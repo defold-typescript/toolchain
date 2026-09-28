@@ -35,13 +35,8 @@ import {
   type TableExpression,
   type TransformationContext,
 } from "typescript-to-lua";
+import { EACH, engineIndexCall, engineIndexHelper, type FieldPath } from "./engine-index-runtime";
 
-export const INDEX_OPTION_VARIABLE_MESSAGE =
-  "`options.index` is zero-based and is converted to Defold's 1-based index only in an object literal written at the call; pass the options inline.";
-export const INDEX_OPTION_SPREAD_MESSAGE =
-  "A spread carrying `index` cannot be converted to Defold's 1-based index; write `index` explicitly after the spread.";
-export const INDEX_OPTION_UNDEFINED_MESSAGE =
-  "`options.index` may be undefined here, so it cannot be converted to Defold's 1-based index; pass a number, or leave `index` out.";
 export const ENGINE_INDEX_FUNCTION_VALUE_MESSAGE =
   "This engine function takes or returns a zero-based index that is converted to Defold's base only where it is called; call it directly or through a `const` alias of its own type instead of using it as a value.";
 export const ENGINE_INDEX_NAMESPACE_VALUE_MESSAGE =
@@ -80,24 +75,31 @@ const CONVERTED_SLOTS: ReadonlyMap<string, readonly SlotKey[]> = (() => {
   return slots;
 })();
 
-// Each function base mapped to its param names whose lowered table fields this
-// pass converts, and the field names.
-const LOWERED_FIELDS: ReadonlyMap<string, ReadonlyMap<string, readonly string[]>> = (() => {
-  const fields = new Map<string, Map<string, string[]>>();
-  for (const key of INDEX_SLOTS.loweredTableFields) {
-    const match = /^(.+?):param:([^:]+):([^:]+)$/.exec(key);
+interface FieldKey extends SlotKey {
+  // The field names below the slot, as the classification key spells them. A
+  // name may sit under a list or a nested table the key does not name
+  // (`table:frame_start` is `table.animations[i].frame_start`).
+  readonly fields: readonly string[];
+}
+
+// Each function base mapped to its native-1 table fields, param and return.
+const CONVERTED_FIELDS: ReadonlyMap<string, readonly FieldKey[]> = (() => {
+  const fields = new Map<string, FieldKey[]>();
+  for (const [key, classification] of Object.entries(INDEX_SLOTS.slots)) {
+    if (classification.class !== "native-1") continue;
+    const match = /^(.+?):(param|return):([^:]+):(.+)$/.exec(key);
     if (match === null) continue;
-    const [, base = "", param = "", field = ""] = match;
-    const byParam = fields.get(base) ?? new Map<string, string[]>();
-    byParam.set(param, [...(byParam.get(param) ?? []), field]);
-    fields.set(base, byParam);
+    const [, base = "", kind, slot = "", names = ""] = match;
+    const list = fields.get(base) ?? [];
+    list.push({ kind: kind as SlotKey["kind"], slot, fields: names.split(":"), classification });
+    fields.set(base, list);
   }
   return fields;
 })();
 
 const CONVERTING_BASES: ReadonlySet<string> = new Set([
   ...CONVERTED_SLOTS.keys(),
-  ...LOWERED_FIELDS.keys(),
+  ...CONVERTED_FIELDS.keys(),
 ]);
 
 // Every namespace a converting function sits in, so a namespace value can be
@@ -223,10 +225,93 @@ function rejection(node: ts.Node, messageText: string): ts.Diagnostic {
   };
 }
 
-// ---- options.index -------------------------------------------------------
+// ---- table fields --------------------------------------------------------
+
+const FIELD_CLASSIFICATION: IndexSlotEntry = { class: "native-1" };
+
+// How far below a slot a classified field name is looked for.
+const MAX_FIELD_DEPTH = 4;
+
+function isOpen(type: ts.Type): boolean {
+  return (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) !== 0;
+}
+
+function isTableLike(type: ts.Type): boolean {
+  return (type.flags & ts.TypeFlags.Object) !== 0 || type.isIntersection();
+}
+
+function listElement(type: ts.Type, checker: ts.TypeChecker): ts.Type | undefined {
+  if (!checker.isArrayType(type) && !checker.isTupleType(type)) return undefined;
+  return checker.getIndexTypeOfType(type, ts.IndexKind.Number);
+}
+
+function uniquePaths(paths: readonly FieldPath[]): FieldPath[] {
+  return [...new Map(paths.map((path) => [JSON.stringify(path), path])).values()];
+}
+
+// Every path to `fields` in `type`. A list is entered through `EACH`, and a
+// name the table does not hold is looked for one table deeper, since a
+// classification key names the field, not every table above it.
+function fieldPaths(
+  type: ts.Type,
+  fields: readonly string[],
+  checker: ts.TypeChecker,
+  depth = 0,
+): FieldPath[] {
+  const [head, ...rest] = fields;
+  if (head === undefined || depth > MAX_FIELD_DEPTH) return [];
+  if (type.isUnion()) {
+    return uniquePaths(type.types.flatMap((part) => fieldPaths(part, fields, checker, depth)));
+  }
+  if (!isTableLike(type)) return [];
+  const element = listElement(type, checker);
+  if (element !== undefined) {
+    return fieldPaths(element, fields, checker, depth + 1).map((path) => [EACH, ...path]);
+  }
+  const property = type.getProperty(head);
+  if (property !== undefined) {
+    if (rest.length === 0) return [[head]];
+    return fieldPaths(checker.getTypeOfSymbol(property), rest, checker, depth + 1).map((path) => [
+      head,
+      ...path,
+    ]);
+  }
+  if (rest.length === 0 && checker.getIndexInfoOfType(type, ts.IndexKind.String) !== undefined) {
+    return [[head]];
+  }
+  return uniquePaths(
+    type
+      .getProperties()
+      .flatMap((nested) =>
+        fieldPaths(checker.getTypeOfSymbol(nested), fields, checker, depth + 1).map((path) => [
+          nested.name,
+          ...path,
+        ]),
+      ),
+  );
+}
+
+// Whether a value of `type` may hold a table at every step of `path`.
+function mayCarry(type: ts.Type, path: FieldPath, checker: ts.TypeChecker): boolean {
+  const [head, ...rest] = path;
+  if (head === undefined || isOpen(type)) return true;
+  if ((type.flags & ts.TypeFlags.Instantiable) !== 0) {
+    const constraint = checker.getBaseConstraintOfType(type);
+    return constraint === undefined || constraint === type || mayCarry(constraint, path, checker);
+  }
+  if (type.isUnion()) return type.types.some((part) => mayCarry(part, path, checker));
+  if (!isTableLike(type)) return false;
+  if (head === EACH) {
+    const element = listElement(type, checker);
+    return element !== undefined && mayCarry(element, rest, checker);
+  }
+  const property = type.getProperty(head);
+  if (property !== undefined) return mayCarry(checker.getTypeOfSymbol(property), rest, checker);
+  return checker.getIndexInfoOfType(type, ts.IndexKind.String) !== undefined;
+}
 
 function carriesField(type: ts.Type, field: string): boolean {
-  return someConstituent(type, (t) => t.getProperty(field) !== undefined);
+  return isOpen(type) || someConstituent(type, (t) => t.getProperty(field) !== undefined);
 }
 
 function propertyName(
@@ -245,60 +330,137 @@ function propertyName(
   return undefined;
 }
 
-function fieldValueType(
-  property: ts.ObjectLiteralElementLike,
-  checker: ts.TypeChecker,
-): ts.Type | undefined {
-  if (ts.isPropertyAssignment(property)) return checker.getTypeAtLocation(property.initializer);
-  if (ts.isShorthandPropertyAssignment(property)) return checker.getTypeAtLocation(property.name);
+function propertyValue(property: ts.ObjectLiteralElementLike): ts.Expression | undefined {
+  if (ts.isPropertyAssignment(property)) return property.initializer;
+  if (ts.isShorthandPropertyAssignment(property)) return property.name;
   return undefined;
 }
 
-// The first reason a lowered table field cannot be converted, or `undefined`
-// when it can.
-function rejectTableField(
-  argument: ts.Expression,
-  field: string,
+interface FieldEdit {
+  readonly key: string;
+  // The field itself is the index, converted where it is written.
+  readonly leaf?: ts.Expression;
+  // Paths below the field's value, converted at run time.
+  readonly paths?: readonly FieldPath[];
+}
+
+// The conversions a literal written at a converting call carries into the Lua
+// it lowers to. Its visitor applies them, so a nested literal converts where it
+// is written and nothing it builds is copied.
+const objectEdits = new WeakMap<ts.Node, FieldEdit[]>();
+const elementEdits = new WeakMap<ts.Node, { position: number; paths: FieldPath[] }[]>();
+// A literal whose field the lowering cannot place (a spread that may override
+// it, a list with a spread or a hole) is converted as a whole at run time.
+const wholeConversions = new WeakMap<ts.Node, FieldPath[]>();
+
+function append<T>(map: WeakMap<ts.Node, T[]>, node: ts.Node, values: readonly T[]): void {
+  if (values.length > 0) map.set(node, [...(map.get(node) ?? []), ...values]);
+}
+
+// Arranges the conversion of `paths` below `expression`: a literal is
+// rewritten where it is written, and the paths returned are left for the
+// caller to convert on the expression's own value at run time.
+function arrangeFields(
+  expression: ts.Expression,
+  paths: readonly FieldPath[],
   checker: ts.TypeChecker,
-): ts.Diagnostic | undefined {
-  const literal = unwrap(argument);
-  if (!ts.isObjectLiteralExpression(literal)) {
-    return carriesField(checker.getTypeAtLocation(literal), field)
-      ? rejection(argument, INDEX_OPTION_VARIABLE_MESSAGE)
-      : undefined;
+): FieldPath[] {
+  const node = unwrap(expression);
+  if (ts.isObjectLiteralExpression(node)) {
+    arrangeObject(node, paths, checker);
+    return [];
   }
-  let uncoveredSpread: ts.SpreadAssignment | undefined;
-  let explicit: ts.ObjectLiteralElementLike | undefined;
-  for (const property of literal.properties) {
-    if (ts.isSpreadAssignment(property)) {
-      if (carriesField(checker.getTypeAtLocation(property.expression), field)) {
-        uncoveredSpread = property;
+  if (ts.isArrayLiteralExpression(node)) {
+    arrangeArray(node, paths, checker);
+    return [];
+  }
+  const type = checker.getTypeAtLocation(node);
+  return paths.filter((path) => mayCarry(type, path, checker));
+}
+
+function arrangeObject(
+  node: ts.ObjectLiteralExpression,
+  paths: readonly FieldPath[],
+  checker: ts.TypeChecker,
+): void {
+  const byKey = new Map<string, FieldPath[]>();
+  for (const [head, ...rest] of paths) {
+    if (typeof head === "string") byKey.set(head, [...(byKey.get(head) ?? []), rest]);
+  }
+  for (const [key, rests] of byKey) {
+    let spread: ts.SpreadAssignment | undefined;
+    let explicit: ts.ObjectLiteralElementLike | undefined;
+    for (const property of node.properties) {
+      if (ts.isSpreadAssignment(property)) {
+        if (carriesField(checker.getTypeAtLocation(property.expression), key)) spread = property;
+      } else if (propertyName(property, checker) === key) {
+        spread = undefined;
+        explicit = property;
       }
-    } else if (propertyName(property, checker) === field) {
-      uncoveredSpread = undefined;
-      explicit = property;
     }
+    if (spread !== undefined) {
+      append(
+        wholeConversions,
+        node,
+        rests.map((rest) => [key, ...rest]),
+      );
+      continue;
+    }
+    const value = explicit && propertyValue(explicit);
+    if (value === undefined) continue;
+    if (rests.some((rest) => rest.length === 0)) append(objectEdits, node, [{ key, leaf: value }]);
+    const deeper = rests.filter((rest) => rest.length > 0);
+    const runtime = deeper.length === 0 ? [] : arrangeFields(value, deeper, checker);
+    if (runtime.length > 0) append(objectEdits, node, [{ key, paths: runtime }]);
   }
-  if (uncoveredSpread !== undefined) return rejection(uncoveredSpread, INDEX_OPTION_SPREAD_MESSAGE);
-  const valueType = explicit && fieldValueType(explicit, checker);
-  if (explicit !== undefined && valueType !== undefined && someConstituent(valueType, isNullish)) {
-    return rejection(explicit, INDEX_OPTION_UNDEFINED_MESSAGE);
-  }
-  return undefined;
 }
 
-const loweredLiterals = new WeakMap<ts.Node, readonly string[]>();
-
-// A literal's diagnostics guarantee the last field of each name is the effective
-// one: a spread carrying it after it is rejected. Every earlier one is shadowed
-// and keeps its source value.
-function offsetEffectiveField(tables: readonly TableExpression[], field: string): void {
-  for (const entry of tables.flatMap((table) => table.fields).reverse()) {
-    if (entry.key !== undefined && isStringLiteral(entry.key) && entry.key.value === field) {
-      entry.value = plusOne(entry.value);
-      return;
-    }
+function arrangeArray(
+  node: ts.ArrayLiteralExpression,
+  paths: readonly FieldPath[],
+  checker: ts.TypeChecker,
+): void {
+  const rests = paths.flatMap(([head, ...rest]) =>
+    head === EACH && rest.length > 0 ? [rest] : [],
+  );
+  if (rests.length === 0) return;
+  if (node.elements.some((e) => ts.isSpreadElement(e) || ts.isOmittedExpression(e))) {
+    append(
+      wholeConversions,
+      node,
+      rests.map((rest) => [EACH, ...rest]),
+    );
+    return;
   }
+  node.elements.forEach((element, position) => {
+    const runtime = arrangeFields(element, rests, checker);
+    if (runtime.length > 0) append(elementEdits, node, [{ position, paths: runtime }]);
+  });
+}
+
+// The files whose Lua calls the run-time helper, so it is defined once at the top.
+const helperFiles = new WeakSet<ts.SourceFile>();
+
+function runtimeConversion(
+  value: Expression,
+  paths: readonly FieldPath[],
+  delta: 1 | -1,
+  copy: boolean,
+  context: TransformationContext,
+): Expression {
+  helperFiles.add(context.sourceFile);
+  return engineIndexCall(value, paths, delta, copy);
+}
+
+// The entry a Lua table (or the tables `__TS__ObjectAssign` merges) ends up
+// holding for `key`: the last one written.
+function effectiveEntry(tables: readonly TableExpression[], key: string) {
+  return tables
+    .flatMap((table) => table.fields)
+    .reverse()
+    .find(
+      (entry) => entry.key !== undefined && isStringLiteral(entry.key) && entry.key.value === key,
+    );
 }
 
 // ---- scalar and tuple conversion ----------------------------------------
@@ -449,23 +611,45 @@ function tupleElements(type: ts.Type, checker: ts.TypeChecker): readonly ts.Type
   return tuple === undefined ? undefined : checker.getTypeArguments(tuple as ts.TypeReference);
 }
 
+interface ReturnFields {
+  // The `LuaMultiReturn` slot holding the table; absent for a single return.
+  readonly tupleSlot?: number;
+  readonly paths: readonly FieldPath[];
+}
+
 function convertReturn(
   result: Expression,
   call: ts.CallExpression,
   returns: readonly SlotKey[],
-  checker: ts.TypeChecker,
+  fields: readonly ReturnFields[],
+  context: TransformationContext,
 ): Expression {
+  const checker = context.checker;
   const type = checker.getTypeAtLocation(call);
   const tupled = returns.filter((slot) => slot.classification.tupleSlot !== undefined);
-  if (tupled.length === 0) {
-    const shape = numberShape(type, checker);
-    if (!shape.numeric || shape.other) return result;
-    return convertValue(result, { direction: "out", shape, fromEnd: false });
+  const tupledFields = fields.filter((field) => field.tupleSlot !== undefined);
+  if (tupled.length === 0 && tupledFields.length === 0) {
+    let converted = result;
+    if (returns.length > 0) {
+      const shape = numberShape(type, checker);
+      if (shape.numeric && !shape.other) {
+        converted = convertValue(result, { direction: "out", shape, fromEnd: false });
+      }
+    }
+    const own = fields.find((field) => field.tupleSlot === undefined);
+    return own === undefined
+      ? converted
+      : runtimeConversion(converted, own.paths, -1, false, context);
   }
   const elements = tupleElements(type, checker) ?? [];
-  const width = Math.max(...tupled.map((slot) => (slot.classification.tupleSlot ?? 0) + 1));
+  const width = Math.max(
+    ...tupled.map((slot) => (slot.classification.tupleSlot ?? 0) + 1),
+    ...tupledFields.map((field) => (field.tupleSlot ?? 0) + 1),
+  );
   const names = Array.from({ length: width }, (_, index) => createIdentifier(`v${index + 1}`));
   const values: Expression[] = names.map((name, index) => {
+    const table = tupledFields.find((field) => field.tupleSlot === index);
+    if (table !== undefined) return runtimeConversion(name, table.paths, -1, false, context);
     if (!tupled.some((slot) => slot.classification.tupleSlot === index)) return name;
     const element = elements[index];
     const shape =
@@ -490,22 +674,51 @@ function isDiscarded(call: ts.CallExpression): boolean {
 
 interface ArgumentConversion {
   readonly position: number;
-  readonly classification: IndexSlotEntry;
+  // The argument is itself a native-1 index.
+  readonly classification?: IndexSlotEntry;
+  // Fields below the argument converted at run time, into a copy.
+  readonly paths: readonly FieldPath[];
 }
 
 interface CallPlan {
   readonly arguments: readonly ArgumentConversion[];
   readonly returns: readonly SlotKey[];
+  readonly returnFields: readonly ReturnFields[];
   readonly diagnostics: readonly ts.Diagnostic[];
 }
 
+function planReturnFields(
+  call: ts.CallExpression,
+  fields: readonly FieldKey[],
+  checker: ts.TypeChecker,
+): ReturnFields[] {
+  const type = checker.getTypeAtLocation(call);
+  const bySlot = new Map<number | undefined, FieldPath[]>();
+  for (const field of fields) {
+    if (field.kind !== "return") continue;
+    const { tupleSlot } = field.classification;
+    const target = tupleSlot === undefined ? type : tupleElements(type, checker)?.[tupleSlot];
+    if (target === undefined) continue;
+    const paths = fieldPaths(target, field.fields, checker);
+    if (paths.length > 0)
+      bySlot.set(tupleSlot, uniquePaths([...(bySlot.get(tupleSlot) ?? []), ...paths]));
+  }
+  return [...bySlot].map(([tupleSlot, paths]) =>
+    tupleSlot === undefined ? { paths } : { tupleSlot, paths },
+  );
+}
+
 function planCall(call: ts.CallExpression, checker: ts.TypeChecker): CallPlan | undefined {
-  const declaration = checker.getResolvedSignature(call)?.declaration;
-  if (declaration === undefined || !ts.isFunctionLike(declaration)) return undefined;
+  const signature = checker.getResolvedSignature(call);
+  const declaration = signature?.declaration;
+  if (signature === undefined || declaration === undefined || !ts.isFunctionLike(declaration)) {
+    return undefined;
+  }
   const base = declarationBase(declaration, checker);
   if (base === undefined || !CONVERTING_BASES.has(base)) return undefined;
   const slots = CONVERTED_SLOTS.get(base) ?? [];
-  const fields = LOWERED_FIELDS.get(base);
+  const fields = CONVERTED_FIELDS.get(base) ?? [];
+  const parameters = signature.getParameters();
   const conversions: ArgumentConversion[] = [];
   const diagnostics: ts.Diagnostic[] = [];
   const firstSpread = call.arguments.findIndex(ts.isSpreadElement);
@@ -513,30 +726,36 @@ function planCall(call: ts.CallExpression, checker: ts.TypeChecker): CallPlan | 
     if (parameter.dotDotDotToken !== undefined || !ts.isIdentifier(parameter.name)) return;
     const name = parameter.name.text;
     const slot = slots.find((candidate) => candidate.kind === "param" && candidate.slot === name);
-    const fieldNames = fields?.get(name) ?? [];
-    if (slot === undefined && fieldNames.length === 0) return;
+    const fieldKeys = fields.filter((key) => key.kind === "param" && key.slot === name);
+    if (slot === undefined && fieldKeys.length === 0) return;
     if (firstSpread !== -1 && firstSpread <= position) {
       const spread = call.arguments[firstSpread] as ts.Expression;
       diagnostics.push(rejection(spread, ENGINE_INDEX_SPREAD_MESSAGE));
       return;
     }
     const argument = call.arguments[position];
+    const symbol = parameters[position];
     if (argument === undefined) return;
-    if (slot !== undefined) conversions.push({ position, classification: slot.classification });
-    for (const field of fieldNames) {
-      const diagnostic = rejectTableField(argument, field, checker);
-      if (diagnostic !== undefined) {
-        diagnostics.push(diagnostic);
-        continue;
-      }
-      const literal = unwrap(argument);
-      if (ts.isObjectLiteralExpression(literal)) {
-        loweredLiterals.set(literal, [...(loweredLiterals.get(literal) ?? []), field]);
-      }
-    }
+    const paths =
+      symbol === undefined
+        ? []
+        : uniquePaths(
+            fieldKeys.flatMap((key) =>
+              fieldPaths(checker.getTypeOfSymbol(symbol), key.fields, checker),
+            ),
+          );
+    const runtime = paths.length === 0 ? [] : arrangeFields(argument, paths, checker);
+    if (slot === undefined && runtime.length === 0) return;
+    conversions.push({
+      position,
+      ...(slot === undefined ? {} : { classification: slot.classification }),
+      paths: runtime,
+    });
   });
-  const returns = isDiscarded(call) ? [] : slots.filter((slot) => slot.kind === "return");
-  return { arguments: conversions, returns, diagnostics };
+  const discarded = isDiscarded(call);
+  const returns = discarded ? [] : slots.filter((slot) => slot.kind === "return");
+  const returnFields = discarded ? [] : planReturnFields(call, fields, checker);
+  return { arguments: conversions, returns, returnFields, diagnostics };
 }
 
 function transformCall(node: ts.CallExpression, context: TransformationContext): Expression {
@@ -551,17 +770,22 @@ function transformCall(node: ts.CallExpression, context: TransformationContext):
     const call = luaCallOf(result);
     if (call !== undefined && (isCallExpression(call) || isMethodCallExpression(call))) {
       const offset = call.params.length - node.arguments.length;
-      for (const { position, classification } of plan.arguments) {
+      for (const { position, classification, paths } of plan.arguments) {
         const index = position + Math.max(offset, 0);
         const value = call.params[index];
         const argument = node.arguments[position];
         if (value === undefined || argument === undefined) continue;
-        call.params[index] = convertArgument(value, argument, classification, context.checker);
+        let converted =
+          classification === undefined
+            ? value
+            : convertArgument(value, argument, classification, context.checker);
+        if (paths.length > 0) converted = runtimeConversion(converted, paths, 1, true, context);
+        call.params[index] = converted;
       }
     }
   }
-  return plan.returns.length > 0
-    ? convertReturn(result, node, plan.returns, context.checker)
+  return plan.returns.length > 0 || plan.returnFields.length > 0
+    ? convertReturn(result, node, plan.returns, plan.returnFields, context)
     : result;
 }
 
@@ -664,26 +888,55 @@ function checkEscapes(file: ts.SourceFile, checker: ts.TypeChecker, out: ts.Diag
   ts.forEachChild(file, visit);
 }
 
+// The whole literal converted at run time, when the lowering could not place a
+// field of it.
+function withWholeConversion(
+  node: ts.Node,
+  result: Expression,
+  context: TransformationContext,
+): Expression {
+  const paths = wholeConversions.get(node);
+  return paths === undefined ? result : runtimeConversion(result, paths, 1, true, context);
+}
+
 export const engineIndexLoweringPlugin: Plugin = {
   visitors: {
     [ts.SyntaxKind.SourceFile]: (node, context) => {
       checkEscapes(node, context.checker, context.diagnostics);
-      return context.superTransformNode(node)[0] as File;
+      const file = context.superTransformNode(node)[0] as File;
+      if (helperFiles.has(node)) file.statements.unshift(engineIndexHelper());
+      return file;
     },
     [ts.SyntaxKind.CallExpression]: transformCall,
     // A spread lowers the literal to `__TS__ObjectAssign({}, base, {index = …})`,
     // so the table carrying the field can sit one call deep.
     [ts.SyntaxKind.ObjectLiteralExpression]: (node, context): Expression => {
       const result = context.superTransformExpression(node);
-      const fields = loweredLiterals.get(node);
-      if (fields === undefined) return result;
       const tables = isTableExpression(result)
         ? [result]
         : isCallExpression(result)
           ? result.params.filter(isTableExpression)
           : [];
-      for (const field of fields) offsetEffectiveField(tables, field);
-      return result;
+      for (const edit of objectEdits.get(node) ?? []) {
+        const entry = effectiveEntry(tables, edit.key);
+        if (entry === undefined) continue;
+        entry.value =
+          edit.leaf !== undefined
+            ? convertArgument(entry.value, edit.leaf, FIELD_CLASSIFICATION, context.checker)
+            : runtimeConversion(entry.value, edit.paths ?? [], 1, true, context);
+      }
+      return withWholeConversion(node, result, context);
+    },
+    [ts.SyntaxKind.ArrayLiteralExpression]: (node, context): Expression => {
+      const result = context.superTransformExpression(node);
+      if (isTableExpression(result)) {
+        for (const { position, paths } of elementEdits.get(node) ?? []) {
+          const entry = result.fields[position];
+          if (entry !== undefined)
+            entry.value = runtimeConversion(entry.value, paths, 1, true, context);
+        }
+      }
+      return withWholeConversion(node, result, context);
     },
   },
 };

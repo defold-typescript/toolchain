@@ -4841,9 +4841,9 @@ describe("engine index base notes", () => {
     );
   });
 
-  test("a table field the transpiler does not convert names Defold's base", () => {
+  test("a converted table field names its TypeScript base", () => {
     expect(tagLine(docBlock(b2dBody113Doc, "get_fixtures"), "@returns")).toContain(
-      "`index` is 1-based.",
+      "`index` is zero-based in TypeScript; Defold receives it 1-based.",
     );
   });
 

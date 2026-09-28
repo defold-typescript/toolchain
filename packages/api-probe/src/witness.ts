@@ -14,6 +14,7 @@ import {
   UnmappedLuaKindError,
 } from "../../types/scripts/lua-kind";
 import { type ApiTarget, loadApiTargets } from "../../types/scripts/regen";
+import { INDEX_SLOT_CLASSIFICATIONS } from "../../types/src/index-slot-classifications";
 import { constantProbes } from "./constant-probes";
 import {
   type Box2DBackend,
@@ -29,7 +30,12 @@ import {
   type ScriptKind,
   WITNESS_OVERRIDES,
 } from "./contexts";
-import { indexProbeCalls, type SignatureArgs, type Unverified } from "./index-probes";
+import {
+  indexProbeCalls,
+  PROBED_INDEX_CLASSES,
+  type SignatureArgs,
+  type Unverified,
+} from "./index-probes";
 import { messageProbes } from "./message-probes";
 import { negativeWitness } from "./negative-witness";
 import { PROBE_DENYLIST } from "./probe-denylist";
@@ -138,6 +144,9 @@ interface Scope {
   readonly urls: Set<string>;
   // How many times each handle has been witnessed in the current call.
   readonly handles: Map<string, number>;
+  // The classified index fields below the current slot, witnessed as the first
+  // position.
+  readonly indexFields?: ReadonlySet<string>;
 }
 
 function opaqueName(type: ts.Type, checker: ts.TypeChecker): string | undefined {
@@ -254,7 +263,10 @@ function objectWitness(type: ts.Type, scope: Scope, depth: number): string {
     .filter((property) => (property.flags & ts.SymbolFlags.Optional) === 0)
     .map((property) => {
       const propertyType = checker.getTypeOfSymbol(property);
-      return `${propertyKey(property.name)}: ${witness(propertyType, scope, depth + 1)}`;
+      const value = scope.indexFields?.has(property.name)
+        ? "0"
+        : witness(propertyType, scope, depth + 1);
+      return `${propertyKey(property.name)}: ${value}`;
     });
   return fields.length === 0 ? "{}" : `{ ${fields.join(", ")} }`;
 }
@@ -345,6 +357,7 @@ export function urlsIn(expression: string): string[] {
 }
 
 interface Param {
+  readonly name: string;
   readonly type: ts.Type;
   readonly optional: boolean;
   readonly rest: boolean;
@@ -366,7 +379,7 @@ function signatureParams(signature: ts.Signature, checker: ts.TypeChecker): Para
     if (rest && checker.isArrayType(type)) {
       type = checker.getTypeArguments(type as ts.TypeReference)[0] ?? type;
     }
-    return { type, optional, rest };
+    return { name: param.name, type, optional, rest };
   });
 }
 
@@ -391,8 +404,22 @@ function slotWitness(param: Param, slot: number, scope: Omit<Scope, "slot">): st
     }
     return override;
   }
+  const key = `${scope.fqn}:param:${param.name}`;
+  if (isProbedIndex(key)) return "0";
+  const indexFields = new Set(
+    [...INDEX_SLOT_CLASSIFICATIONS.keys()]
+      .filter((candidate) => candidate.startsWith(`${key}:`) && isProbedIndex(candidate))
+      .map((candidate) => candidate.slice(candidate.lastIndexOf(":") + 1)),
+  );
   const type = param.optional ? scope.checker.getNonNullableType(param.type) : param.type;
-  return witness(type, full);
+  return witness(type, indexFields.size === 0 ? full : { ...full, indexFields });
+}
+
+// An engine index position is witnessed as the first element, which every
+// collection the probe passes has.
+function isProbedIndex(key: string): boolean {
+  const classification = INDEX_SLOT_CLASSIFICATIONS.get(key)?.class;
+  return classification !== undefined && PROBED_INDEX_CLASSES.has(classification);
 }
 
 function kindsOf(type: ts.Type, checker: ts.TypeChecker): DeclaredKinds {

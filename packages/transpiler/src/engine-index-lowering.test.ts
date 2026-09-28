@@ -8,7 +8,6 @@ import {
   hashExampleSource,
   htmlToCodeText,
   INDEX_SLOT_CLASSIFICATIONS,
-  LOWERED_TABLE_FIELDS,
   lookupTranslation,
   parseDefoldApiDoc,
   splitExampleSources,
@@ -19,10 +18,8 @@ import {
   ENGINE_INDEX_FUNCTION_VALUE_MESSAGE,
   ENGINE_INDEX_NAMESPACE_VALUE_MESSAGE,
   ENGINE_INDEX_SPREAD_MESSAGE,
-  INDEX_OPTION_SPREAD_MESSAGE,
-  INDEX_OPTION_UNDEFINED_MESSAGE,
-  INDEX_OPTION_VARIABLE_MESSAGE,
 } from "./engine-index-lowering";
+import { ENGINE_INDEX_HELPER } from "./engine-index-runtime";
 import { transpile, transpileProject } from "./transpile";
 
 const TYPES_ROOT = path.dirname(
@@ -61,9 +58,18 @@ function source(lines: readonly string[]): string {
   return [...PRELUDE, ...lines, "export {};", ""].join("\n");
 }
 
-// The functions whose `options` table fields the lowering converts.
-const LOWERED_FIELD_APIS: ReadonlySet<string> = new Set(
-  [...LOWERED_TABLE_FIELDS].map((key) => key.slice(0, key.indexOf(":"))),
+// The functions whose `options.index` array-property option the lowering converts.
+const OPTION_INDEX_APIS: ReadonlySet<string> = new Set(
+  [...INDEX_SLOT_CLASSIFICATIONS.keys()]
+    .filter((key) => key.endsWith(":param:options:index"))
+    .map((key) => key.slice(0, key.indexOf(":"))),
+);
+
+// The helper the lowering prepends to a file that converts a table at run time,
+// asserted once below and left out of every other snapshot.
+const HELPER_DEFINITION = new RegExp(
+  `^local function ${ENGINE_INDEX_HELPER}\\([\\s\\S]*?\\n^end\\n`,
+  "m",
 );
 
 // The editor lane's declarations, which a plain script does not see.
@@ -89,6 +95,7 @@ function lua(lines: readonly string[]): string {
   );
   expect(result.diagnostics).toEqual([]);
   return result.lua
+    .replace(HELPER_DEFINITION, "")
     .split("\n")
     .filter(
       (line) => !/^(local ____exports = \{\}|return ____exports|--\[\[ Generated .*)$/.test(line),
@@ -107,7 +114,6 @@ describe("options.index lowering", () => {
         "declare const a: number;",
         "declare const b: number;",
         "declare const base: { key: Hash };",
-        'declare const body: Opaque<"b2Body">;',
         "declare function next(): number;",
         "declare function describe(options: { index: number }): void;",
         "",
@@ -135,7 +141,6 @@ describe("options.index lowering", () => {
         'go.get(url, "tint");',
         "const first = values[0];",
         "describe({ index: 0 });",
-        "const fixtureIndex = b2d.body.get_fixtures(body)[0].index;",
       ]),
     );
     expect(result.diagnostics).toEqual([]);
@@ -184,7 +189,6 @@ describe("options.index lowering", () => {
       go.get(url, "tint")
       local first = values[1]
       describe({index = 0})
-      local fixtureIndex = b2d.body.get_fixtures(body)[1].index
       return ____exports
       "
     `);
@@ -230,24 +234,14 @@ describe("options.index lowering", () => {
     `);
   });
 
-  test("rejects an options value the lowering cannot see into", () => {
-    const cases: [string, string][] = [
-      [
-        'declare const opts: go.GoPropertyOptions; go.set(url, "tint", tint, opts);',
-        INDEX_OPTION_VARIABLE_MESSAGE,
-      ],
-      [
-        'declare const withIndex: go.GoPropertyOptions; go.set(url, "tint", tint, { ...withIndex });',
-        INDEX_OPTION_SPREAD_MESSAGE,
-      ],
-      [
-        'declare const maybe: number | undefined; go.set(url, "tint", tint, { index: maybe });',
-        INDEX_OPTION_UNDEFINED_MESSAGE,
-      ],
-    ];
-    for (const [line, message] of cases) {
-      expect(transpile(source([line])).diagnostics).toEqual([message]);
-    }
+  test("an index that may be undefined keeps nil nil", () => {
+    expect(
+      lua([
+        "declare const maybe: number | undefined;",
+        "declare const tint: Vector4;",
+        'go.set(url, "tint", tint, { index: maybe });',
+      ]),
+    ).toMatchInlineSnapshot(`"go.set(url, "tint", tint, {index = maybe and maybe + 1})"`);
   });
 
   test("accepts an options variable whose type carries no index", () => {
@@ -268,7 +262,7 @@ describe("options.index lowering", () => {
       }
     }
     expect(upstream.size).toBeGreaterThan(0);
-    expect([...upstream].filter((fqn) => !LOWERED_FIELD_APIS.has(fqn))).toEqual([]);
+    expect([...upstream].filter((fqn) => !OPTION_INDEX_APIS.has(fqn))).toEqual([]);
   });
 
   test("each zero-based published example emits the index its upstream Lua passes", () => {
@@ -278,7 +272,7 @@ describe("options.index lowering", () => {
     let compared = 0;
     for (const module of vendoredModules()) {
       for (const fn of module.functions) {
-        if (!LOWERED_FIELD_APIS.has(fn.name)) continue;
+        if (!OPTION_INDEX_APIS.has(fn.name)) continue;
         const whole = htmlToCodeText(fn.examples ?? "");
         const segments = splitExampleSources(fn.examples ?? "");
         const bodies = segments.length > 1 ? [whole, ...segments.map((s) => s.code)] : [whole];
@@ -295,18 +289,6 @@ describe("options.index lowering", () => {
       }
     }
     expect(compared).toBeGreaterThan(0);
-  });
-});
-
-describe("lowered table fields", () => {
-  test("every lowered table field is a native-1 options.index classification", () => {
-    for (const key of LOWERED_TABLE_FIELDS) {
-      expect({ key, class: INDEX_SLOT_CLASSIFICATIONS.get(key)?.class }).toEqual({
-        key,
-        class: "native-1",
-      });
-      expect(key).toEndWith(":param:options:index");
-    }
   });
 });
 
@@ -524,6 +506,231 @@ describe("engine index returns", () => {
   });
 });
 
+describe("table-field lowering", () => {
+  test("an argument literal converts each classified field where it is written", () => {
+    expect(
+      lua([
+        "declare const i: number;",
+        'resource.create_atlas("/a.texturesetc", { texture: "/t.texturec", animations: [{ id: "run", width: 8, height: 8, frame_start: 0, frame_end: 3, fps: 30 }], geometries: [{ vertices: [0, 0, 8, 8], uvs: [0, 0, 8, 8], indices: [0, 1, 2] }] });',
+        "profiler.view_recorded_frame({ frame: 0 });",
+        "profiler.view_recorded_frame({ distance: -1, frame: i });",
+        "profiler.view_recorded_frame({ distance: -1 });",
+      ]),
+    ).toMatchInlineSnapshot(`
+      "resource.create_atlas("/a.texturesetc", {texture = "/t.texturec", animations = {{
+          id = "run",
+          width = 8,
+          height = 8,
+          frame_start = 1,
+          frame_end = 4,
+          fps = 30
+      }}, geometries = {{vertices = {0, 0, 8, 8}, uvs = {0, 0, 8, 8}, indices = {0, 1, 2}}}})
+      profiler.view_recorded_frame({frame = 1})
+      profiler.view_recorded_frame({distance = -1, frame = i + 1})
+      profiler.view_recorded_frame({distance = -1})"
+    `);
+  });
+
+  test("any other argument value is converted into a copy, and a spread-shadowed field once", () => {
+    expect(
+      lua([
+        "declare const opts: go.GoPropertyOptions;",
+        "declare const tint: Vector4;",
+        "declare const atlas: Parameters<typeof resource.set_atlas>[1];",
+        "declare const anims: typeof atlas.animations;",
+        'go.set(url, "tint", tint, opts);',
+        'go.set(url, "tint", tint, { ...opts, index: 0 });',
+        'go.set(url, "tint", tint, { ...opts });',
+        'resource.set_atlas("/a.texturesetc", atlas);',
+        'resource.set_atlas("/a.texturesetc", { texture: "/t.texturec", animations: anims, geometries: [] });',
+      ]),
+    ).toMatchInlineSnapshot(`
+      "local ____lualib = require("lualib_bundle")
+      local __TS__ObjectAssign = ____lualib.__TS__ObjectAssign
+      go.set(
+          url,
+          "tint",
+          tint,
+          ____engine_index(opts, 1, true, {"index"})
+      )
+      go.set(
+          url,
+          "tint",
+          tint,
+          __TS__ObjectAssign({}, opts, {index = 1})
+      )
+      go.set(
+          url,
+          "tint",
+          tint,
+          ____engine_index(
+              __TS__ObjectAssign({}, opts),
+              1,
+              true,
+              {"index"}
+          )
+      )
+      resource.set_atlas(
+          "/a.texturesetc",
+          ____engine_index(
+              ____engine_index(atlas, 1, true, {"animations", true, "frame_end"}),
+              1,
+              true,
+              {"animations", true, "frame_start"}
+          )
+      )
+      resource.set_atlas(
+          "/a.texturesetc",
+          {
+              texture = "/t.texturec",
+              animations = ____engine_index(
+                  ____engine_index(anims, 1, true, {true, "frame_end"}),
+                  1,
+                  true,
+                  {true, "frame_start"}
+              ),
+              geometries = {}
+          }
+      )"
+    `);
+  });
+
+  test("a returned table is converted in place, and only its classified field", () => {
+    expect(
+      lua([
+        'declare const world: Opaque<"b2World">;',
+        "const fixtures = b2d.body.get_fixtures(body);",
+        "const created = b2d.body.create_fixture(body, { shape: { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: 4 }, density: 2 });",
+        "const [hits] = b2d.world.overlap_aabb(world, { lower: vmath.vector3(), upper: vmath.vector3() }, {}, 4);",
+        "b2d.body.create_fixture(body, { shape: { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: 4 } });",
+      ]),
+    ).toMatchInlineSnapshot(`
+      "local fixtures = ____engine_index(
+          b2d.body.get_fixtures(body),
+          -1,
+          false,
+          {true, "index"}
+      )
+      local created = ____engine_index(
+          b2d.body.create_fixture(body, {shape = {type = b2d.shape.SHAPE_TYPE_CIRCLE, radius = 4}, density = 2}),
+          -1,
+          false,
+          {"index"}
+      )
+      local hits = (function(v1, ...)
+          return ____engine_index(v1, -1, false, {true, "index"}), ...
+      end)(b2d.world.overlap_aabb(
+          world,
+          {
+              lower = vmath.vector3(),
+              upper = vmath.vector3()
+          },
+          {},
+          4
+      ))
+      b2d.body.create_fixture(body, {shape = {type = b2d.shape.SHAPE_TYPE_CIRCLE, radius = 4}})"
+    `);
+  });
+
+  test("a returned index round-trips into the slot it pairs with", () => {
+    expect(
+      lua(["print(b2d.fixture.get_density(body, b2d.body.get_fixtures(body)[0].index));"]),
+    ).toMatchInlineSnapshot(`
+      "print(b2d.fixture.get_density(
+          body,
+          ____engine_index(
+              b2d.body.get_fixtures(body),
+              -1,
+              false,
+              {true, "index"}
+          )[1].index + 1
+      ))"
+    `);
+  });
+
+  test("a field that is not a position and a project table are untouched", () => {
+    expect(
+      lua([
+        "b2d.fixture.set_filter_data(body, 0, 0, { category_bits: 1, mask_bits: 1, group_index: 0 });",
+        "function describe(fixture: { index: number }) { return fixture.index; }",
+        "describe({ index: 0 });",
+      ]),
+    ).toMatchInlineSnapshot(`
+      "b2d.fixture.set_filter_data(body, 1, 1, {category_bits = 1, mask_bits = 1, group_index = 0})
+      local function describe(fixture)
+          return fixture.index
+      end
+      describe({index = 0})"
+    `);
+  });
+
+  test("a file that converts a table at run time defines the helper once", () => {
+    const result = transpile(
+      [
+        "declare const url: Url;",
+        "declare const opts: go.GoPropertyOptions;",
+        'go.get(url, "tint", opts);',
+        'go.get(url, "tint", opts);',
+        "export {};",
+        "",
+      ].join("\n"),
+    );
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local function ____engine_index(value, delta, copy, path, depth)
+          if type(value) ~= "table" then
+              return value
+          end
+          depth = depth or 1
+          if copy then
+              local copied = {}
+              for k, v in pairs(value) do
+                  copied[k] = v
+              end
+              value = copied
+          end
+          local key = path[depth]
+          if key == true then
+              for i = 1, #value do
+                  value[i] = ____engine_index(
+                      value[i],
+                      delta,
+                      copy,
+                      path,
+                      depth + 1
+                  )
+              end
+          elseif depth < #path then
+              value[key] = ____engine_index(
+                  value[key],
+                  delta,
+                  copy,
+                  path,
+                  depth + 1
+              )
+          elseif type(value[key]) == "number" then
+              value[key] = value[key] + delta
+          end
+          return value
+      end
+      local ____exports = {}
+      go.get(
+          url,
+          "tint",
+          ____engine_index(opts, 1, true, {"index"})
+      )
+      go.get(
+          url,
+          "tint",
+          ____engine_index(opts, 1, true, {"index"})
+      )
+      return ____exports
+      "
+    `);
+  });
+});
+
 describe("engine index resolution", () => {
   test("aliases, destructured functions and the body, shape_index overload convert", () => {
     expect(
@@ -615,9 +822,10 @@ describe("engine index resolution", () => {
   });
 });
 
-// The declarations a project's scripts and editor scripts type against, so a
-// generated call can find each classified function.
+// The declarations a project's scripts and editor scripts type against, generated
+// and authored, so a generated call can find each classified function.
 const GENERATED_ROOT = path.join(TYPES_ROOT, "generated");
+const AUTHORED_ROOT = path.join(TYPES_ROOT, "src");
 const EDITOR_DECLARATIONS = editorDeclarations();
 
 interface DeclaredSignature {
@@ -632,9 +840,11 @@ function declaredSignatures(base: string): DeclaredSignature[] {
   const name = base.slice(base.lastIndexOf(".") + 1);
   const found: DeclaredSignature[] = [];
   const files = [
-    ...readdirSync(GENERATED_ROOT)
-      .filter((entry) => entry.endsWith(".d.ts"))
-      .map((entry) => readFileSync(path.join(GENERATED_ROOT, entry), "utf8")),
+    ...[GENERATED_ROOT, AUTHORED_ROOT].flatMap((root) =>
+      readdirSync(root)
+        .filter((entry) => entry.endsWith(".d.ts"))
+        .map((entry) => readFileSync(path.join(root, entry), "utf8")),
+    ),
     ...Object.values(EDITOR_DECLARATIONS),
   ];
   const visit = (node: ts.Node, path: string): void => {
@@ -709,6 +919,58 @@ describe("every classified native-1 argument", () => {
         .split(/\s*,\s*/);
       const position = signature.parameters.indexOf(slot);
       expect({ key, value: emitted[position] }).toEqual({ key, value: "1" });
+    }
+  });
+});
+
+describe("every classified native-1 table field", () => {
+  // The helper conversions a call through `signature` emits for `field`, as
+  // `<delta> <copy>`.
+  function fieldConversions(
+    base: string,
+    signature: DeclaredSignature,
+    kind: string,
+    tupleSlot: number | undefined,
+    field: string,
+  ): { diagnostics: string[]; conversions: string[] } {
+    const callee = signature.receiver === undefined ? base : `receiver.${base.split(":")[1]}`;
+    const call = `${callee}(${signature.parameters.map(() => "anything").join(", ")})`;
+    const text = [
+      "declare const anything: any;",
+      ...(signature.receiver === undefined
+        ? []
+        : [`declare const receiver: ${signature.receiver};`]),
+      kind === "param" ? `${call};` : `const ${tupleSlot === undefined ? "r" : "[r]"} = ${call};`,
+      "export {};",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": text, ...EDITOR_DECLARATIONS } });
+    const flat = (result.lua["main.ts"] ?? "").replace(/\s+/g, " ");
+    return {
+      diagnostics: result.diagnostics.map((d) => d.message),
+      conversions: [...flat.matchAll(/, (-?1), (true|false), \{([^}]*)\} ?\)/g)]
+        .filter((match) => (match[3] ?? "").endsWith(`"${field}"`))
+        .map((match) => `${match[1]} ${match[2]}`),
+    };
+  }
+
+  test("a call converts the field: plus one into a copy in, minus one in place out", () => {
+    const fieldKeys = [...INDEX_SLOT_CLASSIFICATIONS]
+      .filter(([key, c]) => c.class === "native-1" && /:(param|return):[^:]+:/.test(key))
+      .map(([key, c]) => ({ key, tupleSlot: c.tupleSlot }));
+    expect(fieldKeys.length).toBeGreaterThan(0);
+    for (const { key, tupleSlot } of fieldKeys) {
+      const [, base = "", kind = "", slot = "", fields = ""] =
+        /^(.+?):(param|return):([^:]+):(.+)$/.exec(key) ?? [];
+      const field = fields.slice(fields.lastIndexOf(":") + 1);
+      const expected = kind === "param" ? "1 true" : "-1 false";
+      // A return field sits in one overload's table; any overload carrying it counts.
+      const outcomes = declaredSignatures(base)
+        .filter((s) => kind === "return" || s.parameters.includes(slot))
+        .map((s) => fieldConversions(base, s, kind, tupleSlot, field));
+      expect({ key, declared: outcomes.length > 0 }).toEqual({ key, declared: true });
+      const converted = outcomes.find((o) => o.conversions.length > 0) ?? outcomes[0];
+      expect({ key, ...converted }).toEqual({ key, diagnostics: [], conversions: [expected] });
     }
   });
 });

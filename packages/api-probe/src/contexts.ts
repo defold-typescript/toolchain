@@ -32,6 +32,8 @@ export const PROBE_URLS: Readonly<Record<string, string>> = {
   PEER: "main:/peer",
   PEER_COLLISION: "main:/peer#collision",
   WRECK_COLLISION: "main:/wreck#collision",
+  // A static body of three fixtures, box, sphere and box, for the index probes.
+  TRIO_COLLISION: "main:/probe#trio",
   VICTIM: "main:/victim",
 };
 
@@ -254,7 +256,7 @@ const BUFFER_RESOURCE = '"/main/triangle.bufferc"';
 // Keeps the probe atlas's one-shot `anim`, which sprite and gui probes play
 // afterwards and whose end the `animation_done` check waits for.
 const ATLAS_PARAMS =
-  '{ texture: "/main/probe.texturec", geometries: [{ vertices: [0, 0, 0, 16, 16, 16], uvs: [0, 0, 0, 16, 16, 16], indices: [0, 1, 2] }], animations: [{ id: "anim", width: 16, height: 16, frame_start: 1, frame_end: 2, playback: go.PLAYBACK_ONCE_FORWARD }] }';
+  '{ texture: "/main/probe.texturec", geometries: [{ vertices: [0, 0, 0, 16, 16, 16], uvs: [0, 0, 0, 16, 16, 16], indices: [0, 1, 2] }], animations: [{ id: "anim", width: 16, height: 16, frame_start: 0, frame_end: 1, playback: go.PLAYBACK_ONCE_FORWARD }] }';
 const TEXTURE_PARAMS =
   "{ type: graphics.TEXTURE_TYPE_2D, width: 16, height: 16, format: graphics.TEXTURE_FORMAT_RGBA }";
 const TEXTURE_BUFFER =
