@@ -1,5 +1,11 @@
 import * as ts from "typescript";
-import { type ApiFunction, type ApiParameter, parseDefoldApiDoc } from "../src/api-doc";
+import {
+  type ApiFunction,
+  type ApiParameter,
+  FUNCTION_NAME_CORRECTIONS,
+  parseDefoldApiDoc,
+} from "../src/api-doc";
+import { htmlToDocText } from "../src/doc-comment";
 import {
   ONE_BASED_PHRASE,
   OVERRIDE_RETURN_SLOT,
@@ -105,6 +111,59 @@ export function scanIndexSlots(
   const unique = new Map<string, IndexSlotHit>();
   for (const hit of hits) if (!unique.has(hit.key)) unique.set(hit.key, hit);
   return [...unique.values()];
+}
+
+export interface FunctionBaseStatement {
+  readonly fn: string;
+  readonly class: "native-1" | "native-0";
+  readonly phrase: string;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function statementsIn(fn: string, element: Record<string, unknown>): FunctionBaseStatement[] {
+  const notes = Array.isArray(element.notes) ? element.notes : [];
+  const texts = [element.description, ...notes].filter((t): t is string => typeof t === "string");
+  const found = new Map<string, FunctionBaseStatement>();
+  for (const text of texts) {
+    for (const sentence of htmlToDocText(text).split(/(?<=[.!?])\s+|\n/)) {
+      for (const [phrase, base] of [
+        [ONE_BASED_PHRASE, "native-1"],
+        [ZERO_BASED_PHRASE, "native-0"],
+      ] as const) {
+        if (!found.has(base) && phrase.test(sentence)) {
+          found.set(base, { fn, class: base, phrase: sentence.trim() });
+        }
+      }
+    }
+  }
+  return [...found.values()];
+}
+
+// The bases a function states for itself, in its description or its notes
+// rather than in a slot's prose ("The index values are zero based"). The
+// parser drops `notes`, so they are read from the raw elements; examples are
+// never read.
+export function scanFunctionBaseStatements(
+  doc: unknown,
+  namespace: string,
+): FunctionBaseStatement[] {
+  if (LUA_STDLIB_NAMESPACES.has(namespace) || !isRecord(doc)) return [];
+  const elements = Array.isArray(doc.elements) ? doc.elements.filter(isRecord) : [];
+  const statements: FunctionBaseStatement[] = [];
+  for (const element of elements) {
+    const name = typeof element.name === "string" ? element.name : "";
+    if (element.type === "FUNCTION") {
+      statements.push(...statementsIn(FUNCTION_NAME_CORRECTIONS.get(name)?.name ?? name, element));
+    } else if (element.type === "TYPEDEF" && Array.isArray(element.functions)) {
+      for (const fn of element.functions.filter(isRecord)) {
+        statements.push(...statementsIn(typeof fn.name === "string" ? fn.name : "", fn));
+      }
+    }
+  }
+  return statements;
 }
 
 // Every slot key a ref-doc declares: each param and return, their nested

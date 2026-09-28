@@ -31,8 +31,11 @@ export interface IndexSlotClassification {
   readonly tupleSlot?: number;
 }
 
-export const ONE_BASED_PHRASE = /\b(?:1[- ]based|one[- ]based|1[- ]indexed)\b/i;
-export const ZERO_BASED_PHRASE = /\b(?:0[- ]based|zero[- ]based|0[- ]indexed)\b/i;
+// A default value is never a base: "Defaults to zero" states no counting.
+export const ONE_BASED_PHRASE =
+  /\b(?:(?:1|one)[- ](?:based|indexed)|lua[- ]based|(?:indexed|start(?:s|ing)?) (?:at|from) (?:1|one)(?!\.\d|\s+of\b))\b/i;
+export const ZERO_BASED_PHRASE =
+  /\b(?:(?:0|zero)[- ](?:based|indexed)|(?:indexed|start(?:s|ing)?) (?:at|from) (?:0|zero)(?!\.\d))\b/i;
 
 // The slot name a declared return takes when no ref-doc names it, as for a
 // return `RETURN_TYPE_OVERRIDES` authors (`b2d.body.create_shape`).
@@ -223,6 +226,7 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
       { class: "native-1", evidence: "1-based pixel coordinate" },
     ],
   ),
+  ["image.pixels:return:iterator", { class: "native-1", evidence: "Coordinates are 1-based" }],
   [
     "model.set_blend_weights:param:weights",
     { class: "not-a-position", evidence: "array of weight values (1-based indices)" },
@@ -261,6 +265,32 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
   [
     "resource.set_texture:param:table:page",
     { class: "native-0", evidence: "slice of the array texture. Zero-based" },
+  ],
+  [
+    "resource.set_texture:param:table:mipmap",
+    {
+      class: "native-0",
+      evidence: "script_resource.cpp reads `mipmap` with default 0, the base level",
+    },
+  ],
+  ...[
+    "resource.create_atlas:param:table:geometries:indices",
+    "resource.set_atlas:param:table:geometries:indices",
+  ].map((key): [string, IndexSlotClassification] => [
+    key,
+    {
+      class: "native-0",
+      evidence:
+        "The index values are zero based where zero refers to the first entry of the vertex and uv lists",
+      pairsWith: ["resource.get_atlas:return:data:geometries:indices"],
+    },
+  ]),
+  [
+    "resource.get_atlas:return:data:geometries:indices",
+    {
+      class: "native-0",
+      evidence: "script_resource.cpp:GetAtlas pushes each m_Indices value unchanged",
+    },
   ],
   ...(["x", "y"] as const).flatMap((axis) =>
     ["tilemap.set_tile", "tilemap.get_tile", "tilemap.get_tile_info"].map(
