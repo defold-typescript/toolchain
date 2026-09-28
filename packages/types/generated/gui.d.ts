@@ -762,7 +762,9 @@ declare global {
      * @param node - node to get the property for
      * @param property - the property to retrieve
      * @param options - optional options table (only applicable for material constants)
-     * - `index` number zero-based index into array property; the transpiler emits Defold's 1-based index
+     * - `index` number index into array property (1 based)
+     *
+     * `index` is 1-based; passed to Defold unchanged.
      * @example
      * ```ts
      * // Get properties on existing nodes:
@@ -948,7 +950,7 @@ declare global {
      * Higher index means the node is drawn on top of lower indexed nodes.
      *
      * @param node - the node to retrieve the id from
-     * @returns the index of the node. 0-based.
+     * @returns the index of the node. 0-based; passed to Defold unchanged.
      * @example
      * ```ts
      * // Compare the index order of two sibling nodes:
@@ -1784,8 +1786,10 @@ declare global {
      * @param property - the property to set
      * @param value - the property to set. `nil` is only supported for removing runtime texture mappings with `gui.set(msg.url(), "textures", nil, {key = ...})`.
      * @param options - optional options table (only applicable for material constants)
-     * - `index` number zero-based index into array property; the transpiler emits Defold's 1-based index
+     * - `index` number index into array property (1 based)
      * - `key` hash name of internal property
+     *
+     * `index` is 1-based; passed to Defold unchanged.
      * @example
      * ```ts
      * // Updates the position property on an existing node:
@@ -1807,15 +1811,15 @@ declare global {
      * // matrix4 is also supported
      * gui.set(node, "light_matrix", vmath.matrix4());
      * // update a constant in an array at position 4. the array is specified in the shader as:
-     * // uniform vec4 tint_array[4]; // TypeScript and the shader are both 0 based
-     * gui.set(node, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 3 });
+     * // uniform vec4 tint_array[4]; // lua is 1 based, shader is 0 based
+     * gui.set(node, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 4 });
      * // update a matrix constant in an array at position 4. the array is specified in the shader as:
      * // uniform mat4 light_matrix_array[4];
-     * gui.set(node, "light_matrix_array", vmath.matrix4(), { index: 3 });
+     * gui.set(node, "light_matrix_array", vmath.matrix4(), { index: 4 });
      * // update a sub-element in a constant
      * gui.set(node, "tint.x", 1);
      * // update a sub-element in an array constant at position 4
-     * gui.set(node, "tint_array.x", 1, { index: 3 });
+     * gui.set(node, "tint_array.x", 1, { index: 4 });
      *
      * // Set a named property
      * export default defineGuiScript({

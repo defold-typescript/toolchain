@@ -31,6 +31,7 @@ import {
   WITNESS_OVERRIDES,
 } from "./contexts";
 import {
+  indexBase,
   indexProbeCalls,
   PROBED_INDEX_CLASSES,
   type SignatureArgs,
@@ -144,9 +145,9 @@ interface Scope {
   readonly urls: Set<string>;
   // How many times each handle has been witnessed in the current call.
   readonly handles: Map<string, number>;
-  // The classified index fields below the current slot, witnessed as the first
-  // position.
-  readonly indexFields?: ReadonlySet<string>;
+  // The classified index fields below the current slot, each witnessed as the
+  // first position in its native base.
+  readonly indexFields?: ReadonlyMap<string, string>;
 }
 
 function opaqueName(type: ts.Type, checker: ts.TypeChecker): string | undefined {
@@ -263,9 +264,8 @@ function objectWitness(type: ts.Type, scope: Scope, depth: number): string {
     .filter((property) => (property.flags & ts.SymbolFlags.Optional) === 0)
     .map((property) => {
       const propertyType = checker.getTypeOfSymbol(property);
-      const value = scope.indexFields?.has(property.name)
-        ? "0"
-        : witness(propertyType, scope, depth + 1);
+      const value =
+        scope.indexFields?.get(property.name) ?? witness(propertyType, scope, depth + 1);
       return `${propertyKey(property.name)}: ${value}`;
     });
   return fields.length === 0 ? "{}" : `{ ${fields.join(", ")} }`;
@@ -405,21 +405,25 @@ function slotWitness(param: Param, slot: number, scope: Omit<Scope, "slot">): st
     return override;
   }
   const key = `${scope.fqn}:param:${param.name}`;
-  if (isProbedIndex(key)) return "0";
-  const indexFields = new Set(
-    [...INDEX_SLOT_CLASSIFICATIONS.keys()]
-      .filter((candidate) => candidate.startsWith(`${key}:`) && isProbedIndex(candidate))
-      .map((candidate) => candidate.slice(candidate.lastIndexOf(":") + 1)),
-  );
+  const indexClass = probedIndexClass(key);
+  if (indexClass !== undefined) return String(indexBase(indexClass));
+  const indexFields = new Map<string, string>();
+  for (const candidate of INDEX_SLOT_CLASSIFICATIONS.keys()) {
+    const fieldClass = candidate.startsWith(`${key}:`) ? probedIndexClass(candidate) : undefined;
+    if (fieldClass === undefined) continue;
+    indexFields.set(candidate.slice(candidate.lastIndexOf(":") + 1), String(indexBase(fieldClass)));
+  }
   const type = param.optional ? scope.checker.getNonNullableType(param.type) : param.type;
   return witness(type, indexFields.size === 0 ? full : { ...full, indexFields });
 }
 
-// An engine index position is witnessed as the first element, which every
-// collection the probe passes has.
-function isProbedIndex(key: string): boolean {
+// An engine index position is witnessed as the first element in its native
+// base, which every collection the probe passes has.
+function probedIndexClass(key: string): string | undefined {
   const classification = INDEX_SLOT_CLASSIFICATIONS.get(key)?.class;
-  return classification !== undefined && PROBED_INDEX_CLASSES.has(classification);
+  return classification !== undefined && PROBED_INDEX_CLASSES.has(classification)
+    ? classification
+    : undefined;
 }
 
 function kindsOf(type: ts.Type, checker: ts.TypeChecker): DeclaredKinds {
