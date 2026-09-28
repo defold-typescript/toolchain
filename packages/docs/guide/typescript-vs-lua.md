@@ -97,19 +97,11 @@ const [x, y] = tilemap.get_bounds(url);
 tilemap.set_tile(url, "layer1", x, y, 3);
 ```
 
-- **1-based** — [`b2d.fixture`](/api/b2d.fixture) `fixture_index` and
-  `child_index`, [`b2d.body`](/api/b2d.body) `destroy_fixture` and
-  `destroy_shape`, the [`b2d.shape`](/api/b2d.shape) `body, shape_index` form,
-  the [`tilemap`](/api/tilemap) `set_tile`, `get_tile` and `get_tile_info`
-  coordinates and `get_bounds`'s `x` and `y`, [`socket`](/api/socket)
-  `client.send`'s `i`, `j`, `index` and `lastindex`, the `index` of the fixture
-  and shape tables `b2d.body` and [`b2d.world`](/api/b2d.world) return, the
-  animation `frame_start` and `frame_end` of
-  [`resource.create_atlas`](/api/resource) and `set_atlas`,
-  `profiler.view_recorded_frame`'s `frame`, `options.index` below, and the
-  editor's `image.pixel` and `tilemap.tiles` indexes.
-- **0-based** — [`gui.get_index`](/api/gui), the [`crash`](/api/crash) user
-  fields and the `page` of [`resource.set_texture`](/api/resource).
+Every position the engine API takes or returns, by the base Defold counts it
+from:
+
+<!-- engine-index-base-table -->
+
 - **Round trips** — a value an engine call returned goes straight back in:
   `client.send(data, lastindex + 1)` resumes after the last byte sent, and
   `b2d.fixture.get_density(body, b2d.body.get_fixtures(body)[0].index)` reads
