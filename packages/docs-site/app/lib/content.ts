@@ -5,6 +5,7 @@ import { applyChangelogTagDates } from "./changelog-dates";
 import { parseFrontmatter } from "./frontmatter";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
+import { guideSymbolRoutes } from "./guide-symbol-links";
 import { renderMarkdown } from "./markdown";
 
 // process.cwd()-relative on purpose: under the Vite/rolldown SSG build the module
@@ -35,6 +36,7 @@ export function renderGuidePage(dir: string, page: GuidePage): Promise<string> {
   return renderMarkdown(body, {
     ...(page.isIndex ? { firstHeading: INDEX_HEADING } : {}),
     readInlineSvg: (src) => readGuideSvg(dir, src),
+    symbolCodeLinks: guideSymbolRoutes(dir),
   });
 }
 
