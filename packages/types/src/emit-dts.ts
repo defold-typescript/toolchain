@@ -16,7 +16,7 @@ import {
   splitExampleSources,
 } from "./doc-comment";
 import type { TranslationStore } from "./example-store";
-import { hashExampleSource, lookupExampleTranslations, lookupTranslation } from "./example-store";
+import { hashExampleSource, lookupExampleSegments, lookupTranslation } from "./example-store";
 import { indexBaseNotes, withIndexBaseNotes } from "./index-slot-classifications";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
@@ -4086,21 +4086,15 @@ function functionDocLines(
   // absent translation) keeps the Lua fallback.
   const segments = splitExampleSources(fn.examples ?? "");
   const perSegment =
-    segments.length > 1
-      ? lookupExampleTranslations(
-          translations,
-          fn.name,
-          segments.map((segment) => hashExampleSource(segment.code)),
-        )
-      : null;
+    segments.length > 1 ? lookupExampleSegments(translations, fn.name, segments) : null;
   const ts = lua === "" ? null : lookupTranslation(translations, fn.name, hashExampleSource(lua));
   const exampleParts: Pick<DocCommentParts, "examples"> =
     perSegment !== null
       ? {
-          examples: perSegment.map((text, index) => ({
+          examples: perSegment.map(({ ts: text, prose }) => ({
             text,
             lang: "ts" as const,
-            ...(segments[index]?.prose ? { prose: segments[index]?.prose } : {}),
+            ...(prose ? { prose } : {}),
           })),
         }
       : ts !== null

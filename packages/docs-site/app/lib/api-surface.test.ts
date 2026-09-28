@@ -2697,6 +2697,18 @@ describe("exampleMarkdownFor", () => {
       "```ts\ndemo.run(); // first\n```\n\nThen:\n\n```ts\ndemo.stop(); // second\n```",
     );
   });
+
+  test("a segment's authored caption renders in place of its upstream prose", () => {
+    const md = exampleMarkdownFor(twoFn, {
+      "demo.pair": [
+        { sourceHash: segmentHashes[0] ?? "", ts: "demo.run(); // first" },
+        { sourceHash: segmentHashes[1] ?? "", ts: "demo.stop(); // second", prose: "Finally:" },
+      ],
+    });
+    expect(md).toBe(
+      "```ts\ndemo.run(); // first\n```\n\nFinally:\n\n```ts\ndemo.stop(); // second\n```",
+    );
+  });
 });
 
 describe("Defold library page examples", () => {

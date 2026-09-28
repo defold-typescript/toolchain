@@ -669,7 +669,7 @@ declare global {
      * });
      * ```
      * @example
-     * Create a texture resource asyncronously without a callback
+     * Create a texture resource asynchronously with a callback that does nothing
      * ```ts
      * // Create a texture resource asyncronously without handling its completion
      * export default defineScript({
