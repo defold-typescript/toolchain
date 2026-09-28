@@ -37,6 +37,9 @@ export interface BindingSlot {
 export interface BindingReturns {
   readonly count: number | "dynamic";
   readonly kinds: LuaKind[][];
+  // Why a position with no kinds could not be resolved, 1-based like
+  // `BindingSlot.index`; absent when every position has kinds.
+  readonly manual?: { readonly position: number; readonly reason: string }[];
 }
 
 export interface BindingFunction {
@@ -612,13 +615,14 @@ function scanExpression(
     ) {
       qualified = `${(tokens[q - 1] as Token).text}::${qualified}`;
     }
+    // An error message's arguments describe the failure; they read nothing the
+    // call accepts. The arguments run before the call, so their pushes land
+    // beneath whatever the call pushes.
+    if (!ERROR_CALLS.has(t.text)) for (const arg of args) scanExpression(arg, guards, events);
     events.push({
       type: "call",
       call: { callee: qualified, args, guards, ...(branches ? { branches: true as const } : {}) },
     });
-    // An error message's arguments describe the failure; they read nothing the
-    // call accepts.
-    if (!ERROR_CALLS.has(t.text)) for (const arg of args) scanExpression(arg, guards, events);
     i = close;
   }
 }
@@ -891,6 +895,7 @@ const PUSH_KINDS: ReadonlyMap<string, LuaKind> = new Map<string, LuaKind>([
   ["lua_pushcclosure", "function"],
   ["lua_pushlightuserdata", "userdata"],
   ["lua_newuserdata", "userdata"],
+  ["luaL_getmetatable", "table"],
   ["PushHash", "hash"],
   ["PushURL", "url"],
   ["PushVector3", "vector3"],
@@ -907,6 +912,8 @@ const POPS: ReadonlyMap<string, number> = new Map([
   ["lua_setmetatable", 1],
   ["lua_settable", 2],
   ["lua_rawset", 2],
+  // `dmScript::Ref` stores the top value in a registry table and pops it.
+  ["Ref", 1],
 ]);
 
 const ERROR_CALLS = new Set([
@@ -1488,53 +1495,216 @@ function union<T>(values: Iterable<T>): T[] {
   return [...new Set(values)];
 }
 
-function analyzeReturns(fn: CFunction): BindingReturns {
-  const stack: LuaKind[][] = [];
-  const counts: number[] = [];
-  const positions: LuaKind[][] = [];
-  let dynamic = false;
+// A value on the Lua stack: the kinds it can hold, or why they are unknown.
+interface StackEntry {
+  readonly kinds: LuaKind[];
+  readonly reason?: string;
+  // Stands for however many values a helper the walk could not follow left:
+  // pops that reach it are absorbed, and nothing at or below it is known.
+  readonly opaque?: true;
+}
+
+// Table reads push a value of unknown kind; the keyed ones pop their key first.
+// `lua_getmetatable` pushes only when it reports true, which is the branch its
+// caller's pops sit under.
+const READ_POPS: ReadonlyMap<string, number> = new Map([
+  ["lua_getmetatable", 0],
+  ["lua_getfield", 0],
+  ["lua_rawgeti", 0],
+  ["lua_getglobal", 0],
+  ["lua_gettable", 1],
+  ["lua_rawget", 1],
+]);
+
+// Calls whose effect on the stack the return walk knows, so they are never
+// followed as helpers nor blamed for a missing push.
+const STACK_MODELED = new Set([
+  ...PUSH_KINDS.keys(),
+  ...READ_POPS.keys(),
+  ...POPS.keys(),
+  ...CHECK_KINDS.keys(),
+  ...IS_GUARDS.keys(),
+  ...NIL_GUARDS,
+  ...ERROR_CALLS,
+  "lua_pop",
+  "lua_pushvalue",
+  "lua_gettop",
+  "lua_type",
+  "luaL_checktype",
+  "DM_LUA_STACK_CHECK",
+]);
+
+// What a helper does to its caller's stack: the values it pops from beneath
+// its own, then the values it leaves.
+interface HelperEffect {
+  readonly consumes: number;
+  readonly left: StackEntry[];
+}
+
+// The net push count a body asserts with `DM_LUA_STACK_CHECK(L, n)`.
+function declaredStackEffect(fn: CFunction): number | undefined {
   for (const event of eventsOf(fn)) {
-    if (event.type === "call") {
-      const name = baseName(event.call.callee);
-      const pushed = PUSH_KINDS.get(name);
-      if (pushed) {
-        stack.push([pushed]);
-        continue;
+    const call = event.type === "call" ? event.call : undefined;
+    if (call?.callee === "DM_LUA_STACK_CHECK" && call.guards.length === 0) {
+      return intLiteral(call.args[1] ?? []);
+    }
+  }
+  return undefined;
+}
+
+// A helper the walk cannot follow leaves the values it declares, else an
+// opaque entry that carries the reason to its caller's return.
+function unfollowedEffect(helper: CFunction, reason: string): HelperEffect {
+  const declared = declaredStackEffect(helper);
+  if (declared === undefined) return { consumes: 0, left: [{ kinds: [], reason, opaque: true }] };
+  return {
+    consumes: Math.max(0, -declared),
+    left: Array.from({ length: Math.max(0, declared) }, () => ({ kinds: [], reason })),
+  };
+}
+
+type ReturnVisitor = (value: Token[], stack: readonly StackEntry[], unfollowed?: string) => void;
+
+// Replays the pushes and pops of a body in statement order. A helper is walked
+// on a fresh stack and what it leaves is pushed onto its caller's, unless its
+// stack changes depend on a branch or reach into the caller's values.
+function walkStack(
+  fn: CFunction,
+  index: Index,
+  depth: number,
+  visiting: ReadonlySet<CFunction>,
+  onReturn?: ReturnVisitor,
+): HelperEffect {
+  const stack: StackEntry[] = [];
+  let underflow = false;
+  let branched = false;
+  let unfollowed: string | undefined;
+  const changes = (call: Call) => {
+    if (depth > 0 && call.guards.length > 0) branched = true;
+  };
+  const pop = (count: number) => {
+    for (let i = 0; i < count; i++) {
+      const top = stack.at(-1);
+      if (top?.opaque) return;
+      if (!top) {
+        if (depth > 0) underflow = true;
+        return;
       }
-      const pops =
-        name === "lua_pop"
-          ? (intLiteral(event.call.args[1] ?? []) ?? 0)
-          : name === "lua_setfield" && intLiteral(event.call.args[1] ?? []) === -1
-            ? 0
-            : (POPS.get(name) ?? 0);
-      stack.splice(Math.max(0, stack.length - pops), pops);
+      stack.pop();
+    }
+  };
+  for (const event of eventsOf(fn)) {
+    if (event.type === "return") {
+      onReturn?.(event.value, stack, unfollowed);
       continue;
     }
-    const value = event.value;
+    const { call } = event;
+    const name = baseName(call.callee);
+    const first = call.args[0] ?? [];
+    const takesL = first.length === 1 && first[0]?.text === "L";
+    const pushed = PUSH_KINDS.get(name);
+    if (pushed) {
+      changes(call);
+      stack.push({ kinds: [pushed] });
+      continue;
+    }
+    if (name === "lua_pushvalue" && takesL) {
+      changes(call);
+      const copied = (call.args[1] ?? []).map((t) => t.text).join(" ");
+      stack.push({ kinds: [], reason: `copy of stack index ${copied}` });
+      continue;
+    }
+    const keys = READ_POPS.get(name);
+    if (keys !== undefined && takesL) {
+      changes(call);
+      pop(keys);
+      stack.push({ kinds: [], reason: `value read by ${name}` });
+      continue;
+    }
+    const pops =
+      name === "lua_pop"
+        ? (intLiteral(call.args[1] ?? []) ?? 0)
+        : name === "lua_setfield" && intLiteral(call.args[1] ?? []) === -1
+          ? 0
+          : (POPS.get(name) ?? 0);
+    if (pops > 0) {
+      changes(call);
+      pop(pops);
+      continue;
+    }
+    if (!takesL || STACK_MODELED.has(name)) continue;
+    const helper = index.functionsNamed(name, fn.file).find((f) => f.takesLuaState);
+    if (!helper || visiting.has(helper)) {
+      unfollowed = name;
+      continue;
+    }
+    const effect =
+      depth + 1 > MAX_HELPER_DEPTH
+        ? unfollowedEffect(helper, `helper ${name} nested too deep`)
+        : walkStack(helper, index, depth + 1, new Set([...visiting, helper]));
+    if (effect.consumes > 0 || effect.left.length > 0) changes(call);
+    pop(effect.consumes);
+    stack.push(...effect.left);
+  }
+  if (underflow) return unfollowedEffect(fn, `helper ${fn.name} pops the caller's stack`);
+  // Pushes under a branch that its pops cancel leave every path balanced. A
+  // nested helper's reason names the push that is actually unknown.
+  if (branched && stack.length > 0) {
+    const nested = stack.find((entry) => entry.opaque)?.reason;
+    return unfollowedEffect(fn, nested ?? `helper ${fn.name} pushes under a branch`);
+  }
+  return { consumes: 0, left: stack };
+}
+
+function analyzeReturns(fn: CFunction, index: Index): BindingReturns {
+  const counts: number[] = [];
+  const positions: LuaKind[][] = [];
+  const reasons: (string | undefined)[] = [];
+  let dynamic = false;
+  walkStack(fn, index, 0, new Set([fn]), (value, stack, unfollowed) => {
     const head = value[0]?.kind === "ident" ? guardedCall({ tokens: value, positive: true }) : null;
-    if (head && ERROR_CALLS.has(head.name)) continue;
+    if (head && ERROR_CALLS.has(head.name)) return;
     const literal = intLiteral(value);
     if (literal === undefined) {
       dynamic = true;
-      continue;
+      return;
     }
     counts.push(literal);
-    const top = literal > 0 ? stack.slice(-literal) : [];
+    let barrier = stack.length - 1;
+    while (barrier >= 0 && !stack[barrier]?.opaque) barrier--;
+    const start = stack.length - literal;
+    // With nothing opaque below, a missing value was pushed where the walk
+    // cannot place it, so no position of this return is known.
+    const short =
+      barrier === -1 && start < 0
+        ? unfollowed
+          ? `unfollowed call ${unfollowed}`
+          : `return ${literal} exceeds ${stack.length} tracked pushes`
+        : undefined;
     for (let i = 0; i < literal; i++) {
-      const kinds = top.length === literal ? (top[i] as LuaKind[]) : [];
-      positions[i] = union([...(positions[i] ?? []), ...kinds]);
+      const at = start + i;
+      const entry = short === undefined && at > barrier ? stack[at] : undefined;
+      positions[i] = union([...(positions[i] ?? []), ...(entry?.kinds ?? [])]);
+      if (!entry || entry.kinds.length === 0) {
+        reasons[i] ??= entry?.reason ?? short ?? stack[barrier]?.reason;
+      }
     }
-  }
-  if (dynamic || counts.length === 0) {
-    return { count: counts.length === 0 && !dynamic ? 0 : "dynamic", kinds: positions };
-  }
-  const count = Math.max(...counts);
-  if (new Set(counts).size > 1) {
+  });
+  const count =
+    dynamic || counts.length === 0
+      ? counts.length === 0 && !dynamic
+        ? 0
+        : ("dynamic" as const)
+      : Math.max(...counts);
+  if (typeof count === "number" && new Set(counts).size > 1) {
     for (let i = Math.min(...counts); i < count; i++) {
       positions[i] = union([...(positions[i] ?? []), "nil" as LuaKind]);
     }
   }
-  return { count, kinds: positions };
+  const manual = positions.flatMap((kinds, i) =>
+    kinds.length === 0 ? [{ position: i + 1, reason: reasons[i] ?? "no tracked push" }] : [],
+  );
+  return { count, kinds: positions, ...(manual.length > 0 ? { manual } : {}) };
 }
 
 // A binding whose whole body is `return Other(L);` reads and returns what the
@@ -1635,7 +1805,7 @@ function analyzeFunction(
     maxArgs: analysis.variadic.length > 0 ? "variadic" : Math.max(maxSlot, minArgs),
     ...(arities ? { arities } : {}),
     slots,
-    returns: analyzeReturns(fn),
+    returns: analyzeReturns(fn, index),
     manual,
   };
 }
