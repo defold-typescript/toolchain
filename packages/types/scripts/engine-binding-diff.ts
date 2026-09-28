@@ -104,7 +104,7 @@ export function mergeBindings(functions: readonly BindingFunction[]): BindingFun
           ? "variadic"
           : Math.max(prior.maxArgs, fn.maxArgs),
       slots,
-      returns: { count, kinds: prior.returns.kinds },
+      returns: { ...prior.returns, count },
       manual: union([...prior.manual, ...fn.manual]),
     });
   }
