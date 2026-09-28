@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import type { ApiPage } from "./api-surface";
+import { searchIndexOutputs } from "../../scripts/build-search-index";
+import { apiVersionAxis, windowedApiPages } from "./api-content";
+import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import {
   listApiVersions,
   loadApiSurface,
@@ -15,8 +17,10 @@ import {
   buildSearchIndex,
   combinedSearchRecords,
   searchIndexFileForRoute,
+  toPlainText,
   versionSearchIndexRecords,
 } from "./search-index";
+import { resolveVersionWindow } from "./version-window";
 
 const API_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
@@ -398,5 +402,61 @@ describe("combinedSearchRecords", () => {
   test("threads a verified upstream deprecation into the Combined search text", () => {
     const model = combinedSearchRecords(combined).find((r) => r.route === "/api/model");
     expect(model?.text).toContain("Deprecated since 1.13.0");
+  });
+});
+
+describe("per-version search reads the pages its version route renders", () => {
+  const outputs = searchIndexOutputs({ typesDir: REAL_TYPES_DIR });
+  const recordText = (version: string, route: string): string => {
+    const file = outputs.find((output) => output.file === `search-index-${version}.json`);
+    if (!file) throw new Error(`no search index for ${version}`);
+    const record = file.records.find((candidate) => candidate.route === route);
+    if (!record) throw new Error(`no ${route} record in ${version}`);
+    return record.text;
+  };
+
+  test("a slot correction reaches the version record as the declaration prints it", () => {
+    const factory = recordText("defold-1.13.1", "/api/defold-1.13.1/factory");
+    expect(factory).toContain("factory.get_status(url: string | Hash | Url)");
+    expect(factory).not.toContain("factory.get_status(url?:");
+
+    const window = resolveVersionWindow(apiVersionAxis(REAL_TYPES_DIR), "defold-1.13.1", null);
+    if (!window) throw new Error("1.13.1 is not a tracked version");
+    const resource = windowedApiPages(window, REAL_TYPES_DIR).find(
+      (page) => page.namespace === "resource",
+    );
+    if (!resource) throw new Error("resource page missing from the 1.13.1 window");
+    const createTexture = apiModuleSymbols(resource, resource.translations, resource.signatures)
+      .filter((s) => s.name === "resource.create_texture")
+      .map((s) => s.signature)
+      .find((signature) => signature.includes("buffer?:"));
+    if (!createTexture) throw new Error("no create_texture declaration with an optional buffer");
+    expect(recordText("defold-1.13.1", "/api/defold-1.13.1/resource")).toContain(
+      toPlainText(createTexture),
+    );
+  });
+
+  test("every authoritative engine signature a version page renders is in that version's record", () => {
+    const axis = apiVersionAxis(REAL_TYPES_DIR);
+    const missing: string[] = [];
+    let compared = 0;
+    for (const { id } of versionsWithDiskFixtures(REAL_TYPES_DIR)) {
+      const window = resolveVersionWindow(axis, id, null);
+      if (!window) throw new Error(`${id} is not a tracked version`);
+      for (const page of windowedApiPages(window, REAL_TYPES_DIR)) {
+        const text = recordText(id, page.route);
+        for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
+          const identity = symbol.declarationIdentity;
+          if (symbol.kind !== "function" || identity === undefined) continue;
+          if (page.authoritativeSignatures?.get(identity) !== symbol.signature) continue;
+          compared += 1;
+          if (!text.includes(toPlainText(symbol.signature))) {
+            missing.push(`${id} ${symbol.signature}`);
+          }
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+    expect(compared).toBeGreaterThan(1000);
   });
 });

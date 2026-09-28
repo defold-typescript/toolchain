@@ -124,7 +124,7 @@ function firstHeading(markdown: string): string | undefined {
   return undefined;
 }
 
-function toPlainText(markdown: string): string {
+export function toPlainText(markdown: string): string {
   return (
     markdown
       // drop fenced code blocks entirely — search indexes prose, not code

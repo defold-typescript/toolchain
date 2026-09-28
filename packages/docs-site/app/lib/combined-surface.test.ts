@@ -306,8 +306,10 @@ describe("loadCombinedSurface (committed artifacts)", () => {
   test("a curated slot reaches the entry with its recovered type", () => {
     const render = surface.namespaces.find((ns) => ns.namespace === "render");
     const clear = render?.entries.find((entry) => entry.identity.name === "render.clear");
-    expect(clear?.slotTypes?.["param:0:buffers"]).toContain("LuaMap<");
-    expect(clear?.slotTypes?.["param:0:buffers"]).not.toContain("Record<string | number, unknown>");
+    expect(clear?.slotTypes?.["param:0:buffers"]?.type).toContain("LuaMap<");
+    expect(clear?.slotTypes?.["param:0:buffers"]?.type).not.toContain(
+      "Record<string | number, unknown>",
+    );
   });
 
   test("every non-empty combined signature equals the authoritative api-signatures value", () => {
