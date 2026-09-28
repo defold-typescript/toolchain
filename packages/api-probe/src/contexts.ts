@@ -141,6 +141,28 @@ export const CONDITIONAL_CONSTANTS: Readonly<Record<string, string>> = {
     "script_graphics.cpp registers a texture format only when the graphics adapter supports it",
 };
 
+// Documented namespaces whose module the stock engine does not link, keyed by
+// namespace root with the reason: none of their constants is registered.
+export const ABSENT_MODULES: Readonly<Record<string, string>> = {
+  material: "the stock engine does not link the material module, so the `material` global is nil",
+};
+
+export function isBox2D(namespace: string): boolean {
+  return namespace === "b2d" || namespace.startsWith("b2d.");
+}
+
+// Why the engine may leave a declared constant undefined: a Box2D backend
+// registers only its own constants, an unlinked module registers none, and the
+// graphics adapter registers only what the host supports. Any other absent
+// constant is a declaration defect.
+export function constantAbsence(fqn: string): "backend" | "module" | "adapter" | undefined {
+  const namespace = fqn.slice(0, fqn.lastIndexOf("."));
+  if (isBox2D(namespace)) return "backend";
+  if (ABSENT_MODULES[namespace.split(".")[0] ?? ""] !== undefined) return "module";
+  if (Object.keys(CONDITIONAL_CONSTANTS).some((prefix) => fqn.startsWith(prefix))) return "adapter";
+  return undefined;
+}
+
 // The `PROBE_URLS` receiver of each built-in message's ref-doc namespace.
 export const MESSAGE_ORIGINS: Readonly<Record<string, string>> = {
   go: "GO",
@@ -416,6 +438,7 @@ export const ACCEPTED_WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "render.enable_texture:2:number": `(${RENDER_TARGET} as unknown as number)`,
   "render.get_render_target_height:1:number": `(${RENDER_TARGET} as unknown as number)`,
   "render.get_render_target_width:1:number": `(${RENDER_TARGET} as unknown as number)`,
+  "render.set_render_target:1:number": `(${RENDER_TARGET} as unknown as number)`,
   "render.set_render_target_size:1:number": `(${RENDER_TARGET} as unknown as number)`,
   "resource.get_texture_info:1:number": 'resource.get_texture_info("/main/probe.texturec").handle',
 };

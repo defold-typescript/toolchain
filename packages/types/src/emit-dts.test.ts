@@ -2454,6 +2454,14 @@ describe("engine-required param fields", () => {
     );
   });
 
+  test("a constant the engine never registers is declared as the nil it reads", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(renderDoc));
+    expect(out).toContain("const RENDER_TARGET_DEFAULT: undefined;");
+    expect(out).toContain(
+      'const FRUSTUM_PLANES_ALL: number & { readonly __brand: "render.FRUSTUM_PLANES_ALL" };',
+    );
+  });
+
   test("render.draw takes the predicate handle render.predicate returns", () => {
     const out = emitDeclarations(parseDefoldApiDoc(renderDoc));
     expect(signatureLine(out, "function predicate(")).toContain('): Opaque<"render_predicate">;');
