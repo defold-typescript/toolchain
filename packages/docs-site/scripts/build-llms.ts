@@ -6,6 +6,7 @@ import { withBase } from "../app/lib/base";
 import { compactAvailability, llmsSignaturesForEntry } from "../app/lib/combined-surface";
 import { parseFrontmatter } from "../app/lib/frontmatter";
 import type { GuidePage } from "../app/lib/guide";
+import { expandGuideDirectives } from "../app/lib/guide-directives";
 import { listGuidePages } from "../app/lib/guide-loader";
 import { buildNav, humanize, type NavLink } from "../app/lib/nav";
 import { SRC_ROOT_FOOTNOTE_LINE, stripSrcRootDefinitions } from "../app/lib/src-root-note";
@@ -280,7 +281,9 @@ export function buildLlmsFull(target: LlmsTarget = SITE_TARGET): string {
   ];
   for (const page of pages) {
     if (!page.includeInLlmsFull) continue;
-    const body = parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body.trimEnd();
+    const body = expandGuideDirectives(
+      parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body,
+    ).trimEnd();
     lines.push(stripSrcRootDefinitions(stripGuideChrome(body)), "");
   }
   lines.push("## API", "");
