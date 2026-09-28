@@ -34,6 +34,12 @@ export interface IndexSlotClassification {
 export const ONE_BASED_PHRASE = /\b(?:1[- ]based|one[- ]based|1[- ]indexed)\b/i;
 export const ZERO_BASED_PHRASE = /\b(?:0[- ]based|zero[- ]based|0[- ]indexed)\b/i;
 
+// The slot name a declared return takes when no ref-doc names it, as for a
+// return `RETURN_TYPE_OVERRIDES` authors (`b2d.body.create_shape`).
+export const OVERRIDE_RETURN_SLOT = "result";
+
+const CREATE_SHAPE_INDEX = `b2d.body.create_shape:return:${OVERRIDE_RETURN_SLOT}:index`;
+
 // Keyed `<element>:<param|return>:<slot>[:<field>]`, the shape
 // `OPTIONAL_SLOT_CORRECTIONS` and `TABLE_FIELD_TYPE_OVERRIDES` use.
 // `scripts/index-slot-scan.test.ts` reds on a scanned slot missing here and on
@@ -95,7 +101,7 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
     },
   ]),
   [
-    "b2d.body.create_shape:return:result:index",
+    CREATE_SHAPE_INDEX,
     {
       class: "native-1",
       evidence:
@@ -107,7 +113,7 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
     {
       class: "native-1",
       evidence: "1-based shape index",
-      pairsWith: ["b2d.body.create_shape:return:result:index"],
+      pairsWith: [CREATE_SHAPE_INDEX],
     },
   ],
   ...[
@@ -138,7 +144,7 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
     {
       class: "native-1",
       evidence: "script_box2d_body_v3.cpp:GetShapeByIndex returns shapes[shape_index - 1]",
-      pairsWith: ["b2d.body.create_shape:return:result:index"],
+      pairsWith: [CREATE_SHAPE_INDEX],
     },
   ]),
   ...[
