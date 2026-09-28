@@ -1022,7 +1022,7 @@ export const FIRST_SLOT_ALTERNATIVES: ReadonlyMap<string, FirstSlotAlternative> 
         },
         {
           name: "shape_index",
-          doc: "The shape's 1-based index on that body, as <code>b2d.body.get_shapes</code> lists them.",
+          doc: "The shape's position on that body, in the order <code>b2d.body.get_shapes</code> lists them.",
           types: ["number"],
           isOptional: false,
         },
@@ -3430,6 +3430,10 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
     const alternative = firstSlotAlternative(fn, module.namespace);
     if (alternative !== null) {
+      // The overload documents its own parameters, so its hover names the base
+      // of the index it takes. Its examples are the primary signature's.
+      const { examples: _examples, ...overloadDoc } = alternative.original;
+      for (const docLine of functionDocLines(overloadDoc, translations)) lines.push(docLine);
       const overload = emitFunction(
         alternative,
         emitName,

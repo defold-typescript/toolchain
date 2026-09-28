@@ -5,7 +5,7 @@ import type { Expression, Plugin } from "typescript-to-lua";
 // `go.get<P>()(url, property)`: the empty call only fixes `P` for the checker.
 export const TYPE_APPLICATION_APIS: ReadonlySet<string> = new Set(["go.get", "go.set"]);
 
-// Keyed like `oneBasedApi` in array-index-option-lowering.ts: only a symbol
+// Keyed like `declarationBase` in engine-index-lowering.ts: only a symbol
 // declared in an ambient `declare global` block carries the `global.` prefix,
 // so a project's own `go` never matches.
 function isTypeApplication(call: ts.CallExpression, checker: ts.TypeChecker): boolean {

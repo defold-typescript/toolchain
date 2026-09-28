@@ -6,11 +6,15 @@ local ____exports = {}
 local c = socket.connect("localhost", 80)
 if c ~= nil then
     local try_ = socket.newtry(function() return c:close() end)
-    local sent, sendError, lastByte = c:send("hello there?\\r\\n")
+    local sent, sendError, lastByte = (function(v1, v2, v3, ...)
+        return v1 and v1 - 1, v2, v3 and v3 - 1, ...
+    end)(c:send("hello there?\\r\\n"))
     try_(sent, sendError, lastByte)
     local line, receiveError, partial = c:receive()
     local answer = try_(line, receiveError, partial)
-    local byeSent, byeError, byeLastByte = c:send("good bye\\r\\n")
+    local byeSent, byeError, byeLastByte = (function(v1, v2, v3, ...)
+        return v1 and v1 - 1, v2, v3 and v3 - 1, ...
+    end)(c:send("good bye\\r\\n"))
     try_(byeSent, byeError, byeLastByte)
     c:close()
 end
@@ -26,7 +30,9 @@ local dostuff = socket.protect(function()
     local conn, connectError = socket.connect("myserver.com", 80)
     local c = try_(conn, connectError)
     try_ = socket.newtry(function() return c:close() end)
-    local sent, sendError, lastByte = c:send("hello?\\r\\n")
+    local sent, sendError, lastByte = (function(v1, v2, v3, ...)
+        return v1 and v1 - 1, v2, v3 and v3 - 1, ...
+    end)(c:send("hello?\\r\\n"))
     try_(sent, sendError, lastByte)
     local line, receiveError, partial = c:receive()
     local answer = try_(line, receiveError, partial)

@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
-import { arrayIndexOptionLoweringPlugin } from "./array-index-option-lowering";
+import { engineIndexLoweringPlugin } from "./engine-index-lowering";
 import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
@@ -16,7 +16,7 @@ const LUA_PLUGINS: tstl.Plugin[] = [
   windowEventGuardLoweringPlugin,
   messageDispatchLoweringPlugin,
   timersLoweringPlugin,
-  arrayIndexOptionLoweringPlugin,
+  engineIndexLoweringPlugin,
   typeApplicationErasurePlugin,
 ];
 
