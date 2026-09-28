@@ -39,8 +39,12 @@ describe(`runtime probe (${process.env.PROBE_TARGET ?? "default target"})`, () =
     expect(failures.stale).toEqual([]);
   });
 
-  test("every negative call raises a bad argument at its own slot", () => {
-    expect(failures.negativeMisfires).toEqual([]);
+  test("every negative call raises a bad argument at its own slot and every accepted call ends ok", () => {
+    expect(failures.misfires).toEqual([]);
+  });
+
+  test("the engine accepts every kind the extractor reads a binding slot as accepting", () => {
+    expect(failures.acceptedRefused).toEqual([]);
   });
 
   test("no negative call is accepted without an exemption naming the lenient binding", () => {

@@ -1,4 +1,4 @@
-import { readBindingsForTarget } from "../../types/scripts/engine-binding-extract";
+import { type LuaKind, readBindingsForTarget } from "../../types/scripts/engine-binding-extract";
 
 export type ScriptKind = "go" | "gui" | "render";
 
@@ -155,10 +155,18 @@ export const MESSAGE_ORIGINS: Readonly<Record<string, string>> = {
   sys: "SYSTEM",
 };
 
-// Calls that delete the probe object, keyed `<fn>:<variant>`. The go script
-// makes them once its message queue drained, in the frame it reports, since
-// every later message needs the object's components.
-export const FINAL_CALLS: ReadonlySet<string> = new Set(["go.delete:required"]);
+// Calls that delete the probe object or change what a message probe sees,
+// keyed `<fn>:<variant>`. The go script makes them once its message queue
+// drained, in the frame it reports, since every later message needs the
+// object's components.
+export const FINAL_CALLS: ReadonlySet<string> = new Set([
+  // A hash names no component, so the engine loads the object's first proxy:
+  // the loader the `load` and `init` message probes load themselves.
+  "collectionproxy.load:accepted-1-hash",
+  "go.delete:required",
+  // `go.delete(recursive)` deletes the calling object too.
+  "go.delete:accepted-1-boolean",
+]);
 
 // Messages whose receiver is not their namespace's: `enable` and `disable` go
 // to a component, and a force or a new parent goes to a dynamic peer so the
@@ -370,12 +378,58 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   ),
 };
 
+const DOOMED_JOINT =
+  'physics.create_joint(physics.JOINT_TYPE_FIXED, COLLISION, "doomed", vmath.vector3(), PEER_COLLISION, vmath.vector3())';
+
+const RENDER_TARGET =
+  'render.render_target("probe", { [graphics.BUFFER_TYPE_COLOR0_BIT]: { format: graphics.TEXTURE_FORMAT_RGBA, width: 16, height: 16 } })';
+
+// The value an accepted-witness call passes for each kind a binding reads. A url,
+// a buffer or an engine handle only means something for its slot, so those
+// kinds have no default.
+export const ACCEPTED_WITNESSES: Readonly<Partial<Record<LuaKind, string>>> = {
+  number: "1",
+  boolean: "true",
+  table: "{}",
+  function: "() => {}",
+  hash: 'hash("probe")',
+  string: '"probe"',
+  vector: "vmath.vector([1, 2, 3])",
+  vector3: "vmath.vector3(1, 1, 1)",
+  vector4: "vmath.vector4(1, 1, 1, 1)",
+  quat: "vmath.quat()",
+  matrix4: "vmath.matrix4()",
+};
+
+// Accepted-witness values a slot needs to be valid, or for the call to leave
+// the run intact, keyed `<ns.fn>:<slot>:<kind>`, 1-based.
+export const ACCEPTED_WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
+  // A list naming the probe object would delete it mid-run.
+  "go.delete:1:table": "[]",
+  // The positive call deleted the only texture and joint the probe made for it.
+  "gui.delete_texture:1:string":
+    '(() => { const id = fresh("texture"); gui.new_texture(id, 1, 1, "rgb", "abc"); return id; })()',
+  "physics.destroy_joint:1:string": `(() => { ${DOOMED_JOINT}; return "main:/probe#collision"; })()`,
+  "physics.destroy_joint:2:hash": `(() => { ${DOOMED_JOINT}; return hash("doomed"); })()`,
+  // A render target handle is the number the engine hands out.
+  "render.delete_render_target:1:number": `(${RENDER_TARGET} as unknown as number)`,
+  "render.enable_texture:2:number": `(${RENDER_TARGET} as unknown as number)`,
+  "render.get_render_target_height:1:number": `(${RENDER_TARGET} as unknown as number)`,
+  "render.get_render_target_width:1:number": `(${RENDER_TARGET} as unknown as number)`,
+  "render.set_render_target_size:1:number": `(${RENDER_TARGET} as unknown as number)`,
+  "resource.get_texture_info:1:number": 'resource.get_texture_info("/main/probe.texturec").handle',
+};
+
+// Accepted witnesses whose kind makes the binding refuse any later argument,
+// keyed `<ns.fn>:<slot>:<kind>`: their call stops at the slot.
+export const ACCEPTED_ALONE: ReadonlySet<string> = new Set(["go.delete:1:boolean"]);
+
 // Statements each script runs before its probes, for calls that need an
 // existing object by id.
 export const PRELUDES: Readonly<Record<ScriptKind, readonly string[]>> = {
   go: [
     'pcall(() => physics.create_joint(physics.JOINT_TYPE_FIXED, COLLISION, "kept", vmath.vector3(), PEER_COLLISION, vmath.vector3()));',
-    'pcall(() => physics.create_joint(physics.JOINT_TYPE_FIXED, COLLISION, "doomed", vmath.vector3(), PEER_COLLISION, vmath.vector3()));',
+    `pcall(() => ${DOOMED_JOINT});`,
   ],
   gui: [],
   render: [],
@@ -416,8 +470,6 @@ export const HANDLE_WITNESSES: Readonly<
   constant_buffer: { render: ["render.constant_buffer()"] },
   render_predicate: { render: ['render.predicate(["probe"])'] },
   render_target: {
-    render: [
-      'render.render_target("probe", { [graphics.BUFFER_TYPE_COLOR0_BIT]: { format: graphics.TEXTURE_FORMAT_RGBA, width: 16, height: 16 } })',
-    ],
+    render: [RENDER_TARGET],
   },
 };
