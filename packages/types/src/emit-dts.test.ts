@@ -62,7 +62,6 @@ import {
   NESTED_FIELD_CURATIONS,
   OPTIONAL_SLOT_CORRECTIONS,
   OVERLOAD_COVERED_SKIPS,
-  PARAM_DOC_REWRITES,
   PARAM_TYPE_CORRECTIONS,
   parseTableFields,
   recoverCallbackSignature,
@@ -4780,18 +4779,6 @@ describe("a nested table field's type override", () => {
   });
 });
 
-describe("array index option doc", () => {
-  test("gui.get and gui.set document a zero-based options.index", () => {
-    const out = emitDeclarations(parseDefoldApiDoc(guiDoc));
-    for (const key of ["gui.get:param:options", "gui.set:param:options"]) {
-      const rewrite = PARAM_DOC_REWRITES.get(key);
-      expect(rewrite).toBeDefined();
-      expect(out).toContain(rewrite?.to ?? "");
-    }
-    expect(out).not.toContain("(1 based)");
-  });
-});
-
 describe("engine index base notes", () => {
   function docBlock(doc: unknown, fnName: string): string {
     const lines = emitDeclarations(parseDefoldApiDoc(doc)).split("\n");
@@ -4810,21 +4797,19 @@ describe("engine index base notes", () => {
 
   const occurrences = (text: string, needle: string): number => text.split(needle).length - 1;
 
-  test("a converted position names its TypeScript base even where upstream names Lua's", () => {
+  test("a native-1 position states its base and that it passes unchanged", () => {
     expect(tagLine(docBlock(b2dFixture113Doc, "get_density"), "@param fixture_index")).toEndWith(
-      "Zero-based in TypeScript; Defold receives it 1-based.",
+      "1-based; passed to Defold unchanged.",
     );
     const line = tagLine(docBlock(b2dBody113Doc, "destroy_shape"), "@param shape_index");
     expect(line).toContain("1-based shape index");
-    expect(line).toEndWith("Zero-based in TypeScript; Defold receives it 1-based.");
-    expect(occurrences(line, "Zero-based in TypeScript")).toBe(1);
+    expect(line).toEndWith("1-based; passed to Defold unchanged.");
+    expect(occurrences(line, "passed to Defold unchanged")).toBe(1);
   });
 
-  test("an authored body, shape_index overload documents its own zero-based index", () => {
+  test("an authored body, shape_index overload states its native base", () => {
     const { block } = memberBlock(b2dShapeDoc, "function get_body(body:");
-    expect(tagLine(block, "@param shape_index")).toEndWith(
-      "Zero-based in TypeScript; Defold receives it 1-based.",
-    );
+    expect(tagLine(block, "@param shape_index")).toEndWith("1-based; passed to Defold unchanged.");
     expect(block).not.toContain("@example");
   });
 
@@ -4832,31 +4817,28 @@ describe("engine index base notes", () => {
     expect(tagLine(docBlock(tilemapDoc, "set_tile"), "@param tile")).not.toContain("based");
   });
 
-  test("a native-0 slot whose prose names no base gains its base", () => {
+  test("a native-0 position states its base and that it passes unchanged", () => {
     expect(tagLine(docBlock(gui113Doc, "get_index"), "@returns")).toContain(
-      "the index of the node. 0-based.",
+      "the index of the node. 0-based; passed to Defold unchanged.",
     );
     expect(tagLine(docBlock(crash113Doc, "get_user_field"), "@param index")).toContain(
-      "user data slot index. 0-based.",
+      "user data slot index. 0-based; passed to Defold unchanged.",
     );
-  });
-
-  test("a converted table field names its TypeScript base", () => {
-    expect(tagLine(docBlock(b2dBody113Doc, "get_fixtures"), "@returns")).toContain(
-      "`index` is zero-based in TypeScript; Defold receives it 1-based.",
-    );
-  });
-
-  test("an upstream 0-indexed phrase stands as the base, not duplicated", () => {
     const line = tagLine(docBlock(crash113Doc, "set_user_field"), "@param index");
     expect(line).toContain("slot index. 0-indexed");
-    expect(line).not.toContain("0-based");
+    expect(line).toEndWith("0-based; passed to Defold unchanged.");
   });
 
-  test("a converted options.index keeps the zero-based rewrite and gains no base note", () => {
-    const block = docBlock(goDoc, "get");
-    expect(block).toContain(PARAM_DOC_REWRITES.get("go.get:param:options")?.to ?? "missing");
-    expect(block).not.toContain("`index` is");
+  test("a table field states its base and that it passes unchanged", () => {
+    expect(tagLine(docBlock(b2dBody113Doc, "get_fixtures"), "@returns")).toContain(
+      "`index` is 1-based; passed to Defold unchanged.",
+    );
+  });
+
+  test("options.index keeps upstream's 1-based doc and gains its field note once", () => {
+    const block = docBlock(guiDoc, "set");
+    expect(block).toContain("index into array property (1 based)");
+    expect(occurrences(block, "`index` is 1-based; passed to Defold unchanged.")).toBe(1);
   });
 
   function memberBlock(doc: unknown, signaturePrefix: string): { block: string; line: string } {
@@ -4877,11 +4859,9 @@ describe("engine index base notes", () => {
   test("a multi-return function names the base of each classified tuple slot", () => {
     const { block } = memberBlock(socketDoc, "send(data: string");
     expect(block).toContain("@returns");
-    expect(slotBullet(block, "index").trimEnd()).toEndWith(
-      "Zero-based in TypeScript; Defold receives it 1-based.",
-    );
+    expect(slotBullet(block, "index").trimEnd()).toEndWith("1-based; passed to Defold unchanged.");
     expect(slotBullet(block, "lastindex").trimEnd()).toEndWith(
-      "Zero-based in TypeScript; Defold receives it 1-based.",
+      "1-based; passed to Defold unchanged.",
     );
     expect(slotBullet(block, "error")).not.toContain("based");
   });

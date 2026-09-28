@@ -99,7 +99,7 @@ declare global {
      * reads user field from a loaded crash dump
      *
      * @param handle - crash dump handle
-     * @param index - user data slot index. 0-based.
+     * @param index - user data slot index. 0-based; passed to Defold unchanged.
      * @returns user data value recorded in the crash dump
      */
     function get_user_field(handle: number, index: number): string;
@@ -127,7 +127,7 @@ declare global {
      * a crash occurs. This can be user id:s, breadcrumb data etc.
      * There are 32 slots indexed from 0. Each slot stores at most 255 characters.
      *
-     * @param index - slot index. 0-indexed
+     * @param index - slot index. 0-indexed. 0-based; passed to Defold unchanged.
      * @param value - string value to store
      */
     function set_user_field(index: number, value: string): void;

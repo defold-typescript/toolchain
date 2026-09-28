@@ -17,7 +17,6 @@ import {
   lookupTranslation,
   luaMultiReturn,
   normalizedFunctionSignature,
-  rewriteParamDoc,
   type SignatureStore,
   type SlotTypes,
   splitExampleSources,
@@ -691,13 +690,7 @@ function projectParams(
     const emitted = slots?.[`${kind}:${index}:${p.name}`];
     const doc =
       elementName !== undefined
-        ? withIndexBaseNotes(
-            elementName,
-            kind,
-            p.name,
-            p.doc,
-            platformDocText(kind === "param" ? rewriteParamDoc(elementName, p.name, p.doc) : p.doc),
-          )
+        ? withIndexBaseNotes(elementName, kind, p.name, platformDocText(p.doc))
         : platformDocText(p.doc);
     return {
       name: p.name,
@@ -1007,13 +1000,7 @@ export function apiModuleMarkdown(
       if (example) lines.push(example, "");
       for (const p of [...fn.parameters, ...fn.returnValues]) {
         const kind = fn.parameters.includes(p) ? "param" : "return";
-        const pdoc = withIndexBaseNotes(
-          fn.name,
-          kind,
-          p.name,
-          p.doc,
-          htmlToDocText(kind === "param" ? rewriteParamDoc(fn.name, p.name, p.doc) : p.doc),
-        );
+        const pdoc = withIndexBaseNotes(fn.name, kind, p.name, htmlToDocText(p.doc));
         if (!pdoc) continue;
         lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
       }

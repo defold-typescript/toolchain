@@ -40,7 +40,7 @@ const SELECTED: readonly FenceSelection[] = [
   { page: "typescript-gotchas.md", lead: "**Naming the enum.**", nth: 0, kind: "gui-script" },
   {
     page: "typescript-vs-lua.md",
-    lead: "### Engine indexes are zero-based",
+    lead: "### Engine indexes use Defold's base",
     nth: 0,
     kind: "script",
   },

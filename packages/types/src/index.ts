@@ -54,9 +54,6 @@ export {
   emitDeclarations,
   emitSymbolSignatures,
   firstSlotAlternativeOf,
-  PARAM_DOC_REWRITES,
-  type ParamDocRewrite,
-  rewriteParamDoc,
   type SlotTypes,
   type SymbolSignature,
   TS_IDENTIFIER,
@@ -74,10 +71,6 @@ export {
   INDEX_SLOT_CLASSIFICATIONS,
   type IndexSlotClass,
   type IndexSlotClassification,
-  type IndexSlotEntry,
-  type IndexSlotsArtifact,
-  REWRITTEN_INDEX_FIELDS,
-  TYPESCRIPT_BASE_NOTE,
   withIndexBaseNotes,
 } from "./index-slot-classifications";
 export {

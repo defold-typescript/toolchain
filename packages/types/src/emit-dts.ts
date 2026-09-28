@@ -650,40 +650,6 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
   ],
 ]);
 
-// Parameter doc text whose upstream wording describes Lua rather than the
-// TypeScript a user writes. The transpiler adds one to a literal `options.index`
-// at these calls, so the 1-based wording would tell the author to be off by one.
-// The `.d.ts` emit and the API reference both apply it, and applying it throws
-// when `from` is absent: an upstream rewording fails the build instead of
-// shipping the stale text alongside the lowering.
-export interface ParamDocRewrite {
-  readonly from: string;
-  readonly to: string;
-}
-
-const ZERO_BASED_INDEX_OPTION_DOC: ParamDocRewrite = {
-  from: "index into array property (1 based)",
-  to: "zero-based index into array property; the transpiler emits Defold's 1-based index",
-};
-
-// Keyed `<element>:param:<slot>` like PARAM_TYPE_CORRECTIONS.
-export const PARAM_DOC_REWRITES: ReadonlyMap<string, ParamDocRewrite> = new Map([
-  ["go.get:param:options", ZERO_BASED_INDEX_OPTION_DOC],
-  ["go.set:param:options", ZERO_BASED_INDEX_OPTION_DOC],
-  ["gui.get:param:options", ZERO_BASED_INDEX_OPTION_DOC],
-  ["gui.set:param:options", ZERO_BASED_INDEX_OPTION_DOC],
-]);
-
-export function rewriteParamDoc(elementName: string, slotName: string, doc: string): string {
-  const key = tableSlotKey(elementName, "param", slotName);
-  const rewrite = PARAM_DOC_REWRITES.get(key);
-  if (rewrite === undefined) return doc;
-  if (!doc.includes(rewrite.from)) {
-    throw new Error(`PARAM_DOC_REWRITES ${key}: upstream doc no longer contains "${rewrite.from}"`);
-  }
-  return doc.replaceAll(rewrite.from, rewrite.to);
-}
-
 // A property whose upstream `<span class="type">` states a type the engine does
 // not use. Unlike every other override here, which fills a gap upstream left
 // empty, these contradict a token upstream explicitly declares — so each entry
@@ -4072,13 +4038,7 @@ function functionDocLines(
 ): string[] {
   const params = fn.parameters.map((p, index) => ({
     name: emittedParamName(p, index),
-    doc: withIndexBaseNotes(
-      fn.name,
-      "param",
-      p.name,
-      p.doc,
-      rewriteParamDoc(fn.name, p.name, htmlToDocText(p.doc)),
-    ),
+    doc: withIndexBaseNotes(fn.name, "param", p.name, htmlToDocText(p.doc)),
   }));
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
   const tupleReturns = multiReturnDoc(fn);
@@ -4115,7 +4075,6 @@ function functionDocLines(
             fn.name,
             "return",
             onlyReturn.name,
-            onlyReturn.doc,
             htmlToDocText(onlyReturn.doc),
           ),
         }
@@ -4133,11 +4092,11 @@ function functionDocLines(
 function multiReturnDoc(fn: ApiFunction): string | undefined {
   if (fn.returnValues.length < 2) return undefined;
   const classified = fn.returnValues.some(
-    (slot) => indexBaseNotes(fn.name, "return", slot.name, slot.doc).length > 0,
+    (slot) => indexBaseNotes(fn.name, "return", slot.name).length > 0,
   );
   if (!classified) return undefined;
   const bullets = fn.returnValues.map((slot) => {
-    const doc = withIndexBaseNotes(fn.name, "return", slot.name, slot.doc, htmlToDocText(slot.doc));
+    const doc = withIndexBaseNotes(fn.name, "return", slot.name, htmlToDocText(slot.doc));
     const [first = "", ...rest] = doc.split("\n");
     return [
       `- \`${slot.name}\` — ${first}`,
