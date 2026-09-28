@@ -436,27 +436,38 @@ describe("per-version search reads the pages its version route renders", () => {
     );
   });
 
-  test("every authoritative engine signature a version page renders is in that version's record", () => {
+  test("every function row a version page renders is in that version's record", () => {
     const axis = apiVersionAxis(REAL_TYPES_DIR);
     const missing: string[] = [];
     let compared = 0;
+    let generatedArms = 0;
+    let authoredArms = 0;
     for (const { id } of versionsWithDiskFixtures(REAL_TYPES_DIR)) {
       const window = resolveVersionWindow(axis, id, null);
       if (!window) throw new Error(`${id} is not a tracked version`);
       for (const page of windowedApiPages(window, REAL_TYPES_DIR)) {
         const text = recordText(id, page.route);
-        for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
-          const identity = symbol.declarationIdentity;
-          if (symbol.kind !== "function" || identity === undefined) continue;
-          if (page.authoritativeSignatures?.get(identity) !== symbol.signature) continue;
+        const rows = apiModuleSymbols(page, page.translations, page.signatures)
+          .filter((symbol) => symbol.kind === "function")
+          .map((symbol) => ({ symbol, plain: toPlainText(symbol.signature) }));
+        const generated = new Set([...(page.authoritativeArms?.values() ?? [])].flat());
+        for (const [index, { symbol, plain }] of rows.entries()) {
           compared += 1;
-          if (!text.includes(toPlainText(symbol.signature))) {
-            missing.push(`${id} ${symbol.signature}`);
-          }
+          if (!text.includes(plain)) missing.push(`${id} ${symbol.signature}`);
+          if (symbol.declarationIdentity !== undefined) continue;
+          // An arm whose text another row already contains could be found through that row.
+          const distinguishable = rows.every(
+            (other, j) => j === index || !other.plain.includes(plain),
+          );
+          if (!distinguishable) continue;
+          if (generated.has(symbol.signature)) generatedArms += 1;
+          else authoredArms += 1;
         }
       }
     }
     expect(missing).toEqual([]);
     expect(compared).toBeGreaterThan(1000);
+    expect(generatedArms).toBeGreaterThan(0);
+    expect(authoredArms).toBeGreaterThan(0);
   });
 });
