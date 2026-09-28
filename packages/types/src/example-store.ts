@@ -5,6 +5,10 @@
 export interface Translation {
   sourceHash: string;
   ts: string;
+  // The authored replacement for the upstream sentence that introduces this
+  // segment. Pinned by the same `sourceHash`, so an upstream rewrite of the
+  // example body drops the caption together with the body.
+  prose?: string;
 }
 
 // An FQN maps to one translation per distinct example body it carries: an
@@ -76,4 +80,29 @@ export function lookupExampleTranslations(
     bodies.push(ts);
   }
   return bodies;
+}
+
+/**
+ * The stored body and caption for each of a blob's segments, in the order
+ * given, or `null` the moment one of them does not resolve.
+ *
+ * Same all-or-nothing and empty-list rules as `lookupExampleTranslations`. Each
+ * caption is the entry's authored `prose` when it carries one, else the
+ * segment's upstream prose.
+ */
+export function lookupExampleSegments(
+  store: TranslationStore,
+  fqn: string,
+  segments: readonly { code: string; prose: string }[],
+): { ts: string; prose: string }[] | null {
+  const entries = store[fqn];
+  if (!entries || segments.length === 0) return null;
+  const resolved: { ts: string; prose: string }[] = [];
+  for (const segment of segments) {
+    const sourceHash = hashExampleSource(segment.code);
+    const entry = entries.find((candidate) => candidate.sourceHash === sourceHash);
+    if (!entry) return null;
+    resolved.push({ ts: entry.ts, prose: entry.prose ?? segment.prose });
+  }
+  return resolved;
 }

@@ -3,6 +3,7 @@ import { loadTranslations } from "../scripts/example-store-io";
 import { htmlToCodeText } from "./doc-comment";
 import {
   hashExampleSource,
+  lookupExampleSegments,
   lookupExampleTranslations,
   lookupTranslation,
   type TranslationStore,
@@ -114,5 +115,41 @@ describe("lookupExampleTranslations", () => {
   test("returns null for an unknown FQN and for an empty hash list", () => {
     expect(lookupExampleTranslations(store, "no.such", ["s1"])).toBeNull();
     expect(lookupExampleTranslations(store, "resource.set_texture", [])).toBeNull();
+  });
+});
+
+describe("lookupExampleSegments", () => {
+  const first = { code: "local a = 1", prose: "Upstream first caption" };
+  const second = { code: "local b = 2", prose: "Upstream second caption" };
+  const blank = { code: "local c = 3", prose: "" };
+  const store: TranslationStore = {
+    "resource.create_texture_async": [
+      { sourceHash: hashExampleSource(first.code), ts: "const a = 1;" },
+      { sourceHash: hashExampleSource(second.code), ts: "const b = 2;", prose: "Authored caption" },
+      { sourceHash: hashExampleSource(blank.code), ts: "const c = 3;" },
+    ],
+  };
+
+  test("an authored caption replaces the upstream one for the entry that carries it only", () => {
+    expect(lookupExampleSegments(store, "resource.create_texture_async", [first, second])).toEqual([
+      { ts: "const a = 1;", prose: "Upstream first caption" },
+      { ts: "const b = 2;", prose: "Authored caption" },
+    ]);
+  });
+
+  test("an entry without a caption keeps the upstream prose, blank included", () => {
+    expect(lookupExampleSegments(store, "resource.create_texture_async", [blank, first])).toEqual([
+      { ts: "const c = 3;", prose: "" },
+      { ts: "const a = 1;", prose: "Upstream first caption" },
+    ]);
+  });
+
+  test("returns null when any one segment is unresolved, for an unknown FQN, and for no segments", () => {
+    const missing = { code: "local z = 0", prose: "Missing" };
+    expect(
+      lookupExampleSegments(store, "resource.create_texture_async", [first, missing]),
+    ).toBeNull();
+    expect(lookupExampleSegments(store, "no.such", [first])).toBeNull();
+    expect(lookupExampleSegments(store, "resource.create_texture_async", [])).toBeNull();
   });
 });

@@ -64,6 +64,7 @@ export {
 } from "./emit-dts";
 export {
   hashExampleSource,
+  lookupExampleSegments,
   lookupExampleTranslations,
   lookupTranslation,
   type Translation,
