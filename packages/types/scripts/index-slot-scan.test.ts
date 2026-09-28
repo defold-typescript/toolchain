@@ -11,6 +11,7 @@ import {
   type IndexSlotHit,
   refDocSlotKeys,
   scanDeclaredIndexSlots,
+  scanFunctionBaseStatements,
   scanIndexSlots,
 } from "./index-slot-scan";
 import {
@@ -56,8 +57,57 @@ describe("scanIndexSlots over the defold-1.13.1 ref-doc", () => {
     expect(fixture.has("b2d.fixture.get_filter_data:return:filter")).toBe(false);
   });
 
+  test("reads `lua based` as a 1-based statement", () => {
+    expect(
+      scanFixture("resource_doc.json", "resource").get(
+        "resource.set_atlas:param:table:frame_start",
+      ),
+    ).toBe("prose-1-based");
+  });
+
   test("skips the Lua stdlib namespaces", () => {
     expect(scanFixture("base_doc.json", "base")).toEqual(new Map());
+  });
+});
+
+function statementsIn(file: string, namespace: string): Map<string, string> {
+  const doc = JSON.parse(readFileSync(join(FIXTURES, file), "utf8"));
+  return new Map(scanFunctionBaseStatements(doc, namespace).map((s) => [s.fn, s.class]));
+}
+
+describe("scanFunctionBaseStatements over the defold-1.13.1 ref-doc", () => {
+  test("reads a base stated in a function's notes", () => {
+    const resource = statementsIn("resource_doc.json", "resource");
+    expect(resource.get("resource.set_atlas")).toBe("native-0");
+    expect(resource.get("resource.create_atlas")).toBe("native-0");
+    const doc = JSON.parse(readFileSync(join(FIXTURES, "resource_doc.json"), "utf8"));
+    const atlas = scanFunctionBaseStatements(doc, "resource").find(
+      (s) => s.fn === "resource.set_atlas",
+    );
+    expect(atlas?.phrase).toContain("zero based");
+  });
+
+  test("reads a base stated in a function's description", () => {
+    const editor = statementsIn("editor_doc.json", "editor");
+    expect(editor.get("image.pixel")).toBe("native-1");
+    expect(editor.get("image.pixels")).toBe("native-1");
+    expect(statementsIn("crash_doc.json", "crash").get("crash.set_user_field")).toBe("native-0");
+  });
+
+  test("never reads a default value or an example as a base", () => {
+    expect(statementsIn("resource_doc.json", "resource").has("resource.create_texture")).toBe(
+      false,
+    );
+    expect(statementsIn("go_doc.json", "go").has("go.get")).toBe(false);
+  });
+
+  test("skips the Lua stdlib namespaces", () => {
+    const doc = (namespace: string) => ({
+      info: { namespace },
+      elements: [{ type: "FUNCTION", name: `${namespace}.sub`, description: "1-based", notes: [] }],
+    });
+    expect(scanFunctionBaseStatements(doc("string"), "string")).toEqual([]);
+    expect(scanFunctionBaseStatements(doc("gui"), "gui")).toHaveLength(1);
   });
 });
 
@@ -198,6 +248,32 @@ describe("index slot classification gate", () => {
     if (stale.length > 0) {
       throw new Error(
         `no retained surface declares these slots; delete or correct the classification:\n${stale.join("\n")}`,
+      );
+    }
+  });
+
+  test("each base a function states is recorded on one of its slots", () => {
+    const missing: string[] = [];
+    const reported = new Set<string>();
+    for (const surface of SURFACES) {
+      for (const statement of scanFunctionBaseStatements(surface.doc, surface.namespace)) {
+        const id = `${statement.fn}:${statement.class}`;
+        if (reported.has(id)) continue;
+        const prefix = `${statement.fn}:`;
+        const recorded = [...INDEX_SLOT_CLASSIFICATIONS].some(
+          ([key, classification]) =>
+            key.startsWith(prefix) && classification.class === statement.class,
+        );
+        if (recorded) continue;
+        reported.add(id);
+        missing.push(
+          `${statement.fn} (${surface.target}, ${statement.class}, ${statement.phrase})`,
+        );
+      }
+    }
+    if (missing.length > 0) {
+      throw new Error(
+        `classify a slot of each function in INDEX_SLOT_CLASSIFICATIONS (packages/types/src/index-slot-classifications.ts) with the base it states:\n${missing.join("\n")}`,
       );
     }
   });

@@ -351,6 +351,7 @@ export const UNPROBED_INDEX_SLOTS: Readonly<Record<string, string>> = {
   "client:send:return:lastindex": "sending needs a connected socket peer",
   "image.pixel:param:x": "an editor-only API; the engine runs no editor script",
   "image.pixel:param:y": "an editor-only API; the engine runs no editor script",
+  "image.pixels:return:iterator": "an editor-only API; the engine runs no editor script",
   "tilemap.tiles.get_info:return:info:index":
     "an editor-only API; the engine runs no editor script",
   "tilemap.tiles.get_tile:return:tile_index":
@@ -366,6 +367,10 @@ export const UNPROBED_INDEX_SLOTS: Readonly<Record<string, string>> = {
   "resource.create_atlas:param:table:animations:frames": "the probe builds no atlas to animate",
   "resource.set_atlas:param:table:animations:frames": "the probe builds no atlas to animate",
   "resource.set_texture:param:table:page": "the probe creates no array texture",
+  "resource.set_texture:param:table:mipmap": "the probe uploads no mipmapped texture",
+  "resource.create_atlas:param:table:geometries:indices": "the probe builds no atlas to animate",
+  "resource.set_atlas:param:table:geometries:indices": "the probe builds no atlas to animate",
+  "resource.get_atlas:return:data:geometries:indices": "the probe builds no atlas to animate",
 };
 
 export interface Unverified {

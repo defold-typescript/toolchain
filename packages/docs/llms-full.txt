@@ -575,6 +575,7 @@ from:
 | ⚠️ **1-based** | `go.get`, `go.set` | `index` field of `options` |
 | ⚠️ **1-based** | `gui.get`, `gui.set` | `index` field of `options` |
 | ⚠️ **1-based** | `image.pixel` | `x` and `y` |
+| ⚠️ **1-based** | `image.pixels` | returned `iterator` |
 | ⚠️ **1-based** | `profiler.view_recorded_frame` | `frame` field of `frame_index` |
 | ⚠️ **1-based** | `resource.create_atlas`, `resource.set_atlas` | `frame_start` and `frame_end` fields of `table` |
 | ⚠️ **1-based** | `resource.create_atlas`, `resource.set_atlas` | `frames` field of `table.animations` |
@@ -586,7 +587,9 @@ from:
 | ⚠️ **1-based** | `tilemap.tiles.set` | `index` field of `tile_or_info` |
 | 0️⃣ **0-based** | `crash.get_user_field`, `crash.set_user_field` | `index` |
 | 0️⃣ **0-based** | `gui.get_index` | returned `index` |
-| 0️⃣ **0-based** | `resource.set_texture` | `page` field of `table` |
+| 0️⃣ **0-based** | `resource.set_texture` | `page` and `mipmap` fields of `table` |
+| 0️⃣ **0-based** | `resource.create_atlas`, `resource.set_atlas` | `indices` field of `table.geometries` |
+| 0️⃣ **0-based** | `resource.get_atlas` | `indices` field of the returned `data.geometries` |
 
 - **Round trips** — a value an engine call returned goes straight back in:
   `client.send(data, lastindex + 1)` resumes after the last byte sent, and

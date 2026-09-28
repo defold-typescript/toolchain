@@ -57,4 +57,16 @@ describe("withIndexBaseNotes", () => {
   test("an empty doc becomes the note alone", () => {
     expect(withIndexBaseNotes("b2d.fixture.get_density", "param", "fixture_index", "")).toBe(note);
   });
+
+  test("a table with two 0-based fields gains one note for each", () => {
+    expect(withIndexBaseNotes("resource.set_texture", "param", "table", "the texture.")).toBe(
+      "the texture. **0️⃣ `page` is 0-based; passed to Defold unchanged.** **0️⃣ `mipmap` is 0-based; passed to Defold unchanged.**",
+    );
+  });
+
+  test("a nested returned field names its own key", () => {
+    expect(withIndexBaseNotes("resource.get_atlas", "return", "data", "the atlas.")).toBe(
+      "the atlas. **0️⃣ `indices` is 0-based; passed to Defold unchanged.**",
+    );
+  });
 });
