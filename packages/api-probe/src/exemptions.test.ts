@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { box2dConstantBackends } from "./contexts";
 import {
   type Exemption,
   ExemptionValidationError,
@@ -7,7 +8,7 @@ import {
   readExemptions,
 } from "./exemptions";
 import type { ProbeOutcome } from "./outcome";
-import type { ProbeCall } from "./witness";
+import { type ProbeCall, probeTarget } from "./witness";
 
 function call(name: string, variant = "required"): ProbeCall {
   return { name, variant, kind: "go", call: `${name}()` };
@@ -586,6 +587,47 @@ describe("parseExemptions", () => {
     "render.RENDER_TARGET_DEFAULT:constant",
     "graphics.TEXTURE_FORMAT_RGB16F:constant",
   ])("rejects an exemption for the ordinary constant %s, naming its key", (key) => {
+    expect(parseKey(key)).toThrow(ExemptionValidationError);
+    expect(parseKey(key)).toThrow(key);
+  });
+
+  test.each([
+    "b2d.body.B2_DYNAMIC_BODY:constant",
+    "b2d.body.B2_DYNAMIC_BODY:constant@v3",
+  ])("rejects %s, a constant both Box2D backends register, naming its key", (key) => {
+    expect(parseKey(key)).toThrow(ExemptionValidationError);
+    expect(parseKey(key)).toThrow(key);
+  });
+
+  test.each([
+    ["b2d.joint.JOINT_TYPE_GEAR:constant", "v2"],
+    ["b2d.shape.SHAPE_TYPE_CAPSULE:constant@v3", "v3"],
+  ])("rejects %s in the pass whose backend registers it", (key, backend) => {
+    expect(parseKey(key)).toThrow(ExemptionValidationError);
+    expect(parseKey(key)).toThrow(key);
+    expect(parseKey(key)).toThrow(`the ${backend} backend registers it`);
+  });
+
+  test("rejects every constant both Box2D backends register, in either pass", () => {
+    const shared = [...box2dConstantBackends(probeTarget().id)]
+      .filter(([, backends]) => backends.size === 2)
+      .map(([fqn]) => fqn);
+    expect(shared).toContain("b2d.body.B2_DYNAMIC_BODY");
+    const accepted = shared
+      .flatMap((fqn) => [`${fqn}:constant`, `${fqn}:constant@v3`])
+      .filter((key) => {
+        try {
+          parseKey(key)();
+          return true;
+        } catch {
+          return false;
+        }
+      });
+    expect(accepted).toEqual([]);
+  });
+
+  test("rejects a constant exemption for an unknown backend, naming its key", () => {
+    const key = "b2d.joint.JOINT_TYPE_GEAR:constant@v4";
     expect(parseKey(key)).toThrow(ExemptionValidationError);
     expect(parseKey(key)).toThrow(key);
   });
