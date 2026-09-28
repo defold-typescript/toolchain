@@ -855,6 +855,20 @@
     background: var(--color-surface);
   }
 
+  /* Set at render time on every cell of a short-content column (see
+     markdown.ts), so a long neighbouring column cannot squeeze it. */
+  .prose .cell-nowrap {
+    white-space: nowrap;
+  }
+
+  /* Inside a table, a code span breaks only between spans, never mid-identifier:
+     its full width counts toward the column's minimum, and the `.table-scroll`
+     wrapper takes any overflow on narrow screens. Authoritative copy is the
+     unlayered mirror in critical.css, which beats this layered rule. */
+  .prose :is(td, th) code {
+    overflow-wrap: normal;
+  }
+
   .prose .table-scroll {
     overflow-x: auto;
     max-width: 100%;

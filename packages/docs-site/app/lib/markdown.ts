@@ -250,6 +250,18 @@ function admonitionLabel(type: AlertType): string {
 const MORE_MARKER = /^\[!more\]/i;
 const MORE_DEFAULT_SUMMARY = "More";
 
+// Longest visible cell text, in characters, a column may hold and still render
+// on one line.
+const SHORT_COLUMN_CHARS = 24;
+
+function cellTextLength(inline: Token | undefined): number {
+  let length = 0;
+  for (const child of inline?.children ?? []) {
+    if (child.type === "text" || child.type === "code_inline") length += child.content.length;
+  }
+  return length;
+}
+
 function replaceFirstHeading(markdown: string, heading: string): string {
   return markdown.replace(/^#\s+.+$/m, `# ${heading}`);
 }
@@ -284,6 +296,34 @@ export async function renderMarkdown(
   // `Shape.member`), so last-wins picks the shape over an identically-texted
   // section heading. First-wins would resolve to the section heading instead.
   const mintedIds = new Map<string, string>();
+  // Keep every cell of a short-content column on one line. The browser's auto
+  // table layout otherwise hands nearly all the width to a column of long
+  // content and squeezes short columns down to their narrowest break, splitting
+  // `1-based` at its hyphen and identifiers mid-word. Measured right after
+  // inline parsing, before later rules turn code spans into HTML.
+  md.core.ruler.after("inline", "balance-table-columns", (state) => {
+    const tokens = state.tokens;
+    for (let start = 0; start < tokens.length; start++) {
+      if (tokens[start]?.type !== "table_open") continue;
+      const columns: Token[][] = [];
+      const widths: number[] = [];
+      let column = 0;
+      let end = start + 1;
+      for (; end < tokens.length && tokens[end]?.type !== "table_close"; end++) {
+        const token = tokens[end] as Token;
+        if (token.type === "tr_open") column = 0;
+        if (token.type !== "th_open" && token.type !== "td_open") continue;
+        columns[column] = [...(columns[column] ?? []), token];
+        widths[column] = Math.max(widths[column] ?? 0, cellTextLength(tokens[end + 1]));
+        column++;
+      }
+      columns.forEach((cells, i) => {
+        if ((widths[i] ?? 0) > SHORT_COLUMN_CHARS) return;
+        for (const cell of cells) cell.attrJoin("class", "cell-nowrap");
+      });
+      start = end;
+    }
+  });
   md.core.ruler.push("slugify-headings", (state) => {
     for (let i = 0; i < state.tokens.length; i++) {
       const token = state.tokens[i];

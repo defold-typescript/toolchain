@@ -424,6 +424,27 @@ describe("renderMarkdown", () => {
     expect(html).toContain("</table>\n</div>");
   });
 
+  test("keeps a column of short cells on one line so a long column cannot squeeze it", async () => {
+    const long = Array.from({ length: 12 }, (_, i) => `\`b2d.fixture.get_${i}\``).join(", ");
+    const html = await renderMarkdown(
+      `| Base | API | Position |\n| --- | --- | --- |\n| ⚠️ 1-based | ${long} | \`fixture_index\` |\n`,
+    );
+    expect(html).toContain('<th class="cell-nowrap">Base</th>');
+    expect(html).toContain("<th>API</th>");
+    expect(html).toContain('<th class="cell-nowrap">Position</th>');
+    expect(html).toContain('<td class="cell-nowrap">⚠️ 1-based</td>');
+    expect(html).toContain('<td class="cell-nowrap"><code>fixture_index</code></td>');
+  });
+
+  test("lets a column wrap once any of its cells is long", async () => {
+    const html = await renderMarkdown(
+      "| Name | Notes |\n| --- | --- |\n| a | short |\n| b | a note long enough to need wrapping in a narrow column |\n",
+    );
+    expect(html).toContain('<th class="cell-nowrap">Name</th>');
+    expect(html).toContain("<th>Notes</th>");
+    expect(html).toContain("<td>short</td>");
+  });
+
   test("leaves a tableless document without a table-scroll wrapper", async () => {
     const html = await renderMarkdown("Just a paragraph with `code`.\n");
     expect(html).not.toContain("table-scroll");
