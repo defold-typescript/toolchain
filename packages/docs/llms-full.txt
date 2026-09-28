@@ -10083,7 +10083,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_viewport(x: number, y: number, width: number, height: number): void;
 - render.FRUSTUM_PLANES_ALL: number & { readonly __brand: "render.FRUSTUM_PLANES_ALL" }
 - render.FRUSTUM_PLANES_SIDES: number & { readonly __brand: "render.FRUSTUM_PLANES_SIDES" }
-- render.RENDER_TARGET_DEFAULT: number & { readonly __brand: "render.RENDER_TARGET_DEFAULT" }
+- render.RENDER_TARGET_DEFAULT: undefined
 - render.SORT_BACK_TO_FRONT: number & { readonly __brand: "render.SORT_BACK_TO_FRONT" }
 - render.SORT_FRONT_TO_BACK: number & { readonly __brand: "render.SORT_FRONT_TO_BACK" }
 - render.SORT_NONE: number & { readonly __brand: "render.SORT_NONE" }

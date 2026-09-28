@@ -4001,7 +4001,19 @@ export const STRING_CONSTANTS: ReadonlyMap<string, StringConstantSource> = new M
   ]),
 ]);
 
+// Documented constants the engine never registers, keyed by FQN with the
+// reason, so Lua reads each as nil. `nil-constant-provenance.test.ts` pins the
+// keys to the accepted `constant-missing-binding` binding verdicts.
+export const NIL_CONSTANTS: ReadonlyMap<string, string> = new Map([
+  [
+    "render.RENDER_TARGET_DEFAULT",
+    "render_script.cpp registers no such field; render.set_render_target reads the nil as the default target",
+  ],
+]);
+
 function brandType(fqn: string): string {
+  // `undefined & { __brand }` collapses to `never`, so a nil constant takes no brand.
+  if (NIL_CONSTANTS.has(fqn)) return "undefined";
   const base = STRING_CONSTANTS.has(fqn) ? "string" : "number";
   return `${base} & { readonly __brand: "${fqn}" }`;
 }

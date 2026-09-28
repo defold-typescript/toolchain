@@ -8,7 +8,7 @@ import {
   UnmappedLuaKindError,
 } from "../../types/scripts/lua-kind";
 import type { ApiTarget } from "../../types/scripts/regen";
-import { type Box2DBackend, CONDITIONAL_CONSTANTS, contextFor } from "./contexts";
+import { type Box2DBackend, constantAbsence, contextFor, isBox2D } from "./contexts";
 import { PROBE_DENYLIST } from "./probe-denylist";
 import { forEachNamespaceStatement } from "./property-probes";
 import { type ProbeCall, probeTarget } from "./witness";
@@ -39,14 +39,10 @@ function aliasMembers(statement: ts.Statement): string[] | undefined {
   return members.map((member) => (member as ts.TypeQueryNode).exprName.getText());
 }
 
-function isBox2D(namespace: string): boolean {
-  return namespace === "b2d" || namespace.startsWith("b2d.");
-}
-
 // Every declared constant, read in the script its namespace runs in, and every
 // numeric constant alias, whose members must hold pairwise-distinct values. A
 // Box2D backend registers its own constants, so the v3 pass reads the `b2d`
-// namespaces again.
+// namespaces again. A constant declared as nil is read bare and must stay nil.
 export function constantProbes(
   target: ApiTarget = probeTarget(),
   program: ts.Program = surfaceProgram(target),
@@ -63,12 +59,13 @@ export function constantProbes(
     const namespace = fqn.slice(0, fqn.lastIndexOf("."));
     const kinds = kindsOf(checker.getTypeOfSymbol(symbol), checker);
     if (kinds !== "any" && kinds.join() === "number") numeric.add(fqn);
-    const conditional = Object.keys(CONDITIONAL_CONSTANTS).some((prefix) => fqn.startsWith(prefix));
+    const conditional = constantAbsence(fqn) === "adapter";
+    const nil = kinds !== "any" && kinds.join() === "nil";
     calls.push({
       name: fqn,
       variant: "constant",
       kind: contextFor(namespace).kind,
-      call: conditional ? fqn : `defined(${fqn})`,
+      call: conditional || nil ? fqn : `defined(${fqn})`,
       returns: {
         kinds: [conditional && kinds !== "any" ? [...kinds, "nil" as const].sort() : kinds],
         variadic: false,

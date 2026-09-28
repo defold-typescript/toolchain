@@ -568,6 +568,36 @@ describe("parseExemptions", () => {
   test("rejects a top level that is not an object", () => {
     expect(() => parseExemptions(JSON.stringify([valid]))).toThrow(ExemptionValidationError);
   });
+
+  function parseKey(key: string, entry: Exemption = valid): () => unknown {
+    return () => parseExemptions(JSON.stringify({ [key]: entry }));
+  }
+
+  test.each([
+    "b2d.shape.SHAPE_TYPE_CAPSULE:constant",
+    "b2d.joint.JOINT_TYPE_GEAR:constant@v3",
+    "material.CONSTANT_TYPE_VIEW:constant",
+  ])("accepts an engine error for %s, which a Box2D backend or unlinked module leaves absent", (key) => {
+    expect(parseExemptions(JSON.stringify({ [key]: valid }))).toEqual({ [key]: valid });
+  });
+
+  test.each([
+    "gui.PIVOT_N:constant",
+    "render.RENDER_TARGET_DEFAULT:constant",
+    "graphics.TEXTURE_FORMAT_RGB16F:constant",
+  ])("rejects an exemption for the ordinary constant %s, naming its key", (key) => {
+    expect(parseKey(key)).toThrow(ExemptionValidationError);
+    expect(parseKey(key)).toThrow(key);
+  });
+
+  test.each([
+    "ok",
+    "bad-argument",
+  ] as const)("rejects a Box2D constant exemption recording %s", (result) => {
+    const key = "b2d.shape.SHAPE_TYPE_CAPSULE:constant";
+    expect(parseKey(key, { ...valid, outcome: result })).toThrow(ExemptionValidationError);
+    expect(parseKey(key, { ...valid, outcome: result })).toThrow(key);
+  });
 });
 
 describe("committed probe-exemptions.json", () => {
