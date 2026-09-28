@@ -60,13 +60,34 @@ export function parseProbeLine(line: string): ProbeOutcome | undefined {
 }
 
 const RETURN = /\bRET\t([^\t]+)\t([^\t]+)\t(\d+)\t(\w+)/;
+const POST = /\bPOST\t([^\t]+)\t([^\t]+)\t(\d+)/;
+const POSTS_DONE = /\bPOSTS_DONE\b/;
+const ENGINE_ERROR = /\bERROR:/;
 
 // Every `PROBE` line of an engine log, each ok one carrying the `RET` lines
-// the runtime printed for it just before.
+// the runtime printed for it just before. A message the go script posted fails
+// on the first `ERROR:` line logged between its `POST` line and the next one:
+// the engine reports a message it cannot deliver or decode while dispatching,
+// after `msg.post` returned.
 export function parseProbeLog(lines: readonly string[]): ProbeOutcome[] {
   const pending = new Map<string, string[]>();
   const outcomes: ProbeOutcome[] = [];
+  const posted = new Map<string, string>();
+  let window: { key: string; frame: string } | undefined;
   for (const line of lines) {
+    const post = POST.exec(line);
+    if (post) {
+      window = { key: `${post[1]}\t${post[2]}`, frame: post[3] as string };
+      continue;
+    }
+    if (POSTS_DONE.test(line)) {
+      window = undefined;
+      continue;
+    }
+    if (window !== undefined && ENGINE_ERROR.test(line) && !posted.has(window.key)) {
+      posted.set(window.key, `frame ${window.frame}: ${line.trimEnd()}`);
+      continue;
+    }
     const outcome = parseProbeLine(line);
     if (outcome !== undefined) {
       const key = `${outcome.name}\t${outcome.variant}`;
@@ -89,5 +110,16 @@ export function parseProbeLog(lines: readonly string[]): ProbeOutcome[] {
     returns[Number(index) - 1] = kind;
     pending.set(key, returns);
   }
-  return outcomes;
+  return outcomes.map((outcome) => {
+    const logged = posted.get(`${outcome.name}\t${outcome.variant}`);
+    if (logged === undefined || outcome.outcome !== "ok") return outcome;
+    const { outcome: result, slot } = classifyError(logged);
+    return {
+      name: outcome.name,
+      variant: outcome.variant,
+      outcome: result,
+      ...(slot === undefined ? {} : { slot }),
+      message: logged,
+    };
+  });
 }

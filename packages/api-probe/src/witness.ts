@@ -14,10 +14,12 @@ import {
   UnmappedLuaKindError,
 } from "../../types/scripts/lua-kind";
 import { type ApiTarget, loadApiTargets } from "../../types/scripts/regen";
+import { constantProbes } from "./constant-probes";
 import {
   type Box2DBackend,
   box2dBackends,
   contextFor,
+  FINAL_CALLS,
   HANDLE_WITNESSES,
   PRELUDES,
   PROBE_URLS,
@@ -28,8 +30,10 @@ import {
   WITNESS_OVERRIDES,
 } from "./contexts";
 import { indexProbeCalls, type SignatureArgs, type Unverified } from "./index-probes";
+import { messageProbes } from "./message-probes";
 import { negativeWitness } from "./negative-witness";
 import { PROBE_DENYLIST } from "./probe-denylist";
+import { propertyProbes } from "./property-probes";
 
 const CORE_TYPES_FILE = resolve(import.meta.dir, "../../types/src/core-types.ts");
 
@@ -48,6 +52,14 @@ export interface NegativeTarget {
   readonly binding: string;
 }
 
+// A built-in message the go script posts, or checks when the engine sends it.
+// An incoming message the probe project does not trigger may never arrive.
+export interface MessageCall {
+  readonly id: string;
+  readonly direction: "outgoing" | "incoming";
+  readonly triggered?: boolean;
+}
+
 export interface ProbeCall {
   readonly name: string;
   readonly variant: string;
@@ -57,6 +69,23 @@ export interface ProbeCall {
   readonly negative?: NegativeTarget;
   // The `INDEX_SLOT_CLASSIFICATIONS` key an index probe checks.
   readonly index?: string;
+  // A write to a property the declaration marks readonly, which must raise.
+  readonly readonlySet?: true;
+  readonly message?: MessageCall;
+}
+
+// One step of the go script's message queue: a post, or a pause until the
+// engine has sent `wait` once more.
+export type QueueStep =
+  | { readonly id: string; readonly name: string; readonly variant: string; readonly post: string }
+  | { readonly wait: string };
+
+// What the go script posts one per frame after its calls, the payload kinds it
+// checks each received message against, and the messages it waits for.
+export interface MessageScript {
+  readonly queue: readonly QueueStep[];
+  readonly shapes: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  readonly triggered: readonly string[];
 }
 
 export interface SkippedSlot {
@@ -98,7 +127,7 @@ export function probeTarget(id = process.env.PROBE_TARGET): ApiTarget {
   return target;
 }
 
-class NoWitness extends Error {}
+export class NoWitness extends Error {}
 
 interface Scope {
   readonly fqn: string;
@@ -297,6 +326,24 @@ function witness(type: ts.Type, scope: Scope, depth = 0): string {
   throw new NoWitness(`no witness for ${checker.typeToString(type)}`);
 }
 
+// A value of `type` built in `context`'s script, for a slot outside any
+// function signature. Throws `NoWitness` when none can be built.
+export function typeWitness(
+  type: ts.Type,
+  fqn: string,
+  context: ProbeContext,
+  checker: ts.TypeChecker,
+  constants: ReadonlySet<string>,
+  urls: Set<string>,
+): string {
+  return witness(type, { fqn, slot: 0, context, checker, constants, urls, handles: new Map() });
+}
+
+// The `PROBE_URLS` names an expression refers to.
+export function urlsIn(expression: string): string[] {
+  return Object.keys(PROBE_URLS).filter((id) => new RegExp(`\\b${id}\\b`).test(expression));
+}
+
 interface Param {
   readonly type: ts.Type;
   readonly optional: boolean;
@@ -472,10 +519,14 @@ function callsFor(
   return out;
 }
 
+// A negative call and a write to a readonly property are calls the declaration
+// must refuse, so each carries `@ts-expect-error`.
 function renderProbe(call: ProbeCall): string {
   const name = JSON.stringify(call.name);
   const variant = JSON.stringify(call.variant);
-  if (call.negative === undefined) return `    probe(${name}, ${variant}, () => ${call.call});`;
+  if (call.negative === undefined && call.readonlySet !== true) {
+    return `    probe(${name}, ${variant}, () => ${call.call});`;
+  }
   return [
     `    probe(${name}, ${variant}, () =>`,
     "      // @ts-expect-error",
@@ -484,16 +535,35 @@ function renderProbe(call: ProbeCall): string {
   ].join("\n");
 }
 
+function renderStep(step: QueueStep): string {
+  if ("wait" in step) return `      { wait: ${JSON.stringify(step.wait)} },`;
+  const name = JSON.stringify(step.name);
+  const variant = JSON.stringify(step.variant);
+  return `      { name: ${name}, variant: ${variant}, post: () => ${step.post} },`;
+}
+
+function renderShapes(shapes: MessageScript["shapes"]): string {
+  const entries = Object.entries(shapes).map(([id, fields]) => {
+    const inner = Object.entries(fields).map(
+      ([field, kinds]) => `${propertyKey(field)}: ${JSON.stringify(kinds)}`,
+    );
+    return `${propertyKey(id)}: { ${inner.join(", ")} }`.replace("{  }", "{}");
+  });
+  return `{ ${entries.join(", ")} }`;
+}
+
 export function renderFile(
   kind: ScriptKind,
   calls: readonly ProbeCall[],
   used: ReadonlySet<string>,
+  messages?: MessageScript,
 ): string {
   const urls = new Set(used);
   for (const statement of PRELUDES[kind]) {
-    for (const id of Object.keys(PROBE_URLS)) {
-      if (new RegExp(`\\b${id}\\b`).test(statement)) urls.add(id);
-    }
+    for (const id of urlsIn(statement)) urls.add(id);
+  }
+  for (const step of kind === "go" ? (messages?.queue ?? []) : []) {
+    if ("post" in step) for (const id of urlsIn(step.post)) urls.add(id);
   }
   const factory = { go: "defineScript", gui: "defineGuiScript", render: "defineRenderScript" }[
     kind
@@ -503,41 +573,64 @@ export function renderFile(
     .map((id) => `    const ${id} = msg.url(${JSON.stringify(PROBE_URLS[id])});`);
   // A negative call the engine wrongly accepts can change what later calls
   // see, so every negative call runs after every positive one.
+  // With messages to post, the go script reports once its queue drained.
+  const queued = messages !== undefined && kind === "go";
+  const final = (call: ProbeCall) => queued && FINAL_CALLS.has(`${call.name}:${call.variant}`);
+  const direct = calls.filter((call) => call.message === undefined && !final(call));
+  const last = calls.filter(final).map((call) => ({ ...call, post: call.call, id: call.name }));
   const probes = [
-    ...calls.filter((call) => call.negative === undefined),
-    ...calls.filter((call) => call.negative !== undefined),
+    ...direct.filter((call) => call.negative === undefined),
+    ...direct.filter((call) => call.negative !== undefined),
   ].map(renderProbe);
   // A material left enabled at the end of the frame crashes the engine's
-  // command parse, so the render script resets it once its probes ran.
-  const cleanup = kind === "render" ? ["    render.disable_material();"] : [];
+  // command parse, so the render script resets it once its probes ran. A
+  // physics event listener takes the collision events the go script waits for
+  // as messages, and a probed gravity pulls the faller off the floor it rests
+  // on, so the go script removes the one and restores the other.
+  const cleanup =
+    kind === "render"
+      ? ["    render.disable_material();"]
+      : queued
+        ? [
+            "    physics.set_event_listener();",
+            "    physics.set_gravity(vmath.vector3(0, -10, 0));",
+          ]
+        : [];
   const prelude = PRELUDES[kind].map((statement) => `    ${statement}`);
-  const body = [
-    ...declarations,
-    ...prelude,
-    ...probes,
-    ...cleanup,
-    `    finish(${JSON.stringify(kind)});`,
-  ];
+  const ending = queued
+    ? [
+        "    queue([",
+        ...(messages as MessageScript).queue.map(renderStep),
+        "    ], [",
+        ...last.map(renderStep),
+        "    ]);",
+        `    listen(${renderShapes((messages as MessageScript).shapes)}, ${JSON.stringify((messages as MessageScript).triggered)});`,
+      ]
+    : [`    finish(${JSON.stringify(kind)});`];
+  const body = [...declarations, ...prelude, ...probes, ...cleanup, ...ending];
   // The render script runs its probes on the first frame, once the main
   // collection (and the go script it reports to) exists.
   const hook =
     kind === "render"
       ? ["  update() {", "    if (!first()) return;", ...body, "  },"]
-      : ["  init() {", ...body, "  },"];
+      : ["  init() {", ...body, "  },", ...(queued ? ["  update() {", "    pump();", "  },"] : [])];
   const onMessage =
     kind === "go"
       ? [
           "  on_message(_self, message_id, message) {",
           '    if (message_id === hash("probe_done")) record((message as unknown as { kind: string }).kind);',
+          ...(queued ? ["    receive(message_id, message);"] : []),
           "  },",
         ]
       : [];
   const imports = [
-    "finish",
+    ...(queued ? ["listen", "pump", "queue", "receive"] : ["finish"]),
     "fresh",
     "probe",
     ...(kind === "go" ? ["record"] : []),
     ...(kind === "render" ? ["first"] : []),
+    ...(direct.some((call) => call.variant === "constant") ? ["defined"] : []),
+    ...(direct.some((call) => call.variant === "distinct") ? ["distinct"] : []),
   ]
     .sort()
     .join(", ");
@@ -601,11 +694,19 @@ export function generateProbes(
     }
   }
   const index = indexProbeCalls(signatures);
-  calls.push(...index.calls);
-  for (const call of index.calls) {
-    for (const id of Object.keys(PROBE_URLS)) {
-      if (new RegExp(`\\b${id}\\b`).test(call.call)) urlsByKind.get(call.kind)?.add(id);
-    }
+  const added = [...index.calls];
+  // Properties, messages and every constant outside `b2d` do not depend on the
+  // Box2D backend, so only the stock-engine pass checks them.
+  added.push(...constantProbes(target, program, backend).calls);
+  let messages: MessageScript | undefined;
+  if (backend === "v2") {
+    const posted = messageProbes(target, program);
+    added.push(...propertyProbes(target, program).calls, ...posted.calls);
+    messages = posted;
+  }
+  calls.push(...added);
+  for (const call of added) {
+    for (const id of urlsIn(call.call)) urlsByKind.get(call.kind)?.add(id);
   }
   const files: Record<string, string> = {};
   for (const kind of SCRIPT_KINDS) {
@@ -613,6 +714,7 @@ export function generateProbes(
       kind,
       calls.filter((call) => call.kind === kind),
       urlsByKind.get(kind) ?? new Set(),
+      messages,
     );
   }
   return {

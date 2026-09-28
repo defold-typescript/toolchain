@@ -5,8 +5,11 @@ export type ScriptKind = "go" | "gui" | "render";
 export const SCRIPT_KINDS: readonly ScriptKind[] = ["go", "gui", "render"];
 
 // Absolute addresses, so a url resolves the same from the go, gui and render
-// scripts. Every one names a component or object in `project/main`.
+// scripts. Every one names a component or object in `project/main`, or one of
+// the engine's own sockets.
 export const PROBE_URLS: Readonly<Record<string, string>> = {
+  RENDER: "@render:",
+  SYSTEM: "@system:",
   GO: "main:/probe",
   SCRIPT: "main:/probe#script",
   SPRITE: "main:/probe#sprite",
@@ -22,6 +25,8 @@ export const PROBE_URLS: Readonly<Record<string, string>> = {
   FACTORY: "main:/probe#factory",
   COLLECTIONFACTORY: "main:/probe#collectionfactory",
   PROXY: "main:/probe#proxy",
+  // A proxy no function probe loads, for the message probes' load cycle.
+  LOADER: "main:/probe#loader",
   COLLISION: "main:/probe#collision",
   GUI: "main:/probe#gui",
   PEER: "main:/peer",
@@ -98,6 +103,82 @@ export function contextFor(namespace: string): ProbeContext {
   return CONTEXTS[namespace] ?? GO_CONTEXT;
 }
 
+// The `PROBE_URLS` component whose type owns each `<ns>.properties` catalog.
+// Every property is read from the go script, the gui component's included.
+export const PROPERTY_TARGETS: Readonly<Record<string, string>> = {
+  go: "GO",
+  sprite: "SPRITE",
+  model: "MODEL",
+  label: "LABEL",
+  sound: "SOUND",
+  particlefx: "PARTICLEFX",
+  tilemap: "TILEMAP",
+  camera: "CAMERA",
+  physics: "COLLISION",
+  mesh: "MESH",
+  gui: "GUI",
+};
+
+// The options a catalog member needs to address one resource of its component,
+// keyed `<ns>.<member>`: a resource of `project/main/probe.gui`, or the emitter
+// of `project/main/probe.particlefx`.
+export const PROPERTY_OPTIONS: Readonly<Record<string, string>> = {
+  "gui.fonts": '{ key: "default" }',
+  "gui.materials": '{ key: "probe" }',
+  "gui.textures": '{ key: "probe" }',
+  "particlefx.animation": '{ keys: ["emitter"] }',
+  "particlefx.image": '{ keys: ["emitter"] }',
+  "particlefx.material": '{ keys: ["emitter"] }',
+};
+
+// Constants the engine registers only when the host supports them, keyed by an
+// FQN prefix with the reason. The probe checks such a constant's kind when the
+// engine defines it, so the result does not depend on the machine it runs on.
+export const CONDITIONAL_CONSTANTS: Readonly<Record<string, string>> = {
+  "graphics.TEXTURE_FORMAT_":
+    "script_graphics.cpp registers a texture format only when the graphics adapter supports it",
+};
+
+// The `PROBE_URLS` receiver of each built-in message's ref-doc namespace.
+export const MESSAGE_ORIGINS: Readonly<Record<string, string>> = {
+  go: "GO",
+  sprite: "SPRITE",
+  model: "MODEL",
+  physics: "COLLISION",
+  collectionproxy: "LOADER",
+  sound: "SOUND",
+  render: "RENDER",
+  gui: "GUI",
+  camera: "CAMERA",
+  sys: "SYSTEM",
+};
+
+// Calls that delete the probe object, keyed `<fn>:<variant>`. The go script
+// makes them once its message queue drained, in the frame it reports, since
+// every later message needs the object's components.
+export const FINAL_CALLS: ReadonlySet<string> = new Set(["go.delete:required"]);
+
+// Messages whose receiver is not their namespace's: `enable` and `disable` go
+// to a component, and a force or a new parent goes to a dynamic peer so the
+// probe object's static body stays where the collision checks expect it.
+export const MESSAGE_RECEIVERS: Readonly<Record<string, string>> = {
+  enable: "SPRITE",
+  disable: "SPRITE",
+  apply_force: "PEER_COLLISION",
+  set_parent: "PEER",
+};
+
+// Payload fields whose witness must name something real or keep the run going,
+// keyed `<message>.<field>`.
+export const MESSAGE_FIELD_OVERRIDES: Readonly<Record<string, string>> = {
+  "play_animation.id": 'hash("anim")',
+  "set_parent.parent_id": 'hash("/wreck")',
+  // A frame cap of one would stretch the rest of the run to one frame a second.
+  "set_update_frequency.frequency": "60",
+  "resize.width": "320",
+  "resize.height": "240",
+};
+
 const BODIES = "b2d.get_body(COLLISION)!, b2d.get_body(PEER_COLLISION)!";
 const REVOLUTE = `b2d.joint.create_revolute(${BODIES})`;
 
@@ -170,9 +251,10 @@ const JOINT_ACCESSORS: Readonly<Record<string, readonly string[]>> = {
 const ATLAS = '"/main/probe.a.texturesetc"';
 const FONT = '"/builtins/fonts/default.fontc"';
 const BUFFER_RESOURCE = '"/main/triangle.bufferc"';
-// Keeps the probe atlas's `anim`, which sprite and gui probes play afterwards.
+// Keeps the probe atlas's one-shot `anim`, which sprite and gui probes play
+// afterwards and whose end the `animation_done` check waits for.
 const ATLAS_PARAMS =
-  '{ texture: "/main/probe.texturec", geometries: [{ vertices: [0, 0, 0, 16, 16, 16], uvs: [0, 0, 0, 16, 16, 16], indices: [0, 1, 2] }], animations: [{ id: "anim", width: 16, height: 16, frame_start: 1, frame_end: 2 }] }';
+  '{ texture: "/main/probe.texturec", geometries: [{ vertices: [0, 0, 0, 16, 16, 16], uvs: [0, 0, 0, 16, 16, 16], indices: [0, 1, 2] }], animations: [{ id: "anim", width: 16, height: 16, frame_start: 1, frame_end: 2, playback: go.PLAYBACK_ONCE_FORWARD }] }';
 const TEXTURE_PARAMS =
   "{ type: graphics.TEXTURE_TYPE_2D, width: 16, height: 16, format: graphics.TEXTURE_FORMAT_RGBA }";
 const TEXTURE_BUFFER =
@@ -272,6 +354,8 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "sys.deserialize:1": "sys.serialize({})",
   // Enabling throttling would stop the frames the probe reports on.
   "sys.set_engine_throttle:1": "false",
+  // A frame cap of one would stretch the message queue to one post a second.
+  "sys.set_update_frequency:1": "60",
   "sys.save:1": '"probe.sav"',
   "sys.load:1": '"probe.sav"',
   "sys.load_buffer:1": '"game.project"',

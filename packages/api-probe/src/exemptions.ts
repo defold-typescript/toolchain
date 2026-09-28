@@ -37,6 +37,8 @@ export interface ProbeFailures {
   readonly returnKinds: string[];
   // Index probes whose slot did not behave as its class says.
   readonly indexSemantics: string[];
+  // Writes the engine accepted to a property declared readonly.
+  readonly writableReadonly: string[];
 }
 
 export class ExemptionValidationError extends Error {
@@ -181,6 +183,7 @@ export function evaluateProbe(
     negativeMisfires: [],
     returnKinds: [],
     indexSemantics: [],
+    writableReadonly: [],
   };
   const seen = new Set<string>();
   for (const pass of passes) {
@@ -188,8 +191,9 @@ export function evaluateProbe(
     const calls = new Map(pass.calls.map((c) => [outcomeKey(pass.backend, c.name, c.variant), c]));
     const last = pass.outcomes.at(-1);
     const inherited = exemptedFailures(pass, exemptions);
-    for (const key of calls.keys()) {
+    for (const [key, call] of calls) {
       if (reported.has(key)) continue;
+      if (call.message?.direction === "incoming" && call.message.triggered !== true) continue;
       const after = last === undefined ? "before any call reported" : `after ${last.name}`;
       failures.unreported.push(`${key}: no outcome; the script died ${after}`);
     }
@@ -200,6 +204,14 @@ export function evaluateProbe(
       const call = calls.get(key);
       if (call?.negative !== undefined) {
         evaluateNegative(pass, call, outcome, exemption, inherited.get(call.name), failures);
+        continue;
+      }
+      if (call?.readonlySet === true) {
+        if (outcome.outcome === "ok") {
+          failures.writableReadonly.push(
+            `${key}: the engine accepts a write to a property declared readonly`,
+          );
+        }
         continue;
       }
       if (outcome.outcome === "ok") {

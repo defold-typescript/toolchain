@@ -58,3 +58,15 @@ components {
   id: "gui"
   component: "/main/probe.gui"
 }
+components {
+  id: "trigger"
+  component: "/main/trigger.collisionobject"
+}
+components {
+  id: "loader"
+  component: "/main/loader.collectionproxy"
+}
+components {
+  id: "floor"
+  component: "/main/floor.collisionobject"
+}

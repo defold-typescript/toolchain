@@ -713,6 +713,15 @@ export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrecti
     },
   ],
   [
+    "go.scale",
+    {
+      ts: "number | Vector3",
+      upstream: "number",
+      reason:
+        "the engine probe reads a vector3 back from `go.get`; `go.set` still takes a number for a uniform scale, as `label.scale` declares",
+    },
+  ],
+  [
     "camera.projection",
     {
       ts: "Matrix4",
@@ -3857,8 +3866,57 @@ function prepareConstant(c: ApiConstant, prefix: string): PreparedConstant | nul
   return { name: stripped, fqn: c.name, original: c };
 }
 
+// Where the engine registers a constant as a string: the vendored binding file
+// and the call there whose macro pushes the literal.
+export interface StringConstantSource {
+  readonly binding: string;
+  readonly macro: string;
+  readonly call: string;
+}
+
+const GUI_SCRIPT = "engine/gui/src/gui_script.cpp";
+const IMAGE_SCRIPT = "engine/gamesys/src/gamesys/scripts/script_image.cpp";
+
+// Constants the engine registers with `lua_pushliteral`, keyed by FQN. The
+// ref-docs give constants no type, and every other constant is a number;
+// `string-constant-provenance.test.ts` reds when a vendored binding stops
+// pushing one as a string.
+export const STRING_CONSTANTS: ReadonlyMap<string, StringConstantSource> = new Map([
+  ...[
+    "position",
+    "rotation",
+    "euler",
+    "scale",
+    "color",
+    "outline",
+    "shadow",
+    "size",
+    "fill_angle",
+    "inner_radius",
+    "leading",
+    "tracking",
+    "slice9",
+  ].map((prop): [string, StringConstantSource] => {
+    const name = prop.toUpperCase();
+    const call = `SETPROP(${prop}, ${name})`;
+    return [`gui.PROP_${name}`, { binding: GUI_SCRIPT, macro: "SETPROP", call }];
+  }),
+  ...(
+    [
+      ["TYPE_RGB", "rgb"],
+      ["TYPE_RGBA", "rgba"],
+      ["TYPE_LUMINANCE", "l"],
+      ["TYPE_LUMINANCE_ALPHA", "la"],
+    ] as const
+  ).map(([name, value]): [string, StringConstantSource] => [
+    `image.${name}`,
+    { binding: IMAGE_SCRIPT, macro: "SETCONSTANT", call: `SETCONSTANT(${name}, "${value}")` },
+  ]),
+]);
+
 function brandType(fqn: string): string {
-  return `number & { readonly __brand: "${fqn}" }`;
+  const base = STRING_CONSTANTS.has(fqn) ? "string" : "number";
+  return `${base} & { readonly __brand: "${fqn}" }`;
 }
 
 function prepareVariable(v: ApiVariable, prefix: string): PreparedVariable | null {
@@ -4364,6 +4422,11 @@ function emitReturn(
   return { type: ts, trailing: "", slots: [{ position: 0, name: first.name, ts }] };
 }
 
+// The mark upstream opens a property's description with when the engine refuses
+// to write it: `go.set` raises "Unable to set the property ... since it is read
+// only".
+const READ_ONLY_MARK = /^\s*<span class="mark">READ ONLY<\/span>/;
+
 function emitPropertyMembers(
   p: ApiProperty,
   mapType: (t: string) => string,
@@ -4384,7 +4447,8 @@ function emitPropertyMembers(
       : p.types.length > 0
         ? unionFromTokens(p.types, mapType)
         : "unknown";
-  return keys.map((key) => `${key}: ${ts};`);
+  const modifier = READ_ONLY_MARK.test(p.description) ? "readonly " : "";
+  return keys.map((key) => `${modifier}${key}: ${ts};`);
 }
 
 // Like `unionFromTokens`, but a `table` token whose slot doc carries a parseable
@@ -4631,7 +4695,7 @@ function unionFromTokens(tokens: readonly string[], mapType: (t: string) => stri
   return joinUnionArms(mapped);
 }
 
-const BRAND_ARM = /^number & \{ readonly __brand: "([^"]+)" \}$/;
+const BRAND_ARM = /^(?:number|string) & \{ readonly __brand: "([^"]+)" \}$/;
 
 // Joins already-mapped arms, collapsing the branded ones to their alias when
 // they are exactly a `CONSTANT_UNION_ALIASES` member set. The alias takes the

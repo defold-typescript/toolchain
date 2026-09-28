@@ -120,7 +120,7 @@ declare global {
       /**
        * READ ONLY The current animation id. An animation that plays currently for the sprite. The type of the property is hash.
        */
-      animation: Hash;
+      readonly animation: Hash;
       /**
        * The normalized animation cursor. The type of the property is number.
        */
@@ -128,7 +128,7 @@ declare global {
       /**
        * READ ONLY The frame count of the currently playing animation.
        */
-      frame_count: number;
+      readonly frame_count: number;
       /**
        * The image used when rendering the sprite. The type of the property is hash.
        */

@@ -213,6 +213,7 @@ describe("evaluateProbe on negative calls", () => {
       negativeMisfires: [],
       returnKinds: [],
       indexSemantics: [],
+      writableReadonly: [],
     });
   });
 
@@ -352,6 +353,49 @@ describe("evaluateProbe on returns", () => {
       {},
     );
     expect(failures.returnKinds).toEqual(["go.get_id:required: value 1 is number, declared hash"]);
+  });
+});
+
+describe("evaluateProbe on property writes and received messages", () => {
+  test("a set of a readonly property must raise, and one the engine accepts fails", () => {
+    const set = (name: string): ProbeCall => ({ ...call(name, "set"), readonlySet: true });
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [set("sprite.properties.a"), set("sprite.properties.b")],
+          outcomes: [
+            { ...outcome("sprite.properties.a", "ok"), variant: "set" },
+            { ...outcome("sprite.properties.b", "engine-error", "read only"), variant: "set" },
+          ],
+        },
+      ],
+      {},
+    );
+    expect(failures.writableReadonly).toEqual([
+      "sprite.properties.a:set: the engine accepts a write to a property declared readonly",
+    ]);
+    expect(failures.unexempted).toEqual([]);
+  });
+
+  test("an incoming message the probe project does not trigger may go unreported", () => {
+    const incoming = (id: string, triggered: boolean): ProbeCall => ({
+      ...call(`message.${id}`, "receive"),
+      message: { id, direction: "incoming", triggered },
+    });
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [incoming("proxy_loaded", true), incoming("ray_cast_missed", false)],
+          outcomes: [],
+        },
+      ],
+      {},
+    );
+    expect(failures.unreported).toEqual([
+      "message.proxy_loaded:receive: no outcome; the script died before any call reported",
+    ]);
   });
 });
 

@@ -6,7 +6,7 @@ animations {
   images {
     image: "/builtins/assets/images/logo/logo_blue_256.png"
   }
-  playback: PLAYBACK_LOOP_FORWARD
+  playback: PLAYBACK_ONCE_FORWARD
   fps: 30
 }
 margin: 0

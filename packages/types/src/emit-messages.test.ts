@@ -1,8 +1,11 @@
 import { describe, expect, test } from "bun:test";
+import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
 import {
   applyMessageDeprecations,
+  applyMessageFieldCorrections,
   emitBuiltinMessages,
   MESSAGE_DEPRECATIONS,
+  MESSAGE_FIELD_CORRECTIONS,
   type MessageCatalog,
   parseMessagesDoc,
 } from "./emit-messages";
@@ -258,15 +261,72 @@ describe("applyMessageDeprecations", () => {
     expect(goAcquire?.deprecatedSince).toBeUndefined();
   });
 
-  test("applying the default overlay then emitting the fixture preserves the generated declaration bytes", async () => {
+  test("applying the default overlays then emitting the fixture preserves the generated declaration bytes", async () => {
     const raw = JSON.parse(
       await Bun.file(new URL("../fixtures/messages_doc.json", import.meta.url)).text(),
     );
-    const catalog = applyMessageDeprecations(parseMessagesDoc(raw));
+    const catalog = applyMessageFieldCorrections(applyMessageDeprecations(parseMessagesDoc(raw)));
     const emitted = emitBuiltinMessages(catalog);
     const generated = await Bun.file(
       new URL("../generated/builtin-messages.d.ts", import.meta.url),
     ).text();
     expect(emitted).toBe(generated);
+  });
+});
+
+describe("applyMessageFieldCorrections", () => {
+  const camera: MessageCatalog = {
+    entries: [
+      {
+        name: "set_camera",
+        origin: "camera",
+        description: "",
+        payload: [
+          { name: "fov", types: ["number"], optional: false, doc: "" },
+          { name: "orthographic_projection", types: ["boolean"], optional: false, doc: "" },
+        ],
+      },
+    ],
+  };
+  const overlay = [
+    {
+      origin: "camera",
+      name: "set_camera",
+      field: "orthographic_projection",
+      types: ["number"],
+      upstream: ["boolean"],
+      reason: "test",
+    },
+  ];
+
+  test("retypes the corrected field and leaves its siblings alone", () => {
+    const [entry] = applyMessageFieldCorrections(camera, overlay).entries;
+    expect(entry?.payload.map((field) => [field.name, field.types])).toEqual([
+      ["fov", ["number"]],
+      ["orthographic_projection", ["number"]],
+    ]);
+    expect(camera.entries[0]?.payload[1]?.types).toEqual(["boolean"]);
+  });
+
+  test("throws once upstream no longer declares the corrected type, or the field is gone", () => {
+    const fixed: MessageCatalog = {
+      entries: [
+        {
+          ...(camera.entries[0] as MessageCatalog["entries"][number]),
+          payload: [
+            { name: "orthographic_projection", types: ["number"], optional: false, doc: "" },
+          ],
+        },
+      ],
+    };
+    expect(() => applyMessageFieldCorrections(fixed, overlay)).toThrow(/upstream now declares/);
+    expect(() => applyMessageFieldCorrections({ entries: [] }, overlay)).toThrow(
+      /no catalog field/,
+    );
+  });
+
+  test("every committed correction matches the committed catalog", () => {
+    expect(MESSAGE_FIELD_CORRECTIONS.length).toBeGreaterThan(0);
+    expect(() => applyMessageFieldCorrections(parseMessagesDoc(messagesDoc))).not.toThrow();
   });
 });

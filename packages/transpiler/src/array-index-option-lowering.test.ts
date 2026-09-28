@@ -139,7 +139,7 @@ describe("array index option lowering", () => {
       local ____gui_2 = gui
       local get = ____gui_2.get
       get(node, "tint", {index = 1})
-      go.get()(url, "cursor", {index = 1})
+      go.get(url, "cursor", {index = 1})
       go.get(url, "tint", {key = "x"})
       go.get(url, "tint")
       local first = values[1]
