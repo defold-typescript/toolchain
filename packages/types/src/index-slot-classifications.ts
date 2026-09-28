@@ -247,6 +247,17 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
       evidence: "Indices are lua based and must be in the range of 1 .. <number-of-geometries>",
     },
   ]),
+  ...[
+    "resource.create_atlas:param:table:animations:frames",
+    "resource.set_atlas:param:table:animations:frames",
+  ].map((key): [string, IndexSlotClassification] => [
+    key,
+    {
+      class: "native-1",
+      evidence:
+        "script_resource.cpp:CheckAtlasArguments checks each frame against 1 .. <number-of-geometries>",
+    },
+  ]),
   [
     "resource.set_texture:param:table:page",
     { class: "native-0", evidence: "slice of the array texture. Zero-based" },

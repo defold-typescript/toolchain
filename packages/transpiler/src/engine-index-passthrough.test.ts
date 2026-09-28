@@ -299,6 +299,7 @@ describe("engine index passthrough", () => {
         "declare const k: Idx;",
         "declare const a: any;",
         "declare const atlas: Parameters<typeof resource.set_atlas>[1];",
+        "declare const built: ReturnType<typeof resource.get_atlas>;",
         "function density<T extends number>(n: T) { return b2d.fixture.get_density(body, n); }",
         "b2d.fixture.get_density(body, 0);",
         "b2d.fixture.get_density(body, i + 2);",
@@ -309,8 +310,8 @@ describe("engine index passthrough", () => {
         "const { index } = created;",
         "b2d.fixture.get_density(body, index);",
         'resource.set_atlas("/a.texturesetc", atlas);',
-        'resource.set_atlas("/a.texturesetc", { texture: "/t.texturec", animations: [{ id: "run", width: 8, height: 8, frame_start: 1, frame_end: 4 }], geometries: [] });',
-        "const start = atlas.animations[i].frame_start;",
+        'resource.set_atlas("/a.texturesetc", { texture: "/t.texturec", animations: [{ id: "run", width: 8, height: 8, frame_start: 1, frame_end: 4 }], geometries: [{ vertices: [0], uvs: [0], indices: [0] }] });',
+        "const start = built.animations[i].frame_start;",
         "const [x, y] = tilemap.get_bounds(url);",
         'tilemap.set_tile(url, "layer", x, y, 3);',
         "print(b2d.fixture.get_density(body, b2d.body.get_fixtures(body)[0].index));",
@@ -337,8 +338,8 @@ describe("engine index passthrough", () => {
           height = 8,
           frame_start = 1,
           frame_end = 4
-      }}, geometries = {}})
-      local start = atlas.animations[i + 1].frame_start
+      }}, geometries = {{vertices = {0}, uvs = {0}, indices = {0}}}})
+      local start = built.animations[i + 1].frame_start
       local x, y = tilemap.get_bounds(url)
       tilemap.set_tile(
           url,

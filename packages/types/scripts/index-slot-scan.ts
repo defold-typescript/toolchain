@@ -132,6 +132,10 @@ function typeFieldKeys(prefix: string, type: ts.TypeNode | undefined, keys: stri
     typeFieldKeys(prefix, ts.isArrayTypeNode(type) ? type.elementType : type.type, keys);
   } else if (ts.isUnionTypeNode(type) || ts.isIntersectionTypeNode(type)) {
     for (const member of type.types) typeFieldKeys(prefix, member, keys);
+  } else if (ts.isTupleTypeNode(type)) {
+    for (const element of type.elements) typeFieldKeys(prefix, element, keys);
+  } else if (ts.isRestTypeNode(type) || ts.isNamedTupleMember(type)) {
+    typeFieldKeys(prefix, type.type, keys);
   } else if (ts.isTypeLiteralNode(type)) {
     for (const member of type.members) {
       if (!ts.isPropertySignature(member) || member.name === undefined) continue;
