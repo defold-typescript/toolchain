@@ -25,4 +25,13 @@ instances {
   id: "victim"
   prototype: "/main/spawn.go"
 }
+instances {
+  id: "faller"
+  prototype: "/main/peer.go"
+  position {
+    x: 0.0
+    y: -167.0
+    z: 0.0
+  }
+}
 scale_along_z: 0

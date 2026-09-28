@@ -76,6 +76,30 @@ describe("parseProbeLog", () => {
     const [outcome] = parseProbeLog(["PROBE\tgo.get\trequired\terr\tbad argument #1"]);
     expect(outcome?.returns).toBeUndefined();
   });
+
+  test("an ERROR line in a posted message's frames fails that post with the raw line", () => {
+    const outcomes = parseProbeLog([
+      "DEBUG:SCRIPT: POST\tmessage.load\trequired\t3",
+      "DEBUG:SCRIPT: PROBE\tmessage.load\trequired\tok\t",
+      "ERROR:GAMESYS: The collection /main/proxy.collectionc could not be loaded.",
+      "DEBUG:SCRIPT: POST\tmessage.init\trequired\t5",
+      "DEBUG:SCRIPT: PROBE\tmessage.init\trequired\tok\t",
+      "DEBUG:SCRIPT: POST\tmessage.play_sound\trequired\t6",
+      "DEBUG:SCRIPT: PROBE\tmessage.play_sound\trequired\terr\tunknown field",
+      "ERROR:SOUND: no sound",
+      "DEBUG:SCRIPT: POSTS_DONE",
+      "ERROR:GAMEOBJECT: unrelated",
+    ]);
+    expect(outcomes.map((o) => [o.name, o.outcome, o.message])).toEqual([
+      [
+        "message.load",
+        "engine-error",
+        "frame 3: ERROR:GAMESYS: The collection /main/proxy.collectionc could not be loaded.",
+      ],
+      ["message.init", "ok", ""],
+      ["message.play_sound", "engine-error", "unknown field"],
+    ]);
+  });
 });
 
 describe("classifyError", () => {

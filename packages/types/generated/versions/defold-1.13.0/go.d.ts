@@ -1105,7 +1105,7 @@ declare global {
       /**
        * The uniform scale of the game object. The type of the property is number.
        */
-      scale: number;
+      scale: number | Vector3;
     }
   }
 }

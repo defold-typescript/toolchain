@@ -35,7 +35,7 @@ declare global {
     release_input_focus: Record<string, never>;
     resize: { height: number; width: number };
     resume_rendering: Record<string, never>;
-    set_camera: { aspect_ratio: number; fov: number; near_z: number; far_z: number; orthographic_projection: boolean; orthographic_zoom: number; orthographic_mode: number };
+    set_camera: { aspect_ratio: number; fov: number; near_z: number; far_z: number; orthographic_projection: number; orthographic_zoom: number; orthographic_mode: number };
     set_gain: { gain: number };
     set_parent: { parent_id?: Hash; keep_world_transform?: 0 | 1 };
     set_time_step: { factor: number; mode: number };

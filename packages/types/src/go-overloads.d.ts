@@ -6,6 +6,19 @@ interface ScriptProperty<TValue> {
   readonly __defoldScriptProperty: TValue;
 }
 
+// True when `A` and `B` are identical, `readonly` modifiers included, which
+// plain assignability ignores.
+type Identical<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
+// The keys of `P` a write may name: every key but a `readonly` one, which the
+// engine refuses to set.
+type WritableKey<P> = {
+  [K in keyof P]-?: Identical<{ [Q in K]: P[K] }, { -readonly [Q in K]: P[K] }> extends true
+    ? K
+    : never;
+}[keyof P];
+
 declare global {
   namespace go {
     interface GoPropertyOptions {
@@ -62,11 +75,12 @@ declare global {
      * ```ts
      * go.set("#sprite", "tint", vmath.vector4(1, 0, 0, 1));
      * // Name the target component to gate the value to its property type. The
-     * // empty call applies the type argument, then the inner call infers the key:
+     * // empty call applies the type argument, then the inner call infers the key.
+     * // A read-only property such as "animation" is not a key it accepts:
      * go.set<sprite.properties>()("#sprite", "playback_rate", 2);
      * ```
      */
-    function set<P>(): <K extends keyof P>(
+    function set<P>(): <K extends WritableKey<P>>(
       url: SceneAddress | Hash | Url,
       property: K,
       value: P[K],

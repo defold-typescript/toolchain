@@ -85,6 +85,58 @@ export function applyMessageDeprecations(
   return { entries };
 }
 
+// A payload field whose documented type the engine refuses, with the type it
+// takes instead. `upstream` is the documented type the correction replaces:
+// once the catalog stops declaring it the entry throws and is deleted.
+export interface MessageFieldCorrection {
+  readonly origin: string;
+  readonly name: string;
+  readonly field: string;
+  readonly types: readonly string[];
+  readonly upstream: readonly string[];
+  readonly reason: string;
+}
+
+// Demonstrated by the engine probe only: each entry is a payload the running
+// engine rejected when it held the documented type.
+export const MESSAGE_FIELD_CORRECTIONS: readonly MessageFieldCorrection[] = [
+  {
+    origin: "camera",
+    name: "set_camera",
+    field: "orthographic_projection",
+    types: ["number"],
+    upstream: ["boolean"],
+    reason:
+      "the engine decodes the payload into a number field and raises `number expected, got boolean` for the documented boolean",
+  },
+];
+
+export function applyMessageFieldCorrections(
+  catalog: MessageCatalog,
+  overlay: readonly MessageFieldCorrection[] = MESSAGE_FIELD_CORRECTIONS,
+): MessageCatalog {
+  const entries = catalog.entries.map((entry) => ({
+    ...entry,
+    payload: entry.payload.map((field) => ({ ...field })),
+  }));
+  for (const correction of overlay) {
+    const field = entries
+      .find((entry) => entry.origin === correction.origin && entry.name === correction.name)
+      ?.payload.find((candidate) => candidate.name === correction.field);
+    const identity = `(origin=${correction.origin}, name=${correction.name}, field=${correction.field})`;
+    if (field === undefined) {
+      throw new Error(`applyMessageFieldCorrections: no catalog field matches ${identity}`);
+    }
+    if (field.types.join("|") !== correction.upstream.join("|")) {
+      throw new Error(
+        `applyMessageFieldCorrections: upstream now declares ${field.types.join("|")} for ${identity}; delete the correction`,
+      );
+    }
+    field.types = [...correction.types];
+  }
+  return { entries };
+}
+
 const TS_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 const ENGINE_TYPES = [
   "Hash",
