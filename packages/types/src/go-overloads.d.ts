@@ -22,7 +22,7 @@ type WritableKey<P> = {
 declare global {
   namespace go {
     interface GoPropertyOptions {
-      /** 1-based index into an array property; passed to Defold unchanged. */
+      /** **⚠️ 1-based index into an array property; passed to Defold unchanged.** */
       index?: number;
       key?: Hash | string;
       keys?: (Hash | string)[];
@@ -34,7 +34,7 @@ declare global {
      * @param url - url of the game object or component having the property
      * @param property - id of the property to retrieve
      * @param options - optional options table
-     * - index number 1-based index into an array property; passed to Defold unchanged
+     * - index number **⚠️ 1-based index into an array property; passed to Defold unchanged.**
      * - key hash or string name of internal property
      * - keys array of hashes or strings identifying internal component resources (e.g. a particle fx emitter, see examples below)
      * @returns the value of the specified property
@@ -68,7 +68,7 @@ declare global {
      * @param property - id of the property to set
      * @param value - the value to set, or an array of vector4 to set a material property array
      * @param options - optional options table
-     * - index integer 1-based index into an array property; passed to Defold unchanged
+     * - index integer **⚠️ 1-based index into an array property; passed to Defold unchanged.**
      * - key hash or string name of internal property
      * - keys array of hashes or strings identifying internal component resources (e.g. a particle fx emitter, see examples below)
      * @example

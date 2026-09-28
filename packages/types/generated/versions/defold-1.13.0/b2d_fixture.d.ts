@@ -11,8 +11,8 @@ declare global {
      * Get fixture AABB for a child shape.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
-     * @param child_index - 1-based child shape index. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param child_index - 1-based child shape index. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns table with `lower` and `upper`
      */
     function get_aabb(body: Opaque<"b2Body">, fixture_index: number, child_index: number): { lower: Vector3; upper: Vector3 };
@@ -20,7 +20,7 @@ declare global {
      * Get fixture density.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns density in kg/m^2
      */
     function get_density(body: Opaque<"b2Body">, fixture_index: number): number;
@@ -28,8 +28,8 @@ declare global {
      * Get fixture filter data for a child shape.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
-     * @param child_index - 1-based child shape index. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param child_index - 1-based child shape index. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns table with `category_bits`, `mask_bits`, and `group_index`
      */
     function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): { category_bits: number; mask_bits: number; group_index: number };
@@ -37,21 +37,21 @@ declare global {
      * Get fixture friction.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      */
     function get_friction(body: Opaque<"b2Body">, fixture_index: number): number;
     /**
      * Get fixture restitution.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      */
     function get_restitution(body: Opaque<"b2Body">, fixture_index: number): number;
     /**
      * Get the fixture shape as a functional shape table.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`,
      * suitable for reuse in `b2d.body.create_fixture`.
      * Circle shapes use `radius` and `center`, edge shapes use `v1`, `v2`, optional `v0`, `v3`,
@@ -63,21 +63,21 @@ declare global {
      * Get the fixture type.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      */
     function get_type(body: Opaque<"b2Body">, fixture_index: number): number;
     /**
      * Check if a fixture is a sensor.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      */
     function is_sensor(body: Opaque<"b2Body">, fixture_index: number): boolean;
     /**
      * Refilter a fixture.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      * @param touch_proxies - if true, touch broad-phase proxies
      */
     function refilter(body: Opaque<"b2Body">, fixture_index: number, touch_proxies: boolean): void;
@@ -85,7 +85,7 @@ declare global {
      * Set fixture density.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      * @param density - density in kg/m^2
      * @param update_mass - if true, reset body mass data after the change
      */
@@ -94,8 +94,8 @@ declare global {
      * Set fixture filter data for a child shape.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
-     * @param child_index - 1-based child shape index. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param child_index - 1-based child shape index. **⚠️ 1-based; passed to Defold unchanged.**
      * @param filter - table with `category_bits`, `mask_bits`, and `group_index`
      */
     function set_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number, filter: { category_bits: number; mask_bits: number; group_index: number }): void;
@@ -103,21 +103,21 @@ declare global {
      * Set fixture friction.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      */
     function set_friction(body: Opaque<"b2Body">, fixture_index: number, friction: number): void;
     /**
      * Set fixture restitution.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      */
     function set_restitution(body: Opaque<"b2Body">, fixture_index: number, restitution: number): void;
     /**
      * Set sensor mode for a fixture.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      */
     function set_sensor(body: Opaque<"b2Body">, fixture_index: number, enabled: boolean): void;
     /**
@@ -128,7 +128,7 @@ declare global {
      * The body mass is not updated unless `update_mass` is true.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      * @param shape - shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
      * @param update_mass - if true, reset body mass data after the change
      * @example
@@ -146,7 +146,7 @@ declare global {
      * Test a point against a fixture.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      * @param point - point in world coordinates
      */
     function test_point(body: Opaque<"b2Body">, fixture_index: number, point: Vector3): boolean;

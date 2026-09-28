@@ -228,7 +228,7 @@ declare global {
      * @param filter - optional query filter with `category_bits`, `mask_bits`, and optional `group_index`
      * @param max_results - optional maximum result count
      * @returns `[fixtures, stats]`:
-     * - `fixtures` — array of fixture info tables. `index` is 1-based; passed to Defold unchanged.
+     * - `fixtures` — array of fixture info tables. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * - `stats` — table with `node_visits` and `leaf_visits`
      */
     function overlap_aabb(world: Opaque<"b2World">, aabb: { lower: Vector3; upper: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>;
@@ -249,7 +249,7 @@ declare global {
      * @param filter - optional query filter with `category_bits`, `mask_bits`, and optional `group_index`
      * @param max_results - optional maximum result count
      * @returns `[fixtures, stats]`:
-     * - `fixtures` — array of fixture info tables. `index` is 1-based; passed to Defold unchanged.
+     * - `fixtures` — array of fixture info tables. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * - `stats` — table with `node_visits` and `leaf_visits`
      */
     function overlap_shape(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>;

@@ -51,7 +51,7 @@ declare global {
      * Check if contact events are enabled for a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns true if contact events are enabled
      */
     function are_contact_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
@@ -66,7 +66,7 @@ declare global {
      * Check if hit events are enabled for a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns true if hit events are enabled
      */
     function are_hit_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
@@ -81,7 +81,7 @@ declare global {
      * Check if pre-solve events are enabled for a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns true if pre-solve events are enabled
      */
     function are_pre_solve_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
@@ -96,7 +96,7 @@ declare global {
      * Check if sensor events are enabled for a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns true if sensor events are enabled
      */
     function are_sensor_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
@@ -111,7 +111,7 @@ declare global {
      * Enable or disable contact events for a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @param enable - true to enable contact events
      */
     function enable_contact_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
@@ -126,7 +126,7 @@ declare global {
      * Enable or disable hit events for a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @param enable - true to enable hit events
      */
     function enable_hit_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
@@ -141,7 +141,7 @@ declare global {
      * Enable or disable pre-solve events for a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @param enable - true to enable pre-solve events
      */
     function enable_pre_solve_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
@@ -156,7 +156,7 @@ declare global {
      * Enable or disable sensor events for a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @param enable - true to enable sensor events
      */
     function enable_sensor_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
@@ -171,7 +171,7 @@ declare global {
      * Get the body owning a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns owning body
      */
     function get_body(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2Body">;
@@ -187,7 +187,7 @@ declare global {
      * Get the closest point on a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @param target - world target point
      * @returns closest world point on the shape
      */
@@ -203,7 +203,7 @@ declare global {
      * Get shape contact capacity.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns maximum contact data count
      */
     function get_contact_capacity(body: Opaque<"b2Body">, shape_index: number): number;
@@ -218,7 +218,7 @@ declare global {
      * Get touching contact data for a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns array of contact tables
      */
     function get_contact_data(body: Opaque<"b2Body">, shape_index: number): Record<string | number, unknown>;
@@ -233,7 +233,7 @@ declare global {
      * Get mass data for a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns table with `mass`, `center`, and `inertia`
      */
     function get_mass_data(body: Opaque<"b2Body">, shape_index: number): { mass: number; center: Vector3; inertia: number };
@@ -248,7 +248,7 @@ declare global {
      * Get shape material id.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns shape material id
      */
     function get_material(body: Opaque<"b2Body">, shape_index: number): number;
@@ -263,7 +263,7 @@ declare global {
      * Get sensor overlap capacity.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns maximum sensor overlap count
      */
     function get_sensor_capacity(body: Opaque<"b2Body">, shape_index: number): number;
@@ -278,7 +278,7 @@ declare global {
      * Get sensor overlaps.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns array of shape info tables
      */
     function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): { shape_id: number }[];
@@ -293,7 +293,7 @@ declare global {
      * Get a shape's geometry.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
      */
     function get_shape(body: Opaque<"b2Body">, shape_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };
@@ -308,7 +308,7 @@ declare global {
      * Get the world owning a shape.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns owning world
      */
     function get_world(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2World">;
@@ -323,7 +323,7 @@ declare global {
      * Validate a shape handle.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns true if the shape handle still refers to a live Box2D shape
      */
     function is_valid(body: Opaque<"b2Body">, shape_index: number): boolean;
@@ -341,7 +341,7 @@ declare global {
      * Ray cast a shape directly.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @param origin - world ray origin
      * @param translation - world ray translation
      * @param max_fraction - optional maximum translation fraction, defaults to 1
@@ -359,7 +359,7 @@ declare global {
      * Set shape material id.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @param material - shape material id
      */
     function set_material(body: Opaque<"b2Body">, shape_index: number, material: number): void;
@@ -388,7 +388,7 @@ declare global {
      * updated unless `update_mass` is true.
      *
      * @param body - The body that owns the shape.
-     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. 1-based; passed to Defold unchanged.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @param definition - shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
      * @param update_mass - true to reset body mass from shapes
      */
