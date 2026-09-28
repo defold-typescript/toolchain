@@ -556,19 +556,38 @@ const [x, y] = tilemap.get_bounds(url);
 tilemap.set_tile(url, "layer1", x, y, 3);
 ```
 
-- **1-based** — [`b2d.fixture`](/api/b2d.fixture) `fixture_index` and
-  `child_index`, [`b2d.body`](/api/b2d.body) `destroy_fixture` and
-  `destroy_shape`, the [`b2d.shape`](/api/b2d.shape) `body, shape_index` form,
-  the [`tilemap`](/api/tilemap) `set_tile`, `get_tile` and `get_tile_info`
-  coordinates and `get_bounds`'s `x` and `y`, [`socket`](/api/socket)
-  `client.send`'s `i`, `j`, `index` and `lastindex`, the `index` of the fixture
-  and shape tables `b2d.body` and [`b2d.world`](/api/b2d.world) return, the
-  animation `frame_start` and `frame_end` of
-  [`resource.create_atlas`](/api/resource) and `set_atlas`,
-  `profiler.view_recorded_frame`'s `frame`, `options.index` below, and the
-  editor's `image.pixel` and `tilemap.tiles` indexes.
-- **0-based** — [`gui.get_index`](/api/gui), the [`crash`](/api/crash) user
-  fields and the `page` of [`resource.set_texture`](/api/resource).
+Every position the engine API takes or returns, by the base Defold counts it
+from:
+
+| Base | API | Position |
+| --- | --- | --- |
+| ⚠️ **1-based** | `b2d.body.destroy_fixture` | `fixture_index` |
+| ⚠️ **1-based** | `b2d.fixture.get_aabb`, `b2d.fixture.get_density`, `b2d.fixture.get_filter_data`, `b2d.fixture.get_friction`, `b2d.fixture.get_restitution`, `b2d.fixture.get_shape`, `b2d.fixture.get_type`, `b2d.fixture.is_sensor`, `b2d.fixture.refilter`, `b2d.fixture.set_density`, `b2d.fixture.set_filter_data`, `b2d.fixture.set_friction`, `b2d.fixture.set_restitution`, `b2d.fixture.set_sensor`, `b2d.fixture.set_shape`, `b2d.fixture.test_point` | `fixture_index` |
+| ⚠️ **1-based** | `b2d.fixture.get_aabb`, `b2d.fixture.get_filter_data`, `b2d.fixture.set_filter_data` | `child_index` |
+| ⚠️ **1-based** | `b2d.body.create_fixture` | `index` field of the returned `fixture` |
+| ⚠️ **1-based** | `b2d.body.get_fixtures` | `index` field of the returned `fixtures` |
+| ⚠️ **1-based** | `b2d.world.overlap_aabb`, `b2d.world.overlap_shape` | `index` field of the returned `fixtures` |
+| ⚠️ **1-based** | `b2d.body.create_shape` | `index` field of the returned `result` |
+| ⚠️ **1-based** | `b2d.body.destroy_shape` | `shape_index` |
+| ⚠️ **1-based** | `b2d.shape.are_contact_events_enabled`, `b2d.shape.are_hit_events_enabled`, `b2d.shape.are_pre_solve_events_enabled`, `b2d.shape.are_sensor_events_enabled`, `b2d.shape.enable_contact_events`, `b2d.shape.enable_hit_events`, `b2d.shape.enable_pre_solve_events`, `b2d.shape.enable_sensor_events`, `b2d.shape.get_body`, `b2d.shape.get_closest_point`, `b2d.shape.get_contact_capacity`, `b2d.shape.get_contact_data`, `b2d.shape.get_mass_data`, `b2d.shape.get_material`, `b2d.shape.get_sensor_capacity`, `b2d.shape.get_sensor_overlaps`, `b2d.shape.get_shape`, `b2d.shape.get_world`, `b2d.shape.is_valid`, `b2d.shape.ray_cast`, `b2d.shape.set_material`, `b2d.shape.set_shape` | `shape_index` |
+| ⚠️ **1-based** | `client:send` | `i` and `j`; counts from the end when negative |
+| ⚠️ **1-based** | `client:send` | returned `index` and `lastindex` |
+| ⚠️ **1-based** | `go.get`, `go.set` | `index` field of `options` |
+| ⚠️ **1-based** | `gui.get`, `gui.set` | `index` field of `options` |
+| ⚠️ **1-based** | `image.pixel` | `x` and `y` |
+| ⚠️ **1-based** | `profiler.view_recorded_frame` | `frame` field of `frame_index` |
+| ⚠️ **1-based** | `resource.create_atlas`, `resource.set_atlas` | `frame_start` and `frame_end` fields of `table` |
+| ⚠️ **1-based** | `resource.create_atlas`, `resource.set_atlas` | `frames` field of `table.animations` |
+| ⚠️ **1-based** | `tilemap.set_tile`, `tilemap.get_tile`, `tilemap.get_tile_info` | `x` and `y` |
+| ⚠️ **1-based** | `tilemap.get_bounds` | returned `x` and `y` |
+| ⚠️ **1-based** | `tilemap.tiles.get_info` | `index` field of the returned `info` |
+| ⚠️ **1-based** | `tilemap.tiles.get_tile` | returned `tile_index` |
+| ⚠️ **1-based** | `tilemap.tiles.set` | `tile_or_info` |
+| ⚠️ **1-based** | `tilemap.tiles.set` | `index` field of `tile_or_info` |
+| 0️⃣ **0-based** | `crash.get_user_field`, `crash.set_user_field` | `index` |
+| 0️⃣ **0-based** | `gui.get_index` | returned `index` |
+| 0️⃣ **0-based** | `resource.set_texture` | `page` field of `table` |
+
 - **Round trips** — a value an engine call returned goes straight back in:
   `client.send(data, lastindex + 1)` resumes after the last byte sent, and
   `b2d.fixture.get_density(body, b2d.body.get_fixtures(body)[0].index)` reads

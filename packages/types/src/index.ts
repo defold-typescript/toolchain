@@ -68,6 +68,11 @@ export {
   type TranslationStore,
 } from "./example-store";
 export {
+  type EngineIndexBaseRow,
+  engineIndexBaseRows,
+  engineIndexBaseTable,
+} from "./index-base-table";
+export {
   INDEX_SLOT_CLASSIFICATIONS,
   type IndexSlotClass,
   type IndexSlotClassification,

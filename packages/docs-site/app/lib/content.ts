@@ -4,6 +4,7 @@ import { CHANGELOG_TAG_DATES } from "../generated/changelog-dates";
 import { applyChangelogTagDates } from "./changelog-dates";
 import { parseFrontmatter } from "./frontmatter";
 import type { GuidePage } from "./guide";
+import { expandGuideDirectives } from "./guide-directives";
 import { listGuidePages } from "./guide-loader";
 import { guideSymbolRoutes } from "./guide-symbol-links";
 import { renderMarkdown } from "./markdown";
@@ -29,7 +30,9 @@ export const INDEX_HEADING = "Overview";
  * sees.
  */
 export function renderGuidePage(dir: string, page: GuidePage): Promise<string> {
-  let body = parseFrontmatter(readFileSync(join(dir, page.file), "utf8")).body;
+  let body = expandGuideDirectives(
+    parseFrontmatter(readFileSync(join(dir, page.file), "utf8")).body,
+  );
   if (page.slug === "changelog") {
     body = applyChangelogTagDates(body, CHANGELOG_TAG_DATES);
   }
