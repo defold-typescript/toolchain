@@ -38,7 +38,18 @@ interface FenceSelection {
 
 const SELECTED: readonly FenceSelection[] = [
   { page: "typescript-gotchas.md", lead: "**Naming the enum.**", nth: 0, kind: "gui-script" },
-  { page: "typescript-vs-lua.md", lead: "**Other engine indexes.**", nth: 0, kind: "script" },
+  {
+    page: "typescript-vs-lua.md",
+    lead: "### Engine indexes are zero-based",
+    nth: 0,
+    kind: "script",
+  },
+  {
+    page: "typescript-vs-lua.md",
+    lead: "### Engine array properties: `options.index`",
+    nth: 0,
+    kind: "script",
+  },
 ];
 
 const surfaces = await exampleSurfaces();

@@ -48,6 +48,7 @@
     "./api-availability.json": "./api-availability.json",
     "./api-signatures.json": "./api-signatures.json",
     "./url-parameters.json": "./url-parameters.json",
+    "./index-slots.json": "./index-slots.json",
     "./package.json": "./package.json"
   },
   "files": [
@@ -59,6 +60,7 @@
     "api-availability.json",
     "api-signatures.json",
     "url-parameters.json",
+    "index-slots.json",
     "index.d.ts",
     "fixtures/messages_doc.json",
     "fixtures/defold-*",
@@ -79,7 +81,8 @@
     "!scripts/engine-binding-diff.ts",
     "!scripts/engine-binding-verdicts.ts",
     "!scripts/engine-binding-verdicts.json",
-    "!scripts/lua-kind.ts"
+    "!scripts/lua-kind.ts",
+    "!scripts/index-slot-scan.ts"
   ],
   "publishConfig": {
     "access": "public"

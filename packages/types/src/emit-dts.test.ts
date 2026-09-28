@@ -7,6 +7,7 @@ import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
 import collectionproxyDoc from "../fixtures/collectionproxy_doc.json" with { type: "json" };
 import b2dBody113Doc from "../fixtures/defold-1.13.1/b2d_body_doc.json" with { type: "json" };
+import b2dFixture113Doc from "../fixtures/defold-1.13.1/b2d_fixture_doc.json" with { type: "json" };
 import b2dShapeDoc from "../fixtures/defold-1.13.1/b2d_shape_doc.json" with { type: "json" };
 import b2dWorldDoc from "../fixtures/defold-1.13.1/b2d_world_doc.json" with { type: "json" };
 import camera113Doc from "../fixtures/defold-1.13.1/camera_doc.json" with { type: "json" };
@@ -4809,13 +4810,29 @@ describe("engine index base notes", () => {
 
   const occurrences = (text: string, needle: string): number => text.split(needle).length - 1;
 
-  test("a slot whose upstream prose states its base gains no second note", () => {
+  test("a converted position names its TypeScript base even where upstream names Lua's", () => {
+    expect(tagLine(docBlock(b2dFixture113Doc, "get_density"), "@param fixture_index")).toEndWith(
+      "Zero-based in TypeScript; Defold receives it 1-based.",
+    );
     const line = tagLine(docBlock(b2dBody113Doc, "destroy_shape"), "@param shape_index");
     expect(line).toContain("1-based shape index");
-    expect(occurrences(line, "based")).toBe(1);
+    expect(line).toEndWith("Zero-based in TypeScript; Defold receives it 1-based.");
+    expect(occurrences(line, "Zero-based in TypeScript")).toBe(1);
   });
 
-  test("a passed-through slot whose prose names no base gains its base", () => {
+  test("an authored body, shape_index overload documents its own zero-based index", () => {
+    const { block } = memberBlock(b2dShapeDoc, "function get_body(body:");
+    expect(tagLine(block, "@param shape_index")).toEndWith(
+      "Zero-based in TypeScript; Defold receives it 1-based.",
+    );
+    expect(block).not.toContain("@example");
+  });
+
+  test("a sentinel value gains no note", () => {
+    expect(tagLine(docBlock(tilemapDoc, "set_tile"), "@param tile")).not.toContain("based");
+  });
+
+  test("a native-0 slot whose prose names no base gains its base", () => {
     expect(tagLine(docBlock(gui113Doc, "get_index"), "@returns")).toContain(
       "the index of the node. 0-based.",
     );
@@ -4824,7 +4841,7 @@ describe("engine index base notes", () => {
     );
   });
 
-  test("a passed-through table field named in the slot prose gains its base", () => {
+  test("a table field the transpiler does not convert names Defold's base", () => {
     expect(tagLine(docBlock(b2dBody113Doc, "get_fixtures"), "@returns")).toContain(
       "`index` is 1-based.",
     );
@@ -4836,7 +4853,7 @@ describe("engine index base notes", () => {
     expect(line).not.toContain("0-based");
   });
 
-  test("a lowered options.index keeps the zero-based rewrite and gains no base note", () => {
+  test("a converted options.index keeps the zero-based rewrite and gains no base note", () => {
     const block = docBlock(goDoc, "get");
     expect(block).toContain(PARAM_DOC_REWRITES.get("go.get:param:options")?.to ?? "missing");
     expect(block).not.toContain("`index` is");
@@ -4860,8 +4877,12 @@ describe("engine index base notes", () => {
   test("a multi-return function names the base of each classified tuple slot", () => {
     const { block } = memberBlock(socketDoc, "send(data: string");
     expect(block).toContain("@returns");
-    expect(slotBullet(block, "index").trimEnd()).toEndWith("1-based.");
-    expect(slotBullet(block, "lastindex").trimEnd()).toEndWith("1-based.");
+    expect(slotBullet(block, "index").trimEnd()).toEndWith(
+      "Zero-based in TypeScript; Defold receives it 1-based.",
+    );
+    expect(slotBullet(block, "lastindex").trimEnd()).toEndWith(
+      "Zero-based in TypeScript; Defold receives it 1-based.",
+    );
     expect(slotBullet(block, "error")).not.toContain("based");
   });
 

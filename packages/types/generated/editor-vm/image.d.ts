@@ -16,8 +16,8 @@ declare global {
      * Coordinates are 1-based, with `1, 1` at the top-left corner.
      *
      * @param image - image userdata returned by `image.load_file()`
-     * @param x - 1-based horizontal pixel coordinate
-     * @param y - 1-based vertical pixel coordinate
+     * @param x - 1-based horizontal pixel coordinate. Zero-based in TypeScript; Defold receives it 1-based.
+     * @param y - 1-based vertical pixel coordinate. Zero-based in TypeScript; Defold receives it 1-based.
      */
     function pixel(image: unknown, x: number, y: number): LuaMultiReturn<[number, number, number, number]>;
     /**

@@ -74,6 +74,10 @@ export {
   INDEX_SLOT_CLASSIFICATIONS,
   type IndexSlotClass,
   type IndexSlotClassification,
+  type IndexSlotEntry,
+  type IndexSlotsArtifact,
+  LOWERED_TABLE_FIELDS,
+  TYPESCRIPT_BASE_NOTE,
   withIndexBaseNotes,
 } from "./index-slot-classifications";
 export {
