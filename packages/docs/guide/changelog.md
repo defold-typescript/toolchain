@@ -42,6 +42,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Curried property access** — `go.get<sprite.properties>()("#sprite", "animation")` and the matching `go.set<P>()` form compiled to an empty `go.get()` call that raised in the engine; they now call [`go.get`](/api/go) and `go.set` directly.
   - **`go.scale`** is `number | Vector3`, since the engine reads the scale back as a `vmath.vector3`.
   - **String constants** — [`gui.PROP_*`](/api/gui) and [`image.TYPE_*`](/api/image) are typed as the strings the engine registers, not as numbers.
+  - **`render.RENDER_TARGET_DEFAULT`** is typed `undefined`, the `nil` the engine reads since it never registers the constant; `render.set_render_target(render.RENDER_TARGET_DEFAULT)` still selects the default target.
 
 ## v0.40.0
 

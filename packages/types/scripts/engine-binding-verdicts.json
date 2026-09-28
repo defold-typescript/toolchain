@@ -354,6 +354,10 @@
     "verdict": "accepted",
     "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
+  "*:render.set_render_target:too-narrow:1": {
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
+  },
   "*:render.set_stencil_op:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
