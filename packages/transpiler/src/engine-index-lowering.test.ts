@@ -369,6 +369,48 @@ describe("engine index arguments", () => {
     `);
   });
 
+  test("an any argument converts only when it is a number at run time, and only in a native-1 slot", () => {
+    expect(
+      lua([
+        "declare const client: socket.client;",
+        "declare const a: any;",
+        "b2d.fixture.get_density(body, a);",
+        'client.send("d", a);',
+        'crash.set_user_field(a, "v");',
+      ]),
+    ).toMatchInlineSnapshot(`
+      "b2d.fixture.get_density(
+          body,
+          type(a) == "number" and a + 1 or a
+      )
+      client:send(
+          "d",
+          type(a) == "number" and (a >= 0 and a + 1 or a) or a
+      )
+      crash.set_user_field(a, "v")"
+    `);
+  });
+
+  test("a generic constrained to number and a branded number convert like number", () => {
+    expect(
+      lua([
+        "declare const client: socket.client;",
+        'type Idx = number & { readonly __brand: "Idx" };',
+        "declare const k: Idx;",
+        "declare const m: Idx | undefined;",
+        "function f<T extends number>(i: T) { return b2d.fixture.get_density(body, i); }",
+        "b2d.fixture.get_density(body, k);",
+        'client.send("d", m);',
+      ]),
+    ).toMatchInlineSnapshot(`
+      "local function f(i)
+          return b2d.fixture.get_density(body, i + 1)
+      end
+      b2d.fixture.get_density(body, k + 1)
+      client:send("d", m and (m >= 0 and m + 1 or m))"
+    `);
+  });
+
   test("slots that are not positions, native-0 slots and project functions are untouched", () => {
     expect(
       lua([
@@ -525,13 +567,51 @@ describe("engine index resolution", () => {
         "declare const args: [number]; b2d.fixture.get_density(body, ...args);",
         ENGINE_INDEX_SPREAD_MESSAGE,
       ],
+      ['client.send.call(client, "d", 0);', ENGINE_INDEX_FUNCTION_VALUE_MESSAGE],
+      ['client.send.apply(client, ["d", 0]);', ENGINE_INDEX_FUNCTION_VALUE_MESSAGE],
+      ['const s = client.send.bind(client, "d"); s(0);', ENGINE_INDEX_FUNCTION_VALUE_MESSAGE],
+      [
+        'const h: (b: Opaque<"b2Body">, i: number) => number = b2d.fixture.get_density; h(body, 0);',
+        ENGINE_INDEX_FUNCTION_VALUE_MESSAGE,
+      ],
+      [
+        'const { get_density }: { get_density(b: Opaque<"b2Body">, i: number): number } = b2d.fixture;',
+        ENGINE_INDEX_NAMESPACE_VALUE_MESSAGE,
+      ],
     ];
     for (const [line, message] of cases) {
       const result = transpile(
-        ['declare const body: Opaque<"b2Body">;', line, "export {};", ""].join("\n"),
+        [
+          'declare const body: Opaque<"b2Body">;',
+          "declare const client: socket.client;",
+          line,
+          "export {};",
+          "",
+        ].join("\n"),
       );
       expect({ line, diagnostics: result.diagnostics }).toEqual({ line, diagnostics: [message] });
     }
+  });
+
+  test("a namespace function called through .call is rejected", () => {
+    const result = transpile(
+      [
+        'declare const body: Opaque<"b2Body">;',
+        "b2d.fixture.get_density.call(undefined, body, 0);",
+        "export {};",
+        "",
+      ].join("\n"),
+    );
+    expect(result.diagnostics).toContain(ENGINE_INDEX_FUNCTION_VALUE_MESSAGE);
+  });
+
+  test("a const alias annotated with its own type converts", () => {
+    expect(
+      lua(["const d: typeof b2d.fixture.get_density = b2d.fixture.get_density;", "d(body, 0);"]),
+    ).toMatchInlineSnapshot(`
+      "local d = b2d.fixture.get_density
+      d(body, 1)"
+    `);
   });
 });
 
