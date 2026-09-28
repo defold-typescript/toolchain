@@ -766,7 +766,7 @@ declare global {
      * @param options - optional options table (only applicable for material constants)
      * - `index` number index into array property (1 based)
      *
-     * `index` is 1-based; passed to Defold unchanged.
+     * **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * @example
      * ```ts
      * // Get properties on existing nodes:
@@ -952,7 +952,7 @@ declare global {
      * Higher index means the node is drawn on top of lower indexed nodes.
      *
      * @param node - the node to retrieve the id from
-     * @returns the index of the node. 0-based; passed to Defold unchanged.
+     * @returns the index of the node. **0️⃣ 0-based; passed to Defold unchanged.**
      * @example
      * ```ts
      * // Compare the index order of two sibling nodes:
@@ -1766,7 +1766,7 @@ declare global {
      * - `index` number index into array property (1 based)
      * - `key` hash name of internal property
      *
-     * `index` is 1-based; passed to Defold unchanged.
+     * **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * @example
      * ```ts
      * // Updates the position property on an existing node:

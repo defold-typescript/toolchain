@@ -227,7 +227,7 @@ declare global {
      *
      * - `frame` The frame index in the recording buffer (1 is first recorded frame)
      *
-     * `frame` is 1-based; passed to Defold unchanged.
+     * **⚠️ `frame` is 1-based; passed to Defold unchanged.**
      * @example
      * ```ts
      * // Go back one frame

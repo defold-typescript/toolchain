@@ -35,8 +35,8 @@ declare global {
      *
      * @param url - the tile map
      * @returns `[x, y, w, h]`:
-     * - `x` — x coordinate of the bottom left corner. 1-based; passed to Defold unchanged.
-     * - `y` — y coordinate of the bottom left corner. 1-based; passed to Defold unchanged.
+     * - `x` — x coordinate of the bottom left corner. **⚠️ 1-based; passed to Defold unchanged.**
+     * - `y` — y coordinate of the bottom left corner. **⚠️ 1-based; passed to Defold unchanged.**
      * - `w` — number of columns (width) in the tile map
      * - `h` — number of rows (height) in the tile map
      * @example
@@ -55,8 +55,8 @@ declare global {
      *
      * @param url - the tile map
      * @param layer - name of the layer for the tile
-     * @param x - x-coordinate of the tile. 1-based; passed to Defold unchanged.
-     * @param y - y-coordinate of the tile. 1-based; passed to Defold unchanged.
+     * @param x - x-coordinate of the tile. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param y - y-coordinate of the tile. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns index of the tile
      * @example
      * ```ts
@@ -76,8 +76,8 @@ declare global {
      *
      * @param url - the tile map
      * @param layer - name of the layer for the tile
-     * @param x - x-coordinate of the tile. 1-based; passed to Defold unchanged.
-     * @param y - y-coordinate of the tile. 1-based; passed to Defold unchanged.
+     * @param x - x-coordinate of the tile. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param y - y-coordinate of the tile. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns index of the tile
      * @example
      * ```ts
@@ -144,8 +144,8 @@ declare global {
      *
      * @param url - the tile map
      * @param layer - name of the layer for the tile
-     * @param x - x-coordinate of the tile. 1-based; passed to Defold unchanged.
-     * @param y - y-coordinate of the tile. 1-based; passed to Defold unchanged.
+     * @param x - x-coordinate of the tile. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param y - y-coordinate of the tile. **⚠️ 1-based; passed to Defold unchanged.**
      * @param tile - index of new tile to set. 0 resets the cell
      * @param transform_bitmask - optional flip and/or rotation should be applied to the tile
      * @example

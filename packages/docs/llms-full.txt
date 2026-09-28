@@ -586,9 +586,10 @@ TypeScript arrays keep their own zero-based indexing, which TypeScriptToLua
 lowers as usual: `arr[0]` is the first element. Only the numbers an engine API
 takes or returns follow Defold's base.
 
-Each classified slot's hover states its base: "1-based; passed to Defold
-unchanged.", or "0-based; passed to Defold unchanged." A table field's names the
-field: "`index` is 1-based; passed to Defold unchanged."
+Each classified slot's hover states its base in one bold sentence led by a
+marker: "**⚠️ 1-based; passed to Defold unchanged.**", or "**0️⃣ 0-based; passed
+to Defold unchanged.**" A table field's names the field after the marker: "**⚠️
+`index` is 1-based; passed to Defold unchanged.**"
 
 Because nothing is converted, an engine function behaves like any other
 function: you can pass it as a value, alias it, spread arguments into it, or
