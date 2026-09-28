@@ -132,14 +132,18 @@ The conversion follows the call through the type checker:
 
 - A literal folds: `get_density(body, 0)` emits `get_density(body, 1)`. Any
   other value is evaluated once: `i` emits `i + 1`, and an optional index that
-  may be `undefined` stays `nil`.
-- Aliases (`const density = b2d.fixture.get_density`), destructuring
+  may be `undefined` stays `nil`. A generic constrained to `number` and a
+  branded number convert like `number`. An index typed `any` is checked at run
+  time: a number converts, anything else passes through.
+- Aliases (`const density = b2d.fixture.get_density`, or one annotated
+  `typeof b2d.fixture.get_density`), destructuring
   (`const { get_density } = b2d.fixture`) and every overload are converted; a
   project function that happens to share a name is not.
 - Using a converting function as a value (passing it as an argument, returning
-  it, storing it in an object or casting it with `as any`), casting its
-  namespace, and a spread argument that covers an index position are errors,
-  since the call could not be converted there.
+  it, storing it in an object, casting it with `as any`, calling it through
+  `.call`, `.apply` or `.bind`, or binding it to a `const` typed as a different
+  function), casting its namespace, and a spread argument that covers an index
+  position are errors, since the call could not be converted there.
 
 Hand-written `.lua` files and native extension APIs are outside the rule and
 pass through untouched. A Lua module that receives an index from TypeScript
