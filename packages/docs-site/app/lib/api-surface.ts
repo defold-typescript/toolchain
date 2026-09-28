@@ -673,11 +673,13 @@ function typeList(types: string[], mapType: MapType = mapDocType): string {
 
 /**
  * Project one call list into render rows. When `slots` carries an entry for a
- * row's `<kind>:<position>:<name>`, that row shows the type the emitter actually
- * rendered into the signature above it — the curated mapping, documented-constant
- * brand or recovered inline object a bare token cannot express. Absent, the row
- * keeps the `mapDocType` render. Nested `fields` always take the token path: they
- * carry per-field prose and sit below a slot type that already spells them out.
+ * row's `<kind>:<position>:<name>`, that row shows the type and optionality the
+ * emitter actually rendered into the signature above it — the curated mapping,
+ * documented-constant brand, recovered inline object or slot correction a bare
+ * token and the ref-doc `is_optional` flag cannot express. Absent, the row keeps
+ * the `mapDocType` render and the ref-doc flag. Nested `fields` always take the
+ * token path: they carry per-field prose and sit below a slot type that already
+ * spells them out.
  */
 function projectParams(
   list: ApiParameter[],
@@ -695,8 +697,8 @@ function projectParams(
     return {
       name: p.name,
       doc,
-      types: emitted !== undefined ? [emitted] : normalizeTypes(p.types).map(mapType),
-      isOptional: p.isOptional,
+      types: emitted !== undefined ? [emitted.type] : normalizeTypes(p.types).map(mapType),
+      isOptional: emitted !== undefined ? emitted.optional : p.isOptional,
       ...(p.fields ? { fields: projectParams(p.fields, mapType) } : {}),
     };
   });
@@ -955,8 +957,16 @@ function tsFence(body: string): string {
 export function apiModuleMarkdown(
   page: Pick<
     ApiPage,
-    "namespace" | "module" | "displayName" | "category" | "availability" | "authoritativeSignatures"
-  >,
+    | "namespace"
+    | "module"
+    | "displayName"
+    | "category"
+    | "availability"
+    | "authoritativeSignatures"
+    | "authoritativeSlotTypes"
+    | "authoritativeArms"
+  > &
+    Partial<Pick<ApiPage, "signatures">>,
   translations: TranslationStore = {},
 ): string {
   const m = page.module;
@@ -974,15 +984,29 @@ export function apiModuleMarkdown(
 
   if (m.functions.length > 0) {
     lines.push("## Functions", "");
+    // The page's own rows own the signature precedence (authoritative, authored
+    // override, token render); each declaration heads the rows it renders, so an
+    // override-collapsed later entry contributes its prose under the rows above.
+    const rowSignatures = new Map<string, string[]>();
+    let current: string[] | undefined;
+    for (const symbol of apiModuleSymbols(page, translations, page.signatures)) {
+      if (symbol.kind !== "function") continue;
+      if (symbol.declarationIdentity !== undefined) {
+        current = [];
+        rowSignatures.set(symbol.declarationIdentity, current);
+      }
+      current?.push(symbol.signature);
+    }
     for (const fn of m.functions) {
-      const authSig = authoritativeSignatureFor(
-        authoritative,
-        m.namespace,
-        "FUNCTION",
-        fn.name,
-        normalizedFunctionSignature(fn),
-      );
-      lines.push(`### \`${authSig ?? functionSignature(fn, mapType, isLibrary)}\``, "");
+      const identity = symbolIdentityKey({
+        namespace: m.namespace,
+        kind: "FUNCTION",
+        name: fn.name,
+        signature: normalizedFunctionSignature(fn),
+      });
+      for (const signature of rowSignatures.get(identity) ?? []) {
+        lines.push(`### \`${signature}\``, "");
+      }
       const doc = htmlToDocText(fn.description || fn.brief);
       if (doc) lines.push(doc, "");
       pushAvailabilityProse(
@@ -1141,6 +1165,7 @@ export function apiModuleSymbols(
       signature: normalizedFunctionSignature(fn),
     });
   const symbols: ApiSymbol[] = [];
+  const artifactBacked = new Set<ApiSymbol>();
   const overrideEmitted = new Set<string>();
   // Every ref-doc entry of an override-covered FQN, grouped in source order
   // before the walk: the collapse below renders only the first entry it meets,
@@ -1237,6 +1262,7 @@ export function apiModuleSymbols(
     const av = availabilityForIdentity(page.availability, identity);
     if (av) symbol.availability = av;
     symbols.push(symbol);
+    if (primarySlots !== undefined) artifactBacked.add(symbol);
     // Each remaining authored overload renders as its own row, reusing the
     // distinct-row overload pattern: its own `docs[k+1]` prose (else its paired
     // ref-doc description), and the parameter/return tables only when an entry
@@ -1411,5 +1437,29 @@ export function apiModuleSymbols(
     }
   }
 
+  for (const symbol of symbols) {
+    if (symbol.kind === "function" && !artifactBacked.has(symbol)) {
+      symbol.parameters = paramsFromSignature(symbol.parameters, symbol.signature);
+    }
+  }
   return symbols;
+}
+
+/**
+ * A row with no emitter record (an authored override row or arm, or a token
+ * render) takes each parameter's optionality from the signature printed above
+ * it, the only source it has, when the slot at that position names the same
+ * parameter (a reserved word prints with an `_` on either side). The slot's type is
+ * copied too when it is the row's type plus a `| undefined` arm, the way an
+ * omissible interior slot prints.
+ */
+function paramsFromSignature(params: ApiSymbolParam[], signature: string): ApiSymbolParam[] {
+  const slots = outerCallSlots(signature);
+  if (slots === null) return params;
+  return params.map((p, index) => {
+    const slot = slots[index];
+    if (slot === undefined || ![p.name, `_${p.name}`, `${p.name}_`].includes(slot.name)) return p;
+    const widened = slot.type === `${p.types.join(" | ")} | undefined`;
+    return { ...p, isOptional: slot.isOptional, ...(widened ? { types: [slot.type] } : {}) };
+  });
 }

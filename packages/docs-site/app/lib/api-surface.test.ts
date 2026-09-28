@@ -1116,7 +1116,13 @@ describe("apiModuleSymbols", () => {
       ...page,
       authoritativeSignatures: new Map([[slotIdentity, slotSignature]]),
       authoritativeSlotTypes: new Map([
-        [slotIdentity, { "param:0:opts": "{ mode: string }", "return:0:id": "Hash" }],
+        [
+          slotIdentity,
+          {
+            "param:0:opts": { type: "{ mode: string }", optional: false },
+            "return:0:id": { type: "Hash", optional: false },
+          },
+        ],
       ]),
     })[0];
     expect(symbol?.signature).toBe(slotSignature);
@@ -1124,12 +1130,35 @@ describe("apiModuleSymbols", () => {
     expect(symbol?.returnValues[0]?.types).toEqual(["Hash"]);
   });
 
+  test("a slot the artifact covers takes its optionality from the record, not the fixture", () => {
+    const optionalFn = {
+      ...slotFn,
+      parameters: [{ name: "opts", doc: "", types: ["table"], isOptional: true }],
+    };
+    const identity = symbolIdentityKey({
+      namespace: "demo",
+      kind: "FUNCTION",
+      name: "demo.run",
+      signature: normalizedFunctionSignature(optionalFn),
+    });
+    const symbol = apiModuleSymbols({
+      ...pageWith({ functions: [optionalFn] }),
+      authoritativeSignatures: new Map([[identity, slotSignature]]),
+      authoritativeSlotTypes: new Map([
+        [identity, { "param:0:opts": { type: "{ mode: string }", optional: false } }],
+      ]),
+    })[0];
+    expect(symbol?.parameters[0]?.isOptional).toBe(false);
+  });
+
   test("a slot the artifact does not cover keeps the token render", () => {
     const page = pageWith({ functions: [slotFn] });
     const symbol = apiModuleSymbols({
       ...page,
       authoritativeSignatures: new Map([[slotIdentity, slotSignature]]),
-      authoritativeSlotTypes: new Map([[slotIdentity, { "return:0:id": "Hash" }]]),
+      authoritativeSlotTypes: new Map([
+        [slotIdentity, { "return:0:id": { type: "Hash", optional: false } }],
+      ]),
     })[0];
     // `opts` has no artifact entry, so it must still render something.
     expect(symbol?.parameters[0]?.types).toEqual([mapDocType("table")]);
@@ -1148,7 +1177,13 @@ describe("apiModuleSymbols", () => {
       ...page,
       authoritativeSignatures: new Map([[slotIdentity, slotSignature]]),
       authoritativeSlotTypes: new Map([
-        [slotIdentity, { "param:0:opts": "{ mode: string }", "return:0:id": "Hash" }],
+        [
+          slotIdentity,
+          {
+            "param:0:opts": { type: "{ mode: string }", optional: false },
+            "return:0:id": { type: "Hash", optional: false },
+          },
+        ],
       ]),
       availability: {
         versions: ["1.10.0"],
@@ -1977,8 +2012,9 @@ describe("apiModuleSymbols", () => {
     expect(symbols[0]?.parameters).toEqual([]);
     expect(symbols[0]?.returnValues).toEqual([]);
     expect(symbols[0]?.exampleMarkdown).toContain("```lua");
+    // the fixture marks `format` optional, but the row's own signature requires it
     expect(symbols[1]?.parameters).toEqual([
-      { name: "format", doc: "the read format", types: ["string"], isOptional: true },
+      { name: "format", doc: "the read format", types: ["string"], isOptional: false },
     ]);
     expect(symbols[1]?.returnValues).toEqual([
       { name: "", doc: "the data read", types: ["string"], isOptional: false },

@@ -1,7 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { apiVersionAxis, windowedApiPages } from "../app/lib/api-content";
+import type { ApiPage } from "../app/lib/api-surface";
 import {
-  loadApiSurfaceForVersion,
   loadCombinedSurface,
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
@@ -15,6 +16,7 @@ import {
   type SearchRecord,
   versionSearchIndexRecords,
 } from "../app/lib/search-index";
+import { resolveVersionWindow } from "../app/lib/version-window";
 
 // Anchored on the script's own location, never `process.cwd()`, so the index
 // generation resolves the same whether the build runs from the package dir or
@@ -28,6 +30,13 @@ const GUIDE_DIR = join(SCRIPTS_DIR, "..", "..", "docs", "guide");
 // `?url` import 404s in honox's dev server, so plain public/ + fetch is the
 // reliable path.
 const OUTPUT_DIR = join(SCRIPTS_DIR, "..", "public");
+
+// The engine pages `/api/<id>/<ns>` renders for a version: its full-range window,
+// so a version record carries the same declaration signatures as the page.
+function versionRoutePages(typesDir: string, versionId: string): ApiPage[] {
+  const window = resolveVersionWindow(apiVersionAxis(typesDir), versionId, null);
+  return window ? windowedApiPages(window, typesDir) : [];
+}
 
 export interface SearchIndexOutput {
   file: string;
@@ -68,7 +77,7 @@ export function searchIndexOutputs(deps: SearchIndexDeps = {}): SearchIndexOutpu
   const outputs: SearchIndexOutput[] = [{ file: "search-index.json", records: shared }];
   for (const { version, records } of versionSearchIndexRecords(typesDir, guideRecords, {
     versions: versionsWithDiskFixtures(typesDir),
-    pagesForVersion: loadApiSurfaceForVersion,
+    pagesForVersion: versionRoutePages,
     sharedPages,
   })) {
     outputs.push({ file: `search-index-${version}.json`, records });

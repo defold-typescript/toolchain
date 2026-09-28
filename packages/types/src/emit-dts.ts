@@ -3604,14 +3604,22 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
 }
 
 /**
- * Every documented slot's rendered TS type, keyed `param|return:<position>:<raw
- * ref-doc name>`. The position is part of the key because a multi-return can
- * carry several unnamed slots (`push.schedule` renders two), which a name-only
- * key would collapse into one. Each value appears verbatim inside the symbol's
- * own `tsSignature`, so a consumer rendering a slot's type beside that signature
- * cannot contradict it.
+ * Every documented slot's rendered TS type and optionality, keyed
+ * `param|return:<position>:<raw ref-doc name>`. The position is part of the key
+ * because a multi-return can carry several unnamed slots (`push.schedule`
+ * renders two), which a name-only key would collapse into one. Each `type`
+ * appears verbatim inside the symbol's own `tsSignature` as the slot's printed
+ * operand (an interior omissible slot keeps its `| undefined` arm), and
+ * `optional` is whether the name carries `?` there, so a consumer rendering a
+ * slot beside that signature cannot contradict it. Returns and slots folded into
+ * a rest element are never `optional`.
  */
-export type SlotTypes = Readonly<Record<string, string>>;
+export interface SlotType {
+  readonly type: string;
+  readonly optional: boolean;
+}
+
+export type SlotTypes = Readonly<Record<string, SlotType>>;
 
 function slotKey(kind: "param" | "return", position: number, name: string): string {
   return `${kind}:${position}:${name}`;
@@ -3677,7 +3685,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     if (isMisfiled(fn)) continue;
     const prepared = prepareFunction(fn, prefix);
     if (prepared === null) continue;
-    const slotTypes: Record<string, string> = {};
+    const slotTypes: Record<string, SlotType> = {};
     const primary = emitFunction(
       prepared,
       emitName(prepared.name),
@@ -3716,7 +3724,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     });
   }
   for (const fn of nested.functions) {
-    const slotTypes: Record<string, string> = {};
+    const slotTypes: Record<string, SlotType> = {};
     out.push({
       identity: fnIdentity(fn.original),
       tsSignature: emitFunction(
@@ -3735,7 +3743,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
   const handleGroups = collectHandleMethodGroups(module);
   for (const group of handleGroups.values()) {
     for (const prepared of group) {
-      const slotTypes: Record<string, string> = {};
+      const slotTypes: Record<string, SlotType> = {};
       out.push({
         identity: fnIdentity(prepared.original),
         tsSignature: emitMethod(
@@ -4058,7 +4066,7 @@ function memberSignature(
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
-  slotSink?: Record<string, string>,
+  slotSink?: Record<string, SlotType>,
 ): string {
   const original = prepared.original.parameters;
   const elementName = prepared.original.name;
@@ -4097,16 +4105,16 @@ function memberSignature(
   if (slotSink !== undefined) {
     for (const [i, p] of positional.entries()) {
       const raw = original[i];
-      if (raw) slotSink[slotKey("param", i, raw.name)] = p.ts;
+      if (raw) slotSink[slotKey("param", i, raw.name)] = { type: p.type, optional: p.optional };
     }
     for (const slot of rest?.slots ?? []) {
-      slotSink[slotKey("param", slot.position, slot.name)] = slot.ts;
+      slotSink[slotKey("param", slot.position, slot.name)] = { type: slot.ts, optional: false };
     }
     // A predicate renders `arg is T` in place of the mapped `boolean`, so its
     // return slot has no text in the signature to stand on and is not reported.
     if (!isPredicate) {
       for (const slot of ret.slots) {
-        slotSink[slotKey("return", slot.position, slot.name)] = slot.ts;
+        slotSink[slotKey("return", slot.position, slot.name)] = { type: slot.ts, optional: false };
       }
     }
   }
@@ -4123,7 +4131,7 @@ function emitFunction(
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
-  slotSink?: Record<string, string>,
+  slotSink?: Record<string, SlotType>,
 ): string {
   return `function ${memberSignature(prepared, name, mapType, resolver, constantTokens, urlParameters, slotSink)}`;
 }
@@ -4137,7 +4145,7 @@ function emitMethod(
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
-  slotSink?: Record<string, string>,
+  slotSink?: Record<string, SlotType>,
 ): string {
   return memberSignature(
     prepared,
@@ -4455,7 +4463,7 @@ function emitParameter(
   constantTokens: ConstantSlotTokens,
   elementName: string,
   urlParameters: UrlParameterTable,
-): { text: string; ts: string } {
+): { text: string; type: string; optional: boolean } {
   const name = safeParamName(p.name, index);
   const ts = parameterType(p, mapType, resolver, constantTokens, elementName, urlParameters);
   // An interior doc-optional param (a required param follows, so the trailing-`?`
@@ -4466,8 +4474,8 @@ function emitParameter(
   const interiorOptional = !optional && (isDocOptional(p, elementName) || nilRequired);
   // `(a) => void | undefined` reads as a function returning `void | undefined`.
   const operand = interiorOptional && isFunctionTypeText(ts) ? `(${ts})` : ts;
-  const text = `${name}${optional ? "?" : ""}: ${operand}${interiorOptional ? " | undefined" : ""}`;
-  return { text, ts };
+  const type = `${operand}${interiorOptional ? " | undefined" : ""}`;
+  return { text: `${name}${optional ? "?" : ""}: ${type}`, type, optional };
 }
 
 function emitReturn(
