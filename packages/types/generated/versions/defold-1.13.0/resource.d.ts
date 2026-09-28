@@ -151,7 +151,7 @@ declare global {
      * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
      *
-     * **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.**
+     * **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
      * @returns Returns the atlas resource path
      * @example
      * ```ts
@@ -763,6 +763,8 @@ declare global {
      * Each animation entry also contains a `frames` table with indices into
      * `geometries`, preserving the frame-to-geometry mapping used by the atlas.
      * See resource.set_atlas for a detailed description of each field
+     *
+     * **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
      */
     function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };
     /**
@@ -1146,7 +1148,7 @@ declare global {
      * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
      *
-     * **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.**
+     * **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
      * @example
      * Add a new animation to an existing atlas
      * ```ts
@@ -1343,7 +1345,7 @@ declare global {
      *
      * - `COMPRESSION_TYPE_BASIS_UASTC`
      *
-     * **0️⃣ `page` is 0-based; passed to Defold unchanged.**
+     * **0️⃣ `page` is 0-based; passed to Defold unchanged.** **0️⃣ `mipmap` is 0-based; passed to Defold unchanged.**
      * @param buffer - The buffer of precreated pixel data
      * To update a cube map texture you need to pass in six times the amount of data via the buffer, since a cube map has six sides!
      * 3D Textures are currently only supported on OpenGL and Vulkan adapters. To check if your device supports 3D textures, use:

@@ -25,7 +25,7 @@ declare global {
      * The iterator returns pixels row by row from top-left to bottom-right. Coordinates are 1-based.
      *
      * @param image - image userdata returned by `image.load_file()`
-     * @returns iterator function returning `x, y, r, g, b, a` for each pixel
+     * @returns iterator function returning `x, y, r, g, b, a` for each pixel. **⚠️ 1-based; passed to Defold unchanged.**
      * @example
      * ```lua
      * local img = image.load_file("assets/source.png")
