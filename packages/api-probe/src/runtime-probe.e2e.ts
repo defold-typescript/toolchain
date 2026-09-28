@@ -55,7 +55,7 @@ describe(`runtime probe (${process.env.PROBE_TARGET ?? "default target"})`, () =
     expect(failures.indexSemantics).toEqual([]);
   });
 
-  test("every lowered or passed-through index slot is probed or listed as unverified", () => {
+  test("every classified index position is probed or listed as unverified", () => {
     const probed = new Set(run.passes.flatMap((pass) => pass.calls.flatMap((c) => c.index ?? [])));
     const unverified = new Map(
       run.passes.flatMap((pass) => pass.indexUnverified.map((u) => [u.key, u.reason] as const)),

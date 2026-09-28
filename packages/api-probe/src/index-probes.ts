@@ -25,11 +25,7 @@ interface Check {
 
 type IndexContext = RoundTrip | Check;
 
-export const PROBED_INDEX_CLASSES: ReadonlySet<string> = new Set([
-  "lowered",
-  "passthrough-1",
-  "passthrough-0",
-]);
+export const PROBED_INDEX_CLASSES: ReadonlySet<string> = new Set(["native-1", "native-0"]);
 
 const FIRST = "vmath.vector4(0.25, 0.5, 0.75, 1)";
 const MIDDLE = "vmath.vector4(0.5, 0.5, 0.5, 0.5)";

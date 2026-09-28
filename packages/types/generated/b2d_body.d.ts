@@ -172,7 +172,7 @@ declare global {
      * Destroy a fixture from a body.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. Zero-based in TypeScript; Defold receives it 1-based.
      */
     function destroy_fixture(body: Opaque<"b2Body">, fixture_index: number): void;
     /**
@@ -183,7 +183,7 @@ declare global {
      * All shapes attached to a body are implicitly destroyed when the body is destroyed.
      *
      * @param body - body
-     * @param shape_index - 1-based shape index from `b2d.body.get_shapes`
+     * @param shape_index - 1-based shape index from `b2d.body.get_shapes`. Zero-based in TypeScript; Defold receives it 1-based.
      */
     function destroy_shape(body: Opaque<"b2Body">, shape_index: number): void;
     /**

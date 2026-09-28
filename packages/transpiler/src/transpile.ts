@@ -3,9 +3,9 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import type * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
-import { arrayIndexOptionLoweringPlugin } from "./array-index-option-lowering";
 import { createCompanionEmitPlugin } from "./companion-emit";
 import { editorScriptErasurePlugin } from "./editor-script-erasure";
+import { engineIndexLoweringPlugin } from "./engine-index-lowering";
 import {
   findDirectGoPropertyCalls,
   GO_PROPERTY_DIRECT_CALL_MESSAGE,
@@ -323,7 +323,7 @@ export function transpileProject(input: TranspileProjectInput): TranspileProject
       { plugin: windowEventGuardLoweringPlugin },
       { plugin: messageDispatchLoweringPlugin },
       { plugin: timersLoweringPlugin },
-      { plugin: arrayIndexOptionLoweringPlugin },
+      { plugin: engineIndexLoweringPlugin },
       { plugin: typeApplicationErasurePlugin },
       { plugin: companionEmit.plugin },
     ],
