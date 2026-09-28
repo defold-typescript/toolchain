@@ -363,6 +363,8 @@ export const UNPROBED_INDEX_SLOTS: Readonly<Record<string, string>> = {
   "resource.create_atlas:param:table:frame_end": "the probe builds no atlas to animate",
   "resource.set_atlas:param:table:frame_start": "the probe builds no atlas to animate",
   "resource.set_atlas:param:table:frame_end": "the probe builds no atlas to animate",
+  "resource.create_atlas:param:table:animations:frames": "the probe builds no atlas to animate",
+  "resource.set_atlas:param:table:animations:frames": "the probe builds no atlas to animate",
   "resource.set_texture:param:table:page": "the probe creates no array texture",
 };
 

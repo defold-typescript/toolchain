@@ -48,6 +48,7 @@ import {
   applyFieldAdditions,
   applyFieldOptionalityCorrections,
   applyFieldTypeOverrides,
+  applyListFieldCorrections,
   applyNestedFieldCurations,
   applyRequiredFieldCorrections,
   buildTableDocResolver,
@@ -1356,21 +1357,24 @@ describe("emitDeclarations", () => {
     const module = parseDefoldApiDoc(resourceDoc);
     const out = emitDeclarations(module);
     expect(out).toContain(
-      "function create_atlas(path: string, table: { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
+      "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
     );
     const createAtlasLine = out.split("\n").find((line) => line.includes("function create_atlas"));
-    expect(createAtlasLine?.match(/ id\??:/g)).toHaveLength(2);
-    expect(createAtlasLine?.match(/ width\??:/g)).toHaveLength(2);
-    expect(createAtlasLine?.match(/ height\??:/g)).toHaveLength(2);
+    // Each non-empty list spells its element twice: the head and the rest.
+    expect(createAtlasLine?.match(/ id\??:/g)).toHaveLength(4);
+    expect(createAtlasLine?.match(/ width\??:/g)).toHaveLength(4);
+    expect(createAtlasLine?.match(/ height\??:/g)).toHaveLength(4);
   });
 
   test("emits 'a list of' atlas table fields as arrays while geometries recovers a nested array", () => {
     const module = parseDefoldApiDoc(resourceDoc);
     const out = emitDeclarations(module);
     const createLine = out.split("\n").find((l) => l.includes("function create_atlas")) ?? "";
-    expect(createLine).toContain("flip_horizontal?: boolean }[]");
     expect(createLine).toContain(
-      "rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]",
+      "flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]",
+    );
+    expect(createLine).toContain(
+      "rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]",
     );
     const getLine = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(getLine).toContain("flip_horizontal: boolean }[]");
@@ -1379,9 +1383,11 @@ describe("emitDeclarations", () => {
     );
     expect(getLine).not.toContain("geometries: Record");
     const setLine = out.split("\n").find((l) => l.includes("function set_atlas(")) ?? "";
-    expect(setLine).toContain("flip_horizontal?: boolean }[]");
     expect(setLine).toContain(
-      "geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]",
+      "flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]",
+    );
+    expect(setLine).toContain(
+      "geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]",
     );
     expect(setLine).not.toContain("geometries?: Record");
   });
@@ -2073,7 +2079,7 @@ describe("number-list table-field recovery", () => {
     // The top-level vertices/uvs/indices number-lists stay byte-identical; only
     // the curated geometries field flips from Record to the nested array.
     expect(setLine).toContain(
-      "geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
+      "geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
     );
     expect(setLine).not.toContain("geometries: Record");
     const getLine = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
@@ -2380,7 +2386,7 @@ describe("engine-required param fields", () => {
       emitDeclarations(parseDefoldApiDoc(resourceDoc)),
       "function create_atlas(",
     );
-    expect(line).toContain("animations: { id: string; width: number; height: number;");
+    expect(line).toContain("animations: [{ id: string; width: number; height: number;");
     expect(line).toContain("fps?: number");
     expect(line).toContain("texture: string | Hash");
   });
@@ -2399,6 +2405,27 @@ describe("engine-required param fields", () => {
     );
     expect(fixture).toContain("friction?: number");
     expect(fixture).toContain("definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON");
+    expect(fixture).toContain(
+      "{ type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 }",
+    );
+    expect(fixture).toContain("{ type: typeof b2d.shape.SHAPE_TYPE_CHAIN;");
+    expect(fixture).not.toContain("SHAPE_TYPE_CAPSULE");
+    expect(fixture).not.toContain("SHAPE_TYPE_SEGMENT");
+  });
+
+  test("create_shape takes the v3 shape kinds and either sensor flag", () => {
+    const line = signatureLine(
+      emitDeclarations(parseDefoldApiDoc(b2dBody113Doc)),
+      'function create_shape(body: Opaque<"b2Body">, definition',
+    );
+    expect(line).toContain(
+      "{ type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 }",
+    );
+    expect(line).toContain(
+      "{ type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 }",
+    );
+    expect(line).not.toContain("SHAPE_TYPE_CHAIN");
+    expect(line).toContain("sensor?: boolean; is_sensor?: boolean;");
   });
 
   test("a Box2D shape slot is a union discriminated on type", () => {
@@ -2413,6 +2440,7 @@ describe("engine-required param fields", () => {
       "{ type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 }",
     );
     expect(line).not.toContain("type?:");
+    expect(line).not.toContain("SHAPE_TYPE_CHAIN");
   });
 
   test("physics.set_shape takes one arm per collision shape kind", () => {
@@ -2447,6 +2475,96 @@ describe("engine-required param fields", () => {
         { name: "transfer_ownership", types: ["boolean"] },
       ]),
     ).toThrow(/resource\.create_buffer:param:table:buffer/);
+  });
+});
+
+describe("list-field corrections", () => {
+  const identity = (t: string): string => t;
+  const atlasFields = (): TableField[] => [
+    { name: "texture", types: ["string", "hash"] },
+    {
+      name: "animations",
+      types: ["table"],
+      isList: true,
+      fields: [
+        { name: "id", types: ["string"] },
+        { name: "frame_start", types: ["number"] },
+        { name: "frame_end", types: ["number"] },
+        { name: "fps", types: ["number"] },
+      ],
+    },
+    {
+      name: "geometries",
+      types: ["table"],
+      isList: true,
+      fields: [{ name: "vertices", types: ["table"], numberList: true }],
+    },
+  ];
+
+  test("makes a parsed list non-empty and intersects its element with the alternatives", () => {
+    const setAtlasDoc =
+      requireFunction(parseDefoldApiDoc(resourceDoc), "resource.set_atlas").parameters[1]?.doc ??
+      "";
+    const parsed = applyNestedFieldCurations(
+      "resource.set_atlas",
+      "param",
+      "table",
+      parseTableFields(setAtlasDoc) ?? [],
+    );
+    const corrected = applyListFieldCorrections("resource.set_atlas", "param", "table", parsed);
+    const animations = corrected.find((field) => field.name === "animations");
+    expect(animations?.nonEmpty).toBe(true);
+    expect(animations?.alternatives).toBe(
+      "{ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }",
+    );
+    expect(animations?.fields?.map((field) => field.name)).not.toContain("frame_start");
+    expect(animations?.fields?.map((field) => field.name)).not.toContain("frame_end");
+    expect(animations?.fields?.map((field) => field.name)).toContain("fps");
+    const geometries = corrected.find((field) => field.name === "geometries");
+    expect(geometries?.nonEmpty).toBe(true);
+    expect(geometries?.alternatives).toBeUndefined();
+    expect(
+      inlineTableType(
+        applyListFieldCorrections("resource.set_atlas", "param", "table", atlasFields()),
+        identity,
+        false,
+      ),
+    ).toBe(
+      "{ texture: string | hash; animations: [{ id: string; fps: number } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; fps: number } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[] }, ...{ vertices: number[] }[]] }",
+    );
+  });
+
+  test("a return slot is never corrected", () => {
+    expect(
+      applyListFieldCorrections("resource.set_atlas", "return", "table", atlasFields()),
+    ).toEqual(atlasFields());
+  });
+
+  test("a correction naming a field the slot does not carry is a hard error", () => {
+    const fields = atlasFields().filter((field) => field.name !== "geometries");
+    expect(() => applyListFieldCorrections("resource.set_atlas", "param", "table", fields)).toThrow(
+      /resource\.set_atlas:param:table:geometries/,
+    );
+  });
+
+  test("a correction naming a field that is not a list is a hard error", () => {
+    const fields = atlasFields().map((field) =>
+      field.name === "geometries" ? { ...field, isList: false } : field,
+    );
+    expect(() => applyListFieldCorrections("resource.set_atlas", "param", "table", fields)).toThrow(
+      /resource\.set_atlas:param:table:geometries/,
+    );
+  });
+
+  test("a replaced member the field does not carry is a hard error", () => {
+    const fields = atlasFields().map((field) =>
+      field.name === "animations"
+        ? { ...field, fields: (field.fields ?? []).filter((member) => member.name !== "frame_end") }
+        : field,
+    );
+    expect(() => applyListFieldCorrections("resource.set_atlas", "param", "table", fields)).toThrow(
+      /resource\.set_atlas:param:table:animations.*frame_end/,
+    );
   });
 });
 
@@ -3225,7 +3343,7 @@ describe("NESTED_FIELD_CURATIONS", () => {
     const setLine = out.split("\n").find((l) => l.includes("function set_atlas(")) ?? "";
     const getLine = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(setLine).toContain(
-      "geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]",
+      "geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...",
     );
     expect(getLine).toContain(
       "geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]",
@@ -3233,7 +3351,7 @@ describe("NESTED_FIELD_CURATIONS", () => {
     // create_atlas keeps its parser-grouped members and gains the arrays.
     const createLine = out.split("\n").find((l) => l.includes("function create_atlas")) ?? "";
     expect(createLine).toContain(
-      "geometries: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]",
+      "geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...",
     );
   });
 });

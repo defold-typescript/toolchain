@@ -1626,17 +1626,46 @@ const B2D_SHAPE_TABLE_FIELDS: readonly TableField[] = [
 // `type` and without the fields that type reads with luaL_checknumber or
 // CheckVec2; the rest go through TryGet*Field. A polygon takes `hx`/`hy` or
 // `vertices`. `SHAPE_TYPE_BOX` is the polygon value and `SHAPE_TYPE_EDGE` the v3
-// segment value, so each shares its arm. Chain is v2 only, capsule v3 only.
+// segment value, so each shares its arm. Each backend raises "Unsupported shape
+// type" on the kinds it does not build: `create_fixture` and `fixture.set_shape`
+// are registered only by v2/script_box2d_*_v2.cpp and take B2D_V2_SHAPE_TS (no
+// capsule, and an edge typed `SHAPE_TYPE_EDGE` with optional ghost vertices);
+// `create_shape` and `shape.set_shape` are registered only by
+// v3/script_box2d_*_v3.cpp and take B2D_V3_SHAPE_TS (no chain, and a segment
+// that reads no ghost vertices). `world.cast_shape` and `world.overlap_shape`
+// are registered by both, so they keep the full union.
 // The box arm leads: a v2 fixture keeps its shape type, and the runtime probe
 // witnesses a union by its first arm against a box collision shape.
 const B2D_SHAPE = "typeof b2d.shape";
+const B2D_BOX_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_POLYGON | ${B2D_SHAPE}.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number }`;
+const B2D_POLYGON_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_POLYGON | ${B2D_SHAPE}.SHAPE_TYPE_BOX; vertices: Vector3[] }`;
+const B2D_CIRCLE_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 }`;
+const B2D_CAPSULE_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 }`;
+const B2D_EDGE_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_EDGE | ${B2D_SHAPE}.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 }`;
+const B2D_V2_EDGE_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 }`;
+const B2D_V3_SEGMENT_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_EDGE | ${B2D_SHAPE}.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 }`;
+const B2D_CHAIN_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }`;
 const B2D_SHAPE_DEFINITION_TS = [
-  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_POLYGON | ${B2D_SHAPE}.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number }`,
-  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_POLYGON | ${B2D_SHAPE}.SHAPE_TYPE_BOX; vertices: Vector3[] }`,
-  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 }`,
-  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 }`,
-  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_EDGE | ${B2D_SHAPE}.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 }`,
-  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }`,
+  B2D_BOX_ARM,
+  B2D_POLYGON_ARM,
+  B2D_CIRCLE_ARM,
+  B2D_CAPSULE_ARM,
+  B2D_EDGE_ARM,
+  B2D_CHAIN_ARM,
+].join(" | ");
+const B2D_V2_SHAPE_TS = [
+  B2D_BOX_ARM,
+  B2D_POLYGON_ARM,
+  B2D_CIRCLE_ARM,
+  B2D_V2_EDGE_ARM,
+  B2D_CHAIN_ARM,
+].join(" | ");
+const B2D_V3_SHAPE_TS = [
+  B2D_BOX_ARM,
+  B2D_POLYGON_ARM,
+  B2D_CIRCLE_ARM,
+  B2D_CAPSULE_ARM,
+  B2D_V3_SEGMENT_ARM,
 ].join(" | ");
 const B2D_SHAPE_DEFINITION: TableSlotCuration = { kind: "verbatim", ts: B2D_SHAPE_DEFINITION_TS };
 // A fixture info entry (index/type/sensor/density/friction/restitution/child_count).
@@ -2177,7 +2206,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
     {
       kind: "object",
       fields: [
-        { name: "shape", types: ["table"], tsType: B2D_SHAPE_DEFINITION_TS },
+        { name: "shape", types: ["table"], tsType: B2D_V2_SHAPE_TS },
         { name: "friction", types: ["number"] },
         { name: "restitution", types: ["number"] },
         { name: "density", types: ["number"] },
@@ -2214,7 +2243,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
     "b2d.body.create_shape:param:definition",
     {
       kind: "verbatim",
-      ts: `({ shape: ${B2D_SHAPE_DEFINITION_TS} } | ${B2D_SHAPE_DEFINITION_TS}) & { density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }`,
+      ts: `({ shape: ${B2D_V3_SHAPE_TS} } | ${B2D_V3_SHAPE_TS}) & { density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }`,
     },
   ],
   [
@@ -2264,10 +2293,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ["b2d.fixture.get_filter_data:return:filter", { kind: "object", fields: B2D_FILTER_DATA_FIELDS }],
   ["b2d.fixture.set_filter_data:param:filter", { kind: "object", fields: B2D_FILTER_DATA_FIELDS }],
   ["b2d.fixture.get_shape:return:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
-  ["b2d.fixture.set_shape:param:shape", B2D_SHAPE_DEFINITION],
+  ["b2d.fixture.set_shape:param:shape", { kind: "verbatim", ts: B2D_V2_SHAPE_TS }],
   // b2d.shape
   ["b2d.shape.get_shape:return:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
-  ["b2d.shape.set_shape:param:definition", B2D_SHAPE_DEFINITION],
+  ["b2d.shape.set_shape:param:definition", { kind: "verbatim", ts: B2D_V3_SHAPE_TS }],
   ["b2d.shape.get_mass_data:return:data", { kind: "object", fields: B2D_MASS_DATA_FIELDS }],
   [
     "b2d.shape.get_sensor_overlaps:return:overlaps",
@@ -2881,6 +2910,85 @@ export function applyRequiredFieldCorrections(
   return corrected;
 }
 
+// A param-side list field the engine binding refuses empty. Every entry emits
+// the list as `[E, ...E[]]`; `replaces` drops members the binding reads only as
+// one of several alternatives, and `alternatives` restores them as a union the
+// element is intersected with. Keyed `<element>:param:<slot>:<field>`, the
+// REQUIRED_FIELD_CORRECTIONS shape.
+export interface ListFieldCorrection {
+  readonly evidence: string;
+  readonly replaces?: readonly string[];
+  readonly alternatives?: string;
+}
+
+const ATLAS_FRAMES =
+  "script_resource.cpp:CheckAtlasArguments reads a non-empty frames table, else both frame_start and frame_end with CheckFieldValue<int>";
+
+export const LIST_FIELD_CORRECTIONS: ReadonlyMap<string, ListFieldCorrection> = new Map<
+  string,
+  ListFieldCorrection
+>(
+  (["create_atlas", "set_atlas"] as const).flatMap((name) => [
+    [`resource.${name}:param:table:geometries`, { evidence: ATLAS_ARGUMENTS }] as const,
+    [
+      `resource.${name}:param:table:animations`,
+      {
+        evidence: `${ATLAS_ARGUMENTS}; ${ATLAS_FRAMES}`,
+        replaces: ["frame_start", "frame_end"],
+        alternatives:
+          "{ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }",
+      },
+    ] as const,
+  ]),
+);
+
+// Apply LIST_FIELD_CORRECTIONS to this slot's fields. An entry keyed to this
+// slot that names no field, names a field that is not a list, or replaces a
+// member the field does not carry throws, so a renamed field or member cannot
+// leave a stale correction looking applied. Returns a new array; never mutates
+// its input.
+export function applyListFieldCorrections(
+  elementName: string,
+  slotKind: "param" | "return" | undefined,
+  slotName: string | undefined,
+  fields: readonly TableField[],
+): TableField[] {
+  if (slotKind !== "param" || slotName === undefined) return [...fields];
+  const prefix = `${tableSlotKey(elementName, slotKind, slotName)}:`;
+  const applied = new Set<string>();
+  const corrected = fields.map((field): TableField => {
+    const key = `${prefix}${field.name}`;
+    const correction = LIST_FIELD_CORRECTIONS.get(key);
+    if (correction === undefined) return field;
+    applied.add(field.name);
+    if (field.isList !== true) {
+      throw new Error(`list-field correction names a field that is not a list: ${key}`);
+    }
+    const replaces = correction.replaces ?? [];
+    const missing = replaces.filter(
+      (name) => !(field.fields ?? []).some((member) => member.name === name),
+    );
+    if (missing.length > 0) {
+      throw new Error(`list-field correction ${key} replaces no member: ${missing.join(", ")}`);
+    }
+    return {
+      ...field,
+      nonEmpty: true,
+      ...(field.fields === undefined
+        ? {}
+        : { fields: field.fields.filter((member) => !replaces.includes(member.name)) }),
+      ...(correction.alternatives === undefined ? {} : { alternatives: correction.alternatives }),
+    };
+  });
+  const stale = [...LIST_FIELD_CORRECTIONS.keys()].filter(
+    (key) => key.startsWith(prefix) && !applied.has(key.slice(prefix.length)),
+  );
+  if (stale.length > 0) {
+    throw new Error(`list-field correction names no recovered field: ${stale.sort().join(", ")}`);
+  }
+  return corrected;
+}
+
 // Append the member TABLE_SLOT_FIELD_ADDITIONS supplies for this slot, after
 // every field the parser recovered. Throws on an addition whose field the parse
 // already produced: upstream has documented it, and the entry is stale.
@@ -3072,6 +3180,11 @@ export interface TableField {
   // Set only by REQUIRED_FIELD_CORRECTIONS: the engine raises without the field,
   // so it keeps no `?` even on a param-side option bag.
   required?: boolean;
+  // Set only by LIST_FIELD_CORRECTIONS: the engine raises on an empty list, so
+  // the list emits as `[E, ...E[]]`, and its element is intersected with the
+  // alternative field sets the binding accepts.
+  nonEmpty?: boolean;
+  alternatives?: string;
   // A hand-curated field whose faithful TS shape is not a plain token union
   // (e.g. a nested vector array, or a documented value union with an array
   // branch): inlineTableType emits this verbatim and the audit treats it as
@@ -4560,12 +4673,13 @@ function mapSlotUnion(
           const added = applyFieldAdditions(elementName, slotKind, slotName, parsed);
           const nested = applyNestedFieldCurations(elementName, slotKind, slotName, added);
           const typed = applyFieldTypeOverrides(elementName, slotKind, slotName, nested);
-          const fields = applyRequiredFieldCorrections(
+          const required = applyRequiredFieldCorrections(
             elementName,
             slotKind,
             slotName,
             applyFieldOptionalityCorrections(elementName, slotKind, slotName, typed),
           );
+          const fields = applyListFieldCorrections(elementName, slotKind, slotName, required);
           const object = inlineTableType(fields, mapType, optionalFields);
           ts = isSlotLevelList(doc) ? `${object}[]` : object;
         } else {
@@ -4662,7 +4776,7 @@ export function inlineTableType(
       field.tsType !== undefined
         ? field.tsType
         : field.fields !== undefined
-          ? `${inlineTableType(field.fields, mapType, optionalFields)}${field.isList ? "[]" : ""}`
+          ? nestedFieldType(field, inlineTableType(field.fields, mapType, optionalFields))
           : field.numberList === true
             ? "number[]"
             : field.types.length > 0
@@ -4676,6 +4790,13 @@ export function inlineTableType(
     return `${key}${optional ? "?" : ""}: ${ts}`;
   });
   return `{ ${members.join("; ")} }`;
+}
+
+function nestedFieldType(field: TableField, object: string): string {
+  const element = field.alternatives === undefined ? object : `${object} & (${field.alternatives})`;
+  if (field.isList !== true) return element;
+  const rest = field.alternatives === undefined ? element : `(${element})`;
+  return field.nonEmpty === true ? `[${element}, ...${rest}[]]` : `${rest}[]`;
 }
 
 function unionFromTokens(tokens: readonly string[], mapType: (t: string) => string): string {

@@ -1147,14 +1147,6 @@
     "verdict": "accepted",
     "reason": "the binding also takes the shape wrapped as { shape = ... }; the declaration types the documented bare shape table"
   },
-  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.center1": {
-    "verdict": "accepted",
-    "reason": "b2d.fixture is the Box2D v2 API, which has no capsule; the shared shape table carries the v3 capsule fields"
-  },
-  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.center2": {
-    "verdict": "accepted",
-    "reason": "b2d.fixture is the Box2D v2 API, which has no capsule; the shared shape table carries the v3 capsule fields"
-  },
   "defold-1.13.0:b2d.joint.create_filter:arity": {
     "verdict": "accepted",
     "reason": "the ref-doc documents an optional definition table the binding never reads; passing one is ignored"
@@ -1356,14 +1348,6 @@
   "defold-1.13.1:b2d.fixture.set_shape:field-undeclared:3.shape": {
     "verdict": "accepted",
     "reason": "the binding also takes the shape wrapped as { shape = ... }; the declaration types the documented bare shape table"
-  },
-  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.center1": {
-    "verdict": "accepted",
-    "reason": "b2d.fixture is the Box2D v2 API, which has no capsule; the shared shape table carries the v3 capsule fields"
-  },
-  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.center2": {
-    "verdict": "accepted",
-    "reason": "b2d.fixture is the Box2D v2 API, which has no capsule; the shared shape table carries the v3 capsule fields"
   },
   "defold-1.13.1:b2d.joint.create_filter:arity": {
     "verdict": "accepted",
