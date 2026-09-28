@@ -32,10 +32,12 @@ go.set<sprite.properties>()("#sprite", "nope", 1);
 // @ts-expect-error cursor is number, not a Hash — value type is gated to P[K]
 go.set<sprite.properties>()("#sprite", "cursor", hash("x"));
 
-// `animation` is READ ONLY in the ref-doc prose, but the generated interface
-// field is plain-mutable (no readonly modifier), so set stays permissive
-// (decision a) — this checks rather than erroring.
+// `animation` is READ ONLY: the generated member is `readonly` and the engine
+// refuses the write, so set rejects the key while get still reads it.
+// @ts-expect-error animation is readonly — set accepts only writable keys
 go.set<sprite.properties>()("#sprite", "animation", hash("x"));
+const _animation: Hash = go.get<sprite.properties>()("#sprite", "animation");
+void _animation;
 
 // Cross-script script properties: a script declares its editor properties via
 // `defineScript({ properties })`; that module exports its declared shape with

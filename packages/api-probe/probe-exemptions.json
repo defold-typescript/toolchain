@@ -39,6 +39,61 @@
     "verdict": "accepted",
     "reason": "the Box2D v2 binding reads reset_mass with lua_toboolean behind lua_gettop and lua_isnil checks, so any non-nil value counts as true"
   },
+  "b2d.joint.JOINT_TYPE_FILTER:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v3 binding registers it, and the v3 pass reads it there"
+  },
+  "b2d.joint.JOINT_TYPE_FRICTION:constant@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v2 binding registers it, and the v2 pass reads it there"
+  },
+  "b2d.joint.JOINT_TYPE_GEAR:constant@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v2 binding registers it, and the v2 pass reads it there"
+  },
+  "b2d.joint.JOINT_TYPE_MOTOR:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v3 binding registers it, and the v3 pass reads it there"
+  },
+  "b2d.joint.JOINT_TYPE_PULLEY:constant@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v2 binding registers it, and the v2 pass reads it there"
+  },
+  "b2d.joint.JOINT_TYPE_ROPE:constant@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v2 binding registers it, and the v2 pass reads it there"
+  },
+  "b2d.joint.JOINT_TYPE_UNKNOWN:constant@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v2 binding registers it, and the v2 pass reads it there"
+  },
+  "b2d.joint.LIMIT_STATE_AT_LOWER:constant@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v2 binding registers it, and the v2 pass reads it there"
+  },
+  "b2d.joint.LIMIT_STATE_AT_UPPER:constant@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v2 binding registers it, and the v2 pass reads it there"
+  },
+  "b2d.joint.LIMIT_STATE_EQUAL:constant@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v2 binding registers it, and the v2 pass reads it there"
+  },
+  "b2d.joint.LIMIT_STATE_INACTIVE:constant@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v2 binding registers it, and the v2 pass reads it there"
+  },
   "b2d.joint.get_max_length:required@v3": {
     "outcome": "engine-error",
     "verdict": "accepted",
@@ -58,6 +113,26 @@
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "the witness is a friction joint, and the Box2D v3 binding cannot create one"
+  },
+  "b2d.shape.SHAPE_TYPE_CAPSULE:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v3 binding registers it, and the v3 pass reads it there"
+  },
+  "b2d.shape.SHAPE_TYPE_CHAIN:constant@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v2 binding registers it, and the v2 pass reads it there"
+  },
+  "b2d.shape.SHAPE_TYPE_GRID:constant@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v2 binding registers it, and the v2 pass reads it there"
+  },
+  "b2d.shape.SHAPE_TYPE_SEGMENT:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "only the Box2D v3 binding registers it, and the v3 pass reads it there"
   },
   "camera.get_aspect_ratio:required": {
     "outcome": "engine-error",
@@ -194,11 +269,6 @@
     "verdict": "accepted",
     "reason": "the binding reads playback only when lua_isnumber(L, 8) and ignores any other kind"
   },
-  "gui.delete_texture:required": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "deletes a texture created with gui.new_texture, and the witness names none"
-  },
   "gui.get:negative-3": {
     "outcome": "ok",
     "verdict": "accepted",
@@ -218,6 +288,91 @@
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "the witness buffer is not ASTC data, and the probe project ships no .astc file"
+  },
+  "material.CONSTANT_TYPE_NORMAL:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_PROJECTION:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_PROJECTION_INVERSE:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_TEXTURE:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_TIME:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_USER:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_USER_MATRIX4:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_VIEW:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_VIEWPROJ:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_VIEWPROJ_INVERSE:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_VIEW_INVERSE:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_WORLD:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_WORLDVIEW:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_WORLDVIEWPROJ:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_WORLDVIEW_INVERSE:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.CONSTANT_TYPE_WORLD_INVERSE:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
   },
   "material.get_constants:required": {
     "outcome": "engine-error",
@@ -269,6 +424,11 @@
     "verdict": "accepted",
     "reason": "the binding reads complete_function only when lua_isfunction(L, 5) and ignores any other kind"
   },
+  "model.properties.animation:set": {
+    "outcome": "bad-argument",
+    "verdict": "accepted",
+    "reason": "no animation plays on the probe model, and the engine resolves no animation from the id the read returns (its message names the resource '(null)')"
+  },
   "physics.raycast:negative-4": {
     "outcome": "ok",
     "verdict": "accepted",
@@ -278,6 +438,11 @@
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "the profiler recording buffer is empty during a probe run"
+  },
+  "render.RENDER_TARGET_DEFAULT:constant": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the engine registers no such field; the documented `render.set_render_target(render.RENDER_TARGET_DEFAULT)` passes the nil it reads, which selects the default target"
   },
   "render.delete_render_target:negative-1": {
     "outcome": "engine-error",
@@ -368,6 +533,11 @@
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "the witness buffer is not WAV or Ogg data, so the engine does not update the sound"
+  },
+  "sprite.properties.texture0:set": {
+    "outcome": "bad-argument",
+    "verdict": "accepted",
+    "reason": "the engine resolves a written texture0 hash to a loaded texture resource, and the hash the read returns resolves to none (its message names the resource '(null)')"
   },
   "sys.get_config_boolean:negative-2": {
     "outcome": "ok",

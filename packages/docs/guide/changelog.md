@@ -19,7 +19,8 @@ What changed in each published `defold-typescript` toolchain release.
   - **Shape tables are one form per `type`** — Box2D shapes passed to `create_fixture`, `create_shape`, `set_shape`, `cast_shape` and `overlap_shape`, and the [`physics.set_shape`](/api/physics) table, take a `SHAPE_TYPE_*` constant plus that kind's fields, such as `{ type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: 8 }`; rebuild a table read from `get_shape` that way before passing it to `set_shape`.
   - **Render predicates are a handle** — [`render.predicate`](/api/render) returns `Opaque<"render_predicate">`, and `render.draw` takes that instead of a number.
   - **Pass `undefined` rather than leaving the argument out** — the binding reads it even when absent: `gui.move_above` and `move_below` take `reference`, `gui.set_parent` takes `parent` and `gui.set` takes `value` ([gui](/api/gui)), `set_prototype` and `collectionproxy.set_collection` take `prototype`, and [`window.set_listener`](/api/window) and [`html5.set_interaction_listener`](/api/html5) take the callback. Write `gui.move_above(node, undefined)` or `window.set_listener(undefined)`.
-  - **Narrower types** — `sound.get_group_name` takes a hash, [`model.get_mesh_enabled`](/api/model) and `set_mesh_enabled` take the mesh id as a string or hash, and `resource.create_texture_async` takes its path as a string.
+  - **Narrower types** — `sound.get_group_name` takes a hash, [`model.get_mesh_enabled`](/api/model) and `set_mesh_enabled` take the mesh id as a string or hash, `resource.create_texture_async` takes its path as a string, and the `set_camera` message takes `orthographic_projection` as a number.
+  - **Read-only properties** — `go.set<P>()` accepts only writable keys, and the properties the reference marks READ ONLY are `readonly`: [`sprite`](/api/sprite) `animation` and `frame_count`, [`camera`](/api/camera) `orthographic_auto_zoom`, `projection` and `view`, and [`physics`](/api/physics) `mass`.
   - **[`sys.set_render_enable`](/api/sys) is `sys.set_render_enabled`**, the name the engine registers; the documented name is `nil` at runtime.
   - **Functions no binding registers are gone** — [`b2d.body`](/api/b2d.body) `get_user_data`, `set_user_data` and `get_contact_list` on Defold 1.13, and `reset_mass_data` on 1.12.4.
 - **Return types match the values the engine returns**, so code that assumed a value is always there needs a check: [`sys.get_config_string`](/api/sys) returns `string | undefined` unless you pass a default, [`b2d.world.cast_ray_closest`](/api/b2d.world) and [`b2d.shape.ray_cast`](/api/b2d.shape) return `undefined` on a miss, and [`gui.new_texture`](/api/gui)'s error code is `undefined` on success. [`b2d.body.get_world_center`](/api/b2d.body) returns a `vmath.vector3`, never a `number`.
@@ -36,6 +37,10 @@ What changed in each published `defold-typescript` toolchain release.
   - **Return values** — `sys.save` and [`tilemap.set_tile`](/api/tilemap) return a boolean, and `b2d.body.create_shape` returns the created shape's `index`, `shape_id`, `type` and material fields.
   - **Table fields** — the `gui.get` and `gui.set` options take `key` and `keys`, each `resource.create_atlas` geometry takes `vertices`, `uvs` and `indices`, and Box2D shape tables take a capsule's `center1` and `center2`.
   - **Constants** — [`graphics.DATA_TYPE_*`](/api/graphics), `graphics.COORDINATE_SPACE_*` and [`material.CONSTANT_TYPE_*`](/api/material) on Defold 1.13, and `render.TEXTURE_BIT`, are declared; the engine defines them, and the reference names them only in prose.
+- **Code that type-checked but failed or misread values in the engine is fixed:**
+  - **Curried property access** — `go.get<sprite.properties>()("#sprite", "animation")` and the matching `go.set<P>()` form compiled to an empty `go.get()` call that raised in the engine; they now call [`go.get`](/api/go) and `go.set` directly.
+  - **`go.scale`** is `number | Vector3`, since the engine reads the scale back as a `vmath.vector3`.
+  - **String constants** — [`gui.PROP_*`](/api/gui) and [`image.TYPE_*`](/api/image) are typed as the strings the engine registers, not as numbers.
 
 ## v0.40.0
 

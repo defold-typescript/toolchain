@@ -8,12 +8,14 @@ declare const v3: Vector3;
 // Narrow: a known property key resolves to its real type from go.properties.
 const _pos: Vector3 = go.get(url, "position");
 const _rot: Quaternion = go.get(url, "rotation");
-const _scale: number = go.get(url, "scale");
+// The engine reads scale back as a vector3 and takes a number for a uniform one.
+const _scale: number | Vector3 = go.get(url, "scale");
 void _pos;
 void _rot;
 void _scale;
 
 go.set(url, "euler", v3);
+go.set(url, "scale", 2);
 
 // @ts-expect-error wrong value type for a known property
 go.set(url, "position", "not a vector");

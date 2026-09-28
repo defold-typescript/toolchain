@@ -11,6 +11,7 @@ import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { timersLoweringPlugin } from "./timers-lowering";
 import { AMBIENT_FILES, collectOutputs, type TranspileProjectResult } from "./transpile";
+import { typeApplicationErasurePlugin } from "./type-application-erasure";
 import { windowEventGuardLoweringPlugin } from "./window-event-guard-lowering";
 
 export interface TranspileSession {
@@ -45,6 +46,7 @@ function compilerOptions(companionEmit: CompanionEmitter): tstl.CompilerOptions 
       { plugin: messageDispatchLoweringPlugin },
       { plugin: timersLoweringPlugin },
       { plugin: arrayIndexOptionLoweringPlugin },
+      { plugin: typeApplicationErasurePlugin },
       { plugin: companionEmit.plugin },
     ],
   };

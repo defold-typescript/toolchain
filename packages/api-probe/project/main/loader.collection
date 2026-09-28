@@ -1,0 +1,6 @@
+name: "loader"
+instances {
+  id: "loaded"
+  prototype: "/main/spawn.go"
+}
+scale_along_z: 0

@@ -279,7 +279,7 @@ declare global {
        * in auto fit and auto cover modes. The value is 1.0 in fixed mode.
        * The type of the property is float.
        */
-      orthographic_auto_zoom: number;
+      readonly orthographic_auto_zoom: number;
       /**
        * Positive zoom multiplier when using an orthographic projection. In auto fit and auto cover
        * modes, this value is multiplied with the calculated orthographic_auto_zoom value.
@@ -290,12 +290,12 @@ declare global {
        * READ ONLY The calculated projection matrix of the camera.
        * The type of the property is matrix4.
        */
-      projection: Matrix4;
+      readonly projection: Matrix4;
       /**
        * READ ONLY The calculated view matrix of the camera.
        * The type of the property is matrix4.
        */
-      view: Matrix4;
+      readonly view: Matrix4;
     }
   }
 }

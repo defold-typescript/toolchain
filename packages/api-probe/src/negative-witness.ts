@@ -74,5 +74,8 @@ export function describeDiagnostic(
     const article = /^[aeiou]/.test(kind) ? "an" : "a";
     return `${where} slot ${slot} too loose: the declaration accepts ${article} ${kind}, which ${binding} rejects`;
   }
+  if (call?.readonlySet === true && diagnostic.message.includes(UNUSED_DIRECTIVE)) {
+    return `${where} too loose: go.set accepts a key its catalog declares readonly`;
+  }
   return `${where}: ${diagnostic.message}`;
 }

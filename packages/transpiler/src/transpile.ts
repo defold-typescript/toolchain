@@ -15,6 +15,7 @@ import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { importsTimersModule, timersLoweringPlugin } from "./timers-lowering";
 import { TIMERS_RUNTIME } from "./timers-runtime";
+import { typeApplicationErasurePlugin } from "./type-application-erasure";
 import { windowEventGuardLoweringPlugin } from "./window-event-guard-lowering";
 
 export interface TranspileResult {
@@ -323,6 +324,7 @@ export function transpileProject(input: TranspileProjectInput): TranspileProject
       { plugin: messageDispatchLoweringPlugin },
       { plugin: timersLoweringPlugin },
       { plugin: arrayIndexOptionLoweringPlugin },
+      { plugin: typeApplicationErasurePlugin },
       { plugin: companionEmit.plugin },
     ],
   });

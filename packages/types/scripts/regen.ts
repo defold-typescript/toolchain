@@ -10,6 +10,7 @@ import {
 } from "../src/emit-dts";
 import {
   applyMessageDeprecations,
+  applyMessageFieldCorrections,
   type EmitBuiltinMessagesOptions,
   emitBuiltinMessages,
   parseMessagesDoc,
@@ -364,7 +365,10 @@ export function generateBuiltinMessagesDeclaration(
   entry: MessagesManifestEntry,
   opts: EmitBuiltinMessagesOptions = {},
 ): string {
-  return emitBuiltinMessages(applyMessageDeprecations(parseMessagesDoc(entry.doc)), opts);
+  return emitBuiltinMessages(
+    applyMessageFieldCorrections(applyMessageDeprecations(parseMessagesDoc(entry.doc))),
+    opts,
+  );
 }
 
 export interface GenerateResult {
