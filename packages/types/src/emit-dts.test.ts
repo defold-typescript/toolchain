@@ -4835,6 +4835,16 @@ describe("engine index base notes", () => {
     );
   });
 
+  test("a classified field of an overridden return states its base once", () => {
+    const block = docBlock(b2dBody113Doc, "create_shape");
+    expect(tagLine(block, "@returns")).toContain("`index` is 1-based; passed to Defold unchanged.");
+    expect(occurrences(block, "passed to Defold unchanged")).toBe(1);
+  });
+
+  test("an overridden return with no classified field gains no @returns", () => {
+    expect(docBlock(sysDoc, "save")).not.toContain("@returns");
+  });
+
   test("options.index keeps upstream's 1-based doc and gains its field note once", () => {
     const block = docBlock(guiDoc, "set");
     expect(block).toContain("index into array property (1 based)");
