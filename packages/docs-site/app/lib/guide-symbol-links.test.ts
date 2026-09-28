@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { canonicalApiPages } from "./api-content";
 import { loadCombinedSurface } from "./api-surface-loader";
 import { withBase } from "./base";
 import { renderGuidePage } from "./content";
@@ -18,8 +19,17 @@ function routeOf(key: string): string {
   return route;
 }
 
-function linkedCode(key: string): string {
-  return `<a href="${withBase(routeOf(key))}"><code>${key}</code></a>`;
+function linkedCode(key: string, route: string = routeOf(key)): string {
+  return `<a href="${withBase(route)}"><code>${key}</code></a>`;
+}
+
+// Global types are version-independent pages, so they are absent from the
+// Combined index and are looked up among the canonical pages instead.
+function globalTypeRoute(namespace: string): string {
+  const page = canonicalApiPages(REAL_TYPES_DIR).find((p) => p.namespace === namespace);
+  if (!page) throw new Error(`no canonical API page for ${namespace}`);
+  expect(page.category).toBe("global-type");
+  return page.route;
 }
 
 async function renderReal(file: string): Promise<string> {
@@ -32,6 +42,16 @@ describe("symbol-named inline code in rendered guide pages", () => {
   test("a guide page links a symbol span to its reference heading", async () => {
     const html = await renderReal("typescript-vs-lua.md");
     expect(html).toContain(linkedCode("go.get"));
+  });
+
+  test("a guide page links a prefixless global function span", async () => {
+    const html = await renderReal("transpile-diagnostics.md");
+    expect(html).toContain(linkedCode("hash"));
+  });
+
+  test("a guide page links a global type span", async () => {
+    const html = await renderReal("messages.md");
+    expect(html).toContain(linkedCode("Hash", globalTypeRoute("Hash")));
   });
 
   // The changelog's released sections are frozen source; the link has to come
@@ -57,7 +77,7 @@ describe("symbol-named inline code in rendered guide pages", () => {
       "go.get(url);",
       "```",
       "",
-      "Linked: `go.get`.",
+      "Linked: `go.get`, `hash`, `Hash`.",
     ].join("\n");
     const routes = guideSymbolRoutes(GUIDE_DIR);
     const html = await renderMarkdown(source, { symbolCodeLinks: routes });
@@ -65,7 +85,9 @@ describe("symbol-named inline code in rendered guide pages", () => {
 
     const href = `href="${withBase(routeOf("go.get"))}"`;
     expect(html.split(href).length - 1).toBe(1);
-    expect(html).toContain(`Linked: ${linkedCode("go.get")}`);
+    expect(html).toContain(
+      `Linked: ${linkedCode("go.get")}, ${linkedCode("hash")}, ${linkedCode("Hash", globalTypeRoute("Hash"))}`,
+    );
     expect(html).not.toMatch(/<a [^>]*>(?:(?!<\/a>)[\s\S])*<a /);
     for (const code of ["go", "game.project", "go.get(url)"]) {
       expect(html).toContain(` <code>${code}</code>`);
