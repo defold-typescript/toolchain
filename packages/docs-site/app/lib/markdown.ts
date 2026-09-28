@@ -261,6 +261,8 @@ export async function renderMarkdown(
     highlightSignatureHeadings?: boolean;
     signatureSymbolLinks?: ReadonlyMap<string, SignatureSymbolTarget>;
     readInlineSvg?: (src: string) => string | undefined;
+    /** Symbol key -> root-absolute `/api` route an inline code span naming it links to. */
+    symbolCodeLinks?: ReadonlyMap<string, string>;
   } = {},
 ): Promise<string> {
   const source = opts.firstHeading ? replaceFirstHeading(markdown, opts.firstHeading) : markdown;
@@ -358,6 +360,39 @@ export async function renderMarkdown(
           }),
         )}\n`;
         tokens.splice(i, 3, figure);
+      }
+    });
+  }
+  // An inline code span whose whole text is a documented symbol (`go.get`) links
+  // to that symbol's reference heading. Spans already inside a link stay as they
+  // are (anchors cannot nest), and so do spans in headings, which the heading
+  // permalink already wraps. Pushed ahead of `rewrite-md-links` so the new
+  // root-absolute hrefs take the deploy base exactly as authored `/api` links do.
+  const symbolCodeLinks = opts.symbolCodeLinks;
+  if (symbolCodeLinks && symbolCodeLinks.size > 0) {
+    md.core.ruler.push("symbol-code-links", (state) => {
+      for (let i = 0; i < state.tokens.length; i++) {
+        const token = state.tokens[i];
+        if (token?.type !== "inline" || !token.children) continue;
+        if (state.tokens[i - 1]?.type === "heading_open") continue;
+        const out: typeof token.children = [];
+        let linkDepth = 0;
+        for (const child of token.children) {
+          if (child.type === "link_open") linkDepth++;
+          else if (child.type === "link_close") linkDepth--;
+          const route =
+            child.type === "code_inline" && linkDepth === 0
+              ? symbolCodeLinks.get(child.content)
+              : undefined;
+          if (route === undefined) {
+            out.push(child);
+            continue;
+          }
+          const open = new state.Token("link_open", "a", 1);
+          open.attrSet("href", route);
+          out.push(open, child, new state.Token("link_close", "a", -1));
+        }
+        token.children = out;
       }
     });
   }
