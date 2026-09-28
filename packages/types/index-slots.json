@@ -166,13 +166,15 @@
       "class": "not-a-position"
     },
     "b2d.world.overlap_aabb:return:fixtures:index": {
-      "class": "native-1"
+      "class": "native-1",
+      "tupleSlot": 0
     },
     "b2d.world.overlap_shape:param:filter:group_index": {
       "class": "not-a-position"
     },
     "b2d.world.overlap_shape:return:fixtures:index": {
-      "class": "native-1"
+      "class": "native-1",
+      "tupleSlot": 0
     },
     "client:send:param:i": {
       "class": "native-1",
@@ -294,11 +296,5 @@
     "tilemap.tiles.set:param:tile_or_info:index": {
       "class": "native-1"
     }
-  },
-  "loweredTableFields": [
-    "go.get:param:options:index",
-    "go.set:param:options:index",
-    "gui.get:param:options:index",
-    "gui.set:param:options:index"
-  ]
+  }
 }

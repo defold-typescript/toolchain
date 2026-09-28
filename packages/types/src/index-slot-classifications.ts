@@ -26,7 +26,8 @@ export interface IndexSlotClassification {
   // entry of the same class.
   readonly pairsWith?: readonly string[];
   // The zero-based position of a return in its function's `LuaMultiReturn`
-  // tuple; absent on the return of a single-value function and on every param.
+  // tuple, or of the return holding a returned field; absent on the return of a
+  // single-value function and on every param.
   readonly tupleSlot?: number;
 }
 
@@ -90,6 +91,7 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
     {
       class: "native-1",
       evidence: "the binding pushes the 1-based fixture_index the b2d.fixture calls take",
+      ...(key.startsWith("b2d.world.") ? { tupleSlot: 0 } : {}),
     },
   ]),
   [
@@ -297,9 +299,9 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
   ),
 ]);
 
-// The native-1 table fields the transpiler converts. Every other native-1 field
-// reaches Defold unchanged, in Defold's base, and its hover says so.
-export const LOWERED_TABLE_FIELDS: ReadonlySet<string> = new Set([
+// The `options.index` fields, whose slot doc `PARAM_DOC_REWRITES` rewrites to the
+// TypeScript base, so they gain no note of their own.
+export const REWRITTEN_INDEX_FIELDS: ReadonlySet<string> = new Set([
   "go.get:param:options:index",
   "go.set:param:options:index",
   "gui.get:param:options:index",
@@ -317,7 +319,6 @@ export interface IndexSlotEntry {
 
 export interface IndexSlotsArtifact {
   readonly slots: Readonly<Record<string, IndexSlotEntry>>;
-  readonly loweredTableFields: readonly string[];
 }
 
 export function indexSlotsArtifact(): IndexSlotsArtifact {
@@ -334,7 +335,7 @@ export function indexSlotsArtifact(): IndexSlotsArtifact {
       ...(tupleSlot === undefined ? {} : { tupleSlot }),
     };
   }
-  return { slots, loweredTableFields: [...LOWERED_TABLE_FIELDS].sort() };
+  return { slots };
 }
 
 export function serializeIndexSlots(): string {
@@ -395,15 +396,16 @@ function ownNote(key: string, prose: string): string | undefined {
   return undefined;
 }
 
-// A lowered field is documented by its slot's own rewrite. Any other native-1
-// field reaches Defold unchanged, so it is written in Defold's base.
+// A native-1 field always gains the TypeScript-base note, like a native-1 slot,
+// unless its slot's own rewrite states it. A native-0 field gains "0-based."
+// only when its prose names no base.
 function fieldNote(key: string, field: string, prose: string): string | undefined {
   const classification = INDEX_SLOT_CLASSIFICATIONS.get(key);
-  if (classification === undefined || LOWERED_TABLE_FIELDS.has(key) || statesBase(prose)) {
-    return undefined;
+  if (classification === undefined || REWRITTEN_INDEX_FIELDS.has(key)) return undefined;
+  if (classification.class === "native-1") {
+    return `\`${field}\` is zero-based in TypeScript; Defold receives it 1-based.`;
   }
-  if (classification.class === "native-1") return `\`${field}\` is 1-based.`;
-  if (classification.class === "native-0") return `\`${field}\` is 0-based.`;
+  if (classification.class === "native-0" && !statesBase(prose)) return `\`${field}\` is 0-based.`;
   return undefined;
 }
 
@@ -423,8 +425,8 @@ export function indexBaseNotes(
   const prefix = `${key}:`;
   for (const fieldKey of INDEX_SLOT_CLASSIFICATIONS.keys()) {
     if (!fieldKey.startsWith(prefix)) continue;
-    const field = fieldKey.slice(prefix.length);
-    if (field.includes(":")) continue;
+    const path = fieldKey.slice(prefix.length);
+    const field = path.slice(path.lastIndexOf(":") + 1);
     const fieldProse = fields.find((candidate) => candidate.name === field)?.prose ?? "";
     const note = fieldNote(fieldKey, field, fieldProse);
     if (note !== undefined) notes.push(note);

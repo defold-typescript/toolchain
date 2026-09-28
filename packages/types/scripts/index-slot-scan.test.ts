@@ -202,13 +202,14 @@ describe("index slot classification gate", () => {
     }
   });
 
-  test("each return records its position in the function's tuple", () => {
+  test("each return, and each field of one, records its position in the function's tuple", () => {
     for (const [key, classification] of INDEX_SLOT_CLASSIFICATIONS) {
-      const [fn = "", kind, slot = ""] = key.split(/:(param|return):/);
-      if (kind !== "return" || slot.includes(":")) {
+      const [fn = "", kind, path = ""] = key.split(/:(param|return):/);
+      if (kind !== "return") {
         expect({ key, tupleSlot: classification.tupleSlot }).toEqual({ key, tupleSlot: undefined });
         continue;
       }
+      const slot = path.split(":")[0] ?? "";
       const names = returnNames(fn);
       const expected = names.length > 1 ? names.indexOf(slot) : undefined;
       expect({ key, tupleSlot: classification.tupleSlot }).toEqual({ key, tupleSlot: expected });
