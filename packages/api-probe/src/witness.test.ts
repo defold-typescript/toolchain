@@ -16,7 +16,7 @@ const [v2] = generations as [ProbeGeneration, ProbeGeneration];
 describe("witness generation", () => {
   test("sprite.play_flipbook gets a required-slot call and one with every optional slot", () => {
     const calls = v2.calls.filter(
-      (call) => call.name === "sprite.play_flipbook" && call.negative === undefined,
+      (call) => call.name === "sprite.play_flipbook" && call.witness === undefined,
     );
     expect(calls.map((call) => [call.variant, call.call])).toEqual([
       ["required", 'sprite.play_flipbook(SPRITE, hash("anim"))'],

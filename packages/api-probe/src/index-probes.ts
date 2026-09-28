@@ -498,7 +498,7 @@ export function manualCoverage(
   for (const pass of passes) {
     const positive = new Set(
       pass.calls
-        .filter((call) => call.negative === undefined && call.index === undefined)
+        .filter((call) => call.witness === undefined && call.index === undefined)
         .map((call) => `${call.name}\t${call.variant}`),
     );
     for (const outcome of pass.outcomes) {

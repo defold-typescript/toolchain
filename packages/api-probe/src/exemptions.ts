@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import type { Box2DBackend } from "./contexts";
 import type { ProbeOutcome } from "./outcome";
 import { returnMismatches } from "./return-kinds";
-import type { ProbeCall } from "./witness";
+import type { ProbeCall, WitnessTarget } from "./witness";
 
 export const EXEMPTIONS_FILE = resolve(import.meta.dir, "..", "probe-exemptions.json");
 
@@ -11,7 +11,8 @@ export const EXEMPTIONS_FILE = resolve(import.meta.dir, "..", "probe-exemptions.
 // records: the engine, not the declaration, is why the call cannot pass.
 // `open`: the declaration accepts an argument the engine rejects and is due a
 // correction; it clears nothing and is reported until the declaration is fixed.
-// Outcome `ok` records a negative call a lenient binding accepts by design.
+// Outcome `ok` records a negative call a lenient binding accepts by design; an
+// accepted call is expected to end ok, so an exemption recording that is stale.
 export interface Exemption {
   readonly outcome: "ok" | "bad-argument" | "engine-error";
   readonly verdict: "accepted" | "open";
@@ -32,8 +33,12 @@ export interface ProbeFailures {
   readonly openFindings: string[];
   // Negative calls the engine accepted.
   readonly tooNarrow: string[];
-  // Negative calls that raised, but not a bad argument at their own slot.
-  readonly negativeMisfires: string[];
+  // Accepted calls refused a bad argument at their own slot: a kind the
+  // extractor reads as accepted that the binding rejects.
+  readonly acceptedRefused: string[];
+  // Negative calls that raised, but not a bad argument at their own slot, and
+  // accepted calls that raised anything else.
+  readonly misfires: string[];
   readonly returnKinds: string[];
   // Index probes whose slot did not behave as its class says.
   readonly indexSemantics: string[];
@@ -99,15 +104,15 @@ function describe(backend: Box2DBackend, outcome: ProbeOutcome): string {
 }
 
 function article(kind: string): string {
-  return /^[aeiou]/.test(kind) ? "an" : "a";
+  return /^[aeio]/.test(kind) ? "an" : "a";
 }
 
-// A negative call is expected to raise a bad argument at its own slot, or one
-// whose message numbers no slot.
+// A bad argument at the witness's own slot, or one whose message numbers no
+// slot.
 function raisesOnSlot(call: ProbeCall, outcome: ProbeOutcome): boolean {
   return (
     outcome.outcome === "bad-argument" &&
-    (outcome.slot === undefined || outcome.slot === call.negative?.slot)
+    (outcome.slot === undefined || outcome.slot === call.witness?.slot)
   );
 }
 
@@ -135,7 +140,9 @@ function exemptedFailures(
   return out;
 }
 
-function evaluateNegative(
+// A negative call must raise a bad argument at its own slot, an accepted call
+// must end ok; anything else fails unless an accepted exemption records it.
+function evaluateWitness(
   pass: PassResult,
   call: ProbeCall,
   outcome: ProbeOutcome,
@@ -144,9 +151,17 @@ function evaluateNegative(
   failures: ProbeFailures,
 ): void {
   const key = outcomeKey(pass.backend, outcome.name, outcome.variant);
-  const target = call.negative as NonNullable<ProbeCall["negative"]>;
-  if (raisesOnSlot(call, outcome)) {
-    if (exemption) failures.stale.push(`${key}: now raises on its slot; delete the exemption`);
+  const target = call.witness as WitnessTarget;
+  const refused = raisesOnSlot(call, outcome);
+  if (target.expect === "raise" ? refused : outcome.outcome === "ok") {
+    if (exemption === undefined) return;
+    const now =
+      target.expect === "raise"
+        ? "now raises on its slot"
+        : exemption.outcome === "ok"
+          ? "ok is the expected outcome"
+          : "now ends ok";
+    failures.stale.push(`${key}: ${now}; delete the exemption`);
     return;
   }
   if (exemption && exemption.outcome !== outcome.outcome) {
@@ -154,18 +169,26 @@ function evaluateNegative(
   }
   if (exemption?.verdict === "open") failures.openFindings.push(`${key}: ${exemption.reason}`);
   if (exemption?.verdict === "accepted" && exemption.outcome === outcome.outcome) return;
-  // A negative call that fails exactly like its function's exempted positive
+  // A witness call that fails exactly like its function's exempted positive
   // call never reached the slot it tests.
   if (exemption === undefined && inherited?.has(bareMessage(outcome.message))) return;
-  if (outcome.outcome === "ok") {
+  const kind = `${article(target.kind)} ${target.kind}`;
+  if (target.expect === "raise" && outcome.outcome === "ok") {
     failures.tooNarrow.push(
-      `${key}: the engine accepts ${article(target.kind)} ${target.kind} in slot ${target.slot}; the declaration is too narrow or ${target.binding} is lenient`,
+      `${key}: the engine accepts ${kind} in slot ${target.slot}; the declaration is too narrow or ${target.binding} is lenient`,
+    );
+    return;
+  }
+  if (target.expect === "ok" && refused) {
+    failures.acceptedRefused.push(
+      `${key}: ${target.binding} refuses ${kind} in slot ${target.slot}, a kind the extractor reads as accepted: ${outcome.message}`,
     );
     return;
   }
   const slot = outcome.slot === undefined ? "" : ` slot ${outcome.slot}`;
-  failures.negativeMisfires.push(
-    `${key}${slot}: raised ${outcome.outcome}, expected a bad argument #${target.slot}: ${outcome.message}`,
+  const expected = target.expect === "ok" ? "ok" : `a bad argument #${target.slot}`;
+  failures.misfires.push(
+    `${key}${slot}: raised ${outcome.outcome}, expected ${expected}: ${outcome.message}`,
   );
 }
 
@@ -180,7 +203,8 @@ export function evaluateProbe(
     stale: [],
     openFindings: [],
     tooNarrow: [],
-    negativeMisfires: [],
+    acceptedRefused: [],
+    misfires: [],
     returnKinds: [],
     indexSemantics: [],
     writableReadonly: [],
@@ -202,8 +226,8 @@ export function evaluateProbe(
       seen.add(key);
       const exemption = exemptions[key];
       const call = calls.get(key);
-      if (call?.negative !== undefined) {
-        evaluateNegative(pass, call, outcome, exemption, inherited.get(call.name), failures);
+      if (call?.witness !== undefined) {
+        evaluateWitness(pass, call, outcome, exemption, inherited.get(call.name), failures);
         continue;
       }
       if (call?.readonlySet === true) {
