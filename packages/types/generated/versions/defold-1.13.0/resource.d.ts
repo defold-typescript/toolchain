@@ -151,7 +151,7 @@ declare global {
      * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
      *
-     * `frame_start` is 1-based; passed to Defold unchanged. `frame_end` is 1-based; passed to Defold unchanged.
+     * `frame_start` is 1-based; passed to Defold unchanged. `frame_end` is 1-based; passed to Defold unchanged. `frames` is 1-based; passed to Defold unchanged.
      * @returns Returns the atlas resource path
      * @example
      * ```ts
@@ -194,7 +194,7 @@ declare global {
      *           indices: [0, 1, 2, 0, 2, 3],
      *         },
      *       ],
-     *     };
+     *     } satisfies Parameters<typeof resource.create_atlas>[1];
      *     const my_atlas_id = resource.create_atlas("/my_atlas.texturesetc", aparams);
      *
      *     // assign the atlas to the 'sprite' component on the same go
@@ -203,7 +203,7 @@ declare global {
      * });
      * ```
      */
-    function create_atlas(path: string, table: { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
+    function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
     /**
      * This function creates a new buffer resource that can be used in the same way as any buffer created during build time.
      * The function requires a valid buffer created from either buffer.create or another pre-existing buffer resource.
@@ -1146,7 +1146,7 @@ declare global {
      * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
      *
-     * `frame_start` is 1-based; passed to Defold unchanged. `frame_end` is 1-based; passed to Defold unchanged.
+     * `frame_start` is 1-based; passed to Defold unchanged. `frame_end` is 1-based; passed to Defold unchanged. `frames` is 1-based; passed to Defold unchanged.
      * @example
      * Add a new animation to an existing atlas
      * ```ts
@@ -1166,7 +1166,16 @@ declare global {
      *       flip_horizontal: false,
      *     };
      *     data.animations.push(my_animation);
-     *     resource.set_atlas("/main/my_atlas.a.texturesetc", data);
+     *     // set_atlas needs at least one animation and one geometry
+     *     const [first_animation, ...animations] = data.animations;
+     *     const [first_geometry, ...geometries] = data.geometries;
+     *     if (first_animation !== undefined && first_geometry !== undefined) {
+     *       resource.set_atlas("/main/my_atlas.a.texturesetc", {
+     *         ...data,
+     *         animations: [first_animation, ...animations],
+     *         geometries: [first_geometry, ...geometries],
+     *       });
+     *     }
      *   },
      * });
      * ```
@@ -1193,13 +1202,13 @@ declare global {
      *           indices: [0, 1, 2, 0, 2, 3],
      *         },
      *       ],
-     *     };
+     *     } satisfies Parameters<typeof resource.set_atlas>[1];
      *     resource.set_atlas("/main/test.a.texturesetc", params);
      *   },
      * });
      * ```
      */
-    function set_atlas(path: Hash | string, table: { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;
+    function set_atlas(path: Hash | string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;
     /**
      * Sets the buffer of a resource. By default, setting the resource buffer will either copy the data from the incoming buffer object
      * to the buffer stored in the destination resource, or make a new buffer object if the sizes between the source buffer and the destination buffer

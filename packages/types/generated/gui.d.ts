@@ -1836,7 +1836,11 @@ declare global {
      * });
      *
      * // Remove a named runtime texture resource mapping:
-     * const atlas_params = { texture: "/runtime.texturec", animations: [], geometries: [] };
+     * const atlas_params = {
+     *   texture: "/runtime.texturec",
+     *   animations: [{ id: "runtime", width: 1, height: 1, frames: [1] }],
+     *   geometries: [{ vertices: [0, 0, 0, 1, 1, 1, 1, 0], uvs: [0, 0, 0, 1, 1, 1, 1, 0], indices: [0, 1, 2, 0, 2, 3] }],
+     * } satisfies Parameters<typeof resource.create_atlas>[1];
      * const atlas_id = resource.create_atlas("/runtime.texturesetc", atlas_params);
      * gui.set(msg.url(), "textures", atlas_id, { key: "runtime_texture" });
      * gui.set_texture(gui.get_node("box"), "runtime_texture");
