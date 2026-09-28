@@ -909,11 +909,6 @@
     "verdict": "accepted",
     "reason": "the profiler recording buffer is empty during a probe run"
   },
-  "render.RENDER_TARGET_DEFAULT:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the engine registers no such field; the documented `render.set_render_target(render.RENDER_TARGET_DEFAULT)` passes the nil it reads, which selects the default target"
-  },
   "render.delete_render_target:negative-1": {
     "outcome": "engine-error",
     "verdict": "accepted",

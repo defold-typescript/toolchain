@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { Box2DBackend } from "./contexts";
+import { type Box2DBackend, constantAbsence } from "./contexts";
 import type { ProbeOutcome } from "./outcome";
 import { returnMismatches } from "./return-kinds";
 import type { ProbeCall, WitnessTarget } from "./witness";
@@ -51,6 +51,7 @@ export class ExemptionValidationError extends Error {
 }
 
 const EXEMPTION_KEYS = ["outcome", "reason", "verdict"];
+const CONSTANT_KEY = /^(.+):constant(?:@[\w-]+)?$/;
 const OUTCOMES: readonly unknown[] = ["ok", "bad-argument", "engine-error"];
 const VERDICTS: readonly unknown[] = ["accepted", "open"];
 
@@ -73,6 +74,18 @@ function validateExemption(key: string, entry: unknown): Exemption {
   }
   if (typeof entry.reason !== "string" || entry.reason.trim() === "") {
     throw fail("reason must be a non-empty string");
+  }
+  const constant = CONSTANT_KEY.exec(key)?.[1];
+  if (constant !== undefined) {
+    const absence = constantAbsence(constant);
+    if (absence !== "backend" && absence !== "module") {
+      throw fail(
+        "only a constant a Box2D backend or an unlinked module leaves absent can be exempted; an ordinary constant must be fixed in the declaration",
+      );
+    }
+    if (entry.outcome !== "engine-error") {
+      throw fail(`a constant exemption records engine-error, got ${String(entry.outcome)}`);
+    }
   }
   return entry as unknown as Exemption;
 }
