@@ -251,6 +251,57 @@ describe("returns", () => {
   test("go.get_position pushes one vector3", () => {
     expect(binding("go", "get_position").returns).toEqual({ count: 1, kinds: [["vector3"]] });
   });
+
+  test("buffer.get_stream follows PushStream past its registry ref and metatable", () => {
+    expect(binding("buffer", "get_stream").returns).toEqual({ count: 1, kinds: [["userdata"]] });
+  });
+
+  test("gui.get_node keeps the userdata its metatable is set on", () => {
+    expect(binding("gui", "get_node").returns).toEqual({ count: 1, kinds: [["userdata"]] });
+  });
+
+  test("go.get leaves the value LuaPushVar pushes inside switch cases unresolved", () => {
+    const { kinds, manual } = binding("go", "get").returns;
+    expect(kinds[0]).toEqual([]);
+    expect(manual?.find((m) => m.position === 1)?.reason).toContain("LuaPushVar");
+  });
+
+  test("a helper that declares its stack effect is not guessed at when it cannot be followed", () => {
+    expect(binding("gui", "get_tree").returns).toEqual({ count: 1, kinds: [["table"]] });
+  });
+
+  test("a helper whose pushes under a branch are popped in the same branch stays balanced", () => {
+    expect(binding("material", "get_textures").returns).toEqual({ count: 1, kinds: [["table"]] });
+  });
+
+  test("a helper pushing in both arms of an if never shifts its caller onto a wrong value", () => {
+    const { kinds, manual } = binding("material", "get_constants").returns;
+    expect(kinds).toEqual([[]]);
+    expect(manual?.[0]?.reason).toContain("PushRenderConstant");
+  });
+
+  test("a push inside a call's arguments lands beneath the call's own push", () => {
+    expect(binding("b2d.shape", "is_sensor").returns).toEqual({ count: 1, kinds: [["boolean"]] });
+  });
+
+  test("a return position is empty exactly when a manual reason explains it", () => {
+    const broken: string[] = [];
+    for (const fn of extraction.functions) {
+      const { kinds, manual = [] } = fn.returns;
+      const id = `${fn.namespace}.${fn.name}@${fn.file}`;
+      if (fn.returns.manual?.length === 0) broken.push(`${id} empty manual list`);
+      kinds.forEach((position, i) => {
+        const reasons = manual.filter((m) => m.position === i + 1);
+        if ((position.length === 0) !== reasons.length > 0) broken.push(`${id} position ${i + 1}`);
+      });
+      for (const entry of manual) {
+        if (entry.position < 1 || entry.position > kinds.length || entry.reason === "") {
+          broken.push(`${id} manual ${JSON.stringify(entry)}`);
+        }
+      }
+    }
+    expect(broken).toEqual([]);
+  });
 });
 
 describe("constants", () => {
