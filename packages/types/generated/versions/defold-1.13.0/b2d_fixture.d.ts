@@ -141,7 +141,7 @@ declare global {
      * }
      * ```
      */
-    function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void;
+    function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void;
     /**
      * Test a point against a fixture.
      *
