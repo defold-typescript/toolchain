@@ -17,7 +17,11 @@ import {
 } from "./doc-comment";
 import type { TranslationStore } from "./example-store";
 import { hashExampleSource, lookupExampleSegments, lookupTranslation } from "./example-store";
-import { indexBaseNotes, withIndexBaseNotes } from "./index-slot-classifications";
+import {
+  indexBaseNotes,
+  OVERRIDE_RETURN_SLOT,
+  withIndexBaseNotes,
+} from "./index-slot-classifications";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
 export interface EmitOptions {
@@ -4029,8 +4033,10 @@ function emitMethod(
 // parameter folded into a rest element union keeps its own tag, so the prose
 // documenting it survives. A single documented return becomes `@returns`; a
 // multi-return function gains one only when a slot carries a classified index
-// (see `multiReturnDoc`). Returns `[]` for a fully-undocumented function,
-// leaving its emission byte-identical.
+// (see `multiReturnDoc`). A return authored in `RETURN_TYPE_OVERRIDES` has no
+// ref-doc slot, so it gains `@returns` only for the base notes of its classified
+// fields (see `overrideReturnDoc`). Returns `[]` for a fully-undocumented
+// function, leaving its emission byte-identical.
 function functionDocLines(
   fn: ApiFunction,
   translations: TranslationStore,
@@ -4041,7 +4047,7 @@ function functionDocLines(
     doc: withIndexBaseNotes(fn.name, "param", p.name, htmlToDocText(p.doc)),
   }));
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
-  const tupleReturns = multiReturnDoc(fn);
+  const notedReturns = multiReturnDoc(fn) ?? overrideReturnDoc(fn);
   const lua = htmlToCodeText(fn.examples ?? "");
   // A blob carrying several examples documents them as several, but only when
   // every segment has an authored body: a partial resolve would drop the rest.
@@ -4078,8 +4084,8 @@ function functionDocLines(
             htmlToDocText(onlyReturn.doc),
           ),
         }
-      : tupleReturns !== undefined
-        ? { returns: tupleReturns }
+      : notedReturns !== undefined
+        ? { returns: notedReturns }
         : {}),
     ...exampleParts,
   };
@@ -4105,6 +4111,12 @@ function multiReturnDoc(fn: ApiFunction): string | undefined {
   });
   const names = fn.returnValues.map((slot) => slot.name).join(", ");
   return [`\`[${names}]\`:`, ...bullets.flat()].join("\n");
+}
+
+function overrideReturnDoc(fn: ApiFunction): string | undefined {
+  if (fn.returnValues.length > 0 || !RETURN_TYPE_OVERRIDES.has(fn.name)) return undefined;
+  const notes = indexBaseNotes(fn.name, "return", OVERRIDE_RETURN_SLOT);
+  return notes.length > 0 ? notes.join(" ") : undefined;
 }
 
 // Summary-only doc lines for a member that carries no params or returns

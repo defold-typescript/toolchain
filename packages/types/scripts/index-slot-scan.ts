@@ -2,6 +2,7 @@ import * as ts from "typescript";
 import { type ApiFunction, type ApiParameter, parseDefoldApiDoc } from "../src/api-doc";
 import {
   ONE_BASED_PHRASE,
+  OVERRIDE_RETURN_SLOT,
   splitSlotFields,
   ZERO_BASED_PHRASE,
 } from "../src/index-slot-classifications";
@@ -106,10 +107,6 @@ export function scanIndexSlots(
   return [...unique.values()];
 }
 
-// The slot name a declared return takes when no ref-doc names it, as for a
-// return an authored overlay supplies (`b2d.body.create_shape`).
-export const UNNAMED_RETURN_SLOT = "result";
-
 // Every slot key a ref-doc declares: each param and return, their nested
 // fields, and each field its prose lists.
 export function refDocSlotKeys(doc: unknown): string[] {
@@ -171,7 +168,7 @@ function signatureSlotKeys(
   const names = returnNames(fn);
   const elements = multiReturnElements(type) ?? [type];
   elements.forEach((element, position) => {
-    const name = names[position] ?? (elements.length === 1 ? UNNAMED_RETURN_SLOT : undefined);
+    const name = names[position] ?? (elements.length === 1 ? OVERRIDE_RETURN_SLOT : undefined);
     if (name === undefined) return;
     const key = `${fn}:return:${name}`;
     keys.push(key);
