@@ -60,6 +60,9 @@ export interface BindingFunction {
 export interface BindingExtraction {
   readonly functions: BindingFunction[];
   readonly constants: Map<string, string[]>;
+  // The binding files whose `lua_setfield` registers each constant, keyed
+  // `<namespace>.<NAME>`.
+  readonly constantFiles: Map<string, string[]>;
   readonly unresolved: string[];
 }
 
@@ -1818,7 +1821,7 @@ type StackValue =
       readonly kind: "table";
       namespace: string | null;
       readonly functions: RegTable[];
-      readonly constants: string[];
+      readonly constants: { readonly name: string; readonly file: string }[];
     }
   | { readonly kind: "value" }
   | { readonly kind: "unknown" };
@@ -1833,15 +1836,24 @@ function simulateRegistration(
   index: Index,
   stack: StackValue[],
   depth: number,
-  out: { registered: Registered[]; constants: Map<string, string[]>; unresolved: string[] },
+  out: {
+    registered: Registered[];
+    constants: Map<string, string[]>;
+    constantFiles: Map<string, string[]>;
+    unresolved: string[];
+  },
   visiting: Set<CFunction>,
 ): void {
   if (visiting.has(fn) || depth > 6) return;
   visiting.add(fn);
+  const setConstant = (namespace: string, name: string, file: string) => {
+    push(out.constants, namespace, name);
+    push(out.constantFiles, `${namespace}.${name}`, file);
+  };
   const bind = (value: StackValue & { kind: "table" }, namespace: string) => {
     value.namespace = namespace;
     for (const table of value.functions) out.registered.push({ namespace, table });
-    for (const constant of value.constants) push(out.constants, namespace, constant);
+    for (const constant of value.constants) setConstant(namespace, constant.name, constant.file);
   };
   for (const event of eventsOf(fn)) {
     if (event.type !== "call") continue;
@@ -1893,8 +1905,8 @@ function simulateRegistration(
       const target = stack[stack.length - 1];
       if (key?.kind !== "string" || target?.kind !== "table" || !value) continue;
       if (value.kind === "value") {
-        if (target.namespace) push(out.constants, target.namespace, key.value ?? "");
-        else target.constants.push(key.value ?? "");
+        if (target.namespace) setConstant(target.namespace, key.value ?? "", fn.file);
+        else target.constants.push({ name: key.value ?? "", file: fn.file });
       } else if (
         value.kind === "table" &&
         (value.functions.length > 0 || value.constants.length > 0) &&
@@ -1934,6 +1946,7 @@ export function extractBindings(dir: string): BindingExtraction {
   const out = {
     registered: [] as Registered[],
     constants: new Map<string, string[]>(),
+    constantFiles: new Map<string, string[]>(),
     unresolved: [] as string[],
   };
   for (const file of files) {
@@ -1965,12 +1978,18 @@ export function extractBindings(dir: string): BindingExtraction {
       a.name.localeCompare(b.name) ||
       a.file.localeCompare(b.file),
   );
-  const constants = new Map(
-    [...out.constants]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([ns, names]) => [ns, union(names).sort()]),
-  );
-  return { functions, constants, unresolved: union(out.unresolved).sort() };
+  const sortedUnion = (map: Map<string, string[]>) =>
+    new Map(
+      [...map]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, values]) => [key, union(values).sort()]),
+    );
+  return {
+    functions,
+    constants: sortedUnion(out.constants),
+    constantFiles: sortedUnion(out.constantFiles),
+    unresolved: union(out.unresolved).sort(),
+  };
 }
 
 export function readBindingsForTarget(targetId: string): BindingExtraction {
