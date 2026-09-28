@@ -1,5 +1,8 @@
 import { readVerdicts, type Verdict } from "../../types/scripts/engine-binding-verdicts";
-import { INDEX_SLOT_CLASSIFICATIONS } from "../../types/src/index-slot-classifications";
+import {
+  INDEX_SLOT_CLASSIFICATIONS,
+  type IndexSlotClassification,
+} from "../../types/src/index-slot-classifications";
 import { contextFor, type ScriptKind } from "./contexts";
 import type { PassResult } from "./exemptions";
 import { PROBE_DENYLIST } from "./probe-denylist";
@@ -11,54 +14,86 @@ export interface SignatureArgs {
   readonly args: readonly string[];
 }
 
-// An index the engine produced itself, handed back through the slot, and how
-// the binding refuses that index minus one: it raises, or returns nil or false.
-interface RoundTrip {
-  readonly value: string;
-  readonly refuses?: "nil" | "false";
+// A slot addressing one of `count` elements by zero-based position. Each check
+// is a statement block that raises when the slot misses. `at` is the probed
+// function called with the slot set to a position; a context that reads the
+// slot some other way (an options table, a return) ignores it.
+interface IndexContext {
+  // How many elements the slot addresses, as a TypeScript expression.
+  readonly count: string;
+  // Raises unless position `i` reaches element `i`.
+  readonly reaches: (i: string, at: (i: string) => string) => string;
+  // Raises unless the binding refuses the position one past the last.
+  readonly beyond: (count: string, at: (i: string) => string) => string;
+  // Argument overrides by parameter name, such as the body the slot indexes into.
+  readonly args?: Readonly<Record<string, string>>;
 }
-
-// A statement block that raises when the slot's base is not its class's.
-interface Check {
-  readonly check: string;
-}
-
-type IndexContext = RoundTrip | Check;
 
 export const PROBED_INDEX_CLASSES: ReadonlySet<string> = new Set(["native-1", "native-0"]);
 
-const FIRST = "vmath.vector4(0.25, 0.5, 0.75, 1)";
-const MIDDLE = "vmath.vector4(0.5, 0.5, 0.5, 0.5)";
-const LAST = "vmath.vector4(1, 0.75, 0.5, 0.25)";
-const VECTOR4S = "ReturnType<typeof vmath.vector4>[]";
+const V4 = "ReturnType<typeof vmath.vector4>";
+const tint = (i: string) => `vmath.vector4(0.25 * (${i} + 1), 0.5, 0.75, 1)`;
 
-// `{ index: 0 }` must reach the first element of the `tints[4]` constant and
-// `{ index: 3 }` the last, read back as the zero-based TypeScript array.
-function loweredSet(ns: "go" | "gui", target: string): Check {
+function raises(call: string, what: string): string {
+  return `{ const [accepted] = pcall(() => ${call}); if (accepted) error("${what}"); }`;
+}
+
+function returns(call: string, value: "undefined" | "false", what: string): string {
+  return `if ((${call} as unknown) !== ${value}) error("${what}");`;
+}
+
+const PAST = "the engine accepts the position one past the last";
+
+// `options.index` over the `tints[4]` constant, read back as the zero-based
+// TypeScript array. `go.set` passes its options through a variable, so the copy
+// the lowering makes is checked to leave the caller's table unchanged.
+function optionsSet(ns: "go" | "gui", target: string, viaVariable: boolean): IndexContext {
   return {
-    check: [
-      `${ns}.set(${target}, "tints", ${FIRST}, { index: 0 });`,
-      `${ns}.set(${target}, "tints", ${LAST}, { index: 3 });`,
-      `const tints = ${ns}.get(${target}, "tints") as unknown as ${VECTOR4S};`,
-      `if (tints[0] !== ${FIRST} || tints[3] !== ${LAST}) error("{ index: 0 } and { index: 3 } missed the first and last element");`,
-    ].join(" "),
+    count: "4",
+    reaches: (i) =>
+      [
+        viaVariable
+          ? `const options = { index: ${i} }; ${ns}.set(${target}, "tints", ${tint(i)}, options); if (options.index !== ${i}) error("the conversion changed the caller's options");`
+          : `${ns}.set(${target}, "tints", ${tint(i)}, { index: ${i} });`,
+        `const tints = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
+        `if (tints[${i}] !== ${tint(i)}) error("{ index: i } missed tints[i]");`,
+      ].join(" "),
+    // The binding accepts a write past the end; it must not land in the array.
+    beyond: (count) =>
+      [
+        `const before = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
+        `${ns}.set(${target}, "tints", vmath.vector4(0, 0, 0, 0), { index: ${count} });`,
+        `const after = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
+        `for (let k = 0; k < ${count}; k++) if (after[k] !== before[k]) error("a write past the last element changed element k");`,
+      ].join(" "),
   };
 }
 
-function loweredGet(ns: "go" | "gui", target: string): Check {
+function optionsGet(ns: "go" | "gui", target: string): IndexContext {
   return {
-    check: [
-      `${ns}.set(${target}, "tints", ${FIRST}, { index: 0 });`,
-      `${ns}.set(${target}, "tints", ${MIDDLE}, { index: 1 });`,
-      `${ns}.set(${target}, "tints", ${LAST}, { index: 3 });`,
-      `const tints = ${ns}.get(${target}, "tints") as unknown as ${VECTOR4S};`,
-      `if (${ns}.get(${target}, "tints", { index: 0 }) !== tints[0] || ${ns}.get(${target}, "tints", { index: 3 }) !== tints[3]) error("{ index: 0 } and { index: 3 } read other elements than [0] and [3]");`,
-    ].join(" "),
+    count: "4",
+    reaches: (i) =>
+      [
+        `${ns}.set(${target}, "tints", ${tint(i)}, { index: ${i} });`,
+        `const tints = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
+        `if (${ns}.get(${target}, "tints", { index: ${i} }) !== tints[${i}]) error("{ index: i } read another element than tints[i]");`,
+      ].join(" "),
+    beyond: (count) => raises(`${ns}.get(${target}, "tints", { index: ${count} })`, PAST),
   };
 }
 
 const TINTED_NODE = 'gui.get_node("tinted")';
-const FIXTURE_INDEX = "b2d.body.get_fixtures(b2d.get_body(COLLISION)!)[0]!.index";
+const TRIO = "b2d.get_body(TRIO_COLLISION)!";
+const TRIO_FIXTURES = `b2d.body.get_fixtures(${TRIO})`;
+// `get_aabb` aborts the v2 engine on the three-fixture body, so it reads the
+// probe's own body, whose fixture count earlier `create_fixture` probes raise.
+const OWN = "b2d.get_body(COLLISION)!";
+
+function fixtureBody(name: string): { body: string; count: string } {
+  return name === "get_aabb"
+    ? { body: OWN, count: `b2d.body.get_fixtures(${OWN}).length` }
+    : { body: TRIO, count: "3" };
+}
 const FIXTURE_CALLS = [
   "get_aabb",
   "get_density",
@@ -74,37 +109,248 @@ const FIXTURE_CALLS = [
   "set_friction",
   "set_restitution",
   "set_sensor",
-  "set_shape",
   "test_point",
 ];
 
-// Keyed like `INDEX_SLOT_CLASSIFICATIONS`. A lowered or passed-through slot
-// with no entry is listed as unverified.
+// Each fixture of the three-fixture body is accepted, and `get_type` reads the
+// type `get_fixtures` lists at the same position: the box, sphere, box order
+// makes a shifted position read the wrong kind.
+function fixtureContext(name: string): IndexContext {
+  const { body, count } = fixtureBody(name);
+  return {
+    count,
+    args: { body, child_index: "0" },
+    reaches: (i, at) =>
+      name === "get_type"
+        ? `if (${at(i)} !== b2d.body.get_fixtures(${body})[${i}]!.type) error("fixture i is not get_fixtures()[i]");`
+        : `${at(i)};`,
+    beyond: (count, at) => raises(at(count), PAST),
+  };
+}
+
+// The one child shape of a fixture.
+function childContext(name: string): IndexContext {
+  return {
+    count: "1",
+    args: { body: fixtureBody(name).body, fixture_index: "0" },
+    reaches: (i, at) => `${at(i)};`,
+    beyond: (count, at) => raises(at(count), PAST),
+  };
+}
+
+// Tiles 1, 2, 3 along row 0 and 1, 4, 5 along column 0 of `probe.tilemap`,
+// whose bounds start at cell (0, 0).
+const ROW = "[1, 2, 3]";
+const COLUMN = "[1, 4, 5]";
+
+function cell(axis: "x" | "y", i: string): string {
+  return axis === "x" ? `${i}, 0` : `0, ${i}`;
+}
+
+function tileContext(fn: "set_tile" | "get_tile" | "get_tile_info", axis: "x" | "y"): IndexContext {
+  const tiles = axis === "x" ? ROW : COLUMN;
+  const call = (i: string) =>
+    fn === "set_tile"
+      ? `tilemap.set_tile(TILEMAP, "layer1", ${cell(axis, i)}, ${tiles}[${i}]!)`
+      : `tilemap.${fn}(TILEMAP, "layer1", ${cell(axis, i)})`;
+  return {
+    count: "3",
+    reaches: (i) =>
+      fn === "set_tile"
+        ? `if (${call(i)} !== true) error("set_tile refused cell i");`
+        : fn === "get_tile"
+          ? `if (${call(i)} !== ${tiles}[${i}]) error("cell i holds another tile");`
+          : `if ((${call(i)} as { index: number } | undefined)?.index !== ${tiles}[${i}]) error("cell i holds another tile");`,
+    beyond: (count) =>
+      fn === "set_tile"
+        ? returns(`tilemap.set_tile(TILEMAP, "layer1", ${cell(axis, count)}, 1)`, "false", PAST)
+        : returns(call(count), "undefined", PAST),
+  };
+}
+
+// Keyed like `INDEX_SLOT_CLASSIFICATIONS`.
 export const INDEX_CONTEXTS: Readonly<Record<string, IndexContext>> = {
-  "go.set:param:options:index": loweredSet("go", "TINTED"),
-  "go.get:param:options:index": loweredGet("go", "TINTED"),
-  "gui.set:param:options:index": loweredSet("gui", TINTED_NODE),
-  "gui.get:param:options:index": loweredGet("gui", TINTED_NODE),
+  "go.set:param:options:index": optionsSet("go", "TINTED", true),
+  "go.get:param:options:index": optionsGet("go", "TINTED"),
+  "gui.set:param:options:index": optionsSet("gui", TINTED_NODE, false),
+  "gui.get:param:options:index": optionsGet("gui", TINTED_NODE),
   ...Object.fromEntries(
-    FIXTURE_CALLS.map((name) => [
-      `b2d.fixture.${name}:param:fixture_index`,
-      { value: FIXTURE_INDEX },
+    FIXTURE_CALLS.map((name) => [`b2d.fixture.${name}:param:fixture_index`, fixtureContext(name)]),
+  ),
+  ...Object.fromEntries(
+    ["get_aabb", "get_filter_data", "set_filter_data"].map((name) => [
+      `b2d.fixture.${name}:param:child_index`,
+      childContext(name),
     ]),
   ),
   "b2d.body.get_fixtures:return:fixtures:index": {
-    check: `if (${FIXTURE_INDEX} !== 1) error("the first fixture's index is not 1");`,
+    count: "3",
+    reaches: (i) =>
+      `if (${TRIO_FIXTURES}[${i}]!.index !== ${i}) error("get_fixtures()[i].index is not i");`,
+    beyond: (count) =>
+      [
+        `const first = ${TRIO_FIXTURES}; const second = ${TRIO_FIXTURES};`,
+        `if (first.length !== ${count}) error("the body does not list three fixtures");`,
+        `for (let k = 0; k < ${count}; k++) if (first[k]!.index !== second[k]!.index) error("two calls list different indexes");`,
+      ].join(" "),
   },
-  "tilemap.get_tile:param:x": { value: "tilemap.get_bounds(TILEMAP)[0]", refuses: "nil" },
-  "tilemap.get_tile:param:y": { value: "tilemap.get_bounds(TILEMAP)[1]", refuses: "nil" },
-  "tilemap.get_tile_info:param:x": { value: "tilemap.get_bounds(TILEMAP)[0]", refuses: "nil" },
-  "tilemap.get_tile_info:param:y": { value: "tilemap.get_bounds(TILEMAP)[1]", refuses: "nil" },
-  "tilemap.set_tile:param:x": { value: "tilemap.get_bounds(TILEMAP)[0]", refuses: "false" },
-  "tilemap.set_tile:param:y": { value: "tilemap.get_bounds(TILEMAP)[1]", refuses: "false" },
-  "crash.set_user_field:param:index": { value: "0" },
-  "crash.get_user_field:param:index": { value: "0" },
+  ...Object.fromEntries(
+    (["x", "y"] as const).flatMap((axis) =>
+      (["set_tile", "get_tile", "get_tile_info"] as const).map((fn) => [
+        `tilemap.${fn}:param:${axis}`,
+        tileContext(fn, axis),
+      ]),
+    ),
+  ),
+  ...Object.fromEntries(
+    (["x", "y"] as const).map((axis, slot) => [
+      `tilemap.get_bounds:return:${axis}`,
+      {
+        count: "3",
+        reaches: () =>
+          `if (tilemap.get_bounds(TILEMAP)[${slot}] !== 0) error("the bounds do not start at cell 0");`,
+        beyond: (count: string) =>
+          `if (tilemap.get_bounds(TILEMAP)[${slot + 2}] !== ${count}) error("the bounds are not three cells wide");`,
+      },
+    ]),
+  ),
+  // Both take 0 to USERFIELD_MAX - 1; `get_user_field` reads a crash dump, so
+  // only the accepted range is checked.
+  ...Object.fromEntries(
+    ["set_user_field", "get_user_field"].map((name) => [
+      `crash.${name}:param:index`,
+      {
+        count: "crash.USERFIELD_MAX",
+        reaches: (i: string, at: (i: string) => string) => `${at(i)};`,
+        beyond: (count: string, at: (i: string) => string) => raises(at(count), PAST),
+      },
+    ]),
+  ),
+  // Earlier gui probes reorder the scene's root nodes, so fresh ones are made:
+  // each follows the one made before it, and the first, moved to the bottom,
+  // reads 0.
   "gui.get_index:return:index": {
-    check: `if (gui.get_index(gui.get_node("box")) !== 0) error("the first root node's index is not 0");`,
+    count: "3",
+    reaches: (i) =>
+      [
+        "const nodes = [0, 1, 2].map(() => gui.new_box_node(vmath.vector3(), vmath.vector3(1, 1, 0)));",
+        `const ok = ${i} === 0 ? (() => { gui.move_below(nodes[0]!, undefined); return gui.get_index(nodes[0]!) === 0; })() : gui.get_index(nodes[${i}]!) === gui.get_index(nodes[${i} - 1]!) + 1;`,
+        "for (const node of nodes) gui.delete_node(node);",
+        'if (!ok) error("a root node is not at the index its order gives");',
+      ].join(" "),
+    beyond: () => "",
   },
+};
+
+// A value an engine return produced, handed back through the slot it pairs
+// with, reaching the element it came from. Keyed input, then return; `at` is the
+// input called with the slot set to a value.
+type RoundTrip = (at: (i: string) => string) => string;
+const bounds = "const [x, y] = tilemap.get_bounds(TILEMAP);";
+export const ROUND_TRIPS: Readonly<Record<string, Readonly<Record<string, RoundTrip>>>> = {
+  ...Object.fromEntries(
+    FIXTURE_CALLS.map((name) => [
+      `b2d.fixture.${name}:param:fixture_index`,
+      {
+        "b2d.body.get_fixtures:return:fixtures:index": (at: (i: string) => string) => {
+          const { body, count } = fixtureBody(name);
+          const fixture = `b2d.body.get_fixtures(${body})[${count} - 1]!`;
+          return name === "get_type"
+            ? `const fixture = ${fixture}; if (${at("fixture.index")} !== fixture.type) error("the returned index reads another fixture");`
+            : `${at(`${fixture}.index`)};`;
+        },
+      },
+    ]),
+  ),
+  ...Object.fromEntries(
+    (["x", "y"] as const).flatMap((axis) => [
+      [
+        `tilemap.get_tile:param:${axis}`,
+        {
+          [`tilemap.get_bounds:return:${axis}`]: () =>
+            `${bounds} if (tilemap.get_tile(TILEMAP, "layer1", x, y) !== 1) error("the bounds origin reads another cell");`,
+        },
+      ],
+      [
+        `tilemap.get_tile_info:param:${axis}`,
+        {
+          [`tilemap.get_bounds:return:${axis}`]: () =>
+            `${bounds} if ((tilemap.get_tile_info(TILEMAP, "layer1", x, y) as { index: number } | undefined)?.index !== 1) error("the bounds origin reads another cell");`,
+        },
+      ],
+      [
+        `tilemap.set_tile:param:${axis}`,
+        {
+          [`tilemap.get_bounds:return:${axis}`]: () =>
+            `${bounds} if (tilemap.set_tile(TILEMAP, "layer1", x, y, 1) !== true) error("set_tile refused the bounds origin");`,
+        },
+      ],
+    ]),
+  ),
+};
+
+// Why each probed-class slot with no context is not checked in the engine.
+export const UNPROBED_INDEX_SLOTS: Readonly<Record<string, string>> = {
+  "b2d.fixture.set_shape:param:fixture_index":
+    "Box2D v2 cannot change a fixture's shape kind, so one shape cannot fill every fixture of the box, sphere, box body",
+  "b2d.body.destroy_fixture:param:fixture_index":
+    "destroying a fixture changes the body every other fixture probe reads",
+  "b2d.body.create_fixture:return:fixture:index":
+    "creating a fixture changes the body every other fixture probe reads",
+  "b2d.world.overlap_aabb:return:fixtures:index":
+    "the result lists fixtures of every body in the box, so no position is known in advance",
+  "b2d.world.overlap_shape:return:fixtures:index":
+    "the result lists fixtures of every body under the shape, so no position is known in advance",
+  "b2d.body.create_shape:return:result:index": "the v3 pass keeps no body with a known shape list",
+  "b2d.body.destroy_shape:param:shape_index": "the v3 pass keeps no body with a known shape list",
+  ...Object.fromEntries(
+    [
+      "are_contact_events_enabled",
+      "are_hit_events_enabled",
+      "are_pre_solve_events_enabled",
+      "are_sensor_events_enabled",
+      "enable_contact_events",
+      "enable_hit_events",
+      "enable_pre_solve_events",
+      "enable_sensor_events",
+      "get_body",
+      "get_closest_point",
+      "get_contact_capacity",
+      "get_contact_data",
+      "get_mass_data",
+      "get_material",
+      "get_sensor_capacity",
+      "get_sensor_overlaps",
+      "get_shape",
+      "get_world",
+      "is_valid",
+      "ray_cast",
+      "set_material",
+      "set_shape",
+    ].map((name) => [
+      `b2d.shape.${name}:param:shape_index`,
+      "the v3 pass keeps no body with a known shape list",
+    ]),
+  ),
+  "client:send:param:i": "sending needs a connected socket peer",
+  "client:send:param:j": "sending needs a connected socket peer",
+  "client:send:return:index": "sending needs a connected socket peer",
+  "client:send:return:lastindex": "sending needs a connected socket peer",
+  "image.pixel:param:x": "an editor-only API; the engine runs no editor script",
+  "image.pixel:param:y": "an editor-only API; the engine runs no editor script",
+  "tilemap.tiles.get_info:return:info:index":
+    "an editor-only API; the engine runs no editor script",
+  "tilemap.tiles.get_tile:return:tile_index":
+    "an editor-only API; the engine runs no editor script",
+  "tilemap.tiles.set:param:tile_or_info": "an editor-only API; the engine runs no editor script",
+  "tilemap.tiles.set:param:tile_or_info:index":
+    "an editor-only API; the engine runs no editor script",
+  "profiler.view_recorded_frame:param:frame_index:frame": "the probe records no profiler frames",
+  "resource.create_atlas:param:table:frame_start": "the probe builds no atlas to animate",
+  "resource.create_atlas:param:table:frame_end": "the probe builds no atlas to animate",
+  "resource.set_atlas:param:table:frame_start": "the probe builds no atlas to animate",
+  "resource.set_atlas:param:table:frame_end": "the probe builds no atlas to animate",
+  "resource.set_texture:param:table:page": "the probe creates no array texture",
 };
 
 export interface Unverified {
@@ -117,49 +363,53 @@ export interface IndexProbes {
   readonly unverified: Unverified[];
 }
 
-function parseKey(key: string): { fqn: string; kind: string; slot: string; field?: string } {
-  const [fqn, kind, slot, field] = key.split(":") as [string, string, string, string?];
-  return { fqn, kind, slot, ...(field === undefined ? {} : { field }) };
+function parseKey(key: string): { fqn: string; slot: string; variant: string } {
+  const [fqn, , slot, ...fields] = key.split(":") as [string, string, string, ...string[]];
+  const variant = ["index", slot, ...fields].join("-");
+  // A method key (`client:send:param:i`) splits one segment early.
+  return fqn.includes(".") ? { fqn, slot, variant } : { fqn: `${fqn}:${slot}`, slot, variant };
 }
 
 function scriptKind(fqn: string): ScriptKind {
   return contextFor(fqn.slice(0, fqn.lastIndexOf("."))).kind;
 }
 
-function roundTrip(fqn: string, position: number, signature: SignatureArgs, context: RoundTrip) {
-  const call = (value: string) => {
-    const args = signature.args.slice(0, Math.max(signature.args.length, position + 1));
-    args[position] = value;
+// The call `fqn(...)` with the probed slot set to a position.
+function caller(fqn: string, slot: string, signature: SignatureArgs, context: IndexContext) {
+  const position = signature.names.indexOf(slot);
+  return (i: string) => {
+    const args = [...signature.args];
+    for (const [name, value] of Object.entries(context.args ?? {})) {
+      const at = signature.names.indexOf(name);
+      if (at !== -1) args[at] = value;
+    }
+    if (position !== -1) args[position] = i;
     return `${fqn}(${args.join(", ")})`;
   };
-  const own = call("value");
-  const shifted = call("value - 1");
-  const refusal = context.refuses === "false" ? "false" : "undefined";
-  const statements =
-    context.refuses === undefined
-      ? [
-          `${own};`,
-          `const [accepted] = pcall(() => ${shifted});`,
-          'if (accepted) error("the engine accepts its own index minus one");',
-        ]
-      : [
-          `if ((${own} as unknown) === ${refusal}) error("the engine refuses its own index");`,
-          `if ((${shifted} as unknown) !== ${refusal}) error("the engine accepts its own index minus one");`,
-        ];
-  return [`const value = ${context.value};`, ...statements].join(" ");
 }
 
-// One call per lowered or passed-through slot that has a context and whose
-// function this pass witnessed; every other such slot is unverified.
-export function indexProbeCalls(signatures: ReadonlyMap<string, SignatureArgs>): IndexProbes {
+// The first, a middle and the last position of each probed slot, the last also
+// checking the position past it, and one call per return-to-argument pair.
+// A probed-class slot with no context names its reason in
+// `UNPROBED_INDEX_SLOTS`; one with neither is an error, so a new slot is never
+// skipped silently.
+export function indexProbeCalls(
+  signatures: ReadonlyMap<string, SignatureArgs>,
+  classifications: ReadonlyMap<string, IndexSlotClassification> = INDEX_SLOT_CLASSIFICATIONS,
+): IndexProbes {
   const calls: ProbeCall[] = [];
   const unverified: Unverified[] = [];
-  for (const [key, classification] of INDEX_SLOT_CLASSIFICATIONS) {
+  const probed = (key: string) => INDEX_CONTEXTS[key] !== undefined;
+  for (const [key, classification] of classifications) {
     if (!PROBED_INDEX_CLASSES.has(classification.class)) continue;
     const context = INDEX_CONTEXTS[key];
-    const { fqn, slot, field } = parseKey(key);
+    const { fqn, slot, variant } = parseKey(key);
     if (context === undefined) {
-      unverified.push({ key, reason: "no probe context" });
+      const reason = UNPROBED_INDEX_SLOTS[key];
+      if (reason === undefined) {
+        throw new Error(`${key}: add an INDEX_CONTEXTS entry or an UNPROBED_INDEX_SLOTS reason`);
+      }
+      unverified.push({ key, reason });
       continue;
     }
     const signature = signatures.get(fqn);
@@ -167,16 +417,41 @@ export function indexProbeCalls(signatures: ReadonlyMap<string, SignatureArgs>):
       unverified.push({ key, reason: "this pass witnesses no call to the function" });
       continue;
     }
-    const variant = `index-${slot}${field === undefined ? "" : `-${field}`}`;
-    let body: string;
-    if ("check" in context) {
-      body = context.check;
-    } else {
-      const position = signature.names.indexOf(slot);
-      if (position === -1) throw new Error(`${key}: ${fqn} declares no parameter ${slot}`);
-      body = roundTrip(fqn, position, signature, context);
+    const at = caller(fqn, slot, signature, context);
+    const kind = scriptKind(fqn);
+    const count = context.count;
+    const positions: [string, string][] = [
+      ["first", "0"],
+      ["middle", `math.floor(${count} / 2)`],
+      ["last", `${count} - 1`],
+    ];
+    for (const [name, i] of positions) {
+      const beyond = name === "last" ? ` ${context.beyond(count, at)}` : "";
+      calls.push({
+        name: fqn,
+        variant: `${variant}-${name}`,
+        kind,
+        call: `{ const i = ${i}; ${context.reaches("i", at)}${beyond} }`,
+        index: key,
+      });
     }
-    calls.push({ name: fqn, variant, kind: scriptKind(fqn), call: `{ ${body} }`, index: key });
+    for (const pair of classification.pairsWith ?? []) {
+      const trip = ROUND_TRIPS[key]?.[pair];
+      if (trip === undefined) {
+        if (!probed(pair)) {
+          unverified.push({ key, reason: `no round trip from ${pair}, which is not probed` });
+          continue;
+        }
+        throw new Error(`${key}: add a ROUND_TRIPS entry for ${pair}`);
+      }
+      calls.push({
+        name: fqn,
+        variant: `${variant}-from-${parseKey(pair).variant.slice("index-".length)}`,
+        kind,
+        call: `{ ${trip(at)} }`,
+        index: key,
+      });
+    }
   }
   return { calls, unverified };
 }

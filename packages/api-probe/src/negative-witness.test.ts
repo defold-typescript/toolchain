@@ -74,7 +74,7 @@ describe("negative call generation", () => {
     );
     expect(calls.map((call) => [call.variant, call.call])).toEqual([
       ["negative-1", 'crash.set_user_field({}, "probe")'],
-      ["negative-2", "crash.set_user_field(1, {})"],
+      ["negative-2", "crash.set_user_field(0, {})"],
     ]);
     expect(calls.map((call) => call.negative?.binding)).toEqual([
       "crash/src/script_crash.cpp",
@@ -85,7 +85,7 @@ describe("negative call generation", () => {
       [
         '    probe("crash.set_user_field", "negative-2", () =>',
         "      // @ts-expect-error",
-        "      crash.set_user_field(1, {}),",
+        "      crash.set_user_field(0, {}),",
         "    );",
       ].join("\n"),
     );

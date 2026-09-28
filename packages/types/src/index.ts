@@ -76,7 +76,7 @@ export {
   type IndexSlotClassification,
   type IndexSlotEntry,
   type IndexSlotsArtifact,
-  LOWERED_TABLE_FIELDS,
+  REWRITTEN_INDEX_FIELDS,
   TYPESCRIPT_BASE_NOTE,
   withIndexBaseNotes,
 } from "./index-slot-classifications";

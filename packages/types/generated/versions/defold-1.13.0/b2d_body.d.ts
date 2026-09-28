@@ -132,7 +132,7 @@ declare global {
      * `polygon` = `{ type = b2d.shape.SHAPE_TYPE_POLYGON, vertices = { vector3, ... } }`
      * `box` = `{ type = b2d.shape.SHAPE_TYPE_BOX, hx = number, hy = number, center = vector3_or_nil, angle = radians_or_nil }`
      * `chain` = `{ type = b2d.shape.SHAPE_TYPE_CHAIN, vertices = { vector3, ... }, loop = boolean_or_nil, prev_vertex = vector3_or_nil, next_vertex = vector3_or_nil }`
-     * @returns fixture info table with `index`, `type`, `sensor`, `density`, `friction`, `restitution`, and `child_count`. `index` is 1-based.
+     * @returns fixture info table with `index`, `type`, `sensor`, `density`, `friction`, `restitution`, and `child_count`. `index` is zero-based in TypeScript; Defold receives it 1-based.
      * @example
      * ```ts
      * const body = b2d.get_body("#collisionobject");
@@ -245,7 +245,7 @@ declare global {
      * Get the fixtures attached to this body.
      *
      * @param body - body
-     * @returns array of fixture info tables with `index`, `type`, `sensor`, `density`, `friction`, `restitution`, and `child_count`. `index` is 1-based.
+     * @returns array of fixture info tables with `index`, `type`, `sensor`, `density`, `friction`, `restitution`, and `child_count`. `index` is zero-based in TypeScript; Defold receives it 1-based.
      */
     function get_fixtures(body: Opaque<"b2Body">): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[];
     /**

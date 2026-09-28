@@ -106,7 +106,9 @@ tilemap.set_tile(url, "layer1", x, y, 3);
 - **Returns** — `tilemap.get_bounds`'s `x` and `y`, `client.send`'s `index` and
   `lastindex`, and the editor's `tilemap.tiles.get_tile`.
 - **Round trips** — a value an engine call returned goes straight back in:
-  `client.send(data, lastindex + 1)` resumes after the last byte sent.
+  `client.send(data, lastindex + 1)` resumes after the last byte sent, and
+  `b2d.fixture.get_density(body, b2d.body.get_fixtures(body)[0].index)` reads
+  the first fixture.
 - **Counting from the end** — a negative `i` or `j` at `client.send` counts from
   the end, as in `string.sub`, and passes through: `client.send(data, 0, -1)`
   sends the whole string.
@@ -118,15 +120,23 @@ tilemap.set_tile(url, "layer1", x, y, 3);
   collision group, array-valued tables such as `model.set_blend_weights`'s
   weights, and sentinels such as the tile `0` that clears a `tilemap.set_tile`
   cell are never touched.
-- **Table fields** — only `options.index` below is converted inside a table. An
-  index field in any other table keeps Defold's base, and its hover says
-  "1-based": the `index` of [`b2d.body.get_fixtures`](/api/b2d.body) entries,
-  the atlas `frame_start` and `frame_end` of `resource.create_atlas` and
-  `set_atlas`, and `profiler.view_recorded_frame`'s `frame`. Subtract 1 from a
-  fixture info `index` before passing it to a `b2d.fixture` call.
+- **Table fields** — an index inside a table converts too: `options.index`
+  below, the `index` of the fixture and shape tables
+  [`b2d.body`](/api/b2d.body) `get_fixtures`, `create_fixture` and
+  `create_shape` return and of the fixtures [`b2d.world`](/api/b2d.world)
+  `overlap_aabb` and `overlap_shape` return, the animation `frame_start` and
+  `frame_end` of [`resource.create_atlas`](/api/resource) and `set_atlas`,
+  `profiler.view_recorded_frame`'s `frame`, and the `index` of the editor's
+  `tilemap.tiles` tile info. An atlas animation's `frames` list keeps Defold's
+  1-based geometry indexes.
+- **Your tables are never changed** — a table written at the call is converted
+  where it is written. Any other table you pass is converted into a copy, so the
+  variable keeps its zero-based values. A table the engine returns is a fresh
+  one, converted in place.
 
 Each converted slot's hover reads "Zero-based in TypeScript; Defold receives it
-1-based."
+1-based.", and each converted field's names the field: "`index` is zero-based in
+TypeScript; Defold receives it 1-based."
 
 The conversion follows the call through the type checker:
 
@@ -150,7 +160,9 @@ pass through untouched. A Lua module that receives an index from TypeScript
 receives it zero-based, and an index it hands back is used as written.
 
 When upgrading, subtract 1 from each literal or computed 1-based index you pass
-to these calls. Values you took from an engine return need no change.
+to these calls, as an argument or in a table field. Values you took from an
+engine return need no change, but code that reads one, such as a fixture's
+`index`, sees it zero-based.
 
 ### Engine array properties: `options.index`
 
@@ -165,12 +177,12 @@ go.set(url, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 0 });
 ```
 
 - A literal is converted: `{ index: 0 }` emits `{index = 1}`.
-- Any other value is evaluated once, plus 1: `{ index: i }` emits `{index = i + 1}`.
+- Any other value is evaluated once, plus 1: `{ index: i }` emits `{index = i + 1}`,
+  and an `index` that may be `undefined` stays `nil`.
 - Leaving `index` out passes the options through unchanged.
+- An options variable, or a spread that may carry `index` with no explicit
+  `index` after it, is converted into a copy when the call runs.
 - The curried `go.get<P>()(…)` is converted too.
-- An options variable whose type has `index`, a spread that carries `index` with
-  no explicit `index` after it, and an `index` that may be `undefined` are
-  errors. Write the options object inline at the call.
 
 ## Modules: `require` vs `import`
 

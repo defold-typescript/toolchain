@@ -1,0 +1,67 @@
+collision_shape: ""
+type: COLLISION_OBJECT_TYPE_STATIC
+mass: 0.0
+friction: 0.1
+restitution: 0.5
+group: "default"
+mask: "default"
+embedded_collision_shape {
+  shapes {
+    shape_type: TYPE_BOX
+    position {
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    }
+    rotation {
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+    }
+    index: 0
+    count: 3
+    id: "first"
+  }
+  shapes {
+    shape_type: TYPE_SPHERE
+    position {
+      x: 40.0
+      y: 0.0
+      z: 0.0
+    }
+    rotation {
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+    }
+    index: 3
+    count: 1
+    id: "middle"
+  }
+  shapes {
+    shape_type: TYPE_BOX
+    position {
+      x: 80.0
+      y: 0.0
+      z: 0.0
+    }
+    rotation {
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+    }
+    index: 4
+    count: 3
+    id: "last"
+  }
+  data: 8.0
+  data: 8.0
+  data: 8.0
+  data: 8.0
+  data: 8.0
+  data: 8.0
+  data: 8.0
+}
