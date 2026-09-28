@@ -2369,7 +2369,9 @@ describe("apiModuleSymbols", () => {
       expect(optionDocs.length).toBeGreaterThan(0);
       for (const doc of optionDocs) {
         expect(doc).toContain("index into array property (1 based)");
-        expect(doc.split("`index` is 1-based; passed to Defold unchanged.").length - 1).toBe(1);
+        expect(doc.split("**⚠️ `index` is 1-based; passed to Defold unchanged.**").length - 1).toBe(
+          1,
+        );
       }
     }
   });
@@ -2378,10 +2380,10 @@ describe("apiModuleSymbols", () => {
     const page = fixturePage("gui");
     const getIndex = apiModuleSymbols(page, {}, {}).find((s) => s.name === "gui.get_index");
     expect(getIndex?.returnValues[0]?.doc).toBe(
-      "the index of the node. 0-based; passed to Defold unchanged.",
+      "the index of the node. **0️⃣ 0-based; passed to Defold unchanged.**",
     );
     expect(apiModuleMarkdown(page)).toContain(
-      "index — the index of the node. 0-based; passed to Defold unchanged.",
+      "index — the index of the node. **0️⃣ 0-based; passed to Defold unchanged.**",
     );
   });
 

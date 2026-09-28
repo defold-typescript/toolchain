@@ -4925,17 +4925,19 @@ describe("engine index base notes", () => {
 
   test("a native-1 position states its base and that it passes unchanged", () => {
     expect(tagLine(docBlock(b2dFixture113Doc, "get_density"), "@param fixture_index")).toEndWith(
-      "1-based; passed to Defold unchanged.",
+      "**⚠️ 1-based; passed to Defold unchanged.**",
     );
     const line = tagLine(docBlock(b2dBody113Doc, "destroy_shape"), "@param shape_index");
     expect(line).toContain("1-based shape index");
-    expect(line).toEndWith("1-based; passed to Defold unchanged.");
+    expect(line).toEndWith("**⚠️ 1-based; passed to Defold unchanged.**");
     expect(occurrences(line, "passed to Defold unchanged")).toBe(1);
   });
 
   test("an authored body, shape_index overload states its native base", () => {
     const { block } = memberBlock(b2dShapeDoc, "function get_body(body:");
-    expect(tagLine(block, "@param shape_index")).toEndWith("1-based; passed to Defold unchanged.");
+    expect(tagLine(block, "@param shape_index")).toEndWith(
+      "**⚠️ 1-based; passed to Defold unchanged.**",
+    );
     expect(block).not.toContain("@example");
   });
 
@@ -4945,25 +4947,27 @@ describe("engine index base notes", () => {
 
   test("a native-0 position states its base and that it passes unchanged", () => {
     expect(tagLine(docBlock(gui113Doc, "get_index"), "@returns")).toContain(
-      "the index of the node. 0-based; passed to Defold unchanged.",
+      "the index of the node. **0️⃣ 0-based; passed to Defold unchanged.**",
     );
     expect(tagLine(docBlock(crash113Doc, "get_user_field"), "@param index")).toContain(
-      "user data slot index. 0-based; passed to Defold unchanged.",
+      "user data slot index. **0️⃣ 0-based; passed to Defold unchanged.**",
     );
     const line = tagLine(docBlock(crash113Doc, "set_user_field"), "@param index");
     expect(line).toContain("slot index. 0-indexed");
-    expect(line).toEndWith("0-based; passed to Defold unchanged.");
+    expect(line).toEndWith("**0️⃣ 0-based; passed to Defold unchanged.**");
   });
 
   test("a table field states its base and that it passes unchanged", () => {
     expect(tagLine(docBlock(b2dBody113Doc, "get_fixtures"), "@returns")).toContain(
-      "`index` is 1-based; passed to Defold unchanged.",
+      "**⚠️ `index` is 1-based; passed to Defold unchanged.**",
     );
   });
 
   test("a classified field of an overridden return states its base once", () => {
     const block = docBlock(b2dBody113Doc, "create_shape");
-    expect(tagLine(block, "@returns")).toContain("`index` is 1-based; passed to Defold unchanged.");
+    expect(tagLine(block, "@returns")).toContain(
+      "**⚠️ `index` is 1-based; passed to Defold unchanged.**",
+    );
     expect(occurrences(block, "passed to Defold unchanged")).toBe(1);
   });
 
@@ -4974,7 +4978,7 @@ describe("engine index base notes", () => {
   test("options.index keeps upstream's 1-based doc and gains its field note once", () => {
     const block = docBlock(guiDoc, "set");
     expect(block).toContain("index into array property (1 based)");
-    expect(occurrences(block, "`index` is 1-based; passed to Defold unchanged.")).toBe(1);
+    expect(occurrences(block, "**⚠️ `index` is 1-based; passed to Defold unchanged.**")).toBe(1);
   });
 
   function memberBlock(doc: unknown, signaturePrefix: string): { block: string; line: string } {
@@ -4995,11 +4999,23 @@ describe("engine index base notes", () => {
   test("a multi-return function names the base of each classified tuple slot", () => {
     const { block } = memberBlock(socketDoc, "send(data: string");
     expect(block).toContain("@returns");
-    expect(slotBullet(block, "index").trimEnd()).toEndWith("1-based; passed to Defold unchanged.");
+    expect(slotBullet(block, "index").trimEnd()).toEndWith(
+      "**⚠️ 1-based; passed to Defold unchanged.**",
+    );
     expect(slotBullet(block, "lastindex").trimEnd()).toEndWith(
-      "1-based; passed to Defold unchanged.",
+      "**⚠️ 1-based; passed to Defold unchanged.**",
     );
     expect(slotBullet(block, "error")).not.toContain("based");
+  });
+
+  test("a multi-return function's marked note leads each classified bound", () => {
+    const { block } = memberBlock(tilemapDoc, "function get_bounds(");
+    for (const axis of ["x", "y"]) {
+      expect(slotBullet(block, axis).trimEnd()).toEndWith(
+        "**⚠️ 1-based; passed to Defold unchanged.**",
+      );
+    }
+    expect(slotBullet(block, "w")).not.toContain("based");
   });
 
   test("a multi-return function's tuple type is unchanged by its slot docs", () => {

@@ -132,7 +132,7 @@ declare global {
      * `polygon` = `{ type = b2d.shape.SHAPE_TYPE_POLYGON, vertices = { vector3, ... } }`
      * `box` = `{ type = b2d.shape.SHAPE_TYPE_BOX, hx = number, hy = number, center = vector3_or_nil, angle = radians_or_nil }`
      * `chain` = `{ type = b2d.shape.SHAPE_TYPE_CHAIN, vertices = { vector3, ... }, loop = boolean_or_nil, prev_vertex = vector3_or_nil, next_vertex = vector3_or_nil }`
-     * @returns fixture info table with `index`, `type`, `sensor`, `density`, `friction`, `restitution`, and `child_count`. `index` is 1-based; passed to Defold unchanged.
+     * @returns fixture info table with `index`, `type`, `sensor`, `density`, `friction`, `restitution`, and `child_count`. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * @example
      * ```ts
      * const body = b2d.get_body("#collisionobject");
@@ -166,14 +166,14 @@ declare global {
      *
      * @param body - body
      * @param definition - the shape definition.
-     * @returns `index` is 1-based; passed to Defold unchanged.
+     * @returns **⚠️ `index` is 1-based; passed to Defold unchanged.**
      */
     function create_shape(body: Opaque<"b2Body">, definition: ({ shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 } } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 }) & { density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; shape_id: Opaque<"b2Shape">; type: number; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean };
     /**
      * Destroy a fixture from a body.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. 1-based; passed to Defold unchanged.
+     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
      */
     function destroy_fixture(body: Opaque<"b2Body">, fixture_index: number): void;
     /**
@@ -184,7 +184,7 @@ declare global {
      * All shapes attached to a body are implicitly destroyed when the body is destroyed.
      *
      * @param body - body
-     * @param shape_index - 1-based shape index from `b2d.body.get_shapes`. 1-based; passed to Defold unchanged.
+     * @param shape_index - 1-based shape index from `b2d.body.get_shapes`. **⚠️ 1-based; passed to Defold unchanged.**
      */
     function destroy_shape(body: Opaque<"b2Body">, shape_index: number): void;
     /**
@@ -246,7 +246,7 @@ declare global {
      * Get the fixtures attached to this body.
      *
      * @param body - body
-     * @returns array of fixture info tables with `index`, `type`, `sensor`, `density`, `friction`, `restitution`, and `child_count`. `index` is 1-based; passed to Defold unchanged.
+     * @returns array of fixture info tables with `index`, `type`, `sensor`, `density`, `friction`, `restitution`, and `child_count`. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      */
     function get_fixtures(body: Opaque<"b2Body">): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[];
     /**
