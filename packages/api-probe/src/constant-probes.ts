@@ -8,7 +8,7 @@ import {
   UnmappedLuaKindError,
 } from "../../types/scripts/lua-kind";
 import type { ApiTarget } from "../../types/scripts/regen";
-import { type Box2DBackend, constantAbsence, contextFor, isBox2D } from "./contexts";
+import { type Box2DBackend, contextFor, isAdapterConditional, isBox2D } from "./contexts";
 import { PROBE_DENYLIST } from "./probe-denylist";
 import { forEachNamespaceStatement } from "./property-probes";
 import { type ProbeCall, probeTarget } from "./witness";
@@ -59,7 +59,7 @@ export function constantProbes(
     const namespace = fqn.slice(0, fqn.lastIndexOf("."));
     const kinds = kindsOf(checker.getTypeOfSymbol(symbol), checker);
     if (kinds !== "any" && kinds.join() === "number") numeric.add(fqn);
-    const conditional = constantAbsence(fqn) === "adapter";
+    const conditional = isAdapterConditional(fqn);
     const nil = kinds !== "any" && kinds.join() === "nil";
     calls.push({
       name: fqn,

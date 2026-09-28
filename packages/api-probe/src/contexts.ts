@@ -43,21 +43,40 @@ export type Box2DBackend = "v2" | "v3";
 
 export const BOX2D_BACKENDS: readonly Box2DBackend[] = ["v2", "v3"];
 
-// The backends whose binding files register each `b2d` function: the shared
+// The backends a Box2D binding file registers for: the shared
 // `script_box2d.cpp` registers for both, `v2/` and `v3/` for their own.
+function fileBackends(file: string): Box2DBackend[] {
+  if (file.includes("/v2/")) return ["v2"];
+  if (file.includes("/v3/")) return ["v3"];
+  return ["v2", "v3"];
+}
+
+function tagBackends(
+  tags: Map<string, Set<Box2DBackend>>,
+  fqn: string,
+  files: readonly string[],
+): void {
+  const set = tags.get(fqn) ?? new Set<Box2DBackend>();
+  for (const file of files) for (const backend of fileBackends(file)) set.add(backend);
+  tags.set(fqn, set);
+}
+
+// The backends whose binding files register each `b2d` function.
 export function box2dBackends(targetId: string): Map<string, Set<Box2DBackend>> {
   const tags = new Map<string, Set<Box2DBackend>>();
   for (const binding of readBindingsForTarget(targetId).functions) {
-    if (binding.namespace !== "b2d" && !binding.namespace.startsWith("b2d.")) continue;
-    const backends: Box2DBackend[] = binding.file.includes("/v2/")
-      ? ["v2"]
-      : binding.file.includes("/v3/")
-        ? ["v3"]
-        : ["v2", "v3"];
-    const fqn = `${binding.namespace}.${binding.name}`;
-    const set = tags.get(fqn) ?? new Set<Box2DBackend>();
-    for (const backend of backends) set.add(backend);
-    tags.set(fqn, set);
+    if (!isBox2D(binding.namespace)) continue;
+    tagBackends(tags, `${binding.namespace}.${binding.name}`, [binding.file]);
+  }
+  return tags;
+}
+
+// The backends whose binding files register each `b2d` constant.
+export function box2dConstantBackends(targetId: string): Map<string, Set<Box2DBackend>> {
+  const tags = new Map<string, Set<Box2DBackend>>();
+  for (const [fqn, files] of readBindingsForTarget(targetId).constantFiles) {
+    if (!fqn.startsWith("b2d.")) continue;
+    tagBackends(tags, fqn, files);
   }
   return tags;
 }
@@ -151,15 +170,28 @@ export function isBox2D(namespace: string): boolean {
   return namespace === "b2d" || namespace.startsWith("b2d.");
 }
 
-// Why the engine may leave a declared constant undefined: a Box2D backend
-// registers only its own constants, an unlinked module registers none, and the
-// graphics adapter registers only what the host supports. Any other absent
-// constant is a declaration defect.
-export function constantAbsence(fqn: string): "backend" | "module" | "adapter" | undefined {
+export function isAdapterConditional(fqn: string): boolean {
+  return Object.keys(CONDITIONAL_CONSTANTS).some((prefix) => fqn.startsWith(prefix));
+}
+
+// Why the engine may leave a declared constant undefined in the `backend` pass:
+// a Box2D backend registers only its own constants, so a `b2d` constant the
+// other backend registers is absent here; an unlinked module registers none,
+// and the graphics adapter registers only what the host supports. Any other
+// absent constant is a declaration defect.
+export function constantAbsence(
+  fqn: string,
+  backend: Box2DBackend,
+  box2dConstants: ReadonlyMap<string, ReadonlySet<Box2DBackend>>,
+): "backend" | "module" | "adapter" | undefined {
   const namespace = fqn.slice(0, fqn.lastIndexOf("."));
-  if (isBox2D(namespace)) return "backend";
+  if (isBox2D(namespace)) {
+    const registered = box2dConstants.get(fqn);
+    if (registered === undefined || registered.has(backend)) return undefined;
+    return BOX2D_BACKENDS.some((other) => registered.has(other)) ? "backend" : undefined;
+  }
   if (ABSENT_MODULES[namespace.split(".")[0] ?? ""] !== undefined) return "module";
-  if (Object.keys(CONDITIONAL_CONSTANTS).some((prefix) => fqn.startsWith(prefix))) return "adapter";
+  if (isAdapterConditional(fqn)) return "adapter";
   return undefined;
 }
 

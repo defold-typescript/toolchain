@@ -315,6 +315,25 @@ describe("constants", () => {
       expect.arrayContaining(["SHAPE_TYPE_CHAIN", "SHAPE_TYPE_GRID"]),
     );
   });
+
+  test("a constant both Box2D backends register keeps both binding files", () => {
+    const files = extraction.constantFiles.get("b2d.body.B2_DYNAMIC_BODY") ?? [];
+    expect(files.filter((file) => file.includes("/box2d/v2/"))).toHaveLength(1);
+    expect(files.filter((file) => file.includes("/box2d/v3/"))).toHaveLength(1);
+  });
+
+  test("a constant one Box2D backend registers keeps only that backend's file", () => {
+    const gear = extraction.constantFiles.get("b2d.joint.JOINT_TYPE_GEAR") ?? [];
+    expect(gear).toHaveLength(1);
+    expect(gear[0]).toContain("/box2d/v2/");
+    const filter = extraction.constantFiles.get("b2d.joint.JOINT_TYPE_FILTER") ?? [];
+    expect(filter).toHaveLength(1);
+    expect(filter[0]).toContain("/box2d/v3/");
+  });
+
+  test("a constant set straight into a named namespace carries its file", () => {
+    expect(extraction.constantFiles.get("go.PLAYBACK_ONCE_FORWARD")?.length).toBeGreaterThan(0);
+  });
 });
 
 describe("manual", () => {

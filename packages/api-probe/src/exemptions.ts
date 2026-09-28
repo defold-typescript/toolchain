@@ -1,9 +1,15 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { type Box2DBackend, constantAbsence } from "./contexts";
+import {
+  BOX2D_BACKENDS,
+  type Box2DBackend,
+  box2dConstantBackends,
+  constantAbsence,
+  isBox2D,
+} from "./contexts";
 import type { ProbeOutcome } from "./outcome";
 import { returnMismatches } from "./return-kinds";
-import type { ProbeCall, WitnessTarget } from "./witness";
+import { type ProbeCall, probeTarget, type WitnessTarget } from "./witness";
 
 export const EXEMPTIONS_FILE = resolve(import.meta.dir, "..", "probe-exemptions.json");
 
@@ -51,12 +57,19 @@ export class ExemptionValidationError extends Error {
 }
 
 const EXEMPTION_KEYS = ["outcome", "reason", "verdict"];
-const CONSTANT_KEY = /^(.+):constant(?:@[\w-]+)?$/;
+const CONSTANT_KEY = /^(.+):constant(?:@([\w-]+))?$/;
 const OUTCOMES: readonly unknown[] = ["ok", "bad-argument", "engine-error"];
 const VERDICTS: readonly unknown[] = ["accepted", "open"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+let box2dConstants: ReadonlyMap<string, ReadonlySet<Box2DBackend>> | undefined;
+
+function probedBox2DConstants(): ReadonlyMap<string, ReadonlySet<Box2DBackend>> {
+  box2dConstants ??= box2dConstantBackends(probeTarget().id);
+  return box2dConstants;
 }
 
 function validateExemption(key: string, entry: unknown): Exemption {
@@ -75,10 +88,23 @@ function validateExemption(key: string, entry: unknown): Exemption {
   if (typeof entry.reason !== "string" || entry.reason.trim() === "") {
     throw fail("reason must be a non-empty string");
   }
-  const constant = CONSTANT_KEY.exec(key)?.[1];
+  const [, constant, suffix] = CONSTANT_KEY.exec(key) ?? [];
   if (constant !== undefined) {
-    const absence = constantAbsence(constant);
+    const backend = (suffix ?? "v2") as Box2DBackend;
+    if (!BOX2D_BACKENDS.includes(backend)) {
+      throw fail(`unknown backend @${suffix}; expected one of ${BOX2D_BACKENDS.join(", ")}`);
+    }
+    const constants = probedBox2DConstants();
+    const absence = constantAbsence(constant, backend, constants);
     if (absence !== "backend" && absence !== "module") {
+      const namespace = constant.slice(0, constant.lastIndexOf("."));
+      if (isBox2D(namespace)) {
+        throw fail(
+          constants.get(constant)?.has(backend)
+            ? `the ${backend} backend registers it, so the ${backend} pass cannot leave it absent`
+            : "no Box2D backend registers it, so no backend leaves it absent; fix the declaration",
+        );
+      }
       throw fail(
         "only a constant a Box2D backend or an unlinked module leaves absent can be exempted; an ordinary constant must be fixed in the declaration",
       );
