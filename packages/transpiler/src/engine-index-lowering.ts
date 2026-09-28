@@ -43,7 +43,7 @@ export const INDEX_OPTION_SPREAD_MESSAGE =
 export const INDEX_OPTION_UNDEFINED_MESSAGE =
   "`options.index` may be undefined here, so it cannot be converted to Defold's 1-based index; pass a number, or leave `index` out.";
 export const ENGINE_INDEX_FUNCTION_VALUE_MESSAGE =
-  "This engine function takes or returns a zero-based index that is converted to Defold's base only where it is called; call it directly or through a `const` alias instead of using it as a value.";
+  "This engine function takes or returns a zero-based index that is converted to Defold's base only where it is called; call it directly or through a `const` alias of its own type instead of using it as a value.";
 export const ENGINE_INDEX_NAMESPACE_VALUE_MESSAGE =
   "This namespace holds engine functions whose zero-based indexes are converted only where they are called; reach its functions through property access instead of using the namespace as a value.";
 export const ENGINE_INDEX_SPREAD_MESSAGE =
@@ -177,13 +177,37 @@ interface NumberShape {
   readonly other: boolean;
 }
 
-function numberShape(type: ts.Type): NumberShape {
-  const types = type.isUnion() ? type.types : [type];
-  return {
-    numeric: types.some(isNumeric),
-    nullable: types.some(isNullish),
-    other: types.some((t) => !isNumeric(t) && !isNullish(t)),
-  };
+const ANY_SHAPE: NumberShape = { numeric: true, nullable: true, other: true };
+
+// An `any` may hold a number, nil or a table form, so it converts behind the
+// run-time number check `convertedRead` already emits for a table form.
+function numberShape(type: ts.Type, checker: ts.TypeChecker): NumberShape {
+  if ((type.flags & ts.TypeFlags.Any) !== 0) return ANY_SHAPE;
+  if ((type.flags & ts.TypeFlags.Instantiable) !== 0) {
+    const constraint = checker.getBaseConstraintOfType(type);
+    if (
+      constraint === undefined ||
+      constraint === type ||
+      (constraint.flags & ts.TypeFlags.Unknown) !== 0
+    ) {
+      return ANY_SHAPE;
+    }
+    return numberShape(constraint, checker);
+  }
+  if (type.isUnion()) {
+    const shapes = type.types.map((t) => numberShape(t, checker));
+    return {
+      numeric: shapes.some((shape) => shape.numeric),
+      nullable: shapes.some((shape) => shape.nullable),
+      other: shapes.some((shape) => shape.other),
+    };
+  }
+  if (type.isIntersection() && type.types.some(isNumeric)) {
+    return { numeric: true, nullable: false, other: false };
+  }
+  const numeric = isNumeric(type);
+  const nullable = isNullish(type);
+  return { numeric, nullable, other: !numeric && !nullable };
 }
 
 function rejection(node: ts.Node, messageText: string): ts.Diagnostic {
@@ -389,7 +413,7 @@ function convertArgument(
     if (classification.fromEnd === true && literal < 0) return value;
     return positioned(createNumericLiteral(literal + 1), value);
   }
-  const shape = numberShape(checker.getTypeAtLocation(argument));
+  const shape = numberShape(checker.getTypeAtLocation(argument), checker);
   if (!shape.numeric) return value;
   return convertValue(value, { direction: "in", shape, fromEnd: classification.fromEnd === true });
 }
@@ -434,7 +458,7 @@ function convertReturn(
   const type = checker.getTypeAtLocation(call);
   const tupled = returns.filter((slot) => slot.classification.tupleSlot !== undefined);
   if (tupled.length === 0) {
-    const shape = numberShape(type);
+    const shape = numberShape(type, checker);
     if (!shape.numeric || shape.other) return result;
     return convertValue(result, { direction: "out", shape, fromEnd: false });
   }
@@ -447,7 +471,7 @@ function convertReturn(
     const shape =
       element === undefined
         ? { numeric: true, nullable: true, other: false }
-        : numberShape(element);
+        : numberShape(element, checker);
     if (!shape.numeric || shape.other) return name;
     return convertedRead(name, { direction: "out", shape, fromEnd: false });
   });
@@ -570,10 +594,13 @@ function holderOf(expression: ts.Expression, checker: ts.TypeChecker): Holder | 
     : undefined;
 }
 
-// A holder may be called, have a property read off it, or be bound by a `const`
-// alias or destructuring; the pass follows each of those back to the
-// declaration. Anywhere else the declaration is lost.
-function followable(expression: ts.Expression, holder: Holder): boolean {
+// A function holder may be called, a namespace holder may have a property read
+// off it, and either may be bound by a `const` alias of its own type or an
+// unannotated destructuring; the pass follows each of those back to the
+// declaration. Anywhere else the declaration is lost: `.call`, `.apply` and
+// `.bind` reach the function through a signature the pass cannot classify, and
+// an alias typed as some other function keeps no link to it.
+function followable(expression: ts.Expression, holder: Holder, checker: ts.TypeChecker): boolean {
   let node: ts.Node = expression;
   while (ts.isParenthesizedExpression(node.parent) || ts.isNonNullExpression(node.parent)) {
     node = node.parent;
@@ -583,13 +610,16 @@ function followable(expression: ts.Expression, holder: Holder): boolean {
     return true;
   }
   if (
+    holder === "namespace" &&
     (ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent)) &&
     parent.expression === node
   ) {
     return true;
   }
   if (ts.isVariableDeclaration(parent) && parent.initializer === node) {
-    return (ts.getCombinedNodeFlags(parent) & ts.NodeFlags.Const) !== 0;
+    if ((ts.getCombinedNodeFlags(parent) & ts.NodeFlags.Const) === 0) return false;
+    if (ts.isIdentifier(parent.name)) return holderOf(parent.name, checker) === holder;
+    return parent.type === undefined;
   }
   return false;
 }
@@ -617,7 +647,7 @@ function checkEscapes(file: ts.SourceFile, checker: ts.TypeChecker, out: ts.Diag
     }
     if (isValueReference(node)) {
       const holder = holderOf(node, checker);
-      if (holder !== undefined && !followable(node, holder)) {
+      if (holder !== undefined && !followable(node, holder, checker)) {
         out.push(
           rejection(
             node,
