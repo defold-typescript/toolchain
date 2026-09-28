@@ -453,6 +453,14 @@ header.topbar-critical .logo-mark {
   color: var(--color-text);
   background: var(--color-surface);
 }
+/* Mirrors app/styles.css. The code rule must live here: the unlayered
+   `.prose code { overflow-wrap: anywhere }` above beats any layered override. */
+.prose .cell-nowrap {
+  white-space: nowrap;
+}
+.prose :is(td, th) code {
+  overflow-wrap: normal;
+}
 .prose .table-scroll {
   overflow-x: auto;
   max-width: 100%;
