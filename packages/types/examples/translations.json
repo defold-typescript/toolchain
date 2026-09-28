@@ -992,7 +992,7 @@
   "profiler.recorded_frame_count": [
     {
       "sourceHash": "9d55df4a00c36560",
-      "ts": "// Show the last recorded frame\nconst recorded_frame_count = profiler.recorded_frame_count();\nprofiler.view_recorded_frame({ frame: recorded_frame_count });"
+      "ts": "// Show the last recorded frame\nconst recorded_frame_count = profiler.recorded_frame_count();\nprofiler.view_recorded_frame({ frame: recorded_frame_count - 1 });"
     }
   ],
   "profiler.scope_begin": [
@@ -1423,7 +1423,7 @@
   "resource.set_atlas": [
     {
       "sourceHash": "58ec7c40c31875a4",
-      "ts": "// Add a new animation to an existing atlas\nexport default defineScript({\n  init() {\n    const data = resource.get_atlas(\"/main/my_atlas.a.texturesetc\");\n    const my_animation = {\n      id: \"my_new_animation\",\n      width: 128,\n      height: 128,\n      frame_start: 1,\n      frame_end: 6,\n      playback: go.PLAYBACK_LOOP_PINGPONG,\n      fps: 8,\n      flip_vertical: false,\n      flip_horizontal: false,\n    };\n    data.animations.push(my_animation);\n    resource.set_atlas(\"/main/my_atlas.a.texturesetc\", data);\n  },\n});"
+      "ts": "// Add a new animation to an existing atlas\nexport default defineScript({\n  init() {\n    const data = resource.get_atlas(\"/main/my_atlas.a.texturesetc\");\n    const my_animation = {\n      id: \"my_new_animation\",\n      width: 128,\n      height: 128,\n      frame_start: 0,\n      frame_end: 5,\n      playback: go.PLAYBACK_LOOP_PINGPONG,\n      fps: 8,\n      flip_vertical: false,\n      flip_horizontal: false,\n    };\n    data.animations.push(my_animation);\n    resource.set_atlas(\"/main/my_atlas.a.texturesetc\", data);\n  },\n});"
     },
     {
       "sourceHash": "c672fd8c9d921f68",

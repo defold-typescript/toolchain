@@ -55,6 +55,15 @@ components {
   component: "/main/static.collisionobject"
 }
 components {
+  id: "trio"
+  component: "/main/trio.collisionobject"
+  position {
+    x: 0.0
+    y: 300.0
+    z: 0.0
+  }
+}
+components {
   id: "gui"
   component: "/main/probe.gui"
 }
