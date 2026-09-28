@@ -151,7 +151,7 @@ declare global {
      * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
      *
-     * `frame_start` is zero-based in TypeScript; Defold receives it 1-based. `frame_end` is zero-based in TypeScript; Defold receives it 1-based.
+     * `frame_start` is 1-based; passed to Defold unchanged. `frame_end` is 1-based; passed to Defold unchanged.
      * @returns Returns the atlas resource path
      * @example
      * ```ts
@@ -1146,7 +1146,7 @@ declare global {
      * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
      *
-     * `frame_start` is zero-based in TypeScript; Defold receives it 1-based. `frame_end` is zero-based in TypeScript; Defold receives it 1-based.
+     * `frame_start` is 1-based; passed to Defold unchanged. `frame_end` is 1-based; passed to Defold unchanged.
      * @example
      * Add a new animation to an existing atlas
      * ```ts
@@ -1158,8 +1158,8 @@ declare global {
      *       id: "my_new_animation",
      *       width: 128,
      *       height: 128,
-     *       frame_start: 0,
-     *       frame_end: 5,
+     *       frame_start: 1,
+     *       frame_end: 6,
      *       playback: go.PLAYBACK_LOOP_PINGPONG,
      *       fps: 8,
      *       flip_vertical: false,
@@ -1333,6 +1333,8 @@ declare global {
      * - `COMPRESSION_TYPE_DEFAULT`
      *
      * - `COMPRESSION_TYPE_BASIS_UASTC`
+     *
+     * `page` is 0-based; passed to Defold unchanged.
      * @param buffer - The buffer of precreated pixel data
      * To update a cube map texture you need to pass in six times the amount of data via the buffer, since a cube map has six sides!
      * 3D Textures are currently only supported on OpenGL and Vulkan adapters. To check if your device supports 3D textures, use:

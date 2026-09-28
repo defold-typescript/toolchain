@@ -1,17 +1,17 @@
 import { htmlToDocText } from "./doc-comment";
 
-// TypeScript authors every engine position zero-based. The class records the
-// base Defold itself counts from, which is what the transpiler converts to:
+// The class records the base Defold itself counts from. TypeScript passes every
+// engine position to Defold, and takes it back, unchanged in that base:
 //
-// - `native-1`: Defold counts from 1; the transpiler adds 1 on the way in and
-//   subtracts 1 on the way out.
-// - `native-0`: Defold already counts from 0; the value passes through.
+// - `native-1`: Defold counts from 1.
+// - `native-0`: Defold counts from 0.
 // - `not-a-position`: matched the scan but addresses nothing by position (an
 //   array-valued table, a count, an id, a collision group, a name that only
-//   contains "index"). Never touched.
+//   contains "index").
 //
-// Moving a slot between classes changes the meaning of existing calls with no
-// compile error, so it is a breaking change.
+// The class drives the base each hover states and the positions the engine
+// probes check, so moving a slot between classes changes its documented
+// meaning.
 export type IndexSlotClass = "native-1" | "native-0" | "not-a-position";
 
 export interface IndexSlotClassification {
@@ -299,49 +299,6 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
   ),
 ]);
 
-// The `options.index` fields, whose slot doc `PARAM_DOC_REWRITES` rewrites to the
-// TypeScript base, so they gain no note of their own.
-export const REWRITTEN_INDEX_FIELDS: ReadonlySet<string> = new Set([
-  "go.get:param:options:index",
-  "go.set:param:options:index",
-  "gui.get:param:options:index",
-  "gui.set:param:options:index",
-]);
-
-// The part of the table the transpiler reads at run time, written to
-// `index-slots.json` by `scripts/regen.ts`: the package's runtime entry is
-// TypeScript source, which the published CLI cannot load under plain node.
-export interface IndexSlotEntry {
-  readonly class: IndexSlotClass;
-  readonly fromEnd?: true;
-  readonly tupleSlot?: number;
-}
-
-export interface IndexSlotsArtifact {
-  readonly slots: Readonly<Record<string, IndexSlotEntry>>;
-}
-
-export function indexSlotsArtifact(): IndexSlotsArtifact {
-  const slots: Record<string, IndexSlotEntry> = {};
-  for (const key of [...INDEX_SLOT_CLASSIFICATIONS.keys()].sort()) {
-    const {
-      class: slotClass,
-      fromEnd,
-      tupleSlot,
-    } = INDEX_SLOT_CLASSIFICATIONS.get(key) as IndexSlotClassification;
-    slots[key] = {
-      class: slotClass,
-      ...(fromEnd === undefined ? {} : { fromEnd }),
-      ...(tupleSlot === undefined ? {} : { tupleSlot }),
-    };
-  }
-  return { slots };
-}
-
-export function serializeIndexSlots(): string {
-  return `${JSON.stringify(indexSlotsArtifact(), null, 2)}\n`;
-}
-
 const FIELD_LINE = /^- `([A-Za-z_]\w*)(?:\s[^`]*)?`\s*(.*)$/;
 
 export interface SlotDocFields {
@@ -380,70 +337,50 @@ export function splitSlotFields(html: string): SlotDocFields {
   };
 }
 
-function statesBase(prose: string): boolean {
-  return ONE_BASED_PHRASE.test(prose) || ZERO_BASED_PHRASE.test(prose);
-}
-
-export const TYPESCRIPT_BASE_NOTE = "Zero-based in TypeScript; Defold receives it 1-based.";
-
-// A native-1 slot always gains the TypeScript-base note, since upstream prose
-// saying "1-based" describes the Lua call. A native-0 slot gains "0-based." only
-// when its prose names no base.
-function ownNote(key: string, prose: string): string | undefined {
-  const classification = INDEX_SLOT_CLASSIFICATIONS.get(key);
-  if (classification?.class === "native-1") return TYPESCRIPT_BASE_NOTE;
-  if (classification?.class === "native-0" && !statesBase(prose)) return "0-based.";
+// The base a position's class names, stated whatever its prose says, since
+// upstream prose phrases its base in too many ways to read reliably.
+function nativeBase(key: string): string | undefined {
+  const classification = INDEX_SLOT_CLASSIFICATIONS.get(key)?.class;
+  if (classification === "native-1") return "1-based; passed to Defold unchanged.";
+  if (classification === "native-0") return "0-based; passed to Defold unchanged.";
   return undefined;
 }
 
-// A native-1 field always gains the TypeScript-base note, like a native-1 slot,
-// unless its slot's own rewrite states it. A native-0 field gains "0-based."
-// only when its prose names no base.
-function fieldNote(key: string, field: string, prose: string): string | undefined {
-  const classification = INDEX_SLOT_CLASSIFICATIONS.get(key);
-  if (classification === undefined || REWRITTEN_INDEX_FIELDS.has(key)) return undefined;
-  if (classification.class === "native-1") {
-    return `\`${field}\` is zero-based in TypeScript; Defold receives it 1-based.`;
-  }
-  if (classification.class === "native-0" && !statesBase(prose)) return `\`${field}\` is 0-based.`;
-  return undefined;
+function fieldNote(key: string, field: string): string | undefined {
+  const base = nativeBase(key);
+  return base === undefined ? undefined : `\`${field}\` is ${base}`;
 }
 
 // The sentences a slot's doc gains so each index it holds, the slot itself or
-// one of its table fields, names the base the TypeScript author writes.
+// one of its table fields, names the native base Defold counts from.
 export function indexBaseNotes(
   elementName: string,
   kind: "param" | "return",
   slotName: string,
-  rawDoc: string,
 ): string[] {
   const key = `${elementName}:${kind}:${slotName}`;
-  const { prose, fields } = splitSlotFields(rawDoc);
   const notes: string[] = [];
-  const own = ownNote(key, prose);
+  const own = nativeBase(key);
   if (own !== undefined) notes.push(own);
   const prefix = `${key}:`;
   for (const fieldKey of INDEX_SLOT_CLASSIFICATIONS.keys()) {
     if (!fieldKey.startsWith(prefix)) continue;
     const path = fieldKey.slice(prefix.length);
-    const field = path.slice(path.lastIndexOf(":") + 1);
-    const fieldProse = fields.find((candidate) => candidate.name === field)?.prose ?? "";
-    const note = fieldNote(fieldKey, field, fieldProse);
+    const note = fieldNote(fieldKey, path.slice(path.lastIndexOf(":") + 1));
     if (note !== undefined) notes.push(note);
   }
   return notes;
 }
 
 // `doc` is the slot doc in whatever form the caller renders (decoded text or
-// ref-doc HTML); `rawDoc` is the ref-doc HTML the base check reads.
+// ref-doc HTML).
 export function withIndexBaseNotes(
   elementName: string,
   kind: "param" | "return",
   slotName: string,
-  rawDoc: string,
   doc: string,
 ): string {
-  const notes = indexBaseNotes(elementName, kind, slotName, rawDoc);
+  const notes = indexBaseNotes(elementName, kind, slotName);
   if (notes.length === 0) return doc;
   const sentence = notes.join(" ");
   const body = doc.trimEnd();

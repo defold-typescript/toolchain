@@ -539,109 +539,77 @@ Beyond these three, TypeScript also gives you `Set`, `WeakMap`, `WeakSet`, and
 what is built in, what each lowers to, its `lualib` cost, and what to reach for
 when something is missing, see [Data structures](./data-structures.md).
 
-##### Engine indexes are zero-based
+##### Engine indexes use Defold's base
 
-Every position a built-in Defold API takes or returns is written zero-based in
-TypeScript, like any other array index. Defold counts most of them from 1, and
-the transpiler converts at the call: it adds 1 to an index you pass and
-subtracts 1 from an index the engine returns.
+Every position a built-in Defold API takes or returns is passed in Defold's own
+base, unchanged. Most count from 1, so the first fixture, cell or byte is `1`.
+The transpiler adds nothing and subtracts nothing: the number you write is the
+number Defold receives, and the number Defold returns is the number you read.
 
 ```ts
 declare const body: Opaque<"b2Body">;
 declare const url: Url;
-// the first fixture: Defold receives 1
-print(b2d.fixture.get_density(body, 0));
-// the bottom-left cell; get_bounds returns it zero-based
+// the first fixture
+print(b2d.fixture.get_density(body, 1));
+// the bottom-left cell, fed straight back in
 const [x, y] = tilemap.get_bounds(url);
 tilemap.set_tile(url, "layer1", x, y, 3);
 ```
 
-- **Arguments** — [`b2d.fixture`](/api/b2d.fixture) `fixture_index` and
+- **1-based** — [`b2d.fixture`](/api/b2d.fixture) `fixture_index` and
   `child_index`, [`b2d.body`](/api/b2d.body) `destroy_fixture` and
   `destroy_shape`, the [`b2d.shape`](/api/b2d.shape) `body, shape_index` form,
   the [`tilemap`](/api/tilemap) `set_tile`, `get_tile` and `get_tile_info`
-  coordinates, [`socket`](/api/socket) `client.send`'s `i` and `j`, and the
+  coordinates and `get_bounds`'s `x` and `y`, [`socket`](/api/socket)
+  `client.send`'s `i`, `j`, `index` and `lastindex`, the `index` of the fixture
+  and shape tables `b2d.body` and [`b2d.world`](/api/b2d.world) return, the
+  animation `frame_start` and `frame_end` of
+  [`resource.create_atlas`](/api/resource) and `set_atlas`,
+  `profiler.view_recorded_frame`'s `frame`, `options.index` below, and the
   editor's `image.pixel` and `tilemap.tiles` indexes.
-- **Returns** — `tilemap.get_bounds`'s `x` and `y`, `client.send`'s `index` and
-  `lastindex`, and the editor's `tilemap.tiles.get_tile`.
+- **0-based** — [`gui.get_index`](/api/gui), the [`crash`](/api/crash) user
+  fields and the `page` of [`resource.set_texture`](/api/resource).
 - **Round trips** — a value an engine call returned goes straight back in:
   `client.send(data, lastindex + 1)` resumes after the last byte sent, and
   `b2d.fixture.get_density(body, b2d.body.get_fixtures(body)[0].index)` reads
-  the first fixture.
+  the first fixture. The `[0]` there is an ordinary TypeScript array index; the
+  `index` field it reads is Defold's.
 - **Counting from the end** — a negative `i` or `j` at `client.send` counts from
-  the end, as in `string.sub`, and passes through: `client.send(data, 0, -1)`
-  sends the whole string.
-- **Already zero-based** — [`gui.get_index`](/api/gui), the
-  [`crash`](/api/crash) user fields and the `page` of
-  [`resource.set_texture`](/api/resource) count from 0 in Defold too, so they
-  pass through.
+  the end, as in `string.sub`: `client.send(data, 1, -1)` sends the whole
+  string.
 - **Not positions** — counts, ids, enum constants, the Box2D `group_index`
   collision group, array-valued tables such as `model.set_blend_weights`'s
   weights, and sentinels such as the tile `0` that clears a `tilemap.set_tile`
-  cell are never touched.
-- **Table fields** — an index inside a table converts too: `options.index`
-  below, the `index` of the fixture and shape tables
-  [`b2d.body`](/api/b2d.body) `get_fixtures`, `create_fixture` and
-  `create_shape` return and of the fixtures [`b2d.world`](/api/b2d.world)
-  `overlap_aabb` and `overlap_shape` return, the animation `frame_start` and
-  `frame_end` of [`resource.create_atlas`](/api/resource) and `set_atlas`,
-  `profiler.view_recorded_frame`'s `frame`, and the `index` of the editor's
-  `tilemap.tiles` tile info. An atlas animation's `frames` list keeps Defold's
-  1-based geometry indexes.
-- **Your tables are never changed** — a table written at the call is converted
-  where it is written. Any other table you pass is converted into a copy, so the
-  variable keeps its zero-based values. A table the engine returns is a fresh
-  one, converted in place.
+  cell.
 
-Each converted slot's hover reads "Zero-based in TypeScript; Defold receives it
-1-based.", and each converted field's names the field: "`index` is zero-based in
-TypeScript; Defold receives it 1-based."
+TypeScript arrays keep their own zero-based indexing, which TypeScriptToLua
+lowers as usual: `arr[0]` is the first element. Only the numbers an engine API
+takes or returns follow Defold's base.
 
-The conversion follows the call through the type checker:
+Each classified slot's hover states its base: "1-based; passed to Defold
+unchanged.", or "0-based; passed to Defold unchanged." A table field's names the
+field: "`index` is 1-based; passed to Defold unchanged."
 
-- A literal folds: `get_density(body, 0)` emits `get_density(body, 1)`. Any
-  other value is evaluated once: `i` emits `i + 1`, and an optional index that
-  may be `undefined` stays `nil`. A generic constrained to `number` and a
-  branded number convert like `number`. An index typed `any` is checked at run
-  time: a number converts, anything else passes through.
-- Aliases (`const density = b2d.fixture.get_density`, or one annotated
-  `typeof b2d.fixture.get_density`), destructuring
-  (`const { get_density } = b2d.fixture`) and every overload are converted; a
-  project function that happens to share a name is not.
-- Using a converting function as a value (passing it as an argument, returning
-  it, storing it in an object, casting it with `as any`, calling it through
-  `.call`, `.apply` or `.bind`, or binding it to a `const` typed as a different
-  function), casting its namespace, and a spread argument that covers an index
-  position are errors, since the call could not be converted there.
-
-Hand-written `.lua` files and native extension APIs are outside the rule and
-pass through untouched. A Lua module that receives an index from TypeScript
-receives it zero-based, and an index it hands back is used as written.
-
-When upgrading, subtract 1 from each literal or computed 1-based index you pass
-to these calls, as an argument or in a table field. Values you took from an
-engine return need no change, but code that reads one, such as a fixture's
-`index`, sees it zero-based.
+Because nothing is converted, an engine function behaves like any other
+function: you can pass it as a value, alias it, spread arguments into it, or
+call it through `.call`, `.apply` and `.bind`. A table you pass reaches Defold
+as the same table. Hand-written `.lua` files and native extension APIs see the
+same values TypeScript does.
 
 ##### Engine array properties: `options.index`
 
 `go.get`, `go.set`, `gui.get` and `gui.set` take an `options.index` that picks
 one element of an array property, such as a material constant array. It is
-zero-based too, and the transpiler adds 1:
+1-based, as Defold documents, and passes through unchanged:
 
 ```ts
 declare const url: Url;
 // the first element: tint_array[0] in the shader
-go.set(url, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 0 });
+go.set(url, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 1 });
 ```
 
-- A literal is converted: `{ index: 0 }` emits `{index = 1}`.
-- Any other value is evaluated once, plus 1: `{ index: i }` emits `{index = i + 1}`,
-  and an `index` that may be `undefined` stays `nil`.
-- Leaving `index` out passes the options through unchanged.
-- An options variable, or a spread that may carry `index` with no explicit
-  `index` after it, is converted into a copy when the call runs.
-- The curried `go.get<P>()(…)` is converted too.
+`{ index: i }` emits `{index = i}`. An options variable, a spread and an `index`
+that may be `undefined` pass through as written.
 
 #### Modules: `require` vs `import`
 
