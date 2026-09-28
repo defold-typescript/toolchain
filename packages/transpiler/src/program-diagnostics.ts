@@ -5,6 +5,7 @@ import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { timersLoweringPlugin } from "./timers-lowering";
+import { typeApplicationErasurePlugin } from "./type-application-erasure";
 import { windowEventGuardLoweringPlugin } from "./window-event-guard-lowering";
 
 // The same lua plugins the build path lists (transpile.ts / session.ts), so the
@@ -16,6 +17,7 @@ const LUA_PLUGINS: tstl.Plugin[] = [
   messageDispatchLoweringPlugin,
   timersLoweringPlugin,
   arrayIndexOptionLoweringPlugin,
+  typeApplicationErasurePlugin,
 ];
 
 const noopWriteFile: ts.WriteFileCallback = () => {};

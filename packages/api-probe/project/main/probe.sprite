@@ -5,3 +5,10 @@ textures {
   sampler: "texture_sampler"
   texture: "/main/probe.atlas"
 }
+size {
+  x: 32.0
+  y: 32.0
+  z: 0.0
+  w: 0.0
+}
+size_mode: SIZE_MODE_MANUAL

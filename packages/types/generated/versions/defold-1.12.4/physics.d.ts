@@ -551,7 +551,7 @@ declare global {
       /**
        * READ ONLY Returns the defined physical mass of the collision object component as a number.
        */
-      mass: number;
+      readonly mass: number;
     }
   }
 }

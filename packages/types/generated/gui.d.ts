@@ -334,55 +334,55 @@ declare global {
     /**
      * color property
      */
-    const PROP_COLOR: number & { readonly __brand: "gui.PROP_COLOR" };
+    const PROP_COLOR: string & { readonly __brand: "gui.PROP_COLOR" };
     /**
      * euler property
      */
-    const PROP_EULER: number & { readonly __brand: "gui.PROP_EULER" };
+    const PROP_EULER: string & { readonly __brand: "gui.PROP_EULER" };
     /**
      * fill_angle property
      */
-    const PROP_FILL_ANGLE: number & { readonly __brand: "gui.PROP_FILL_ANGLE" };
+    const PROP_FILL_ANGLE: string & { readonly __brand: "gui.PROP_FILL_ANGLE" };
     /**
      * inner_radius property
      */
-    const PROP_INNER_RADIUS: number & { readonly __brand: "gui.PROP_INNER_RADIUS" };
+    const PROP_INNER_RADIUS: string & { readonly __brand: "gui.PROP_INNER_RADIUS" };
     /**
      * leading property
      */
-    const PROP_LEADING: number & { readonly __brand: "gui.PROP_LEADING" };
+    const PROP_LEADING: string & { readonly __brand: "gui.PROP_LEADING" };
     /**
      * outline color property
      */
-    const PROP_OUTLINE: number & { readonly __brand: "gui.PROP_OUTLINE" };
+    const PROP_OUTLINE: string & { readonly __brand: "gui.PROP_OUTLINE" };
     /**
      * position property
      */
-    const PROP_POSITION: number & { readonly __brand: "gui.PROP_POSITION" };
+    const PROP_POSITION: string & { readonly __brand: "gui.PROP_POSITION" };
     /**
      * rotation property
      */
-    const PROP_ROTATION: number & { readonly __brand: "gui.PROP_ROTATION" };
+    const PROP_ROTATION: string & { readonly __brand: "gui.PROP_ROTATION" };
     /**
      * scale property
      */
-    const PROP_SCALE: number & { readonly __brand: "gui.PROP_SCALE" };
+    const PROP_SCALE: string & { readonly __brand: "gui.PROP_SCALE" };
     /**
      * shadow color property
      */
-    const PROP_SHADOW: number & { readonly __brand: "gui.PROP_SHADOW" };
+    const PROP_SHADOW: string & { readonly __brand: "gui.PROP_SHADOW" };
     /**
      * size property
      */
-    const PROP_SIZE: number & { readonly __brand: "gui.PROP_SIZE" };
+    const PROP_SIZE: string & { readonly __brand: "gui.PROP_SIZE" };
     /**
      * slice9 property
      */
-    const PROP_SLICE9: number & { readonly __brand: "gui.PROP_SLICE9" };
+    const PROP_SLICE9: string & { readonly __brand: "gui.PROP_SLICE9" };
     /**
      * tracking property
      */
-    const PROP_TRACKING: number & { readonly __brand: "gui.PROP_TRACKING" };
+    const PROP_TRACKING: string & { readonly __brand: "gui.PROP_TRACKING" };
     /**
      * The provided data is not in the expected format or is in some other way
      * incorrect, for instance the image data provided to gui.new_texture().

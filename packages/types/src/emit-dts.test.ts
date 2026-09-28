@@ -487,6 +487,66 @@ describe("emitDeclarations", () => {
     );
   });
 
+  test("a constant the engine registers as a string brands a string", () => {
+    const module: ApiModule = {
+      namespace: "gui",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "gui.get",
+          brief: "",
+          description: "",
+          parameters: [
+            {
+              name: "property",
+              doc: "",
+              types: ["gui.PROP_POSITION", "gui.PROP_SCALE"],
+              isOptional: false,
+            },
+          ],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [
+        { name: "gui.PROP_POSITION", brief: "", description: "" },
+        { name: "gui.PIVOT_N", brief: "", description: "" },
+      ],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain(
+      'const PROP_POSITION: string & { readonly __brand: "gui.PROP_POSITION" };',
+    );
+    expect(out).toContain('const PIVOT_N: number & { readonly __brand: "gui.PIVOT_N" };');
+  });
+
+  test("a property upstream marks READ ONLY emits a readonly member", () => {
+    const module: ApiModule = {
+      namespace: "ns",
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [
+        {
+          name: "frames",
+          types: ["number"],
+          brief: "",
+          description: '<span class="mark">READ ONLY</span> The frame count.',
+        },
+        { name: "rate", types: ["number"], brief: "", description: "The playback rate." },
+      ],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain("readonly frames: number;");
+    expect(out).toMatch(/\n\s+rate: number;/);
+  });
+
   test("a param whose types are in-module constant FQNs emits a union of brand types", () => {
     const module: ApiModule = {
       namespace: "ns",
@@ -4135,8 +4195,8 @@ describe("component property type fidelity", () => {
   test("a corrected property emits its corrected type while an uncorrected sibling is untouched", () => {
     const module = parseDefoldApiDoc(sprite113Doc);
     const out = emitDeclarations(module);
-    expect(out).toContain("    frame_count: number;");
-    expect(out).toContain("    animation: Hash;");
+    expect(out).toContain("    readonly frame_count: number;");
+    expect(out).toContain("    readonly animation: Hash;");
     expect(out).toContain("    image: Hash;");
   });
 
@@ -4149,7 +4209,7 @@ describe("component property type fidelity", () => {
     const fov = ledger.find(
       (entry) => entry.identity.kind === "PROPERTY" && entry.identity.name === "fov",
     );
-    expect(view?.tsSignature).toBe("view: Matrix4;");
+    expect(view?.tsSignature).toBe("readonly view: Matrix4;");
     expect(fov?.tsSignature).toBe("fov: number;");
   });
 
@@ -4313,7 +4373,7 @@ describe("documented constant slot expansion", () => {
       ),
     };
     expect(signatureLine(emitDeclarations(module), "function cancel_animations(")).toBe(
-      `function cancel_animations(node: Opaque<"node">, property?: string | ${brand("gui.PROP_COLOR")} | Hash): void;`,
+      `function cancel_animations(node: Opaque<"node">, property?: string | string & { readonly __brand: "gui.PROP_COLOR" } | Hash): void;`,
     );
   });
 

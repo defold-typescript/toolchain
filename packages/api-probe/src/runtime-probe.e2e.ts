@@ -70,6 +70,25 @@ describe(`runtime probe (${process.env.PROBE_TARGET ?? "default target"})`, () =
     expect(classified.filter((key) => !probed.has(key) && !unverified.has(key))).toEqual([]);
   });
 
+  test("no write to a property declared readonly succeeds", () => {
+    expect(failures.writableReadonly).toEqual([]);
+  });
+
+  test("an incoming message the probe project does not trigger is listed as unverified", () => {
+    const unverified = run.passes.flatMap((pass) => {
+      const reported = new Set(pass.outcomes.map((o) => `${o.name}:${o.variant}`));
+      return pass.calls
+        .filter((call) => call.message?.direction === "incoming")
+        .filter((call) => !reported.has(`${call.name}:${call.variant}`))
+        .map((call) => call.name);
+    });
+    console.log(`unverified incoming messages:\n${unverified.map((n) => `  ${n}`).join("\n")}`);
+    const triggered = run.passes.flatMap((pass) =>
+      pass.calls.filter((call) => call.message?.triggered === true).map((call) => call.name),
+    );
+    expect(unverified.filter((name) => triggered.includes(name))).toEqual([]);
+  });
+
   test("every manual verdict of the static oracle has an ok positive call or a denylist reason", () => {
     expect(manualCoverage(run.passes, run.target)).toEqual([]);
   });

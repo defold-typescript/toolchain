@@ -9,19 +9,19 @@ declare global {
     /**
      * luminance image type
      */
-    const TYPE_LUMINANCE: number & { readonly __brand: "image.TYPE_LUMINANCE" };
+    const TYPE_LUMINANCE: string & { readonly __brand: "image.TYPE_LUMINANCE" };
     /**
      * luminance image type
      */
-    const TYPE_LUMINANCE_ALPHA: number & { readonly __brand: "image.TYPE_LUMINANCE_ALPHA" };
+    const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: "image.TYPE_LUMINANCE_ALPHA" };
     /**
      * RGB image type
      */
-    const TYPE_RGB: number & { readonly __brand: "image.TYPE_RGB" };
+    const TYPE_RGB: string & { readonly __brand: "image.TYPE_RGB" };
     /**
      * RGBA image type
      */
-    const TYPE_RGBA: number & { readonly __brand: "image.TYPE_RGBA" };
+    const TYPE_RGBA: string & { readonly __brand: "image.TYPE_RGBA" };
     /**
      * get the header of an .astc buffer
      *

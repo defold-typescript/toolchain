@@ -42,3 +42,25 @@ export const PROBE_DENYLIST: Readonly<Record<string, string>> = {
   "gui.on_message": LIFECYCLE,
   "gui.on_reload": LIFECYCLE,
 };
+
+// Catalog members the probe never reads or writes, keyed `<ns>.<member>`.
+const ONE_SAMPLER =
+  "the probe model's material binds one sampler, so only texture0 names a texture";
+
+export const PROPERTY_DENYLIST: Readonly<Record<string, string>> = {
+  "model.texture1": ONE_SAMPLER,
+  "model.texture2": ONE_SAMPLER,
+  "model.texture3": ONE_SAMPLER,
+  "model.texture4": ONE_SAMPLER,
+  "model.texture5": ONE_SAMPLER,
+  "model.texture6": ONE_SAMPLER,
+  "model.texture7": ONE_SAMPLER,
+};
+
+// Built-in messages the probe never posts, keyed by message id.
+export const MESSAGE_DENYLIST: Readonly<Record<string, string>> = {
+  exit: "ends the run",
+  reboot: "restarts the engine",
+  start_record: "writes a video file beside the engine",
+  stop_record: "logs an error unless start_record began a recording, which the probe never posts",
+};
