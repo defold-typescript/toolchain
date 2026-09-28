@@ -3156,3 +3156,22 @@ describe("grouped overload blocks (committed artifacts)", () => {
     expect(checked).toBeGreaterThan(10);
   });
 });
+
+describe("a slot doc carrying a list stays under its bullet", () => {
+  test("collectionfactory.get_status's status values nest under the status bullet", async () => {
+    const ns = loadCombinedSurface(REAL_TYPES_DIR).namespaces.find(
+      (candidate) => candidate.namespace === "collectionfactory",
+    );
+    if (!ns) throw new Error("collectionfactory namespace missing from the combined surface");
+    const html = await renderMarkdown(
+      apiPageMarkdown(combinedNamespaceToApiPage(ns), (text) => text),
+    );
+    const start = html.indexOf("status of the collection factory component");
+    const end = html.indexOf("collectionfactory.STATUS_UNLOADED", start);
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    const between = html.slice(start, end);
+    expect(between).toContain("<ul>");
+    expect(between).not.toContain("</li>");
+  });
+});

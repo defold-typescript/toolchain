@@ -123,13 +123,19 @@ function slotTypesFor(version: string): Record<string, SlotTypes> {
     const key = symbolIdentityKey(funcId("demo", fn));
     if (fn === evolving) {
       entries[key] = wide
-        ? { "param:0:a": "string", "param:1:b": "number" }
-        : { "param:0:a": "string" };
+        ? {
+            "param:0:a": { type: "string", optional: false },
+            "param:1:b": { type: "number", optional: false },
+          }
+        : { "param:0:a": { type: "string", optional: false } };
     } else if (fn === widenedEvolving) {
       entries[key] =
         version === SECOND_NEWEST
-          ? { "param:0:a": "string", "param:1:b": "number" }
-          : { "param:0:a": "string" };
+          ? {
+              "param:0:a": { type: "string", optional: false },
+              "param:1:b": { type: "number", optional: false },
+            }
+          : { "param:0:a": { type: "string", optional: false } };
     }
   }
   return entries;
@@ -260,7 +266,10 @@ describe("windowCombinedSurface", () => {
       (entry) => symbolIdentityKey(entry.identity) === key,
     );
     expect(built?.authoritativeSignature).toBe(EVOLVING_NEW);
-    expect(built?.slotTypes).toEqual({ "param:0:a": "string", "param:1:b": "number" });
+    expect(built?.slotTypes).toEqual({
+      "param:0:a": { type: "string", optional: false },
+      "param:1:b": { type: "number", optional: false },
+    });
 
     const windowed = windowCombinedSurface(combined, signatures, {
       from: OLDEST,
@@ -272,7 +281,7 @@ describe("windowCombinedSurface", () => {
     expect(entry?.authoritativeSignature).toBe(EVOLVING_OLD);
     // Reading the default version here would keep `param:1:b` beside a signature
     // that no longer declares it.
-    expect(entry?.slotTypes).toEqual({ "param:0:a": "string" });
+    expect(entry?.slotTypes).toEqual({ "param:0:a": { type: "string", optional: false } });
   });
 
   test("a capped window steps over a declaration-free in-window version", () => {

@@ -199,14 +199,29 @@ describe("per-slot rendered types travel with the signature", () => {
 
   test("a curated slot carries the recovered type the token map cannot reach", () => {
     const key = functionKey(CURRENT_VERSION, "render", "render.clear");
-    const buffers = artifact.slotTypes[CURRENT_VERSION]?.[key]?.["param:0:buffers"];
+    const buffers = artifact.slotTypes[CURRENT_VERSION]?.[key]?.["param:0:buffers"]?.type;
     expect(buffers).toContain("LuaMap<");
     expect(buffers).not.toContain("Record<string | number, unknown>");
 
     const stateKey = functionKey(CURRENT_VERSION, "render", "render.enable_state");
-    const state = artifact.slotTypes[CURRENT_VERSION]?.[stateKey]?.["param:0:state"];
+    const state = artifact.slotTypes[CURRENT_VERSION]?.[stateKey]?.["param:0:state"]?.type;
     expect(state).toBe("graphics.State");
     expect(state).not.toContain('Opaque<"constant">');
+  });
+
+  test("a param record carries the optionality its declaration prints", () => {
+    const slot = (namespace: string, name: string, slotKey: string) =>
+      artifact.slotTypes[CURRENT_VERSION]?.[functionKey(CURRENT_VERSION, namespace, name)]?.[
+        slotKey
+      ];
+    expect(slot("collectionfactory", "collectionfactory.get_status", "param:0:url")).toEqual({
+      type: "string | Hash | Url",
+      optional: false,
+    });
+    expect(slot("camera", "camera.get_fov", "param:0:camera")?.optional).toBe(true);
+    expect(
+      slot("collectionfactory", "collectionfactory.set_prototype", "param:1:prototype"),
+    ).toEqual({ type: "string | undefined", optional: false });
   });
 
   test("every recorded slot type is a substring of that symbol's own signature", () => {
@@ -216,11 +231,39 @@ describe("per-slot rendered types travel with the signature", () => {
       for (const [key, slots] of Object.entries(perSymbol)) {
         const signature = artifact.versions[version]?.[key];
         expect(signature).toBeDefined();
-        for (const [slot, ts] of Object.entries(slots)) {
+        for (const [slot, { type }] of Object.entries(slots)) {
           compared += 1;
-          if (!(signature as string).includes(ts)) {
-            mismatches.push(`${version} ${key.split("\0")[2]} ${slot}: ${ts}`);
+          if (!(signature as string).includes(type)) {
+            mismatches.push(`${version} ${key.split("\0")[2]} ${slot}: ${type}`);
           }
+        }
+      }
+    }
+    expect(mismatches).toEqual([]);
+    expect(compared).toBeGreaterThan(1000);
+  });
+
+  test("every param record's optionality is the one printed after its name", () => {
+    const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const mismatches: string[] = [];
+    let compared = 0;
+    for (const [version, perSymbol] of Object.entries(artifact.slotTypes)) {
+      for (const [key, slots] of Object.entries(perSymbol)) {
+        // Slot records describe the primary arm, which is the first line.
+        const [primary = ""] = (artifact.versions[version]?.[key] ?? "").split("\n");
+        const restStart = primary.indexOf("...");
+        for (const [slot, { type, optional }] of Object.entries(slots)) {
+          if (!slot.startsWith("param:")) continue;
+          compared += 1;
+          const printed = new RegExp(
+            `[A-Za-z_$][\\w$]*${optional ? "\\?" : ""}: ${escapeRegExp(type)}(?=, |\\))`,
+          );
+          if (printed.test(primary)) continue;
+          // A slot folded into the rest element prints no name of its own.
+          if (!optional && restStart !== -1 && primary.slice(restStart).includes(type)) continue;
+          mismatches.push(
+            `${version} ${key.split("\0")[2]} ${slot}: ${optional ? "?" : ""}${type}`,
+          );
         }
       }
     }
