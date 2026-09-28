@@ -11,12 +11,14 @@ import {
   describeDiagnostic,
   narrowingVerdict,
   negativeWitness,
+  uncoveredKinds,
 } from "./negative-witness";
 import { generateProbes, PROBE_FILES, type ProbeCall, probeTarget, renderFile } from "./witness";
 
 const RUNTIME = resolve(import.meta.dir, "..", "project", "probe", "runtime.ts");
 const extraction = readBindingsForTarget(probeTarget().id);
 const v2 = generateProbes(undefined, "v2");
+const v3 = generateProbes(undefined, "v3");
 
 function extracted(fqn: string, index: number): BindingSlot {
   const found = extraction.functions.filter((f) => `${f.namespace}.${f.name}` === fqn);
@@ -96,17 +98,23 @@ describe("negative call generation", () => {
     );
   });
 
-  test("skipped slots are listed with the reason", () => {
-    expect(v2.skipped).toContainEqual({
-      name: "sprite.play_flipbook",
-      slot: 3,
-      reason: "manual: lua_type switch",
-    });
-    expect(v2.skipped).toContainEqual({
-      name: "sprite.set_hflip",
-      slot: 2,
-      reason: "the binding converts any kind instead of raising",
-    });
+  test("skipped slots are listed with the reason, and carry no kind", () => {
+    const slotLevel = [
+      { name: "sprite.play_flipbook", slot: 3, reason: "manual: lua_type switch" },
+      {
+        name: "sprite.set_hflip",
+        slot: 2,
+        reason: "the binding converts any kind instead of raising",
+      },
+    ];
+    for (const expected of slotLevel) {
+      const entry = v2.skipped.find(
+        (skip) =>
+          skip.name === expected.name && skip.slot === expected.slot && skip.kind === undefined,
+      );
+      expect(entry).toEqual(expected);
+      expect(entry).not.toHaveProperty("kind");
+    }
   });
 
   test(
@@ -275,4 +283,90 @@ describe("accepted call generation", () => {
     },
     { timeout: 60_000 },
   );
+});
+
+describe("kind coverage", () => {
+  type Generation = typeof v2;
+  const nonNil = (fqn: string, slot: number) =>
+    (v2.bindings.get(fqn)?.slots.find((s) => s.index === slot)?.kinds ?? []).filter(
+      (kind) => kind !== "nil",
+    );
+  function withoutCall(generation: Generation, name: string, variant: string): Generation {
+    const calls = generation.calls.filter((c) => !(c.name === name && c.variant === variant));
+    expect(calls).toHaveLength(generation.calls.length - 1);
+    return { ...generation, calls };
+  }
+
+  test("every extracted kind is accounted for on both backends", () => {
+    expect(v2.bindings.size).toBeGreaterThan(0);
+    expect(uncoveredKinds(v2)).toEqual([]);
+    expect(uncoveredKinds(v3)).toEqual([]);
+  });
+
+  test("dropping an accepted call leaves exactly its kind uncovered", () => {
+    const table = v2.calls.find(
+      (call) => call.witness?.expect === "ok" && call.witness.kind === "table",
+    );
+    if (table?.witness === undefined) throw new Error("no accepted table call");
+    expect(uncoveredKinds(withoutCall(v2, table.name, table.variant))).toEqual([
+      { name: table.name, slot: table.witness.slot, kind: "table" },
+    ]);
+    expect(uncoveredKinds(withoutCall(v2, "gui.get_node", "accepted-1-hash"))).toEqual([
+      { name: "gui.get_node", slot: 1, kind: "hash" },
+    ]);
+  });
+
+  test("an accepted call that repeats a positive call is recorded against it", () => {
+    const record = { name: "gui.get_node", slot: 1, kind: "string", variant: "required" } as const;
+    expect(v2.covered).toContainEqual(record);
+    const covered = v2.covered.filter(
+      (c) => !(c.name === record.name && c.slot === record.slot && c.kind === record.kind),
+    );
+    expect(covered).toHaveLength(v2.covered.length - 1);
+    expect(uncoveredKinds({ ...v2, covered })).toEqual([
+      { name: "gui.get_node", slot: 1, kind: "string" },
+    ]);
+    const problems: string[] = [];
+    for (const c of v2.covered) {
+      const call = v2.calls.find((p) => p.name === c.name && p.variant === c.variant);
+      if (call === undefined) problems.push(`${c.name}:${c.variant} names no generated call`);
+      else if (call.witness?.expect === "raise") {
+        problems.push(`${c.name}:${c.variant} is a negative call`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  test("a kind-level skip accounts for its kind only", () => {
+    const record = {
+      name: "render.draw",
+      slot: 2,
+      kind: "userdata",
+      reason: "no accepted witness for a userdata",
+    } as const;
+    expect(v2.skipped).toContainEqual(record);
+    const skipped = v2.skipped.filter(
+      (s) => !(s.name === record.name && s.slot === record.slot && s.kind === record.kind),
+    );
+    expect(uncoveredKinds({ ...v2, skipped })).toEqual([
+      { name: "render.draw", slot: 2, kind: "userdata" },
+    ]);
+  });
+
+  test("a slot-level skip accounts for every kind of its slot", () => {
+    const skipped = v2.skipped.filter(
+      (s) => !(s.name === "sprite.play_flipbook" && s.slot === 3 && s.kind === undefined),
+    );
+    expect(skipped).toHaveLength(v2.skipped.length - 1);
+    const kinds = nonNil("sprite.play_flipbook", 3);
+    expect(kinds.length).toBeGreaterThan(0);
+    expect(uncoveredKinds({ ...v2, skipped })).toEqual(
+      kinds.map((kind) => ({ name: "sprite.play_flipbook", slot: 3, kind })),
+    );
+    expect(v2.skipped).toContainEqual({
+      name: "tilemap.set_tile",
+      slot: 7,
+      reason: "no declared parameter at this slot",
+    });
+  });
 });

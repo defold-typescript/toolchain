@@ -103,10 +103,20 @@ export interface MessageScript {
   readonly triggered: readonly string[];
 }
 
+// A slot with no call, or with `kind`, one kind of it with no accepted call.
 export interface SkippedSlot {
   readonly name: string;
   readonly slot: number;
+  readonly kind?: LuaKind;
   readonly reason: string;
+}
+
+// An accepted call left out because it repeats `variant`, which reads the kind.
+export interface CoveredKind {
+  readonly name: string;
+  readonly slot: number;
+  readonly kind: LuaKind;
+  readonly variant: string;
 }
 
 export interface Unwitnessed {
@@ -122,6 +132,9 @@ export interface ProbeGeneration {
   readonly unwitnessed: readonly Unwitnessed[];
   // Slots that get no negative call, and kinds that get no accepted call.
   readonly skipped: readonly SkippedSlot[];
+  readonly covered: readonly CoveredKind[];
+  // The merged binding of every function the calls were generated from.
+  readonly bindings: ReadonlyMap<string, BindingFunction>;
   // Lowered and passed-through index slots this pass does not probe.
   readonly indexUnverified: readonly Unverified[];
   // `probe_go.ts`, `probe_gui.ts` and `probe_render.ts`, relative to `main/`.
@@ -528,6 +541,7 @@ interface FunctionCalls {
   calls: ProbeCall[];
   unwitnessed: Unwitnessed[];
   skipped: SkippedSlot[];
+  covered: CoveredKind[];
   signature?: SignatureArgs;
 }
 
@@ -546,9 +560,11 @@ function callsFor(
     .getTypeOfSymbol(symbol)
     .getCallSignatures()
     .filter((signature) => !isTypeApplication(signature));
-  const out: FunctionCalls = { calls: [], unwitnessed: [], skipped: [] };
-  const seen = new Set<string>();
+  const out: FunctionCalls = { calls: [], unwitnessed: [], skipped: [], covered: [] };
+  // Each generated call's text, with its variant.
+  const seen = new Map<string, string>();
   const negated = new Set<number>();
+  let reached = 0;
   // Each `<slot>:<kind>` a binding reads, with its accepted call or why it has none.
   const pending = new Map<string, { readonly call: ProbeCall } | { readonly reason: string }>();
   signatures.forEach((signature, index) => {
@@ -560,6 +576,7 @@ function callsFor(
     const required = params.filter((param) => !param.optional).length;
     const variants: [string, number][] = [["required", required]];
     const present = params.filter((param) => !param.rest).length;
+    reached = Math.max(reached, present);
     if (present > required) variants.push(["optional", present]);
     const returns = declaredReturns(signature, checker);
     const witnessAll = (count: number, handles = new Map<string, number>()) =>
@@ -568,8 +585,8 @@ function callsFor(
       for (const [variant, count] of variants) {
         const call = `${fqn}(${witnessAll(count).join(", ")})`;
         if (seen.has(call)) continue;
-        seen.add(call);
         const label = overload === undefined ? variant : `${overload}-${variant}`;
+        seen.set(call, label);
         out.calls.push({ name: fqn, variant: label, kind: context.kind, call, returns });
       }
       const positive = witnessAll(present);
@@ -667,14 +684,24 @@ function callsFor(
   });
   // After every positive call, so none is repeated as an accepted call.
   for (const [key, entry] of pending) {
+    const [slot, kind] = key.split(":") as [string, LuaKind];
     if ("reason" in entry) {
-      out.skipped.push({ name: fqn, slot: Number(key.split(":")[0]), reason: entry.reason });
+      out.skipped.push({ name: fqn, slot: Number(slot), kind, reason: entry.reason });
       continue;
     }
-    if (seen.has(entry.call.call)) continue;
-    seen.add(entry.call.call);
+    const repeated = seen.get(entry.call.call);
+    if (repeated !== undefined) {
+      out.covered.push({ name: fqn, slot: Number(slot), kind, variant: repeated });
+      continue;
+    }
+    seen.set(entry.call.call, entry.call.variant);
     for (const id of urlsIn(entry.call.call)) urls.add(id);
     out.calls.push(entry.call);
+  }
+  for (const { index } of binding?.slots ?? []) {
+    if (index > reached) {
+      out.skipped.push({ name: fqn, slot: index, reason: "no declared parameter at this slot" });
+    }
   }
   return out;
 }
@@ -839,6 +866,8 @@ export function generateProbes(
   const calls: ProbeCall[] = [];
   const unwitnessed: Unwitnessed[] = [];
   const skipped: SkippedSlot[] = [];
+  const covered: CoveredKind[] = [];
+  const probed = new Map<string, BindingFunction>();
   const signatures = new Map<string, SignatureArgs>();
   const urlsByKind = new Map<ScriptKind, Set<string>>(
     SCRIPT_KINDS.map((kind) => [kind, new Set<string>()]),
@@ -849,10 +878,13 @@ export function generateProbes(
     if (denied(fqn)) continue;
     const kind = contextFor(fqn.slice(0, fqn.lastIndexOf("."))).kind;
     const urls = new Set<string>();
-    const generated = callsFor(target, fqn, symbol, checker, constants, urls, bindings.get(fqn));
+    const binding = bindings.get(fqn);
+    if (binding !== undefined) probed.set(fqn, binding);
+    const generated = callsFor(target, fqn, symbol, checker, constants, urls, binding);
     calls.push(...generated.calls);
     unwitnessed.push(...generated.unwitnessed);
     skipped.push(...generated.skipped);
+    covered.push(...generated.covered);
     if (generated.signature !== undefined) signatures.set(fqn, generated.signature);
     if (generated.calls.length > 0) {
       for (const id of urls) urlsByKind.get(kind)?.add(id);
@@ -889,6 +921,8 @@ export function generateProbes(
     calls,
     unwitnessed,
     skipped,
+    covered,
+    bindings: probed,
     indexUnverified: index.unverified,
     files,
   };

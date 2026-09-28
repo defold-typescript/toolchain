@@ -4,7 +4,7 @@ import { readVerdicts, type Verdict } from "../../types/scripts/engine-binding-v
 import type { DeclaredKinds } from "../../types/scripts/lua-kind";
 import type { ApiTarget } from "../../types/scripts/regen";
 import { ACCEPTED_WITNESS_OVERRIDES, ACCEPTED_WITNESSES } from "./contexts";
-import type { ProbeCall } from "./witness";
+import type { ProbeCall, ProbeGeneration } from "./witness";
 
 export type NegativeWitness =
   | { readonly kind: LuaKind; readonly expression: string }
@@ -103,6 +103,43 @@ export function acceptedWitnesses(
     witnesses.push({ kind, expression, declared: accepts });
   }
   return { witnesses, missing };
+}
+
+export interface UncoveredKind {
+  readonly name: string;
+  readonly slot: number;
+  readonly kind: LuaKind;
+}
+
+// Each non-nil kind a probed binding reads that no accepted call reads, no
+// accepted call repeating a generated call records, and no skip or unwitnessed
+// function gives a reason for.
+export function uncoveredKinds(
+  generation: Pick<ProbeGeneration, "bindings" | "calls" | "covered" | "skipped" | "unwitnessed">,
+): UncoveredKind[] {
+  const accounted = new Set<string>();
+  for (const { name, witness } of generation.calls) {
+    if (witness?.expect === "ok") accounted.add(`${name}:${witness.slot}:${witness.kind}`);
+  }
+  for (const { name, slot, kind } of generation.covered) accounted.add(`${name}:${slot}:${kind}`);
+  for (const { name, slot, kind } of generation.skipped) {
+    accounted.add(`${name}:${slot}:${kind ?? "*"}`);
+  }
+  const unwitnessed = new Set(
+    generation.unwitnessed.map(({ name }) => name.replace(/:overload\d+$/, "")),
+  );
+  const out: UncoveredKind[] = [];
+  for (const [name, binding] of generation.bindings) {
+    if (unwitnessed.has(name)) continue;
+    for (const { index, kinds } of binding.slots) {
+      if (accounted.has(`${name}:${index}:*`)) continue;
+      for (const kind of kinds) {
+        if (kind === "nil" || accounted.has(`${name}:${index}:${kind}`)) continue;
+        out.push({ name, slot: index, kind });
+      }
+    }
+  }
+  return out;
 }
 
 let verdicts: Readonly<Record<string, Verdict>> | undefined;
