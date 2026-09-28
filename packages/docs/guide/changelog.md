@@ -29,6 +29,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **Every engine index states its native base in hovers and the API reference**: a 1-based position reads "1-based; passed to Defold unchanged.", a 0-based one such as the return of [`gui.get_index`](/api/gui) reads "0-based; passed to Defold unchanged.", and a table field names itself, in an argument or a returned table such as [`b2d.body.create_shape`](/api/b2d.body)'s result ("`index` is 1-based; passed to Defold unchanged."). See [Engine indexes use Defold's base](./typescript-vs-lua.md#engine-indexes-use-defolds-base).
+- **API symbol names in the guide and changelog link to their reference entry**: inline code such as `go.get` or `render.RENDER_TARGET_DEFAULT` opens that symbol's heading in the [API reference](/api).
 
 ### Fixed
 

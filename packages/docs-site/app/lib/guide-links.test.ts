@@ -4,7 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Hono } from "hono";
 import { createLibraryListingRoute } from "../routes/libraries/[owner]/[repo]";
-import { canonicalNamespaces, defoldListings } from "./api-content";
+import {
+  apiVersionAxis,
+  canonicalApiPages,
+  canonicalNamespaces,
+  defoldListings,
+  windowedApiPages,
+} from "./api-content";
 import { versionedApiParams } from "./api-page-render";
 import { combinedRedirect } from "./api-redirect";
 import { versionsWithDiskFixtures } from "./api-surface-loader";
@@ -13,6 +19,8 @@ import { parseFrontmatter } from "./frontmatter";
 import { listGuidePages } from "./guide-loader";
 import { renderMarkdown } from "./markdown";
 import { ssgRoutePaths } from "./ssg-routes";
+import { buildSymbolIndex } from "./symbol-index";
+import { resolveVersionWindow } from "./version-window";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const FIXTURES = join(import.meta.dir, "__fixtures__");
@@ -89,6 +97,26 @@ export function emittedApiRoutes(typesDir: string, libraryTypesDir: string): Set
   return routes;
 }
 
+// Every `route#anchor` a symbol heading carries on the canonical and versioned
+// API pages, read from the symbol index those pages' tooltips and cross-links
+// use. Each page is indexed on its own because a canonical page and its versioned
+// copies share symbol keys, and one index would keep only the last route per key.
+export function emittedApiAnchors(typesDir: string, libraryTypesDir: string): Set<string> {
+  const pages = canonicalApiPages(typesDir, libraryTypesDir);
+  const axis = apiVersionAxis(typesDir);
+  for (const version of versionsWithDiskFixtures(typesDir)) {
+    const window = resolveVersionWindow(axis, version.id, null);
+    if (window) pages.push(...windowedApiPages(window, typesDir));
+  }
+  const anchors = new Set<string>();
+  for (const page of pages) {
+    for (const { route } of Object.values(buildSymbolIndex([page]))) {
+      if (route.includes("#")) anchors.add(route);
+    }
+  }
+  return anchors;
+}
+
 // Honox routes flat, so `app/routes/*.tsx` is the static route table: each file
 // is the page at its own name, `index` is `/`, a leading `_` is a layout rather
 // than a page, and a bracketed name is a catch-all whose paths come from the
@@ -117,6 +145,8 @@ export function staticRoutes(
 
 interface RouteSets {
   api: Set<string>;
+  /** The `route#anchor` symbol headings an `/api` fragment may name. */
+  apiAnchors: Set<string>;
   static: Set<string>;
   /** The tracked version ids a `?since=` window bound may name. */
   versions: Set<string>;
@@ -152,6 +182,7 @@ interface Broken {
   reason:
     | "missing file"
     | "unknown anchor"
+    | "unknown api anchor"
     | "unknown api route"
     | "unknown route"
     | "unknown version bound";
@@ -178,15 +209,17 @@ async function checkCorpus(
     for (const target of linkTargets(markdown)) {
       if (!target || isExempt(target, routes !== undefined)) continue;
       inspected.push({ page, target });
-      // An absolute link names a rendered route, not a file: only the path is
-      // resolvable here, and its `#fragment` is a heading the API or guide
-      // renderer emits rather than one this walk can read off a guide page.
+      // An absolute link names a rendered route, not a file, so this walk cannot
+      // read its headings off a guide page. An `/api` fragment is resolved
+      // against the symbol anchors the API pages emit; any other route's
+      // fragment is left unchecked.
       if (routes !== undefined && target.startsWith("/")) {
         // `/api/<version>/<ns>?since=<version>` is the explicit-window URL the
         // range selector builds, so the query is split off the route before the
         // lookup and its bound is resolved against the tracked axis — a window
         // naming a version the site no longer ships is as dead as a dead route.
-        const pathAndQuery = target.split("#")[0] ?? "";
+        const [pathAndQuery = "", ...fragmentParts] = target.split("#");
+        const fragment = fragmentParts.join("#");
         const queryAt = pathAndQuery.indexOf("?");
         const route = queryAt === -1 ? pathAndQuery : pathAndQuery.slice(0, queryAt);
         const since =
@@ -196,6 +229,8 @@ async function checkCorpus(
             broken.push({ page, target, reason: "unknown api route" });
           } else if (since !== null && !routes.versions.has(since)) {
             broken.push({ page, target, reason: "unknown version bound" });
+          } else if (fragment && !routes.apiAnchors.has(`${route}#${fragment}`)) {
+            broken.push({ page, target, reason: "unknown api anchor" });
           }
         } else if (!routes.static.has(route)) {
           broken.push({ page, target, reason: "unknown route" });
@@ -238,8 +273,10 @@ listingApp.get(
 );
 const STATIC_ROUTES = staticRoutes(REAL_ROUTES_DIR, GUIDE_DIR, await ssgRoutePaths(listingApp));
 const TRACKED_VERSION_IDS = new Set(versionsWithDiskFixtures(REAL_TYPES_DIR).map((v) => v.id));
+const API_ANCHORS = emittedApiAnchors(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
 const siteReport = checkCorpus(GUIDE_DIR, siteRenderer(GUIDE_DIR), {
   api: API_ROUTES,
+  apiAnchors: API_ANCHORS,
   static: STATIC_ROUTES,
   versions: TRACKED_VERSION_IDS,
 });
@@ -264,6 +301,23 @@ describe("docs/guide link and anchor resolution", () => {
     const unknown = broken.filter((b) => b.reason === "unknown api route");
     if (unknown.length > 0) throw new Error(`unresolvable api routes:\n${format(unknown)}`);
     expect(unknown).toEqual([]);
+  });
+
+  test("every /api fragment names a symbol heading the API pages really emit", async () => {
+    const { broken, inspected } = await siteReport;
+    const unknown = broken.filter((b) => b.reason === "unknown api anchor");
+    if (unknown.length > 0) throw new Error(`unresolvable api anchors:\n${format(unknown)}`);
+    expect(unknown).toEqual([]);
+    expect(inspected.some((i) => isApiRoute(i.target) && i.target.includes("#"))).toBe(true);
+  });
+
+  // The anchor set is read off the symbol index for both page families a guide
+  // can deep-link, so a versioned link is not judged against canonical anchors.
+  test("the emitted anchor set spans canonical and versioned symbol headings", () => {
+    const anchors = [...API_ANCHORS];
+    expect(anchors.some((a) => /^\/api\/go#/.test(a))).toBe(true);
+    expect(anchors.some((a) => /^\/api\/defold-\d+\.\d+\.\d+\/go#/.test(a))).toBe(true);
+    expect(anchors.some((a) => /^\/api\/math#/.test(a))).toBe(true);
   });
 
   // Non-vacuity for the check above, at each route shape it has to understand: a
@@ -399,13 +453,14 @@ describe("docs/guide link and anchor resolution", () => {
   });
 
   // The same corpus walked with a route set: each retired route is reported and
-  // its live sibling is not, an `/api` fragment is ignored rather than resolved
-  // against a guide heading, and both halves stay opt-in. Driven by synthetic
-  // sets so the case holds whatever the real corpus contains.
+  // its live sibling is not, an `/api` fragment resolves against the symbol
+  // anchors rather than a guide heading, and both halves stay opt-in. Driven by
+  // synthetic sets so the case holds whatever the real corpus contains.
   test("a dead route is reported on both halves, and only when a route set is supplied", async () => {
     const dir = join(FIXTURES, "guide-links-broken");
     const routes = {
       api: new Set(["/api", "/api/live_module"]),
+      apiAnchors: new Set(["/api/live_module#live_modulelive_symbol"]),
       static: new Set(["/libraries"]),
       versions: new Set<string>(),
     };
@@ -414,7 +469,15 @@ describe("docs/guide link and anchor resolution", () => {
       withRoutes.broken
         .filter((b) => b.reason === "unknown api route")
         .map((b) => `${b.page} ${b.target}`),
-    ).toEqual(["alpha.md /api/retired.retired#anchor-ignored"]);
+    ).toEqual(["alpha.md /api/retired.retired#some-symbol"]);
+    expect(
+      withRoutes.broken
+        .filter((b) => b.reason === "unknown api anchor")
+        .map((b) => `${b.page} ${b.target}`),
+    ).toEqual(["alpha.md /api/live_module#not-a-symbol"]);
+    expect(withRoutes.inspected.map((i) => i.target)).toContain(
+      "/api/live_module#live_modulelive_symbol",
+    );
     expect(
       withRoutes.broken
         .filter((b) => b.reason === "unknown route")
@@ -446,6 +509,7 @@ describe("explicit-window links", () => {
       bareRenderer,
       {
         api: new Set(["/api/defold-1.12.4/go"]),
+        apiAnchors: new Set(["/api/defold-1.12.4/go#create"]),
         static: new Set<string>(),
         versions: new Set(["defold-1.12.4", "defold-1.12.0"]),
       },
