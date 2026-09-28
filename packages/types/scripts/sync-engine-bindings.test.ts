@@ -26,21 +26,15 @@ function listFiles(dir: string): string[] {
 describe("selectBindingPaths", () => {
   const selected = selectBindingPaths(readFileSync(TREE_FIXTURE, "utf8").trim().split("\n"));
 
-  test("keeps every module's binding file", () => {
-    for (const path of [
-      "engine/gamesys/src/gamesys/scripts/script_sprite.cpp",
-      "engine/gameobject/src/gameobject/gameobject_script.cpp",
-      "engine/gameobject/src/gameobject/gameobject_props_lua.cpp",
-      "engine/gui/src/gui_script.cpp",
-      "engine/render/src/render/render_script.cpp",
-      "engine/script/src/script_vmath.cpp",
-      "engine/profiler/src/profiler.cpp",
-      "engine/script/src/script_html5_js.cpp",
-      "engine/gamesys/src/gamesys/scripts/box2d/v2/script_box2d_body_v2.cpp",
-      "engine/gamesys/src/gamesys/scripts/box2d/v3/script_box2d_body_v3.cpp",
-    ]) {
-      expect(selected).toContain(path);
-    }
+  test("keeps every binding source vendored for 1.13.1", () => {
+    const target = vendoredTargets().find((t) => t.id === "defold-1.13.1");
+    if (!target) throw new Error("defold-1.13.1 is not a vendored target");
+    const manifest = JSON.parse(
+      readFileSync(join(bindingsDir(target), "manifest.json"), "utf8"),
+    ) as EngineBindingManifest;
+    const vendored = manifest.files.map((file) => file.path);
+    expect(vendored.length).toBeGreaterThan(0);
+    expect(vendored.filter((path) => !selected.includes(path))).toEqual([]);
   });
 
   test("drops test sources and platform stubs", () => {
