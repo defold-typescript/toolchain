@@ -159,7 +159,13 @@ function negative(name: string, slot: number): ProbeCall {
     variant: `negative-${slot}`,
     kind: "go",
     call: `${name}({})`,
-    negative: { slot, kind: "table", binding: "gamesys/src/x.cpp" },
+    witness: {
+      slot,
+      kind: "table",
+      binding: "gamesys/src/x.cpp",
+      expect: "raise",
+      declared: false,
+    },
   };
 }
 
@@ -210,7 +216,8 @@ describe("evaluateProbe on negative calls", () => {
       stale: [],
       openFindings: [],
       tooNarrow: [],
-      negativeMisfires: [],
+      acceptedRefused: [],
+      misfires: [],
       returnKinds: [],
       indexSemantics: [],
       writableReadonly: [],
@@ -231,7 +238,7 @@ describe("evaluateProbe on negative calls", () => {
       ],
       {},
     );
-    expect(failures.negativeMisfires).toEqual([
+    expect(failures.misfires).toEqual([
       "a.f:negative-2 slot 1: raised bad-argument, expected a bad argument #2: raised",
       "a.g:negative-1: raised engine-error, expected a bad argument #1: raised",
     ]);
@@ -259,6 +266,137 @@ describe("evaluateProbe on negative calls", () => {
   });
 });
 
+function acceptedCall(name: string, slot: number): ProbeCall {
+  return {
+    name,
+    variant: `accepted-${slot}-hash`,
+    kind: "go",
+    call: `${name}(hash("probe"))`,
+    witness: { slot, kind: "hash", binding: "gamesys/src/x.cpp", expect: "ok", declared: true },
+  };
+}
+
+function acceptedOutcome(
+  name: string,
+  slot: number,
+  result: ProbeOutcome["outcome"],
+  raisedAt?: number,
+): ProbeOutcome {
+  return { ...negativeOutcome(name, slot, result, raisedAt), variant: `accepted-${slot}-hash` };
+}
+
+describe("evaluateProbe on accepted calls", () => {
+  test("an accepted call ending ok passes", () => {
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [acceptedCall("a.f", 1)],
+          outcomes: [acceptedOutcome("a.f", 1, "ok")],
+        },
+      ],
+      {},
+    );
+    expect(Object.values(failures).flat()).toEqual([]);
+  });
+
+  test("a bad argument at its own slot is a kind the binding refuses, naming the binding", () => {
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [acceptedCall("a.f", 2), acceptedCall("a.g", 1)],
+          outcomes: [
+            acceptedOutcome("a.f", 2, "bad-argument", 2),
+            acceptedOutcome("a.g", 1, "bad-argument"),
+          ],
+        },
+      ],
+      {},
+    );
+    expect(failures.acceptedRefused).toEqual([
+      "a.f:accepted-2-hash: gamesys/src/x.cpp refuses a hash in slot 2, a kind the extractor reads as accepted: raised",
+      "a.g:accepted-1-hash: gamesys/src/x.cpp refuses a hash in slot 1, a kind the extractor reads as accepted: raised",
+    ]);
+    expect(failures.misfires).toEqual([]);
+    expect(failures.badArguments).toEqual([]);
+  });
+
+  test("an engine error, or a bad argument at another slot, misfires", () => {
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [acceptedCall("a.f", 2), acceptedCall("a.g", 1)],
+          outcomes: [
+            acceptedOutcome("a.f", 2, "bad-argument", 1),
+            acceptedOutcome("a.g", 1, "engine-error"),
+          ],
+        },
+      ],
+      {},
+    );
+    expect(failures.misfires).toEqual([
+      "a.f:accepted-2-hash slot 1: raised bad-argument, expected ok: raised",
+      "a.g:accepted-1-hash: raised engine-error, expected ok: raised",
+    ]);
+    expect(failures.acceptedRefused).toEqual([]);
+    expect(failures.unexempted).toEqual([]);
+  });
+
+  test("an accepted exemption clears the exact outcome it records; one recording ok is stale", () => {
+    const calls = [acceptedCall("a.f", 1), acceptedCall("a.g", 1), acceptedCall("a.h", 1)];
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls,
+          outcomes: [
+            acceptedOutcome("a.f", 1, "engine-error"),
+            acceptedOutcome("a.g", 1, "bad-argument", 1),
+            acceptedOutcome("a.h", 1, "ok"),
+          ],
+        },
+      ],
+      {
+        "a.f:accepted-1-hash": accepted("engine-error"),
+        "a.g:accepted-1-hash": accepted("engine-error"),
+        "a.h:accepted-1-hash": accepted("ok"),
+      },
+    );
+    expect(failures.misfires).toEqual([]);
+    expect(failures.acceptedRefused).toEqual([
+      "a.g:accepted-1-hash: gamesys/src/x.cpp refuses a hash in slot 1, a kind the extractor reads as accepted: raised",
+    ]);
+    expect(failures.stale).toEqual([
+      "a.g:accepted-1-hash: now ends bad-argument; update or delete the exemption",
+      "a.h:accepted-1-hash: ok is the expected outcome; delete the exemption",
+    ]);
+  });
+
+  test("an accepted call failing like its exempted positive call inherits the exemption", () => {
+    const unlinked = "main/probe_go.ts.script:12: attempt to index global 'compute' (a nil value)";
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [call("compute.get_samplers"), acceptedCall("compute.get_samplers", 1)],
+          outcomes: [
+            outcome("compute.get_samplers", "engine-error", unlinked),
+            {
+              ...acceptedOutcome("compute.get_samplers", 1, "engine-error"),
+              message: unlinked.replace(":12:", ":40:"),
+            },
+          ],
+        },
+      ],
+      { "compute.get_samplers:required": accepted("engine-error") },
+    );
+    expect(failures.misfires).toEqual([]);
+    expect(failures.unexempted).toEqual([]);
+  });
+});
+
 describe("evaluateProbe on a negative call its function's exemption covers", () => {
   const unlinked = "main/probe_go.ts.script:12: attempt to index global 'compute' (a nil value)";
 
@@ -279,7 +417,7 @@ describe("evaluateProbe on a negative call its function's exemption covers", () 
       ],
       { "compute.get_samplers:required": accepted("engine-error") },
     );
-    expect(failures.negativeMisfires).toEqual([]);
+    expect(failures.misfires).toEqual([]);
     expect(failures.unexempted).toEqual([]);
   });
 
@@ -297,7 +435,7 @@ describe("evaluateProbe on a negative call its function's exemption covers", () 
       ],
       { "compute.get_samplers:required": accepted("engine-error") },
     );
-    expect(failures.negativeMisfires).toEqual([
+    expect(failures.misfires).toEqual([
       "compute.get_samplers:negative-1: raised engine-error, expected a bad argument #1: other",
     ]);
   });

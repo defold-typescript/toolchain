@@ -34,7 +34,13 @@ describe("manualCoverage", () => {
               variant: "negative-1",
               kind: "go",
               call: "go.set({})",
-              negative: { slot: 1, kind: "table", binding: "x.cpp" },
+              witness: {
+                slot: 1,
+                kind: "table",
+                binding: "x.cpp",
+                expect: "raise",
+                declared: false,
+              },
             },
           ],
           outcomes: [{ name: "go.set", variant: "negative-1", outcome: "ok", message: "" }],
@@ -105,7 +111,7 @@ describe("indexProbeCalls", () => {
     const positive = (name: string) =>
       passes
         .flatMap((pass) => pass.calls)
-        .find((c) => c.name === name && c.index === undefined && c.negative === undefined)?.call;
+        .find((c) => c.name === name && c.index === undefined && c.witness === undefined)?.call;
     expect(positive("b2d.fixture.get_density")).toEndWith(", 1)");
     expect(positive("tilemap.get_tile")).toEndWith(", 1, 1)");
     expect(positive("crash.set_user_field")).toStartWith("crash.set_user_field(0,");

@@ -6,8 +6,13 @@ import {
   type BindingSlot,
   readBindingsForTarget,
 } from "../../types/scripts/engine-binding-extract";
-import { describeDiagnostic, negativeWitness } from "./negative-witness";
-import { generateProbes, PROBE_FILES, probeTarget, renderFile } from "./witness";
+import {
+  acceptedWitnesses,
+  describeDiagnostic,
+  narrowingVerdict,
+  negativeWitness,
+} from "./negative-witness";
+import { generateProbes, PROBE_FILES, type ProbeCall, probeTarget, renderFile } from "./witness";
 
 const RUNTIME = resolve(import.meta.dir, "..", "project", "probe", "runtime.ts");
 const extraction = readBindingsForTarget(probeTarget().id);
@@ -70,13 +75,13 @@ describe("negativeWitness", () => {
 describe("negative call generation", () => {
   test("each checked slot gets one call with every other argument positive", () => {
     const calls = v2.calls.filter(
-      (call) => call.name === "crash.set_user_field" && call.negative !== undefined,
+      (call) => call.name === "crash.set_user_field" && call.witness?.expect === "raise",
     );
     expect(calls.map((call) => [call.variant, call.call])).toEqual([
       ["negative-1", 'crash.set_user_field({}, "probe")'],
       ["negative-2", "crash.set_user_field(0, {})"],
     ]);
-    expect(calls.map((call) => call.negative?.binding)).toEqual([
+    expect(calls.map((call) => call.witness?.binding)).toEqual([
       "crash/src/script_crash.cpp",
       "crash/src/script_crash.cpp",
     ]);
@@ -122,6 +127,151 @@ describe("negative call generation", () => {
       expect(errors).toEqual([
         "crash.set_user_field:negative-2 slot 2 too loose: the declaration accepts a table, which crash/src/script_crash.cpp rejects",
       ]);
+    },
+    { timeout: 60_000 },
+  );
+});
+
+function transpileErrors(calls: ProbeCall[]): string[] {
+  const file = renderFile("go", calls, new Set());
+  const result = transpileProject({
+    files: { "probe/runtime.ts": readFileSync(RUNTIME, "utf8"), "main/probe_go.ts": file },
+  });
+  return result.diagnostics
+    .filter((d) => d.category !== "warning")
+    .map((d) => describeDiagnostic(file, calls, d));
+}
+
+describe("acceptedWitnesses", () => {
+  test("one witness per kind the binding reads, never a kind Lua converts into it", () => {
+    expect(acceptedWitnesses(["number"], extracted("crash.set_user_field", 1))).toEqual({
+      witnesses: [{ kind: "number", expression: "1", declared: true }],
+      missing: [],
+    });
+    expect(acceptedWitnesses(["string"], extracted("crash.set_user_field", 2))).toEqual({
+      witnesses: [{ kind: "string", expression: '"probe"', declared: true }],
+      missing: [],
+    });
+  });
+
+  test("a kind with no expression is listed as missing", () => {
+    const chosen = acceptedWitnesses(["hash", "string", "url"], extracted("go.get_position", 1));
+    expect(chosen).toEqual({
+      witnesses: [
+        { kind: "hash", expression: 'hash("probe")', declared: true },
+        { kind: "string", expression: '"probe"', declared: true },
+      ],
+      missing: [{ kind: "url", reason: "no accepted witness for a url" }],
+    });
+  });
+
+  test("a kind the declaration leaves out is flagged declaration-rejected", () => {
+    expect(acceptedWitnesses(["string"], extracted("gui.get_node", 1))).toEqual({
+      witnesses: [
+        { kind: "hash", expression: 'hash("probe")', declared: false },
+        { kind: "string", expression: '"probe"', declared: true },
+      ],
+      missing: [],
+    });
+  });
+
+  test("skips exactly the slots negativeWitness skips", () => {
+    expect(acceptedWitnesses("any", extracted("crash.set_user_field", 2))).toEqual({
+      skipped: "declared any",
+    });
+    expect(acceptedWitnesses(["function"], extracted("sprite.play_flipbook", 3))).toEqual({
+      skipped: "manual: lua_type switch",
+    });
+    expect(acceptedWitnesses(["boolean"], extracted("sprite.set_hflip", 2))).toEqual({
+      skipped: "the binding converts any kind instead of raising",
+    });
+    expect(acceptedWitnesses(["number"], undefined)).toEqual({
+      skipped: "the binding reads no such slot",
+    });
+  });
+});
+
+describe("accepted call generation", () => {
+  const positives = new Set(
+    v2.calls
+      .filter((call) => call.witness === undefined)
+      .map((call) => `${call.name} ${call.call}`),
+  );
+  const accepted = v2.calls.filter((call) => call.witness?.expect === "ok");
+
+  test("every accepted call carries a kind its binding reads, beside positive arguments", () => {
+    expect(accepted.length).toBeGreaterThan(0);
+    const problems: string[] = [];
+    for (const call of accepted) {
+      const target = call.witness as NonNullable<ProbeCall["witness"]>;
+      const slot = extraction.functions
+        .filter((f) => `${f.namespace}.${f.name}` === call.name)
+        .flatMap((f) => f.slots.filter((s) => s.index === target.slot));
+      if (!slot.some((s) => s.kinds.includes(target.kind))) {
+        problems.push(`${call.name}:${call.variant} carries a kind its binding does not read`);
+      }
+      if (call.variant !== `accepted-${target.slot}-${target.kind}`) {
+        problems.push(`${call.name}:${call.variant} is not named after its slot and kind`);
+      }
+      if (positives.has(`${call.name} ${call.call}`)) {
+        problems.push(`${call.name}:${call.variant} repeats a positive call`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  test("gui.get_node gets the hash of its positive id, and no repeat of the positive call", () => {
+    const calls = v2.calls.filter((call) => call.name === "gui.get_node");
+    expect(calls.map((call) => [call.variant, call.call])).toEqual([
+      ["required", 'gui.get_node("box")'],
+      ["negative-1", "gui.get_node({})"],
+      ["accepted-1-hash", 'gui.get_node(hash("box"))'],
+    ]);
+    const hashCall = calls.find((call) => call.variant === "accepted-1-hash");
+    expect(hashCall?.witness).toEqual({
+      slot: 1,
+      kind: "hash",
+      binding: "gui/src/gui_script.cpp",
+      expect: "ok",
+      declared: true,
+    });
+  });
+
+  test(
+    "a declaration-rejected kind renders a type error unless a too-narrow verdict records why",
+    () => {
+      const target = probeTarget();
+      expect(narrowingVerdict(target, "gui.get_node", 1)).toBeUndefined();
+      expect(narrowingVerdict(target, "b2d.body.get_world_point", 1)).toBe(
+        "*:b2d.body.get_world_point:too-narrow:1",
+      );
+      const narrowed = v2.calls.find(
+        (call) => call.name === "b2d.body.get_world_point" && call.variant === "accepted-1-vector3",
+      );
+      expect(narrowed?.witness?.declared).toBe(false);
+      expect(narrowed?.witness?.verdict).toBe("*:b2d.body.get_world_point:too-narrow:1");
+      expect(v2.files[PROBE_FILES.go] ?? "").toContain(
+        [
+          '    probe("b2d.body.get_world_point", "accepted-1-vector3", () =>',
+          "      // @ts-expect-error",
+        ].join("\n"),
+      );
+      const legacy = v2.calls.find(
+        (call) => call.name === "image.load" && call.variant === "accepted-2-boolean",
+      );
+      if (legacy?.witness === undefined) throw new Error("no image.load accepted-2-boolean call");
+      expect(legacy.witness.verdict).toBe("*:image.load:too-narrow:2");
+      const negative = v2.calls.find(
+        (call) => call.name === "image.load" && call.variant === "negative-2",
+      );
+      expect(negative?.call.replace(/, 1\)$/, ", true)")).toBe(legacy.call);
+      const { verdict: _recorded, ...witness } = legacy.witness;
+      const unrecorded = { ...legacy, witness };
+      expect(renderFile("go", [unrecorded], new Set())).not.toContain("@ts-expect-error");
+      expect(transpileErrors([unrecorded])).toEqual([
+        "image.load:accepted-2-boolean slot 2 too narrow: the declaration rejects a boolean, which gamesys/src/gamesys/scripts/script_image.cpp accepts",
+      ]);
+      expect(transpileErrors([legacy])).toEqual([]);
     },
     { timeout: 60_000 },
   );
