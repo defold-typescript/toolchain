@@ -54,6 +54,7 @@ export {
   emitDeclarations,
   emitSymbolSignatures,
   firstSlotAlternativeOf,
+  type SlotType,
   type SlotTypes,
   type SymbolSignature,
   TS_IDENTIFIER,

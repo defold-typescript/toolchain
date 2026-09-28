@@ -15,7 +15,9 @@ interface Slot {
   readonly signature: string;
   readonly kind: "param" | "return";
   readonly name: string;
+  readonly index: number;
   readonly rendered: string;
+  readonly isOptional: boolean;
   readonly backed: boolean;
   /** The row renders no single ref-doc declaration — an authored override arm. */
   readonly unidentified: boolean;
@@ -62,7 +64,9 @@ function walkSlots(): Slot[] {
             signature: symbol.signature,
             kind,
             name: p.name,
+            index,
             rendered: p.types.join(" | "),
+            isOptional: p.isOptional,
             backed: slots !== undefined && `${kind}:${index}:${p.name}` in slots,
             unidentified: identity === undefined,
             sharedFqn,
@@ -131,6 +135,32 @@ describe("rendered slot types agree with the signature above them", () => {
       .filter((s) => !s.signature.includes(s.rendered))
       .map((s) => `${s.symbol} ${s.kind}:${s.name} — ${s.rendered} not in ${s.signature}`);
     expect(mismatches).toEqual([]);
+  });
+
+  test("every artifact-backed param row's label appears verbatim in its own signature", () => {
+    const params = backed.filter((s) => s.kind === "param");
+    // A row is labelled with its ref-doc name; the declaration prints the emitted
+    // one, which escapes a reserved word with a trailing `_` and replaces a
+    // non-identifier.
+    const mismatches = params
+      .filter((s) => {
+        const q = s.isOptional ? "?" : "";
+        return ![s.name, `${s.name}_`, `arg${s.index}`].some((name) =>
+          s.signature.includes(`${name}${q}: ${s.rendered}`),
+        );
+      })
+      .map(
+        (s) => `${s.symbol} ${s.name}${s.isOptional ? "?" : ""}: ${s.rendered} — ${s.signature}`,
+      );
+    expect(mismatches).toEqual([]);
+    expect(params.length).toBeGreaterThan(1000);
+  });
+
+  test("a param row states the optionality its declaration has, not the ref-doc flag", () => {
+    const row = (symbol: string, name: string): Slot | undefined =>
+      backed.find((s) => s.symbol === symbol && s.kind === "param" && s.name === name);
+    expect(row("collectionfactory.get_status", "url")?.isOptional).toBe(false);
+    expect(row("camera.get_fov", "camera")?.isOptional).toBe(true);
   });
 
   test("no slot still renders the opaque placeholder its signature recovered from", () => {

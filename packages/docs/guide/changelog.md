@@ -44,6 +44,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`go.scale`** is `number | Vector3`, since the engine reads the scale back as a `vmath.vector3`.
   - **String constants** — [`gui.PROP_*`](/api/gui) and [`image.TYPE_*`](/api/image) are typed as the strings the engine registers, not as numbers.
   - **`render.RENDER_TARGET_DEFAULT`** is typed `undefined`, the `nil` the engine reads since it never registers the constant; `render.set_render_target(render.RENDER_TARGET_DEFAULT)` still selects the default target.
+- **API reference pages agree with their declarations:** each parameter row marks a slot optional exactly when the signature above it does (every [camera](/api/camera) getter's `camera`, `b2d.joint.create_*`'s `definition`), a slot doc that lists constants keeps them under its own bullet, and a version's search results show the same signatures as that version's pages.
 
 ## v0.40.0
 

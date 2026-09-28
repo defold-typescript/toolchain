@@ -70,6 +70,12 @@ function nameTypeLabel(name: string, isOptional: boolean, types: string): string
   return `\`${name}\`${optional}:${NAME_TYPE_GAP}${typeCode}`;
 }
 
+// A multi-line slot doc (a list of constants) indents every continuation line to
+// the bullet's content column, so markdown-it keeps it inside that bullet.
+function underBullet(doc: string, indent: string): string {
+  return doc.replace(/\n(?=[^\n])/g, `\n${indent}`);
+}
+
 // An object-literal member and its subtree, indented two spaces per depth so
 // markdown-it nests it under the parameter bullet. Each member reads
 // `` `name`?:<gap>`type` — doc ``, keeping the member type inline (backticked)
@@ -79,7 +85,7 @@ function fieldBullets(fields: ApiSymbolParam[], depth: number): string[] {
   const out: string[] = [];
   for (const f of fields) {
     let bullet = `${indent}- ${nameTypeLabel(f.name, f.isOptional, f.types.join(" | "))}`;
-    if (f.doc) bullet += ` — ${f.doc}`;
+    if (f.doc) bullet += ` — ${underBullet(f.doc, `${indent}  `)}`;
     out.push(bullet);
     if (f.fields && f.fields.length > 0) out.push(...fieldBullets(f.fields, depth + 1));
   }
@@ -88,7 +94,7 @@ function fieldBullets(fields: ApiSymbolParam[], depth: number): string[] {
 
 function paramBullet(p: ApiSymbolParam): string {
   let bullet = `- ${nameTypeLabel(p.name, p.isOptional, p.types.join(" | "))}`;
-  if (p.doc) bullet += ` — ${p.doc}`;
+  if (p.doc) bullet += ` — ${underBullet(p.doc, "  ")}`;
   if (p.fields && p.fields.length > 0) {
     return [bullet, ...fieldBullets(p.fields, 0)].join("\n");
   }

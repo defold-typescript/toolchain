@@ -4221,33 +4221,33 @@ describe("per-slot rendered types", () => {
 
   test("a curated mapping slot reports the recovered LuaMap, not the opaque record", () => {
     const entry = slotsOf(renderDoc, "render.clear", { knownConstantFqns: renderConstants });
-    const buffers = entry.slotTypes["param:0:buffers"];
+    const buffers = entry.slotTypes["param:0:buffers"]?.type;
     expect(buffers).toBe("LuaMap<render.ClearBufferKey, number | Vector4>");
     expect(buffers).not.toContain("Record<string | number, unknown>");
   });
 
   test("a documented-constant slot reports the brand union, not Opaque", () => {
     const entry = slotsOf(renderDoc, "render.enable_state", { knownConstantFqns: renderConstants });
-    const state = entry.slotTypes["param:0:state"];
+    const state = entry.slotTypes["param:0:state"]?.type;
     expect(state).toBe("graphics.State");
     expect(state).not.toContain('Opaque<"constant">');
   });
 
   test("a plain-token slot reports what the token map already yields", () => {
     const entry = slotsOf(goDoc, "go.get_id");
-    expect(entry.slotTypes["param:0:path"]).toBe("string");
+    expect(entry.slotTypes["param:0:path"]).toEqual({ type: "string", optional: true });
   });
 
   test("a return slot is reported, so Returns is covered and not only Parameters", () => {
     const entry = slotsOf(goDoc, "go.get_id");
-    expect(entry.slotTypes["return:0:id"]).toBe("Hash");
+    expect(entry.slotTypes["return:0:id"]).toEqual({ type: "Hash", optional: false });
   });
 
   test("two unnamed return slots stay distinct under the positional key", () => {
     const entry = slotsOf(pushDoc, "push.schedule");
     expect(entry.tsSignature).toContain("LuaMultiReturn<[number, string]>");
-    expect(entry.slotTypes["return:0:"]).toBe("number");
-    expect(entry.slotTypes["return:1:"]).toBe("string");
+    expect(entry.slotTypes["return:0:"]?.type).toBe("number");
+    expect(entry.slotTypes["return:1:"]?.type).toBe("string");
   });
 
   test("every reported slot type is a substring of that symbol's own signature", () => {
@@ -4262,9 +4262,9 @@ describe("per-slot rendered types", () => {
     for (const [doc, options] of modules) {
       const module = parseDefoldApiDoc(doc as Parameters<typeof parseDefoldApiDoc>[0]);
       for (const entry of emitSymbolSignatures(module, options)) {
-        for (const [slot, ts] of Object.entries(entry.slotTypes)) {
-          if (!entry.tsSignature.includes(ts)) {
-            mismatches.push(`${entry.identity.name} ${slot}: ${ts} not in ${entry.tsSignature}`);
+        for (const [slot, { type }] of Object.entries(entry.slotTypes)) {
+          if (!entry.tsSignature.includes(type)) {
+            mismatches.push(`${entry.identity.name} ${slot}: ${type} not in ${entry.tsSignature}`);
           }
         }
       }
