@@ -94,12 +94,12 @@ declare global {
        * Output is not buffered. For small strings, it is always better to concatenate them in Lua (with the `..` operator) and send the result in one call instead of calling the method several times.
        *
        * @param data - the string to be sent.
-       * @param i - optional starting index of the string. 1-based.
-       * @param j - optional end index of string. 1-based.
+       * @param i - optional starting index of the string. Zero-based in TypeScript; Defold receives it 1-based.
+       * @param j - optional end index of string. Zero-based in TypeScript; Defold receives it 1-based.
        * @returns `[index, error, lastindex]`:
-       * - `index` — the index of the last byte within [i, j] that has been sent, or `nil` in case of error. Notice that, if `i` is 1 or absent, this is effectively the total number of bytes sent. 1-based.
+       * - `index` — the index of the last byte within [i, j] that has been sent, or `nil` in case of error. Notice that, if `i` is 1 or absent, this is effectively the total number of bytes sent. Zero-based in TypeScript; Defold receives it 1-based.
        * - `error` — the error message, or `nil` if no error occurred. The error message can be `"closed"` in case the connection was closed before the transmission was completed or the string `"timeout"` in case there was a timeout during the operation.
-       * - `lastindex` — in case of error, the index of the last byte within [i, j] that has been sent. You might want to try again from the byte following that. `nil` if no error occurred. 1-based.
+       * - `lastindex` — in case of error, the index of the last byte within [i, j] that has been sent. You might want to try again from the byte following that. `nil` if no error occurred. Zero-based in TypeScript; Defold receives it 1-based.
        */
       send(data: string, i?: number, j?: number): LuaMultiReturn<[number | undefined, string | undefined, number | undefined]>;
       /**

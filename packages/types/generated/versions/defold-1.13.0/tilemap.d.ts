@@ -34,6 +34,11 @@ declare global {
      * the bounds are calculated as if all layers were collapsed into one.
      *
      * @param url - the tile map
+     * @returns `[x, y, w, h]`:
+     * - `x` — x coordinate of the bottom left corner. Zero-based in TypeScript; Defold receives it 1-based.
+     * - `y` — y coordinate of the bottom left corner. Zero-based in TypeScript; Defold receives it 1-based.
+     * - `w` — number of columns (width) in the tile map
+     * - `h` — number of rows (height) in the tile map
      * @example
      * ```ts
      * // get the level bounds.
@@ -50,8 +55,8 @@ declare global {
      *
      * @param url - the tile map
      * @param layer - name of the layer for the tile
-     * @param x - x-coordinate of the tile. 1-based.
-     * @param y - y-coordinate of the tile. 1-based.
+     * @param x - x-coordinate of the tile. Zero-based in TypeScript; Defold receives it 1-based.
+     * @param y - y-coordinate of the tile. Zero-based in TypeScript; Defold receives it 1-based.
      * @returns index of the tile
      * @example
      * ```ts
@@ -71,8 +76,8 @@ declare global {
      *
      * @param url - the tile map
      * @param layer - name of the layer for the tile
-     * @param x - x-coordinate of the tile. 1-based.
-     * @param y - y-coordinate of the tile. 1-based.
+     * @param x - x-coordinate of the tile. Zero-based in TypeScript; Defold receives it 1-based.
+     * @param y - y-coordinate of the tile. Zero-based in TypeScript; Defold receives it 1-based.
      * @returns index of the tile
      * @example
      * ```ts
@@ -153,8 +158,8 @@ declare global {
      *
      * @param url - the tile map
      * @param layer - name of the layer for the tile
-     * @param x - x-coordinate of the tile. 1-based.
-     * @param y - y-coordinate of the tile. 1-based.
+     * @param x - x-coordinate of the tile. Zero-based in TypeScript; Defold receives it 1-based.
+     * @param y - y-coordinate of the tile. Zero-based in TypeScript; Defold receives it 1-based.
      * @param tile - index of new tile to set. 0 resets the cell
      * @param transform_bitmask - optional flip and/or rotation should be applied to the tile
      * @example
