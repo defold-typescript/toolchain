@@ -16,7 +16,6 @@ import {
   parseMessagesDoc,
 } from "../src/emit-messages";
 import type { TranslationStore } from "../src/example-store";
-import { serializeIndexSlots } from "../src/index-slot-classifications";
 import { wrapAsAmbientGlobal, wrapAsModule } from "../src/publish-dts";
 import type { UrlParameterTable } from "../src/url-parameters";
 import {
@@ -827,10 +826,6 @@ if (import.meta.main) {
   const messagesOut = resolve(generated, MESSAGES_MANIFEST.outFile);
   writeFileSync(messagesOut, generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST));
   console.log(`wrote ${messagesOut}`);
-
-  const indexSlotsOut = resolve(import.meta.dir, "..", "index-slots.json");
-  writeFileSync(indexSlotsOut, serializeIndexSlots());
-  console.log(`wrote ${indexSlotsOut}`);
 
   // Imported here rather than at module scope: its fixtures are not published,
   // and `resolve` loads this module from an installed package.

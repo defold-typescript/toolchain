@@ -129,7 +129,7 @@ declare global {
      * ```ts
      * // Show the last recorded frame
      * const recorded_frame_count = profiler.recorded_frame_count();
-     * profiler.view_recorded_frame({ frame: recorded_frame_count - 1 });
+     * profiler.view_recorded_frame({ frame: recorded_frame_count });
      * ```
      */
     function recorded_frame_count(): number;
@@ -227,7 +227,7 @@ declare global {
      *
      * - `frame` The frame index in the recording buffer (1 is first recorded frame)
      *
-     * `frame` is zero-based in TypeScript; Defold receives it 1-based.
+     * `frame` is 1-based; passed to Defold unchanged.
      * @example
      * ```ts
      * // Go back one frame

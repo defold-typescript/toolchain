@@ -48,7 +48,6 @@
     "./api-availability.json": "./api-availability.json",
     "./api-signatures.json": "./api-signatures.json",
     "./url-parameters.json": "./url-parameters.json",
-    "./index-slots.json": "./index-slots.json",
     "./package.json": "./package.json"
   },
   "files": [
@@ -60,7 +59,6 @@
     "api-availability.json",
     "api-signatures.json",
     "url-parameters.json",
-    "index-slots.json",
     "index.d.ts",
     "fixtures/messages_doc.json",
     "fixtures/defold-*",

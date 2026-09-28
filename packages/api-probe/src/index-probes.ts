@@ -14,25 +14,37 @@ export interface SignatureArgs {
   readonly args: readonly string[];
 }
 
-// A slot addressing one of `count` elements by zero-based position. Each check
-// is a statement block that raises when the slot misses. `at` is the probed
-// function called with the slot set to a position; a context that reads the
-// slot some other way (an options table, a return) ignores it.
+// A slot addressing one of `count` elements by position in its native base.
+// Each check is a statement block that raises when the slot misses. `at` is the
+// probed function called with the slot set to a position; a context that reads
+// the slot some other way (an options table, a return) ignores it. `base` is
+// the slot's native base, so position `i` is TypeScript array element
+// `i - base`.
 interface IndexContext {
   // How many elements the slot addresses, as a TypeScript expression.
   readonly count: string;
-  // Raises unless position `i` reaches element `i`.
-  readonly reaches: (i: string, at: (i: string) => string) => string;
-  // Raises unless the binding refuses the position one past the last.
-  readonly beyond: (count: string, at: (i: string) => string) => string;
+  // Raises unless position `i` reaches element `i - base`.
+  readonly reaches: (i: string, at: (i: string) => string, base: number) => string;
+  // Raises unless the binding refuses `past`, the position one past the last.
+  readonly beyond: (past: string, count: string, at: (i: string) => string) => string;
   // Argument overrides by parameter name, such as the body the slot indexes into.
   readonly args?: Readonly<Record<string, string>>;
 }
 
 export const PROBED_INDEX_CLASSES: ReadonlySet<string> = new Set(["native-1", "native-0"]);
 
+// The base Defold counts a probed-class slot from: its first position.
+export function indexBase(slotClass: string): number {
+  return slotClass === "native-1" ? 1 : 0;
+}
+
+// The TypeScript array element position `i` addresses.
+function element(i: string, base: number): string {
+  return base === 0 ? i : `${i} - ${base}`;
+}
+
 const V4 = "ReturnType<typeof vmath.vector4>";
-const tint = (i: string) => `vmath.vector4(0.25 * (${i} + 1), 0.5, 0.75, 1)`;
+const tint = (i: string) => `vmath.vector4(0.25 * ${i}, 0.5, 0.75, 1)`;
 
 function raises(call: string, what: string): string {
   return `{ const [accepted] = pcall(() => ${call}); if (accepted) error("${what}"); }`;
@@ -44,25 +56,25 @@ function returns(call: string, value: "undefined" | "false", what: string): stri
 
 const PAST = "the engine accepts the position one past the last";
 
-// `options.index` over the `tints[4]` constant, read back as the zero-based
-// TypeScript array. `go.set` passes its options through a variable, so the copy
-// the lowering makes is checked to leave the caller's table unchanged.
+// `options.index` over the `tints[4]` constant, read back as a TypeScript
+// array. `go.set` passes its options through a variable, which the call must
+// leave as the caller wrote it.
 function optionsSet(ns: "go" | "gui", target: string, viaVariable: boolean): IndexContext {
   return {
     count: "4",
-    reaches: (i) =>
+    reaches: (i, _at, base) =>
       [
         viaVariable
-          ? `const options = { index: ${i} }; ${ns}.set(${target}, "tints", ${tint(i)}, options); if (options.index !== ${i}) error("the conversion changed the caller's options");`
+          ? `const options = { index: ${i} }; ${ns}.set(${target}, "tints", ${tint(i)}, options); if (options.index !== ${i}) error("the call changed the caller's options");`
           : `${ns}.set(${target}, "tints", ${tint(i)}, { index: ${i} });`,
         `const tints = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
-        `if (tints[${i}] !== ${tint(i)}) error("{ index: i } missed tints[i]");`,
+        `if (tints[${element(i, base)}] !== ${tint(i)}) error("{ index: i } missed its element");`,
       ].join(" "),
     // The binding accepts a write past the end; it must not land in the array.
-    beyond: (count) =>
+    beyond: (past, count) =>
       [
         `const before = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
-        `${ns}.set(${target}, "tints", vmath.vector4(0, 0, 0, 0), { index: ${count} });`,
+        `${ns}.set(${target}, "tints", vmath.vector4(0, 0, 0, 0), { index: ${past} });`,
         `const after = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
         `for (let k = 0; k < ${count}; k++) if (after[k] !== before[k]) error("a write past the last element changed element k");`,
       ].join(" "),
@@ -72,13 +84,13 @@ function optionsSet(ns: "go" | "gui", target: string, viaVariable: boolean): Ind
 function optionsGet(ns: "go" | "gui", target: string): IndexContext {
   return {
     count: "4",
-    reaches: (i) =>
+    reaches: (i, _at, base) =>
       [
         `${ns}.set(${target}, "tints", ${tint(i)}, { index: ${i} });`,
         `const tints = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
-        `if (${ns}.get(${target}, "tints", { index: ${i} }) !== tints[${i}]) error("{ index: i } read another element than tints[i]");`,
+        `if (${ns}.get(${target}, "tints", { index: ${i} }) !== tints[${element(i, base)}]) error("{ index: i } read another element");`,
       ].join(" "),
-    beyond: (count) => raises(`${ns}.get(${target}, "tints", { index: ${count} })`, PAST),
+    beyond: (past) => raises(`${ns}.get(${target}, "tints", { index: ${past} })`, PAST),
   };
 }
 
@@ -119,12 +131,12 @@ function fixtureContext(name: string): IndexContext {
   const { body, count } = fixtureBody(name);
   return {
     count,
-    args: { body, child_index: "0" },
-    reaches: (i, at) =>
+    args: { body, child_index: "1" },
+    reaches: (i, at, base) =>
       name === "get_type"
-        ? `if (${at(i)} !== b2d.body.get_fixtures(${body})[${i}]!.type) error("fixture i is not get_fixtures()[i]");`
+        ? `if (${at(i)} !== b2d.body.get_fixtures(${body})[${element(i, base)}]!.type) error("fixture i is not the one get_fixtures lists at i");`
         : `${at(i)};`,
-    beyond: (count, at) => raises(at(count), PAST),
+    beyond: (past, _count, at) => raises(at(past), PAST),
   };
 }
 
@@ -132,39 +144,40 @@ function fixtureContext(name: string): IndexContext {
 function childContext(name: string): IndexContext {
   return {
     count: "1",
-    args: { body: fixtureBody(name).body, fixture_index: "0" },
+    args: { body: fixtureBody(name).body, fixture_index: "1" },
     reaches: (i, at) => `${at(i)};`,
-    beyond: (count, at) => raises(at(count), PAST),
+    beyond: (past, _count, at) => raises(at(past), PAST),
   };
 }
 
-// Tiles 1, 2, 3 along row 0 and 1, 4, 5 along column 0 of `probe.tilemap`,
-// whose bounds start at cell (0, 0).
+// Tiles 1, 2, 3 along the first row and 1, 4, 5 along the first column of
+// `probe.tilemap`, whose bounds start at cell (1, 1).
 const ROW = "[1, 2, 3]";
 const COLUMN = "[1, 4, 5]";
 
 function cell(axis: "x" | "y", i: string): string {
-  return axis === "x" ? `${i}, 0` : `0, ${i}`;
+  return axis === "x" ? `${i}, 1` : `1, ${i}`;
 }
 
 function tileContext(fn: "set_tile" | "get_tile" | "get_tile_info", axis: "x" | "y"): IndexContext {
   const tiles = axis === "x" ? ROW : COLUMN;
+  // A tilemap cell is 1-based.
   const call = (i: string) =>
     fn === "set_tile"
-      ? `tilemap.set_tile(TILEMAP, "layer1", ${cell(axis, i)}, ${tiles}[${i}]!)`
+      ? `tilemap.set_tile(TILEMAP, "layer1", ${cell(axis, i)}, ${tiles}[${element(i, 1)}]!)`
       : `tilemap.${fn}(TILEMAP, "layer1", ${cell(axis, i)})`;
   return {
     count: "3",
-    reaches: (i) =>
+    reaches: (i, _at, base) =>
       fn === "set_tile"
         ? `if (${call(i)} !== true) error("set_tile refused cell i");`
         : fn === "get_tile"
-          ? `if (${call(i)} !== ${tiles}[${i}]) error("cell i holds another tile");`
-          : `if ((${call(i)} as { index: number } | undefined)?.index !== ${tiles}[${i}]) error("cell i holds another tile");`,
-    beyond: (count) =>
+          ? `if (${call(i)} !== ${tiles}[${element(i, base)}]) error("cell i holds another tile");`
+          : `if ((${call(i)} as { index: number } | undefined)?.index !== ${tiles}[${element(i, base)}]) error("cell i holds another tile");`,
+    beyond: (past) =>
       fn === "set_tile"
-        ? returns(`tilemap.set_tile(TILEMAP, "layer1", ${cell(axis, count)}, 1)`, "false", PAST)
-        : returns(call(count), "undefined", PAST),
+        ? returns(`tilemap.set_tile(TILEMAP, "layer1", ${cell(axis, past)}, 1)`, "false", PAST)
+        : returns(call(past), "undefined", PAST),
   };
 }
 
@@ -185,9 +198,9 @@ export const INDEX_CONTEXTS: Readonly<Record<string, IndexContext>> = {
   ),
   "b2d.body.get_fixtures:return:fixtures:index": {
     count: "3",
-    reaches: (i) =>
-      `if (${TRIO_FIXTURES}[${i}]!.index !== ${i}) error("get_fixtures()[i].index is not i");`,
-    beyond: (count) =>
+    reaches: (i, _at, base) =>
+      `if (${TRIO_FIXTURES}[${element(i, base)}]!.index !== ${i}) error("the fixture listed at i has another index");`,
+    beyond: (_past, count) =>
       [
         `const first = ${TRIO_FIXTURES}; const second = ${TRIO_FIXTURES};`,
         `if (first.length !== ${count}) error("the body does not list three fixtures");`,
@@ -207,9 +220,9 @@ export const INDEX_CONTEXTS: Readonly<Record<string, IndexContext>> = {
       `tilemap.get_bounds:return:${axis}`,
       {
         count: "3",
-        reaches: () =>
-          `if (tilemap.get_bounds(TILEMAP)[${slot}] !== 0) error("the bounds do not start at cell 0");`,
-        beyond: (count: string) =>
+        reaches: (_i: string, _at: (i: string) => string, base: number) =>
+          `if (tilemap.get_bounds(TILEMAP)[${slot}] !== ${base}) error("the bounds do not start at the first cell");`,
+        beyond: (_past: string, count: string) =>
           `if (tilemap.get_bounds(TILEMAP)[${slot + 2}] !== ${count}) error("the bounds are not three cells wide");`,
       },
     ]),
@@ -222,7 +235,7 @@ export const INDEX_CONTEXTS: Readonly<Record<string, IndexContext>> = {
       {
         count: "crash.USERFIELD_MAX",
         reaches: (i: string, at: (i: string) => string) => `${at(i)};`,
-        beyond: (count: string, at: (i: string) => string) => raises(at(count), PAST),
+        beyond: (past: string, _count: string, at: (i: string) => string) => raises(at(past), PAST),
       },
     ]),
   ),
@@ -231,10 +244,10 @@ export const INDEX_CONTEXTS: Readonly<Record<string, IndexContext>> = {
   // reads 0.
   "gui.get_index:return:index": {
     count: "3",
-    reaches: (i) =>
+    reaches: (i, _at, base) =>
       [
         "const nodes = [0, 1, 2].map(() => gui.new_box_node(vmath.vector3(), vmath.vector3(1, 1, 0)));",
-        `const ok = ${i} === 0 ? (() => { gui.move_below(nodes[0]!, undefined); return gui.get_index(nodes[0]!) === 0; })() : gui.get_index(nodes[${i}]!) === gui.get_index(nodes[${i} - 1]!) + 1;`,
+        `const ok = ${i} === ${base} ? (() => { gui.move_below(nodes[0]!, undefined); return gui.get_index(nodes[0]!) === ${base}; })() : gui.get_index(nodes[${element(i, base)}]!) === gui.get_index(nodes[${element(i, base)} - 1]!) + 1;`,
         "for (const node of nodes) gui.delete_node(node);",
         'if (!ok) error("a root node is not at the index its order gives");',
       ].join(" "),
@@ -420,18 +433,27 @@ export function indexProbeCalls(
     const at = caller(fqn, slot, signature, context);
     const kind = scriptKind(fqn);
     const count = context.count;
-    const positions: [string, string][] = [
-      ["first", "0"],
-      ["middle", `math.floor(${count} / 2)`],
-      ["last", `${count} - 1`],
-    ];
+    const base = indexBase(classification.class);
+    const positions: [string, string][] =
+      base === 1
+        ? [
+            ["first", "1"],
+            ["middle", `math.floor(${count} / 2) + 1`],
+            ["last", count],
+          ]
+        : [
+            ["first", "0"],
+            ["middle", `math.floor(${count} / 2)`],
+            ["last", `${count} - 1`],
+          ];
+    const past = base === 1 ? `${count} + 1` : count;
     for (const [name, i] of positions) {
-      const beyond = name === "last" ? ` ${context.beyond(count, at)}` : "";
+      const beyond = name === "last" ? ` ${context.beyond(past, count, at)}` : "";
       calls.push({
         name: fqn,
         variant: `${variant}-${name}`,
         kind,
-        call: `{ const i = ${i}; ${context.reaches("i", at)}${beyond} }`,
+        call: `{ const i = ${i}; ${context.reaches("i", at, base)}${beyond} }`,
         index: key,
       });
     }

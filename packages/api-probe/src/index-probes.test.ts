@@ -87,6 +87,30 @@ describe("indexProbeCalls", () => {
     ).toBe(true);
   });
 
+  test("each position is bound in the slot's native base", () => {
+    const bound = (key: string) =>
+      ["first", "middle", "last"].map((position) => {
+        const call = calls.find((c) => c.index === key && c.variant.endsWith(`-${position}`));
+        return /^\{ const i = (.+?); /.exec(call?.call ?? "")?.[1];
+      });
+    expect(bound("b2d.fixture.get_type:param:fixture_index")).toEqual([
+      "1",
+      "math.floor(3 / 2) + 1",
+      "3",
+    ]);
+    expect(bound("gui.get_index:return:index")).toEqual(["0", "math.floor(3 / 2)", "3 - 1"]);
+  });
+
+  test("a witnessed index argument is the first position in the slot's native base", () => {
+    const positive = (name: string) =>
+      passes
+        .flatMap((pass) => pass.calls)
+        .find((c) => c.name === name && c.index === undefined && c.negative === undefined)?.call;
+    expect(positive("b2d.fixture.get_density")).toEndWith(", 1)");
+    expect(positive("tilemap.get_tile")).toEndWith(", 1, 1)");
+    expect(positive("crash.set_user_field")).toStartWith("crash.set_user_field(0,");
+  });
+
   test("a probed-class slot with neither a context nor a reason is an error", () => {
     const table = new Map([
       ["tilemap.get_tile:param:z", { class: "native-1" as const, evidence: "" }],
