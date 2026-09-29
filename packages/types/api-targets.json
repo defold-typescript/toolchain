@@ -17,7 +17,11 @@
           "namespace": "b2d.body",
           "fixture": "b2d_body_doc.json",
           "outFile": "b2d_body.d.ts",
-          "skipFunctions": ["get_contact_list", "get_user_data", "set_user_data"]
+          "skipFunctions": ["get_contact_list", "get_user_data", "set_user_data"],
+          "skipOverloads": [
+            { "name": "create_fixture", "param": "shape", "type": "b2Shape" },
+            { "name": "set_mass_data", "param": "data", "type": "b2MassData" }
+          ]
         },
         {
           "namespace": "b2d.chain",
@@ -212,7 +216,15 @@
           "namespace": "vmath",
           "fixture": "vmath_doc.json",
           "outFile": "vmath.d.ts",
-          "skipFunctions": ["clamp", "euler_to_quat", "lerp", "slerp", "mul_per_elem", "normalize"]
+          "skipFunctions": [
+            "clamp",
+            "euler_to_quat",
+            "lerp",
+            "slerp",
+            "mul_per_elem",
+            "normalize",
+            "vector"
+          ]
         },
         {
           "namespace": "window",
@@ -349,7 +361,11 @@
           "namespace": "b2d.body",
           "fixture": "b2d_body_doc.json",
           "outFile": "b2d_body.d.ts",
-          "skipFunctions": ["get_contact_list", "get_user_data", "set_user_data"]
+          "skipFunctions": ["get_contact_list", "get_user_data", "set_user_data"],
+          "skipOverloads": [
+            { "name": "create_fixture", "param": "shape", "type": "b2Shape" },
+            { "name": "set_mass_data", "param": "data", "type": "b2MassData" }
+          ]
         },
         {
           "namespace": "b2d.chain",
@@ -544,7 +560,15 @@
           "namespace": "vmath",
           "fixture": "vmath_doc.json",
           "outFile": "vmath.d.ts",
-          "skipFunctions": ["clamp", "euler_to_quat", "lerp", "slerp", "mul_per_elem", "normalize"]
+          "skipFunctions": [
+            "clamp",
+            "euler_to_quat",
+            "lerp",
+            "slerp",
+            "mul_per_elem",
+            "normalize",
+            "vector"
+          ]
         },
         {
           "namespace": "window",
@@ -834,7 +858,15 @@
           "namespace": "vmath",
           "fixture": "vmath_doc.json",
           "outFile": "vmath.d.ts",
-          "skipFunctions": ["clamp", "euler_to_quat", "lerp", "slerp", "mul_per_elem", "normalize"]
+          "skipFunctions": [
+            "clamp",
+            "euler_to_quat",
+            "lerp",
+            "slerp",
+            "mul_per_elem",
+            "normalize",
+            "vector"
+          ]
         },
         {
           "namespace": "window",

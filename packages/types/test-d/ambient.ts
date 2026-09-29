@@ -114,7 +114,7 @@ const _badCf: string = collectionfactory.create(
 );
 void _badCf;
 
-const _cpRes: Hash[] = collectionproxy.get_resources(msg.url());
+const _cpRes: string[] = collectionproxy.get_resources(msg.url());
 collectionproxy.set_collection(msg.url(), "/main.collectionc");
 collectionproxy.set_collection(msg.url(), undefined);
 collectionproxy.get_resources("#proxy");

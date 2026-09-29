@@ -199,6 +199,52 @@ describe("manifest member skips", () => {
   });
 });
 
+describe("manifest overload skips", () => {
+  const overload = (name: string, param: string, type: string) => ({
+    type: "FUNCTION",
+    name,
+    brief: "",
+    description: "",
+    parameters: [
+      { name: "body", doc: "", types: ["b2Body"] },
+      { name: param, doc: "", types: [type] },
+    ],
+    returnvalues: [],
+  });
+  const doc = {
+    info: { namespace: "demo", brief: "d", description: "d" },
+    elements: [
+      overload("demo.attach", "definition", "table"),
+      overload("demo.attach", "shape", "b2Shape"),
+      overload("demo.other", "shape", "b2Shape"),
+    ],
+  };
+
+  test("a rule drops only the overload whose named param has that upstream type", () => {
+    const { contents, dropped } = generateModuleDeclaration({
+      namespace: "demo",
+      outFile: "demo.d.ts",
+      doc,
+      skipOverloads: [{ name: "attach", param: "shape", type: "b2Shape" }],
+    });
+    expect(dropped).toEqual([]);
+    expect(contents).toMatch(/function attach\(body: Opaque<"b2Body">, definition: /);
+    expect(contents).not.toMatch(/function attach\(body: Opaque<"b2Body">, shape: /);
+    expect(contents).toMatch(/function other\(body: Opaque<"b2Body">, shape: /);
+  });
+
+  test("a rule matching no overload throws naming it", () => {
+    expect(() =>
+      generateModuleDeclaration({
+        namespace: "demo",
+        outFile: "demo.d.ts",
+        doc,
+        skipOverloads: [{ name: "attach", param: "shape", type: "b2MassData" }],
+      }),
+    ).toThrow(/demo\.attach.*shape.*b2MassData/);
+  });
+});
+
 describe("editor namespace emit", () => {
   const editorEntry = () => {
     const entry = EDITOR_MODULE_MANIFEST.find((e) => e.namespace === "editor");
