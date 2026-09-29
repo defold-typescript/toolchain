@@ -65,8 +65,10 @@ export {
   lookupExampleSegments,
   lookupExampleTranslations,
   lookupTranslation,
+  proseLuaFences,
   type Translation,
   type TranslationStore,
+  translateProseFences,
 } from "./example-store";
 export {
   type EngineIndexBaseRow,

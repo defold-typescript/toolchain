@@ -1,0 +1,20 @@
+{
+  "socket": [
+    {
+      "sourceHash": "9a9df9a03a561ccf",
+      "reason": "`require \"builtins.scripts.socket\"` loads a Defold builtin Lua module; the toolchain has no TypeScript form for it."
+    }
+  ],
+  "socket.dns.getaddrinfo": [
+    {
+      "sourceHash": "ae82321b2d2cd36e",
+      "reason": "Illustrates the Lua table the resolver returns; the declared return type already states it in TypeScript."
+    }
+  ],
+  "socket.dns.getnameinfo": [
+    {
+      "sourceHash": "35f587585fa1ae99",
+      "reason": "Illustrates the Lua table the resolver returns; the declared return type already states it in TypeScript."
+    }
+  ]
+}

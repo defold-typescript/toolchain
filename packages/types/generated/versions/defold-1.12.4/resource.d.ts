@@ -366,10 +366,10 @@ declare global {
      *
      * You can test if the device supports these values by checking if a specific enum is nil or not:
      *
-     * ```lua
-     * if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
-     *     -- it is safe to use this format
-     * end
+     * ```ts
+     * if (graphics.TEXTURE_FORMAT_RGBA16F !== undefined) {
+     *   // it is safe to use this format
+     * }
      * ```
      *
      * `flags`
@@ -391,10 +391,10 @@ declare global {
      * @param buffer - optional buffer of precreated pixel data
      * @returns The path to the resource.
      * 3D Textures are currently only supported on OpenGL and Vulkan adapters. To check if your device supports 3D textures, use:
-     * ```lua
-     * if graphics.TEXTURE_TYPE_3D ~= nil then
-     * -- Device and graphics adapter support 3D textures
-     * end
+     * ```ts
+     * if (graphics.TEXTURE_TYPE_3D !== undefined) {
+     *   // Device and graphics adapter support 3D textures
+     * }
      * ```
      * @example
      * How to create an 128x128 RGBA texture resource and assign it to a model
@@ -545,10 +545,10 @@ declare global {
      *
      * You can test if the device supports these values by checking if a specific enum is nil or not:
      *
-     * ```lua
-     * if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
-     *     -- it is safe to use this format
-     * end
+     * ```ts
+     * if (graphics.TEXTURE_FORMAT_RGBA16F !== undefined) {
+     *   // it is safe to use this format
+     * }
      * ```
      *
      * `flags`
@@ -1240,10 +1240,10 @@ declare global {
      * - `graphics.TEXTURE_FORMAT_RG32F`
      * You can test if the device supports these values by checking if a specific enum is nil or not:
      *
-     * ```lua
-     * if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
-     *     -- it is safe to use this format
-     * end
+     * ```ts
+     * if (graphics.TEXTURE_FORMAT_RGBA16F !== undefined) {
+     *   // it is safe to use this format
+     * }
      * ```
      *
      * `x`
@@ -1266,10 +1266,10 @@ declare global {
      * @param buffer - The buffer of precreated pixel data
      * To update a cube map texture you need to pass in six times the amount of data via the buffer, since a cube map has six sides!
      * 3D Textures are currently only supported on OpenGL and Vulkan adapters. To check if your device supports 3D textures, use:
-     * ```lua
-     * if graphics.TEXTURE_TYPE_3D ~= nil then
-     * -- Device and graphics adapter support 3D textures
-     * end
+     * ```ts
+     * if (graphics.TEXTURE_TYPE_3D !== undefined) {
+     *   // Device and graphics adapter support 3D textures
+     * }
      * ```
      * @example
      * How to set all pixels of an atlas

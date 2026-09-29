@@ -23,6 +23,7 @@ import {
   symbolIdentityKey,
   symbolNameKey,
   type TranslationStore,
+  translateProseFences,
   varargElementType,
   withIndexBaseNotes,
 } from "@defold-typescript/types";
@@ -687,12 +688,18 @@ function projectParams(
   slots?: SlotTypes,
   kind: "param" | "return" = "param",
   elementName?: string,
+  translations: TranslationStore = {},
 ): ApiSymbolParam[] {
   return list.map((p, index) => {
     const emitted = slots?.[`${kind}:${index}:${p.name}`];
     const doc =
       elementName !== undefined
-        ? withIndexBaseNotes(elementName, kind, p.name, platformDocText(p.doc))
+        ? withIndexBaseNotes(
+            elementName,
+            kind,
+            p.name,
+            translateProseFences(platformDocText(p.doc), elementName, translations),
+          )
         : platformDocText(p.doc);
     return {
       name: p.name,
@@ -950,6 +957,15 @@ export function exampleMarkdownFor(
   return converted === "" ? undefined : converted;
 }
 
+/**
+ * A ref-doc prose fragment as page Markdown, with each ```lua fence swapped for
+ * the TypeScript pinned under `key` — the element's name, or the namespace for
+ * its description — exactly as the emitted hover shows it.
+ */
+export function proseDocText(html: string, key: string, translations: TranslationStore): string {
+  return translateProseFences(platformDocText(html), key, translations);
+}
+
 function tsFence(body: string): string {
   return `\`\`\`ts\n${body.replace(/\n+$/, "")}\n\`\`\``;
 }
@@ -979,7 +995,11 @@ export function apiModuleMarkdown(
   if (page.displayName && page.displayName !== m.namespace) {
     lines.push(`\`${m.namespace}\``, "");
   }
-  const intro = htmlToDocText(m.description || m.brief);
+  const intro = translateProseFences(
+    htmlToDocText(m.description || m.brief),
+    m.namespace,
+    translations,
+  );
   if (intro) lines.push(intro, "");
 
   if (m.functions.length > 0) {
@@ -1007,7 +1027,11 @@ export function apiModuleMarkdown(
       for (const signature of rowSignatures.get(identity) ?? []) {
         lines.push(`### \`${signature}\``, "");
       }
-      const doc = htmlToDocText(fn.description || fn.brief);
+      const doc = translateProseFences(
+        htmlToDocText(fn.description || fn.brief),
+        fn.name,
+        translations,
+      );
       if (doc) lines.push(doc, "");
       pushAvailabilityProse(
         lines,
@@ -1024,7 +1048,12 @@ export function apiModuleMarkdown(
       if (example) lines.push(example, "");
       for (const p of [...fn.parameters, ...fn.returnValues]) {
         const kind = fn.parameters.includes(p) ? "param" : "return";
-        const pdoc = withIndexBaseNotes(fn.name, kind, p.name, htmlToDocText(p.doc));
+        const pdoc = withIndexBaseNotes(
+          fn.name,
+          kind,
+          p.name,
+          translateProseFences(htmlToDocText(p.doc), fn.name, translations),
+        );
         if (!pdoc) continue;
         lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
       }
@@ -1209,12 +1238,14 @@ export function apiModuleSymbols(
     // per-overload description: each override row keeps its own `docs[i]` prose,
     // falling back to its paired ref-doc entry's description — or, unpaired, to
     // the shared entry-0 one — when absent/`null`.
-    const fixtureDoc = platformDocText(fn.description || fn.brief);
+    const fixtureDoc = proseDocText(fn.description || fn.brief, fn.name, translations);
     const overloadDoc = (i: number): string => {
       const authored = ov?.docs?.[i];
       if (authored != null) return platformDocText(authored);
       const entry = paired?.[i];
-      return entry ? platformDocText(entry.description || entry.brief) : fixtureDoc;
+      return entry
+        ? proseDocText(entry.description || entry.brief, fn.name, translations)
+        : fixtureDoc;
     };
     const primaryEntry = rowEntry(0);
     // A paired row carries its own entry's example. The first row to reach an
@@ -1238,10 +1269,24 @@ export function apiModuleSymbols(
       declarationIdentity: identity,
       docMarkdown: ov === null ? fixtureDoc : overloadDoc(0),
       parameters: primaryEntry
-        ? projectParams(primaryEntry.parameters, mapType, primarySlots, "param", fn.name)
+        ? projectParams(
+            primaryEntry.parameters,
+            mapType,
+            primarySlots,
+            "param",
+            fn.name,
+            translations,
+          )
         : [],
       returnValues: primaryEntry
-        ? projectParams(primaryEntry.returnValues, mapType, primarySlots, "return", fn.name)
+        ? projectParams(
+            primaryEntry.returnValues,
+            mapType,
+            primarySlots,
+            "return",
+            fn.name,
+            translations,
+          )
         : [],
     };
     const example = rowExample(0);
@@ -1291,6 +1336,7 @@ export function apiModuleSymbols(
                   undefined,
                   "param",
                   fn.name,
+                  translations,
                 ),
                 ...symbol.parameters.slice(1),
               ]
@@ -1314,10 +1360,10 @@ export function apiModuleSymbols(
           signature,
           docMarkdown: overloadDoc(k + 1),
           parameters: entry
-            ? projectParams(entry.parameters, mapType, undefined, "param", fn.name)
+            ? projectParams(entry.parameters, mapType, undefined, "param", fn.name, translations)
             : [],
           returnValues: entry
-            ? projectParams(entry.returnValues, mapType, undefined, "return", fn.name)
+            ? projectParams(entry.returnValues, mapType, undefined, "return", fn.name, translations)
             : [],
           ...(example ? { exampleMarkdown: example } : {}),
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),

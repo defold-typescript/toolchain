@@ -913,6 +913,24 @@
       "ts": "export default defineScript({\n  init(self) {\n    let gravity = physics.get_gravity();\n    // Inverse gravity!\n    gravity = vmath.vector3(-gravity.x, -gravity.y, -gravity.z);\n    physics.set_gravity(gravity);\n  },\n});"
     }
   ],
+  "physics.get_group": [
+    {
+      "sourceHash": "c8144370669b125f",
+      "ts": "function check_is_enemy(): boolean {\n  const group = physics.get_group(\"#collisionobject\");\n  return group === hash(\"enemy\");\n}"
+    }
+  ],
+  "physics.get_maskbit": [
+    {
+      "sourceHash": "8679181844a752a4",
+      "ts": "function is_invincible(): boolean {\n  // check if the collisionobject would collide with the \"bullet\" group\n  const invincible = physics.get_maskbit(\"#collisionobject\", \"bullet\");\n  return invincible;\n}"
+    }
+  ],
+  "physics.get_shape": [
+    {
+      "sourceHash": "82791cbb5f80661a",
+      "ts": "function get_shape_meta() {\n  const sphere = physics.get_shape(\"#collisionobject\", \"my_sphere_shape\");\n  // returns a table with sphere.diameter\n  return sphere;\n}"
+    }
+  ],
   "physics.raycast": [
     {
       "sourceHash": "3e0c534d741f0120",
@@ -941,10 +959,28 @@
       "ts": "export default defineScript({\n  init(self) {\n    // Set \"upside down\" gravity for this collection.\n    physics.set_gravity(vmath.vector3(0, 10.0, 0));\n  },\n});"
     }
   ],
+  "physics.set_group": [
+    {
+      "sourceHash": "c4125b51c18c0a63",
+      "ts": "function change_collision_group() {\n  physics.set_group(\"#collisionobject\", \"enemy\");\n}"
+    }
+  ],
   "physics.set_hflip": [
     {
       "sourceHash": "71a627e46d2e651e",
       "ts": "export default defineScript({\n  init() {\n    const fliph = true; // set on some condition\n    physics.set_hflip(\"#collisionobject\", fliph);\n    return { fliph };\n  },\n});"
+    }
+  ],
+  "physics.set_maskbit": [
+    {
+      "sourceHash": "a4b238ed0887509f",
+      "ts": "function make_invincible() {\n  // no longer collide with the \"bullet\" group\n  physics.set_maskbit(\"#collisionobject\", \"bullet\", false);\n}"
+    }
+  ],
+  "physics.set_shape": [
+    {
+      "sourceHash": "12a0293fcc2f7687",
+      "ts": "function set_shape_data() {\n  // set capsule shape data\n  physics.set_shape(\"#collisionobject\", \"my_capsule_shape\", {\n    type: physics.SHAPE_TYPE_CAPSULE,\n    diameter: 10,\n    height: 20,\n  });\n\n  // set sphere shape data\n  physics.set_shape(\"#collisionobject\", \"my_sphere_shape\", {\n    type: physics.SHAPE_TYPE_SPHERE,\n    diameter: 10,\n  });\n\n  // set box shape data\n  physics.set_shape(\"#collisionobject\", \"my_box_shape\", {\n    type: physics.SHAPE_TYPE_BOX,\n    dimensions: vmath.vector3(10, 10, 5),\n  });\n}"
     }
   ],
   "physics.set_vflip": [
@@ -957,6 +993,12 @@
     {
       "sourceHash": "a14ee2d03aad6964",
       "ts": "physics.update_mass(\"#collisionobject\", 14);"
+    }
+  ],
+  "physics.wakeup": [
+    {
+      "sourceHash": "8bda507f7a5248c1",
+      "ts": "export default defineScript({\n  on_input(self, action_id, action) {\n    if (action_id === hash(\"test\") && action.pressed) {\n      physics.wakeup(\"#collisionobject\");\n    }\n  },\n});"
     }
   ],
   "profiler.dump_frame": [
@@ -1159,6 +1201,10 @@
     {
       "sourceHash": "e39f13af5d65d01d",
       "ts": "// How to create a render target with multiple outputs:\nexport default defineRenderScript({\n  init() {\n    // render target buffer parameters\n    const color_params_rgba = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const color_params_float = {\n      format: graphics.TEXTURE_FORMAT_RG32F,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n\n    // Create a render target with three color attachments\n    // Note: No depth buffer is attached here\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR1_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR2_BIT]: color_params_float,\n      }),\n      my_pred: render.predicate([hash(\"my_tag\")]),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.set_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
+    },
+    {
+      "sourceHash": "582c319c90bcf7ad",
+      "ts": "export default defineRenderScript({\n  init() {\n    if (graphics.BUFFER_TYPE_COLOR1_BIT === undefined) {\n      // this devices does not support multiple color attachments\n    }\n  },\n});"
     }
   ],
   "render.set_blend_equation_separate": [
@@ -1337,6 +1383,14 @@
     {
       "sourceHash": "54a85cf9f38f2521",
       "ts": "// How to create a 32x32x32 floating point 3D texture that can be used to generate volumetric data in a compute shader\nexport default defineScript({\n  init() {\n    const t_volume = resource.create_texture(\"/my_backing_texture.texturec\", {\n      type: graphics.TEXTURE_TYPE_IMAGE_3D,\n      width: 32,\n      height: 32,\n      depth: 32,\n      format: graphics.TEXTURE_FORMAT_RGBA32F,\n      flags: graphics.TEXTURE_USAGE_FLAG_STORAGE + graphics.TEXTURE_USAGE_FLAG_SAMPLE,\n    });\n\n    // pass the backing texture to the render script\n    msg.post(\"@render:\", \"add_textures\", [t_volume]);\n  },\n});"
+    },
+    {
+      "sourceHash": "805bde1e64372a97",
+      "ts": "if (graphics.TEXTURE_FORMAT_RGBA16F !== undefined) {\n  // it is safe to use this format\n}"
+    },
+    {
+      "sourceHash": "51b59b3d6e594c38",
+      "ts": "if (graphics.TEXTURE_TYPE_3D !== undefined) {\n  // Device and graphics adapter support 3D textures\n}"
     }
   ],
   "resource.create_texture_async": [
@@ -1348,6 +1402,14 @@
       "sourceHash": "921632059c7abb58",
       "ts": "// Create a texture resource asyncronously without handling its completion\nexport default defineScript({\n  init() {\n    // Create a texture resource async\n    const tparams = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGBA,\n    };\n\n    // Create a new buffer with 4 components\n    const tbuffer = buffer.create(tparams.width * tparams.height, [{ name: hash(\"rgba\"), type: buffer.VALUE_TYPE_UINT8, count: 4 }]);\n    const tstream = buffer.get_stream(tbuffer, hash(\"rgba\"));\n\n    // Fill the buffer stream with some float values\n    for (let y = 0; y < tparams.width; y++) {\n      for (let x = 0; x < tparams.height; x++) {\n        const index = y * 128 * 4 + x * 4;\n        tstream[index + 0] = 255;\n        tstream[index + 1] = 0;\n        tstream[index + 2] = 255;\n        tstream[index + 3] = 255;\n      }\n    }\n    // create the texture\n    // the binding requires a callback function, so pass one that does nothing\n    const [tpath, request_id] = resource.create_texture_async(\"/my_texture.texturec\", tparams, tbuffer, () => {});\n    // at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture\n    // that will be removed once the new texture has been updated\n    go.set(\"#model\", \"texture0\", tpath);\n  },\n});",
       "prose": "Create a texture resource asynchronously with a callback that does nothing"
+    },
+    {
+      "sourceHash": "805bde1e64372a97",
+      "ts": "if (graphics.TEXTURE_FORMAT_RGBA16F !== undefined) {\n  // it is safe to use this format\n}"
+    },
+    {
+      "sourceHash": "51b59b3d6e594c38",
+      "ts": "if (graphics.TEXTURE_TYPE_3D !== undefined) {\n  // Device and graphics adapter support 3D textures\n}"
     }
   ],
   "resource.font": [
@@ -1460,6 +1522,14 @@
     {
       "sourceHash": "34dce6f8362c0e92",
       "ts": "// Update an existing 3D texture from a buffer\nexport default defineScript({\n  init() {\n    // create a buffer that can hold the data of a 8x8x8 texture\n    const tbuffer = buffer.create(8 * 8 * 8, [{ name: hash(\"rgba\"), type: buffer.VALUE_TYPE_FLOAT32, count: 4 }]);\n    const tstream = buffer.get_stream(tbuffer, hash(\"rgba\"));\n\n    // populate the buffer with some data\n    let index = 0;\n    for (let z = 0; z < 8; z++) {\n      for (let y = 0; y < 8; y++) {\n        for (let x = 0; x < 8; x++) {\n          tstream[index + 0] = x;\n          tstream[index + 1] = y;\n          tstream[index + 2] = z;\n          tstream[index + 3] = 1.0;\n          index = index + 4;\n        }\n      }\n    }\n\n    const t_args = {\n      type: graphics.TEXTURE_TYPE_IMAGE_3D,\n      width: 8,\n      height: 8,\n      depth: 8,\n      format: graphics.TEXTURE_FORMAT_RGBA32F,\n    };\n\n    // This expects that the texture resource \"/my_3d_texture.texturec\" already exists\n    // and is a 3D texture resource. To create a dynamic 3D texture resource\n    // use the \"resource.create_texture\" function.\n    resource.set_texture(\"/my_3d_texture.texturec\", t_args, tbuffer);\n  },\n});"
+    },
+    {
+      "sourceHash": "805bde1e64372a97",
+      "ts": "if (graphics.TEXTURE_FORMAT_RGBA16F !== undefined) {\n  // it is safe to use this format\n}"
+    },
+    {
+      "sourceHash": "51b59b3d6e594c38",
+      "ts": "if (graphics.TEXTURE_TYPE_3D !== undefined) {\n  // Device and graphics adapter support 3D textures\n}"
     }
   ],
   "resource.texture": [

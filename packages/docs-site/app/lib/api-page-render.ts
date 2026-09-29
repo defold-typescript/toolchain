@@ -22,6 +22,7 @@ import {
   outerCallSlots,
   overloadFormCodes,
   overloadHeading,
+  proseDocText,
   splitCallForm,
   windowedBadgeCategory,
 } from "./api-surface";
@@ -31,7 +32,6 @@ import { API_TYPE_CODE_CLOSE, API_TYPE_CODE_OPEN } from "./api-type-links";
 import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
 import type { LibraryListing } from "./nav";
 import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
-import { platformDocText } from "./platform-icons";
 import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
 import { symbolLinkifier } from "./symbol-linkify";
@@ -535,7 +535,7 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
 // JSDoc); it goes straight to the shared `markdown-it` pipeline so fenced
 // examples and bullet lists render verbatim. ref-doc descriptions are HTML and
 // still flow through `platformDocText` (`htmlToDocText` keeping platform icon
-// markers) first.
+// markers) first, with each prose Lua fence swapped for its pinned translation.
 export function apiPageMarkdown(
   page: Pick<
     ApiPage,
@@ -661,7 +661,8 @@ export function apiPageMarkdown(
     lines.push(titleBadges, "");
   }
   const raw = m.description || m.brief;
-  const intro = page.category === "global-type" ? raw : platformDocText(raw);
+  const intro =
+    page.category === "global-type" ? raw : proseDocText(raw, m.namespace, page.translations);
   if (intro) lines.push(linkify(intro), "");
   if (page.category === "library" && page.libraryMeta) {
     lines.push(

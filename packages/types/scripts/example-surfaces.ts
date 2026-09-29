@@ -17,7 +17,7 @@ import { basename, dirname, resolve } from "node:path";
 import ts from "typescript";
 import { parseDefoldApiDoc } from "../src/api-doc";
 import { htmlToCodeText, splitExampleSources } from "../src/doc-comment";
-import { hashExampleSource, type TranslationStore } from "../src/example-store";
+import { hashExampleSource, proseLuaFences, type TranslationStore } from "../src/example-store";
 import { buildVersionedSurfaceFiles, renderMaterializedKindIndex } from "./materialize-version";
 import {
   type ApiTarget,
@@ -333,7 +333,16 @@ export function translationOwnership(
       const key = moduleKey(module.namespace, lane);
       const carriers = targetSurfaces.filter((surface) => surface.modules.has(key));
       if (carriers.length === 0) continue;
-      for (const fn of parseDefoldApiDoc(module.doc).functions) {
+      const own = (identity: string) => {
+        if (!stored.has(identity)) return;
+        const existing = owners.get(identity) ?? [];
+        for (const surface of carriers) {
+          if (!existing.includes(surface.id)) existing.push(surface.id);
+        }
+        owners.set(identity, existing);
+      };
+      const parsed = parseDefoldApiDoc(module.doc);
+      for (const fn of parsed.functions) {
         const lua = htmlToCodeText(fn.examples ?? "");
         if (lua === "") continue;
         // Both keyings, because both are live: an element documented as several
@@ -347,15 +356,11 @@ export function translationOwnership(
             ? segments.map((segment) => hashExampleSource(segment.code))
             : []),
         ];
-        for (const hash of hashes) {
-          const identity = exampleIdentity(fn.name, hash);
-          if (!stored.has(identity)) continue;
-          const existing = owners.get(identity) ?? [];
-          for (const surface of carriers) {
-            if (!existing.includes(surface.id)) existing.push(surface.id);
-          }
-          owners.set(identity, existing);
-        }
+        for (const hash of hashes) own(exampleIdentity(fn.name, hash));
+      }
+      // A prose Lua fence's translation ships in the same module's hovers.
+      for (const { key: fenceKey, lua } of proseLuaFences(parsed)) {
+        own(exampleIdentity(fenceKey, hashExampleSource(lua)));
       }
     }
   }
