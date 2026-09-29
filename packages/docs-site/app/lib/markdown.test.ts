@@ -657,6 +657,47 @@ describe("renderMarkdown fence language badges", () => {
   });
 });
 
+describe("renderMarkdown translation and source tabs", () => {
+  test("a ts fence followed by a `lua original` fence renders one tab group, TypeScript selected", async () => {
+    const html = await renderMarkdown(
+      "```ts\nlet a = 1;\n```\n\n```lua original\nlocal a = 1\n```\n",
+    );
+    const root = parseHtml(html);
+    const groups = root.querySelectorAll(".code-tabs");
+    expect(groups).toHaveLength(1);
+    const group = groups[0] as MiniElement;
+    const tablist = group.querySelectorAll('[role="tablist"]');
+    expect(tablist).toHaveLength(1);
+    const tabs = tablist[0]?.querySelectorAll("button.code-tab") ?? [];
+    expect(tabs.map((tab) => languageBadge(tab.children[0]).label)).toEqual(["TypeScript", "Lua"]);
+    expect(tabs.map((tab) => tab.getAttribute("aria-selected"))).toEqual(["true", "false"]);
+    const panels = group.querySelectorAll("figure.code-tabs-panel");
+    expect(panels).toHaveLength(2);
+    expect(panels[0]?.getAttribute("hidden")).toBeNull();
+    expect(panels[1]?.getAttribute("hidden")).not.toBeNull();
+    const luaPre = html.match(/<figure[^>]*hidden[^>]*>[\s\S]*?(<pre[\s\S]*?<\/pre>)/)?.[1] ?? "";
+    expect(luaPre.replace(/<[^>]+>/g, "")).toBe("local a = 1");
+    expect(group.querySelector("figure.code-block--badged")).toBeNull();
+    expect(root.querySelector("figure.code-block--badged")).toBeNull();
+  });
+
+  test("a lone lua fence stays a single badged block", async () => {
+    const root = parseHtml(await renderMarkdown("```lua\nlocal a = 1\n```\n"));
+    expect(root.querySelectorAll("figure.code-block--badged")).toHaveLength(1);
+    expect(root.querySelector(".code-tabs")).toBeNull();
+  });
+
+  test("a `lua original` fence after prose, not a fence, stays a plain badged Lua block", async () => {
+    const root = parseHtml(
+      await renderMarkdown("Some prose.\n\n```lua original\nlocal a = 1\n```\n"),
+    );
+    const figures = root.querySelectorAll("figure.code-block--badged");
+    expect(figures).toHaveLength(1);
+    expect(languageBadge(figures[0]?.children[0]).label).toBe("Lua");
+    expect(root.querySelector(".code-tabs")).toBeNull();
+  });
+});
+
 describe("renderMarkdown platform markers", () => {
   test("a known marker in prose becomes a tooltip trigger around an icon-only outline badge", async () => {
     const html = await renderMarkdown("Only [icon:ios] on phones.\n");

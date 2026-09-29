@@ -2764,9 +2764,7 @@ describe("exampleMarkdownFor", () => {
 
   test("a matched FQN and hash render the authored TypeScript as a ```ts fence", () => {
     const md = exampleMarkdownFor(fn, { "demo.run": [{ sourceHash, ts: "demo.run(); // ts" }] });
-    expect(md).toContain("```ts");
-    expect(md).toContain("demo.run(); // ts");
-    expect(md).not.toContain("```lua");
+    expect(md).toBe("```ts\ndemo.run(); // ts\n```\n\n```lua original\ndemo.run()\n```");
   });
 
   test("an FQN present with a mismatched hash falls back to the Lua fence", () => {
@@ -2809,10 +2807,15 @@ describe("exampleMarkdownFor", () => {
         { sourceHash: segmentHashes[1] ?? "", ts: "demo.stop(); // second" },
       ],
     });
-    expect(md?.match(/```ts/g)).toHaveLength(2);
-    expect(md).toContain("demo.run(); // first");
-    expect(md).toContain("demo.stop(); // second");
-    expect(md).not.toContain("```lua");
+    expect(md).toBe(
+      [
+        "```ts\ndemo.run(); // first\n```",
+        "```lua original\ndemo.run()\n```",
+        "Then:",
+        "```ts\ndemo.stop(); // second\n```",
+        "```lua original\ndemo.stop()\n```",
+      ].join("\n\n"),
+    );
   });
 
   const wholeBlobFallback = "```lua\ndemo.run()\n```\n\nThen:\n\n```lua\ndemo.stop()\n```";
@@ -2842,7 +2845,7 @@ describe("exampleMarkdownFor", () => {
         ],
       },
     );
-    expect(md).toBe("```ts\ndemo.run();\n```");
+    expect(md).toBe("```ts\ndemo.run();\n```\n\n```lua original\ndemo.run()\n```");
   });
 
   test("an element whose trailing segment alone resolves falls back to the same complete rendering", () => {
@@ -2863,7 +2866,13 @@ describe("exampleMarkdownFor", () => {
       ],
     });
     expect(md).toBe(
-      "```ts\ndemo.run(); // first\n```\n\nThen:\n\n```ts\ndemo.stop(); // second\n```",
+      [
+        "```ts\ndemo.run(); // first\n```",
+        "```lua original\ndemo.run()\n```",
+        "Then:",
+        "```ts\ndemo.stop(); // second\n```",
+        "```lua original\ndemo.stop()\n```",
+      ].join("\n\n"),
     );
   });
 
@@ -2875,7 +2884,13 @@ describe("exampleMarkdownFor", () => {
       ],
     });
     expect(md).toBe(
-      "```ts\ndemo.run(); // first\n```\n\nFinally:\n\n```ts\ndemo.stop(); // second\n```",
+      [
+        "```ts\ndemo.run(); // first\n```",
+        "```lua original\ndemo.run()\n```",
+        "Finally:",
+        "```ts\ndemo.stop(); // second\n```",
+        "```lua original\ndemo.stop()\n```",
+      ].join("\n\n"),
     );
   });
 });
@@ -2917,7 +2932,7 @@ describe("loadApiSurface translations and /api rendering", () => {
     expect(fn).toBeDefined();
     const md = fn ? exampleMarkdownFor(fn, goPage?.translations) : undefined;
     expect(md).toContain("```ts");
-    expect(md).not.toContain("```lua");
+    expect(md).not.toMatch(/^```lua$/m);
     expect(md).not.toContain("<div");
     expect(md).not.toContain("<span");
     expect(md).not.toContain("codehilite");
@@ -2928,7 +2943,7 @@ describe("loadApiSurface translations and /api rendering", () => {
     expect(fn).toBeDefined();
     const md = fn ? exampleMarkdownFor(fn, cameraPage?.translations) : undefined;
     expect(md).toContain("```ts");
-    expect(md).not.toContain("```lua");
+    expect(md).not.toMatch(/^```lua$/m);
     expect(md).not.toContain("<span");
   });
 
@@ -2943,9 +2958,10 @@ describe("loadApiSurface translations and /api rendering", () => {
     ).find((s) => s.kind === "function" && s.name === "physics.get_maskbit");
     const doc = symbol?.returnValues[0]?.doc ?? "";
     expect(doc).toContain("```ts");
-    expect(doc).not.toContain("```lua");
+    expect(doc).not.toMatch(/^```lua$/m);
     const flat = apiModuleMarkdown(physicsPage, physicsPage.translations);
-    expect(flat).not.toContain("local function is_invincible()");
+    expect(flat).toContain("```lua original\nlocal function is_invincible()");
+    expect(flat).not.toContain("```lua\nlocal function is_invincible()");
   });
 
   test("apiModuleMarkdown and apiModuleSymbols are identical with an absent vs empty store", () => {
@@ -4014,7 +4030,7 @@ describe("canonical /api pages render every resolvable authored translation", ()
   // A per-segment rendering opens with the prose introducing its first example,
   // so the fence languages are the invariant, not the first line.
   const fenceLangs = (md: string | undefined): string[] =>
-    [...(md ?? "").matchAll(/^```(\w+)/gm)].map((m) => m[1] ?? "");
+    [...(md ?? "").matchAll(/^```(\w+)$/gm)].map((m) => m[1] ?? "");
 
   test("a function whose stored hash resolves renders TypeScript throughout", () => {
     const resolvable = rows.filter((row) => row.resolvable);

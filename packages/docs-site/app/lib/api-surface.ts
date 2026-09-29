@@ -16,6 +16,7 @@ import {
   normalizedFunctionSignature,
   type SignatureStore,
   type SlotTypes,
+  segmentExampleRegions,
   splitExampleSources,
   symbolIdentityKey,
   symbolNameKey,
@@ -729,7 +730,7 @@ function projectParams(
             elementName,
             kind,
             p.name,
-            translateProseFences(platformDocText(p.doc), elementName, translations),
+            translateProseFences(platformDocText(p.doc), elementName, translations, KEEP_SOURCE),
           )
         : platformDocText(p.doc);
     return {
@@ -968,16 +969,29 @@ function propertySignature(
 // each example resolves by its own segment hash, a single-example element's one
 // segment being the whole blob with no prose, and renders as ```ts only when
 // every segment has an authored body; any miss keeps the clean Lua fallback.
-// Returns `undefined` when the function carries no example at all.
+// Each ```ts fence is followed by its segment's source as a `<lang> original`
+// fence, the clean code the Lua fallback would show, which the page renders as
+// the second tab. Returns `undefined` when the function carries no example at all.
 export function exampleMarkdownFor(
   fn: ApiFunction,
   translations: TranslationStore = {},
 ): string | undefined {
   if (!fn.examples) return undefined;
-  const resolved = lookupExampleSegments(translations, fn.name, splitExampleSources(fn.examples));
+  const keyed = splitExampleSources(fn.examples);
+  const resolved = lookupExampleSegments(translations, fn.name, keyed);
   if (resolved !== null) {
+    // `splitExampleSources` returns the walk's own segments whenever there are
+    // several, so both lists line up with `resolved` index for index.
+    const walked = segmentExampleRegions(fn.examples).segments;
+    const sources = walked.length > 0 ? walked : keyed;
     return resolved
-      .map(({ ts: body, prose }) => (prose === "" ? tsFence(body) : `${prose}\n\n${tsFence(body)}`))
+      .map(({ ts: body, prose }, i) => {
+        const source = sources[i];
+        const fences = source
+          ? `${tsFence(body)}\n\n\`\`\`${source.lang} original\n${source.code}\n\`\`\``
+          : tsFence(body);
+        return prose === "" ? fences : `${prose}\n\n${fences}`;
+      })
       .join("\n\n");
   }
   const converted = examplesHtmlToMarkdown(fn.examples);
@@ -990,8 +1004,10 @@ export function exampleMarkdownFor(
  * its description — exactly as the emitted hover shows it.
  */
 export function proseDocText(html: string, key: string, translations: TranslationStore): string {
-  return translateProseFences(platformDocText(html), key, translations);
+  return translateProseFences(platformDocText(html), key, translations, KEEP_SOURCE);
 }
+
+const KEEP_SOURCE = { keepSource: true };
 
 function tsFence(body: string): string {
   return `\`\`\`ts\n${body.replace(/\n+$/, "")}\n\`\`\``;
@@ -1027,6 +1043,7 @@ export function apiModuleMarkdown(
     htmlToDocText(m.description || m.brief),
     m.namespace,
     translations,
+    KEEP_SOURCE,
   );
   if (intro) lines.push(intro, "");
 
@@ -1059,6 +1076,7 @@ export function apiModuleMarkdown(
         htmlToDocText(fn.description || fn.brief),
         fn.name,
         translations,
+        KEEP_SOURCE,
       );
       if (doc) lines.push(doc, "");
       pushAvailabilityProse(
@@ -1081,7 +1099,7 @@ export function apiModuleMarkdown(
           fn.name,
           kind,
           p.name,
-          translateProseFences(htmlToDocText(p.doc), fn.name, translations),
+          translateProseFences(htmlToDocText(p.doc), fn.name, translations, KEEP_SOURCE),
         );
         if (!pdoc) continue;
         lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
