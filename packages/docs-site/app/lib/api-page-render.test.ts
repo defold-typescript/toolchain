@@ -341,8 +341,8 @@ describe("apiPageMarkdown", () => {
     page.translations = { "demo.check": [{ sourceHash: hashExampleSource(fence.lua), ts }] };
     const md = apiPageMarkdown(page, apiLinkify([page]));
     const block = blockOf(md, groupFor(page, "demo.check")[0]?.signature ?? "");
-    expect(block).toContain(`\`\`\`ts\n${ts}\n\`\`\``);
-    expect(block).not.toContain("demo.supported() == nil");
+    expect(block).toContain(`\`\`\`ts\n${ts}\n\`\`\`\n\n\`\`\`lua original\n${fence.lua}\n\`\`\``);
+    expect(block).not.toMatch(/^```lua$/m);
   });
 
   test("renders the authored math.random signature from the store, not the thin ref-doc one", () => {

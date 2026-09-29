@@ -137,19 +137,32 @@ function fenceBody(lines: readonly string[], fence: DocFence): string {
  * Swap each ```lua fence in `htmlToDocText` output for the TypeScript pinned
  * under `key` to its body's hash, leaving every other byte alone. A fence with
  * no matching entry stays Lua, the same fallback the `@example` ladder keeps.
+ * With `keepSource`, each swapped fence is followed by a blank line and its
+ * untouched body as a ```lua original fence, the pairing the API reference
+ * renders as TypeScript and Lua tabs.
  */
 export function translateProseFences(
   markdown: string,
   key: string,
   store: TranslationStore,
+  options: { keepSource?: boolean } = {},
 ): string {
   if (!store[key]) return markdown;
   const lines = markdown.split("\n");
   const fences = luaDocFences(lines);
   for (const fence of fences.reverse()) {
-    const ts = lookupTranslation(store, key, hashExampleSource(fenceBody(lines, fence)));
+    const lua = fenceBody(lines, fence);
+    const ts = lookupTranslation(store, key, hashExampleSource(lua));
     if (ts === null) continue;
-    lines.splice(fence.open, fence.close - fence.open + 1, "```ts", ...ts.split("\n"), "```");
+    const source = options.keepSource ? ["", "```lua original", ...lua.split("\n"), "```"] : [];
+    lines.splice(
+      fence.open,
+      fence.close - fence.open + 1,
+      "```ts",
+      ...ts.split("\n"),
+      "```",
+      ...source,
+    );
   }
   return lines.join("\n");
 }
