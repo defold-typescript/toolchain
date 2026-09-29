@@ -2803,6 +2803,22 @@ describe("loadApiSurface translations and /api rendering", () => {
     expect(md).not.toContain("<span");
   });
 
+  test("physics.get_maskbit's return doc renders its prose sample as the pinned TypeScript", () => {
+    const physicsPage = pages.find((p) => p.namespace === "physics");
+    expect(physicsPage).toBeDefined();
+    if (!physicsPage) return;
+    const symbol = apiModuleSymbols(
+      physicsPage,
+      physicsPage.translations,
+      physicsPage.signatures,
+    ).find((s) => s.kind === "function" && s.name === "physics.get_maskbit");
+    const doc = symbol?.returnValues[0]?.doc ?? "";
+    expect(doc).toContain("```ts");
+    expect(doc).not.toContain("```lua");
+    const flat = apiModuleMarkdown(physicsPage, physicsPage.translations);
+    expect(flat).not.toContain("local function is_invincible()");
+  });
+
   test("apiModuleMarkdown and apiModuleSymbols are identical with an absent vs empty store", () => {
     expect(cameraPage).toBeDefined();
     if (!cameraPage) return;

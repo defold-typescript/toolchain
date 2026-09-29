@@ -14,15 +14,23 @@ import {
   htmlToDocText,
   renderDocComment,
   splitExampleSources,
+  summaryFor,
 } from "./doc-comment";
 import type { TranslationStore } from "./example-store";
-import { hashExampleSource, lookupExampleSegments, lookupTranslation } from "./example-store";
+import {
+  hashExampleSource,
+  lookupExampleSegments,
+  lookupTranslation,
+  translateProseFences,
+} from "./example-store";
 import {
   indexBaseNotes,
   OVERRIDE_RETURN_SLOT,
   withIndexBaseNotes,
 } from "./index-slot-classifications";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
+
+export { summaryFor };
 
 export interface EmitOptions {
   mapType?: (defoldType: string) => string;
@@ -3458,7 +3466,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   const decl = hasAliases ? "export " : "";
 
   const lines: string[] = [];
-  for (const docLine of namespaceDocLines(module)) lines.push(docLine);
+  for (const docLine of namespaceDocLines(module, translations)) lines.push(docLine);
   lines.push(`declare namespace ${module.namespace} {`);
 
   for (const t of typedefs) {
@@ -4177,10 +4185,15 @@ function functionDocLines(
 ): string[] {
   const params = fn.parameters.map((p, index) => ({
     name: emittedParamName(p, index),
-    doc: withIndexBaseNotes(fn.name, "param", p.name, htmlToDocText(p.doc)),
+    doc: withIndexBaseNotes(
+      fn.name,
+      "param",
+      p.name,
+      translateProseFences(htmlToDocText(p.doc), fn.name, translations),
+    ),
   }));
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
-  const notedReturns = multiReturnDoc(fn) ?? overrideReturnDoc(fn);
+  const notedReturns = multiReturnDoc(fn, translations) ?? overrideReturnDoc(fn);
   const lua = htmlToCodeText(fn.examples ?? "");
   // A blob carrying several examples documents them as several, but only when
   // every segment has an authored body: a partial resolve would drop the rest.
@@ -4206,7 +4219,11 @@ function functionDocLines(
           ? { examples: [{ text: lua, lang: "lua" }] }
           : {};
   const parts: DocCommentParts = {
-    summary: htmlToDocText(summaryFor(fn.brief, fn.description)),
+    summary: translateProseFences(
+      htmlToDocText(summaryFor(fn.brief, fn.description)),
+      fn.name,
+      translations,
+    ),
     params,
     ...(onlyReturn
       ? {
@@ -4214,7 +4231,7 @@ function functionDocLines(
             fn.name,
             "return",
             onlyReturn.name,
-            htmlToDocText(onlyReturn.doc),
+            translateProseFences(htmlToDocText(onlyReturn.doc), fn.name, translations),
           ),
         }
       : notedReturns !== undefined
@@ -4228,14 +4245,19 @@ function functionDocLines(
 // A multi-return function documents its tuple slot by slot, in tuple order, so
 // the hover can name each classified index's base. Every other multi-return
 // function keeps no `@returns`, leaving its emission byte-identical.
-function multiReturnDoc(fn: ApiFunction): string | undefined {
+function multiReturnDoc(fn: ApiFunction, translations: TranslationStore): string | undefined {
   if (fn.returnValues.length < 2) return undefined;
   const classified = fn.returnValues.some(
     (slot) => indexBaseNotes(fn.name, "return", slot.name).length > 0,
   );
   if (!classified) return undefined;
   const bullets = fn.returnValues.map((slot) => {
-    const doc = withIndexBaseNotes(fn.name, "return", slot.name, htmlToDocText(slot.doc));
+    const doc = withIndexBaseNotes(
+      fn.name,
+      "return",
+      slot.name,
+      translateProseFences(htmlToDocText(slot.doc), fn.name, translations),
+    );
     const [first = "", ...rest] = doc.split("\n");
     return [
       `- \`${slot.name}\` — ${first}`,
@@ -4261,24 +4283,17 @@ function summaryDocLines(brief: string, description: string, indent: string): st
   return indentDocLines({ summary: htmlToDocText(summaryFor(brief, description)) }, indent);
 }
 
-function namespaceDocLines(module: ApiModule): string[] {
+function namespaceDocLines(module: ApiModule, translations: TranslationStore): string[] {
   const official = summaryFor(module.brief, module.description).trim();
   const summary =
     official.length > 0
-      ? htmlToDocText(official)
+      ? translateProseFences(htmlToDocText(official), module.namespace, translations)
       : `(synthesized)\nDefold \`${module.namespace}\` API namespace.`;
   return indentDocLines({ summary }, "");
 }
 
 function indentDocLines(parts: DocCommentParts, indent: string): string[] {
   return renderDocComment(parts).map((line) => `${indent}${line}`);
-}
-
-// Prefer the full `description`; fall back to the one-line `brief` when prose is
-// absent. Shared by every documented member kind so the summary source is
-// consistent across functions, constants, variables, and properties.
-export function summaryFor(brief: string, description: string): string {
-  return description.trim() !== "" ? description : brief;
 }
 
 export function isMarkedOptional(p: ApiParameter): boolean {
