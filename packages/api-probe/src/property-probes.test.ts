@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { PROPERTY_DENYLIST } from "./probe-denylist";
-import { propertyProbes } from "./property-probes";
+import { callsFor, propertyProbes } from "./property-probes";
 import { generateProbes, PROBE_FILES } from "./witness";
 
 const generation = propertyProbes();
@@ -34,7 +34,8 @@ describe("property probes", () => {
     expect(byKey.get("sprite.texture0")?.kinds).toEqual(["hash"]);
     expect(byKey.get("mesh.vertices")?.target).toBe("MESH");
     expect(byKey.get("camera.projection")?.kinds).toEqual(["matrix4"]);
-    expect(byKey.get("label.scale")?.kinds).toEqual(["number", "vector3"]);
+    expect(byKey.get("go.scale")?.kinds).toEqual(["number", "vector3"]);
+    expect(byKey.get("label.scale")?.kinds).toEqual(["vector3"]);
     expect(byKey.get("go.position")?.target).toBe("GO");
     expect(byKey.get("physics.mass")?.target).toBe("COLLISION");
   });
@@ -68,6 +69,23 @@ describe("property probes", () => {
     expect(keyed?.call).toBe(
       'go.set<gui.properties>()(GUI, "textures", go.get<gui.properties>()(GUI, "textures", { key: "probe" }), { key: "probe" })',
     );
+  });
+
+  test("a writable union member is also written once with each kind it declares", () => {
+    const calls = generation.calls.filter((call) => call.name === "go.properties.scale");
+    expect(calls.map((call) => [call.variant, call.call])).toEqual([
+      ["get", 'go.get<go.properties>()(GO, "scale")'],
+      ["set", 'go.set<go.properties>()(GO, "scale", go.get<go.properties>()(GO, "scale"))'],
+      ["set-number", 'go.set<go.properties>()(GO, "scale", 1)'],
+      ["set-vector3", 'go.set<go.properties>()(GO, "scale", vmath.vector3(1, 1, 1))'],
+    ]);
+  });
+
+  test("a readonly union member gets no per-kind writes", () => {
+    const scale = byKey.get("go.scale");
+    if (scale === undefined) throw new Error("go.scale is not probed");
+    const variants = callsFor({ ...scale, readonly: true }).map((call) => call.variant);
+    expect(variants).toEqual(["get", "set"]);
   });
 
   test("a member the catalog declares readonly gets a write that must be refused", () => {

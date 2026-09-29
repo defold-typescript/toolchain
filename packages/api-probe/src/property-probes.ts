@@ -1,4 +1,5 @@
 import ts from "typescript";
+import type { LuaKind } from "../../types/scripts/engine-binding-extract";
 import {
   type DeclaredKinds,
   declaredKinds,
@@ -8,7 +9,7 @@ import {
 import type { ApiTarget } from "../../types/scripts/regen";
 import { PROPERTY_OPTIONS, PROPERTY_TARGETS } from "./contexts";
 import { PROPERTY_DENYLIST } from "./probe-denylist";
-import { type ProbeCall, probeTarget } from "./witness";
+import { kindWitness, type ProbeCall, probeTarget } from "./witness";
 
 export interface PropertyProbe {
   readonly catalog: string;
@@ -18,6 +19,8 @@ export interface PropertyProbe {
   readonly target: string;
   readonly readonly: boolean;
   readonly options?: string;
+  // One value per kind a writable union member declares, each written on its own.
+  readonly kindWrites?: readonly { readonly kind: LuaKind; readonly value: string }[];
 }
 
 export interface PropertyGeneration {
@@ -81,10 +84,20 @@ function getter(probe: PropertyProbe): string {
   return `go.get<${probe.catalog}.properties>()(${probe.target}, ${JSON.stringify(probe.member)}${options})`;
 }
 
-function callsFor(probe: PropertyProbe): ProbeCall[] {
+export function callsFor(probe: PropertyProbe): ProbeCall[] {
   const name = `${probe.catalog}.properties.${probe.member}`;
   const options = probe.options === undefined ? "" : `, ${probe.options}`;
-  const set = `go.set<${probe.catalog}.properties>()(${probe.target}, ${JSON.stringify(probe.member)}, ${getter(probe)}${options})`;
+  const setter = (value: string) =>
+    `go.set<${probe.catalog}.properties>()(${probe.target}, ${JSON.stringify(probe.member)}, ${value}${options})`;
+  const set = setter(getter(probe));
+  const kindWrites: ProbeCall[] = probe.readonly
+    ? []
+    : (probe.kindWrites ?? []).map(({ kind, value }) => ({
+        name,
+        variant: `set-${kind}`,
+        kind: "go",
+        call: setter(value),
+      }));
   return [
     {
       name,
@@ -100,12 +113,37 @@ function callsFor(probe: PropertyProbe): ProbeCall[] {
       call: set,
       ...(probe.readonly ? { readonlySet: true } : {}),
     },
+    ...kindWrites,
   ];
+}
+
+function kindWritesFor(
+  key: string,
+  type: ts.Type,
+  kinds: DeclaredKinds,
+  target: string,
+  checker: ts.TypeChecker,
+): PropertyProbe["kindWrites"] {
+  if (kinds === "any" || kinds.length < 2) return undefined;
+  return kinds.map((kind) => {
+    const value = kindWitness(
+      type,
+      kind,
+      key,
+      { kind: "go", url: target },
+      checker,
+      new Set(),
+      new Set(),
+    );
+    if (value === undefined) throw new Error(`no ${kind} witness for property ${key}`);
+    return { kind, value };
+  });
 }
 
 // Every member of every `<ns>.properties` catalog the surface declares, the
 // hand-authored overlays merged in, read with `go.get` from its probe
-// component and written back with `go.set`.
+// component and written back with `go.set`; a writable union member is also
+// written once with a value of each kind it declares.
 export function propertyProbes(
   target: ApiTarget = probeTarget(),
   program: ts.Program = surfaceProgram(target),
@@ -133,13 +171,18 @@ export function propertyProbes(
         continue;
       }
       const options = PROPERTY_OPTIONS[key];
+      const type = checker.getTypeOfSymbol(property);
+      const kinds = kindsOf(type, checker);
+      const readonly = isReadonly(property);
+      const kindWrites = readonly ? undefined : kindWritesFor(key, type, kinds, target, checker);
       probes.push({
         catalog,
         member: property.name,
-        kinds: kindsOf(checker.getTypeOfSymbol(property), checker),
+        kinds,
         target,
-        readonly: isReadonly(property),
+        readonly,
         ...(options === undefined ? {} : { options }),
+        ...(kindWrites === undefined ? {} : { kindWrites }),
       });
     }
   }
