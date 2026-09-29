@@ -138,6 +138,11 @@ Four things are worth knowing about how it behaves:
   land, the terminal names that editor's address once and stops reporting it as
   attached, rather than leaving you watching a loop that believes it is
   connected. The attach line returns when a reload succeeds again.
+- **A rejected reload shows its issues.** Defold 1.13.2 and later answer a
+  reload once it has finished and say whether it succeeded. A rejected reload
+  prints each issue as `<resource>:<line>: <severity>: <message>` and keeps the
+  editor attached, since it answered. Older editors only queue the reload, so
+  their errors reach the terminal through the console alone.
 
 Hot reload runs the **new code against the old state** and does not re-run
 `init`. See [Script lifecycle](./script-lifecycle.md#hot-reload-and-on_reload)
@@ -155,7 +160,8 @@ status you can branch on.
 - `--json` — stream the build lifecycle as newline-delimited JSON for agents and
   scripts. See [Agent runbooks](./agent-runbooks.md#machine-readable-output)
   for the event stream. Each reload adds a `reload` event; a reload the editor
-  declined because no game is running is silent. A late editor's version notice
+  declined because no game is running is silent, and one a Defold 1.13.2+
+  editor rejected carries its issues in `editorIssues`. A late editor's version notice
   arrives as an `editorVersion` event instead of on stderr.
 
 ## As a mise task

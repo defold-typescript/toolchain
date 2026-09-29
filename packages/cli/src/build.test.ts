@@ -800,7 +800,7 @@ function makeBuildEditor(baseUrl: string | null): BuildEditor {
       },
       postCommand() {
         counts.posts += 1;
-        return Promise.resolve("accepted" as const);
+        return Promise.resolve({ outcome: "accepted" as const, result: null });
       },
       openConsole() {
         counts.consoles += 1;
@@ -827,7 +827,7 @@ function makeHungBuildEditor(): BuildEditor {
       },
       postCommand() {
         counts.posts += 1;
-        return Promise.resolve("accepted" as const);
+        return Promise.resolve({ outcome: "accepted" as const, result: null });
       },
       openConsole() {
         counts.consoles += 1;

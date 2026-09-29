@@ -15,10 +15,14 @@ import {
 import { type BuildSession, createBuildSession } from "./build-session";
 import { mapConsoleLine } from "./console-source-map";
 import {
+  type CommandAnswer,
+  type CommandResult,
   consoleLines,
   consoleWatermark,
   type EditorEndpoint,
   type EditorTransport,
+  editorIssues,
+  formatEditorIssue,
   isConsoleContinuation,
   isConsoleErrorHeader,
   openConsoleStream,
@@ -50,7 +54,7 @@ export type EditorReloadCommand = "hot-reload" | "reload-extensions";
 
 export interface WatchEditorClient {
   resolve(cwd: string, signal?: AbortSignal): Promise<EditorEndpoint | null>;
-  postCommand(cwd: string, name: EditorReloadCommand, signal?: AbortSignal): Promise<ReloadOutcome>;
+  postCommand(cwd: string, name: EditorReloadCommand, signal?: AbortSignal): Promise<CommandAnswer>;
   /**
    * Live console lines with the replayed history already dropped, or null when
    * the stream will not open. Optional: console streaming is additive, so a
@@ -81,6 +85,7 @@ export const defaultEditorClient: WatchEditorClient = createWatchEditorClient();
 const EDITOR_SCRIPT_SUFFIX = SCRIPT_SUFFIX_BY_KIND["editor-script"];
 
 const RELOAD_UNAVAILABLE = "no running Defold editor accepted the reload";
+const RELOAD_REJECTED = "the Defold editor rejected the reload";
 
 function reloadCommandsFor(written: readonly string[]): EditorReloadCommand[] {
   const commands: EditorReloadCommand[] = [];
@@ -480,12 +485,32 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     }
   }
 
-  function emitReloadEvent(outcome: ReloadOutcome): void {
-    if (!opts.json || outcome === "skipped") return;
+  /**
+   * A rejected result is the editor's verdict on this reload, not a lost
+   * attachment: the editor answered, so it stays attached and the issues are
+   * reported instead.
+   */
+  function emitReloadEvent(outcome: ReloadOutcome, result: CommandResult | null = null): void {
+    if (outcome === "skipped") return;
+    const rejected = outcome === "accepted" && result !== null && !result.success;
+    if (!opts.json) {
+      if (!rejected) return;
+      for (const issue of editorIssues(result)) {
+        stderr.write(`${CONSOLE_PREFIX}${mapConsoleLine(cwd, formatEditorIssue(issue))}\n`);
+      }
+      writeError(`defold-typescript watch: ${RELOAD_REJECTED}`);
+      return;
+    }
     stdout.write(
-      outcome === "accepted"
-        ? renderWatchEvent({ event: "reload" })
-        : renderWatchEvent({ event: "reload", error: RELOAD_UNAVAILABLE }),
+      outcome === "unavailable"
+        ? renderWatchEvent({ event: "reload", error: RELOAD_UNAVAILABLE })
+        : rejected
+          ? renderWatchEvent({
+              event: "reload",
+              error: RELOAD_REJECTED,
+              editorIssues: editorIssues(result),
+            })
+          : renderWatchEvent({ event: "reload" }),
     );
   }
 
@@ -547,14 +572,14 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       return;
     }
     for (const name of commands) {
-      const outcome = await client.postCommand(cwd, name, editorAbort.signal);
+      const { outcome, result } = await client.postCommand(cwd, name, editorAbort.signal);
       if (stopped) return;
       if (outcome === "unavailable") {
         noteReloadFailed(endpoint.baseUrl);
       } else {
         noteAttached(endpoint.baseUrl);
       }
-      emitReloadEvent(outcome);
+      emitReloadEvent(outcome, result);
     }
   }
 

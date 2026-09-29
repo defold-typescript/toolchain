@@ -1,3 +1,4 @@
+import type { EditorIssue } from "./editor-attach";
 import type { InitOperation } from "./init";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 
@@ -109,6 +110,9 @@ export interface RenderResultInput {
   }[];
   readonly consoleObserved?: boolean;
   readonly consoleWindowComplete?: boolean;
+  // Present only when the editor returned a verdict (Defold 1.13.2+); absent for
+  // an older editor, which answers a reload with no result at all.
+  readonly editorIssues?: readonly EditorIssue[];
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -208,10 +212,14 @@ export function renderResult(input: RenderResultInput): string {
     "consoleObserved" in input
       ? { ...withConsoleLocations, consoleObserved: input.consoleObserved }
       : withConsoleLocations;
-  const payload =
+  const withConsoleWindow =
     "consoleWindowComplete" in input
       ? { ...withConsoleObserved, consoleWindowComplete: input.consoleWindowComplete }
       : withConsoleObserved;
+  const payload =
+    "editorIssues" in input
+      ? { ...withConsoleWindow, editorIssues: input.editorIssues }
+      : withConsoleWindow;
   return `${JSON.stringify(payload)}\n`;
 }
 
@@ -247,6 +255,7 @@ export interface RenderWatchEventInput {
   readonly targetSource?: "pin" | "detected" | "default";
   readonly error?: string;
   readonly errors?: readonly WatchErrorEntry[];
+  readonly editorIssues?: readonly EditorIssue[];
 }
 
 export function renderWatchEvent(input: RenderWatchEventInput): string {
@@ -276,7 +285,11 @@ export function renderWatchEvent(input: RenderWatchEventInput): string {
       : withPinMismatch;
   const withEditor = "editor" in input ? { ...withUpstream, editor: input.editor } : withUpstream;
   const withTarget = "target" in input ? { ...withEditor, target: input.target } : withEditor;
-  const payload =
+  const withTargetSource =
     "targetSource" in input ? { ...withTarget, targetSource: input.targetSource } : withTarget;
+  const payload =
+    "editorIssues" in input
+      ? { ...withTargetSource, editorIssues: input.editorIssues }
+      : withTargetSource;
   return `${JSON.stringify(payload)}\n`;
 }

@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import * as os from "node:os";
 import * as path from "node:path";
 import { runBuild } from "./build";
-import type { EditorEndpoint, ReloadOutcome } from "./editor-attach";
+import type { CommandAnswer, CommandResult, EditorEndpoint, ReloadOutcome } from "./editor-attach";
 import { runReload } from "./reload";
 import type { EditorReloadCommand, WatchEditorClient } from "./watch";
 
@@ -108,6 +108,7 @@ interface FakeEditor {
 function makeEditor(opts?: {
   readonly baseUrl?: string | null;
   readonly outcome?: ReloadOutcome;
+  readonly result?: CommandResult | null;
   readonly onConsole?: (console: FakeConsole) => void;
   readonly console?: ConsoleBehavior;
   readonly resolveNeverSettles?: boolean;
@@ -145,9 +146,9 @@ function makeEditor(opts?: {
       if (opts?.resolveNeverSettles === true) return await new Promise<never>(() => {});
       return baseUrl === null ? null : { baseUrl };
     },
-    async postCommand(_cwd, name): Promise<ReloadOutcome> {
+    async postCommand(_cwd, name): Promise<CommandAnswer> {
       posts.push(name);
-      return outcome;
+      return { outcome, result: opts?.result ?? null };
     },
     ...(behavior === "absent" ? {} : { openConsole }),
   };
@@ -654,6 +655,130 @@ describe("runReload", () => {
   });
 });
 
+describe("runReload editor result", () => {
+  const LOCATED = {
+    message: "attempt to call a nil value (global 'undefined_fn')",
+    severity: "error",
+    resource: "/main/main.script",
+    range: { start: { line: 11, character: 4 }, end: { line: 11, character: 16 } },
+  };
+  const UNLOCATED = { message: "reload failed", severity: "error" };
+  const REJECTED = { success: false, issues: [LOCATED, UNLOCATED] };
+
+  test("a rejected reload exits 1 with each issue on stderr, without reading the console", async () => {
+    const editor = makeEditor({ result: REJECTED });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: "/project",
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      waitMs: NEVER_ELAPSES_MS,
+    });
+
+    expect(code).toBe(1);
+    expect(io.err()).toBe(
+      [
+        "defold-typescript reload: editor: /main/main.script:12: error: attempt to call a nil value (global 'undefined_fn')",
+        "defold-typescript reload: editor: error: reload failed",
+        "defold-typescript reload: error: the Defold editor rejected the reload",
+        "",
+      ].join("\n"),
+    );
+    await editor.consoles[0]?.released();
+  });
+
+  test("--json lists a rejected reload's issues under editorIssues", async () => {
+    const editor = makeEditor({ result: REJECTED });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: "/project",
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      json: true,
+      waitMs: NEVER_ELAPSES_MS,
+    });
+
+    expect(code).toBe(1);
+    const payload = JSON.parse(io.out().trim()) as {
+      ok: boolean;
+      outcome: string;
+      editorIssues: unknown[];
+    };
+    expect(payload.ok).toBe(false);
+    expect(payload.outcome).toBe("accepted");
+    expect(payload.editorIssues).toEqual([LOCATED, UNLOCATED]);
+    expect(io.err()).toBe("");
+  });
+
+  test("a successful result still reads the console, and a console error still fails", async () => {
+    const editor = makeEditor({
+      result: { success: true, issues: [] },
+      onConsole: (stream) => {
+        stream.push("ERROR:SCRIPT: /main/main.script:12: boom");
+        stream.end();
+      },
+    });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: "/project",
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      json: true,
+      waitMs: NEVER_ELAPSES_MS,
+    });
+
+    expect(code).toBe(1);
+    const payload = JSON.parse(io.out().trim()) as {
+      consoleErrors: string[];
+      editorIssues: unknown[];
+    };
+    expect(payload.consoleErrors).toEqual(["ERROR:SCRIPT: /main/main.script:12: boom"]);
+    expect(payload.editorIssues).toEqual([]);
+  });
+
+  test("a successful result with a quiet console exits 0", async () => {
+    const editor = makeEditor({ result: { success: true, issues: [] } });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: "/project",
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      waitMs: SHORT_WINDOW_MS,
+    });
+
+    expect(code).toBe(0);
+    expect(io.out()).toContain("no error observed");
+    expect(io.err()).toBe("");
+  });
+
+  test("an editor before 1.13.2 answers with no result, and --json carries no editorIssues", async () => {
+    const editor = makeEditor({ result: null });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: "/project",
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      json: true,
+      waitMs: SHORT_WINDOW_MS,
+    });
+
+    expect(code).toBe(0);
+    const payload = JSON.parse(io.out().trim()) as Record<string, unknown>;
+    expect(payload.ok).toBe(true);
+    expect("editorIssues" in payload).toBe(false);
+  });
+});
+
 describe("runReload console source mapping", () => {
   const MARKER = "defold_typescript_marker";
   const CONSOLE_PREFIX = "defold-typescript reload: editor: ";
@@ -771,6 +896,37 @@ export default defineScript({
     expect(location?.file).toBe("src/main.ts");
     const authored = readFileSync(path.join(project, "src/main.ts"), "utf8").split("\n");
     expect(authored[(location?.line as number) - 1]).toContain(MARKER);
+  });
+
+  test("an editor issue on a built chunk carries the authored location beside the raw one", async () => {
+    const chunkLine = markerChunkLine();
+    const position = { line: chunkLine - 1, character: 0 };
+    const editor = makeEditor({
+      result: {
+        success: false,
+        issues: [
+          {
+            message: "attempt to index a nil value",
+            severity: "error",
+            resource: "/src/main.ts.script",
+            range: { start: position, end: position },
+          },
+        ],
+      },
+    });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: project,
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      waitMs: NEVER_ELAPSES_MS,
+    });
+
+    expect(code).toBe(1);
+    expect(io.err()).toContain(`(/src/main.ts.script:${chunkLine}): error:`);
+    expect(io.err()).toMatch(/src\/main\.ts:\d+:\d+ \(/);
   });
 
   test("an unmappable chunk leaves both surfaces exactly as they are today", async () => {

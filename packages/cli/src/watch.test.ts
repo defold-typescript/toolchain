@@ -14,6 +14,7 @@ import { Writable } from "node:stream";
 import { GENERATED_BANNER } from "./build-output";
 import { readCliVersion } from "./cli-version";
 import {
+  type CommandResult,
   EDITOR_API_TITLE,
   EDITOR_PORT_FILE,
   type EditorTransport,
@@ -1173,6 +1174,7 @@ interface FakeEditor {
   resolveCount(): number;
   setBaseUrl(url: string | null): void;
   setOutcome(outcome: ReloadOutcome): void;
+  setResult(result: CommandResult | null): void;
   /** Suspend every post opened from now until the returned release is called. */
   hold(): () => void;
   /** Suspend every resolve started from now until the returned release is called. */
@@ -1197,6 +1199,7 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
     resolves: 0,
     url: baseUrl,
     outcome: "accepted" as ReloadOutcome,
+    result: null as CommandResult | null,
     resolveSignal: undefined as AbortSignal | undefined,
     postSignal: undefined as AbortSignal | undefined,
     consoleOpen: true,
@@ -1218,7 +1221,7 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
       state.postSignal = signal;
       const open = gate;
       if (open) await open;
-      return state.outcome;
+      return { outcome: state.outcome, result: state.result };
     },
     async openConsole(_endpoint, signal) {
       if (!state.consoleOpen) return null;
@@ -1240,6 +1243,9 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
     },
     setOutcome(outcome) {
       state.outcome = outcome;
+    },
+    setResult(result) {
+      state.result = result;
     },
     hold() {
       let release!: () => void;
@@ -3438,6 +3444,124 @@ describe("runWatch stop lifecycle", () => {
   });
 });
 
+describe("runWatch hot reload editor result", () => {
+  const ISSUE = {
+    message: "attempt to call a nil value (global 'undefined_fn')",
+    severity: "error",
+    resource: "/main/main.script",
+    range: { start: { line: 11, character: 4 }, end: { line: 11, character: 16 } },
+  };
+
+  const readReloadEvents = (out: string): Array<Record<string, unknown>> =>
+    out
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as Record<string, unknown>)
+      .filter((event) => event.event === "reload");
+
+  test("a successful result emits a clean reload event and keeps the editor attached", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    editor.setResult({ success: true, issues: [] });
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    for (const value of [2, 3]) {
+      writeProjectFile("src/main.ts", scriptSource(value));
+      factory.trigger("change", "src/main.ts");
+      await handle.waitForIdle();
+    }
+
+    expect(editor.posts).toEqual(["hot-reload", "hot-reload"]);
+    expect(readReloadEvents(out())).toEqual([
+      { command: "watch", event: "reload", ok: true, written: [] },
+      { command: "watch", event: "reload", ok: true, written: [] },
+    ]);
+    expect(err()).toBe("");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("json mode carries a failed result's issues on the reload event", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    editor.setResult({ success: false, issues: [ISSUE] });
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    const [event] = readReloadEvents(out());
+    expect(event?.ok).toBe(false);
+    expect(event?.error).toBe("the Defold editor rejected the reload");
+    expect(event?.editorIssues).toEqual([ISSUE]);
+    expect(err()).toBe("");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a failed result prints its issues and does not detach the editor", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    editor.setResult({ success: false, issues: [ISSUE] });
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(err()).toContain(
+      "defold-typescript watch: editor: /main/main.script:12: error: attempt to call a nil value (global 'undefined_fn')\n",
+    );
+    expect(err()).toContain("the Defold editor rejected the reload");
+    expect(err()).not.toMatch(/did not accept the reload/);
+    expect(err()).not.toMatch(/no Defold editor detected/);
+
+    handle.stop();
+    await handle.done;
+  });
+});
+
 describe("runWatch console support is optional", () => {
   test("a client declaring only resolve and postCommand drives a hot-reloading watch", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
@@ -3452,7 +3576,7 @@ describe("runWatch console support is optional", () => {
       resolve: () => Promise.resolve({ baseUrl: "http://localhost:4242" }),
       postCommand: (_cwd, name) => {
         posts.push(name);
-        return Promise.resolve("accepted" as const);
+        return Promise.resolve({ outcome: "accepted" as const, result: null });
       },
     };
     const opts: PublicRunWatchOptions = {
