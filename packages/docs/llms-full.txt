@@ -8572,9 +8572,9 @@ skip it.
   changing what it is about.
 - **The docs-site provenance assertions.** `api-surface-loader.test.ts` reads the
   pin back out of the emitted API-doc metadata and asserts it exactly — for
-  example `meta.commit` is `1.2.5` and `meta.sourceUrl` is
-  `https://github.com/Insality/druid/tree/1.2.5`. A bump moves both, and they are
-  in a different package from the registry you edited.
+  druid, `meta.commit` is the `ref` of its `luals-targets.json` entry and
+  `meta.sourceUrl` is `https://github.com/Insality/druid/tree/<ref>`. A bump
+  moves both, and they are in a different package from the registry you edited.
 - **The pin-refresh record.** `packages/library-types/pin-refresh.json` states which
   members a bump added and removed, one entry per refresh, each tagged with the
   `lane` it belongs to (`luals`, `script-api`, or `openapi`).
@@ -8611,10 +8611,11 @@ conflating them is the first mistake a repo-wide find-and-replace makes.
 Several CLI tests hardcode archive URLs and extracted-entry paths, and some of
 them pin *exactly* the corpus string. `packages/cli/src/library-match.test.ts`,
 `packages/cli/src/resolve.test.ts` and `packages/cli/src/druid-resolve-e2e.test.ts`
-all carry druid's `1.2.5` — the same literal the registry entry holds. That
-collision is the reason a repo-wide find-and-replace is unsafe: one `1.2.5` must
-move with the bump (the registry entry, and the docs-site provenance assertions
-named above), and another must not.
+all carry a druid version literal in consumer archive URLs, and it can equal the
+`ref` the registry entry holds. That collision is the reason a repo-wide
+find-and-replace is unsafe: one copy of the version must move with the bump (the
+registry entry, and the docs-site provenance assertions named above), and
+another must not.
 
 `normalizeSourceId` (`packages/cli/src/library-match.ts`) strips
 `/archive/<ref>.zip` and matches on the repo name alone, so a consumer fixture is

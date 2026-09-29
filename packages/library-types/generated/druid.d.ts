@@ -65,6 +65,8 @@ declare module 'druid.druid' {
 		BTN_SOUND_DISABLED?: string | undefined;
 		DISABLED_COLOR?: Vector4 | undefined;
 		ENABLED_COLOR?: Vector4 | undefined;
+		ON_HOVER_CURSOR?: string | number | undefined;
+		ON_MOUSE_HOVER_CURSOR?: string | number | undefined;
 		on_init?: ((self: druid_button) => void) | undefined;
 		on_click?: ((self: druid_button, node: Opaque<"node">) => void) | undefined;
 		on_click_disabled?: ((self: druid_button, node: Opaque<"node">) => void) | undefined;
@@ -189,6 +191,8 @@ declare module 'druid.druid' {
 	interface druid_drag_style {
 		DRAG_DEADZONE: number;
 		NO_USE_SCREEN_KOEF: boolean;
+		ON_HOVER_CURSOR?: string | number | undefined;
+		ON_MOUSE_HOVER_CURSOR?: string | number | undefined;
 	}
 	/**
 	 * A component that allows you to subscribe to drag events over a node
@@ -220,7 +224,8 @@ declare module 'druid.druid' {
 		 */
 		init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void): void;
 		/**
-		 * Enable or disable drag cursor styles. No-op without defos. Hover is created on first enable.
+		 * Enable or disable drag cursors from the Drag style. No-op without defos or without cursors in style. Hover is created on first enable.
+		 * The cursors are not shown while the Drag is disabled.
 		 */
 		set_drag_cursors(is_enabled: boolean): void;
 		/**
@@ -324,6 +329,8 @@ declare module 'druid.druid' {
 		WHEEL_SCROLL_SPEED?: number | undefined;
 		WHEEL_SCROLL_INVERTED?: boolean | undefined;
 		WHEEL_SCROLL_BY_INERTION?: boolean | undefined;
+		ON_HOVER_CURSOR?: string | number | undefined;
+		ON_MOUSE_HOVER_CURSOR?: string | number | undefined;
 	}
 	/**
 	 * Basic Druid scroll component. Handles all scrolling behavior in Druid GUI.
@@ -454,6 +461,10 @@ declare module 'druid.druid' {
 		_on_touch_start(): void;
 		_on_touch_end(): void;
 		_update_size(): void;
+		/**
+		 * Apply scroll cursors style to the inner drag. Cursors are shown only while content is scrollable
+		 */
+		_update_drag_cursors(): void;
 		_process_scroll_wheel(): void;
 		_inverse_lerp(): void;
 		/**
@@ -756,6 +767,7 @@ declare module 'druid.druid' {
 		set_input_priority(value: number, is_temporary?: boolean | undefined): druid_component;
 		/**
 		 * Reset component input priority to it's default value, that was set in `create` function or `set_input_priority`
+		 * Each component in the subtree returns to it's own default value, not to the parent one
 		 */
 		reset_input_priority(): druid_component;
 		/**
@@ -871,6 +883,7 @@ declare module 'druid.druid' {
 	}
 	interface druid_rich_text_metrics {
 		width: number;
+		visible_width?: number | undefined;
 		height: number;
 		offset_x?: number | undefined;
 		offset_y?: number | undefined;
@@ -1198,6 +1211,8 @@ declare module 'druid.druid' {
 		MASK_DEFAULT_CHAR: string;
 		IS_LONGTAP_ERASE: boolean;
 		IS_UNSELECT_ON_RESELECT: boolean;
+		ON_HOVER_CURSOR?: string | number | undefined;
+		ON_MOUSE_HOVER_CURSOR?: string | number | undefined;
 		on_init?: ((self: druid_input) => void) | undefined;
 		on_select: (self: druid_input, button_node: Opaque<"node">) => void;
 		on_unselect: (self: druid_input, button_node: Opaque<"node">) => void;
@@ -1460,6 +1475,11 @@ declare module 'druid.druid' {
 		 */
 		set_max_size(max_size: Vector3): druid_progress;
 	}
+	interface druid_slider_style {
+		DEFAULT_STEPS?: number[] | undefined;
+		ON_HOVER_CURSOR?: string | number | undefined;
+		ON_MOUSE_HOVER_CURSOR?: string | number | undefined;
+	}
 	/**
 	 * Basic Druid slider component. Creates a draggable node over a line with progress reporting.
 	 *
@@ -1476,7 +1496,8 @@ declare module 'druid.druid' {
 	interface druid_slider extends druid_component {
 		node: Opaque<"node">;
 		on_change_value: event;
-		style: LuaTable;
+		style: druid_slider_style;
+		hover?: druid_hover | undefined;
 		/**
 		 * The Slider constructor
 		 */

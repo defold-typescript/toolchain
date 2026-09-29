@@ -169,9 +169,9 @@ describe("loadApiSurface library displayName", () => {
 describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
   test("attributes druid to Insality/druid at the luals-targets ref, not the ts-defold/library pin", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("druid");
-    expect(meta.commit).toBe("1.3.1");
+    expect(meta.commit).toBe("1.4.0");
     expect(meta.authorUrl).toBe("https://github.com/Insality/druid");
-    expect(meta.sourceUrl).toBe("https://github.com/Insality/druid/tree/1.3.1");
+    expect(meta.sourceUrl).toBe("https://github.com/Insality/druid/tree/1.4.0");
     expect(meta.importString).toBe('import * as druid from "druid"');
     expect(meta.license).toBe("MIT");
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
