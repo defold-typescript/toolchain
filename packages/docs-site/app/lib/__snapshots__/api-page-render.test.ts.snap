@@ -1468,7 +1468,7 @@ Scroll to item in scroll by point index.
 
 **Parameters**
 
-- \`index\`: <code class="api-type">number</code> — Point index
+- \`index\`: <code class="api-type">number</code> — Point index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 - \`is_silent\`?: <code class="api-type">boolean | undefined</code> — If true, skip the point callback
 - \`is_instant\`?: <code class="api-type">boolean | undefined</code> — Instant scroll flag
 
@@ -1945,7 +1945,7 @@ Return pos for grid node index
 
 **Parameters**
 
-- \`index\`: <code class="api-type">number</code> — The grid element index
+- \`index\`: <code class="api-type">number</code> — The grid element index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 **Returns**
 
@@ -1966,7 +1966,7 @@ Return grid index by content-local x, y. Inverse of get_pos + _get_dynamic_offse
 
 **Returns**
 
-- <code class="api-type">number</code> — The node index
+- <code class="api-type">number</code> — The node index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 </div>
 
@@ -1982,7 +1982,7 @@ Return grid index by position. Inverse of get_pos + _get_dynamic_offset.
 
 **Returns**
 
-- <code class="api-type">number</code> — The node index
+- <code class="api-type">number</code> — The node index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 </div>
 
@@ -1998,7 +1998,7 @@ Return grid index by node
 
 **Returns**
 
-- <code class="api-type">number | undefined</code> — The node index
+- <code class="api-type">number | undefined</code> — The node index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 </div>
 
@@ -2051,7 +2051,7 @@ Add new item to the grid
 **Parameters**
 
 - \`item\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — GUI node
-- \`index\`?: <code class="api-type">number | undefined</code> — The item position. By default add as last item
+- \`index\`?: <code class="api-type">number | undefined</code> — The item position. By default add as last item. **⚠️ 1-based; passed to \`druid\` unchanged.**
 - \`shift_policy\`?: <code class="api-type">number | undefined</code> — How shift nodes, if required. Default: const.SHIFT.RIGHT
 - \`is_instant\`?: <code class="api-type">boolean | undefined</code> — If true, update node positions instantly
 
@@ -2086,7 +2086,7 @@ Remove the item from the grid. Note that gui node will be not deleted
 
 **Parameters**
 
-- \`index\`: <code class="api-type">number</code> — The grid node index to remove
+- \`index\`: <code class="api-type">number</code> — The grid node index to remove. **⚠️ 1-based; passed to \`druid\` unchanged.**
 - \`shift_policy\`?: <code class="api-type">number | undefined</code> — How shift nodes, if required. Default: const.SHIFT.RIGHT
 - \`is_instant\`?: <code class="api-type">boolean | undefined</code> — If true, update node positions instantly
 
@@ -2322,7 +2322,7 @@ Nodes array
 
 <div class="api-symbol-body">
 
-First index
+First index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 </div>
 
@@ -2330,7 +2330,7 @@ First index
 
 <div class="api-symbol-body">
 
-Last index
+Last index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 </div>
 
@@ -3886,7 +3886,7 @@ Add element to DataList
 **Parameters**
 
 - \`data\`: <code class="api-type">LuaTable</code> — The data to add
-- \`index\`?: <code class="api-type">number | undefined</code> — The index to add the data at
+- \`index\`?: <code class="api-type">number | undefined</code> — The index to add the data at. **⚠️ 1-based; passed to \`druid\` unchanged.**
 - \`shift_policy\`?: <code class="api-type">number | undefined</code> — The constant from const.SHIFT.*
 
 **Returns**
@@ -3903,7 +3903,7 @@ Remove element from DataList
 
 **Parameters**
 
-- \`index\`?: <code class="api-type">number | undefined</code> — The index to remove the data at
+- \`index\`?: <code class="api-type">number | undefined</code> — The index to remove the data at. **⚠️ 1-based; passed to \`druid\` unchanged.**
 - \`shift_policy\`?: <code class="api-type">number | undefined</code> — The constant from const.SHIFT.*
 
 **Returns**
@@ -3985,7 +3985,7 @@ Instant scroll to element with passed index
 
 **Parameters**
 
-- \`index\`: <code class="api-type">number</code> — The index to scroll to
+- \`index\`: <code class="api-type">number</code> — The index to scroll to. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 </div>
 
@@ -4047,7 +4047,7 @@ fun(self: druid.data_list, index: number, node: node, instance: druid.component,
 
 <div class="api-symbol-body">
 
-The top index of the visible elements
+The top index of the visible elements. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 </div>
 
@@ -4055,7 +4055,7 @@ The top index of the visible elements
 
 <div class="api-symbol-body">
 
-The last index of the visible elements
+The last index of the visible elements. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 </div>
 
@@ -4376,9 +4376,9 @@ Set cursor position in input field
 
 **Parameters**
 
-- \`cursor_index\`?: <code class="api-type">number | undefined</code> — Cursor index for cursor position, if nil - will be set to the end of the text
-- \`start_index\`?: <code class="api-type">number | undefined</code> — Start index for cursor position, if nil - will be set to the end of the text
-- \`end_index\`?: <code class="api-type">number | undefined</code> — End index for cursor position, if nil - will be set to the start_index
+- \`cursor_index\`?: <code class="api-type">number | undefined</code> — Cursor index for cursor position, if nil - will be set to the end of the text. **0️⃣ 0-based; passed to \`druid\` unchanged.**
+- \`start_index\`?: <code class="api-type">number | undefined</code> — Start index for cursor position, if nil - will be set to the end of the text. **0️⃣ 0-based; passed to \`druid\` unchanged.**
+- \`end_index\`?: <code class="api-type">number | undefined</code> — End index for cursor position, if nil - will be set to the start_index. **0️⃣ 0-based; passed to \`druid\` unchanged.**
 
 **Returns**
 
@@ -4641,7 +4641,7 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 **Parameters**
 
 - \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — The node to set the index of
-- \`index\`: <code class="api-type">number</code> — The index to set the node to
+- \`index\`: <code class="api-type">number</code> — The index to set the node to. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 **Returns**
 

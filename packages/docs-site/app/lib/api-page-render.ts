@@ -539,6 +539,7 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
 export function apiPageMarkdown(
   page: Pick<
     ApiPage,
+    | "namespace"
     | "module"
     | "translations"
     | "signatures"

@@ -113,6 +113,66 @@ export function scanIndexSlots(
   return [...unique.values()];
 }
 
+export function isIndexName(name: string): boolean {
+  return INDEX_NAME.test(name);
+}
+
+// The class fields a library typedef declares, keyed `<Typedef>:field:<member>`.
+export function classFieldKeys(doc: unknown): string[] {
+  return parseDefoldApiDoc(doc).typedefs.flatMap((typedef) =>
+    (typedef.properties ?? []).map((member) => `${typedef.name}:field:${member.name}`),
+  );
+}
+
+// The class fields that hold a position: index-named members, and members whose
+// prose states a base.
+export function scanTypedefMemberSlots(doc: unknown): IndexSlotHit[] {
+  const hits: IndexSlotHit[] = [];
+  for (const typedef of parseDefoldApiDoc(doc).typedefs) {
+    for (const member of typedef.properties ?? []) {
+      const prose = htmlToDocText(`${member.brief}\n${member.description}`);
+      const evidence = ONE_BASED_PHRASE.test(prose)
+        ? "prose-1-based"
+        : ZERO_BASED_PHRASE.test(prose)
+          ? "prose-0-based"
+          : INDEX_NAME.test(member.name)
+            ? "name"
+            : undefined;
+      if (evidence !== undefined) {
+        hits.push({ key: `${typedef.name}:field:${member.name}`, evidence });
+      }
+    }
+  }
+  return hits;
+}
+
+const CALLBACK_DOC = /^function\s*\(([^)]*)\)/;
+
+// The arguments a callback slot passes, named by a slot doc of the form
+// `function(_, day)`, keyed as fields of that slot. `_` names nothing.
+export function callbackArgKeys(doc: unknown): string[] {
+  const module = parseDefoldApiDoc(doc);
+  const keys: string[] = [];
+  const addFunction = (fn: ApiFunction): void => {
+    for (const [kind, slots] of [
+      ["param", fn.parameters],
+      ["return", fn.returnValues],
+    ] as const) {
+      for (const slot of slots) {
+        const args = CALLBACK_DOC.exec(htmlToDocText(slot.doc).trim())?.[1] ?? "";
+        for (const arg of args.split(",").map((name) => name.trim())) {
+          if (arg !== "_" && /^[A-Za-z_]\w*$/.test(arg)) {
+            keys.push(`${fn.name}:${kind}:${slot.name}:${arg}`);
+          }
+        }
+      }
+    }
+  };
+  for (const fn of module.functions) addFunction(fn);
+  for (const typedef of module.typedefs) for (const fn of typedef.functions ?? []) addFunction(fn);
+  return keys;
+}
+
 export interface FunctionBaseStatement {
   readonly fn: string;
   readonly class: "native-1" | "native-0";
