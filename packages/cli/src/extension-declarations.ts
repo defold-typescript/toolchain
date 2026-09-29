@@ -17,6 +17,7 @@ import {
 } from "./extension-archive";
 import type { ExtensionDependency } from "./extension-deps";
 import { type EmittedExtension, emitExtensionDeclaration } from "./extension-emit";
+import { curatedIndexPages, loadCuratedExtensionManifest } from "./extension-index-pages";
 
 export interface ExtensionDeclarations {
   readonly url: string;
@@ -115,6 +116,7 @@ export async function resolveExtensionDeclarations(
 ): Promise<ExtensionDeclarations[]> {
   const open = opts.readZip ?? defaultReadZip;
   const resolved = await resolveExtensions(deps, opts);
+  const curated = loadCuratedExtensionManifest();
 
   const bundles: ExtensionDeclarations[] = [];
   for (const archive of resolved) {
@@ -139,7 +141,8 @@ export async function resolveExtensionDeclarations(
     }
     const declarations: EmittedExtension[] = [];
     for (const scriptApi of archive.scriptApis) {
-      declarations.push(await emitExtensionDeclaration(zip.read(scriptApi)));
+      const pages = curatedIndexPages(archive.url, scriptApi, zip.entries(), curated);
+      declarations.push(await emitExtensionDeclaration(zip.read(scriptApi), pages));
     }
     bundles.push({
       url: archive.url,

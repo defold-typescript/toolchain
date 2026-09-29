@@ -21,6 +21,7 @@ import {
   parseMessagesDoc,
 } from "../src/emit-messages";
 import type { TranslationStore } from "../src/example-store";
+import type { IndexBaseSource } from "../src/index-slot-classifications";
 import { wrapAsAmbientGlobal, wrapAsModule } from "../src/publish-dts";
 import type { UrlParameterTable } from "../src/url-parameters";
 import {
@@ -153,6 +154,9 @@ export interface ModuleManifestEntry {
   // for tokens no runtime namespace uses, so `DEFOLD_TYPE_MAP` keeps describing
   // only the runtime surface.
   readonly mapType?: (token: string) => string;
+  // The classification map this entry's index notes read; absent means the
+  // engine map. A library or extension declaration names its page keys.
+  readonly indexBaseSource?: IndexBaseSource;
 }
 
 export interface ResolveTargetOptions {
@@ -483,6 +487,7 @@ export function generateModuleDeclaration(
     translations,
     urlParameters,
     ...(mapType ? { mapType } : {}),
+    ...(entry.indexBaseSource ? { indexBaseSource: entry.indexBaseSource } : {}),
   });
   const importsFrom = entry.importsFrom ?? "../src/core-types";
   const contents = entry.moduleId

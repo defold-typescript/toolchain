@@ -250,3 +250,56 @@ describe("resolveExtensionDeclarations", () => {
     expect(bundles[0]?.manifestDirs).toEqual([]);
   });
 });
+
+const STEAM = `
+- name: steam
+  type: table
+  desc: Steam.
+  members:
+  - name: friends_get_friend_by_index
+    type: function
+    desc: Get a friend by index.
+    parameters:
+      - name: iFriend
+        type: number
+        desc: Is a index of range [0, GetFriendCount())
+`;
+
+describe("resolveExtensionDeclarations index notes", () => {
+  async function steamDeclaration(url: string, wrapper: string): Promise<string> {
+    const entry = `${wrapper}/steam/api/steam.script_api`;
+    const bundles = await resolveExtensionDeclarations([dep(url)], {
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(
+        {
+          [extensionArchiveKey(url)]: {
+            entries: [entry, `${wrapper}/steam/ext.manifest`],
+            contents: { [entry]: STEAM },
+          },
+        },
+        [],
+      ),
+    });
+    return bundles[0]?.declarations[0]?.contents ?? "";
+  }
+
+  test("a curated extension's classified index names the library", async () => {
+    const contents = await steamDeclaration(
+      "https://github.com/defold/extension-steam/archive/refs/tags/3.0.0.zip",
+      "extension-steam-3.0.0",
+    );
+    expect(contents).toContain(
+      "@param iFriend - Is a index of range [0, GetFriendCount()). **0️⃣ 0-based; passed to `steam` unchanged.**",
+    );
+  });
+
+  test("the same bytes from an uncurated repo carry no note", async () => {
+    const contents = await steamDeclaration(
+      "https://example.com/steam-fork.zip",
+      "extension-steam-3.0.0",
+    );
+    expect(contents).toContain("@param iFriend - Is a index of range [0, GetFriendCount())");
+    expect(contents.includes("based; passed to")).toBe(false);
+  });
+});

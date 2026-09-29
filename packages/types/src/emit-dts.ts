@@ -19,9 +19,11 @@ import {
 import type { TranslationStore } from "./example-store";
 import { lookupExampleSegments, translateProseFences } from "./example-store";
 import {
-  indexBaseNotes,
+  appendNotes,
+  type IndexBaseNoteResolver,
+  type IndexBaseSource,
+  indexBaseNoteResolver,
   OVERRIDE_RETURN_SLOT,
-  withIndexBaseNotes,
 } from "./index-slot-classifications";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
@@ -46,6 +48,10 @@ export interface EmitOptions {
   // emit. `regen` supplies the committed `url-parameters.json`; the table
   // arrives as data so this module stays free of `node:fs` (bug-88).
   urlParameters?: UrlParameterTable;
+  // Which classification map the index-base notes read. Defaults to the engine
+  // map; a library or extension declaration passes its page keys (`[]` for one
+  // no page documents), so it never names Defold as the receiver.
+  indexBaseSource?: IndexBaseSource;
 }
 
 export const TS_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
@@ -3406,6 +3412,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   const knownConstantFqns = options?.knownConstantFqns;
   const translations = options?.translations ?? {};
   const urlParameters = options?.urlParameters ?? [];
+  const baseNotes = indexBaseNoteResolver(options?.indexBaseSource ?? "engine");
   const baseMapType = options?.mapType ?? defaultMapType;
   const mapType = (token: string): string =>
     constantFqns.has(token) || knownConstantFqns?.has(token)
@@ -3492,7 +3499,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     const group = handleGroups.get(receiver) ?? [];
     lines.push(`${INDENT}${decl}interface ${receiver} {`);
     for (const fn of group) {
-      for (const docLine of functionDocLines(fn.original, translations, handleIndent)) {
+      for (const docLine of functionDocLines(fn.original, translations, baseNotes, handleIndent)) {
         lines.push(docLine);
       }
       lines.push(
@@ -3525,7 +3532,8 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   for (const fn of functions) {
     const reserved = TS_RESERVED_NAMES.has(fn.name);
     const emitName = aliasName(fn.name, aliases);
-    for (const docLine of functionDocLines(fn.original, translations)) lines.push(docLine);
+    for (const docLine of functionDocLines(fn.original, translations, baseNotes))
+      lines.push(docLine);
     const line = emitFunction(fn, emitName, mapType, resolver, constantTokens, urlParameters);
     lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
     const alternative = firstSlotAlternative(fn, module.namespace);
@@ -3533,7 +3541,8 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
       // The overload documents its own parameters, so its hover names the base
       // of the index it takes. Its examples are the primary signature's.
       const { examples: _examples, ...overloadDoc } = alternative.original;
-      for (const docLine of functionDocLines(overloadDoc, translations)) lines.push(docLine);
+      for (const docLine of functionDocLines(overloadDoc, translations, baseNotes))
+        lines.push(docLine);
       const overload = emitFunction(
         alternative,
         emitName,
@@ -3586,7 +3595,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
       for (const fn of group.functions) {
         const reserved = TS_RESERVED_NAMES.has(fn.name);
         const emitName = aliasName(fn.name, segmentAliases);
-        for (const docLine of functionDocLines(fn.original, translations, bodyIndent)) {
+        for (const docLine of functionDocLines(fn.original, translations, baseNotes, bodyIndent)) {
           lines.push(docLine);
         }
         lines.push(
@@ -4190,19 +4199,19 @@ function emitMethod(
 function functionDocLines(
   fn: ApiFunction,
   translations: TranslationStore,
+  baseNotes: IndexBaseNoteResolver,
   indent: string = INDENT,
 ): string[] {
   const params = fn.parameters.map((p, index) => ({
     name: emittedParamName(p, index),
-    doc: withIndexBaseNotes(
-      fn.name,
-      "param",
-      p.name,
+    doc: appendNotes(
       translateProseFences(htmlToDocText(p.doc), fn.name, translations),
+      baseNotes(fn.name, "param", p.name),
     ),
   }));
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
-  const notedReturns = multiReturnDoc(fn, translations) ?? overrideReturnDoc(fn);
+  const notedReturns =
+    multiReturnDoc(fn, translations, baseNotes) ?? overrideReturnDoc(fn, baseNotes);
   const lua = htmlToCodeText(fn.examples ?? "");
   // Each example resolves by its own segment hash, a single-example element's
   // one segment being the whole blob with no prose. The blob documents its
@@ -4231,11 +4240,9 @@ function functionDocLines(
     params,
     ...(onlyReturn
       ? {
-          returns: withIndexBaseNotes(
-            fn.name,
-            "return",
-            onlyReturn.name,
+          returns: appendNotes(
             translateProseFences(htmlToDocText(onlyReturn.doc), fn.name, translations),
+            baseNotes(fn.name, "return", onlyReturn.name),
           ),
         }
       : notedReturns !== undefined
@@ -4249,18 +4256,20 @@ function functionDocLines(
 // A multi-return function documents its tuple slot by slot, in tuple order, so
 // the hover can name each classified index's base. Every other multi-return
 // function keeps no `@returns`, leaving its emission byte-identical.
-function multiReturnDoc(fn: ApiFunction, translations: TranslationStore): string | undefined {
+function multiReturnDoc(
+  fn: ApiFunction,
+  translations: TranslationStore,
+  baseNotes: IndexBaseNoteResolver,
+): string | undefined {
   if (fn.returnValues.length < 2) return undefined;
   const classified = fn.returnValues.some(
-    (slot) => indexBaseNotes(fn.name, "return", slot.name).length > 0,
+    (slot) => baseNotes(fn.name, "return", slot.name).length > 0,
   );
   if (!classified) return undefined;
   const bullets = fn.returnValues.map((slot) => {
-    const doc = withIndexBaseNotes(
-      fn.name,
-      "return",
-      slot.name,
+    const doc = appendNotes(
       translateProseFences(htmlToDocText(slot.doc), fn.name, translations),
+      baseNotes(fn.name, "return", slot.name),
     );
     const [first = "", ...rest] = doc.split("\n");
     return [
@@ -4272,9 +4281,9 @@ function multiReturnDoc(fn: ApiFunction, translations: TranslationStore): string
   return [`\`[${names}]\`:`, ...bullets.flat()].join("\n");
 }
 
-function overrideReturnDoc(fn: ApiFunction): string | undefined {
+function overrideReturnDoc(fn: ApiFunction, baseNotes: IndexBaseNoteResolver): string | undefined {
   if (fn.returnValues.length > 0 || !RETURN_TYPE_OVERRIDES.has(fn.name)) return undefined;
-  const notes = indexBaseNotes(fn.name, "return", OVERRIDE_RETURN_SLOT);
+  const notes = baseNotes(fn.name, "return", OVERRIDE_RETURN_SLOT);
   return notes.length > 0 ? notes.join(" ") : undefined;
 }
 

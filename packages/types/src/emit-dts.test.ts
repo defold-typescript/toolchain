@@ -5071,6 +5071,60 @@ describe("engine index base notes", () => {
   });
 });
 
+describe("library index base notes", () => {
+  const CURATED_API_DOC_DIR = resolve(
+    import.meta.dir,
+    "../../library-types/defold-extensions/api-doc",
+  );
+  const curatedDoc = (page: string): unknown =>
+    JSON.parse(readFileSync(join(CURATED_API_DOC_DIR, `${page}.json`), "utf8"));
+
+  function docBlock(emitted: string, fnName: string): string {
+    const lines = emitted.split("\n");
+    const at = lines.findIndex((line) => line.includes(`function ${fnName}(`));
+    if (at < 0) throw new Error(`no emitted function ${fnName}`);
+    let start = at;
+    while (start > 0 && !lines[start]?.includes("/**")) start -= 1;
+    return lines.slice(start, at).join("\n");
+  }
+
+  function paramDoc(block: string, param: string): string {
+    const lines = block.split("\n");
+    const at = lines.findIndex((line) => line.includes(`@param ${param} `));
+    if (at < 0) throw new Error(`no @param ${param} in\n${block}`);
+    const end = lines.findIndex((line, index) => index > at && /@(?:param|returns)\b/.test(line));
+    return lines.slice(at, end < 0 ? undefined : end).join("\n");
+  }
+
+  test("a library page's classified param names the library as its receiver", () => {
+    const emitted = emitDeclarations(parseDefoldApiDoc(curatedDoc("steam")), {
+      indexBaseSource: { pages: ["steam"] },
+    });
+    expect(paramDoc(docBlock(emitted, "friends_get_friend_by_index"), "iFriend")).toEndWith(
+      "**0️⃣ 0-based; passed to `steam` unchanged.**",
+    );
+    expect(emitted.includes("passed to Defold")).toBe(false);
+  });
+
+  test("a library field note reads the map under the page key, not the element's namespace", () => {
+    const module = parseDefoldApiDoc(curatedDoc("spine.gui"));
+    const noted = emitDeclarations(module, { indexBaseSource: { pages: ["spine.gui"] } });
+    expect(paramDoc(docBlock(noted, "cancel_spine"), "options")).toContain(
+      "**⚠️ `track` is 1-based; passed to `spine.gui` unchanged.**",
+    );
+    const unnoted = emitDeclarations(module, { indexBaseSource: { pages: [] } });
+    expect(docBlock(unnoted, "cancel_spine")).not.toContain("based; passed to");
+  });
+
+  test("a declaration with no library page never gains an engine note", () => {
+    const unnoted = emitDeclarations(parseDefoldApiDoc(guiDoc), { indexBaseSource: { pages: [] } });
+    expect(unnoted.includes("passed to Defold")).toBe(false);
+    expect(docBlock(emitDeclarations(parseDefoldApiDoc(guiDoc)), "set")).toContain(
+      "**⚠️ `index` is 1-based; passed to Defold unchanged.**",
+    );
+  });
+});
+
 describe("signatures upstream documents in prose", () => {
   function emittedLine(doc: Parameters<typeof parseDefoldApiDoc>[0], needle: string): string {
     const out = emitDeclarations(parseDefoldApiDoc(doc));

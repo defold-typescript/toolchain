@@ -20,4 +20,5 @@ export const EXTENSION_GOLDEN_MANIFEST: readonly ModuleManifestEntry[] =
       readFileSync(resolve(PACKAGE_ROOT, "fixtures", `${namespace}_doc.json`), "utf8"),
     ),
     outFile: `${namespace}.d.ts`,
+    indexBaseSource: { pages: [] },
   }));

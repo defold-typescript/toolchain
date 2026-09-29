@@ -82,6 +82,7 @@
     "authored-targets.json",
     "openapi-targets.json",
     "native-targets.json",
+    "defold-extensions.json",
     "NOTICE",
     "!scripts/**/*.test.ts"
   ],
