@@ -16,7 +16,7 @@
 import { basename, dirname, resolve } from "node:path";
 import ts from "typescript";
 import { parseDefoldApiDoc } from "../src/api-doc";
-import { htmlToCodeText, splitExampleSources } from "../src/doc-comment";
+import { splitExampleSources } from "../src/doc-comment";
 import { hashExampleSource, proseLuaFences, type TranslationStore } from "../src/example-store";
 import { buildVersionedSurfaceFiles, renderMaterializedKindIndex } from "./materialize-version";
 import {
@@ -343,20 +343,13 @@ export function translationOwnership(
       };
       const parsed = parseDefoldApiDoc(module.doc);
       for (const fn of parsed.functions) {
-        const lua = htmlToCodeText(fn.examples ?? "");
-        if (lua === "") continue;
-        // Both keyings, because both are live: an element documented as several
-        // examples is stored one entry per segment, one documented as a single
-        // blob under the whole-blob hash. Registering only the blob would strand
-        // every split body with no owning surface.
-        const segments = splitExampleSources(fn.examples ?? "");
-        const hashes = [
-          hashExampleSource(lua),
-          ...(segments.length > 1
-            ? segments.map((segment) => hashExampleSource(segment.code))
-            : []),
-        ];
-        for (const hash of hashes) own(exampleIdentity(fn.name, hash));
+        // The one keying both lanes resolve by: one entry per example, a
+        // single-example element's lone segment being its whole blob. A
+        // whole-blob body stored for a multi-example element ships nowhere, so
+        // it has no owning surface.
+        for (const segment of splitExampleSources(fn.examples ?? "")) {
+          own(exampleIdentity(fn.name, hashExampleSource(segment.code)));
+        }
       }
       // A prose Lua fence's translation ships in the same module's hovers.
       for (const { key: fenceKey, lua } of proseLuaFences(parsed)) {

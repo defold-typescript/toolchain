@@ -85,20 +85,22 @@ declare global {
      *
      * @returns Array of mounts
      * @example
+     * Output the current resource mounts
      * ```ts
-     * // Output the current resource mounts
      * pprint("MOUNTS", liveupdate.get_mounts());
-     *
-     * // Give an output like:
+     * ```
+     * @example
+     * Give an output like:
+     * ```ts
      * // DEBUG:SCRIPT: MOUNTS,
      * // {
      * //   1 = {
-     * //     name = "liveupdate",
+     * //     name = hash: [liveupdate],
      * //     uri = "zip:/device/path/to/acchives/liveupdate.zip",
      * //     priority = 5
      * //   },
      * //   2 = {
-     * //     name = "_base",
+     * //     name = hash: [_base],
      * //     uri = "archive:build/default/game.dmanifest",
      * //     priority = -10
      * //   }

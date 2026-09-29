@@ -913,9 +913,11 @@ declare global {
      * ```ts
      * // read custom resource data into buffer
      * const buffer = resource.load("/resources/datafile");
-     *
-     * // In order for the engine to include custom resources in the build process, you
-     * // need to specify them in the "game.project" settings file:
+     * ```
+     * @example
+     * In order for the engine to include custom resources in the build process, you need
+     * to specify them in the "game.project" settings file:
+     * ```ts
      * // [project]
      * // title = My project
      * // version = 0.1

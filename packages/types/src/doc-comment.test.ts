@@ -810,6 +810,24 @@ describe("segmentExampleRegions", () => {
     expect(segmentExampleRegions("")).toEqual({ segments: [], trailingProse: "" });
     expect(segmentExampleRegions("   \n\t ")).toEqual({ segments: [], trailingProse: "" });
   });
+
+  test("a mangled fence inside a prose region becomes its own segment", () => {
+    const { segments, trailingProse } = segmentExampleRegions(
+      `Intro<code>lua\nfoo()</code>Next${block("bar()")}`,
+    );
+    expect(segments).toEqual([
+      { prose: "Intro", code: "foo()", lang: "lua" },
+      { prose: "Next", code: "bar()", lang: "lua" },
+    ]);
+    expect(trailingProse).toBe("");
+  });
+
+  test("inline code with no newline after its first token stays prose", () => {
+    const { segments } = segmentExampleRegions(
+      `Call <code>foo</code> or <code>lua</code> first.${block("bar()")}`,
+    );
+    expect(segments).toEqual([{ prose: "Call `foo` or `lua` first.", code: "bar()", lang: "lua" }]);
+  });
 });
 
 /** Every line of `markdown` that sits strictly inside a fenced block. */
@@ -859,6 +877,12 @@ describe("examplesHtmlToMarkdown fence segmentation", () => {
   test("prose following the last code block is still rendered", () => {
     expect(examplesHtmlToMarkdown(`${block("local a = 1")}See the manual.`)).toBe(
       "```lua\nlocal a = 1\n```\n\nSee the manual.",
+    );
+  });
+
+  test("a mangled fence in prose renders as its own fence, not backticks in a paragraph", () => {
+    expect(examplesHtmlToMarkdown(`Intro<code>lua\nfoo()</code>Next${block("bar()")}`)).toBe(
+      "Intro\n\n```lua\nfoo()\n```\n\nNext\n\n```lua\nbar()\n```",
     );
   });
 

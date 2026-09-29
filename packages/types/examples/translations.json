@@ -79,8 +79,12 @@
   ],
   "collectionfactory.create": [
     {
-      "sourceHash": "5a49721288808772",
-      "ts": "// How to spawn a collection of game objects:\nexport default defineScript({\n  init() {\n    // Spawn a small group of enemies.\n    const pos = vmath.vector3(100, 12.5, 0);\n    const rot = vmath.quat_rotation_z(Math.PI / 2);\n    const scale = 0.5;\n    const props = new LuaMap<Hash, Record<string, unknown>>();\n    props.set(hash(\"/enemy_leader\"), { health: 1000.0 });\n    props.set(hash(\"/enemy_1\"), { health: 200.0 });\n    props.set(hash(\"/enemy_2\"), { health: 400.0, color: hash(\"green\") });\n\n    const enemy_ids = collectionfactory.create(\"#enemyfactory\", pos, rot, props, scale);\n    // enemy_ids now map to the spawned instance ids:\n    //\n    // pprint(self.enemy_ids)\n    //\n    // DEBUG:SCRIPT:\n    // {\n    //   hash: [/enemy_leader] = hash: [/collection0/enemy_leader],\n    //   hash: [/enemy_1] = hash: [/collection0/enemy_1],\n    //   hash: [/enemy_2] = hash: [/collection0/enemy_2]\n    // }\n\n    // Send \"attack\" message to the leader. First look up its instance id.\n    const leader_id = enemy_ids.get(hash(\"/enemy_leader\"));\n    if (leader_id !== undefined) {\n      msg.post(leader_id, \"attack\");\n    }\n    return { enemy_ids };\n  },\n});\n\n// How to delete a spawned collection:\nfunction delete_enemies(self: { enemy_ids: Hash[] }) {\n  go.delete(self.enemy_ids);\n}"
+      "sourceHash": "1ba3a94b5d04c5a0",
+      "ts": "export default defineScript({\n  init() {\n    // Spawn a small group of enemies.\n    const pos = vmath.vector3(100, 12.5, 0);\n    const rot = vmath.quat_rotation_z(Math.PI / 2);\n    const scale = 0.5;\n    const props = new LuaMap<Hash, Record<string, unknown>>();\n    props.set(hash(\"/enemy_leader\"), { health: 1000.0 });\n    props.set(hash(\"/enemy_1\"), { health: 200.0 });\n    props.set(hash(\"/enemy_2\"), { health: 400.0, color: hash(\"green\") });\n\n    const enemy_ids = collectionfactory.create(\"#enemyfactory\", pos, rot, props, scale);\n    // enemy_ids now map to the spawned instance ids:\n    //\n    // pprint(self.enemy_ids)\n    //\n    // DEBUG:SCRIPT:\n    // {\n    //   hash: [/enemy_leader] = hash: [/collection0/enemy_leader],\n    //   hash: [/enemy_1] = hash: [/collection0/enemy_1],\n    //   hash: [/enemy_2] = hash: [/collection0/enemy_2]\n    // }\n\n    // Send \"attack\" message to the leader. First look up its instance id.\n    const leader_id = enemy_ids.get(hash(\"/enemy_leader\"));\n    if (leader_id !== undefined) {\n      msg.post(leader_id, \"attack\");\n    }\n    return { enemy_ids };\n  },\n});"
+    },
+    {
+      "sourceHash": "4a14456855350b8c",
+      "ts": "function delete_enemies(self: { enemy_ids: Hash[] }) {\n  go.delete(self.enemy_ids);\n}"
     }
   ],
   "collectionfactory.load": [
@@ -157,8 +161,16 @@
   ],
   "editor.bob": [
     {
-      "sourceHash": "3d4699538f2b8207",
-      "ts": "// Print help in the console:\neditor.bob({ help: true });\n\n// Bundle the game for the host platform:\nconst opts = { archive: true, platform: editor.platform };\neditor.bob(opts, \"distclean\", \"resolve\", \"build\", \"bundle\");\n\n// Using snake_cased and repeated options:\nconst bundleOpts = {\n  archive: true,\n  platform: editor.platform,\n  build_server: \"https://build.my-company.com\",\n  settings: [\"test.ini\", \"headless.ini\"],\n};\neditor.bob(bundleOpts, \"distclean\", \"resolve\", \"build\");"
+      "sourceHash": "2d2af2a8d67e6042",
+      "ts": "editor.bob({ help: true });"
+    },
+    {
+      "sourceHash": "daf12f556b1915ae",
+      "ts": "const opts = { archive: true, platform: editor.platform };\neditor.bob(opts, \"distclean\", \"resolve\", \"build\", \"bundle\");"
+    },
+    {
+      "sourceHash": "9e755fcbee26e790",
+      "ts": "const opts = {\n  archive: true,\n  platform: editor.platform,\n  build_server: \"https://build.my-company.com\",\n  settings: [\"test.ini\", \"headless.ini\"],\n};\neditor.bob(opts, \"distclean\", \"resolve\", \"build\");"
     }
   ],
   "editor.command": [
@@ -175,8 +187,16 @@
   ],
   "editor.create_resources": [
     {
-      "sourceHash": "b650f0d98eccb0fd",
-      "ts": "// Create a single resource from template:\neditor.create_resources([\"/npc.go\"]);\n\n// Create multiple resources:\neditor.create_resources([\"/npc.go\", \"/levels/1.collection\", \"/levels/2.collection\"]);\n\n// Create a resource with custom content:\neditor.create_resources([[\"/npc.script\", \"go.property('hp', 100)\"]]);"
+      "sourceHash": "dd9b866b84f9de49",
+      "ts": "editor.create_resources([\"/npc.go\"]);"
+    },
+    {
+      "sourceHash": "86faf70ca56cf8a6",
+      "ts": "editor.create_resources([\"/npc.go\", \"/levels/1.collection\", \"/levels/2.collection\"]);"
+    },
+    {
+      "sourceHash": "f29c4cbd5eb7bb65",
+      "ts": "editor.create_resources([[\"/npc.script\", \"go.property('hp', 100)\"]]);"
     }
   ],
   "editor.delete_directory": [
@@ -187,8 +207,12 @@
   ],
   "editor.execute": [
     {
-      "sourceHash": "b22ea40a2a3595b2",
-      "ts": "// Make a directory with spaces in it:\neditor.execute(\"mkdir\", \"new dir\");\n\n// Read the git status:\nconst status = editor.execute(\"git\", \"status\", \"--porcelain\", {\n  reload_resources: false,\n  out: \"capture\",\n});"
+      "sourceHash": "d5e0db47ebda0546",
+      "ts": "editor.execute(\"mkdir\", \"new dir\");"
+    },
+    {
+      "sourceHash": "5044e4584bab1ea9",
+      "ts": "const status = editor.execute(\"git\", \"status\", \"--porcelain\", {\n  reload_resources: false,\n  out: \"capture\",\n});"
     }
   ],
   "editor.ui.use_memo": [
@@ -205,8 +229,12 @@
   ],
   "factory.create": [
     {
-      "sourceHash": "d2cd2037a9127ec6",
-      "ts": "// How to create a new game object:\nexport default defineScript({\n  init(self) {\n    // create a new game object and provide property values\n    const created = factory.create(\"#factory\", undefined, undefined, { my_value: 1 });\n    // communicate with the object\n    msg.post(created, \"hello\");\n  },\n});\n\n// And then let the new game object have a script attached, in its own file:\n//\n//   go.property(\"my_value\", 0);\n//\n//   export default defineScript({\n//     init(self) {\n//       // do something with self.my_value which is now one\n//     },\n//   });"
+      "sourceHash": "df32ef57d1e2366e",
+      "ts": "export default defineScript({\n  init(self) {\n    // create a new game object and provide property values\n    const created = factory.create(\"#factory\", undefined, undefined, { my_value: 1 });\n    // communicate with the object\n    msg.post(created, \"hello\");\n  },\n});"
+    },
+    {
+      "sourceHash": "981a4891837250a9",
+      "ts": "go.property(\"my_value\", 0);\n\nexport default defineScript({\n  init(self) {\n    // do something with self.my_value which is now one\n  },\n});"
     }
   ],
   "factory.load": [
@@ -297,8 +325,32 @@
   ],
   "go.get": [
     {
-      "sourceHash": "7cac2203eda50a5e",
-      "ts": "// Get a property \"speed\" from a script \"player\"; the property must be declared\n// in the player script:\ngo.property(\"speed\", 50);\n\n// Then in the calling script (assumed to belong to the same game object, but it\n// does not have to):\nconst speed = go.get(\"#player\", \"speed\");\n\n// Get a value in a material property array (the glsl indices are 0-based):\nconst url = msg.url(\"#mesh\");\ngo.get(url, \"example\", { index: 1 }); // the first vector4 in the array: example[0]\ngo.get(url, \"example\", { index: 16 }); // the last vector4 in the array: example[15]\ngo.get(url, \"example.x\", { index: 1 }); // an element of a vector4: example[0].x\n\n// Get all values in a material property array as a table:\ngo.get(url, \"example\"); // => [vector4, vector4, ...]\ngo.get(url, \"example.x\"); // => [number1, number2, ...]\n\n// Get a named property (the resource of a certain gui font):\nconst font_hash = go.get(\"#gui\", \"fonts\", { key: \"system_font_BIG\" });\n\n// Get a property from a sub-component, using the \"keys\" options table\n// (addressing the first level of a component):\ngo.get(\"#particlefx\", \"material\", { keys: [\"cone_emitter\"] });\n\n// Get a property in a deeper sub-hierarchy (if the component supports it).\n// Note: no built-in component supports this yet, but a custom one could.\ngo.get(\"#my_component\", \"some_property\", { keys: [\"root\", \"child_node\"] });"
+      "sourceHash": "bf6bc560db059a69",
+      "ts": "go.property(\"speed\", 50);"
+    },
+    {
+      "sourceHash": "6c13a2e33f4f0c98",
+      "ts": "const speed = go.get(\"#player\", \"speed\");"
+    },
+    {
+      "sourceHash": "decf402c4b246359",
+      "ts": "// the glsl indices are 0-based\nconst url = msg.url(\"#mesh\");\ngo.get(url, \"example\", { index: 1 }); // the first vector4 in the array: example[0]\ngo.get(url, \"example\", { index: 16 }); // the last vector4 in the array: example[15]\ngo.get(url, \"example.x\", { index: 1 }); // an element of a vector4: example[0].x"
+    },
+    {
+      "sourceHash": "cd59aaeb4278cdfc",
+      "ts": "const url = msg.url(\"#mesh\");\ngo.get(url, \"example\"); // => [vector4, vector4, ...]\ngo.get(url, \"example.x\"); // => [number1, number2, ...]"
+    },
+    {
+      "sourceHash": "4b5cae0c647b3381",
+      "ts": "// get the resource of a certain gui font\nconst font_hash = go.get(\"#gui\", \"fonts\", { key: \"system_font_BIG\" });"
+    },
+    {
+      "sourceHash": "ecf8c97d1bcaf7d3",
+      "ts": "// Addressing the first level of a component:\ngo.get(\"#particlefx\", \"material\", { keys: [\"cone_emitter\"] });"
+    },
+    {
+      "sourceHash": "df724fc6773a584b",
+      "ts": "// Note: no built-in component supports this yet, but a custom one could.\ngo.get(\"#my_component\", \"some_property\", { keys: [\"root\", \"child_node\"] });"
     }
   ],
   "go.get_id": [
@@ -415,8 +467,32 @@
   ],
   "go.set": [
     {
-      "sourceHash": "2ca1763ad71c1232",
-      "ts": "// Set a property \"speed\" of a script \"player\"; the property must be declared in\n// the player script:\ngo.property(\"speed\", 50);\n\n// Then in the calling script (assumed to belong to the same game object, but it\n// does not have to):\ngo.set(\"#player\", \"speed\", 100);\n\n// Set a vector4 in a material property array (the glsl indices are 0-based):\nconst url = msg.url(\"#mesh\");\ngo.set(url, \"example\", vmath.vector4(1, 1, 1, 1), { index: 1 }); // example[0] = v\ngo.set(url, \"example\", vmath.vector4(2, 2, 2, 2), { index: 16 }); // example[15] = v\ngo.set(url, \"example.x\", 7, { index: 1 }); // example[0].x = 7\n\n// Set a material property array by a table of vector4 (only the first two are\n// set; extra array elements are ignored):\ngo.set(url, \"example\", [vmath.vector4(1, 1, 1, 1), vmath.vector4(2, 2, 2, 2)]);\n\n// Set a named property (inside init(self)):\ngo.property(\"big_font\", resource.font());\n\nfunction set_named_font(self: { big_font: Hash }) {\n  go.set(\"#gui\", \"fonts\", self.big_font, { key: \"system_font_BIG\" });\n}\n\n// Set a property on a sub-component, using the \"keys\" options table (inside\n// init(self)):\ngo.property(\"my_material\", resource.material());\n\nfunction set_sub_component_material(self: { my_material: Hash }) {\n  go.set(\"#particlefx\", \"material\", self.my_material, { keys: [\"cone_emitter\"] });\n}\n\n// Set a property in a deeper sub-hierarchy (if the component supports it).\n// Note: no built-in component supports this yet, but a custom one could.\nconst some_value = 1;\ngo.set(\"#my_component\", \"some_property\", some_value, { keys: [\"root\", \"child_node\"] });"
+      "sourceHash": "bf6bc560db059a69",
+      "ts": "go.property(\"speed\", 50);"
+    },
+    {
+      "sourceHash": "dcb0970a052d80a0",
+      "ts": "go.set(\"#player\", \"speed\", 100);"
+    },
+    {
+      "sourceHash": "150af4281adacf42",
+      "ts": "// the glsl indices are 0-based\nconst url = msg.url(\"#mesh\");\ngo.set(url, \"example\", vmath.vector4(1, 1, 1, 1), { index: 1 }); // example[0] = v\ngo.set(url, \"example\", vmath.vector4(2, 2, 2, 2), { index: 16 }); // example[15] = v\ngo.set(url, \"example.x\", 7, { index: 1 }); // example[0].x = 7"
+    },
+    {
+      "sourceHash": "fb7b5aefbb9fad4b",
+      "ts": "// set the first two vector4's in the array\n// if the array has more than two elements in the array they will not be set\nconst url = msg.url(\"#mesh\");\ngo.set(url, \"example\", [vmath.vector4(1, 1, 1, 1), vmath.vector4(2, 2, 2, 2)]);"
+    },
+    {
+      "sourceHash": "ea5b1b6430458d24",
+      "ts": "go.property(\"big_font\", resource.font());\n\nfunction set_named_font(self: { big_font: Hash }) {\n  go.set(\"#gui\", \"fonts\", self.big_font, { key: \"system_font_BIG\" });\n}"
+    },
+    {
+      "sourceHash": "bb73335ad4c5f1fe",
+      "ts": "go.property(\"my_material\", resource.material());\n\nfunction set_sub_component_material(self: { my_material: Hash }) {\n  go.set(\"#particlefx\", \"material\", self.my_material, { keys: [\"cone_emitter\"] });\n}"
+    },
+    {
+      "sourceHash": "2a68fe57bedcd5c1",
+      "ts": "// Note: no built-in component supports this yet, but a custom one could.\nconst some_value = 1;\ngo.set(\"#my_component\", \"some_property\", some_value, { keys: [\"root\", \"child_node\"] });"
     }
   ],
   "go.set_parent": [
@@ -511,8 +587,12 @@
   ],
   "gui.cancel_animations": [
     {
-      "sourceHash": "ac678b79b816b54d",
-      "ts": "// Start an animation of the position property of a node, then cancel parts of\n// the animation:\nconst node = gui.get_node(\"my_node\");\n// animate to new position\nconst pos = vmath.vector3(100, 100, 0);\ngui.animate(node, \"position\", pos, gui.EASING_LINEAR, 2);\n// ...\n// cancel animation of the x component.\ngui.cancel_animations(node, \"position.x\");\n\n// Cancels all property animations on a node in a single call:\n// animate to new position and scale\ngui.animate(node, \"position\", vmath.vector3(100, 100, 0), gui.EASING_LINEAR, 5);\ngui.animate(node, \"scale\", vmath.vector3(0.5), gui.EASING_LINEAR, 5);\n// ...\n// cancel positioning and scaling at once\ngui.cancel_animations(node);"
+      "sourceHash": "4887f66e427b7c8e",
+      "ts": "const node = gui.get_node(\"my_node\");\n// animate to new position\nconst pos = vmath.vector3(100, 100, 0);\ngui.animate(node, \"position\", pos, gui.EASING_LINEAR, 2);\n// ...\n// cancel animation of the x component.\ngui.cancel_animations(node, \"position.x\");"
+    },
+    {
+      "sourceHash": "62239db9b4ffcfec",
+      "ts": "const node = gui.get_node(\"my_node\");\n// animate to new position and scale\ngui.animate(node, \"position\", vmath.vector3(100, 100, 0), gui.EASING_LINEAR, 5);\ngui.animate(node, \"scale\", vmath.vector3(0.5), gui.EASING_LINEAR, 5);\n// ...\n// cancel positioning and scaling at once\ngui.cancel_animations(node);"
     }
   ],
   "gui.cancel_flipbook": [
@@ -571,14 +651,22 @@
   ],
   "gui.new_texture": [
     {
-      "sourceHash": "192ba6f4b864704a",
-      "ts": "// How to create a texture and apply it to a new box node:\nexport default defineGuiScript({\n  init(self) {\n    const w = 200;\n    const h = 300;\n\n    // A nice orange. String with the RGB values.\n    const orange = String.fromCharCode(0xff, 0x80, 0x10);\n\n    // Create the texture. Repeat the color string for each pixel.\n    const [ok, reason] = gui.new_texture(\"orange_tx\", w, h, \"rgb\", orange.repeat(w * h));\n    if (ok) {\n      // Create a box node and apply the texture to it.\n      const n = gui.new_box_node(vmath.vector3(200, 200, 0), vmath.vector3(w, h, 0));\n      gui.set_texture(n, \"orange_tx\");\n    } else {\n      // Could not create texture for some reason...\n      if (reason === gui.RESULT_TEXTURE_ALREADY_EXISTS) {\n        // ...\n      } else {\n        // ...\n      }\n    }\n  },\n});\n\n// How to create a texture using .astc format\nconst size = 4;\nconst pos = vmath.vector3(200, 200, 0);\nconst path = \"/assets/images/logo_4x4.astc\";\nconst [data] = sys.load_resource(path);\nif (data !== undefined) {\n  const n = gui.new_box_node(pos, vmath.vector3(size, size, 0));\n  // size is read from the .astc buffer\n  // flip is not supported\n  gui.new_texture(path, 0, 0, \"astc\", data, false);\n  gui.set_texture(n, path);\n}"
+      "sourceHash": "b649d09aecc014e4",
+      "ts": "export default defineGuiScript({\n  init(self) {\n    const w = 200;\n    const h = 300;\n\n    // A nice orange. String with the RGB values.\n    const orange = String.fromCharCode(0xff, 0x80, 0x10);\n\n    // Create the texture. Repeat the color string for each pixel.\n    const [ok, reason] = gui.new_texture(\"orange_tx\", w, h, \"rgb\", orange.repeat(w * h));\n    if (ok) {\n      // Create a box node and apply the texture to it.\n      const n = gui.new_box_node(vmath.vector3(200, 200, 0), vmath.vector3(w, h, 0));\n      gui.set_texture(n, \"orange_tx\");\n    } else {\n      // Could not create texture for some reason...\n      if (reason === gui.RESULT_TEXTURE_ALREADY_EXISTS) {\n        // ...\n      } else {\n        // ...\n      }\n    }\n  },\n});"
+    },
+    {
+      "sourceHash": "3279c780ce37ad44",
+      "ts": "const size = 4;\nconst pos = vmath.vector3(200, 200, 0);\nconst path = \"/assets/images/logo_4x4.astc\";\nconst [data] = sys.load_resource(path);\nif (data !== undefined) {\n  const n = gui.new_box_node(pos, vmath.vector3(size, size, 0));\n  // size is read from the .astc buffer\n  // flip is not supported\n  gui.new_texture(path, 0, 0, \"astc\", data, false);\n  gui.set_texture(n, path);\n}"
     }
   ],
   "gui.play_flipbook": [
     {
-      "sourceHash": "341233e631c23020",
-      "ts": "// Set the texture of a node to a flipbook animation from an atlas:\nfunction anim_callback(self: unknown, node: unknown) {\n  // Take action after animation has played.\n}\n\nexport default defineGuiScript({\n  init(self) {\n    // Create a new node and set the texture to a flipbook animation\n    const node = gui.get_node(\"button_node\");\n    gui.set_texture(node, \"gui_sprites\");\n    gui.play_flipbook(node, \"animated_button\");\n  },\n});\n\n// Set the texture of a node to an image from an atlas:\n// Create a new node and set the texture to a \"button.png\" from atlas\nconst node = gui.get_node(\"button_node\");\ngui.set_texture(node, \"gui_sprites\");\ngui.play_flipbook(node, \"button\");"
+      "sourceHash": "766767de34e4e6a2",
+      "ts": "function anim_callback(self: unknown, node: unknown) {\n  // Take action after animation has played.\n}\n\nexport default defineGuiScript({\n  init(self) {\n    // Create a new node and set the texture to a flipbook animation\n    const node = gui.get_node(\"button_node\");\n    gui.set_texture(node, \"gui_sprites\");\n    gui.play_flipbook(node, \"animated_button\");\n  },\n});"
+    },
+    {
+      "sourceHash": "90aa26229f63af7e",
+      "ts": "// Create a new node and set the texture to a \"button.png\" from atlas\nconst node = gui.get_node(\"button_node\");\ngui.set_texture(node, \"gui_sprites\");\ngui.play_flipbook(node, \"button\");"
     }
   ],
   "gui.play_particlefx": [
@@ -601,12 +689,24 @@
   ],
   "gui.set": [
     {
-      "sourceHash": "a609fdbcee772fac",
-      "ts": "// Updates the position property on an existing node:\nconst node = gui.get_node(\"my_box_node\");\nconst node_position = gui.get(node, \"position\") as Vector3;\ngui.set(node, \"position.x\", node_position.x + 128);\n\n// Updates the rotation property on an existing node:\ngui.set(node, \"rotation\", vmath.quat_rotation_z(math.rad(45)));\n// this is equivalent to:\ngui.set(node, \"euler.z\", 45);\n// or using the entire vector:\ngui.set(node, \"euler\", vmath.vector3(0, 0, 45));\n// or using the set_rotation\ngui.set_rotation(node, vmath.vector3(0, 0, 45));\n\n// Sets various material constants for a node:\ngui.set(node, \"tint\", vmath.vector4(1, 0, 0, 1));\n// matrix4 is also supported\ngui.set(node, \"light_matrix\", vmath.matrix4());\n// update a constant in an array at position 4. the array is specified in the shader as:\n// uniform vec4 tint_array[4]; // lua is 1 based, shader is 0 based\ngui.set(node, \"tint_array\", vmath.vector4(1, 0, 0, 1), { index: 4 });\n// update a matrix constant in an array at position 4. the array is specified in the shader as:\n// uniform mat4 light_matrix_array[4];\ngui.set(node, \"light_matrix_array\", vmath.matrix4(), { index: 4 });\n// update a sub-element in a constant\ngui.set(node, \"tint.x\", 1);\n// update a sub-element in an array constant at position 4\ngui.set(node, \"tint_array.x\", 1, { index: 4 });\n\n// Set a named property\nexport default defineGuiScript({\n  on_message(self, message_id, message) {\n    if (message_id === hash(\"set_font\") && types.is_hash(message.font)) {\n      gui.set(msg.url(), \"fonts\", message.font, { key: \"my_font_name\" });\n      gui.set_font(gui.get_node(\"text\"), \"my_font_name\");\n    } else if (message_id === hash(\"set_texture\") && types.is_hash(message.texture)) {\n      gui.set(msg.url(), \"textures\", message.texture, { key: \"my_texture\" });\n      gui.set_texture(gui.get_node(\"box\"), \"my_texture\");\n      gui.play_flipbook(gui.get_node(\"box\"), \"logo_256\");\n    }\n  },\n});\n\n// Remove a named runtime texture resource mapping:\nconst atlas_params = {\n  texture: \"/runtime.texturec\",\n  animations: [{ id: \"runtime\", width: 1, height: 1, frames: [1] }],\n  geometries: [{ vertices: [0, 0, 0, 1, 1, 1, 1, 0], uvs: [0, 0, 0, 1, 1, 1, 1, 0], indices: [0, 1, 2, 0, 2, 3] }],\n} satisfies Parameters<typeof resource.create_atlas>[1];\nconst atlas_id = resource.create_atlas(\"/runtime.texturesetc\", atlas_params);\ngui.set(msg.url(), \"textures\", atlas_id, { key: \"runtime_texture\" });\ngui.set_texture(gui.get_node(\"box\"), \"runtime_texture\");\n\n// Later, remove the GUI mapping before releasing the atlas resource.\ngui.set(msg.url(), \"textures\", undefined, { key: \"runtime_texture\" });\nresource.release(atlas_id);"
+      "sourceHash": "0b505e5f92fd4aff",
+      "ts": "const node = gui.get_node(\"my_box_node\");\nconst node_position = gui.get(node, \"position\") as Vector3;\ngui.set(node, \"position.x\", node_position.x + 128);"
     },
     {
-      "sourceHash": "d195edde0a9fd170",
-      "ts": "// Updates the position property on an existing node:\nconst node = gui.get_node(\"my_box_node\");\nconst node_position = gui.get(node, \"position\") as Vector3;\ngui.set(node, \"position.x\", node_position.x + 128);\n\n// Updates the rotation property on an existing node:\ngui.set(node, \"rotation\", vmath.quat_rotation_z(math.rad(45)));\n// this is equivalent to:\ngui.set(node, \"euler.z\", 45);\n// or using the entire vector:\ngui.set(node, \"euler\", vmath.vector3(0, 0, 45));\n// or using the set_rotation\ngui.set_rotation(node, vmath.vector3(0, 0, 45));\n\n// Sets various material constants for a node:\ngui.set(node, \"tint\", vmath.vector4(1, 0, 0, 1));\n// matrix4 is also supported\ngui.set(node, \"light_matrix\", vmath.matrix4());\n// update a constant in an array at position 4. the array is specified in the shader as:\n// uniform vec4 tint_array[4]; // lua is 1 based, shader is 0 based\ngui.set(node, \"tint_array\", vmath.vector4(1, 0, 0, 1), { index: 4 });\n// update a matrix constant in an array at position 4. the array is specified in the shader as:\n// uniform mat4 light_matrix_array[4];\ngui.set(node, \"light_matrix_array\", vmath.matrix4(), { index: 4 });\n// update a sub-element in a constant\ngui.set(node, \"tint.x\", 1);\n// update a sub-element in an array constant at position 4\ngui.set(node, \"tint_array.x\", 1, { index: 4 });\n\n// Set a named property\nexport default defineGuiScript({\n  on_message(self, message_id, message) {\n    if (message_id === hash(\"set_font\") && types.is_hash(message.font)) {\n      gui.set(msg.url(), \"fonts\", message.font, { key: \"my_font_name\" });\n      gui.set_font(gui.get_node(\"text\"), \"my_font_name\");\n    } else if (message_id === hash(\"set_texture\") && types.is_hash(message.texture)) {\n      gui.set(msg.url(), \"textures\", message.texture, { key: \"my_texture\" });\n      gui.set_texture(gui.get_node(\"box\"), \"my_texture\");\n      gui.play_flipbook(gui.get_node(\"box\"), \"logo_256\");\n    }\n  },\n});"
+      "sourceHash": "8ed6f5c059ba2496",
+      "ts": "const node = gui.get_node(\"my_box_node\");\ngui.set(node, \"rotation\", vmath.quat_rotation_z(math.rad(45)));\n// this is equivalent to:\ngui.set(node, \"euler.z\", 45);\n// or using the entire vector:\ngui.set(node, \"euler\", vmath.vector3(0, 0, 45));\n// or using the set_rotation\ngui.set_rotation(node, vmath.vector3(0, 0, 45));"
+    },
+    {
+      "sourceHash": "2a8317babd507565",
+      "ts": "const node = gui.get_node(\"my_box_node\");\ngui.set(node, \"tint\", vmath.vector4(1, 0, 0, 1));\n// matrix4 is also supported\ngui.set(node, \"light_matrix\", vmath.matrix4());\n// update a constant in an array at position 4. the array is specified in the shader as:\n// uniform vec4 tint_array[4]; // lua is 1 based, shader is 0 based\ngui.set(node, \"tint_array\", vmath.vector4(1, 0, 0, 1), { index: 4 });\n// update a matrix constant in an array at position 4. the array is specified in the shader as:\n// uniform mat4 light_matrix_array[4];\ngui.set(node, \"light_matrix_array\", vmath.matrix4(), { index: 4 });\n// update a sub-element in a constant\ngui.set(node, \"tint.x\", 1);\n// update a sub-element in an array constant at position 4\ngui.set(node, \"tint_array.x\", 1, { index: 4 });"
+    },
+    {
+      "sourceHash": "b52d73e25b02e93f",
+      "ts": "export default defineGuiScript({\n  on_message(self, message_id, message) {\n    if (message_id === hash(\"set_font\") && types.is_hash(message.font)) {\n      gui.set(msg.url(), \"fonts\", message.font, { key: \"my_font_name\" });\n      gui.set_font(gui.get_node(\"text\"), \"my_font_name\");\n    } else if (message_id === hash(\"set_texture\") && types.is_hash(message.texture)) {\n      gui.set(msg.url(), \"textures\", message.texture, { key: \"my_texture\" });\n      gui.set_texture(gui.get_node(\"box\"), \"my_texture\");\n      gui.play_flipbook(gui.get_node(\"box\"), \"logo_256\");\n    }\n  },\n});"
+    },
+    {
+      "sourceHash": "8e2e40668493072c",
+      "ts": "const atlas_params = {\n  texture: \"/runtime.texturec\",\n  animations: [{ id: \"runtime\", width: 1, height: 1, frames: [1] }],\n  geometries: [{ vertices: [0, 0, 0, 1, 1, 1, 1, 0], uvs: [0, 0, 0, 1, 1, 1, 1, 0], indices: [0, 1, 2, 0, 2, 3] }],\n} satisfies Parameters<typeof resource.create_atlas>[1];\nconst atlas_id = resource.create_atlas(\"/runtime.texturesetc\", atlas_params);\ngui.set(msg.url(), \"textures\", atlas_id, { key: \"runtime_texture\" });\ngui.set_texture(gui.get_node(\"box\"), \"runtime_texture\");\n\n// Later, remove the GUI mapping before releasing the atlas resource.\ngui.set(msg.url(), \"textures\", undefined, { key: \"runtime_texture\" });\nresource.release(atlas_id);"
     }
   ],
   "gui.set_id": [
@@ -623,8 +723,12 @@
   ],
   "gui.set_texture": [
     {
-      "sourceHash": "8c3b738f1772c4fa",
-      "ts": "// To set a texture (or animation) from an atlas:\nconst node = gui.get_node(\"box_node\");\ngui.set_texture(node, \"my_atlas\");\ngui.play_flipbook(node, \"image\");\n\n// Set a dynamically created texture to a node. Note that there is only\n// one texture image in this case so gui.set_texture() is sufficient.\nconst w = 200;\nconst h = 300;\n// A nice orange. String with the RGB values.\nconst orange = String.fromCharCode(0xff, 0x80, 0x10);\n// Create the texture. Repeat the color string for each pixel.\nif (gui.new_texture(\"orange_tx\", w, h, \"rgb\", orange.repeat(w * h))) {\n  gui.set_texture(node, \"orange_tx\");\n}"
+      "sourceHash": "27917506578ef40c",
+      "ts": "const node = gui.get_node(\"box_node\");\ngui.set_texture(node, \"my_atlas\");\ngui.play_flipbook(node, \"image\");"
+    },
+    {
+      "sourceHash": "63abf329a2522305",
+      "ts": "const w = 200;\nconst h = 300;\n// A nice orange. String with the RGB values.\nconst orange = String.fromCharCode(0xff, 0x80, 0x10);\n// Create the texture. Repeat the color string for each pixel.\nconst [ok] = gui.new_texture(\"orange_tx\", w, h, \"rgb\", orange.repeat(w * h));\nif (ok) {\n  const node = gui.get_node(\"box_node\");\n  gui.set_texture(node, \"orange_tx\");\n}"
     }
   ],
   "gui.set_texture_data": [
@@ -677,14 +781,22 @@
   ],
   "json.decode": [
     {
-      "sourceHash": "a9970c96ca5954c6",
-      "ts": "// Converting a string containing JSON data into a table:\nexport default defineScript({\n  init() {\n    const jsonstring = '{\"persons\":[{\"name\":\"John Doe\"},{\"name\":\"Darth Vader\"}]}';\n    const data = json.decode(jsonstring);\n    pprint(data);\n  },\n});\n\n// Results in the following printout:\n// {\n//   persons = {\n//     1 = {\n//       name = John Doe,\n//     }\n//     2 = {\n//       name = Darth Vader,\n//     }\n//   }\n// }"
+      "sourceHash": "8dcdd6f81ef65528",
+      "ts": "export default defineScript({\n  init() {\n    const jsonstring = '{\"persons\":[{\"name\":\"John Doe\"},{\"name\":\"Darth Vader\"}]}';\n    const data = json.decode(jsonstring);\n    pprint(data);\n  },\n});"
+    },
+    {
+      "sourceHash": "4cd6b13a31344b55",
+      "ts": "// {\n//   persons = {\n//     1 = {\n//       name = John Doe,\n//     }\n//     2 = {\n//       name = Darth Vader,\n//     }\n//   }\n// }"
     }
   ],
   "json.encode": [
     {
-      "sourceHash": "e87a21865ef89cd4",
-      "ts": "// Convert a table to a JSON string:\nexport default defineScript({\n  init() {\n    const tbl = {\n      persons: [{ name: \"John Doe\" }, { name: \"Darth Vader\" }],\n    };\n    const jsonstring = json.encode(tbl);\n    pprint(jsonstring);\n  },\n});\n\n// Results in the following printout:\n// {\"persons\":[{\"name\":\"John Doe\"},{\"name\":\"Darth Vader\"}]}"
+      "sourceHash": "cd58784a46da5fcb",
+      "ts": "export default defineScript({\n  init() {\n    const tbl = {\n      persons: [{ name: \"John Doe\" }, { name: \"Darth Vader\" }],\n    };\n    const jsonstring = json.encode(tbl);\n    pprint(jsonstring);\n  },\n});"
+    },
+    {
+      "sourceHash": "2bb4b4f7cdbb2f0f",
+      "ts": "// {\"persons\":[{\"name\":\"John Doe\"},{\"name\":\"Darth Vader\"}]}"
     }
   ],
   "label.get_text": [
@@ -711,12 +823,16 @@
   ],
   "liveupdate.get_mounts": [
     {
-      "sourceHash": "1d7c8369562acce9",
-      "ts": "// Output the current resource mounts\npprint(\"MOUNTS\", liveupdate.get_mounts());\n\n// Give an output like:\n// DEBUG:SCRIPT: MOUNTS,\n// {\n//   1 = {\n//     name = \"liveupdate\",\n//     uri = \"zip:/device/path/to/acchives/liveupdate.zip\",\n//     priority = 5\n//   },\n//   2 = {\n//     name = \"_base\",\n//     uri = \"archive:build/default/game.dmanifest\",\n//     priority = -10\n//   }\n// }"
+      "sourceHash": "5c7eede2122552e2",
+      "ts": "pprint(\"MOUNTS\", liveupdate.get_mounts());"
     },
     {
-      "sourceHash": "f79283b7edf516cf",
-      "ts": "// Output the current resource mounts\npprint(\"MOUNTS\", liveupdate.get_mounts());\n\n// Give an output like:\n// DEBUG:SCRIPT: MOUNTS,\n// {\n//   1 = {\n//     name = \"liveupdate\",\n//     uri = \"zip:/device/path/to/acchives/liveupdate.zip\",\n//     priority = 5\n//   },\n//   2 = {\n//     name = \"_base\",\n//     uri = \"archive:build/default/game.dmanifest\",\n//     priority = -10\n//   }\n// }"
+      "sourceHash": "8f1c19f5a5d6e4b1",
+      "ts": "// DEBUG:SCRIPT: MOUNTS,\n// {\n//   1 = {\n//     name = hash: [liveupdate],\n//     uri = \"zip:/device/path/to/acchives/liveupdate.zip\",\n//     priority = 5\n//   },\n//   2 = {\n//     name = hash: [_base],\n//     uri = \"archive:build/default/game.dmanifest\",\n//     priority = -10\n//   }\n// }"
+    },
+    {
+      "sourceHash": "a93aeb64f6460957",
+      "ts": "// DEBUG:SCRIPT: MOUNTS,\n// {\n//   1 = {\n//     name = \"liveupdate\",\n//     uri = \"zip:/device/path/to/acchives/liveupdate.zip\",\n//     priority = 5\n//   },\n//   2 = {\n//     name = \"_base\",\n//     uri = \"archive:build/default/game.dmanifest\",\n//     priority = -10\n//   }\n// }"
     }
   ],
   "liveupdate.is_built_with_excluded_files": [
@@ -835,8 +951,12 @@
   ],
   "msg.post": [
     {
-      "sourceHash": "8eb90635d0b538fe",
-      "ts": "// Send \"enable\" to the sprite \"my_sprite\" in \"my_gameobject\":\nmsg.post(\"my_gameobject#my_sprite\", \"enable\");\n\n// Send a \"my_message\" to a url with some additional data:\nconst my_url = msg.url(\"my_gameobject#my_script\");\nconst params = { my_parameter: \"my_value\" };\nmsg.post(my_url, \"my_message\", params);"
+      "sourceHash": "3bb511425986efad",
+      "ts": "msg.post(\"my_gameobject#my_sprite\", \"enable\");"
+    },
+    {
+      "sourceHash": "bb0ad09dd9648670",
+      "ts": "const my_url = msg.url(\"my_gameobject#my_script\");\nconst params = { my_parameter: \"my_value\" };\nmsg.post(my_url, \"my_message\", params);"
     }
   ],
   "msg.url": [
@@ -1075,8 +1195,20 @@
   ],
   "render.constant_buffer": [
     {
-      "sourceHash": "851cc71b74ec904a",
-      "ts": "export default defineRenderScript({\n  init() {\n    return { my_pred: render.predicate([hash(\"my_tag\")]) };\n  },\n\n  update(self, dt) {\n    // Set a \"tint\" constant in a constant buffer in the render script:\n    const constants = render.constant_buffer();\n    constants.tint = vmath.vector4(1, 1, 1, 1);\n\n    // Then use the constant buffer when drawing a predicate:\n    render.draw(self.my_pred, { constants });\n\n    // The constant buffer also supports array values by specifying constants in an array:\n    const constants2 = render.constant_buffer();\n    constants2.light_colors = [];\n    constants2.light_colors[0] = vmath.vector4(1, 0, 0, 1);\n    constants2.light_colors[1] = vmath.vector4(0, 1, 0, 1);\n    constants2.light_colors[2] = vmath.vector4(0, 0, 1, 1);\n\n    // You can also create the array by passing the vectors directly:\n    const constants3 = render.constant_buffer();\n    constants3.light_colors = [\n      vmath.vector4(1, 0, 0, 1),\n      vmath.vector4(0, 1, 0, 1),\n      vmath.vector4(0, 0, 1, 1),\n    ];\n\n    // Add more constants to the array\n    constants3.light_colors[3] = vmath.vector4(1, 1, 1, 1);\n  },\n});"
+      "sourceHash": "16ded57baadade85",
+      "ts": "const constants = render.constant_buffer();\nconstants.tint = vmath.vector4(1, 1, 1, 1);"
+    },
+    {
+      "sourceHash": "d89056c8f1a576bb",
+      "ts": "function draw_tinted(self: { my_pred: Opaque<\"render_predicate\"> }) {\n  const constants = render.constant_buffer();\n  constants.tint = vmath.vector4(1, 1, 1, 1);\n  render.draw(self.my_pred, { constants });\n}"
+    },
+    {
+      "sourceHash": "2c9cd28e1eb6e610",
+      "ts": "const constants = render.constant_buffer();\nconstants.light_colors = [];\nconstants.light_colors[0] = vmath.vector4(1, 0, 0, 1);\nconstants.light_colors[1] = vmath.vector4(0, 1, 0, 1);\nconstants.light_colors[2] = vmath.vector4(0, 0, 1, 1);"
+    },
+    {
+      "sourceHash": "d1c04a81200daf67",
+      "ts": "const constants = render.constant_buffer();\nconstants.light_colors = [\n  vmath.vector4(1, 0, 0, 1),\n  vmath.vector4(0, 1, 0, 1),\n  vmath.vector4(0, 0, 1, 1),\n];\n\n// Add more constants to the array\nconstants.light_colors[3] = vmath.vector4(1, 1, 1, 1);"
     }
   ],
   "render.delete_render_target": [
@@ -1105,14 +1237,30 @@
   ],
   "render.dispatch_compute": [
     {
-      "sourceHash": "af76607a05354da7",
-      "ts": "export default defineRenderScript({\n  init() {\n    const color_params = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n    };\n    return {\n      backing_texture: resource.get_texture_info(\"/main/backing.texturec\").handle,\n      scene_rt: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),\n    };\n  },\n\n  update(self, dt) {\n    render.set_compute(\"bloom\");\n    render.enable_texture(0, self.backing_texture);\n    render.enable_texture(1, self.scene_rt);\n    render.dispatch_compute(128, 128, 1);\n    render.set_compute();\n  },\n});\n\n// Dispatch a compute program with a constant buffer:\nconst constants = render.constant_buffer();\nconstants.tint = vmath.vector4(1, 1, 1, 1);\nrender.dispatch_compute(32, 32, 32, { constants });"
+      "sourceHash": "75d02543f0e1f325",
+      "ts": "export default defineRenderScript({\n  init() {\n    const color_params = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n    };\n    return {\n      backing_texture: resource.get_texture_info(\"/main/backing.texturec\").handle,\n      scene_rt: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),\n    };\n  },\n\n  update(self, dt) {\n    render.set_compute(\"bloom\");\n    render.enable_texture(0, self.backing_texture);\n    render.enable_texture(1, self.scene_rt);\n    render.dispatch_compute(128, 128, 1);\n    render.set_compute();\n  },\n});"
+    },
+    {
+      "sourceHash": "839cd1accd7a318c",
+      "ts": "const constants = render.constant_buffer();\nconstants.tint = vmath.vector4(1, 1, 1, 1);\nrender.dispatch_compute(32, 32, 32, { constants });"
     }
   ],
   "render.draw": [
     {
-      "sourceHash": "47232b75e7b74189",
-      "ts": "export default defineRenderScript({\n  init() {\n    return {\n      // define a predicate matching anything with material tag \"my_tag\"\n      my_pred: render.predicate([hash(\"my_tag\")]),\n      proj: vmath.matrix4_perspective(math.rad(45), render.get_window_width() / render.get_window_height(), 0.1, 1000),\n      view: vmath.matrix4_look_at(vmath.vector3(0, 0, 10), vmath.vector3(0, 0, 0), vmath.vector3(0, 1, 0)),\n    };\n  },\n\n  update(self, dt) {\n    // draw everything in the my_pred predicate\n    render.draw(self.my_pred);\n\n    // Draw predicate with constants:\n    const constants = render.constant_buffer();\n    constants.tint = vmath.vector4(1, 1, 1, 1);\n    render.draw(self.my_pred, { constants });\n\n    // Draw with predicate and frustum culling (without near+far planes):\n    const frustum = self.proj.mul(self.view);\n    render.draw(self.my_pred, { frustum });\n\n    // Draw with predicate and frustum culling (with near+far planes):\n    const frustum2 = self.proj.mul(self.view);\n    render.draw(self.my_pred, { frustum: frustum2, frustum_planes: render.FRUSTUM_PLANES_ALL });\n  },\n});"
+      "sourceHash": "5f241f4874a8bc1a",
+      "ts": "export default defineRenderScript({\n  init() {\n    // define a predicate matching anything with material tag \"my_tag\"\n    return { my_pred: render.predicate([hash(\"my_tag\")]) };\n  },\n\n  update(self, dt) {\n    // draw everything in the my_pred predicate\n    render.draw(self.my_pred);\n  },\n});"
+    },
+    {
+      "sourceHash": "50e774f222fef263",
+      "ts": "function draw_tinted(self: { my_pred: Opaque<\"render_predicate\"> }) {\n  const constants = render.constant_buffer();\n  constants.tint = vmath.vector4(1, 1, 1, 1);\n  render.draw(self.my_pred, { constants });\n}"
+    },
+    {
+      "sourceHash": "19aaab03c8a4c8e7",
+      "ts": "function draw_culled(self: { my_pred: Opaque<\"render_predicate\">; proj: Matrix4; view: Matrix4 }) {\n  const frustum = self.proj.mul(self.view);\n  render.draw(self.my_pred, { frustum });\n}"
+    },
+    {
+      "sourceHash": "d1cbea5554766082",
+      "ts": "function draw_culled(self: { my_pred: Opaque<\"render_predicate\">; proj: Matrix4; view: Matrix4 }) {\n  const frustum = self.proj.mul(self.view);\n  render.draw(self.my_pred, { frustum, frustum_planes: render.FRUSTUM_PLANES_ALL });\n}"
     }
   ],
   "render.draw_debug3d": [
@@ -1227,8 +1375,12 @@
   ],
   "render.set_camera": [
     {
-      "sourceHash": "6ee012d07a0487a6",
-      "ts": "export default defineRenderScript({\n  init() {\n    return { my_pred: render.predicate([hash(\"my_tag\")]) };\n  },\n\n  update(self, dt) {\n    // Set the current camera to be used for rendering\n    render.set_camera(\"main:/my_go#camera\");\n    render.draw(self.my_pred);\n    render.set_camera(undefined);\n\n    // Use the camera frustum for frustum culling together with a specific frustum plane option for the draw command\n    // The camera frustum will take precedence over the frustum plane option in render.draw\n    render.set_camera(\"main:/my_go#camera\", { use_frustum: true });\n    // However, we can still customize the frustum planes regardless of the camera option!\n    render.draw(self.my_pred, { frustum_planes: render.FRUSTUM_PLANES_ALL });\n    render.set_camera();\n  },\n});"
+      "sourceHash": "b107acc1597639c2",
+      "ts": "function draw_through_camera(self: { my_pred: Opaque<\"render_predicate\"> }) {\n  render.set_camera(\"main:/my_go#camera\");\n  render.draw(self.my_pred);\n  render.set_camera(undefined);\n}"
+    },
+    {
+      "sourceHash": "4fc6efe0ea0a194d",
+      "ts": "function draw_through_camera(self: { my_pred: Opaque<\"render_predicate\"> }) {\n  // The camera frustum will take precedence over the frustum plane option in render.draw\n  render.set_camera(\"main:/my_go#camera\", { use_frustum: true });\n  // However, we can still customize the frustum planes regardless of the camera option!\n  render.draw(self.my_pred, { frustum_planes: render.FRUSTUM_PLANES_ALL });\n  render.set_camera();\n}"
     }
   ],
   "render.set_color_mask": [
@@ -1456,8 +1608,12 @@
   ],
   "resource.load": [
     {
-      "sourceHash": "051230427173b08a",
-      "ts": "// read custom resource data into buffer\nconst buffer = resource.load(\"/resources/datafile\");\n\n// In order for the engine to include custom resources in the build process, you\n// need to specify them in the \"game.project\" settings file:\n// [project]\n// title = My project\n// version = 0.1\n// custom_resources = resources/,assets/level_data.json"
+      "sourceHash": "dfc400954f81d242",
+      "ts": "// read custom resource data into buffer\nconst buffer = resource.load(\"/resources/datafile\");"
+    },
+    {
+      "sourceHash": "f02ab4b1fbd6e499",
+      "ts": "// [project]\n// title = My project\n// version = 0.1\n// custom_resources = resources/,assets/level_data.json"
     }
   ],
   "resource.material": [
@@ -1564,8 +1720,12 @@
   ],
   "socket.skip": [
     {
-      "sourceHash": "3a75c35a80c48e9e",
-      "ts": "const line = \"250 OK\";\n\n// Instead of doing the following with dummy variables:\n{\n  // get the status code and separator from SMTP server reply\n  const [dummy1, dummy2, code, sep] = string.find(line, \"^(%d%d%d)(.?)\");\n}\n\n// You can skip a number of variables:\n{\n  // get the status code and separator from SMTP server reply\n  const [code, sep] = socket.skip(2, string.find(line, \"^(%d%d%d)(.?)\"));\n}"
+      "sourceHash": "4a23a75fe4aaaca9",
+      "ts": "const line = \"250 OK\";\n// get the status code and separator from SMTP server reply\nconst [dummy1, dummy2, code, sep] = string.find(line, \"^(%d%d%d)(.?)\");"
+    },
+    {
+      "sourceHash": "76686918042071bd",
+      "ts": "const line = \"250 OK\";\n// get the status code and separator from SMTP server reply\nconst [code, sep] = socket.skip(2, string.find(line, \"^(%d%d%d)(.?)\"));"
     }
   ],
   "sound.get_group_gain": [
@@ -1618,8 +1778,12 @@
   ],
   "sound.play": [
     {
-      "sourceHash": "fcfbfd341c41ec59",
-      "ts": "// Assuming the script belongs to an instance with a sound-component with id\n// \"sound\", this will make the component play its sound after 1 second:\nsound.play(\"#sound\", { delay: 1, gain: 0.9, pan: -1.0 });\n\n// Using the callback argument, you can chain several sounds together:\nfunction sound_done(self: unknown, message_id: unknown, message: unknown, sender: unknown) {\n  // play 'boom' sound fx when the countdown has completed\n  const { play_id } = message as { play_id: number };\n  if (message_id === hash(\"sound_done\") && play_id === (self as { countdown_id: number }).countdown_id) {\n    sound.play(\"#boom\", undefined, sound_done);\n  }\n}\n\nexport default defineScript({\n  init() {\n    return { countdown_id: sound.play(\"#countdown\", undefined, sound_done) };\n  },\n});"
+      "sourceHash": "657f9fcfa39cf3af",
+      "ts": "sound.play(\"#sound\", { delay: 1, gain: 0.9, pan: -1.0 });"
+    },
+    {
+      "sourceHash": "181c1feca6bf14c8",
+      "ts": "function sound_done(self: unknown, message_id: unknown, message: unknown, sender: unknown) {\n  // play 'boom' sound fx when the countdown has completed\n  const { play_id } = message as { play_id: number };\n  if (message_id === hash(\"sound_done\") && play_id === (self as { countdown_id: number }).countdown_id) {\n    sound.play(\"#boom\", undefined, sound_done);\n  }\n}\n\nexport default defineScript({\n  init() {\n    return { countdown_id: sound.play(\"#countdown\", undefined, sound_done) };\n  },\n});"
     }
   ],
   "sound.set_gain": [
@@ -1648,8 +1812,12 @@
   ],
   "sprite.play_flipbook": [
     {
-      "sourceHash": "6bac8dc702dfffec",
-      "ts": "// Assuming the sprite has id \"sprite\": play the \"jump\" animation followed by the\n// \"run\" animation:\nexport default defineScript({\n  init() {\n    const url = msg.url(\"#sprite\");\n    sprite.play_flipbook(url, \"jump\", (self, message_id, message) => {\n      if (message_id === hash(\"animation_done\") && message.id === hash(\"jump\")) {\n        // jump animation done, chain with \"run\"\n        sprite.play_flipbook(url, \"run\");\n      }\n    });\n  },\n});"
+      "sourceHash": "69a3c26fd553ffa4",
+      "ts": "const url = msg.url(\"#sprite\");\n\nfunction anim_done(self: unknown, message_id: Hash, message: { id: Hash }) {\n  if (message_id === hash(\"animation_done\") && message.id === hash(\"jump\")) {\n    // jump animation done, chain with \"run\"\n    sprite.play_flipbook(url, \"run\");\n  }\n}"
+    },
+    {
+      "sourceHash": "286542aa4db17a87",
+      "ts": "export default defineScript({\n  init() {\n    const url = msg.url(\"#sprite\");\n    sprite.play_flipbook(url, \"jump\", (self, message_id, message) => {\n      if (message_id === hash(\"animation_done\") && message.id === hash(\"jump\")) {\n        // jump animation done, chain with \"run\"\n        sprite.play_flipbook(url, \"run\");\n      }\n    });\n  },\n});"
     }
   ],
   "sprite.reset_constant": [
@@ -1690,8 +1858,12 @@
   ],
   "sys.get_application_info": [
     {
-      "sourceHash": "e13c2cc712709832",
-      "ts": "// Check if twitter is installed:\nconst sysinfo = sys.get_sys_info();\nlet twitter: { installed?: boolean } = {};\n\nif (sysinfo.system_name === \"Android\") {\n  twitter = sys.get_application_info(\"com.twitter.android\");\n} else if (sysinfo.system_name === \"iPhone OS\") {\n  twitter = sys.get_application_info(\"twitter:\");\n}\n\nif (twitter.installed) {\n  // twitter is installed!\n}\n\n// Info.plist for the iOS app needs to list the schemes that are queried:\n// ...\n// <key>LSApplicationQueriesSchemes</key>\n//  <array>\n//    <string>twitter</string>\n//  </array>\n// ..."
+      "sourceHash": "326e42d5ff9baf96",
+      "ts": "const sysinfo = sys.get_sys_info();\nlet twitter: { installed?: boolean } = {};\n\nif (sysinfo.system_name === \"Android\") {\n  twitter = sys.get_application_info(\"com.twitter.android\");\n} else if (sysinfo.system_name === \"iPhone OS\") {\n  twitter = sys.get_application_info(\"twitter:\");\n}\n\nif (twitter.installed) {\n  // twitter is installed!\n}"
+    },
+    {
+      "sourceHash": "1dd1eced66cc1e10",
+      "ts": "// ...\n// <key>LSApplicationQueriesSchemes</key>\n//  <array>\n//    <string>twitter</string>\n//  </array>\n// ..."
     }
   ],
   "sys.get_application_path": [
@@ -1708,8 +1880,12 @@
   ],
   "sys.get_config_int": [
     {
-      "sourceHash": "f384eab53a7c1bda",
-      "ts": "// Get user config value\nconst speed = sys.get_config_int(\"my_game.speed\", 20); // with default value\n\nconst testmode = sys.get_config_int(\"my_game.testmode\"); // without default value\nif (testmode !== undefined) {\n  // do stuff\n}"
+      "sourceHash": "cadf71c740165693",
+      "ts": "const speed = sys.get_config_int(\"my_game.speed\", 20); // with default value"
+    },
+    {
+      "sourceHash": "9365fae7e38c060c",
+      "ts": "const testmode = sys.get_config_int(\"my_game.testmode\"); // without default value\nif (testmode !== undefined) {\n  // do stuff\n}"
     }
   ],
   "sys.get_config_number": [
@@ -1720,8 +1896,16 @@
   ],
   "sys.get_config_string": [
     {
-      "sourceHash": "4aeb12fca87c114c",
-      "ts": "// Get user config value\nconst text = sys.get_config_string(\"my_game.text\", \"default text\");\n\n// Start the engine with a bootstrap config override and add a custom config value\n// $ dmengine --config=bootstrap.main_collection=/mytest.collectionc --config=mygame.testmode=1\n\n// Read the custom config value from the command line\nconst testmode = sys.get_config_int(\"mygame.testmode\");"
+      "sourceHash": "0bf7e3158e38a94a",
+      "ts": "const text = sys.get_config_string(\"my_game.text\", \"default text\");"
+    },
+    {
+      "sourceHash": "a4703f05ae2e55b8",
+      "ts": "// $ dmengine --config=bootstrap.main_collection=/mytest.collectionc --config=mygame.testmode=1"
+    },
+    {
+      "sourceHash": "4bf891e310fb931a",
+      "ts": "const testmode = sys.get_config_int(\"mygame.testmode\");"
     }
   ],
   "sys.get_connectivity": [
@@ -1738,8 +1922,12 @@
   ],
   "sys.get_host_path": [
     {
-      "sourceHash": "a059ecb3d55d5c22",
-      "ts": "// Save data on the host\n{\n  const mytable = { score: 100, level: 3 };\n  const host_path = sys.get_host_path(\"logs/test.txt\");\n  sys.save(host_path, mytable);\n}\n\n// Load data from the host\n{\n  const host_path = sys.get_host_path(\"logs/test.txt\");\n  const table = sys.load(host_path);\n}"
+      "sourceHash": "cea90df8f93a0217",
+      "ts": "const mytable = { score: 100, level: 3 };\nconst host_path = sys.get_host_path(\"logs/test.txt\");\nsys.save(host_path, mytable);"
+    },
+    {
+      "sourceHash": "8b9a6ad30303b25e",
+      "ts": "const host_path = sys.get_host_path(\"logs/test.txt\");\nconst table = sys.load(host_path);"
     }
   ],
   "sys.get_ifaddrs": [
@@ -1768,14 +1956,22 @@
   ],
   "sys.load_buffer": [
     {
-      "sourceHash": "106462121a6dfc78",
-      "ts": "// Load binary data from a custom project resource:\nconst my_buffer = sys.load_buffer(\"/assets/my_level_data.bin\");\nconst data_str = buffer.get_bytes(my_buffer, \"data\");\nconst has_my_header = data_str.slice(0, 6) === \"D3F0LD\";\n\n// Load binary data from non-custom resource files on disk:\nconst asset_1 = sys.load_buffer(\"folder_next_to_binary/my_level_asset.txt\");\nconst asset_2 = sys.load_buffer(\"/my/absolute/path\");"
+      "sourceHash": "485ff25191819692",
+      "ts": "const my_buffer = sys.load_buffer(\"/assets/my_level_data.bin\");\nconst data_str = buffer.get_bytes(my_buffer, \"data\");\nconst has_my_header = data_str.slice(0, 6) === \"D3F0LD\";"
+    },
+    {
+      "sourceHash": "ff532f8e663a09ba",
+      "ts": "const asset_1 = sys.load_buffer(\"folder_next_to_binary/my_level_asset.txt\");\nconst asset_2 = sys.load_buffer(\"/my/absolute/path\");"
     }
   ],
   "sys.load_buffer_async": [
     {
-      "sourceHash": "6a383bca91cf11eb",
-      "ts": "// Load binary data from a custom project resource and update a texture resource:\n{\n  function my_callback(self: unknown, request_id: unknown, result: unknown) {\n    const { status, buf } = result as { status: number; buf: Opaque<\"buffer\"> };\n    if (status === sys.REQUEST_STATUS_FINISHED) {\n      resource.set_texture(\"/my_texture\", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format: graphics.TEXTURE_FORMAT_RGBA }, buf);\n    }\n  }\n\n  const my_request = sys.load_buffer_async(\"/assets/my_level_data.bin\", my_callback);\n}\n\n// Load binary data from non-custom resource files on disk:\nfunction my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { first_asset, second_asset } = self as { first_asset: Hash; second_asset: Hash };\n  if ((result as { status: number }).status !== sys.REQUEST_STATUS_FINISHED) {\n    // uh oh! File could not be found, do something graceful\n  } else if (request_id === first_asset) {\n    // result.buffer contains data from my_level_asset.bin\n  } else if (request_id === second_asset) {\n    // result.buffer contains data from 'my_level.bin'\n  }\n}\n\nexport default defineScript({\n  init() {\n    const first_path = \"folder_next_to_binary/my_level_asset.bin\";\n    const second_path = \"/some_absolute_path/my_level.bin\";\n    return {\n      first_asset: hash(first_path),\n      second_asset: hash(second_path),\n      first_request: sys.load_buffer_async(first_path, my_callback),\n      second_request: sys.load_buffer_async(second_path, my_callback),\n    };\n  },\n});"
+      "sourceHash": "91d84e7dc569ae20",
+      "ts": "function my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { status, buf } = result as { status: number; buf: Opaque<\"buffer\"> };\n  if (status === sys.REQUEST_STATUS_FINISHED) {\n    resource.set_texture(\"/my_texture\", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format: graphics.TEXTURE_FORMAT_RGBA }, buf);\n  }\n}\n\nconst my_request = sys.load_buffer_async(\"/assets/my_level_data.bin\", my_callback);"
+    },
+    {
+      "sourceHash": "5545b8901e6ec4c5",
+      "ts": "function my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { first_asset, second_asset } = self as { first_asset: Hash; second_asset: Hash };\n  if ((result as { status: number }).status !== sys.REQUEST_STATUS_FINISHED) {\n    // uh oh! File could not be found, do something graceful\n  } else if (request_id === first_asset) {\n    // result.buffer contains data from my_level_asset.bin\n  } else if (request_id === second_asset) {\n    // result.buffer contains data from 'my_level.bin'\n  }\n}\n\nexport default defineScript({\n  init() {\n    const first_path = \"folder_next_to_binary/my_level_asset.bin\";\n    const second_path = \"/some_absolute_path/my_level.bin\";\n    return {\n      first_asset: hash(first_path),\n      second_asset: hash(second_path),\n      first_request: sys.load_buffer_async(first_path, my_callback),\n      second_request: sys.load_buffer_async(second_path, my_callback),\n    };\n  },\n});"
     }
   ],
   "sys.load_resource": [
@@ -1816,8 +2012,12 @@
   ],
   "sys.set_engine_throttle": [
     {
-      "sourceHash": "66eae5cfa23de217",
-      "ts": "// Disable throttling\nsys.set_engine_throttle(false);\n\n// Enable throttling\nsys.set_engine_throttle(true, 1.5);"
+      "sourceHash": "3e3d6cc6b4f7ebb6",
+      "ts": "sys.set_engine_throttle(false);"
+    },
+    {
+      "sourceHash": "8bf9b8da4d26c449",
+      "ts": "sys.set_engine_throttle(true, 1.5);"
     }
   ],
   "sys.set_error_handler": [
@@ -1894,8 +2094,12 @@
   ],
   "timer.delay": [
     {
-      "sourceHash": "d50acfc0a9d925a8",
-      "ts": "// A simple one-shot timer\ntimer.delay(1, false, () => print(\"print in one second\"));\n\n// Repetitive timer which canceled after 10 calls\nfunction call_every_second(self: unknown, handle: unknown, time_elapsed: unknown) {\n  const state = self as { counter: number };\n  state.counter = state.counter + 1;\n  print(\"Call #\", state.counter);\n  if (state.counter === 10) {\n    timer.cancel(handle as number); // cancel timer after 10 calls\n  }\n}\n\nfunction start_counting(self: { counter: number }) {\n  self.counter = 0;\n  timer.delay(1, true, call_every_second);\n}"
+      "sourceHash": "afdbd5fc199b8290",
+      "ts": "timer.delay(1, false, () => print(\"print in one second\"));"
+    },
+    {
+      "sourceHash": "777732bd4b7c14a2",
+      "ts": "function call_every_second(self: unknown, handle: unknown, time_elapsed: unknown) {\n  const state = self as { counter: number };\n  state.counter = state.counter + 1;\n  print(\"Call #\", state.counter);\n  if (state.counter === 10) {\n    timer.cancel(handle as number); // cancel timer after 10 calls\n  }\n}\n\nfunction start_counting(self: { counter: number }) {\n  self.counter = 0;\n  timer.delay(1, true, call_every_second);\n}"
     }
   ],
   "timer.get_info": [

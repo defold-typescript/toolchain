@@ -9,12 +9,9 @@ import {
   DEFOLD_TYPE_MAP,
   examplesHtmlToMarkdown,
   firstSlotAlternativeOf,
-  hashExampleSource,
-  htmlToCodeText,
   htmlToDocText,
   lookupExampleSegments,
   lookupSignature,
-  lookupTranslation,
   luaMultiReturn,
   normalizedFunctionSignature,
   type SignatureStore,
@@ -933,26 +930,22 @@ function propertySignature(
 }
 
 // Resolve a function's example to rendered markdown, matching the `.d.ts` emit
-// (`emit-dts.ts` `functionDocLines`) exactly so `/api` and the typings agree: a
-// hand-authored TypeScript translation pinned to this exact Lua source flips the
-// fence to ```ts; any hash mismatch or absent translation keeps the clean Lua
-// fallback. Returns `undefined` when the function carries no example at all.
+// (`emit-dts.ts` `functionDocLines`) exactly so `/api` and the typings agree:
+// each example resolves by its own segment hash, a single-example element's one
+// segment being the whole blob with no prose, and renders as ```ts only when
+// every segment has an authored body; any miss keeps the clean Lua fallback.
+// Returns `undefined` when the function carries no example at all.
 export function exampleMarkdownFor(
   fn: ApiFunction,
   translations: TranslationStore = {},
 ): string | undefined {
   if (!fn.examples) return undefined;
-  const segments = splitExampleSources(fn.examples);
-  const perSegment =
-    segments.length > 1 ? lookupExampleSegments(translations, fn.name, segments) : null;
-  if (perSegment !== null) {
-    return perSegment
+  const resolved = lookupExampleSegments(translations, fn.name, splitExampleSources(fn.examples));
+  if (resolved !== null) {
+    return resolved
       .map(({ ts: body, prose }) => (prose === "" ? tsFence(body) : `${prose}\n\n${tsFence(body)}`))
       .join("\n\n");
   }
-  const lua = htmlToCodeText(fn.examples);
-  const ts = lua === "" ? null : lookupTranslation(translations, fn.name, hashExampleSource(lua));
-  if (ts !== null) return tsFence(ts);
   const converted = examplesHtmlToMarkdown(fn.examples);
   return converted === "" ? undefined : converted;
 }

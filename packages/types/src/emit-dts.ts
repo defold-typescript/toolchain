@@ -17,12 +17,7 @@ import {
   summaryFor,
 } from "./doc-comment";
 import type { TranslationStore } from "./example-store";
-import {
-  hashExampleSource,
-  lookupExampleSegments,
-  lookupTranslation,
-  translateProseFences,
-} from "./example-store";
+import { lookupExampleSegments, translateProseFences } from "./example-store";
 import {
   indexBaseNotes,
   OVERRIDE_RETURN_SLOT,
@@ -4209,29 +4204,24 @@ function functionDocLines(
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
   const notedReturns = multiReturnDoc(fn, translations) ?? overrideReturnDoc(fn);
   const lua = htmlToCodeText(fn.examples ?? "");
-  // A blob carrying several examples documents them as several, but only when
-  // every segment has an authored body: a partial resolve would drop the rest.
-  // Otherwise the whole-blob ladder stands — a hand-authored TS translation
-  // pinned to this exact Lua flips the fence to ```ts; any hash mismatch (or
-  // absent translation) keeps the Lua fallback.
+  // Each example resolves by its own segment hash, a single-example element's
+  // one segment being the whole blob with no prose. The blob documents its
+  // examples as TypeScript only when every segment has an authored body: a
+  // partial resolve would drop the rest, so any miss keeps the Lua fallback.
   const segments = splitExampleSources(fn.examples ?? "");
-  const perSegment =
-    segments.length > 1 ? lookupExampleSegments(translations, fn.name, segments) : null;
-  const ts = lua === "" ? null : lookupTranslation(translations, fn.name, hashExampleSource(lua));
+  const resolved = lookupExampleSegments(translations, fn.name, segments);
   const exampleParts: Pick<DocCommentParts, "examples"> =
-    perSegment !== null
+    resolved !== null
       ? {
-          examples: perSegment.map(({ ts: text, prose }) => ({
+          examples: resolved.map(({ ts: text, prose }) => ({
             text,
             lang: "ts" as const,
             ...(prose ? { prose } : {}),
           })),
         }
-      : ts !== null
-        ? { examples: [{ text: ts, lang: "ts" }] }
-        : lua !== ""
-          ? { examples: [{ text: lua, lang: "lua" }] }
-          : {};
+      : lua !== ""
+        ? { examples: [{ text: lua, lang: "lua" }] }
+        : {};
   const parts: DocCommentParts = {
     summary: translateProseFences(
       htmlToDocText(summaryFor(fn.brief, fn.description)),

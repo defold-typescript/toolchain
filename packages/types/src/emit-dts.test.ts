@@ -43,6 +43,7 @@ import windowDoc from "../fixtures/window_doc.json" with { type: "json" };
 import urlParameterTable from "../url-parameters.json" with { type: "json" };
 import { type ApiFunction, type ApiModule, type ApiParameter, parseDefoldApiDoc } from "./api-doc";
 import { DEFOLD_TYPE_MAP } from "./core-types";
+import { htmlToCodeText } from "./doc-comment";
 import {
   ARBITRARY_TABLE_SLOTS,
   applyFieldAdditions,
@@ -71,6 +72,7 @@ import {
   TABLE_SLOT_FIELD_ADDITIONS,
   type TableField,
 } from "./emit-dts";
+import { hashExampleSource } from "./example-store";
 import type { UrlParameterTable } from "./url-parameters";
 
 function requireFunction(module: ApiModule, name: string): ApiFunction {
@@ -1557,6 +1559,43 @@ describe("function JSDoc emission", () => {
     expect(block).toContain(" * local p = go.get_position()");
     expect(block).not.toContain("<span");
     expect(block).not.toContain("class=");
+  });
+
+  const exampleModule = (examples: string): ApiModule => ({
+    namespace: "ns",
+    brief: "",
+    description: "",
+    functions: [
+      { name: "ns.demo", brief: "", description: "", parameters: [], returnValues: [], examples },
+    ],
+    variables: [],
+    constants: [],
+    properties: [],
+    typedefs: [],
+  });
+  const block = (code: string) => `<div class="codehilite"><pre><code>${code}</code></pre></div>`;
+
+  test("a two-example element holding only a whole-blob entry emits the Lua fallback", () => {
+    const examples = `${block("ns.demo()")}Then:<br>${block("ns.demo(1)")}`;
+    const translations = {
+      "ns.demo": [{ sourceHash: hashExampleSource(htmlToCodeText(examples)), ts: "welded();" }],
+    };
+    const out = emitDeclarations(exampleModule(examples), { translations });
+    const doc = jsdocBefore(out, "function demo(");
+    expect(doc).not.toContain("welded();");
+    expect(doc).not.toContain("```ts");
+    expect(doc).toContain(" * ```lua");
+  });
+
+  test("a single-example element with a whole-blob entry emits that body with no prose line", () => {
+    const examples = `Query a position:<br>${block("ns.demo()")}`;
+    const translations = {
+      "ns.demo": [{ sourceHash: hashExampleSource(htmlToCodeText(examples)), ts: "ns.demo();" }],
+    };
+    const out = emitDeclarations(exampleModule(examples), { translations });
+    expect(jsdocBefore(out, "function demo(")).toContain(
+      "   * @example\n   * ```ts\n   * ns.demo();\n   * ```",
+    );
   });
 
   test("a function with a single documented return emits @returns with the rendered doc", () => {
