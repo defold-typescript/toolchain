@@ -20,9 +20,11 @@ const SPINE_GUI_TRACK_PROSE: Readonly<Record<string, string>> = {
 // Keyed `<page>/<element>:<param|return|field>:<slot>[:<field>]`, `<page>` being
 // the library page key (`gooey`, `spine.gui`, `rive.cmd`), so a library slot
 // never shares a key with an engine one (`spine.gui` documents `gui.*`). A class
-// field is keyed `<page>/<Typedef>:field:<member>`, and a callback argument as a
-// field of its callback slot. A typedef method is keyed by its bare name, so one
-// key covers every class of the page that declares that method.
+// field is keyed `<page>/<Typedef>:field:<member>`, a callback argument as a
+// field of its callback slot, and each positional value of an unnamed
+// multi-value return as a field of that return (`cast:return::tile_x`). A
+// typedef method is keyed by its bare name, so one key covers every class of the
+// page that declares that method.
 // `docs-site/app/lib/library-index-slot-gate.test.ts` reds on a scanned slot
 // missing here and on an entry no library page declares.
 export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<
@@ -304,9 +306,22 @@ export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<
   [
     "tile_raycast/cast:return:",
     {
-      class: "native-1",
-      evidence: "the module states tile coordinates and array indices are 1-based",
+      class: "not-a-position",
+      evidence:
+        "a tuple: `hit`, `tile_id`, `intersection_x`, `intersection_y` and `side` address nothing by position; `tile_x`, `tile_y` and `array_id` are keyed on their own",
     },
+  ],
+  ...(["tile_x", "tile_y"] as const).map((value): [string, LibraryIndexSlotClassification] => [
+    `tile_raycast/cast:return::${value}`,
+    {
+      class: "native-1",
+      evidence:
+        "Tile coordinates and array indices are 1-based; set_at/get_at subtract 1 from them (tileraycast.cpp)",
+    },
+  ]),
+  [
+    "tile_raycast/cast:return::array_id",
+    { class: "native-1", evidence: "Tile coordinates and array indices are 1-based" },
   ],
   ...(["set_at", "get_at"] as const).flatMap((fn) =>
     (["tile_x", "tile_y"] as const).map((slot): [string, LibraryIndexSlotClassification] => [
