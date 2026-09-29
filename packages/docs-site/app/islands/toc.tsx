@@ -133,9 +133,9 @@ export default function Toc({
                   href={`#${h.id}`}
                   aria-current={ariaCurrent}
                   onClick={() => setClickedId(h.id)}
-                  onMouseEnter={(e) => showTip(e, h.text)}
+                  onMouseEnter={(e: MouseEvent) => showTip(e, h.text)}
                   onMouseLeave={hideTip}
-                  onFocus={(e) => showTip(e, h.text)}
+                  onFocus={(e: FocusEvent) => showTip(e, h.text)}
                   onBlur={hideTip}
                   class={linkClass}
                 >
