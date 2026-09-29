@@ -108,7 +108,6 @@ declare global {
      * The best time to call this function is:
      *
      * - In the `init` function of your main collection script before any sounds are triggered
-     *
      * - In a window listener callback when the window.WINDOW_EVENT_FOCUS_GAINED event is received
      *
      * Both those times will give you a correct reading of the state even when your application is

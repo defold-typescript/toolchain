@@ -201,9 +201,7 @@ declare global {
      * @returns network connectivity status:
      *
      * - `sys.NETWORK_DISCONNECTED` (no network connection is found)
-     *
      * - `sys.NETWORK_CONNECTED_CELLULAR` (connected through mobile cellular)
-     *
      * - `sys.NETWORK_CONNECTED` (otherwise, Wifi)
      * @example
      * ```ts
@@ -422,9 +420,7 @@ declare global {
      * number The status of the request, supported values are:
      *
      * - `resource.REQUEST_STATUS_FINISHED`
-     *
      * - `resource.REQUEST_STATUS_ERROR_IO_ERROR`
-     *
      * - `resource.REQUEST_STATUS_ERROR_NOT_FOUND`
      *
      * `buffer`

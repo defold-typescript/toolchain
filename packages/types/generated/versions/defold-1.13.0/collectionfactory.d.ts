@@ -92,9 +92,7 @@ declare global {
      * @returns status of the collection factory component
      *
      * - `collectionfactory.STATUS_UNLOADED`
-     *
      * - `collectionfactory.STATUS_LOADING`
-     *
      * - `collectionfactory.STATUS_LOADED`
      */
     function get_status(url: string | Hash | Url): collectionfactory.Status;

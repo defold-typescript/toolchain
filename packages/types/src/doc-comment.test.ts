@@ -29,6 +29,14 @@ describe("htmlToDocText", () => {
     expect(htmlToDocText("<ul><li>a</li><li>b</li></ul>")).toBe("- a\n- b");
   });
 
+  test("a nested <ul> becomes an indented sub-list", () => {
+    expect(
+      htmlToDocText(
+        "<ul>\n<li><code>type</code>: image type<ul>\n<li><code>a</code></li>\n<li>\n<code>b</code></li>\n</ul>\n</li>\n<li><code>buffer</code></li>\n</ul>",
+      ),
+    ).toBe("- `type`: image type\n  - `a`\n  - `b`\n- `buffer`");
+  });
+
   test("<br> becomes a newline", () => {
     expect(htmlToDocText("line one<br>line two")).toBe("line one\nline two");
   });
@@ -45,6 +53,32 @@ describe("htmlToDocText", () => {
 
   test("runaway blank runs collapse to a single blank line", () => {
     expect(htmlToDocText("<p>A</p><p></p><p>B</p>")).toBe("A\n\nB");
+  });
+
+  test("a bare <pre> becomes a text fence that keeps its spacing", () => {
+    const html =
+      "Tiles:\n<pre>\n+-------+------+\n|  0,1  | 1,1  |\n+-------O------+\n</pre>\n\nAfter.";
+    expect(htmlToDocText(html)).toBe(
+      "Tiles:\n\n```text\n+-------+------+\n|  0,1  | 1,1  |\n+-------O------+\n```\n\nAfter.",
+    );
+  });
+
+  test("a highlighted <pre><code> becomes a dedented lua fence", () => {
+    const html =
+      'Usage:<div class="codehilite"><pre><span></span><code> <span class="kr">for</span> <span class="n">k</span> <span class="kr">do</span>\n   <span class="n">f</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>\n <span class="kr">end</span>\n</code></pre></div>';
+    expect(htmlToDocText(html)).toBe("Usage:\n\n```lua\nfor k do\n  f(k)\nend\n```");
+  });
+
+  test("a <pre> of backtick-led lines is misread Markdown and becomes a bullet list", () => {
+    const html =
+      'limits:<div class="codehilite"><pre><span></span><code><span class="n n-Quoted">`max_a`</span><span class="w">    </span>[type:number]  max A\n<span class="n n-Quoted">`max_bb`</span><span class="w">   </span>[type:number]  max B\n</code></pre></div>';
+    expect(htmlToDocText(html)).toBe("limits:\n\n- `max_a` number max A\n- `max_bb` number max B");
+  });
+
+  test("a <pre> code class names the fence language", () => {
+    expect(htmlToDocText('<pre><code class="language-bash">$ dmengine</code></pre>')).toBe(
+      "```bash\n$ dmengine\n```",
+    );
   });
 
   test("consecutive whitespace collapses and ends trim", () => {

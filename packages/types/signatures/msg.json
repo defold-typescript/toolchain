@@ -5,7 +5,7 @@
       "msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void"
     ],
     "docs": [
-      "Post a message to a receiving URL. The most common case is to send messages to a component. If the component part of the receiver is omitted, the message is broadcast to all components in the game object. The following receiver shorthands are available:\n\n- `\".\"` the current game object\n\n- `\"#\"` the current component\n\nThere is a 2 kilobyte limit to the message parameter table size.",
+      "Post a message to a receiving URL. The most common case is to send messages to a component. If the component part of the receiver is omitted, the message is broadcast to all components in the game object. The following receiver shorthands are available:\n\n- `\".\"` the current game object\n- `\"#\"` the current component\n\nThere is a 2 kilobyte limit to the message parameter table size.",
       null
     ]
   },

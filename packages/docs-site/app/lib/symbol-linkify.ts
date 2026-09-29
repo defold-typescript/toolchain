@@ -3,7 +3,7 @@
  * `/api/<namespace>` links whose href carries the deploy base. The function operates on text already produced by
  * `htmlToDocText` (which strips upstream Defold cross-references) and re-attaches
  * them as local links, longest-match-first with word-boundary checks, while
- * skipping backtick-fenced code spans.
+ * skipping backtick code spans and ``` fenced code blocks.
  */
 
 import { withBase } from "./base";
@@ -121,6 +121,16 @@ function linkifyText(
   let result = "";
   let i = 0;
   while (i < text.length) {
+    // A fence opens only at a line start; copy it through its closing line so
+    // a mention in the code stays text rather than becoming literal anchor HTML.
+    if (text.startsWith("```", i) && (i === 0 || text[i - 1] === "\n")) {
+      const close = text.indexOf("\n```", i + 3);
+      const lineEnd = close === -1 ? -1 : text.indexOf("\n", close + 4);
+      const end = close === -1 || lineEnd === -1 ? text.length : lineEnd;
+      result += text.slice(i, end);
+      i = end;
+      continue;
+    }
     if (text[i] === "`") {
       const close = text.indexOf("`", i + 1);
       if (close === -1) {

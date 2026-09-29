@@ -47,11 +47,8 @@ declare global {
        * @param option - the name of the option to get:
        *
        * - `"keepalive"`
-       *
        * - `"linger"`
-       *
        * - `"reuseaddr"`
-       *
        * - `"tcp-nodelay"`
        */
       getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;
@@ -119,7 +116,6 @@ declare global {
        * Controls the action taken when unsent data are queued on a socket and a close is performed. The value is a table with the following keys:
        *
        * - boolean `on`
-       *
        * - number `timeout` (seconds)
        *
        * If the 'on' field is set to true, the system will block the process on the close attempt until it is able to transmit the data or until `timeout` has passed. If 'on' is false and a close is issued, the system will process the close in a manner that allows the process to continue as quickly as possible. It is not advised to set this to anything other than zero;
@@ -183,23 +179,14 @@ declare global {
        * @param option - the name of the option to get:
        *
        * - `"dontroute"`
-       *
        * - `"broadcast"`
-       *
        * - `"reuseaddr"`
-       *
        * - `"reuseport"`
-       *
        * - `"ip-multicast-loop"`
-       *
        * - `"ipv6-v6only"`
-       *
        * - `"ip-multicast-if"`
-       *
        * - `"ip-multicast-ttl"`
-       *
        * - `"ip-add-membership"`
-       *
        * - `"ip-drop-membership"`
        */
       getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;
@@ -255,14 +242,12 @@ declare global {
        * `"ip-add-membership"`: Joins the multicast group specified. Receives a table with fields:
        *
        * - string `multiaddr` (IP address)
-       *
        * - string `interface` (IP address)
        *
        * "'ip-drop-membership"`
        * Leaves the multicast group specified. Receives a table with fields:
        *
        * - string `multiaddr` (IP address)
-       *
        * - string `interface` (IP address)
        * @param value - the value to set for the specified option.
        */
@@ -397,11 +382,8 @@ declare global {
        * @param option - the name of the option to get:
        *
        * - `"keepalive"`
-       *
        * - `"linger"`
-       *
        * - `"reuseaddr"`
-       *
        * - `"tcp-nodelay"`
        */
       getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;
@@ -434,7 +416,6 @@ declare global {
        * Controls the action taken when unsent data are queued on a socket and a close is performed. The value is a table with the following keys:
        *
        * - boolean `on`
-       *
        * - number `timeout` (seconds)
        *
        * If the 'on' field is set to true, the system will block the process on the close attempt until it is able to transmit the data or until `timeout` has passed. If 'on' is false and a close is issued, the system will process the close in a manner that allows the process to continue as quickly as possible. It is not advised to set this to anything other than zero;
@@ -484,23 +465,14 @@ declare global {
        * @param option - the name of the option to get:
        *
        * - `"dontroute"`
-       *
        * - `"broadcast"`
-       *
        * - `"reuseaddr"`
-       *
        * - `"reuseport"`
-       *
        * - `"ip-multicast-loop"`
-       *
        * - `"ipv6-v6only"`
-       *
        * - `"ip-multicast-if"`
-       *
        * - `"ip-multicast-ttl"`
-       *
        * - `"ip-add-membership"`
-       *
        * - `"ip-drop-membership"`
        */
       getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;
@@ -557,14 +529,12 @@ declare global {
        * `"ip-add-membership"`: Joins the multicast group specified. Receives a table with fields:
        *
        * - string `multiaddr` (IP address)
-       *
        * - string `interface` (IP address)
        *
        * "'ip-drop-membership"`
        * Leaves the multicast group specified. Receives a table with fields:
        *
        * - string `multiaddr` (IP address)
-       *
        * - string `interface` (IP address)
        * @param value - the value to set for the specified option.
        */
@@ -753,18 +723,19 @@ declare global {
        * The supplied address can be an IPv4 or IPv6 address or host name.
        * The function returns a table with all information returned by the resolver:
        *
-       * `{
-       * [1] = {
-       * family = family-name-1,
-       * addr = address-1
-       * },
-       * ...
-       * [n] = {
-       * family = family-name-n,
-       * addr = address-n
+       * ```lua
+       * {
+       *  [1] = {
+       *     family = family-name-1,
+       *     addr = address-1
+       *   },
+       *   ...
+       *   [n] = {
+       *     family = family-name-n,
+       *     addr = address-n
+       *   }
        * }
-       * }
-       * `
+       * ```
        *
        * Here, family contains the string `"inet"` for IPv4 addresses, and `"inet6"` for IPv6 addresses.
        * In case of error, the function returns nil followed by an error message.
@@ -783,12 +754,13 @@ declare global {
        * The supplied address can be an IPv4 or IPv6 address or host name.
        * The function returns a table with all information returned by the resolver:
        *
-       * `{
-       * [1] = host-name-1,
-       * ...
-       * [n] = host-name-n,
+       * ```lua
+       * {
+       *   [1] = host-name-1,
+       *   ...
+       *   [n] = host-name-n,
        * }
-       * `
+       * ```
        *
        * @param address - a hostname or an IPv4 or IPv6 address.
        */

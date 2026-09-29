@@ -139,15 +139,17 @@ declare global {
      * above and to the right of origin has coordinates 1,1.
      * Tiles to the left of and below origin are indexed 0, -1, -2 and so forth.
      *
+     * ```text
      * +-------+-------+------+------+
-     * | 0,3 | 1,3 | 2,3 | 3,3 |
+     * |  0,3  |  1,3  | 2,3  | 3,3  |
      * +-------+-------+------+------+
-     * | 0,2 | 1,2 | 2,2 | 3,2 |
+     * |  0,2  |  1,2  | 2,2  | 3,2  |
      * +-------+-------+------+------+
-     * | 0,1 | 1,1 | 2,1 | 3,1 |
+     * |  0,1  |  1,1  | 2,1  | 3,1  |
      * +-------O-------+------+------+
-     * | 0,0 | 1,0 | 2,0 | 3,0 |
+     * |  0,0  |  1,0  | 2,0  | 3,0  |
      * +-------+-------+------+------+
+     * ```
      *
      * The coordinates must be within the bounds of the tile map as it were created.
      * That is, it is not possible to extend the size of a tile map by setting tiles outside the edges.

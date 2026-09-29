@@ -48,7 +48,6 @@ declare global {
      * The following receiver shorthands are available:
      *
      * - `"."` the current game object
-     *
      * - `"#"` the current component
      *
      * There is a 2 kilobyte limit to the message parameter table size.

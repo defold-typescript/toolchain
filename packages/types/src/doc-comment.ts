@@ -39,6 +39,12 @@ function codePointOr(code: number, fallback: string): string {
   return code <= 0x10ffff ? String.fromCodePoint(code) : fallback;
 }
 
+// One level of list nesting while `htmlToDocText` runs its whitespace pass,
+// which would otherwise strip leading spaces.
+const LIST_INDENT = "";
+const STRANDED_MARKER = /^(*)-$/;
+const LIST_ITEM = /^*- /;
+
 /**
  * Join a list marker left alone on its line back onto the item's first content
  * line. Upstream prose puts a newline between `<li>` and the item's first word,
@@ -57,7 +63,8 @@ function weldStrandedListMarkers(text: string): string {
       out.push(line);
       continue;
     }
-    if (inFence || line !== "-") {
+    const stranded = STRANDED_MARKER.exec(line);
+    if (inFence || !stranded) {
       out.push(line);
       continue;
     }
@@ -66,18 +73,58 @@ function weldStrandedListMarkers(text: string): string {
     const content = lines[ahead];
     if (
       content === undefined ||
-      content === "-" ||
-      content.startsWith("- ") ||
+      STRANDED_MARKER.test(content) ||
+      LIST_ITEM.test(content) ||
       content.startsWith("```")
     ) {
       // No value to weld onto — drop the marker and the blank run behind it.
       index = ahead - 1;
       continue;
     }
-    out.push(`- ${content}`);
+    out.push(`${stranded[1]}- ${content}`);
     index = ahead;
   }
   return out.join("\n").trim();
+}
+
+// Upstream Markdown indented one level too deep is highlighted as code while
+// still reading as Markdown: every line opens on a backtick-quoted name, as in
+// the field table `graphics.get_adapter_info` documents under `limits`. That
+// doc is replaced whole by a `DOC_CORRECTIONS` entry, so no vendored ref-doc
+// reaches this rule today. It is the fallback for when upstream rewords such a
+// doc without fixing it — the correction's hash stops matching and this still
+// yields a readable list, not a mislabelled `lua` fence — and for any other doc
+// that repeats the mistake.
+const MISREAD_MARKDOWN_LINE = /^\s*`[^`]+`/;
+
+// A `<pre>` body as Markdown. Misread Markdown becomes a bullet per line, its
+// `[type:X]` marker reduced to the bare type the way a `<span class="type">` is.
+// Otherwise it is a fence: a `<code>` inside marks highlighted source, Lua
+// unless its class names another language, and a bare `<pre>` is a
+// preformatted diagram. Upstream indents some samples by a uniform margin,
+// which is dropped.
+function preToMarkdown(inner: string): string {
+  const lines = htmlToCodeText(inner).split("\n");
+  const filled = lines.filter((line) => line.trim() !== "");
+  if (filled.every((line) => MISREAD_MARKDOWN_LINE.test(line))) {
+    return filled
+      .map(
+        (line) =>
+          `- ${line
+            .trim()
+            .replace(/\[type:([^\]]+)\]/g, "$1")
+            .replace(/\s+/g, " ")}`,
+      )
+      .join("\n");
+  }
+  const lang =
+    inner.match(/class="language-([A-Za-z0-9_+-]+)"/)?.[1] ??
+    (/<code\b/i.test(inner) ? "lua" : "text");
+  const margin = Math.min(
+    ...lines.filter((line) => line.trim() !== "").map((line) => line.match(/^ */)?.[0].length ?? 0),
+  );
+  const body = lines.map((line) => line.slice(Number.isFinite(margin) ? margin : 0)).join("\n");
+  return `\`\`\`${lang}\n${body}\n\`\`\``;
 }
 
 /**
@@ -86,15 +133,30 @@ function weldStrandedListMarkers(text: string): string {
  * slices and any future surface can reuse it.
  */
 export function htmlToDocText(html: string): string {
+  // Lift each `<pre>` out before the whitespace pass, which would flatten an
+  // ASCII diagram or a code sample into one line, and put it back as Markdown.
+  const fences: string[] = [];
+  // A list item's marker carries one `LIST_INDENT` per enclosing list beyond
+  // the first, which the whitespace pass leaves alone; each becomes two spaces,
+  // the content column of the parent `- ` marker, once that pass is done.
+  let listDepth = 0;
   let text = html
+    .replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, (_, inner: string) => {
+      fences.push(preToMarkdown(inner));
+      return `\n\n\uE000${fences.length - 1}\uE000\n\n`;
+    })
     .replace(/<code>([\s\S]*?)<\/code>/gi, "`$1`")
     .replace(/<(?:em|i)>([\s\S]*?)<\/(?:em|i)>/gi, "*$1*")
     .replace(/<a\b[^>]*>([\s\S]*?)<\/a>/gi, "$1")
-    .replace(/<li>/gi, "\n- ")
-    .replace(/<\/li>/gi, "")
+    .replace(/<(\/?)(ul|ol|li)\b[^>]*>/gi, (_, close: string, tag: string) => {
+      if (tag.toLowerCase() !== "li") {
+        listDepth = Math.max(0, listDepth + (close ? -1 : 1));
+        return "";
+      }
+      return close ? "" : `\n${LIST_INDENT.repeat(Math.max(0, listDepth - 1))}- `;
+    })
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>/gi, "\n\n")
-    .replace(/<\/?pre>/gi, "\n")
     .replace(/<[^>]+>/g, "");
 
   text = decodeEntities(text);
@@ -109,7 +171,12 @@ export function htmlToDocText(html: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
-  text = weldStrandedListMarkers(text);
+  // A blank line between two items would make the list loose, spacing every
+  // item apart like a paragraph.
+  text = weldStrandedListMarkers(text)
+    .replace(/(?<=^*- .*)\n\n(?=*- )/gm, "\n")
+    .replaceAll(LIST_INDENT, "  ")
+    .replace(/\uE000(\d+)\uE000/g, (_, i: string) => fences[Number(i)] ?? "");
 
   // Upstream prose can open a fence and end mid-body; left open it swallows the
   // rest of the JSDoc block and everything after it on the rendered page.
