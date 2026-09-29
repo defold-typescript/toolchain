@@ -18,8 +18,8 @@ declare global {
      * - boolean `decode_null_as_userdata`: whether to decode a JSON null value as json.null or nil (default is nil)
      * @returns decoded json
      * @example
+     * Converting a string containing JSON data into a Lua table:
      * ```ts
-     * // Converting a string containing JSON data into a table:
      * export default defineScript({
      *   init() {
      *     const jsonstring = '{"persons":[{"name":"John Doe"},{"name":"Darth Vader"}]}';
@@ -27,8 +27,10 @@ declare global {
      *     pprint(data);
      *   },
      * });
-     *
-     * // Results in the following printout:
+     * ```
+     * @example
+     * Results in the following printout:
+     * ```ts
      * // {
      * //   persons = {
      * //     1 = {
@@ -52,8 +54,8 @@ declare global {
      * - string `encode_empty_table_as_object`: whether to encode an empty table as an JSON object or array (default is object)
      * @returns encoded json
      * @example
+     * Convert a lua table to a JSON string:
      * ```ts
-     * // Convert a table to a JSON string:
      * export default defineScript({
      *   init() {
      *     const tbl = {
@@ -63,8 +65,10 @@ declare global {
      *     pprint(jsonstring);
      *   },
      * });
-     *
-     * // Results in the following printout:
+     * ```
+     * @example
+     * Results in the following printout:
+     * ```ts
      * // {"persons":[{"name":"John Doe"},{"name":"Darth Vader"}]}
      * ```
      */

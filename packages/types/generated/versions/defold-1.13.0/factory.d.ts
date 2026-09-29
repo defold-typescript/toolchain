@@ -35,8 +35,8 @@ declare global {
      * @param scale - the scale of the new game object (must be greater than 0), the scale of the game object containing the factory is used by default, or if the value is `nil`
      * @returns the global id of the spawned game object
      * @example
+     * How to create a new game object:
      * ```ts
-     * // How to create a new game object:
      * export default defineScript({
      *   init(self) {
      *     // create a new game object and provide property values
@@ -45,16 +45,17 @@ declare global {
      *     msg.post(created, "hello");
      *   },
      * });
+     * ```
+     * @example
+     * And then let the new game object have a script attached:
+     * ```ts
+     * go.property("my_value", 0);
      *
-     * // And then let the new game object have a script attached, in its own file:
-     * //
-     * //   go.property("my_value", 0);
-     * //
-     * //   export default defineScript({
-     * //     init(self) {
-     * //       // do something with self.my_value which is now one
-     * //     },
-     * //   });
+     * export default defineScript({
+     *   init(self) {
+     *     // do something with self.my_value which is now one
+     *   },
+     * });
      * ```
      */
     function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash;

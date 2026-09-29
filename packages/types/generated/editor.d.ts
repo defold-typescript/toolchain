@@ -34,22 +34,26 @@ declare global {
      * @param options - table of command line options for bob, without the leading dashes (`--`). You can use snake_case instead of kebab-case for option keys. Only long option names are supported (i.e. `output`, not `o`). Supported value types are strings, integers and booleans. If an option takes no arguments, use a boolean (i.e. `true`). If an option may be repeated, you can use an array of values.
      * @param commands - bob commands, e.g. `"resolve"` or `"build"`
      * @example
+     * Print help in the console:
      * ```ts
-     * // Print help in the console:
      * editor.bob({ help: true });
-     *
-     * // Bundle the game for the host platform:
+     * ```
+     * @example
+     * Bundle the game for the host platform:
+     * ```ts
      * const opts = { archive: true, platform: editor.platform };
      * editor.bob(opts, "distclean", "resolve", "build", "bundle");
-     *
-     * // Using snake_cased and repeated options:
-     * const bundleOpts = {
+     * ```
+     * @example
+     * Using snake_cased and repeated options:
+     * ```ts
+     * const opts = {
      *   archive: true,
      *   platform: editor.platform,
      *   build_server: "https://build.my-company.com",
      *   settings: ["test.ini", "headless.ini"],
      * };
-     * editor.bob(bundleOpts, "distclean", "resolve", "build");
+     * editor.bob(opts, "distclean", "resolve", "build");
      * ```
      */
     function bob(options?: Record<string | number, unknown>, ...commands: string[]): void;
@@ -111,14 +115,18 @@ declare global {
      *
      * @param resources - ] Array of resource paths (strings starting with `/`) or resource definitions, lua tables with the following keys:`1 string`required, resource path (starting with `/`)`2 string`optional, created resource content
      * @example
+     * Create a single resource from template:
      * ```ts
-     * // Create a single resource from template:
      * editor.create_resources(["/npc.go"]);
-     *
-     * // Create multiple resources:
+     * ```
+     * @example
+     * Create multiple resources:
+     * ```ts
      * editor.create_resources(["/npc.go", "/levels/1.collection", "/levels/2.collection"]);
-     *
-     * // Create a resource with custom content:
+     * ```
+     * @example
+     * Create a resource with custom content:
+     * ```ts
      * editor.create_resources([["/npc.script", "go.property('hp', 100)"]]);
      * ```
      */
@@ -153,11 +161,13 @@ declare global {
      *   - `"discard"`: the error output is discarded completely.
      * @returns If `out` option is set to `"capture"`, returns the output as string with trimmed trailing newlines. Otherwise, returns `nil`.
      * @example
+     * Make a directory with spaces in it:
      * ```ts
-     * // Make a directory with spaces in it:
      * editor.execute("mkdir", "new dir");
-     *
-     * // Read the git status:
+     * ```
+     * @example
+     * Read the git status:
+     * ```ts
      * const status = editor.execute("git", "status", "--porcelain", {
      *   reload_resources: false,
      *   out: "capture",

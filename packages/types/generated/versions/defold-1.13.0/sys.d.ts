@@ -95,8 +95,8 @@ declare global {
      * `installed`
      * boolean `true` if the application is installed, `false` otherwise.
      * @example
+     * Check if twitter is installed:
      * ```ts
-     * // Check if twitter is installed:
      * const sysinfo = sys.get_sys_info();
      * let twitter: { installed?: boolean } = {};
      *
@@ -109,8 +109,10 @@ declare global {
      * if (twitter.installed) {
      *   // twitter is installed!
      * }
-     *
-     * // Info.plist for the iOS app needs to list the schemes that are queried:
+     * ```
+     * @example
+     * Info.plist for the iOS app needs to list the schemes that are queried:
+     * ```ts
      * // ...
      * // <key>LSApplicationQueriesSchemes</key>
      * //  <array>
@@ -169,10 +171,12 @@ declare global {
      * @param default_value - (optional) default value to return if the value does not exist
      * @returns config value as an integer. default_value if the config key does not exist. 0 if no default value was supplied.
      * @example
+     * Get user config value
      * ```ts
-     * // Get user config value
      * const speed = sys.get_config_int("my_game.speed", 20); // with default value
-     *
+     * ```
+     * @example
+     * ```ts
      * const testmode = sys.get_config_int("my_game.testmode"); // without default value
      * if (testmode !== undefined) {
      *   // do stuff
@@ -240,19 +244,17 @@ declare global {
      * @param filename - file to read from
      * @returns the path prefixed with the proper host mount
      * @example
+     * Save data on the host
      * ```ts
-     * // Save data on the host
-     * {
-     *   const mytable = { score: 100, level: 3 };
-     *   const host_path = sys.get_host_path("logs/test.txt");
-     *   sys.save(host_path, mytable);
-     * }
-     *
-     * // Load data from the host
-     * {
-     *   const host_path = sys.get_host_path("logs/test.txt");
-     *   const table = sys.load(host_path);
-     * }
+     * const mytable = { score: 100, level: 3 };
+     * const host_path = sys.get_host_path("logs/test.txt");
+     * sys.save(host_path, mytable);
+     * ```
+     * @example
+     * Load data from the host
+     * ```ts
+     * const host_path = sys.get_host_path("logs/test.txt");
+     * const table = sys.load(host_path);
      * ```
      */
     function get_host_path(filename: string): string;
@@ -386,13 +388,15 @@ declare global {
      * @param path - the path to load the buffer from
      * @returns the buffer with data
      * @example
+     * Load binary data from a custom project resource:
      * ```ts
-     * // Load binary data from a custom project resource:
      * const my_buffer = sys.load_buffer("/assets/my_level_data.bin");
      * const data_str = buffer.get_bytes(my_buffer, "data");
      * const has_my_header = data_str.slice(0, 6) === "D3F0LD";
-     *
-     * // Load binary data from non-custom resource files on disk:
+     * ```
+     * @example
+     * Load binary data from non-custom resource files on disk:
+     * ```ts
      * const asset_1 = sys.load_buffer("folder_next_to_binary/my_level_asset.txt");
      * const asset_2 = sys.load_buffer("/my/absolute/path");
      * ```
@@ -427,20 +431,20 @@ declare global {
      * buffer If the request was successfull, this will contain the request payload in a buffer object, and nil otherwise. Make sure to check the status before doing anything with the buffer value!
      * @returns a handle to the request
      * @example
+     * Load binary data from a custom project resource and update a texture resource:
      * ```ts
-     * // Load binary data from a custom project resource and update a texture resource:
-     * {
-     *   function my_callback(self: unknown, request_id: unknown, result: unknown) {
-     *     const { status, buf } = result as { status: number; buf: Opaque<"buffer"> };
-     *     if (status === sys.REQUEST_STATUS_FINISHED) {
-     *       resource.set_texture("/my_texture", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format: graphics.TEXTURE_FORMAT_RGBA }, buf);
-     *     }
+     * function my_callback(self: unknown, request_id: unknown, result: unknown) {
+     *   const { status, buf } = result as { status: number; buf: Opaque<"buffer"> };
+     *   if (status === sys.REQUEST_STATUS_FINISHED) {
+     *     resource.set_texture("/my_texture", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format: graphics.TEXTURE_FORMAT_RGBA }, buf);
      *   }
-     *
-     *   const my_request = sys.load_buffer_async("/assets/my_level_data.bin", my_callback);
      * }
      *
-     * // Load binary data from non-custom resource files on disk:
+     * const my_request = sys.load_buffer_async("/assets/my_level_data.bin", my_callback);
+     * ```
+     * @example
+     * Load binary data from non-custom resource files on disk:
+     * ```ts
      * function my_callback(self: unknown, request_id: unknown, result: unknown) {
      *   const { first_asset, second_asset } = self as { first_asset: Hash; second_asset: Hash };
      *   if ((result as { status: number }).status !== sys.REQUEST_STATUS_FINISHED) {

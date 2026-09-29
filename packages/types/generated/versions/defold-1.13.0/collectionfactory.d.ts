@@ -43,8 +43,8 @@ declare global {
      * @param scale - uniform scaling to apply to the newly spawned collection (must be greater than 0).
      * @returns a table mapping the id:s from the collection to the new instance id:s
      * @example
+     * How to spawn a collection of game objects:
      * ```ts
-     * // How to spawn a collection of game objects:
      * export default defineScript({
      *   init() {
      *     // Spawn a small group of enemies.
@@ -76,8 +76,10 @@ declare global {
      *     return { enemy_ids };
      *   },
      * });
-     *
-     * // How to delete a spawned collection:
+     * ```
+     * @example
+     * How to delete a spawned collection:
+     * ```ts
      * function delete_enemies(self: { enemy_ids: Hash[] }) {
      *   go.delete(self.enemy_ids);
      * }

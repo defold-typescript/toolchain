@@ -575,9 +575,9 @@ declare global {
      * - `"tracking"` (text)
      * - `"slice9"` (slice9)
      * @example
+     * Start an animation of the position property of a node, then cancel parts of
+     * the animation:
      * ```ts
-     * // Start an animation of the position property of a node, then cancel parts of
-     * // the animation:
      * const node = gui.get_node("my_node");
      * // animate to new position
      * const pos = vmath.vector3(100, 100, 0);
@@ -585,8 +585,11 @@ declare global {
      * // ...
      * // cancel animation of the x component.
      * gui.cancel_animations(node, "position.x");
-     *
-     * // Cancels all property animations on a node in a single call:
+     * ```
+     * @example
+     * Cancels all property animations on a node in a single call:
+     * ```ts
+     * const node = gui.get_node("my_node");
      * // animate to new position and scale
      * gui.animate(node, "position", vmath.vector3(100, 100, 0), gui.EASING_LINEAR, 5);
      * gui.animate(node, "scale", vmath.vector3(0.5), gui.EASING_LINEAR, 5);
@@ -1278,8 +1281,8 @@ declare global {
      * @param buffer - texture data
      * @param flip - flip texture vertically
      * @example
+     * How to create a texture and apply it to a new box node:
      * ```ts
-     * // How to create a texture and apply it to a new box node:
      * export default defineGuiScript({
      *   init(self) {
      *     const w = 200;
@@ -1304,8 +1307,10 @@ declare global {
      *     }
      *   },
      * });
-     *
-     * // How to create a texture using .astc format
+     * ```
+     * @example
+     * How to create a texture using .astc format
+     * ```ts
      * const size = 4;
      * const pos = vmath.vector3(200, 200, 0);
      * const path = "/assets/images/logo_4x4.astc";
@@ -1543,8 +1548,8 @@ declare global {
      * `playback_rate`
      * number The rate with which the animation will be played. Must be positive
      * @example
+     * Set the texture of a node to a flipbook animation from an atlas:
      * ```ts
-     * // Set the texture of a node to a flipbook animation from an atlas:
      * function anim_callback(self: unknown, node: unknown) {
      *   // Take action after animation has played.
      * }
@@ -1557,8 +1562,10 @@ declare global {
      *     gui.play_flipbook(node, "animated_button");
      *   },
      * });
-     *
-     * // Set the texture of a node to an image from an atlas:
+     * ```
+     * @example
+     * Set the texture of a node to an image from an atlas:
+     * ```ts
      * // Create a new node and set the texture to a "button.png" from atlas
      * const node = gui.get_node("button_node");
      * gui.set_texture(node, "gui_sprites");
@@ -1674,13 +1681,16 @@ declare global {
      *
      * **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * @example
+     * Updates the position property on an existing node:
      * ```ts
-     * // Updates the position property on an existing node:
      * const node = gui.get_node("my_box_node");
      * const node_position = gui.get(node, "position") as Vector3;
      * gui.set(node, "position.x", node_position.x + 128);
-     *
-     * // Updates the rotation property on an existing node:
+     * ```
+     * @example
+     * Updates the rotation property on an existing node:
+     * ```ts
+     * const node = gui.get_node("my_box_node");
      * gui.set(node, "rotation", vmath.quat_rotation_z(math.rad(45)));
      * // this is equivalent to:
      * gui.set(node, "euler.z", 45);
@@ -1688,8 +1698,11 @@ declare global {
      * gui.set(node, "euler", vmath.vector3(0, 0, 45));
      * // or using the set_rotation
      * gui.set_rotation(node, vmath.vector3(0, 0, 45));
-     *
-     * // Sets various material constants for a node:
+     * ```
+     * @example
+     * Sets various material constants for a node:
+     * ```ts
+     * const node = gui.get_node("my_box_node");
      * gui.set(node, "tint", vmath.vector4(1, 0, 0, 1));
      * // matrix4 is also supported
      * gui.set(node, "light_matrix", vmath.matrix4());
@@ -1703,8 +1716,10 @@ declare global {
      * gui.set(node, "tint.x", 1);
      * // update a sub-element in an array constant at position 4
      * gui.set(node, "tint_array.x", 1, { index: 4 });
-     *
-     * // Set a named property
+     * ```
+     * @example
+     * Set a named property
+     * ```ts
      * export default defineGuiScript({
      *   on_message(self, message_id, message) {
      *     if (message_id === hash("set_font") && types.is_hash(message.font)) {
@@ -2091,20 +2106,25 @@ declare global {
      * @param node - node to set texture for
      * @param texture - texture id
      * @example
+     * To set a texture (or animation) from an atlas:
      * ```ts
-     * // To set a texture (or animation) from an atlas:
      * const node = gui.get_node("box_node");
      * gui.set_texture(node, "my_atlas");
      * gui.play_flipbook(node, "image");
-     *
-     * // Set a dynamically created texture to a node. Note that there is only
-     * // one texture image in this case so gui.set_texture() is sufficient.
+     * ```
+     * @example
+     * Set a dynamically created texture to a node. Note that there is only
+     * one texture image in this case so `gui.set_texture()` is
+     * sufficient.
+     * ```ts
      * const w = 200;
      * const h = 300;
      * // A nice orange. String with the RGB values.
      * const orange = String.fromCharCode(0xff, 0x80, 0x10);
      * // Create the texture. Repeat the color string for each pixel.
-     * if (gui.new_texture("orange_tx", w, h, "rgb", orange.repeat(w * h))) {
+     * const [ok] = gui.new_texture("orange_tx", w, h, "rgb", orange.repeat(w * h));
+     * if (ok) {
+     *   const node = gui.get_node("box_node");
      *   gui.set_texture(node, "orange_tx");
      * }
      * ```

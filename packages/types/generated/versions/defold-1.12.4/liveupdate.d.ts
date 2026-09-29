@@ -81,11 +81,13 @@ declare global {
      *
      * @returns Array of mounts
      * @example
+     * Output the current resource mounts
      * ```ts
-     * // Output the current resource mounts
      * pprint("MOUNTS", liveupdate.get_mounts());
-     *
-     * // Give an output like:
+     * ```
+     * @example
+     * Give an output like:
+     * ```ts
      * // DEBUG:SCRIPT: MOUNTS,
      * // {
      * //   1 = {

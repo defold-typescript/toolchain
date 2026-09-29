@@ -35,9 +35,20 @@ declare global {
      * `playback_rate`
      * number the rate with which the animation will be played. Must be positive.
      * @example
+     * The following examples assumes that the model has id "sprite".
+     * How to play the "jump" animation followed by the "run" animation:
      * ```ts
-     * // Assuming the sprite has id "sprite": play the "jump" animation followed by the
-     * // "run" animation:
+     * const url = msg.url("#sprite");
+     *
+     * function anim_done(self: unknown, message_id: Hash, message: { id: Hash }) {
+     *   if (message_id === hash("animation_done") && message.id === hash("jump")) {
+     *     // jump animation done, chain with "run"
+     *     sprite.play_flipbook(url, "run");
+     *   }
+     * }
+     * ```
+     * @example
+     * ```ts
      * export default defineScript({
      *   init() {
      *     const url = msg.url("#sprite");
