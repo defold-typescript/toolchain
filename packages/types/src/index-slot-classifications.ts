@@ -428,7 +428,7 @@ function slotBaseNotes(
   return notes;
 }
 
-function appendNotes(doc: string, notes: readonly string[]): string {
+export function appendNotes(doc: string, notes: readonly string[]): string {
   if (notes.length === 0) return doc;
   const sentence = notes.join(" ");
   const body = doc.trimEnd();
@@ -481,4 +481,23 @@ export function withLibraryIndexBaseNotes(
   doc: string,
 ): string {
   return appendNotes(doc, libraryIndexBaseNotes(page, elementName, kind, slotName));
+}
+
+// Where a declaration's index notes come from: the engine map, naming Defold, or
+// the library map under each listed page, naming that library. A library or
+// extension declaration never reads the engine map, so an element it shares a
+// name with (`spine.gui` declares `gui.*`) never claims Defold as its receiver.
+export type IndexBaseSource = "engine" | { readonly pages: readonly string[] };
+
+export type IndexBaseNoteResolver = (
+  elementName: string,
+  kind: "param" | "return",
+  slotName: string,
+) => string[];
+
+export function indexBaseNoteResolver(source: IndexBaseSource): IndexBaseNoteResolver {
+  if (source === "engine") return indexBaseNotes;
+  const { pages } = source;
+  return (elementName, kind, slotName) =>
+    pages.flatMap((page) => libraryIndexBaseNotes(page, elementName, kind, slotName));
 }
