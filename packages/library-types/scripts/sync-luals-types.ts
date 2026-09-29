@@ -224,6 +224,15 @@ export function buildTargetFidelity(packageRoot: string, target: LualsTarget): F
   );
 }
 
+export function emitLualsTargetDeclarations(packageRoot: string, target: LualsTarget): string {
+  return emitLibraryDeclarations(buildTargetModel(packageRoot, target), {
+    moduleId: target.moduleId,
+    typeRenames: target.typeRenames,
+    externalTypes: target.externalTypes,
+    indexBasePage: target.namespace,
+  });
+}
+
 /**
  * A druid-style corpus member: a LuaLS-sourced pure-Lua library, distinct from
  * the ts-defold hand-written modules. Standalone registry — the docs-site and
@@ -300,16 +309,9 @@ if (import.meta.main) {
   if (argv.includes("--emit")) {
     const targets = readLualsTargets(root);
     for (const target of targets) {
-      const model = buildTargetModel(root, target);
-      const declarations = emitLibraryDeclarations(model, {
-        moduleId: target.moduleId,
-        typeRenames: target.typeRenames,
-        externalTypes: target.externalTypes,
-        indexBasePage: target.namespace,
-      });
       const dest = join(root, "generated", `${target.namespace}.d.ts`);
       mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, declarations);
+      writeFileSync(dest, emitLualsTargetDeclarations(root, target));
       console.log(`emitted ${target.moduleId} -> generated/${target.namespace}.d.ts`);
     }
   }
