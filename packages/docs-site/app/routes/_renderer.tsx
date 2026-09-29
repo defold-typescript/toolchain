@@ -5,6 +5,7 @@ import { RangeSelectorControls } from "../components/range-selector";
 import { SidebarItems } from "../components/sidebar";
 import { FONT_TOKENS, PRELOAD_FONT_FILES } from "../generated/fonts";
 import CodeCopy from "../islands/code-copy";
+import CodeTabs from "../islands/code-tabs";
 import Search from "../islands/search";
 import SidebarToggle from "../islands/sidebar-toggle";
 import SidebarTooltip from "../islands/sidebar-tooltip";
@@ -447,6 +448,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         <SymbolTooltip versionIds={versionIds} />
         <UiTooltip />
         <CodeCopy />
+        <CodeTabs />
         <script dangerouslySetInnerHTML={{ __html: SIDEBAR_SCROLL_INIT }} />
         <script dangerouslySetInnerHTML={{ __html: TOPBAR_HEIGHT_INIT }} />
         <script dangerouslySetInnerHTML={{ __html: TOPIC_SCROLL_INIT }} />
