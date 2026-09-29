@@ -19,10 +19,15 @@ command that starts, does one thing, and exits with a status.
 
 ## Why it reads the console
 
-The editor answers a reload request with HTTP 202 — *queued* — and nothing more.
-A Lua error in the reloaded chunk never reaches that response; it goes to the
-editor's console. So a command that reported success on 202 alone would report
-success for code that threw on the first frame after loading.
+Editors before Defold 1.13.2 answer a reload request with HTTP 202 — *queued* —
+and nothing more. Defold 1.13.2 and later answer once the reload has finished,
+with a result that says whether it succeeded and lists any issues, each with its
+resource and line. `reload` reports that result: a reload the editor rejected
+fails with its issues, printed as `<resource>:<line>: <severity>: <message>`.
+
+Neither answer covers a Lua error the reloaded code raises once it runs; that
+goes to the editor's console. So a command that reported success on the post
+alone would report success for code that threw on the first frame after loading.
 
 `reload` therefore posts the command and then reads the console for a bounded
 window, keeping the `ERROR:`/`WARNING:` lines and their stack tracebacks and
@@ -43,8 +48,8 @@ always kept.
 
 - **0** — the editor accepted the reload, and either no error appeared during the
   window or `--wait 0` opened no window at all.
-- **1** — no editor was running, the editor refused the reload, an error appeared
-  during the window, a console window was requested and could not be opened, or
+- **1** — no editor was running, the editor refused or rejected the reload, an
+  error appeared during the window, a console window was requested and could not be opened, or
   the console closed or failed before the window ended, leaving the rest of it
   unread.
 
@@ -56,9 +61,10 @@ can fail. Under `--wait 0` there is no window and nothing was read, so exit 0
 says only *the editor accepted the post*. Either way, that is the strongest
 claim it can honestly make.
 
-Two failure classes stay invisible here, as they do under `watch`: Defold's own
-build errors (a bad component reference, a missing atlas, a Lua syntax error) go
-to the editor's Build Errors tab, never to the console.
+Before Defold 1.13.2, Defold's own build errors (a bad component reference, a
+missing atlas, a Lua syntax error) stay invisible here, as they do under `watch`:
+they go to the editor's Build Errors tab, never to the console. From 1.13.2 the
+editor returns them as the reload's issues.
 
 ## Flags
 
@@ -95,6 +101,12 @@ it is `false` with an error when the console closed or failed first, and
 window only when `consoleWindowComplete` is `true`. Note
 that `ok` is `false` while `outcome` is `accepted` when the post landed and the
 reloaded code then threw — the two fields answer different questions.
+
+Against Defold 1.13.2 or later the object also carries `editorIssues`: the
+issues of a reload the editor rejected, each with `message`, `severity`, and,
+when the editor sent them, `resource` and `range` (zero-based `line` and
+`character`, as the editor sends them). It is `[]` when the editor accepted the
+reload, and absent against an older editor, which returns no result.
 
 ## Pairing it with build
 

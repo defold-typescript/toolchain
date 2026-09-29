@@ -125,7 +125,7 @@ function makeEditorClient(baseUrl = "http://localhost:4242"): FakeEditorClient {
       },
       postCommand(_cwd, name) {
         posts.push(name);
-        return Promise.resolve("accepted");
+        return Promise.resolve({ outcome: "accepted", result: null });
       },
       openConsole() {
         return Promise.resolve(null);
