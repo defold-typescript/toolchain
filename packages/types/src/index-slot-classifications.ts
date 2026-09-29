@@ -429,9 +429,10 @@ function slotBaseNotes(
 }
 
 export function appendNotes(doc: string, notes: readonly string[]): string {
-  if (notes.length === 0) return doc;
-  const sentence = notes.join(" ");
   const body = doc.trimEnd();
+  const missing = notes.filter((note) => !body.includes(note));
+  if (missing.length === 0) return doc;
+  const sentence = missing.join(" ");
   if (body === "") return sentence;
   if (body.includes("\n")) return `${body}\n\n${sentence}`;
   return /[.!?:]$/.test(body) ? `${body} ${sentence}` : `${body}. ${sentence}`;
