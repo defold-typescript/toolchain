@@ -30,11 +30,21 @@ import { loadTranslations } from "./example-store-io";
 import { synthesizeProseConstants } from "./prose-constants";
 import { type readZip, SYNC_MANIFEST, type SyncManifestEntry } from "./sync-api-docs";
 
+// Withholds one overload of a documented function — the one whose `param` has
+// exactly the upstream type `type` — while its same-named siblings still emit.
+// `name` is the local name, like a `skipFunctions` rule.
+export interface SkipOverloadRule {
+  readonly name: string;
+  readonly param: string;
+  readonly type: string;
+}
+
 export interface ApiTargetModule {
   readonly namespace: string;
   readonly fixture: string;
   readonly outFile: string;
   readonly skipFunctions?: readonly string[];
+  readonly skipOverloads?: readonly SkipOverloadRule[];
 }
 
 // An editor-VM document declared by a target. It carries two things a runtime
@@ -97,6 +107,14 @@ export function loadApiTargets(
   return targets;
 }
 
+function withSkipRules(entry: ModuleManifestEntry, module: ApiTargetModule): ModuleManifestEntry {
+  return {
+    ...entry,
+    ...(module.skipFunctions ? { skipFunctions: module.skipFunctions } : {}),
+    ...(module.skipOverloads ? { skipOverloads: module.skipOverloads } : {}),
+  };
+}
+
 export function loadTargetModules(
   target: ApiTarget,
   packageRoot: string = PACKAGE_ROOT,
@@ -117,7 +135,7 @@ export function loadTargetModules(
       outFile: module.outFile,
       importsFrom: target.coreTypesImport,
     };
-    return module.skipFunctions ? { ...entry, skipFunctions: module.skipFunctions } : entry;
+    return withSkipRules(entry, module);
   });
   return synthesizeProseConstants(modules);
 }
@@ -131,6 +149,7 @@ export interface ModuleManifestEntry {
   // prefix dropping everything beneath it (`ui.`). The field keeps its historic
   // name; its reach is not limited to functions.
   readonly skipFunctions?: readonly string[];
+  readonly skipOverloads?: readonly SkipOverloadRule[];
   readonly importsFrom?: string;
   readonly moduleId?: string;
   readonly sourceProvenance?: DocSourceProvenance;
@@ -185,7 +204,7 @@ export async function resolveTargetModules(
       importsFrom: target.coreTypesImport,
       sourceProvenance: provenance,
     };
-    return module.skipFunctions ? { ...entry, skipFunctions: module.skipFunctions } : entry;
+    return withSkipRules(entry, module);
   });
   return synthesizeProseConstants(modules);
 }
@@ -421,7 +440,7 @@ interface PreparedGeneratedModule {
   dropped: string[];
 }
 
-// Parse a manifest entry, apply its `skipFunctions` filter, and resolve the
+// Parse a manifest entry, apply its `skipFunctions` and `skipOverloads` filters, and resolve the
 // shared constant-brand universe and translations. Both the `.d.ts` emit and
 // the authoritative-signature emit run off this identical prepared module, so a
 // dropped member never appears in either surface.
@@ -443,6 +462,20 @@ function prepareGeneratedModule(
   };
   module.functions = module.functions.filter((fn) => !withheld(fn.name));
   module.variables = module.variables.filter((v) => !withheld(v.name));
+  for (const rule of entry.skipOverloads ?? []) {
+    const fqn = `${prefix}${rule.name}`;
+    const kept = module.functions.filter(
+      (fn) =>
+        fn.name !== fqn ||
+        !fn.parameters.some(
+          (p) => p.name === rule.param && p.types.length === 1 && p.types[0] === rule.type,
+        ),
+    );
+    if (kept.length === module.functions.length) {
+      throw new Error(`skipOverloads: ${fqn} has no overload whose ${rule.param} is ${rule.type}`);
+    }
+    module.functions = kept;
+  }
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
   const translations = options?.translations ?? loadTranslations();
   const urlParameters = options?.urlParameters ?? committedUrlParameters();

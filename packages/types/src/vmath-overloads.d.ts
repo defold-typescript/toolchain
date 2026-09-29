@@ -1,6 +1,6 @@
 /** @noSelfInFile */
 
-import type { Quaternion, Vector3, Vector4 } from "./core-types";
+import type { Quaternion, Vector, Vector3, Vector4 } from "./core-types";
 
 declare global {
   namespace vmath {
@@ -124,5 +124,31 @@ declare global {
      * @returns the slerped quaternion
      */
     function slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion;
+    /**
+     * Creates an empty vector. The engine raises on an explicit nil, so this
+     * form takes no argument at all.
+     *
+     * @returns new vector
+     */
+    function vector(): Vector;
+    /**
+     * Creates a vector of arbitrary size. The vector is initialized
+     * with numeric values from a table.
+     * The table values are converted to floating point
+     * values. If a value cannot be converted, a 0 is stored in that
+     * value position in the vector.
+     *
+     * @param t - table of numbers
+     * @returns new vector
+     * @example
+     * ```ts
+     * // How to create a vector with custom data to be used for animation easing:
+     * const values = [0, 0.5, 0];
+     * const vec = vmath.vector(values);
+     * print(vec); // => vmath.vector (size: 3)
+     * print(vec[2]); // => 0.5
+     * ```
+     */
+    function vector(t: number[]): Vector;
   }
 }

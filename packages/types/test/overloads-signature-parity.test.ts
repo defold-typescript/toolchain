@@ -42,6 +42,7 @@ const NAMESPACES: readonly OverloadNamespace[] = [
       "vmath.slerp",
       "vmath.mul_per_elem",
       "vmath.normalize",
+      "vmath.vector",
     ],
     reflow: {
       from: "function lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion;",

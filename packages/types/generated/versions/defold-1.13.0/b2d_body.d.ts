@@ -114,7 +114,7 @@ declare global {
      * }
      * ```
      */
-    function create_chain(body: Opaque<"b2Body">, definition: { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: { category_bits: number; mask_bits: number; group_index: number }; enable_sensor_events?: boolean }): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: number }[]]>;
+    function create_chain(body: Opaque<"b2Body">, definition: { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: { category_bits?: number; mask_bits?: number; group_index?: number }; enable_sensor_events?: boolean }): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: number }[]]>;
     /**
      * Creates a fixture and attach it to this body. Use this function if you need
      * to set some fixture parameters, like friction. Otherwise you can create the
@@ -144,18 +144,7 @@ declare global {
      * }
      * ```
      */
-    function create_fixture(body: Opaque<"b2Body">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number };
-    /**
-     * Creates a fixture from a shape and attach it to this body.
-     * This is a convenience function. Use b2FixtureDef if you need to set parameters
-     * like friction, restitution, user data, or filtering.
-     * If the density is non-zero, this function automatically updates the mass of the body.
-     *
-     * @param body - body
-     * @param shape - the shape to be cloned.
-     * @param density - the shape density (set to zero for static bodies).
-     */
-    function create_fixture(body: Opaque<"b2Body">, shape: Opaque<"b2Shape">, density: number): void;
+    function create_fixture(body: Opaque<"b2Body">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number };
     /**
      * Creates a shape and attaches it to this body.
      * If the density is non-zero, this function automatically updates the mass of the body.
@@ -594,13 +583,6 @@ declare global {
      * @param data - table with `mass`, `center` in local coordinates, and `inertia`.
      */
     function set_mass_data(body: Opaque<"b2Body">, data: { mass: number; center: Vector3; inertia: number }): void;
-    /**
-     * Set the mass properties to override the mass properties of the shapes.
-     *
-     * @param body - body
-     * @param data - the mass properties.
-     */
-    function set_mass_data(body: Opaque<"b2Body">, data: Opaque<"b2MassData">): void;
     /**
      * Set the body name.
      *

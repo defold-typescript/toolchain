@@ -218,6 +218,9 @@ export const OVERLOAD_COVERED_SKIPS = new Set([
   "render.render_target",
   // vmath-overloads.d.ts supplies the vector3 and three-number euler_to_quat arities.
   "vmath.euler_to_quat",
+  // vmath-overloads.d.ts supplies the empty form and the table form; the engine
+  // raises on an explicit nil, so no optional parameter admits undefined.
+  "vmath.vector",
   // vmath-overloads.d.ts supplies the generic covariant signatures.
   "vmath.clamp",
   "vmath.lerp",
@@ -809,10 +812,6 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
   [
     "render.set_render_target:param:render_target",
     "render_script.cpp:RenderScript_SetRenderTarget sets the default target when lua_gettop(L) == 0",
-  ],
-  [
-    "vmath.vector:param:t",
-    "script_vmath.cpp:Vector_new returns an empty vector when lua_gettop(L) == 0",
   ],
   ["socket.newtry:param:finalizer", "socket.protect's example `local try = socket.newtry()`"],
   ...(
@@ -2016,8 +2015,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   // `headers`; the sibling `options` table stays parser-recovered.
   ["http.request:param:headers", { kind: "mapping", key: "string", value: "string" }],
   // collectionproxy.get_resources returns "the resources, or an empty list", a
-  // homogeneous list of resource-path hashes (prose only, no field list).
-  ["collectionproxy.get_resources:return:resources", { kind: "array", element: "hash" }],
+  // homogeneous list of resource paths (prose only, no field list), each a
+  // hexadecimal string: script_collectionproxy.cpp:GetResourceHashCallback pushes
+  // every entry with lua_pushlstring.
+  ["collectionproxy.get_resources:return:resources", { kind: "array", element: "string" }],
   // render.predicate's `tags` is "table of tags ... can be of either hash or
   // string type", a homogeneous array whose element is the string|hash union.
   ["render.predicate:param:tags", { kind: "array", element: ["string", "hash"] }],
@@ -2228,6 +2229,9 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
         { name: "restitution", types: ["number"] },
         { name: "density", types: ["number"] },
         { name: "sensor", types: ["boolean"] },
+        // v2/script_box2d_fixture_v2.cpp:CheckFixtureDef reads is_sensor when
+        // sensor is absent.
+        { name: "is_sensor", types: ["boolean"] },
         { name: "filter", types: ["table"], fields: [...B2D_FILTER_DATA_FIELDS] },
       ],
     },
@@ -2618,6 +2622,9 @@ export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> 
 // `render.set_render_target`'s `options.transient` is documented as `table`
 // with the prose "a list of buffer types", and upstream's example passes
 // graphics.BUFFER_TYPE_* constants.
+//
+// `resource.create_sound_data`'s `options.data` is documented as `string`, while
+// script_resource.cpp:CreateSoundData reads it with CheckBufferOrString.
 const CONSTANT_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[]";
 const ATTRIBUTE_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | number[]";
 export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
@@ -2630,6 +2637,7 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["resource.get_atlas:return:data:animations[].playback", "go.Playback"],
   ["gui.set:param:options:key", "string | Hash"],
   ["render.set_render_target:param:options:transient", "graphics.BufferType[]"],
+  ["resource.create_sound_data:param:options:data", 'string | Opaque<"buffer">'],
 ]);
 
 // A field the engine accepts on an option bag whose `<dl>` upstream otherwise
@@ -2788,8 +2796,6 @@ export function applyFieldOptionalityCorrections(
 const CHECK_SHAPE_DEF = "CheckShapeDef reads the shape table with luaL_checkinteger(type)";
 const V2_FILTER_DATA =
   "v2/script_box2d_fixture_v2.cpp:CheckFilterData reads each with luaL_checkinteger";
-const V3_FILTER_DATA =
-  "v3/script_box2d_chain_v3.cpp:CheckFilterData reads each with luaL_checknumber or luaL_checkinteger";
 const TEXTURE_PARAMS =
   "script_resource.cpp:CheckCreateTextureResourceParams reads CheckTableInteger";
 const ATLAS_ARGUMENTS =
@@ -2820,7 +2826,6 @@ export const REQUIRED_FIELD_CORRECTIONS: ReadonlyMap<string, string> = new Map<s
     "b2d.body.create_chain:param:definition:vertices",
     "v3/script_box2d_chain_v3.cpp:Body_CreateChain reads vertices with CheckVerticesTable, at least 2 (4 for a loop)",
   ],
-  ...filterDataFields("b2d.body.create_chain:param:definition", V3_FILTER_DATA),
   ...(["cast_mover", "collide_mover"] as const).flatMap((name) =>
     (["center1", "center2", "radius"] as const).map(
       (field) =>

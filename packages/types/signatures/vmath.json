@@ -50,5 +50,12 @@
     "docs": [
       "Normalizes a vector, i.e. returns a new vector with the same direction as the input vector, but with length 1. The length of the vector must be above 0, otherwise a division-by-zero will occur."
     ]
+  },
+  "vmath.vector": {
+    "signatures": ["vmath.vector(): Vector", "vmath.vector(t: number[]): Vector"],
+    "docs": [
+      "Creates an empty vector. The engine raises on an explicit nil, so this form takes no argument at all.",
+      "Creates a vector of arbitrary size. The vector is initialized with numeric values from a table. The table values are converted to floating point values. If a value cannot be converted, a 0 is stored in that value position in the vector."
+    ]
   }
 }
