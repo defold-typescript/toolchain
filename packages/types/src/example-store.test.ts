@@ -209,6 +209,30 @@ describe("translateProseFences", () => {
       ].join("\n"),
     );
   });
+
+  test("keepSource follows each swapped fence with its untouched body as a `lua original` fence", () => {
+    const other = "if x then\nend";
+    const mixed = ["```lua", other, "```", "", markdown].join("\n");
+    expect(translateProseFences(mixed, "physics.get_group", store, { keepSource: true })).toBe(
+      [
+        "```lua",
+        other,
+        "```",
+        "",
+        "Returns the group.",
+        "",
+        "```ts",
+        ts,
+        "```",
+        "",
+        "```lua original",
+        body,
+        "```",
+        "",
+        "Trailing *prose*.",
+      ].join("\n"),
+    );
+  });
 });
 
 describe("proseLuaFences", () => {
