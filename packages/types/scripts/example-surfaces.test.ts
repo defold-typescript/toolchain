@@ -331,7 +331,9 @@ describe("module-bound ownership", () => {
   });
 
   test("a namespace named only inside a string literal is not a reference", () => {
-    const body = bodyOf("editor.create_resources");
+    const body =
+      (store["editor.create_resources"] ?? []).find((entry) => entry.ts.includes("go.property"))
+        ?.ts ?? "";
     expect(body).toContain("go.property");
     expect(referencedNamespaces(body, moduleNamespaces(surfaces))).toEqual(["editor"]);
   });

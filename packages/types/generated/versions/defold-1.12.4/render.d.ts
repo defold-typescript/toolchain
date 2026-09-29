@@ -62,39 +62,41 @@ declare global {
      *
      * @returns new constant buffer
      * @example
+     * Set a "tint" constant in a constant buffer in the render script:
      * ```ts
-     * export default defineRenderScript({
-     *   init() {
-     *     return { my_pred: render.predicate([hash("my_tag")]) };
-     *   },
+     * const constants = render.constant_buffer();
+     * constants.tint = vmath.vector4(1, 1, 1, 1);
+     * ```
+     * @example
+     * Then use the constant buffer when drawing a predicate:
+     * ```ts
+     * function draw_tinted(self: { my_pred: Opaque<"render_predicate"> }) {
+     *   const constants = render.constant_buffer();
+     *   constants.tint = vmath.vector4(1, 1, 1, 1);
+     *   render.draw(self.my_pred, { constants });
+     * }
+     * ```
+     * @example
+     * The constant buffer also supports array values by specifying constants in a table:
+     * ```ts
+     * const constants = render.constant_buffer();
+     * constants.light_colors = [];
+     * constants.light_colors[0] = vmath.vector4(1, 0, 0, 1);
+     * constants.light_colors[1] = vmath.vector4(0, 1, 0, 1);
+     * constants.light_colors[2] = vmath.vector4(0, 0, 1, 1);
+     * ```
+     * @example
+     * You can also create the table by passing the vectors directly when creating the table:
+     * ```ts
+     * const constants = render.constant_buffer();
+     * constants.light_colors = [
+     *   vmath.vector4(1, 0, 0, 1),
+     *   vmath.vector4(0, 1, 0, 1),
+     *   vmath.vector4(0, 0, 1, 1),
+     * ];
      *
-     *   update(self, dt) {
-     *     // Set a "tint" constant in a constant buffer in the render script:
-     *     const constants = render.constant_buffer();
-     *     constants.tint = vmath.vector4(1, 1, 1, 1);
-     *
-     *     // Then use the constant buffer when drawing a predicate:
-     *     render.draw(self.my_pred, { constants });
-     *
-     *     // The constant buffer also supports array values by specifying constants in an array:
-     *     const constants2 = render.constant_buffer();
-     *     constants2.light_colors = [];
-     *     constants2.light_colors[0] = vmath.vector4(1, 0, 0, 1);
-     *     constants2.light_colors[1] = vmath.vector4(0, 1, 0, 1);
-     *     constants2.light_colors[2] = vmath.vector4(0, 0, 1, 1);
-     *
-     *     // You can also create the array by passing the vectors directly:
-     *     const constants3 = render.constant_buffer();
-     *     constants3.light_colors = [
-     *       vmath.vector4(1, 0, 0, 1),
-     *       vmath.vector4(0, 1, 0, 1),
-     *       vmath.vector4(0, 0, 1, 1),
-     *     ];
-     *
-     *     // Add more constants to the array
-     *     constants3.light_colors[3] = vmath.vector4(1, 1, 1, 1);
-     *   },
-     * });
+     * // Add more constants to the array
+     * constants.light_colors[3] = vmath.vector4(1, 1, 1, 1);
      * ```
      */
     function constant_buffer(): Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };
@@ -235,8 +237,10 @@ declare global {
      *     render.set_compute();
      *   },
      * });
-     *
-     * // Dispatch a compute program with a constant buffer:
+     * ```
+     * @example
+     * Dispatch a compute program with a constant buffer:
+     * ```ts
      * const constants = render.constant_buffer();
      * constants.tint = vmath.vector4(1, 1, 1, 1);
      * render.dispatch_compute(32, 32, 32, { constants });
@@ -268,32 +272,40 @@ declare global {
      * ```ts
      * export default defineRenderScript({
      *   init() {
-     *     return {
-     *       // define a predicate matching anything with material tag "my_tag"
-     *       my_pred: render.predicate([hash("my_tag")]),
-     *       proj: vmath.matrix4_perspective(math.rad(45), render.get_window_width() / render.get_window_height(), 0.1, 1000),
-     *       view: vmath.matrix4_look_at(vmath.vector3(0, 0, 10), vmath.vector3(0, 0, 0), vmath.vector3(0, 1, 0)),
-     *     };
+     *     // define a predicate matching anything with material tag "my_tag"
+     *     return { my_pred: render.predicate([hash("my_tag")]) };
      *   },
      *
      *   update(self, dt) {
      *     // draw everything in the my_pred predicate
      *     render.draw(self.my_pred);
-     *
-     *     // Draw predicate with constants:
-     *     const constants = render.constant_buffer();
-     *     constants.tint = vmath.vector4(1, 1, 1, 1);
-     *     render.draw(self.my_pred, { constants });
-     *
-     *     // Draw with predicate and frustum culling (without near+far planes):
-     *     const frustum = self.proj.mul(self.view);
-     *     render.draw(self.my_pred, { frustum });
-     *
-     *     // Draw with predicate and frustum culling (with near+far planes):
-     *     const frustum2 = self.proj.mul(self.view);
-     *     render.draw(self.my_pred, { frustum: frustum2, frustum_planes: render.FRUSTUM_PLANES_ALL });
      *   },
      * });
+     * ```
+     * @example
+     * Draw predicate with constants:
+     * ```ts
+     * function draw_tinted(self: { my_pred: Opaque<"render_predicate"> }) {
+     *   const constants = render.constant_buffer();
+     *   constants.tint = vmath.vector4(1, 1, 1, 1);
+     *   render.draw(self.my_pred, { constants });
+     * }
+     * ```
+     * @example
+     * Draw with predicate and frustum culling (without near+far planes):
+     * ```ts
+     * function draw_culled(self: { my_pred: Opaque<"render_predicate">; proj: Matrix4; view: Matrix4 }) {
+     *   const frustum = self.proj.mul(self.view);
+     *   render.draw(self.my_pred, { frustum });
+     * }
+     * ```
+     * @example
+     * Draw with predicate and frustum culling (with near+far planes):
+     * ```ts
+     * function draw_culled(self: { my_pred: Opaque<"render_predicate">; proj: Matrix4; view: Matrix4 }) {
+     *   const frustum = self.proj.mul(self.view);
+     *   render.draw(self.my_pred, { frustum, frustum_planes: render.FRUSTUM_PLANES_ALL });
+     * }
      * ```
      */
     function draw(predicate: Opaque<"render_predicate">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;
@@ -724,26 +736,24 @@ declare global {
      * `use_frustum`
      * boolean If true, the renderer will use the cameras view-projection matrix for frustum culling (default: false)
      * @example
+     * Set the current camera to be used for rendering
      * ```ts
-     * export default defineRenderScript({
-     *   init() {
-     *     return { my_pred: render.predicate([hash("my_tag")]) };
-     *   },
-     *
-     *   update(self, dt) {
-     *     // Set the current camera to be used for rendering
-     *     render.set_camera("main:/my_go#camera");
-     *     render.draw(self.my_pred);
-     *     render.set_camera(undefined);
-     *
-     *     // Use the camera frustum for frustum culling together with a specific frustum plane option for the draw command
-     *     // The camera frustum will take precedence over the frustum plane option in render.draw
-     *     render.set_camera("main:/my_go#camera", { use_frustum: true });
-     *     // However, we can still customize the frustum planes regardless of the camera option!
-     *     render.draw(self.my_pred, { frustum_planes: render.FRUSTUM_PLANES_ALL });
-     *     render.set_camera();
-     *   },
-     * });
+     * function draw_through_camera(self: { my_pred: Opaque<"render_predicate"> }) {
+     *   render.set_camera("main:/my_go#camera");
+     *   render.draw(self.my_pred);
+     *   render.set_camera(undefined);
+     * }
+     * ```
+     * @example
+     * Use the camera frustum for frustum culling together with a specific frustum plane option for the draw command
+     * ```ts
+     * function draw_through_camera(self: { my_pred: Opaque<"render_predicate"> }) {
+     *   // The camera frustum will take precedence over the frustum plane option in render.draw
+     *   render.set_camera("main:/my_go#camera", { use_frustum: true });
+     *   // However, we can still customize the frustum planes regardless of the camera option!
+     *   render.draw(self.my_pred, { frustum_planes: render.FRUSTUM_PLANES_ALL });
+     *   render.set_camera();
+     * }
      * ```
      */
     function set_camera(camera?: Url | number | string | Hash, options?: { use_frustum?: boolean }): void;

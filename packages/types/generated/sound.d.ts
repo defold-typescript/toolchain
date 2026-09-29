@@ -186,12 +186,13 @@ declare global {
      * url The invoker of the callback: the sound component.
      * @returns The identifier for the sound voice
      * @example
+     * Assuming the script belongs to an instance with a sound-component with id "sound", this will make the component play its sound after 1 second:
      * ```ts
-     * // Assuming the script belongs to an instance with a sound-component with id
-     * // "sound", this will make the component play its sound after 1 second:
      * sound.play("#sound", { delay: 1, gain: 0.9, pan: -1.0 });
-     *
-     * // Using the callback argument, you can chain several sounds together:
+     * ```
+     * @example
+     * Using the callback argument, you can chain several sounds together:
+     * ```ts
      * function sound_done(self: unknown, message_id: unknown, message: unknown, sender: unknown) {
      *   // play 'boom' sound fx when the countdown has completed
      *   const { play_id } = message as { play_id: number };

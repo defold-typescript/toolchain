@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadTranslations } from "../scripts/example-store-io";
 import { parseDefoldApiDoc } from "./api-doc";
-import { htmlToCodeText, htmlToDocText } from "./doc-comment";
+import { htmlToCodeText, htmlToDocText, splitExampleSources } from "./doc-comment";
 import {
   hashExampleSource,
   lookupExampleSegments,
@@ -13,6 +13,8 @@ import {
   type TranslationStore,
   translateProseFences,
 } from "./example-store";
+
+const FIXTURES_DIR = resolve(import.meta.dir, "..", "fixtures");
 
 describe("hashExampleSource", () => {
   test("is stable for the same input", () => {
@@ -66,19 +68,18 @@ describe("translations.json multi-hash entries", () => {
   // demoted targets, so both source hashes have to resolve to their own
   // translation. A re-pin that replaces rather than appends drops one of them
   // and the older surface silently falls back to raw Lua.
-  test("gui.set resolves a translation for both the default and the demoted source body", () => {
+  test("gui.set resolves every example of both the default and the demoted source body", () => {
     const store = loadTranslations();
-    const hashes = (store["gui.set"] ?? []).map((entry) => entry.sourceHash);
-    expect(hashes).toContain("a609fdbcee772fac");
-    expect(hashes).toContain("d195edde0a9fd170");
-    for (const hash of hashes) {
-      const ts = lookupTranslation(store, "gui.set", hash);
-      expect(ts).not.toBeNull();
-      expect(ts).not.toContain("local ");
+    const resolved = ["defold-1.13.1", "defold-1.12.4"].map((target) => {
+      const doc = JSON.parse(readFileSync(resolve(FIXTURES_DIR, target, "gui_doc.json"), "utf8"));
+      const fn = parseDefoldApiDoc(doc).functions.find((candidate) => candidate.name === "gui.set");
+      return lookupExampleSegments(store, "gui.set", splitExampleSources(fn?.examples ?? ""));
+    });
+    for (const segments of resolved) {
+      expect(segments).not.toBeNull();
+      for (const { ts } of segments ?? []) expect(ts).not.toContain("local ");
     }
-    expect(lookupTranslation(store, "gui.set", "a609fdbcee772fac")).not.toBe(
-      lookupTranslation(store, "gui.set", "d195edde0a9fd170"),
-    );
+    expect(resolved[0]).not.toEqual(resolved[1]);
   });
 });
 

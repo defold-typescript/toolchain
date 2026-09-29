@@ -228,7 +228,7 @@ function scanExampleRegions(html: string): { matched: boolean; regions: ExampleR
   let matched = false;
   for (let match = blocks.exec(html); match !== null; match = blocks.exec(html)) {
     matched = true;
-    regions.push({ kind: "prose", html: html.slice(lastIndex, match.index), lang: "lua" });
+    regions.push(...proseRegions(html.slice(lastIndex, match.index)));
     const inner = match[1] ?? "";
     regions.push({
       kind: "code",
@@ -238,8 +238,26 @@ function scanExampleRegions(html: string): { matched: boolean; regions: ExampleR
     lastIndex = match.index + match[0].length;
   }
   if (!matched) return { matched: false, regions: [{ kind: "code", html, lang: "lua" }] };
-  regions.push({ kind: "prose", html: html.slice(lastIndex), lang: "lua" });
+  regions.push(...proseRegions(html.slice(lastIndex)));
   return { matched: true, regions };
+}
+
+// Upstream Markdown ```` ```lua ```` fences sometimes reach the ref-doc as
+// `<code>lua\n...</code>`: a language token, a newline, then source. Read as
+// prose it welds the code into the surrounding sentences, so each one is lifted
+// into a code region of its own. Inline `<code>` spans carry no such newline.
+const MANGLED_FENCE = /<code>([A-Za-z0-9_+-]+)\n([\s\S]*?)<\/code>/g;
+
+function proseRegions(html: string): ExampleRegion[] {
+  const regions: ExampleRegion[] = [];
+  let lastIndex = 0;
+  for (const match of html.matchAll(MANGLED_FENCE)) {
+    regions.push({ kind: "prose", html: html.slice(lastIndex, match.index), lang: "lua" });
+    regions.push({ kind: "code", html: match[2] ?? "", lang: match[1] ?? "lua" });
+    lastIndex = match.index + match[0].length;
+  }
+  regions.push({ kind: "prose", html: html.slice(lastIndex), lang: "lua" });
+  return regions;
 }
 
 /**
@@ -290,7 +308,8 @@ export interface ExampleSegmentation {
  * Carve an `examples` HTML fragment into one segment per example it carries.
  *
  * A `<div class="codehilite">` block is a code region and the markup between
- * two of them is a prose region; inside either, a ` ``` ` line switches between
+ * two of them is a prose region, less any mangled `<code>lang\n...</code>`
+ * fence lifted out of it as a code region; inside either, a ` ``` ` line switches between
  * code and prose, and an opener reached while already in code ends the running
  * example and starts the next. Upstream writes several examples both ways — as
  * several blocks, and as its own Markdown fences inside one block — so both

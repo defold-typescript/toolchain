@@ -9,7 +9,7 @@ import {
   VERSIONED_MODULE_MANIFEST,
 } from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
-import { htmlToCodeText, splitExampleSources } from "../src/doc-comment";
+import { htmlToCodeText, segmentExampleRegions, splitExampleSources } from "../src/doc-comment";
 import {
   hashExampleSource,
   lookupExampleTranslations,
@@ -19,6 +19,7 @@ import {
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const EXAMPLES_DIR = resolve(PACKAGE_ROOT, "examples");
+const WELDED_FENCE = /^\s*`[A-Za-z0-9_+-]+$/;
 
 // One committed API surface per entry: a target's `generatedDir` is the
 // directory that target emits its module declarations into, so the default
@@ -34,9 +35,9 @@ function allGeneratedSurfaces(): { id: string; dir: string }[] {
     .filter((surface) => existsSync(surface.dir));
 }
 
-// FQN -> every source a stored translation may legitimately be pinned to: an
-// element's whole-blob post-htmlToCodeText body, and — when its blob carries
-// several examples — each segment's body. Overloads can carry differing bodies
+// FQN -> every source a stored translation may legitimately be pinned to: each
+// body `splitExampleSources` carves from an element's blob, which for a
+// single-example element is the whole blob. Overloads can carry differing bodies
 // under one FQN, so this is a set per name. Spans the editor manifest too: its
 // emitted members carry translations, so their stored source hashes need a
 // fixture body to match against or they read as stale. Spans the demoted
@@ -56,12 +57,10 @@ function exampleSourcesByFqn(): Map<string, Set<string>> {
     ...VERSIONED_MODULE_MANIFEST,
   ]) {
     for (const fn of parseDefoldApiDoc(entry.doc).functions) {
-      const lua = htmlToCodeText(fn.examples ?? "");
-      if (lua === "") continue;
-      const set = byFqn.get(fn.name) ?? new Set<string>();
-      set.add(lua);
       const segments = splitExampleSources(fn.examples ?? "");
-      if (segments.length > 1) for (const segment of segments) set.add(segment.code);
+      if (segments.length === 0) continue;
+      const set = byFqn.get(fn.name) ?? new Set<string>();
+      for (const segment of segments) set.add(segment.code);
       byFqn.set(fn.name, set);
     }
   }
@@ -88,8 +87,8 @@ function allProseLuaFences(): { key: string; lua: string; hash: string }[] {
 }
 
 // Every example-bearing element across every manifest, with the hashes the emit
-// ladder consults for it: the whole-blob hash, and the per-segment hashes when
-// its blob carries several examples.
+// ladder consults for it: one per example `splitExampleSources` carves out, the
+// lone one of a single-example element being its whole-blob hash.
 function exampleElements(): { fqn: string; wholeHash: string; segmentHashes: string[] }[] {
   const out: { fqn: string; wholeHash: string; segmentHashes: string[] }[] = [];
   const seen = new Set<string>();
@@ -99,18 +98,16 @@ function exampleElements(): { fqn: string; wholeHash: string; segmentHashes: str
     ...VERSIONED_MODULE_MANIFEST,
   ]) {
     for (const fn of parseDefoldApiDoc(entry.doc).functions) {
-      const lua = htmlToCodeText(fn.examples ?? "");
-      if (lua === "") continue;
-      const wholeHash = hashExampleSource(lua);
+      const segments = splitExampleSources(fn.examples ?? "");
+      if (segments.length === 0) continue;
+      const wholeHash = hashExampleSource(htmlToCodeText(fn.examples ?? ""));
       const key = `${fn.name}:${wholeHash}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      const segments = splitExampleSources(fn.examples ?? "");
       out.push({
         fqn: fn.name,
         wholeHash,
-        segmentHashes:
-          segments.length > 1 ? segments.map((segment) => hashExampleSource(segment.code)) : [],
+        segmentHashes: segments.map((segment) => hashExampleSource(segment.code)),
       });
     }
   }
@@ -120,29 +117,19 @@ function exampleElements(): { fqn: string; wholeHash: string; segmentHashes: str
 // Every example-bearing element, identified `<fqn>:<sourceHash>` by its
 // whole-blob hash, that the emit ladder resolves to no authored body. Per
 // element (not per FQN), so an overload-shadowed body under an already-
-// translated FQN is still visible. Reads the ladder's own precedence, so an
-// element documented by per-segment entries counts as translated even though no
-// entry carries its whole-blob hash.
+// translated FQN is still visible. Reads the ladder's own rule: an element is
+// translated only when every example it carries resolves.
 function untranslatedElements(): string[] {
   const store = loadTranslations();
   const out: string[] = [];
   const seen = new Set<string>();
   for (const entry of MODULE_MANIFEST) {
     for (const fn of parseDefoldApiDoc(entry.doc).functions) {
-      const lua = htmlToCodeText(fn.examples ?? "");
-      if (lua === "") continue;
-      const sourceHash = hashExampleSource(lua);
       const segments = splitExampleSources(fn.examples ?? "");
-      const perSegment =
-        segments.length > 1
-          ? lookupExampleTranslations(
-              store,
-              fn.name,
-              segments.map((segment) => hashExampleSource(segment.code)),
-            )
-          : null;
-      if (perSegment !== null) continue;
-      if (lookupTranslation(store, fn.name, sourceHash) !== null) continue;
+      if (segments.length === 0) continue;
+      const segmentHashes = segments.map((segment) => hashExampleSource(segment.code));
+      if (lookupExampleTranslations(store, fn.name, segmentHashes) !== null) continue;
+      const sourceHash = hashExampleSource(htmlToCodeText(fn.examples ?? ""));
       const key = `${fn.name}:${sourceHash}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -171,70 +158,45 @@ describe("example translation drift guard", () => {
     expect(stale).toEqual([]);
   });
 
-  test("no element that resolves to an authored body today loses one to segment re-keying", () => {
+  // An element whose FQN carries no stored entry at all is untranslated, not
+  // unsplit, and ships its Lua fallback; `untranslated.json` tracks those.
+  test("every multi-example element resolves a translation per example", () => {
     const store = loadTranslations();
-    const lost: string[] = [];
+    const unsplit: string[] = [];
     for (const element of exampleElements()) {
-      const perSegment = lookupExampleTranslations(store, element.fqn, element.segmentHashes);
-      const whole = lookupTranslation(store, element.fqn, element.wholeHash);
-      // The emit ladder's own precedence: per-segment when every segment
-      // resolves, else the whole-blob body. An element with neither is one the
-      // backfill goal still owns and ships its Lua fallback, as it does today.
-      if (perSegment === null && whole === null && element.segmentHashes.length > 0) {
-        const anySegment = element.segmentHashes.some(
-          (hash) => lookupTranslation(store, element.fqn, hash) !== null,
-        );
-        if (anySegment) lost.push(`${element.fqn}:${element.wholeHash}`);
-      }
-    }
-    if (lost.length > 0) {
-      throw new Error(
-        `these elements hold a segment translation but resolve to no complete body — split every segment or keep the whole-blob entry: ${lost.join(", ")}`,
-      );
-    }
-    expect(lost).toEqual([]);
-  });
-
-  // `go.get` and `go.set` document cases whose Lua the segmenter leaves inside a
-  // prose region rather than lifting into its own segment, so their final
-  // segment's prose carries welded sentences and inline Lua. Splitting them
-  // would render that prose above the fence and drop the authored TypeScript for
-  // the swallowed cases, so they keep their whole-blob body until the segmenter
-  // separates those regions. Membership is pinned both ways: a third element
-  // reaching the fallback reds the first assertion, and either of these two
-  // becoming splittable reds the second.
-  const WELDED_PROSE_FQNS = ["go.get", "go.set"];
-
-  test("every multi-example go element outside the welded-prose pair resolves a translation per example", () => {
-    const store = loadTranslations();
-    const onFallback: string[] = [];
-    let multi = 0;
-    for (const element of exampleElements()) {
-      if (!element.fqn.startsWith("go.")) continue;
       if (element.segmentHashes.length < 2) continue;
-      if (WELDED_PROSE_FQNS.includes(element.fqn)) continue;
-      multi += 1;
+      if ((store[element.fqn] ?? []).length === 0) continue;
       if (lookupExampleTranslations(store, element.fqn, element.segmentHashes) === null) {
-        onFallback.push(`${element.fqn}:${element.wholeHash}`);
+        unsplit.push(`${element.fqn}:${element.wholeHash}`);
       }
     }
-    expect(multi).toBe(20);
-    if (onFallback.length > 0) {
+    if (unsplit.length > 0) {
       throw new Error(
-        `these go elements still resolve through the whole-blob arm — split every segment: ${onFallback.join(", ")}`,
+        `these elements carry several examples but no translation per example — split every segment: ${unsplit.join(", ")}`,
       );
     }
-    expect(onFallback).toEqual([]);
+    expect(unsplit).toEqual([]);
   });
 
-  test("the welded-prose pair still documents every example through its whole-blob body", () => {
-    const store = loadTranslations();
-    for (const fqn of WELDED_PROSE_FQNS) {
-      const element = exampleElements().find((candidate) => candidate.fqn === fqn);
-      expect(element?.segmentHashes.length ?? 0).toBeGreaterThan(1);
-      expect(lookupTranslation(store, fqn, element?.wholeHash ?? "")).not.toBeNull();
-      expect(lookupExampleTranslations(store, fqn, element?.segmentHashes ?? [])).toBeNull();
+  // A mangled upstream fence reaches prose as `<code>lua\n...</code>`, which
+  // `htmlToDocText` renders as a line holding a backtick and a bare language
+  // token. Seeing one here means the segmenter left an example's code in prose.
+  test("no example prose across any fixture holds a welded fence", () => {
+    const welded = new Set<string>();
+    const opensFence = (text: string) => text.split("\n").some((line) => WELDED_FENCE.test(line));
+    for (const entry of [
+      ...MODULE_MANIFEST,
+      ...EDITOR_MODULE_MANIFEST,
+      ...VERSIONED_MODULE_MANIFEST,
+    ]) {
+      for (const fn of parseDefoldApiDoc(entry.doc).functions) {
+        const { segments, trailingProse } = segmentExampleRegions(fn.examples ?? "");
+        if (segments.some((segment) => opensFence(segment.prose)) || opensFence(trailingProse)) {
+          welded.add(fn.name);
+        }
+      }
     }
+    expect([...welded].sort()).toEqual([]);
   });
 
   test("the per-element untranslated set matches the committed examples/untranslated.json snapshot", () => {
