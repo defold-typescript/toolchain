@@ -8,6 +8,7 @@ import {
   scanFunctionBaseStatements,
   scanIndexSlots,
   scanTypedefMemberSlots,
+  tupleComponentKeys,
 } from "../../../types/scripts/index-slot-scan";
 import { LIBRARY_INDEX_SLOT_CLASSIFICATIONS } from "../../../types/src/library-index-slot-classifications";
 import { loadLibraryPageSources } from "./api-surface-loader";
@@ -20,6 +21,7 @@ const sources = loadLibraryPageSources(REAL_LIBRARY_TYPES_DIR);
 describe("library index slot classification gate", () => {
   const sightings = new Map<string, { page: string; evidence: string }>();
   const declared = new Set<string>();
+  const tupleReturns = new Set<string>();
   for (const { page, doc } of sources) {
     const key = (slot: string): string => `${page.namespace}/${slot}`;
     const sight = (slot: string, evidence: string): void => {
@@ -33,6 +35,10 @@ describe("library index slot classification gate", () => {
     for (const slot of [...refDocSlotKeys(doc), ...classFieldKeys(doc), ...callbackArgKeys(doc)]) {
       declared.add(key(slot));
     }
+    for (const { key: slot, components } of tupleComponentKeys(doc)) {
+      tupleReturns.add(key(slot));
+      for (const component of components) declared.add(key(`${slot}:${component}`));
+    }
   }
 
   test("scans the loader's library pages, class fields and callback arguments included", () => {
@@ -42,6 +48,24 @@ describe("library index slot classification gate", () => {
     expect(declared.has("bridge/bridge.daily_rewards.get_current_day:param:on_success:day")).toBe(
       true,
     );
+    expect(declared.has("tile_raycast/cast:return::tile_x")).toBe(true);
+    expect(declared.has("tile_raycast/cast:return::array_id")).toBe(true);
+    expect(declared.has("tile_raycast/cast:return::side")).toBe(true);
+    expect(declared.has("tile_raycast/cast:return::LEFT")).toBe(false);
+    expect(declared.has("tile_raycast/cast:return::tile_index")).toBe(false);
+  });
+
+  test("an unnamed multi-value return is never classified as one position", () => {
+    const whole = [...tupleReturns].filter((key) => {
+      const base = LIBRARY_INDEX_SLOT_CLASSIFICATIONS.get(key)?.class;
+      return base === "native-1" || base === "native-0";
+    });
+    expect(tupleReturns.has("tile_raycast/cast:return:")).toBe(true);
+    if (whole.length > 0) {
+      throw new Error(
+        `these returns hold several values; classify each positional value as \`<key>:<value>\` in ${MAP_FILE}:\n${whole.join("\n")}`,
+      );
+    }
   });
 
   test("every scanned library index slot is classified", () => {
