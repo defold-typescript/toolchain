@@ -1143,7 +1143,7 @@ function first(values: unknown): number {
 
 **Symptom.** Defold component properties — the values you address at runtime through `go.get`/`go.set`/`go.animate` with a string id (`"color"`, `"position"`, `"size"`, …) — do not appear as members on the namespace object. There is no `label.color` you can read directly.
 
-**Why.** These properties are not module-level globals; they are per-component fields keyed by a string id passed to `go.get(url, "color")`. The ref-doc lists them as `PROPERTY` elements with a name and a type but no addressable symbol. The generated typings recover each namespace's properties into an in-namespace `interface properties { … }` so the name and type survive as a committed, drift-gated catalog. For example, `label.properties` carries `color: Vector4`, `size: Vector3`, `scale: number | Vector3`, and so on.
+**Why.** These properties are not module-level globals; they are per-component fields keyed by a string id passed to `go.get(url, "color")`. The ref-doc lists them as `PROPERTY` elements with a name and a type but no addressable symbol. The generated typings recover each namespace's properties into an in-namespace `interface properties { … }` so the name and type survive as a committed, drift-gated catalog. For example, `label.properties` carries `color: Vector4`, `size: Vector3`, `scale: Vector3`, and so on.
 
 **Typed alternative.** Read a property's type off the catalog with an indexed access — `label.properties["color"]` is `Vector4`. The catalog also makes `go.get`/`go.set` type-aware: a literal key drawn from `go`'s own transform properties narrows the result and the written value to the property's real type. `go.get(url, "position")` is `Vector3`, `go.get(url, "scale")` is `number | Vector3`, and `go.set(url, "euler", v3)` type-checks while `go.set(url, "position", "oops")` is rejected. Any other key — a `Hash`, a dynamic string, or a fragment-addressed cross-component property like `go.get("#sprite", "tint")` — falls through to an open `string | Hash` overload returning the documented wide union, so hashed and runtime access keep working unchanged.
 
@@ -8931,9 +8931,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function apply_linear_impulse_to_center(body: Opaque<"b2Body">, impulse: Vector3): void; [since 1.13.0]
 - function apply_torque(body: Opaque<"b2Body">, torque: number): void;
 - function compute_aabb(body: Opaque<"b2Body">): { lower: Vector3; upper: Vector3 }; [since 1.13.0]
-- function create_chain(body: Opaque<"b2Body">, definition: { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: { category_bits: number; mask_bits: number; group_index: number }; enable_sensor_events?: boolean }): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: number }[]]>; [since 1.13.0]
-- function create_fixture(body: Opaque<"b2Body">, shape: Opaque<"b2Shape">, density: number): void; [since 1.13.0]
-- function create_fixture(body: Opaque<"b2Body">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }; [since 1.13.0]
+- function create_chain(body: Opaque<"b2Body">, definition: { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: { category_bits?: number; mask_bits?: number; group_index?: number }; enable_sensor_events?: boolean }): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: number }[]]>; [since 1.13.0]
+- b2d.body.create_fixture(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): Record<string | number, unknown>
+- b2d.body.create_fixture(body: Opaque<"b2Body">, shape: Opaque<"b2Shape">, density: number)
+- function create_fixture(body: Opaque<"b2Body">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }; [since 1.13.0]
 - function create_shape(body: Opaque<"b2Body">, definition: ({ shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 } } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 }) & { density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; shape_id: Opaque<"b2Shape">; type: number; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean }; [since 1.13.0]
 - function destroy_fixture(body: Opaque<"b2Body">, fixture_index: number): void; [since 1.13.0]
 - function destroy_shape(body: Opaque<"b2Body">, shape_index: number): void; [since 1.13.0]
@@ -8996,7 +8997,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_gravity_scale(body: Opaque<"b2Body">, scale: number): void;
 - function set_linear_damping(body: Opaque<"b2Body">, damping: number): void;
 - function set_linear_velocity(body: Opaque<"b2Body">, velocity: Vector3): void;
-- function set_mass_data(body: Opaque<"b2Body">, data: Opaque<"b2MassData">): void; [since 1.13.0]
+- b2d.body.set_mass_data(body: Opaque<"b2Body">, data: Record<string | number, unknown>)
+- b2d.body.set_mass_data(body: Opaque<"b2Body">, data: Opaque<"b2MassData">)
 - function set_mass_data(body: Opaque<"b2Body">, data: { mass: number; center: Vector3; inertia: number }): void; [since 1.13.0]
 - function set_name(body: Opaque<"b2Body">, name: string): void; [since 1.13.0]
 - function set_sleep_threshold(body: Opaque<"b2Body">, threshold: number): void; [since 1.13.0]
@@ -9335,7 +9337,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### collectionproxy
 
-- function get_resources(collectionproxy: Url | string | Hash): Hash[];
+- function get_resources(collectionproxy: Url | string | Hash): string[];
 - function load(url: string | Hash | Url, options: Record<string | number, unknown> | undefined, callback: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): void; [since 1.13.1]
 - function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number]>;
 - collectionproxy.RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" }
@@ -10123,7 +10125,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function buffer(path?: string): Hash;
 - function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
 - function create_buffer(path: string, table: { buffer: Opaque<"buffer">; transfer_ownership?: boolean }): Hash;
-- function create_sound_data(path: string, options: { data: string; filesize?: number; partial?: boolean }): Hash;
+- function create_sound_data(path: string, options: { data: string | Opaque<"buffer">; filesize?: number; partial?: boolean }): Hash;
 - function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer">): Hash;
 - function create_texture_async(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer"> | undefined, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
 - function font(path?: string): Hash;
@@ -10380,7 +10382,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function rotate(q: Quaternion, v1: Vector3): Vector3;
 - vmath.slerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T
 - vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
-- function vector(t?: number[]): Vector;
+- vmath.vector(): Vector
+- vmath.vector(t: number[]): Vector
 - function vector3(): Vector3;
 - function vector3(x: number, y: number, z: number): Vector3;
 - function vector3(n: number): Vector3;

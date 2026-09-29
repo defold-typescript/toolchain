@@ -218,11 +218,13 @@ describe("api-targets registry", () => {
       namespace: m.namespace,
       outFile: m.outFile,
       skipFunctions: m.skipFunctions ?? undefined,
+      skipOverloads: m.skipOverloads ?? undefined,
     }));
     const manifest = MODULE_MANIFEST.map((m) => ({
       namespace: m.namespace,
       outFile: m.outFile,
       skipFunctions: m.skipFunctions ?? undefined,
+      skipOverloads: m.skipOverloads ?? undefined,
     }));
     expect(manifest).toEqual(registry);
   });
