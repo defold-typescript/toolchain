@@ -778,7 +778,7 @@ describe("defold-input migration integrity", () => {
       expect(target).toBeDefined();
       expect(target?.namespace).toBe(moduleId);
       expect(target?.repo).toBe("https://github.com/britzl/defold-input");
-      expect(target?.ref).toBe("4.7.1");
+      expect(target?.ref).toBe("4.8.0");
       expect(target?.license).toBe("MIT");
       expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
       expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);

@@ -145,7 +145,7 @@
     },
     {
       "repo": "https://github.com/britzl/defold-input",
-      "ref": "4.7.1",
+      "ref": "4.8.0",
       "license": "MIT",
       "authored": "fixtures/authored/in.accelerometer.d.ts",
       "moduleId": "in.accelerometer",
@@ -156,7 +156,7 @@
     },
     {
       "repo": "https://github.com/britzl/defold-input",
-      "ref": "4.7.1",
+      "ref": "4.8.0",
       "license": "MIT",
       "authored": "fixtures/authored/in.button.d.ts",
       "moduleId": "in.button",
@@ -167,7 +167,7 @@
     },
     {
       "repo": "https://github.com/britzl/defold-input",
-      "ref": "4.7.1",
+      "ref": "4.8.0",
       "license": "MIT",
       "authored": "fixtures/authored/in.cursor.d.ts",
       "moduleId": "in.cursor",
@@ -178,7 +178,7 @@
     },
     {
       "repo": "https://github.com/britzl/defold-input",
-      "ref": "4.7.1",
+      "ref": "4.8.0",
       "license": "MIT",
       "authored": "fixtures/authored/in.gesture.d.ts",
       "moduleId": "in.gesture",
@@ -189,7 +189,7 @@
     },
     {
       "repo": "https://github.com/britzl/defold-input",
-      "ref": "4.7.1",
+      "ref": "4.8.0",
       "license": "MIT",
       "authored": "fixtures/authored/in.keyboard.d.ts",
       "moduleId": "in.keyboard",
@@ -200,7 +200,7 @@
     },
     {
       "repo": "https://github.com/britzl/defold-input",
-      "ref": "4.7.1",
+      "ref": "4.8.0",
       "license": "MIT",
       "authored": "fixtures/authored/in.mapper.d.ts",
       "moduleId": "in.mapper",
@@ -211,7 +211,7 @@
     },
     {
       "repo": "https://github.com/britzl/defold-input",
-      "ref": "4.7.1",
+      "ref": "4.8.0",
       "license": "MIT",
       "authored": "fixtures/authored/in.onscreen.d.ts",
       "moduleId": "in.onscreen",
@@ -222,7 +222,7 @@
     },
     {
       "repo": "https://github.com/britzl/defold-input",
-      "ref": "4.7.1",
+      "ref": "4.8.0",
       "license": "MIT",
       "authored": "fixtures/authored/in.state.d.ts",
       "moduleId": "in.state",
@@ -233,7 +233,7 @@
     },
     {
       "repo": "https://github.com/britzl/defold-input",
-      "ref": "4.7.1",
+      "ref": "4.8.0",
       "license": "MIT",
       "authored": "fixtures/authored/in.textbox.d.ts",
       "moduleId": "in.textbox",
@@ -244,7 +244,7 @@
     },
     {
       "repo": "https://github.com/britzl/defold-input",
-      "ref": "4.7.1",
+      "ref": "4.8.0",
       "license": "MIT",
       "authored": "fixtures/authored/in.triggers.d.ts",
       "moduleId": "in.triggers",

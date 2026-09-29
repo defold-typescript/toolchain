@@ -360,9 +360,9 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
   "fixtures/upstream-lua/defold-checkpoint/checkpoint/checkpoint.lua":
     "2d204c5da4edd7e41d781a5c4f01471aad8c955036c957bf027238f00b266e02",
   "fixtures/upstream-lua/defold-input/in/accelerometer.lua":
-    "42a0b89d8ce0989fab9486a3b9dafda742d93d92e4b0097b9f1112cf9eefbc45",
+    "fbdf49f06a31bc860d24434d38fc5124f913cb43e88ad039640e0b32e2b545c0",
   "fixtures/upstream-lua/defold-input/in/button.lua":
-    "c975e2c842c1ff676bd13de2b5b52b76e5519242c8045dc6fd7b46c6cb22ab8f",
+    "e87aeed156a1593bca7bbc441cfb816a83b88fc977f70ee0db00f979afe28ace",
   "fixtures/upstream-lua/defold-input/in/cursor.lua":
     "32c7946018ce2003af1af746cd469414f13bc6de1eacc0a4bb0e7716aaf02f53",
   "fixtures/upstream-lua/defold-input/in/gesture.lua":
@@ -372,11 +372,11 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
   "fixtures/upstream-lua/defold-input/in/mapper.lua":
     "b7f51e00a57dadb7ab3cffed717b07f211c31eb44df39cfbfc4b88bbe27db9e8",
   "fixtures/upstream-lua/defold-input/in/onscreen.lua":
-    "fa8f6393b93d569adacd3bbe622c450d114ad08a1773209727b17084afbdf38b",
+    "8172e9bfce7479a61ba66218a373ad75f5d42b26e14122082ef6d91cc79a9b96",
   "fixtures/upstream-lua/defold-input/in/state.lua":
     "6e26a118da2f4c9ff636937a3e100d5ee8a7d0660171010f0bd219e01a61880d",
   "fixtures/upstream-lua/defold-input/in/textbox.lua":
-    "d8d27198e5064b8d7afef0347ff8473bc5201deab18b73e770b50078d3afa35f",
+    "250b1cd13b3b2231bdbf6434efc9c3530e389fffc3caaade9fc05a0186e4a452",
   "fixtures/upstream-lua/defold-input/in/triggers.lua":
     "f9c1bbaa272e97efc3b360e446e6df5216906afdf7378e5edfc1b180fc3cf1d1",
   "fixtures/upstream-lua/defold-metrics/metrics/fps.lua":
