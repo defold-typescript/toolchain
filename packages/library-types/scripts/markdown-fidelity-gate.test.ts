@@ -1530,7 +1530,7 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/persist.persist.d.ts":
     "4ede94326945884649966cd0496316ba51bf243d06be2fbfc868789207df4be8",
   "fixtures/authored/gooey.gooey.d.ts":
-    "8544aa267709580c194a9fb52bf740048a6bca90fa8d4b8332f25d78a49e825f",
+    "729f68b046ce1e2757acce4d9956b3452961143012024c4f2ead685499ad67c7",
   "fixtures/authored/bzAnim.bzLibrary.d.ts":
     "5ac9ea3a79428383dca86b3dbd85beff6a55413e2a52867b88079f97a21fbc69",
   "fixtures/authored/dicebag.dicebag.d.ts":

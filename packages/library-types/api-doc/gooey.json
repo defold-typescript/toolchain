@@ -2037,7 +2037,7 @@
         },
         {
           "name": "index",
-          "doc": "",
+          "doc": "**⚠️ 1-based; passed to `gooey` unchanged.**",
           "types": [
             "number"
           ],

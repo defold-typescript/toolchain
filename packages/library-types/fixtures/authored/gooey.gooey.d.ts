@@ -311,6 +311,10 @@ declare module 'gooey.gooey' {
 		group_fn: () => void,
 	): table;
 
-	/** Move a group's focus to the component at `index`, refreshing it. */
+	/**
+	 * Move a group's focus to the component at `index`, refreshing it.
+	 *
+	 * @param index **⚠️ 1-based; passed to `gooey` unchanged.**
+	 */
 	export function set_focus(group: table, index: number): void;
 }

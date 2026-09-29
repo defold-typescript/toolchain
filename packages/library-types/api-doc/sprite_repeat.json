@@ -137,8 +137,8 @@
         },
         {
           "name": "current_frame",
-          "brief": "The 1-based index of the frame shown next.",
-          "description": "The 1-based index of the frame shown next.",
+          "brief": "The 1-based index of the frame shown next. **⚠️ 1-based; passed to `sprite_repeat` unchanged.**",
+          "description": "The 1-based index of the frame shown next. **⚠️ 1-based; passed to `sprite_repeat` unchanged.**",
           "types": [
             "number"
           ]

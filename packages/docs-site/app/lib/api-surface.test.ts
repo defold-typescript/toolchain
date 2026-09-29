@@ -6,6 +6,7 @@ import {
   type ApiFunction,
   hashExampleSource,
   htmlToCodeText,
+  libraryIndexBaseNotes,
   lookupExampleTranslations,
   normalizedFunctionSignature,
   parseDefoldApiDoc,
@@ -2497,8 +2498,27 @@ describe("index-base notes on library pages", () => {
       .flatMap((s) => s.parameters)
       .find((row) => row.name === param)?.doc;
 
+  const occurrences = (text: string, note: string): number => text.split(note).length - 1;
+
   test("a library slot names the library as the receiver", () => {
     expect(paramDoc(page("gooey"), "set_focus", "index")).toContain("passed to `gooey` unchanged");
+  });
+
+  test("a hand-written declaration that carries its notes renders each once", () => {
+    const gooey = page("gooey");
+    const [focusNote = ""] = libraryIndexBaseNotes("gooey", "set_focus", "param", "index");
+    expect(occurrences(paramDoc(gooey, "set_focus", "index") ?? "", focusNote)).toBe(1);
+    expect(occurrences(apiModuleMarkdown(gooey, gooey.translations), focusNote)).toBe(1);
+    for (const [namespace, element] of [
+      ["node_repeat", "NodeRepeatAnimation"],
+      ["sprite_repeat", "SpriteRepeatAnimation"],
+    ] as const) {
+      const p = page(namespace);
+      const [frameNote = ""] = libraryIndexBaseNotes(namespace, element, "field", "current_frame");
+      const field = symbols(p).find((s) => s.name === `${element}.current_frame`);
+      expect(occurrences(field?.docMarkdown ?? "", frameNote)).toBe(1);
+      expect(occurrences(apiModuleMarkdown(p, p.translations), frameNote)).toBe(1);
+    }
   });
 
   test("a library page renders its own classification and never an engine note", () => {
@@ -2549,6 +2569,9 @@ describe("index-base notes on library pages", () => {
     const notes = ["tile_x", "tile_y", "array_id"].map(note).join(" ");
     const doc = symbols(tileRaycast).find((s) => s.name === "cast")?.returnValues[0]?.doc ?? "";
     expect(doc.endsWith(notes)).toBe(true);
+    for (const value of ["tile_x", "tile_y", "array_id"]) {
+      expect(occurrences(doc, note(value))).toBe(1);
+    }
     expect(doc).not.toContain("**⚠️ 1-based;");
     for (const value of ["hit", "tile_id", "intersection_x", "intersection_y", "side"]) {
       expect(doc).not.toContain(`\`${value}\` is `);
@@ -2559,6 +2582,7 @@ describe("index-base notes on library pages", () => {
     const end = markdown.indexOf("\n### ", start + 1);
     const cast = markdown.slice(start, end === -1 ? undefined : end);
     expect(cast).toContain(notes);
+    expect(occurrences(cast, notes)).toBe(1);
     expect(cast).not.toContain("**⚠️ 1-based;");
   });
 
