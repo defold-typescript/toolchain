@@ -152,6 +152,14 @@ describe("emitScriptApiDeclaration", () => {
     // A stable exported function symbol (assert on the symbol, not the whole blob).
     expect(contents).toContain("function get_achievements(");
   });
+
+  test("notes a classified callback argument naming the library, under its api-doc page", async () => {
+    const contents = await emitScriptApiDeclaration(PACKAGE_ROOT, BRIDGE);
+    expect(contents).toContain(
+      "@param on_success - function(_, day). **0️⃣ `day` is 0-based; passed to `bridge` unchanged.**",
+    );
+    expect(contents).not.toContain("passed to Defold");
+  });
 });
 
 describe("applyOmittableSlots", () => {

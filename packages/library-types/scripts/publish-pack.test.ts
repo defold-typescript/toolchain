@@ -37,6 +37,10 @@ describe("@defold-typescript/library-types publish surface", () => {
     expect(paths).toContain("generated/defcon.d.ts");
   });
 
+  test("ships the curated extension manifest resolve reads to note extension index bases", () => {
+    expect(paths).toContain("defold-extensions.json");
+  });
+
   test("keeps the already-shipped registry JSONs", () => {
     expect(paths).toContain("library-targets.json");
     expect(paths).toContain("library-classification.json");

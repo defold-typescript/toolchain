@@ -85,9 +85,11 @@ export {
   INDEX_SLOT_CLASSIFICATIONS,
   type IndexSlotClass,
   type IndexSlotClassification,
+  libraryIndexBaseNotes,
   withIndexBaseNotes,
   withLibraryIndexBaseNotes,
 } from "./index-slot-classifications";
+export { LIBRARY_INDEX_SLOT_CLASSIFICATIONS } from "./library-index-slot-classifications";
 export {
   hasTopLevelUnion,
   luaMultiReturn,

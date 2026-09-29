@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import type { FidelityReport } from "./luals-fidelity";
 
 /**
@@ -183,6 +183,7 @@ interface RegenModule {
     outFile: string;
     importsFrom?: string;
     moduleId?: string;
+    indexBaseSource?: { pages: readonly string[] };
   }) => { contents: string; dropped: string[] };
 }
 
@@ -291,6 +292,12 @@ export function applyOmittableSlots(
   return { ...doc, elements };
 }
 
+// The library page key the docs site gives this target: its api-doc file name, so
+// the declaration's index notes read the same map entries the page renders.
+function scriptApiPage(target: ScriptApiTarget): string {
+  return basename(target.apiDoc, ".json");
+}
+
 /**
  * `.script_api` -> `scriptApiToFixtureJson` -> `generateModuleDeclaration`. Returns
  * an importable module keyed by `moduleId` (`declare module '<moduleId>'`), with
@@ -311,6 +318,7 @@ export async function emitScriptApiDeclaration(
     outFile: `${target.moduleId}.d.ts`,
     importsFrom: SCRIPT_API_CORE_TYPES_IMPORT,
     moduleId: target.moduleId,
+    indexBaseSource: { pages: [scriptApiPage(target)] },
   });
   return contents;
 }
