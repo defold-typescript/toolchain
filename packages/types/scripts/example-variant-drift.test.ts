@@ -37,8 +37,43 @@ function body(sourceHash: string, ts: string): TranslationStore {
 }
 
 describe("committed store", () => {
+  const store = loadTranslations();
+  const index = exampleSourceIndex();
+
   test("no shipped translation carries a variant's names or omits its own source's", () => {
-    expect(variantDriftDefects(loadTranslations(), exampleSourceIndex())).toEqual([]);
+    expect(variantDriftDefects(store, index)).toEqual([]);
+  });
+
+  test("a real newer body rewritten to its older source's names is named in both directions", () => {
+    const byHash = index.sources.get(FQN);
+    expect(byHash).toBeDefined();
+    const newer = store[FQN]?.find((entry) =>
+      byHash?.get(entry.sourceHash)?.lua.includes("graphics.TEXTURE_USAGE_FLAG_STORAGE"),
+    );
+    expect(newer).toBeDefined();
+    const older = [...(byHash ?? [])].find(([, source]) =>
+      source.lua.includes("resource.TEXTURE_USAGE_FLAG_STORAGE"),
+    );
+    expect(older).toBeDefined();
+    if (newer === undefined || older === undefined) return;
+    const [variant] = older;
+    const own = newer.sourceHash;
+    const mutated: TranslationStore = {
+      ...store,
+      [FQN]: (store[FQN] ?? []).map((entry) =>
+        entry === newer
+          ? { ...entry, ts: entry.ts.replaceAll("graphics.TEXTURE_", "resource.TEXTURE_") }
+          : entry,
+      ),
+    };
+    expect(variantDriftDefects(mutated, index)).toEqual([
+      `${FQN}:${own} carries resource.TEXTURE_FORMAT_RGBA32F from ${variant}`,
+      `${FQN}:${own} carries resource.TEXTURE_USAGE_FLAG_SAMPLE from ${variant}`,
+      `${FQN}:${own} carries resource.TEXTURE_USAGE_FLAG_STORAGE from ${variant}`,
+      `${FQN}:${own} omits graphics.TEXTURE_FORMAT_RGBA32F its source adds over ${variant}`,
+      `${FQN}:${own} omits graphics.TEXTURE_USAGE_FLAG_SAMPLE its source adds over ${variant}`,
+      `${FQN}:${own} omits graphics.TEXTURE_USAGE_FLAG_STORAGE its source adds over ${variant}`,
+    ]);
   });
 });
 
