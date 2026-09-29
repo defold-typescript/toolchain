@@ -2231,6 +2231,7 @@ describe("OVERLOAD_COVERED_SKIPS", () => {
       "vmath.mul_per_elem",
       "vmath.normalize",
       "vmath.slerp",
+      "vmath.vector",
     ]);
   });
 });
@@ -3029,13 +3030,15 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect(line).not.toContain("Record<string | number, unknown>");
   });
 
-  test("collectionproxy.get_resources recovers a Hash[] return", () => {
+  test("collectionproxy.get_resources recovers a string[] return", () => {
     const module = parseDefoldApiDoc(collectionproxyDoc);
     const out = emitDeclarations({
       ...module,
       functions: [requireFunction(module, "collectionproxy.get_resources")],
     });
-    expect(out).toContain("function get_resources(collectionproxy: Url | string | Hash): Hash[];");
+    expect(out).toContain(
+      "function get_resources(collectionproxy: Url | string | Hash): string[];",
+    );
     expect(out).not.toContain("Record<string | number, unknown>");
   });
 
@@ -3424,7 +3427,7 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
         },
       ]),
     );
-    expect(vmathOut).toContain("function vector(t?: number[]): void;");
+    expect(vmathOut).toContain("function vector(t: number[]): void;");
 
     const soundOut = emitDeclarations(
       moduleOf("sound", [

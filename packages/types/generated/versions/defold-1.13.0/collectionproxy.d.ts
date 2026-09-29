@@ -40,7 +40,7 @@ declare global {
      * }
      * ```
      */
-    function get_resources(collectionproxy: Url | string | Hash): Hash[];
+    function get_resources(collectionproxy: Url | string | Hash): string[];
     /**
      * The collection should be loaded by the collection proxy.
      * Setting the collection to "nil" will revert it back to the original collection.

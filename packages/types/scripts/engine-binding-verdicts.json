@@ -1123,25 +1123,9 @@
     "verdict": "accepted",
     "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
-  "defold-1.13.0:b2d.body.create_fixture:arity": {
-    "verdict": "accepted",
-    "reason": "a second ref-doc entry documents the C++ b2Body::CreateFixture(shape, density) form, which neither Lua binding implements; the table form covers every call"
-  },
-  "defold-1.13.0:b2d.body.create_fixture:field-undeclared:2.is_sensor": {
-    "verdict": "accepted",
-    "reason": "a fallback the binding reads only when sensor is absent; the declaration names sensor"
-  },
   "defold-1.13.0:b2d.body.create_fixture:field-undeclared:2.user_data": {
     "verdict": "accepted",
     "reason": "read only to raise \"Fixture user_data is not supported\""
-  },
-  "defold-1.13.0:b2d.body.create_fixture:too-loose:2": {
-    "verdict": "accepted",
-    "reason": "a second ref-doc entry documents the C++ b2Body::CreateFixture(shape, density) form, which neither Lua binding implements; the table form covers every call"
-  },
-  "defold-1.13.0:b2d.body.set_mass_data:too-loose:2": {
-    "verdict": "accepted",
-    "reason": "a second ref-doc entry documents a b2MassData handle form, which the v3 binding does not implement; the table form covers every call"
   },
   "defold-1.13.0:b2d.chain.from_shape:manual": {
     "verdict": "manual",
@@ -1325,25 +1309,9 @@
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
   },
-  "defold-1.13.1:b2d.body.create_fixture:arity": {
-    "verdict": "accepted",
-    "reason": "a second ref-doc entry documents the C++ b2Body::CreateFixture(shape, density) form, which neither Lua binding implements; the table form covers every call"
-  },
-  "defold-1.13.1:b2d.body.create_fixture:field-undeclared:2.is_sensor": {
-    "verdict": "accepted",
-    "reason": "a fallback the binding reads only when sensor is absent; the declaration names sensor"
-  },
   "defold-1.13.1:b2d.body.create_fixture:field-undeclared:2.user_data": {
     "verdict": "accepted",
     "reason": "read only to raise \"Fixture user_data is not supported\""
-  },
-  "defold-1.13.1:b2d.body.create_fixture:too-loose:2": {
-    "verdict": "accepted",
-    "reason": "a second ref-doc entry documents the C++ b2Body::CreateFixture(shape, density) form, which neither Lua binding implements; the table form covers every call"
-  },
-  "defold-1.13.1:b2d.body.set_mass_data:too-loose:2": {
-    "verdict": "accepted",
-    "reason": "a second ref-doc entry documents a b2MassData handle form, which the v3 binding does not implement; the table form covers every call"
   },
   "defold-1.13.1:b2d.chain.from_shape:manual": {
     "verdict": "manual",
