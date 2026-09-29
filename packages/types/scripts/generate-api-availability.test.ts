@@ -95,6 +95,15 @@ describe("availability derivation over the committed target snapshots", () => {
     expect(isSignatureTransition(group[0] as (typeof group)[number], artifact.versions)).toBe(true);
   });
 
+  test("an overload withheld by skipOverloads carries no availability record", () => {
+    const withheld = (name: string, handle: string) =>
+      artifact.records.filter(
+        (r) => r.identity.name === name && r.identity.signature.includes(`"${handle}"`),
+      );
+    expect(withheld("b2d.body.create_fixture", "b2Shape")).toEqual([]);
+    expect(withheld("b2d.body.set_mass_data", "b2MassData")).toEqual([]);
+  });
+
   test("a symbol present in every tracked version carries no record (available-in-all)", () => {
     const bothVersions = artifact.records.filter(
       (r) => r.availableIn.length === artifact.versions.length,

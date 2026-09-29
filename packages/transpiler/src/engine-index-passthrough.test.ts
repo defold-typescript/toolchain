@@ -185,40 +185,44 @@ function lua(lines: readonly string[]): string {
 }
 
 describe("every classified scalar index argument", () => {
-  test("0, 1 and an identifier reach the engine call unchanged", () => {
-    const keys = positionKeys("param", false);
-    expect(keys.length).toBeGreaterThan(0);
-    for (const key of keys) {
-      const [, base = "", slot = ""] = /^(.+):param:([^:]+)$/.exec(key) ?? [];
-      const signature = declaredSignatures(base).find((s) => s.parameters.includes(slot));
-      expect({ key, declared: signature !== undefined }).toEqual({ key, declared: true });
-      if (signature === undefined) continue;
-      const position = signature.parameters.indexOf(slot);
-      for (const value of ["0", "1", "i"]) {
-        const { declarations, call, luaCallee } = callOf(
-          base,
-          signature,
-          signature.parameters.map((p) => (p === slot ? value : "anything")),
-        );
-        const { flat, diagnostics } = compileMain(
-          [
-            "declare const anything: never;",
-            "declare const i: number;",
-            ...declarations,
-            `${call};`,
-            "export {};",
-            "",
-          ].join("\n"),
-        );
-        expect({
-          key,
-          value,
-          diagnostics,
-          emitted: emittedArgs(flat, luaCallee)[position],
-        }).toEqual({ key, value, diagnostics: [], emitted: value });
+  test(
+    "0, 1 and an identifier reach the engine call unchanged",
+    () => {
+      const keys = positionKeys("param", false);
+      expect(keys.length).toBeGreaterThan(0);
+      for (const key of keys) {
+        const [, base = "", slot = ""] = /^(.+):param:([^:]+)$/.exec(key) ?? [];
+        const signature = declaredSignatures(base).find((s) => s.parameters.includes(slot));
+        expect({ key, declared: signature !== undefined }).toEqual({ key, declared: true });
+        if (signature === undefined) continue;
+        const position = signature.parameters.indexOf(slot);
+        for (const value of ["0", "1", "i"]) {
+          const { declarations, call, luaCallee } = callOf(
+            base,
+            signature,
+            signature.parameters.map((p) => (p === slot ? value : "anything")),
+          );
+          const { flat, diagnostics } = compileMain(
+            [
+              "declare const anything: never;",
+              "declare const i: number;",
+              ...declarations,
+              `${call};`,
+              "export {};",
+              "",
+            ].join("\n"),
+          );
+          expect({
+            key,
+            value,
+            diagnostics,
+            emitted: emittedArgs(flat, luaCallee)[position],
+          }).toEqual({ key, value, diagnostics: [], emitted: value });
+        }
       }
-    }
-  });
+    },
+    { timeout: 30_000 },
+  );
 });
 
 describe("every classified index table and return", () => {

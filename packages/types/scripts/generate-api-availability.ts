@@ -10,7 +10,7 @@ import {
   type VersionSurface,
   validateAvailability,
 } from "../src/api-availability";
-import { type ApiModule, parseDefoldApiDoc } from "../src/api-doc";
+import { type ApiModule, parseDefoldApiDoc, withholdOverloads } from "../src/api-doc";
 import { type ApiTarget, loadApiTargets, loadTargetModules } from "./regen";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
@@ -85,7 +85,9 @@ export function buildAvailabilityArtifact(
   const targets = loadApiTargets(registryPath);
   const completeTargets = selectCompleteVersionSurfaces(targets);
   const parse = (target: ApiTarget): ApiModule[] =>
-    loadTargetModules(target, packageRoot).map((entry) => parseDefoldApiDoc(entry.doc));
+    loadTargetModules(target, packageRoot).map((entry) =>
+      withholdOverloads(parseDefoldApiDoc(entry.doc), entry.skipOverloads ?? []),
+    );
   const surfaces: VersionSurface[] = completeTargets.map((target) => ({
     version: versionOf(target),
     modules: parse(target),
