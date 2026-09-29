@@ -9,7 +9,11 @@ import {
   sanitizeTypeName,
 } from "./emit-library-dts";
 import type { LibraryModel, LibraryParam } from "./parse-luals";
-import { buildTargetModel, readLualsTargets } from "./sync-luals-types";
+import {
+  buildTargetModel,
+  emitLualsTargetDeclarations,
+  readLualsTargets,
+} from "./sync-luals-types";
 
 test("emits a declare module block with an interface, its field and method, and a module function", () => {
   const model: LibraryModel = {
@@ -780,13 +784,7 @@ test.each(
   EMIT_TARGETS,
 )("regenerating %s from the committed fixtures matches the committed golden byte-for-byte", (namespace, target) => {
   const packageRoot = join(import.meta.dir, "..");
-  const model = buildTargetModel(packageRoot, target);
-  const emitted = emitLibraryDeclarations(model, {
-    moduleId: target.moduleId,
-    typeRenames: target.typeRenames,
-    externalTypes: target.externalTypes,
-    indexBasePage: target.namespace,
-  });
+  const emitted = emitLualsTargetDeclarations(packageRoot, target);
   const golden = readFileSync(join(packageRoot, "generated", `${namespace}.d.ts`), "utf8");
 
   expect(emitted).toBe(golden);
