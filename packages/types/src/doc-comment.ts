@@ -370,6 +370,13 @@ function trimBlankEdges(lines: readonly string[]): string[] {
   return out;
 }
 
+// Prefer the full `description`; fall back to the one-line `brief` when prose is
+// absent. Shared by every documented member kind so the summary source is
+// consistent across functions, constants, variables, and properties.
+export function summaryFor(brief: string, description: string): string {
+  return description.trim() !== "" ? description : brief;
+}
+
 export interface DocCommentParts {
   summary: string;
   // Present exactly when the source carried a deprecation tag; `""` is the bare

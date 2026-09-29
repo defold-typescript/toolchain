@@ -1,12 +1,17 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { loadTranslations } from "../scripts/example-store-io";
-import { htmlToCodeText } from "./doc-comment";
+import { parseDefoldApiDoc } from "./api-doc";
+import { htmlToCodeText, htmlToDocText } from "./doc-comment";
 import {
   hashExampleSource,
   lookupExampleSegments,
   lookupExampleTranslations,
   lookupTranslation,
+  proseLuaFences,
   type TranslationStore,
+  translateProseFences,
 } from "./example-store";
 
 describe("hashExampleSource", () => {
@@ -151,5 +156,79 @@ describe("lookupExampleSegments", () => {
     ).toBeNull();
     expect(lookupExampleSegments(store, "no.such", [first])).toBeNull();
     expect(lookupExampleSegments(store, "resource.create_texture_async", [])).toBeNull();
+  });
+});
+
+describe("translateProseFences", () => {
+  const body = 'local function check()\n    return physics.get_group("#co")\nend';
+  const markdown = ["Returns the group.", "", "```lua", body, "```", "", "Trailing *prose*."].join(
+    "\n",
+  );
+  const ts = 'function check(): hash {\n  return physics.get_group("#co");\n}';
+  const store: TranslationStore = {
+    "physics.get_group": [{ sourceHash: hashExampleSource(body), ts }],
+  };
+
+  test("replaces a fence whose body hash is pinned under the key, leaving every other byte", () => {
+    expect(translateProseFences(markdown, "physics.get_group", store)).toBe(
+      ["Returns the group.", "", "```ts", ts, "```", "", "Trailing *prose*."].join("\n"),
+    );
+  });
+
+  test("keeps the Lua fence when no entry under the key matches, or the match sits under another key", () => {
+    expect(translateProseFences(markdown, "physics.get_group", {})).toBe(markdown);
+    expect(
+      translateProseFences(markdown, "physics.get_group", {
+        "physics.get_group": [{ sourceHash: "0000000000000000", ts }],
+      }),
+    ).toBe(markdown);
+    expect(translateProseFences(markdown, "physics.set_group", store)).toBe(markdown);
+  });
+
+  test("swaps only the matching fence when a doc carries several, and never reads a non-Lua fence", () => {
+    const other = "if x then\nend";
+    const mixed = ["```text", body, "```", "", "```lua", other, "```", "", markdown].join("\n");
+    expect(translateProseFences(mixed, "physics.get_group", store)).toBe(
+      [
+        "```text",
+        body,
+        "```",
+        "",
+        "```lua",
+        other,
+        "```",
+        "",
+        "Returns the group.",
+        "",
+        "```ts",
+        ts,
+        "```",
+        "",
+        "Trailing *prose*.",
+      ].join("\n"),
+    );
+  });
+});
+
+describe("proseLuaFences", () => {
+  const FIXTURES = resolve(import.meta.dir, "..", "fixtures", "defold-1.13.1");
+  const load = (name: string) =>
+    parseDefoldApiDoc(JSON.parse(readFileSync(resolve(FIXTURES, `${name}_doc.json`), "utf8")));
+
+  test("reads a return doc's fence body exactly as htmlToDocText renders it", () => {
+    const physics = load("physics");
+    const fences = proseLuaFences(physics).filter((fence) => fence.key === "physics.get_maskbit");
+    expect(fences).toHaveLength(1);
+    const lua = fences[0]?.lua ?? "";
+    expect(lua).toStartWith("local function is_invincible()\n    -- check if");
+    const returnDoc = physics.functions.find((fn) => fn.name === "physics.get_maskbit")
+      ?.returnValues[0]?.doc;
+    expect(htmlToDocText(returnDoc ?? "")).toContain(`\`\`\`lua\n${lua}\n\`\`\``);
+  });
+
+  test("keys a namespace description fence by the namespace and a summary fence by the function", () => {
+    const keys = proseLuaFences(load("socket")).map((fence) => fence.key);
+    expect(keys).toContain("socket");
+    expect(keys).toContain("socket.dns.getaddrinfo");
   });
 });

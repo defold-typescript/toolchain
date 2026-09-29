@@ -83,11 +83,11 @@ declare global {
      * @param url - the collision object to return the group of.
      * @returns hash value of the group.
      *
-     * ```lua
-     * local function check_is_enemy()
-     *     local group = physics.get_group("#collisionobject")
-     *     return group == hash("enemy")
-     * end
+     * ```ts
+     * function check_is_enemy(): boolean {
+     *   const group = physics.get_group("#collisionobject");
+     *   return group === hash("enemy");
+     * }
      * ```
      */
     function get_group(url: string | Hash | Url): Hash;
@@ -131,12 +131,12 @@ declare global {
      * @param group - the name of the group to check for.
      * @returns boolean value of the maskbit. 'true' if present, 'false' otherwise.
      *
-     * ```lua
-     * local function is_invincible()
-     *     -- check if the collisionobject would collide with the "bullet" group
-     *     local invincible = physics.get_maskbit("#collisionobject", "bullet")
-     *     return invincible
-     * end
+     * ```ts
+     * function is_invincible(): boolean {
+     *   // check if the collisionobject would collide with the "bullet" group
+     *   const invincible = physics.get_maskbit("#collisionobject", "bullet");
+     *   return invincible;
+     * }
      * ```
      */
     function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;
@@ -173,12 +173,12 @@ declare global {
      * `height`
      * number the height of the capsule
      *
-     * ```lua
-     * local function get_shape_meta()
-     *     local sphere = physics.get_shape("#collisionobject", "my_sphere_shape")
-     *     -- returns a table with sphere.diameter
-     *     return sphere
-     * end
+     * ```ts
+     * function get_shape_meta() {
+     *   const sphere = physics.get_shape("#collisionobject", "my_sphere_shape");
+     *   // returns a table with sphere.diameter
+     *   return sphere;
+     * }
      * ```
      */
     function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };
@@ -395,10 +395,10 @@ declare global {
      * @param url - the collision object affected.
      * @param group - the new group name to be assigned.
      *
-     * ```lua
-     * local function change_collision_group()
-     *      physics.set_group("#collisionobject", "enemy")
-     * end
+     * ```ts
+     * function change_collision_group() {
+     *   physics.set_group("#collisionobject", "enemy");
+     * }
      * ```
      */
     function set_group(url: string | Hash | Url, group: string | Hash): void;
@@ -437,11 +437,11 @@ declare global {
      * @param group - the name of the group (maskbit) to modify in the mask.
      * @param maskbit - boolean value of the new maskbit. 'true' to enable, 'false' to disable.
      *
-     * ```lua
-     * local function make_invincible()
-     *     -- no longer collide with the "bullet" group
-     *     physics.set_maskbit("#collisionobject", "bullet", false)
-     * end
+     * ```ts
+     * function make_invincible() {
+     *   // no longer collide with the "bullet" group
+     *   physics.set_maskbit("#collisionobject", "bullet", false);
+     * }
      * ```
      */
     function set_maskbit(url: string | Hash | Url, group: string | Hash, maskbit: boolean): void;
@@ -455,27 +455,27 @@ declare global {
      * @param table - the shape data to update the shape with.
      * See physics.get_shape for a detailed description of each field in the data table.
      *
-     * ```lua
-     * local function set_shape_data()
-     *     -- set capsule shape data
-     *     local data = {}
-     *     data.type = physics.SHAPE_TYPE_CAPSULE
-     *     data.diameter = 10
-     *     data.height = 20
-     *     physics.set_shape("#collisionobject", "my_capsule_shape", data)
+     * ```ts
+     * function set_shape_data() {
+     *   // set capsule shape data
+     *   physics.set_shape("#collisionobject", "my_capsule_shape", {
+     *     type: physics.SHAPE_TYPE_CAPSULE,
+     *     diameter: 10,
+     *     height: 20,
+     *   });
      *
-     *     -- set sphere shape data
-     *     data = {}
-     *     data.type = physics.SHAPE_TYPE_SPHERE
-     *     data.diameter = 10
-     *     physics.set_shape("#collisionobject", "my_sphere_shape", data)
+     *   // set sphere shape data
+     *   physics.set_shape("#collisionobject", "my_sphere_shape", {
+     *     type: physics.SHAPE_TYPE_SPHERE,
+     *     diameter: 10,
+     *   });
      *
-     *     -- set box shape data
-     *     data = {}
-     *     data.type = physics.SHAPE_TYPE_BOX
-     *     data.dimensions = vmath.vector3(10, 10, 5)
-     *     physics.set_shape("#collisionobject", "my_box_shape", data)
-     * end
+     *   // set box shape data
+     *   physics.set_shape("#collisionobject", "my_box_shape", {
+     *     type: physics.SHAPE_TYPE_BOX,
+     *     dimensions: vmath.vector3(10, 10, 5),
+     *   });
+     * }
      * ```
      */
     function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;
@@ -514,12 +514,14 @@ declare global {
      *
      * @param url - the collision object to wake.
      *
-     * ```lua
-     * function on_input(self, action_id, action)
-     *     if action_id == hash("test") and action.pressed then
-     *         physics.wakeup("#collisionobject")
-     *     end
-     * end
+     * ```ts
+     * export default defineScript({
+     *   on_input(self, action_id, action) {
+     *     if (action_id === hash("test") && action.pressed) {
+     *       physics.wakeup("#collisionobject");
+     *     }
+     *   },
+     * });
      * ```
      */
     function wakeup(url: string | Hash | Url): void;

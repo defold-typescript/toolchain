@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { loadTranslations } from "../scripts/example-store-io";
+import { loadProseLuaKeeps, loadTranslations } from "../scripts/example-store-io";
 import {
   EDITOR_MODULE_MANIFEST,
   loadApiTargets,
@@ -14,6 +14,7 @@ import {
   hashExampleSource,
   lookupExampleTranslations,
   lookupTranslation,
+  proseLuaFences,
 } from "../src/example-store";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
@@ -40,9 +41,15 @@ function allGeneratedSurfaces(): { id: string; dir: string }[] {
 // emitted members carry translations, so their stored source hashes need a
 // fixture body to match against or they read as stale. Spans the demoted
 // surfaces for the same reason: a translation pinned to the body an older target
-// still ships is live for that target, not stale.
+// still ships is live for that target, not stale. A prose Lua fence is a source
+// too, under the key `proseLuaFences` gives it.
 function exampleSourcesByFqn(): Map<string, Set<string>> {
   const byFqn = new Map<string, Set<string>>();
+  for (const { key, lua } of allProseLuaFences()) {
+    const set = byFqn.get(key) ?? new Set<string>();
+    set.add(lua);
+    byFqn.set(key, set);
+  }
   for (const entry of [
     ...MODULE_MANIFEST,
     ...EDITOR_MODULE_MANIFEST,
@@ -59,6 +66,25 @@ function exampleSourcesByFqn(): Map<string, Set<string>> {
     }
   }
   return byFqn;
+}
+
+// Every prose Lua fence across every manifest, once per `<key>:<hash>`.
+function allProseLuaFences(): { key: string; lua: string; hash: string }[] {
+  const out: { key: string; lua: string; hash: string }[] = [];
+  const seen = new Set<string>();
+  for (const entry of [
+    ...MODULE_MANIFEST,
+    ...EDITOR_MODULE_MANIFEST,
+    ...VERSIONED_MODULE_MANIFEST,
+  ]) {
+    for (const { key, lua } of proseLuaFences(parseDefoldApiDoc(entry.doc))) {
+      const hash = hashExampleSource(lua);
+      if (seen.has(`${key}:${hash}`)) continue;
+      seen.add(`${key}:${hash}`);
+      out.push({ key, lua, hash });
+    }
+  }
+  return out;
 }
 
 // Every example-bearing element across every manifest, with the hashes the emit
@@ -217,6 +243,60 @@ describe("example translation drift guard", () => {
       readFileSync(resolve(EXAMPLES_DIR, "untranslated.json"), "utf8"),
     ) as string[];
     expect(untranslated).toEqual(committed);
+  });
+});
+
+describe("prose Lua fences", () => {
+  test("every prose Lua fence resolves to a translation or a recorded keep", () => {
+    const store = loadTranslations();
+    const keeps = loadProseLuaKeeps();
+    const unresolved = allProseLuaFences()
+      .filter(({ key, hash }) => lookupTranslation(store, key, hash) === null)
+      .filter(({ key, hash }) => !(keeps[key] ?? []).some((keep) => keep.sourceHash === hash))
+      .map(({ key, hash }) => `${key}:${hash}`);
+    expect(unresolved).toEqual([]);
+  });
+
+  test("every recorded keep matches a live prose Lua fence under its key", () => {
+    const live = new Set(allProseLuaFences().map(({ key, hash }) => `${key}:${hash}`));
+    const stale = Object.entries(loadProseLuaKeeps()).flatMap(([key, keeps]) =>
+      keeps.map((keep) => `${key}:${keep.sourceHash}`).filter((id) => !live.has(id)),
+    );
+    expect(stale).toEqual([]);
+  });
+
+  // An `@example` fence is the translation ladder's, gated above; every other
+  // ```lua fence in a committed surface came from prose, so it must be one the
+  // keep record excuses. Reads the emitted bytes, so an emit site that stops
+  // translating reds here even while the parse-level gate stays green.
+  test("every ```lua fence outside an @example in a committed surface is a recorded keep", () => {
+    const kept = new Set(
+      Object.values(loadProseLuaKeeps()).flatMap((keeps) => keeps.map((keep) => keep.sourceHash)),
+    );
+    const offenders: string[] = [];
+    for (const surface of allGeneratedSurfaces()) {
+      for (const file of readdirSync(surface.dir)) {
+        if (!file.endsWith(".d.ts")) continue;
+        const lines = readFileSync(resolve(surface.dir, file), "utf8").split("\n");
+        for (let i = 0; i < lines.length; i++) {
+          const opener = /^\s*\* ( *)```lua$/.exec(lines[i] ?? "");
+          if (!opener || lines[i - 1]?.trim() === "* @example") continue;
+          const indent = opener[1] ?? "";
+          const body: string[] = [];
+          let close = i + 1;
+          for (; close < lines.length; close++) {
+            const text = (lines[close] ?? "").replace(/^\s*\* ?/, "");
+            if (text.trim() === "```" || /^\s*\*\/$/.test(lines[close] ?? "")) break;
+            body.push(text.startsWith(indent) ? text.slice(indent.length) : text);
+          }
+          if (!kept.has(hashExampleSource(body.join("\n")))) {
+            offenders.push(`${surface.id}/${file}:${i + 1}`);
+          }
+          i = close;
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });
 
