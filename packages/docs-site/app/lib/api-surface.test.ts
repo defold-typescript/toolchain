@@ -2542,6 +2542,26 @@ describe("index-base notes on library pages", () => {
     );
   });
 
+  test("an unnamed multi-value return notes each positional value by name", () => {
+    const tileRaycast = page("tile_raycast");
+    const note = (value: string): string =>
+      `**⚠️ \`${value}\` is 1-based; passed to \`tile_raycast\` unchanged.**`;
+    const notes = ["tile_x", "tile_y", "array_id"].map(note).join(" ");
+    const doc = symbols(tileRaycast).find((s) => s.name === "cast")?.returnValues[0]?.doc ?? "";
+    expect(doc.endsWith(notes)).toBe(true);
+    expect(doc).not.toContain("**⚠️ 1-based;");
+    for (const value of ["hit", "tile_id", "intersection_x", "intersection_y", "side"]) {
+      expect(doc).not.toContain(`\`${value}\` is `);
+    }
+    const markdown = apiModuleMarkdown(tileRaycast, tileRaycast.translations);
+    const start = markdown.indexOf("### `cast(");
+    expect(start).toBeGreaterThan(-1);
+    const end = markdown.indexOf("\n### ", start + 1);
+    const cast = markdown.slice(start, end === -1 ? undefined : end);
+    expect(cast).toContain(notes);
+    expect(cast).not.toContain("**⚠️ 1-based;");
+  });
+
   test("the engine gui page keeps its Defold note", () => {
     expect(paramDoc(page("gui", "engine"), "gui.set", "options")).toContain(
       "passed to Defold unchanged",
