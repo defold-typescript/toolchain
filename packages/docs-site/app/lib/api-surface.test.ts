@@ -399,7 +399,7 @@ describe("loadApiSurface library pages", () => {
       expect(meta).toBeDefined();
       expect(meta?.authoredHere).toBe(true);
       expect(meta?.authorUrl).toBe("https://github.com/britzl/defold-input");
-      expect(meta?.commit).toBe("4.7.1");
+      expect(meta?.commit).toBe("4.8.0");
       expect(meta?.importString).toBe(`import * as ${mod} from "${namespace}"`);
     }
   });
