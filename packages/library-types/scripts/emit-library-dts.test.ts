@@ -1,13 +1,14 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { appendNotes, libraryIndexBaseNotes } from "@defold-typescript/types";
 import {
   emitLibraryDeclarations,
   isPublicField,
   isPublicMethod,
   sanitizeTypeName,
 } from "./emit-library-dts";
-import type { LibraryModel } from "./parse-luals";
+import type { LibraryModel, LibraryParam } from "./parse-luals";
 import { buildTargetModel, readLualsTargets } from "./sync-luals-types";
 
 test("emits a declare module block with an interface, its field and method, and a module function", () => {
@@ -784,6 +785,7 @@ test.each(
     moduleId: target.moduleId,
     typeRenames: target.typeRenames,
     externalTypes: target.externalTypes,
+    indexBasePage: target.namespace,
   });
   const golden = readFileSync(join(packageRoot, "generated", `${namespace}.d.ts`), "utf8");
 
@@ -1057,4 +1059,96 @@ test("a model declaring the token itself wins over the ambient stdlib rename", (
     "export function get_default_logger_name(this: void, debuginfo: debuginfo): string;",
   );
   expect(out).not.toContain("debug.FunctionInfo");
+});
+
+const gridParam = (name: string, doc = ""): LibraryParam => ({
+  name,
+  types: ["number"],
+  doc,
+  isOptional: false,
+  isVararg: false,
+});
+
+const indexBaseModel: LibraryModel = {
+  interfaces: [
+    {
+      name: "druid.grid",
+      generics: [],
+      fields: [
+        { name: "first_index", types: ["number"], doc: "The first index", isOptional: false },
+        { name: "nodes", types: ["node[]"], doc: "The nodes", isOptional: false },
+      ],
+      methods: [
+        {
+          name: "get_pos",
+          brief: "Return the position of an index.",
+          generics: [],
+          params: [gridParam("index", "The grid index")],
+          returns: [],
+        },
+        {
+          name: "get_index",
+          brief: "Return the index of a position.",
+          generics: [],
+          params: [gridParam("pos")],
+          returns: [gridParam("index")],
+        },
+        {
+          name: "remove",
+          brief: "Remove a component.",
+          generics: [],
+          params: [gridParam("component")],
+          returns: [],
+        },
+      ],
+      brief: "A grid.",
+    },
+  ],
+  aliases: [],
+  moduleFunctions: [],
+};
+
+function docAbove(out: string, memberLine: string): string {
+  const lines = out.split("\n");
+  const at = lines.findIndex((line) => line.includes(memberLine));
+  expect(at).toBeGreaterThan(0);
+  const doc: string[] = [];
+  for (let i = at - 1; i >= 0 && /^\s*(\/\*\*|\*)/.test(lines[i] as string); i--) {
+    doc.unshift(lines[i] as string);
+    if ((lines[i] as string).trim().startsWith("/**")) break;
+  }
+  return doc
+    .slice(1, -1)
+    .map((line) => line.trim().replace(/^\*\s?/, ""))
+    .join("\n");
+}
+
+test("a library page notes each classified param, return and class field under the API reference's keys", () => {
+  const paramNotes = libraryIndexBaseNotes("druid", "get_pos", "param", "index");
+  const returnNotes = libraryIndexBaseNotes("druid", "get_index", "return", "");
+  const fieldNotes = libraryIndexBaseNotes("druid", "druid_grid", "field", "first_index");
+  expect(paramNotes.length).toBeGreaterThan(0);
+  expect(returnNotes.length).toBeGreaterThan(0);
+  expect(fieldNotes.length).toBeGreaterThan(0);
+
+  const out = emitLibraryDeclarations(indexBaseModel, { moduleId: "x.x", indexBasePage: "druid" });
+
+  expect(docAbove(out, "get_pos(index: number)")).toContain(
+    `@param index - ${appendNotes("The grid index", paramNotes)}`,
+  );
+  expect(docAbove(out, "get_index(pos: number)")).toContain(
+    `@returns ${appendNotes("", returnNotes)}`,
+  );
+  expect(docAbove(out, "get_index(pos: number)")).not.toContain("@param");
+  expect(docAbove(out, "first_index: number;")).toBe(appendNotes("The first index", fieldNotes));
+  expect(docAbove(out, "nodes: ")).toBe("");
+  expect(docAbove(out, "remove(component: number)")).not.toContain("@param");
+});
+
+test("a model emitted without an index base page carries no slot tags or field docs", () => {
+  const out = emitLibraryDeclarations(indexBaseModel, { moduleId: "x.x" });
+
+  expect(out).not.toContain("@param");
+  expect(out).not.toContain("@returns");
+  expect(docAbove(out, "first_index: number;")).toBe("");
 });

@@ -15,7 +15,7 @@ type Lane = "script-api" | "extension" | "luals" | "authored" | "native";
 
 // Lanes whose declarations do not yet carry library index notes. Each entry
 // leaves once its own emitter notes the classified positions it declares.
-const PENDING_LANES: ReadonlySet<Lane> = new Set<Lane>(["luals", "authored", "native"]);
+const PENDING_LANES: ReadonlySet<Lane> = new Set<Lane>(["authored", "native"]);
 
 function readTargets<T>(file: string): T[] {
   return (JSON.parse(readFileSync(join(LIBRARY_TYPES_DIR, file), "utf8")) as { targets: T[] })
@@ -109,7 +109,7 @@ function functionDeclarations(text: string): Map<string, ts.FunctionDeclaration[
   return found;
 }
 
-function slotTagTexts(fn: ts.FunctionDeclaration, slot: ClassifiedSlot): string[] {
+function slotTagTexts(fn: ts.SignatureDeclarationBase, slot: ClassifiedSlot): string[] {
   return ts
     .getJSDocTags(fn)
     .filter((tag) =>
@@ -120,7 +120,68 @@ function slotTagTexts(fn: ts.FunctionDeclaration, slot: ClassifiedSlot): string[
     .map((tag) => ts.getTextOfJSDocComment(tag.comment) ?? "");
 }
 
+// Every interface member of a LuaLS declaration by name, with the interface
+// that declares it, plus every module function; a typedef method is keyed by
+// its bare name, so one key reaches every class that declares it.
+interface LualsMembers {
+  readonly callables: Map<string, ts.SignatureDeclarationBase[]>;
+  readonly fields: Map<string, ts.TypeElement[]>;
+}
+
+function lualsMembers(text: string): LualsMembers {
+  const source = ts.createSourceFile("library.d.ts", text, ts.ScriptTarget.Latest, true);
+  const callables = new Map<string, ts.SignatureDeclarationBase[]>();
+  const fields = new Map<string, ts.TypeElement[]>();
+  const add = <T>(map: Map<string, T[]>, key: string, node: T): void => {
+    map.set(key, [...(map.get(key) ?? []), node]);
+  };
+  const visit = (node: ts.Node): void => {
+    if (ts.isInterfaceDeclaration(node)) {
+      for (const member of node.members) {
+        if (member.name === undefined) continue;
+        const name = ts.isStringLiteral(member.name) ? member.name.text : member.name.getText();
+        add(fields, `${node.name.text}.${name}`, member);
+        if (ts.isMethodSignature(member)) add(callables, name, member);
+      }
+      return;
+    }
+    if (ts.isFunctionDeclaration(node) && node.name !== undefined) {
+      add(callables, node.name.text, node);
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return { callables, fields };
+}
+
+// The doc texts a LuaLS slot's notes must appear in: one per declaration that
+// holds the slot. `undefined` means no declaration holds it.
+function lualsSlotTexts(members: LualsMembers, slot: ClassifiedSlot): string[] | undefined {
+  if (slot.kind === "field") {
+    const nodes = members.fields.get(`${slot.element}.${slot.slot}`) ?? [];
+    if (nodes.length === 0) return undefined;
+    return nodes.map((node) =>
+      ts
+        .getJSDocCommentsAndTags(node)
+        .filter(ts.isJSDoc)
+        .map((doc) => ts.getTextOfJSDocComment(doc.comment) ?? "")
+        .join("\n"),
+    );
+  }
+  const holders = (members.callables.get(slot.element) ?? []).filter((fn) =>
+    slot.kind === "param"
+      ? fn.parameters.some((param) => param.name.getText() === slot.slot)
+      : fn.type !== undefined && fn.type.kind !== ts.SyntaxKind.VoidKeyword,
+  );
+  if (holders.length === 0) return undefined;
+  return holders.map((fn) => slotTagTexts(fn, slot).join("\n"));
+}
+
 async function emitLaneDeclaration(page: string, lane: Lane): Promise<string> {
+  if (lane === "luals") {
+    return readFileSync(join(LIBRARY_TYPES_DIR, "generated", `${page}.d.ts`), "utf8");
+  }
   if (lane === "script-api") {
     const target = scriptApiTargets.find((t) => basename(t.apiDoc, ".json") === page);
     if (target === undefined) throw new Error(`no script-api target for page ${page}`);
@@ -164,18 +225,21 @@ describe("library index base declaration gate", () => {
     }
     expect([...byPage.keys()]).toContain("bridge");
     expect([...byPage.keys()]).toContain("spine.gui");
+    expect([...byPage.keys()]).toContain("druid");
 
     const missing: string[] = [];
     for (const [page, pageSlots] of byPage) {
-      const declarations = functionDeclarations(
-        await emitLaneDeclaration(page, lanes.get(page) as Lane),
-      );
+      const lane = lanes.get(page) as Lane;
+      const text = await emitLaneDeclaration(page, lane);
+      const declarations = lane === "luals" ? undefined : functionDeclarations(text);
+      const members = lane === "luals" ? lualsMembers(text) : undefined;
       for (const slot of pageSlots) {
         const label = `${slot.page}/${slot.element}:${slot.kind}:${slot.slot}`;
         const notes = libraryIndexBaseNotes(slot.page, slot.element, slot.kind, slot.slot);
-        const texts = (declarations.get(slot.element) ?? []).flatMap((fn) =>
-          slotTagTexts(fn, slot),
-        );
+        const texts =
+          members !== undefined
+            ? (lualsSlotTexts(members, slot) ?? [])
+            : (declarations?.get(slot.element) ?? []).flatMap((fn) => slotTagTexts(fn, slot));
         if (texts.length === 0) {
           missing.push(`${label}: no declared ${slot.kind} tag`);
           continue;

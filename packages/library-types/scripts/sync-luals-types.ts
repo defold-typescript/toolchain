@@ -305,6 +305,7 @@ if (import.meta.main) {
         moduleId: target.moduleId,
         typeRenames: target.typeRenames,
         externalTypes: target.externalTypes,
+        indexBasePage: target.namespace,
       });
       const dest = join(root, "generated", `${target.namespace}.d.ts`);
       mkdirSync(dirname(dest), { recursive: true });

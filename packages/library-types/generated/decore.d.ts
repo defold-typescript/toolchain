@@ -86,6 +86,9 @@ declare module 'decore.decore' {
 		active: boolean;
 		world: world;
 		entities: entity[];
+		/**
+		 * **⚠️ 1-based; passed to `decore` unchanged.**
+		 */
 		index: number;
 		modified: boolean;
 		hasOnModify?: boolean | undefined;

@@ -376,6 +376,8 @@ declare module 'druid.druid' {
 		scroll_to_make_node_visible(node: Opaque<"node">, is_instant?: boolean | undefined): void;
 		/**
 		 * Scroll to item in scroll by point index.
+		 *
+		 * @param index - Point index. **⚠️ 1-based; passed to `druid` unchanged.**
 		 */
 		scroll_to_index(index: number, is_silent?: boolean | undefined, is_instant?: boolean | undefined): void;
 		/**
@@ -481,7 +483,13 @@ declare module 'druid.druid' {
 		on_update_positions: event;
 		parent: Opaque<"node">;
 		nodes: Opaque<"node">[];
+		/**
+		 * First index. **⚠️ 1-based; passed to `druid` unchanged.**
+		 */
 		first_index: number;
+		/**
+		 * Last index. **⚠️ 1-based; passed to `druid` unchanged.**
+		 */
 		last_index: number;
 		anchor: Vector3;
 		pivot: Vector3;
@@ -495,18 +503,26 @@ declare module 'druid.druid' {
 		init(parent: string | Opaque<"node">, element: Opaque<"node">, in_row?: number | undefined): void;
 		/**
 		 * Return pos for grid node index
+		 *
+		 * @param index - The grid element index. **⚠️ 1-based; passed to `druid` unchanged.**
 		 */
 		get_pos(index: number): Vector3;
 		/**
 		 * Return grid index by content-local x, y. Inverse of get_pos + _get_dynamic_offset.
+		 *
+		 * @returns The node index. **⚠️ 1-based; passed to `druid` unchanged.**
 		 */
 		get_index_xy(x: number, y: number): number;
 		/**
 		 * Return grid index by position. Inverse of get_pos + _get_dynamic_offset.
+		 *
+		 * @returns The node index. **⚠️ 1-based; passed to `druid` unchanged.**
 		 */
 		get_index(pos: Vector3): number;
 		/**
 		 * Return grid index by node
+		 *
+		 * @returns The node index. **⚠️ 1-based; passed to `druid` unchanged.**
 		 */
 		get_index_by_node(node: Opaque<"node">): number | undefined;
 		/**
@@ -523,6 +539,8 @@ declare module 'druid.druid' {
 		set_pivot(pivot: Opaque<"constant">): druid_grid;
 		/**
 		 * Add new item to the grid
+		 *
+		 * @param index - The item position. By default add as last item. **⚠️ 1-based; passed to `druid` unchanged.**
 		 */
 		add(item: Opaque<"node">, index?: number | undefined, shift_policy?: number | undefined, is_instant?: boolean | undefined): druid_grid;
 		/**
@@ -531,6 +549,8 @@ declare module 'druid.druid' {
 		set_items(nodes: Opaque<"node">[], is_instant?: boolean | undefined): druid_grid;
 		/**
 		 * Remove the item from the grid. Note that gui node will be not deleted
+		 *
+		 * @param index - The grid node index to remove. **⚠️ 1-based; passed to `druid` unchanged.**
 		 */
 		remove(index: number, shift_policy?: number | undefined, is_instant?: boolean | undefined): Opaque<"node">;
 		/**
@@ -1064,7 +1084,13 @@ declare module 'druid.druid' {
 		on_scroll_progress_change: event;
 		on_element_add: event;
 		on_element_remove: event;
+		/**
+		 * The top index of the visible elements. **⚠️ 1-based; passed to `druid` unchanged.**
+		 */
 		top_index: number;
+		/**
+		 * The last index of the visible elements. **⚠️ 1-based; passed to `druid` unchanged.**
+		 */
 		last_index: number;
 		scroll_progress: number;
 		/**
@@ -1085,10 +1111,14 @@ declare module 'druid.druid' {
 		get_data(): LuaTable;
 		/**
 		 * Add element to DataList
+		 *
+		 * @param index - The index to add the data at. **⚠️ 1-based; passed to `druid` unchanged.**
 		 */
 		add(data: LuaTable, index?: number | undefined, shift_policy?: number | undefined): druid_data_list;
 		/**
 		 * Remove element from DataList
+		 *
+		 * @param index - The index to remove the data at. **⚠️ 1-based; passed to `druid` unchanged.**
 		 */
 		remove(index?: number | undefined, shift_policy?: number | undefined): druid_data_list;
 		/**
@@ -1113,6 +1143,8 @@ declare module 'druid.druid' {
 		get_created_components(): druid_component[];
 		/**
 		 * Instant scroll to element with passed index
+		 *
+		 * @param index - The index to scroll to. **⚠️ 1-based; passed to `druid` unchanged.**
 		 */
 		scroll_to_index(index: number): void;
 		/**
@@ -1240,6 +1272,10 @@ declare module 'druid.druid' {
 		reset_changes(): druid_input;
 		/**
 		 * Set cursor position in input field
+		 *
+		 * @param cursor_index - Cursor index for cursor position, if nil - will be set to the end of the text. **0️⃣ 0-based; passed to `druid` unchanged.**
+		 * @param start_index - Start index for cursor position, if nil - will be set to the end of the text. **0️⃣ 0-based; passed to `druid` unchanged.**
+		 * @param end_index - End index for cursor position, if nil - will be set to the start_index. **0️⃣ 0-based; passed to `druid` unchanged.**
 		 */
 		select_cursor(cursor_index?: number | undefined, start_index?: number | undefined, end_index?: number | undefined): druid_input;
 		/**
@@ -1328,6 +1364,9 @@ declare module 'druid.druid' {
 		on_layout_change(): void;
 		get_entities(): Opaque<"node">[];
 		get_entities_count(): number;
+		/**
+		 * @param index - The index to set the node to. **⚠️ 1-based; passed to `druid` unchanged.**
+		 */
 		set_node_index(node: Opaque<"node">, index: number): druid_layout;
 		/**
 		 * Set the margin of the layout
