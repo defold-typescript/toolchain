@@ -7,12 +7,14 @@ import { retainedSurfaces } from "../src/optional-correction-provenance";
 import { readBindingsForTarget } from "./engine-binding-extract";
 import { EXTENSION_GOLDEN_MANIFEST } from "./extension-goldens";
 import {
+  callbackArgKeys,
   declaredSlotKeys,
   type IndexSlotHit,
   refDocSlotKeys,
   scanDeclaredIndexSlots,
   scanFunctionBaseStatements,
   scanIndexSlots,
+  scanTypedefMemberSlots,
 } from "./index-slot-scan";
 import {
   EDITOR_MODULE_MANIFEST,
@@ -108,6 +110,43 @@ describe("scanFunctionBaseStatements over the defold-1.13.1 ref-doc", () => {
     });
     expect(scanFunctionBaseStatements(doc("string"), "string")).toEqual([]);
     expect(scanFunctionBaseStatements(doc("gui"), "gui")).toHaveLength(1);
+  });
+});
+
+const LIBRARY_API_DOC = join(import.meta.dir, "..", "..", "library-types", "api-doc");
+
+function libraryDoc(file: string): unknown {
+  return JSON.parse(readFileSync(join(LIBRARY_API_DOC, file), "utf8"));
+}
+
+describe("scanTypedefMemberSlots over the library api-doc", () => {
+  test("keys an index-named class field to its class", () => {
+    const decore = new Map(
+      scanTypedefMemberSlots(libraryDoc("decore.json")).map((hit) => [hit.key, hit.evidence]),
+    );
+    expect(decore.get("system:field:index")).toBe("name");
+    const panthera = new Map(
+      scanTypedefMemberSlots(libraryDoc("panthera.json")).map((hit) => [hit.key, hit.evidence]),
+    );
+    expect(panthera.get("panthera_animation:field:animation_keys_index")).toBe("name");
+  });
+
+  test("reports nothing for a member that is not a position", () => {
+    const keys = scanTypedefMemberSlots(libraryDoc("decore.json")).map((hit) => hit.key);
+    expect(keys.filter((key) => key.endsWith(":field:entities"))).toEqual([]);
+  });
+});
+
+describe("callbackArgKeys over the library api-doc", () => {
+  test("declares each argument a `function(...)` slot doc names", () => {
+    const keys = callbackArgKeys(libraryDoc("bridge.json"));
+    expect(keys).toContain("bridge.daily_rewards.get_current_day:param:on_success:day");
+    expect(keys).toContain("bridge.daily_rewards.get_current_day:param:on_failure:error");
+  });
+
+  test("declares no key for a slot whose doc is not a `function(...)` form", () => {
+    const keys = callbackArgKeys(libraryDoc("druid.json"));
+    expect(keys.filter((key) => key.startsWith("new_data_list:param:create_function"))).toEqual([]);
   });
 });
 

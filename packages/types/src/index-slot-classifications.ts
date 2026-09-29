@@ -1,4 +1,5 @@
 import { htmlToDocText } from "./doc-comment";
+import { LIBRARY_INDEX_SLOT_CLASSIFICATIONS } from "./library-index-slot-classifications";
 
 // The class records the base Defold itself counts from. TypeScript passes every
 // engine position to Defold, and takes it back, unchanged in that base:
@@ -391,20 +392,49 @@ export const INDEX_BASE_MARKERS: Readonly<Record<"native-1" | "native-0", string
   "native-0": "0️⃣",
 };
 
-const BASE_SENTENCES: Readonly<Record<"native-1" | "native-0", string>> = {
-  "native-1": "1-based; passed to Defold unchanged.",
-  "native-0": "0-based; passed to Defold unchanged.",
-};
-
 // The base a position's class names, stated whatever its prose says, since
-// upstream prose phrases its base in too many ways to read reliably. `subject`
-// names the table field the note is about, when it is about one.
-function nativeBaseNote(key: string, subject?: string): string | undefined {
-  const classification = INDEX_SLOT_CLASSIFICATIONS.get(key)?.class;
+// upstream prose phrases its base in too many ways to read reliably. `receiver`
+// names who counts from that base; `subject` names the table field the note is
+// about, when it is about one.
+function nativeBaseNote(
+  map: ReadonlyMap<string, Pick<IndexSlotClassification, "class">>,
+  receiver: string,
+  key: string,
+  subject?: string,
+): string | undefined {
+  const classification = map.get(key)?.class;
   if (classification !== "native-1" && classification !== "native-0") return undefined;
-  const sentence = BASE_SENTENCES[classification];
+  const base = classification === "native-1" ? "1-based" : "0-based";
+  const sentence = `${base}; passed to ${receiver} unchanged.`;
   const body = subject === undefined ? sentence : `\`${subject}\` is ${sentence}`;
   return `**${INDEX_BASE_MARKERS[classification]} ${body}**`;
+}
+
+function slotBaseNotes(
+  map: ReadonlyMap<string, Pick<IndexSlotClassification, "class">>,
+  receiver: string,
+  key: string,
+): string[] {
+  const notes: string[] = [];
+  const own = nativeBaseNote(map, receiver, key);
+  if (own !== undefined) notes.push(own);
+  const prefix = `${key}:`;
+  for (const fieldKey of map.keys()) {
+    if (!fieldKey.startsWith(prefix)) continue;
+    const path = fieldKey.slice(prefix.length);
+    const note = nativeBaseNote(map, receiver, fieldKey, path.slice(path.lastIndexOf(":") + 1));
+    if (note !== undefined) notes.push(note);
+  }
+  return notes;
+}
+
+function appendNotes(doc: string, notes: readonly string[]): string {
+  if (notes.length === 0) return doc;
+  const sentence = notes.join(" ");
+  const body = doc.trimEnd();
+  if (body === "") return sentence;
+  if (body.includes("\n")) return `${body}\n\n${sentence}`;
+  return /[.!?:]$/.test(body) ? `${body} ${sentence}` : `${body}. ${sentence}`;
 }
 
 // The sentences a slot's doc gains so each index it holds, the slot itself or
@@ -414,18 +444,7 @@ export function indexBaseNotes(
   kind: "param" | "return",
   slotName: string,
 ): string[] {
-  const key = `${elementName}:${kind}:${slotName}`;
-  const notes: string[] = [];
-  const own = nativeBaseNote(key);
-  if (own !== undefined) notes.push(own);
-  const prefix = `${key}:`;
-  for (const fieldKey of INDEX_SLOT_CLASSIFICATIONS.keys()) {
-    if (!fieldKey.startsWith(prefix)) continue;
-    const path = fieldKey.slice(prefix.length);
-    const note = nativeBaseNote(fieldKey, path.slice(path.lastIndexOf(":") + 1));
-    if (note !== undefined) notes.push(note);
-  }
-  return notes;
+  return slotBaseNotes(INDEX_SLOT_CLASSIFICATIONS, "Defold", `${elementName}:${kind}:${slotName}`);
 }
 
 // `doc` is the slot doc in whatever form the caller renders (decoded text or
@@ -436,11 +455,30 @@ export function withIndexBaseNotes(
   slotName: string,
   doc: string,
 ): string {
-  const notes = indexBaseNotes(elementName, kind, slotName);
-  if (notes.length === 0) return doc;
-  const sentence = notes.join(" ");
-  const body = doc.trimEnd();
-  if (body === "") return sentence;
-  if (body.includes("\n")) return `${body}\n\n${sentence}`;
-  return /[.!?:]$/.test(body) ? `${body} ${sentence}` : `${body}. ${sentence}`;
+  return appendNotes(doc, indexBaseNotes(elementName, kind, slotName));
+}
+
+// The same notes for a slot or class field of a library page, read from the
+// library map under that page's key and naming the library as the receiver.
+export function libraryIndexBaseNotes(
+  page: string,
+  elementName: string,
+  kind: "param" | "return" | "field",
+  slotName: string,
+): string[] {
+  return slotBaseNotes(
+    LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
+    `\`${page}\``,
+    `${page}/${elementName}:${kind}:${slotName}`,
+  );
+}
+
+export function withLibraryIndexBaseNotes(
+  page: string,
+  elementName: string,
+  kind: "param" | "return" | "field",
+  slotName: string,
+  doc: string,
+): string {
+  return appendNotes(doc, libraryIndexBaseNotes(page, elementName, kind, slotName));
 }
