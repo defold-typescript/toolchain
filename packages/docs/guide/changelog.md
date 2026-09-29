@@ -42,6 +42,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **API symbol names in the guide and changelog link to their reference entry**: inline code such as `go.get`, `render.RENDER_TARGET_DEFAULT`, the global function `hash` or the global type `Vector3` opens that entry in the [API reference](/api).
 - **Every function with several examples documents each one as its own TypeScript block, with the sentence that introduces it above**, in hovers and the API reference: among them `gui.set`, `render.draw`, `sys.load_buffer`, `json.decode` and `editor.bob`, each of which showed one welded block. The API reference does the same for `go.get` and `go.set`, including their named-property and sub-component cases.
 - **Every TypeScript example in the API reference has a Lua tab beside it** showing the engine's original sample, in function examples and in code samples inside descriptions and parameter docs; the selected tab's badge is highlighted.
+- **The ten `in.*` library types are checked against `britzl/defold-input` `4.8.0`**, and their API reference pages name that tag; the declarations are unchanged.
 
 ### Fixed
 
