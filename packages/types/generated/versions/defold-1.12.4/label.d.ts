@@ -68,10 +68,9 @@ declare global {
        */
       outline: Vector4;
       /**
-       * The scale of the label. The type of the property is number (uniform)
-       * or vector3 (non uniform).
+       * The scale of the label. `go.get` returns and `go.set` takes a vector3; `go.animate` also takes a number, which sets a uniform scale.
        */
-      scale: number | Vector3;
+      scale: Vector3;
       /**
        * The shadow color of the label. The type of the property is vector4.
        */

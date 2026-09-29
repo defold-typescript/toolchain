@@ -181,7 +181,12 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
     } else if (type === "CONSTANT") {
       constants.push(parseConstant(element));
     } else if (type === "PROPERTY") {
-      properties.push(parseProperty(element));
+      const property = parseProperty(element);
+      const doc = correctedDoc(
+        docCorrectionKey(namespace, "property", property.name),
+        property.description,
+      );
+      properties.push(doc === property.description ? property : { ...property, description: doc });
     } else if (type === "TYPEDEF") {
       typedefs.push(parseTypedef(element));
     }

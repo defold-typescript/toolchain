@@ -17,6 +17,13 @@ void _scale;
 go.set(url, "euler", v3);
 go.set(url, "scale", 2);
 
+// A label's scale is read back as a vector3 and refuses a number on write.
+const _labelScale: Vector3 = go.get<label.properties>()(url, "scale");
+void _labelScale;
+go.set<label.properties>()(url, "scale", v3);
+// @ts-expect-error the label component refuses a number scale
+go.set<label.properties>()(url, "scale", 2);
+
 // @ts-expect-error wrong value type for a known property
 go.set(url, "position", "not a vector");
 
