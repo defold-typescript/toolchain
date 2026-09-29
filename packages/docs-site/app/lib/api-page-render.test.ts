@@ -4,7 +4,9 @@ import { join } from "node:path";
 import {
   type ApiAvailability,
   type ApiFunction,
+  hashExampleSource,
   normalizedFunctionSignature,
+  proseLuaFences,
   signatureTransitionNames,
   symbolIdentityKey,
 } from "@defold-typescript/types";
@@ -152,6 +154,38 @@ function fieldsPage(): ApiPage {
   };
 }
 
+// An engine page whose one function has no authored override and carries a Lua
+// sample in its ref-doc description, in the upstream `codehilite` markup.
+function proseSamplePage(): ApiPage {
+  return {
+    namespace: "demo",
+    route: "/api/demo",
+    brief: "Demo",
+    module: {
+      namespace: "demo",
+      brief: "Demo",
+      description: "Demo module.",
+      functions: [
+        {
+          name: "demo.check",
+          brief: "",
+          description:
+            'Checks support:\n<div class="codehilite"><pre><span></span><code><span class="kr">if</span> demo.supported() == nil <span class="kr">then</span>\n    demo.fallback()\n<span class="kr">end</span>\n</code></pre></div>',
+          parameters: [],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    },
+    translations: {},
+    signatures: {},
+    category: "engine",
+  };
+}
+
 function typedefPage(): ApiPage {
   return {
     namespace: "demo",
@@ -296,6 +330,19 @@ describe("apiPageMarkdown", () => {
     expect(date).toContain("`(format?: string, time?: number)");
     expect(date).toContain('`(format: "*t", time?: number)');
     expect(md).not.toContain(`\`${thin}\``);
+  });
+
+  test("renders a function description's prose Lua sample as its pinned TypeScript", () => {
+    const page = proseSamplePage();
+    const [fence] = proseLuaFences(page.module).filter((f) => f.key === "demo.check");
+    expect(fence?.lua).toContain("demo.supported() == nil");
+    if (!fence) return;
+    const ts = "if (demo.supported() === undefined) {\n  demo.fallback();\n}";
+    page.translations = { "demo.check": [{ sourceHash: hashExampleSource(fence.lua), ts }] };
+    const md = apiPageMarkdown(page, apiLinkify([page]));
+    const block = blockOf(md, groupFor(page, "demo.check")[0]?.signature ?? "");
+    expect(block).toContain(`\`\`\`ts\n${ts}\n\`\`\``);
+    expect(block).not.toContain("demo.supported() == nil");
   });
 
   test("renders the authored math.random signature from the store, not the thin ref-doc one", () => {
