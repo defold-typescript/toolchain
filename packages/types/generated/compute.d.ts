@@ -18,37 +18,21 @@ declare global {
      * number the type of the constant. Supported values:
      *
      * - `material.CONSTANT_TYPE_USER`
-     *
      * - `material.CONSTANT_TYPE_USER_MATRIX4`
-     *
      * - `material.CONSTANT_TYPE_VIEWPROJ`
-     *
      * - `material.CONSTANT_TYPE_WORLD`
-     *
      * - `material.CONSTANT_TYPE_TEXTURE`
-     *
      * - `material.CONSTANT_TYPE_VIEW`
-     *
      * - `material.CONSTANT_TYPE_PROJECTION`
-     *
      * - `material.CONSTANT_TYPE_NORMAL`
-     *
      * - `material.CONSTANT_TYPE_WORLDVIEW`
-     *
      * - `material.CONSTANT_TYPE_WORLDVIEWPROJ`
-     *
      * - `material.CONSTANT_TYPE_TIME`
-     *
      * - `material.CONSTANT_TYPE_WORLD_INVERSE`
-     *
      * - `material.CONSTANT_TYPE_VIEW_INVERSE`
-     *
      * - `material.CONSTANT_TYPE_PROJECTION_INVERSE`
-     *
      * - `material.CONSTANT_TYPE_VIEWPROJ_INVERSE`
-     *
      * - `material.CONSTANT_TYPE_WORLDVIEW_INVERSE`
-     *
      * - `material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE`
      *
      * `value`
@@ -72,48 +56,34 @@ declare global {
      * number the u wrap mode of the texture sampler. Supported values:
      *
      * - `graphics.TEXTURE_WRAP_CLAMP_TO_BORDER`
-     *
      * - `graphics.TEXTURE_WRAP_CLAMP_TO_EDGE`
-     *
      * - `graphics.TEXTURE_WRAP_MIRRORED_REPEAT`
-     *
      * - `graphics.TEXTURE_WRAP_REPEAT`
      *
      * `v_wrap`
      * number the v wrap mode of the texture sampler. Supported values:
      *
      * - `graphics.TEXTURE_WRAP_CLAMP_TO_BORDER`
-     *
      * - `graphics.TEXTURE_WRAP_CLAMP_TO_EDGE`
-     *
      * - `graphics.TEXTURE_WRAP_MIRRORED_REPEAT`
-     *
      * - `graphics.TEXTURE_WRAP_REPEAT`
      *
      * `min_filter`
      * number the min filter mode of the texture sampler. Supported values:
      *
      * - `graphics.TEXTURE_FILTER_DEFAULT`
-     *
      * - `graphics.TEXTURE_FILTER_NEAREST`
-     *
      * - `graphics.TEXTURE_FILTER_LINEAR`
-     *
      * - `graphics.TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST`
-     *
      * - `graphics.TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR`
-     *
      * - `graphics.TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST`
-     *
      * - `graphics.TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR`
      *
      * `mag_filter`
      * number the mag filter mode of the texture sampler
      *
      * - `graphics.TEXTURE_FILTER_DEFAULT`
-     *
      * - `graphics.TEXTURE_FILTER_NEAREST`
-     *
      * - `graphics.TEXTURE_FILTER_LINEAR`
      *
      * `max_anisotropy`
@@ -146,28 +116,19 @@ declare global {
      * number the type of the texture. Supported values:
      *
      * - `graphics.TEXTURE_TYPE_2D`
-     *
      * - `graphics.TEXTURE_TYPE_2D_ARRAY`
-     *
      * - `graphics.TEXTURE_TYPE_CUBE_MAP`
-     *
      * - `graphics.TEXTURE_TYPE_IMAGE_2D`
-     *
      * - `graphics.TEXTURE_TYPE_3D`
-     *
      * - `graphics.TEXTURE_TYPE_IMAGE_3D`
      *
      * `flags`
      * number the flags of the texture. This field is a bit mask of these supported flags:
      *
      * - `graphics.TEXTURE_USAGE_FLAG_SAMPLE`
-     *
      * - `graphics.TEXTURE_USAGE_FLAG_MEMORYLESS`
-     *
      * - `graphics.TEXTURE_USAGE_FLAG_STORAGE`
-     *
      * - `graphics.TEXTURE_USAGE_FLAG_INPUT`
-     *
      * - `graphics.TEXTURE_USAGE_FLAG_COLOR`
      * @example
      * ```ts
@@ -185,37 +146,21 @@ declare global {
      * number the type of the constant. Supported values:
      *
      * - `material.CONSTANT_TYPE_USER`
-     *
      * - `material.CONSTANT_TYPE_USER_MATRIX4`
-     *
      * - `material.CONSTANT_TYPE_VIEWPROJ`
-     *
      * - `material.CONSTANT_TYPE_WORLD`
-     *
      * - `material.CONSTANT_TYPE_TEXTURE`
-     *
      * - `material.CONSTANT_TYPE_VIEW`
-     *
      * - `material.CONSTANT_TYPE_PROJECTION`
-     *
      * - `material.CONSTANT_TYPE_NORMAL`
-     *
      * - `material.CONSTANT_TYPE_WORLDVIEW`
-     *
      * - `material.CONSTANT_TYPE_WORLDVIEWPROJ`
-     *
      * - `material.CONSTANT_TYPE_TIME`
-     *
      * - `material.CONSTANT_TYPE_WORLD_INVERSE`
-     *
      * - `material.CONSTANT_TYPE_VIEW_INVERSE`
-     *
      * - `material.CONSTANT_TYPE_PROJECTION_INVERSE`
-     *
      * - `material.CONSTANT_TYPE_VIEWPROJ_INVERSE`
-     *
      * - `material.CONSTANT_TYPE_WORLDVIEW_INVERSE`
-     *
      * - `material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE`
      *
      * `value`
@@ -237,48 +182,34 @@ declare global {
      * number the u wrap mode of the texture sampler. Supported values:
      *
      * - `graphics.TEXTURE_WRAP_CLAMP_TO_BORDER`
-     *
      * - `graphics.TEXTURE_WRAP_CLAMP_TO_EDGE`
-     *
      * - `graphics.TEXTURE_WRAP_MIRRORED_REPEAT`
-     *
      * - `graphics.TEXTURE_WRAP_REPEAT`
      *
      * `v_wrap`
      * number the v wrap mode of the texture sampler. Supported values:
      *
      * - `graphics.TEXTURE_WRAP_CLAMP_TO_BORDER`
-     *
      * - `graphics.TEXTURE_WRAP_CLAMP_TO_EDGE`
-     *
      * - `graphics.TEXTURE_WRAP_MIRRORED_REPEAT`
-     *
      * - `graphics.TEXTURE_WRAP_REPEAT`
      *
      * `min_filter`
      * number the min filter mode of the texture sampler. Supported values:
      *
      * - `graphics.TEXTURE_FILTER_DEFAULT`
-     *
      * - `graphics.TEXTURE_FILTER_NEAREST`
-     *
      * - `graphics.TEXTURE_FILTER_LINEAR`
-     *
      * - `graphics.TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST`
-     *
      * - `graphics.TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR`
-     *
      * - `graphics.TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST`
-     *
      * - `graphics.TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR`
      *
      * `mag_filter`
      * number the mag filter mode of the texture sampler
      *
      * - `graphics.TEXTURE_FILTER_DEFAULT`
-     *
      * - `graphics.TEXTURE_FILTER_NEAREST`
-     *
      * - `graphics.TEXTURE_FILTER_LINEAR`
      *
      * `max_anisotropy`

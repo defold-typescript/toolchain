@@ -42,11 +42,8 @@ declare global {
      * constant the new state of the emitter:
      *
      * - `particlefx.EMITTER_STATE_SLEEPING`
-     *
      * - `particlefx.EMITTER_STATE_PRESPAWN`
-     *
      * - `particlefx.EMITTER_STATE_SPAWNING`
-     *
      * - `particlefx.EMITTER_STATE_POSTSPAWN`
      * @example
      * ```ts

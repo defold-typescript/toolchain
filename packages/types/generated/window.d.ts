@@ -53,9 +53,7 @@ declare global {
      * @returns The mode for screen dimming
      *
      * - `window.DIMMING_UNKNOWN`
-     *
      * - `window.DIMMING_ON`
-     *
      * - `window.DIMMING_OFF`
      */
     function get_dim_mode(): window.DimModeState;
@@ -82,19 +80,12 @@ declare global {
      * table table containing these keys:
      *
      * - number `x`
-     *
      * - number `y`
-     *
      * - number `width`
-     *
      * - number `height`
-     *
      * - number `inset_left`
-     *
      * - number `inset_top`
-     *
      * - number `inset_right`
-     *
      * - number `inset_bottom`
      */
     function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };
@@ -110,7 +101,6 @@ declare global {
      * @param mode - The mode for screen dimming
      *
      * - `window.DIMMING_ON`
-     *
      * - `window.DIMMING_OFF`
      */
     function set_dim_mode(mode: window.DimModeStateSettable): void;
@@ -125,20 +115,15 @@ declare global {
      * constant The type of event. Can be one of these:
      *
      * - `window.WINDOW_EVENT_FOCUS_LOST`
-     *
      * - `window.WINDOW_EVENT_FOCUS_GAINED`
-     *
      * - `window.WINDOW_EVENT_RESIZED`
-     *
      * - `window.WINDOW_EVENT_ICONIFIED`
-     *
      * - `window.WINDOW_EVENT_DEICONIFIED`
      *
      * `data`
      * table The callback value `data` is a table which currently holds these values
      *
      * - number `width`: The width of a resize event. nil otherwise.
-     *
      * - number `height`: The height of a resize event. nil otherwise.
      * @example
      * ```ts

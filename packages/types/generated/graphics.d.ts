@@ -363,44 +363,40 @@ declare global {
      * optional context features supported by the backend.
      *
      * @returns table with the following fields:
-     * `family` string adapter family name (e.g. "opengl", "vulkan")
-     * `version_major` number adapter API major version (e.g. 1 for Vulkan 1.4)
-     * `version_minor` number adapter API minor version (e.g. 4 for Vulkan 1.4)
-     * `limits` table hardware/driver limits:
      *
-     * ``max_texture_size_2d` [type:number] max 2D texture dimension in texels
-     * `max_texture_size_3d` [type:number] max 3D (volume) texture dimension in texels
-     * `max_texture_size_cube` [type:number] max cube map face dimension in texels
-     * `max_texture_array_layers` [type:number] max layers in an array texture
-     * `max_framebuffer_width` [type:number] max framebuffer width in pixels
-     * `max_framebuffer_height` [type:number] max framebuffer height in pixels
-     * `max_color_attachments` [type:number] max simultaneous color attachments
-     * `max_samplers_per_stage` [type:number] max texture samplers per shader stage
-     * `max_textures_per_stage` [type:number] max sampled textures per shader stage
-     * `max_vertex_attributes` [type:number] max vertex attributes
-     * `max_vertex_buffers` [type:number] max vertex buffer bindings
-     * `max_compute_workgroup_size_x` [type:number] max compute workgroup size (X)
-     * `max_compute_workgroup_size_y` [type:number] max compute workgroup size (Y)
-     * `max_compute_workgroup_size_z` [type:number] max compute workgroup size (Z)
-     * `max_compute_workgroup_invocations` [type:number] max invocations per compute workgroup
-     * `max_compute_shared_memory_size` [type:number] max shared memory per compute workgroup (bytes)
-     * `max_uniform_buffer_range` [type:number] max bindable uniform buffer range (bytes)
-     * `max_storage_buffer_range` [type:number] max bindable storage buffer range (bytes)
-     * `
-     *
-     * `extensions` table array of driver-reported extension name strings
-     * `features` table array of supported context feature ids:
-     *
-     * ``graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING` multi-target rendering
-     * `graphics.CONTEXT_FEATURE_TEXTURE_ARRAY` texture arrays
-     * `graphics.CONTEXT_FEATURE_COMPUTE_SHADER` compute shaders
-     * `graphics.CONTEXT_FEATURE_STORAGE_BUFFER` storage buffers
-     * `graphics.CONTEXT_FEATURE_VSYNC` vertical sync
-     * `graphics.CONTEXT_FEATURE_INSTANCING` hardware instancing
-     * `graphics.CONTEXT_FEATURE_3D_TEXTURES` 3D (volume) textures
-     * `graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES` ASTC compressed 2D array textures
-     * `graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX` min/max blend equations
-     * `
+     * - `family` string adapter family name (e.g. "opengl", "vulkan")
+     * - `version_major` number adapter API major version (e.g. 1 for Vulkan 1.4)
+     * - `version_minor` number adapter API minor version (e.g. 4 for Vulkan 1.4)
+     * - `limits` table hardware/driver limits:
+     *   - `max_texture_size_2d` number max 2D texture dimension in texels
+     *   - `max_texture_size_3d` number max 3D (volume) texture dimension in texels
+     *   - `max_texture_size_cube` number max cube map face dimension in texels
+     *   - `max_texture_array_layers` number max layers in an array texture
+     *   - `max_framebuffer_width` number max framebuffer width in pixels
+     *   - `max_framebuffer_height` number max framebuffer height in pixels
+     *   - `max_color_attachments` number max simultaneous color attachments
+     *   - `max_samplers_per_stage` number max texture samplers per shader stage
+     *   - `max_textures_per_stage` number max sampled textures per shader stage
+     *   - `max_vertex_attributes` number max vertex attributes
+     *   - `max_vertex_buffers` number max vertex buffer bindings
+     *   - `max_compute_workgroup_size_x` number max compute workgroup size (X)
+     *   - `max_compute_workgroup_size_y` number max compute workgroup size (Y)
+     *   - `max_compute_workgroup_size_z` number max compute workgroup size (Z)
+     *   - `max_compute_workgroup_invocations` number max invocations per compute workgroup
+     *   - `max_compute_shared_memory_size` number max shared memory per compute workgroup (bytes)
+     *   - `max_uniform_buffer_range` number max bindable uniform buffer range (bytes)
+     *   - `max_storage_buffer_range` number max bindable storage buffer range (bytes)
+     * - `extensions` table array of driver-reported extension name strings
+     * - `features` table array of supported context feature ids:
+     *   - `graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING` multi-target rendering
+     *   - `graphics.CONTEXT_FEATURE_TEXTURE_ARRAY` texture arrays
+     *   - `graphics.CONTEXT_FEATURE_COMPUTE_SHADER` compute shaders
+     *   - `graphics.CONTEXT_FEATURE_STORAGE_BUFFER` storage buffers
+     *   - `graphics.CONTEXT_FEATURE_VSYNC` vertical sync
+     *   - `graphics.CONTEXT_FEATURE_INSTANCING` hardware instancing
+     *   - `graphics.CONTEXT_FEATURE_3D_TEXTURES` 3D (volume) textures
+     *   - `graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES` ASTC compressed 2D array textures
+     *   - `graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX` min/max blend equations
      */
     function get_adapter_info(): { family: string; version_major: number; version_minor: number; limits: { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number }; extensions: string[]; features: number[] };
     /**

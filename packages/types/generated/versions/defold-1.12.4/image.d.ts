@@ -29,15 +29,10 @@ declare global {
      * @returns header or `nil` if buffer is not a valid .astc. The header has these fields:
      *
      * - number `width`: image width
-     *
      * - number `height`: image height
-     *
      * - number `depth`: image depth
-     *
      * - number `block_size_x`: block size x
-     *
      * - number `block_size_y`: block size y
-     *
      * - number `block_size_z`: block size z
      * @example
      * ```ts
@@ -63,19 +58,12 @@ declare global {
      * @returns object or `nil` if loading fails. The object is a table with the following fields:
      *
      * - number `width`: image width
-     *
      * - number `height`: image height
-     *
      * - constant `type`: image type
-     *
-     * - `image.TYPE_RGB`
-     *
-     * - `image.TYPE_RGBA`
-     *
-     * - `image.TYPE_LUMINANCE`
-     *
-     * - `image.TYPE_LUMINANCE_ALPHA`
-     *
+     *   - `image.TYPE_RGB`
+     *   - `image.TYPE_RGBA`
+     *   - `image.TYPE_LUMINANCE`
+     *   - `image.TYPE_LUMINANCE_ALPHA`
      * - string `buffer`: the raw image data
      * @example
      * ```ts
@@ -103,19 +91,12 @@ declare global {
      * @returns object or `nil` if loading fails. The object is a table with the following fields:
      *
      * - number `width`: image width
-     *
      * - number `height`: image height
-     *
      * - constant `type`: image type
-     *
-     * - `image.TYPE_RGB`
-     *
-     * - `image.TYPE_RGBA`
-     *
-     * - `image.TYPE_LUMINANCE`
-     *
-     * - `image.TYPE_LUMINANCE_ALPHA`
-     *
+     *   - `image.TYPE_RGB`
+     *   - `image.TYPE_RGBA`
+     *   - `image.TYPE_LUMINANCE`
+     *   - `image.TYPE_LUMINANCE_ALPHA`
      * - buffer `buffer`: the script buffer that holds the decompressed image data. See buffer.create how to use the buffer.
      * @example
      * ```ts

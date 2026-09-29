@@ -10,7 +10,6 @@ declare global {
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     *
      * - Return a hash to the run-time version of the resource
      *
      * This function can only be called within go.property function calls.
@@ -51,7 +50,6 @@ declare global {
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     *
      * - Return a hash to the run-time version of the resource
      *
      * This function can only be called within go.property function calls.
@@ -325,13 +323,9 @@ declare global {
      * number The texture type. Supported values:
      *
      * - `graphics.TEXTURE_TYPE_2D`
-     *
      * - `graphics.TEXTURE_TYPE_IMAGE_2D`
-     *
      * - `graphics.TEXTURE_TYPE_3D`
-     *
      * - `graphics.TEXTURE_TYPE_IMAGE_3D`
-     *
      * - `graphics.TEXTURE_TYPE_CUBE_MAP`
      *
      * `width`
@@ -344,68 +338,46 @@ declare global {
      * number The texture format, note that some of these formats might not be supported by the running device. Supported values:
      *
      * - `graphics.TEXTURE_FORMAT_LUMINANCE`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA`
      *
      * These constants might not be available on the device:
      *
      * - `graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB_ETC1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_ETC2`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB_BC1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_BC3`
-     *
      * - `graphics.TEXTURE_FORMAT_R_BC4`
-     *
      * - `graphics.TEXTURE_FORMAT_RG_BC5`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_BC7`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB16F`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB32F`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA16F`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA32F`
-     *
      * - `graphics.TEXTURE_FORMAT_R16F`
-     *
      * - `graphics.TEXTURE_FORMAT_RG16F`
-     *
      * - `graphics.TEXTURE_FORMAT_R32F`
-     *
      * - `graphics.TEXTURE_FORMAT_RG32F`
      *
      * You can test if the device supports these values by checking if a specific enum is nil or not:
      *
-     * `if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
-     * -- it is safe to use this format
+     * ```lua
+     * if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
+     *     -- it is safe to use this format
      * end
-     * `
+     * ```
      *
      * `flags`
      * number Texture creation flags that can be used to dictate how the texture is created. The default value is graphics.TEXTURE_USAGE_FLAG_SAMPLE, which means that the texture can be sampled from a shader.
      * These flags may or may not be supported on the running device and/or the underlying graphics API and is simply used internally as a 'hint' when creating the texture. There is no guarantee that any of these will have any effect. Supported values:
      *
      * - `graphics.TEXTURE_USAGE_FLAG_SAMPLE` - The texture can be sampled from a shader (default)
-     *
      * - `graphics.TEXTURE_USAGE_FLAG_MEMORYLESS` - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
-     *
      * - `graphics.TEXTURE_USAGE_FLAG_STORAGE` - The texture can be used as a storage texture, which is required for a shader to write to the texture
      *
      * `max_mipmaps`
@@ -415,7 +387,6 @@ declare global {
      * Creating an empty texture with no buffer data is not supported as a core feature. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
      *
      * - `COMPRESSION_TYPE_DEFAULT`
-     *
      * - `COMPRESSION_TYPE_BASIS_UASTC`
      * @param buffer - optional buffer of precreated pixel data
      * @returns The path to the resource.
@@ -531,13 +502,9 @@ declare global {
      * number The texture type. Supported values:
      *
      * - `graphics.TEXTURE_TYPE_2D`
-     *
      * - `graphics.TEXTURE_TYPE_IMAGE_2D`
-     *
      * - `graphics.TEXTURE_TYPE_3D`
-     *
      * - `graphics.TEXTURE_TYPE_IMAGE_3D`
-     *
      * - `graphics.TEXTURE_TYPE_CUBE_MAP`
      *
      * `width`
@@ -550,67 +517,45 @@ declare global {
      * number The texture format, note that some of these formats might not be supported by the running device. Supported values:
      *
      * - `graphics.TEXTURE_FORMAT_LUMINANCE`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA`
      *
      * These constants might not be available on the device:
      *
      * - `graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB_ETC1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_ETC2`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB_BC1`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_BC3`
-     *
      * - `graphics.TEXTURE_FORMAT_R_BC4`
-     *
      * - `graphics.TEXTURE_FORMAT_RG_BC5`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA_BC7`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB16F`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB32F`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA16F`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA32F`
-     *
      * - `graphics.TEXTURE_FORMAT_R16F`
-     *
      * - `graphics.TEXTURE_FORMAT_RG16F`
-     *
      * - `graphics.TEXTURE_FORMAT_R32F`
-     *
      * - `graphics.TEXTURE_FORMAT_RG32F`
      *
      * You can test if the device supports these values by checking if a specific enum is nil or not:
      *
-     * `if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
-     * -- it is safe to use this format
+     * ```lua
+     * if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
+     *     -- it is safe to use this format
      * end
-     * `
+     * ```
      *
      * `flags`
      * number Texture creation flags that can be used to dictate how the texture is created. Supported values:
      *
      * - `graphics.TEXTURE_USAGE_FLAG_SAMPLE` - The texture can be sampled from a shader (default)
-     *
      * - `graphics.TEXTURE_USAGE_FLAG_MEMORYLESS` - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
-     *
      * - `graphics.TEXTURE_USAGE_FLAG_STORAGE` - The texture can be used as a storage texture, which is required for a shader to write to the texture
      *
      * `max_mipmaps`
@@ -620,7 +565,6 @@ declare global {
      * Creating an empty texture with no buffer data is not supported as a core feature. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
      *
      * - `COMPRESSION_TYPE_DEFAULT`
-     *
      * - `COMPRESSION_TYPE_BASIS_UASTC`
      * @param buffer - optional buffer of precreated pixel data
      * @param callback - callback function when texture is created (self, request_id, resource)
@@ -711,7 +655,6 @@ declare global {
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     *
      * - Return a hash to the run-time version of the resource
      *
      * This function can only be called within go.property function calls.
@@ -755,9 +698,7 @@ declare global {
      * @returns A table with the following entries:
      *
      * - texture
-     *
      * - geometries
-     *
      * - animations
      *
      * Each animation entry also contains a `frames` table with indices into
@@ -811,26 +752,18 @@ declare global {
      * number The texture type. Supported values:
      *
      * - `graphics.TEXTURE_TYPE_2D`
-     *
      * - `graphics.TEXTURE_TYPE_CUBE_MAP`
-     *
      * - `graphics.TEXTURE_TYPE_2D_ARRAY`
      *
      * `buffer_type`
      * number The attachment buffer type. Supported values:
      *
      * - `resource.BUFFER_TYPE_COLOR0`
-     *
      * - `resource.BUFFER_TYPE_COLOR1`
-     *
      * - `resource.BUFFER_TYPE_COLOR2`
-     *
      * - `resource.BUFFER_TYPE_COLOR3`
-     *
      * - `resource.BUFFER_TYPE_DEPTH`
-     *
      * - `resource.BUFFER_TYPE_STENCIL`
-     *
      * - `texture`
      * hash The hashed path to the attachment texture resource. This field is only available if the render target passed in is a resource.
      * @example
@@ -881,11 +814,8 @@ declare global {
      * @returns a table with the following fields:
      *
      * - width
-     *
      * - height
-     *
      * - max_ascent
-     *
      * - max_descent
      * @example
      * ```ts
@@ -923,15 +853,10 @@ declare global {
      * number The texture type. Supported values:
      *
      * - `graphics.TEXTURE_TYPE_2D`
-     *
      * - `graphics.TEXTURE_TYPE_2D_ARRAY`
-     *
      * - `graphics.TEXTURE_TYPE_IMAGE_2D`
-     *
      * - `graphics.TEXTURE_TYPE_3D`
-     *
      * - `graphics.TEXTURE_TYPE_IMAGE_3D`
-     *
      * - `graphics.TEXTURE_TYPE_CUBE_MAP`
      * @example
      * Create a new texture and get the metadata from it
@@ -1002,7 +927,6 @@ declare global {
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     *
      * - Return a hash to the run-time version of the resource
      *
      * This function can only be called within go.property function calls.
@@ -1050,7 +974,6 @@ declare global {
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     *
      * - Return a hash to the run-time version of the resource
      *
      * This function can only be called within go.property function calls.
@@ -1278,13 +1201,9 @@ declare global {
      * number The texture type. Supported values:
      *
      * - `graphics.TEXTURE_TYPE_2D`
-     *
      * - `graphics.TEXTURE_TYPE_IMAGE_2D`
-     *
      * - `graphics.TEXTURE_TYPE_3D`
-     *
      * - `graphics.TEXTURE_TYPE_IMAGE_3D`
-     *
      * - `graphics.TEXTURE_TYPE_CUBE_MAP`
      *
      * `width`
@@ -1295,9 +1214,7 @@ declare global {
      * number The texture format, note that some of these formats are platform specific. Supported values:
      *
      * - `graphics.TEXTURE_FORMAT_LUMINANCE`
-     *
      * - `graphics.TEXTURE_FORMAT_RGB`
-     *
      * - `graphics.TEXTURE_FORMAT_RGBA`
      *
      * These constants might not be available on the device:
@@ -1323,10 +1240,11 @@ declare global {
      * - `graphics.TEXTURE_FORMAT_RG32F`
      * You can test if the device supports these values by checking if a specific enum is nil or not:
      *
-     * `if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
-     * -- it is safe to use this format
+     * ```lua
+     * if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
+     *     -- it is safe to use this format
      * end
-     * `
+     * ```
      *
      * `x`
      * number optional x offset of the texture (in pixels)
@@ -1342,7 +1260,6 @@ declare global {
      * number optional specify the compression type for the data in the buffer object that holds the texture data. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
      *
      * - `COMPRESSION_TYPE_DEFAULT`
-     *
      * - `COMPRESSION_TYPE_BASIS_UASTC`
      *
      * **0️⃣ `page` is 0-based; passed to Defold unchanged.** **0️⃣ `mipmap` is 0-based; passed to Defold unchanged.**
@@ -1511,7 +1428,6 @@ declare global {
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     *
      * - Return a hash to the run-time version of the resource
      *
      * This function can only be called within go.property function calls.
@@ -1537,7 +1453,6 @@ declare global {
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     *
      * - Return a hash to the run-time version of the resource
      *
      * This function can only be called within go.property function calls.

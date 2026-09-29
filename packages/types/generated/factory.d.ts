@@ -67,9 +67,7 @@ declare global {
      * @returns status of the factory component
      *
      * - `factory.STATUS_UNLOADED`
-     *
      * - `factory.STATUS_LOADING`
-     *
      * - `factory.STATUS_LOADED`
      */
     function get_status(url: string | Hash | Url): factory.Status;

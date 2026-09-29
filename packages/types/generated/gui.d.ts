@@ -462,57 +462,33 @@ declare global {
      * @param property - property to animate
      *
      * - `"position"`
-     *
      * - `"rotation"`
-     *
      * - `"euler"`
-     *
      * - `"scale"`
-     *
      * - `"color"`
-     *
      * - `"outline"`
-     *
      * - `"shadow"`
-     *
      * - `"size"`
-     *
      * - `"fill_angle"` (pie)
-     *
      * - `"inner_radius"` (pie)
-     *
      * - `"leading"` (text)
-     *
      * - `"tracking"` (text)
-     *
      * - `"slice9"` (slice9)
      *
      * The following property constants are defined equaling the corresponding property string names.
      *
      * - `gui.PROP_POSITION`
-     *
      * - `gui.PROP_ROTATION`
-     *
      * - `gui.PROP_EULER`
-     *
      * - `gui.PROP_SCALE`
-     *
      * - `gui.PROP_COLOR`
-     *
      * - `gui.PROP_OUTLINE`
-     *
      * - `gui.PROP_SHADOW`
-     *
      * - `gui.PROP_SIZE`
-     *
      * - `gui.PROP_FILL_ANGLE`
-     *
      * - `gui.PROP_INNER_RADIUS`
-     *
      * - `gui.PROP_LEADING`
-     *
      * - `gui.PROP_TRACKING`
-     *
      * - `gui.PROP_SLICE9`
      * @param to - target property value
      * @param easing - easing to use during animation.
@@ -525,15 +501,10 @@ declare global {
      * @param playback - playback mode
      *
      * - `gui.PLAYBACK_ONCE_FORWARD`
-     *
      * - `gui.PLAYBACK_ONCE_BACKWARD`
-     *
      * - `gui.PLAYBACK_ONCE_PINGPONG`
-     *
      * - `gui.PLAYBACK_LOOP_FORWARD`
-     *
      * - `gui.PLAYBACK_LOOP_BACKWARD`
-     *
      * - `gui.PLAYBACK_LOOP_PINGPONG`
      * @example
      * How to start a simple color animation, where the node fades in to white during 0.5 seconds:
@@ -591,29 +562,17 @@ declare global {
      * @param property - optional property for which the animation should be canceled
      *
      * - `"position"`
-     *
      * - `"rotation"`
-     *
      * - `"euler"`
-     *
      * - `"scale"`
-     *
      * - `"color"`
-     *
      * - `"outline"`
-     *
      * - `"shadow"`
-     *
      * - `"size"`
-     *
      * - `"fill_angle"` (pie)
-     *
      * - `"inner_radius"` (pie)
-     *
      * - `"leading"` (text)
-     *
      * - `"tracking"` (text)
-     *
      * - `"slice9"` (slice9)
      * @example
      * ```ts
@@ -730,29 +689,17 @@ declare global {
      * when operating in the gui namespace. Most notably, only these explicitly named properties are supported:
      *
      * - `"position"`
-     *
      * - `"rotation"`
-     *
      * - `"euler"`
-     *
      * - `"scale"`
-     *
      * - `"color"`
-     *
      * - `"outline"`
-     *
      * - `"shadow"`
-     *
      * - `"size"`
-     *
      * - `"fill_angle"` (pie)
-     *
      * - `"inner_radius"` (pie)
-     *
      * - `"leading"` (text)
-     *
      * - `"tracking"` (text)
-     *
      * - `"slice9"` (slice9)
      *
      * The value returned will either be a vmath.vector4 or a single number, i.e getting the "position"
@@ -782,9 +729,7 @@ declare global {
      * @returns the current adjust mode
      *
      * - `gui.ADJUST_FIT`
-     *
      * - `gui.ADJUST_ZOOM`
-     *
      * - `gui.ADJUST_STRETCH`
      */
     function get_adjust_mode(node: Opaque<"node">): gui.AdjustMode;
@@ -803,13 +748,9 @@ declare global {
      * @returns blend mode
      *
      * - `gui.BLEND_ALPHA`
-     *
      * - `gui.BLEND_ADD`
-     *
      * - `gui.BLEND_ADD_ALPHA`
-     *
      * - `gui.BLEND_MULT`
-     *
      * - `gui.BLEND_SCREEN`
      */
     function get_blend_mode(node: Opaque<"node">): gui.BlendMode;
@@ -827,7 +768,6 @@ declare global {
      * @returns clipping mode
      *
      * - `gui.CLIPPING_MODE_NONE`
-     *
      * - `gui.CLIPPING_MODE_STENCIL`
      */
     function get_clipping_mode(node: Opaque<"node">): gui.ClippingMode;
@@ -1053,7 +993,6 @@ declare global {
      * @returns the outer bounds mode of the pie node:
      *
      * - `gui.PIEBOUNDS_RECTANGLE`
-     *
      * - `gui.PIEBOUNDS_ELLIPSE`
      */
     function get_outer_bounds(node: Opaque<"node">): gui.PieBounds;
@@ -1095,21 +1034,13 @@ declare global {
      * @returns pivot constant
      *
      * - `gui.PIVOT_CENTER`
-     *
      * - `gui.PIVOT_N`
-     *
      * - `gui.PIVOT_NE`
-     *
      * - `gui.PIVOT_E`
-     *
      * - `gui.PIVOT_SE`
-     *
      * - `gui.PIVOT_S`
-     *
      * - `gui.PIVOT_SW`
-     *
      * - `gui.PIVOT_W`
-     *
      * - `gui.PIVOT_NW`
      */
     function get_pivot(node: Opaque<"node">): gui.Pivot;
@@ -1171,7 +1102,6 @@ declare global {
      * @returns the current size mode
      *
      * - `gui.SIZE_MODE_MANUAL`
-     *
      * - `gui.SIZE_MODE_AUTO`
      */
     function get_size_mode(node: Opaque<"node">): gui.SizeMode;
@@ -1239,9 +1169,7 @@ declare global {
      * @returns anchor constant
      *
      * - `gui.ANCHOR_NONE`
-     *
      * - `gui.ANCHOR_LEFT`
-     *
      * - `gui.ANCHOR_RIGHT`
      */
     function get_xanchor(node: Opaque<"node">): gui.XAnchor;
@@ -1252,9 +1180,7 @@ declare global {
      * @returns anchor constant
      *
      * - `gui.ANCHOR_NONE`
-     *
      * - `gui.ANCHOR_TOP`
-     *
      * - `gui.ANCHOR_BOTTOM`
      */
     function get_yanchor(node: Opaque<"node">): gui.YAnchor;
@@ -1346,11 +1272,8 @@ declare global {
      * @param type - texture type
      *
      * - `"rgb"` - RGB
-     *
      * - `"rgba"` - RGBA
-     *
      * - `"l"` - LUMINANCE
-     *
      * - `"astc"` - ASTC compressed format
      * @param buffer - texture data
      * @param flip - flip texture vertically
@@ -1659,11 +1582,8 @@ declare global {
      * constant the new state of the emitter:
      *
      * - `particlefx.EMITTER_STATE_SLEEPING`
-     *
      * - `particlefx.EMITTER_STATE_PRESPAWN`
-     *
      * - `particlefx.EMITTER_STATE_SPAWNING`
-     *
      * - `particlefx.EMITTER_STATE_POSTSPAWN`
      * @example
      * ```ts
@@ -1746,29 +1666,17 @@ declare global {
      * when operating in the gui namespace. Most notably, only these named properties identifiers are supported:
      *
      * - `"position"`
-     *
      * - `"rotation"`
-     *
      * - `"euler"`
-     *
      * - `"scale"`
-     *
      * - `"color"`
-     *
      * - `"outline"`
-     *
      * - `"shadow"`
-     *
      * - `"size"`
-     *
      * - `"fill_angle"` (pie)
-     *
      * - `"inner_radius"` (pie)
-     *
      * - `"leading"` (text)
-     *
      * - `"tracking"` (text)
-     *
      * - `"slice9"` (slice9)
      *
      * The value to set must either be a vmath.vector4, vmath.vector3, vmath.quat or a single number and depends on the property name you want to set.
@@ -1860,9 +1768,7 @@ declare global {
      * @param adjust_mode - adjust mode to set
      *
      * - `gui.ADJUST_FIT`
-     *
      * - `gui.ADJUST_ZOOM`
-     *
      * - `gui.ADJUST_STRETCH`
      */
     function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.AdjustMode): void;
@@ -1881,13 +1787,9 @@ declare global {
      * @param blend_mode - blend mode to set
      *
      * - `gui.BLEND_ALPHA`
-     *
      * - `gui.BLEND_ADD`
-     *
      * - `gui.BLEND_ADD_ALPHA`
-     *
      * - `gui.BLEND_MULT`
-     *
      * - `gui.BLEND_SCREEN`
      */
     function set_blend_mode(node: Opaque<"node">, blend_mode: gui.BlendMode): void;
@@ -1905,7 +1807,6 @@ declare global {
      * @param clipping_mode - clipping mode to set
      *
      * - `gui.CLIPPING_MODE_NONE`
-     *
      * - `gui.CLIPPING_MODE_STENCIL`
      */
     function set_clipping_mode(node: Opaque<"node">, clipping_mode: gui.ClippingMode): void;
@@ -2073,7 +1974,6 @@ declare global {
      * @param bounds_mode - the outer bounds mode of the pie node:
      *
      * - `gui.PIEBOUNDS_RECTANGLE`
-     *
      * - `gui.PIEBOUNDS_ELLIPSE`
      */
     function set_outer_bounds(node: Opaque<"node">, bounds_mode: gui.PieBounds): void;
@@ -2114,21 +2014,13 @@ declare global {
      * @param pivot - pivot constant
      *
      * - `gui.PIVOT_CENTER`
-     *
      * - `gui.PIVOT_N`
-     *
      * - `gui.PIVOT_NE`
-     *
      * - `gui.PIVOT_E`
-     *
      * - `gui.PIVOT_SE`
-     *
      * - `gui.PIVOT_S`
-     *
      * - `gui.PIVOT_SW`
-     *
      * - `gui.PIVOT_W`
-     *
      * - `gui.PIVOT_NW`
      */
     function set_pivot(node: Opaque<"node">, pivot: gui.Pivot): void;
@@ -2163,11 +2055,8 @@ declare global {
      * @param mode - safe area mode
      *
      * - `gui.SAFE_AREA_NONE`
-     *
      * - `gui.SAFE_AREA_LONG`
-     *
      * - `gui.SAFE_AREA_SHORT`
-     *
      * - `gui.SAFE_AREA_BOTH`
      */
     function set_safe_area_mode(mode: gui.SafeAreaMode): void;
@@ -2213,7 +2102,6 @@ declare global {
      * @param size_mode - size mode to set
      *
      * - `gui.SIZE_MODE_MANUAL`
-     *
      * - `gui.SIZE_MODE_AUTO`
      */
     function set_size_mode(node: Opaque<"node">, size_mode: gui.SizeMode): void;
@@ -2270,11 +2158,8 @@ declare global {
      * @param type - texture type
      *
      * - `"rgb"` - RGB
-     *
      * - `"rgba"` - RGBA
-     *
      * - `"l"` - LUMINANCE
-     *
      * - `"astc"` - ASTC compressed format
      * @param buffer - texture data
      * @param flip - flip texture vertically
@@ -2331,9 +2216,7 @@ declare global {
      * @param anchor - anchor constant
      *
      * - `gui.ANCHOR_NONE`
-     *
      * - `gui.ANCHOR_LEFT`
-     *
      * - `gui.ANCHOR_RIGHT`
      */
     function set_xanchor(node: Opaque<"node">, anchor: gui.XAnchor): void;
@@ -2344,9 +2227,7 @@ declare global {
      * @param anchor - anchor constant
      *
      * - `gui.ANCHOR_NONE`
-     *
      * - `gui.ANCHOR_TOP`
-     *
      * - `gui.ANCHOR_BOTTOM`
      */
     function set_yanchor(node: Opaque<"node">, anchor: gui.YAnchor): void;
@@ -2359,11 +2240,8 @@ declare global {
      * @param type - keyboard type
      *
      * - `gui.KEYBOARD_TYPE_DEFAULT`
-     *
      * - `gui.KEYBOARD_TYPE_EMAIL`
-     *
      * - `gui.KEYBOARD_TYPE_NUMBER_PAD`
-     *
      * - `gui.KEYBOARD_TYPE_PASSWORD`
      * @param autoclose - if the keyboard should automatically close when clicking outside
      */

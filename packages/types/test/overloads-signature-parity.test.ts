@@ -233,14 +233,20 @@ function renderOverloadSignatures(
 }
 
 // Collapse each paragraph of the JSDoc comment to the single line the store
-// holds, keeping the blank lines between paragraphs so an authored bullet list
-// survives the round trip into `docs[]`. An overload with no description (a
-// `@deprecated`-only comment, or no comment at all) maps to `null` — the store's
-// "keep the ref-doc fixture prose for this row" marker.
+// holds, keeping the blank lines between paragraphs and the line break before
+// each `- ` item so an authored bullet list survives the round trip into
+// `docs[]`. An overload with no description (a `@deprecated`-only comment, or no
+// comment at all) maps to `null` — the store's "keep the ref-doc fixture prose
+// for this row" marker.
 function normalizeDoc(text: string): string | null {
   const paragraphs = text
     .split(/\n[ \t]*\n/)
-    .map((paragraph) => paragraph.replace(/\s+/g, " ").trim())
+    .map((paragraph) =>
+      paragraph
+        .split(/\n(?=[ \t]*- )/)
+        .map((line) => line.replace(/\s+/g, " ").trim())
+        .join("\n"),
+    )
     .filter((paragraph) => paragraph !== "");
   return paragraphs.length === 0 ? null : paragraphs.join("\n\n");
 }

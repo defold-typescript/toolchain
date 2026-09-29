@@ -1,3 +1,5 @@
+import { correctedDoc, docCorrectionKey } from "./doc-corrections";
+
 export interface ApiModule {
   namespace: string;
   brief: string;
@@ -171,7 +173,7 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
     if (!isRecord(element)) continue;
     const type = element.type;
     if (type === "FUNCTION") {
-      const fn = parseFunction(element);
+      const fn = withDocCorrections(parseFunction(element));
       const corrected = FUNCTION_NAME_CORRECTIONS.get(fn.name);
       functions.push(corrected === undefined ? fn : { ...fn, name: corrected.name });
     } else if (type === "VARIABLE") {
@@ -186,6 +188,19 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
   }
 
   return { namespace, brief, description, functions, variables, constants, properties, typedefs };
+}
+
+// Keyed by the ref-doc FQN, before any `FUNCTION_NAME_CORRECTIONS` rename.
+function withDocCorrections(fn: ApiFunction): ApiFunction {
+  const correct = (slot: "param" | "return") => (p: ApiParameter) => {
+    const doc = correctedDoc(docCorrectionKey(fn.name, slot, p.name), p.doc);
+    return doc === p.doc ? p : { ...p, doc };
+  };
+  return {
+    ...fn,
+    parameters: fn.parameters.map(correct("param")),
+    returnValues: fn.returnValues.map(correct("return")),
+  };
 }
 
 function parseTypedef(element: Record<string, unknown>): ApiTypedef {

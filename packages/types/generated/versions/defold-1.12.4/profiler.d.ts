@@ -160,11 +160,8 @@ declare global {
      * @param mode - the mode to set the ui profiler in
      *
      * - `profiler.MODE_RUN` This is default mode that continously shows the last frame
-     *
      * - `profiler.MODE_PAUSE` Pauses on the currently displayed frame
-     *
      * - `profiler.MODE_SHOW_PEAK_FRAME` Pauses on the currently displayed frame but shows a new frame if that frame is slower
-     *
      * - `profiler.MODE_RECORD` Records all incoming frames to the recording buffer
      *
      * To stop recording, switch to a different mode such as `MODE_PAUSE` or `MODE_RUN`.
@@ -188,7 +185,6 @@ declare global {
      * @param mode - the view mode to set the ui profiler in
      *
      * - `profiler.VIEW_MODE_FULL` The default mode which displays all the ui profiler details
-     *
      * - `profiler.VIEW_MODE_MINIMIZED` Minimized mode which only shows the top header (fps counters and ui profiler mode)
      * @example
      * ```ts
@@ -224,7 +220,6 @@ declare global {
      * @param frame_index - a table where you specify one of the following parameters:
      *
      * - `distance` The offset from the currently displayed frame (this is truncated between zero and the number of recorded frames)
-     *
      * - `frame` The frame index in the recording buffer (1 is first recorded frame)
      *
      * **⚠️ `frame` is 1-based; passed to Defold unchanged.**

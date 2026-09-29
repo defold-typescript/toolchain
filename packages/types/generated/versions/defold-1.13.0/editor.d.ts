@@ -144,13 +144,13 @@ declare global {
      * @param options - Optional options table. Supported entries:
      * - boolean `reload_resources`: make the editor reload the resources from disk after the command is executed, default `true`
      * - string `out`: standard output mode, either:
-     * - `"pipe"`: the output is piped to the editor console (this is the default behavior).
-     * - `"capture"`: capture and return the output to the editor script with trailing newlines trimmed.
-     * - `"discard"`: the output is discarded completely.
+     *   - `"pipe"`: the output is piped to the editor console (this is the default behavior).
+     *   - `"capture"`: capture and return the output to the editor script with trailing newlines trimmed.
+     *   - `"discard"`: the output is discarded completely.
      * - string `err`: standard error output mode, either:
-     * - `"pipe"`: the error output is piped to the editor console (this is the default behavior).
-     * - `"stdout"`: the error output is redirected to the standard output of the process.
-     * - `"discard"`: the error output is discarded completely.
+     *   - `"pipe"`: the error output is piped to the editor console (this is the default behavior).
+     *   - `"stdout"`: the error output is redirected to the standard output of the process.
+     *   - `"discard"`: the error output is discarded completely.
      * @returns If `out` option is set to `"capture"`, returns the output as string with trimmed trailing newlines. Otherwise, returns `nil`.
      * @example
      * ```ts

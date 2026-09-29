@@ -217,15 +217,10 @@ declare global {
      * @param playback - playback mode of the animation
      *
      * - `go.PLAYBACK_ONCE_FORWARD`
-     *
      * - `go.PLAYBACK_ONCE_BACKWARD`
-     *
      * - `go.PLAYBACK_ONCE_PINGPONG`
-     *
      * - `go.PLAYBACK_LOOP_FORWARD`
-     *
      * - `go.PLAYBACK_LOOP_BACKWARD`
-     *
      * - `go.PLAYBACK_LOOP_PINGPONG`
      * @param to - target property value
      * @param easing - easing to use during animation. Either specify a constant, see the animation guide for a complete list, or a vmath.vector with a curve
@@ -378,7 +373,6 @@ declare global {
      * of the absolute path to the instance.
      *
      * - If `path` is specified, it can either be absolute or relative to the instance of the calling script.
-     *
      * - If `path` is not specified, the id of the game object instance the script is attached to will be returned.
      *
      * @param path - path of the instance for which to return the id

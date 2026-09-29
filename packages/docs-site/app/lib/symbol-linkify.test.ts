@@ -23,6 +23,15 @@ describe("linkifySymbolMentions", () => {
     expect(out).toBe("call `go.set_position` first");
   });
 
+  test("leaves a fenced code block verbatim and links the prose after it", () => {
+    const links = new Map([["go.set_position", "/api/go#gogetposition"]]);
+    const text =
+      "Sample:\n\n```lua\ngo.set_position(p) -- `go.set_position`\n```\n\nsee go.set_position";
+    expect(linkifySymbolMentions(text, links)).toBe(
+      'Sample:\n\n```lua\ngo.set_position(p) -- `go.set_position`\n```\n\nsee <a href="/api/go#gogetposition" class="symbol-xref">go.set_position</a>',
+    );
+  });
+
   test("links multiple mentions with distinct hrefs when the routes differ", () => {
     const links = new Map([
       ["go.set_position", "/api/go#gogetposition"],

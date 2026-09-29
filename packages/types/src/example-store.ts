@@ -1,3 +1,5 @@
+import { fnv1a64 } from "./fnv1a";
+
 // A hand-authored TypeScript translation of one element's ref-doc `@example`,
 // pinned by a hash of the exact source Lua it replaces. A ref-doc re-pin that
 // changes the source Lua flips the hash, so a stale translation stops matching
@@ -21,25 +23,15 @@ export interface Translation {
 // replacing the entry silently regresses every demoted surface to raw Lua.
 export type TranslationStore = Record<string, Translation[]>;
 
-const FNV_OFFSET_BASIS = 0xcbf29ce484222325n;
-const FNV_PRIME = 0x100000001b3n;
-const U64_MASK = 0xffffffffffffffffn;
-
-// A pure, dependency-free FNV-1a 64-bit hash over the source's UTF-16 code
-// units, returned as zero-padded hex. Deliberately node- and Bun-free: this
-// module is reachable from `index.ts` (via `emit-dts`), so a `node:crypto` or
-// ambient-`Bun` reference here would fail type-checking in every downstream
-// consumer that compiles the shipped `src/` graph.
+// The `fnv1a64` hash of an example's source, which must stay node- and Bun-free
+// for the reason given there: this module is reachable from `index.ts` (via
+// `emit-dts`).
 //
 // The input is the already-normalized post-`htmlToCodeText` string (per-line
 // trailing whitespace and surrounding blank lines stripped), so the hash is
 // independent of trailing whitespace in the original ref-doc HTML.
 export function hashExampleSource(source: string): string {
-  let hash = FNV_OFFSET_BASIS;
-  for (let i = 0; i < source.length; i++) {
-    hash = ((hash ^ BigInt(source.charCodeAt(i))) * FNV_PRIME) & U64_MASK;
-  }
-  return hash.toString(16).padStart(16, "0");
+  return fnv1a64(source);
 }
 
 // Return the stored TypeScript body only when the FQN exists and one of its
