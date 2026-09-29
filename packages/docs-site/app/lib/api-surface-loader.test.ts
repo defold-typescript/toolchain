@@ -869,3 +869,41 @@ describe("Defold extensions under Libraries", () => {
     ).toThrow(/twice/);
   });
 });
+
+describe("engine pages withhold the overloads the declarations withhold", () => {
+  const typed = (fn: { parameters: { name: string; types: string[] }[] }, param: string) =>
+    fn.parameters.find((p) => p.name === param)?.types;
+
+  test("each 1.13 b2d.body page drops the handle forms and keeps the table forms", () => {
+    for (const id of ["defold-1.13.0", "defold-1.13.1"]) {
+      const page = loadApiSurfaceForVersion(REAL_TYPES_DIR, id).find(
+        (p) => p.namespace === "b2d.body",
+      );
+      const named = (name: string) =>
+        page?.module.functions.filter((fn) => fn.name === `b2d.body.${name}`) ?? [];
+      const fixture = named("create_fixture");
+      const massData = named("set_mass_data");
+      expect(fixture.map((fn) => typed(fn, "shape"))).not.toContainEqual(["b2Shape"]);
+      expect(massData.map((fn) => typed(fn, "data"))).not.toContainEqual(["b2MassData"]);
+      expect(fixture.map((fn) => typed(fn, "definition"))).toContainEqual(["table"]);
+      expect(massData.map((fn) => typed(fn, "data"))).toContainEqual(["table"]);
+    }
+  });
+
+  test("the combined b2d.body page carries one curated signature per withheld name", () => {
+    const ns = loadCombinedSurface(REAL_TYPES_DIR).namespaces.find(
+      (n) => n.namespace === "b2d.body",
+    );
+    const entries = (name: string) =>
+      ns?.entries.filter((e) => e.identity.name === `b2d.body.${name}`) ?? [];
+    for (const name of ["create_fixture", "set_mass_data"]) {
+      const [entry, ...rest] = entries(name);
+      expect(rest).toHaveLength(0);
+      expect(entry?.authoritativeSignature).not.toBe("");
+      expect(entry?.authoritativeSignature).not.toContain("Record<string | number, unknown>");
+    }
+    expect(entries("set_mass_data")[0]?.authoritativeSignature).toContain(
+      "data: { mass: number; center: Vector3; inertia: number }",
+    );
+  });
+});

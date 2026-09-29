@@ -195,6 +195,37 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
   return { namespace, brief, description, functions, variables, constants, properties, typedefs };
 }
 
+// Withholds one overload of a documented function — the one whose `param` has
+// exactly the upstream type `type` — while its same-named siblings still emit.
+// `name` is the local name, like a `skipFunctions` rule.
+export interface SkipOverloadRule {
+  readonly name: string;
+  readonly param: string;
+  readonly type: string;
+}
+
+export function withholdOverloads(
+  module: ApiModule,
+  rules: readonly SkipOverloadRule[],
+): ApiModule {
+  let functions = module.functions;
+  for (const rule of rules) {
+    const fqn = `${module.namespace}.${rule.name}`;
+    const kept = functions.filter(
+      (fn) =>
+        fn.name !== fqn ||
+        !fn.parameters.some(
+          (p) => p.name === rule.param && p.types.length === 1 && p.types[0] === rule.type,
+        ),
+    );
+    if (kept.length === functions.length) {
+      throw new Error(`skipOverloads: ${fqn} has no overload whose ${rule.param} is ${rule.type}`);
+    }
+    functions = kept;
+  }
+  return functions === module.functions ? module : { ...module, functions };
+}
+
 // Keyed by the ref-doc FQN, before any `FUNCTION_NAME_CORRECTIONS` rename.
 function withDocCorrections(fn: ApiFunction): ApiFunction {
   const correct = (slot: "param" | "return") => (p: ApiParameter) => {

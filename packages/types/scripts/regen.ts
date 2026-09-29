@@ -1,7 +1,12 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
-import { type ApiModule, parseDefoldApiDoc } from "../src/api-doc";
+import {
+  type ApiModule,
+  parseDefoldApiDoc,
+  type SkipOverloadRule,
+  withholdOverloads,
+} from "../src/api-doc";
 import {
   defaultMapType,
   emitDeclarations,
@@ -29,15 +34,6 @@ import {
 import { loadTranslations } from "./example-store-io";
 import { synthesizeProseConstants } from "./prose-constants";
 import { type readZip, SYNC_MANIFEST, type SyncManifestEntry } from "./sync-api-docs";
-
-// Withholds one overload of a documented function — the one whose `param` has
-// exactly the upstream type `type` — while its same-named siblings still emit.
-// `name` is the local name, like a `skipFunctions` rule.
-export interface SkipOverloadRule {
-  readonly name: string;
-  readonly param: string;
-  readonly type: string;
-}
 
 export interface ApiTargetModule {
   readonly namespace: string;
@@ -448,7 +444,7 @@ function prepareGeneratedModule(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): PreparedGeneratedModule {
-  const module = parseDefoldApiDoc(entry.doc);
+  let module = parseDefoldApiDoc(entry.doc);
   const prefix = `${module.namespace}.`;
   const dropped: string[] = [];
   const rules = entry.skipFunctions ?? [];
@@ -462,20 +458,7 @@ function prepareGeneratedModule(
   };
   module.functions = module.functions.filter((fn) => !withheld(fn.name));
   module.variables = module.variables.filter((v) => !withheld(v.name));
-  for (const rule of entry.skipOverloads ?? []) {
-    const fqn = `${prefix}${rule.name}`;
-    const kept = module.functions.filter(
-      (fn) =>
-        fn.name !== fqn ||
-        !fn.parameters.some(
-          (p) => p.name === rule.param && p.types.length === 1 && p.types[0] === rule.type,
-        ),
-    );
-    if (kept.length === module.functions.length) {
-      throw new Error(`skipOverloads: ${fqn} has no overload whose ${rule.param} is ${rule.type}`);
-    }
-    module.functions = kept;
-  }
+  module = withholdOverloads(module, entry.skipOverloads ?? []);
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
   const translations = options?.translations ?? loadTranslations();
   const urlParameters = options?.urlParameters ?? committedUrlParameters();
