@@ -48,6 +48,8 @@ declare global {
      * @returns `hit`, then on a hit: `tile_x`, `tile_y`, `array_id` (index in the
      * tile table), `tile_id`, `intersection_x`, `intersection_y` and `side`
      * (`LEFT`, `RIGHT`, `TOP` or `BOTTOM`).
+     *
+     * **⚠️ `tile_x` is 1-based; passed to `tile_raycast` unchanged.** **⚠️ `tile_y` is 1-based; passed to `tile_raycast` unchanged.** **⚠️ `array_id` is 1-based; passed to `tile_raycast` unchanged.**
      */
     function cast(
       from_x: number,
@@ -61,8 +63,8 @@ declare global {
      * reader under this name and its writer as {@link tile_raycast.get_at}, the
      * reverse of what its documentation describes.
      *
-     * @param tile_x - Tile X coordinate.
-     * @param tile_y - Tile Y coordinate.
+     * @param tile_x - Tile X coordinate. **⚠️ 1-based; passed to `tile_raycast` unchanged.**
+     * @param tile_y - Tile Y coordinate. **⚠️ 1-based; passed to `tile_raycast` unchanged.**
      * @returns The tile ID at that coordinate.
      */
     function set_at(tile_x: number, tile_y: number): number;
@@ -72,8 +74,8 @@ declare global {
      * writer under this name and its reader as {@link tile_raycast.set_at}, the
      * reverse of what its documentation describes.
      *
-     * @param tile_x - Tile X coordinate.
-     * @param tile_y - Tile Y coordinate.
+     * @param tile_x - Tile X coordinate. **⚠️ 1-based; passed to `tile_raycast` unchanged.**
+     * @param tile_y - Tile Y coordinate. **⚠️ 1-based; passed to `tile_raycast` unchanged.**
      * @param tile_id - Tile ID to set.
      */
     function get_at(tile_x: number, tile_y: number, tile_id: number): void;

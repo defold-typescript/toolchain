@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import {
+  appendNotes,
   INDEX_BASE_MARKERS,
   indexBaseNotes,
+  libraryIndexBaseNotes,
   withIndexBaseNotes,
 } from "./index-slot-classifications";
 
@@ -68,5 +70,26 @@ describe("withIndexBaseNotes", () => {
     expect(withIndexBaseNotes("resource.get_atlas", "return", "data", "the atlas.")).toBe(
       "the atlas. **0️⃣ `indices` is 0-based; passed to Defold unchanged.**",
     );
+  });
+});
+
+describe("appendNotes", () => {
+  const [tileX = "", tileY = ""] = libraryIndexBaseNotes("tile_raycast", "cast", "return", "");
+
+  test("a doc that already carries the note is returned unchanged", () => {
+    const [note = ""] = libraryIndexBaseNotes("tile_raycast", "set_at", "param", "tile_x");
+    const doc = `Tile X coordinate. ${note}`;
+    expect(appendNotes(doc, [note])).toBe(doc);
+  });
+
+  test("only the notes a doc lacks are appended, by the usual separator rules", () => {
+    expect(appendNotes(`${tileX} The values.`, [tileX, tileY])).toBe(
+      `${tileX} The values. ${tileY}`,
+    );
+    expect(appendNotes(`first\n${tileX}`, [tileX, tileY])).toBe(`first\n${tileX}\n\n${tileY}`);
+  });
+
+  test("a doc holding none of the notes gains all of them", () => {
+    expect(appendNotes("The values", [tileX, tileY])).toBe(`The values. ${tileX} ${tileY}`);
   });
 });
