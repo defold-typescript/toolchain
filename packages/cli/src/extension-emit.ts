@@ -32,6 +32,7 @@ interface RegenModule {
     doc: unknown;
     outFile: string;
     importsFrom?: string;
+    indexBaseSource?: { pages: readonly string[] };
   }) => { contents: string; dropped: string[] };
 }
 
@@ -51,10 +52,13 @@ async function loadEmitter(): Promise<ScriptApiToFixtureJson & RegenModule> {
 // guard. The doc is the post-`scriptApiToFixtureJson` ref-doc JSON, so passing a
 // committed `fixtures/<ns>_doc.json` reproduces the committed
 // `extension-goldens/<ns>.d.ts` byte-for-byte (regen writes the same
-// `generateModuleDeclaration` output with no formatting pass).
-export async function emitExtensionDeclarationFromDoc(doc: {
-  info: { namespace: string };
-}): Promise<EmittedExtension> {
+// `generateModuleDeclaration` output with no formatting pass). `pages` are the
+// curated library pages documenting this doc, whose classified indexes the
+// declaration notes; an uncurated extension has none and gains no note.
+export async function emitExtensionDeclarationFromDoc(
+  doc: { info: { namespace: string } },
+  pages: readonly string[] = [],
+): Promise<EmittedExtension> {
   const { generateModuleDeclaration } = await loadEmitter();
   const namespace = doc.info.namespace;
   const { contents, dropped } = generateModuleDeclaration({
@@ -62,14 +66,18 @@ export async function emitExtensionDeclarationFromDoc(doc: {
     doc,
     outFile: `${namespace}.d.ts`,
     importsFrom: EXTENSION_CORE_TYPES_IMPORT,
+    indexBaseSource: { pages },
   });
   return { namespace, contents, dropped };
 }
 
-export async function emitExtensionDeclaration(scriptApiYaml: string): Promise<EmittedExtension> {
+export async function emitExtensionDeclaration(
+  scriptApiYaml: string,
+  pages: readonly string[] = [],
+): Promise<EmittedExtension> {
   const { scriptApiToFixtureJson } = await loadEmitter();
   const doc = JSON.parse(scriptApiToFixtureJson(scriptApiYaml)) as {
     info: { namespace: string };
   };
-  return emitExtensionDeclarationFromDoc(doc);
+  return emitExtensionDeclarationFromDoc(doc, pages);
 }

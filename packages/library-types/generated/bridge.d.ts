@@ -138,7 +138,7 @@ declare module 'bridge.bridge' {
       /**
        * Returns the 0-based index of the reward the player is currently on.
        *
-       * @param on_success - function(_, day)
+       * @param on_success - function(_, day). **0️⃣ `day` is 0-based; passed to `bridge` unchanged.**
        * @param on_failure - function(_, error)
        */
       function get_current_day(on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
