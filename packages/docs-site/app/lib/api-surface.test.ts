@@ -7,7 +7,6 @@ import {
   hashExampleSource,
   htmlToCodeText,
   lookupExampleTranslations,
-  lookupTranslation,
   normalizedFunctionSignature,
   parseDefoldApiDoc,
   type SignatureStore,
@@ -2716,6 +2715,26 @@ describe("exampleMarkdownFor", () => {
     expect(md).not.toContain("demo.run(); // first");
   });
 
+  test("an element holding only a whole-blob entry renders the complete Lua rendering", () => {
+    const md = exampleMarkdownFor(twoFn, {
+      "demo.pair": [{ sourceHash: hashExampleSource(htmlToCodeText(twoBlocks)), ts: "welded();" }],
+    });
+    expect(md).toBe(wholeBlobFallback);
+  });
+
+  test("a single-example element with a whole-blob entry renders that body with no prose line", () => {
+    const withProse = `Query a position:<br>${luaExample}`;
+    const md = exampleMarkdownFor(
+      { ...fn, examples: withProse },
+      {
+        "demo.run": [
+          { sourceHash: hashExampleSource(htmlToCodeText(withProse)), ts: "demo.run();" },
+        ],
+      },
+    );
+    expect(md).toBe("```ts\ndemo.run();\n```");
+  });
+
   test("an element whose trailing segment alone resolves falls back to the same complete rendering", () => {
     const md = exampleMarkdownFor(twoFn, {
       "demo.pair": [{ sourceHash: segmentHashes[1] ?? "", ts: "demo.stop(); // second" }],
@@ -3827,23 +3846,17 @@ describe("canonical /api pages render every resolvable authored translation", ()
   );
 
   // The partition the resolver itself keys on, rebuilt from the same production
-  // hashing primitives: a blob resolves when its segment hashes all resolve, or
-  // when its whole-blob hash does.
+  // hashing primitives: a blob resolves when its segment hashes all resolve. A
+  // single-example blob's one segment is the whole blob.
   const resolvesToStored = (fn: ApiFunction, store: TranslationStore): boolean => {
     if (!fn.examples) return false;
-    const segments = splitExampleSources(fn.examples);
-    if (
-      segments.length > 1 &&
+    return (
       lookupExampleTranslations(
         store,
         fn.name,
-        segments.map((segment) => hashExampleSource(segment.code)),
+        splitExampleSources(fn.examples).map((segment) => hashExampleSource(segment.code)),
       ) !== null
-    ) {
-      return true;
-    }
-    const lua = htmlToCodeText(fn.examples);
-    return lua !== "" && lookupTranslation(store, fn.name, hashExampleSource(lua)) !== null;
+    );
   };
 
   // One row per example-bearing function, with `resolvable` decided by the

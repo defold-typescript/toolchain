@@ -39,6 +39,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **Every engine index states its native base in hovers and the API reference** as one bold sentence led by a marker, "**⚠️ 1-based; passed to Defold unchanged.**" or "**0️⃣ 0-based; passed to Defold unchanged.**", on the slot itself or naming the table field it covers, including bases the reference states only in a function's notes or description: the geometry `indices` of `resource.create_atlas`, `resource.set_atlas` and `resource.get_atlas`, and the `mipmap` of `resource.set_texture`; the editor-script `image.pixels` marks the base of its coordinates the same way. The guide's [Engine indexes use Defold's base](./typescript-vs-lua.md#engine-indexes-use-defolds-base) lists every such position by base in a table built from the same data, so it names exactly the positions the hovers mark.
 - **API symbol names in the guide and changelog link to their reference entry**: inline code such as `go.get`, `render.RENDER_TARGET_DEFAULT`, the global function `hash` or the global type `Vector3` opens that entry in the [API reference](/api).
+- **Every function with several examples documents each one as its own TypeScript block, with the sentence that introduces it above**, in hovers and the API reference: among them `gui.set`, `render.draw`, `sys.load_buffer`, `json.decode` and `editor.bob`, each of which showed one welded block. The API reference does the same for `go.get` and `go.set`, including their named-property and sub-component cases.
 
 ### Fixed
 

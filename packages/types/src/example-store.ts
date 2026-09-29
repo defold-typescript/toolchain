@@ -63,7 +63,7 @@ export function lookupTranslation(
  * emitted as several `@example` blocks only when every one of them has an
  * authored body. A partial resolve would document some of the element's
  * examples and silently drop the rest, so the caller falls back to the
- * whole-blob body instead. An empty hash list is a miss for the same reason —
+ * upstream Lua instead. An empty hash list is a miss for the same reason —
  * it would otherwise report success while documenting nothing.
  */
 export function lookupExampleTranslations(

@@ -51,11 +51,13 @@ declare global {
      * number The elapsed time - on first trigger it is time since timer.delay call, otherwise time since last trigger
      * @returns identifier for the create timer, returns timer.INVALID_TIMER_HANDLE if the timer can not be created
      * @example
+     * A simple one-shot timer
      * ```ts
-     * // A simple one-shot timer
      * timer.delay(1, false, () => print("print in one second"));
-     *
-     * // Repetitive timer which canceled after 10 calls
+     * ```
+     * @example
+     * Repetitive timer which canceled after 10 calls
+     * ```ts
      * function call_every_second(self: unknown, handle: unknown, time_elapsed: unknown) {
      *   const state = self as { counter: number };
      *   state.counter = state.counter + 1;
