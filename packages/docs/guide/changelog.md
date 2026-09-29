@@ -34,6 +34,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`go.scale`** reads are `number | Vector3`, and the engine always returns a `vmath.vector3`: narrow the result, or read `go.get_scale()` for a `Vector3`. Writes also take a number as a uniform scale.
   - **String constants** — [`gui.PROP_*`](/api/gui) and [`image.TYPE_*`](/api/image) are the strings the engine registers; stop using them as numbers.
   - **`render.RENDER_TARGET_DEFAULT`** is `undefined`, the `nil` the engine reads since it never registers the constant; stop using it as a number. `render.set_render_target(render.RENDER_TARGET_DEFAULT)` still selects the default target.
+- **A [druid](/api/druid) slider's style is typed**: `druid.druid_slider.style` is `druid_slider_style` rather than a plain `LuaTable`, so a value declared `LuaTable` no longer assigns to it; read and write its fields directly, such as `druid.druid_slider_style.DEFAULT_STEPS`.
 
 ### Improved
 
@@ -43,6 +44,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **Every function with several examples documents each one as its own TypeScript block, with the sentence that introduces it above**, in hovers and the API reference: among them `gui.set`, `render.draw`, `sys.load_buffer`, `json.decode` and `editor.bob`, each of which showed one welded block. The API reference does the same for `go.get` and `go.set`, including their named-property and sub-component cases.
 - **Every TypeScript example in the API reference has a Lua tab beside it** showing the engine's original sample, in function examples and in code samples inside descriptions and parameter docs; the selected tab's badge is highlighted.
 - **The ten `in.*` library types are checked against `britzl/defold-input` `4.8.0`**, and their API reference pages name that tag; the declarations are unchanged.
+- **[druid](/api/druid) types follow `Insality/druid` `1.4.0`**: the button, drag, scroll, input and slider styles take optional hover cursors, such as `druid.druid_button_style.ON_HOVER_CURSOR`, a slider exposes its `druid.druid_slider.hover` component, and rich text word metrics report `druid.druid_rich_text_metrics.visible_width`.
 
 ### Fixed
 
