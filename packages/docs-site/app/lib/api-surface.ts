@@ -23,6 +23,7 @@ import {
   translateProseFences,
   varargElementType,
   withIndexBaseNotes,
+  withLibraryIndexBaseNotes,
 } from "@defold-typescript/types";
 import { slugify } from "./headings";
 import { platformDocText } from "./platform-icons";
@@ -669,6 +670,37 @@ function typeList(types: string[], mapType: MapType = mapDocType): string {
   return real.length > 0 ? real.join(" | ") : "unknown";
 }
 
+// A library page reads its own classifications under its page key and names the
+// library; every other page reads the engine map and names Defold.
+function withSlotBaseNotes(
+  libraryPage: string | undefined,
+  elementName: string,
+  kind: "param" | "return",
+  slotName: string,
+  doc: string,
+): string {
+  return libraryPage === undefined
+    ? withIndexBaseNotes(elementName, kind, slotName, doc)
+    : withLibraryIndexBaseNotes(libraryPage, elementName, kind, slotName, doc);
+}
+
+// The page key a library page's notes read, absent on every other page.
+function libraryPageKey(page: Pick<ApiPage, "namespace" | "category">): string | undefined {
+  return page.category === "library" ? page.namespace : undefined;
+}
+
+// A class field's doc with its base note, which only a library page records.
+function withFieldBaseNotes(
+  libraryPage: string | undefined,
+  typeName: string,
+  fieldName: string,
+  doc: string,
+): string {
+  return libraryPage === undefined
+    ? doc
+    : withLibraryIndexBaseNotes(libraryPage, typeName, "field", fieldName, doc);
+}
+
 /**
  * Project one call list into render rows. When `slots` carries an entry for a
  * row's `<kind>:<position>:<name>`, that row shows the type and optionality the
@@ -686,12 +718,14 @@ function projectParams(
   kind: "param" | "return" = "param",
   elementName?: string,
   translations: TranslationStore = {},
+  libraryPage?: string,
 ): ApiSymbolParam[] {
   return list.map((p, index) => {
     const emitted = slots?.[`${kind}:${index}:${p.name}`];
     const doc =
       elementName !== undefined
-        ? withIndexBaseNotes(
+        ? withSlotBaseNotes(
+            libraryPage,
             elementName,
             kind,
             p.name,
@@ -984,6 +1018,7 @@ export function apiModuleMarkdown(
   // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the shipped `generated/*.d.ts`.
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
   const isLibrary = page.category === "library";
+  const libraryPage = libraryPageKey(page);
   const lines: string[] = [`# ${page.displayName ?? m.namespace}`, ""];
   if (page.displayName && page.displayName !== m.namespace) {
     lines.push(`\`${m.namespace}\``, "");
@@ -1041,7 +1076,8 @@ export function apiModuleMarkdown(
       if (example) lines.push(example, "");
       for (const p of [...fn.parameters, ...fn.returnValues]) {
         const kind = fn.parameters.includes(p) ? "param" : "return";
-        const pdoc = withIndexBaseNotes(
+        const pdoc = withSlotBaseNotes(
+          libraryPage,
           fn.name,
           kind,
           p.name,
@@ -1118,14 +1154,23 @@ export function apiModuleMarkdown(
         const example = exampleMarkdownFor(fn, translations);
         if (example) lines.push(example, "");
         for (const p of [...fn.parameters, ...fn.returnValues]) {
-          const pdoc = htmlToDocText(p.doc);
+          const kind = fn.parameters.includes(p) ? "param" : "return";
+          const pdoc =
+            libraryPage === undefined
+              ? htmlToDocText(p.doc)
+              : withLibraryIndexBaseNotes(libraryPage, fn.name, kind, p.name, htmlToDocText(p.doc));
           if (!pdoc) continue;
           lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
         }
       }
       for (const prop of td.properties ?? []) {
         lines.push(`#### \`${variableSignature(prop, mapType)}\``, "");
-        const doc = htmlToDocText(prop.description || prop.brief);
+        const doc = withFieldBaseNotes(
+          libraryPage,
+          td.name,
+          prop.name,
+          htmlToDocText(prop.description || prop.brief),
+        );
         if (doc) lines.push(doc, "");
       }
     }
@@ -1162,6 +1207,7 @@ function authoritativeConstantUnionAliases(
 export function apiModuleSymbols(
   page: Pick<
     ApiPage,
+    | "namespace"
     | "module"
     | "category"
     | "availability"
@@ -1177,6 +1223,7 @@ export function apiModuleSymbols(
   // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the shipped `generated/*.d.ts`.
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
   const isLibrary = page.category === "library";
+  const libraryPage = libraryPageKey(page);
   const authoritative = page.authoritativeSignatures;
   const slotTypes = page.authoritativeSlotTypes;
   const functionIdentity = (fn: ApiFunction): string =>
@@ -1269,6 +1316,7 @@ export function apiModuleSymbols(
             "param",
             fn.name,
             translations,
+            libraryPage,
           )
         : [],
       returnValues: primaryEntry
@@ -1279,6 +1327,7 @@ export function apiModuleSymbols(
             "return",
             fn.name,
             translations,
+            libraryPage,
           )
         : [],
     };
@@ -1330,6 +1379,7 @@ export function apiModuleSymbols(
                   "param",
                   fn.name,
                   translations,
+                  libraryPage,
                 ),
                 ...symbol.parameters.slice(1),
               ]
@@ -1353,10 +1403,26 @@ export function apiModuleSymbols(
           signature,
           docMarkdown: overloadDoc(k + 1),
           parameters: entry
-            ? projectParams(entry.parameters, mapType, undefined, "param", fn.name, translations)
+            ? projectParams(
+                entry.parameters,
+                mapType,
+                undefined,
+                "param",
+                fn.name,
+                translations,
+                libraryPage,
+              )
             : [],
           returnValues: entry
-            ? projectParams(entry.returnValues, mapType, undefined, "return", fn.name, translations)
+            ? projectParams(
+                entry.returnValues,
+                mapType,
+                undefined,
+                "return",
+                fn.name,
+                translations,
+                libraryPage,
+              )
             : [],
           ...(example ? { exampleMarkdown: example } : {}),
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
@@ -1453,8 +1519,23 @@ export function apiModuleSymbols(
         name: typeMemberName(td.name, fn.name),
         signature: typeMemberFunctionSignature(td.name, fn, mapType, isLibrary),
         docMarkdown: platformDocText(fn.description || fn.brief),
-        parameters: projectParams(fn.parameters, mapType),
-        returnValues: projectParams(fn.returnValues, mapType),
+        // Only a library page keys its class methods; they carry no translations.
+        parameters:
+          libraryPage === undefined
+            ? projectParams(fn.parameters, mapType)
+            : projectParams(fn.parameters, mapType, undefined, "param", fn.name, {}, libraryPage),
+        returnValues:
+          libraryPage === undefined
+            ? projectParams(fn.returnValues, mapType)
+            : projectParams(
+                fn.returnValues,
+                mapType,
+                undefined,
+                "return",
+                fn.name,
+                {},
+                libraryPage,
+              ),
       };
       const example = exampleMarkdownFor(fn, translations);
       if (example) symbol.exampleMarkdown = example;
@@ -1467,7 +1548,12 @@ export function apiModuleSymbols(
         kind: "type",
         name: typeMemberName(td.name, prop.name),
         signature: typeMemberPropertySignature(td.name, prop, mapType),
-        docMarkdown: platformDocText(prop.description || prop.brief),
+        docMarkdown: withFieldBaseNotes(
+          libraryPage,
+          td.name,
+          prop.name,
+          platformDocText(prop.description || prop.brief),
+        ),
         parameters: [],
         returnValues: [],
         ...(prop.deprecated !== undefined ? { deprecated: prop.deprecated } : {}),

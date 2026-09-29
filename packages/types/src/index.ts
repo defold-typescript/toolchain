@@ -86,6 +86,7 @@ export {
   type IndexSlotClass,
   type IndexSlotClassification,
   withIndexBaseNotes,
+  withLibraryIndexBaseNotes,
 } from "./index-slot-classifications";
 export {
   hasTopLevelUnion,

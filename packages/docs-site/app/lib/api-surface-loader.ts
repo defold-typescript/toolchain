@@ -635,6 +635,12 @@ export function libraryModulePaths(libraryTypesDir: string): Map<string, string>
 // the empty cases that the previous step rendered as a floating provenance
 // block.
 function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
+  return loadLibraryPageSources(libraryTypesDir).map((source) => source.page);
+}
+
+// Each library page with the raw api-doc JSON it was parsed from, for the scans
+// that read what the parser drops (a function's `notes`).
+export function loadLibraryPageSources(libraryTypesDir: string): { page: ApiPage; doc: unknown }[] {
   const apiDocDir = join(libraryTypesDir, "api-doc");
   if (!existsSync(apiDocDir)) return [];
   const metaFor = loadLibraryProvenance(libraryTypesDir);
@@ -688,7 +694,7 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
     repoCounts.set(repo, (repoCounts.get(repo) ?? 0) + 1);
   }
 
-  const pages: ApiPage[] = [];
+  const pages: { page: ApiPage; doc: unknown }[] = [];
   for (const namespace of namespaces) {
     const defold = defoldDocs.get(namespace);
     const docDir = defold
@@ -696,9 +702,8 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
       : nativeTargets.has(namespace)
         ? nativeApiDocDir
         : apiDocDir;
-    const module = parseDefoldApiDoc(
-      JSON.parse(readFileSync(join(docDir, `${namespace}.json`), "utf8")),
-    );
+    const doc: unknown = JSON.parse(readFileSync(join(docDir, `${namespace}.json`), "utf8"));
+    const module = parseDefoldApiDoc(doc);
     const dir = moduleDir.get(namespace);
     if (!module.description && defold?.entry.description) {
       module.description = defold.entry.description;
@@ -715,15 +720,18 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
       displayOverrides.get(namespace) ??
       libraryDisplayName(namespace, repo, owner, repoCounts.get(repo) ?? 1);
     pages.push({
-      namespace,
-      route: `/api/${libraryRouteSlug(namespace)}`,
-      brief: module.brief,
-      module,
-      translations: {},
-      signatures: {},
-      category: "library",
-      libraryMeta: meta,
-      displayName,
+      page: {
+        namespace,
+        route: `/api/${libraryRouteSlug(namespace)}`,
+        brief: module.brief,
+        module,
+        translations: {},
+        signatures: {},
+        category: "library",
+        libraryMeta: meta,
+        displayName,
+      },
+      doc,
     });
   }
   return pages;

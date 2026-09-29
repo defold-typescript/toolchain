@@ -122,7 +122,9 @@ takes or returns follow Defold's base.
 Each classified slot's hover states its base in one bold sentence led by a
 marker: "**⚠️ 1-based; passed to Defold unchanged.**", or "**0️⃣ 0-based; passed
 to Defold unchanged.**" A table field's names the field after the marker: "**⚠️
-`index` is 1-based; passed to Defold unchanged.**"
+`index` is 1-based; passed to Defold unchanged.**" The API reference notes each
+index position on a library or extension page the same way, naming the library
+that counts from that base: "**⚠️ 1-based; passed to `gooey` unchanged.**"
 
 Because nothing is converted, an engine function behaves like any other
 function: you can pass it as a value, alias it, spread arguments into it, or
