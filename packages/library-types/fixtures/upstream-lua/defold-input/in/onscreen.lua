@@ -87,7 +87,7 @@ function M.create(config)
 		control.prev_x = control.x or 0
 		control.prev_y = control.y or 0
 		if control.pressed then
-			gui.cancel_animation(node, gui.PROP_POSITION)
+			gui.cancel_animations(node, gui.PROP_POSITION)
 			control.x = 0
 			control.y = 0
 			control.analog_pos = vmath.vector3(control.touch_position)
@@ -149,6 +149,8 @@ function M.create(config)
 			fn = fn,
 			settings = settings,
 			handler = handler,
+			x = 0,
+			y = 0,
 		}
 		controls[node] = control
 		return control
