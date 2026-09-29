@@ -21,6 +21,9 @@ declare module 'panthera.panthera' {
 		animation_id?: string | undefined;
 		previous_animation_id?: string | undefined;
 		animation_path: string;
+		/**
+		 * Animation keys index. **⚠️ 1-based; passed to `panthera` unchanged.**
+		 */
 		animation_keys_index: number;
 		events?: LuaTable | undefined;
 		template_states?: LuaTable<string, panthera_animation> | undefined;
