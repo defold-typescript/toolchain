@@ -21,8 +21,14 @@ export {
   type VersionSurface,
   validateAvailability,
 } from "./api-availability";
-export type { ApiFunction, ApiModule, ApiParameter, ApiVariable } from "./api-doc";
-export { parseDefoldApiDoc } from "./api-doc";
+export type {
+  ApiFunction,
+  ApiModule,
+  ApiParameter,
+  ApiVariable,
+  SkipOverloadRule,
+} from "./api-doc";
+export { parseDefoldApiDoc, withholdOverloads } from "./api-doc";
 export {
   DEFOLD_TYPE_MAP,
   type Hash,

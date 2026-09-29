@@ -33,15 +33,6 @@
         "namespace": "b2d.body",
         "kind": "FUNCTION",
         "name": "b2d.body.create_fixture",
-        "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Shape\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
-      },
-      "availableIn": ["1.13.1", "1.13.0"]
-    },
-    {
-      "identity": {
-        "namespace": "b2d.body",
-        "kind": "FUNCTION",
-        "name": "b2d.body.create_fixture",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
       "availableIn": ["1.13.1", "1.13.0"]
@@ -277,15 +268,6 @@
         "kind": "FUNCTION",
         "name": "b2d.body.is_valid",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
-      },
-      "availableIn": ["1.13.1", "1.13.0"]
-    },
-    {
-      "identity": {
-        "namespace": "b2d.body",
-        "kind": "FUNCTION",
-        "name": "b2d.body.set_mass_data",
-        "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2MassData\"],\"isOptional\":false}]->[]"
       },
       "availableIn": ["1.13.1", "1.13.0"]
     },

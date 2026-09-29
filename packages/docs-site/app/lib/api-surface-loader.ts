@@ -4,9 +4,11 @@ import {
   type ApiAvailability,
   parseDefoldApiDoc,
   type SignatureStore,
+  type SkipOverloadRule,
   signatureTransitionNames,
   symbolIdentityKey,
   type TranslationStore,
+  withholdOverloads,
 } from "@defold-typescript/types";
 import type { ApiPage, ApiPageCategory, AvailabilityLookup, LibraryMeta } from "./api-surface";
 import {
@@ -22,7 +24,7 @@ interface ApiTarget {
   id: string;
   default?: boolean;
   fixturesDir: string;
-  modules: { namespace: string; fixture: string }[];
+  modules: { namespace: string; fixture: string; skipOverloads?: SkipOverloadRule[] }[];
   luaStdlib?: { namespace: string; fixture: string }[];
 }
 
@@ -798,7 +800,7 @@ function loadEnginePages(typesDir: string, target: ApiTarget, routePrefix: strin
   const modules = target.modules.filter((mod) => !defoldPages.has(mod.namespace));
   const pages = modules.map((mod): ApiPage => {
     const raw = JSON.parse(readFileSync(join(typesDir, target.fixturesDir, mod.fixture), "utf8"));
-    const module = parseDefoldApiDoc(raw);
+    const module = withholdOverloads(parseDefoldApiDoc(raw), mod.skipOverloads ?? []);
     return {
       namespace: mod.namespace,
       route: `/api${routePrefix}/${mod.namespace}`,
