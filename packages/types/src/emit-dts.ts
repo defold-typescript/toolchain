@@ -696,7 +696,16 @@ export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrecti
       ts: "number | Vector3",
       upstream: "number",
       reason:
-        "the engine probe reads a vector3 back from `go.get`; `go.set` still takes a number for a uniform scale, as `label.scale` declares",
+        "the engine reads a vector3 back from `go.get`, and `go.set` also takes a number, which it applies as a uniform scale",
+    },
+  ],
+  [
+    "label.scale",
+    {
+      ts: "Vector3",
+      upstream: "number | vector3",
+      reason:
+        'the engine reads a vector3 back from `go.get`, and `go.set` raises "must be a vmath.vector3" when given a number',
     },
   ],
   [

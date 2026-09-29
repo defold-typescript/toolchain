@@ -1,13 +1,15 @@
 import { fnv1a64 } from "./fnv1a";
 
 // A function slot whose upstream doc HTML is malformed badly enough to misread,
-// replaced wholesale with authored HTML that keeps upstream's wording. Each
+// replaced wholesale with authored HTML that keeps upstream's wording, or a
+// property description that contradicts what the engine does. Each
 // entry is pinned by the FNV-1a hash of the exact upstream HTML it replaces: the
 // parse applies it only while the vendored doc still hashes to that value, so a
 // fixed or reworded upstream doc wins by itself, and
 // `doc-correction-provenance.test.ts` reds until the stale entry is deleted.
 //
-// Keyed `<function>#param:<name>` or `<function>#return:<name>`.
+// Keyed `<function>#param:<name>`, `<function>#return:<name>`, or
+// `<namespace>#property:<name>` (the ref-doc `PROPERTY` element's bare name).
 export interface DocCorrection {
   readonly upstreamHash: string;
   readonly html: string;
@@ -70,14 +72,32 @@ export const DOC_CORRECTIONS: ReadonlyMap<string, DocCorrection> = new Map([
       ].join("\n"),
     },
   ],
+  [
+    "go#property:scale",
+    {
+      upstreamHash: "a7f5ba1b125d1fae",
+      reason:
+        "upstream calls it a uniform number, but the engine reads a vector3 back from `go.get` and applies a written number as a uniform scale",
+      html: "The scale of the game object. <code>go.get</code> returns a vector3; <code>go.set</code> and <code>go.animate</code> also take a number, which sets a uniform scale.",
+    },
+  ],
+  [
+    "label#property:scale",
+    {
+      upstreamHash: "5a15760073a8629d",
+      reason:
+        'upstream says a number is accepted, but `go.set` raises "must be a vmath.vector3" on one; only `go.animate` takes a number',
+      html: "The scale of the label. <code>go.get</code> returns and <code>go.set</code> takes a vector3; <code>go.animate</code> also takes a number, which sets a uniform scale.",
+    },
+  ],
 ]);
 
 export function docCorrectionKey(
-  functionName: string,
-  slot: "param" | "return",
+  owner: string,
+  slot: "param" | "return" | "property",
   name: string,
 ): string {
-  return `${functionName}#${slot}:${name}`;
+  return `${owner}#${slot}:${name}`;
 }
 
 // The slot's doc with its correction applied, or `doc` itself when the slot has

@@ -1050,7 +1050,7 @@ describe("emitDeclarations", () => {
 
   test("a PROPERTY with multiple types emits a union member", () => {
     const module: ApiModule = {
-      namespace: "label",
+      namespace: "thing",
       brief: "",
       description: "",
       functions: [],

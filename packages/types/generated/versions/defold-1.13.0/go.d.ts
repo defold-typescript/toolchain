@@ -1097,7 +1097,7 @@ declare global {
        */
       rotation: Quaternion;
       /**
-       * The uniform scale of the game object. The type of the property is number.
+       * The scale of the game object. `go.get` returns a vector3; `go.set` and `go.animate` also take a number, which sets a uniform scale.
        */
       scale: number | Vector3;
     }

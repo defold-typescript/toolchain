@@ -372,6 +372,28 @@ export function typeWitness(
   return witness(type, { fqn, slot: 0, context, checker, constants, urls, handles: new Map() });
 }
 
+// A value of the first member of `type` that declares `kind`, built like
+// `typeWitness`, or undefined when no such member has a witness.
+export function kindWitness(
+  type: ts.Type,
+  kind: LuaKind,
+  fqn: string,
+  context: ProbeContext,
+  checker: ts.TypeChecker,
+  constants: ReadonlySet<string>,
+  urls: Set<string>,
+): string | undefined {
+  return memberWitness(type, kind, {
+    fqn,
+    slot: 0,
+    context,
+    checker,
+    constants,
+    urls,
+    handles: new Map(),
+  });
+}
+
 // The `PROBE_URLS` names an expression refers to.
 export function urlsIn(expression: string): string[] {
   return Object.keys(PROBE_URLS).filter((id) => new RegExp(`\\b${id}\\b`).test(expression));

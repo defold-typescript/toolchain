@@ -24,6 +24,7 @@ interface RefDocSlot {
 interface RefDocElement {
   readonly type?: string;
   readonly name?: string;
+  readonly description?: string;
   readonly parameters?: readonly RefDocSlot[];
   readonly returnvalues?: readonly RefDocSlot[];
 }
@@ -36,20 +37,30 @@ interface Sighting {
 
 // Every vendored ref-doc the generators read that documents the corrected slot,
 // so an entry is pinned against the release it ships from and every older one
-// still in `api-targets.json`.
+// still in `api-targets.json`. A property slot is keyed by its namespace, since
+// the ref-doc names a `PROPERTY` element bare.
 function sightings(key: string): Sighting[] {
-  const match = /^(.+)#(param|return):(.+)$/.exec(key);
+  const match = /^(.+)#(param|return|property):(.+)$/.exec(key);
   if (!match) return [];
-  const [, fnName, slot, slotName] = match as unknown as [string, string, string, string];
+  const [, owner, slot, slotName] = match as unknown as [string, string, string, string];
   const out: Sighting[] = [];
   for (const target of TARGETS) {
     for (const module of target.modules) {
-      if (!fnName.startsWith(`${module.namespace}.`)) continue;
+      if (
+        slot === "property" ? owner !== module.namespace : !owner.startsWith(`${module.namespace}.`)
+      )
+        continue;
       const path = join(PKG, target.fixturesDir, module.fixture);
       if (!existsSync(path)) continue;
       const doc = JSON.parse(readFileSync(path, "utf8")) as { elements?: RefDocElement[] };
       for (const element of doc.elements ?? []) {
-        if (element.type !== "FUNCTION" || element.name !== fnName) continue;
+        if (slot === "property") {
+          if (element.type === "PROPERTY" && element.name === slotName) {
+            out.push({ target: target.id, path, doc: element.description ?? "" });
+          }
+          continue;
+        }
+        if (element.type !== "FUNCTION" || element.name !== owner) continue;
         const slots = slot === "param" ? element.parameters : element.returnvalues;
         for (const s of slots ?? []) {
           if (s.name === slotName) out.push({ target: target.id, path, doc: s.doc ?? "" });
@@ -89,13 +100,18 @@ describe("doc correction provenance", () => {
   test("the parse applies every correction in place of the upstream doc", () => {
     const missed: string[] = [];
     for (const [key, correction] of entries) {
-      const [fnName, slotKey] = key.split("#") as [string, string];
+      const [owner, slotKey] = key.split("#") as [string, string];
       const [slot, slotName] = slotKey.split(":") as [string, string];
       for (const sighting of sightings(key)) {
         const module = parseDefoldApiDoc(JSON.parse(readFileSync(sighting.path, "utf8")));
-        const fn = module.functions.find((f) => f.name === fnName);
-        const slots = slot === "param" ? fn?.parameters : fn?.returnValues;
-        const doc = slots?.find((p) => p.name === slotName)?.doc;
+        let doc: string | undefined;
+        if (slot === "property") {
+          doc = module.properties.find((p) => p.name === slotName)?.description;
+        } else {
+          const fn = module.functions.find((f) => f.name === owner);
+          const slots = slot === "param" ? fn?.parameters : fn?.returnValues;
+          doc = slots?.find((p) => p.name === slotName)?.doc;
+        }
         if (doc !== correction.html) missed.push(`${key} in ${sighting.target}`);
       }
     }
