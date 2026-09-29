@@ -363,6 +363,22 @@ You can override this component styles params in Druid styles table or create yo
           ],
         },
         {
+          "doc": "Cursor on button touch hover (defos cursor). Default: nil",
+          "isOptional": true,
+          "name": "ON_HOVER_CURSOR",
+          "types": [
+            "string|number|nil",
+          ],
+        },
+        {
+          "doc": "Cursor on button mouse hover (defos cursor). Default: nil",
+          "isOptional": true,
+          "name": "ON_MOUSE_HOVER_CURSOR",
+          "types": [
+            "string|number|nil",
+          ],
+        },
+        {
           "doc": "",
           "isOptional": true,
           "name": "on_init",
@@ -1054,6 +1070,22 @@ If the game is not HTML, html mode will be not enabled"
             "boolean",
           ],
         },
+        {
+          "doc": "Cursor on node touch hover (defos cursor). Default: nil",
+          "isOptional": true,
+          "name": "ON_HOVER_CURSOR",
+          "types": [
+            "string|number|nil",
+          ],
+        },
+        {
+          "doc": "Cursor on node mouse hover (defos cursor). Default: nil",
+          "isOptional": true,
+          "name": "ON_MOUSE_HOVER_CURSOR",
+          "types": [
+            "string|number|nil",
+          ],
+        },
       ],
       "generics": [],
       "methods": [],
@@ -1306,7 +1338,10 @@ If the game is not HTML, html mode will be not enabled"
           "visibility": "private",
         },
         {
-          "brief": "Enable or disable drag cursor styles. No-op without defos. Hover is created on first enable.",
+          "brief": 
+"Enable or disable drag cursors from the Drag style. No-op without defos or without cursors in style. Hover is created on first enable.
+The cursors are not shown while the Drag is disabled."
+,
           "generics": [],
           "name": "set_drag_cursors",
           "params": [
@@ -2092,6 +2127,22 @@ any hover events"
           "name": "WHEEL_SCROLL_BY_INERTION",
           "types": [
             "boolean|nil",
+          ],
+        },
+        {
+          "doc": "Cursor on scroll touch hover (defos cursor), only while content is scrollable. Default: nil",
+          "isOptional": true,
+          "name": "ON_HOVER_CURSOR",
+          "types": [
+            "string|number|nil",
+          ],
+        },
+        {
+          "doc": "Cursor on scroll mouse hover (defos cursor), only while content is scrollable. Default: nil",
+          "isOptional": true,
+          "name": "ON_MOUSE_HOVER_CURSOR",
+          "types": [
+            "string|number|nil",
           ],
         },
       ],
@@ -2977,6 +3028,13 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
           "brief": "",
           "generics": [],
           "name": "_update_size",
+          "params": [],
+          "returns": [],
+        },
+        {
+          "brief": "Apply scroll cursors style to the inner drag. Cursors are shown only while content is scrollable",
+          "generics": [],
+          "name": "_update_drag_cursors",
           "params": [],
           "returns": [],
         },
@@ -5260,7 +5318,10 @@ Parent template will be added automatically if exist."
           ],
         },
         {
-          "brief": "Reset component input priority to it's default value, that was set in \`create\` function or \`set_input_priority\`",
+          "brief": 
+"Reset component input priority to it's default value, that was set in \`create\` function or \`set_input_priority\`
+Each component in the subtree returns to it's own default value, not to the parent one"
+,
           "generics": [],
           "name": "reset_input_priority",
           "params": [],
@@ -5614,43 +5675,6 @@ Recursive for all children components."
             },
           ],
           "returns": [],
-        },
-        {
-          "brief": "",
-          "generics": [],
-          "name": "on_input",
-          "params": [
-            {
-              "doc": "Action id from on_input",
-              "isOptional": false,
-              "isVararg": false,
-              "name": "action_id",
-              "types": [
-                "hash",
-              ],
-            },
-            {
-              "doc": "Action table from on_input",
-              "isOptional": false,
-              "isVararg": false,
-              "name": "action",
-              "types": [
-                "table",
-              ],
-            },
-          ],
-          "returns": [
-            {
-              "doc": "True if input was consumed",
-              "isOptional": false,
-              "isVararg": false,
-              "name": "is_consumed",
-              "types": [
-                "boolean",
-              ],
-            },
-          ],
-          "visibility": "private",
         },
         {
           "brief": "Set placeholder text",
@@ -6223,11 +6247,19 @@ Recursive for all children components."
       "brief": "",
       "fields": [
         {
-          "doc": "",
+          "doc": "Advance of the word, the next word starts after it",
           "isOptional": false,
           "name": "width",
           "types": [
             "number",
+          ],
+        },
+        {
+          "doc": "Width to the last visible glyph of a text word",
+          "isOptional": true,
+          "name": "visible_width",
+          "types": [
+            "number|nil",
           ],
         },
         {
@@ -8443,6 +8475,22 @@ Create hotkey component with druid: \`hotkey = druid:new_hotkey(keys, callback, 
           ],
         },
         {
+          "doc": "Cursor on input touch hover (defos cursor). Default: nil",
+          "isOptional": true,
+          "name": "ON_HOVER_CURSOR",
+          "types": [
+            "string|number|nil",
+          ],
+        },
+        {
+          "doc": "Cursor on input mouse hover (defos cursor). Default: nil",
+          "isOptional": true,
+          "name": "ON_MOUSE_HOVER_CURSOR",
+          "types": [
+            "string|number|nil",
+          ],
+        },
+        {
           "doc": "Callback when input is initialized, use to set custom properties on self",
           "isOptional": true,
           "name": "on_init",
@@ -8653,6 +8701,34 @@ Create input component with druid: \`input = druid:new_input(button_node_name, t
               ],
             },
           ],
+          "visibility": "private",
+        },
+        {
+          "brief": "",
+          "generics": [],
+          "name": "on_input_interrupt",
+          "params": [
+            {
+              "doc": "The action id",
+              "isNilable": true,
+              "isOptional": false,
+              "isVararg": false,
+              "name": "action_id",
+              "types": [
+                "hash|nil",
+              ],
+            },
+            {
+              "doc": "The action",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "action",
+              "types": [
+                "action",
+              ],
+            },
+          ],
+          "returns": [],
           "visibility": "private",
         },
         {
@@ -10409,6 +10485,38 @@ Create progress bar component with druid: \`progress = druid:new_progress(node_n
       "name": "druid.progress",
     },
     {
+      "brief": "",
+      "fields": [
+        {
+          "doc": "Default steps for the notched slider. Default: nil",
+          "isOptional": true,
+          "name": "DEFAULT_STEPS",
+          "types": [
+            "number[]|nil",
+          ],
+        },
+        {
+          "doc": "Cursor on slider touch hover (defos cursor). Default: nil",
+          "isOptional": true,
+          "name": "ON_HOVER_CURSOR",
+          "types": [
+            "string|number|nil",
+          ],
+        },
+        {
+          "doc": "Cursor on slider mouse hover (defos cursor). Default: nil",
+          "isOptional": true,
+          "name": "ON_MOUSE_HOVER_CURSOR",
+          "types": [
+            "string|number|nil",
+          ],
+        },
+      ],
+      "generics": [],
+      "methods": [],
+      "name": "druid.slider.style",
+    },
+    {
       "brief": 
 "Basic Druid slider component. Creates a draggable node over a line with progress reporting.
 
@@ -10445,7 +10553,15 @@ Create slider component with druid: \`slider = druid:new_slider(node_name, end_p
           "isOptional": false,
           "name": "style",
           "types": [
-            "table",
+            "druid.slider.style",
+          ],
+        },
+        {
+          "doc": "Hover for the pin node cursors. nil without defos or without cursors in style",
+          "isOptional": true,
+          "name": "hover",
+          "types": [
+            "druid.hover|nil",
           ],
         },
         {
@@ -10517,6 +10633,15 @@ Create slider component with druid: \`slider = druid:new_slider(node_name, end_p
           "name": "steps",
           "types": [
             "number[]?",
+          ],
+          "visibility": "private",
+        },
+        {
+          "doc": "Hover for the input node cursors",
+          "isOptional": true,
+          "name": "_input_hover",
+          "types": [
+            "druid.hover|nil",
           ],
           "visibility": "private",
         },
@@ -14087,6 +14212,60 @@ which are treated as having a length of 1"
       ],
     },
     {
+      "brief": "Create rich text gui nodes from text, scaled down to fit the area. Nodes are updated once",
+      "generics": [],
+      "name": "create_adjusted",
+      "params": [
+        {
+          "doc": "The text to create rich text nodes from",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "text",
+          "types": [
+            "string",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "settings",
+          "types": [
+            "druid.rich_text.settings",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "style",
+          "types": [
+            "druid.rich_text.style",
+          ],
+        },
+      ],
+      "returns": [
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "druid.rich_text.word[]",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "druid.rich_text.lines_metrics",
+          ],
+        },
+      ],
+    },
+    {
       "brief": "",
       "generics": [],
       "name": "_fill_properties",
@@ -14296,6 +14475,60 @@ which are treated as having a length of 1"
           "name": "",
           "types": [
             "druid.rich_text.lines_metrics",
+          ],
+        },
+      ],
+    },
+    {
+      "brief": "Find the adjust scale to fit the text into the area",
+      "generics": [],
+      "name": "_get_fit_scale",
+      "params": [
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "words",
+          "types": [
+            "druid.rich_text.word[]",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "settings",
+          "types": [
+            "druid.rich_text.settings",
+          ],
+        },
+        {
+          "doc": "Metrics at the current adjust scale",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "lines_metrics",
+          "types": [
+            "druid.rich_text.lines_metrics",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "style",
+          "types": [
+            "druid.rich_text.style",
+          ],
+        },
+      ],
+      "returns": [
+        {
+          "doc": "Nil if the text already fits",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "scale",
+          "types": [
+            "number|nil",
           ],
         },
       ],
