@@ -140,7 +140,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "`hit`, then on a hit: `tile_x`, `tile_y`, `array_id` (index in the\ntile table), `tile_id`, `intersection_x`, `intersection_y` and `side`\n(`LEFT`, `RIGHT`, `TOP` or `BOTTOM`).",
+          "doc": "`hit`, then on a hit: `tile_x`, `tile_y`, `array_id` (index in the\ntile table), `tile_id`, `intersection_x`, `intersection_y` and `side`\n(`LEFT`, `RIGHT`, `TOP` or `BOTTOM`).\n\n**⚠️ `tile_x` is 1-based; passed to `tile_raycast` unchanged.** **⚠️ `tile_y` is 1-based; passed to `tile_raycast` unchanged.** **⚠️ `array_id` is 1-based; passed to `tile_raycast` unchanged.**",
           "types": [
             "LuaMultiReturn<[ false ] | [ true, number, number, number, number, number, number, number ]>"
           ]
@@ -155,7 +155,7 @@
       "parameters": [
         {
           "name": "tile_x",
-          "doc": "Tile X coordinate.",
+          "doc": "Tile X coordinate. **⚠️ 1-based; passed to `tile_raycast` unchanged.**",
           "types": [
             "number"
           ],
@@ -163,7 +163,7 @@
         },
         {
           "name": "tile_y",
-          "doc": "Tile Y coordinate.",
+          "doc": "Tile Y coordinate. **⚠️ 1-based; passed to `tile_raycast` unchanged.**",
           "types": [
             "number"
           ],
@@ -188,7 +188,7 @@
       "parameters": [
         {
           "name": "tile_x",
-          "doc": "Tile X coordinate.",
+          "doc": "Tile X coordinate. **⚠️ 1-based; passed to `tile_raycast` unchanged.**",
           "types": [
             "number"
           ],
@@ -196,7 +196,7 @@
         },
         {
           "name": "tile_y",
-          "doc": "Tile Y coordinate.",
+          "doc": "Tile Y coordinate. **⚠️ 1-based; passed to `tile_raycast` unchanged.**",
           "types": [
             "number"
           ],

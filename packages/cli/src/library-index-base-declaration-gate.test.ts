@@ -15,7 +15,7 @@ type Lane = "script-api" | "extension" | "luals" | "authored" | "native";
 
 // Lanes whose declarations do not yet carry library index notes. Each entry
 // leaves once its own emitter notes the classified positions it declares.
-const PENDING_LANES: ReadonlySet<Lane> = new Set<Lane>(["authored", "native"]);
+const PENDING_LANES: ReadonlySet<Lane> = new Set<Lane>();
 
 function readTargets<T>(file: string): T[] {
   return (JSON.parse(readFileSync(join(LIBRARY_TYPES_DIR, file), "utf8")) as { targets: T[] })
@@ -36,6 +36,12 @@ const scriptApiTargets = readTargets<{ apiDoc: string; generated: string }>(
   "script-api-targets.json",
 );
 
+const authoredTargets = readTargets<{ apiDoc: string; generated: string }>("authored-targets.json");
+
+const nativeTargets = readTargets<{ namespace: string; declaration: string }>(
+  "native-targets.json",
+);
+
 // The page key each lane gives its libraries, the same key the API reference
 // and the classification map use.
 function pageLanes(): Map<string, Lane> {
@@ -52,12 +58,8 @@ function pageLanes(): Map<string, Lane> {
   for (const { namespace } of readTargets<{ namespace: string }>("luals-targets.json")) {
     claim(namespace, "luals");
   }
-  for (const { apiDoc } of readTargets<{ apiDoc: string }>("authored-targets.json")) {
-    claim(basename(apiDoc, ".json"), "authored");
-  }
-  for (const { namespace } of readTargets<{ namespace: string }>("native-targets.json")) {
-    claim(namespace, "native");
-  }
+  for (const { apiDoc } of authoredTargets) claim(basename(apiDoc, ".json"), "authored");
+  for (const { namespace } of nativeTargets) claim(namespace, "native");
   return lanes;
 }
 
@@ -120,15 +122,17 @@ function slotTagTexts(fn: ts.SignatureDeclarationBase, slot: ClassifiedSlot): st
     .map((tag) => ts.getTextOfJSDocComment(tag.comment) ?? "");
 }
 
-// Every interface member of a LuaLS declaration by name, with the interface
-// that declares it, plus every module function; a typedef method is keyed by
-// its bare name, so one key reaches every class that declares it.
-interface LualsMembers {
+// Every interface member of a LuaLS, authored or native declaration by name,
+// with the interface that declares it, plus every function, whether inside
+// `declare module '<id>'` or `declare global { namespace <ns> }`; a typedef
+// method is keyed by its bare name, so one key reaches every class that
+// declares it.
+interface DeclaredMembers {
   readonly callables: Map<string, ts.SignatureDeclarationBase[]>;
   readonly fields: Map<string, ts.TypeElement[]>;
 }
 
-function lualsMembers(text: string): LualsMembers {
+function declaredMembers(text: string): DeclaredMembers {
   const source = ts.createSourceFile("library.d.ts", text, ts.ScriptTarget.Latest, true);
   const callables = new Map<string, ts.SignatureDeclarationBase[]>();
   const fields = new Map<string, ts.TypeElement[]>();
@@ -155,9 +159,9 @@ function lualsMembers(text: string): LualsMembers {
   return { callables, fields };
 }
 
-// The doc texts a LuaLS slot's notes must appear in: one per declaration that
+// The doc texts a member-checked slot's notes must appear in: one per declaration that
 // holds the slot. `undefined` means no declaration holds it.
-function lualsSlotTexts(members: LualsMembers, slot: ClassifiedSlot): string[] | undefined {
+function memberSlotTexts(members: DeclaredMembers, slot: ClassifiedSlot): string[] | undefined {
   if (slot.kind === "field") {
     const nodes = members.fields.get(`${slot.element}.${slot.slot}`) ?? [];
     if (nodes.length === 0) return undefined;
@@ -186,6 +190,16 @@ async function emitLaneDeclaration(page: string, lane: Lane): Promise<string> {
     const target = scriptApiTargets.find((t) => basename(t.apiDoc, ".json") === page);
     if (target === undefined) throw new Error(`no script-api target for page ${page}`);
     return readFileSync(join(LIBRARY_TYPES_DIR, target.generated), "utf8");
+  }
+  if (lane === "authored") {
+    const target = authoredTargets.find((t) => basename(t.apiDoc, ".json") === page);
+    if (target === undefined) throw new Error(`no authored target for page ${page}`);
+    return readFileSync(join(LIBRARY_TYPES_DIR, target.generated), "utf8");
+  }
+  if (lane === "native") {
+    const target = nativeTargets.find((t) => t.namespace === page);
+    if (target === undefined) throw new Error(`no native target for page ${page}`);
+    return readFileSync(join(LIBRARY_TYPES_DIR, target.declaration), "utf8");
   }
   const doc = JSON.parse(
     readFileSync(join(LIBRARY_TYPES_DIR, "defold-extensions", "api-doc", `${page}.json`), "utf8"),
@@ -226,19 +240,23 @@ describe("library index base declaration gate", () => {
     expect([...byPage.keys()]).toContain("bridge");
     expect([...byPage.keys()]).toContain("spine.gui");
     expect([...byPage.keys()]).toContain("druid");
+    for (const page of ["gooey", "node_repeat", "sprite_repeat", "tile_raycast"]) {
+      expect([...byPage.keys()]).toContain(page);
+    }
 
     const missing: string[] = [];
     for (const [page, pageSlots] of byPage) {
       const lane = lanes.get(page) as Lane;
       const text = await emitLaneDeclaration(page, lane);
-      const declarations = lane === "luals" ? undefined : functionDeclarations(text);
-      const members = lane === "luals" ? lualsMembers(text) : undefined;
+      const byMember = lane === "luals" || lane === "authored" || lane === "native";
+      const declarations = byMember ? undefined : functionDeclarations(text);
+      const members = byMember ? declaredMembers(text) : undefined;
       for (const slot of pageSlots) {
         const label = `${slot.page}/${slot.element}:${slot.kind}:${slot.slot}`;
         const notes = libraryIndexBaseNotes(slot.page, slot.element, slot.kind, slot.slot);
         const texts =
           members !== undefined
-            ? (lualsSlotTexts(members, slot) ?? [])
+            ? (memberSlotTexts(members, slot) ?? [])
             : (declarations?.get(slot.element) ?? []).flatMap((fn) => slotTagTexts(fn, slot));
         if (texts.length === 0) {
           missing.push(`${label}: no declared ${slot.kind} tag`);

@@ -35,7 +35,7 @@ declare module 'node_repeat.node_repeat' {
 		height: number;
 		/** The animation's playback rate, from the atlas. */
 		fps: number;
-		/** The 1-based index of the frame shown next. */
+		/** The 1-based index of the frame shown next. **⚠️ 1-based; passed to `node_repeat` unchanged.** */
 		current_frame: number;
 		/** The `uv_repeat` value: `x`/`y` the repeat factors, `z`/`w` the current frame's size. */
 		v: Vector4;
