@@ -64,7 +64,18 @@ layout.on_size_changed.subscribe((self: unknown) => {
   void self;
 });
 
+// Component styles are typed interfaces carrying the hover cursor fields: a
+// button style reads `ON_HOVER_CURSOR`, and a slider's `style` is
+// `druid_slider_style` rather than a bare `LuaTable`, so its fields read directly.
+const hoverCursor: string | number | undefined = button.style.ON_HOVER_CURSOR;
+const slider = instance.new_slider("slider_pin", vmath.vector3(100, 0, 0));
+const sliderSteps: number[] | undefined = slider.style.DEFAULT_STEPS;
+const sliderHovered: boolean | undefined = slider.hover?.is_hovered();
+
 void buttonName;
+void hoverCursor;
+void sliderSteps;
+void sliderHovered;
 void enabledState;
 void widgetName;
 void subscribed;
