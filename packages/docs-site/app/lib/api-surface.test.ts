@@ -2483,6 +2483,72 @@ describe("apiModuleSymbols", () => {
   });
 });
 
+describe("index-base notes on library pages", () => {
+  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const page = (namespace: string, category: ApiPage["category"] = "library"): ApiPage => {
+    const found = pages.find((p) => p.namespace === namespace && p.category === category);
+    if (!found) throw new Error(`no ${category} page ${namespace}`);
+    return found;
+  };
+  const symbols = (p: ApiPage): ApiSymbol[] => apiModuleSymbols(p, p.translations, p.signatures);
+  const paramDoc = (p: ApiPage, name: string, param: string): string | undefined =>
+    symbols(p)
+      .filter((s) => s.name === name)
+      .flatMap((s) => s.parameters)
+      .find((row) => row.name === param)?.doc;
+
+  test("a library slot names the library as the receiver", () => {
+    expect(paramDoc(page("gooey"), "set_focus", "index")).toContain("passed to `gooey` unchanged");
+  });
+
+  test("a library page renders its own classification and never an engine note", () => {
+    expect(paramDoc(page("spine.gui"), "gui.cancel_spine", "options")).toContain(
+      "`track` is 1-based; passed to `spine.gui` unchanged",
+    );
+    const offenders = pages
+      .filter((p) => p.category === "library")
+      .flatMap((p) =>
+        symbols(p)
+          .filter((s) =>
+            [s.docMarkdown, ...[...s.parameters, ...s.returnValues].map((row) => row.doc)].some(
+              (doc) => doc.includes("passed to Defold"),
+            ),
+          )
+          .map((s) => `${p.namespace} ${s.name}`),
+      );
+    expect(offenders).toEqual([]);
+  });
+
+  test("class methods and class fields carry their notes", () => {
+    const druid = page("druid");
+    expect(paramDoc(druid, "druid_grid.get_pos", "index")).toContain("passed to `druid` unchanged");
+    expect(apiModuleMarkdown(druid, druid.translations)).toContain("passed to `druid` unchanged");
+    const decore = page("decore");
+    expect(symbols(decore).find((s) => s.name === "system.index")?.docMarkdown).toContain(
+      "passed to `decore` unchanged",
+    );
+    expect(apiModuleMarkdown(decore, decore.translations)).toContain(
+      "passed to `decore` unchanged",
+    );
+  });
+
+  test("the llms-full text carries a callback argument's note under its function", () => {
+    const markdown = apiModuleMarkdown(page("bridge"), page("bridge").translations);
+    const start = markdown.indexOf("bridge.daily_rewards.get_current_day(");
+    expect(start).toBeGreaterThan(-1);
+    const end = markdown.indexOf("\n### ", start);
+    expect(markdown.slice(start, end === -1 ? undefined : end)).toContain(
+      "**0️⃣ `day` is 0-based; passed to `bridge` unchanged.**",
+    );
+  });
+
+  test("the engine gui page keeps its Defold note", () => {
+    expect(paramDoc(page("gui", "engine"), "gui.set", "options")).toContain(
+      "passed to Defold unchanged",
+    );
+  });
+});
+
 describe("apiModuleSymbols / apiModuleMarkdown authoritative signatures", () => {
   const getConstants: ApiFunction = {
     name: "compute.get_constants",
