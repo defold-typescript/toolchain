@@ -15,6 +15,7 @@ import {
   consoleWatermark,
   type EditorResponse,
   type EditorTransport,
+  editorIssues,
   evalEditor,
   hotReload,
   openConsoleStream,
@@ -153,7 +154,7 @@ describe("hotReload", () => {
     writePortFile(cwd, "58433");
     const { transport, calls } = recordingTransport(() => response(202));
 
-    expect(await hotReload(cwd, transport)).toBe("accepted");
+    expect(await hotReload(cwd, transport)).toEqual({ outcome: "accepted", result: null });
     expect(calls).toEqual([{ url: "http://localhost:58433/command/hot-reload", method: "POST" }]);
   });
 
@@ -162,7 +163,7 @@ describe("hotReload", () => {
     writePortFile(cwd, "58433");
     const { transport } = recordingTransport(() => response(403));
 
-    expect(await hotReload(cwd, transport)).toBe("skipped");
+    expect(await hotReload(cwd, transport)).toEqual({ outcome: "skipped", result: null });
   });
 
   test("maps any other status to unavailable", async () => {
@@ -170,20 +171,20 @@ describe("hotReload", () => {
     writePortFile(cwd, "58433");
     const { transport } = recordingTransport(() => response(500));
 
-    expect(await hotReload(cwd, transport)).toBe("unavailable");
+    expect(await hotReload(cwd, transport)).toEqual({ outcome: "unavailable", result: null });
   });
 
   test("maps a transport rejection to unavailable", async () => {
     const cwd = tempProject();
     writePortFile(cwd, "58433");
 
-    expect(await hotReload(cwd, rejectingTransport)).toBe("unavailable");
+    expect((await hotReload(cwd, rejectingTransport)).outcome).toBe("unavailable");
   });
 
   test("posts nothing at all when there is no port file", async () => {
     const { transport, calls } = recordingTransport(() => response(202));
 
-    expect(await hotReload(tempProject(), transport)).toBe("unavailable");
+    expect((await hotReload(tempProject(), transport)).outcome).toBe("unavailable");
     expect(calls).toEqual([]);
   });
 
@@ -209,7 +210,7 @@ describe("postCommand", () => {
     writePortFile(cwd, "58433");
     const { transport, calls } = recordingTransport(() => response(202));
 
-    expect(await postCommand(cwd, "reload-extensions", transport)).toBe("accepted");
+    expect((await postCommand(cwd, "reload-extensions", transport)).outcome).toBe("accepted");
     expect(calls).toEqual([
       { url: "http://localhost:58433/command/reload-extensions", method: "POST" },
     ]);
@@ -223,7 +224,7 @@ describe("postCommand", () => {
     const outcome = postCommand(cwd, "hot-reload", abortOnlyTransport, controller.signal);
     controller.abort();
 
-    expect(await outcome).toBe("unavailable");
+    expect((await outcome).outcome).toBe("unavailable");
   });
 
   test("a signal that never aborts leaves the ordinary outcome alone", async () => {
@@ -233,7 +234,88 @@ describe("postCommand", () => {
 
     const outcome = await postCommand(cwd, "hot-reload", transport, new AbortController().signal);
 
-    expect(outcome).toBe("accepted");
+    expect(outcome.outcome).toBe("accepted");
+  });
+
+  // Defold 1.13.2 answers a finished command with 200 or 422 and a structured
+  // body; earlier editors answer 202 (queued) with no body.
+  test("a 200 with a successful result is an answered post carrying that result", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const { transport } = recordingTransport(() =>
+      response(200, JSON.stringify({ success: true, issues: [] })),
+    );
+
+    expect(await postCommand(cwd, "hot-reload", transport)).toEqual({
+      outcome: "accepted",
+      result: { success: true, issues: [] },
+    });
+  });
+
+  test("a 422 is an answered post carrying the editor's issues unchanged", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const issue = {
+      message: "attempt to call a nil value (global 'undefined_fn')",
+      severity: "error",
+      resource: "/main/main.script",
+      range: { start: { line: 11, character: 4 }, end: { line: 11, character: 16 } },
+    };
+    const { transport } = recordingTransport(() =>
+      response(422, JSON.stringify({ success: false, issues: [issue] })),
+    );
+
+    expect(await postCommand(cwd, "hot-reload", transport)).toEqual({
+      outcome: "accepted",
+      result: { success: false, issues: [issue] },
+    });
+  });
+
+  test("a 202 from an editor before 1.13.2 is an answered post with no result", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const { transport } = recordingTransport(() => response(202));
+
+    expect(await postCommand(cwd, "hot-reload", transport)).toEqual({
+      outcome: "accepted",
+      result: null,
+    });
+  });
+
+  test("a 200 whose body is not a result is still an answered post, never no editor", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const { transport } = recordingTransport(() => response(200, "<html>"));
+
+    expect(await postCommand(cwd, "hot-reload", transport)).toEqual({
+      outcome: "accepted",
+      result: null,
+    });
+  });
+
+  test("403 stays skipped and 404 or 500 stay unavailable", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const outcomeFor = async (status: number) =>
+      (await postCommand(cwd, "hot-reload", recordingTransport(() => response(status)).transport))
+        .outcome;
+
+    expect(await outcomeFor(403)).toBe("skipped");
+    expect(await outcomeFor(404)).toBe("unavailable");
+    expect(await outcomeFor(500)).toBe("unavailable");
+  });
+});
+
+describe("editorIssues", () => {
+  const issue = { message: "boom", severity: "error", resource: "/main/main.script" };
+
+  test("returns a failed result's issues", () => {
+    expect(editorIssues({ success: false, issues: [issue] })).toEqual([issue]);
+  });
+
+  test("returns nothing for a successful result or no result", () => {
+    expect(editorIssues({ success: true, issues: [issue] })).toEqual([]);
+    expect(editorIssues(null)).toEqual([]);
   });
 });
 

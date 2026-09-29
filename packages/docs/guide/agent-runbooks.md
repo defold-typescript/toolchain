@@ -897,9 +897,11 @@ Chain them with `&&`: `build` exits non-zero on a compile error, so a failed
 build never reloads and the game stays on the last code that actually built.
 
 [`reload`](./reload.md) posts one reload and then reads the editor console for a
-bounded window (`--wait <ms>`, default `2000`), because the editor answers the
-post with HTTP 202 — *queued* — and a Lua error in the reloaded chunk reaches the
-console, never that response. Its single JSON line is:
+bounded window (`--wait <ms>`, default `2000`). An editor before Defold 1.13.2
+answers the post with HTTP 202 — *queued* — and nothing more; 1.13.2 and later
+answer once the reload has finished, with a verdict `reload` reports as
+`editorIssues`. Neither answer covers a Lua error the reloaded code raises once it
+runs, which reaches only the console. Its single JSON line is:
 
 ```json
 {"command":"reload","ok":false,"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /src/main.ts.script:4: attempt to index a nil value"],"consoleErrorLocations":[{"chunk":"/src/main.ts.script","chunkLine":4,"file":"src/main.ts","line":5,"column":11}],"consoleObserved":true,"consoleWindowComplete":true}
@@ -914,7 +916,9 @@ resolving to something that is not a file in the project produces. Never assume
 it is populated. Every `file` it does carry is a project-relative path naming a
 file in the project, under any `outDir`.
 
-Branch on `outcome` first, then `consoleObserved`, then `ok`:
+Branch on `outcome` first, then `editorIssues`, then `consoleObserved`, then
+`ok`. `editorIssues` is present only against Defold 1.13.2 or later: `[]` when the
+editor accepted the reload, and absent against an older editor.
 
 - `outcome: "unavailable"` — no editor is running, or it never answered within
   the attach deadline. Nothing was posted; start the editor and the game before
@@ -922,6 +926,11 @@ Branch on `outcome` first, then `consoleObserved`, then `ok`:
 - `outcome: "skipped"` — the editor is running but declined: usually no game is
   running, or nothing was dirty. Press **Build** in the editor once to get a game
   under it.
+- `outcome: "accepted"` with `ok: false` and a non-empty `editorIssues` — the
+  editor rejected the reload, and the console was not read. Each issue carries
+  `message`, `severity`, and, when the editor sent them, `resource` (a project
+  path such as `/src/main.ts.script`) and `range` (zero-based `line` and
+  `character`). Fix the issues and rebuild.
 - `outcome: "accepted"` with `consoleObserved: false` and `ok: false` — the post
   was accepted but the console never opened, so nothing was watched. Retry, or
   pass `--wait 0` to accept that trade deliberately.
