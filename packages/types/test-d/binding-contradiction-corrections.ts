@@ -14,8 +14,11 @@ declare const maybeNumbers: number[] | undefined;
 const box = { type: b2d.shape.SHAPE_TYPE_BOX, hx: 1, hy: 1 } as const;
 
 // v3 CheckFilterData starts from b2DefaultFilter() and reads each field only
-// when it is not nil.
-b2d.body.create_chain(body, { vertices: [vmath.vector3()], filter: { mask_bits: 1 } });
+// when it is not nil. A non-looping chain needs at least two vertices.
+b2d.body.create_chain(body, {
+  vertices: [vmath.vector3(0, 0, 0), vmath.vector3(1, 0, 0)],
+  filter: { mask_bits: 1 },
+});
 
 // The v2 fixture filter reads every field unguarded.
 // @ts-expect-error

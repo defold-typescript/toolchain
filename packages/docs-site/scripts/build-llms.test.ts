@@ -496,3 +496,24 @@ describe("llms API section line shape", () => {
     }
   });
 });
+
+describe("llms-full.txt withholds the overloads the declarations withhold", () => {
+  const full = buildLlmsFull(PACKAGE_TARGET);
+  const start = full.indexOf("### b2d.body\n");
+  const end = full.indexOf("\n### ", start + 1);
+  const lines = full.slice(start, end === -1 ? undefined : end).split("\n");
+
+  test("b2d.body lists one table-form line per withheld name and no handle form", () => {
+    expect(start).not.toBe(-1);
+    const fixture = lines.filter((line) => /\bcreate_fixture\(/.test(line));
+    const massData = lines.filter((line) => /\bset_mass_data\(/.test(line));
+    expect(fixture).toHaveLength(1);
+    expect(fixture[0]).toContain("definition: { shape:");
+    expect(massData).toHaveLength(1);
+    expect(massData[0]).toContain("data: { mass: number; center: Vector3; inertia: number }");
+    for (const line of lines) {
+      expect(line).not.toContain('Opaque<"b2Shape">, density');
+      expect(line).not.toContain('data: Opaque<"b2MassData">');
+    }
+  });
+});
