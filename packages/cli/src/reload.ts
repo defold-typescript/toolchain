@@ -1,6 +1,9 @@
 import { consoleLineLocations, mapConsoleLine } from "./console-source-map";
 import {
+  type CommandResult,
   type EditorEndpoint,
+  editorIssues,
+  formatEditorIssue,
   isConsoleContinuation,
   isConsoleErrorHeader,
   type ReloadOutcome,
@@ -36,6 +39,7 @@ const CONSOLE_PREFIX = "defold-typescript reload: editor: ";
 
 const UNAVAILABLE = "no running Defold editor accepted the reload";
 const REFUSED = "the Defold editor refused the reload: no game running, or nothing to reload";
+const EDITOR_REJECTED = "the Defold editor rejected the reload";
 const REPORTED_ERROR = "the reloaded code reported an error";
 const UNOBSERVABLE =
   "the editor console could not be opened, so nothing was observed for this reload";
@@ -137,11 +141,14 @@ async function drainWindow(
 }
 
 /**
- * Posts a single reload and then reads the editor console for a bounded window,
- * because HTTP 202 only means the editor queued the command: a Lua error in the
- * reloaded chunk reaches the console, never the response. The window is a
- * heuristic -- an error thrown after it closes is missed -- so nothing here
- * claims the reload succeeded, only that no error was observed in time.
+ * Posts a single reload and then reads the editor console for a bounded window.
+ * An editor before 1.13.2 answers 202 once the command is queued, so a Lua error
+ * in the reloaded chunk reaches only the console. 1.13.2 and later answer after
+ * the reload with a verdict, and a rejected one ends the command there; an
+ * accepted one still gets the window, because a runtime error raised once the
+ * reloaded code runs is never part of that verdict. The window is a heuristic --
+ * an error thrown after it closes is missed -- so nothing here claims the reload
+ * succeeded, only that no error was observed in time.
  */
 export async function runReload(opts: RunReloadOptions): Promise<number> {
   const { cwd, stdout, stderr } = opts;
@@ -151,6 +158,7 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
     opts.extensions === true ? "reload-extensions" : "hot-reload";
   const abort = new AbortController();
   const attachTimeoutMs = opts.attachTimeoutMs ?? ATTACH_TIMEOUT_MS;
+  let result: CommandResult | null = null;
 
   const report = (
     outcome: ReloadOutcome,
@@ -172,6 +180,7 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
           consoleObserved,
           consoleWindowComplete: windowComplete,
           ...(error === undefined ? {} : { error }),
+          ...(result === null ? {} : { editorIssues: editorIssues(result) }),
         }),
       );
       return error === undefined ? 0 : 1;
@@ -180,6 +189,9 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
       stderr.write(
         `${CONSOLE_PREFIX}${colorConsoleTag(mapConsoleLine(cwd, line), opts.color === true)}\n`,
       );
+    }
+    for (const issue of editorIssues(result)) {
+      stderr.write(`${CONSOLE_PREFIX}${mapConsoleLine(cwd, formatEditorIssue(issue))}\n`);
     }
     if (error !== undefined) {
       stderr.write(
@@ -224,17 +236,25 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
       : "observed";
   const observed = consoleState === "observed";
 
-  const outcome = await client.postCommand(cwd, command);
+  const answer = await client.postCommand(cwd, command);
+  const { outcome } = answer;
   if (outcome !== "accepted") {
     abort.abort();
     void reader?.return?.(undefined);
     return report(outcome, [], observed, false, outcome === "skipped" ? REFUSED : UNAVAILABLE);
   }
+  result = answer.result;
 
   if (!opts.json) {
     stdout.write(
       `defold-typescript reload: Defold editor at ${endpoint.baseUrl}: posted ${command}\n`,
     );
+  }
+
+  if (result !== null && !result.success) {
+    abort.abort();
+    void reader?.return?.(undefined);
+    return report("accepted", [], observed, false, EDITOR_REJECTED);
   }
 
   // The post is the command's primary job and it landed, so the editor's answer

@@ -23,12 +23,39 @@ export interface EditorEndpoint {
 }
 
 /**
- * `accepted` (202) and `skipped` (403) are both successful outcomes: the editor
- * answers 403 when no game is running or nothing is dirty, which is the common
- * case during a watch and must stay silent. Only `unavailable` is worth
- * reporting.
+ * `accepted` (an answered post: 200, 202 or 422) and `skipped` (403) are both
+ * successful outcomes: the editor answers 403 when no game is running or nothing
+ * is dirty, which is the common case during a watch and must stay silent. Only
+ * `unavailable` is worth reporting. Whether an answered command itself succeeded
+ * is the {@link CommandResult}'s to say, not the outcome's.
  */
 export type ReloadOutcome = "accepted" | "skipped" | "unavailable";
+
+export interface EditorPosition {
+  /** Zero-based, as in LSP: the editor builds it from its own cursor range. */
+  readonly line: number;
+  readonly character: number;
+}
+
+export interface EditorIssue {
+  readonly message: string;
+  readonly severity: string;
+  /** A project path such as `/main/main.script`. */
+  readonly resource?: string;
+  readonly range?: { readonly start: EditorPosition; readonly end: EditorPosition };
+}
+
+/** The verdict a Defold 1.13.2+ editor returns once a command has finished. */
+export interface CommandResult {
+  readonly success: boolean;
+  readonly issues: readonly EditorIssue[];
+}
+
+export interface CommandAnswer {
+  readonly outcome: ReloadOutcome;
+  /** `null` when the editor queued the command (202) or its body did not parse. */
+  readonly result: CommandResult | null;
+}
 
 export const EDITOR_PORT_FILE = path.join(".internal", "editor.port");
 
@@ -164,29 +191,95 @@ export async function evalEditor(
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parsePosition(value: unknown): EditorPosition | null {
+  if (!isRecord(value)) return null;
+  const { line, character } = value;
+  return typeof line === "number" && typeof character === "number" ? { line, character } : null;
+}
+
+function parseIssue(value: unknown): EditorIssue | null {
+  if (!isRecord(value)) return null;
+  const { message, severity, resource, range } = value;
+  if (typeof message !== "string" || typeof severity !== "string") return null;
+  const start = isRecord(range) ? parsePosition(range.start) : null;
+  const end = isRecord(range) ? parsePosition(range.end) : null;
+  return {
+    message,
+    severity,
+    ...(typeof resource === "string" ? { resource } : {}),
+    ...(start !== null && end !== null ? { range: { start, end } } : {}),
+  };
+}
+
+/**
+ * An unreadable body yields `null` rather than a throw: the editor did answer,
+ * so the post is not "no editor", it only carries no verdict to report.
+ */
+function parseCommandResult(body: string): CommandResult | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return null;
+  }
+  if (!isRecord(parsed) || typeof parsed.success !== "boolean") return null;
+  const issues = Array.isArray(parsed.issues) ? parsed.issues : [];
+  return {
+    success: parsed.success,
+    issues: issues.map(parseIssue).filter((issue): issue is EditorIssue => issue !== null),
+  };
+}
+
+/**
+ * `<resource>:<line>: <severity>: <message>`, with the line one-based so it
+ * reads like a console error location and `mapConsoleLine` can map it.
+ */
+export function formatEditorIssue(issue: EditorIssue): string {
+  const line = issue.range === undefined ? "" : `:${issue.range.start.line + 1}`;
+  const location = issue.resource === undefined ? "" : `${issue.resource}${line}: `;
+  return `${location}${issue.severity}: ${issue.message}`;
+}
+
+/** A failed result's issues; nothing for a successful result or none at all. */
+export function editorIssues(result: CommandResult | null): readonly EditorIssue[] {
+  return result === null || result.success ? [] : result.issues;
+}
+
 /**
  * Posts `/command/<name>`. The port is re-read per call and never memoized: a
  * restarted editor gets a new random port, and a cached one would post into a
  * dead socket or another project's editor.
+ *
+ * Editors before 1.13.2 answer 202 once the command is queued. 1.13.2 and later
+ * answer after it finishes: 200 on success and 422 on failure, both with a
+ * `{ success, issues }` body.
  */
 export async function postCommand(
   cwd: string,
   name: string,
   transport: EditorTransport = defaultTransport,
   signal?: AbortSignal,
-): Promise<ReloadOutcome> {
+): Promise<CommandAnswer> {
   const port = readEditorPort(cwd);
-  if (port === null) return "unavailable";
+  if (port === null) return { outcome: "unavailable", result: null };
   try {
     const res = await transport(`http://localhost:${port}/command/${name}`, {
       method: "POST",
       signal,
     });
-    if (res.status === 202) return "accepted";
-    if (res.status === 403) return "skipped";
-    return "unavailable";
+    if (res.status === 200 || res.status === 422) {
+      const body = await res.text().catch(() => "");
+      return { outcome: "accepted", result: parseCommandResult(body) };
+    }
+    if (res.status === 202) return { outcome: "accepted", result: null };
+    if (res.status === 403) return { outcome: "skipped", result: null };
+    return { outcome: "unavailable", result: null };
   } catch {
-    return "unavailable";
+    return { outcome: "unavailable", result: null };
   }
 }
 
@@ -194,7 +287,7 @@ export function hotReload(
   cwd: string,
   transport: EditorTransport = defaultTransport,
   signal?: AbortSignal,
-): Promise<ReloadOutcome> {
+): Promise<CommandAnswer> {
   return postCommand(cwd, "hot-reload", transport, signal);
 }
 
