@@ -68,6 +68,8 @@ declare module 'narrator.narrator' {
 		get_choices(): Narrator_Choice[];
 		/**
 		 * Make a choice to continue the story.
+		 *
+		 * @param index - an index of the choice. **⚠️ 1-based; passed to `narrator` unchanged.**
 		 */
 		choose(index: number): void;
 		/**

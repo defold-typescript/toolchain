@@ -82,6 +82,7 @@ export {
   engineIndexBaseTable,
 } from "./index-base-table";
 export {
+  appendNotes,
   INDEX_SLOT_CLASSIFICATIONS,
   type IndexSlotClass,
   type IndexSlotClassification,
