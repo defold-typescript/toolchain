@@ -74,6 +74,7 @@
     "!scripts/example-semantics.ts",
     "!scripts/example-surfaces.ts",
     "!scripts/example-typecheck.ts",
+    "!scripts/example-variant-drift.ts",
     "!scripts/engine-binding-extract.ts",
     "!scripts/sync-engine-bindings.ts",
     "!scripts/engine-binding-diff.ts",

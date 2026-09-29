@@ -360,6 +360,64 @@ export function translationOwnership(
   return owners;
 }
 
+export interface IndexedExampleSource {
+  readonly lua: string;
+  readonly targets: ReadonlySet<string>;
+}
+
+export interface ExampleSourceIndex {
+  /** `fqn` -> source hash -> the Lua it hashes and every target shipping it. */
+  readonly sources: ReadonlyMap<string, ReadonlyMap<string, IndexedExampleSource>>;
+  /** Target id -> the `name` of every function, constant, variable and property it documents. */
+  readonly documented: ReadonlyMap<string, ReadonlySet<string>>;
+  /** Every module namespace any committed target documents, in either lane. */
+  readonly namespaces: ReadonlySet<string>;
+}
+
+/**
+ * Every example source the committed targets document, keyed exactly as
+ * `translationOwnership` keys the store, so a stored body finds the Lua it was
+ * translated from and the targets that ship it. Unlike ownership it keeps the
+ * sources no translation covers yet: a body is judged against the other
+ * versions of its example, whether or not those have their own translation.
+ */
+export function exampleSourceIndex(
+  targets: readonly ApiTarget[] = loadApiTargets(),
+): ExampleSourceIndex {
+  const sources = new Map<string, Map<string, { lua: string; targets: Set<string> }>>();
+  const documented = new Map<string, Set<string>>();
+  const namespaces = new Set<string>();
+  for (const target of committedTargets(targets)) {
+    const names = new Set<string>();
+    documented.set(target.id, names);
+    const index = (fqn: string, lua: string) => {
+      const hash = hashExampleSource(lua);
+      const byHash = sources.get(fqn) ?? new Map<string, { lua: string; targets: Set<string> }>();
+      sources.set(fqn, byHash);
+      const entry = byHash.get(hash) ?? { lua, targets: new Set<string>() };
+      byHash.set(hash, entry);
+      entry.targets.add(target.id);
+    };
+    for (const module of [...loadTargetModules(target), ...loadTargetEditorModules(target)]) {
+      namespaces.add(module.namespace);
+      const parsed = parseDefoldApiDoc(module.doc);
+      for (const member of [
+        ...parsed.functions,
+        ...parsed.constants,
+        ...parsed.variables,
+        ...parsed.properties,
+      ]) {
+        names.add(member.name);
+      }
+      for (const fn of parsed.functions) {
+        for (const segment of splitExampleSources(fn.examples ?? "")) index(fn.name, segment.code);
+      }
+      for (const { key, lua } of proseLuaFences(parsed)) index(key, lua);
+    }
+  }
+  return { sources, documented, namespaces };
+}
+
 /**
  * The kind factory names a translation can call, read from the manifest that
  * renders every kind subpath's export clause — so a kind added there, or a
@@ -461,7 +519,7 @@ export function referencedNamespaces(
 }
 
 /** The receiver's dotted text when it is built only from identifiers and property accesses. */
-function dottedChain(node: ts.Expression): string | undefined {
+export function dottedChain(node: ts.Expression): string | undefined {
   if (ts.isIdentifier(node)) return node.text;
   if (!ts.isPropertyAccessExpression(node)) return undefined;
   const head = dottedChain(node.expression);
