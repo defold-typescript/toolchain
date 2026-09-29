@@ -245,6 +245,50 @@ export function refDocSlotKeys(doc: unknown): string[] {
   return keys;
 }
 
+const LUA_LITERALS: ReadonlySet<string> = new Set(["true", "false", "nil"]);
+
+// The most values a `LuaMultiReturn<...>` type text can hold: the longest of
+// its tuples, so `LuaMultiReturn<[false] | [true, number, number]>` holds 3.
+function multiReturnArity(text: string): number | undefined {
+  const source = ts.createSourceFile("return.ts", `type T = ${text};`, ts.ScriptTarget.Latest);
+  const [statement] = source.statements;
+  if (statement === undefined || !ts.isTypeAliasDeclaration(statement)) return undefined;
+  const type = statement.type;
+  if (!ts.isTypeReferenceNode(type) || !ts.isIdentifier(type.typeName)) return undefined;
+  if (type.typeName.text !== "LuaMultiReturn") return undefined;
+  const [argument] = type.typeArguments ?? [];
+  if (argument === undefined) return undefined;
+  const tuples = ts.isUnionTypeNode(argument) ? argument.types : [argument];
+  const lengths = tuples.flatMap((tuple) =>
+    ts.isTupleTypeNode(tuple) ? [tuple.elements.length] : [],
+  );
+  return lengths.length === 0 ? undefined : Math.max(...lengths);
+}
+
+// Each unnamed multi-value return a library page declares, keyed
+// `<fn>:return:`, with the values its prose names in tuple order: the leading
+// code spans, one per tuple position. `components` is empty when the prose
+// names fewer values than the tuple holds.
+export function tupleComponentKeys(doc: unknown): { key: string; components: readonly string[] }[] {
+  const module = parseDefoldApiDoc(doc);
+  const slots: { key: string; components: readonly string[] }[] = [];
+  const addFunction = (fn: ApiFunction): void => {
+    for (const slot of fn.returnValues) {
+      if (slot.name !== "" || slot.types.length !== 1) continue;
+      const arity = multiReturnArity(slot.types[0] ?? "");
+      if (arity === undefined) continue;
+      const named = [...htmlToDocText(slot.doc).matchAll(CODE_SPAN)]
+        .map((match) => match[1] ?? "")
+        .filter((name) => /^[A-Za-z_]\w*$/.test(name) && !LUA_LITERALS.has(name))
+        .slice(0, arity);
+      slots.push({ key: `${fn.name}:return:`, components: named.length < arity ? [] : named });
+    }
+  };
+  for (const fn of module.functions) addFunction(fn);
+  for (const typedef of module.typedefs) for (const fn of typedef.functions ?? []) addFunction(fn);
+  return slots;
+}
+
 function typeFieldKeys(prefix: string, type: ts.TypeNode | undefined, keys: string[]): void {
   if (type === undefined) return;
   if (ts.isParenthesizedTypeNode(type) || ts.isArrayTypeNode(type)) {
