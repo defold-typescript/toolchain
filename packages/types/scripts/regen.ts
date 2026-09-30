@@ -7,12 +7,7 @@ import {
   type SkipOverloadRule,
   withholdOverloads,
 } from "../src/api-doc";
-import {
-  emitDeclarations,
-  emitSymbolSignatures,
-  mapTypeWithLeaves,
-  type SymbolSignature,
-} from "../src/emit-dts";
+import { emitDeclarations, emitSymbolSignatures, type SymbolSignature } from "../src/emit-dts";
 import {
   applyMessageDeprecations,
   applyMessageFieldCorrections,
@@ -142,19 +137,21 @@ export interface ModuleManifestEntry {
   readonly doc: unknown;
   readonly outFile: string;
   // Each item drops one member of any element kind — a FUNCTION, a VARIABLE, a
-  // CONSTANT or an ENUM member — by an exact stripped local (`get`), or — when it
-  // ends in `.` — a segment prefix dropping everything beneath it (`ui.`). An
-  // ENUM whose every member is dropped emits no alias either. The field keeps its
-  // historic name; its reach is not limited to functions.
+  // CONSTANT, an ENUM member, a STRUCT or an aliasing TYPEDEF — by an exact
+  // stripped local (`get`), or — when it ends in `.` — a segment prefix dropping
+  // everything beneath it (`ui.`). An ENUM whose every member is dropped emits no
+  // alias either. The field keeps its historic name; its reach is not limited to
+  // functions.
   readonly skipFunctions?: readonly string[];
   readonly skipOverloads?: readonly SkipOverloadRule[];
   readonly importsFrom?: string;
   readonly moduleId?: string;
   readonly sourceProvenance?: DocSourceProvenance;
-  // Overrides the shared token -> TS type mapping for this entry alone. Reserved
-  // for tokens no runtime namespace uses, so `DEFOLD_TYPE_MAP` keeps describing
-  // only the runtime surface.
-  readonly mapType?: (token: string) => string;
+  // Extra token -> TS type leaves for this entry alone, resolved ahead of the
+  // shared mapping and beside the module's declared types. Reserved for tokens no
+  // runtime namespace uses, so `DEFOLD_TYPE_MAP` keeps describing only the
+  // runtime surface.
+  readonly typeLeaves?: Readonly<Record<string, string>>;
   // The classification map this entry's index notes read; absent means the
   // engine map. A library or extension declaration names its page keys.
   readonly indexBaseSource?: IndexBaseSource;
@@ -249,13 +246,11 @@ const EDITOR_TYPE_MAP: Readonly<Record<string, string>> = {
   "editor.message": 'Opaque<"message">',
 };
 
-const mapEditorType = mapTypeWithLeaves(EDITOR_TYPE_MAP);
-
 // The named type maps an `editorModules` entry may select. A closed set, so an
 // unknown selector fails loudly instead of silently falling back to the runtime
 // token mapping and emitting `unknown` for every editor handle.
-const NAMED_TYPE_MAPS: Readonly<Record<string, (token: string) => string>> = {
-  editor: mapEditorType,
+const NAMED_TYPE_MAPS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  editor: EDITOR_TYPE_MAP,
 };
 
 // The subdirectory the namespace-shaped libraries the editor VM exposes
@@ -286,7 +281,9 @@ function oneLevelDeeper(importPath: string): string {
 // The `skipFunctions` rules a target declares in `api-targets.json` withhold
 // members for reasons the registry data alone cannot state. Rules are local
 // names — the `<namespace>.` prefix is stripped before matching — and they
-// withhold any member: FUNCTIONs, VARIABLEs, CONSTANTs and ENUM members alike.
+// withhold any member: FUNCTIONs, VARIABLEs, CONSTANTs, ENUM members, STRUCTs
+// and aliasing TYPEDEFs alike. A TYPEDEF that names no aliased type keeps its
+// flat handle path and is never withheld.
 // An ENUM whose every member is withheld emits no alias.
 //
 // On a `b2d.body` entry they withhold what that release documents but neither
@@ -355,7 +352,7 @@ export function loadTargetEditorModules(
           ? oneLevelDeeper(target.coreTypesImport)
           : target.coreTypesImport),
       ...(module.skipFunctions ? { skipFunctions: module.skipFunctions } : {}),
-      ...(module.mapType ? { mapType: NAMED_TYPE_MAPS[module.mapType] } : {}),
+      ...(module.mapType ? { typeLeaves: NAMED_TYPE_MAPS[module.mapType] } : {}),
     };
     return entry;
   });
@@ -443,7 +440,7 @@ interface PreparedGeneratedModule {
   knownConstantFqns: ReadonlySet<string>;
   translations: TranslationStore;
   urlParameters: UrlParameterTable;
-  mapType: ((token: string) => string) | undefined;
+  typeLeaves: Readonly<Record<string, string>> | undefined;
   dropped: string[];
 }
 
@@ -461,11 +458,26 @@ function prepareGeneratedModule(
   const rules = entry.skipFunctions ?? [];
   const exact = new Set(rules.filter((rule) => !rule.endsWith(".")));
   const segments = rules.filter((rule) => rule.endsWith("."));
+  const localOf = (name: string): string =>
+    name.startsWith(prefix) ? name.slice(prefix.length) : name;
   const withheld = (name: string): boolean => {
-    const local = name.startsWith(prefix) ? name.slice(prefix.length) : name;
+    const local = localOf(name);
     if (!exact.has(local) && !segments.some((segment) => local.startsWith(segment))) return false;
     dropped.push(name);
     return true;
+  };
+  // An exact rule a value and a type both answer to (`render_target`) names the
+  // value, the member every such rule was written to withhold; a segment rule
+  // still takes the whole subtree, types included.
+  const valueLocals = new Set(
+    [...module.functions, ...module.variables, ...module.constants].map((m) => localOf(m.name)),
+  );
+  const withheldType = (name: string): boolean => {
+    const local = localOf(name);
+    if (valueLocals.has(local) && !segments.some((segment) => local.startsWith(segment))) {
+      return false;
+    }
+    return withheld(name);
   };
   module.functions = module.functions.filter((fn) => !withheld(fn.name));
   module.variables = module.variables.filter((v) => !withheld(v.name));
@@ -480,6 +492,8 @@ function prepareGeneratedModule(
       (e) => e.members.length === 0 || !e.members.every((member) => withheldConstants.has(member)),
     );
   }
+  if (module.structs) module.structs = module.structs.filter((s) => !withheldType(s.name));
+  module.typedefs = module.typedefs.filter((t) => t.aliasOf === undefined || !withheldType(t.name));
   module = withholdOverloads(module, entry.skipOverloads ?? []);
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
   const translations = options?.translations ?? loadTranslations();
@@ -489,7 +503,7 @@ function prepareGeneratedModule(
     knownConstantFqns,
     translations,
     urlParameters,
-    mapType: entry.mapType,
+    typeLeaves: entry.typeLeaves,
     dropped,
   };
 }
@@ -498,13 +512,13 @@ export function generateModuleDeclaration(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): GenerateResult {
-  const { module, knownConstantFqns, translations, urlParameters, mapType, dropped } =
+  const { module, knownConstantFqns, translations, urlParameters, typeLeaves, dropped } =
     prepareGeneratedModule(entry, options);
   const emitted = emitDeclarations(module, {
     knownConstantFqns,
     translations,
     urlParameters,
-    ...(mapType ? { mapType } : {}),
+    ...(typeLeaves ? { typeLeaves } : {}),
     ...(entry.indexBaseSource ? { indexBaseSource: entry.indexBaseSource } : {}),
   });
   const importsFrom = entry.importsFrom ?? "../src/core-types";
@@ -522,14 +536,14 @@ export function generateModuleSignatures(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): SymbolSignature[] {
-  const { module, knownConstantFqns, urlParameters, mapType } = prepareGeneratedModule(
+  const { module, knownConstantFqns, urlParameters, typeLeaves } = prepareGeneratedModule(
     entry,
     options,
   );
   return emitSymbolSignatures(module, {
     knownConstantFqns,
     urlParameters,
-    ...(mapType ? { mapType } : {}),
+    ...(typeLeaves ? { typeLeaves } : {}),
   });
 }
 
