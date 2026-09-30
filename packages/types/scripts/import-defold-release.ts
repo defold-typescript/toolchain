@@ -13,7 +13,7 @@ import {
 } from "./sync-api-docs";
 
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
-const LUA_NAMESPACE = /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$/;
+const LUA_NAMESPACE = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
 const DECLARED_NAME_KINDS = new Set(["CONSTANT", "ENUM", "STRUCT", "TYPEDEF", "CLASS"]);
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
@@ -25,19 +25,48 @@ const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 // excusing their bare names would suppress a real runtime namespace instead.
 const EDITOR_MAPPED_NAMESPACES = new Set(EDITOR_MANIFEST.map((source) => source.namespace));
 
-// The set of namespaces promoted into the generated surface at Defold 1.13.0.
-// Held here rather than derived from the root release model because the
+// Namespaces promoted into the generated surface for the first time at a given
+// release. Held here rather than derived from the root release model because the
 // per-package `rootDir` boundary forbids importing outside this package tree;
 // `scripts/release-model.test.ts` correspondence-guards this against the model.
-export const DEFOLD_1_13_PROMOTED_NAMESPACES = [
-  "b2d.chain",
-  "b2d.fixture",
-  "b2d.joint",
-  "b2d.shape",
-  "b2d.world",
-  "compute",
-  "material",
-] as const;
+export const PROMOTED_NAMESPACES_BY_VERSION: Readonly<Record<string, readonly string[]>> = {
+  "1.13.0": [
+    "b2d.chain",
+    "b2d.fixture",
+    "b2d.joint",
+    "b2d.shape",
+    "b2d.world",
+    "compute",
+    "material",
+  ],
+  "1.13.2": [
+    "bullet3d",
+    "bullet3d.collision_object",
+    "bullet3d.constraint",
+    "bullet3d.rigid_body",
+    "bullet3d.shape",
+    "bullet3d.world",
+  ],
+};
+
+function compareVersions(a: string, b: string): number {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let index = 0; index < Math.max(pa.length, pb.length); index += 1) {
+    const delta = (pa[index] ?? 0) - (pb[index] ?? 0);
+    if (delta !== 0) return delta;
+  }
+  return 0;
+}
+
+// A baseline that predates a promotion has no fixture for the promoted namespace,
+// so the import of the promoting release, and of every later one, seeds it empty.
+export function promotedNamespacesThrough(version: string): string[] {
+  return Object.keys(PROMOTED_NAMESPACES_BY_VERSION)
+    .filter((release) => compareVersions(release, version) <= 0)
+    .sort(compareVersions)
+    .flatMap((release) => PROMOTED_NAMESPACES_BY_VERSION[release] ?? []);
+}
 
 interface RawElement extends Record<string, unknown> {
   type?: string;
@@ -474,7 +503,7 @@ export function parseReleaseImportArgs(args: readonly string[]): ReleaseImportAr
   return { version, check, json, ...(zipPath ? { zipPath } : {}) };
 }
 
-function loadBaseline(packageRoot = PACKAGE_ROOT): ReleaseBaseline {
+function loadBaseline(version: string, packageRoot = PACKAGE_ROOT): ReleaseBaseline {
   const registry = JSON.parse(readFileSync(resolve(packageRoot, "api-targets.json"), "utf8")) as {
     targets: Array<{
       id: string;
@@ -493,7 +522,7 @@ function loadBaseline(packageRoot = PACKAGE_ROOT): ReleaseBaseline {
   const modules = target.modules
     .filter((module) => SYNC_MANIFEST.some((source) => source.namespace === module.namespace))
     .map(load);
-  for (const namespace of DEFOLD_1_13_PROMOTED_NAMESPACES) {
+  for (const namespace of promotedNamespacesThrough(version)) {
     if (modules.some((module) => module.namespace === namespace)) continue;
     modules.push({
       namespace,
@@ -517,7 +546,7 @@ if (import.meta.main) {
     const plan = buildReleaseImportPlan({
       version: args.version,
       zip: resolved.zip,
-      baseline: loadBaseline(),
+      baseline: loadBaseline(args.version),
     });
     if (args.json) process.stdout.write(releaseImportReportJson(plan));
     else {

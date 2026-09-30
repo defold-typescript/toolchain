@@ -1424,6 +1424,67 @@ describe("emitDeclarations", () => {
     expect(out).not.toContain("function delete(");
   });
 
+  test("a struct nested under a reserved-name function is reachable through its alias", () => {
+    const module: ApiModule = {
+      namespace: "editor",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "editor.prefs.schema.enum",
+          brief: "",
+          description: "",
+          parameters: [
+            {
+              name: "opts",
+              doc: "",
+              types: ["editor.prefs.schema.enum.options"],
+              isOptional: false,
+            },
+          ],
+          returnValues: [{ name: "value", doc: "", types: ["string"], isOptional: false }],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+      structs: [
+        {
+          name: "editor.prefs.schema.enum.options",
+          brief: "",
+          description: "",
+          members: [{ name: "values", doc: "", type: "string[]", isOptional: false }],
+        },
+      ],
+    };
+    const files = new Map([
+      ["/decl.d.ts", emitDeclarations(module)],
+      [
+        "/use.ts",
+        [
+          'const opts: editor.prefs.schema.enum.options = { values: ["a"] };',
+          "const value: string = editor.prefs.schema.enum(opts);",
+          "void value;",
+        ].join("\n"),
+      ],
+    ]);
+    const options: ts.CompilerOptions = { strict: true, noEmit: true, lib: ["lib.es2022.d.ts"] };
+    const host = ts.createCompilerHost(options);
+    const readFile = host.readFile.bind(host);
+    host.fileExists = (file) => files.has(file) || ts.sys.fileExists(file);
+    host.readFile = (file) => files.get(file) ?? readFile(file);
+    host.getSourceFile = (file, target) => {
+      const text = files.get(file) ?? ts.sys.readFile(file);
+      return text === undefined ? undefined : ts.createSourceFile(file, text, target);
+    };
+    const program = ts.createProgram([...files.keys()], options, host);
+    const messages = ts
+      .getPreEmitDiagnostics(program)
+      .map((d) => `${d.file?.fileName}: ${ts.flattenDiagnosticMessageText(d.messageText, "\n")}`);
+    expect(messages).toEqual([]);
+  });
+
   test("a reserved-word parameter name takes the trailing-underscore escape", () => {
     const module: ApiModule = {
       namespace: "thing",

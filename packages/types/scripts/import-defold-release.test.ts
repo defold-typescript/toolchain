@@ -5,8 +5,8 @@ import { join, resolve } from "node:path";
 import {
   applyReleaseImport,
   buildReleaseImportPlan,
-  DEFOLD_1_13_PROMOTED_NAMESPACES,
   parseReleaseImportArgs,
+  promotedNamespacesThrough,
   releaseImportReportJson,
 } from "./import-defold-release";
 import { EDITOR_MANIFEST, EDITOR_VM_MANIFEST, type ZipAccessor } from "./sync-api-docs";
@@ -50,8 +50,8 @@ function fn(
 }
 
 describe("buildReleaseImportPlan", () => {
-  test("the 1.13 promotion explicitly covers every new runtime namespace", () => {
-    expect(DEFOLD_1_13_PROMOTED_NAMESPACES).toEqual([
+  test("a release's promotions apply to its own import and every later one, never an earlier one", () => {
+    const b2dAndFriends = [
       "b2d.chain",
       "b2d.fixture",
       "b2d.joint",
@@ -59,7 +59,18 @@ describe("buildReleaseImportPlan", () => {
       "b2d.world",
       "compute",
       "material",
-    ]);
+    ];
+    const bullet3d = [
+      "bullet3d",
+      "bullet3d.collision_object",
+      "bullet3d.constraint",
+      "bullet3d.rigid_body",
+      "bullet3d.shape",
+      "bullet3d.world",
+    ];
+    expect(promotedNamespacesThrough("1.12.4")).toEqual([]);
+    expect(promotedNamespacesThrough("1.13.1")).toEqual(b2dAndFriends);
+    expect(promotedNamespacesThrough("1.13.2")).toEqual([...b2dAndFriends, ...bullet3d]);
   });
 
   test("inventories parsed namespaces rather than paths and reports namespace and symbol deltas", () => {
@@ -196,6 +207,23 @@ describe("buildReleaseImportPlan", () => {
       { namespace: "orphan", entries: ["doc/orphan.json"], symbols: ["orphan.run"] },
     ]);
     expect(plan.ready).toBe(false);
+  });
+
+  test("reports an unmapped namespace whose segments contain an underscore", () => {
+    const zip = fakeZip({
+      "doc/alpha.json": apiDoc("alpha", [fn("alpha.old")]),
+      "doc/rigid.json": apiDoc("orphan.rigid_body", [fn("orphan.rigid_body.get_mass")]),
+    });
+
+    const plan = buildReleaseImportPlan({ version: "1.13.0", zip, baseline });
+
+    expect(plan.blockers.unmappedFunctionNamespaces).toEqual([
+      {
+        namespace: "orphan.rigid_body",
+        entries: ["doc/rigid.json"],
+        symbols: ["orphan.rigid_body.get_mass"],
+      },
+    ]);
   });
 
   test("reads struct member type strings and resolves composite tokens", () => {

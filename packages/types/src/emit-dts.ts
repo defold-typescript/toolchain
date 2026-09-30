@@ -3825,7 +3825,8 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   // keyword is otherwise omitted to keep every alias-free module byte-identical.
   const hasAliases =
     variables.some((v) => TS_RESERVED_NAMES.has(v.name)) ||
-    functions.some((fn) => TS_RESERVED_NAMES.has(fn.name));
+    functions.some((fn) => TS_RESERVED_NAMES.has(fn.name)) ||
+    [...nestedRoot.keys()].some((segment) => TS_RESERVED_NAMES.has(segment));
   const decl = hasAliases ? "export " : "";
 
   const lines: string[] = [];
@@ -3902,6 +3903,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     }
   }
 
+  aliasReservedSegments(nestedRoot.keys(), aliases);
   for (const alias of [...aliases].sort((a, b) => a.public.localeCompare(b.public))) {
     lines.push(`${INDENT}export { ${alias.internal} as ${alias.public} };`);
   }
@@ -3917,14 +3919,20 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
       // A reserved-name member inside a nested namespace gets the same recovery as
       // a top-level one: emitted un-exported as `_<name>` and re-exported under the
       // reserved name. The alias switches this namespace out of implicit-export mode,
-      // so its siblings then need an explicit `export` to stay reachable.
+      // so its siblings then need an explicit `export` to stay reachable. A
+      // reserved segment is itself declared as `_<segment>`, merging with a
+      // same-named function, and reached through the parent's alias.
       const segmentAliases: { internal: string; public: string }[] = [];
       const segmentDecl =
         group.variables.some((v) => TS_RESERVED_NAMES.has(v.name)) ||
-        group.functions.some((fn) => TS_RESERVED_NAMES.has(fn.name))
+        group.functions.some((fn) => TS_RESERVED_NAMES.has(fn.name)) ||
+        [...group.children.keys()].some((child) => TS_RESERVED_NAMES.has(child))
           ? "export "
           : "";
-      lines.push(`${indent}${outerDecl}namespace ${segment} {`);
+      const reservedSegment = TS_RESERVED_NAMES.has(segment);
+      lines.push(
+        `${indent}${reservedSegment ? "" : outerDecl}namespace ${reservedSegment ? `_${segment}` : segment} {`,
+      );
       for (const declaration of group.typeDeclarations) {
         lines.push(...declaration.lines(bodyIndent, segmentDecl));
       }
@@ -3967,6 +3975,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
           `${bodyIndent}${reserved ? "" : segmentDecl}${emitFunction(fn, emitName, mapType, resolver, constantTokens, urlParameters)}`,
         );
       }
+      aliasReservedSegments(group.children.keys(), segmentAliases);
       for (const alias of [...segmentAliases].sort((a, b) => a.public.localeCompare(b.public))) {
         lines.push(`${bodyIndent}export { ${alias.internal} as ${alias.public} };`);
       }
@@ -4560,6 +4569,20 @@ function aliasName(name: string, aliases: { internal: string; public: string }[]
   const internal = `_${name}`;
   aliases.push({ internal, public: name });
   return internal;
+}
+
+// A nested namespace named by a reserved word is emitted as `_<segment>`; its
+// parent re-exports it under the reserved name, sharing the alias a same-named
+// function already recorded.
+function aliasReservedSegments(
+  segments: Iterable<string>,
+  aliases: { internal: string; public: string }[],
+): void {
+  for (const segment of segments) {
+    if (!TS_RESERVED_NAMES.has(segment)) continue;
+    if (aliases.some((alias) => alias.public === segment)) continue;
+    aliases.push({ internal: `_${segment}`, public: segment });
+  }
 }
 
 function emitVariable(
