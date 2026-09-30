@@ -9,6 +9,20 @@ export interface ApiModule {
   constants: ApiConstant[];
   properties: ApiProperty[];
   typedefs: ApiTypedef[];
+  /**
+   * Each ref-doc `ENUM`, whose members are also lowered into `constants`. Absent
+   * on a hand-built module, which reads the same as an empty list.
+   */
+  enums?: ApiEnum[];
+}
+
+/** A ref-doc `ENUM`: a named set of constants, each lowered into `constants`. */
+export interface ApiEnum {
+  name: string;
+  brief: string;
+  description: string;
+  /** The member FQNs, in documentation order. */
+  members: string[];
 }
 
 export interface ApiProperty {
@@ -34,6 +48,14 @@ export interface ApiConstant {
   name: string;
   brief: string;
   description: string;
+  /**
+   * Present when the constant is a member of an `ENUM` whose value type is
+   * `string` (`parameters[0].types`); absence means a number, as every
+   * pre-`ENUM` constant is.
+   */
+  valueType?: "string";
+  /** Present when an `ENUM` member is typed `<ENUM>|nil`: some platforms leave it unset. */
+  nilable?: true;
   /** See {@link ApiFunction.global}. */
   global?: true;
 }
@@ -168,6 +190,7 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
   const constants: ApiConstant[] = [];
   const properties: ApiProperty[] = [];
   const typedefs: ApiTypedef[] = [];
+  const enums: ApiEnum[] = [];
 
   for (const element of elements) {
     if (!isRecord(element)) continue;
@@ -189,10 +212,29 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
       properties.push(doc === property.description ? property : { ...property, description: doc });
     } else if (type === "TYPEDEF") {
       typedefs.push(parseTypedef(element));
+    } else if (type === "ENUM") {
+      const members = parseEnumMembers(element);
+      constants.push(...members);
+      enums.push({
+        name: stringOr(element.name, ""),
+        brief: stringOr(element.brief, ""),
+        description: stringOr(element.description, ""),
+        members: members.map((m) => m.name),
+      });
     }
   }
 
-  return { namespace, brief, description, functions, variables, constants, properties, typedefs };
+  return {
+    namespace,
+    brief,
+    description,
+    functions,
+    variables,
+    constants,
+    properties,
+    typedefs,
+    enums,
+  };
 }
 
 // Withholds one overload of a documented function — the one whose `param` has
@@ -279,6 +321,27 @@ function parseConstant(element: Record<string, unknown>): ApiConstant {
     description: stringOr(element.description, ""),
     ...globalKey(element),
   };
+}
+
+// A member carries one `doc` string where a constant carried `brief` and
+// `description`; both take it.
+function parseEnumMembers(element: Record<string, unknown>): ApiConstant[] {
+  const [value] = parseParameterList(element.parameters);
+  const valueType = value?.types.length === 1 && value.types[0] === "string" ? "string" : null;
+  const raw = Array.isArray(element.members) ? element.members : [];
+  const out: ApiConstant[] = [];
+  for (const member of raw) {
+    if (!isRecord(member)) continue;
+    const doc = stringOr(member.doc, "");
+    out.push({
+      name: stringOr(member.name, ""),
+      brief: doc,
+      description: doc,
+      ...(valueType === null ? {} : { valueType }),
+      ...(stringOr(member.type, "").endsWith("|nil") ? { nilable: true } : {}),
+    });
+  }
+  return out;
 }
 
 function parseFunction(element: Record<string, unknown>): ApiFunction {

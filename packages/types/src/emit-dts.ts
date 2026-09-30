@@ -1445,9 +1445,11 @@ export function constantUnionAlias(fqns: readonly string[]): ConstantUnionAlias 
 export function constantUnionAliasDeclarations(namespace: string): string[] {
   return CONSTANT_UNION_ALIASES.filter((row) => row.home === namespace)
     .sort((a, b) => a.name.localeCompare(b.name))
-    .map(
-      (row) => `type ${row.name} = ${row.members.map((member) => `typeof ${member}`).join(" | ")};`,
-    );
+    .map((row) => unionAliasDeclaration(row.name, row.members));
+}
+
+function unionAliasDeclaration(name: string, members: readonly string[]): string {
+  return `type ${name} = ${members.map((member) => `typeof ${member}`).join(" | ")};`;
 }
 
 const DOC_CONSTANT_TOKEN =
@@ -3410,19 +3412,19 @@ function typedefAlias(name: string, mapType: (token: string) => string): string 
 export function emitDeclarations(module: ApiModule, options?: EmitOptions): string {
   const prefix = `${module.namespace}.`;
 
-  const constantFqns = new Set(module.constants.map((c) => c.name));
+  const constantsByFqn = new Map(module.constants.map((c) => [c.name, c]));
   const knownConstantFqns = options?.knownConstantFqns;
   const translations = options?.translations ?? {};
   const urlParameters = options?.urlParameters ?? [];
   const baseNotes = indexBaseNoteResolver(options?.indexBaseSource ?? "engine");
   const baseMapType = options?.mapType ?? defaultMapType;
   const mapType = (token: string): string =>
-    constantFqns.has(token) || knownConstantFqns?.has(token)
-      ? brandType(token)
+    constantsByFqn.has(token) || knownConstantFqns?.has(token)
+      ? brandType(token, constantsByFqn.get(token))
       : baseMapType(token);
   const constantTokens = constantSlotTokenResolver(
     module,
-    new Set([...constantFqns, ...(knownConstantFqns ?? [])]),
+    new Set([...constantsByFqn.keys(), ...(knownConstantFqns ?? [])]),
   );
 
   const constants = module.constants
@@ -3453,6 +3455,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   // segment. One or two leading identifier segments qualify; anything deeper,
   // and any non-identifier segment, stays dropped.
   const nestedRoot = collectNestedGroups(module, prefix);
+  const enumAliases = collectEnumAliases(module, constants, nestedRoot);
 
   // Colon methods (`client:send`) are FUNCTION elements named `<receiver>:<method>`
   // and are NOT namespace-prefixed, so they fail the flat-identifier test in
@@ -3496,6 +3499,9 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   for (const aliasDecl of constantUnionAliasDeclarations(module.namespace)) {
     lines.push(`${INDENT}${decl}${aliasDecl}`);
   }
+  for (const alias of enumAliases.topLevel) {
+    lines.push(`${INDENT}${decl}${unionAliasDeclaration(alias.name, alias.members)}`);
+  }
   const handleIndent = `${INDENT}${INDENT}`;
   for (const receiver of handleReceivers) {
     const group = handleGroups.get(receiver) ?? [];
@@ -3514,7 +3520,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     for (const docLine of summaryDocLines(c.original.brief, c.original.description, INDENT)) {
       lines.push(docLine);
     }
-    lines.push(`${INDENT}${decl}const ${c.name}: ${brandType(c.fqn)};`);
+    lines.push(`${INDENT}${decl}const ${c.name}: ${constantType(c)};`);
   }
   const aliases: { internal: string; public: string }[] = [];
   for (const v of variables) {
@@ -3580,6 +3586,21 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
           ? "export "
           : "";
       lines.push(`${indent}${outerDecl}namespace ${segment} {`);
+      for (const alias of group.enumAliases) {
+        lines.push(
+          `${bodyIndent}${segmentDecl}${unionAliasDeclaration(alias.name, alias.members)}`,
+        );
+      }
+      for (const c of group.constants) {
+        for (const docLine of summaryDocLines(
+          c.original.brief,
+          c.original.description,
+          bodyIndent,
+        )) {
+          lines.push(docLine);
+        }
+        lines.push(`${bodyIndent}${segmentDecl}const ${c.name}: ${constantType(c)};`);
+      }
       for (const v of group.variables) {
         const reserved = TS_RESERVED_NAMES.has(v.name);
         const emitName = aliasName(v.name, segmentAliases);
@@ -3677,17 +3698,17 @@ export interface SymbolSignature {
  */
 export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): SymbolSignature[] {
   const prefix = `${module.namespace}.`;
-  const constantFqns = new Set(module.constants.map((c) => c.name));
+  const constantsByFqn = new Map(module.constants.map((c) => [c.name, c]));
   const knownConstantFqns = options?.knownConstantFqns;
   const urlParameters = options?.urlParameters ?? [];
   const baseMapType = options?.mapType ?? defaultMapType;
   const mapType = (token: string): string =>
-    constantFqns.has(token) || knownConstantFqns?.has(token)
-      ? brandType(token)
+    constantsByFqn.has(token) || knownConstantFqns?.has(token)
+      ? brandType(token, constantsByFqn.get(token))
       : baseMapType(token);
   const constantTokens = constantSlotTokenResolver(
     module,
-    new Set([...constantFqns, ...(knownConstantFqns ?? [])]),
+    new Set([...constantsByFqn.keys(), ...(knownConstantFqns ?? [])]),
   );
   const resolver = buildTableDocResolver(
     module.functions.map((fn) => ({
@@ -3738,7 +3759,20 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     out.push({ identity: fnIdentity(fn), tsSignature, slotTypes });
   }
 
-  const nested = flattenNestedGroups(collectNestedGroups(module, prefix));
+  const nestedRoot = collectNestedGroups(module, prefix);
+  const nested = flattenNestedGroups(nestedRoot);
+  for (const c of nested.constants) {
+    out.push({
+      identity: {
+        namespace: module.namespace,
+        kind: "CONSTANT",
+        name: c.fqn,
+        signature: "",
+      },
+      tsSignature: `const ${c.name}: ${constantType(c)};`,
+      slotTypes: NO_SLOTS,
+    });
+  }
   for (const v of nested.variables) {
     out.push({
       identity: {
@@ -3787,12 +3821,14 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     }
   }
 
+  const constants: PreparedConstant[] = [];
   for (const c of module.constants) {
     const prepared = prepareConstant(c, prefix);
     if (prepared === null) continue;
+    constants.push(prepared);
     out.push({
       identity: { namespace: module.namespace, kind: "CONSTANT", name: c.name, signature: "" },
-      tsSignature: `const ${prepared.name}: ${brandType(prepared.fqn)};`,
+      tsSignature: `const ${prepared.name}: ${constantType(prepared)};`,
       slotTypes: NO_SLOTS,
     });
   }
@@ -3834,9 +3870,18 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
   for (const row of CONSTANT_UNION_ALIASES.filter((r) => r.home === module.namespace)) {
     out.push({
       identity: { namespace: module.namespace, kind: "TYPEDEF", name: row.name, signature: "" },
-      tsSignature: `type ${row.name} = ${row.members
-        .map((member) => `typeof ${member}`)
-        .join(" | ")};`,
+      tsSignature: unionAliasDeclaration(row.name, row.members),
+      slotTypes: NO_SLOTS,
+    });
+  }
+
+  // An enum alias is keyed by its local path (`STATUS`, `ui.COLOR`), as the
+  // constant-union aliases above are keyed by their local name.
+  const enumAliases = collectEnumAliases(module, constants, nestedRoot);
+  for (const alias of enumAliases.all) {
+    out.push({
+      identity: { namespace: module.namespace, kind: "TYPEDEF", name: alias.path, signature: "" },
+      tsSignature: unionAliasDeclaration(alias.name, alias.members),
       slotTypes: NO_SLOTS,
     });
   }
@@ -3863,9 +3908,19 @@ interface PreparedVariable {
 // One level of the nested-member tree: the members declared directly under a
 // segment, plus the segments declared beneath it.
 interface NestedGroup {
+  constants: PreparedConstant[];
   variables: PreparedVariable[];
   functions: PreparedFunction[];
+  enumAliases: EnumAlias[];
   children: Map<string, NestedGroup>;
+}
+
+// One `ENUM`'s union alias: `name` is the declared identifier, `path` the local
+// path under the module namespace (`ui.COLOR`), `members` the member FQNs.
+interface EnumAlias {
+  name: string;
+  path: string;
+  members: readonly string[];
 }
 
 // A stripped local carrying one or two leading identifier segments before the
@@ -3882,7 +3937,13 @@ function collectNestedGroups(module: ApiModule, prefix: string): Map<string, Nes
     for (const segment of segments) {
       let next = level.get(segment);
       if (next === undefined) {
-        next = { variables: [], functions: [], children: new Map() };
+        next = {
+          constants: [],
+          variables: [],
+          functions: [],
+          enumAliases: [],
+          children: new Map(),
+        };
         level.set(segment, next);
       }
       group = next;
@@ -3892,6 +3953,14 @@ function collectNestedGroups(module: ApiModule, prefix: string): Map<string, Nes
   };
   const pathOf = (local: string): string[] => local.split(".").slice(0, -1);
 
+  for (const c of module.constants) {
+    const local = stripPrefix(c.name, prefix);
+    if (!NESTED_MEMBER_LOCAL.test(local)) continue;
+    const segments = pathOf(local);
+    const prepared = prepareConstant(c, `${module.namespace}.${segments.join(".")}.`);
+    if (prepared === null) continue;
+    groupAt(segments).constants.push(prepared);
+  }
   for (const v of module.variables) {
     const local = stripPrefix(v.name, prefix);
     if (!NESTED_MEMBER_LOCAL.test(local)) continue;
@@ -3911,6 +3980,7 @@ function collectNestedGroups(module: ApiModule, prefix: string): Map<string, Nes
 
   const sortLevel = (level: Map<string, NestedGroup>): void => {
     for (const group of level.values()) {
+      group.constants.sort((a, b) => a.name.localeCompare(b.name));
       group.variables.sort((a, b) => a.name.localeCompare(b.name));
       group.functions.sort((a, b) =>
         a.name === b.name
@@ -3929,21 +3999,70 @@ function collectNestedGroups(module: ApiModule, prefix: string): Map<string, Nes
 // children). Callers that need no per-segment container read the tree through
 // this rather than re-deriving which members are nested and how deep.
 function flattenNestedGroups(level: ReadonlyMap<string, NestedGroup>): {
+  constants: PreparedConstant[];
   variables: PreparedVariable[];
   functions: PreparedFunction[];
 } {
+  const constants: PreparedConstant[] = [];
   const variables: PreparedVariable[] = [];
   const functions: PreparedFunction[] = [];
   const walk = (current: ReadonlyMap<string, NestedGroup>): void => {
     for (const segment of [...current.keys()].sort((a, b) => a.localeCompare(b))) {
       const group = current.get(segment) as NestedGroup;
+      constants.push(...group.constants);
       variables.push(...group.variables);
       functions.push(...group.functions);
       walk(group.children);
     }
   };
   walk(level);
-  return { variables, functions };
+  return { constants, variables, functions };
+}
+
+// Each `ENUM`'s union alias, placed where its name lands: a flat local
+// (`STATUS`) at the top of the namespace, a nested one (`ui.COLOR`) in the
+// nested group `ui`, which the tree already holds when the members are nested
+// beside it. An enum is aliased only when every member is declared, so the
+// alias never names a constant the module does not emit. The nested groups
+// gain their aliases in place; `topLevel` and `all` are in name order.
+function collectEnumAliases(
+  module: ApiModule,
+  topLevelConstants: readonly PreparedConstant[],
+  nestedRoot: Map<string, NestedGroup>,
+): { topLevel: EnumAlias[]; all: EnumAlias[] } {
+  const prefix = `${module.namespace}.`;
+  const declared = new Set([
+    ...topLevelConstants.map((c) => c.fqn),
+    ...flattenNestedGroups(nestedRoot).constants.map((c) => c.fqn),
+  ]);
+  const topLevel: EnumAlias[] = [];
+  const all: EnumAlias[] = [];
+  const enums = [...(module.enums ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  for (const e of enums) {
+    if (e.members.length === 0 || !e.members.every((m) => declared.has(m))) continue;
+    const path = stripPrefix(e.name, prefix);
+    if (TS_IDENTIFIER.test(path)) {
+      const alias = { name: path, path, members: e.members };
+      topLevel.push(alias);
+      all.push(alias);
+      continue;
+    }
+    if (!NESTED_MEMBER_LOCAL.test(path)) continue;
+    const segments = path.split(".");
+    const name = segments.pop() as string;
+    let level = nestedRoot;
+    let group: NestedGroup | undefined;
+    for (const segment of segments) {
+      group = level.get(segment);
+      if (group === undefined) break;
+      level = group.children;
+    }
+    if (group === undefined) continue;
+    const alias = { name, path, members: e.members };
+    group.enumAliases.push(alias);
+    all.push(alias);
+  }
+  return { topLevel, all };
 }
 
 function prepareFunction(fn: ApiFunction, prefix: string): PreparedFunction | null {
@@ -4047,11 +4166,21 @@ export const NIL_CONSTANTS: ReadonlyMap<string, string> = new Map([
   ],
 ]);
 
-function brandType(fqn: string): string {
+// `constant` is the module's own element for `fqn`, absent for a constant another
+// module declares; an `ENUM` member's value type rides on it.
+function brandType(fqn: string, constant?: ApiConstant): string {
   // `undefined & { __brand }` collapses to `never`, so a nil constant takes no brand.
   if (NIL_CONSTANTS.has(fqn)) return "undefined";
-  const base = STRING_CONSTANTS.has(fqn) ? "string" : "number";
+  const base = constant?.valueType === "string" || STRING_CONSTANTS.has(fqn) ? "string" : "number";
   return `${base} & { readonly __brand: "${fqn}" }`;
+}
+
+// A declared constant's type. A nilable `ENUM` member admits `undefined` here
+// only: a slot naming it still takes the brand, as the value it is documented to
+// accept.
+function constantType(c: PreparedConstant): string {
+  const brand = brandType(c.fqn, c.original);
+  return c.original.nilable === true && brand !== "undefined" ? `${brand} | undefined` : brand;
 }
 
 function prepareVariable(v: ApiVariable, prefix: string): PreparedVariable | null {
