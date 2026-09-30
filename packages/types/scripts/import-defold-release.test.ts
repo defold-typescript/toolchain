@@ -220,6 +220,35 @@ describe("buildReleaseImportPlan", () => {
     ]);
   });
 
+  test("a token naming a type declared anywhere in the release is not a blocker", () => {
+    const zip = fakeZip({
+      "doc/alpha.json": apiDoc("alpha", [
+        fn(
+          "alpha.configure",
+          [{ name: "options", types: ["beta.options", "beta.MODE|nil", "builtin_handle"] }],
+          [{ name: "result", types: ["beta.undeclared"] }],
+        ),
+      ]),
+      "doc/beta.json": apiDoc("beta", [
+        { type: "STRUCT", name: "beta.options", members: [] },
+        { type: "ENUM", name: "beta.MODE", members: [] },
+      ]),
+      "doc/builtins.json": apiDoc("builtins", [
+        {
+          type: "TYPEDEF",
+          name: "builtin_handle",
+          parameters: [{ name: "value", types: ["userdata"] }],
+        },
+      ]),
+    });
+
+    const plan = buildReleaseImportPlan({ version: "1.13.0", zip, baseline });
+
+    expect(plan.blockers.unknownTypes).toEqual([
+      { namespace: "alpha", symbol: "alpha.configure", tokens: ["beta.undeclared"] },
+    ]);
+  });
+
   // The editor-scripting namespace is mapped by `EDITOR_MANIFEST`, never by
   // `api-targets.json` — it emits through `EDITOR_MODULE_MANIFEST`, not the
   // runtime module set the baseline is built from. Reading mapped-ness off the
