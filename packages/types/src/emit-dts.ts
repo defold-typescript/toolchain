@@ -61,6 +61,10 @@ export interface EmitOptions {
   // `unknown`. The module's own declarations resolve without it. Read only by the
   // default engine mapper; a caller-supplied `mapType` keeps its own vocabulary.
   declaredTypes?: ReadonlyMap<string, string>;
+  // Tokens a surface names that the engine vocabulary does not (the editor's
+  // handles), resolved ahead of it both as whole tokens and as leaves inside a
+  // composite. Read by the default mapper together with the declared types.
+  typeLeaves?: Readonly<Record<string, string>>;
 }
 
 export const TS_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
@@ -3538,21 +3542,41 @@ function placeTypeDeclarations(
   return topLevel.sort(byName);
 }
 
-// The engine mapper extended with the module's own declared types and those
-// `declared` names from other modules.
-function declaredTypesMapper(
+// The mappers both emit surfaces read. `mapType` is the engine vocabulary with
+// the surface's leaves, the module's own declared types, those `declaredTypes`
+// names from other modules, and constant tokens branded. `rawMapType`, read only
+// for a typedef's own name, leaves the declared paths out: a handle typedef
+// (`editor.schema`) would otherwise map to its own path and alias itself.
+function moduleTypeMappers(
   module: ApiModule,
-  declared: ReadonlyMap<string, string> | undefined,
-): (token: string) => string {
-  return mapTypeWithDeclaredTypes(new Map([...declaredTypePaths([module]), ...(declared ?? [])]));
+  constantsByFqn: ReadonlyMap<string, ApiConstant>,
+  options: EmitOptions | undefined,
+): { rawMapType: (token: string) => string; mapType: (token: string) => string } {
+  const leaves = options?.typeLeaves;
+  const rawMapType = options?.mapType ?? mapTypeWithVocabulary({ leaves });
+  const baseMapType =
+    options?.mapType ??
+    mapTypeWithVocabulary({
+      leaves,
+      declared: new Map([...declaredTypePaths([module]), ...(options?.declaredTypes ?? [])]),
+    });
+  const knownConstantFqns = options?.knownConstantFqns;
+  const mapType = (token: string): string =>
+    constantsByFqn.has(token) || knownConstantFqns?.has(token)
+      ? brandType(token, constantsByFqn.get(token))
+      : baseMapType(token);
+  return { rawMapType, mapType };
 }
 
 /**
  * Move each `STRUCT` and aliasing `TYPEDEF` to the module whose namespace is the
  * longest prefix of its name (`b2d.joint.revolute_definition`, declared in the
  * `b2d` doc, moves to `b2d.joint`). A name no module prefixes stays with the
- * module that declares it. Modules with nothing moved in or out are returned
- * as-is.
+ * module that declares it. A declaration the home already declares under the
+ * same kind and name, or that an earlier module already routed there, is
+ * dropped, so the home's own copy wins; a type sharing a value's name
+ * (`resource.atlas`) is untouched. Modules with nothing moved in or out are
+ * returned as-is.
  */
 export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[] {
   const homeOf = (name: string, declaring: string): string => {
@@ -3597,10 +3621,17 @@ export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[
   return kept.map((module) => {
     const bucket = incoming.get(module.namespace);
     if (bucket === undefined) return module;
+    const unclaimed = (names: Set<string>) => (declaration: { name: string }) => {
+      if (names.has(declaration.name)) return false;
+      names.add(declaration.name);
+      return true;
+    };
+    const structNames = new Set((module.structs ?? []).map((struct) => struct.name));
+    const typedefNames = new Set(module.typedefs.map((typedef) => typedef.name));
     return {
       ...module,
-      structs: [...(module.structs ?? []), ...bucket.structs],
-      typedefs: [...module.typedefs, ...bucket.typedefs],
+      structs: [...(module.structs ?? []), ...bucket.structs.filter(unclaimed(structNames))],
+      typedefs: [...module.typedefs, ...bucket.typedefs.filter(unclaimed(typedefNames))],
     };
   });
 }
@@ -3637,12 +3668,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   const translations = options?.translations ?? {};
   const urlParameters = options?.urlParameters ?? [];
   const baseNotes = indexBaseNoteResolver(options?.indexBaseSource ?? "engine");
-  const rawMapType = options?.mapType ?? defaultMapType;
-  const baseMapType = options?.mapType ?? declaredTypesMapper(module, options?.declaredTypes);
-  const mapType = (token: string): string =>
-    constantsByFqn.has(token) || knownConstantFqns?.has(token)
-      ? brandType(token, constantsByFqn.get(token))
-      : baseMapType(token);
+  const { rawMapType, mapType } = moduleTypeMappers(module, constantsByFqn, options);
   const constantTokens = constantSlotTokenResolver(
     module,
     new Set([...constantsByFqn.keys(), ...(knownConstantFqns ?? [])]),
@@ -3925,12 +3951,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
   const constantsByFqn = new Map(module.constants.map((c) => [c.name, c]));
   const knownConstantFqns = options?.knownConstantFqns;
   const urlParameters = options?.urlParameters ?? [];
-  const rawMapType = options?.mapType ?? defaultMapType;
-  const baseMapType = options?.mapType ?? declaredTypesMapper(module, options?.declaredTypes);
-  const mapType = (token: string): string =>
-    constantsByFqn.has(token) || knownConstantFqns?.has(token)
-      ? brandType(token, constantsByFqn.get(token))
-      : baseMapType(token);
+  const { rawMapType, mapType } = moduleTypeMappers(module, constantsByFqn, options);
   const constantTokens = constantSlotTokenResolver(
     module,
     new Set([...constantsByFqn.keys(), ...(knownConstantFqns ?? [])]),
@@ -5307,30 +5328,25 @@ export function defaultMapType(token: string): string {
 }
 
 /**
- * A mapper that resolves `leaves` both as whole tokens and as leaves inside a
- * composite expression, falling back to the engine vocabulary for the rest.
+ * The engine mapper extended with `leaves`, resolved ahead of the engine
+ * vocabulary, and `declared` (Lua name -> TS path), consulted after it. A whole
+ * token checks `leaves`, the engine's whole-token mapping, then `declared`; a
+ * leaf inside a composite checks `leaves`, the engine leaves, then `declared`.
+ * So a surface's handle brand (`editor.message`) outranks any declared path.
  */
-export function mapTypeWithLeaves(
-  leaves: Readonly<Record<string, string>>,
-): (token: string) => string {
+export function mapTypeWithVocabulary(vocabulary: {
+  leaves?: Readonly<Record<string, string>> | undefined;
+  declared?: ReadonlyMap<string, string> | undefined;
+}): (token: string) => string {
+  const leaves = vocabulary.leaves ?? {};
+  const declared = vocabulary.declared ?? new Map<string, string>();
+  if (Object.keys(leaves).length === 0 && declared.size === 0) return defaultMapType;
   const resolveLeaf = (leaf: string): string | undefined =>
-    Object.hasOwn(leaves, leaf) ? leaves[leaf] : resolveDefoldLeaf(leaf);
+    Object.hasOwn(leaves, leaf) ? leaves[leaf] : (resolveDefoldLeaf(leaf) ?? declared.get(leaf));
   return (token) => {
     if (Object.hasOwn(leaves, token)) return leaves[token] as string;
-    return wholeTokenMapping(token) ?? mapLualsExpression(token, resolveLeaf).ts;
+    return (
+      wholeTokenMapping(token) ?? declared.get(token) ?? mapLualsExpression(token, resolveLeaf).ts
+    );
   };
-}
-
-/**
- * The engine mapper with `declared` (Lua name -> TS path) consulted after the
- * engine vocabulary, both as a whole token and as a leaf inside a composite.
- */
-export function mapTypeWithDeclaredTypes(
-  declared: ReadonlyMap<string, string>,
-): (token: string) => string {
-  if (declared.size === 0) return defaultMapType;
-  const resolveLeaf = (leaf: string): string | undefined =>
-    resolveDefoldLeaf(leaf) ?? declared.get(leaf);
-  return (token) =>
-    wholeTokenMapping(token) ?? declared.get(token) ?? mapLualsExpression(token, resolveLeaf).ts;
 }

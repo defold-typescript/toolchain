@@ -28,7 +28,9 @@ import {
   versionedModuleManifest,
   versionSrcAugmentationImports,
 } from "../scripts/regen";
+import { EDITOR_VM_MANIFEST, extractFixtures, type ZipAccessor } from "../scripts/sync-api-docs";
 import { parseDefoldApiDoc } from "../src/api-doc";
+import { routeTypeDeclarations } from "../src/emit-dts";
 import { unexpressedFixtureNames } from "./declared-fqns";
 
 const GENERATED = resolve(import.meta.dir, "..", "generated");
@@ -41,6 +43,103 @@ const COMMITTED_MODULES = [
   ...EDITOR_MODULE_MANIFEST,
   ...EDITOR_VM_MODULE_MANIFEST,
 ];
+
+// Verbatim 1.13.2 editor-doc declarations: the VM `http` library's typedefs and
+// struct beside one struct the editor namespace owns.
+const EDITOR_HTTP_DOC = {
+  info: { namespace: "editor", brief: "", description: "" },
+  elements: [
+    {
+      type: "TYPEDEF",
+      name: "http.response",
+      brief: "hTTP server response",
+      description: "HTTP server response",
+      returnvalues: [],
+      parameters: [
+        { name: "value", doc: "hTTP server response", types: ["userdata"], is_optional: "False" },
+      ],
+      members: [],
+    },
+    {
+      type: "STRUCT",
+      name: "http.server.request",
+      brief: "hTTP server request",
+      description: "HTTP server request",
+      returnvalues: [],
+      parameters: [],
+      members: [
+        {
+          name: "[string]",
+          doc: "route path parameter extracted from a path pattern",
+          type: "any",
+        },
+        { name: "path", doc: "full matched path, starting with <code>/</code>", type: "string" },
+        { name: "method", doc: 'HTTP request method, e.g. <code>"POST"</code>', type: "string" },
+        {
+          name: "headers",
+          doc: "request headers, keyed by lowercase header name",
+          type: "table<string, string|string[]>",
+        },
+        { name: "query?", doc: "query string", type: "string" },
+        {
+          name: "body?",
+          doc: "request body, whose type depends on the route's <code>as</code> argument",
+          type: "any",
+        },
+      ],
+    },
+    {
+      type: "TYPEDEF",
+      name: "http.server.handler",
+      brief: "hTTP server request handler",
+      description: "HTTP server request handler",
+      returnvalues: [],
+      parameters: [
+        {
+          name: "value",
+          doc: "hTTP server request handler",
+          types: [
+            "fun(request:http.server.request):(http.response|integer|nil, table<string, string>|nil, string|nil)",
+          ],
+          is_optional: "False",
+        },
+      ],
+      members: [],
+    },
+    {
+      type: "STRUCT",
+      name: "editor.command.query.selection",
+      brief: "selection requested by an editor command",
+      description: "Selection requested by an editor command",
+      returnvalues: [],
+      parameters: [],
+      members: [
+        { name: "type", doc: "selection type", type: '"resource"|"outline"|"scene"' },
+        {
+          name: "cardinality",
+          doc: "either the first selected item or all selected items",
+          type: '"one"|"many"',
+        },
+      ],
+    },
+  ],
+};
+
+// The `http` VM fixture production's own split cuts from EDITOR_HTTP_DOC.
+function splitEditorHttpDoc(): unknown {
+  const zipEntry = "doc/editor.apidoc_doc.json";
+  const zip: ZipAccessor = {
+    has: (entry) => entry === zipEntry,
+    read: () => JSON.stringify(EDITOR_HTTP_DOC),
+    entries: () => [zipEntry],
+  };
+  const [fixture] = extractFixtures(
+    zip,
+    EDITOR_VM_MANIFEST.filter((entry) => entry.namespace === "http"),
+  );
+  if (!fixture) throw new Error("http editor VM sync entry missing");
+  return JSON.parse(fixture.contents);
+}
 
 // A string-valued ref-doc ENUM in the element shape Defold 1.13.2 ships.
 function stringEnum(name: string, members: readonly { name: string; type: string }[]) {
@@ -248,6 +347,59 @@ describe("manifest member skips", () => {
     expect(contents).toContain("const KEPT_CONST:");
   });
 
+  test("a rule withholds a STRUCT and an aliasing TYPEDEF by local name or segment", () => {
+    const struct = (name: string) => ({
+      type: "STRUCT",
+      name,
+      brief: "",
+      description: "",
+      parameters: [],
+      returnvalues: [],
+      members: [{ name: "field", doc: "", type: "string" }],
+    });
+    const alias = (name: string) => ({
+      type: "TYPEDEF",
+      name,
+      brief: "",
+      description: "",
+      returnvalues: [],
+      parameters: [{ name: "value", doc: "", types: ['"a"', '"b"'] }],
+    });
+    const { contents, dropped } = generateModuleDeclaration({
+      namespace: "demo",
+      outFile: "demo.d.ts",
+      doc: {
+        info: { namespace: "demo", brief: "d", description: "d" },
+        elements: [
+          struct("demo.gone"),
+          struct("demo.nested.inner"),
+          struct("demo.kept"),
+          alias("demo.gone_alias"),
+          alias("demo.nested.mode"),
+          alias("demo.kept_alias"),
+          alias("demo.shared"),
+          { type: "FUNCTION", name: "demo.shared", brief: "", description: "", parameters: [] },
+        ],
+      },
+      skipFunctions: ["gone", "gone_alias", "nested.", "shared"],
+    });
+    expect(dropped.sort()).toEqual([
+      "demo.gone",
+      "demo.gone_alias",
+      "demo.nested.inner",
+      "demo.nested.mode",
+      "demo.shared",
+    ]);
+    // An exact rule naming both a value and a type withholds the value only.
+    expect(contents).not.toContain("function shared(");
+    expect(contents).toContain('type shared = "a" | "b";');
+    expect(contents).not.toContain("interface gone");
+    expect(contents).not.toContain("type gone_alias");
+    expect(contents).not.toContain("namespace nested");
+    expect(contents).toContain("interface kept {");
+    expect(contents).toContain('type kept_alias = "a" | "b";');
+  });
+
   test("an owned ENUM keeps its string brand, nilable member and alias in both surfaces", () => {
     const { contents } = generateModuleDeclaration(enumEntry);
     expect(contents).toContain(
@@ -426,6 +578,18 @@ describe("editor namespace emit", () => {
     expect(dropped).toContain("json.decode");
   });
 
+  test("withholds the VM libraries' declarations while keeping an editor-owned struct", () => {
+    const { contents, dropped } = generateModuleDeclaration({
+      ...editorEntry(),
+      doc: EDITOR_HTTP_DOC,
+    });
+    expect(contents).not.toContain("namespace http");
+    expect(dropped).toEqual(
+      expect.arrayContaining(["http.response", "http.server.request", "http.server.handler"]),
+    );
+    expect(contents).toContain("interface selection {");
+  });
+
   test("maps the editor handle tokens to opaque types and repairs the mangled array token", () => {
     const { contents } = generateModuleDeclaration(editorEntry());
     expect(contents).toMatch(/function set\([^)]*\): Opaque<"transaction_step">;/);
@@ -471,6 +635,142 @@ describe("editor namespace emit", () => {
         '(props: unknown) => Opaque<"component">;',
     );
     expect(contents).toContain("function tuple(items: unknown[]): unknown;");
+  });
+
+  // Verbatim 1.13.2 command declarations: the editor handle vocabulary must add to
+  // the module's own declared types, not replace them.
+  test("resolves the editor's own declared structs and aliases beside its handle brands", () => {
+    const struct = (name: string, brief: string, members: object[]) => ({
+      type: "STRUCT",
+      name,
+      brief,
+      description: brief,
+      returnvalues: [],
+      parameters: [],
+      members,
+    });
+    const member = (name: string, doc: string, type: string) => ({ name, doc, type });
+    const doc = {
+      info: { namespace: "editor", brief: "", description: "" },
+      elements: [
+        {
+          type: "TYPEDEF",
+          name: "editor.command.location",
+          brief: "a location where an editor command can be displayed",
+          description: "A location where an editor command can be displayed",
+          returnvalues: [],
+          parameters: [
+            {
+              name: "value",
+              doc: "a location where an editor command can be displayed",
+              types: [
+                '"Assets"',
+                '"Bundle"',
+                '"Code"',
+                '"Debug"',
+                '"Edit"',
+                '"Help"',
+                '"Outline"',
+                '"Project"',
+                '"Scene"',
+                '"View"',
+              ],
+              is_optional: "False",
+            },
+          ],
+          members: [],
+        },
+        struct("editor.command.context", "context provided to editor command handler functions", [
+          member(
+            "selection?",
+            "current selection, populated when requested by the command query",
+            "string|userdata|(string|userdata)[]",
+          ),
+          member(
+            "active_view?",
+            "current active editor view, populated when requested by the command query",
+            "userdata",
+          ),
+          member(
+            "argument?",
+            "command argument, populated when requested by the command query",
+            "any",
+          ),
+        ]),
+        struct("editor.command.query.selection", "selection requested by an editor command", [
+          member("type", "selection type", '"resource"|"outline"|"scene"'),
+          member(
+            "cardinality",
+            "either the first selected item or all selected items",
+            '"one"|"many"',
+          ),
+        ]),
+        struct(
+          "editor.command.query.active_view",
+          "active editor view requested by an editor command",
+          [member("type", "active editor view type", '"code"|"scene"|"html"|"form"')],
+        ),
+        struct(
+          "editor.command.query",
+          "a query that controls command availability and provides context to its handler functions",
+          [
+            member("selection?", "current selection request", "editor.command.query.selection"),
+            member(
+              "active_view?",
+              "current active editor view request",
+              "editor.command.query.active_view",
+            ),
+            member(
+              "argument?",
+              "set to true to provide the command argument to the handler functions",
+              "true",
+            ),
+          ],
+        ),
+        struct("editor.command.options", "options used to create an editor command", [
+          member(
+            "label",
+            "user-visible command name, either a string or a localization message",
+            "string|editor.message",
+          ),
+          member(
+            "locations",
+            "non-empty list of locations where the command is displayed",
+            "editor.command.location[]",
+          ),
+          member(
+            "query?",
+            "query that controls command availability and provides context to its handler functions",
+            "editor.command.query",
+          ),
+          member("id?", "keyword identifier that may be used for assigning a shortcut", "string"),
+          member(
+            "active?",
+            "function that additionally checks if a command is active in the current context",
+            "fun(opts:editor.command.context):boolean",
+          ),
+          member(
+            "run?",
+            "function that is invoked when the user decides to execute the command",
+            "fun(opts:editor.command.context):any",
+          ),
+        ]),
+      ],
+    };
+    const { contents } = generateModuleDeclaration({ ...editorEntry(), doc });
+    expect(contents).toContain("selection?: editor.command.query.selection;");
+    expect(contents).toContain("locations: editor.command.location[];");
+    expect(contents).toMatch(/active\?: \(opts: editor\.command\.context\) => boolean;/);
+    expect(contents).toContain('label: string | Opaque<"message">;');
+    expect(contents).toMatch(/type location = "Assets" \| "Bundle" \|/);
+    const block = (name: string): string => {
+      const opened = contents.slice(contents.indexOf(`interface ${name} {`));
+      return opened.slice(0, opened.indexOf("\n", opened.indexOf("}")));
+    };
+    for (const name of ["query", "options"]) {
+      expect(block(name)).toContain(`interface ${name} {`);
+      expect(block(name)).not.toMatch(/: unknown;/);
+    }
   });
 
   test("emits a documented vararg as a rest parameter under its own name", () => {
@@ -561,8 +861,8 @@ describe("editor manifests derived from the declaring target", () => {
     // The named `mapType` selector survives the derivation: without it every
     // editor handle token falls back to `unknown` and the branded chain breaks.
     for (const entry of EDITOR_MODULE_MANIFEST) {
-      expect(entry.mapType?.("command")).toBe('Opaque<"command">');
-      expect(entry.mapType?.("transaction_step[")).toBe('Opaque<"transaction_step">[]');
+      expect(entry.typeLeaves?.command).toBe('Opaque<"command">');
+      expect(entry.typeLeaves?.["transaction_step["]).toBe('Opaque<"transaction_step">[]');
     }
   });
 
@@ -586,7 +886,7 @@ describe("editor manifests derived from the declaring target", () => {
       })),
     );
     for (const entry of EDITOR_VM_MODULE_MANIFEST) {
-      expect(entry.mapType?.("any[")).toBe("unknown[]");
+      expect(entry.typeLeaves?.["any["]).toBe("unknown[]");
     }
   });
 
@@ -912,6 +1212,36 @@ describe("editor VM module emit", () => {
     zlib: [],
     "tilemap.tiles": [],
   };
+
+  test("the http module owns the declarations its split carries, each once", () => {
+    const entry = EDITOR_VM_MODULE_MANIFEST.find((e) => e.namespace === "http");
+    if (!entry) throw new Error("http editor VM manifest entry missing");
+    const { contents } = generateModuleDeclaration({ ...entry, doc: splitEditorHttpDoc() });
+    expect(contents.match(/type response = /g)).toHaveLength(1);
+    expect(contents).toContain("interface request {");
+    expect(contents).toMatch(
+      /type handler = \(request: http\.server\.request\) => .*http\.response/,
+    );
+  });
+
+  test("routing the full editor doc beside its http split leaves one owner per declaration", () => {
+    const routed = routeTypeDeclarations([
+      parseDefoldApiDoc(EDITOR_HTTP_DOC),
+      parseDefoldApiDoc(splitEditorHttpDoc()),
+    ]);
+    const module = (namespace: string) => {
+      const found = routed.find((m) => m.namespace === namespace);
+      if (!found) throw new Error(`${namespace} module missing`);
+      return found;
+    };
+    const http = module("http");
+    expect(http.typedefs.filter((t) => t.name === "http.response")).toHaveLength(1);
+    expect((http.structs ?? []).filter((s) => s.name === "http.server.request")).toHaveLength(1);
+    const editor = module("editor");
+    const names = [...editor.typedefs, ...(editor.structs ?? [])].map((d) => d.name);
+    expect(names.filter((name) => name.startsWith("http."))).toEqual([]);
+    expect(names).toContain("editor.command.query.selection");
+  });
 
   test("the manifest covers exactly the namespace-shaped editor VM libraries", () => {
     expect(EDITOR_VM_MODULE_MANIFEST.map((entry) => entry.namespace).sort()).toEqual(
