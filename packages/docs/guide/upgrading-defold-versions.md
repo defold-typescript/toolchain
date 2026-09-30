@@ -597,8 +597,8 @@ These still compile and run against the 1.13.2 surface.
 The misspelled `window.WINDOW_EVENT_ICONFIED` is deprecated in favor of
 `window.WINDOW_EVENT_ICONIFIED`, which the reference now documents. The engine
 registers both with the same value, and the declarations give them the same
-type, so either compares equal to a `window.set_listener` event. Switch to the
-correct spelling. The [1.13.1 `window` page](/api/defold-1.13.1/window) shows only
+type, so either compares equal to a `window.set_listener` event and either works
+as the `isWindowEvent` constant. Switch to the correct spelling. The [1.13.1 `window` page](/api/defold-1.13.1/window) shows only
 the old name.
 
 - **`label.get_text`, `label.set_text`.** Deprecated in favor of the label

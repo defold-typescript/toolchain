@@ -1782,7 +1782,7 @@
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): window.safe_area;",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: window.DimModeStateSettable): void;",
-      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void) | undefined): void;",
+      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined): void;",
       "window\u0000FUNCTION\u0000window.set_mouse_lock\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mouse_lock(flag: boolean): void;",
       "window\u0000FUNCTION\u0000window.set_position\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_position(x: number, y: number): void;",
       "window\u0000FUNCTION\u0000window.set_size\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_size(width: number, height: number): void;",
@@ -3153,7 +3153,7 @@
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: window.DimModeStateSettable): void;",
-      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void) | undefined): void;",
+      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined): void;",
       "window\u0000FUNCTION\u0000window.set_mouse_lock\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mouse_lock(flag: boolean): void;",
       "window\u0000FUNCTION\u0000window.set_position\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_position(x: number, y: number): void;",
       "window\u0000FUNCTION\u0000window.set_size\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_size(width: number, height: number): void;",
@@ -4518,7 +4518,7 @@
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: window.DimModeStateSettable): void;",
-      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void) | undefined): void;",
+      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined): void;",
       "window\u0000FUNCTION\u0000window.set_mouse_lock\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mouse_lock(flag: boolean): void;",
       "window\u0000FUNCTION\u0000window.set_position\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_position(x: number, y: number): void;",
       "window\u0000FUNCTION\u0000window.set_size\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_size(width: number, height: number): void;",
@@ -5547,7 +5547,7 @@
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: window.DimModeStateSettable): void;",
-      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void) | undefined): void;",
+      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined): void;",
       "window\u0000FUNCTION\u0000window.set_mouse_lock\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mouse_lock(flag: boolean): void;",
       "window\u0000FUNCTION\u0000window.set_position\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_position(x: number, y: number): void;",
       "window\u0000FUNCTION\u0000window.set_size\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_size(width: number, height: number): void;",
@@ -10365,7 +10365,7 @@
       },
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": {
-          "type": "((self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void) | undefined",
+          "type": "((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined",
           "optional": false
         }
       },
@@ -14327,7 +14327,7 @@
       },
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": {
-          "type": "((self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void) | undefined",
+          "type": "((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined",
           "optional": false
         }
       },
@@ -18278,7 +18278,7 @@
       },
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": {
-          "type": "((self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void) | undefined",
+          "type": "((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined",
           "optional": false
         }
       },
@@ -20901,7 +20901,7 @@
       },
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": {
-          "type": "((self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void) | undefined",
+          "type": "((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined",
           "optional": false
         }
       },

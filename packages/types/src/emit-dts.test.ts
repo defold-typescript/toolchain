@@ -475,7 +475,8 @@ describe("emitDeclarations", () => {
     };
     const out = emitDeclarations(module);
     expect(out).toContain(
-      "function set_listener(callback: (self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void): void;",
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: a TS template literal type in emitted text
+      "function set_listener(callback: (self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void): void;",
     );
     // A non-keyed callback param still widens to the recoverCallbackSignature form.
     expect(out).toContain(
