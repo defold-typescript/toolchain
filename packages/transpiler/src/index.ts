@@ -86,6 +86,8 @@ export type { SceneMessage } from "./scene-text-format";
 export { parseSceneTextFormat, SceneTextFormatError } from "./scene-text-format";
 export type { TranspileSession } from "./session";
 export { createTranspileSession } from "./session";
+export type { TextScriptPropertyFinding } from "./text-script-property";
+export { findTextScriptProperties } from "./text-script-property";
 export { TIMERS_REQUIRE_NAME } from "./timers-runtime";
 export type {
   TranspileDiagnostic,
