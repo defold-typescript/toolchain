@@ -21,6 +21,9 @@ import {
 import { RELEASE_MODEL } from "./release-model.ts";
 
 const REPO_ROOT = join(import.meta.dir, "..");
+// Regenerating the llms corpus and the signatures artifact, or checking the real
+// repo, runs close to Bun's 5 s default on a loaded CI runner.
+const BUMP_CHECK_TEST_TIMEOUT_MS = 30_000;
 
 function matchingDrift(): DriftInputs {
   return {
@@ -186,13 +189,13 @@ describe("runBumpCheck — offline integration", () => {
       throw new Error(`expected ok, got blockers:\n${JSON.stringify(result.problems, null, 2)}`);
     }
     expect(result.ok).toBe(true);
-  });
+  }, BUMP_CHECK_TEST_TIMEOUT_MS);
 
   test("sources the expected release from the model: a mismatched model blocks on import", () => {
     const result = runBumpCheck(REPO_ROOT, { current: "9.9.9", previous: "8.8.8" });
     expect(result.ok).toBe(false);
     expect(result.problems.some((p) => p.category === "import")).toBe(true);
-  });
+  }, BUMP_CHECK_TEST_TIMEOUT_MS);
 });
 
 // Build a temp root whose three committed drift artifacts are all fresh-correct,
@@ -230,7 +233,7 @@ describe("collectDriftInputs — real disk-read seam", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, BUMP_CHECK_TEST_TIMEOUT_MS);
 
   test("a stale committed api-signatures.json read from disk is a single signatures blocker", () => {
     const root = freshCorrectRoot({ signatures: JSON.stringify({ versions: { stale: true } }) });
@@ -241,7 +244,7 @@ describe("collectDriftInputs — real disk-read seam", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, BUMP_CHECK_TEST_TIMEOUT_MS);
 });
 
 describe("runBumpCheck — drift root split makes staling the sole cause", () => {
@@ -256,7 +259,7 @@ describe("runBumpCheck — drift root split makes staling the sole cause", () =>
     } finally {
       rmSync(driftRoot, { recursive: true, force: true });
     }
-  });
+  }, BUMP_CHECK_TEST_TIMEOUT_MS);
 
   test("a stale llms.txt in the drift root is the sole blocker through runBumpCheck", () => {
     const driftRoot = freshCorrectRoot({ llmsTxt: "STALE llms corpus\n" });
@@ -268,7 +271,7 @@ describe("runBumpCheck — drift root split makes staling the sole cause", () =>
     } finally {
       rmSync(driftRoot, { recursive: true, force: true });
     }
-  });
+  }, BUMP_CHECK_TEST_TIMEOUT_MS);
 
   test("a stale api-signatures.json in the drift root is the sole blocker through runBumpCheck", () => {
     const driftRoot = freshCorrectRoot({
@@ -282,7 +285,7 @@ describe("runBumpCheck — drift root split makes staling the sole cause", () =>
     } finally {
       rmSync(driftRoot, { recursive: true, force: true });
     }
-  });
+  }, BUMP_CHECK_TEST_TIMEOUT_MS);
 });
 
 describe("bump:defold --check command — stale artifact exit code", () => {
@@ -308,7 +311,7 @@ describe("bump:defold --check command — stale artifact exit code", () => {
     }
     // Two full `bun scripts/bump-defold.ts --check` subprocesses: the default
     // 5s budget is what this costs on a Windows runner, not headroom above it.
-  }, 30_000);
+  }, BUMP_CHECK_TEST_TIMEOUT_MS);
 });
 
 describe("offline discipline", () => {
