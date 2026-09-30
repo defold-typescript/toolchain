@@ -159,10 +159,24 @@ function elementsOf(doc: unknown): RawElement[] {
   return doc.elements.filter(isRecord) as RawElement[];
 }
 
+// An ENUM's members are the constants 1.13.1 and earlier documented as
+// top-level CONSTANT elements, so each counts as a symbol beside the enum itself.
 function symbolNames(doc: unknown): string[] {
   return [
-    ...new Set(elementsOf(doc).flatMap((element) => (element.name ? [element.name] : []))),
+    ...new Set(
+      elementsOf(doc).flatMap((element) => [
+        ...(element.name ? [element.name] : []),
+        ...enumMemberNames(element),
+      ]),
+    ),
   ].sort();
+}
+
+function enumMemberNames(element: RawElement): string[] {
+  if (element.type !== "ENUM" || !Array.isArray(element.members)) return [];
+  return element.members.flatMap((member) =>
+    isRecord(member) && typeof member.name === "string" ? [member.name] : [],
+  );
 }
 
 function expectedSourceEntries(module: ReleaseBaselineModule): string[] {
@@ -284,6 +298,7 @@ export function buildReleaseImportPlan(input: {
         if (element.type === "CONSTANT" && typeof element.name === "string") {
           knownConstants.add(element.name);
         }
+        for (const member of enumMemberNames(element)) knownConstants.add(member);
       }
     }
   }

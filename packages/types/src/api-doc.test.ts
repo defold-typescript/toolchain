@@ -460,3 +460,124 @@ describe("parseDefoldApiDoc typedef property optionality", () => {
     }
   });
 });
+
+describe("parseDefoldApiDoc ENUM elements", () => {
+  // Verbatim from the Defold 1.13.2 ref-doc (`scripts-script_factory.cpp_doc.json`).
+  const factoryStatus = {
+    type: "ENUM",
+    name: "factory.STATUS",
+    brief: "Factory status values",
+    description: "Factory status values",
+    returnvalues: [],
+    parameters: [],
+    examples: "",
+    replaces: "",
+    error: "",
+    tparams: [],
+    members: [
+      { name: "factory.STATUS_LOADED", doc: "The factory resources are loaded.", type: "" },
+      { name: "factory.STATUS_LOADING", doc: "The factory resources are loading.", type: "" },
+      { name: "factory.STATUS_UNLOADED", doc: "The factory resources are unloaded.", type: "" },
+    ],
+    notes: [],
+    language: "",
+  };
+
+  // Verbatim from the Defold 1.13.2 ref-doc (`editor.apidoc_doc.json`).
+  const editorUiColor = {
+    type: "ENUM",
+    name: "editor.ui.COLOR",
+    brief: "constants for color enums",
+    description: "Constants for color enums",
+    returnvalues: [],
+    parameters: [{ name: "value", doc: "enum value", types: ["string"], is_optional: "False" }],
+    examples: "",
+    replaces: "",
+    error: "",
+    tparams: [],
+    members: [
+      { name: "editor.ui.COLOR.TEXT", doc: '<code>"text"</code>', type: "" },
+      { name: "editor.ui.COLOR.HINT", doc: '<code>"hint"</code>', type: "" },
+      { name: "editor.ui.COLOR.OVERRIDE", doc: '<code>"override"</code>', type: "" },
+      { name: "editor.ui.COLOR.WARNING", doc: '<code>"warning"</code>', type: "" },
+      { name: "editor.ui.COLOR.ERROR", doc: '<code>"error"</code>', type: "" },
+    ],
+    notes: [],
+    language: "",
+  };
+
+  test("a numeric enum yields one constant per member and one enum over them", () => {
+    const module = parseDefoldApiDoc({ info: { namespace: "factory" }, elements: [factoryStatus] });
+    expect(module.constants).toEqual([
+      {
+        name: "factory.STATUS_LOADED",
+        brief: "The factory resources are loaded.",
+        description: "The factory resources are loaded.",
+      },
+      {
+        name: "factory.STATUS_LOADING",
+        brief: "The factory resources are loading.",
+        description: "The factory resources are loading.",
+      },
+      {
+        name: "factory.STATUS_UNLOADED",
+        brief: "The factory resources are unloaded.",
+        description: "The factory resources are unloaded.",
+      },
+    ]);
+    expect(module.enums).toEqual([
+      {
+        name: "factory.STATUS",
+        brief: "Factory status values",
+        description: "Factory status values",
+        members: ["factory.STATUS_LOADED", "factory.STATUS_LOADING", "factory.STATUS_UNLOADED"],
+      },
+    ]);
+  });
+
+  test("a string-valued editor enum yields string-base members at their nested path", () => {
+    const module = parseDefoldApiDoc({ info: { namespace: "editor" }, elements: [editorUiColor] });
+    expect(module.constants.map((c) => [c.name, c.valueType])).toEqual([
+      ["editor.ui.COLOR.TEXT", "string"],
+      ["editor.ui.COLOR.HINT", "string"],
+      ["editor.ui.COLOR.OVERRIDE", "string"],
+      ["editor.ui.COLOR.WARNING", "string"],
+      ["editor.ui.COLOR.ERROR", "string"],
+    ]);
+    expect(module.variables).toEqual([]);
+    expect(module.enums?.map((e) => e.name)).toEqual(["editor.ui.COLOR"]);
+  });
+
+  test("a member typed `<ENUM>|nil` is nilable and an untyped member is not", () => {
+    const module = parseDefoldApiDoc({
+      info: { namespace: "graphics" },
+      elements: [
+        {
+          type: "ENUM",
+          name: "graphics.TEXTURE_FORMAT",
+          parameters: [],
+          members: [
+            { name: "graphics.TEXTURE_FORMAT_RGBA", doc: "", type: "" },
+            {
+              name: "graphics.TEXTURE_FORMAT_BGRA8U",
+              doc: "",
+              type: "graphics.TEXTURE_FORMAT|nil",
+            },
+          ],
+        },
+      ],
+    });
+    const [rgba, bgra] = module.constants;
+    expect(rgba?.name).toBe("graphics.TEXTURE_FORMAT_RGBA");
+    expect(Object.hasOwn(rgba ?? {}, "nilable")).toBe(false);
+    expect(bgra?.nilable).toBe(true);
+  });
+
+  test("a module without ENUM elements carries no enums", () => {
+    const module = parseDefoldApiDoc({
+      info: { namespace: "ns" },
+      elements: [{ type: "CONSTANT", name: "ns.A" }],
+    });
+    expect(module.enums).toEqual([]);
+  });
+});
