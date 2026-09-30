@@ -7,6 +7,7 @@ import type {
   ApiParameter,
   ApiProperty,
   ApiStruct,
+  ApiStructMember,
   ApiTypedef,
   ApiVariable,
 } from "./api-doc";
@@ -2834,8 +2835,10 @@ export function applyFieldOptionalityCorrections(
 // carries no per-field optionality, so every field of an input option bag is
 // emitted `?`; an entry here keeps one field required. Keyed
 // `<element>:param:<slot>:<field>`, the TABLE_FIELD_TYPE_OVERRIDES shape, with
-// `<field>.<member>` or `<field>[].<member>` one level down. The value is the
-// evidence: the C++ binding, `<file>:<cFunction>`, and how it reads the field.
+// `<field>.<member>` or `<field>[].<member>` one level down. A `STRUCT` member
+// is keyed `<struct>:member:<field>`, for a target whose slot names that struct
+// (`field-correction-coverage.ts` pairs the two). The value is the evidence: the
+// C++ binding, `<file>:<cFunction>`, and how it reads the field.
 const CHECK_SHAPE_DEF = "CheckShapeDef reads the shape table with luaL_checkinteger(type)";
 const V2_FILTER_DATA =
   "v2/script_box2d_fixture_v2.cpp:CheckFilterData reads each with luaL_checkinteger";
@@ -2938,6 +2941,10 @@ export const REQUIRED_FIELD_CORRECTIONS: ReadonlyMap<string, string> = new Map<s
     "resource.create_sound_data:param:options:data",
     "script_resource.cpp:CreateSoundData reads the data with CheckBufferOrString",
   ],
+  [
+    "resource.sound_data_options:member:data",
+    "script_resource.cpp:CreateSoundData reads the data with CheckBufferOrString",
+  ],
 ]);
 
 // Mark the fields REQUIRED_FIELD_CORRECTIONS names for this slot required,
@@ -2978,8 +2985,8 @@ export function applyRequiredFieldCorrections(
 // A param-side list field the engine binding refuses empty. Every entry emits
 // the list as `[E, ...E[]]`; `replaces` drops members the binding reads only as
 // one of several alternatives, and `alternatives` restores them as a union the
-// element is intersected with. Keyed `<element>:param:<slot>:<field>`, the
-// REQUIRED_FIELD_CORRECTIONS shape.
+// element is intersected with. Keyed `<element>:param:<slot>:<field>` or
+// `<struct>:member:<field>`, the REQUIRED_FIELD_CORRECTIONS shapes.
 export interface ListFieldCorrection {
   readonly evidence: string;
   readonly replaces?: readonly string[];
@@ -2989,23 +2996,24 @@ export interface ListFieldCorrection {
 const ATLAS_FRAMES =
   "script_resource.cpp:CheckAtlasArguments reads a non-empty frames table, else both frame_start and frame_end with CheckFieldValue<int>";
 
+const ATLAS_GEOMETRIES: ListFieldCorrection = { evidence: ATLAS_ARGUMENTS };
+const ATLAS_ANIMATIONS: ListFieldCorrection = {
+  evidence: `${ATLAS_ARGUMENTS}; ${ATLAS_FRAMES}`,
+  replaces: ["frame_start", "frame_end"],
+  alternatives: "{ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }",
+};
+
 export const LIST_FIELD_CORRECTIONS: ReadonlyMap<string, ListFieldCorrection> = new Map<
   string,
   ListFieldCorrection
->(
-  (["create_atlas", "set_atlas"] as const).flatMap((name) => [
-    [`resource.${name}:param:table:geometries`, { evidence: ATLAS_ARGUMENTS }] as const,
-    [
-      `resource.${name}:param:table:animations`,
-      {
-        evidence: `${ATLAS_ARGUMENTS}; ${ATLAS_FRAMES}`,
-        replaces: ["frame_start", "frame_end"],
-        alternatives:
-          "{ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }",
-      },
-    ] as const,
+>([
+  ...(["create_atlas", "set_atlas"] as const).flatMap((name) => [
+    [`resource.${name}:param:table:geometries`, ATLAS_GEOMETRIES] as const,
+    [`resource.${name}:param:table:animations`, ATLAS_ANIMATIONS] as const,
   ]),
-);
+  ["resource.atlas:member:geometries", ATLAS_GEOMETRIES],
+  ["resource.atlas:member:animations", ATLAS_ANIMATIONS],
+]);
 
 // Apply LIST_FIELD_CORRECTIONS to this slot's fields. An entry keyed to this
 // slot that names no field, names a field that is not a list, or replaces a
@@ -3509,21 +3517,84 @@ function collectTypeDeclarations(
   for (const struct of module.structs ?? []) {
     const local = localOf(struct.name);
     if (local === null || skip.has(local)) continue;
-    out.push(structDeclaration(struct, local, mapType));
+    out.push(structDeclaration(struct, local, mapType, module.structs ?? []));
   }
   return out;
+}
+
+export function memberCorrectionKey(struct: string, field: string): string {
+  return `${struct}:member:${field}`;
+}
+
+// A member-keyed LIST_FIELD_CORRECTIONS entry over a `T[]` member: `T` with the
+// replaced members omitted, rendered by the prose-field list renderer.
+function correctedListMemberType(
+  struct: ApiStruct,
+  member: ApiStructMember,
+  correction: ListFieldCorrection,
+  structs: readonly ApiStruct[],
+  mapType: (token: string) => string,
+): string {
+  const key = memberCorrectionKey(struct.name, member.name);
+  const element = member.type.endsWith("[]") ? member.type.slice(0, -2) : undefined;
+  if (element === undefined || element.length === 0) {
+    throw new Error(`list-field correction names a member that is not a list: ${key}`);
+  }
+  const replaces = correction.replaces ?? [];
+  const elementStruct = structs.find((candidate) => candidate.name === element);
+  const missing = replaces.filter(
+    (name) => !(elementStruct?.members ?? []).some((candidate) => candidate.name === name),
+  );
+  if (missing.length > 0) {
+    throw new Error(`list-field correction ${key} replaces no member: ${missing.join(", ")}`);
+  }
+  const mapped = mapType(element);
+  const object =
+    replaces.length === 0
+      ? mapped
+      : `Omit<${mapped}, ${replaces.map((name) => JSON.stringify(name)).join(" | ")}>`;
+  return nestedFieldType(
+    {
+      name: member.name,
+      types: [],
+      isList: true,
+      nonEmpty: true,
+      ...(correction.alternatives === undefined ? {} : { alternatives: correction.alternatives }),
+    },
+    object,
+  );
 }
 
 function structDeclaration(
   struct: ApiStruct,
   path: string,
   mapType: (token: string) => string,
+  structs: readonly ApiStruct[],
 ): TypeDeclaration {
   const name = path.slice(path.lastIndexOf(".") + 1);
-  const members = struct.members.map((member) => ({
-    doc: member.doc,
-    line: `${TS_IDENTIFIER.test(member.name) ? member.name : JSON.stringify(member.name)}${member.isOptional ? "?" : ""}: ${member.type === "" ? "unknown" : mapType(member.type)};`,
-  }));
+  const memberPrefix = memberCorrectionKey(struct.name, "");
+  const declared = new Set(struct.members.map((member) => member.name));
+  const stale = [...REQUIRED_FIELD_CORRECTIONS.keys(), ...LIST_FIELD_CORRECTIONS.keys()].filter(
+    (key) => key.startsWith(memberPrefix) && !declared.has(key.slice(memberPrefix.length)),
+  );
+  if (stale.length > 0) {
+    throw new Error(`member-keyed field correction names no member: ${stale.sort().join(", ")}`);
+  }
+  const members = struct.members.map((member) => {
+    const key = memberCorrectionKey(struct.name, member.name);
+    const list = LIST_FIELD_CORRECTIONS.get(key);
+    const optional = member.isOptional && !REQUIRED_FIELD_CORRECTIONS.has(key);
+    const type =
+      list !== undefined
+        ? correctedListMemberType(struct, member, list, structs, mapType)
+        : member.type === ""
+          ? "unknown"
+          : mapType(member.type);
+    return {
+      doc: member.doc,
+      line: `${TS_IDENTIFIER.test(member.name) ? member.name : JSON.stringify(member.name)}${optional ? "?" : ""}: ${type};`,
+    };
+  });
   return {
     name,
     path,
