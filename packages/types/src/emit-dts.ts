@@ -30,13 +30,17 @@ import {
   indexBaseNoteResolver,
   OVERRIDE_RETURN_SLOT,
 } from "./index-slot-classifications";
-import { mapLualsExpression } from "./luals-type-expr";
+import { type LualsPosition, mapLualsExpression } from "./luals-type-expr";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
 export { summaryFor };
 
+// Maps one ref-doc type token. `position` says whether the caller supplies the
+// value (a parameter) or the engine hands it back; see `LualsPosition`.
+export type DefoldTypeMapper = (token: string, position?: LualsPosition) => string;
+
 export interface EmitOptions {
-  mapType?: (defoldType: string) => string;
+  mapType?: DefoldTypeMapper;
   // Constant FQNs from *other* modules, so a foreign token like
   // `graphics.BUFFER_TYPE_COLOR0_BIT` used as a param type inside `render`
   // brands to the same FQN-keyed type its owning module's `const` emits,
@@ -3462,7 +3466,7 @@ function typedefAlias(
   typedef: ApiTypedef,
   local: string,
   rawMapType: (token: string) => string,
-  mapType: (token: string) => string,
+  mapType: DefoldTypeMapper,
 ): string {
   const brand = `Opaque<"${typedef.name}">`;
   const aliasOf = typedef.aliasOf ?? [];
@@ -3497,7 +3501,7 @@ function collectTypeDeclarations(
   module: ApiModule,
   skip: ReadonlySet<string>,
   rawMapType: (token: string) => string,
-  mapType: (token: string) => string,
+  mapType: DefoldTypeMapper,
 ): TypeDeclaration[] {
   const prefix = `${module.namespace}.`;
   const out: TypeDeclaration[] = [];
@@ -3537,7 +3541,7 @@ function correctedListMemberType(
   member: ApiStructMember,
   correction: ListFieldCorrection,
   structs: readonly ApiStruct[],
-  mapType: (token: string) => string,
+  mapType: DefoldTypeMapper,
 ): string {
   const key = memberCorrectionKey(struct.name, member.name);
   const element = member.type.endsWith("[]") ? member.type.slice(0, -2) : undefined;
@@ -3572,7 +3576,7 @@ function correctedListMemberType(
 function structDeclaration(
   struct: ApiStruct,
   path: string,
-  mapType: (token: string) => string,
+  mapType: DefoldTypeMapper,
   structs: readonly ApiStruct[],
 ): TypeDeclaration {
   const name = path.slice(path.lastIndexOf(".") + 1);
@@ -3647,7 +3651,7 @@ function moduleTypeMappers(
   module: ApiModule,
   constantsByFqn: ReadonlyMap<string, ApiConstant>,
   options: EmitOptions | undefined,
-): { rawMapType: (token: string) => string; mapType: (token: string) => string } {
+): { rawMapType: (token: string) => string; mapType: DefoldTypeMapper } {
   const leaves = options?.typeLeaves;
   const rawMapType = options?.mapType ?? mapTypeWithVocabulary({ leaves });
   const baseMapType =
@@ -3657,10 +3661,10 @@ function moduleTypeMappers(
       declared: new Map([...declaredTypePaths([module]), ...(options?.declaredTypes ?? [])]),
     });
   const knownConstantFqns = options?.knownConstantFqns;
-  const mapType = (token: string): string =>
+  const mapType: DefoldTypeMapper = (token, position) =>
     constantsByFqn.has(token) || knownConstantFqns?.has(token)
       ? brandType(token, constantsByFqn.get(token))
-      : baseMapType(token);
+      : baseMapType(token, position);
   return { rawMapType, mapType };
 }
 
@@ -4632,11 +4636,7 @@ function aliasReservedSegments(
   }
 }
 
-function emitVariable(
-  prepared: PreparedVariable,
-  name: string,
-  mapType: (t: string) => string,
-): string {
+function emitVariable(prepared: PreparedVariable, name: string, mapType: DefoldTypeMapper): string {
   const ts =
     prepared.original.types.length > 0
       ? unionFromTokens(prepared.original.types, mapType)
@@ -4647,7 +4647,7 @@ function emitVariable(
 function memberSignature(
   prepared: PreparedFunction,
   name: string,
-  mapType: (t: string) => string,
+  mapType: DefoldTypeMapper,
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
@@ -4712,7 +4712,7 @@ function memberSignature(
 function emitFunction(
   prepared: PreparedFunction,
   name: string,
-  mapType: (t: string) => string,
+  mapType: DefoldTypeMapper,
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
@@ -4726,7 +4726,7 @@ function emitFunction(
 // member carries no `self` parameter.
 function emitMethod(
   prepared: PreparedFunction,
-  mapType: (t: string) => string,
+  mapType: DefoldTypeMapper,
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
@@ -4909,7 +4909,7 @@ const SCENE_ADDRESS_ALIASES: Readonly<Record<string, string>> = {
 // becomes the matching scene-derived alias. Wrapping `mapType` rather than
 // rewriting the finished union leaves `mapSlotUnion`'s member ordering and
 // de-duplication in charge, so only the one token moves.
-function addressMapType(mapType: (t: string) => string, alias: string): (t: string) => string {
+function addressMapType(mapType: DefoldTypeMapper, alias: string): (t: string) => string {
   return (token) => (token === "string" ? alias : mapType(token));
 }
 
@@ -4918,17 +4918,20 @@ function addressMapType(mapType: (t: string) => string, alias: string): (t: stri
 // type alone.
 function parameterType(
   p: ApiParameter,
-  mapType: (t: string) => string,
+  mapType: DefoldTypeMapper,
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   elementName: string,
   urlParameters: UrlParameterTable,
 ): string {
   const concrete = p.types.filter((t) => t !== "nil");
+  // The caller supplies a parameter, so a string-keyed table in it also takes an
+  // object literal.
+  const inputMapType = (token: string): string => mapType(token, "input");
   // The table is keyed by the *raw* ref-doc parameter name, not the emitted
   // `safeParamName` fallback.
   const alias = SCENE_ADDRESS_ALIASES[classifyUrlParameter(urlParameters, elementName, p.name)];
-  const slotMapType = alias === undefined ? mapType : addressMapType(mapType, alias);
+  const slotMapType = alias === undefined ? inputMapType : addressMapType(inputMapType, alias);
   const mapped =
     concrete.length > 0
       ? mapSlotUnion(
@@ -5021,7 +5024,7 @@ function emittedParamName(p: ApiParameter, index: number): string {
 function emitRestParameter(
   params: readonly ApiParameter[],
   varargIndex: number,
-  mapType: (t: string) => string,
+  mapType: DefoldTypeMapper,
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   elementName: string,
@@ -5055,7 +5058,7 @@ function emitParameter(
   p: ApiParameter,
   index: number,
   optional: boolean,
-  mapType: (t: string) => string,
+  mapType: DefoldTypeMapper,
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   elementName: string,
@@ -5077,7 +5080,7 @@ function emitParameter(
 
 function emitReturn(
   returnValues: ApiParameter[],
-  mapType: (t: string) => string,
+  mapType: DefoldTypeMapper,
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   elementName: string,
@@ -5160,7 +5163,7 @@ const READ_ONLY_MARK = /^\s*<span class="mark">READ ONLY<\/span>/;
 
 function emitPropertyMembers(
   p: ApiProperty,
-  mapType: (t: string) => string,
+  mapType: DefoldTypeMapper,
   namespace: string,
 ): readonly string[] {
   const keyRange = PROPERTY_KEY_RANGES.get(`${namespace}.${p.name}`);
@@ -5192,7 +5195,7 @@ function emitPropertyMembers(
 function mapSlotUnion(
   types: readonly string[],
   doc: string,
-  mapType: (t: string) => string,
+  mapType: DefoldTypeMapper,
   optionalFields: boolean,
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
@@ -5371,7 +5374,7 @@ export function applyNestedFieldCurations(
 
 function arrayTypeFromTokens(
   element: string | readonly string[],
-  mapType: (t: string) => string,
+  mapType: DefoldTypeMapper,
 ): string {
   const tokens = typeof element === "string" ? [element] : element;
   return tokens.length > 1
@@ -5381,7 +5384,7 @@ function arrayTypeFromTokens(
 
 export function inlineTableType(
   fields: readonly TableField[],
-  mapType: (t: string) => string,
+  mapType: DefoldTypeMapper,
   optionalFields: boolean,
 ): string {
   const members = fields.map((field) => {
@@ -5422,7 +5425,7 @@ function nestedFieldType(field: TableField, object: string): string {
   return field.nonEmpty === true ? `[${element}, ...${rest}[]]` : `${rest}[]`;
 }
 
-function unionFromTokens(tokens: readonly string[], mapType: (t: string) => string): string {
+function unionFromTokens(tokens: readonly string[], mapType: DefoldTypeMapper): string {
   const mapped: string[] = [];
   const seen = new Set<string>();
   for (const token of tokens) {
@@ -5501,8 +5504,8 @@ export function isKnownDefoldTypeToken(token: string): boolean {
   return unknownDefoldTypeLeaves(token).length === 0;
 }
 
-export function defaultMapType(token: string): string {
-  return wholeTokenMapping(token) ?? mapLualsExpression(token, resolveDefoldLeaf).ts;
+export function defaultMapType(token: string, position?: LualsPosition): string {
+  return wholeTokenMapping(token) ?? mapLualsExpression(token, resolveDefoldLeaf, position).ts;
 }
 
 /**
@@ -5515,16 +5518,18 @@ export function defaultMapType(token: string): string {
 export function mapTypeWithVocabulary(vocabulary: {
   leaves?: Readonly<Record<string, string>> | undefined;
   declared?: ReadonlyMap<string, string> | undefined;
-}): (token: string) => string {
+}): DefoldTypeMapper {
   const leaves = vocabulary.leaves ?? {};
   const declared = vocabulary.declared ?? new Map<string, string>();
   if (Object.keys(leaves).length === 0 && declared.size === 0) return defaultMapType;
   const resolveLeaf = (leaf: string): string | undefined =>
     Object.hasOwn(leaves, leaf) ? leaves[leaf] : (resolveDefoldLeaf(leaf) ?? declared.get(leaf));
-  return (token) => {
+  return (token, position) => {
     if (Object.hasOwn(leaves, token)) return leaves[token] as string;
     return (
-      wholeTokenMapping(token) ?? declared.get(token) ?? mapLualsExpression(token, resolveLeaf).ts
+      wholeTokenMapping(token) ??
+      declared.get(token) ??
+      mapLualsExpression(token, resolveLeaf, position).ts
     );
   };
 }

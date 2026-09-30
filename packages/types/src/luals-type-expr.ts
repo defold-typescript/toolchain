@@ -16,6 +16,16 @@ import { luaMultiReturn } from "./library-signature";
 
 export type LualsLeafResolver = (leaf: string) => string | undefined;
 
+/**
+ * Who supplies the value a type describes: `"input"` for a slot the caller fills
+ * (a parameter, a field of a table passed as one, a callback's return), `"output"`
+ * for one the engine or library hands back (a return, a property read back, a
+ * callback's parameters). Only `"input"` widens a string-keyed `table<K, V>` to also
+ * accept an object literal, so `"output"` renders exactly what an unpositioned
+ * mapping does.
+ */
+export type LualsPosition = "input" | "output";
+
 export interface LualsMapResult {
   ts: string;
   unknowns: string[];
@@ -126,9 +136,20 @@ function luaTableKey(mapped: string): string {
   return arms.length === 0 ? "AnyNotNil" : arms.join(" | ");
 }
 
+/**
+ * TSTL's `LuaTable` is built with `new LuaTable()`, so an object literal is not
+ * assignable to it although both compile to the same Lua table. A caller-supplied
+ * table whose key admits `string` also takes `Record<string, V>`; a `Hash` or
+ * numeric key cannot be spelled as an object literal's key, so it stays `LuaTable`.
+ */
+function acceptsObjectLiteral(key: string): boolean {
+  return splitTopLevel(key, "|").some((arm) => arm.trim() === "string");
+}
+
 interface Walk {
   resolveLeaf: LualsLeafResolver;
   unknowns: string[];
+  position: LualsPosition;
 }
 
 /**
@@ -143,12 +164,18 @@ function functionParts(token: string, walk: Walk): { paramList: string; ret: str
   const afterClose = token.slice(close + 1).trim();
 
   const params = paramsStr === "" ? [] : splitTopLevel(paramsStr, ",");
+  // A callback's params are values the engine hands over. A returned or stored
+  // function's params keep `"output"` too: widening them would reject a callback
+  // with the narrower `LuaTable` param a caller assigns to a writable field.
+  const paramWalk: Walk = { ...walk, position: "output" };
   const paramList = params
     .map((raw) => raw.trim())
     .map((part) => {
       if (part.startsWith(LUALS_VARARG_TOKEN)) {
         const after = part.slice(3).trim();
-        const element = after.startsWith(":") ? mapToken(after.slice(1).trim(), walk) : "unknown";
+        const element = after.startsWith(":")
+          ? mapToken(after.slice(1).trim(), paramWalk)
+          : "unknown";
         return `...args: ${needsArrayParens(element) ? `(${element})[]` : `${element}[]`}`;
       }
       const colon = splitTopLevel(part, ":");
@@ -158,7 +185,7 @@ function functionParts(token: string, walk: Walk): { paramList: string; ret: str
       }
       const name = colon[0]?.trim() ?? "";
       const typeExpr = colon.slice(1).join(":").trim();
-      return `${name}: ${mapToken(typeExpr, walk)}`;
+      return `${name}: ${mapToken(typeExpr, paramWalk)}`;
     })
     .join(", ");
 
@@ -268,7 +295,12 @@ function mapToken(raw: string, walk: Walk): string {
   if (token.startsWith("table<") && token.endsWith(">")) {
     const args = splitTopLevel(token.slice(6, -1), ",").map((a) => mapToken(a.trim(), walk));
     if (args.length > 0) args[0] = luaTableKey(args[0] as string);
-    return `LuaTable<${args.join(", ")}>`;
+    const table = `LuaTable<${args.join(", ")}>`;
+    const [key, value] = args;
+    if (walk.position === "input" && args.length === 2 && acceptsObjectLiteral(key as string)) {
+      return `${table} | Record<string, ${value}>`;
+    }
+    return table;
   }
 
   if (token.startsWith("{") && token.endsWith("}")) return mapObject(token, walk);
@@ -288,8 +320,12 @@ function mapFunction(token: string, walk: Walk): string {
 }
 
 /** Map one raw LuaLS type expression to a TypeScript type string. */
-export function mapLualsExpression(token: string, resolveLeaf: LualsLeafResolver): LualsMapResult {
-  const walk: Walk = { resolveLeaf, unknowns: [] };
+export function mapLualsExpression(
+  token: string,
+  resolveLeaf: LualsLeafResolver,
+  position: LualsPosition = "output",
+): LualsMapResult {
+  const walk: Walk = { resolveLeaf, unknowns: [], position };
   return { ts: mapToken(token, walk), unknowns: walk.unknowns };
 }
 
@@ -301,12 +337,13 @@ export function mapLualsExpression(token: string, resolveLeaf: LualsLeafResolver
 export function mapLualsCallSignatureExpression(
   token: string,
   resolveLeaf: LualsLeafResolver,
+  position: LualsPosition = "output",
 ): LualsMapResult {
   const trimmed = token.trim();
   if (!/^fun\s*\(/.test(trimmed)) {
     throw new Error(`mapLualsCallSignature: expected a "fun(...)" token, got "${token}".`);
   }
-  const walk: Walk = { resolveLeaf, unknowns: [] };
+  const walk: Walk = { resolveLeaf, unknowns: [], position };
   const { paramList, ret } = functionParts(trimmed, walk);
   return { ts: `(${paramList}): ${ret}`, unknowns: walk.unknowns };
 }

@@ -311,7 +311,7 @@
           "name": "entities",
           "doc": "",
           "types": [
-            "LuaTable<string, LuaTable>"
+            "LuaTable<string, LuaTable> | Record<string, LuaTable>"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -347,7 +347,7 @@
           "name": "components",
           "doc": "",
           "types": [
-            "LuaTable<string, unknown>"
+            "LuaTable<string, unknown> | Record<string, unknown>"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -391,7 +391,7 @@
           "name": "components",
           "doc": "additional components to merge with prefab",
           "types": [
-            "LuaTable<string, unknown> | undefined"
+            "LuaTable<string, unknown> | Record<string, unknown> | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -585,7 +585,7 @@
           "name": "components",
           "doc": "",
           "types": [
-            "LuaTable<string, unknown> | undefined"
+            "LuaTable<string, unknown> | Record<string, unknown> | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"

@@ -119,6 +119,7 @@ export {
   LUALS_VARARG_TOKEN,
   type LualsLeafResolver,
   type LualsMapResult,
+  type LualsPosition,
   mapLualsCallSignatureExpression,
   mapLualsExpression,
   matchBracket,

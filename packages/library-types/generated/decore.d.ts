@@ -192,7 +192,7 @@ declare module 'decore.decore' {
 	 * If entities pack with same id already loaded, do nothing.
 	 * If the same id is used in different packs, the last one will be used in `create_prefab` function
 	 */
-	export function register_entities(this: void, pack_id: string, entities: LuaTable<string, LuaTable>): void;
+	export function register_entities(this: void, pack_id: string, entities: LuaTable<string, LuaTable> | Record<string, LuaTable>): void;
 	/**
 	 * Unload entities pack from decore entities
 	 */
@@ -200,11 +200,11 @@ declare module 'decore.decore' {
 	/**
 	 * Create new entity instance
 	 */
-	export function create(this: void, components: LuaTable<string, unknown>): entity;
+	export function create(this: void, components: LuaTable<string, unknown> | Record<string, unknown>): entity;
 	/**
 	 * Create new entity instance from prefab
 	 */
-	export function create_prefab(this: void, prefab_id?: string | Hash | undefined, pack_id?: string | undefined, components?: LuaTable<string, unknown> | undefined): entity;
+	export function create_prefab(this: void, prefab_id?: string | Hash | undefined, pack_id?: string | undefined, components?: LuaTable<string, unknown> | Record<string, unknown> | undefined): entity;
 	/**
 	 * Register component to decore components
 	 */
@@ -235,7 +235,7 @@ declare module 'decore.decore' {
 	 * Add components to entity
 	 * To refresh system filters, call world:addEntity(entity) after this function
 	 */
-	export function apply_components(this: void, entity: entity, components?: LuaTable<string, unknown> | undefined): entity;
+	export function apply_components(this: void, entity: entity, components?: LuaTable<string, unknown> | Record<string, unknown> | undefined): entity;
 	/**
 	 * Remove a component key from entity and clear its shape cache token.
 	 * To refresh system filters, call world:addEntity(entity) after this function.
