@@ -3,6 +3,7 @@ import { symbolIdentityKey } from "../src/api-availability";
 import type { SlotTypes } from "../src/emit-dts";
 import { selectCompleteVersionSurfaces, versionOf } from "./generate-api-availability";
 import {
+  type ApiTarget,
   generateModuleSignatures,
   loadApiTargets,
   loadTargetModules,
@@ -27,6 +28,10 @@ export interface SignaturesArtifact {
 export interface BuildSignaturesOptions {
   readonly packageRoot?: string;
   readonly registryPath?: string;
+  // The constants each target's engine registers, which gate the undocumented
+  // constant back-fill. Omitted, every target is emitted ungated. Supplied by the
+  // in-repo callers only: the vendored bindings it reads are not published.
+  readonly registeredConstantsOf?: (target: ApiTarget) => ReadonlySet<string> | undefined;
 }
 
 // The authored replacement for a symbol the skip filter withheld, read from the
@@ -74,8 +79,12 @@ export function buildSignaturesArtifact(options: BuildSignaturesOptions = {}): S
     const version = versionOf(target);
     const perSymbol: Record<string, string> = {};
     const perSymbolSlots: Record<string, SlotTypes> = {};
+    const registeredConstants = options.registeredConstantsOf?.(target);
     for (const entry of loadTargetModules(target, packageRoot)) {
-      for (const signature of generateModuleSignatures(entry)) {
+      for (const signature of generateModuleSignatures(
+        entry,
+        registeredConstants ? { registeredConstants } : undefined,
+      )) {
         const key = symbolIdentityKey(signature.identity);
         perSymbol[key] = signature.tsSignature;
         if (Object.keys(signature.slotTypes).length > 0) {
@@ -120,7 +129,8 @@ export function serializeSignaturesArtifact(artifact: SignaturesArtifact): strin
 }
 
 if (import.meta.main) {
-  const artifact = buildSignaturesArtifact();
+  const { registeredConstantFqns } = await import("./engine-binding-extract");
+  const artifact = buildSignaturesArtifact({ registeredConstantsOf: registeredConstantFqns });
   if (process.argv.includes("--write")) {
     Bun.write(SIGNATURES_PATH, serializeSignaturesArtifact(artifact));
     const count = Object.values(artifact.versions).reduce((n, v) => n + Object.keys(v).length, 0);

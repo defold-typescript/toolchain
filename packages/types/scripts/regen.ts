@@ -439,6 +439,7 @@ export interface GenerateOptions {
   knownConstantFqns?: ReadonlySet<string>;
   translations?: TranslationStore;
   urlParameters?: UrlParameterTable;
+  registeredConstants?: ReadonlySet<string>;
 }
 
 interface PreparedGeneratedModule {
@@ -446,6 +447,7 @@ interface PreparedGeneratedModule {
   knownConstantFqns: ReadonlySet<string>;
   translations: TranslationStore;
   urlParameters: UrlParameterTable;
+  registeredConstants: ReadonlySet<string> | undefined;
   typeLeaves: Readonly<Record<string, string>> | undefined;
   dropped: string[];
 }
@@ -467,6 +469,7 @@ function prepareGeneratedModule(
     knownConstantFqns,
     translations,
     urlParameters,
+    registeredConstants: options?.registeredConstants,
     typeLeaves: entry.typeLeaves,
     dropped,
   };
@@ -583,12 +586,20 @@ export function generateModuleDeclaration(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): GenerateResult {
-  const { module, knownConstantFqns, translations, urlParameters, typeLeaves, dropped } =
-    prepareGeneratedModule(entry, options);
+  const {
+    module,
+    knownConstantFqns,
+    translations,
+    urlParameters,
+    registeredConstants,
+    typeLeaves,
+    dropped,
+  } = prepareGeneratedModule(entry, options);
   const emitted = emitDeclarations(module, {
     knownConstantFqns,
     translations,
     urlParameters,
+    ...(registeredConstants ? { registeredConstants } : {}),
     ...(typeLeaves ? { typeLeaves } : {}),
     ...(entry.indexBaseSource ? { indexBaseSource: entry.indexBaseSource } : {}),
   });
@@ -607,13 +618,12 @@ export function generateModuleSignatures(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): SymbolSignature[] {
-  const { module, knownConstantFqns, urlParameters, typeLeaves } = prepareGeneratedModule(
-    entry,
-    options,
-  );
+  const { module, knownConstantFqns, urlParameters, registeredConstants, typeLeaves } =
+    prepareGeneratedModule(entry, options);
   return emitSymbolSignatures(module, {
     knownConstantFqns,
     urlParameters,
+    ...(registeredConstants ? { registeredConstants } : {}),
     ...(typeLeaves ? { typeLeaves } : {}),
   });
 }
@@ -959,13 +969,24 @@ export async function regenerate(
   );
   io.log(`field correction coverage checked: ${targets} target(s)`);
 
+  // Imported here rather than at module scope: the vendored engine bindings are
+  // not published, and `resolve` loads this module from an installed package.
+  const { registeredConstantFqns } = await import("./engine-binding-extract");
   const generated = resolve(import.meta.dir, "..", "generated");
   io.mkdir(resolve(generated, "editor-vm"));
-  for (const entry of [
-    ...MODULE_MANIFEST,
-    ...EDITOR_MODULE_MANIFEST,
-    ...EDITOR_VM_MODULE_MANIFEST,
-  ]) {
+  const defaultRegistered = registeredConstantFqns(DEFAULT_TARGET);
+  for (const entry of MODULE_MANIFEST) {
+    const { contents, dropped } = generateModuleDeclaration(entry, {
+      ...(defaultRegistered ? { registeredConstants: defaultRegistered } : {}),
+    });
+    if (dropped.length > 0) {
+      io.log(`note: dropped skipped member(s) from ${entry.namespace}: ${dropped.join(", ")}`);
+    }
+    const out = resolve(generated, entry.outFile);
+    io.write(out, contents);
+    io.log(`wrote ${out}`);
+  }
+  for (const entry of [...EDITOR_MODULE_MANIFEST, ...EDITOR_VM_MODULE_MANIFEST]) {
     const { contents, dropped } = generateModuleDeclaration(entry);
     if (dropped.length > 0) {
       io.log(`note: dropped skipped member(s) from ${entry.namespace}: ${dropped.join(", ")}`);
@@ -1005,7 +1026,12 @@ export async function regenerate(
     return resolve(PACKAGE_ROOT, target.generatedDir);
   };
   for (const entry of VERSIONED_MODULE_MANIFEST) {
-    const { contents, dropped } = generateModuleDeclaration(entry);
+    const target = versionedTargets.find((t) => t.id === entry.versionId);
+    const registeredConstants = target ? registeredConstantFqns(target) : undefined;
+    const { contents, dropped } = generateModuleDeclaration(
+      entry,
+      registeredConstants ? { registeredConstants } : undefined,
+    );
     if (dropped.length > 0) {
       io.log(
         `note: dropped skipped member(s) from ${entry.versionId}/${entry.namespace}: ${dropped.join(", ")}`,

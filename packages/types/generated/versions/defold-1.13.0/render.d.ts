@@ -10,6 +10,14 @@ declare global {
     type render_target = Opaque<"render_target">;
     type texture = Opaque<"texture">;
     type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
+    /**
+     * The rendering context was lost. Rendering is paused and all graphics resources become invalid. Passed to the `render.set_listener` callback.
+     */
+    const CONTEXT_EVENT_CONTEXT_LOST: number & { readonly __brand: "render.CONTEXT_EVENT_CONTEXT_LOST" };
+    /**
+     * The rendering context was restored. Rendering is still paused and graphics resources are still invalid, but can be reloaded. Passed to the `render.set_listener` callback.
+     */
+    const CONTEXT_EVENT_CONTEXT_RESTORED: number & { readonly __brand: "render.CONTEXT_EVENT_CONTEXT_RESTORED" };
     const FRUSTUM_PLANES_ALL: number & { readonly __brand: "render.FRUSTUM_PLANES_ALL" };
     const FRUSTUM_PLANES_SIDES: number & { readonly __brand: "render.FRUSTUM_PLANES_SIDES" };
     const RENDER_TARGET_DEFAULT: undefined;
