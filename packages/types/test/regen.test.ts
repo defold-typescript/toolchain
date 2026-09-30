@@ -10,6 +10,7 @@ import {
   generateBuiltinMessagesDeclaration,
   generateKindIndex,
   generateModuleDeclaration,
+  generateModuleSignatures,
   generateVersionIndex,
   KIND_MODULE_MANIFEST,
   type KindManifestEntry,
@@ -40,6 +41,19 @@ const COMMITTED_MODULES = [
   ...EDITOR_MODULE_MANIFEST,
   ...EDITOR_VM_MODULE_MANIFEST,
 ];
+
+// A string-valued ref-doc ENUM in the element shape Defold 1.13.2 ships.
+function stringEnum(name: string, members: readonly { name: string; type: string }[]) {
+  return {
+    type: "ENUM",
+    name,
+    brief: "",
+    description: "",
+    returnvalues: [],
+    parameters: [{ name: "value", doc: "", types: ["string"] }],
+    members: members.map((member) => ({ ...member, doc: "" })),
+  };
+}
 
 describe("root entrypoint completeness", () => {
   // `index.d.ts` is hand-maintained, unlike every per-version index, which
@@ -159,8 +173,9 @@ describe("reserved-name member recovery", () => {
 
 describe("manifest member skips", () => {
   // A skip rule withholds a member whatever its element type: a constant table
-  // the hand-authored lane owns is a VARIABLE, and leaving the filter on
-  // functions alone would emit an `unknown`-typed duplicate beside it.
+  // the hand-authored lane owns is a VARIABLE, a CONSTANT or an ENUM member
+  // depending on the release, and leaving the filter on functions alone would
+  // emit a duplicate beside it.
   const element = (type: string, name: string) => ({
     type,
     name,
@@ -196,6 +211,59 @@ describe("manifest member skips", () => {
     expect(contents).not.toContain("function gone(");
     expect(contents).not.toContain("const GONE:");
     expect(contents).not.toContain("namespace TABLE {");
+  });
+
+  const enumEntry = {
+    namespace: "demo",
+    outFile: "demo.d.ts",
+    doc: {
+      info: { namespace: "demo", brief: "d", description: "d" },
+      elements: [
+        element("CONSTANT", "demo.KEPT_CONST"),
+        element("CONSTANT", "demo.GONE_CONST"),
+        stringEnum("demo.TABLE_ENUM", [
+          { name: "demo.TABLE_ENUM.FIRST", type: "" },
+          { name: "demo.TABLE_ENUM.SECOND", type: "" },
+        ]),
+        stringEnum("demo.KEPT_ENUM", [
+          { name: "demo.KEPT_ENUM.PLAIN", type: "" },
+          { name: "demo.KEPT_ENUM.MAYBE", type: "demo.KEPT_ENUM|nil" },
+        ]),
+      ],
+    },
+    skipFunctions: ["GONE_CONST", "TABLE_ENUM."],
+  };
+
+  test("a rule withholds a top-level CONSTANT and every member of an ENUM, alias included", () => {
+    const { contents, dropped } = generateModuleDeclaration(enumEntry);
+    expect(dropped.sort()).toEqual([
+      "demo.GONE_CONST",
+      "demo.TABLE_ENUM.FIRST",
+      "demo.TABLE_ENUM.SECOND",
+    ]);
+    expect(contents).not.toContain("const GONE_CONST:");
+    expect(contents).not.toContain("namespace TABLE_ENUM {");
+    expect(contents).not.toContain("FIRST");
+    expect(contents).not.toContain("type TABLE_ENUM");
+    expect(contents).toContain("const KEPT_CONST:");
+  });
+
+  test("an owned ENUM keeps its string brand, nilable member and alias in both surfaces", () => {
+    const { contents } = generateModuleDeclaration(enumEntry);
+    expect(contents).toContain(
+      'const PLAIN: string & { readonly __brand: "demo.KEPT_ENUM.PLAIN" };',
+    );
+    expect(contents).toContain(
+      'const MAYBE: string & { readonly __brand: "demo.KEPT_ENUM.MAYBE" } | undefined;',
+    );
+    expect(contents).toContain("type KEPT_ENUM = ");
+    const names = generateModuleSignatures(enumEntry).map((s) => s.identity.name);
+    expect(names.sort()).toEqual([
+      "KEPT_ENUM",
+      "demo.KEPT_CONST",
+      "demo.KEPT_ENUM.MAYBE",
+      "demo.KEPT_ENUM.PLAIN",
+    ]);
   });
 });
 
@@ -323,6 +391,29 @@ describe("editor namespace emit", () => {
     ]) {
       expect(unexpressed).not.toContain(reached);
     }
+  });
+
+  test("withholds a foreign library's ENUM while keeping an editor-owned one", () => {
+    const { contents, dropped } = generateModuleDeclaration({
+      ...editorEntry(),
+      doc: {
+        info: { namespace: "editor", brief: "e", description: "e" },
+        elements: [
+          stringEnum("zip.METHOD", [
+            { name: "zip.METHOD.DEFLATED", type: "" },
+            { name: "zip.METHOD.STORED", type: "" },
+          ]),
+          stringEnum("editor.ui.COLOR", [{ name: "editor.ui.COLOR.TEXT", type: "" }]),
+        ],
+      },
+    });
+    expect(dropped).toEqual(expect.arrayContaining(["zip.METHOD.DEFLATED", "zip.METHOD.STORED"]));
+    expect(contents).not.toContain("namespace zip");
+    expect(contents).not.toContain("DEFLATED");
+    expect(contents).not.toContain("type METHOD");
+    expect(contents).toContain("namespace ui {");
+    expect(contents).toContain("const TEXT:");
+    expect(contents).toContain("type COLOR = ");
   });
 
   test("leaves the editor-VM libraries that share the fixture to their own manifest", () => {
@@ -800,7 +891,8 @@ describe("editor VM module emit", () => {
   // carries no `types`, and its brief is an unreliable literal (upstream's
   // `zip.ON_CONFLICT.OVERWRITE` reads `"skip"`) — so the hand-authored form in
   // `src/editor-vm-globals.d.ts`, which `ZipPackOptions` actually types against,
-  // stays authoritative. Kept apart from EMITTER_GAP so the two causes stay
+  // stays authoritative. As 1.13.2 ENUM members they carry a string type, and
+  // the same rules still withhold them. Kept apart from EMITTER_GAP so the two causes stay
   // distinguishable: a deliberate skip going missing is a different defect from
   // a new upstream shape falling out.
   const DELIBERATE_SKIP: Readonly<Record<string, readonly string[]>> = {
@@ -843,6 +935,32 @@ describe("editor VM module emit", () => {
     expect(unexpressedFixtureNames(entry.doc, contents)).toEqual(
       [...(EMITTER_GAP[namespace] ?? []), ...(DELIBERATE_SKIP[namespace] ?? [])].sort(),
     );
+  });
+
+  test("zip withholds its ENUM constant tables, leaving them to the hand-authored globals", () => {
+    const entry = EDITOR_VM_MODULE_MANIFEST.find((e) => e.namespace === "zip");
+    if (!entry) throw new Error("zip editor VM manifest entry missing");
+    const { contents } = generateModuleDeclaration({
+      ...entry,
+      doc: {
+        info: { namespace: "zip", brief: "z", description: "z" },
+        elements: [
+          stringEnum("zip.METHOD", [
+            { name: "zip.METHOD.DEFLATED", type: "" },
+            { name: "zip.METHOD.STORED", type: "" },
+          ]),
+          stringEnum("zip.ON_CONFLICT", [
+            { name: "zip.ON_CONFLICT.ERROR", type: "" },
+            { name: "zip.ON_CONFLICT.OVERWRITE", type: "" },
+            { name: "zip.ON_CONFLICT.SKIP", type: "" },
+          ]),
+        ],
+      },
+    });
+    expect(contents).not.toContain("namespace METHOD");
+    expect(contents).not.toContain("namespace ON_CONFLICT");
+    expect(contents).not.toContain("type METHOD");
+    expect(contents).not.toContain("type ON_CONFLICT");
   });
 
   test("each module lands under its own subdirectory path, dots flattened", () => {
