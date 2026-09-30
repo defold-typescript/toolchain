@@ -99,7 +99,10 @@ declare global {
       options?: GoPropertyOptions,
     ): void;
     /**
-     * Registers a Defold editor script property (deprecated escape hatch).
+     * Registers a script property, which the Defold editor exposes on every game
+     * object and collection that uses the script. Defold accepts the call only at
+     * the top level of the script, outside callbacks such as `init` and `update`.
+     * A `string` default needs Defold 1.13.2 or later.
      *
      * @deprecated Don't call `go.property` yourself. Declare the property in
      * `defineScript({ properties })` — that is the only form that types it onto

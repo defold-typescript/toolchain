@@ -2295,6 +2295,44 @@ describe("apiModuleSymbols", () => {
     );
   });
 
+  function canonicalGoPage(): ApiPage {
+    const page = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
+      (p) => p.module.namespace === "go",
+    );
+    if (!page) throw new Error("no canonical go page");
+    return page;
+  }
+
+  test("go.property's undocumented rows inherit the first row's authored prose", () => {
+    const page = canonicalGoPage();
+    const refDoc =
+      apiModuleSymbols(page, page.translations, {}).find((s) => s.name === "go.property")
+        ?.docMarkdown ?? "";
+    const rows = apiModuleSymbols(page, page.translations, page.signatures).filter(
+      (s) => s.name === "go.property",
+    );
+
+    expect(rows.length).toBeGreaterThan(1);
+    expect(rows[0]?.docMarkdown).not.toBe(refDoc);
+    for (const row of rows) expect(row.docMarkdown).toBe(rows[0]?.docMarkdown ?? "");
+  });
+
+  test("go.property's rows span every version its ref-doc signatures cover", () => {
+    const page = canonicalGoPage();
+    const records = [...(page.availability?.records.values() ?? [])].filter(
+      (record) => record.identity.name === "go.property",
+    );
+    // Two records: the ref-doc re-typed `value` in a later release, while the
+    // authored forms stay the same on every version.
+    expect(records.length).toBeGreaterThan(1);
+    const covered = new Set(records.flatMap((record) => record.availableIn));
+
+    const [head] = apiModuleSymbols(page, page.translations, page.signatures).filter(
+      (s) => s.name === "go.property",
+    );
+    expect(new Set(head?.availability?.availableIn)).toEqual(covered);
+  });
+
   test("msg.post's primary row keeps the authored bullet list through the projection", () => {
     const store = committedStore("msg");
     const rows = apiModuleSymbols(fixturePage("msg"), {}, store).filter(

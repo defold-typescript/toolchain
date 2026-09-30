@@ -61,6 +61,22 @@ function availabilityForIdentity(
   return availability.records.get(identity);
 }
 
+// One record standing for several identities of the same symbol: the newest
+// record's facts over the union of every record's versions, newest first.
+function mergedAvailability(
+  records: readonly ApiAvailability[],
+  versions: readonly string[],
+): ApiAvailability | undefined {
+  const [first] = records;
+  if (first === undefined || records.length === 1) return first;
+  const availableIn = [...new Set(records.flatMap((record) => record.availableIn))].sort(
+    (a, b) => versions.indexOf(a) - versions.indexOf(b),
+  );
+  const newest =
+    records.find((record) => record.availableIn.includes(availableIn[0] ?? "")) ?? first;
+  return { ...newest, availableIn };
+}
+
 function joinAvailability(
   availability: AvailabilityLookup | undefined,
   namespace: string,
@@ -1306,15 +1322,16 @@ export function apiModuleSymbols(
     const rowEntry = (i: number): ApiFunction | null => paired?.[i] ?? (i === tableRow ? fn : null);
     // per-overload description: each override row keeps its own `docs[i]` prose,
     // falling back to its paired ref-doc entry's description — or, unpaired, to
+    // the first row's authored prose, which documents the whole function, else
     // the shared entry-0 one — when absent/`null`.
     const fixtureDoc = proseDocText(fn.description || fn.brief, fn.name, translations);
+    const headDoc = ov?.docs?.[0];
     const overloadDoc = (i: number): string => {
       const authored = ov?.docs?.[i];
       if (authored != null) return platformDocText(authored);
       const entry = paired?.[i];
-      return entry
-        ? proseDocText(entry.description || entry.brief, fn.name, translations)
-        : fixtureDoc;
+      if (entry) return proseDocText(entry.description || entry.brief, fn.name, translations);
+      return headDoc != null ? platformDocText(headDoc) : fixtureDoc;
     };
     const primaryEntry = rowEntry(0);
     // A paired row carries its own entry's example. The first row to reach an
@@ -1375,7 +1392,24 @@ export function apiModuleSymbols(
     // `api-availability.json` was derived with — so a badge lands on the one
     // overload it identifies. Authored-override extra rows below share the raw
     // symbol and carry no badge of their own.
-    const av = availabilityForIdentity(page.availability, identity);
+    //
+    // An authored override renders the same forms on every version, so a ref-doc
+    // signature change that collapses into them never reaches the reader: the row
+    // carries the span of every identity it stands for, not one record's half.
+    const av =
+      ov === null || collapsed
+        ? availabilityForIdentity(page.availability, identity)
+        : mergedAvailability(
+            (overrideEntries.get(fn.name) ?? [fn])
+              .map(functionIdentity)
+              .filter((id) => {
+                const signature = authoritative?.get(id);
+                return signature === undefined || rowSignatures.includes(signature);
+              })
+              .map((id) => availabilityForIdentity(page.availability, id))
+              .filter((record) => record !== undefined),
+            page.availability?.versions ?? [],
+          );
     if (av) symbol.availability = av;
     symbols.push(symbol);
     if (primarySlots !== undefined) artifactBacked.add(symbol);
