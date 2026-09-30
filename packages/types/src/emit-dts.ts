@@ -6,6 +6,8 @@ import type {
   ApiModule,
   ApiParameter,
   ApiProperty,
+  ApiStruct,
+  ApiTypedef,
   ApiVariable,
 } from "./api-doc";
 import { DEFOLD_TYPE_MAP } from "./core-types";
@@ -54,6 +56,11 @@ export interface EmitOptions {
   // map; a library or extension declaration passes its page keys (`[]` for one
   // no page documents), so it never names Defold as the receiver.
   indexBaseSource?: IndexBaseSource;
+  // The TS path of each `ENUM`, `STRUCT` and `TYPEDEF` another module declares
+  // (`declaredTypePaths`), so a token naming one resolves instead of widening to
+  // `unknown`. The module's own declarations resolve without it. Read only by the
+  // default engine mapper; a caller-supplied `mapType` keeps its own vocabulary.
+  declaredTypes?: ReadonlyMap<string, string>;
 }
 
 export const TS_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
@@ -1448,8 +1455,14 @@ export function constantUnionAliasDeclarations(namespace: string): string[] {
     .map((row) => unionAliasDeclaration(row.name, row.members));
 }
 
-function unionAliasDeclaration(name: string, members: readonly string[]): string {
-  return `type ${name} = ${members.map((member) => `typeof ${member}`).join(" | ")};`;
+function unionAliasDeclaration(
+  name: string,
+  members: readonly string[],
+  nilable: ReadonlySet<string> = new Set(),
+): string {
+  const arm = (member: string) =>
+    nilable.has(member) ? `NonNullable<typeof ${member}>` : `typeof ${member}`;
+  return `type ${name} = ${members.map(arm).join(" | ")};`;
 }
 
 const DOC_CONSTANT_TOKEN =
@@ -3403,10 +3416,217 @@ function groupFlattenedTableFields(fields: readonly TableField[]): TableField[] 
 // A handle the type map widens (`constant_buffer` takes named constants) keeps
 // that shape, so annotating with the alias loses nothing the handle-returning
 // function yields.
-function typedefAlias(name: string, mapType: (token: string) => string): string {
-  const brand = `Opaque<"${name}">`;
-  const mapped = mapType(name);
-  return `type ${name} = ${mapped.startsWith(brand) ? mapped : brand};`;
+//
+// An engine typedef that names its aliased type: a `userdata`/`number` handle the
+// type map resolves (`vector`, `socket_client`) aliases that mapping, an
+// unresolved one keeps the brand, and any other aliased type (a union, literals, a
+// record) aliases the type itself.
+function typedefAlias(
+  typedef: ApiTypedef,
+  local: string,
+  rawMapType: (token: string) => string,
+  mapType: (token: string) => string,
+): string {
+  const brand = `Opaque<"${typedef.name}">`;
+  const aliasOf = typedef.aliasOf ?? [];
+  if (aliasOf.length > 0 && !isHandleAlias(aliasOf)) {
+    return `type ${local} = ${unionFromTokens(aliasOf, mapType)};`;
+  }
+  const mapped = rawMapType(typedef.name);
+  if (mapped.startsWith(brand)) return `type ${local} = ${mapped};`;
+  const resolved = aliasOf.length > 0 && mapped !== "unknown" && mapped !== local;
+  return `type ${local} = ${resolved ? mapped : brand};`;
+}
+
+function isHandleAlias(aliasOf: readonly string[]): boolean {
+  return aliasOf.length === 1 && (aliasOf[0] === "userdata" || aliasOf[0] === "number");
+}
+
+// A `STRUCT` or aliasing `TYPEDEF` placed at its local path (`shape_data`,
+// `on_input.action`) under the module that emits it.
+interface TypeDeclaration {
+  name: string;
+  path: string;
+  // The declaration's lines at `indent`, its keyword line led by `decl`.
+  lines: (indent: string, decl: string) => string[];
+  signature: string;
+}
+
+// A typedef with no aliased type keeps the flat-name rule it always had; one that
+// names its aliased type, and every struct, sits at its name less the module
+// prefix, nested when that local is dotted. Typedefs come before structs, each in
+// document order.
+function collectTypeDeclarations(
+  module: ApiModule,
+  skip: ReadonlySet<string>,
+  rawMapType: (token: string) => string,
+  mapType: (token: string) => string,
+): TypeDeclaration[] {
+  const prefix = `${module.namespace}.`;
+  const out: TypeDeclaration[] = [];
+  const localOf = (name: string): string | null => {
+    const local = stripPrefix(name, prefix);
+    return local.split(".").every((segment) => TS_IDENTIFIER.test(segment)) ? local : null;
+  };
+  for (const t of module.typedefs) {
+    const local =
+      t.aliasOf === undefined ? (TS_IDENTIFIER.test(t.name) ? t.name : null) : localOf(t.name);
+    if (local === null || skip.has(local)) continue;
+    const name = local.slice(local.lastIndexOf(".") + 1);
+    const signature = typedefAlias(t, name, rawMapType, mapType);
+    out.push({
+      name,
+      path: local,
+      lines: (indent, decl) => [`${indent}${decl}${signature}`],
+      signature,
+    });
+  }
+  for (const struct of module.structs ?? []) {
+    const local = localOf(struct.name);
+    if (local === null || skip.has(local)) continue;
+    out.push(structDeclaration(struct, local, mapType));
+  }
+  return out;
+}
+
+function structDeclaration(
+  struct: ApiStruct,
+  path: string,
+  mapType: (token: string) => string,
+): TypeDeclaration {
+  const name = path.slice(path.lastIndexOf(".") + 1);
+  const members = struct.members.map((member) => ({
+    doc: member.doc,
+    line: `${TS_IDENTIFIER.test(member.name) ? member.name : JSON.stringify(member.name)}${member.isOptional ? "?" : ""}: ${member.type === "" ? "unknown" : mapType(member.type)};`,
+  }));
+  return {
+    name,
+    path,
+    lines: (indent, decl) => {
+      const memberIndent = `${indent}${INDENT}`;
+      return [
+        ...summaryDocLines(struct.brief, struct.description, indent),
+        `${indent}${decl}interface ${name} {`,
+        ...members.flatMap((member) => [
+          ...summaryDocLines(member.doc, "", memberIndent),
+          `${memberIndent}${member.line}`,
+        ]),
+        `${indent}}`,
+      ];
+    },
+    signature: `interface ${name} { ${members.map((member) => `${member.line} `).join("")}}`,
+  };
+}
+
+// Nested declarations join the group at their path, which is created when no
+// member lives there; the flat ones are returned in name order.
+function placeTypeDeclarations(
+  declarations: readonly TypeDeclaration[],
+  nestedRoot: Map<string, NestedGroup>,
+): TypeDeclaration[] {
+  const byName = (a: TypeDeclaration, b: TypeDeclaration) => a.name.localeCompare(b.name);
+  const topLevel: TypeDeclaration[] = [];
+  for (const declaration of declarations) {
+    if (declaration.path === declaration.name) {
+      topLevel.push(declaration);
+      continue;
+    }
+    const group = nestedGroupAt(nestedRoot, declaration.path.split(".").slice(0, -1));
+    group.typeDeclarations.push(declaration);
+    group.typeDeclarations.sort(byName);
+  }
+  return topLevel.sort(byName);
+}
+
+// The engine mapper extended with the module's own declared types and those
+// `declared` names from other modules.
+function declaredTypesMapper(
+  module: ApiModule,
+  declared: ReadonlyMap<string, string> | undefined,
+): (token: string) => string {
+  return mapTypeWithDeclaredTypes(new Map([...declaredTypePaths([module]), ...(declared ?? [])]));
+}
+
+/**
+ * Move each `STRUCT` and aliasing `TYPEDEF` to the module whose namespace is the
+ * longest prefix of its name (`b2d.joint.revolute_definition`, declared in the
+ * `b2d` doc, moves to `b2d.joint`). A name no module prefixes stays with the
+ * module that declares it. Modules with nothing moved in or out are returned
+ * as-is.
+ */
+export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[] {
+  const homeOf = (name: string, declaring: string): string => {
+    let home = declaring;
+    let longest = -1;
+    for (const { namespace } of modules) {
+      if (name.startsWith(`${namespace}.`) && namespace.length > longest) {
+        home = namespace;
+        longest = namespace.length;
+      }
+    }
+    return home;
+  };
+  const incoming = new Map<string, { structs: ApiStruct[]; typedefs: ApiTypedef[] }>();
+  const into = (namespace: string) => {
+    let bucket = incoming.get(namespace);
+    if (bucket === undefined) {
+      bucket = { structs: [], typedefs: [] };
+      incoming.set(namespace, bucket);
+    }
+    return bucket;
+  };
+  const kept = modules.map((module) => {
+    const structs = (module.structs ?? []).filter((struct) => {
+      const home = homeOf(struct.name, module.namespace);
+      if (home === module.namespace) return true;
+      into(home).structs.push(struct);
+      return false;
+    });
+    const typedefs = module.typedefs.filter((typedef) => {
+      if (typedef.aliasOf === undefined) return true;
+      const home = homeOf(typedef.name, module.namespace);
+      if (home === module.namespace) return true;
+      into(home).typedefs.push(typedef);
+      return false;
+    });
+    return structs.length === (module.structs ?? []).length &&
+      typedefs.length === module.typedefs.length
+      ? module
+      : { ...module, structs, typedefs };
+  });
+  return kept.map((module) => {
+    const bucket = incoming.get(module.namespace);
+    if (bucket === undefined) return module;
+    return {
+      ...module,
+      structs: [...(module.structs ?? []), ...bucket.structs],
+      typedefs: [...module.typedefs, ...bucket.typedefs],
+    };
+  });
+}
+
+/**
+ * The TS path of every `ENUM`, `STRUCT` and aliasing `TYPEDEF` the (routed)
+ * modules declare, keyed by its Lua name: the name itself when it sits under its
+ * module's namespace, else that name nested under the module
+ * (`on_input.action` in `go` is `go.on_input.action`).
+ */
+export function declaredTypePaths(modules: readonly ApiModule[]): Map<string, string> {
+  const paths = new Map<string, string>();
+  for (const module of modules) {
+    const names = [
+      ...(module.enums ?? []).map((e) => e.name),
+      ...(module.structs ?? []).map((struct) => struct.name),
+      ...module.typedefs.filter((t) => t.aliasOf !== undefined).map((t) => t.name),
+    ];
+    for (const name of names) {
+      paths.set(
+        name,
+        name.startsWith(`${module.namespace}.`) ? name : `${module.namespace}.${name}`,
+      );
+    }
+  }
+  return paths;
 }
 
 export function emitDeclarations(module: ApiModule, options?: EmitOptions): string {
@@ -3417,7 +3637,8 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   const translations = options?.translations ?? {};
   const urlParameters = options?.urlParameters ?? [];
   const baseNotes = indexBaseNoteResolver(options?.indexBaseSource ?? "engine");
-  const baseMapType = options?.mapType ?? defaultMapType;
+  const rawMapType = options?.mapType ?? defaultMapType;
+  const baseMapType = options?.mapType ?? declaredTypesMapper(module, options?.declaredTypes);
   const mapType = (token: string): string =>
     constantsByFqn.has(token) || knownConstantFqns?.has(token)
       ? brandType(token, constantsByFqn.get(token))
@@ -3473,9 +3694,12 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     })),
   );
 
-  const typedefs = module.typedefs
-    .filter((t) => TS_IDENTIFIER.test(t.name))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // A typedef that also has colon methods is emitted as a method-bearing
+  // interface below, not an opaque brand alias.
+  const typeDeclarations = placeTypeDeclarations(
+    collectTypeDeclarations(module, new Set(handleGroups.keys()), rawMapType, mapType),
+    nestedRoot,
+  );
 
   // A re-export alias (`export { _x as x }`) switches the ambient namespace out
   // of its implicit-export mode, so once any alias is present every sibling
@@ -3490,17 +3714,14 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   for (const docLine of namespaceDocLines(module, translations)) lines.push(docLine);
   lines.push(`declare namespace ${module.namespace} {`);
 
-  for (const t of typedefs) {
-    // A typedef that also has colon methods is emitted as a method-bearing
-    // interface below, not an opaque brand alias.
-    if (handleGroups.has(t.name)) continue;
-    lines.push(`${INDENT}${decl}${typedefAlias(t.name, baseMapType)}`);
-  }
+  for (const declaration of typeDeclarations) lines.push(...declaration.lines(INDENT, decl));
   for (const aliasDecl of constantUnionAliasDeclarations(module.namespace)) {
     lines.push(`${INDENT}${decl}${aliasDecl}`);
   }
   for (const alias of enumAliases.topLevel) {
-    lines.push(`${INDENT}${decl}${unionAliasDeclaration(alias.name, alias.members)}`);
+    lines.push(
+      `${INDENT}${decl}${unionAliasDeclaration(alias.name, alias.members, alias.nilable)}`,
+    );
   }
   const handleIndent = `${INDENT}${INDENT}`;
   for (const receiver of handleReceivers) {
@@ -3586,9 +3807,12 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
           ? "export "
           : "";
       lines.push(`${indent}${outerDecl}namespace ${segment} {`);
+      for (const declaration of group.typeDeclarations) {
+        lines.push(...declaration.lines(bodyIndent, segmentDecl));
+      }
       for (const alias of group.enumAliases) {
         lines.push(
-          `${bodyIndent}${segmentDecl}${unionAliasDeclaration(alias.name, alias.members)}`,
+          `${bodyIndent}${segmentDecl}${unionAliasDeclaration(alias.name, alias.members, alias.nilable)}`,
         );
       }
       for (const c of group.constants) {
@@ -3701,7 +3925,8 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
   const constantsByFqn = new Map(module.constants.map((c) => [c.name, c]));
   const knownConstantFqns = options?.knownConstantFqns;
   const urlParameters = options?.urlParameters ?? [];
-  const baseMapType = options?.mapType ?? defaultMapType;
+  const rawMapType = options?.mapType ?? defaultMapType;
+  const baseMapType = options?.mapType ?? declaredTypesMapper(module, options?.declaredTypes);
   const mapType = (token: string): string =>
     constantsByFqn.has(token) || knownConstantFqns?.has(token)
       ? brandType(token, constantsByFqn.get(token))
@@ -3855,11 +4080,22 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     });
   }
 
-  for (const t of module.typedefs) {
-    if (!TS_IDENTIFIER.test(t.name) || handleGroups.has(t.name)) continue;
+  // A struct signs as its interface on one line; each member line is verbatim in
+  // the declarations.
+  for (const declaration of collectTypeDeclarations(
+    module,
+    new Set(handleGroups.keys()),
+    rawMapType,
+    mapType,
+  )) {
     out.push({
-      identity: { namespace: module.namespace, kind: "TYPEDEF", name: t.name, signature: "" },
-      tsSignature: typedefAlias(t.name, baseMapType),
+      identity: {
+        namespace: module.namespace,
+        kind: "TYPEDEF",
+        name: declaration.path,
+        signature: "",
+      },
+      tsSignature: declaration.signature,
       slotTypes: NO_SLOTS,
     });
   }
@@ -3881,7 +4117,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
   for (const alias of enumAliases.all) {
     out.push({
       identity: { namespace: module.namespace, kind: "TYPEDEF", name: alias.path, signature: "" },
-      tsSignature: unionAliasDeclaration(alias.name, alias.members),
+      tsSignature: unionAliasDeclaration(alias.name, alias.members, alias.nilable),
       slotTypes: NO_SLOTS,
     });
   }
@@ -3912,6 +4148,7 @@ interface NestedGroup {
   variables: PreparedVariable[];
   functions: PreparedFunction[];
   enumAliases: EnumAlias[];
+  typeDeclarations: TypeDeclaration[];
   children: Map<string, NestedGroup>;
 }
 
@@ -3921,6 +4158,9 @@ interface EnumAlias {
   name: string;
   path: string;
   members: readonly string[];
+  // Members typed `<ENUM>|nil`, whose arm drops the `undefined` their `const`
+  // admits, as a slot naming one does.
+  nilable: ReadonlySet<string>;
 }
 
 // A stripped local carrying one or two leading identifier segments before the
@@ -3929,28 +4169,32 @@ interface EnumAlias {
 // than half-emitted.
 const NESTED_MEMBER_LOCAL = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*){1,2}$/;
 
+// The group at `segments` under `root`, creating each missing level.
+function nestedGroupAt(root: Map<string, NestedGroup>, segments: readonly string[]): NestedGroup {
+  let level = root;
+  let group: NestedGroup | undefined;
+  for (const segment of segments) {
+    let next = level.get(segment);
+    if (next === undefined) {
+      next = {
+        constants: [],
+        variables: [],
+        functions: [],
+        enumAliases: [],
+        typeDeclarations: [],
+        children: new Map(),
+      };
+      level.set(segment, next);
+    }
+    group = next;
+    level = next.children;
+  }
+  return group as NestedGroup;
+}
+
 function collectNestedGroups(module: ApiModule, prefix: string): Map<string, NestedGroup> {
   const root = new Map<string, NestedGroup>();
-  const groupAt = (segments: readonly string[]): NestedGroup => {
-    let level = root;
-    let group: NestedGroup | undefined;
-    for (const segment of segments) {
-      let next = level.get(segment);
-      if (next === undefined) {
-        next = {
-          constants: [],
-          variables: [],
-          functions: [],
-          enumAliases: [],
-          children: new Map(),
-        };
-        level.set(segment, next);
-      }
-      group = next;
-      level = next.children;
-    }
-    return group as NestedGroup;
-  };
+  const groupAt = (segments: readonly string[]): NestedGroup => nestedGroupAt(root, segments);
   const pathOf = (local: string): string[] => local.split(".").slice(0, -1);
 
   for (const c of module.constants) {
@@ -4035,6 +4279,7 @@ function collectEnumAliases(
     ...topLevelConstants.map((c) => c.fqn),
     ...flattenNestedGroups(nestedRoot).constants.map((c) => c.fqn),
   ]);
+  const nilable = new Set(module.constants.filter((c) => c.nilable).map((c) => c.name));
   const topLevel: EnumAlias[] = [];
   const all: EnumAlias[] = [];
   const enums = [...(module.enums ?? [])].sort((a, b) => a.name.localeCompare(b.name));
@@ -4042,7 +4287,7 @@ function collectEnumAliases(
     if (e.members.length === 0 || !e.members.every((m) => declared.has(m))) continue;
     const path = stripPrefix(e.name, prefix);
     if (TS_IDENTIFIER.test(path)) {
-      const alias = { name: path, path, members: e.members };
+      const alias = { name: path, path, members: e.members, nilable };
       topLevel.push(alias);
       all.push(alias);
       continue;
@@ -4058,7 +4303,7 @@ function collectEnumAliases(
       level = group.children;
     }
     if (group === undefined) continue;
-    const alias = { name, path, members: e.members };
+    const alias = { name, path, members: e.members, nilable };
     group.enumAliases.push(alias);
     all.push(alias);
   }
@@ -5074,4 +5319,18 @@ export function mapTypeWithLeaves(
     if (Object.hasOwn(leaves, token)) return leaves[token] as string;
     return wholeTokenMapping(token) ?? mapLualsExpression(token, resolveLeaf).ts;
   };
+}
+
+/**
+ * The engine mapper with `declared` (Lua name -> TS path) consulted after the
+ * engine vocabulary, both as a whole token and as a leaf inside a composite.
+ */
+export function mapTypeWithDeclaredTypes(
+  declared: ReadonlyMap<string, string>,
+): (token: string) => string {
+  if (declared.size === 0) return defaultMapType;
+  const resolveLeaf = (leaf: string): string | undefined =>
+    resolveDefoldLeaf(leaf) ?? declared.get(leaf);
+  return (token) =>
+    wholeTokenMapping(token) ?? declared.get(token) ?? mapLualsExpression(token, resolveLeaf).ts;
 }

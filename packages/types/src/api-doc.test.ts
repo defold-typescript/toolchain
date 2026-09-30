@@ -581,3 +581,88 @@ describe("parseDefoldApiDoc ENUM elements", () => {
     expect(module.enums).toEqual([]);
   });
 });
+
+describe("parseDefoldApiDoc STRUCT and TYPEDEF elements", () => {
+  // Verbatim from the Defold 1.13.2 ref-doc (`scripts-script_physics.cpp_doc.json`).
+  const physicsShapeData = {
+    type: "STRUCT",
+    name: "physics.shape_data",
+    brief: "Collision shape data",
+    description: "The available geometry fields depend on <code>type</code>.",
+    returnvalues: [],
+    parameters: [],
+    examples: "",
+    replaces: "",
+    error: "",
+    tparams: [],
+    members: [
+      { name: "type", doc: "shape type", type: "physics.SHAPE_TYPE" },
+      { name: "diameter?", doc: "sphere diameter or capsule pole diameter", type: "number" },
+      { name: "dimensions?", doc: "box dimensions", type: "vector3" },
+      { name: "height?", doc: "capsule height", type: "number" },
+    ],
+    notes: [],
+    language: "",
+  };
+
+  // Verbatim from the Defold 1.13.2 ref-doc (`scripts-script_collectionproxy.cpp_doc.json`).
+  const timeStepMode = {
+    type: "TYPEDEF",
+    name: "collectionproxy.TIME_STEP_MODE",
+    brief: "Collection proxy time-step mode",
+    description:
+      "The runtime message uses numeric modes rather than exported Lua constants:\n0 updates continuously and 1 updates in discrete steps.",
+    returnvalues: [],
+    parameters: [{ name: "value", doc: "time-step mode", types: ["0", "1"], is_optional: "False" }],
+    examples: "",
+    replaces: "",
+    error: "",
+    tparams: [],
+    members: [],
+    notes: [],
+    language: "",
+  };
+
+  test("a struct member's `?` suffix marks it optional and leaves the name bare", () => {
+    const module = parseDefoldApiDoc({
+      info: { namespace: "physics" },
+      elements: [physicsShapeData],
+    });
+    expect(module.structs).toEqual([
+      {
+        name: "physics.shape_data",
+        brief: "Collision shape data",
+        description: "The available geometry fields depend on <code>type</code>.",
+        members: [
+          { name: "type", doc: "shape type", type: "physics.SHAPE_TYPE", isOptional: false },
+          {
+            name: "diameter",
+            doc: "sphere diameter or capsule pole diameter",
+            type: "number",
+            isOptional: true,
+          },
+          { name: "dimensions", doc: "box dimensions", type: "vector3", isOptional: true },
+          { name: "height", doc: "capsule height", type: "number", isOptional: true },
+        ],
+      },
+    ]);
+  });
+
+  test("a typedef keeps the type it aliases", () => {
+    const module = parseDefoldApiDoc({
+      info: { namespace: "collectionproxy" },
+      elements: [timeStepMode],
+    });
+    expect(module.typedefs).toEqual([
+      { name: "collectionproxy.TIME_STEP_MODE", aliasOf: ["0", "1"] },
+    ]);
+  });
+
+  test("a module without STRUCT elements carries no structs", () => {
+    const module = parseDefoldApiDoc({
+      info: { namespace: "ns" },
+      elements: [{ type: "CONSTANT", name: "ns.A" }],
+    });
+    expect(module.structs).toEqual([]);
+  });
+});
