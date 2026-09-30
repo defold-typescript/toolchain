@@ -56,6 +56,7 @@ import {
   CONSTANT_UNION_ALIASES,
   collectHandleMethodGroups,
   constantUnionAlias,
+  declaredTypePaths,
   defaultMapType,
   emitDeclarations,
   emitSymbolSignatures,
@@ -69,6 +70,7 @@ import {
   PARAM_TYPE_CORRECTIONS,
   parseTableFields,
   recoverCallbackSignature,
+  routeTypeDeclarations,
   SLOT_LEVEL_LIST_PROSE,
   TABLE_SLOT_CURATIONS,
   TABLE_SLOT_FIELD_ADDITIONS,
@@ -5444,7 +5446,7 @@ describe("ENUM declarations", () => {
     expect(missing).toEqual([]);
   });
 
-  test("a `<ENUM>|nil` member admits undefined while a slot naming it stays branded", () => {
+  test("a `<ENUM>|nil` member admits undefined while a slot or alias naming it stays branded", () => {
     const module = parseDefoldApiDoc({
       info: { namespace: "graphics" },
       elements: [
@@ -5478,5 +5480,306 @@ describe("ENUM declarations", () => {
     expect(out).toContain(
       'function use(format: number & { readonly __brand: "graphics.TEXTURE_FORMAT_BGRA8U" }): void;',
     );
+    expect(out).toContain(
+      "type TEXTURE_FORMAT = typeof graphics.TEXTURE_FORMAT_RGBA | NonNullable<typeof graphics.TEXTURE_FORMAT_BGRA8U>;",
+    );
+  });
+});
+
+describe("STRUCT and TYPEDEF declarations", () => {
+  // Verbatim from the Defold 1.13.2 ref-doc (`scripts-script_physics.cpp_doc.json`).
+  const physicsShapeType = {
+    type: "ENUM",
+    name: "physics.SHAPE_TYPE",
+    brief: "Shape types",
+    description: "Shape types",
+    returnvalues: [],
+    parameters: [],
+    examples: "",
+    replaces: "",
+    error: "",
+    tparams: [],
+    members: [
+      { name: "physics.SHAPE_TYPE_BOX", doc: "Box shape.", type: "" },
+      {
+        name: "physics.SHAPE_TYPE_CAPSULE",
+        doc: "Capsule shape; supported only by 3D physics.",
+        type: "",
+      },
+      { name: "physics.SHAPE_TYPE_HULL", doc: "Convex hull shape.", type: "" },
+      {
+        name: "physics.SHAPE_TYPE_MESH",
+        doc: "Triangle mesh shape; supported only by the Bullet 3D backend.",
+        type: "",
+      },
+      { name: "physics.SHAPE_TYPE_SPHERE", doc: "Sphere shape.", type: "" },
+    ],
+    notes: [],
+    language: "",
+  };
+
+  // Verbatim from the Defold 1.13.2 ref-doc (`scripts-script_physics.cpp_doc.json`).
+  const physicsShapeData = {
+    type: "STRUCT",
+    name: "physics.shape_data",
+    brief: "Collision shape data",
+    description: "The available geometry fields depend on <code>type</code>.",
+    returnvalues: [],
+    parameters: [],
+    examples: "",
+    replaces: "",
+    error: "",
+    tparams: [],
+    members: [
+      { name: "type", doc: "shape type", type: "physics.SHAPE_TYPE" },
+      { name: "diameter?", doc: "sphere diameter or capsule pole diameter", type: "number" },
+      { name: "dimensions?", doc: "box dimensions", type: "vector3" },
+      { name: "height?", doc: "capsule height", type: "number" },
+    ],
+    notes: [],
+    language: "",
+  };
+
+  // Verbatim from the Defold 1.13.2 ref-doc (`scripts-script_physics.cpp_doc.json`).
+  const physicsEvent = {
+    type: "TYPEDEF",
+    name: "physics.event",
+    brief: "Physics world event",
+    description:
+      "An event delivered to a physics world listener. Inspect its <code>type</code> field to\ndetermine which event-specific fields are available.",
+    returnvalues: [],
+    parameters: [
+      {
+        name: "value",
+        doc: "physics event data",
+        types: [
+          "message.physics.contact_point_event",
+          "message.physics.collision_event",
+          "message.physics.trigger_event",
+          "message.physics.ray_cast_response",
+          "message.physics.ray_cast_missed",
+        ],
+        is_optional: "False",
+      },
+    ],
+    examples: "",
+    replaces: "",
+    error: "",
+    tparams: [],
+    members: [],
+    notes: [],
+    language: "",
+  };
+
+  // Verbatim from the Defold 1.13.2 ref-doc (`scripts-script_collectionproxy.cpp_doc.json`).
+  const timeStepMode = {
+    type: "TYPEDEF",
+    name: "collectionproxy.TIME_STEP_MODE",
+    brief: "Collection proxy time-step mode",
+    description:
+      "The runtime message uses numeric modes rather than exported Lua constants:\n0 updates continuously and 1 updates in discrete steps.",
+    returnvalues: [],
+    parameters: [{ name: "value", doc: "time-step mode", types: ["0", "1"], is_optional: "False" }],
+    examples: "",
+    replaces: "",
+    error: "",
+    tparams: [],
+    members: [],
+    notes: [],
+    language: "",
+  };
+
+  // Verbatim from the Defold 1.13.2 ref-doc (`luasocket-luasocket.doc_h_doc.json`),
+  // prose and examples elided.
+  const socketClient = {
+    type: "TYPEDEF",
+    name: "socket_client",
+    brief: "TCP client object",
+    parameters: [
+      { name: "value", doc: "connected TCP socket", types: ["userdata"], is_optional: "False" },
+    ],
+    members: [],
+  };
+
+  // Verbatim from the Defold 1.13.2 ref-doc (`src-script_vmath.cpp_doc.json`), prose
+  // and examples elided.
+  const vmathVector = {
+    type: "TYPEDEF",
+    name: "vector",
+    brief: "Dynamically sized numeric vector",
+    parameters: [
+      { name: "value", doc: "dynamically sized vector", types: ["userdata"], is_optional: "False" },
+    ],
+    members: [],
+  };
+
+  // Verbatim from the Defold 1.13.2 ref-doc (`scripts-bullet3d-script_bullet3d_constraint.cpp_doc.json`).
+  const btTypedConstraint = {
+    type: "TYPEDEF",
+    name: "btTypedConstraint",
+    brief: "Bullet typed constraint",
+    description: "Bullet typed constraint",
+    returnvalues: [],
+    parameters: [
+      { name: "value", doc: "opaque constraint handle", types: ["userdata"], is_optional: "False" },
+    ],
+    examples: "",
+    replaces: "",
+    error: "",
+    tparams: [],
+    members: [],
+    notes: [],
+    language: "",
+  };
+
+  // Verbatim from the Defold 1.13.2 ref-doc (`scripts-box2d-script_box2d.cpp_doc.json`),
+  // members after the first two elided.
+  const revoluteDefinition = {
+    type: "STRUCT",
+    name: "b2d.joint.revolute_definition",
+    brief: "Box2D revolute-joint definition",
+    description: "Box2D revolute-joint definition",
+    parameters: [],
+    members: [
+      { name: "local_anchor_a?", doc: "Local anchor on the first body.", type: "vector3" },
+      { name: "local_anchor_b?", doc: "Local anchor on the second body.", type: "vector3" },
+    ],
+  };
+
+  const aliasLine = (out: string, name: string): string | undefined =>
+    out
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.startsWith(`type ${name} =`));
+
+  const physicsModule = parseDefoldApiDoc({
+    info: { namespace: "physics" },
+    elements: [physicsShapeType, physicsShapeData, physicsEvent],
+  });
+
+  test("a struct emits an interface with its members' optionality, types and docs", () => {
+    const lines = emitDeclarations(physicsModule).split("\n");
+    const start = lines.indexOf("  interface shape_data {");
+    expect(start).toBeGreaterThan(-1);
+    expect(lines.slice(start, start + 18)).toEqual([
+      "  interface shape_data {",
+      "    /**",
+      "     * shape type",
+      "     */",
+      "    type: physics.SHAPE_TYPE;",
+      "    /**",
+      "     * sphere diameter or capsule pole diameter",
+      "     */",
+      "    diameter?: number;",
+      "    /**",
+      "     * box dimensions",
+      "     */",
+      "    dimensions?: Vector3;",
+      "    /**",
+      "     * capsule height",
+      "     */",
+      "    height?: number;",
+      "  }",
+    ]);
+    expect(lines.slice(0, start).some((line) => line === "declare namespace physics {")).toBe(true);
+  });
+
+  test("a struct signs as a typedef whose member lines the declarations carry", () => {
+    const declarations = emitDeclarations(physicsModule);
+    const shapeData = emitSymbolSignatures(physicsModule).find(
+      (entry) => entry.identity.kind === "TYPEDEF" && entry.identity.name === "shape_data",
+    );
+    expect(shapeData?.tsSignature).toBe(
+      "interface shape_data { type: physics.SHAPE_TYPE; diameter?: number; dimensions?: Vector3; height?: number; }",
+    );
+    for (const member of ["type: physics.SHAPE_TYPE;", "diameter?: number;", "height?: number;"]) {
+      expect(declarations).toContain(`    ${member}`);
+    }
+  });
+
+  test("a union typedef aliases its arms", () => {
+    expect(aliasLine(emitDeclarations(physicsModule), "event")).toBe(
+      'type event = BuiltinMessages["contact_point_event"] | BuiltinMessages["collision_event"] | BuiltinMessages["trigger_event"] | BuiltinMessages["ray_cast_response"] | BuiltinMessages["ray_cast_missed"];',
+    );
+  });
+
+  test("a literal typedef aliases its literals", () => {
+    const out = emitDeclarations(
+      parseDefoldApiDoc({ info: { namespace: "collectionproxy" }, elements: [timeStepMode] }),
+    );
+    expect(aliasLine(out, "TIME_STEP_MODE")).toBe("type TIME_STEP_MODE = 0 | 1;");
+  });
+
+  test("a handle typedef the type map resolves aliases that mapping", () => {
+    const socket = emitDeclarations(
+      parseDefoldApiDoc({ info: { namespace: "socket" }, elements: [socketClient] }),
+    );
+    expect(aliasLine(socket, "socket_client")).toBe("type socket_client = client;");
+    const vmath = emitDeclarations(
+      parseDefoldApiDoc({ info: { namespace: "vmath" }, elements: [vmathVector] }),
+    );
+    expect(aliasLine(vmath, "vector")).toBe("type vector = Vector;");
+  });
+
+  test("an unmapped userdata typedef keeps its opaque brand", () => {
+    const out = emitDeclarations(
+      parseDefoldApiDoc({
+        info: { namespace: "bullet3d.constraint" },
+        elements: [btTypedConstraint],
+      }),
+    );
+    expect(aliasLine(out, "btTypedConstraint")).toBe(
+      'type btTypedConstraint = Opaque<"btTypedConstraint">;',
+    );
+  });
+
+  test("a declaration routes to the module whose namespace is its longest prefix", () => {
+    const [b2d, joint] = routeTypeDeclarations([
+      parseDefoldApiDoc({ info: { namespace: "b2d" }, elements: [revoluteDefinition] }),
+      parseDefoldApiDoc({ info: { namespace: "b2d.joint" }, elements: [] }),
+    ]) as [ApiModule, ApiModule];
+    const jointOut = emitDeclarations(joint);
+    expect(jointOut).toContain("declare namespace b2d.joint {");
+    expect(jointOut).toContain("  interface revolute_definition {");
+    expect(jointOut).toContain("    local_anchor_a?: Vector3;");
+    expect(emitDeclarations(b2d)).not.toContain("revolute_definition");
+    expect(
+      emitSymbolSignatures(joint)
+        .filter((entry) => entry.identity.kind === "TYPEDEF")
+        .map((entry) => [entry.identity.namespace, entry.identity.name]),
+    ).toEqual([["b2d.joint", "revolute_definition"]]);
+  });
+
+  test("a declaration no module prefixes nests under its declaring module", () => {
+    const modules = routeTypeDeclarations([
+      parseDefoldApiDoc({
+        info: { namespace: "go" },
+        elements: [
+          {
+            type: "STRUCT",
+            name: "on_input.action",
+            brief: "Input action",
+            members: [{ name: "pressed?", doc: "Whether the input was pressed.", type: "boolean" }],
+          },
+          {
+            type: "FUNCTION",
+            name: "go.take",
+            parameters: [{ name: "action", doc: "", types: ["on_input.action"] }],
+          },
+        ],
+      }),
+    ]);
+    const paths = declaredTypePaths(modules);
+    expect(paths.get("on_input.action")).toBe("go.on_input.action");
+    const lines = emitDeclarations(modules[0] as ApiModule, { declaredTypes: paths }).split("\n");
+    const namespace = lines.indexOf("  namespace on_input {");
+    expect(namespace).toBeGreaterThan(-1);
+    expect(lines.slice(namespace + 1, namespace + 5)).toEqual([
+      "    /**",
+      "     * Input action",
+      "     */",
+      "    interface action {",
+    ]);
+    expect(lines).toContain("  function take(action: go.on_input.action): void;");
   });
 });
