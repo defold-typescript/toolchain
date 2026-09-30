@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import committed from "../api-signatures.json" with { type: "json" };
 import { OVERLOAD_COVERED_SKIPS } from "../src/emit-dts";
+import { registeredConstantFqns } from "./engine-binding-extract";
 import { selectCompleteVersionSurfaces } from "./generate-api-availability";
 import {
   buildSignaturesArtifact,
@@ -285,11 +286,15 @@ describe("per-slot rendered types travel with the signature", () => {
 
 describe("committed artifact drift gate", () => {
   test("fresh derivation equals the committed api-signatures.json", () => {
-    expect(buildSignaturesArtifact()).toEqual(committed as unknown as SignaturesArtifact);
+    expect(buildSignaturesArtifact({ registeredConstantsOf: registeredConstantFqns })).toEqual(
+      committed as unknown as SignaturesArtifact,
+    );
   });
 
   test("committed api-signatures.json is byte-equal to a fresh serialization", () => {
-    const fresh = serializeSignaturesArtifact(buildSignaturesArtifact());
+    const fresh = serializeSignaturesArtifact(
+      buildSignaturesArtifact({ registeredConstantsOf: registeredConstantFqns }),
+    );
     expect(fresh).toBe(readFileSync(SIGNATURES_PATH, "utf8"));
   });
 });

@@ -1,7 +1,7 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
-import type { entity, tiny_ecs, world } from "decore.decore";
+import { create, type entity, type tiny_ecs, type world } from "decore.decore";
 
 // Compile-only proof (mirroring log-usage.test-d.ts) for decore's `ecs.world`.
 // Two halves: an exact pin on the whole return type, which is what actually
@@ -51,6 +51,13 @@ const tail: unknown[] = rest;
 // @ts-expect-error the vararg tail is unknown, not number
 const _first: number = rest[0];
 
+// A string-keyed table param takes an object literal as well as a `LuaTable`;
+// both lower to the same Lua table.
+const fromLiteral: entity = create({ transform: { position_x: 1 } });
+const fromLuaTable: entity = create(new LuaTable<string, unknown>());
+
+void fromLiteral;
+void fromLuaTable;
 void _signature;
 void _notFixedArity;
 void _notNarrowedTail;

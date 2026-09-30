@@ -13,6 +13,7 @@
  * yields near-empty elements. The model carries the interfaces explicitly.
  */
 
+import type { LualsPosition } from "@defold-typescript/types";
 import {
   buildModelContext,
   type ExternalTypeRef,
@@ -28,8 +29,12 @@ import type { LibraryField, LibraryMethod, LibraryModel, LibraryParam } from "./
 
 // Each type token is mapped independently (one mapped TS string per token) so the
 // ref-doc `types` array stays token-per-slot the way engine ref-docs are shaped.
-function mapTokens(tokens: readonly string[], ctx: MapContext): string[] {
-  return tokens.map((token) => mapTypes([token], ctx));
+function mapTokens(
+  tokens: readonly string[],
+  ctx: MapContext,
+  position: LualsPosition = "output",
+): string[] {
+  return tokens.map((token) => mapTypes([token], ctx, position));
 }
 
 function parameterElement(
@@ -44,7 +49,7 @@ function parameterElement(
   return {
     name: param.isVararg ? "...args" : param.name,
     doc: param.doc,
-    types: mapTokens(param.types, ctx),
+    types: mapTokens(param.types, ctx, "input"),
     is_optional: isOptional ? "True" : "False",
     is_vararg: param.isVararg ? "True" : "False",
   };

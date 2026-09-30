@@ -1150,3 +1150,84 @@ test("a model emitted without an index base page carries no slot tags or field d
   expect(out).not.toContain("@returns");
   expect(docAbove(out, "first_index: number;")).toBe("");
 });
+
+const stringTableModel: LibraryModel = {
+  interfaces: [
+    {
+      name: "registry",
+      generics: [],
+      fields: [{ name: "entries", types: ["table<string, integer>"], doc: "", isOptional: false }],
+      methods: [
+        {
+          name: "merge",
+          brief: "",
+          generics: [],
+          params: [
+            {
+              name: "self",
+              types: ["registry"],
+              doc: "",
+              isOptional: false,
+              isVararg: false,
+            },
+            {
+              name: "extra",
+              types: ["table<string, integer>"],
+              doc: "",
+              isOptional: false,
+              isVararg: false,
+            },
+          ],
+          returns: [
+            {
+              name: "",
+              types: ["table<string, integer>"],
+              doc: "",
+              isOptional: false,
+              isVararg: false,
+            },
+          ],
+        },
+      ],
+      brief: "",
+    },
+  ],
+  aliases: [],
+  moduleFunctions: [
+    {
+      name: "create",
+      brief: "",
+      generics: [],
+      params: [
+        {
+          name: "components",
+          types: ["table<string, any>"],
+          doc: "",
+          isOptional: false,
+          isVararg: false,
+        },
+      ],
+      returns: [
+        {
+          name: "",
+          types: ["table<string, any>"],
+          doc: "",
+          isOptional: false,
+          isVararg: false,
+        },
+      ],
+    },
+  ],
+};
+
+test("a string-keyed table param accepts an object literal while the same return and field stay LuaTable", () => {
+  const out = emitLibraryDeclarations(stringTableModel, { moduleId: "demo.demo" });
+
+  expect(out).toContain(
+    "export function create(this: void, components: LuaTable<string, unknown> | Record<string, unknown>): LuaTable<string, unknown>;",
+  );
+  expect(out).toContain(
+    "merge(self: registry, extra: LuaTable<string, number> | Record<string, number>): LuaTable<string, number>;",
+  );
+  expect(out).toContain("entries: LuaTable<string, number>;");
+});

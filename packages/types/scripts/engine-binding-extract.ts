@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
-import { loadApiTargets } from "./regen";
+import { type ApiTarget, loadApiTargets } from "./regen";
 import { bindingsDir } from "./sync-engine-bindings";
 
 export type LuaKind =
@@ -1997,4 +1997,22 @@ export function readBindingsForTarget(targetId: string): BindingExtraction {
   if (!target) throw new Error(`unknown API target ${targetId}`);
   if (target.source !== null) throw new Error(`target ${targetId} has no vendored engine bindings`);
   return extractBindings(join(bindingsDir(target), "engine"));
+}
+
+const registeredConstantCache = new Map<string, ReadonlySet<string>>();
+
+// The `<namespace>.<NAME>` of every constant the target's vendored engine
+// registers, or undefined for a target with no vendored bindings (a ref-doc
+// target), which leaves the undocumented-constant back-fill ungated.
+export function registeredConstantFqns(target: ApiTarget): ReadonlySet<string> | undefined {
+  if ((target.source ?? null) !== null) return undefined;
+  let fqns = registeredConstantCache.get(target.id);
+  if (!fqns) {
+    const constants = readBindingsForTarget(target.id).constants;
+    fqns = new Set(
+      [...constants].flatMap(([namespace, names]) => names.map((name) => `${namespace}.${name}`)),
+    );
+    registeredConstantCache.set(target.id, fqns);
+  }
+  return fqns;
 }
