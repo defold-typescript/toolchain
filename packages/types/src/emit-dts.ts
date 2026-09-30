@@ -2707,7 +2707,8 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
 // for a callback parameter's recovered signature, used where the generic
 // `recoverCallbackSignature` `unknown`-everywhere form leaves real engine type
 // information on the table. The value is the full emitted function type. Honest
-// only: `window.set_listener` discriminates `event` by a known constant union and
+// only: `window.set_listener` discriminates `event` by the union of the
+// `WINDOW_EVENT_*` constants the surface's own `window` namespace declares, and
 // its `data` is a bare record (only resize carries fields — `isWindowEvent` is the
 // path to typed `data`), mirroring the `msg.post` (send, typed) / `isMessage`
 // (receive, narrow) split.
@@ -2724,7 +2725,8 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
 export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, string> = new Map([
   [
     "window.set_listener:param:callback",
-    "(self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void",
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: emitted verbatim as a TS template literal type
+    "(self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void",
   ],
   [
     "http.request:param:callback",

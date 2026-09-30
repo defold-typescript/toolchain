@@ -161,6 +161,52 @@ describe("versioned API surface — consumer tsconfig proof", () => {
     }
   });
 
+  test("defold-1.12.4 window events are exactly the WINDOW_EVENT_* constants its window namespace declares", async () => {
+    const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.12.4");
+    if (!target) throw new Error("no defold-1.12.4 target");
+    const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-proof-"));
+    try {
+      await materializeVersionedSurface(target, {
+        destDir: resolve(root, "versions", "defold-1.12.4"),
+      });
+      const tsconfigPath = writeProofConfig(
+        root,
+        [
+          "export {};",
+          "declare global {",
+          "  namespace window {",
+          '    const WINDOW_EVENT_PROBE: number & { readonly __brand: "window.WINDOW_EVENT_PROBE" };',
+          "  }",
+          "}",
+          "type WindowListener = NonNullable<Parameters<typeof window.set_listener>[0]>;",
+          "window.set_listener((_self, event, data) => {",
+          "  // @ts-expect-error WINDOW_EVENT_ICONIFIED is first declared in 1.13.2",
+          "  isWindowEvent(event, data, window.WINDOW_EVENT_ICONIFIED);",
+          "  if (isWindowEvent(event, data, window.WINDOW_EVENT_RESIZED)) {",
+          "    const _width: number = data.width;",
+          "    void _width;",
+          "  }",
+          "  isWindowEvent(event, data, window.WINDOW_EVENT_PROBE);",
+          "  // @ts-expect-error a non-window constant is not a window event",
+          "  isWindowEvent(event, data, physics.SHAPE_TYPE_SPHERE);",
+          "});",
+          "const _probe: Parameters<WindowListener>[1] = window.WINDOW_EVENT_PROBE;",
+          "void _probe;",
+          "// @ts-expect-error a non-window constant is not a window event",
+          "const _sphere: Parameters<WindowListener>[1] = physics.SHAPE_TYPE_SPHERE;",
+          "void _sphere;",
+          "",
+        ].join("\n"),
+        "defold-1.12.4",
+      );
+      const { exitCode, output } = typecheck(tsconfigPath);
+      if (exitCode !== 0) throw new Error(`defold-1.12.4 window event proof failed:\n${output}`);
+      expect(exitCode).toBe(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("defold-1.13.0 declares the branded semantic types it documents, without morph target weights", async () => {
     const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.13.0");
     if (!target) throw new Error("no defold-1.13.0 target");
