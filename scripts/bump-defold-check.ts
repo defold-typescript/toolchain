@@ -5,6 +5,7 @@ import {
   buildLlmsTxt,
   PACKAGE_TARGET,
 } from "../packages/docs-site/scripts/build-llms.ts";
+import { registeredConstantFqns } from "../packages/types/scripts/engine-binding-extract.ts";
 import {
   buildSignaturesArtifact,
   type SignaturesArtifact,
@@ -100,7 +101,10 @@ export function collectDriftInputs(root: string): DriftInputs {
       committed: readOr(path.join(docsDir, "llms-full.txt")),
       fresh: buildLlmsFull(PACKAGE_TARGET),
     },
-    signatures: { committed: committedSignatures, fresh: buildSignaturesArtifact() },
+    signatures: {
+      committed: committedSignatures,
+      fresh: buildSignaturesArtifact({ registeredConstantsOf: registeredConstantFqns }),
+    },
   };
 }
 
