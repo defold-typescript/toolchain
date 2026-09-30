@@ -14,6 +14,7 @@ import {
 
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 const LUA_NAMESPACE = /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$/;
+const DECLARED_NAME_KINDS = new Set(["CONSTANT", "ENUM", "STRUCT", "TYPEDEF", "CLASS"]);
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
 // Editor-scripting namespaces are mapped, but not by `api-targets.json`: they
@@ -216,13 +217,13 @@ function addUnknownLeaves(token: string, out: Set<string>): void {
 function unknownTypeBlockers(
   namespace: string,
   doc: unknown,
-  knownConstants: ReadonlySet<string>,
+  knownNames: ReadonlySet<string>,
 ): UnknownTypeBlocker[] {
   const out: UnknownTypeBlocker[] = [];
   for (const element of elementsOf(doc)) {
     const tokens = new Set<string>();
     typeTokens(element, tokens);
-    for (const token of knownConstants) tokens.delete(token);
+    for (const token of tokens) if (knownNames.has(token)) tokens.delete(token);
     if (tokens.size === 0) continue;
     out.push({ namespace, symbol: element.name ?? "<unnamed>", tokens: [...tokens].sort() });
   }
@@ -291,14 +292,17 @@ export function buildReleaseImportPlan(input: {
     };
   });
 
-  const knownConstants = new Set<string>();
+  // Every constant and declared type name in any of the release's Lua docs, so a
+  // token naming one declared in another namespace, or only in a doc no namespace
+  // maps (`builtins`), is not an unknown type.
+  const knownNames = new Set<string>();
   for (const group of grouped.values()) {
     for (const { doc } of group) {
       for (const element of elementsOf(doc)) {
-        if (element.type === "CONSTANT" && typeof element.name === "string") {
-          knownConstants.add(element.name);
+        if (typeof element.name === "string" && DECLARED_NAME_KINDS.has(element.type ?? "")) {
+          knownNames.add(element.name);
         }
-        for (const member of enumMemberNames(element)) knownConstants.add(member);
+        for (const member of enumMemberNames(element)) knownNames.add(member);
       }
     }
   }
@@ -353,7 +357,7 @@ export function buildReleaseImportPlan(input: {
     if (added.length > 0 || removed.length > 0)
       symbols.push({ namespace: module.namespace, added, removed });
     if (generatedNamespaces.has(module.namespace)) {
-      unknownTypes.push(...unknownTypeBlockers(module.namespace, doc, knownConstants));
+      unknownTypes.push(...unknownTypeBlockers(module.namespace, doc, knownNames));
     }
   }
 

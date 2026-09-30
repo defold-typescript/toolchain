@@ -14,6 +14,25 @@ export interface ApiModule {
    * on a hand-built module, which reads the same as an empty list.
    */
   enums?: ApiEnum[];
+  /** Each ref-doc `STRUCT`. Absent on a hand-built module, read as an empty list. */
+  structs?: ApiStruct[];
+}
+
+/** A ref-doc `STRUCT`: a named table shape. */
+export interface ApiStruct {
+  name: string;
+  brief: string;
+  description: string;
+  members: ApiStructMember[];
+}
+
+/** One `STRUCT` member; upstream marks an optional one with a `name?` suffix. */
+export interface ApiStructMember {
+  name: string;
+  doc: string;
+  /** One LuaLS type expression. */
+  type: string;
+  isOptional: boolean;
 }
 
 /** A ref-doc `ENUM`: a named set of constants, each lowered into `constants`. */
@@ -40,6 +59,11 @@ export interface ApiTypedef {
   types?: string[];
   /** The type text of each parent an interface-backed typedef extends. */
   extends?: string[];
+  /**
+   * The type an engine ref-doc `TYPEDEF` aliases (`parameters[0].types`): a
+   * handle's `userdata`/`number`, or the arms of a union, literal or record alias.
+   */
+  aliasOf?: string[];
   /** See {@link ApiFunction.global}. */
   global?: true;
 }
@@ -191,6 +215,7 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
   const properties: ApiProperty[] = [];
   const typedefs: ApiTypedef[] = [];
   const enums: ApiEnum[] = [];
+  const structs: ApiStruct[] = [];
 
   for (const element of elements) {
     if (!isRecord(element)) continue;
@@ -221,6 +246,8 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
         description: stringOr(element.description, ""),
         members: members.map((m) => m.name),
       });
+    } else if (type === "STRUCT") {
+      structs.push(parseStruct(element));
     }
   }
 
@@ -234,6 +261,7 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
     properties,
     typedefs,
     enums,
+    structs,
   };
 }
 
@@ -286,13 +314,38 @@ function parseTypedef(element: Record<string, unknown>): ApiTypedef {
   const properties = parseVariableList(element.properties);
   const types = parseStringArray(element.types);
   const parents = parseStringArray(element.extends);
+  const [aliased] = parseParameterList(element.parameters);
+  const aliasOf = aliased?.types ?? [];
   return {
     name: stringOr(element.name, ""),
     ...(functions.length > 0 ? { functions } : {}),
     ...(properties.length > 0 ? { properties } : {}),
     ...(types.length > 0 ? { types } : {}),
     ...(parents.length > 0 ? { extends: parents } : {}),
+    ...(aliasOf.length > 0 ? { aliasOf } : {}),
     ...globalKey(element),
+  };
+}
+
+function parseStruct(element: Record<string, unknown>): ApiStruct {
+  const raw = Array.isArray(element.members) ? element.members : [];
+  const members: ApiStructMember[] = [];
+  for (const member of raw) {
+    if (!isRecord(member)) continue;
+    const name = stringOr(member.name, "");
+    const isOptional = name.endsWith("?");
+    members.push({
+      name: isOptional ? name.slice(0, -1) : name,
+      doc: stringOr(member.doc, ""),
+      type: stringOr(member.type, ""),
+      isOptional,
+    });
+  }
+  return {
+    name: stringOr(element.name, ""),
+    brief: stringOr(element.brief, ""),
+    description: stringOr(element.description, ""),
+    members,
   };
 }
 
