@@ -573,6 +573,27 @@ describe("parseDefoldApiDoc ENUM elements", () => {
     expect(bgra?.nilable).toBe(true);
   });
 
+  // Verbatim 1.13.2 shape (`bullet3d_rigid_body`): the members are named bare,
+  // while the engine registers them on the enum's namespace and the doc's own
+  // example writes `bullet3d.rigid_body.BT_DISABLE_WORLD_GRAVITY`.
+  test("a bare member name is qualified with its enum's namespace", () => {
+    const module = parseDefoldApiDoc({
+      info: { namespace: "bullet3d.rigid_body" },
+      elements: [
+        {
+          type: "ENUM",
+          name: "bullet3d.rigid_body.FLAG",
+          parameters: [],
+          members: [{ name: "BT_DISABLE_WORLD_GRAVITY", doc: "", type: "" }],
+        },
+      ],
+    });
+    expect(module.constants.map((c) => c.name)).toEqual([
+      "bullet3d.rigid_body.BT_DISABLE_WORLD_GRAVITY",
+    ]);
+    expect(module.enums?.[0]?.members).toEqual(["bullet3d.rigid_body.BT_DISABLE_WORLD_GRAVITY"]);
+  });
+
   test("a module without ENUM elements carries no enums", () => {
     const module = parseDefoldApiDoc({
       info: { namespace: "ns" },

@@ -5,44 +5,95 @@ declare global {
    * and screen dimming.
    */
   namespace window {
+    /**
+     * Width and height are present for window.WINDOW_EVENT_RESIZED and
+     * absent for other window events.
+     */
+    interface event_data {
+      /**
+       * Window width after a resize.
+       */
+      width?: number;
+      /**
+       * Window height after a resize.
+       */
+      height?: number;
+    }
+    /**
+     * Window safe-area data
+     */
+    interface safe_area {
+      /**
+       * Safe-area x-coordinate.
+       */
+      x: number;
+      /**
+       * Safe-area y-coordinate.
+       */
+      y: number;
+      /**
+       * Safe-area width.
+       */
+      width: number;
+      /**
+       * Safe-area height.
+       */
+      height: number;
+      /**
+       * Inset from the left window edge.
+       */
+      inset_left: number;
+      /**
+       * Inset from the top window edge.
+       */
+      inset_top: number;
+      /**
+       * Inset from the right window edge.
+       */
+      inset_right: number;
+      /**
+       * Inset from the bottom window edge.
+       */
+      inset_bottom: number;
+    }
     type DimModeState = typeof window.DIMMING_UNKNOWN | typeof window.DIMMING_ON | typeof window.DIMMING_OFF;
     type DimModeStateSettable = typeof window.DIMMING_ON | typeof window.DIMMING_OFF;
+    type DIMMING = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN;
+    type WINDOW_EVENT = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED;
     /**
-     * Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.
+     * dimming mode off Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.
      */
     const DIMMING_OFF: number & { readonly __brand: "window.DIMMING_OFF" };
     /**
-     * Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.
+     * dimming mode on Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.
      */
     const DIMMING_ON: number & { readonly __brand: "window.DIMMING_ON" };
     /**
-     * Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.
-     * This mode indicates that the dim mode can't be determined, or that the platform doesn't support dimming.
+     * dimming mode unknown Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction. This mode indicates that the dim mode can't be determined, or that the platform doesn't support dimming.
      */
     const DIMMING_UNKNOWN: number & { readonly __brand: "window.DIMMING_UNKNOWN" };
     /**
-     * This event is sent to a window event listener when the game window or app screen is
-     * restored after being iconified.
+     * deiconified window event This event is sent to a window event listener when the game window or app screen is restored after being iconified.
      */
     const WINDOW_EVENT_DEICONIFIED: number & { readonly __brand: "window.WINDOW_EVENT_DEICONIFIED" };
     /**
-     * This event is sent to a window event listener when the game window or app screen has
-     * gained focus.
-     * This event is also sent at game startup and the engine gives focus to the game.
+     * focus gained window event This event is sent to a window event listener when the game window or app screen has gained focus. This event is also sent at game startup and the engine gives focus to the game.
      */
     const WINDOW_EVENT_FOCUS_GAINED: number & { readonly __brand: "window.WINDOW_EVENT_FOCUS_GAINED" };
     /**
-     * This event is sent to a window event listener when the game window or app screen has lost focus.
+     * focus lost window event This event is sent to a window event listener when the game window or app screen has lost focus.
      */
     const WINDOW_EVENT_FOCUS_LOST: number & { readonly __brand: "window.WINDOW_EVENT_FOCUS_LOST" };
     /**
-     * This event is sent to a window event listener when the game window or app screen is
-     * iconified (reduced to an application icon in a toolbar, application tray or similar).
+     * Deprecated misspelling of `window.WINDOW_EVENT_ICONIFIED`, with the same value. The engine still registers it.
      */
-    const WINDOW_EVENT_ICONFIED: number & { readonly __brand: "window.WINDOW_EVENT_ICONFIED" };
+    const WINDOW_EVENT_ICONFIED: typeof window.WINDOW_EVENT_ICONIFIED;
     /**
-     * This event is sent to a window event listener when the game window or app screen is resized.
-     * The new size is passed along in the data field to the event listener.
+     * iconify window event This event is sent to a window event listener when the game window or app screen is iconified (reduced to an application icon in a toolbar, application tray or similar).
+     */
+    const WINDOW_EVENT_ICONIFIED: number & { readonly __brand: "window.WINDOW_EVENT_ICONIFIED" };
+    /**
+     * resized window event This event is sent to a window event listener when the game window or app screen is resized. The new size is passed along in the data field to the event listener.
      */
     const WINDOW_EVENT_RESIZED: number & { readonly __brand: "window.WINDOW_EVENT_RESIZED" };
     /**
@@ -51,12 +102,8 @@ declare global {
      * On platforms that does not support dimming, `window.DIMMING_UNKNOWN` is always returned.
      *
      * @returns The mode for screen dimming
-     *
-     * - `window.DIMMING_UNKNOWN`
-     * - `window.DIMMING_ON`
-     * - `window.DIMMING_OFF`
      */
-    function get_dim_mode(): window.DimModeState;
+    function get_dim_mode(): window.DIMMING;
     /**
      * This returns the content scale of the current display.
      *
@@ -75,20 +122,8 @@ declare global {
      * this returns the full window size and zero insets.
      *
      * @returns safe area data
-     *
-     * `safe_area`
-     * table table containing these keys:
-     *
-     * - number `x`
-     * - number `y`
-     * - number `width`
-     * - number `height`
-     * - number `inset_left`
-     * - number `inset_top`
-     * - number `inset_right`
-     * - number `inset_bottom`
      */
-    function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };
+    function get_safe_area(): window.safe_area;
     /**
      * This returns the current window size (width and height).
      */
@@ -99,32 +134,12 @@ declare global {
      * This function has no effect on platforms that does not support dimming.
      *
      * @param mode - The mode for screen dimming
-     *
-     * - `window.DIMMING_ON`
-     * - `window.DIMMING_OFF`
      */
     function set_dim_mode(mode: window.DimModeStateSettable): void;
     /**
      * Sets a window event listener. Only one window event listener can be set at a time.
      *
      * @param callback - A callback which receives info about window events. Pass an empty function or `nil` if you no longer wish to receive callbacks.
-     *
-     * `self`
-     * object The calling script
-     * `event`
-     * constant The type of event. Can be one of these:
-     *
-     * - `window.WINDOW_EVENT_FOCUS_LOST`
-     * - `window.WINDOW_EVENT_FOCUS_GAINED`
-     * - `window.WINDOW_EVENT_RESIZED`
-     * - `window.WINDOW_EVENT_ICONIFIED`
-     * - `window.WINDOW_EVENT_DEICONIFIED`
-     *
-     * `data`
-     * table The callback value `data` is a table which currently holds these values
-     *
-     * - number `width`: The width of a resize event. nil otherwise.
-     * - number `height`: The height of a resize event. nil otherwise.
      * @example
      * ```ts
      * function window_callback(self: unknown, event: unknown, data: Record<string | number, unknown>) {
@@ -132,8 +147,8 @@ declare global {
      *     print("window.WINDOW_EVENT_FOCUS_LOST");
      *   } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {
      *     print("window.WINDOW_EVENT_FOCUS_GAINED");
-     *   } else if (event === window.WINDOW_EVENT_ICONFIED) {
-     *     print("window.WINDOW_EVENT_ICONFIED");
+     *   } else if (event === window.WINDOW_EVENT_ICONIFIED) {
+     *     print("window.WINDOW_EVENT_ICONIFIED");
      *   } else if (event === window.WINDOW_EVENT_DEICONIFIED) {
      *     print("window.WINDOW_EVENT_DEICONIFIED");
      *   } else if (event === window.WINDOW_EVENT_RESIZED) {

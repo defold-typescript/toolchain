@@ -1,0 +1,1945 @@
+{
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "b2World",
+      "brief": "Box2D world",
+      "description": "An opaque handle to the Box2D physics world owned by the current collection.\nObtain it with <a href=\"/ref/b2d#b2d.get_world\">b2d.get_world</a> and pass it to functions in <code>b2d.world</code>.\nThe engine creates and destroys the world together with the collection; it\ncannot be constructed directly from Lua.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "Box2D world handle",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">world</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">get_world</span><span class=\"p\">()</span>\n<span class=\"kr\">if</span> <span class=\"n\">world</span> <span class=\"kr\">then</span>\n    <span class=\"n\">pprint</span><span class=\"p\">(</span><span class=\"n\">world</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "b2Body",
+      "brief": "Box2D body",
+      "description": "An opaque handle to the native Box2D body of a collision-object component.\nObtain it with <a href=\"/ref/b2d#b2d.get_body\">b2d.get_body</a> and pass it to functions in <code>b2d.body</code>.\nThe collision object owns the body, so the handle becomes invalid when its\ncomponent or game object is deleted.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "Box2D body handle",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">body</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">get_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject&quot;</span><span class=\"p\">)</span>\n<span class=\"kr\">if</span> <span class=\"n\">body</span> <span class=\"kr\">then</span>\n    <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">body</span><span class=\"p\">.</span><span class=\"n\">get_position</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">))</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.mass_data",
+      "brief": "Box2D mass data",
+      "description": "Mass properties for a Box2D body or shape.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "mass",
+          "doc": "Body mass, usually in kilograms.",
+          "type": "number"
+        },
+        {
+          "name": "center",
+          "doc": "Local center of mass.",
+          "type": "vector3"
+        },
+        {
+          "name": "inertia",
+          "doc": "Rotational inertia about the local origin.",
+          "type": "number"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.transform",
+      "brief": "Box2D transform",
+      "description": "World transform for a Box2D body.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "position",
+          "doc": "World position of the body origin.",
+          "type": "vector3"
+        },
+        {
+          "name": "angle",
+          "doc": "World rotation angle in radians.",
+          "type": "number"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.version_info",
+      "brief": "Box2D version information",
+      "description": "Box2D version information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "version",
+          "doc": "Full Box2D version string.",
+          "type": "string"
+        },
+        {
+          "name": "major",
+          "doc": "Major version number.",
+          "type": "integer"
+        },
+        {
+          "name": "middle",
+          "doc": "Middle version number.",
+          "type": "integer"
+        },
+        {
+          "name": "minor",
+          "doc": "Minor version number.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.filter",
+      "brief": "Box2D collision filter",
+      "description": "Box2D collision filter",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "category_bits",
+          "doc": "Collision category bits.",
+          "type": "integer"
+        },
+        {
+          "name": "mask_bits",
+          "doc": "Collision mask bits.",
+          "type": "integer"
+        },
+        {
+          "name": "group_index",
+          "doc": "Collision group index.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.filter_options",
+      "brief": "Partial Box2D collision filter",
+      "description": "Partial Box2D collision filter",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "category_bits?",
+          "doc": "Collision category bits.",
+          "type": "integer"
+        },
+        {
+          "name": "mask_bits?",
+          "doc": "Collision mask bits.",
+          "type": "integer"
+        },
+        {
+          "name": "group_index?",
+          "doc": "Collision group index.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.query_filter",
+      "brief": "Box2D world-query filter",
+      "description": "Box2D world-query filter",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "category_bits?",
+          "doc": "Optional collision category bits.",
+          "type": "integer"
+        },
+        {
+          "name": "mask_bits?",
+          "doc": "Optional collision mask bits.",
+          "type": "integer"
+        },
+        {
+          "name": "group_index?",
+          "doc": "Optional collision group index. Supported by the Box2D 2.x backend.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.aabb",
+      "brief": "Box2D axis-aligned bounding box",
+      "description": "Box2D axis-aligned bounding box",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "lower",
+          "doc": "Lower bound.",
+          "type": "vector3"
+        },
+        {
+          "name": "upper",
+          "doc": "Upper bound.",
+          "type": "vector3"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.tree_stats",
+      "brief": "Box2D broad-phase query statistics",
+      "description": "Box2D broad-phase query statistics",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "node_visits",
+          "doc": "Number of tree nodes visited.",
+          "type": "integer"
+        },
+        {
+          "name": "leaf_visits",
+          "doc": "Number of tree leaves visited.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.fixture_info",
+      "brief": "Box2D 2.x fixture information",
+      "description": "Box2D 2.x fixture information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "body?",
+          "doc": "Owning body, when returned from a world query.",
+          "type": "b2Body"
+        },
+        {
+          "name": "index",
+          "doc": "Fixture index on the body.",
+          "type": "integer"
+        },
+        {
+          "name": "child_index?",
+          "doc": "Child-shape index, when returned from a world query.",
+          "type": "integer"
+        },
+        {
+          "name": "type",
+          "doc": "Shape type.",
+          "type": "b2d.shape.SHAPE_TYPE"
+        },
+        {
+          "name": "sensor",
+          "doc": "Whether the fixture is a sensor.",
+          "type": "boolean"
+        },
+        {
+          "name": "density",
+          "doc": "Fixture density.",
+          "type": "number"
+        },
+        {
+          "name": "friction",
+          "doc": "Fixture friction.",
+          "type": "number"
+        },
+        {
+          "name": "restitution",
+          "doc": "Fixture restitution.",
+          "type": "number"
+        },
+        {
+          "name": "child_count",
+          "doc": "Number of child shapes.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.shape_info",
+      "brief": "Box2D 3.x shape information",
+      "description": "Box2D 3.x shape information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "index",
+          "doc": "Shape index on the body.",
+          "type": "integer"
+        },
+        {
+          "name": "shape_id",
+          "doc": "Shape handle.",
+          "type": "b2Shape"
+        },
+        {
+          "name": "type",
+          "doc": "Shape type.",
+          "type": "b2d.shape.SHAPE_TYPE"
+        },
+        {
+          "name": "sensor",
+          "doc": "Whether the shape is a sensor.",
+          "type": "boolean"
+        },
+        {
+          "name": "density",
+          "doc": "Shape density.",
+          "type": "number"
+        },
+        {
+          "name": "friction",
+          "doc": "Shape friction.",
+          "type": "number"
+        },
+        {
+          "name": "restitution",
+          "doc": "Shape restitution.",
+          "type": "number"
+        },
+        {
+          "name": "material",
+          "doc": "Shape material identifier.",
+          "type": "integer"
+        },
+        {
+          "name": "child_count",
+          "doc": "Number of child shapes.",
+          "type": "integer"
+        },
+        {
+          "name": "is_chain_segment",
+          "doc": "Whether the shape belongs to a chain.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.fixture_definition",
+      "brief": "Box2D 2.x fixture definition",
+      "description": "Box2D 2.x fixture definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "shape",
+          "doc": "Shape definition.",
+          "type": "b2d.shape.definition"
+        },
+        {
+          "name": "friction?",
+          "doc": "Fixture friction.",
+          "type": "number"
+        },
+        {
+          "name": "restitution?",
+          "doc": "Fixture restitution.",
+          "type": "number"
+        },
+        {
+          "name": "density?",
+          "doc": "Fixture density.",
+          "type": "number"
+        },
+        {
+          "name": "sensor?",
+          "doc": "Whether the fixture is a sensor.",
+          "type": "boolean"
+        },
+        {
+          "name": "is_sensor?",
+          "doc": "Alias for <code>sensor</code>.",
+          "type": "boolean"
+        },
+        {
+          "name": "filter?",
+          "doc": "Collision filter.",
+          "type": "b2d.filter"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "b2d.shape_create_definition",
+      "brief": "Box2D 3.x shape creation definition",
+      "description": "Geometry and material properties accepted by <a href=\"#b2d\">b2d.body.create_shape</a>. The\ngeometry can be supplied in the <code>shape</code> field as a <span class=\"type\">b2d.shape.definition</span>,\nor its fields can be placed directly in this table. Material properties such\nas <code>density</code>, <code>friction</code>, <code>restitution</code>, and <code>filter</code> are optional.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "{ shape:b2d.shape.definition, density?:number, friction?:number, restitution?:number, material?:integer, sensor?:boolean, is_sensor?:boolean, filter?:b2d.filter }",
+            "{ type:b2d.shape.SHAPE_TYPE, radius?:number, center?:vector3, center1?:vector3, center2?:vector3, v0?:vector3, v1?:vector3, v2?:vector3, v3?:vector3, hx?:number, hy?:number, angle?:number, vertices?:vector3[], density?:number, friction?:number, restitution?:number, material?:integer, sensor?:boolean, is_sensor?:boolean, filter?:b2d.filter }"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Create a circular shape using an inline geometry definition:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">body</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">get_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject&quot;</span><span class=\"p\">)</span>\n<span class=\"kd\">local</span> <span class=\"n\">shape</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">body</span><span class=\"p\">.</span><span class=\"n\">create_shape</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n    <span class=\"nb\">type</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">shape</span><span class=\"p\">.</span><span class=\"n\">SHAPE_TYPE_CIRCLE</span><span class=\"p\">,</span>\n    <span class=\"n\">radius</span> <span class=\"o\">=</span> <span class=\"mi\">16</span><span class=\"p\">,</span>\n    <span class=\"n\">density</span> <span class=\"o\">=</span> <span class=\"mi\">1</span><span class=\"p\">,</span>\n    <span class=\"n\">friction</span> <span class=\"o\">=</span> <span class=\"mf\">0.4</span><span class=\"p\">,</span>\n<span class=\"p\">})</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.chain_definition",
+      "brief": "Box2D 3.x chain definition",
+      "description": "Box2D 3.x chain definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "vertices",
+          "doc": "Chain vertices.",
+          "type": "vector3[]"
+        },
+        {
+          "name": "loop?",
+          "doc": "Whether the chain is closed.",
+          "type": "boolean"
+        },
+        {
+          "name": "prev_vertex?",
+          "doc": "Ghost vertex preceding an open chain.",
+          "type": "vector3"
+        },
+        {
+          "name": "next_vertex?",
+          "doc": "Ghost vertex following an open chain.",
+          "type": "vector3"
+        },
+        {
+          "name": "friction?",
+          "doc": "Segment friction.",
+          "type": "number"
+        },
+        {
+          "name": "restitution?",
+          "doc": "Segment restitution.",
+          "type": "number"
+        },
+        {
+          "name": "material?",
+          "doc": "Segment material identifier.",
+          "type": "integer"
+        },
+        {
+          "name": "filter?",
+          "doc": "Collision filter fields to override.",
+          "type": "b2d.filter_options"
+        },
+        {
+          "name": "enable_sensor_events?",
+          "doc": "Whether to enable sensor events.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.chain_geometry",
+      "brief": "Box2D chain geometry",
+      "description": "Box2D chain geometry",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "loop",
+          "doc": "Whether the chain is closed.",
+          "type": "boolean"
+        },
+        {
+          "name": "segment_count",
+          "doc": "Number of chain segments.",
+          "type": "integer"
+        },
+        {
+          "name": "vertices",
+          "doc": "Chain vertices.",
+          "type": "vector3[]"
+        },
+        {
+          "name": "prev_vertex?",
+          "doc": "Ghost vertex preceding an open chain.",
+          "type": "vector3"
+        },
+        {
+          "name": "next_vertex?",
+          "doc": "Ghost vertex following an open chain.",
+          "type": "vector3"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.fixture_cast_hit",
+      "brief": "Box2D 2.x cast hit",
+      "description": "Box2D 2.x cast hit",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "fixture",
+          "doc": "Hit fixture.",
+          "type": "b2d.fixture_info"
+        },
+        {
+          "name": "shape",
+          "doc": "Hit fixture child shape.",
+          "type": "b2d.fixture_info"
+        },
+        {
+          "name": "point",
+          "doc": "Hit point.",
+          "type": "vector3"
+        },
+        {
+          "name": "normal",
+          "doc": "Hit normal.",
+          "type": "vector3"
+        },
+        {
+          "name": "fraction",
+          "doc": "Hit fraction.",
+          "type": "number"
+        },
+        {
+          "name": "node_visits?",
+          "doc": "Number of tree nodes visited by a closest query.",
+          "type": "integer"
+        },
+        {
+          "name": "leaf_visits?",
+          "doc": "Number of tree leaves visited by a closest query.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.shape_cast_hit",
+      "brief": "Box2D 3.x cast hit",
+      "description": "Box2D 3.x cast hit",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "shape",
+          "doc": "Hit shape.",
+          "type": "b2d.shape_info"
+        },
+        {
+          "name": "point",
+          "doc": "Hit point.",
+          "type": "vector3"
+        },
+        {
+          "name": "normal",
+          "doc": "Hit normal.",
+          "type": "vector3"
+        },
+        {
+          "name": "fraction",
+          "doc": "Hit fraction.",
+          "type": "number"
+        },
+        {
+          "name": "node_visits?",
+          "doc": "Number of tree nodes visited by a closest query.",
+          "type": "integer"
+        },
+        {
+          "name": "leaf_visits?",
+          "doc": "Number of tree leaves visited by a closest query.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.shape_cast_output",
+      "brief": "Direct Box2D shape cast result",
+      "description": "Direct Box2D shape cast result",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "point",
+          "doc": "Hit point.",
+          "type": "vector3"
+        },
+        {
+          "name": "normal",
+          "doc": "Hit normal.",
+          "type": "vector3"
+        },
+        {
+          "name": "fraction",
+          "doc": "Hit fraction.",
+          "type": "number"
+        },
+        {
+          "name": "iterations",
+          "doc": "Number of cast iterations.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.contact_point",
+      "brief": "Box2D contact manifold point",
+      "description": "Box2D contact manifold point",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "point",
+          "doc": "World contact point.",
+          "type": "vector3"
+        },
+        {
+          "name": "anchor_a",
+          "doc": "Contact anchor on the first body.",
+          "type": "vector3"
+        },
+        {
+          "name": "anchor_b",
+          "doc": "Contact anchor on the second body.",
+          "type": "vector3"
+        },
+        {
+          "name": "separation",
+          "doc": "Contact separation.",
+          "type": "number"
+        },
+        {
+          "name": "normal_impulse",
+          "doc": "Normal impulse.",
+          "type": "number"
+        },
+        {
+          "name": "tangent_impulse",
+          "doc": "Tangent impulse.",
+          "type": "number"
+        },
+        {
+          "name": "total_normal_impulse",
+          "doc": "Total normal impulse.",
+          "type": "number"
+        },
+        {
+          "name": "normal_velocity",
+          "doc": "Relative normal velocity.",
+          "type": "number"
+        },
+        {
+          "name": "id",
+          "doc": "Contact point identifier.",
+          "type": "integer"
+        },
+        {
+          "name": "persisted",
+          "doc": "Whether the point persisted from the previous step.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.contact_data",
+      "brief": "Box2D contact data",
+      "description": "Box2D contact data",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "shape_a",
+          "doc": "First contact shape.",
+          "type": "b2d.shape_info"
+        },
+        {
+          "name": "shape_b",
+          "doc": "Second contact shape.",
+          "type": "b2d.shape_info"
+        },
+        {
+          "name": "normal",
+          "doc": "Contact normal.",
+          "type": "vector3"
+        },
+        {
+          "name": "rolling_impulse",
+          "doc": "Rolling resistance impulse.",
+          "type": "number"
+        },
+        {
+          "name": "point_count",
+          "doc": "Number of manifold points.",
+          "type": "integer"
+        },
+        {
+          "name": "points",
+          "doc": "Contact manifold points.",
+          "type": "b2d.contact_point[]"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.mover_capsule",
+      "brief": "Box2D mover capsule",
+      "description": "Box2D mover capsule",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "center1",
+          "doc": "First capsule center.",
+          "type": "vector3"
+        },
+        {
+          "name": "center2",
+          "doc": "Second capsule center.",
+          "type": "vector3"
+        },
+        {
+          "name": "radius",
+          "doc": "Capsule radius.",
+          "type": "number"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.mover_plane",
+      "brief": "Box2D mover collision plane",
+      "description": "Box2D mover collision plane",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "shape",
+          "doc": "Colliding shape.",
+          "type": "b2d.shape_info"
+        },
+        {
+          "name": "normal",
+          "doc": "Plane normal.",
+          "type": "vector3"
+        },
+        {
+          "name": "offset",
+          "doc": "Plane offset.",
+          "type": "number"
+        },
+        {
+          "name": "hit",
+          "doc": "Whether the mover hit the plane.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.explosion_definition",
+      "brief": "Box2D explosion definition",
+      "description": "Box2D explosion definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "position",
+          "doc": "Explosion center.",
+          "type": "vector3"
+        },
+        {
+          "name": "radius",
+          "doc": "Explosion radius.",
+          "type": "number"
+        },
+        {
+          "name": "falloff",
+          "doc": "Distance over which the impulse falls off.",
+          "type": "number"
+        },
+        {
+          "name": "impulse_per_length",
+          "doc": "Impulse applied per unit length.",
+          "type": "number"
+        },
+        {
+          "name": "mask_bits?",
+          "doc": "Optional collision mask.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.world_profile",
+      "brief": "Box2D world profiling data",
+      "description": "Box2D world profiling data",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "step",
+          "doc": "Total step time.",
+          "type": "number"
+        },
+        {
+          "name": "pairs",
+          "doc": "Pair update time.",
+          "type": "number"
+        },
+        {
+          "name": "collide",
+          "doc": "Collision time.",
+          "type": "number"
+        },
+        {
+          "name": "solve",
+          "doc": "Solver time.",
+          "type": "number"
+        },
+        {
+          "name": "merge_islands",
+          "doc": "Island merge time.",
+          "type": "number"
+        },
+        {
+          "name": "prepare_stages",
+          "doc": "Stage preparation time.",
+          "type": "number"
+        },
+        {
+          "name": "solve_constraints",
+          "doc": "Constraint solver time.",
+          "type": "number"
+        },
+        {
+          "name": "prepare_constraints",
+          "doc": "Constraint preparation time.",
+          "type": "number"
+        },
+        {
+          "name": "integrate_velocities",
+          "doc": "Velocity integration time.",
+          "type": "number"
+        },
+        {
+          "name": "warm_start",
+          "doc": "Warm-start time.",
+          "type": "number"
+        },
+        {
+          "name": "solve_impulses",
+          "doc": "Impulse solver time.",
+          "type": "number"
+        },
+        {
+          "name": "integrate_positions",
+          "doc": "Position integration time.",
+          "type": "number"
+        },
+        {
+          "name": "relax_impulses",
+          "doc": "Impulse relaxation time.",
+          "type": "number"
+        },
+        {
+          "name": "apply_restitution",
+          "doc": "Restitution time.",
+          "type": "number"
+        },
+        {
+          "name": "store_impulses",
+          "doc": "Impulse storage time.",
+          "type": "number"
+        },
+        {
+          "name": "split_islands",
+          "doc": "Island splitting time.",
+          "type": "number"
+        },
+        {
+          "name": "transforms",
+          "doc": "Transform update time.",
+          "type": "number"
+        },
+        {
+          "name": "hit_events",
+          "doc": "Hit-event generation time.",
+          "type": "number"
+        },
+        {
+          "name": "refit",
+          "doc": "Tree refit time.",
+          "type": "number"
+        },
+        {
+          "name": "bullets",
+          "doc": "Bullet processing time.",
+          "type": "number"
+        },
+        {
+          "name": "sleep_islands",
+          "doc": "Island sleeping time.",
+          "type": "number"
+        },
+        {
+          "name": "sensors",
+          "doc": "Sensor processing time.",
+          "type": "number"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.world_counters",
+      "brief": "Box2D world counters",
+      "description": "Box2D world counters",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "body_count",
+          "doc": "Number of bodies.",
+          "type": "integer"
+        },
+        {
+          "name": "shape_count",
+          "doc": "Number of shapes.",
+          "type": "integer"
+        },
+        {
+          "name": "contact_count",
+          "doc": "Number of contacts.",
+          "type": "integer"
+        },
+        {
+          "name": "joint_count",
+          "doc": "Number of joints.",
+          "type": "integer"
+        },
+        {
+          "name": "island_count",
+          "doc": "Number of islands.",
+          "type": "integer"
+        },
+        {
+          "name": "stack_used",
+          "doc": "Stack bytes in use.",
+          "type": "integer"
+        },
+        {
+          "name": "static_tree_height",
+          "doc": "Static broad-phase tree height.",
+          "type": "integer"
+        },
+        {
+          "name": "tree_height",
+          "doc": "Dynamic broad-phase tree height.",
+          "type": "integer"
+        },
+        {
+          "name": "byte_count",
+          "doc": "Allocated byte count.",
+          "type": "integer"
+        },
+        {
+          "name": "task_count",
+          "doc": "Number of tasks.",
+          "type": "integer"
+        },
+        {
+          "name": "color_counts",
+          "doc": "Constraint graph color counts.",
+          "type": "integer[]"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.joint.distance_definition",
+      "brief": "Box2D distance-joint definition",
+      "description": "Box2D distance-joint definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "local_anchor_a?",
+          "doc": "Local anchor on the first body.",
+          "type": "vector3"
+        },
+        {
+          "name": "local_anchor_b?",
+          "doc": "Local anchor on the second body.",
+          "type": "vector3"
+        },
+        {
+          "name": "length?",
+          "doc": "Rest length.",
+          "type": "number"
+        },
+        {
+          "name": "min_length?",
+          "doc": "Minimum length.",
+          "type": "number"
+        },
+        {
+          "name": "max_length?",
+          "doc": "Maximum length.",
+          "type": "number"
+        },
+        {
+          "name": "enable_spring?",
+          "doc": "Whether the spring is enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "hertz?",
+          "doc": "Spring frequency in hertz.",
+          "type": "number"
+        },
+        {
+          "name": "frequency?",
+          "doc": "Legacy spring frequency alias.",
+          "type": "number"
+        },
+        {
+          "name": "damping_ratio?",
+          "doc": "Spring damping ratio.",
+          "type": "number"
+        },
+        {
+          "name": "damping?",
+          "doc": "Legacy spring damping-ratio alias.",
+          "type": "number"
+        },
+        {
+          "name": "enable_limit?",
+          "doc": "Whether length limits are enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "enable_motor?",
+          "doc": "Whether the motor is enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "max_motor_force?",
+          "doc": "Maximum motor force.",
+          "type": "number"
+        },
+        {
+          "name": "motor_speed?",
+          "doc": "Motor speed.",
+          "type": "number"
+        },
+        {
+          "name": "collide_connected?",
+          "doc": "Whether connected bodies collide.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.joint.mouse_definition",
+      "brief": "Box2D mouse-joint definition",
+      "description": "Box2D mouse-joint definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "target?",
+          "doc": "Target position.",
+          "type": "vector3"
+        },
+        {
+          "name": "max_force?",
+          "doc": "Maximum force.",
+          "type": "number"
+        },
+        {
+          "name": "hertz?",
+          "doc": "Spring frequency in hertz.",
+          "type": "number"
+        },
+        {
+          "name": "frequency?",
+          "doc": "Legacy spring frequency alias.",
+          "type": "number"
+        },
+        {
+          "name": "damping_ratio?",
+          "doc": "Spring damping ratio.",
+          "type": "number"
+        },
+        {
+          "name": "damping?",
+          "doc": "Legacy spring damping-ratio alias.",
+          "type": "number"
+        },
+        {
+          "name": "collide_connected?",
+          "doc": "Whether connected bodies collide.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.joint.prismatic_definition",
+      "brief": "Box2D prismatic-joint definition",
+      "description": "Box2D prismatic-joint definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "local_anchor_a?",
+          "doc": "Local anchor on the first body.",
+          "type": "vector3"
+        },
+        {
+          "name": "local_anchor_b?",
+          "doc": "Local anchor on the second body.",
+          "type": "vector3"
+        },
+        {
+          "name": "local_axis_a?",
+          "doc": "Local translation axis on the first body.",
+          "type": "vector3"
+        },
+        {
+          "name": "reference_angle?",
+          "doc": "Reference angle.",
+          "type": "number"
+        },
+        {
+          "name": "enable_spring?",
+          "doc": "Whether the spring is enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "hertz?",
+          "doc": "Spring frequency in hertz.",
+          "type": "number"
+        },
+        {
+          "name": "frequency?",
+          "doc": "Legacy spring frequency alias.",
+          "type": "number"
+        },
+        {
+          "name": "damping_ratio?",
+          "doc": "Spring damping ratio.",
+          "type": "number"
+        },
+        {
+          "name": "damping?",
+          "doc": "Legacy spring damping-ratio alias.",
+          "type": "number"
+        },
+        {
+          "name": "enable_limit?",
+          "doc": "Whether translation limits are enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "lower_translation?",
+          "doc": "Lower translation limit.",
+          "type": "number"
+        },
+        {
+          "name": "upper_translation?",
+          "doc": "Upper translation limit.",
+          "type": "number"
+        },
+        {
+          "name": "enable_motor?",
+          "doc": "Whether the motor is enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "max_motor_force?",
+          "doc": "Maximum motor force.",
+          "type": "number"
+        },
+        {
+          "name": "motor_speed?",
+          "doc": "Motor speed.",
+          "type": "number"
+        },
+        {
+          "name": "collide_connected?",
+          "doc": "Whether connected bodies collide.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.joint.revolute_definition",
+      "brief": "Box2D revolute-joint definition",
+      "description": "Box2D revolute-joint definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "local_anchor_a?",
+          "doc": "Local anchor on the first body.",
+          "type": "vector3"
+        },
+        {
+          "name": "local_anchor_b?",
+          "doc": "Local anchor on the second body.",
+          "type": "vector3"
+        },
+        {
+          "name": "reference_angle?",
+          "doc": "Reference angle.",
+          "type": "number"
+        },
+        {
+          "name": "enable_spring?",
+          "doc": "Whether the spring is enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "hertz?",
+          "doc": "Spring frequency in hertz.",
+          "type": "number"
+        },
+        {
+          "name": "frequency?",
+          "doc": "Legacy spring frequency alias.",
+          "type": "number"
+        },
+        {
+          "name": "damping_ratio?",
+          "doc": "Spring damping ratio.",
+          "type": "number"
+        },
+        {
+          "name": "damping?",
+          "doc": "Legacy spring damping-ratio alias.",
+          "type": "number"
+        },
+        {
+          "name": "enable_limit?",
+          "doc": "Whether angular limits are enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "lower_angle?",
+          "doc": "Lower angular limit.",
+          "type": "number"
+        },
+        {
+          "name": "upper_angle?",
+          "doc": "Upper angular limit.",
+          "type": "number"
+        },
+        {
+          "name": "enable_motor?",
+          "doc": "Whether the motor is enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "max_motor_torque?",
+          "doc": "Maximum motor torque.",
+          "type": "number"
+        },
+        {
+          "name": "motor_speed?",
+          "doc": "Motor speed.",
+          "type": "number"
+        },
+        {
+          "name": "collide_connected?",
+          "doc": "Whether connected bodies collide.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.joint.weld_definition",
+      "brief": "Box2D weld-joint definition",
+      "description": "Box2D weld-joint definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "local_anchor_a?",
+          "doc": "Local anchor on the first body.",
+          "type": "vector3"
+        },
+        {
+          "name": "local_anchor_b?",
+          "doc": "Local anchor on the second body.",
+          "type": "vector3"
+        },
+        {
+          "name": "reference_angle?",
+          "doc": "Reference angle.",
+          "type": "number"
+        },
+        {
+          "name": "hertz?",
+          "doc": "Legacy spring frequency in hertz.",
+          "type": "number"
+        },
+        {
+          "name": "frequency?",
+          "doc": "Legacy spring frequency.",
+          "type": "number"
+        },
+        {
+          "name": "damping_ratio?",
+          "doc": "Legacy spring damping ratio.",
+          "type": "number"
+        },
+        {
+          "name": "damping?",
+          "doc": "Legacy spring damping-ratio alias.",
+          "type": "number"
+        },
+        {
+          "name": "linear_hertz?",
+          "doc": "Linear spring frequency in hertz.",
+          "type": "number"
+        },
+        {
+          "name": "angular_hertz?",
+          "doc": "Angular spring frequency in hertz.",
+          "type": "number"
+        },
+        {
+          "name": "linear_damping_ratio?",
+          "doc": "Linear damping ratio.",
+          "type": "number"
+        },
+        {
+          "name": "angular_damping_ratio?",
+          "doc": "Angular damping ratio.",
+          "type": "number"
+        },
+        {
+          "name": "collide_connected?",
+          "doc": "Whether connected bodies collide.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.joint.wheel_definition",
+      "brief": "Box2D wheel-joint definition",
+      "description": "Box2D wheel-joint definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "local_anchor_a?",
+          "doc": "Local anchor on the first body.",
+          "type": "vector3"
+        },
+        {
+          "name": "local_anchor_b?",
+          "doc": "Local anchor on the second body.",
+          "type": "vector3"
+        },
+        {
+          "name": "local_axis_a?",
+          "doc": "Local suspension axis on the first body.",
+          "type": "vector3"
+        },
+        {
+          "name": "enable_spring?",
+          "doc": "Whether the spring is enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "hertz?",
+          "doc": "Spring frequency in hertz.",
+          "type": "number"
+        },
+        {
+          "name": "frequency?",
+          "doc": "Legacy spring frequency alias.",
+          "type": "number"
+        },
+        {
+          "name": "damping_ratio?",
+          "doc": "Spring damping ratio.",
+          "type": "number"
+        },
+        {
+          "name": "damping?",
+          "doc": "Legacy spring damping-ratio alias.",
+          "type": "number"
+        },
+        {
+          "name": "enable_limit?",
+          "doc": "Whether translation limits are enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "lower_translation?",
+          "doc": "Lower translation limit.",
+          "type": "number"
+        },
+        {
+          "name": "upper_translation?",
+          "doc": "Upper translation limit.",
+          "type": "number"
+        },
+        {
+          "name": "enable_motor?",
+          "doc": "Whether the motor is enabled.",
+          "type": "boolean"
+        },
+        {
+          "name": "max_motor_torque?",
+          "doc": "Maximum motor torque.",
+          "type": "number"
+        },
+        {
+          "name": "motor_speed?",
+          "doc": "Motor speed.",
+          "type": "number"
+        },
+        {
+          "name": "collide_connected?",
+          "doc": "Whether connected bodies collide.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.joint.friction_definition",
+      "brief": "Box2D friction-joint definition",
+      "description": "Box2D friction-joint definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "local_anchor_a?",
+          "doc": "Local anchor on the first body.",
+          "type": "vector3"
+        },
+        {
+          "name": "local_anchor_b?",
+          "doc": "Local anchor on the second body.",
+          "type": "vector3"
+        },
+        {
+          "name": "max_force?",
+          "doc": "Maximum friction force.",
+          "type": "number"
+        },
+        {
+          "name": "max_torque?",
+          "doc": "Maximum friction torque.",
+          "type": "number"
+        },
+        {
+          "name": "collide_connected?",
+          "doc": "Whether connected bodies collide.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.joint.rope_definition",
+      "brief": "Box2D rope-joint definition",
+      "description": "Box2D rope-joint definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "local_anchor_a?",
+          "doc": "Local anchor on the first body.",
+          "type": "vector3"
+        },
+        {
+          "name": "local_anchor_b?",
+          "doc": "Local anchor on the second body.",
+          "type": "vector3"
+        },
+        {
+          "name": "max_length?",
+          "doc": "Maximum rope length.",
+          "type": "number"
+        },
+        {
+          "name": "collide_connected?",
+          "doc": "Whether connected bodies collide.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.joint.pulley_definition",
+      "brief": "Box2D pulley-joint definition",
+      "description": "Box2D pulley-joint definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "ground_anchor_a?",
+          "doc": "First ground anchor.",
+          "type": "vector3"
+        },
+        {
+          "name": "ground_anchor_b?",
+          "doc": "Second ground anchor.",
+          "type": "vector3"
+        },
+        {
+          "name": "local_anchor_a?",
+          "doc": "Local anchor on the first body.",
+          "type": "vector3"
+        },
+        {
+          "name": "local_anchor_b?",
+          "doc": "Local anchor on the second body.",
+          "type": "vector3"
+        },
+        {
+          "name": "length_a?",
+          "doc": "First segment length.",
+          "type": "number"
+        },
+        {
+          "name": "length_b?",
+          "doc": "Second segment length.",
+          "type": "number"
+        },
+        {
+          "name": "ratio?",
+          "doc": "Pulley ratio.",
+          "type": "number"
+        },
+        {
+          "name": "collide_connected?",
+          "doc": "Whether connected bodies collide.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.joint.gear_definition",
+      "brief": "Box2D gear-joint definition",
+      "description": "Box2D gear-joint definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "ratio?",
+          "doc": "Gear ratio.",
+          "type": "number"
+        },
+        {
+          "name": "collide_connected?",
+          "doc": "Whether connected bodies collide.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "b2d.joint.motor_definition",
+      "brief": "Box2D motor-joint definition",
+      "description": "Box2D motor-joint definition",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "linear_offset?",
+          "doc": "Linear target offset.",
+          "type": "vector3"
+        },
+        {
+          "name": "angular_offset?",
+          "doc": "Angular target offset.",
+          "type": "number"
+        },
+        {
+          "name": "max_force?",
+          "doc": "Maximum motor force.",
+          "type": "number"
+        },
+        {
+          "name": "max_torque?",
+          "doc": "Maximum motor torque.",
+          "type": "number"
+        },
+        {
+          "name": "correction_factor?",
+          "doc": "Position correction factor.",
+          "type": "number"
+        },
+        {
+          "name": "collide_connected?",
+          "doc": "Whether connected bodies collide.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "b2d.joint.filter_definition",
+      "brief": "Box2D filter-joint definition",
+      "description": "The optional definition passed to <a href=\"#b2d\">b2d.joint.create_filter</a>. Filter joints\ncurrently have no configurable fields, so omit the argument or pass an empty\ntable. The type is reserved for future options.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "empty filter-joint options",
+          "types": ["{}"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">body_a</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">get_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject_a&quot;</span><span class=\"p\">)</span>\n<span class=\"kd\">local</span> <span class=\"n\">body_b</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">get_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject_b&quot;</span><span class=\"p\">)</span>\n<span class=\"kd\">local</span> <span class=\"n\">joint</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">joint</span><span class=\"p\">.</span><span class=\"n\">create_filter</span><span class=\"p\">(</span><span class=\"n\">body_a</span><span class=\"p\">,</span> <span class=\"n\">body_b</span><span class=\"p\">,</span> <span class=\"p\">{})</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.get_world",
+      "brief": "Get the Box2D world from the current collection",
+      "description": "Get the Box2D world from the current collection",
+      "returnvalues": [
+        {
+          "name": "world",
+          "doc": "the world if successful. Otherwise <code>nil</code>.",
+          "types": ["b2World", "nil"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.get_body",
+      "brief": "Get the Box2D body from a collision object",
+      "description": "Get the Box2D body from a collision object",
+      "returnvalues": [
+        {
+          "name": "body",
+          "doc": "the body if successful. Otherwise <code>nil</code>.",
+          "types": ["b2Body", "nil"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "the url to the game object collision component",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.get_version",
+      "brief": "Get the Box2D version information for the active backend.",
+      "description": "Get the Box2D version information for the active backend.",
+      "returnvalues": [
+        {
+          "name": "info",
+          "doc": "version information",
+          "types": ["b2d.version_info"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "b2d",
+    "name": "b2d",
+    "brief": "Box2D documentation",
+    "description": "Functions for interacting with Box2D.",
+    "path": "engine/gamesys/src/gamesys/scripts/box2d/script_box2d.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

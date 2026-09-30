@@ -117,7 +117,22 @@ const SURFACES = retainedSurfaces(
 
 // Corrections some retained target already declares correctly while an older
 // one still needs them, each with the targets that resolved it.
-const PARAM_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {};
+const PARAM_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
+  "gui.animate:param:property": ["defold-1.13.2"],
+  "gui.cancel_animations:param:property": ["defold-1.13.2"],
+  "resource.create_texture_async:param:path": ["defold-1.13.2"],
+  "render.get_render_target_width:param:render_target": ["defold-1.13.2"],
+  "render.get_render_target_height:param:render_target": ["defold-1.13.2"],
+  "render.set_render_target_size:param:render_target": ["defold-1.13.2"],
+  // Older targets type these `number`; 1.13.2 retypes the handle to an opaque
+  // type that no longer admits the number the binding reads.
+  "resource.get_texture_info:param:path": ["defold-1.12.4", "defold-1.13.0", "defold-1.13.1"],
+  "resource.get_render_target_info:param:path": ["defold-1.12.4", "defold-1.13.0", "defold-1.13.1"],
+  // Older targets type these `number` and `constant` (expanded to the settable
+  // pair); 1.13.2 retypes them to an enum that is too narrow and too wide.
+  "tilemap.set_tile:param:transform_bitmask": ["defold-1.12.4", "defold-1.13.0", "defold-1.13.1"],
+  "window.set_dim_mode:param:mode": ["defold-1.12.4", "defold-1.13.0", "defold-1.13.1"],
+};
 
 describe("parameter-type correction provenance", () => {
   const entries = [...PARAM_TYPE_CORRECTIONS.entries()];

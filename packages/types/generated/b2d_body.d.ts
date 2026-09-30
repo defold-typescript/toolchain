@@ -8,6 +8,7 @@ declare global {
   namespace b2d.body {
     type b2Body = Opaque<"b2Body">;
     type b2World = Opaque<"b2World">;
+    type B2 = typeof b2d.body.B2_DYNAMIC_BODY | typeof b2d.body.B2_KINEMATIC_BODY | typeof b2d.body.B2_STATIC_BODY;
     /**
      * Dynamic body
      */
@@ -74,32 +75,13 @@ declare global {
      * Compute the world AABB of all body shapes.
      *
      * @param body - body
-     * @returns table with `lower` and `upper` vector3 fields
+     * @returns body bounds
      */
-    function compute_aabb(body: Opaque<"b2Body">): { lower: Vector3; upper: Vector3 };
+    function compute_aabb(body: Opaque<"b2Body">): b2d.aabb;
     /**
      * Chains are one-sided connected segments with optional ghost vertices at
      * the ends of open chains. Ghost vertices are creation-time chain data only and
      * cannot be added to arbitrary shapes, bodies, or joints after creation.
-     *
-     * `definition.vertices`
-     * table array of local `vector3` vertices. Open chains require at least 2 vertices. Loop chains require at least 4 vertices.
-     * `definition.loop`
-     * boolean true to create a closed loop chain.
-     * `definition.prev_vertex`
-     * vector3 optional ghost vertex before the first vertex for open chains.
-     * `definition.next_vertex`
-     * vector3 optional ghost vertex after the last vertex for open chains.
-     * `definition.friction`
-     * number optional friction.
-     * `definition.restitution`
-     * number optional restitution.
-     * `definition.material`
-     * number optional material id.
-     * `definition.filter`
-     * table optional filter with `category_bits`, `mask_bits`, and `group_index`.
-     * `definition.enable_sensor_events`
-     * boolean true to enable sensor events for chain segments.
      *
      * @param body - body
      * @param definition - the chain definition
@@ -114,7 +96,7 @@ declare global {
      * }
      * ```
      */
-    function create_chain(body: Opaque<"b2Body">, definition: { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: { category_bits?: number; mask_bits?: number; group_index?: number }; enable_sensor_events?: boolean }): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: number }[]]>;
+    function create_chain(body: Opaque<"b2Body">, definition: b2d.chain_definition): LuaMultiReturn<[Opaque<"b2Chain">, b2d.shape_info[]]>;
     /**
      * Creates a fixture and attach it to this body. Use this function if you need
      * to set some fixture parameters, like friction. Otherwise you can create the
@@ -123,16 +105,8 @@ declare global {
      * Contacts are not created until the next time step.
      *
      * @param body - body
-     * @param definition - fixture definition table with:
-     * `shape` = shape table, `friction` = number, `restitution` = number,
-     * `density` = number, `sensor` = boolean, and optional `filter` table.
-     * Supported shape tables are:
-     * `circle` = `{ type = b2d.shape.SHAPE_TYPE_CIRCLE, radius = number, center = vector3_or_nil }`
-     * `edge` = `{ type = b2d.shape.SHAPE_TYPE_EDGE, v1 = vector3, v2 = vector3, v0 = vector3_or_nil, v3 = vector3_or_nil }`
-     * `polygon` = `{ type = b2d.shape.SHAPE_TYPE_POLYGON, vertices = { vector3, ... } }`
-     * `box` = `{ type = b2d.shape.SHAPE_TYPE_BOX, hx = number, hy = number, center = vector3_or_nil, angle = radians_or_nil }`
-     * `chain` = `{ type = b2d.shape.SHAPE_TYPE_CHAIN, vertices = { vector3, ... }, loop = boolean_or_nil, prev_vertex = vector3_or_nil, next_vertex = vector3_or_nil }`
-     * @returns fixture info table with `index`, `type`, `sensor`, `density`, `friction`, `restitution`, and `child_count`. **⚠️ `index` is 1-based; passed to Defold unchanged.**
+     * @param definition - fixture definition
+     * @returns fixture information. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * @example
      * ```ts
      * const body = b2d.get_body("#collisionobject");
@@ -144,14 +118,11 @@ declare global {
      * }
      * ```
      */
-    function create_fixture(body: Opaque<"b2Body">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number };
+    function create_fixture(body: Opaque<"b2Body">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): b2d.fixture_info;
     /**
      * Creates a shape and attaches it to this body.
      * If the density is non-zero, this function automatically updates the mass of the body.
      * Contacts are not created until the next time step.
-     * The definition may include `density`, `friction`, `restitution`, `material`,
-     * `sensor` or `is_sensor`, `filter`, and the shape table itself. The shape table
-     * can be in `definition.shape` or directly in `definition`.
      *
      * @param body - body
      * @param definition - the shape definition.
@@ -162,7 +133,7 @@ declare global {
      * Destroy a fixture from a body.
      *
      * @param body - body
-     * @param fixture_index - 1-based fixture index from `b2d.body.get_fixtures`. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
      */
     function destroy_fixture(body: Opaque<"b2Body">, fixture_index: number): void;
     /**
@@ -230,14 +201,14 @@ declare global {
      * @param body - body
      * @returns array of contact tables
      */
-    function get_contact_data(body: Opaque<"b2Body">): Record<string | number, unknown>;
+    function get_contact_data(body: Opaque<"b2Body">): b2d.contact_data[];
     /**
      * Get the fixtures attached to this body.
      *
      * @param body - body
-     * @returns array of fixture info tables with `index`, `type`, `sensor`, `density`, `friction`, `restitution`, and `child_count`. **⚠️ `index` is 1-based; passed to Defold unchanged.**
+     * @returns the attached fixtures. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      */
-    function get_fixtures(body: Opaque<"b2Body">): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[];
+    function get_fixtures(body: Opaque<"b2Body">): b2d.fixture_info[];
     /**
      * Get the total force currently applied on this object
      *
@@ -262,9 +233,9 @@ declare global {
      * Get the joints attached to this body.
      *
      * @param body - body
-     * @returns array of `b2Joint` handles created by `b2d.joint`
+     * @returns joint handles created by b2d.joint
      */
-    function get_joints(body: Opaque<"b2Body">): number[];
+    function get_joints(body: Opaque<"b2Body">): Opaque<"b2Joint">[];
     /**
      * Get the linear damping of the body.
      *
@@ -336,9 +307,9 @@ declare global {
      * Get the mass data of the body.
      *
      * @param body - body
-     * @returns table with `mass`, `center` in local coordinates, and `inertia`.
+     * @returns the mass data
      */
-    function get_mass_data(body: Opaque<"b2Body">): { mass: number; center: Vector3; inertia: number };
+    function get_mass_data(body: Opaque<"b2Body">): b2d.mass_data;
     /**
      * Get the mass data of the body.
      *
@@ -350,16 +321,16 @@ declare global {
      * Get the body name.
      *
      * @param body - body
-     * @returns body name, or nil if no name is set
+     * @returns body name, or `nil` if no name is set
      */
-    function get_name(body: Opaque<"b2Body">): string;
+    function get_name(body: Opaque<"b2Body">): string | undefined;
     /**
      * Get the next body in the world's body list.
      *
      * @param body - body
-     * @returns the next body
+     * @returns the next body, or `nil` if this is the last body
      */
-    function get_next(body: Opaque<"b2Body">): Opaque<"b2Body">;
+    function get_next(body: Opaque<"b2Body">): Opaque<"b2Body"> | undefined;
     /**
      * Get the world body origin position.
      *
@@ -378,9 +349,9 @@ declare global {
      * Get the list of all shapes attached to this body.
      *
      * @param body - body
-     * @returns a table of shape info entries. Each entry includes `shape_id` for use with `b2d.shape` functions.
+     * @returns attached shapes
      */
-    function get_shapes(body: Opaque<"b2Body">): { shape_id: number }[];
+    function get_shapes(body: Opaque<"b2Body">): b2d.shape_info[];
     /**
      * Get the sleep velocity threshold.
      *
@@ -392,9 +363,9 @@ declare global {
      * Get the body transform for the body's origin.
      *
      * @param body - body
-     * @returns table with `position` and `angle` in radians.
+     * @returns the body transform
      */
-    function get_transform(body: Opaque<"b2Body">): { position: Vector3; angle: number };
+    function get_transform(body: Opaque<"b2Body">): b2d.transform;
     /**
      * Get the body transform for the body's origin.
      *
@@ -580,9 +551,9 @@ declare global {
      * Set the mass properties to override the mass properties of the fixtures.
      *
      * @param body - body
-     * @param data - table with `mass`, `center` in local coordinates, and `inertia`.
+     * @param data - the mass data
      */
-    function set_mass_data(body: Opaque<"b2Body">, data: { mass: number; center: Vector3; inertia: number }): void;
+    function set_mass_data(body: Opaque<"b2Body">, data: b2d.mass_data): void;
     /**
      * Set the body name.
      *

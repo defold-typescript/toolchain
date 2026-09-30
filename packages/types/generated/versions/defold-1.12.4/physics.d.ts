@@ -218,7 +218,8 @@ declare global {
      *     const to = vmath.vector3(from.x, from.y - 100, from.z);
      *     const results = physics.raycast(from, to, self.groups, { all: true });
      *     if (results !== undefined) {
-     *       for (const result of results) {
+     *       // with `all` set, the ray cast returns every hit as a list
+     *       for (const result of Array.isArray(results) ? results : [results]) {
      *         handle_result(result);
      *       }
      *     }

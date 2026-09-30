@@ -154,6 +154,12 @@ function emittedArgs(flat: string, luaCallee: string): string[] {
     .split(/\s*,\s*/);
 }
 
+// A bare script hook (`on_input`) is called by the engine, so its params arrive
+// from Defold the way a return does and never reach an engine call.
+function isScriptHook(key: string): boolean {
+  return !/[.:]/.test(key.slice(0, key.indexOf(":")));
+}
+
 function positionKeys(kind: "param" | "return", fielded: boolean): string[] {
   const shape = fielded
     ? new RegExp(`^.+?:${kind}:[^:]+:.+$`)
@@ -227,7 +233,7 @@ describe("every classified scalar index argument", () => {
 
 describe("every classified index table and return", () => {
   test("an argument table reaches the engine call as the same value", () => {
-    const keys = positionKeys("param", true);
+    const keys = positionKeys("param", true).filter((key) => !isScriptHook(key));
     expect(keys.length).toBeGreaterThan(0);
     for (const key of keys) {
       const [, base = "", slot = ""] = /^(.+?):param:([^:]+):/.exec(key) ?? [];
@@ -315,7 +321,7 @@ describe("engine index passthrough", () => {
         "b2d.fixture.get_density(body, index);",
         'resource.set_atlas("/a.texturesetc", atlas);',
         'resource.set_atlas("/a.texturesetc", { texture: "/t.texturec", animations: [{ id: "run", width: 8, height: 8, frame_start: 1, frame_end: 4 }], geometries: [{ vertices: [0], uvs: [0], indices: [0] }] });',
-        "const start = built.animations[i].frame_start;",
+        "const start = built.animations[i].frames[0];",
         "const [x, y] = tilemap.get_bounds(url);",
         'tilemap.set_tile(url, "layer", x, y, 3);',
         "print(b2d.fixture.get_density(body, b2d.body.get_fixtures(body)[0].index));",
@@ -343,7 +349,7 @@ describe("engine index passthrough", () => {
           frame_start = 1,
           frame_end = 4
       }}, geometries = {{vertices = {0}, uvs = {0}, indices = {0}}}})
-      local start = built.animations[i + 1].frame_start
+      local start = built.animations[i + 1].frames[1]
       local x, y = tilemap.get_bounds(url)
       tilemap.set_tile(
           url,

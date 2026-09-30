@@ -207,6 +207,48 @@ describe("per-target provenance — mixed-version inputs", () => {
     });
   });
 
+  // Verbatim 1.13.2 shape: the slot names a STRUCT and the field lives in its
+  // members, with `?` on the name for an optional one.
+  function structReturn(target: string, addressMember: string): ProvenanceSurface {
+    const doc = surface(target, "sys", [
+      {
+        name: "sys.get_ifaddrs",
+        returnvalues: [
+          { name: "ifaddrs", types: ["sys.interface_info[]"], doc: "network interfaces" },
+        ],
+      },
+    ]).doc as { elements: unknown[] };
+    doc.elements.push({
+      type: "STRUCT",
+      name: "sys.interface_info",
+      members: [
+        { name: "name", doc: "Interface name.", type: "string" },
+        { name: addressMember, doc: "IP address, when available.", type: "string" },
+      ],
+    });
+    return { target, namespace: "sys", doc };
+  }
+
+  test("a field the slot's struct marks optional is resolved there", () => {
+    expect(
+      fieldCorrectionProvenance(ADDRESS_ENTRIES, [structReturn("new", "address?")])[0],
+    ).toEqual({
+      key: ADDRESS,
+      sightedIn: ["new"],
+      neededBy: [],
+      resolvedIn: ["new"],
+      missingFieldIn: [],
+      typeDrift: [],
+    });
+  });
+
+  test("a field the slot's struct declares required is still a hard failure", () => {
+    expect(
+      fieldCorrectionProvenance(ADDRESS_ENTRIES, [structReturn("new", "address")])[0]
+        ?.missingFieldIn,
+    ).toEqual(["new"]);
+  });
+
   test("a field key no surface declares stays visible with no sighting", () => {
     const old = surface("old", "sys", [ifaddrs(NEEDS_CORRECTION)]);
     const noElement = "sys.no_such_function:return:ifaddrs:address";
@@ -434,8 +476,28 @@ const SURFACES = retainedSurfaces(
 // one still needs them, each with the targets that resolved it. An upstream fix
 // in one target lands here instead of deleting a correction older targets still
 // pay for.
-const FIELD_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {};
-const RETURN_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {};
+const FIELD_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
+  "sys.get_sys_info:return:sys_info:device_model": ["defold-1.13.2"],
+  "sys.get_sys_info:return:sys_info:manufacturer": ["defold-1.13.2"],
+  "sys.get_sys_info:return:sys_info:device_ident": ["defold-1.13.2"],
+  "sys.get_sys_info:return:sys_info:user_agent": ["defold-1.13.2"],
+  "sys.get_ifaddrs:return:ifaddrs:address": ["defold-1.13.2"],
+  "sys.get_ifaddrs:return:ifaddrs:mac": ["defold-1.13.2"],
+};
+const RETURN_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
+  "b2d.get_body": ["defold-1.13.2"],
+};
+
+// Return corrections a retained target retypes and fixes in the same change: its
+// new tokens declare the `nil` and a precise type, so the pin gate leaves the
+// correction inert there and that target emits upstream's type. Each pair is
+// checked by hand against the target's emit; a retype that still gets the slot
+// wrong gains a `retypedUpstream` pin instead.
+const RETURN_CORRECTIONS_RETYPED_FIXED: Record<string, readonly string[]> = {
+  "b2d.shape.ray_cast": ["defold-1.13.2"],
+  "b2d.world.cast_ray_closest": ["defold-1.13.2"],
+  "gui.new_texture": ["defold-1.13.2"],
+};
 
 interface LifecycleVerdict {
   readonly key: string;
@@ -543,7 +605,23 @@ describe("return-type correction provenance", () => {
   });
 
   test("the return type pin holds wherever the correction applies", () => {
-    expect(provenance.flatMap((entry) => entry.typeDrift)).toEqual([]);
+    const unrecorded = provenance.flatMap((entry) => {
+      const fixedIn = RETURN_CORRECTIONS_RETYPED_FIXED[entry.key] ?? [];
+      return entry.typeDrift.filter(
+        (message) => !fixedIn.some((target) => message.startsWith(`${target}: `)),
+      );
+    });
+    expect(unrecorded).toEqual([]);
+  });
+
+  test("every recorded retyped fix is a target that still retypes the pin", () => {
+    const stale = Object.entries(RETURN_CORRECTIONS_RETYPED_FIXED).flatMap(([key, targets]) => {
+      const driftedIn = provenance.find((entry) => entry.key === key)?.driftedIn ?? [];
+      return targets
+        .filter((target) => !driftedIn.includes(target))
+        .map((target) => `${key}: ${target} no longer retypes the pinned return — drop the record`);
+    });
+    expect(stale).toEqual([]);
   });
 
   test("every correction is still needed by some retained target", () => {

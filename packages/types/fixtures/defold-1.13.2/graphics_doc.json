@@ -1,0 +1,1211 @@
+{
+  "elements": [
+    {
+      "type": "ENUM",
+      "name": "graphics.BLEND_FACTOR",
+      "brief": "Blend factors",
+      "description": "Blend factors",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.BLEND_FACTOR_CONSTANT_ALPHA",
+          "doc": "constant blend alpha for every component",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_CONSTANT_COLOR",
+          "doc": "constant blend color",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_DST_ALPHA",
+          "doc": "destination alpha for every component",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_DST_COLOR",
+          "doc": "destination color",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_ONE",
+          "doc": "one for every component",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA",
+          "doc": "one minus the constant blend alpha for every component",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR",
+          "doc": "one minus the constant blend color",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA",
+          "doc": "one minus the destination alpha for every component",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR",
+          "doc": "one minus the destination color",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA",
+          "doc": "one minus the source alpha for every component",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR",
+          "doc": "one minus the source color",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_SRC_ALPHA",
+          "doc": "source alpha for every component",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE",
+          "doc": "minimum of source alpha and one minus destination alpha for color, and one for alpha",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_SRC_COLOR",
+          "doc": "source color",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_FACTOR_ZERO",
+          "doc": "zero for every component",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.BLEND_EQUATION",
+      "brief": "Blend equations",
+      "description": "Blend equations",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.BLEND_EQUATION_ADD",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_EQUATION_MAX",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_EQUATION_MIN",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_EQUATION_REVERSE_SUBTRACT",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.BLEND_EQUATION_SUBTRACT",
+          "doc": "",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.BUFFER_TYPE",
+      "brief": "Buffer types",
+      "description": "Buffer types",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.BUFFER_TYPE_COLOR0_BIT",
+          "doc": "first color attachment",
+          "type": ""
+        },
+        {
+          "name": "graphics.BUFFER_TYPE_COLOR1_BIT",
+          "doc": "second color attachment; may be nil if multiple render targets are unsupported",
+          "type": "graphics.BUFFER_TYPE|nil"
+        },
+        {
+          "name": "graphics.BUFFER_TYPE_COLOR2_BIT",
+          "doc": "third color attachment; may be nil if multiple render targets are unsupported",
+          "type": "graphics.BUFFER_TYPE|nil"
+        },
+        {
+          "name": "graphics.BUFFER_TYPE_COLOR3_BIT",
+          "doc": "fourth color attachment; may be nil if multiple render targets are unsupported",
+          "type": "graphics.BUFFER_TYPE|nil"
+        },
+        {
+          "name": "graphics.BUFFER_TYPE_DEPTH_BIT",
+          "doc": "depth attachment",
+          "type": ""
+        },
+        {
+          "name": "graphics.BUFFER_TYPE_STENCIL_BIT",
+          "doc": "stencil attachment",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.DATA_TYPE",
+      "brief": "Vertex attribute data types",
+      "description": "Vertex attribute data types",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.DATA_TYPE_BYTE",
+          "doc": "Signed 8-bit vertex attribute data.",
+          "type": ""
+        },
+        {
+          "name": "graphics.DATA_TYPE_FLOAT",
+          "doc": "32-bit floating-point vertex attribute data.",
+          "type": ""
+        },
+        {
+          "name": "graphics.DATA_TYPE_INT",
+          "doc": "Signed 32-bit vertex attribute data.",
+          "type": ""
+        },
+        {
+          "name": "graphics.DATA_TYPE_SHORT",
+          "doc": "Signed 16-bit vertex attribute data.",
+          "type": ""
+        },
+        {
+          "name": "graphics.DATA_TYPE_UNSIGNED_BYTE",
+          "doc": "Unsigned 8-bit vertex attribute data.",
+          "type": ""
+        },
+        {
+          "name": "graphics.DATA_TYPE_UNSIGNED_INT",
+          "doc": "Unsigned 32-bit vertex attribute data.",
+          "type": ""
+        },
+        {
+          "name": "graphics.DATA_TYPE_UNSIGNED_SHORT",
+          "doc": "Unsigned 16-bit vertex attribute data.",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.COMPARE_FUNC",
+      "brief": "Comparison functions",
+      "description": "Comparison functions",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.COMPARE_FUNC_ALWAYS",
+          "doc": "always passes",
+          "type": ""
+        },
+        {
+          "name": "graphics.COMPARE_FUNC_EQUAL",
+          "doc": "passes when the values are equal",
+          "type": ""
+        },
+        {
+          "name": "graphics.COMPARE_FUNC_GEQUAL",
+          "doc": "passes when the incoming value is greater than or equal to the stored value",
+          "type": ""
+        },
+        {
+          "name": "graphics.COMPARE_FUNC_GREATER",
+          "doc": "passes when the incoming value is greater than the stored value",
+          "type": ""
+        },
+        {
+          "name": "graphics.COMPARE_FUNC_LEQUAL",
+          "doc": "passes when the incoming value is less than or equal to the stored value",
+          "type": ""
+        },
+        {
+          "name": "graphics.COMPARE_FUNC_LESS",
+          "doc": "passes when the incoming value is less than the stored value",
+          "type": ""
+        },
+        {
+          "name": "graphics.COMPARE_FUNC_NEVER",
+          "doc": "never passes",
+          "type": ""
+        },
+        {
+          "name": "graphics.COMPARE_FUNC_NOTEQUAL",
+          "doc": "passes when the values are not equal",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.COORDINATE_SPACE",
+      "brief": "Vertex attribute coordinate spaces",
+      "description": "Vertex attribute coordinate spaces",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.COORDINATE_SPACE_DEFAULT",
+          "doc": "Default vertex attribute coordinate space.",
+          "type": ""
+        },
+        {
+          "name": "graphics.COORDINATE_SPACE_LOCAL",
+          "doc": "Local vertex attribute coordinate space.",
+          "type": ""
+        },
+        {
+          "name": "graphics.COORDINATE_SPACE_WORLD",
+          "doc": "World vertex attribute coordinate space.",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.CONTEXT_FEATURE",
+      "brief": "Optional graphics-context features",
+      "description": "Optional graphics-context features",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.CONTEXT_FEATURE_3D_TEXTURES",
+          "doc": "Context feature flag indicating support for 3D (volume) textures.",
+          "type": ""
+        },
+        {
+          "name": "graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES",
+          "doc": "Context feature flag indicating support for ASTC compressed 2D array textures. Some WebGL/GLES drivers fail array texture ASTC uploads while 2D ASTC works.",
+          "type": ""
+        },
+        {
+          "name": "graphics.CONTEXT_FEATURE_BC_ARRAY_TEXTURES",
+          "doc": "Context feature flag indicating support for BC (S3TC/RGTC/BPTC) compressed 2D array and 3D textures. WebGL2 forbids these compressed families on array/3D targets while allowing them on 2D.",
+          "type": ""
+        },
+        {
+          "name": "graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX",
+          "doc": "Context feature flag indicating support for min/max blend equations. Requires GLES3+ or EXT_blend_minmax.",
+          "type": ""
+        },
+        {
+          "name": "graphics.CONTEXT_FEATURE_COMPUTE_SHADER",
+          "doc": "Context feature flag indicating support for compute shaders.",
+          "type": ""
+        },
+        {
+          "name": "graphics.CONTEXT_FEATURE_INSTANCING",
+          "doc": "Context feature flag indicating support for hardware instancing.",
+          "type": ""
+        },
+        {
+          "name": "graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING",
+          "doc": "Context feature flag indicating support for rendering to multiple color targets simultaneously.",
+          "type": ""
+        },
+        {
+          "name": "graphics.CONTEXT_FEATURE_STORAGE_BUFFER",
+          "doc": "Context feature flag indicating support for storage buffers.",
+          "type": ""
+        },
+        {
+          "name": "graphics.CONTEXT_FEATURE_TEXTURE_ARRAY",
+          "doc": "Context feature flag indicating support for texture arrays.",
+          "type": ""
+        },
+        {
+          "name": "graphics.CONTEXT_FEATURE_VSYNC",
+          "doc": "Context feature flag indicating support for vertical sync (vsync).",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.COMPRESSION_TYPE",
+      "brief": "Texture compression types",
+      "description": "Texture compression types",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.COMPRESSION_TYPE_BASIS_ETC1S",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.COMPRESSION_TYPE_BASIS_UASTC",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.COMPRESSION_TYPE_DEFAULT",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.COMPRESSION_TYPE_WEBP",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.COMPRESSION_TYPE_WEBP_LOSSY",
+          "doc": "",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.FACE_TYPE",
+      "brief": "Face types",
+      "description": "Face types",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.FACE_TYPE_BACK",
+          "doc": "back-facing polygons",
+          "type": ""
+        },
+        {
+          "name": "graphics.FACE_TYPE_FRONT",
+          "doc": "front-facing polygons",
+          "type": ""
+        },
+        {
+          "name": "graphics.FACE_TYPE_FRONT_AND_BACK",
+          "doc": "both front- and back-facing polygons",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.STATE",
+      "brief": "Graphics states",
+      "description": "Graphics states",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.STATE_ALPHA_TEST",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.STATE_ALPHA_TEST_SUPPORTED",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.STATE_BLEND",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.STATE_CULL_FACE",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.STATE_DEPTH_TEST",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.STATE_POLYGON_OFFSET_FILL",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.STATE_SCISSOR_TEST",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.STATE_STENCIL_TEST",
+          "doc": "",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.SEMANTIC_TYPE",
+      "brief": "Vertex attribute semantic types",
+      "description": "Vertex attribute semantic types",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.SEMANTIC_TYPE_BONE_INDICES",
+          "doc": "Bone-index vertex attribute.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_BONE_WEIGHTS",
+          "doc": "Bone-weight vertex attribute.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_COLOR",
+          "doc": "Color vertex attribute.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS",
+          "doc": "Morph-target-weight vertex attribute.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_NONE",
+          "doc": "Vertex attribute without a predefined semantic.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_NORMAL",
+          "doc": "Normal vertex attribute.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_NORMAL_MATRIX",
+          "doc": "Normal-matrix vertex attribute.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_PAGE_INDEX",
+          "doc": "Texture page-index vertex attribute.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_POSITION",
+          "doc": "Position vertex attribute.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_TANGENT",
+          "doc": "Tangent vertex attribute.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_TEXCOORD",
+          "doc": "Texture-coordinate vertex attribute.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D",
+          "doc": "2D texture-transform vertex attribute.",
+          "type": ""
+        },
+        {
+          "name": "graphics.SEMANTIC_TYPE_WORLD_MATRIX",
+          "doc": "World-matrix vertex attribute.",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.STENCIL_OP",
+      "brief": "Stencil operations",
+      "description": "Stencil operations",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.STENCIL_OP_DECR",
+          "doc": "decrement and clamp at zero",
+          "type": ""
+        },
+        {
+          "name": "graphics.STENCIL_OP_DECR_WRAP",
+          "doc": "decrement and wrap zero to the maximum unsigned value",
+          "type": ""
+        },
+        {
+          "name": "graphics.STENCIL_OP_INCR",
+          "doc": "increment and clamp at the maximum unsigned value",
+          "type": ""
+        },
+        {
+          "name": "graphics.STENCIL_OP_INCR_WRAP",
+          "doc": "increment and wrap the maximum unsigned value to zero",
+          "type": ""
+        },
+        {
+          "name": "graphics.STENCIL_OP_INVERT",
+          "doc": "bitwise invert",
+          "type": ""
+        },
+        {
+          "name": "graphics.STENCIL_OP_KEEP",
+          "doc": "keep the current value",
+          "type": ""
+        },
+        {
+          "name": "graphics.STENCIL_OP_REPLACE",
+          "doc": "replace with the reference value from <a href=\"/ref/render#render.set_stencil_func\">render.set_stencil_func</a>",
+          "type": ""
+        },
+        {
+          "name": "graphics.STENCIL_OP_ZERO",
+          "doc": "set to zero",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.TEXTURE_FILTER",
+      "brief": "Texture filters",
+      "description": "Texture filters",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.TEXTURE_FILTER_DEFAULT",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_FILTER_LINEAR",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_FILTER_NEAREST",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST",
+          "doc": "",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.TEXTURE_FORMAT",
+      "brief": "Texture formats",
+      "description": "Texture formats",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.TEXTURE_FORMAT_BGRA8U",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_DEPTH",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_LUMINANCE",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_LUMINANCE_ALPHA",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_R16F",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_R32F",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_R32UI",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RG16F",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RG32F",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGB",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGB16F",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGB32F",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGBA",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGBA16F",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGBA32F",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGBA32UI",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGBA_16BPP",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGBA_BC3",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGBA_BC7",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGBA_ETC2",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGB_16BPP",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGB_BC1",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGB_ETC1",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RG_BC5",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_RG_ETC2",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_R_BC4",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_R_ETC2",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_FORMAT|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_FORMAT_STENCIL",
+          "doc": "",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.TEXTURE_TYPE",
+      "brief": "Texture types",
+      "description": "Texture types",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.TEXTURE_TYPE_2D",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_TYPE_2D_ARRAY",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_TYPE_3D",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_TYPE|nil"
+        },
+        {
+          "name": "graphics.TEXTURE_TYPE_CUBE_MAP",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_TYPE_IMAGE_2D",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_TYPE_IMAGE_3D",
+          "doc": "May be nil if the graphics driver doesn't support it",
+          "type": "graphics.TEXTURE_TYPE|nil"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.TEXTURE_USAGE_FLAG",
+      "brief": "Texture usage flags",
+      "description": "Texture usage flags",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.TEXTURE_USAGE_FLAG_COLOR",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_USAGE_FLAG_INPUT",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_USAGE_FLAG_MEMORYLESS",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_USAGE_FLAG_SAMPLE",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_USAGE_FLAG_STORAGE",
+          "doc": "",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "graphics.TEXTURE_WRAP",
+      "brief": "Texture wrapping modes",
+      "description": "Texture wrapping modes",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "graphics.TEXTURE_WRAP_CLAMP_TO_BORDER",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_WRAP_CLAMP_TO_EDGE",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_WRAP_MIRRORED_REPEAT",
+          "doc": "",
+          "type": ""
+        },
+        {
+          "name": "graphics.TEXTURE_WRAP_REPEAT",
+          "doc": "",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "graphics.adapter_limits",
+      "brief": "Graphics context limits",
+      "description": "Graphics context limits",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "max_texture_size_2d",
+          "doc": "Maximum 2D texture dimension in texels.",
+          "type": "integer"
+        },
+        {
+          "name": "max_texture_size_3d",
+          "doc": "Maximum 3D texture dimension in texels.",
+          "type": "integer"
+        },
+        {
+          "name": "max_texture_size_cube",
+          "doc": "Maximum cube-map face dimension in texels.",
+          "type": "integer"
+        },
+        {
+          "name": "max_texture_array_layers",
+          "doc": "Maximum number of array texture layers.",
+          "type": "integer"
+        },
+        {
+          "name": "max_framebuffer_width",
+          "doc": "Maximum framebuffer width in pixels.",
+          "type": "integer"
+        },
+        {
+          "name": "max_framebuffer_height",
+          "doc": "Maximum framebuffer height in pixels.",
+          "type": "integer"
+        },
+        {
+          "name": "max_color_attachments",
+          "doc": "Maximum number of simultaneous color attachments.",
+          "type": "integer"
+        },
+        {
+          "name": "max_samplers_per_stage",
+          "doc": "Maximum number of texture samplers per shader stage.",
+          "type": "integer"
+        },
+        {
+          "name": "max_textures_per_stage",
+          "doc": "Maximum number of sampled textures per shader stage.",
+          "type": "integer"
+        },
+        {
+          "name": "max_vertex_attributes",
+          "doc": "Maximum number of vertex attributes.",
+          "type": "integer"
+        },
+        {
+          "name": "max_vertex_buffers",
+          "doc": "Maximum number of vertex-buffer bindings.",
+          "type": "integer"
+        },
+        {
+          "name": "max_compute_workgroup_size_x",
+          "doc": "Maximum compute workgroup size on the X axis.",
+          "type": "integer"
+        },
+        {
+          "name": "max_compute_workgroup_size_y",
+          "doc": "Maximum compute workgroup size on the Y axis.",
+          "type": "integer"
+        },
+        {
+          "name": "max_compute_workgroup_size_z",
+          "doc": "Maximum compute workgroup size on the Z axis.",
+          "type": "integer"
+        },
+        {
+          "name": "max_compute_workgroup_invocations",
+          "doc": "Maximum invocations per compute workgroup.",
+          "type": "integer"
+        },
+        {
+          "name": "max_compute_shared_memory_size",
+          "doc": "Maximum shared memory per compute workgroup in bytes.",
+          "type": "integer"
+        },
+        {
+          "name": "max_uniform_buffer_range",
+          "doc": "Maximum bindable uniform-buffer range in bytes.",
+          "type": "integer"
+        },
+        {
+          "name": "max_storage_buffer_range",
+          "doc": "Maximum bindable storage-buffer range in bytes.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "graphics.adapter_info",
+      "brief": "Graphics adapter information",
+      "description": "Graphics adapter information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "family",
+          "doc": "Adapter family name.",
+          "type": "string"
+        },
+        {
+          "name": "version_major",
+          "doc": "Adapter API major version.",
+          "type": "integer"
+        },
+        {
+          "name": "version_minor",
+          "doc": "Adapter API minor version.",
+          "type": "integer"
+        },
+        {
+          "name": "limits",
+          "doc": "Hardware and driver limits.",
+          "type": "graphics.adapter_limits"
+        },
+        {
+          "name": "extensions",
+          "doc": "Driver-reported extension names.",
+          "type": "string[]"
+        },
+        {
+          "name": "features",
+          "doc": "Supported optional context features.",
+          "type": "graphics.CONTEXT_FEATURE[]"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "graphics.get_engine_adapters",
+      "brief": "get the list of graphics adapters that have been registered with the engine",
+      "description": "get the list of graphics adapters that have been registered with the engine",
+      "returnvalues": [
+        {
+          "name": "adapters",
+          "doc": "array of adapter family name strings (e.g. \"opengl\", \"vulkan\", \"webgpu\")",
+          "types": ["string[]"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "graphics.get_adapter_info",
+      "brief": "get information about the currently installed graphics adapter",
+      "description": "Returns a table describing the active graphics context: the adapter family,\nits hardware limits, the list of driver-reported extensions, and the set of\noptional context features supported by the backend.",
+      "returnvalues": [
+        {
+          "name": "info",
+          "doc": "information about the active graphics adapter and context",
+          "types": ["graphics.adapter_info"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "graphics",
+    "name": "Graphics",
+    "brief": "Graphics API documentation",
+    "description": "Graphics functions and constants.",
+    "path": "engine/script/src/script_graphics.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

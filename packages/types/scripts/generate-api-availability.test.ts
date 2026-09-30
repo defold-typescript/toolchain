@@ -54,13 +54,18 @@ describe("availability derivation over the committed target snapshots", () => {
   // `b2d.world` was promoted mid-history, so it must carry every release from its
   // promotion forward and none before it — asserted as the prefix property rather
   // than as a fixed version list, which only held while exactly two were tracked.
+  // Per logical name: a signature that changed after the promotion splits the
+  // run across two identities, which together still cover it.
   test("a promoted symbol carries a newest-anchored run that stops short of the oldest release", () => {
     const promoted = artifact.records.filter((r) => r.identity.namespace === "b2d.world");
     expect(promoted.length).toBeGreaterThan(0);
-    for (const record of promoted) {
-      expect(isNewestAnchoredPrefix(record.availableIn)).toBe(true);
-      expect(record.availableIn).toContain(NEWEST_VERSION);
-      expect(record.availableIn).not.toContain(OLDEST_VERSION);
+    for (const group of groupByLogicalName(promoted, artifact.versions)) {
+      const run = artifact.versions.filter((version) =>
+        group.overloads.some((overload) => overload.availableIn.includes(version)),
+      );
+      expect(isNewestAnchoredPrefix(run)).toBe(true);
+      expect(run).toContain(NEWEST_VERSION);
+      expect(run).not.toContain(OLDEST_VERSION);
     }
   });
 
@@ -104,9 +109,14 @@ describe("availability derivation over the committed target snapshots", () => {
     expect(withheld("b2d.body.set_mass_data", "b2MassData")).toEqual([]);
   });
 
+  // A record the migration overlay carries (a deprecation) is kept whatever its span.
   test("a symbol present in every tracked version carries no record (available-in-all)", () => {
     const bothVersions = artifact.records.filter(
-      (r) => r.availableIn.length === artifact.versions.length,
+      (r) =>
+        r.availableIn.length === artifact.versions.length &&
+        r.deprecatedSince === undefined &&
+        r.replacement === undefined &&
+        r.box2d === undefined,
     );
     expect(bothVersions).toHaveLength(0);
   });

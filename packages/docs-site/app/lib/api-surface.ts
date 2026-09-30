@@ -1254,6 +1254,9 @@ export function apiModuleSymbols(
   const symbols: ApiSymbol[] = [];
   const artifactBacked = new Set<ApiSymbol>();
   const overrideEmitted = new Set<string>();
+  // The signatures each override-covered FQN has rendered, so a later identity
+  // repeating one collapses while a changed one still gets its row.
+  const overrideRows = new Map<string, Set<string>>();
   // Every ref-doc entry of an override-covered FQN, grouped in source order
   // before the walk: the collapse below renders only the first entry it meets,
   // so the pairing needs the whole group to reach the later ones.
@@ -1268,8 +1271,15 @@ export function apiModuleSymbols(
   for (const fn of m.functions) {
     const ov = lookupSignature(signatures, fn.name);
     // override-covered FQN: render the store signatures once, not per fixture entry
-    // (`vmath.lerp` has 3 ref-doc entries but one authored override set).
-    if (ov !== null && overrideEmitted.has(fn.name)) continue;
+    // (`vmath.lerp` has 3 ref-doc entries but one authored override set). A later
+    // identity whose authoritative declaration the page has not rendered yet — a
+    // signature that changed between releases on a Combined page — still renders
+    // its own row.
+    const collapsed = ov !== null && overrideEmitted.has(fn.name);
+    if (collapsed) {
+      const later = authoritative?.get(functionIdentity(fn));
+      if (later === undefined || overrideRows.get(fn.name)?.has(later) === true) continue;
+    }
     // One key for every per-declaration lookup this row makes, so the signature,
     // the slots, the availability badge and the identity the row reports can never
     // come from different declarations.
@@ -1288,10 +1298,11 @@ export function apiModuleSymbols(
     // (`msg.url`'s 0/1/3 arities) each row reads its own; otherwise every row
     // keeps entry 0, exactly as before.
     const rowSignatures =
-      ov === null ? [primarySignature] : [primarySignature, ...ov.signatures.slice(1)];
-    const entries = ov === null ? [fn] : (overrideEntries.get(fn.name) ?? [fn]);
-    const paired = ov === null ? null : pairFixtureEntries(entries, rowSignatures);
-    const tableRow = paired !== null ? -1 : ov === null ? 0 : unpairedTableRow(fn, rowSignatures);
+      ov === null || collapsed ? [primarySignature] : [primarySignature, ...ov.signatures.slice(1)];
+    const entries = ov === null || collapsed ? [fn] : (overrideEntries.get(fn.name) ?? [fn]);
+    const paired = ov === null || collapsed ? null : pairFixtureEntries(entries, rowSignatures);
+    const tableRow =
+      paired !== null ? -1 : ov === null || collapsed ? 0 : unpairedTableRow(fn, rowSignatures);
     const rowEntry = (i: number): ApiFunction | null => paired?.[i] ?? (i === tableRow ? fn : null);
     // per-overload description: each override row keeps its own `docs[i]` prose,
     // falling back to its paired ref-doc entry's description — or, unpaired, to
@@ -1325,7 +1336,7 @@ export function apiModuleSymbols(
       name: fn.name,
       signature: primarySignature,
       declarationIdentity: identity,
-      docMarkdown: ov === null ? fixtureDoc : overloadDoc(0),
+      docMarkdown: ov === null || collapsed ? fixtureDoc : overloadDoc(0),
       parameters: primaryEntry
         ? projectParams(
             primaryEntry.parameters,
@@ -1411,6 +1422,12 @@ export function apiModuleSymbols(
       }
     }
     if (ov !== null) {
+      const rows = overrideRows.get(fn.name) ?? new Set<string>();
+      rows.add(primarySignature);
+      if (!collapsed) for (const signature of ov.signatures.slice(1)) rows.add(signature);
+      overrideRows.set(fn.name, rows);
+    }
+    if (ov !== null && !collapsed) {
       overrideEmitted.add(fn.name);
       for (const [k, signature] of ov.signatures.slice(1).entries()) {
         const entry = rowEntry(k + 1);

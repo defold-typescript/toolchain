@@ -2,6 +2,7 @@ import * as ts from "typescript";
 import {
   type ApiFunction,
   type ApiParameter,
+  type ApiStruct,
   FUNCTION_NAME_CORRECTIONS,
   parseDefoldApiDoc,
 } from "../src/api-doc";
@@ -44,7 +45,46 @@ function evidenceFor(name: string, prose: string): IndexSlotEvidence | undefined
   return undefined;
 }
 
-function scanSlot(key: string, slot: ApiParameter, hits: IndexSlotHit[]): void {
+type StructIndex = ReadonlyMap<string, ApiStruct>;
+
+const STRUCT_REFERENCE = /^([A-Za-z_][\w.]*)(?:\[\])?$/;
+
+function structIndex(structs: readonly ApiStruct[] | undefined): StructIndex {
+  return new Map((structs ?? []).map((struct) => [struct.name, struct]));
+}
+
+// The members of the ref-doc STRUCT a slot's type names, read as fields of the
+// slot, so a base a member states is keyed to that member. `within` holds the
+// structs already expanded on this path, so a self-referencing struct stops.
+function structFields(
+  slot: ApiParameter,
+  structs: StructIndex,
+  within: ReadonlySet<string>,
+): { readonly fields: ApiParameter[]; readonly within: ReadonlySet<string> } {
+  for (const type of slot.types) {
+    const name = STRUCT_REFERENCE.exec(type)?.[1];
+    const struct = name === undefined || within.has(name) ? undefined : structs.get(name);
+    if (struct === undefined) continue;
+    return {
+      fields: struct.members.map((member) => ({
+        name: member.name,
+        doc: member.doc,
+        types: [member.type],
+        isOptional: member.isOptional,
+      })),
+      within: new Set([...within, struct.name]),
+    };
+  }
+  return { fields: [], within };
+}
+
+function scanSlot(
+  key: string,
+  slot: ApiParameter,
+  hits: IndexSlotHit[],
+  structs: StructIndex,
+  within: ReadonlySet<string> = new Set(),
+): void {
   const { prose, fields } = splitSlotFields(slot.doc);
   const own = evidenceFor(slot.name, prose);
   if (own !== undefined) hits.push({ key, evidence: own });
@@ -55,10 +95,11 @@ function scanSlot(key: string, slot: ApiParameter, hits: IndexSlotHit[]): void {
     const evidence = evidenceFor(field.name, field.prose);
     if (evidence !== undefined) hits.push({ key: `${key}:${field.name}`, evidence });
   }
-  for (const field of slot.fields ?? []) {
+  const members = structFields(slot, structs, within);
+  for (const field of [...(slot.fields ?? []), ...members.fields]) {
     if (seen.has(field.name)) continue;
     seen.add(field.name);
-    scanSlot(`${key}:${field.name}`, field, hits);
+    scanSlot(`${key}:${field.name}`, field, hits, structs, members.within);
   }
   // A key named only in the slot's prose (`table with ... and \`group_index\``).
   if (slot.types.includes("table")) {
@@ -71,9 +112,13 @@ function scanSlot(key: string, slot: ApiParameter, hits: IndexSlotHit[]): void {
   }
 }
 
-function scanFunction(fn: ApiFunction, hits: IndexSlotHit[]): void {
-  for (const slot of fn.parameters) scanSlot(`${fn.name}:param:${slot.name}`, slot, hits);
-  for (const slot of fn.returnValues) scanSlot(`${fn.name}:return:${slot.name}`, slot, hits);
+function scanFunction(fn: ApiFunction, hits: IndexSlotHit[], structs: StructIndex): void {
+  for (const slot of fn.parameters) {
+    scanSlot(`${fn.name}:param:${slot.name}`, slot, hits, structs);
+  }
+  for (const slot of fn.returnValues) {
+    scanSlot(`${fn.name}:return:${slot.name}`, slot, hits, structs);
+  }
 }
 
 // A binding that subtracts 1 from a checked argument, keyed to the ref-doc
@@ -103,9 +148,10 @@ export function scanIndexSlots(
   if (LUA_STDLIB_NAMESPACES.has(namespace)) return [];
   const module = parseDefoldApiDoc(doc);
   const hits: IndexSlotHit[] = [];
-  for (const fn of module.functions) scanFunction(fn, hits);
+  const structs = structIndex(module.structs);
+  for (const fn of module.functions) scanFunction(fn, hits, structs);
   for (const typedef of module.typedefs) {
-    for (const fn of typedef.functions ?? []) scanFunction(fn, hits);
+    for (const fn of typedef.functions ?? []) scanFunction(fn, hits, structs);
   }
   if (bindings) scanBindings(module.functions, namespace, bindings, hits);
   const unique = new Map<string, IndexSlotHit>();
@@ -231,14 +277,18 @@ export function scanFunctionBaseStatements(
 export function refDocSlotKeys(doc: unknown): string[] {
   const module = parseDefoldApiDoc(doc);
   const keys: string[] = [];
-  const addSlot = (key: string, slot: ApiParameter): void => {
+  const structs = structIndex(module.structs);
+  const addSlot = (key: string, slot: ApiParameter, within: ReadonlySet<string>): void => {
     keys.push(key);
     for (const field of splitSlotFields(slot.doc).fields) keys.push(`${key}:${field.name}`);
-    for (const field of slot.fields ?? []) addSlot(`${key}:${field.name}`, field);
+    const members = structFields(slot, structs, within);
+    for (const field of [...(slot.fields ?? []), ...members.fields]) {
+      addSlot(`${key}:${field.name}`, field, members.within);
+    }
   };
   const addFunction = (fn: ApiFunction): void => {
-    for (const slot of fn.parameters) addSlot(`${fn.name}:param:${slot.name}`, slot);
-    for (const slot of fn.returnValues) addSlot(`${fn.name}:return:${slot.name}`, slot);
+    for (const slot of fn.parameters) addSlot(`${fn.name}:param:${slot.name}`, slot, new Set());
+    for (const slot of fn.returnValues) addSlot(`${fn.name}:return:${slot.name}`, slot, new Set());
   };
   for (const fn of module.functions) addFunction(fn);
   for (const typedef of module.typedefs) for (const fn of typedef.functions ?? []) addFunction(fn);

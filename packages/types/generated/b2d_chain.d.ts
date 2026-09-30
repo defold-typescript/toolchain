@@ -30,13 +30,12 @@ declare global {
      */
     function get_friction(chain: Opaque<"b2Chain">): number;
     /**
-     * Returns a chain geometry table with `loop`, `segment_count`, and `vertices`.
-     * Open chains also include `prev_vertex` and `next_vertex` ghost vertices.
+     * Get the chain geometry.
      *
      * @param chain - chain
-     * @returns chain geometry table
+     * @returns chain geometry
      */
-    function get_geometry(chain: Opaque<"b2Chain">): Record<string | number, unknown>;
+    function get_geometry(chain: Opaque<"b2Chain">): b2d.chain_geometry;
     /**
      * Get chain material id.
      *
@@ -62,9 +61,9 @@ declare global {
      * Get the segment shapes owned by a chain.
      *
      * @param chain - chain
-     * @returns array of shape info tables for the chain segments. Each entry includes `shape_id`.
+     * @returns chain segment shapes
      */
-    function get_segments(chain: Opaque<"b2Chain">): { shape_id: number }[];
+    function get_segments(chain: Opaque<"b2Chain">): b2d.shape_info[];
     /**
      * Get the world owning a chain.
      *

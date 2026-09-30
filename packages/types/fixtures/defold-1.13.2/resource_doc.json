@@ -1,0 +1,1539 @@
+{
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "resource_data",
+      "brief": "Script property resource reference",
+      "description": "An opaque declaration-time reference to a Defold resource. Resource references\nare created by functions such as <a href=\"/ref/resource#resource.atlas\">resource.atlas</a>, <a href=\"/ref/resource#resource.font\">resource.font</a>, and\n<a href=\"/ref/resource#resource.material\">resource.material</a>. They can only be used as default values passed to\n<a href=\"/ref/go#go.property\">go.property</a>.\nThe referenced resource is loaded together with the script. At runtime, the\nproperty contains the hashed path of the compiled resource.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "script property resource reference",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;player_atlas&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">atlas</span><span class=\"p\">(</span><span class=\"s2\">&quot;/main/player.atlas&quot;</span><span class=\"p\">))</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#sprite&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;image&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">player_atlas</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.atlas",
+      "brief": "Atlas creation data",
+      "description": "Data accepted by <a href=\"/ref/resource#resource.create_atlas\">resource.create_atlas</a> and <a href=\"/ref/resource#resource.set_atlas\">resource.set_atlas</a>.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "texture",
+          "doc": "Path to the texture resource, for example <code>\"/main/my_texture.texturec\"</code>.",
+          "type": "string|hash"
+        },
+        {
+          "name": "animations",
+          "doc": "Animations in the atlas.",
+          "type": "resource.animation[]"
+        },
+        {
+          "name": "geometries",
+          "doc": "Geometries that map to the texture data.",
+          "type": "resource.geometry[]"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.animation",
+      "brief": "Atlas animation creation data",
+      "description": "Animation data accepted when creating or updating an atlas. Specify either\n<code>frames</code>, or both <code>frame_start</code> and <code>frame_end</code>.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "id",
+          "doc": "Animation id.",
+          "type": "string"
+        },
+        {
+          "name": "width",
+          "doc": "Animation width.",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "doc": "Animation height.",
+          "type": "integer"
+        },
+        {
+          "name": "frames?",
+          "doc": "Geometry indices for the animation frames.",
+          "type": "integer[]"
+        },
+        {
+          "name": "frame_start?",
+          "doc": "First geometry index for the legacy contiguous frame range.",
+          "type": "integer"
+        },
+        {
+          "name": "frame_end?",
+          "doc": "Non-inclusive last geometry index for the legacy contiguous frame range.",
+          "type": "integer"
+        },
+        {
+          "name": "playback?",
+          "doc": "Playback mode. The default is <code>go.PLAYBACK_ONCE_FORWARD</code>.",
+          "type": "go.PLAYBACK"
+        },
+        {
+          "name": "fps?",
+          "doc": "Animation frame rate. The default is 30.",
+          "type": "integer"
+        },
+        {
+          "name": "flip_vertical?",
+          "doc": "Whether to flip the animation vertically. The default is false.",
+          "type": "boolean"
+        },
+        {
+          "name": "flip_horizontal?",
+          "doc": "Whether to flip the animation horizontally. The default is false.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.geometry",
+      "brief": "Atlas geometry creation data",
+      "description": "Geometry data accepted when creating or updating an atlas. Vertex, UV, and\nindex values are zero-based.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "id?",
+          "doc": "Geometry name, used when matching animations between atlases.",
+          "type": "string"
+        },
+        {
+          "name": "width?",
+          "doc": "Width of the image represented by the geometry. If omitted, it is calculated from the vertices.",
+          "type": "number"
+        },
+        {
+          "name": "height?",
+          "doc": "Height of the image represented by the geometry. If omitted, it is calculated from the vertices.",
+          "type": "number"
+        },
+        {
+          "name": "pivot_x?",
+          "doc": "Horizontal pivot in unit coordinates. The default is 0.5.",
+          "type": "number"
+        },
+        {
+          "name": "pivot_y?",
+          "doc": "Vertical pivot in unit coordinates. The default is 0.5.",
+          "type": "number"
+        },
+        {
+          "name": "rotated?",
+          "doc": "Whether the image is rotated 90 degrees counter-clockwise in the atlas.",
+          "type": "boolean"
+        },
+        {
+          "name": "vertices",
+          "doc": "Vertex coordinates in image space as <code>{px0, py0, px1, py1, ...}</code>.",
+          "type": "number[]"
+        },
+        {
+          "name": "uvs",
+          "doc": "UV coordinates in image space as <code>{u0, v0, u1, v1, ...}</code>.",
+          "type": "number[]"
+        },
+        {
+          "name": "indices",
+          "doc": "Geometry indices where each group of three entries represents a triangle.",
+          "type": "integer[]"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.atlas_data",
+      "brief": "Atlas data",
+      "description": "Data returned by <a href=\"/ref/resource#resource.get_atlas\">resource.get_atlas</a>.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "texture",
+          "doc": "Path to the texture resource.",
+          "type": "string|hash"
+        },
+        {
+          "name": "animations",
+          "doc": "Animations in the atlas.",
+          "type": "resource.animation_data[]"
+        },
+        {
+          "name": "geometries",
+          "doc": "Geometries that map to the texture data.",
+          "type": "resource.geometry_data[]"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.animation_data",
+      "brief": "Atlas animation data",
+      "description": "Animation data returned by <a href=\"/ref/resource#resource.get_atlas\">resource.get_atlas</a>.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "id",
+          "doc": "Animation id.",
+          "type": "string"
+        },
+        {
+          "name": "width",
+          "doc": "Animation width.",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "doc": "Animation height.",
+          "type": "integer"
+        },
+        {
+          "name": "frames",
+          "doc": "Geometry indices for the animation frames.",
+          "type": "integer[]"
+        },
+        {
+          "name": "playback",
+          "doc": "Playback mode.",
+          "type": "go.PLAYBACK"
+        },
+        {
+          "name": "fps",
+          "doc": "Animation frame rate.",
+          "type": "integer"
+        },
+        {
+          "name": "flip_vertical",
+          "doc": "Whether the animation is flipped vertically.",
+          "type": "boolean"
+        },
+        {
+          "name": "flip_horizontal",
+          "doc": "Whether the animation is flipped horizontally.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.geometry_data",
+      "brief": "Atlas geometry data",
+      "description": "Geometry data returned by <a href=\"/ref/resource#resource.get_atlas\">resource.get_atlas</a>.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "width",
+          "doc": "Width of the image represented by the geometry.",
+          "type": "number"
+        },
+        {
+          "name": "height",
+          "doc": "Height of the image represented by the geometry.",
+          "type": "number"
+        },
+        {
+          "name": "pivot_x",
+          "doc": "Horizontal pivot in unit coordinates.",
+          "type": "number"
+        },
+        {
+          "name": "pivot_y",
+          "doc": "Vertical pivot in unit coordinates.",
+          "type": "number"
+        },
+        {
+          "name": "rotated",
+          "doc": "Whether the image is rotated 90 degrees counter-clockwise in the atlas.",
+          "type": "boolean"
+        },
+        {
+          "name": "vertices",
+          "doc": "Vertex coordinates in image space as <code>{px0, py0, px1, py1, ...}</code>.",
+          "type": "number[]"
+        },
+        {
+          "name": "uvs",
+          "doc": "UV coordinates in image space as <code>{u0, v0, u1, v1, ...}</code>.",
+          "type": "number[]"
+        },
+        {
+          "name": "indices",
+          "doc": "Geometry indices where each group of three entries represents a triangle.",
+          "type": "integer[]"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.render_target_attachment_info",
+      "brief": "Render target attachment information",
+      "description": "Render target attachment information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "handle",
+          "doc": "Opaque texture handle.",
+          "type": "texture"
+        },
+        {
+          "name": "width",
+          "doc": "Texture width.",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "doc": "Texture height.",
+          "type": "integer"
+        },
+        {
+          "name": "depth",
+          "doc": "Texture depth or layer count.",
+          "type": "integer"
+        },
+        {
+          "name": "page_count",
+          "doc": "Texture page count.",
+          "type": "integer"
+        },
+        {
+          "name": "mipmaps",
+          "doc": "Number of mipmaps.",
+          "type": "integer"
+        },
+        {
+          "name": "flags",
+          "doc": "Texture usage flags.",
+          "type": "graphics.TEXTURE_USAGE_FLAG"
+        },
+        {
+          "name": "type",
+          "doc": "Texture type.",
+          "type": "graphics.TEXTURE_TYPE"
+        },
+        {
+          "name": "buffer_type",
+          "doc": "Render-target buffer type.",
+          "type": "graphics.BUFFER_TYPE"
+        },
+        {
+          "name": "texture?",
+          "doc": "Backing texture resource, when present.",
+          "type": "hash"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.texture_info",
+      "brief": "Texture information",
+      "description": "Texture information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "handle",
+          "doc": "Opaque texture handle.",
+          "type": "texture"
+        },
+        {
+          "name": "width",
+          "doc": "Texture width.",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "doc": "Texture height.",
+          "type": "integer"
+        },
+        {
+          "name": "depth",
+          "doc": "Texture depth or layer count.",
+          "type": "integer"
+        },
+        {
+          "name": "page_count",
+          "doc": "Texture page count.",
+          "type": "integer"
+        },
+        {
+          "name": "mipmaps",
+          "doc": "Number of mipmaps.",
+          "type": "integer"
+        },
+        {
+          "name": "flags",
+          "doc": "Texture usage flags.",
+          "type": "graphics.TEXTURE_USAGE_FLAG"
+        },
+        {
+          "name": "type",
+          "doc": "Texture type.",
+          "type": "graphics.TEXTURE_TYPE"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.render_target_info",
+      "brief": "Render target information",
+      "description": "Render target information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "handle",
+          "doc": "Opaque render-target handle.",
+          "type": "render_target"
+        },
+        {
+          "name": "sample_count",
+          "doc": "Effective sample count shared by all render-target attachments.",
+          "type": "integer"
+        },
+        {
+          "name": "attachments",
+          "doc": "Render-target attachments.",
+          "type": "resource.render_target_attachment_info[]"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.texture_creation_params",
+      "brief": "Texture creation parameters",
+      "description": "Texture creation parameters",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "type",
+          "doc": "Texture type.",
+          "type": "graphics.TEXTURE_TYPE"
+        },
+        {
+          "name": "width",
+          "doc": "Texture width in pixels; must be greater than zero.",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "doc": "Texture height in pixels; must be greater than zero.",
+          "type": "integer"
+        },
+        {
+          "name": "depth?",
+          "doc": "Texture depth; used by 3D texture types and must be greater than zero.",
+          "type": "integer"
+        },
+        {
+          "name": "page_count?",
+          "doc": "Number of pages for a 2D array texture.",
+          "type": "integer"
+        },
+        {
+          "name": "format",
+          "doc": "Texture format. Device-specific unsupported constants evaluate to <code>nil</code>.",
+          "type": "graphics.TEXTURE_FORMAT"
+        },
+        {
+          "name": "flags?",
+          "doc": "Creation-usage hints. The default is <a href=\"/ref/graphics#graphics.TEXTURE_USAGE_FLAG_SAMPLE\">graphics.TEXTURE_USAGE_FLAG_SAMPLE</a>.",
+          "type": "graphics.TEXTURE_USAGE_FLAG"
+        },
+        {
+          "name": "max_mipmaps?",
+          "doc": "Maximum mipmap count. The default is zero.",
+          "type": "integer"
+        },
+        {
+          "name": "compression_type?",
+          "doc": "Compression used by the supplied buffer. The default is <a href=\"/ref/graphics#graphics.COMPRESSION_TYPE_DEFAULT\">graphics.COMPRESSION_TYPE_DEFAULT</a>.",
+          "type": "graphics.COMPRESSION_TYPE"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.texture_creation_result",
+      "brief": "Asynchronous texture creation result",
+      "description": "Asynchronous texture creation result",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "path",
+          "doc": "Created texture resource path.",
+          "type": "hash"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.texture_update_params",
+      "brief": "Texture update parameters",
+      "description": "Texture update parameters",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "type",
+          "doc": "Texture type.",
+          "type": "graphics.TEXTURE_TYPE"
+        },
+        {
+          "name": "width",
+          "doc": "Update width in pixels.",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "doc": "Update height in pixels.",
+          "type": "integer"
+        },
+        {
+          "name": "depth?",
+          "doc": "Update depth for a 3D texture.",
+          "type": "integer"
+        },
+        {
+          "name": "format",
+          "doc": "Texture format. Device-specific unsupported constants evaluate to <code>nil</code>.",
+          "type": "graphics.TEXTURE_FORMAT"
+        },
+        {
+          "name": "x?",
+          "doc": "X offset in pixels.",
+          "type": "integer"
+        },
+        {
+          "name": "y?",
+          "doc": "Y offset in pixels.",
+          "type": "integer"
+        },
+        {
+          "name": "z?",
+          "doc": "Z offset for a 3D texture.",
+          "type": "integer"
+        },
+        {
+          "name": "page?",
+          "doc": "Zero-based page of a 2D array texture.",
+          "type": "integer"
+        },
+        {
+          "name": "mipmap?",
+          "doc": "Mipmap level to update.",
+          "type": "integer"
+        },
+        {
+          "name": "compression_type?",
+          "doc": "Compression used by the supplied buffer. The default is <a href=\"/ref/graphics#graphics.COMPRESSION_TYPE_DEFAULT\">graphics.COMPRESSION_TYPE_DEFAULT</a>.",
+          "type": "graphics.COMPRESSION_TYPE"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.sound_data_options",
+      "brief": "Sound-data creation options",
+      "description": "Sound-data creation options",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "data?",
+          "doc": "Raw sound file data, including the file header.",
+          "type": "string"
+        },
+        {
+          "name": "filesize?",
+          "doc": "Complete file size when <code>data</code> is partial.",
+          "type": "number"
+        },
+        {
+          "name": "partial?",
+          "doc": "Whether <code>data</code> contains only the initial file chunk.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.buffer_creation_params",
+      "brief": "Buffer-resource creation parameters",
+      "description": "Buffer-resource creation parameters",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "buffer",
+          "doc": "Buffer to bind to the resource.",
+          "type": "buffer_data"
+        },
+        {
+          "name": "transfer_ownership?",
+          "doc": "Whether the resource takes ownership of the buffer. The default is true.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.buffer_update_options",
+      "brief": "Buffer-resource update options",
+      "description": "Buffer-resource update options",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "transfer_ownership?",
+          "doc": "Whether the resource takes ownership of the buffer. The default is false.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.text_metrics_options",
+      "brief": "Text metric options",
+      "description": "Text metric options",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "width?",
+          "doc": "Text-field width; unused when <code>line_break</code> is false.",
+          "type": "number"
+        },
+        {
+          "name": "leading?",
+          "doc": "Line leading. The default is 1.",
+          "type": "number"
+        },
+        {
+          "name": "tracking?",
+          "doc": "Character tracking. The default is 0.",
+          "type": "number"
+        },
+        {
+          "name": "line_break?",
+          "doc": "Whether to account for line breaks. The default is false.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "resource.text_metrics",
+      "brief": "Text metrics",
+      "description": "Text metrics",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "width",
+          "doc": "Text width.",
+          "type": "number"
+        },
+        {
+          "name": "height",
+          "doc": "Text height.",
+          "type": "number"
+        },
+        {
+          "name": "max_ascent",
+          "doc": "Maximum ascent.",
+          "type": "number"
+        },
+        {
+          "name": "max_descent",
+          "doc": "Maximum descent.",
+          "type": "number"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.material",
+      "brief": "reference to material resource",
+      "description": "Constructor-like function with two purposes:\n<ul>\n<li>Load the specified resource as part of loading the script</li>\n<li>Create a resource reference that resolves to the hashed path of the run-time resource</li>\n</ul>\n<span class=\"icon-attention\"></span> This function can only be called within <a href=\"/ref/go#go.property\">go.property</a> function calls.",
+      "returnvalues": [
+        {
+          "name": "resource",
+          "doc": "a reference to the binary version of the resource",
+          "types": ["resource_data"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "optional resource path string to the resource",
+          "types": ["string"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Load a material and set it to a sprite:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">(</span><span class=\"s2\">&quot;/material.material&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#sprite&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;material&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nLoad a material resource and update a named material with the resource:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">(</span><span class=\"s2\">&quot;/material.material&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#gui&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;materials&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">key</span> <span class=\"o\">=</span> <span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.font",
+      "brief": "reference to font resource",
+      "description": "Constructor-like function with two purposes:\n<ul>\n<li>Load the specified resource as part of loading the script</li>\n<li>Create a resource reference that resolves to the hashed path of the run-time resource</li>\n</ul>\n<span class=\"icon-attention\"></span> This function can only be called within <a href=\"/ref/go#go.property\">go.property</a> function calls.",
+      "returnvalues": [
+        {
+          "name": "resource",
+          "doc": "a reference to the binary version of the resource",
+          "types": ["resource_data"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "optional resource path string to the resource",
+          "types": ["string"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Load a font and set it to a label:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_font&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">font</span><span class=\"p\">(</span><span class=\"s2\">&quot;/font.font&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#label&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;font&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_font</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nLoad a font and set it to a gui:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_font&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">font</span><span class=\"p\">(</span><span class=\"s2\">&quot;/font.font&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#gui&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;fonts&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_font</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">key</span> <span class=\"o\">=</span> <span class=\"s2\">&quot;my_font&quot;</span><span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.texture",
+      "brief": "reference to texture resource",
+      "description": "Constructor-like function with two purposes:\n<ul>\n<li>Load the specified resource as part of loading the script</li>\n<li>Create a resource reference that resolves to the hashed path of the run-time resource</li>\n</ul>\n<span class=\"icon-attention\"></span> This function can only be called within <a href=\"/ref/go#go.property\">go.property</a> function calls.",
+      "returnvalues": [
+        {
+          "name": "resource",
+          "doc": "a reference to the binary version of the resource",
+          "types": ["resource_data"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "optional resource path string to the resource",
+          "types": ["string"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Load a texture and set it to a model:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_texture&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">texture</span><span class=\"p\">(</span><span class=\"s2\">&quot;/texture.png&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#model&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_texture</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.atlas",
+      "brief": "reference to atlas resource",
+      "description": "Constructor-like function with two purposes:\n<ul>\n<li>Load the specified resource as part of loading the script</li>\n<li>Create a resource reference that resolves to the hashed path of the run-time resource</li>\n</ul>\n<span class=\"icon-attention\"></span> This function can only be called within <a href=\"/ref/go#go.property\">go.property</a> function calls.",
+      "returnvalues": [
+        {
+          "name": "resource",
+          "doc": "a reference to the binary version of the resource",
+          "types": ["resource_data"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "optional resource path string to the resource",
+          "types": ["string"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Load an atlas and set it to a sprite:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_atlas&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">atlas</span><span class=\"p\">(</span><span class=\"s2\">&quot;/atlas.atlas&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#sprite&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;image&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_atlas</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nLoad an atlas and set it to a gui:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_atlas&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">atlas</span><span class=\"p\">(</span><span class=\"s2\">&quot;/atlas.atlas&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#gui&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;textures&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_atlas</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">key</span> <span class=\"o\">=</span> <span class=\"s2\">&quot;my_atlas&quot;</span><span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.buffer",
+      "brief": "reference to buffer resource",
+      "description": "Constructor-like function with two purposes:\n<ul>\n<li>Load the specified resource as part of loading the script</li>\n<li>Create a resource reference that resolves to the hashed path of the run-time resource</li>\n</ul>\n<span class=\"icon-attention\"></span> This function can only be called within <a href=\"/ref/go#go.property\">go.property</a> function calls.",
+      "returnvalues": [
+        {
+          "name": "resource",
+          "doc": "a reference to the binary version of the resource",
+          "types": ["resource_data"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "optional resource path string to the resource",
+          "types": ["string"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Set a unique buffer it to a sprite:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_buffer&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">buffer</span><span class=\"p\">(</span><span class=\"s2\">&quot;/cube.buffer&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#mesh&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;vertices&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_buffer</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.tile_source",
+      "brief": "reference to tile source resource",
+      "description": "Constructor-like function with two purposes:\n<ul>\n<li>Load the specified resource as part of loading the script</li>\n<li>Create a resource reference that resolves to the hashed path of the run-time resource</li>\n</ul>\n<span class=\"icon-attention\"></span> This function can only be called within <a href=\"/ref/go#go.property\">go.property</a> function calls.",
+      "returnvalues": [
+        {
+          "name": "resource",
+          "doc": "a reference to the binary version of the resource",
+          "types": ["resource_data"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "optional resource path string to the resource",
+          "types": ["string"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Load tile source and set it to a tile map:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_tile_source&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">tile_source</span><span class=\"p\">(</span><span class=\"s2\">&quot;/tilesource.tilesource&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;tile_source&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_tile_source</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.render_target",
+      "brief": "reference to render target resource",
+      "description": "Constructor-like function with two purposes:\n<ul>\n<li>Load the specified resource as part of loading the script</li>\n<li>Create a resource reference that resolves to the hashed path of the run-time resource</li>\n</ul>\n<span class=\"icon-attention\"></span> This function can only be called within <a href=\"/ref/go#go.property\">go.property</a> function calls.",
+      "returnvalues": [
+        {
+          "name": "resource",
+          "doc": "a reference to the binary version of the resource",
+          "types": ["resource_data"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "optional resource path string to the resource",
+          "types": ["string"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Set a render target color attachment as a model texture:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_render_target&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">render_target</span><span class=\"p\">(</span><span class=\"s2\">&quot;/rt.render_target&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"kd\">local</span> <span class=\"n\">rt_info</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_render_target_info</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_render_target</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#model&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">,</span> <span class=\"n\">rt_info</span><span class=\"p\">.</span><span class=\"n\">attachments</span><span class=\"p\">[</span><span class=\"mi\">1</span><span class=\"p\">].</span><span class=\"n\">texture</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.set",
+      "brief": "Set a resource",
+      "description": "Sets the resource data for a specific resource",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["string", "hash"],
+          "is_optional": "False"
+        },
+        {
+          "name": "buffer",
+          "doc": "The buffer of precreated data, suitable for the intended resource type",
+          "types": ["buffer_data"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Assuming the folder \"/res\" is added to the project custom resources:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- load a texture resource and set it on a sprite</span>\n<span class=\"kd\">local</span> <span class=\"n\">buffer</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">load</span><span class=\"p\">(</span><span class=\"s2\">&quot;/res/new.texturec&quot;</span><span class=\"p\">)</span>\n<span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;#sprite&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">),</span> <span class=\"n\">buffer</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.load",
+      "brief": "load a resource",
+      "description": "Loads the resource data for a specific resource.",
+      "returnvalues": [
+        {
+          "name": "buffer",
+          "doc": "Returns the buffer stored on disc",
+          "types": ["buffer_data"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- read custom resource data into buffer</span>\n<span class=\"kd\">local</span> <span class=\"n\">buffer</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">load</span><span class=\"p\">(</span><span class=\"s2\">&quot;/resources/datafile&quot;</span><span class=\"p\">)</span>\n</code></pre></div>\n\nIn order for the engine to include custom resources in the build process, you need\nto specify them in the \"game.project\" settings file:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"k\">[project]</span><span class=\"w\"></span>\n<span class=\"na\">title</span><span class=\"w\"> </span><span class=\"o\">=</span><span class=\"w\"> </span><span class=\"s\">My project</span><span class=\"w\"></span>\n<span class=\"na\">version</span><span class=\"w\"> </span><span class=\"o\">=</span><span class=\"w\"> </span><span class=\"s\">0.1</span><span class=\"w\"></span>\n<span class=\"na\">custom_resources</span><span class=\"w\"> </span><span class=\"o\">=</span><span class=\"w\"> </span><span class=\"s\">resources/,assets/level_data.json</span><span class=\"w\"></span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.create_texture",
+      "brief": "create a texture",
+      "description": "Creates a new texture resource that can be used in the same way as any texture created during build time.\nThe path used for creating the texture must be unique, trying to create a resource at a path that is already\nregistered will trigger an error. If the intention is to instead modify an existing texture, use the <a href=\"/ref/resource#resource.set_texture\">resource.set_texture</a>\nfunction. Also note that the path to the new texture resource must have a '.texturec' extension,\nmeaning \"/path/my_texture\" is not a valid path but \"/path/my_texture.texturec\" is.\nIf the texture is created without a buffer, the pixel data will be blank.",
+      "returnvalues": [
+        {
+          "name": "path",
+          "doc": "The path to the resource.",
+          "types": ["hash"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource.",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "table",
+          "doc": "texture creation parameters",
+          "types": ["resource.texture_creation_params"],
+          "is_optional": "False"
+        },
+        {
+          "name": "buffer",
+          "doc": "optional buffer of precreated pixel data",
+          "types": ["buffer_data"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Check whether a texture format is supported by the device:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">if</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA16F</span> <span class=\"o\">~=</span> <span class=\"kc\">nil</span> <span class=\"kr\">then</span>\n    <span class=\"c1\">-- It is safe to use this format.</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\n<span class=\"icon-attention\"></span> 3D textures are currently only supported on OpenGL and Vulkan adapters. Check whether the device supports 3D textures before using them:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">if</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_3D</span> <span class=\"o\">~=</span> <span class=\"kc\">nil</span> <span class=\"kr\">then</span>\n    <span class=\"c1\">-- The device and graphics adapter support 3D textures.</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nHow to create an 128x128 RGBA texture resource and assign it to a model\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tparams</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n       <span class=\"n\">width</span>          <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n       <span class=\"n\">height</span>         <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n       <span class=\"nb\">type</span>           <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D</span><span class=\"p\">,</span>\n       <span class=\"n\">format</span>         <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA</span><span class=\"p\">,</span>\n   <span class=\"p\">}</span>\n   <span class=\"kd\">local</span> <span class=\"n\">my_texture_id</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_texture</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_custom_texture.texturec&quot;</span><span class=\"p\">,</span> <span class=\"n\">tparams</span><span class=\"p\">)</span>\n   <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#model&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">,</span> <span class=\"n\">my_texture_id</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nHow to create an 128x128 floating point texture (RGBA32F) resource from a buffer object\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- Create a new buffer with 4 components and FLOAT32 type</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tbuffer</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">create</span><span class=\"p\">(</span><span class=\"mi\">128</span> <span class=\"o\">*</span> <span class=\"mi\">128</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"p\">{</span><span class=\"n\">name</span><span class=\"o\">=</span><span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgba&quot;</span><span class=\"p\">),</span> <span class=\"nb\">type</span><span class=\"o\">=</span><span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">VALUE_TYPE_FLOAT32</span><span class=\"p\">,</span> <span class=\"n\">count</span><span class=\"o\">=</span><span class=\"mi\">4</span><span class=\"p\">}</span> <span class=\"p\">}</span> <span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tstream</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">get_stream</span><span class=\"p\">(</span><span class=\"n\">tbuffer</span><span class=\"p\">,</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgba&quot;</span><span class=\"p\">))</span>\n\n    <span class=\"c1\">-- Fill the buffer stream with some float values</span>\n    <span class=\"kr\">for</span> <span class=\"n\">y</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">128</span> <span class=\"kr\">do</span>\n        <span class=\"kr\">for</span> <span class=\"n\">x</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">128</span> <span class=\"kr\">do</span>\n            <span class=\"kd\">local</span> <span class=\"n\">index</span> <span class=\"o\">=</span> <span class=\"p\">(</span><span class=\"n\">y</span><span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"o\">*</span> <span class=\"mi\">128</span> <span class=\"o\">*</span> <span class=\"mi\">4</span> <span class=\"o\">+</span> <span class=\"p\">(</span><span class=\"n\">x</span><span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"o\">*</span> <span class=\"mi\">4</span> <span class=\"o\">+</span> <span class=\"mi\">1</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">0</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mf\">999.0</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">1</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"o\">-</span><span class=\"mf\">1.0</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">2</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mf\">0.5</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">3</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mf\">1.0</span>\n        <span class=\"kr\">end</span>\n    <span class=\"kr\">end</span>\n\n    <span class=\"c1\">-- Create a 2D Texture with a RGBA23F format</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tparams</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n       <span class=\"n\">width</span>          <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n       <span class=\"n\">height</span>         <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n       <span class=\"nb\">type</span>           <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D</span><span class=\"p\">,</span>\n       <span class=\"n\">format</span>         <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA32F</span><span class=\"p\">,</span>\n   <span class=\"p\">}</span>\n\n   <span class=\"c1\">-- Note that we pass the buffer as the last argument here!</span>\n   <span class=\"kd\">local</span> <span class=\"n\">my_texture_id</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_texture</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_custom_texture.texturec&quot;</span><span class=\"p\">,</span> <span class=\"n\">tparams</span><span class=\"p\">,</span> <span class=\"n\">tbuffer</span><span class=\"p\">)</span>\n\n   <span class=\"c1\">-- assign the texture to a model</span>\n   <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#model&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">,</span> <span class=\"n\">my_texture_id</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nHow to create a 32x32x32 floating point 3D texture that can be used to generate volumetric data in a compute shader\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">t_volume</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_texture</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_backing_texture.texturec&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"nb\">type</span>   <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_IMAGE_3D</span><span class=\"p\">,</span>\n        <span class=\"n\">width</span>  <span class=\"o\">=</span> <span class=\"mi\">32</span><span class=\"p\">,</span>\n        <span class=\"n\">height</span> <span class=\"o\">=</span> <span class=\"mi\">32</span><span class=\"p\">,</span>\n        <span class=\"n\">depth</span>  <span class=\"o\">=</span> <span class=\"mi\">32</span><span class=\"p\">,</span>\n        <span class=\"n\">format</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA32F</span><span class=\"p\">,</span>\n        <span class=\"n\">flags</span>  <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_USAGE_FLAG_STORAGE</span> <span class=\"o\">+</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_USAGE_FLAG_SAMPLE</span><span class=\"p\">,</span>\n    <span class=\"p\">})</span>\n\n    <span class=\"c1\">-- pass the backing texture to the render script</span>\n    <span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;@render:&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;add_textures&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"n\">t_volume</span> <span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nHow to create 512x512 texture array with 5 pages.\n<div class=\"codehilite\"><pre><span></span><code>        <span class=\"kd\">local</span> <span class=\"n\">new_tex</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_texture</span><span class=\"p\">(</span><span class=\"s2\">&quot;/runtime/example_array.texturec&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n            <span class=\"nb\">type</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D_ARRAY</span><span class=\"p\">,</span>\n            <span class=\"n\">width</span> <span class=\"o\">=</span> <span class=\"mi\">512</span><span class=\"p\">,</span>\n            <span class=\"n\">height</span> <span class=\"o\">=</span> <span class=\"mi\">512</span><span class=\"p\">,</span>\n            <span class=\"n\">page_count</span> <span class=\"o\">=</span> <span class=\"mi\">5</span><span class=\"p\">,</span>\n            <span class=\"n\">format</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGB</span><span class=\"p\">,</span>\n        <span class=\"p\">})</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.create_texture_async",
+      "brief": "create a texture async",
+      "description": "Creates a new texture resource that can be used in the same way as any texture created during build time.\nThe path used for creating the texture must be unique, trying to create a resource at a path that is already\nregistered will trigger an error. If the intention is to instead modify an existing texture, use the <a href=\"/ref/resource#resource.set_texture\">resource.set_texture</a>\nfunction. Also note that the path to the new texture resource must have a '.texturec' extension,\nmeaning \"/path/my_texture\" is not a valid path but \"/path/my_texture.texturec\" is.\nIf the texture is created without a buffer, the pixel data will be blank.\nThe difference between the async version and <a href=\"/ref/resource#resource.create_texture\">resource.create_texture</a> is that the texture data will be uploaded\nin a graphics worker thread. The function will return a resource immediately that contains a 1x1 blank texture which can be used\nimmediately after the function call. When the new texture has been uploaded, the initial blank texture will be deleted and replaced with the\nnew texture. Be careful when using the initial texture handle handle as it will not be valid after the upload has finished.",
+      "returnvalues": [
+        {
+          "name": "path",
+          "doc": "The path to the texture resource.",
+          "types": ["hash"]
+        },
+        {
+          "name": "request_id",
+          "doc": "The request id for the async request.",
+          "types": ["integer"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource.",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "table",
+          "doc": "texture creation parameters",
+          "types": ["resource.texture_creation_params"],
+          "is_optional": "False"
+        },
+        {
+          "name": "buffer",
+          "doc": "optional buffer of precreated pixel data",
+          "types": ["buffer_data"],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "callback function invoked when the texture is created",
+          "types": [
+            "fun(self:script_instance, request_id:integer, result:resource.texture_creation_result)"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Check whether a texture format is supported by the device:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">if</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA16F</span> <span class=\"o\">~=</span> <span class=\"kc\">nil</span> <span class=\"kr\">then</span>\n    <span class=\"c1\">-- It is safe to use this format.</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\n<span class=\"icon-attention\"></span> 3D textures are currently only supported on OpenGL and Vulkan adapters. Check whether the device supports 3D textures before using them:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">if</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_3D</span> <span class=\"o\">~=</span> <span class=\"kc\">nil</span> <span class=\"kr\">then</span>\n    <span class=\"c1\">-- The device and graphics adapter support 3D textures.</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nCreate a texture resource asyncronously with a buffer and a callback\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">callback</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">request_id</span><span class=\"p\">,</span> <span class=\"n\">result</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- The resource has been updated with a new texture,</span>\n    <span class=\"c1\">-- so we can update other systems with the new handle,</span>\n    <span class=\"c1\">-- or update components to use the resource if we want</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tinfo</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_texture_info</span><span class=\"p\">(</span><span class=\"n\">result</span><span class=\"p\">.</span><span class=\"n\">path</span><span class=\"p\">)</span>\n    <span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;@render:&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;set_backing_texture&quot;</span><span class=\"p\">,</span> <span class=\"n\">tinfo</span><span class=\"p\">.</span><span class=\"n\">handle</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- Create a texture resource async</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tparams</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"n\">width</span>          <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"n\">height</span>         <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"nb\">type</span>           <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D</span><span class=\"p\">,</span>\n        <span class=\"n\">format</span>         <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA</span><span class=\"p\">,</span>\n    <span class=\"p\">}</span>\n\n    <span class=\"c1\">-- Create a new buffer with 4 components</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tbuffer</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">create</span><span class=\"p\">(</span><span class=\"n\">tparams</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"o\">*</span> <span class=\"n\">tparams</span><span class=\"p\">.</span><span class=\"n\">height</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"p\">{</span><span class=\"n\">name</span><span class=\"o\">=</span><span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgba&quot;</span><span class=\"p\">),</span> <span class=\"nb\">type</span><span class=\"o\">=</span><span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">VALUE_TYPE_UINT8</span><span class=\"p\">,</span> <span class=\"n\">count</span><span class=\"o\">=</span><span class=\"mi\">4</span><span class=\"p\">}</span> <span class=\"p\">}</span> <span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tstream</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">get_stream</span><span class=\"p\">(</span><span class=\"n\">tbuffer</span><span class=\"p\">,</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgba&quot;</span><span class=\"p\">))</span>\n\n    <span class=\"c1\">-- Fill the buffer stream with some float values</span>\n    <span class=\"kr\">for</span> <span class=\"n\">y</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"n\">tparams</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"kr\">do</span>\n        <span class=\"kr\">for</span> <span class=\"n\">x</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"n\">tparams</span><span class=\"p\">.</span><span class=\"n\">height</span> <span class=\"kr\">do</span>\n            <span class=\"kd\">local</span> <span class=\"n\">index</span> <span class=\"o\">=</span> <span class=\"p\">(</span><span class=\"n\">y</span><span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"o\">*</span> <span class=\"mi\">128</span> <span class=\"o\">*</span> <span class=\"mi\">4</span> <span class=\"o\">+</span> <span class=\"p\">(</span><span class=\"n\">x</span><span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"o\">*</span> <span class=\"mi\">4</span> <span class=\"o\">+</span> <span class=\"mi\">1</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">0</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mi\">255</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">1</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mi\">0</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">2</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mi\">255</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">3</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mi\">255</span>\n        <span class=\"kr\">end</span>\n    <span class=\"kr\">end</span>\n    <span class=\"c1\">-- create the texture</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tpath</span><span class=\"p\">,</span> <span class=\"n\">request_id</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_texture_async</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_texture.texturec&quot;</span><span class=\"p\">,</span> <span class=\"n\">tparams</span><span class=\"p\">,</span> <span class=\"n\">tbuffer</span><span class=\"p\">,</span> <span class=\"n\">callback</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture</span>\n    <span class=\"c1\">-- that will be removed once the new texture has been updated</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#model&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">,</span> <span class=\"n\">tpath</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nCreate a texture resource asyncronously without a callback\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- Create a texture resource async</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tparams</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"n\">width</span>          <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"n\">height</span>         <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"nb\">type</span>           <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D</span><span class=\"p\">,</span>\n        <span class=\"n\">format</span>         <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA</span><span class=\"p\">,</span>\n    <span class=\"p\">}</span>\n\n    <span class=\"c1\">-- Create a new buffer with 4 components</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tbuffer</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">create</span><span class=\"p\">(</span><span class=\"n\">tparams</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"o\">*</span> <span class=\"n\">tparams</span><span class=\"p\">.</span><span class=\"n\">height</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"p\">{</span><span class=\"n\">name</span><span class=\"o\">=</span><span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgba&quot;</span><span class=\"p\">),</span> <span class=\"nb\">type</span><span class=\"o\">=</span><span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">VALUE_TYPE_UINT8</span><span class=\"p\">,</span> <span class=\"n\">count</span><span class=\"o\">=</span><span class=\"mi\">4</span><span class=\"p\">}</span> <span class=\"p\">}</span> <span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tstream</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">get_stream</span><span class=\"p\">(</span><span class=\"n\">tbuffer</span><span class=\"p\">,</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgba&quot;</span><span class=\"p\">))</span>\n\n    <span class=\"c1\">-- Fill the buffer stream with some float values</span>\n    <span class=\"kr\">for</span> <span class=\"n\">y</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"n\">tparams</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"kr\">do</span>\n        <span class=\"kr\">for</span> <span class=\"n\">x</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"n\">tparams</span><span class=\"p\">.</span><span class=\"n\">height</span> <span class=\"kr\">do</span>\n            <span class=\"kd\">local</span> <span class=\"n\">index</span> <span class=\"o\">=</span> <span class=\"p\">(</span><span class=\"n\">y</span><span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"o\">*</span> <span class=\"mi\">128</span> <span class=\"o\">*</span> <span class=\"mi\">4</span> <span class=\"o\">+</span> <span class=\"p\">(</span><span class=\"n\">x</span><span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"o\">*</span> <span class=\"mi\">4</span> <span class=\"o\">+</span> <span class=\"mi\">1</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">0</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mi\">255</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">1</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mi\">0</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">2</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mi\">255</span>\n            <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">3</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mi\">255</span>\n        <span class=\"kr\">end</span>\n    <span class=\"kr\">end</span>\n    <span class=\"c1\">-- create the texture</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tpath</span><span class=\"p\">,</span> <span class=\"n\">request_id</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_texture_async</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_texture.texturec&quot;</span><span class=\"p\">,</span> <span class=\"n\">tparams</span><span class=\"p\">,</span> <span class=\"n\">tbuffer</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture</span>\n    <span class=\"c1\">-- that will be removed once the new texture has been updated</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#model&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">,</span> <span class=\"n\">tpath</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.release",
+      "brief": "release a resource",
+      "description": "Release a resource.\n<span class=\"icon-attention\"></span> This is a potentially dangerous operation, releasing resources currently being used can cause unexpected behaviour.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource.",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.set_texture",
+      "brief": "set a texture",
+      "description": "Sets the pixel data for a specific texture.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "table",
+          "doc": "texture update parameters",
+          "types": ["resource.texture_update_params"],
+          "is_optional": "False"
+        },
+        {
+          "name": "buffer",
+          "doc": "The buffer of precreated pixel data\n<span class=\"icon-attention\"></span> To update a cube map texture you need to pass in six times the amount of data via the buffer, since a cube map has six sides!\n<span class=\"icon-attention\"></span> 3D textures are currently only supported on OpenGL and Vulkan adapters.",
+          "types": ["buffer_data"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Check whether a texture format is supported by the device:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">if</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA16F</span> <span class=\"o\">~=</span> <span class=\"kc\">nil</span> <span class=\"kr\">then</span>\n    <span class=\"c1\">-- It is safe to use this format.</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nCheck whether the device supports 3D textures before using them:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">if</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_3D</span> <span class=\"o\">~=</span> <span class=\"kc\">nil</span> <span class=\"kr\">then</span>\n    <span class=\"c1\">-- The device and graphics adapter support 3D textures.</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nHow to set all pixels of an atlas\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">height</span> <span class=\"o\">=</span> <span class=\"mi\">128</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"o\">=</span> <span class=\"mi\">128</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">buffer</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">create</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"o\">*</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">height</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"p\">{</span><span class=\"n\">name</span><span class=\"o\">=</span><span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgb&quot;</span><span class=\"p\">),</span> <span class=\"nb\">type</span><span class=\"o\">=</span><span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">VALUE_TYPE_UINT8</span><span class=\"p\">,</span> <span class=\"n\">count</span><span class=\"o\">=</span><span class=\"mi\">3</span><span class=\"p\">}</span> <span class=\"p\">}</span> <span class=\"p\">)</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">stream</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">get_stream</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">buffer</span><span class=\"p\">,</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgb&quot;</span><span class=\"p\">))</span>\n\n  <span class=\"kr\">for</span> <span class=\"n\">y</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">height</span> <span class=\"kr\">do</span>\n      <span class=\"kr\">for</span> <span class=\"n\">x</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"kr\">do</span>\n          <span class=\"kd\">local</span> <span class=\"n\">index</span> <span class=\"o\">=</span> <span class=\"p\">(</span><span class=\"n\">y</span><span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"o\">*</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"o\">*</span> <span class=\"mi\">3</span> <span class=\"o\">+</span> <span class=\"p\">(</span><span class=\"n\">x</span><span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"o\">*</span> <span class=\"mi\">3</span> <span class=\"o\">+</span> <span class=\"mi\">1</span>\n          <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">stream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">0</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mh\">0xff</span>\n          <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">stream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">1</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mh\">0x80</span>\n          <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">stream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">2</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mh\">0x10</span>\n      <span class=\"kr\">end</span>\n  <span class=\"kr\">end</span>\n\n  <span class=\"kd\">local</span> <span class=\"n\">resource_path</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;#model&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">)</span>\n  <span class=\"kd\">local</span> <span class=\"n\">args</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">width</span><span class=\"o\">=</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">width</span><span class=\"p\">,</span> <span class=\"n\">height</span><span class=\"o\">=</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">height</span><span class=\"p\">,</span> <span class=\"nb\">type</span><span class=\"o\">=</span><span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D</span><span class=\"p\">,</span> <span class=\"n\">format</span><span class=\"o\">=</span><span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGB</span><span class=\"p\">,</span> <span class=\"n\">num_mip_maps</span><span class=\"o\">=</span><span class=\"mi\">1</span> <span class=\"p\">}</span>\n  <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">set_texture</span><span class=\"p\">(</span> <span class=\"n\">resource_path</span><span class=\"p\">,</span> <span class=\"n\">args</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">buffer</span> <span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nHow to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">x</span> <span class=\"o\">=</span> <span class=\"mi\">16</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">y</span> <span class=\"o\">=</span> <span class=\"mi\">16</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">height</span> <span class=\"o\">=</span> <span class=\"mi\">128</span> <span class=\"o\">-</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">x</span> <span class=\"o\">*</span> <span class=\"mi\">2</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"o\">=</span> <span class=\"mi\">128</span> <span class=\"o\">-</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">y</span> <span class=\"o\">*</span> <span class=\"mi\">2</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">buffer</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">create</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"o\">*</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">height</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"p\">{</span><span class=\"n\">name</span><span class=\"o\">=</span><span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgb&quot;</span><span class=\"p\">),</span> <span class=\"nb\">type</span><span class=\"o\">=</span><span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">VALUE_TYPE_UINT8</span><span class=\"p\">,</span> <span class=\"n\">count</span><span class=\"o\">=</span><span class=\"mi\">3</span><span class=\"p\">}</span> <span class=\"p\">}</span> <span class=\"p\">)</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">stream</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">get_stream</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">buffer</span><span class=\"p\">,</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgb&quot;</span><span class=\"p\">))</span>\n\n  <span class=\"kr\">for</span> <span class=\"n\">y</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">height</span> <span class=\"kr\">do</span>\n      <span class=\"kr\">for</span> <span class=\"n\">x</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"kr\">do</span>\n          <span class=\"kd\">local</span> <span class=\"n\">index</span> <span class=\"o\">=</span> <span class=\"p\">(</span><span class=\"n\">y</span><span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"o\">*</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">width</span> <span class=\"o\">*</span> <span class=\"mi\">3</span> <span class=\"o\">+</span> <span class=\"p\">(</span><span class=\"n\">x</span><span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"o\">*</span> <span class=\"mi\">3</span> <span class=\"o\">+</span> <span class=\"mi\">1</span>\n          <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">stream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">0</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mh\">0xff</span>\n          <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">stream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">1</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mh\">0x80</span>\n          <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">stream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">2</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mh\">0x10</span>\n      <span class=\"kr\">end</span>\n  <span class=\"kr\">end</span>\n\n  <span class=\"kd\">local</span> <span class=\"n\">resource_path</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;#model&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">)</span>\n  <span class=\"kd\">local</span> <span class=\"n\">args</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">width</span><span class=\"o\">=</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">width</span><span class=\"p\">,</span> <span class=\"n\">height</span><span class=\"o\">=</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">height</span><span class=\"p\">,</span> <span class=\"n\">x</span><span class=\"o\">=</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">x</span><span class=\"p\">,</span> <span class=\"n\">y</span><span class=\"o\">=</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">y</span><span class=\"p\">,</span> <span class=\"nb\">type</span><span class=\"o\">=</span><span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D</span><span class=\"p\">,</span> <span class=\"n\">format</span><span class=\"o\">=</span><span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGB</span><span class=\"p\">,</span> <span class=\"n\">num_mip_maps</span><span class=\"o\">=</span><span class=\"mi\">1</span> <span class=\"p\">}</span>\n  <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">set_texture</span><span class=\"p\">(</span><span class=\"n\">resource_path</span><span class=\"p\">,</span> <span class=\"n\">args</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">buffer</span> <span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nUpdate a texture from a buffer resource\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_buffer&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">buffer</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_default_buffer.buffer&quot;</span><span class=\"p\">))</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">resource_path</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;#model&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- the &quot;my_buffer&quot; resource is expected to hold 128 * 128 * 3 bytes!</span>\n    <span class=\"kd\">local</span> <span class=\"n\">args</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n         <span class=\"n\">width</span>  <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n         <span class=\"n\">height</span> <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n         <span class=\"nb\">type</span>   <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D</span><span class=\"p\">,</span>\n         <span class=\"n\">format</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGB</span>\n     <span class=\"p\">}</span>\n    <span class=\"c1\">-- Note that the extra resource.get_buffer call is a requirement here</span>\n    <span class=\"c1\">-- since the &quot;self.my_buffer&quot; is just pointing to a buffer resource path</span>\n    <span class=\"c1\">-- and not an actual buffer object or buffer resource.</span>\n    <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">set_texture</span><span class=\"p\">(</span><span class=\"n\">resource_path</span><span class=\"p\">,</span> <span class=\"n\">args</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_buffer</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_buffer</span><span class=\"p\">))</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nUpdate an existing 3D texture from a lua buffer\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- create a buffer that can hold the data of a 8x8x8 texture</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tbuffer</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">create</span><span class=\"p\">(</span><span class=\"mi\">8</span> <span class=\"o\">*</span> <span class=\"mi\">8</span> <span class=\"o\">*</span> <span class=\"mi\">8</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"p\">{</span><span class=\"n\">name</span><span class=\"o\">=</span><span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgba&quot;</span><span class=\"p\">),</span> <span class=\"nb\">type</span><span class=\"o\">=</span><span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">VALUE_TYPE_FLOAT32</span><span class=\"p\">,</span> <span class=\"n\">count</span><span class=\"o\">=</span><span class=\"mi\">4</span><span class=\"p\">}</span> <span class=\"p\">}</span> <span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tstream</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">get_stream</span><span class=\"p\">(</span><span class=\"n\">tbuffer</span><span class=\"p\">,</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;rgba&quot;</span><span class=\"p\">))</span>\n\n    <span class=\"c1\">-- populate the buffer with some data</span>\n    <span class=\"kd\">local</span> <span class=\"n\">index</span> <span class=\"o\">=</span> <span class=\"mi\">1</span>\n    <span class=\"kr\">for</span> <span class=\"n\">z</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">8</span> <span class=\"kr\">do</span>\n        <span class=\"kr\">for</span> <span class=\"n\">y</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">8</span> <span class=\"kr\">do</span>\n            <span class=\"kr\">for</span> <span class=\"n\">x</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">8</span> <span class=\"kr\">do</span>\n                <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">0</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"n\">x</span>\n                <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">1</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"n\">y</span>\n                <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">2</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"n\">z</span>\n                <span class=\"n\">tstream</span><span class=\"p\">[</span><span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">3</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"mf\">1.0</span>\n                <span class=\"n\">index</span> <span class=\"o\">=</span> <span class=\"n\">index</span> <span class=\"o\">+</span> <span class=\"mi\">4</span>\n            <span class=\"kr\">end</span>\n        <span class=\"kr\">end</span>\n    <span class=\"kr\">end</span>\n\n    <span class=\"kd\">local</span> <span class=\"n\">t_args</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"nb\">type</span>   <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_IMAGE_3D</span><span class=\"p\">,</span>\n        <span class=\"n\">width</span>  <span class=\"o\">=</span> <span class=\"mi\">8</span><span class=\"p\">,</span>\n        <span class=\"n\">height</span> <span class=\"o\">=</span> <span class=\"mi\">8</span><span class=\"p\">,</span>\n        <span class=\"n\">depth</span>  <span class=\"o\">=</span> <span class=\"mi\">8</span><span class=\"p\">,</span>\n        <span class=\"n\">format</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA32F</span>\n    <span class=\"p\">}</span>\n\n    <span class=\"c1\">-- This expects that the texture resource &quot;/my_3d_texture.texturec&quot; already exists</span>\n    <span class=\"c1\">-- and is a 3D texture resource. To create a dynamic 3D texture resource</span>\n    <span class=\"c1\">-- use the &quot;resource.create_texture&quot; function.</span>\n    <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">set_texture</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_3d_texture.texturec&quot;</span><span class=\"p\">,</span> <span class=\"n\">t_args</span><span class=\"p\">,</span> <span class=\"n\">tbuffer</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nUpdate texture 2nd array page with loaded texture from png\n<div class=\"codehilite\"><pre><span></span><code>    <span class=\"c1\">-- new_tex is resource handle of texture which was created via resource.create_resource</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tex_path</span> <span class=\"o\">=</span> <span class=\"s2\">&quot;/bundle_resources/page_02.png&quot;</span>\n    <span class=\"kd\">local</span> <span class=\"n\">data</span> <span class=\"o\">=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">load_resource</span><span class=\"p\">(</span><span class=\"n\">tex_path</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">buf</span> <span class=\"o\">=</span> <span class=\"n\">image</span><span class=\"p\">.</span><span class=\"n\">load_buffer</span><span class=\"p\">(</span><span class=\"n\">data</span><span class=\"p\">)</span>\n    <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">set_texture</span><span class=\"p\">(</span><span class=\"n\">new_tex</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"nb\">type</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D_ARRAY</span><span class=\"p\">,</span>\n        <span class=\"n\">width</span> <span class=\"o\">=</span> <span class=\"n\">buf</span><span class=\"p\">.</span><span class=\"n\">width</span><span class=\"p\">,</span>\n        <span class=\"n\">height</span> <span class=\"o\">=</span> <span class=\"n\">buf</span><span class=\"p\">.</span><span class=\"n\">height</span><span class=\"p\">,</span>\n        <span class=\"n\">page</span> <span class=\"o\">=</span> <span class=\"mi\">1</span><span class=\"p\">,</span>\n        <span class=\"n\">format</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGB</span>\n    <span class=\"p\">},</span> <span class=\"n\">buf</span><span class=\"p\">.</span><span class=\"n\">buffer</span><span class=\"p\">)</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#mesh&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">,</span> <span class=\"n\">new_tex</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.get_texture_info",
+      "brief": "get texture info",
+      "description": "Gets texture info from a texture resource path or a texture handle",
+      "returnvalues": [
+        {
+          "name": "table",
+          "doc": "texture information",
+          "types": ["resource.texture_info"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource or a texture handle",
+          "types": ["hash", "string", "texture"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Create a new texture and get the metadata from it\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- create an empty texture</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tparams</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"n\">width</span>          <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"n\">height</span>         <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"nb\">type</span>           <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D</span><span class=\"p\">,</span>\n        <span class=\"n\">format</span>         <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA</span><span class=\"p\">,</span>\n    <span class=\"p\">}</span>\n\n    <span class=\"kd\">local</span> <span class=\"n\">my_texture_path</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_texture</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_texture.texturec&quot;</span><span class=\"p\">,</span> <span class=\"n\">tparams</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">my_texture_info</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_texture_info</span><span class=\"p\">(</span><span class=\"n\">my_texture_path</span><span class=\"p\">)</span>\n\n    <span class=\"c1\">-- my_texture_info now contains</span>\n    <span class=\"c1\">-- {</span>\n    <span class=\"c1\">--      handle = &lt;the-numeric-handle&gt;,</span>\n    <span class=\"c1\">--      width = 128,</span>\n    <span class=\"c1\">--      height = 128,</span>\n    <span class=\"c1\">--      depth = 1</span>\n    <span class=\"c1\">--      mipmaps = 1,</span>\n    <span class=\"c1\">--      page_count = 1,</span>\n    <span class=\"c1\">--      type = graphics.TEXTURE_TYPE_2D,</span>\n    <span class=\"c1\">--      flags = graphics.TEXTURE_USAGE_FLAG_SAMPLE</span>\n    <span class=\"c1\">-- }</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nGet the meta data from an atlas resource\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">my_atlas_info</span>   <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_atlas</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_atlas.a.texturesetc&quot;</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">my_texture_info</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_texture_info</span><span class=\"p\">(</span><span class=\"n\">my_atlas_info</span><span class=\"p\">.</span><span class=\"n\">texture</span><span class=\"p\">)</span>\n\n    <span class=\"c1\">-- my_texture_info now contains the information about the texture that is backing the atlas</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.get_render_target_info",
+      "brief": "get render target info",
+      "description": "Gets render target info from a render target resource path or a render target handle",
+      "returnvalues": [
+        {
+          "name": "table",
+          "doc": "render-target information",
+          "types": ["resource.render_target_info"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource or a render target handle",
+          "types": ["hash", "string", "render_target"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Get the metadata from a render target resource\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">info</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_render_target_info</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_render_target.render_targetc&quot;</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- the info table contains meta data about all the render target attachments</span>\n    <span class=\"c1\">-- so it&#39;s not necessary to use resource.get_texture here, but we do it here</span>\n    <span class=\"c1\">-- just to show that it&#39;s possible:</span>\n    <span class=\"kd\">local</span> <span class=\"n\">info_attachment_1</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_texture_info</span><span class=\"p\">(</span><span class=\"n\">info</span><span class=\"p\">.</span><span class=\"n\">attachments</span><span class=\"p\">[</span><span class=\"mi\">1</span><span class=\"p\">].</span><span class=\"n\">handle</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nGet a texture attachment from a render target and set it on a model component\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">info</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_render_target_info</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_render_target.render_targetc&quot;</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">attachment</span> <span class=\"o\">=</span> <span class=\"n\">info</span><span class=\"p\">.</span><span class=\"n\">attachments</span><span class=\"p\">[</span><span class=\"mi\">1</span><span class=\"p\">].</span><span class=\"n\">texture</span>\n    <span class=\"c1\">-- you can also get texture info from the &#39;texture&#39; field, since it&#39;s a resource hash</span>\n    <span class=\"kd\">local</span> <span class=\"n\">texture_info</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_texture_info</span><span class=\"p\">(</span><span class=\"n\">attachment</span><span class=\"p\">)</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#model&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;texture0&quot;</span><span class=\"p\">,</span> <span class=\"n\">attachment</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.create_atlas",
+      "brief": "create an atlas resource",
+      "description": "This function creates a new atlas resource that can be used in the same way as any atlas created during build time.\nThe path used for creating the atlas must be unique, trying to create a resource at a path that is already\nregistered will trigger an error. If the intention is to instead modify an existing atlas, use the <a href=\"/ref/resource#resource.set_atlas\">resource.set_atlas</a>\nfunction. Also note that the path to the new atlas resource must have a '.texturesetc' extension,\nmeaning \"/path/my_atlas\" is not a valid path but \"/path/my_atlas.texturesetc\" is.\nWhen creating the atlas, at least one geometry and one animation is required, and an error will be\nraised if these requirements are not met. A reference to the resource will be held by the collection\nthat created the resource and will automatically be released when that collection is destroyed.\nNote that releasing a resource essentially means decreasing the reference count of that resource,\nand not necessarily that it will be deleted.",
+      "returnvalues": [
+        {
+          "name": "path",
+          "doc": "Returns the atlas resource path",
+          "types": ["hash"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource.",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "table",
+          "doc": "atlas creation data",
+          "types": ["resource.atlas"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Create a backing texture and an atlas\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- create an empty texture</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tparams</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"n\">width</span>          <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"n\">height</span>         <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"nb\">type</span>           <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D</span><span class=\"p\">,</span>\n        <span class=\"n\">format</span>         <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA</span><span class=\"p\">,</span>\n    <span class=\"p\">}</span>\n    <span class=\"kd\">local</span> <span class=\"n\">my_texture_id</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_texture</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_texture.texturec&quot;</span><span class=\"p\">,</span> <span class=\"n\">tparams</span><span class=\"p\">)</span>\n\n    <span class=\"c1\">-- optionally use resource.set_texture to upload data to texture</span>\n\n    <span class=\"c1\">-- create an atlas with one animation and one square geometry</span>\n    <span class=\"c1\">-- note that the function doesn&#39;t support hashes for the texture,</span>\n    <span class=\"c1\">-- you need to use a string for the texture path here aswell</span>\n    <span class=\"kd\">local</span> <span class=\"n\">aparams</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"n\">texture</span> <span class=\"o\">=</span> <span class=\"s2\">&quot;/my_texture.texturec&quot;</span><span class=\"p\">,</span>\n        <span class=\"n\">animations</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n            <span class=\"p\">{</span>\n                <span class=\"n\">id</span>          <span class=\"o\">=</span> <span class=\"s2\">&quot;my_animation&quot;</span><span class=\"p\">,</span>\n                <span class=\"n\">width</span>       <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                <span class=\"n\">height</span>      <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                <span class=\"n\">frames</span>      <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"mi\">1</span> <span class=\"p\">}</span>\n            <span class=\"p\">}</span>\n        <span class=\"p\">},</span>\n        <span class=\"n\">geometries</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n            <span class=\"p\">{</span>\n                <span class=\"n\">id</span> <span class=\"o\">=</span> <span class=\"s1\">&#39;idle0&#39;</span><span class=\"p\">,</span>\n                <span class=\"n\">width</span> <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                <span class=\"n\">height</span> <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                <span class=\"n\">pivot_x</span> <span class=\"o\">=</span> <span class=\"mf\">0.5</span><span class=\"p\">,</span>\n                <span class=\"n\">pivot_y</span> <span class=\"o\">=</span> <span class=\"mf\">0.5</span><span class=\"p\">,</span>\n                <span class=\"n\">vertices</span>  <span class=\"o\">=</span> <span class=\"p\">{</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span>   <span class=\"mi\">0</span><span class=\"p\">,</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span>   <span class=\"mi\">128</span><span class=\"p\">,</span>\n                    <span class=\"mi\">128</span><span class=\"p\">,</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                    <span class=\"mi\">128</span><span class=\"p\">,</span> <span class=\"mi\">0</span>\n                <span class=\"p\">},</span>\n                <span class=\"n\">uvs</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span>   <span class=\"mi\">0</span><span class=\"p\">,</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span>   <span class=\"mi\">128</span><span class=\"p\">,</span>\n                    <span class=\"mi\">128</span><span class=\"p\">,</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                    <span class=\"mi\">128</span><span class=\"p\">,</span> <span class=\"mi\">0</span>\n                <span class=\"p\">},</span>\n                <span class=\"n\">indices</span> <span class=\"o\">=</span> <span class=\"p\">{</span><span class=\"mi\">0</span><span class=\"p\">,</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">0</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">3</span><span class=\"p\">}</span>\n            <span class=\"p\">}</span>\n        <span class=\"p\">}</span>\n    <span class=\"p\">}</span>\n    <span class=\"kd\">local</span> <span class=\"n\">my_atlas_id</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_atlas</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_atlas.texturesetc&quot;</span><span class=\"p\">,</span> <span class=\"n\">aparams</span><span class=\"p\">)</span>\n\n    <span class=\"c1\">-- assign the atlas to the &#39;sprite&#39; component on the same go</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#sprite&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;image&quot;</span><span class=\"p\">,</span> <span class=\"n\">my_atlas_id</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.set_atlas",
+      "brief": "set atlas data",
+      "description": "Sets the data for a specific atlas resource. Setting new atlas data is specified by passing in\na texture path for the backing texture of the atlas, a list of geometries and a list of animations\nthat map to the entries in the geometry list. The geometry entries are represented by three lists:\nvertices, uvs and indices that together represent triangles that are used in other parts of the\nengine to produce render objects from.\nVertex and uv coordinates for the geometries are expected to be\nin pixel coordinates where 0,0 is the top left corner of the texture.\nThere is no automatic padding or margin support when setting custom data,\nwhich could potentially cause filtering artifacts if used with a material sampler that has linear filtering.\nIf that is an issue, you need to calculate padding and margins manually before passing in the geometry data to\nthis function.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the atlas resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "table",
+          "doc": "atlas data",
+          "types": ["resource.atlas"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Add a new animation to an existing atlas\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">data</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_atlas</span><span class=\"p\">(</span><span class=\"s2\">&quot;/main/my_atlas.a.texturesetc&quot;</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">my_animation</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"n\">id</span>          <span class=\"o\">=</span> <span class=\"s2\">&quot;my_new_animation&quot;</span><span class=\"p\">,</span>\n        <span class=\"n\">width</span>       <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"n\">height</span>      <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"n\">frame_start</span> <span class=\"o\">=</span> <span class=\"mi\">1</span><span class=\"p\">,</span>\n        <span class=\"n\">frame_end</span>   <span class=\"o\">=</span> <span class=\"mi\">6</span><span class=\"p\">,</span>\n        <span class=\"n\">playback</span>    <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">PLAYBACK_LOOP_PINGPONG</span><span class=\"p\">,</span>\n        <span class=\"n\">fps</span>         <span class=\"o\">=</span> <span class=\"mi\">8</span>\n    <span class=\"p\">}</span>\n    <span class=\"nb\">table.insert</span><span class=\"p\">(</span><span class=\"n\">data</span><span class=\"p\">.</span><span class=\"n\">animations</span><span class=\"p\">,</span> <span class=\"n\">my_animation</span><span class=\"p\">)</span>\n    <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">set_atlas</span><span class=\"p\">(</span><span class=\"s2\">&quot;/main/my_atlas.a.texturesetc&quot;</span><span class=\"p\">,</span> <span class=\"n\">data</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nSets atlas data for a 256x256 texture with a single animation being rendered as a quad\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">params</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"n\">texture</span> <span class=\"o\">=</span> <span class=\"s2\">&quot;/main/my_256x256_texture.texturec&quot;</span><span class=\"p\">,</span>\n        <span class=\"n\">animations</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n            <span class=\"p\">{</span>\n                <span class=\"n\">id</span>          <span class=\"o\">=</span> <span class=\"s2\">&quot;my_animation&quot;</span><span class=\"p\">,</span>\n                <span class=\"n\">width</span>       <span class=\"o\">=</span> <span class=\"mi\">256</span><span class=\"p\">,</span>\n                <span class=\"n\">height</span>      <span class=\"o\">=</span> <span class=\"mi\">256</span><span class=\"p\">,</span>\n                <span class=\"n\">frames</span>      <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"mi\">1</span> <span class=\"p\">}</span>\n            <span class=\"p\">}</span>\n        <span class=\"p\">},</span>\n        <span class=\"n\">geometries</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n            <span class=\"p\">{</span>\n                <span class=\"n\">vertices</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span>   <span class=\"mi\">0</span><span class=\"p\">,</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span>   <span class=\"mi\">256</span><span class=\"p\">,</span>\n                    <span class=\"mi\">256</span><span class=\"p\">,</span> <span class=\"mi\">256</span><span class=\"p\">,</span>\n                    <span class=\"mi\">256</span><span class=\"p\">,</span> <span class=\"mi\">0</span>\n                <span class=\"p\">},</span>\n                <span class=\"n\">uvs</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">256</span><span class=\"p\">,</span>\n                    <span class=\"mi\">256</span><span class=\"p\">,</span> <span class=\"mi\">256</span><span class=\"p\">,</span>\n                    <span class=\"mi\">256</span><span class=\"p\">,</span> <span class=\"mi\">0</span>\n                <span class=\"p\">},</span>\n                <span class=\"n\">indices</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"mi\">0</span><span class=\"p\">,</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">0</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">3</span> <span class=\"p\">}</span>\n            <span class=\"p\">}</span>\n        <span class=\"p\">}</span>\n    <span class=\"p\">}</span>\n    <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">set_atlas</span><span class=\"p\">(</span><span class=\"s2\">&quot;/main/test.a.texturesetc&quot;</span><span class=\"p\">,</span> <span class=\"n\">params</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": ["Custom atlas data is not compatible with slice-9 for sprites"],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.get_atlas",
+      "brief": "Get atlas data",
+      "description": "Returns the atlas data for an atlas",
+      "returnvalues": [
+        {
+          "name": "data",
+          "doc": "atlas data",
+          "types": ["resource.atlas_data"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the atlas resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.set_sound",
+      "brief": "Update internal sound resource",
+      "description": "Update internal sound resource (wavc/oggc/opusc) with new data",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "buffer",
+          "doc": "A lua string containing the binary sound data",
+          "types": ["string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.create_sound_data",
+      "brief": "Creates a sound data resource (.oggc/.opusc/.wavc)",
+      "description": "Creates a sound data resource\nSupported formats are .oggc, .opusc and .wavc",
+      "returnvalues": [
+        {
+          "name": "path_hash",
+          "doc": "the resulting path hash to the resource",
+          "types": ["hash"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "the path to the resource. Must not already exist.",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "optional sound-data parameters",
+          "types": ["resource.sound_data_options"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- create a new sound resource, given the initial chunk of the file</span>\n    <span class=\"kd\">local</span> <span class=\"n\">relative_path</span> <span class=\"o\">=</span> <span class=\"s2\">&quot;/a/unique/resource/name.oggc&quot;</span>\n    <span class=\"kd\">local</span> <span class=\"n\">hash</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_sound_data</span><span class=\"p\">(</span><span class=\"n\">relative_path</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"n\">data</span> <span class=\"o\">=</span> <span class=\"n\">data</span><span class=\"p\">,</span> <span class=\"n\">filesize</span> <span class=\"o\">=</span> <span class=\"n\">filesize</span><span class=\"p\">,</span> <span class=\"n\">partial</span> <span class=\"o\">=</span> <span class=\"kc\">true</span> <span class=\"p\">})</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#music&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;sound&quot;</span><span class=\"p\">,</span> <span class=\"n\">hash</span><span class=\"p\">)</span> <span class=\"c1\">-- override the previous sound resource</span>\n    <span class=\"n\">sound</span><span class=\"p\">.</span><span class=\"n\">play</span><span class=\"p\">(</span><span class=\"s2\">&quot;#music&quot;</span><span class=\"p\">)</span> <span class=\"c1\">-- start the playing</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.create_buffer",
+      "brief": "create a buffer resource",
+      "description": "This function creates a new buffer resource that can be used in the same way as any buffer created during build time.\nThe function requires a valid buffer created from either <a href=\"/ref/buffer#buffer.create\">buffer.create</a> or another pre-existing buffer resource.\nBy default, the new resource will take ownership of the buffer lua reference, meaning the buffer will not automatically be removed\nwhen the lua reference to the buffer is garbage collected. This behaviour can be overruled by specifying 'transfer_ownership = false'\nin the argument table. If the new buffer resource is created from a buffer object that is created by another resource,\nthe buffer object will be copied and the new resource will effectively own a copy of the buffer instead.\nNote that the path to the new resource must have the '.bufferc' extension, \"/path/my_buffer\" is not a valid path but \"/path/my_buffer.bufferc\" is.\nThe path must also be unique, attempting to create a buffer with the same name as an existing resource will raise an error.",
+      "returnvalues": [
+        {
+          "name": "path",
+          "doc": "Returns the buffer resource path",
+          "types": ["hash"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource.",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "table",
+          "doc": "buffer-resource creation parameters",
+          "types": ["resource.buffer_creation_params"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Create a buffer object and bind it to a buffer resource\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">size</span> <span class=\"o\">=</span> <span class=\"mi\">1</span>\n    <span class=\"kd\">local</span> <span class=\"n\">positions</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"c1\">-- triangle 1</span>\n         <span class=\"n\">size</span><span class=\"p\">,</span>  <span class=\"n\">size</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n        <span class=\"o\">-</span><span class=\"n\">size</span><span class=\"p\">,</span> <span class=\"o\">-</span><span class=\"n\">size</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n         <span class=\"n\">size</span><span class=\"p\">,</span> <span class=\"o\">-</span><span class=\"n\">size</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n        <span class=\"c1\">-- triangle 2</span>\n         <span class=\"n\">size</span><span class=\"p\">,</span> <span class=\"n\">size</span><span class=\"p\">,</span>  <span class=\"mi\">0</span><span class=\"p\">,</span>\n        <span class=\"o\">-</span><span class=\"n\">size</span><span class=\"p\">,</span>  <span class=\"n\">size</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n        <span class=\"o\">-</span><span class=\"n\">size</span><span class=\"p\">,</span> <span class=\"o\">-</span><span class=\"n\">size</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n    <span class=\"p\">}</span>\n\n    <span class=\"kd\">local</span> <span class=\"n\">buffer_handle</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">create</span><span class=\"p\">(</span><span class=\"o\">#</span><span class=\"n\">positions</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"p\">{</span>\n            <span class=\"n\">name</span>  <span class=\"o\">=</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;position&quot;</span><span class=\"p\">),</span>\n            <span class=\"nb\">type</span>  <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">VALUE_TYPE_FLOAT32</span><span class=\"p\">,</span>\n            <span class=\"n\">count</span> <span class=\"o\">=</span> <span class=\"mi\">3</span>\n        <span class=\"p\">}</span>\n    <span class=\"p\">})</span>\n\n    <span class=\"kd\">local</span> <span class=\"n\">stream</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">get_stream</span><span class=\"p\">(</span><span class=\"n\">buffer_handle</span><span class=\"p\">,</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;position&quot;</span><span class=\"p\">))</span>\n\n    <span class=\"c1\">-- transfer vertex data to buffer</span>\n    <span class=\"kr\">for</span> <span class=\"n\">k</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"o\">#</span><span class=\"n\">positions</span> <span class=\"kr\">do</span>\n        <span class=\"n\">stream</span><span class=\"p\">[</span><span class=\"n\">k</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"n\">positions</span><span class=\"p\">[</span><span class=\"n\">k</span><span class=\"p\">]</span>\n    <span class=\"kr\">end</span>\n\n    <span class=\"kd\">local</span> <span class=\"n\">my_buffer</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_buffer</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_buffer.bufferc&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"n\">buffer</span> <span class=\"o\">=</span> <span class=\"n\">buffer_handle</span> <span class=\"p\">})</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;/go#mesh&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;vertices&quot;</span><span class=\"p\">,</span> <span class=\"n\">my_buffer</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nCreate a buffer resource from existing resource\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">res</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_buffer</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_buffer_path.bufferc&quot;</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- create a cloned buffer resource from another resource buffer</span>\n    <span class=\"kd\">local</span> <span class=\"n\">buf</span> <span class=\"o\">=</span> <span class=\"n\">reource</span><span class=\"p\">.</span><span class=\"n\">create_buffer</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_cloned_buffer.bufferc&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"n\">buffer</span> <span class=\"o\">=</span> <span class=\"n\">res</span> <span class=\"p\">})</span>\n    <span class=\"c1\">-- assign cloned buffer to a mesh component</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;/go#mesh&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;vertices&quot;</span><span class=\"p\">,</span> <span class=\"n\">buf</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.get_buffer",
+      "brief": "get resource buffer",
+      "description": "gets the buffer from a resource",
+      "returnvalues": [
+        {
+          "name": "buffer",
+          "doc": "The resource buffer",
+          "types": ["buffer_data"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "How to get the data from a buffer\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n\n    <span class=\"kd\">local</span> <span class=\"n\">res_path</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;#mesh&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;vertices&quot;</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">buf</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_buffer</span><span class=\"p\">(</span><span class=\"n\">res_path</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">stream_positions</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">get_stream</span><span class=\"p\">(</span><span class=\"n\">buf</span><span class=\"p\">,</span> <span class=\"s2\">&quot;position&quot;</span><span class=\"p\">)</span>\n\n    <span class=\"kr\">for</span> <span class=\"n\">i</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"o\">#</span><span class=\"n\">stream_positions</span> <span class=\"kr\">do</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">i</span><span class=\"p\">,</span> <span class=\"n\">stream_positions</span><span class=\"p\">[</span><span class=\"n\">i</span><span class=\"p\">])</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.set_buffer",
+      "brief": "set resource buffer",
+      "description": "Sets the buffer of a resource. By default, setting the resource buffer will either copy the data from the incoming buffer object\nto the buffer stored in the destination resource, or make a new buffer object if the sizes between the source buffer and the destination buffer\nstored in the resource differs. In some cases, e.g performance reasons, it might be beneficial to just set the buffer object on the resource without copying or cloning.\nTo achieve this, set the <code>transfer_ownership</code> flag to true in the argument table. Transferring ownership from a lua buffer to a resource with this function\nworks exactly the same as <a href=\"/ref/resource#resource.create_buffer\">resource.create_buffer</a>: the destination resource will take ownership of the buffer held by the lua reference, i.e the buffer will not automatically be removed\nwhen the lua reference to the buffer is garbage collected.\nNote: When setting a buffer with <code>transfer_ownership = true</code>, the currently bound buffer in the resource will be destroyed.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "buffer",
+          "doc": "The resource buffer",
+          "types": ["buffer_data"],
+          "is_optional": "False"
+        },
+        {
+          "name": "table",
+          "doc": "optional buffer-resource update options",
+          "types": ["resource.buffer_update_options"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "How to set the data from a buffer\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"kr\">function</span> <span class=\"nf\">fill_stream</span><span class=\"p\">(</span><span class=\"n\">stream</span><span class=\"p\">,</span> <span class=\"n\">verts</span><span class=\"p\">)</span>\n    <span class=\"kr\">for</span> <span class=\"n\">key</span><span class=\"p\">,</span> <span class=\"n\">value</span> <span class=\"kr\">in</span> <span class=\"nb\">ipairs</span><span class=\"p\">(</span><span class=\"n\">verts</span><span class=\"p\">)</span> <span class=\"kr\">do</span>\n        <span class=\"n\">stream</span><span class=\"p\">[</span><span class=\"n\">key</span><span class=\"p\">]</span> <span class=\"o\">=</span> <span class=\"n\">verts</span><span class=\"p\">[</span><span class=\"n\">key</span><span class=\"p\">]</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n\n    <span class=\"kd\">local</span> <span class=\"n\">res_path</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;#mesh&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;vertices&quot;</span><span class=\"p\">)</span>\n\n    <span class=\"kd\">local</span> <span class=\"n\">positions</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n         <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n         <span class=\"mi\">1</span><span class=\"p\">,</span>  <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n         <span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"o\">-</span><span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span>\n    <span class=\"p\">}</span>\n\n    <span class=\"kd\">local</span> <span class=\"n\">num_verts</span> <span class=\"o\">=</span> <span class=\"o\">#</span><span class=\"n\">positions</span> <span class=\"o\">/</span> <span class=\"mi\">3</span>\n\n    <span class=\"c1\">-- create a new buffer</span>\n    <span class=\"kd\">local</span> <span class=\"n\">buf</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">create</span><span class=\"p\">(</span><span class=\"n\">num_verts</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"p\">{</span> <span class=\"n\">name</span> <span class=\"o\">=</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;position&quot;</span><span class=\"p\">),</span> <span class=\"nb\">type</span><span class=\"o\">=</span><span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">VALUE_TYPE_FLOAT32</span><span class=\"p\">,</span> <span class=\"n\">count</span> <span class=\"o\">=</span> <span class=\"mi\">3</span> <span class=\"p\">}</span>\n    <span class=\"p\">})</span>\n\n    <span class=\"kd\">local</span> <span class=\"n\">buf</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_buffer</span><span class=\"p\">(</span><span class=\"n\">res_path</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">stream_positions</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">get_stream</span><span class=\"p\">(</span><span class=\"n\">buf</span><span class=\"p\">,</span> <span class=\"s2\">&quot;position&quot;</span><span class=\"p\">)</span>\n\n    <span class=\"n\">fill_stream</span><span class=\"p\">(</span><span class=\"n\">stream_positions</span><span class=\"p\">,</span> <span class=\"n\">positions</span><span class=\"p\">)</span>\n\n    <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">set_buffer</span><span class=\"p\">(</span><span class=\"n\">res_path</span><span class=\"p\">,</span> <span class=\"n\">buf</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resource.get_text_metrics",
+      "brief": "gets the text metrics for a font",
+      "description": "Gets the text metrics from a font. Rich text markup is measured using its\nvisible text and font sizes. If markup cannot be parsed, the text is measured literally.\nInline sprites reserve their specified dimensions, or one em by default.",
+      "returnvalues": [
+        {
+          "name": "metrics",
+          "doc": "measured text metrics",
+          "types": ["resource.text_metrics"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "the font to get the (unscaled) metrics from",
+          "types": ["hash"],
+          "is_optional": "False"
+        },
+        {
+          "name": "text",
+          "doc": "text to measure",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "optional text-metric options",
+          "types": ["resource.text_metrics_options"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">font</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;#label&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;font&quot;</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">metrics</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">get_text_metrics</span><span class=\"p\">(</span><span class=\"n\">font</span><span class=\"p\">,</span> <span class=\"s2\">&quot;The quick brown fox</span><span class=\"se\">\\n</span><span class=\"s2\"> jumps over the lazy dog&quot;</span><span class=\"p\">)</span>\n    <span class=\"n\">pprint</span><span class=\"p\">(</span><span class=\"n\">metrics</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "resource",
+    "name": "Resource",
+    "brief": "Resource API documentation",
+    "description": "Functions and constants to access resources.",
+    "path": "engine/gamesys/src/gamesys/scripts/script_resource.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

@@ -6,6 +6,7 @@ declare global {
    * Functions and messages used to manipulate tile map components.
    */
   namespace tilemap {
+    type TRANSFORM = typeof tilemap.H_FLIP | typeof tilemap.ROTATE_180 | typeof tilemap.ROTATE_270 | typeof tilemap.ROTATE_90 | typeof tilemap.V_FLIP;
     /**
      * flip tile horizontally
      */
@@ -78,7 +79,7 @@ declare global {
      * @param layer - name of the layer for the tile
      * @param x - x-coordinate of the tile. **⚠️ 1-based; passed to Defold unchanged.**
      * @param y - y-coordinate of the tile. **⚠️ 1-based; passed to Defold unchanged.**
-     * @returns index of the tile
+     * @returns full tile information
      * @example
      * ```ts
      * function tile_info_under_player(self: { player_x: number; player_y: number }) {
@@ -118,7 +119,7 @@ declare global {
      * }
      * ```
      */
-    function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>>;
+    function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaTable<number, LuaTable<number, number>>;
     /**
      * Resets a shader constant for a tile map component.
      * The constant must be defined in the material assigned to the tile map.
@@ -154,9 +155,6 @@ declare global {
      * The coordinates must be within the bounds of the tile map as it were created.
      * That is, it is not possible to extend the size of a tile map by setting tiles outside the edges.
      * To clear a tile, set the tile to number 0. Which tile map and layer to manipulate is identified by the URL and the layer name parameters.
-     * Transform bitmask is arithmetic sum of one or both FLIP constants (`tilemap.H_FLIP`, `tilemap.V_FLIP`) and/or one of ROTATION constants
-     * (`tilemap.ROTATE_90`, `tilemap.ROTATE_180`, `tilemap.ROTATE_270`).
-     * Flip always applies before rotation (clockwise).
      *
      * @param url - the tile map
      * @param layer - name of the layer for the tile
@@ -178,7 +176,7 @@ declare global {
      * }
      * ```
      */
-    function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): boolean;
+    function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.TRANSFORM | number): boolean;
     /**
      * Sets the visibility of the tilemap layer
      *

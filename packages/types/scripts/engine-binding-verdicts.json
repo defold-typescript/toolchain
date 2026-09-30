@@ -71,8 +71,14 @@
     "verdict": "accepted",
     "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
-  "*:buffer.copy_stream:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:buffer.copy_stream:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:buffer.copy_stream:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:buffer.copy_stream:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "*:buffer.get_bytes:arity": {
     "verdict": "accepted",
     "reason": "the binding never reads the stream_name the ref-doc documents and returns the whole buffer, so the extra argument is ignored"
@@ -105,7 +111,10 @@
     "verdict": "accepted",
     "reason": "the binding resolves the camera with CheckRenderCamera, whose ResolveURL takes nil as the calling script's url; the ref-doc types the slot url|number|nil"
   },
-  "*:go.animate:manual:4": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:go.animate:manual:4": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "*:go.final:missing-binding": {
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
@@ -154,7 +163,10 @@
     "verdict": "accepted",
     "reason": "the binding reads keep_world_transform with lua_toboolean, which reads an absent argument as false, and resolves both ids through ResolveURL, which takes nil"
   },
-  "*:go.set:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:go.set:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "*:go.update:missing-binding": {
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
@@ -191,10 +203,6 @@
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
-  "*:gui.new_texture:too-loose:4": {
-    "verdict": "accepted",
-    "reason": "the ref-doc's `constant` alternative for the image type maps to an opaque handle; the binding reads the type with luaL_checkstring"
-  },
   "*:gui.on_input:missing-binding": {
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
@@ -207,11 +215,10 @@
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
-  "*:gui.set_texture_data:too-loose:4": {
-    "verdict": "accepted",
-    "reason": "the ref-doc's `constant` alternative for the image type maps to an opaque handle; the binding reads the type with luaL_checkstring"
+  "*:gui.set:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
   },
-  "*:gui.set:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
   "*:gui.set:too-narrow:1": {
     "verdict": "accepted",
     "reason": "a string or hash reaches ResolveURL only on the texture-removal path, which also requires the calling GUI's own url; the declaration keeps url or node"
@@ -220,14 +227,9 @@
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
-  "*:http.request:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:image.load_buffer:too-narrow:2": {
-    "verdict": "accepted",
-    "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
-  },
-  "*:image.load:too-narrow:2": {
-    "verdict": "accepted",
-    "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
+  "*:http.request:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
   },
   "*:json.decode:arity": {
     "verdict": "accepted",
@@ -257,7 +259,10 @@
     "verdict": "accepted",
     "reason": "the binding branches on the argument count (none or one resolves an address string, three build one from parts); the overloads mirror exactly those forms"
   },
-  "*:msg.url:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:msg.url:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "*:particlefx.stop:arity": {
     "verdict": "accepted",
     "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a particle fx component; the declaration keeps the url required"
@@ -270,13 +275,22 @@
     "verdict": "accepted",
     "reason": "the properties table is read through a lua_type switch that returns early on nil or none, so the slot is optional"
   },
-  "*:physics.create_joint:manual:7": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:physics.create_joint:manual:7": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "*:physics.set_event_listener:arity": {
     "verdict": "accepted",
     "reason": "the binding switches on lua_type and takes none, nil or a function, so the callback is optional"
   },
-  "*:physics.set_event_listener:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:physics.set_joint_properties:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:physics.set_event_listener:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:physics.set_joint_properties:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "*:profiler.get_lua_ref_count:missing-declaration": {
     "verdict": "accepted",
     "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
@@ -292,10 +306,6 @@
   "*:render.disable_texture:too-loose:1": {
     "verdict": "accepted",
     "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
-  },
-  "*:render.draw:too-narrow:2": {
-    "verdict": "accepted",
-    "reason": "the binding still takes a constant buffer in place of the options table (deprecated); the declaration types the documented options table"
   },
   "*:render.enable_texture:too-loose:2": {
     "verdict": "accepted",
@@ -341,7 +351,10 @@
     "verdict": "accepted",
     "reason": "the binding switches on lua_type and takes none, nil or a function, so the callback is optional"
   },
-  "*:render.set_listener:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:render.set_listener:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "*:render.set_render_target_size:too-loose:1": {
     "verdict": "accepted",
     "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
@@ -370,21 +383,9 @@
     "verdict": "accepted",
     "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
   },
-  "*:resource.create_atlas:field-unread:2.indices": {
-    "verdict": "accepted",
-    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
-  },
   "*:resource.create_atlas:field-unread:2.texture": {
     "verdict": "accepted",
     "reason": "the binding reads texture through CheckTextureResource on a relative stack index the extraction does not resolve"
-  },
-  "*:resource.create_atlas:field-unread:2.uvs": {
-    "verdict": "accepted",
-    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
-  },
-  "*:resource.create_atlas:field-unread:2.vertices": {
-    "verdict": "accepted",
-    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
   },
   "*:resource.create_texture_async:required-as-optional:3": {
     "verdict": "accepted",
@@ -402,18 +403,6 @@
     "verdict": "accepted",
     "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
   },
-  "*:resource.set_atlas:field-unread:2.indices": {
-    "verdict": "accepted",
-    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
-  },
-  "*:resource.set_atlas:field-unread:2.uvs": {
-    "verdict": "accepted",
-    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
-  },
-  "*:resource.set_atlas:field-unread:2.vertices": {
-    "verdict": "accepted",
-    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
-  },
   "*:resource.texture:missing-binding": {
     "verdict": "accepted",
     "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
@@ -426,7 +415,10 @@
     "verdict": "accepted",
     "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a sound component; the declaration keeps the url required"
   },
-  "*:sound.play:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:sound.play:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "*:sound.play:optional-as-required:1": {
     "verdict": "accepted",
     "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a sound component; the declaration keeps the url required"
@@ -439,7 +431,10 @@
     "verdict": "accepted",
     "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a sound component; the declaration keeps the url required"
   },
-  "*:sprite.play_flipbook:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:sprite.play_flipbook:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "*:sprite.set_scale:missing-declaration": {
     "verdict": "accepted",
     "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
@@ -476,47 +471,86 @@
     "verdict": "accepted",
     "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
   },
-  "*:types.is_hash:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_hash:manual:1": {
+    "verdict": "manual",
+    "reason": "no kind check"
+  },
   "*:types.is_matrix4:arity": {
     "verdict": "accepted",
     "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
   },
-  "*:types.is_matrix4:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_matrix4:manual:1": {
+    "verdict": "manual",
+    "reason": "no kind check"
+  },
   "*:types.is_quat:arity": {
     "verdict": "accepted",
     "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
   },
-  "*:types.is_quat:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_quat:manual:1": {
+    "verdict": "manual",
+    "reason": "no kind check"
+  },
   "*:types.is_url:arity": {
     "verdict": "accepted",
     "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
   },
-  "*:types.is_url:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_url:manual:1": {
+    "verdict": "manual",
+    "reason": "no kind check"
+  },
   "*:types.is_vector:arity": {
     "verdict": "accepted",
     "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
   },
-  "*:types.is_vector:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_vector:manual:1": {
+    "verdict": "manual",
+    "reason": "no kind check"
+  },
   "*:types.is_vector3:arity": {
     "verdict": "accepted",
     "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
   },
-  "*:types.is_vector3:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_vector3:manual:1": {
+    "verdict": "manual",
+    "reason": "no kind check"
+  },
   "*:types.is_vector4:arity": {
     "verdict": "accepted",
     "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
   },
-  "*:types.is_vector4:manual:1": { "verdict": "manual", "reason": "no kind check" },
-  "*:vmath.clamp:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.clamp:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.clamp:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.dot:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.dot:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:types.is_vector4:manual:1": {
+    "verdict": "manual",
+    "reason": "no kind check"
+  },
+  "*:vmath.clamp:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.clamp:manual:2": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.clamp:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.dot:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.dot:manual:2": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "*:vmath.euler_to_quat:arity": {
     "verdict": "accepted",
     "reason": "the binding switches on lua_type between the (vector3) and (x, y, z) forms; the overloads mirror both"
   },
-  "*:vmath.euler_to_quat:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.euler_to_quat:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "*:vmath.euler_to_quat:required-as-optional:2": {
     "verdict": "accepted",
     "reason": "the binding switches on lua_type between the (vector3) and (x, y, z) forms; the overloads mirror both"
@@ -525,19 +559,58 @@
     "verdict": "accepted",
     "reason": "the binding switches on lua_type between the (vector3) and (x, y, z) forms; the overloads mirror both"
   },
-  "*:vmath.length_sqr:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.length:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.lerp:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.lerp:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.matrix4_compose:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.matrix4_translation:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.mul_per_elem:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.mul_per_elem:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.normalize:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.slerp:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.slerp:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.vector3:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.vector4:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.length_sqr:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.length:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.lerp:manual:2": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.lerp:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.matrix4_compose:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.matrix4_translation:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.mul_per_elem:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.mul_per_elem:manual:2": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.normalize:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.slerp:manual:2": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.slerp:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.vector3:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:vmath.vector4:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "defold-1.12.4:b2d.body.dump:missing-declaration": {
     "verdict": "accepted",
     "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
@@ -602,6 +675,22 @@
     "verdict": "accepted",
     "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
+  "defold-1.12.4:gui.new_texture:too-loose:4": {
+    "verdict": "accepted",
+    "reason": "the ref-doc's `constant` alternative for the image type maps to an opaque handle; the binding reads the type with luaL_checkstring"
+  },
+  "defold-1.12.4:gui.set_texture_data:too-loose:4": {
+    "verdict": "accepted",
+    "reason": "the ref-doc's `constant` alternative for the image type maps to an opaque handle; the binding reads the type with luaL_checkstring"
+  },
+  "defold-1.12.4:image.load_buffer:too-narrow:2": {
+    "verdict": "accepted",
+    "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
+  },
+  "defold-1.12.4:image.load:too-narrow:2": {
+    "verdict": "accepted",
+    "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
+  },
   "defold-1.12.4:label.get_text_metrics:missing-declaration": {
     "verdict": "accepted",
     "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
@@ -650,7 +739,10 @@
     "verdict": "accepted",
     "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
   },
-  "defold-1.12.4:particlefx.play:manual:2": { "verdict": "manual", "reason": "no kind check" },
+  "defold-1.12.4:particlefx.play:manual:2": {
+    "verdict": "manual",
+    "reason": "no kind check"
+  },
   "defold-1.12.4:physics.ray_cast:missing-declaration": {
     "verdict": "accepted",
     "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
@@ -790,6 +882,10 @@
   "defold-1.12.4:render.draw_debug2d:missing-declaration": {
     "verdict": "accepted",
     "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
+  },
+  "defold-1.12.4:render.draw:too-narrow:2": {
+    "verdict": "accepted",
+    "reason": "the binding still takes a constant buffer in place of the options table (deprecated); the declaration types the documented options table"
   },
   "defold-1.12.4:render.enable_render_target:missing-declaration": {
     "verdict": "accepted",
@@ -970,6 +1066,30 @@
   "defold-1.12.4:resource.COMPRESSION_TYPE_DEFAULT:constant-missing-declaration": {
     "verdict": "accepted",
     "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
+  },
+  "defold-1.12.4:resource.create_atlas:field-unread:2.indices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.12.4:resource.create_atlas:field-unread:2.uvs": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.12.4:resource.create_atlas:field-unread:2.vertices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.12.4:resource.set_atlas:field-unread:2.indices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.12.4:resource.set_atlas:field-unread:2.uvs": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.12.4:resource.set_atlas:field-unread:2.vertices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_DEPTH:constant-missing-declaration": {
     "verdict": "accepted",
@@ -1251,7 +1371,10 @@
     "verdict": "accepted",
     "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
   },
-  "defold-1.13.0:b2d.shape.is_valid:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "defold-1.13.0:b2d.shape.is_valid:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "defold-1.13.0:b2d.shape.is_valid:required-as-optional:2": {
     "verdict": "accepted",
     "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
@@ -1296,11 +1419,34 @@
     "verdict": "accepted",
     "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
+  "defold-1.13.0:gui.new_texture:too-loose:4": {
+    "verdict": "accepted",
+    "reason": "the ref-doc's `constant` alternative for the image type maps to an opaque handle; the binding reads the type with luaL_checkstring"
+  },
+  "defold-1.13.0:gui.set_texture_data:too-loose:4": {
+    "verdict": "accepted",
+    "reason": "the ref-doc's `constant` alternative for the image type maps to an opaque handle; the binding reads the type with luaL_checkstring"
+  },
+  "defold-1.13.0:image.load_buffer:too-narrow:2": {
+    "verdict": "accepted",
+    "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
+  },
+  "defold-1.13.0:image.load:too-narrow:2": {
+    "verdict": "accepted",
+    "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
+  },
   "defold-1.13.0:msg.post:too-loose:2": {
     "verdict": "accepted",
     "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
   },
-  "defold-1.13.0:particlefx.play:manual:2": { "verdict": "manual", "reason": "no kind check" },
+  "defold-1.13.0:particlefx.play:manual:2": {
+    "verdict": "manual",
+    "reason": "no kind check"
+  },
+  "defold-1.13.0:render.draw:too-narrow:2": {
+    "verdict": "accepted",
+    "reason": "the binding still takes a constant buffer in place of the options table (deprecated); the declaration types the documented options table"
+  },
   "defold-1.13.0:render.set_blend_equation_separate:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
@@ -1308,6 +1454,30 @@
   "defold-1.13.0:render.set_blend_func_separate:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
+  },
+  "defold-1.13.0:resource.create_atlas:field-unread:2.indices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.13.0:resource.create_atlas:field-unread:2.uvs": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.13.0:resource.create_atlas:field-unread:2.vertices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.13.0:resource.set_atlas:field-unread:2.indices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.13.0:resource.set_atlas:field-unread:2.uvs": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.13.0:resource.set_atlas:field-unread:2.vertices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
   },
   "defold-1.13.1:b2d.body.create_fixture:field-undeclared:2.user_data": {
     "verdict": "accepted",
@@ -1437,7 +1607,10 @@
     "verdict": "accepted",
     "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
   },
-  "defold-1.13.1:b2d.shape.is_valid:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "defold-1.13.1:b2d.shape.is_valid:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
   "defold-1.13.1:b2d.shape.is_valid:required-as-optional:2": {
     "verdict": "accepted",
     "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
@@ -1490,6 +1663,30 @@
     "verdict": "manual",
     "reason": "lua_type switch"
   },
+  "defold-1.13.1:gui.new_texture:too-loose:4": {
+    "verdict": "accepted",
+    "reason": "the ref-doc's `constant` alternative for the image type maps to an opaque handle; the binding reads the type with luaL_checkstring"
+  },
+  "defold-1.13.1:gui.set_texture_data:too-loose:4": {
+    "verdict": "accepted",
+    "reason": "the ref-doc's `constant` alternative for the image type maps to an opaque handle; the binding reads the type with luaL_checkstring"
+  },
+  "defold-1.13.1:image.load_buffer:too-narrow:2": {
+    "verdict": "accepted",
+    "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
+  },
+  "defold-1.13.1:image.load:too-narrow:2": {
+    "verdict": "accepted",
+    "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
+  },
+  "defold-1.13.1:msg.post:too-loose:2": {
+    "verdict": "accepted",
+    "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
+  },
+  "defold-1.13.1:render.draw:too-narrow:2": {
+    "verdict": "accepted",
+    "reason": "the binding still takes a constant buffer in place of the options table (deprecated); the declaration types the documented options table"
+  },
   "defold-1.13.1:render.set_blend_equation_separate:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
@@ -1497,6 +1694,350 @@
   "defold-1.13.1:render.set_blend_func_separate:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
+  },
+  "defold-1.13.1:resource.create_atlas:field-unread:2.indices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.13.1:resource.create_atlas:field-unread:2.uvs": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.13.1:resource.create_atlas:field-unread:2.vertices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.13.1:resource.set_atlas:field-unread:2.indices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.13.1:resource.set_atlas:field-unread:2.uvs": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.13.1:resource.set_atlas:field-unread:2.vertices": {
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
+  },
+  "defold-1.13.2:b2d.body.create_fixture:field-undeclared:2.user_data": {
+    "verdict": "accepted",
+    "reason": "read only to raise \"Fixture user_data is not supported\""
+  },
+  "defold-1.13.2:b2d.chain.from_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.fixture.set_shape:field-undeclared:3.shape": {
+    "verdict": "accepted",
+    "reason": "the binding also takes the shape wrapped as { shape = ... }; the declaration types the documented bare shape table"
+  },
+  "defold-1.13.2:b2d.joint.create_filter:arity": {
+    "verdict": "accepted",
+    "reason": "the ref-doc documents an optional definition table the binding never reads; passing one is ignored"
+  },
+  "defold-1.13.2:b2d.joint.create_prismatic:manual": {
+    "verdict": "manual",
+    "reason": "CheckVector3 at a non-literal index"
+  },
+  "defold-1.13.2:b2d.joint.create_wheel:manual": {
+    "verdict": "manual",
+    "reason": "CheckVector3 at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.are_contact_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.are_hit_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.are_pre_solve_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.are_sensor_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.enable_contact_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.enable_hit_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.enable_pre_solve_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.enable_sensor_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.get_aabb:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.get_body:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.get_closest_point:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.get_contact_capacity:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.get_contact_data:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.get_density:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.get_filter_data:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.get_friction:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.get_mass_data:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.get_material:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.get_restitution:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.get_sensor_capacity:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.get_sensor_overlaps:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.get_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.get_type:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.get_world:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.is_sensor:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.is_valid:arity": {
+    "verdict": "accepted",
+    "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
+  },
+  "defold-1.13.2:b2d.shape.is_valid:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "defold-1.13.2:b2d.shape.is_valid:required-as-optional:2": {
+    "verdict": "accepted",
+    "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
+  },
+  "defold-1.13.2:b2d.shape.ray_cast:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; luaL_checknumber at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.refilter:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.set_density:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.set_filter_data:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.set_friction:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.set_material:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.set_restitution:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.set_sensor:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.shape.set_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.2:b2d.shape.test_point:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.13.2:b2d.world.cast_mover:field-unread:4.group_index": {
+    "verdict": "accepted",
+    "reason": "shared b2d.world.query_filter struct; the Box2D v3 mover filter reads only category and mask bits"
+  },
+  "defold-1.13.2:b2d.world.collide_mover:field-unread:3.group_index": {
+    "verdict": "accepted",
+    "reason": "shared b2d.world.query_filter struct; the Box2D v3 mover filter reads only category and mask bits"
+  },
+  "defold-1.13.2:bullet3d.collision_object.is_valid:arity": {
+    "verdict": "accepted",
+    "reason": "the binding tests slot 1 through a validity helper without a kind check, so the one declared argument is read"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_cone_twist:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_cone_twist:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_generic_6dof_spring:field-undeclared:3.use_linear_reference_frame_a": {
+    "verdict": "accepted",
+    "reason": "the binding reads the field only to reject it with RejectIneffectiveField, so declaring it would invite a runtime error"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_generic_6dof_spring:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_generic_6dof_spring:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_generic_6dof:field-undeclared:3.use_linear_reference_frame_a": {
+    "verdict": "accepted",
+    "reason": "the binding reads the field only to reject it with RejectIneffectiveField, so declaring it would invite a runtime error"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_generic_6dof:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_generic_6dof:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_hinge:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_hinge:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_hinge2:manual": {
+    "verdict": "manual",
+    "reason": "axis vectors are read with CheckVector3 at a computed index; the declared three-argument shape matches"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_hinge2:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_hinge2:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_point_to_point:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_point_to_point:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_slider:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_slider:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_universal:manual": {
+    "verdict": "manual",
+    "reason": "axis vectors are read with CheckVector3 at a computed index; the declared three-argument shape matches"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_universal:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.constraint.create_universal:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.13.2:bullet3d.shape.is_valid:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "defold-1.13.2:bullet3d.shape.set_shape:field-unread:2.position": {
+    "verdict": "accepted",
+    "reason": "shared bullet3d.shape.definition struct; set_shape replaces the geometry and ignores placement fields"
+  },
+  "defold-1.13.2:bullet3d.shape.set_shape:field-unread:2.rotation": {
+    "verdict": "accepted",
+    "reason": "shared bullet3d.shape.definition struct; set_shape replaces the geometry and ignores placement fields"
+  },
+  "defold-1.13.2:bullet3d.shape.set_shape:field-unread:2.target_rotation": {
+    "verdict": "accepted",
+    "reason": "shared bullet3d.shape.definition struct; set_shape replaces the geometry and ignores placement fields"
+  },
+  "defold-1.13.2:bullet3d.world.cast_ray_closest:arity": {
+    "verdict": "accepted",
+    "reason": "the shared cast body reads a max_results slot that the closest variant never uses"
+  },
+  "defold-1.13.2:bullet3d.world.cast_shape_closest:arity": {
+    "verdict": "accepted",
+    "reason": "the shared cast body reads a max_results slot that the closest variant never uses"
+  },
+  "defold-1.13.2:bullet3d.world.is_valid:arity": {
+    "verdict": "accepted",
+    "reason": "the binding tests slot 1 through a validity helper without a kind check, so the one declared argument is read"
+  },
+  "defold-1.13.2:collectionproxy.load:manual:2": {
+    "verdict": "manual",
+    "reason": "no read of this slot"
+  },
+  "defold-1.13.2:collectionproxy.load:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "defold-1.13.2:render.set_blend_equation_separate:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checknumber at a non-literal index"
+  },
+  "defold-1.13.2:render.set_blend_func_separate:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checknumber at a non-literal index"
+  },
+  "defold-1.13.2:resource.get_render_target_info:too-loose:1": {
+    "verdict": "accepted",
+    "reason": "Opaque<\"render_target\"> is the branded numeric handle the engine reads as a number; the matching info handle field returns it"
+  },
+  "defold-1.13.2:resource.get_texture_info:too-loose:1": {
+    "verdict": "accepted",
+    "reason": "Opaque<\"texture\"> is the branded numeric handle the engine reads as a number; the matching info handle field returns it"
   },
   "defold-1.9.8:*:missing-binding": {
     "verdict": "accepted",

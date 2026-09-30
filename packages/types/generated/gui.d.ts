@@ -6,6 +6,74 @@ declare global {
    * GUI API documentation
    */
   namespace gui {
+    /**
+     * Rich-text layout object
+     */
+    interface layout_object {
+      /**
+       * object type, currently `link` or `sprite`
+       */
+      type: string;
+      /**
+       * the object's `id` attribute, or its generated layout object id
+       */
+      id: Hash;
+      /**
+       * zero-based UTF-32 offset in the visible text
+       */
+      text_offset: number;
+      /**
+       * visible UTF-32 text length covered by the object
+       */
+      text_length: number;
+      /**
+       * lower-left x-coordinate relative to the text node's upper-left layout origin
+       */
+      x: number;
+      /**
+       * lower-left y-coordinate relative to the text node's upper-left layout origin
+       */
+      y: number;
+      /**
+       * resolved object width
+       */
+      width: number;
+      /**
+       * resolved object height
+       */
+      height: number;
+      /**
+       * markup attributes keyed by name
+       */
+      attributes: LuaTable<string, string>;
+    }
+    type node = Opaque<"node">;
+    /**
+     * GUI flipbook playback properties
+     */
+    interface play_properties {
+      /**
+       * Normalized initial animation cursor.
+       */
+      offset?: number;
+      /**
+       * Positive animation playback rate.
+       */
+      playback_rate?: number;
+    }
+    /**
+     * Generic GUI property options
+     */
+    interface set_options {
+      /**
+       * One-based material-constant array index.
+       */
+      index?: number;
+      /**
+       * Internal property name.
+       */
+      key?: string | Hash;
+    }
     type AdjustMode = typeof gui.ADJUST_FIT | typeof gui.ADJUST_ZOOM | typeof gui.ADJUST_STRETCH;
     type BlendMode = typeof gui.BLEND_ALPHA | typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN;
     type ClippingMode = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL;
@@ -20,19 +88,30 @@ declare global {
     type SizeMode = typeof gui.SIZE_MODE_MANUAL | typeof gui.SIZE_MODE_AUTO;
     type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT;
     type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;
+    type ADJUST = typeof gui.ADJUST_FIT | typeof gui.ADJUST_STRETCH | typeof gui.ADJUST_ZOOM;
+    type ANCHOR = typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_RIGHT | typeof gui.ANCHOR_TOP;
+    type BLEND = typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN;
+    type CLIPPING_MODE = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL;
+    type EASING = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE;
+    type KEYBOARD_TYPE = typeof gui.KEYBOARD_TYPE_DEFAULT | typeof gui.KEYBOARD_TYPE_EMAIL | typeof gui.KEYBOARD_TYPE_NUMBER_PAD | typeof gui.KEYBOARD_TYPE_PASSWORD;
+    type PIEBOUNDS = typeof gui.PIEBOUNDS_ELLIPSE | typeof gui.PIEBOUNDS_RECTANGLE;
+    type PIVOT = typeof gui.PIVOT_CENTER | typeof gui.PIVOT_E | typeof gui.PIVOT_N | typeof gui.PIVOT_NE | typeof gui.PIVOT_NW | typeof gui.PIVOT_S | typeof gui.PIVOT_SE | typeof gui.PIVOT_SW | typeof gui.PIVOT_W;
+    type PLAYBACK = typeof gui.PLAYBACK_LOOP_BACKWARD | typeof gui.PLAYBACK_LOOP_FORWARD | typeof gui.PLAYBACK_LOOP_PINGPONG | typeof gui.PLAYBACK_ONCE_BACKWARD | typeof gui.PLAYBACK_ONCE_FORWARD | typeof gui.PLAYBACK_ONCE_PINGPONG;
+    type PROP = typeof gui.PROP_COLOR | typeof gui.PROP_EULER | typeof gui.PROP_FILL_ANGLE | typeof gui.PROP_INNER_RADIUS | typeof gui.PROP_LEADING | typeof gui.PROP_OUTLINE | typeof gui.PROP_POSITION | typeof gui.PROP_ROTATION | typeof gui.PROP_SCALE | typeof gui.PROP_SHADOW | typeof gui.PROP_SIZE | typeof gui.PROP_SLICE9 | typeof gui.PROP_TRACKING;
+    type RESULT = typeof gui.RESULT_DATA_ERROR | typeof gui.RESULT_OUT_OF_RESOURCES | typeof gui.RESULT_TEXTURE_ALREADY_EXISTS;
+    type SAFE_AREA = typeof gui.SAFE_AREA_BOTH | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_SHORT;
+    type SIZE_MODE = typeof gui.SIZE_MODE_AUTO | typeof gui.SIZE_MODE_MANUAL;
+    type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT;
     /**
-     * Adjust mode is used when the screen resolution differs from the project settings.
-     * The fit mode ensures that the entire node is visible in the adjusted gui scene.
+     * fit adjust mode Adjust mode is used when the screen resolution differs from the project settings. The fit mode ensures that the entire node is visible in the adjusted gui scene.
      */
     const ADJUST_FIT: number & { readonly __brand: "gui.ADJUST_FIT" };
     /**
-     * Adjust mode is used when the screen resolution differs from the project settings.
-     * The stretch mode ensures that the node is displayed as is in the adjusted gui scene, which might scale it non-uniformally.
+     * stretch adjust mode Adjust mode is used when the screen resolution differs from the project settings. The stretch mode ensures that the node is displayed as is in the adjusted gui scene, which might scale it non-uniformally.
      */
     const ADJUST_STRETCH: number & { readonly __brand: "gui.ADJUST_STRETCH" };
     /**
-     * Adjust mode is used when the screen resolution differs from the project settings.
-     * The zoom mode ensures that the node fills its entire area and might make the node exceed it.
+     * zoom adjust mode Adjust mode is used when the screen resolution differs from the project settings. The zoom mode ensures that the node fills its entire area and might make the node exceed it.
      */
     const ADJUST_ZOOM: number & { readonly __brand: "gui.ADJUST_ZOOM" };
     /**
@@ -384,41 +463,39 @@ declare global {
      */
     const PROP_TRACKING: string & { readonly __brand: "gui.PROP_TRACKING" };
     /**
-     * The provided data is not in the expected format or is in some other way
-     * incorrect, for instance the image data provided to gui.new_texture().
+     * data error The provided data is not in the expected format or is in some other way incorrect, for instance the image data provided to gui.new_texture().
      */
     const RESULT_DATA_ERROR: number & { readonly __brand: "gui.RESULT_DATA_ERROR" };
     /**
-     * The system is out of resources, for instance when trying to create a new
-     * texture using gui.new_texture().
+     * out of resource The system is out of resources, for instance when trying to create a new texture using gui.new_texture().
      */
     const RESULT_OUT_OF_RESOURCES: number & { readonly __brand: "gui.RESULT_OUT_OF_RESOURCES" };
     /**
-     * The texture id already exists when trying to use gui.new_texture().
+     * texture already exists The texture id already exists when trying to use gui.new_texture().
      */
     const RESULT_TEXTURE_ALREADY_EXISTS: number & { readonly __brand: "gui.RESULT_TEXTURE_ALREADY_EXISTS" };
     /**
-     * Safe area mode that applies insets on all edges.
+     * both sides safe area Safe area mode that applies insets on all edges.
      */
     const SAFE_AREA_BOTH: number & { readonly __brand: "gui.SAFE_AREA_BOTH" };
     /**
-     * Safe area mode that applies insets only on the long edges.
+     * long side safe area Safe area mode that applies insets only on the long edges.
      */
     const SAFE_AREA_LONG: number & { readonly __brand: "gui.SAFE_AREA_LONG" };
     /**
-     * Safe area mode that ignores safe area insets.
+     * no safe area Safe area mode that ignores safe area insets.
      */
     const SAFE_AREA_NONE: number & { readonly __brand: "gui.SAFE_AREA_NONE" };
     /**
-     * Safe area mode that applies insets only on the short edges.
+     * short side safe area Safe area mode that applies insets only on the short edges.
      */
     const SAFE_AREA_SHORT: number & { readonly __brand: "gui.SAFE_AREA_SHORT" };
     /**
-     * The size of the node is determined by the currently assigned texture.
+     * automatic size mode The size of the node is determined by the currently assigned texture.
      */
     const SIZE_MODE_AUTO: number & { readonly __brand: "gui.SIZE_MODE_AUTO" };
     /**
-     * The size of the node is determined by the size set in the editor, the constructor or by gui.set_size()
+     * manual size mode The size of the node is determined by the size set in the editor, the constructor or by gui.set_size()
      */
     const SIZE_MODE_MANUAL: number & { readonly __brand: "gui.SIZE_MODE_MANUAL" };
     /**
@@ -459,37 +536,7 @@ declare global {
      * together. See the examples below for more information.
      *
      * @param node - node to animate
-     * @param property - property to animate
-     *
-     * - `"position"`
-     * - `"rotation"`
-     * - `"euler"`
-     * - `"scale"`
-     * - `"color"`
-     * - `"outline"`
-     * - `"shadow"`
-     * - `"size"`
-     * - `"fill_angle"` (pie)
-     * - `"inner_radius"` (pie)
-     * - `"leading"` (text)
-     * - `"tracking"` (text)
-     * - `"slice9"` (slice9)
-     *
-     * The following property constants are defined equaling the corresponding property string names.
-     *
-     * - `gui.PROP_POSITION`
-     * - `gui.PROP_ROTATION`
-     * - `gui.PROP_EULER`
-     * - `gui.PROP_SCALE`
-     * - `gui.PROP_COLOR`
-     * - `gui.PROP_OUTLINE`
-     * - `gui.PROP_SHADOW`
-     * - `gui.PROP_SIZE`
-     * - `gui.PROP_FILL_ANGLE`
-     * - `gui.PROP_INNER_RADIUS`
-     * - `gui.PROP_LEADING`
-     * - `gui.PROP_TRACKING`
-     * - `gui.PROP_SLICE9`
+     * @param property - property to animate; each gui.PROP member equals its corresponding property name string
      * @param to - target property value
      * @param easing - easing to use during animation.
      * Either specify one of the `gui.EASING_*` constants or provide a
@@ -499,13 +546,6 @@ declare global {
      * @param complete_function - function to call when the
      * animation has completed
      * @param playback - playback mode
-     *
-     * - `gui.PLAYBACK_ONCE_FORWARD`
-     * - `gui.PLAYBACK_ONCE_BACKWARD`
-     * - `gui.PLAYBACK_ONCE_PINGPONG`
-     * - `gui.PLAYBACK_LOOP_FORWARD`
-     * - `gui.PLAYBACK_LOOP_BACKWARD`
-     * - `gui.PLAYBACK_LOOP_PINGPONG`
      * @example
      * How to start a simple color animation, where the node fades in to white during 0.5 seconds:
      * ```ts
@@ -554,7 +594,7 @@ declare global {
      * });
      * ```
      */
-    function animate(node: Opaque<"node">, property: string | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: unknown) => void, playback?: gui.Playback): void;
+    function animate(node: Opaque<"node">, property: string | Hash | gui.PROP, to: number | Vector3 | Vector4 | Quaternion, easing: gui.EASING | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.PLAYBACK): void;
     /**
      * If one or more animations of the specified node is currently running (started by `gui.animate`), they will immediately be canceled.
      *
@@ -598,7 +638,7 @@ declare global {
      * gui.cancel_animations(node);
      * ```
      */
-    function cancel_animations(node: Opaque<"node">, property?: string | gui.Property | Hash): void;
+    function cancel_animations(node: Opaque<"node">, property?: string | Hash | gui.PROP): void;
     /**
      * Cancels any running flipbook animation on the specified node.
      *
@@ -628,7 +668,7 @@ declare global {
      * @param node - root node to clone
      * @returns a table mapping node ids to the corresponding cloned nodes
      */
-    function clone_tree(node: Opaque<"node">): LuaMap<Hash, Opaque<"node">>;
+    function clone_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">>;
     /**
      * Deletes the specified node. Any child nodes of the specified node will be
      * recursively deleted.
@@ -669,7 +709,7 @@ declare global {
      * or release user input focus (see `release_input_focus`). There is no use in starting any animations or similar
      * from this function since the gui component is about to be destroyed.
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @example
      * ```ts
      * export default defineScript({
@@ -684,7 +724,7 @@ declare global {
      * });
      * ```
      */
-    function final(self: Opaque<"userdata">): void;
+    function final(self: unknown): void;
     /**
      * Instead of using specific getters such as gui.get_position or gui.get_scale,
      * you can use gui.get instead and supply the property as a string or a hash.
@@ -712,7 +752,7 @@ declare global {
      * @param node - node to get the property for
      * @param property - the property to retrieve
      * @param options - optional options table (only applicable for material constants)
-     * - `index` number index into array property (1 based)
+     * - `index` integer index into array property (1 based)
      *
      * **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * @example
@@ -722,7 +762,7 @@ declare global {
      * const node_position = gui.get(node, "position");
      * ```
      */
-    function get(node: Opaque<"node">, property: string | Hash | gui.Property, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;
+    function get(node: Opaque<"node">, property: string | Hash | gui.PROP, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;
     /**
      * Returns the adjust mode of a node.
      * The adjust mode defines how the node will adjust itself to screen
@@ -730,12 +770,8 @@ declare global {
      *
      * @param node - node from which to get the adjust mode (node)
      * @returns the current adjust mode
-     *
-     * - `gui.ADJUST_FIT`
-     * - `gui.ADJUST_ZOOM`
-     * - `gui.ADJUST_STRETCH`
      */
-    function get_adjust_mode(node: Opaque<"node">): gui.AdjustMode;
+    function get_adjust_mode(node: Opaque<"node">): gui.ADJUST;
     /**
      * gets the node alpha
      *
@@ -749,14 +785,8 @@ declare global {
      *
      * @param node - node from which to get the blend mode
      * @returns blend mode
-     *
-     * - `gui.BLEND_ALPHA`
-     * - `gui.BLEND_ADD`
-     * - `gui.BLEND_ADD_ALPHA`
-     * - `gui.BLEND_MULT`
-     * - `gui.BLEND_SCREEN`
      */
-    function get_blend_mode(node: Opaque<"node">): gui.BlendMode;
+    function get_blend_mode(node: Opaque<"node">): gui.BLEND;
     /**
      * If node is set as an inverted clipping node, it will clip anything inside as opposed to outside.
      *
@@ -773,7 +803,7 @@ declare global {
      * - `gui.CLIPPING_MODE_NONE`
      * - `gui.CLIPPING_MODE_STENCIL`
      */
-    function get_clipping_mode(node: Opaque<"node">): gui.ClippingMode;
+    function get_clipping_mode(node: Opaque<"node">): gui.CLIPPING_MODE;
     /**
      * If node is set as visible clipping node, it will be shown as well as clipping. Otherwise, it will only clip but not show visually.
      *
@@ -937,13 +967,22 @@ declare global {
      */
     function get_layout(): Hash;
     /**
+     * Returns the sprites and links found in the text node's current layout.
+     * Each object's `x` and `y` identify its lower-left corner relative to the
+     * text node's upper-left layout origin.
+     *
+     * @param node - text node to inspect
+     * @returns layout objects in source order. **0️⃣ `text_offset` is 0-based; passed to Defold unchanged.**
+     */
+    function get_layout_objects(node: Opaque<"node">): gui.layout_object[];
+    /**
      * Returns a table mapping each layout id hash to a vector3(width, height, 0). For the default layout,
      * the current scene resolution is returned. If a layout name is not present in the Display Profiles (or when
      * no display profiles are assigned), the width/height pair is 0.
      *
      * @returns layout_id_hash -> vmath.vector3(width, height, 0)
      */
-    function get_layouts(): LuaMap<Hash, Vector3>;
+    function get_layouts(): LuaTable<Hash, Vector3>;
     /**
      * Returns the leading value for a text node.
      *
@@ -993,12 +1032,9 @@ declare global {
      * Returns the outer bounds mode for a pie node.
      *
      * @param node - node from where to get the outer bounds mode
-     * @returns the outer bounds mode of the pie node:
-     *
-     * - `gui.PIEBOUNDS_RECTANGLE`
-     * - `gui.PIEBOUNDS_ELLIPSE`
+     * @returns the outer bounds mode of the pie node
      */
-    function get_outer_bounds(node: Opaque<"node">): gui.PieBounds;
+    function get_outer_bounds(node: Opaque<"node">): gui.PIEBOUNDS;
     /**
      * Returns the outline color of the supplied node.
      * See gui.get_color for info how vectors encode color values.
@@ -1046,7 +1082,7 @@ declare global {
      * - `gui.PIVOT_W`
      * - `gui.PIVOT_NW`
      */
-    function get_pivot(node: Opaque<"node">): gui.Pivot;
+    function get_pivot(node: Opaque<"node">): gui.PIVOT;
     /**
      * Returns the position of the supplied node.
      *
@@ -1103,11 +1139,8 @@ declare global {
      *
      * @param node - node from which to get the size mode (node)
      * @returns the current size mode
-     *
-     * - `gui.SIZE_MODE_MANUAL`
-     * - `gui.SIZE_MODE_AUTO`
      */
-    function get_size_mode(node: Opaque<"node">): gui.SizeMode;
+    function get_size_mode(node: Opaque<"node">): gui.SIZE_MODE;
     /**
      * Returns the slice9 configuration values for the node.
      *
@@ -1144,13 +1177,13 @@ declare global {
      * @param node - root node to get node tree from
      * @returns a table mapping node ids to the corresponding nodes
      */
-    function get_tree(node: Opaque<"node">): LuaMap<Hash, Opaque<"node">>;
+    function get_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">>;
     /**
      * gets the node type
      *
      * @param node - node from which to get the type
      */
-    function get_type(node: Opaque<"node">): LuaMultiReturn<[gui.NodeType, number | undefined]>;
+    function get_type(node: Opaque<"node">): LuaMultiReturn<[gui.TYPE, number | undefined]>;
     /**
      * Returns `true` if a node is visible and `false` if it's not.
      * Invisible nodes are not rendered.
@@ -1175,7 +1208,7 @@ declare global {
      * - `gui.ANCHOR_LEFT`
      * - `gui.ANCHOR_RIGHT`
      */
-    function get_xanchor(node: Opaque<"node">): gui.XAnchor;
+    function get_xanchor(node: Opaque<"node">): gui.ANCHOR;
     /**
      * The y-anchor specifies how the node is moved when the game is run in a different resolution.
      *
@@ -1186,7 +1219,7 @@ declare global {
      * - `gui.ANCHOR_TOP`
      * - `gui.ANCHOR_BOTTOM`
      */
-    function get_yanchor(node: Opaque<"node">): gui.YAnchor;
+    function get_yanchor(node: Opaque<"node">): gui.ANCHOR;
     /**
      * Hides the on-display touch keyboard on the device.
      */
@@ -1195,7 +1228,7 @@ declare global {
      * This is a callback-function, which is called by the engine when a gui component is initialized. It can be used
      * to set the initial state of the script and gui scene.
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @example
      * ```ts
      * export default defineScript({
@@ -1206,7 +1239,7 @@ declare global {
      * });
      * ```
      */
-    function init(self: Opaque<"userdata">): void;
+    function init(self: unknown): void;
     /**
      * Returns `true` if a node is enabled and `false` if it's not.
      * Disabled nodes are not rendered and animations acting on them are not evaluated.
@@ -1274,9 +1307,9 @@ declare global {
      * @param height - texture height
      * @param type - texture type
      *
-     * - `"rgb"` - RGB
-     * - `"rgba"` - RGBA
-     * - `"l"` - LUMINANCE
+     * - `"rgb"` or `image.TYPE_RGB` - RGB
+     * - `"rgba"` or `image.TYPE_RGBA` - RGBA
+     * - `"l"` or `image.TYPE_LUMINANCE` - LUMINANCE
      * - `"astc"` - ASTC compressed format
      * @param buffer - texture data
      * @param flip - flip texture vertically
@@ -1324,7 +1357,7 @@ declare global {
      * }
      * ```
      */
-    function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): LuaMultiReturn<[boolean, number | undefined]>;
+    function new_texture(texture_id: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string, flip?: boolean): LuaMultiReturn<[boolean, gui.RESULT | undefined]>;
     /**
      * This is a callback-function, which is called by the engine when user input is sent to the instance of the gui component.
      * It can be used to take action on the input, e.g. modify the gui according to the input.
@@ -1336,132 +1369,10 @@ declare global {
      * to signal that it wants input to be consumed.
      * See the documentation of acquire_input_focus for more
      * information.
-     * The `action` parameter is a table containing data about the input mapped to the
-     * `action_id`.
-     * For mapped actions it specifies the value of the input and if it was just pressed or released.
-     * Actions are mapped to input in an input_binding-file.
-     * Mouse movement is specifically handled and uses `nil` as its `action_id`.
-     * The `action` only contains positional parameters in this case, such as x and y of the pointer.
-     * Here is a brief description of the available table fields:
      *
-     * Field
-     * Description
-     *
-     * `value`
-     * The amount of input given by the user. This is usually 1 for buttons and 0-1 for analogue inputs. This is not present for mouse movement and text input.
-     *
-     * `pressed`
-     * If the input was pressed this frame. This is not present for mouse movement and text input.
-     *
-     * `released`
-     * If the input was released this frame. This is not present for mouse movement and text input.
-     *
-     * `repeated`
-     * If the input was repeated this frame. This is similar to how a key on a keyboard is repeated when you hold it down. This is not present for mouse movement and text input.
-     *
-     * `x`
-     * The x value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `y`
-     * The y value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `screen_x`
-     * The screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `screen_y`
-     * The screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `dx`
-     * The change in x value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `dy`
-     * The change in y value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `screen_dx`
-     * The change in screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `screen_dy`
-     * The change in screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `gamepad`
-     * The index of the gamepad device that provided the input. See table below about gamepad input.
-     *
-     * `touch`
-     * List of touch input, one element per finger, if present. See table below about touch input
-     *
-     * `text`
-     * Text input from a (virtual) keyboard or similar.
-     *
-     * `marked_text`
-     * Sequence of entered symbols while entering a symbol combination, for example Japanese Kana.
-     *
-     * Gamepad specific fields:
-     *
-     * Field
-     * Description
-     *
-     * `gamepad`
-     * The index of the gamepad device that provided the input.
-     *
-     * `userid`
-     * Id of the user associated with the controller. Usually only relevant on consoles.
-     *
-     * `gamepad_unknown`
-     * True if the inout originated from an unknown/unmapped gamepad.
-     *
-     * `gamepad_name`
-     * Name of the gamepad
-     *
-     * `gamepad_axis`
-     * List of gamepad axis values. For raw gamepad input only.
-     *
-     * `gamepadhats`
-     * List of gamepad hat values. For raw gamepad input only.
-     *
-     * `gamepad_buttons`
-     * List of gamepad button values. For raw gamepad input only.
-     *
-     * Touch input table:
-     *
-     * Field
-     * Description
-     *
-     * `id`
-     * A number identifying the touch input during its duration.
-     *
-     * `pressed`
-     * True if the finger was pressed this frame.
-     *
-     * `released`
-     * True if the finger was released this frame.
-     *
-     * `tap_count`
-     * Number of taps, one for single, two for double-tap, etc
-     *
-     * `x`
-     * The x touch location.
-     *
-     * `y`
-     * The y touch location.
-     *
-     * `dx`
-     * The change in x value.
-     *
-     * `dy`
-     * The change in y value.
-     *
-     * `acc_x`
-     * Accelerometer x value (if present).
-     *
-     * `acc_y`
-     * Accelerometer y value (if present).
-     *
-     * `acc_z`
-     * Accelerometer z value (if present).
-     *
-     * @param self - reference to the script state to be used for storing data
-     * @param action_id - id of the received input action, as mapped in the input_binding-file
-     * @param action - a table containing the input data, see above for a description
+     * @param self - script instance used for storing state
+     * @param action_id - id of the received input action, as mapped in the input_binding-file, or `nil` for mouse movement
+     * @param action - input data for the action. **0️⃣ `gamepad` is 0-based; passed to Defold unchanged.**
      * @returns optional boolean to signal if the input should be consumed (not passed on to others) or not, default is false
      * @example
      * ```ts
@@ -1482,7 +1393,7 @@ declare global {
      * });
      * ```
      */
-    function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;
+    function on_input(self: unknown, action_id: Hash | undefined, action: go.on_input.action): boolean | undefined;
     /**
      * This is a callback-function, which is called by the engine whenever a message has been sent to the gui component.
      * It can be used to take action on the message, e.g. update the gui or send a response back to the sender of the message.
@@ -1490,16 +1401,17 @@ declare global {
      * documentation of the message specifies which data is supplied.
      * See the update function for examples on how to use this callback-function.
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @param message_id - id of the received message
      * @param message - a table containing the message data
+     * @param sender - address of the sender
      */
-    function on_message(self: Opaque<"userdata">, message_id: Hash, message: Record<string | number, unknown>): void;
+    function on_message(self: unknown, message_id: Hash, message: LuaMap<AnyNotNil, unknown> | Record<string, unknown>, sender: Url): void;
     /**
      * This is a callback-function, which is called by the engine when the gui script is reloaded, e.g. from the editor.
      * It can be used for live development, e.g. to tweak constants or set up the state properly for the script.
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @example
      * ```ts
      * export default defineGuiScript({
@@ -1514,7 +1426,7 @@ declare global {
      * });
      * ```
      */
-    function on_reload(self: Opaque<"userdata">): void;
+    function on_reload(self: unknown): void;
     /**
      * Tests whether a coordinate is within the bounding box of a
      * node.
@@ -1536,17 +1448,12 @@ declare global {
      *
      * `self`
      *
-     * object The current object.
+     * script_instance The current script instance.
      *
      * `node`
      *
      * node The node that is animated.
-     * @param play_properties - optional table with properties
-     *
-     * `offset`
-     * number The normalized initial value of the animation cursor when the animation starts playing
-     * `playback_rate`
-     * number The rate with which the animation will be played. Must be positive
+     * @param play_properties - optional playback properties
      * @example
      * Set the texture of a node to a flipbook animation from an atlas:
      * ```ts
@@ -1572,26 +1479,12 @@ declare global {
      * gui.play_flipbook(node, "button");
      * ```
      */
-    function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: unknown) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
+    function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: Opaque<"node">) => void, play_properties?: gui.play_properties): void;
     /**
      * Plays the paricle fx for a gui node
      *
      * @param node - node to play particle fx for
      * @param emitter_state_function - optional callback function that will be called when an emitter attached to this particlefx changes state.
-     *
-     * `self`
-     * object The current object
-     * `node`
-     * hash The particle fx node, or `nil` if the node was deleted
-     * `emitter`
-     * hash The id of the emitter
-     * `state`
-     * constant the new state of the emitter:
-     *
-     * - `particlefx.EMITTER_STATE_SLEEPING`
-     * - `particlefx.EMITTER_STATE_PRESPAWN`
-     * - `particlefx.EMITTER_STATE_SPAWNING`
-     * - `particlefx.EMITTER_STATE_POSTSPAWN`
      * @example
      * ```ts
      * // How to play a particle fx when a gui node is created.
@@ -1610,7 +1503,7 @@ declare global {
      * });
      * ```
      */
-    function play_particlefx(node: Opaque<"node">, emitter_state_function?: (self: unknown, node: unknown, emitter: unknown, state: unknown) => void): void;
+    function play_particlefx(node: Opaque<"node">, emitter_state_function?: (self: unknown, node: Opaque<"node"> | undefined, emitter: Hash, state: particlefx.EMITTER_STATE) => void): void;
     /**
      * Resets the input context of keyboard. This will clear marked text.
      */
@@ -1700,11 +1593,7 @@ declare global {
      * @param node - node to set the property for, or msg.url() to the gui itself
      * @param property - the property to set
      * @param value - the property to set. `nil` is only supported for removing runtime texture mappings with `gui.set(msg.url(), "textures", nil, {key = ...})`.
-     * @param options - optional options table (only applicable for material constants)
-     * - `index` number index into array property (1 based)
-     * - `key` hash name of internal property
-     *
-     * **⚠️ `index` is 1-based; passed to Defold unchanged.**
+     * @param options - optional material-constant options. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * @example
      * Updates the position property on an existing node:
      * ```ts
@@ -1775,7 +1664,7 @@ declare global {
      * resource.release(atlas_id);
      * ```
      */
-    function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash | undefined, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): void;
+    function set(node: Opaque<"node"> | Url, property: string | Hash | gui.PROP, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash | undefined, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): void;
     /**
      * Sets the adjust mode on a node.
      * The adjust mode defines how the node will adjust itself to screen
@@ -1783,12 +1672,8 @@ declare global {
      *
      * @param node - node to set adjust mode for
      * @param adjust_mode - adjust mode to set
-     *
-     * - `gui.ADJUST_FIT`
-     * - `gui.ADJUST_ZOOM`
-     * - `gui.ADJUST_STRETCH`
      */
-    function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.AdjustMode): void;
+    function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.ADJUST): void;
     /**
      * sets the node alpha
      *
@@ -1802,14 +1687,8 @@ declare global {
      *
      * @param node - node to set blend mode for
      * @param blend_mode - blend mode to set
-     *
-     * - `gui.BLEND_ALPHA`
-     * - `gui.BLEND_ADD`
-     * - `gui.BLEND_ADD_ALPHA`
-     * - `gui.BLEND_MULT`
-     * - `gui.BLEND_SCREEN`
      */
-    function set_blend_mode(node: Opaque<"node">, blend_mode: gui.BlendMode): void;
+    function set_blend_mode(node: Opaque<"node">, blend_mode: gui.BLEND): void;
     /**
      * If node is set as an inverted clipping node, it will clip anything inside as opposed to outside.
      *
@@ -1826,7 +1705,7 @@ declare global {
      * - `gui.CLIPPING_MODE_NONE`
      * - `gui.CLIPPING_MODE_STENCIL`
      */
-    function set_clipping_mode(node: Opaque<"node">, clipping_mode: gui.ClippingMode): void;
+    function set_clipping_mode(node: Opaque<"node">, clipping_mode: gui.CLIPPING_MODE): void;
     /**
      * If node is set as an visible clipping node, it will be shown as well as clipping. Otherwise, it will only clip but not show visually.
      *
@@ -1988,12 +1867,9 @@ declare global {
      * Sets the outer bounds mode for a pie node.
      *
      * @param node - node for which to set the outer bounds mode
-     * @param bounds_mode - the outer bounds mode of the pie node:
-     *
-     * - `gui.PIEBOUNDS_RECTANGLE`
-     * - `gui.PIEBOUNDS_ELLIPSE`
+     * @param bounds_mode - the outer bounds mode of the pie node
      */
-    function set_outer_bounds(node: Opaque<"node">, bounds_mode: gui.PieBounds): void;
+    function set_outer_bounds(node: Opaque<"node">, bounds_mode: gui.PIEBOUNDS): void;
     /**
      * Sets the outline color of the supplied node.
      * See gui.set_color for info how vectors encode color values.
@@ -2040,7 +1916,7 @@ declare global {
      * - `gui.PIVOT_W`
      * - `gui.PIVOT_NW`
      */
-    function set_pivot(node: Opaque<"node">, pivot: gui.Pivot): void;
+    function set_pivot(node: Opaque<"node">, pivot: gui.PIVOT): void;
     /**
      * Sets the position of the supplied node.
      *
@@ -2070,13 +1946,8 @@ declare global {
      * Sets how the safe area is applied to this gui scene.
      *
      * @param mode - safe area mode
-     *
-     * - `gui.SAFE_AREA_NONE`
-     * - `gui.SAFE_AREA_LONG`
-     * - `gui.SAFE_AREA_SHORT`
-     * - `gui.SAFE_AREA_BOTH`
      */
-    function set_safe_area_mode(mode: gui.SafeAreaMode): void;
+    function set_safe_area_mode(mode: gui.SAFE_AREA): void;
     /**
      * Sets the scaling of the supplied node.
      *
@@ -2117,11 +1988,8 @@ declare global {
      *
      * @param node - node to set size mode for
      * @param size_mode - size mode to set
-     *
-     * - `gui.SIZE_MODE_MANUAL`
-     * - `gui.SIZE_MODE_AUTO`
      */
-    function set_size_mode(node: Opaque<"node">, size_mode: gui.SizeMode): void;
+    function set_size_mode(node: Opaque<"node">, size_mode: gui.SIZE_MODE): void;
     /**
      * Set the slice9 configuration values for the node.
      *
@@ -2179,9 +2047,9 @@ declare global {
      * @param height - texture height
      * @param type - texture type
      *
-     * - `"rgb"` - RGB
-     * - `"rgba"` - RGBA
-     * - `"l"` - LUMINANCE
+     * - `"rgb"` or `image.TYPE_RGB` - RGB
+     * - `"rgba"` or `image.TYPE_RGBA` - RGBA
+     * - `"l"` or `image.TYPE_LUMINANCE` - LUMINANCE
      * - `"astc"` - ASTC compressed format
      * @param buffer - texture data
      * @param flip - flip texture vertically
@@ -2215,7 +2083,7 @@ declare global {
      * });
      * ```
      */
-    function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): boolean;
+    function set_texture_data(texture: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string, flip?: boolean): boolean;
     /**
      * Sets the tracking value of a text node. This value is used to
      * adjust the vertical spacing of characters in the text.
@@ -2241,7 +2109,7 @@ declare global {
      * - `gui.ANCHOR_LEFT`
      * - `gui.ANCHOR_RIGHT`
      */
-    function set_xanchor(node: Opaque<"node">, anchor: gui.XAnchor): void;
+    function set_xanchor(node: Opaque<"node">, anchor: gui.ANCHOR): void;
     /**
      * The y-anchor specifies how the node is moved when the game is run in a different resolution.
      *
@@ -2252,7 +2120,7 @@ declare global {
      * - `gui.ANCHOR_TOP`
      * - `gui.ANCHOR_BOTTOM`
      */
-    function set_yanchor(node: Opaque<"node">, anchor: gui.YAnchor): void;
+    function set_yanchor(node: Opaque<"node">, anchor: gui.ANCHOR): void;
     /**
      * Shows the on-display touch keyboard.
      * The specified type of keyboard is displayed if it is available on
@@ -2260,28 +2128,21 @@ declare global {
      * This function is only available on iOS and Android. .
      *
      * @param type - keyboard type
-     *
-     * - `gui.KEYBOARD_TYPE_DEFAULT`
-     * - `gui.KEYBOARD_TYPE_EMAIL`
-     * - `gui.KEYBOARD_TYPE_NUMBER_PAD`
-     * - `gui.KEYBOARD_TYPE_PASSWORD`
      * @param autoclose - if the keyboard should automatically close when clicking outside
      */
-    function show_keyboard(type: gui.KeyboardType, autoclose: boolean): void;
+    function show_keyboard(type: gui.KEYBOARD_TYPE, autoclose: boolean): void;
     /**
      * Stops the particle fx for a gui node
      *
      * @param node - node to stop particle fx for
-     * @param options - options when stopping the particle fx. Supported options:
-     *
-     * - boolean `clear`: instantly clear spawned particles
+     * @param options - options used when stopping the particle fx
      */
-    function stop_particlefx(node: Opaque<"node">, options?: { clear?: boolean }): void;
+    function stop_particlefx(node: Opaque<"node">, options?: particlefx.stop_options): void;
     /**
      * This is a callback-function, which is called by the engine every frame to update the state of a gui component.
      * It can be used to perform any kind of gui related tasks, e.g. animating nodes.
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @param dt - the time-step of the frame update
      * @example
      * ```ts
@@ -2325,7 +2186,7 @@ declare global {
      * });
      * ```
      */
-    function update(self: Opaque<"userdata">, dt: number): void;
+    function update(self: unknown, dt: number): void;
     interface properties {
       /**
        * The fonts used in the gui. The type of the property is hash.

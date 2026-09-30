@@ -7,28 +7,30 @@ declare global {
   namespace profiler {
     type Mode = typeof profiler.MODE_RUN | typeof profiler.MODE_PAUSE | typeof profiler.MODE_SHOW_PEAK_FRAME | typeof profiler.MODE_RECORD;
     type ViewMode = typeof profiler.VIEW_MODE_FULL | typeof profiler.VIEW_MODE_MINIMIZED;
+    type MODE = typeof profiler.MODE_PAUSE | typeof profiler.MODE_RECORD | typeof profiler.MODE_RUN | typeof profiler.MODE_SHOW_PEAK_FRAME;
+    type VIEW_MODE = typeof profiler.VIEW_MODE_FULL | typeof profiler.VIEW_MODE_MINIMIZED;
     /**
-     * pause on current frame
+     * pause on the currently displayed frame
      */
     const MODE_PAUSE: number & { readonly __brand: "profiler.MODE_PAUSE" };
     /**
-     * start recording
+     * record incoming frames to the recording buffer
      */
     const MODE_RECORD: number & { readonly __brand: "profiler.MODE_RECORD" };
     /**
-     * continously show latest frame
+     * continuously show the latest frame
      */
     const MODE_RUN: number & { readonly __brand: "profiler.MODE_RUN" };
     /**
-     * pause at peak frame
+     * pause on the displayed frame, replacing it when a slower frame arrives
      */
     const MODE_SHOW_PEAK_FRAME: number & { readonly __brand: "profiler.MODE_SHOW_PEAK_FRAME" };
     /**
-     * show full profiler ui
+     * show all profiler details
      */
     const VIEW_MODE_FULL: number & { readonly __brand: "profiler.VIEW_MODE_FULL" };
     /**
-     * show mimimal profiler ui
+     * show only the header with FPS counters and profiler mode
      */
     const VIEW_MODE_MINIMIZED: number & { readonly __brand: "profiler.VIEW_MODE_MINIMIZED" };
     /**
@@ -157,12 +159,6 @@ declare global {
      * Set the on-screen profile mode - run, pause, record or show peak frame
      *
      * @param mode - the mode to set the ui profiler in
-     *
-     * - `profiler.MODE_RUN` This is default mode that continously shows the last frame
-     * - `profiler.MODE_PAUSE` Pauses on the currently displayed frame
-     * - `profiler.MODE_SHOW_PEAK_FRAME` Pauses on the currently displayed frame but shows a new frame if that frame is slower
-     * - `profiler.MODE_RECORD` Records all incoming frames to the recording buffer
-     *
      * To stop recording, switch to a different mode such as `MODE_PAUSE` or `MODE_RUN`.
      * You can also use the `view_recorded_frame` function to display a recorded frame. Doing so stops the recording as well.
      * Every time you switch to recording mode the recording buffer is cleared.
@@ -177,21 +173,18 @@ declare global {
      * }
      * ```
      */
-    function set_ui_mode(mode: profiler.Mode): void;
+    function set_ui_mode(mode: profiler.MODE): void;
     /**
      * Set the on-screen profile view mode - minimized or expanded
      *
      * @param mode - the view mode to set the ui profiler in
-     *
-     * - `profiler.VIEW_MODE_FULL` The default mode which displays all the ui profiler details
-     * - `profiler.VIEW_MODE_MINIMIZED` Minimized mode which only shows the top header (fps counters and ui profiler mode)
      * @example
      * ```ts
      * // Minimize the profiler view
      * profiler.set_ui_view_mode(profiler.VIEW_MODE_MINIMIZED);
      * ```
      */
-    function set_ui_view_mode(mode: profiler.ViewMode): void;
+    function set_ui_view_mode(mode: profiler.VIEW_MODE): void;
     /**
      * Shows or hides the time the engine waits for vsync in the on-screen profiler
      * Each frame the engine waits for vsync and depending on your vsync settings and how much time
@@ -228,7 +221,7 @@ declare global {
      * profiler.view_recorded_frame({ distance: -1 });
      * ```
      */
-    function view_recorded_frame(frame_index: { distance?: number; frame?: number }): void;
+    function view_recorded_frame(frame_index: { distance: number } | { frame: number }): void;
   }
 }
 

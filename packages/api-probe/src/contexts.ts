@@ -320,7 +320,7 @@ const BUFFER_RESOURCE = '"/main/triangle.bufferc"';
 const ATLAS_PARAMS =
   '{ texture: "/main/probe.texturec", geometries: [{ vertices: [0, 0, 0, 16, 16, 16], uvs: [0, 0, 0, 16, 16, 16], indices: [0, 1, 2] }], animations: [{ id: "anim", width: 16, height: 16, frame_start: 1, frame_end: 2, playback: go.PLAYBACK_ONCE_FORWARD }] }';
 const TEXTURE_PARAMS =
-  "{ type: graphics.TEXTURE_TYPE_2D, width: 16, height: 16, format: graphics.TEXTURE_FORMAT_RGBA }";
+  "{ type: graphics.TEXTURE_TYPE_2D, width: 16, height: 16, format: graphics.TEXTURE_FORMAT_RGBA! }";
 const TEXTURE_BUFFER =
   'buffer.create(16 * 16, [{ name: hash("rgba"), type: buffer.VALUE_TYPE_UINT8, count: 4 }])';
 const CAPSULE = "{ center1: vmath.vector3(0, 0, 0), center2: vmath.vector3(0, 16, 0), radius: 4 }";
@@ -502,7 +502,7 @@ export const HANDLE_WITNESSES: Readonly<
 > = {
   node: { gui: ['gui.get_node("box")', 'gui.get_node("text")'] },
   b2Body: { go: ["b2d.get_body(COLLISION)!", "b2d.get_body(PEER_COLLISION)!"] },
-  b2World: { go: ["b2d.get_world()"] },
+  b2World: { go: ["b2d.get_world()!"] },
   b2Joint: {
     go: [
       REVOLUTE,

@@ -16,6 +16,7 @@ import {
   isSlotLevelList,
   isVarargParameter,
   MAPPING_TABLE_SLOTS,
+  NAME_CLASH_SKIPS,
   type NestedMapping,
   OVERLOAD_COVERED_SKIPS,
   parseTableFields,
@@ -25,6 +26,7 @@ import {
   TS_IDENTIFIER,
   trailingOptionalCutoff,
   UNBOUND_SKIPS,
+  unknownDefoldTypeLeaves,
 } from "../src/emit-dts";
 import { parseMessagesDoc } from "../src/emit-messages";
 import { readVerdicts } from "./engine-binding-verdicts";
@@ -311,6 +313,11 @@ export const OPTIONALITY_EVIDENCE_EXEMPTIONS: ReadonlyMap<string, string> = new 
     "gui.set:param:value",
     "gui_script.cpp:LuaSet reads argument 3 even when it is absent; REQUIRED_SLOT_CORRECTIONS " +
       "keeps the documented nil as `value: T | undefined`.",
+  ],
+  [
+    "resource.create_sound_data:param:options",
+    "1.13.2 marks the options optional, but script_resource.cpp:CreateSoundData checks " +
+      "luaL_checktype(L, 2, LUA_TTABLE); REQUIRED_SLOT_CORRECTIONS keeps it required.",
   ],
   [
     "html5.set_interaction_listener:param:callback",
@@ -604,10 +611,28 @@ function openBindingCounts(): Map<string, number> {
   return counts;
 }
 
+// The ENUM, STRUCT and TYPEDEF names every audited module declares. The emitter
+// routes each across the surface and resolves a reference to it by name, so a
+// slot naming one in another module's doc is not an unknown token.
+const DECLARED_TYPE_KINDS: ReadonlySet<string> = new Set(["ENUM", "STRUCT", "TYPEDEF", "CLASS"]);
+
+function collectDeclaredTypeNames(manifest: readonly ModuleManifestEntry[]): Set<string> {
+  const names = new Set<string>();
+  for (const entry of manifest) {
+    for (const element of elementsOf(entry.doc)) {
+      if (typeof element.name === "string" && DECLARED_TYPE_KINDS.has(String(element.type))) {
+        names.add(element.name);
+      }
+    }
+  }
+  return names;
+}
+
 function auditEntry(
   entry: ModuleManifestEntry,
   knownConstantFqns: ReadonlySet<string>,
   bindingOpen: ReadonlyMap<string, number>,
+  declaredTypeNames: ReadonlySet<string> = new Set(),
 ): FidelityEntry {
   const skipFunctions = new Set(entry.skipFunctions ?? []);
   const elements = elementsOf(entry.doc);
@@ -664,7 +689,7 @@ function auditEntry(
       // field token still surfaces under unknownTokens and a nested `table`
       // field (no doc → not recovered) still counts under recordTables. This
       // keeps the invariant that every loss in the emitted surface is measured.
-      if (token === "table") {
+      if (token === "table" || tableSlotCuration?.retypedUpstream?.includes(token) === true) {
         // A mapping-table slot is recovered by emit-dts into `LuaMap<K, V>` from
         // the curated key/value tokens — not a `Record`, so don't count it.
         // Feed the curated tokens back through considerTypes so an unmapped one
@@ -844,20 +869,59 @@ function auditEntry(
       // (constantFqns) or in any other manifest module (knownConstantFqns) now
       // resolve to their brand type, and `function(...)` callback signatures
       // recover to typed functions, so none is an unknown token.
+      // A LuaLS type expression (`b2d.aabb[]`, `table<hash, hash>`, a `fun(...)`)
+      // is unknown only for the leaves neither the engine vocabulary, a declared
+      // type nor a constant resolves, the way the release importer judges it.
       if (
-        token !== "nil" &&
-        !Object.hasOwn(DEFOLD_TYPE_MAP, token) &&
-        !constantFqns.has(token) &&
-        !knownConstantFqns.has(token) &&
-        recoverCallbackSignature(token) === null
+        token === "nil" ||
+        Object.hasOwn(DEFOLD_TYPE_MAP, token) ||
+        constantFqns.has(token) ||
+        knownConstantFqns.has(token) ||
+        recoverCallbackSignature(token) !== null
       ) {
-        unknown.add(token);
+        continue;
+      }
+      for (const leaf of unknownDefoldTypeLeaves(token)) {
+        if (declaredTypeNames.has(leaf) || constantFqns.has(leaf) || knownConstantFqns.has(leaf)) {
+          continue;
+        }
+        unknown.add(leaf);
       }
     }
   };
 
+  const aliasingTypedefs = new Set(
+    parseDefoldApiDoc(entry.doc)
+      .typedefs.filter((typedef) => typedef.aliasOf !== undefined)
+      .map((typedef) => typedef.name),
+  );
   for (const element of elements) {
     const type = element.type;
+    // An ENUM, a STRUCT and an aliasing TYPEDEF are emitted as declarations;
+    // what a STRUCT member or a TYPEDEF names is audited like a slot.
+    if (
+      type === "ENUM" ||
+      type === "STRUCT" ||
+      (type === "TYPEDEF" && typeof element.name === "string" && aliasingTypedefs.has(element.name))
+    ) {
+      for (const member of Array.isArray(element.members) ? element.members : []) {
+        const memberType = (member as { type?: unknown }).type;
+        if (typeof memberType === "string" && memberType !== "") considerTypes([memberType]);
+      }
+      if (type === "TYPEDEF") {
+        for (const param of paramList(element.parameters)) considerTypes(stringArray(param.types));
+      }
+      continue;
+    }
+    // A CLASS names an engine value type the core types declare by hand
+    // (`vector3` is `Vector3`), so the surface already carries it.
+    if (
+      type === "CLASS" &&
+      typeof element.name === "string" &&
+      Object.hasOwn(DEFOLD_TYPE_MAP, element.name)
+    ) {
+      continue;
+    }
     // An identifier-named TYPEDEF is recovered into a per-namespace
     // `type <name> = Opaque<"<name>">` alias, under the same TS_IDENTIFIER guard
     // the emitter uses, so the gate and the emitted surface agree. A
@@ -953,8 +1017,12 @@ function auditEntry(
     droppedMembers:
       generateModuleDeclaration(entry, {
         knownConstantFqns: NO_KNOWN_CONSTANTS,
-      }).dropped.filter((name) => !OVERLOAD_COVERED_SKIPS.has(name) && !UNBOUND_SKIPS.has(name))
-        .length + countDroppedHandleMethods(entry.doc, entry.namespace),
+      }).dropped.filter(
+        (name) =>
+          !OVERLOAD_COVERED_SKIPS.has(name) &&
+          !UNBOUND_SKIPS.has(name) &&
+          !NAME_CLASH_SKIPS.has(name),
+      ).length + countDroppedHandleMethods(entry.doc, entry.namespace),
     optionalAsRequired,
     bindingOpen: bindingOpen.get(entry.namespace) ?? 0,
   };
@@ -974,10 +1042,13 @@ export function buildFidelityReport(
 ): Record<string, FidelityEntry> {
   const report: Record<string, FidelityEntry> = {};
   const knownConstantFqns = collectConstantFqns(manifest);
+  const declaredTypeNames = collectDeclaredTypeNames(manifest);
   const bindingOpen = openBindingCounts();
   for (const namespace of [...manifest.map((e) => e.namespace)].sort()) {
     const entry = manifest.find((e) => e.namespace === namespace);
-    if (entry) report[namespace] = auditEntry(entry, knownConstantFqns, bindingOpen);
+    if (entry) {
+      report[namespace] = auditEntry(entry, knownConstantFqns, bindingOpen, declaredTypeNames);
+    }
   }
   return report;
 }

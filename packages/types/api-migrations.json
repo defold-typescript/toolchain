@@ -26,6 +26,33 @@
         "signature": ""
       },
       "deprecatedSince": "1.13.0"
+    },
+    {
+      "identity": {
+        "namespace": "label",
+        "kind": "FUNCTION",
+        "name": "label.get_text",
+        "signature": ""
+      },
+      "deprecatedSince": "1.13.2"
+    },
+    {
+      "identity": {
+        "namespace": "label",
+        "kind": "FUNCTION",
+        "name": "label.set_text",
+        "signature": ""
+      },
+      "deprecatedSince": "1.13.2"
+    },
+    {
+      "identity": {
+        "namespace": "window",
+        "kind": "CONSTANT",
+        "name": "window.WINDOW_EVENT_ICONFIED",
+        "signature": ""
+      },
+      "deprecatedSince": "1.13.2"
     }
   ]
 }

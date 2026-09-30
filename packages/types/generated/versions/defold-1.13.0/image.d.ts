@@ -107,12 +107,14 @@ declare global {
      *     response.response !== undefined
      *       ? image.load_buffer(response.response, { flip_vertically: true })
      *       : undefined;
-     *   if (img !== undefined) {
+     *   // the engine registers a texture format only when the driver supports it
+     *   const format = graphics.TEXTURE_FORMAT_RGBA;
+     *   if (img !== undefined && format !== undefined) {
      *     const tparams = {
      *       width: img.width,
      *       height: img.height,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *     };
      *
      *     const my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams, img.buffer);

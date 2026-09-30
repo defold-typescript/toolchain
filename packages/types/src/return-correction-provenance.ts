@@ -88,6 +88,28 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+// A slot that names a STRUCT (`sys.interface_info[]`) carries its fields as that
+// struct's members rather than a `<dl>`; a member name ending in `?` is the
+// struct's own optionality mark. True when the named struct marks `field`
+// optional.
+function structMarksOptional(doc: unknown, slot: RawSlot, field: string): boolean {
+  if (!isRecord(doc) || !Array.isArray(doc.elements)) return false;
+  const names = new Set(
+    (slot.types ?? [])
+      .filter((token) => token !== "nil")
+      .map((token) => token.replace(/\[\]$/, "")),
+  );
+  return doc.elements.some(
+    (candidate) =>
+      isRecord(candidate) &&
+      candidate.type === "STRUCT" &&
+      typeof candidate.name === "string" &&
+      names.has(candidate.name) &&
+      Array.isArray(candidate.members) &&
+      candidate.members.some((member) => isRecord(member) && member.name === `${field}?`),
+  );
+}
+
 // Every `returnvalues` entry of every FUNCTION in the surface named `element`,
 // unfiltered by slot: one target can declare the element more than once.
 function returnSlots(doc: unknown, element: string): RawSlot[] {
@@ -154,6 +176,9 @@ export interface ReturnFieldProvenance {
 // therefore prose- and token-shaped: the evidence sentence is gone from the
 // field's `<dd>`, or its type span now declares `nil` itself.
 //
+// A slot that names a STRUCT resolves the field when the struct marks that
+// member optional, since the struct is where that target now declares it.
+//
 // `missingFieldIn` is deliberately not a resolution. A field upstream dropped
 // from a slot the target still declares makes the correction stale, and
 // `applyFieldOptionalityCorrections` throws rather than no-op for it, so that
@@ -182,7 +207,7 @@ export function fieldCorrectionProvenance(
 
         let verdict: FieldVerdict;
         if (prose === undefined) {
-          verdict = "missing";
+          verdict = structMarksOptional(surface.doc, slot, field) ? "resolved" : "missing";
         } else if (!prose.includes(correction.evidence) || (tokens ?? []).includes("nil")) {
           verdict = "resolved";
         } else {

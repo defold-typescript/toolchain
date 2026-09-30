@@ -1,0 +1,215 @@
+{
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "btDiscreteDynamicsWorld",
+      "brief": "Bullet dynamics world",
+      "description": "Bullet dynamics world",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "btCollisionObject",
+      "brief": "Bullet collision object",
+      "description": "Bullet collision object",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "btRigidBody",
+      "brief": "Bullet rigid body",
+      "description": "Rigid bodies use the same Lua userdata representation as collision objects,\nbut rigid-body functions validate the native type before upcasting it.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "bullet3d.version_info",
+      "brief": "Bullet version information",
+      "description": "Bullet version information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "version",
+          "doc": "full Bullet version string",
+          "type": "string"
+        },
+        {
+          "name": "number",
+          "doc": "compact numeric Bullet version",
+          "type": "integer"
+        },
+        {
+          "name": "major",
+          "doc": "major version number",
+          "type": "integer"
+        },
+        {
+          "name": "minor",
+          "doc": "minor version number",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.get_world",
+      "brief": "Get the Bullet world for the current collection",
+      "description": "This function raises an error unless the collection uses 3D physics.",
+      "returnvalues": [
+        {
+          "name": "world",
+          "doc": "the world, or <code>nil</code> if the collection has no physics world",
+          "types": ["btDiscreteDynamicsWorld", "nil"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.get_collision_object",
+      "brief": "Get a Bullet collision object",
+      "description": "This returns both rigid bodies and ghost trigger objects.\nThis function raises an error unless the collection uses 3D physics.",
+      "returnvalues": [
+        {
+          "name": "object",
+          "doc": "the collision object, or <code>nil</code>",
+          "types": ["btCollisionObject", "nil"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "collision object component URL",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.get_rigid_body",
+      "brief": "Get a Bullet rigid body",
+      "description": "Trigger components are ghost objects, so this function returns <code>nil</code> for them.\nThis function raises an error unless the collection uses 3D physics.",
+      "returnvalues": [
+        {
+          "name": "body",
+          "doc": "the rigid body handle, or <code>nil</code>",
+          "types": ["btRigidBody", "nil"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "collision object component URL",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">world</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_world</span><span class=\"p\">()</span>\n<span class=\"kd\">local</span> <span class=\"n\">body</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_rigid_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject&quot;</span><span class=\"p\">)</span>\n<span class=\"kr\">if</span> <span class=\"n\">world</span> <span class=\"ow\">and</span> <span class=\"n\">body</span> <span class=\"ow\">and</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">rigid_body</span><span class=\"p\">.</span><span class=\"n\">is_valid</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">)</span> <span class=\"kr\">then</span>\n    <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">rigid_body</span><span class=\"p\">.</span><span class=\"n\">apply_central_impulse</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">10</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">))</span>\n<span class=\"kr\">end</span>\n\n<span class=\"c1\">-- A trigger is a collision object, not a rigid body.</span>\n<span class=\"kd\">local</span> <span class=\"n\">trigger</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_collision_object</span><span class=\"p\">(</span><span class=\"s2\">&quot;#trigger&quot;</span><span class=\"p\">)</span>\n<span class=\"nb\">assert</span><span class=\"p\">(</span><span class=\"n\">trigger</span> <span class=\"ow\">and</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_rigid_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#trigger&quot;</span><span class=\"p\">)</span> <span class=\"o\">==</span> <span class=\"kc\">nil</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.get_version",
+      "brief": "Get the Bullet version",
+      "description": "Get the Bullet version",
+      "returnvalues": [
+        {
+          "name": "info",
+          "doc": "version information",
+          "types": ["bullet3d.version_info"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "bullet3d",
+    "name": "bullet3d",
+    "brief": "Bullet 3D documentation",
+    "description": "Native-style access to the Bullet 3D world and collision objects owned by\nDefold. World creation, destruction and stepping remain controlled by Defold.\nThe backend name refers to three-dimensional physics.\n\nWorld, collision-object and rigid-body userdata are borrowed handles to\nDefold-owned objects. Shape userdata are borrowed logical child-slot handles\nattached to a collision object. Constraint userdata identify auxiliary native\nobjects owned by this Lua API; destroy them explicitly when no longer needed.\nThey are also destroyed automatically when a required body or world is\ndestroyed.\n\nA collision-object, rigid-body or shape handle becomes invalid when its\ncollision object is deleted or reloaded. A world handle remains valid across\ncollision-object reloads, but becomes invalid when its collection and physics\nworld are destroyed. The corresponding `is_valid()` function is safe for\nchecking a retained handle; every other operation rejects an invalid handle.",
+    "path": "engine/gamesys/src/gamesys/scripts/bullet3d/script_bullet3d.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}
