@@ -116,6 +116,7 @@ const scriptProperties = {
   speed: go.property("speed", 450),
   enabled: go.property("enabled", true),
   name: go.property("name", hash("initial value")),
+  greeting: go.property("greeting", "Hello"),
 };
 
 type ScriptProps = ScriptProperties<typeof scriptProperties>;
@@ -128,10 +129,12 @@ const propertyHooks = defineScript<ScriptProps, ScriptState>({
     const _enabled: boolean = self.enabled;
     const _name: Hash = self.name;
     const _velocity: Vector3 = self.velocity;
+    const _greeting: string = self.greeting;
     void _speed;
     void _enabled;
     void _name;
     void _velocity;
+    void _greeting;
   },
 });
 void propertyHooks;
@@ -139,6 +142,9 @@ void propertyHooks;
 defineScript<ScriptProps, ScriptState>({
   init: () => ({ velocity: vmath.vector3(0, 0, 0) }),
 });
+
+const _text: ScriptProperty<string> = go.property("note", "a\nb");
+void _text;
 
 // @ts-expect-error explicit init state still requires init-created fields
 defineScript<ScriptProps, ScriptState>({ init: () => ({}) });
