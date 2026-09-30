@@ -24,6 +24,7 @@ import {
   PARAM_TYPE_CORRECTIONS,
   REQUIRED_SLOT_CORRECTIONS,
   RETURN_TYPE_CORRECTIONS,
+  routeTypeDeclarations,
 } from "../src/emit-dts";
 import { splitTopLevel } from "../src/luals-type-expr";
 import { type ApiTarget, loadApiTargets, loadTargetModules } from "./regen";
@@ -149,9 +150,13 @@ export function buildAvailabilityArtifact(
   const registryPath = options.registryPath ?? resolve(packageRoot, "api-targets.json");
   const targets = loadApiTargets(registryPath);
   const completeTargets = selectCompleteVersionSurfaces(targets);
+  // Routed per target, like regen, so an identity names the namespace whose
+  // declarations export it and routing never carries a symbol across versions.
   const parse = (target: ApiTarget): ApiModule[] =>
-    loadTargetModules(target, packageRoot).map((entry) =>
-      withholdOverloads(parseDefoldApiDoc(entry.doc), entry.skipOverloads ?? []),
+    routeTypeDeclarations(
+      loadTargetModules(target, packageRoot).map((entry) =>
+        withholdOverloads(parseDefoldApiDoc(entry.doc), entry.skipOverloads ?? []),
+      ),
     );
   const surfaces: VersionSurface[] = completeTargets.map((target) => ({
     version: versionOf(target),

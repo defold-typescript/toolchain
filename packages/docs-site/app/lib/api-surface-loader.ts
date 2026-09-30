@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
   type ApiAvailability,
   parseDefoldApiDoc,
+  routeTypeDeclarations,
   type SignatureStore,
   type SkipOverloadRule,
   signatureTransitionNames,
@@ -805,20 +806,25 @@ function loadEnginePages(typesDir: string, target: ApiTarget, routePrefix: strin
   // surface, so its only page is the one under Libraries.
   const defoldPages = defoldExtensionDocs(siblingLibraryTypesDir(typesDir));
 
-  const modules = target.modules.filter((mod) => !defoldPages.has(mod.namespace));
-  const pages = modules.map((mod): ApiPage => {
-    const raw = JSON.parse(readFileSync(join(typesDir, target.fixturesDir, mod.fixture), "utf8"));
-    const module = withholdOverloads(parseDefoldApiDoc(raw), mod.skipOverloads ?? []);
-    return {
-      namespace: mod.namespace,
-      route: `/api${routePrefix}/${mod.namespace}`,
+  // Routed before the extension filter, as regen routes the whole target, so a
+  // page lists what its namespace's declarations export.
+  const modules = routeTypeDeclarations(
+    target.modules.map((mod) => {
+      const raw = JSON.parse(readFileSync(join(typesDir, target.fixturesDir, mod.fixture), "utf8"));
+      return withholdOverloads(parseDefoldApiDoc(raw), mod.skipOverloads ?? []);
+    }),
+  ).filter((module) => !defoldPages.has(module.namespace));
+  const pages = modules.map(
+    (module): ApiPage => ({
+      namespace: module.namespace,
+      route: `/api${routePrefix}/${module.namespace}`,
       brief: module.brief,
       module,
       translations,
       signatures,
       category: "engine",
-    };
-  });
+    }),
+  );
 
   // Hand-vendored, presence-gated: the prefixless global symbols (`hash`, …)
   // have no api-targets module, so they never reach regen/generated output.
