@@ -1692,6 +1692,8 @@ When the project [targets](./pinning-defold-target.md) an older Defold, [`build`
 src/greeter.ts:5:15: script property "greeting" has a string default, which needs Defold 1.13.2 or later; the target is 1.12.4
 ```
 
+A direct `go.property("greeting", "Hello")` also compiles, typed `ScriptProperty<string>`; it is deprecated like every direct `go.property` call and meets the same version check.
+
 The same release lets a script read and write a label's text as a component property: `go.get<label.properties>()("#label", "text")`.
 
 ##### Reading properties in `init`
@@ -10131,6 +10133,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.property(name: string, value: Vector3): ScriptProperty<Vector3>
 - go.property(name: string, value: Vector4): ScriptProperty<Vector4>
 - go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
+- go.property(name: string, value: string): ScriptProperty<string>
 - go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void [through 1.13.1] [signature transition]
 - go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
 - go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void

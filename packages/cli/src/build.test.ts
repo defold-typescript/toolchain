@@ -1477,6 +1477,33 @@ describe("runBuild (text script properties)", () => {
     );
   });
 
+  test("gates a direct string go.property on a pre-1.13.2 target and builds it on 1.13.2", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/greeter.ts",
+      [
+        'import { defineScript } from "@defold-typescript/types";',
+        "",
+        'go.property("greeting", "Hello");',
+        "",
+        "defineScript({});",
+        "",
+      ].join("\n"),
+    );
+
+    const thrown = thrownBy(() => runBuild({ cwd, defoldVersion: "1.12.4" }));
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const error = thrown as BuildFailureError;
+    expect(error.message).toContain("src/greeter.ts:3:25");
+    expect(error.message).toContain("greeting");
+    expect(error.message).toContain("1.13.2");
+    expect(error.message).toContain("1.12.4");
+    expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(false);
+
+    expect(runBuild({ cwd, defoldVersion: "1.13.2" }).written).toContain("src/greeter.ts.script");
+  });
+
   test("a script without a text property builds on an older target", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile(

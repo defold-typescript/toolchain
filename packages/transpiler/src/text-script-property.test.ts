@@ -125,6 +125,53 @@ describe("findTextScriptProperties", () => {
     expect(findings).toEqual([]);
   });
 
+  test("reports a direct string go.property at its value argument, not a number one", () => {
+    const findings = findingsOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        'const greeting = go.property("greeting", "Hello");',
+        'const speed = go.property("speed", 1);',
+        "",
+        "defineScript({});",
+      ),
+    );
+    expect(findings).toEqual([{ name: "greeting", file: "main.ts", line: 3, column: 42 }]);
+  });
+
+  test("reports a direct go.property whose value is a module const holding a string", () => {
+    const findings = findingsOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        'const NOTE = "note";',
+        'const TEXT = "Hi";',
+        "const note = go.property(NOTE, TEXT);",
+        "",
+        "defineScript({});",
+      ),
+    );
+    expect(findings.map((finding) => finding.name)).toEqual(["NOTE"]);
+  });
+
+  test("reports a properties default and a direct call in source order", () => {
+    const findings = findingsOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        'const title = go.property("title", "Top");',
+        "",
+        "defineScript({",
+        '  properties: { greeting: "Hello" },',
+        "});",
+      ),
+    );
+    expect(findings).toEqual([
+      { name: "title", file: "main.ts", line: 3, column: 36 },
+      { name: "greeting", file: "main.ts", line: 6, column: 27 },
+    ]);
+  });
+
   test("ignores a properties object on a local function named defineScript", () => {
     const findings = findingsOf(
       lines(
