@@ -60,6 +60,7 @@ export {
   emitDeclarations,
   emitSymbolSignatures,
   firstSlotAlternativeOf,
+  routeTypeDeclarations,
   type SlotType,
   type SlotTypes,
   type SymbolSignature,
