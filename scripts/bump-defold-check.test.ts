@@ -360,28 +360,34 @@ describe("offline discipline", () => {
     });
   });
 
-  test("the executed dependency boundary fires no network or child-process call at runtime", () => {
-    const calls: string[] = [];
-    const realFetch = globalThis.fetch;
-    const realSpawn = Bun.spawn;
-    const realSpawnSync = Bun.spawnSync;
-    const trap =
-      (name: string) =>
-      (...args: unknown[]): never => {
-        calls.push(name);
-        throw new Error(`offline boundary violated: ${name} was called with ${args.length} arg(s)`);
-      };
-    try {
-      globalThis.fetch = trap("fetch") as unknown as typeof fetch;
-      Bun.spawn = trap("Bun.spawn") as unknown as typeof Bun.spawn;
-      Bun.spawnSync = trap("Bun.spawnSync") as unknown as typeof Bun.spawnSync;
-      const result = runBumpCheck(REPO_ROOT);
-      expect(result.ok).toBe(true);
-      expect(calls).toEqual([]);
-    } finally {
-      globalThis.fetch = realFetch;
-      Bun.spawn = realSpawn;
-      Bun.spawnSync = realSpawnSync;
-    }
-  });
+  test(
+    "the executed dependency boundary fires no network or child-process call at runtime",
+    () => {
+      const calls: string[] = [];
+      const realFetch = globalThis.fetch;
+      const realSpawn = Bun.spawn;
+      const realSpawnSync = Bun.spawnSync;
+      const trap =
+        (name: string) =>
+        (...args: unknown[]): never => {
+          calls.push(name);
+          throw new Error(
+            `offline boundary violated: ${name} was called with ${args.length} arg(s)`,
+          );
+        };
+      try {
+        globalThis.fetch = trap("fetch") as unknown as typeof fetch;
+        Bun.spawn = trap("Bun.spawn") as unknown as typeof Bun.spawn;
+        Bun.spawnSync = trap("Bun.spawnSync") as unknown as typeof Bun.spawnSync;
+        const result = runBumpCheck(REPO_ROOT);
+        expect(result.ok).toBe(true);
+        expect(calls).toEqual([]);
+      } finally {
+        globalThis.fetch = realFetch;
+        Bun.spawn = realSpawn;
+        Bun.spawnSync = realSpawnSync;
+      }
+    },
+    BUMP_CHECK_TEST_TIMEOUT_MS,
+  );
 });
