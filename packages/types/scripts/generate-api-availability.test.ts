@@ -19,6 +19,7 @@ const AVAILABILITY_PATH = resolve(import.meta.dir, "..", "api-availability.json"
 const COMPLETE_VERSIONS = selectCompleteVersionSurfaces(loadApiTargets()).map(versionOf);
 const [NEWEST_VERSION] = COMPLETE_VERSIONS as [string];
 const OLDEST_VERSION = COMPLETE_VERSIONS[COMPLETE_VERSIONS.length - 1] as string;
+const INTRODUCED_IN_1_13_2 = COMPLETE_VERSIONS.slice(0, COMPLETE_VERSIONS.indexOf("1.13.2") + 1);
 
 // `availableIn` for a symbol introduced after the oldest tracked release is a
 // newest-anchored, contiguous prefix of the version axis: a symbol cannot be
@@ -133,7 +134,7 @@ describe("availability derivation over the committed target snapshots", () => {
       expect(records.length).toBeGreaterThan(0);
       for (const record of records) {
         expect(record.identity.namespace).toBe("bullet3d.collision_object");
-        expect(record.availableIn).toContain("1.13.2");
+        expect(record.availableIn).toEqual(INTRODUCED_IN_1_13_2);
       }
     }
     expect(
