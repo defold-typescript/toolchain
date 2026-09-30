@@ -236,6 +236,40 @@ describe("emitDeclarations", () => {
     expect(emitDeclarations(module)).toContain("function takes(v: number | Vector3): void;");
   });
 
+  test("a LuaLS string-keyed table param accepts an object literal while the same return stays LuaTable", () => {
+    const module: ApiModule = {
+      namespace: "thing",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "thing.set_constants",
+          brief: "",
+          description: "",
+          parameters: [
+            {
+              name: "constants",
+              doc: "",
+              types: ["table<string|hash, number>"],
+              isOptional: false,
+            },
+            { name: "keyed", doc: "", types: ["table<hash, number>"], isOptional: false },
+          ],
+          returnValues: [
+            { name: "", doc: "", types: ["table<string|hash, number>"], isOptional: false },
+          ],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    expect(emitDeclarations(module)).toContain(
+      "function set_constants(constants: LuaTable<string | Hash, number> | Record<string, number>, keyed: LuaTable<Hash, number>): LuaTable<string | Hash, number>;",
+    );
+  });
+
   test("unknown Defold type token falls through to unknown without throwing", () => {
     const module: ApiModule = {
       namespace: "thing",

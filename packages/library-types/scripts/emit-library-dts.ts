@@ -26,6 +26,7 @@
 import {
   appendNotes,
   type DocCommentParts,
+  type LualsPosition,
   libraryIndexBaseNotes,
   luaMultiReturn,
   renderDocComment,
@@ -144,9 +145,13 @@ function renderExternalImports(externalTypes?: Record<string, ExternalTypeRef>):
     );
 }
 
-export function mapTypes(types: readonly string[], ctx: MapContext): string {
+export function mapTypes(
+  types: readonly string[],
+  ctx: MapContext,
+  position: LualsPosition = "output",
+): string {
   if (types.length === 0) return "unknown";
-  return types.map((token) => mapLualsType(token, ctx).ts).join(" | ");
+  return types.map((token) => mapLualsType(token, ctx, position).ts).join(" | ");
 }
 
 /** A generic parameter list `<A extends C, B>`, or `""` when there are none. */
@@ -222,7 +227,7 @@ function renderParams(params: readonly LibraryParam[], ctx: MapContext): string 
   const optionalFlags = paramOptionalFlags(params);
   return params
     .map((param, index) => {
-      const mapped = mapTypes(param.types, ctx);
+      const mapped = mapTypes(param.types, ctx, "input");
       if (param.isVararg) {
         return `...args: ${varargElementType(mapped)}`;
       }
