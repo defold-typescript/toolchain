@@ -72,6 +72,27 @@ describe("per-target provenance — fabricated inputs", () => {
     expect(paramCorrectionProvenance(ENTRIES, [mixed])[0]?.neededBy).toEqual(["t"]);
   });
 
+  test("a target declaring a retyped pin still needs the correction", () => {
+    const retyped: readonly [string, ParamTypeCorrection][] = [
+      [KEY, { ...CORRECTION, retypedUpstream: [["render_target", "string"]] }],
+    ];
+    const later = surface("later", "render", [setRenderTarget(["render_target", "string", "nil"])]);
+    const fixed = surface("fixed", "render", [
+      setRenderTarget(["render_target", "string", "hash"]),
+    ]);
+    expect(paramCorrectionProvenance(retyped, [later, fixed])).toEqual([
+      { key: KEY, sightedIn: ["fixed", "later"], neededBy: ["later"], resolvedIn: ["fixed"] },
+    ]);
+  });
+
+  test("a target declaring neither pin resolves it", () => {
+    const retyped: readonly [string, ParamTypeCorrection][] = [
+      [KEY, { ...CORRECTION, retypedUpstream: [["render_target", "string"]] }],
+    ];
+    const other = surface("t", "render", [setRenderTarget(["string", "render_target"])]);
+    expect(paramCorrectionProvenance(retyped, [other])[0]?.resolvedIn).toEqual(["t"]);
+  });
+
   test("a slot no surface declares stays visible with no sighting", () => {
     const other = surface("t", "render", [
       { name: "render.set_render_target", parameters: [{ name: "target", types: ["x"] }] },

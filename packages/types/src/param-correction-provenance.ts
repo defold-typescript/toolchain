@@ -1,4 +1,5 @@
 import { type ApiModule, parseDefoldApiDoc } from "./api-doc";
+import { correctionPins, pinMatches } from "./correction-pins";
 import type { ParamTypeCorrection } from "./emit-dts";
 import type { ProvenanceSurface } from "./optional-correction-provenance";
 
@@ -11,16 +12,12 @@ export interface ParamTypeProvenance {
 
 const PARAM_SEPARATOR = ":param:";
 
-// `nil` is optionality, which `isDocOptional` owns; the correction replaces only
-// the concrete tokens, so only those are evidence.
-function baseTokens(tokens: readonly string[]): string {
-  return tokens.filter((token) => token !== "nil").join("|");
-}
-
 // A target needs a correction while any declaration of the slot there still
-// states the pinned tokens, so an overload that shows the defect keeps it alive.
-// Any other declared token set — fixed or retyped — no longer carries the
-// contradiction the entry records, and the entry goes once no target needs it.
+// states one of its pins, so an overload that shows the defect keeps it alive.
+// `nil` is optionality, which `isDocOptional` owns, so `pinMatches` compares
+// only the concrete tokens. Any other declared token set — fixed, or retyped
+// without a `retypedUpstream` pin — no longer carries the contradiction the
+// entry records, and the entry goes once no target needs it.
 export function paramCorrectionProvenance(
   entries: readonly [string, ParamTypeCorrection][],
   surfaces: readonly ProvenanceSurface[],
@@ -41,7 +38,7 @@ export function paramCorrectionProvenance(
     const element = key.slice(0, separator);
     const slot = key.slice(separator + PARAM_SEPARATOR.length);
     const namespace = element.slice(0, element.lastIndexOf("."));
-    const pinned = baseTokens(correction.upstream);
+    const pins = correctionPins(correction);
 
     const neededByTarget = new Map<string, boolean>();
     for (const surface of surfaces) {
@@ -51,7 +48,7 @@ export function paramCorrectionProvenance(
         for (const parameter of fn.parameters) {
           if (parameter.name !== slot) continue;
           const needed = neededByTarget.get(surface.target) ?? false;
-          neededByTarget.set(surface.target, needed || baseTokens(parameter.types) === pinned);
+          neededByTarget.set(surface.target, needed || pinMatches(parameter.types, pins));
         }
       }
     }
