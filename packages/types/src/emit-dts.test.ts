@@ -5750,6 +5750,64 @@ describe("STRUCT and TYPEDEF declarations", () => {
     ).toEqual([["b2d.joint", "revolute_definition"]]);
   });
 
+  test("a routed declaration the home already declares keeps the home's copy alone", () => {
+    const handle = (name: string, aliased: string) => ({
+      type: "TYPEDEF",
+      name,
+      parameters: [{ name: "value", doc: "", types: [aliased] }],
+    });
+    const [editor, http] = routeTypeDeclarations([
+      parseDefoldApiDoc({
+        info: { namespace: "editor" },
+        elements: [handle("http.response", "userdata")],
+      }),
+      parseDefoldApiDoc({
+        info: { namespace: "http" },
+        elements: [handle("http.response", "number")],
+      }),
+    ]) as [ApiModule, ApiModule];
+    expect(editor.typedefs).toEqual([]);
+    expect(http.typedefs.map((t) => t.aliasOf)).toEqual([["number"]]);
+  });
+
+  test("a routed declaration two modules carry arrives once, first module winning", () => {
+    const struct = (brief: string) => ({
+      type: "STRUCT",
+      name: "b2d.joint.revolute_definition",
+      brief,
+      members: [{ name: "enable_limit?", doc: "", type: "boolean" }],
+    });
+    const modules = routeTypeDeclarations([
+      parseDefoldApiDoc({ info: { namespace: "b2d" }, elements: [struct("first")] }),
+      parseDefoldApiDoc({ info: { namespace: "b2d.body" }, elements: [struct("second")] }),
+      parseDefoldApiDoc({ info: { namespace: "b2d.joint" }, elements: [] }),
+    ]);
+    expect(modules[2]?.structs?.map((s) => s.brief)).toEqual(["first"]);
+  });
+
+  test("a routed struct sharing a function's name leaves both in the home", () => {
+    const [go, resource] = routeTypeDeclarations([
+      parseDefoldApiDoc({
+        info: { namespace: "go" },
+        elements: [
+          {
+            type: "STRUCT",
+            name: "resource.atlas",
+            brief: "",
+            members: [{ name: "texture", doc: "", type: "string" }],
+          },
+        ],
+      }),
+      parseDefoldApiDoc({
+        info: { namespace: "resource" },
+        elements: [{ type: "FUNCTION", name: "resource.atlas", parameters: [] }],
+      }),
+    ]) as [ApiModule, ApiModule];
+    expect(go.structs).toEqual([]);
+    expect(resource.structs?.map((s) => s.name)).toEqual(["resource.atlas"]);
+    expect(resource.functions.map((fn) => fn.name)).toEqual(["resource.atlas"]);
+  });
+
   test("a declaration no module prefixes nests under its declaring module", () => {
     const modules = routeTypeDeclarations([
       parseDefoldApiDoc({
