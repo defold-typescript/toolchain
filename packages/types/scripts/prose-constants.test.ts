@@ -174,6 +174,58 @@ describe("synthesizeProseConstants", () => {
     expect(semanticConstants(twice)).toEqual(semanticConstants(once));
   });
 
+  describe("a release that stops listing a family", () => {
+    // 1.13.2's shape: `set_vertex_attributes` still documents `attributes`, but
+    // its prose names no constant.
+    const material: ModuleManifestEntry = {
+      namespace: "material",
+      outFile: "material.d.ts",
+      doc: {
+        elements: [
+          {
+            type: "FUNCTION",
+            name: "material.set_vertex_attributes",
+            description: "Set the vertex attributes of a material.",
+            parameters: [{ name: "attributes", doc: "the attribute declarations" }],
+          },
+        ],
+      },
+    };
+    const graphics = (elements: readonly object[]): ModuleManifestEntry => ({
+      namespace: "graphics",
+      outFile: "graphics.d.ts",
+      doc: { elements },
+    });
+    const enumOf = (name: string, members: readonly string[]) => ({
+      type: "ENUM",
+      name,
+      members: members.map((member) => ({ name: member, doc: "", type: "" })),
+    });
+
+    test("with no declaration either, synthesis throws naming the family", () => {
+      expect(() => synthesizeProseConstants([material, graphics([])])).toThrow(
+        "graphics.SEMANTIC_TYPE_",
+      );
+    });
+
+    test("with the members declared as ENUM members, nothing is synthesized", () => {
+      const modules = [
+        material,
+        graphics([
+          enumOf("graphics.SEMANTIC_TYPE", ["graphics.SEMANTIC_TYPE_POSITION"]),
+          enumOf("graphics.DATA_TYPE", ["graphics.DATA_TYPE_FLOAT"]),
+          enumOf("graphics.COORDINATE_SPACE", ["graphics.COORDINATE_SPACE_WORLD"]),
+        ]),
+      ];
+      expect(synthesizeProseConstants(modules)).toEqual(modules);
+    });
+
+    test("a target without the evidence function synthesizes nothing", () => {
+      const modules = [{ ...material, doc: { elements: [] } }, graphics([])];
+      expect(synthesizeProseConstants(modules)).toEqual(modules);
+    });
+  });
+
   test("a module list with no material entry is returned unchanged", () => {
     const modules = loadTargetModules(targetById("defold-1.12.4"));
     expect(synthesizeProseConstants(modules)).toEqual(modules);

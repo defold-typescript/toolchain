@@ -16,6 +16,12 @@ import {
   parseMessagesDoc,
 } from "../src/emit-messages";
 import type { TranslationStore } from "../src/example-store";
+import {
+  type FieldCorrectionGap,
+  type FieldCorrectionTables,
+  fieldCorrectionGaps,
+  formatFieldCorrectionGaps,
+} from "../src/field-correction-coverage";
 import type { IndexBaseSource } from "../src/index-slot-classifications";
 import { wrapAsAmbientGlobal, wrapAsModule } from "../src/publish-dts";
 import type { UrlParameterTable } from "../src/url-parameters";
@@ -452,6 +458,22 @@ function prepareGeneratedModule(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): PreparedGeneratedModule {
+  const { module, dropped } = withheldApiModule(entry);
+  const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
+  const translations = options?.translations ?? loadTranslations();
+  const urlParameters = options?.urlParameters ?? committedUrlParameters();
+  return {
+    module,
+    knownConstantFqns,
+    translations,
+    urlParameters,
+    typeLeaves: entry.typeLeaves,
+    dropped,
+  };
+}
+
+// The parsed module with the entry's `skipFunctions` and `skipOverloads` applied.
+function withheldApiModule(entry: ModuleManifestEntry): { module: ApiModule; dropped: string[] } {
   let module = parseDefoldApiDoc(entry.doc);
   const prefix = `${module.namespace}.`;
   const dropped: string[] = [];
@@ -495,17 +517,31 @@ function prepareGeneratedModule(
   if (module.structs) module.structs = module.structs.filter((s) => !withheldType(s.name));
   module.typedefs = module.typedefs.filter((t) => t.aliasOf === undefined || !withheldType(t.name));
   module = withholdOverloads(module, entry.skipOverloads ?? []);
-  const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
-  const translations = options?.translations ?? loadTranslations();
-  const urlParameters = options?.urlParameters ?? committedUrlParameters();
-  return {
-    module,
-    knownConstantFqns,
-    translations,
-    urlParameters,
-    typeLeaves: entry.typeLeaves,
-    dropped,
-  };
+  return { module, dropped };
+}
+
+// The field corrections one target's runtime entries leave inert: every entry is
+// parsed with its skip rules first, so a withheld overload's slot is not judged.
+export function targetFieldCorrectionGaps(
+  entries: readonly ModuleManifestEntry[],
+  tables?: FieldCorrectionTables,
+): FieldCorrectionGap[] {
+  return fieldCorrectionGaps(
+    entries.map((entry) => withheldApiModule(entry).module),
+    tables,
+  );
+}
+
+export function assertTargetFieldCorrectionCoverage(
+  targetId: string,
+  entries: readonly ModuleManifestEntry[],
+): void {
+  const gaps = targetFieldCorrectionGaps(entries);
+  if (gaps.length > 0) {
+    throw new Error(
+      `target "${targetId}": field corrections no slot or member carries:\n${formatFieldCorrectionGaps(gaps)}`,
+    );
+  }
 }
 
 export function generateModuleDeclaration(
@@ -860,6 +896,16 @@ if (import.meta.main) {
   // would let the guard be deleted or reordered with the line still intact.
   const checked = await assertSrcAugmentationScoping();
   console.log(`src augmentation scoping checked: ${checked} file(s)`);
+  assertTargetFieldCorrectionCoverage(DEFAULT_TARGET.id, MODULE_MANIFEST);
+  for (const target of API_TARGETS) {
+    if (target.default === true || (target.source ?? null) != null) continue;
+    assertTargetFieldCorrectionCoverage(
+      target.id,
+      VERSIONED_MODULE_MANIFEST.filter(
+        (entry) => entry.versionId === target.id && entry.editor !== true,
+      ),
+    );
+  }
 
   const generated = resolve(import.meta.dir, "..", "generated");
   mkdirSync(resolve(generated, "editor-vm"), { recursive: true });
