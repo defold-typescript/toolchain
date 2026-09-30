@@ -923,23 +923,44 @@ export async function assertSrcAugmentationScoping(
   return files.length;
 }
 
-if (import.meta.main) {
+export interface RegenIo {
+  mkdir(path: string): void;
+  write(path: string, contents: string): void;
+  log(line: string): void;
+}
+
+export const nodeRegenIo: RegenIo = {
+  mkdir: (path) => mkdirSync(path, { recursive: true }),
+  write: (path, contents) => writeFileSync(path, contents),
+  log: (line) => console.log(line),
+};
+
+export async function regenerate(
+  options: { io?: RegenIo; fieldCorrectionTables?: FieldCorrectionTables } = {},
+): Promise<void> {
+  const io = options.io ?? nodeRegenIo;
   // Ordering contract: `regen-entrypoint.test.ts` reads this line's prefix to
   // prove the guard runs before the first write. The count comes from the guard's
   // own return value so the marker cannot be printed without a completed guard
   // run — do not simplify it back to `SRC_AUGMENTATION_MODULES.length`, which
   // would let the guard be deleted or reordered with the line still intact.
   const checked = await assertSrcAugmentationScoping();
-  console.log(`src augmentation scoping checked: ${checked} file(s)`);
+  io.log(`src augmentation scoping checked: ${checked} file(s)`);
   // Ordering contract: `regen-entrypoint.test.ts` reads this line's prefix to
   // prove the coverage gate runs before the first write. Print the count the gate
   // returns — never `committedFieldCorrectionTargets().length` or any other count
   // not taken from the gate, which would keep the line alive with the gate gone.
-  const targets = assertCommittedFieldCorrectionCoverage();
-  console.log(`field correction coverage checked: ${targets} target(s)`);
+  // The `regenerate` rejection test injects stranded tables and asserts that no
+  // directory or file is written, so the gate must receive `fieldCorrectionTables`
+  // and throw before the first `io.mkdir`.
+  const targets = assertCommittedFieldCorrectionCoverage(
+    committedFieldCorrectionTargets(),
+    options.fieldCorrectionTables,
+  );
+  io.log(`field correction coverage checked: ${targets} target(s)`);
 
   const generated = resolve(import.meta.dir, "..", "generated");
-  mkdirSync(resolve(generated, "editor-vm"), { recursive: true });
+  io.mkdir(resolve(generated, "editor-vm"));
   for (const entry of [
     ...MODULE_MANIFEST,
     ...EDITOR_MODULE_MANIFEST,
@@ -947,29 +968,29 @@ if (import.meta.main) {
   ]) {
     const { contents, dropped } = generateModuleDeclaration(entry);
     if (dropped.length > 0) {
-      console.log(`note: dropped skipped member(s) from ${entry.namespace}: ${dropped.join(", ")}`);
+      io.log(`note: dropped skipped member(s) from ${entry.namespace}: ${dropped.join(", ")}`);
     }
     const out = resolve(generated, entry.outFile);
-    writeFileSync(out, contents);
-    console.log(`wrote ${out}`);
+    io.write(out, contents);
+    io.log(`wrote ${out}`);
   }
   const messagesOut = resolve(generated, MESSAGES_MANIFEST.outFile);
-  writeFileSync(messagesOut, generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST));
-  console.log(`wrote ${messagesOut}`);
+  io.write(messagesOut, generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST));
+  io.log(`wrote ${messagesOut}`);
 
   // Imported here rather than at module scope: its fixtures are not published,
   // and `resolve` loads this module from an installed package.
   const { EXTENSION_GOLDENS_DIR, EXTENSION_GOLDEN_MANIFEST } = await import("./extension-goldens");
   const goldens = resolve(PACKAGE_ROOT, EXTENSION_GOLDENS_DIR);
-  mkdirSync(goldens, { recursive: true });
+  io.mkdir(goldens);
   for (const entry of EXTENSION_GOLDEN_MANIFEST) {
     const { contents, dropped } = generateModuleDeclaration(entry);
     if (dropped.length > 0) {
-      console.log(`note: dropped skipped member(s) from ${entry.namespace}: ${dropped.join(", ")}`);
+      io.log(`note: dropped skipped member(s) from ${entry.namespace}: ${dropped.join(", ")}`);
     }
     const out = resolve(goldens, entry.outFile);
-    writeFileSync(out, contents);
-    console.log(`wrote ${out}`);
+    io.write(out, contents);
+    io.log(`wrote ${out}`);
   }
 
   // The target's own `generatedDir` is where a version lands, so a declaring
@@ -986,19 +1007,19 @@ if (import.meta.main) {
   for (const entry of VERSIONED_MODULE_MANIFEST) {
     const { contents, dropped } = generateModuleDeclaration(entry);
     if (dropped.length > 0) {
-      console.log(
+      io.log(
         `note: dropped skipped member(s) from ${entry.versionId}/${entry.namespace}: ${dropped.join(", ")}`,
       );
     }
     const out = resolve(versionDirOf(entry.versionId), entry.outFile);
-    mkdirSync(dirname(out), { recursive: true });
-    writeFileSync(out, contents);
-    console.log(`wrote ${out}`);
+    io.mkdir(dirname(out));
+    io.write(out, contents);
+    io.log(`wrote ${out}`);
   }
   for (const target of versionedTargets) {
     const indexOut = resolve(versionDirOf(target.id), "index.d.ts");
-    mkdirSync(dirname(indexOut), { recursive: true });
-    writeFileSync(
+    io.mkdir(dirname(indexOut));
+    io.write(
       indexOut,
       generateVersionIndex(
         target.id,
@@ -1006,24 +1027,28 @@ if (import.meta.main) {
         versionSrcAugmentationImports(target),
       ),
     );
-    console.log(`wrote ${indexOut}`);
+    io.log(`wrote ${indexOut}`);
 
     const editorKinds = targetKindManifest(target).filter((entry) => entry.only !== undefined);
     if (editorKinds.length === 0) continue;
     const versionKindsDir = resolve(versionDirOf(target.id), "kinds");
-    mkdirSync(versionKindsDir, { recursive: true });
+    io.mkdir(versionKindsDir);
     for (const entry of editorKinds) {
       const out = resolve(versionKindsDir, `${entry.kind}.d.ts`);
-      writeFileSync(out, generateKindIndex(entry.kind, target));
-      console.log(`wrote ${out}`);
+      io.write(out, generateKindIndex(entry.kind, target));
+      io.log(`wrote ${out}`);
     }
   }
 
   const kindsDir = resolve(generated, "kinds");
-  mkdirSync(kindsDir, { recursive: true });
+  io.mkdir(kindsDir);
   for (const entry of KIND_MODULE_MANIFEST) {
     const out = resolve(kindsDir, `${entry.kind}.d.ts`);
-    writeFileSync(out, generateKindIndex(entry.kind));
-    console.log(`wrote ${out}`);
+    io.write(out, generateKindIndex(entry.kind));
+    io.log(`wrote ${out}`);
   }
+}
+
+if (import.meta.main) {
+  await regenerate();
 }
