@@ -45,6 +45,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **`render.CONTEXT_EVENT_CONTEXT_LOST` and `render.CONTEXT_EVENT_CONTEXT_RESTORED` have their own API reference entries**, on every Defold version whose engine registers them.
 - **Every TypeScript example in the API reference has a Lua tab beside it** showing the engine's original sample, in function examples and in code samples inside descriptions and parameter docs; the selected tab's badge is highlighted.
 - **The ten `in.*` library types are checked against `britzl/defold-input` `4.8.0`**, and their API reference pages name that tag; the declarations are unchanged.
+- **Library parameters typed as string-keyed tables accept an object literal as well as a `LuaTable`**, such as the `components` of `decore.create` and the `nodes` of `panthera.create_gui`; tables a library returns stay `LuaTable`.
 - **[druid](/api/druid) types follow `Insality/druid` `1.4.0`**: the button, drag, scroll, input and slider styles take optional hover cursors, such as `druid.druid_button_style.ON_HOVER_CURSOR`, a slider exposes its `druid.druid_slider.hover` component, and rich text word metrics report `druid.druid_rich_text_metrics.visible_width`.
 
 ### Fixed

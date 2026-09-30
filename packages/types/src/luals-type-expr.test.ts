@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { mapLualsExpression } from "./luals-type-expr";
+import { mapLualsCallSignatureExpression, mapLualsExpression } from "./luals-type-expr";
 
 const LEAVES: Readonly<Record<string, string>> = {
   string: "string",
   integer: "number",
+  number: "number",
+  hash: "Hash",
   nil: "undefined",
   "http.server.request": "HttpServerRequest",
   "http.response": "HttpResponse",
@@ -64,5 +66,70 @@ describe("mapLualsExpression unresolved leaves", () => {
       ts: "LuaTable<string, unknown> | undefined",
       unknowns: ["buffer_data"],
     });
+  });
+});
+
+describe("mapLualsExpression position-aware tables", () => {
+  const input = (token: string) => mapLualsExpression(token, resolveLeaf, "input").ts;
+  const output = (token: string) => mapLualsExpression(token, resolveLeaf, "output").ts;
+
+  test("a string-keyed table widens to accept an object literal only in input position", () => {
+    expect(input("table<string|hash, number>")).toBe(
+      "LuaTable<string | Hash, number> | Record<string, number>",
+    );
+    expect(output("table<string|hash, number>")).toBe("LuaTable<string | Hash, number>");
+    expect(map("table<string|hash, number>").ts).toBe("LuaTable<string | Hash, number>");
+  });
+
+  test("a hash-only key cannot carry an object literal's keys, so it never widens", () => {
+    expect(input("table<hash, number>")).toBe("LuaTable<Hash, number>");
+    expect(output("table<hash, number>")).toBe("LuaTable<Hash, number>");
+  });
+
+  test("a nested string-keyed table widens at every level in input position and none in output", () => {
+    expect(input("table<string, table<string, number>>")).toBe(
+      "LuaTable<string, LuaTable<string, number> | Record<string, number>> | Record<string, LuaTable<string, number> | Record<string, number>>",
+    );
+    expect(output("table<string, table<string, number>>")).toBe(
+      "LuaTable<string, LuaTable<string, number>>",
+    );
+  });
+
+  test("input position reaches through optionals, unions, arrays and inline records", () => {
+    expect(input("table<string, number>?")).toBe(
+      "LuaTable<string, number> | Record<string, number> | undefined",
+    );
+    expect(input("table<string, number>[]")).toBe(
+      "(LuaTable<string, number> | Record<string, number>)[]",
+    );
+    expect(input("{ values: table<string, number> }")).toBe(
+      "{ values: LuaTable<string, number> | Record<string, number> }",
+    );
+  });
+
+  test("a callback's params are handed over by the engine, its return is supplied by the caller", () => {
+    expect(input("fun(t: table<string, number>): table<string, number>")).toBe(
+      "(t: LuaTable<string, number>) => LuaTable<string, number> | Record<string, number>",
+    );
+    expect(output("fun(t: table<string, number>): table<string, number>")).toBe(
+      "(t: LuaTable<string, number>) => LuaTable<string, number>",
+    );
+  });
+
+  test("a widened table maps its value once, so an unknown leaf is reported once", () => {
+    expect(mapLualsExpression("table<string, buffer_data>", resolveLeaf, "input")).toEqual({
+      ts: "LuaTable<string, unknown> | Record<string, unknown>",
+      unknowns: ["buffer_data"],
+    });
+  });
+
+  test("a call signature keeps its params unwidened and widens its return only in input position", () => {
+    const token = "fun(t: table<string, number>): table<string, number>";
+    expect(mapLualsCallSignatureExpression(token, resolveLeaf).ts).toBe(
+      "(t: LuaTable<string, number>): LuaTable<string, number>",
+    );
+    expect(mapLualsCallSignatureExpression(token, resolveLeaf, "input").ts).toBe(
+      "(t: LuaTable<string, number>): LuaTable<string, number> | Record<string, number>",
+    );
   });
 });
