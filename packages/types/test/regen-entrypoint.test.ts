@@ -5,8 +5,11 @@ import { resolve } from "node:path";
 import {
   assertSrcAugmentationScoping,
   committedFieldCorrectionTargets,
+  type RegenIo,
+  regenerate,
   SRC_AUGMENTATION_MODULES,
 } from "../scripts/regen";
+import type { FieldCorrectionTables } from "../src/field-correction-coverage";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
@@ -78,5 +81,49 @@ describe("the regeneration entry point", () => {
     expect(covered).toBeLessThan(firstWrite);
     const targets = (lines[covered] ?? "").slice(COVERAGE_CHECKED_PREFIX.length).match(/\d+/)?.[0];
     expect(targets).toBe(String(committedFieldCorrectionTargets().length));
+  });
+});
+
+interface Recording {
+  readonly mkdirs: string[];
+  readonly writes: string[];
+  readonly logs: string[];
+}
+
+function recordingIo(): { io: RegenIo; recording: Recording } {
+  const recording: Recording = { mkdirs: [], writes: [], logs: [] };
+  return {
+    recording,
+    io: {
+      mkdir: (path) => recording.mkdirs.push(path),
+      write: (path) => recording.writes.push(path),
+      log: (line) => recording.logs.push(line),
+    },
+  };
+}
+
+describe("regenerate", () => {
+  // `go.get_position` is declared by every committed target and has no `nosuch`
+  // param, so every target reports the key as stranded.
+  const STRANDED = "go.get_position:param:nosuch:field";
+  const stranded: FieldCorrectionTables = {
+    required: new Map([[STRANDED, {}]]),
+    list: new Map(),
+    optionality: new Map(),
+  };
+
+  test("a stranded field correction rejects before any directory or file is written", async () => {
+    const { io, recording } = recordingIo();
+    const error = await regenerate({ io, fieldCorrectionTables: stranded }).then(
+      () => undefined,
+      (reason: unknown) => reason,
+    );
+    expect(error).toBeInstanceOf(Error);
+    const message = (error as Error).message;
+    expect(message).toContain(STRANDED);
+    for (const { id } of committedFieldCorrectionTargets()) expect(message).toContain(id);
+    expect(recording.writes).toEqual([]);
+    expect(recording.mkdirs).toEqual([]);
+    expect(recording.logs.some((line) => line.startsWith(COVERAGE_CHECKED_PREFIX))).toBe(false);
   });
 });
