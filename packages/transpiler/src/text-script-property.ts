@@ -1,16 +1,18 @@
 import * as ts from "typescript";
+import { findDirectGoPropertyCalls } from "./go-property-direct-call";
 import { factoryHooks, isPropertiesHook, propertyMembers } from "./lifecycle-erasure";
 
 export interface TextScriptPropertyFinding {
   readonly name: string;
   readonly file: string;
-  /** 1-based line of the default's initializer. */
+  /** 1-based line of the default's initializer or the direct call's value. */
   readonly line: number;
-  /** 1-based column of the default's initializer. */
+  /** 1-based column of the default's initializer or the direct call's value. */
   readonly column: number;
 }
 
-// The script properties whose default may hold a string. Defold registers a
+// The script properties whose default may hold a string, declared either in a
+// `properties` field or by a direct `go.property` call. Defold registers a
 // string `go.property` only from 1.13.2, so a build for an older target must
 // refuse them; typed rather than literal-driven, so a const holding a string
 // counts.
@@ -26,6 +28,7 @@ export function findTextScriptProperties(
     if (sourceFile === undefined) {
       continue;
     }
+    const located: { name: string; value: ts.Node }[] = [];
     const visit = (node: ts.Node): void => {
       if (ts.isCallExpression(node)) {
         const hooks = factoryHooks(node, checker);
@@ -34,24 +37,34 @@ export function findTextScriptProperties(
             continue;
           }
           for (const { name, initializer } of propertyMembers(property)) {
-            if (!mayHoldString(checker.getTypeAtLocation(initializer), checker)) {
-              continue;
+            if (mayHoldString(checker.getTypeAtLocation(initializer), checker)) {
+              located.push({ name, value: initializer });
             }
-            const position = sourceFile.getLineAndCharacterOfPosition(
-              initializer.getStart(sourceFile),
-            );
-            findings.push({
-              name,
-              file,
-              line: position.line + 1,
-              column: position.character + 1,
-            });
           }
         }
       }
       ts.forEachChild(node, visit);
     };
     visit(sourceFile);
+    for (const call of findDirectGoPropertyCalls(sourceFile)) {
+      const [nameArgument, value] = call.arguments;
+      if (nameArgument === undefined || value === undefined) {
+        continue;
+      }
+      if (mayHoldString(checker.getTypeAtLocation(value), checker)) {
+        const name = ts.isStringLiteralLike(nameArgument)
+          ? nameArgument.text
+          : nameArgument.getText(sourceFile);
+        located.push({ name, value });
+      }
+    }
+    located.sort(
+      (left, right) => left.value.getStart(sourceFile) - right.value.getStart(sourceFile),
+    );
+    for (const { name, value } of located) {
+      const position = sourceFile.getLineAndCharacterOfPosition(value.getStart(sourceFile));
+      findings.push({ name, file, line: position.line + 1, column: position.character + 1 });
+    }
   }
 
   return findings;

@@ -136,5 +136,7 @@ declare global {
     function property(name: string, value: Vector4): ScriptProperty<Vector4>;
     /** @deprecated Declare quaternions via the `defineScript({ properties })` field. */
     function property(name: string, value: Quaternion): ScriptProperty<Quaternion>;
+    /** @deprecated Declare text via the `defineScript({ properties })` field; needs Defold 1.13.2. */
+    function property(name: string, value: string): ScriptProperty<string>;
   }
 }
