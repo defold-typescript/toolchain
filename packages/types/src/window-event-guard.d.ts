@@ -7,13 +7,10 @@
 // untyped `data` payload (only `WINDOW_EVENT_RESIZED` carries fields). It mirrors
 // `isMessage` for `on_message`; the transpiler lowers the call to a bare
 // `event == window.WINDOW_EVENT_*` (window-event-guard-lowering.ts), so this
-// package emits no runtime Lua.
-type WindowEventKind =
-  | typeof window.WINDOW_EVENT_FOCUS_LOST
-  | typeof window.WINDOW_EVENT_FOCUS_GAINED
-  | typeof window.WINDOW_EVENT_RESIZED
-  | typeof window.WINDOW_EVENT_ICONFIED
-  | typeof window.WINDOW_EVENT_DEICONIFIED;
+// package emits no runtime Lua. The event kinds are read off the loaded
+// surface's own `window` namespace, so each Defold version accepts exactly the
+// `WINDOW_EVENT_*` constants it declares.
+type WindowEventKind = (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>];
 
 type WindowEventData<K extends WindowEventKind> = K extends typeof window.WINDOW_EVENT_RESIZED
   ? { width: number; height: number }
@@ -22,8 +19,8 @@ type WindowEventData<K extends WindowEventKind> = K extends typeof window.WINDOW
 declare global {
   /**
    * Type guard for a `window.set_listener` callback: narrows the untyped `data`
-   * payload to its event-specific shape when `event` matches a known
-   * `WINDOW_EVENT_*` constant. The engine hands `event` and `data` as separate
+   * payload to its event-specific shape when `event` matches one of the
+   * `WINDOW_EVENT_*` constants the selected Defold version declares. The engine hands `event` and `data` as separate
    * params and the constants are branded numbers, so TS cannot auto-narrow `data`
    * from an `event === window.WINDOW_EVENT_RESIZED` check — this guard
    * re-introduces the discriminant. Only `WINDOW_EVENT_RESIZED` carries fields

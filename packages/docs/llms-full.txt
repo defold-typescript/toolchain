@@ -7702,8 +7702,8 @@ These still compile and run against the 1.13.2 surface.
 The misspelled `window.WINDOW_EVENT_ICONFIED` is deprecated in favor of
 `window.WINDOW_EVENT_ICONIFIED`, which the reference now documents. The engine
 registers both with the same value, and the declarations give them the same
-type, so either compares equal to a `window.set_listener` event. Switch to the
-correct spelling. The [1.13.1 `window` page](/api/defold-1.13.1/window) shows only
+type, so either compares equal to a `window.set_listener` event and either works
+as the `isWindowEvent` constant. Switch to the correct spelling. The [1.13.1 `window` page](/api/defold-1.13.1/window) shows only
 the old name.
 
 - **`label.get_text`, `label.set_text`.** Deprecated in favor of the label
@@ -11287,7 +11287,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_safe_area(): window.safe_area;
 - function get_size(): LuaMultiReturn<[number, number]>;
 - function set_dim_mode(mode: window.DimModeStateSettable): void;
-- function set_listener(callback: ((self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void) | undefined): void;
+- function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined): void;
 - function set_mouse_lock(flag: boolean): void;
 - function set_position(x: number, y: number): void;
 - function set_size(width: number, height: number): void;
