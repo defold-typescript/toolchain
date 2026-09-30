@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import resource113Doc from "../fixtures/defold-1.13.1/resource_doc.json" with { type: "json" };
 import {
-  MODULE_MANIFEST,
+  type ApiTarget,
+  assertCommittedFieldCorrectionCoverage,
+  committedFieldCorrectionTargets,
+  loadApiTargets,
+  type ModuleManifestEntry,
   targetFieldCorrectionGaps,
-  VERSIONED_MODULE_MANIFEST,
+  type VersionedModuleManifestEntry,
 } from "../scripts/regen";
 import slots from "../test/fixtures/defold-1.13.2-struct-slots.json" with { type: "json" };
 import { type ApiModule, parseDefoldApiDoc } from "./api-doc";
@@ -132,25 +136,110 @@ describe("fieldCorrectionGaps", () => {
   });
 });
 
-describe("targetFieldCorrectionGaps", () => {
-  test("every committed target reports no gap", () => {
-    const byTarget = new Map<string, typeof MODULE_MANIFEST>([["default", MODULE_MANIFEST]]);
-    for (const entry of VERSIONED_MODULE_MANIFEST) {
-      if (entry.editor === true) continue;
-      byTarget.set(entry.versionId, [...(byTarget.get(entry.versionId) ?? []), entry]);
+function entries113_2(): ModuleManifestEntry[] {
+  return [slots.resource, slots.b2d, slots["b2d.world"], slots.sys].map((doc) => ({
+    namespace: doc.info.namespace,
+    doc,
+    outFile: `${doc.info.namespace}.d.ts`,
+  }));
+}
+
+function syntheticTarget(id: string, extra: Partial<ApiTarget> = {}): ApiTarget {
+  return {
+    id,
+    fixturesDir: `fixtures/${id}`,
+    generatedDir: `generated/${id}`,
+    coreTypesImport: "../src/core-types",
+    modules: [],
+    ...extra,
+  };
+}
+
+const STRANDED_SOUND_DATA = "resource.create_sound_data:param:options:data";
+const STRANDED_ATLAS = "resource.create_atlas:param:table:geometries";
+
+function rejection(
+  targets: Parameters<typeof assertCommittedFieldCorrectionCoverage>[0],
+  stranded: FieldCorrectionTables,
+): string {
+  try {
+    assertCommittedFieldCorrectionCoverage(targets, stranded);
+  } catch (error) {
+    expect(error).toBeInstanceOf(Error);
+    return (error as Error).message;
+  }
+  throw new Error("expected the coverage gate to reject");
+}
+
+describe("committedFieldCorrectionTargets", () => {
+  test("groups the default runtime surface and each fixture-backed version's runtime entries", () => {
+    const runtime = entries113_2();
+    const versioned = ["v-fixture", "v-refdoc"].flatMap((versionId) => [
+      { ...runtime[0], versionId, editor: true },
+      { ...runtime[1], versionId },
+    ]) as VersionedModuleManifestEntry[];
+    const groups = committedFieldCorrectionTargets(
+      [
+        syntheticTarget("v-default", { default: true }),
+        syntheticTarget("v-fixture"),
+        syntheticTarget("v-refdoc", { source: { kind: "ref-doc", version: "9.9.9" } }),
+      ],
+      runtime,
+      versioned,
+    );
+    expect(groups).toEqual([
+      { id: "v-default", entries: runtime },
+      { id: "v-fixture", entries: [versioned[1]] },
+    ]);
+  });
+
+  test("the production grouping judges every committed target and no editor document", () => {
+    const targets = loadApiTargets();
+    const groups = committedFieldCorrectionTargets();
+    const ids = groups.map((group) => group.id);
+    expect(ids).toContain((targets.find((target) => target.default === true) as ApiTarget).id);
+    expect(groups.length).toBeGreaterThan(1);
+    const sourceBacked = targets.filter((target) => (target.source ?? null) != null);
+    expect(sourceBacked.length).toBeGreaterThan(0);
+    for (const target of sourceBacked) expect(ids).not.toContain(target.id);
+    for (const group of groups) {
+      expect(group.entries.length).toBeGreaterThan(0);
+      for (const entry of group.entries) expect("editor" in entry && entry.editor).not.toBe(true);
     }
-    expect(byTarget.size).toBeGreaterThan(1);
-    for (const entries of byTarget.values()) {
-      expect(targetFieldCorrectionGaps(entries)).toEqual([]);
+  });
+});
+
+describe("assertCommittedFieldCorrectionCoverage", () => {
+  test("every committed target passes, and the gate reports how many it judged", () => {
+    expect(assertCommittedFieldCorrectionCoverage()).toBe(committedFieldCorrectionTargets().length);
+  });
+
+  test("a stranded correction rejects with every failing target and key named", () => {
+    const stranded = tables({ required: [STRANDED_SOUND_DATA], list: [STRANDED_ATLAS] });
+    const judged = [
+      { id: "first-target", entries: entries113_2() },
+      { id: "second-target", entries: entries113_2() },
+    ];
+    const message = rejection(judged, stranded);
+    for (const needle of ["first-target", "second-target", STRANDED_SOUND_DATA, STRANDED_ATLAS]) {
+      expect(message).toContain(needle);
     }
   });
 
+  test("a target's skip rules withhold the slot a stranded correction names", () => {
+    const stranded = tables({ required: [STRANDED_SOUND_DATA], list: [STRANDED_ATLAS] });
+    const entries = entries113_2().map((entry) =>
+      entry.namespace === "resource" ? { ...entry, skipFunctions: ["create_sound_data"] } : entry,
+    );
+    const message = rejection([{ id: "skipping-target", entries }], stranded);
+    expect(message).toContain(STRANDED_ATLAS);
+    expect(message).not.toContain(STRANDED_SOUND_DATA);
+  });
+});
+
+describe("targetFieldCorrectionGaps", () => {
   test("a 1.13.2 entry set with a stranded correction reports it", () => {
-    const entries = [slots.resource, slots.b2d, slots["b2d.world"], slots.sys].map((doc) => ({
-      namespace: doc.info.namespace,
-      doc,
-      outFile: `${doc.info.namespace}.d.ts`,
-    }));
+    const entries = entries113_2();
     expect(targetFieldCorrectionGaps(entries)).toEqual([]);
     const gaps = targetFieldCorrectionGaps(
       entries,
