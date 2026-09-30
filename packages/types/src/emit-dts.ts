@@ -67,6 +67,10 @@ export interface EmitOptions {
   // handles), resolved ahead of it both as whole tokens and as leaves inside a
   // composite. Read by the default mapper together with the declared types.
   typeLeaves?: Readonly<Record<string, string>>;
+  // Constant FQNs the target's own engine bindings register, which gate the
+  // `UNDOCUMENTED_CONSTANTS` back-fill. Absent for a surface with no vendored
+  // bindings (a ref-doc target), where every entry the ref-doc omits is emitted.
+  registeredConstants?: ReadonlySet<string>;
 }
 
 export const TS_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
@@ -3752,7 +3756,8 @@ export function declaredTypePaths(modules: readonly ApiModule[]): Map<string, st
   return paths;
 }
 
-export function emitDeclarations(module: ApiModule, options?: EmitOptions): string {
+export function emitDeclarations(documented: ApiModule, options?: EmitOptions): string {
+  const module = withUndocumentedConstants(documented, options?.registeredConstants);
   const prefix = `${module.namespace}.`;
 
   const constantsByFqn = new Map(module.constants.map((c) => [c.name, c]));
@@ -4047,7 +4052,11 @@ export interface SymbolSignature {
  * line, primary first, the same convention as the authored fold; its
  * `slotTypes` describe the primary arm only.
  */
-export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): SymbolSignature[] {
+export function emitSymbolSignatures(
+  documented: ApiModule,
+  options?: EmitOptions,
+): SymbolSignature[] {
+  const module = withUndocumentedConstants(documented, options?.registeredConstants);
   const prefix = `${module.namespace}.`;
   const constantsByFqn = new Map(module.constants.map((c) => [c.name, c]));
   const knownConstantFqns = options?.knownConstantFqns;
@@ -4532,6 +4541,44 @@ export const NIL_CONSTANTS: ReadonlyMap<string, string> = new Map([
     "render_script.cpp registers no such field; render.set_render_target reads the nil as the default target",
   ],
 ]);
+
+// Constants the engine registers but some release's ref-doc omits, keyed by FQN
+// with the doc the emit carries. A surface gains an entry only where its ref-doc
+// leaves the constant out and its engine bindings register it.
+// `undocumented-constant-provenance.test.ts` reds an entry no committed target
+// still needs.
+export const UNDOCUMENTED_CONSTANTS: ReadonlyMap<string, { readonly doc: string }> = new Map([
+  [
+    "render.CONTEXT_EVENT_CONTEXT_LOST",
+    {
+      doc: "The rendering context was lost. Rendering is paused and all graphics resources become invalid. Passed to the `render.set_listener` callback.",
+    },
+  ],
+  [
+    "render.CONTEXT_EVENT_CONTEXT_RESTORED",
+    {
+      doc: "The rendering context was restored. Rendering is still paused and graphics resources are still invalid, but can be reloaded. Passed to the `render.set_listener` callback.",
+    },
+  ],
+]);
+
+function withUndocumentedConstants(
+  module: ApiModule,
+  registered: ReadonlySet<string> | undefined,
+): ApiModule {
+  const prefix = `${module.namespace}.`;
+  const documented = new Set(module.constants.map((c) => c.name));
+  const backfill: ApiConstant[] = [];
+  for (const [fqn, { doc }] of UNDOCUMENTED_CONSTANTS) {
+    if (!fqn.startsWith(prefix) || fqn.slice(prefix.length).includes(".")) continue;
+    if (documented.has(fqn)) continue;
+    if (registered !== undefined && !registered.has(fqn)) continue;
+    backfill.push({ name: fqn, brief: doc, description: "" });
+  }
+  return backfill.length === 0
+    ? module
+    : { ...module, constants: [...module.constants, ...backfill] };
+}
 
 // `constant` is the module's own element for `fqn`, absent for a constant another
 // module declares; an `ENUM` member's value type rides on it.

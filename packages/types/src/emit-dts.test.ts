@@ -40,9 +40,16 @@ import tilemapDoc from "../fixtures/tilemap_doc.json" with { type: "json" };
 import typesDoc from "../fixtures/types_doc.json" with { type: "json" };
 import vmathDoc from "../fixtures/vmath_doc.json" with { type: "json" };
 import windowDoc from "../fixtures/window_doc.json" with { type: "json" };
+import { loadApiTargets, loadSrcAugmentations } from "../scripts/regen";
 import structSlots from "../test/fixtures/defold-1.13.2-struct-slots.json" with { type: "json" };
 import urlParameterTable from "../url-parameters.json" with { type: "json" };
-import { type ApiFunction, type ApiModule, type ApiParameter, parseDefoldApiDoc } from "./api-doc";
+import {
+  type ApiConstant,
+  type ApiFunction,
+  type ApiModule,
+  type ApiParameter,
+  parseDefoldApiDoc,
+} from "./api-doc";
 import { DEFOLD_TYPE_MAP } from "./core-types";
 import { htmlToCodeText } from "./doc-comment";
 import {
@@ -76,6 +83,7 @@ import {
   TABLE_SLOT_CURATIONS,
   TABLE_SLOT_FIELD_ADDITIONS,
   type TableField,
+  UNDOCUMENTED_CONSTANTS,
 } from "./emit-dts";
 import { hashExampleSource } from "./example-store";
 import type { UrlParameterTable } from "./url-parameters";
@@ -6211,5 +6219,87 @@ describe("upstream-pinned corrections", () => {
     const line = signature(emitted("render", setRenderTarget), "set_render_target");
     expect(line.match(/\| Hash\b/g)).toHaveLength(1);
     expect(line.match(/\| string\b/g)).toHaveLength(1);
+  });
+});
+
+describe("UNDOCUMENTED_CONSTANTS back-fill", () => {
+  const LOST = "render.CONTEXT_EVENT_CONTEXT_LOST";
+  const LOST_DECL = "const CONTEXT_EVENT_CONTEXT_LOST:";
+  const renderModule = (constants: ApiConstant[]): ApiModule => ({
+    namespace: "render",
+    brief: "",
+    description: "",
+    functions: [],
+    variables: [],
+    constants,
+    properties: [],
+    typedefs: [],
+  });
+  const count = (text: string, needle: string): number => text.split(needle).length - 1;
+  const tableDoc = (fqn: string): string => {
+    const entry = UNDOCUMENTED_CONSTANTS.get(fqn);
+    if (!entry) throw new Error(`${fqn} is not in UNDOCUMENTED_CONSTANTS`);
+    return entry.doc;
+  };
+
+  test("a registered constant the ref-doc omits emits once, with the table doc and its brand", () => {
+    const out = emitDeclarations(renderModule([]), { registeredConstants: new Set([LOST]) });
+    expect(count(out, LOST_DECL)).toBe(1);
+    expect(out).toContain(`${LOST_DECL} number & { readonly __brand: "${LOST}" };`);
+    const firstSentence = tableDoc(LOST).split(".")[0] ?? "";
+    expect(firstSentence.length).toBeGreaterThan(0);
+    expect(jsdocBefore(out, LOST_DECL)).toContain(firstSentence);
+  });
+
+  test("a constant the target's engine does not register is not emitted", () => {
+    const out = emitDeclarations(renderModule([]), { registeredConstants: new Set() });
+    expect(out).not.toContain(LOST_DECL);
+  });
+
+  test("with no engine bindings to consult, every entry the ref-doc omits is emitted", () => {
+    const out = emitDeclarations(renderModule([]));
+    for (const fqn of UNDOCUMENTED_CONSTANTS.keys()) {
+      if (!fqn.startsWith("render.")) continue;
+      expect(count(out, `const ${fqn.slice("render.".length)}:`)).toBe(1);
+    }
+  });
+
+  test("a constant the ref-doc declares emits once, from the ref-doc", () => {
+    const upstream = "Upstream wording for the lost context event.";
+    const out = emitDeclarations(renderModule([{ name: LOST, brief: upstream, description: "" }]), {
+      registeredConstants: new Set([LOST]),
+    });
+    expect(count(out, LOST_DECL)).toBe(1);
+    const block = jsdocBefore(out, LOST_DECL);
+    expect(block).toContain(upstream);
+    expect(block).not.toContain(tableDoc(LOST).split(".")[0] ?? "");
+  });
+
+  test("the authoritative signatures carry the back-filled constant too", () => {
+    const signatures = emitSymbolSignatures(renderModule([]), {
+      registeredConstants: new Set([LOST]),
+    });
+    expect(signatures.filter((s) => s.identity.name === LOST)).toHaveLength(1);
+  });
+
+  test("every committed target's render surface declares each context event exactly once", () => {
+    const augmentations = loadSrcAugmentations().map((file) => file.contents);
+    const committed = loadApiTargets().filter((target) => (target.source ?? null) === null);
+    expect(committed.length).toBeGreaterThan(0);
+    for (const target of committed) {
+      const dir =
+        target.default === true
+          ? GENERATED_DIR
+          : resolve(import.meta.dir, "..", target.generatedDir);
+      const surface = [readFileSync(join(dir, "render.d.ts"), "utf8"), ...augmentations];
+      for (const name of ["CONTEXT_EVENT_CONTEXT_LOST", "CONTEXT_EVENT_CONTEXT_RESTORED"]) {
+        const declared = surface.reduce((n, text) => n + count(text, `const ${name}:`), 0);
+        expect({ target: target.id, name, declared }).toEqual({
+          target: target.id,
+          name,
+          declared: 1,
+        });
+      }
+    }
   });
 });
