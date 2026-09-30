@@ -241,6 +241,11 @@ const EDITOR_TYPE_MAP: Readonly<Record<string, string>> = {
   // `string[`, this token means one thing everywhere it appears — a list of
   // values to render — so `unknown[]` is sound at all three of its slots.
   "any[": "unknown[]",
+  // 1.13.2 names the same handles with their namespace prefix, slot for slot.
+  "editor.command": 'Opaque<"command">',
+  "editor.component": 'Opaque<"component">',
+  "editor.transaction_step": 'Opaque<"transaction_step">',
+  "editor.message": 'Opaque<"message">',
 };
 
 function mapEditorType(token: string): string {

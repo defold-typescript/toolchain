@@ -116,6 +116,15 @@ export {
   type ScriptProperty,
 } from "./lifecycle";
 export {
+  LUALS_VARARG_TOKEN,
+  type LualsLeafResolver,
+  type LualsMapResult,
+  mapLualsCallSignatureExpression,
+  mapLualsExpression,
+  matchBracket,
+  splitTopLevel,
+} from "./luals-type-expr";
+export {
   type ModuleWrapOptions,
   type WrapOptions,
   wrapAsAmbientGlobal,

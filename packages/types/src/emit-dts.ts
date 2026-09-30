@@ -1,3 +1,4 @@
+import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
 import { type ApiSymbolIdentity, normalizedFunctionSignature } from "./api-availability";
 import type {
   ApiConstant,
@@ -25,6 +26,7 @@ import {
   indexBaseNoteResolver,
   OVERRIDE_RETURN_SLOT,
 } from "./index-slot-classifications";
+import { mapLualsExpression } from "./luals-type-expr";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
 export { summaryFor };
@@ -4888,20 +4890,44 @@ function joinUnionArms(mapped: readonly string[]): string {
   return out.join(" | ");
 }
 
-export function isKnownDefoldTypeToken(token: string): boolean {
-  return (
-    token === "nil" ||
-    Object.hasOwn(DEFOLD_TYPE_MAP, token) ||
-    recoverCallbackSignature(token) !== null
-  );
+const BUILTIN_MESSAGE_NAMES: ReadonlySet<string> = new Set(
+  messagesDoc.messages.map((message) => message.name),
+);
+const MESSAGE_REFERENCE = /^message\.[a-z_]+\.([a-z_]+)$/;
+
+// The leaf vocabulary the LuaLS grammar resolves an engine type expression
+// against. `message.<ns>.<name>` names a documented message payload, typed only
+// when `<name>` is one `BuiltinMessages` declares.
+function resolveDefoldLeaf(leaf: string): string | undefined {
+  if (leaf === "nil") return "undefined";
+  if (Object.hasOwn(DEFOLD_TYPE_MAP, leaf)) return DEFOLD_TYPE_MAP[leaf];
+  const message = MESSAGE_REFERENCE.exec(leaf);
+  const name = message?.[1];
+  if (name !== undefined && BUILTIN_MESSAGE_NAMES.has(name)) return `BuiltinMessages["${name}"]`;
+  return undefined;
 }
 
-export function defaultMapType(token: string): string {
+// Whole-token lookup and callback recovery run first, so the grammar sees only
+// what they miss; every pre-1.13.2 token resolves before it is reached.
+function wholeTokenMapping(token: string): string | undefined {
   if (Object.hasOwn(DEFOLD_TYPE_MAP, token)) {
     const mapped = DEFOLD_TYPE_MAP[token];
     if (typeof mapped === "string") return mapped;
   }
-  const callback = recoverCallbackSignature(token);
-  if (callback !== null) return callback;
-  return "unknown";
+  return recoverCallbackSignature(token) ?? undefined;
+}
+
+/** The leaves of `token` that resolve to nothing; empty when the whole token maps. */
+export function unknownDefoldTypeLeaves(token: string): string[] {
+  if (token === "nil" || wholeTokenMapping(token) !== undefined) return [];
+  if (token.trim() === "") return [token];
+  return mapLualsExpression(token, resolveDefoldLeaf).unknowns;
+}
+
+export function isKnownDefoldTypeToken(token: string): boolean {
+  return unknownDefoldTypeLeaves(token).length === 0;
+}
+
+export function defaultMapType(token: string): string {
+  return wholeTokenMapping(token) ?? mapLualsExpression(token, resolveDefoldLeaf).ts;
 }
