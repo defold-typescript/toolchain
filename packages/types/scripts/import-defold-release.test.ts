@@ -95,6 +95,44 @@ describe("buildReleaseImportPlan", () => {
     expect(plan.ready).toBe(false);
   });
 
+  test("a baseline constant that reappears as an ENUM member is not a removed symbol", () => {
+    const constant = (name: string) => ({ type: "CONSTANT", name });
+    const enumBaseline = {
+      id: "defold-1.13.1",
+      modules: [
+        {
+          namespace: "factory",
+          fixture: "factory_doc.json",
+          doc: apiDoc("factory", [
+            constant("factory.STATUS_LOADED"),
+            constant("factory.STATUS_UNLOADED"),
+            constant("factory.GONE"),
+          ]),
+        },
+      ],
+      luaStdlib: [],
+    };
+    const zip = fakeZip({
+      "doc/factory.json": apiDoc("factory", [
+        {
+          type: "ENUM",
+          name: "factory.STATUS",
+          parameters: [],
+          members: [
+            { name: "factory.STATUS_LOADED", doc: "", type: "" },
+            { name: "factory.STATUS_UNLOADED", doc: "", type: "" },
+          ],
+        },
+      ]),
+    });
+
+    const plan = buildReleaseImportPlan({ version: "1.13.2", zip, baseline: enumBaseline });
+
+    expect(plan.symbols).toEqual([
+      { namespace: "factory", added: ["factory.STATUS"], removed: ["factory.GONE"] },
+    ]);
+  });
+
   test("merges split Box2D documents by signature and removes only exact duplicates", () => {
     const boxBaseline = {
       id: "defold-1.12.4",

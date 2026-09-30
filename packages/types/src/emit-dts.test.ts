@@ -5264,3 +5264,219 @@ describe("defaultMapType LuaLS fallback", () => {
     expect(isKnownDefoldTypeToken("message.physics.collision_info")).toBe(false);
   });
 });
+
+describe("ENUM declarations", () => {
+  // Verbatim from the Defold 1.13.2 ref-doc (`scripts-script_factory.cpp_doc.json`).
+  const factoryStatus = {
+    type: "ENUM",
+    name: "factory.STATUS",
+    brief: "Factory status values",
+    description: "Factory status values",
+    returnvalues: [],
+    parameters: [],
+    examples: "",
+    replaces: "",
+    error: "",
+    tparams: [],
+    members: [
+      { name: "factory.STATUS_LOADED", doc: "The factory resources are loaded.", type: "" },
+      { name: "factory.STATUS_LOADING", doc: "The factory resources are loading.", type: "" },
+      { name: "factory.STATUS_UNLOADED", doc: "The factory resources are unloaded.", type: "" },
+    ],
+    notes: [],
+    language: "",
+  };
+
+  // Verbatim from the Defold 1.13.2 ref-doc (`editor.apidoc_doc.json`).
+  const editorUiColor = {
+    type: "ENUM",
+    name: "editor.ui.COLOR",
+    brief: "constants for color enums",
+    description: "Constants for color enums",
+    returnvalues: [],
+    parameters: [{ name: "value", doc: "enum value", types: ["string"], is_optional: "False" }],
+    examples: "",
+    replaces: "",
+    error: "",
+    tparams: [],
+    members: [
+      { name: "editor.ui.COLOR.TEXT", doc: '<code>"text"</code>', type: "" },
+      { name: "editor.ui.COLOR.HINT", doc: '<code>"hint"</code>', type: "" },
+      { name: "editor.ui.COLOR.OVERRIDE", doc: '<code>"override"</code>', type: "" },
+      { name: "editor.ui.COLOR.WARNING", doc: '<code>"warning"</code>', type: "" },
+      { name: "editor.ui.COLOR.ERROR", doc: '<code>"error"</code>', type: "" },
+    ],
+    notes: [],
+    language: "",
+  };
+
+  // The shape 1.13.1 shipped the same names in: one element per member.
+  function asPre1132Elements(
+    enumElement: { members: readonly { name: string; doc: string }[] },
+    type: "CONSTANT" | "VARIABLE",
+  ) {
+    return enumElement.members.map((m) => ({
+      type,
+      name: m.name,
+      brief: m.doc,
+      description: m.doc,
+    }));
+  }
+
+  function constLines(out: string): string[] {
+    return out.split("\n").filter((line) => /^\s*const /.test(line));
+  }
+
+  // Each `const` member's dotted path through the namespaces that enclose it.
+  function constPaths(out: string): string[] {
+    const stack: string[] = [];
+    const paths: string[] = [];
+    for (const line of out.split("\n")) {
+      const open = /^\s*(?:export )?(?:declare )?namespace ([\w$]+) \{$/.exec(line);
+      if (open) {
+        stack.push(open[1] as string);
+        continue;
+      }
+      if (/^\s*\}$/.test(line)) {
+        stack.pop();
+        continue;
+      }
+      const member = /^\s*(?:export )?const ([\w$]+):/.exec(line);
+      if (member) paths.push([...stack, member[1]].join("."));
+    }
+    return paths.sort();
+  }
+
+  const factoryEnumModule = parseDefoldApiDoc({
+    info: { namespace: "factory" },
+    elements: [factoryStatus],
+  });
+  const editorEnumModule = parseDefoldApiDoc({
+    info: { namespace: "editor" },
+    elements: [editorUiColor],
+  });
+
+  test("each member emits the line its pre-1.13.2 constant emitted", () => {
+    const fromEnum = constLines(emitDeclarations(factoryEnumModule));
+    const fromConstants = constLines(
+      emitDeclarations(
+        parseDefoldApiDoc({
+          info: { namespace: "factory" },
+          elements: asPre1132Elements(factoryStatus, "CONSTANT"),
+        }),
+      ),
+    );
+    expect(fromConstants).toHaveLength(3);
+    expect(fromEnum).toEqual(fromConstants);
+  });
+
+  test("each enum emits one union alias named after it, over its members in order", () => {
+    const aliases = emitDeclarations(factoryEnumModule)
+      .split("\n")
+      .filter((line) => line.trimStart().startsWith("type STATUS "));
+    expect(aliases).toEqual([
+      "  type STATUS = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED;",
+    ]);
+  });
+
+  test("the enum alias signs as a typedef the declarations carry verbatim", () => {
+    const declarations = emitDeclarations(factoryEnumModule);
+    const typedef = emitSymbolSignatures(factoryEnumModule).find(
+      (entry) => entry.identity.kind === "TYPEDEF" && entry.identity.name === "STATUS",
+    );
+    expect(typedef?.tsSignature).toBe(
+      "type STATUS = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED;",
+    );
+    expect(declarations).toContain(typedef?.tsSignature as string);
+  });
+
+  test("a string-valued enum brands its members string", () => {
+    const out = emitDeclarations(editorEnumModule);
+    expect(out).toContain('const TEXT: string & { readonly __brand: "editor.ui.COLOR.TEXT" };');
+    expect(out).not.toContain('number & { readonly __brand: "editor.ui.COLOR.');
+  });
+
+  test("nested editor members emit at the nested path the 1.13.1 variables used", () => {
+    const fromEnum = constPaths(emitDeclarations(editorEnumModule));
+    const fromVariables = constPaths(
+      emitDeclarations(
+        parseDefoldApiDoc({
+          info: { namespace: "editor" },
+          elements: asPre1132Elements(editorUiColor, "VARIABLE"),
+        }),
+      ),
+    );
+    expect(fromVariables).toHaveLength(5);
+    expect(fromEnum).toEqual(fromVariables);
+  });
+
+  test("a nested enum's alias is declared beside the namespace holding its members", () => {
+    const lines = emitDeclarations(editorEnumModule).split("\n");
+    const ui = lines.findIndex((line) => line.trim() === "namespace ui {");
+    const alias = lines.findIndex((line) => line.trim().startsWith("type COLOR = "));
+    const color = lines.findIndex((line) => line.trim() === "namespace COLOR {");
+    expect(ui).toBeGreaterThan(-1);
+    expect(alias).toBeGreaterThan(ui);
+    expect(color).toBeGreaterThan(ui);
+    expect(lines[alias]?.trim()).toBe(
+      "type COLOR = typeof editor.ui.COLOR.TEXT | typeof editor.ui.COLOR.HINT | typeof editor.ui.COLOR.OVERRIDE | typeof editor.ui.COLOR.WARNING | typeof editor.ui.COLOR.ERROR;",
+    );
+  });
+
+  test("every nested member and alias signs as text its declarations carry", () => {
+    const declarations = emitDeclarations(editorEnumModule);
+    const signatures = emitSymbolSignatures(editorEnumModule);
+    expect(
+      signatures.filter((entry) => entry.identity.kind === "CONSTANT").map((e) => e.identity.name),
+    ).toEqual([
+      "editor.ui.COLOR.ERROR",
+      "editor.ui.COLOR.HINT",
+      "editor.ui.COLOR.OVERRIDE",
+      "editor.ui.COLOR.TEXT",
+      "editor.ui.COLOR.WARNING",
+    ]);
+    expect(
+      signatures.filter((entry) => entry.identity.kind === "TYPEDEF").map((e) => e.identity.name),
+    ).toEqual(["ui.COLOR"]);
+    const missing = signatures
+      .filter((entry) => !declarations.includes(entry.tsSignature))
+      .map((entry) => entry.tsSignature);
+    expect(missing).toEqual([]);
+  });
+
+  test("a `<ENUM>|nil` member admits undefined while a slot naming it stays branded", () => {
+    const module = parseDefoldApiDoc({
+      info: { namespace: "graphics" },
+      elements: [
+        {
+          type: "ENUM",
+          name: "graphics.TEXTURE_FORMAT",
+          parameters: [],
+          members: [
+            { name: "graphics.TEXTURE_FORMAT_RGBA", doc: "", type: "" },
+            {
+              name: "graphics.TEXTURE_FORMAT_BGRA8U",
+              doc: "",
+              type: "graphics.TEXTURE_FORMAT|nil",
+            },
+          ],
+        },
+        {
+          type: "FUNCTION",
+          name: "graphics.use",
+          parameters: [{ name: "format", types: ["graphics.TEXTURE_FORMAT_BGRA8U"] }],
+        },
+      ],
+    });
+    const out = emitDeclarations(module);
+    expect(out).toContain(
+      'const TEXTURE_FORMAT_BGRA8U: number & { readonly __brand: "graphics.TEXTURE_FORMAT_BGRA8U" } | undefined;',
+    );
+    expect(out).toContain(
+      'const TEXTURE_FORMAT_RGBA: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA" };',
+    );
+    expect(out).toContain(
+      'function use(format: number & { readonly __brand: "graphics.TEXTURE_FORMAT_BGRA8U" }): void;',
+    );
+  });
+});
