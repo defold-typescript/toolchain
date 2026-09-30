@@ -160,6 +160,28 @@ describe("buildReleaseImportPlan", () => {
     expect(plan.ready).toBe(false);
   });
 
+  test("reads struct member type strings and resolves composite tokens", () => {
+    const zip = fakeZip({
+      "doc/alpha.json": apiDoc("alpha", [
+        {
+          type: "STRUCT",
+          name: "alpha.options",
+          members: [
+            { name: "id", doc: "", type: "hash|string" },
+            { name: "handle?", doc: "", type: "mystery_member|nil" },
+          ],
+        },
+        fn("alpha.composite", [{ name: "ids", types: ["table<string|hash, any>", "hash[]"] }]),
+      ]),
+    });
+
+    const plan = buildReleaseImportPlan({ version: "1.13.0", zip, baseline });
+
+    expect(plan.blockers.unknownTypes).toEqual([
+      { namespace: "alpha", symbol: "alpha.options", tokens: ["mystery_member"] },
+    ]);
+  });
+
   // The editor-scripting namespace is mapped by `EDITOR_MANIFEST`, never by
   // `api-targets.json` — it emits through `EDITOR_MODULE_MANIFEST`, not the
   // runtime module set the baseline is built from. Reading mapped-ness off the

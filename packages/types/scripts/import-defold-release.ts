@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { isKnownDefoldTypeToken } from "../src/emit-dts";
+import { unknownDefoldTypeLeaves } from "../src/emit-dts";
 import { refDocCacheDir, resolveRefDoc } from "./doc-source";
 import {
   apiElementIdentity,
@@ -180,10 +180,23 @@ function typeTokens(value: unknown, out: Set<string>): void {
   if (!isRecord(value)) return;
   if (Array.isArray(value.types)) {
     for (const token of value.types) {
-      if (typeof token === "string" && !isKnownDefoldTypeToken(token)) out.add(token);
+      if (typeof token === "string") addUnknownLeaves(token, out);
+    }
+  }
+  // A STRUCT member carries one `type` string rather than a `types[]` list; an
+  // ENUM member's is empty.
+  if (Array.isArray(value.members)) {
+    for (const member of value.members) {
+      if (isRecord(member) && typeof member.type === "string" && member.type !== "") {
+        addUnknownLeaves(member.type, out);
+      }
     }
   }
   for (const nested of Object.values(value)) typeTokens(nested, out);
+}
+
+function addUnknownLeaves(token: string, out: Set<string>): void {
+  for (const leaf of unknownDefoldTypeLeaves(token)) out.add(leaf);
 }
 
 function unknownTypeBlockers(

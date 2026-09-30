@@ -13,8 +13,17 @@
  * verbatim and the emitter sanitizes it later.
  */
 
-import { luaMultiReturn } from "@defold-typescript/types";
+import {
+  LUALS_VARARG_TOKEN,
+  type LualsLeafResolver,
+  mapLualsCallSignatureExpression,
+  mapLualsExpression,
+  matchBracket,
+  splitTopLevel,
+} from "@defold-typescript/types";
 import { CORE_TYPE_RENAMES } from "./sync-library-types";
+
+export { LUALS_VARARG_TOKEN };
 
 export interface MapContext {
   knownNames: ReadonlySet<string>;
@@ -62,297 +71,55 @@ const SCALARS: Readonly<Record<string, string>> = {
 const CALLABLE_UNSPECIFIED = "(...args: any[]) => unknown";
 
 /**
- * LuaLS's two placeholders: the throwaway param name `_`, and a bare `...` in vararg
- * or return position. Neither declares a type at all, so lowering it to `unknown`
- * loses nothing an author wrote — the same reasoning that already exempts `any` from
- * the fallback count. The boundary is deliberate: an untyped `self` or `ctx` *is* an
- * upstream omission and stays recorded.
+ * The library lane's leaf vocabulary, handed to the shared grammar in
+ * `@defold-typescript/types`. Bare `table` and `function` are leaves there, so a
+ * `function[]`, `function|nil`, or `fun(cb: function)` routes through the composite
+ * branches first.
+ *
+ * LuaLS's bare `...` in return position is a placeholder that declares no type at all,
+ * so lowering it to `unknown` loses nothing an author wrote — the same reasoning that
+ * already exempts `any` from the fallback count. It is not a `SCALARS` entry, which
+ * maps real Lua type names.
  */
-const LUALS_THROWAWAY_PARAM = "_";
-export const LUALS_VARARG_TOKEN = "...";
+function leafResolver(ctx: MapContext): LualsLeafResolver {
+  return (token) => {
+    if (token === "table") return "LuaTable";
+    if (token === "function") return CALLABLE_UNSPECIFIED;
+    if (token === LUALS_VARARG_TOKEN) return "unknown";
+    const scalar = SCALARS[token];
+    if (scalar !== undefined) return scalar;
 
-/**
- * Split `s` on every top-level occurrence of the single-character `sep`, honoring
- * bracket depth and double-quoted string literals so a separator nested inside
- * `<...>`, `(...)`, `[...]`, `{...}`, or a `"..."` literal does not split.
- */
-function splitTopLevel(s: string, sep: string): string[] {
-  const parts: string[] = [];
-  let depth = 0;
-  let inQuote = false;
-  let start = 0;
-  for (let i = 0; i < s.length; i++) {
-    const c = s[i];
-    if (inQuote) {
-      if (c === '"') inQuote = false;
-      continue;
-    }
-    if (c === '"') inQuote = true;
-    else if (c === "<" || c === "(" || c === "[" || c === "{") depth++;
-    else if (c === ">" || c === ")" || c === "]" || c === "}") depth = Math.max(0, depth - 1);
-    else if (depth === 0 && c === sep) {
-      parts.push(s.slice(start, i));
-      start = i + 1;
-    }
-  }
-  parts.push(s.slice(start));
-  return parts;
-}
-
-/** Index of the matching close bracket for the opener at `open`, or -1 if unbalanced. */
-function matchBracket(s: string, open: number): number {
-  const closers: Record<string, string> = { "<": ">", "(": ")", "[": "]", "{": "}" };
-  const want = closers[s[open] as string];
-  let depth = 0;
-  let inQuote = false;
-  for (let i = open; i < s.length; i++) {
-    const c = s[i];
-    if (inQuote) {
-      if (c === '"') inQuote = false;
-      continue;
-    }
-    if (c === '"') inQuote = true;
-    else if (c === "<" || c === "(" || c === "[" || c === "{") depth++;
-    else if (c === ">" || c === ")" || c === "]" || c === "}") {
-      depth--;
-      if (depth === 0) return c === want ? i : -1;
-    }
-  }
-  return -1;
-}
-
-/** True when a top-level `=>` (an arrow function type) appears in a mapped result. */
-function hasTopLevelArrow(tsExpr: string): boolean {
-  let depth = 0;
-  for (let i = 0; i + 1 < tsExpr.length; i++) {
-    const c = tsExpr[i];
-    if (c === "<" || c === "(" || c === "[" || c === "{") depth++;
-    else if (c === ">" || c === ")" || c === "]" || c === "}") depth = Math.max(0, depth - 1);
-    else if (depth === 0 && c === "=" && tsExpr[i + 1] === ">") return true;
-  }
-  return false;
-}
-
-/** A union member needs parentheses when it is itself a function type. */
-function wrapForUnion(tsExpr: string): string {
-  return hasTopLevelArrow(tsExpr) ? `(${tsExpr})` : tsExpr;
-}
-
-/** An array element needs parentheses when it is a union, a function, or an object. */
-function needsArrayParens(tsExpr: string): boolean {
-  return (
-    splitTopLevel(tsExpr, "|").length > 1 || hasTopLevelArrow(tsExpr) || tsExpr.startsWith("{")
-  );
-}
-
-/**
- * `LuaTable<K, V>` constrains `K` to `AnyNotNil`, so a mapped key that admits nil is
- * not a compilable key however faithfully it renders the annotation. LuaLS `any` maps
- * to `unknown` everywhere else, and `nil` to `undefined`; in key position both fail the
- * constraint and `tsc` rejects the emitted declaration. `AnyNotNil` is the faithful
- * target — "any non-nil Lua value" is exactly what a table key may be — so drop a nil
- * arm from a key union and fall back to `AnyNotNil` when nothing survives.
- */
-function luaTableKey(mapped: string): string {
-  const arms = splitTopLevel(mapped, "|")
-    .map((arm) => arm.trim())
-    .filter((arm) => arm !== "undefined" && arm !== "unknown");
-  return arms.length === 0 ? "AnyNotNil" : arms.join(" | ");
-}
-
-/**
- * The mapped `(params)` list and `ret` type of a `fun(...)` token, shared by the
- * arrow-form `mapFunction` and the colon-return `mapLualsCallSignature`. The only
- * difference between the two consumers is the separator (`=>` vs `:`), so both the
- * param handling (typed/untyped/vararg) and the single/multi-return logic live here.
- */
-function functionParts(
-  token: string,
-  ctx: MapContext,
-  unknowns: string[],
-): { paramList: string; ret: string } {
-  const open = token.indexOf("(");
-  const close = matchBracket(token, open);
-  const paramsStr = token.slice(open + 1, close).trim();
-  const afterClose = token.slice(close + 1).trim();
-
-  const params = paramsStr === "" ? [] : splitTopLevel(paramsStr, ",");
-  const paramList = params
-    .map((raw) => raw.trim())
-    .map((part) => {
-      if (part.startsWith(LUALS_VARARG_TOKEN)) {
-        const after = part.slice(3).trim();
-        const element = after.startsWith(":")
-          ? mapToken(after.slice(1).trim(), ctx, unknowns)
-          : "unknown";
-        return `...args: ${needsArrayParens(element) ? `(${element})[]` : `${element}[]`}`;
-      }
-      const colon = splitTopLevel(part, ":");
-      if (colon.length < 2) {
-        // Untyped param (`self`, `ctx`): a recorded gap, not a silent `any`. A bare `_`
-        // is LuaLS's deliberate throwaway and records nothing.
-        if (part !== LUALS_THROWAWAY_PARAM) unknowns.push(part);
-        return `${part}: unknown`;
-      }
-      const name = colon[0]?.trim() ?? "";
-      const typeExpr = colon.slice(1).join(":").trim();
-      const mapped = mapToken(typeExpr, ctx, unknowns);
-      return `${name}: ${mapped}`;
-    })
-    .join(", ");
-
-  let ret = "void";
-  if (afterClose.startsWith(":")) {
-    const retStr = afterClose.slice(1).trim();
-    const retTokens = retStr === "" ? [] : splitTopLevel(retStr, ",").map((r) => r.trim());
-    if (retTokens.length === 1) {
-      ret = mapToken(retTokens[0] as string, ctx, unknowns);
-    } else if (retTokens.length > 1) {
-      const restTail = retTokens.at(-1) === LUALS_VARARG_TOKEN;
-      ret = luaMultiReturn(
-        retTokens.map((r) => mapToken(r, ctx, unknowns)),
-        restTail,
+    // Reference-token precedence: per-target rename, core rename, loud-fail on an
+    // unmapped `vmath.*`, known model reference verbatim, else recorded `unknown`.
+    const override = ctx.typeRenames[token];
+    if (override !== undefined) return override;
+    const core = CORE_TYPE_RENAMES[token];
+    if (core !== undefined) return core;
+    if (token.startsWith("vmath.")) {
+      throw new Error(
+        `luals type mapper: unmapped Defold core token "${token}" - extend CORE_TYPE_RENAMES or the target's typeRenames.`,
       );
     }
-  }
-  return { paramList, ret };
-}
-
-function mapFunction(token: string, ctx: MapContext, unknowns: string[]): string {
-  const { paramList, ret } = functionParts(token, ctx, unknowns);
-  return `(${paramList}) => ${ret}`;
-}
-
-function mapObject(token: string, ctx: MapContext, unknowns: string[]): string {
-  const inner = token.slice(1, -1).trim();
-  if (inner === "") return "{}";
-  const entries = splitTopLevel(inner, ",")
-    .map((raw) => raw.trim())
-    .filter((part) => part.length > 0)
-    .map((part) => {
-      const colon = splitTopLevel(part, ":");
-      const key = colon[0]?.trim() ?? "";
-      const typeExpr = colon.slice(1).join(":").trim();
-      return `${key}: ${mapToken(typeExpr, ctx, unknowns)}`;
-    });
-  return `{ ${entries.join("; ")} }`;
-}
-
-function mapToken(raw: string, ctx: MapContext, unknowns: string[]): string {
-  let token = raw.trim();
-
-  // Strip a redundant pair of outer parentheses (LuaLS grouping) so `(a | b)[]`
-  // reaches the union handler rather than falling through to a reference lookup.
-  while (token.startsWith("(") && matchBracket(token, 0) === token.length - 1) {
-    token = token.slice(1, -1).trim();
-  }
-
-  if (token === "") return "unknown";
-
-  // A `fun(...)` whose return follows the `)` keeps its return-type `|` and `?` inside
-  // the function; splitting the union first would cut `fun(): a|b` into `(fun) | b`, and
-  // peeling the optional suffix first would turn `fun(): number?` — a function with an
-  // optional *return* — into an optional function. The whole-function optional is spelled
-  // with explicit parentheses, `(fun(): number)?`, which does not match here.
-  // `fun()|nil` (a `|` right after the `)`) falls through to the union split.
-  if (/^fun\s*\(/.test(token)) {
-    const close = matchBracket(token, token.indexOf("("));
-    const afterClose = close === -1 ? "" : token.slice(close + 1).trim();
-    if (close !== -1 && afterClose.startsWith(":")) {
-      return mapFunction(token, ctx, unknowns);
-    }
-  }
-
-  // Optional suffix.
-  if (token.length > 1 && token.endsWith("?")) {
-    const base = mapToken(token.slice(0, -1), ctx, unknowns);
-    const members = splitTopLevel(base, "|").map((m) => m.trim());
-    return members.includes("undefined") ? base : `${wrapForUnion(base)} | undefined`;
-  }
-
-  // Top-level union.
-  const unionParts = splitTopLevel(token, "|");
-  if (unionParts.length > 1) {
-    return unionParts.map((p) => wrapForUnion(mapToken(p.trim(), ctx, unknowns))).join(" | ");
-  }
-
-  // Trailing array.
-  if (token.endsWith("[]")) {
-    const element = mapToken(token.slice(0, -2), ctx, unknowns);
-    return needsArrayParens(element) ? `(${element})[]` : `${element}[]`;
-  }
-
-  // Function.
-  if (/^fun\s*\(/.test(token)) return mapFunction(token, ctx, unknowns);
-
-  // Table.
-  if (token === "table") return "LuaTable";
-  if (token.startsWith("table<") && token.endsWith(">")) {
-    const args = splitTopLevel(token.slice(6, -1), ",").map((a) =>
-      mapToken(a.trim(), ctx, unknowns),
-    );
-    if (args.length > 0) args[0] = luaTableKey(args[0] as string);
-    return `LuaTable<${args.join(", ")}>`;
-  }
-
-  // Inline object.
-  if (token.startsWith("{") && token.endsWith("}")) return mapObject(token, ctx, unknowns);
-
-  // String literal — passthrough.
-  if (token.startsWith('"') && token.endsWith('"')) return token;
-
-  // Signature-less callable. Placed after every composite branch so `function[]`,
-  // `function|nil`, and `fun(cb: function)` route through those first.
-  if (token === "function") return CALLABLE_UNSPECIFIED;
-
-  // Placeholder vararg in return position — not a `SCALARS` entry, which maps real Lua
-  // type names. Sits beside the callable branch so `...[]` and `...|nil` reach their
-  // structural handlers first.
-  if (token === LUALS_VARARG_TOKEN) return "unknown";
-
-  // Scalars.
-  const scalar = SCALARS[token];
-  if (scalar !== undefined) return scalar;
-
-  // Reference-token precedence: per-target rename, core rename, loud-fail on an
-  // unmapped `vmath.*`, known model reference verbatim, else recorded `unknown`.
-  const override = ctx.typeRenames[token];
-  if (override !== undefined) return override;
-  const core = CORE_TYPE_RENAMES[token];
-  if (core !== undefined) return core;
-  if (token.startsWith("vmath.")) {
-    throw new Error(
-      `luals type mapper: unmapped Defold core token "${token}" - extend CORE_TYPE_RENAMES or the target's typeRenames.`,
-    );
-  }
-  if (ctx.knownNames.has(token)) return token;
-  unknowns.push(token);
-  return "unknown";
+    if (ctx.knownNames.has(token)) return token;
+    return undefined;
+  };
 }
 
 /** Map one raw LuaLS type token to a TypeScript type string. */
 export function mapLualsType(token: string, ctx: MapContext): MapResult {
-  const unknowns: string[] = [];
-  const ts = mapToken(token, ctx, unknowns);
-  return { ts, unknowns };
+  return mapLualsExpression(token, leafResolver(ctx));
 }
 
 /**
  * Map a `fun(...)` token (a class `@overload`) to a TypeScript **call signature** —
  * the colon-return form `(params): ret` an interface uses to become callable, not
  * the `=>` arrow a field/param function type takes. Shares the exact param/return
- * computation as `mapFunction`, so nested callback params and multi-returns map
+ * computation as the arrow form, so nested callback params and multi-returns map
  * identically. Throws on a non-`fun` token; the parser only ever records `fun(...)`
  * overloads, so this guards a programming error rather than user input.
  */
 export function mapLualsCallSignature(token: string, ctx: MapContext): MapResult {
-  const trimmed = token.trim();
-  if (!/^fun\s*\(/.test(trimmed)) {
-    throw new Error(`mapLualsCallSignature: expected a "fun(...)" token, got "${token}".`);
-  }
-  const unknowns: string[] = [];
-  const { paramList, ret } = functionParts(trimmed, ctx, unknowns);
-  return { ts: `(${paramList}): ${ret}`, unknowns };
+  return mapLualsCallSignatureExpression(token, leafResolver(ctx));
 }
 
 /**
