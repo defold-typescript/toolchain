@@ -40,6 +40,7 @@ import tilemapDoc from "../fixtures/tilemap_doc.json" with { type: "json" };
 import typesDoc from "../fixtures/types_doc.json" with { type: "json" };
 import vmathDoc from "../fixtures/vmath_doc.json" with { type: "json" };
 import windowDoc from "../fixtures/window_doc.json" with { type: "json" };
+import structSlots from "../test/fixtures/defold-1.13.2-struct-slots.json" with { type: "json" };
 import urlParameterTable from "../url-parameters.json" with { type: "json" };
 import { type ApiFunction, type ApiModule, type ApiParameter, parseDefoldApiDoc } from "./api-doc";
 import { DEFOLD_TYPE_MAP } from "./core-types";
@@ -5839,6 +5840,47 @@ describe("STRUCT and TYPEDEF declarations", () => {
       "    interface action {",
     ]);
     expect(lines).toContain("  function take(action: go.on_input.action): void;");
+  });
+
+  const resource113_2 = parseDefoldApiDoc(structSlots.resource);
+
+  test("resource.atlas emits its member-keyed non-empty lists", () => {
+    const out = emitDeclarations(resource113_2);
+    const animation =
+      'Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number })';
+    expect(out).toContain("    geometries: [resource.geometry, ...resource.geometry[]];");
+    expect(out).toContain(`    animations: [${animation}, ...(${animation})[]];`);
+  });
+
+  test("resource.sound_data_options emits its member-keyed required data", () => {
+    const lines = emitDeclarations(resource113_2).split("\n");
+    const start = lines.indexOf("  interface sound_data_options {");
+    expect(start).toBeGreaterThan(-1);
+    const end = lines.indexOf("  }", start);
+    expect(lines.slice(start, end).filter((line) => /^ {4}\w/.test(line))).toEqual([
+      "    data: string;",
+      "    filesize?: number;",
+      "    partial?: boolean;",
+    ]);
+  });
+
+  test("a member-keyed correction naming no member of a declared struct throws", () => {
+    const renamed = {
+      ...structSlots.resource,
+      elements: structSlots.resource.elements.map((element) =>
+        element.name === "resource.sound_data_options"
+          ? {
+              ...element,
+              members: element.members.map((member) =>
+                member.name === "data?" ? { ...member, name: "payload?" } : member,
+              ),
+            }
+          : element,
+      ),
+    };
+    expect(() => emitDeclarations(parseDefoldApiDoc(renamed))).toThrow(
+      "resource.sound_data_options:member:data",
+    );
   });
 });
 

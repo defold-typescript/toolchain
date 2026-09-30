@@ -60,6 +60,7 @@ interface DocElement {
   readonly name: string;
   readonly description?: string;
   readonly parameters?: readonly { readonly name: string; readonly doc?: string }[];
+  readonly members?: readonly { readonly name: string }[];
 }
 
 interface ApiDoc {
@@ -70,12 +71,28 @@ function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function evidencedNames(family: ProseConstantFamily, modules: readonly ModuleManifestEntry[]) {
+function evidenceFunction(
+  family: ProseConstantFamily,
+  modules: readonly ModuleManifestEntry[],
+): DocElement | undefined {
   const source = modules.find((m) => m.namespace === family.evidence.namespace);
-  if (!source) return [];
-  const fn = (source.doc as ApiDoc).elements.find(
+  return (source?.doc as ApiDoc | undefined)?.elements.find(
     (e) => e.type === "FUNCTION" && e.name === family.evidence.function,
   );
+}
+
+// A release may declare the family itself, as `CONSTANT`s or `ENUM` members.
+function declaresFamily(family: ProseConstantFamily, modules: readonly ModuleManifestEntry[]) {
+  const target = modules.find((m) => m.namespace === family.namespace);
+  const prefix = `${family.namespace}.${family.prefix}`;
+  return ((target?.doc as ApiDoc | undefined)?.elements ?? []).some(
+    (e) =>
+      e.name.startsWith(prefix) ||
+      (e.members ?? []).some((member) => member.name.startsWith(prefix)),
+  );
+}
+
+function evidencedNames(family: ProseConstantFamily, fn: DocElement | undefined) {
   const { parameter } = family.evidence;
   const prose =
     parameter === undefined
@@ -112,8 +129,18 @@ export function synthesizeProseConstants(
 ): ModuleManifestEntry[] {
   let out = [...modules];
   for (const family of PROSE_CONSTANT_FAMILIES) {
-    const names = evidencedNames(family, out);
-    if (names.length === 0) continue;
+    const fn = evidenceFunction(family, out);
+    const names = evidencedNames(family, fn);
+    if (names.length === 0) {
+      // The evidence function survives but its prose lists no member: unless the
+      // release declares the family itself, the constants would vanish unannounced.
+      if (fn !== undefined && !declaresFamily(family, out)) {
+        throw new Error(
+          `prose constant family ${family.namespace}.${family.prefix}*: ${family.evidence.function} lists no member and ${family.namespace} declares none`,
+        );
+      }
+      continue;
+    }
     const index = out.findIndex((m) => m.namespace === family.namespace);
     const target = out[index];
     if (!target) continue;
