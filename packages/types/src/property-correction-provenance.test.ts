@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import apiTargets from "../api-targets.json" with { type: "json" };
+import { pinMatches, propertyCorrectionPins, spanTokens } from "./correction-pins";
 import { PROPERTY_KEY_RANGES, PROPERTY_TYPE_CORRECTIONS } from "./emit-dts";
 
 const PKG = resolve(import.meta.dir, "..");
@@ -72,10 +73,11 @@ describe("property-type correction provenance", () => {
   test("every vendored ref-doc still declares the upstream token the correction overrides", () => {
     const drifted: string[] = [];
     for (const [key, correction] of entries) {
+      const pins = propertyCorrectionPins(correction);
       for (const sighting of sightings(key)) {
-        if (sighting.token !== correction.upstream) {
+        if (sighting.token === undefined || !pinMatches(spanTokens(sighting.token), pins)) {
           drifted.push(
-            `${key} in ${sighting.target}: pinned ${correction.upstream}, found ${sighting.token ?? "no type span"}`,
+            `${key} in ${sighting.target}: pinned ${[correction.upstream, ...(correction.retypedUpstream ?? [])].join(" or ")}, found ${sighting.token ?? "no type span"}`,
           );
         }
       }
