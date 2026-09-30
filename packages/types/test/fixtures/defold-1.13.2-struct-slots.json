@@ -1,0 +1,489 @@
+{
+  "resource": {
+    "info": {
+      "namespace": "resource"
+    },
+    "elements": [
+      {
+        "type": "STRUCT",
+        "name": "resource.atlas",
+        "brief": "Atlas creation data",
+        "description": "Data accepted by <a href=\"/ref/resource#resource.create_atlas\">resource.create_atlas</a> and <a href=\"/ref/resource#resource.set_atlas\">resource.set_atlas</a>.",
+        "returnvalues": [],
+        "parameters": [],
+        "examples": "",
+        "replaces": "",
+        "error": "",
+        "tparams": [],
+        "members": [
+          {
+            "name": "texture",
+            "doc": "Path to the texture resource, for example <code>\"/main/my_texture.texturec\"</code>.",
+            "type": "string|hash"
+          },
+          {
+            "name": "animations",
+            "doc": "Animations in the atlas.",
+            "type": "resource.animation[]"
+          },
+          {
+            "name": "geometries",
+            "doc": "Geometries that map to the texture data.",
+            "type": "resource.geometry[]"
+          }
+        ],
+        "notes": [],
+        "language": ""
+      },
+      {
+        "type": "STRUCT",
+        "name": "resource.animation",
+        "brief": "Atlas animation creation data",
+        "description": "Animation data accepted when creating or updating an atlas. Specify either\n<code>frames</code>, or both <code>frame_start</code> and <code>frame_end</code>.",
+        "returnvalues": [],
+        "parameters": [],
+        "examples": "",
+        "replaces": "",
+        "error": "",
+        "tparams": [],
+        "members": [
+          {
+            "name": "id",
+            "doc": "Animation id.",
+            "type": "string"
+          },
+          {
+            "name": "width",
+            "doc": "Animation width.",
+            "type": "integer"
+          },
+          {
+            "name": "height",
+            "doc": "Animation height.",
+            "type": "integer"
+          },
+          {
+            "name": "frames?",
+            "doc": "Geometry indices for the animation frames.",
+            "type": "integer[]"
+          },
+          {
+            "name": "frame_start?",
+            "doc": "First geometry index for the legacy contiguous frame range.",
+            "type": "integer"
+          },
+          {
+            "name": "frame_end?",
+            "doc": "Non-inclusive last geometry index for the legacy contiguous frame range.",
+            "type": "integer"
+          },
+          {
+            "name": "playback?",
+            "doc": "Playback mode. The default is <code>go.PLAYBACK_ONCE_FORWARD</code>.",
+            "type": "go.PLAYBACK"
+          },
+          {
+            "name": "fps?",
+            "doc": "Animation frame rate. The default is 30.",
+            "type": "integer"
+          },
+          {
+            "name": "flip_vertical?",
+            "doc": "Whether to flip the animation vertically. The default is false.",
+            "type": "boolean"
+          },
+          {
+            "name": "flip_horizontal?",
+            "doc": "Whether to flip the animation horizontally. The default is false.",
+            "type": "boolean"
+          }
+        ],
+        "notes": [],
+        "language": ""
+      },
+      {
+        "type": "STRUCT",
+        "name": "resource.geometry",
+        "brief": "Atlas geometry creation data",
+        "description": "Geometry data accepted when creating or updating an atlas. Vertex, UV, and\nindex values are zero-based.",
+        "returnvalues": [],
+        "parameters": [],
+        "examples": "",
+        "replaces": "",
+        "error": "",
+        "tparams": [],
+        "members": [
+          {
+            "name": "id?",
+            "doc": "Geometry name, used when matching animations between atlases.",
+            "type": "string"
+          },
+          {
+            "name": "width?",
+            "doc": "Width of the image represented by the geometry. If omitted, it is calculated from the vertices.",
+            "type": "number"
+          },
+          {
+            "name": "height?",
+            "doc": "Height of the image represented by the geometry. If omitted, it is calculated from the vertices.",
+            "type": "number"
+          },
+          {
+            "name": "pivot_x?",
+            "doc": "Horizontal pivot in unit coordinates. The default is 0.5.",
+            "type": "number"
+          },
+          {
+            "name": "pivot_y?",
+            "doc": "Vertical pivot in unit coordinates. The default is 0.5.",
+            "type": "number"
+          },
+          {
+            "name": "rotated?",
+            "doc": "Whether the image is rotated 90 degrees counter-clockwise in the atlas.",
+            "type": "boolean"
+          },
+          {
+            "name": "vertices",
+            "doc": "Vertex coordinates in image space as <code>{px0, py0, px1, py1, ...}</code>.",
+            "type": "number[]"
+          },
+          {
+            "name": "uvs",
+            "doc": "UV coordinates in image space as <code>{u0, v0, u1, v1, ...}</code>.",
+            "type": "number[]"
+          },
+          {
+            "name": "indices",
+            "doc": "Geometry indices where each group of three entries represents a triangle.",
+            "type": "integer[]"
+          }
+        ],
+        "notes": [],
+        "language": ""
+      },
+      {
+        "type": "STRUCT",
+        "name": "resource.sound_data_options",
+        "brief": "Sound-data creation options",
+        "description": "Sound-data creation options",
+        "returnvalues": [],
+        "parameters": [],
+        "examples": "",
+        "replaces": "",
+        "error": "",
+        "tparams": [],
+        "members": [
+          {
+            "name": "data?",
+            "doc": "Raw sound file data, including the file header.",
+            "type": "string"
+          },
+          {
+            "name": "filesize?",
+            "doc": "Complete file size when <code>data</code> is partial.",
+            "type": "number"
+          },
+          {
+            "name": "partial?",
+            "doc": "Whether <code>data</code> contains only the initial file chunk.",
+            "type": "boolean"
+          }
+        ],
+        "notes": [],
+        "language": ""
+      },
+      {
+        "type": "FUNCTION",
+        "name": "resource.create_atlas",
+        "brief": "create an atlas resource",
+        "description": "This function creates a new atlas resource that can be used in the same way as any atlas created during build time.\nThe path used for creating the atlas must be unique, trying to create a resource at a path that is already\nregistered will trigger an error. If the intention is to instead modify an existing atlas, use the <a href=\"/ref/resource#resource.set_atlas\">resource.set_atlas</a>\nfunction. Also note that the path to the new atlas resource must have a '.texturesetc' extension,\nmeaning \"/path/my_atlas\" is not a valid path but \"/path/my_atlas.texturesetc\" is.\nWhen creating the atlas, at least one geometry and one animation is required, and an error will be\nraised if these requirements are not met. A reference to the resource will be held by the collection\nthat created the resource and will automatically be released when that collection is destroyed.\nNote that releasing a resource essentially means decreasing the reference count of that resource,\nand not necessarily that it will be deleted.",
+        "returnvalues": [
+          {
+            "name": "path",
+            "doc": "Returns the atlas resource path",
+            "types": [
+              "hash"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "doc": "The path to the resource.",
+            "types": [
+              "string"
+            ],
+            "is_optional": "False"
+          },
+          {
+            "name": "table",
+            "doc": "atlas creation data",
+            "types": [
+              "resource.atlas"
+            ],
+            "is_optional": "False"
+          }
+        ],
+        "examples": "Create a backing texture and an atlas\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- create an empty texture</span>\n    <span class=\"kd\">local</span> <span class=\"n\">tparams</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"n\">width</span>          <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"n\">height</span>         <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n        <span class=\"nb\">type</span>           <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_TYPE_2D</span><span class=\"p\">,</span>\n        <span class=\"n\">format</span>         <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_FORMAT_RGBA</span><span class=\"p\">,</span>\n    <span class=\"p\">}</span>\n    <span class=\"kd\">local</span> <span class=\"n\">my_texture_id</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_texture</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_texture.texturec&quot;</span><span class=\"p\">,</span> <span class=\"n\">tparams</span><span class=\"p\">)</span>\n\n    <span class=\"c1\">-- optionally use resource.set_texture to upload data to texture</span>\n\n    <span class=\"c1\">-- create an atlas with one animation and one square geometry</span>\n    <span class=\"c1\">-- note that the function doesn&#39;t support hashes for the texture,</span>\n    <span class=\"c1\">-- you need to use a string for the texture path here aswell</span>\n    <span class=\"kd\">local</span> <span class=\"n\">aparams</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"n\">texture</span> <span class=\"o\">=</span> <span class=\"s2\">&quot;/my_texture.texturec&quot;</span><span class=\"p\">,</span>\n        <span class=\"n\">animations</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n            <span class=\"p\">{</span>\n                <span class=\"n\">id</span>          <span class=\"o\">=</span> <span class=\"s2\">&quot;my_animation&quot;</span><span class=\"p\">,</span>\n                <span class=\"n\">width</span>       <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                <span class=\"n\">height</span>      <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                <span class=\"n\">frames</span>      <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"mi\">1</span> <span class=\"p\">}</span>\n            <span class=\"p\">}</span>\n        <span class=\"p\">},</span>\n        <span class=\"n\">geometries</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n            <span class=\"p\">{</span>\n                <span class=\"n\">id</span> <span class=\"o\">=</span> <span class=\"s1\">&#39;idle0&#39;</span><span class=\"p\">,</span>\n                <span class=\"n\">width</span> <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                <span class=\"n\">height</span> <span class=\"o\">=</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                <span class=\"n\">pivot_x</span> <span class=\"o\">=</span> <span class=\"mf\">0.5</span><span class=\"p\">,</span>\n                <span class=\"n\">pivot_y</span> <span class=\"o\">=</span> <span class=\"mf\">0.5</span><span class=\"p\">,</span>\n                <span class=\"n\">vertices</span>  <span class=\"o\">=</span> <span class=\"p\">{</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span>   <span class=\"mi\">0</span><span class=\"p\">,</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span>   <span class=\"mi\">128</span><span class=\"p\">,</span>\n                    <span class=\"mi\">128</span><span class=\"p\">,</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                    <span class=\"mi\">128</span><span class=\"p\">,</span> <span class=\"mi\">0</span>\n                <span class=\"p\">},</span>\n                <span class=\"n\">uvs</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span>   <span class=\"mi\">0</span><span class=\"p\">,</span>\n                    <span class=\"mi\">0</span><span class=\"p\">,</span>   <span class=\"mi\">128</span><span class=\"p\">,</span>\n                    <span class=\"mi\">128</span><span class=\"p\">,</span> <span class=\"mi\">128</span><span class=\"p\">,</span>\n                    <span class=\"mi\">128</span><span class=\"p\">,</span> <span class=\"mi\">0</span>\n                <span class=\"p\">},</span>\n                <span class=\"n\">indices</span> <span class=\"o\">=</span> <span class=\"p\">{</span><span class=\"mi\">0</span><span class=\"p\">,</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">0</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">3</span><span class=\"p\">}</span>\n            <span class=\"p\">}</span>\n        <span class=\"p\">}</span>\n    <span class=\"p\">}</span>\n    <span class=\"kd\">local</span> <span class=\"n\">my_atlas_id</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_atlas</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_atlas.texturesetc&quot;</span><span class=\"p\">,</span> <span class=\"n\">aparams</span><span class=\"p\">)</span>\n\n    <span class=\"c1\">-- assign the atlas to the &#39;sprite&#39; component on the same go</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#sprite&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;image&quot;</span><span class=\"p\">,</span> <span class=\"n\">my_atlas_id</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+        "replaces": "",
+        "error": "",
+        "tparams": [],
+        "members": [],
+        "notes": [],
+        "language": ""
+      },
+      {
+        "type": "FUNCTION",
+        "name": "resource.create_sound_data",
+        "brief": "Creates a sound data resource (.oggc/.opusc/.wavc)",
+        "description": "Creates a sound data resource\nSupported formats are .oggc, .opusc and .wavc",
+        "returnvalues": [
+          {
+            "name": "path_hash",
+            "doc": "the resulting path hash to the resource",
+            "types": [
+              "hash"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "doc": "the path to the resource. Must not already exist.",
+            "types": [
+              "string"
+            ],
+            "is_optional": "False"
+          },
+          {
+            "name": "options",
+            "doc": "optional sound-data parameters",
+            "types": [
+              "resource.sound_data_options"
+            ],
+            "is_optional": "True"
+          }
+        ],
+        "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- create a new sound resource, given the initial chunk of the file</span>\n    <span class=\"kd\">local</span> <span class=\"n\">relative_path</span> <span class=\"o\">=</span> <span class=\"s2\">&quot;/a/unique/resource/name.oggc&quot;</span>\n    <span class=\"kd\">local</span> <span class=\"n\">hash</span> <span class=\"o\">=</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">create_sound_data</span><span class=\"p\">(</span><span class=\"n\">relative_path</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"n\">data</span> <span class=\"o\">=</span> <span class=\"n\">data</span><span class=\"p\">,</span> <span class=\"n\">filesize</span> <span class=\"o\">=</span> <span class=\"n\">filesize</span><span class=\"p\">,</span> <span class=\"n\">partial</span> <span class=\"o\">=</span> <span class=\"kc\">true</span> <span class=\"p\">})</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#music&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;sound&quot;</span><span class=\"p\">,</span> <span class=\"n\">hash</span><span class=\"p\">)</span> <span class=\"c1\">-- override the previous sound resource</span>\n    <span class=\"n\">sound</span><span class=\"p\">.</span><span class=\"n\">play</span><span class=\"p\">(</span><span class=\"s2\">&quot;#music&quot;</span><span class=\"p\">)</span> <span class=\"c1\">-- start the playing</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+        "replaces": "",
+        "error": "",
+        "tparams": [],
+        "members": [],
+        "notes": [],
+        "language": ""
+      }
+    ]
+  },
+  "b2d": {
+    "info": {
+      "namespace": "b2d"
+    },
+    "elements": [
+      {
+        "type": "STRUCT",
+        "name": "b2d.mover_capsule",
+        "brief": "Box2D mover capsule",
+        "description": "Box2D mover capsule",
+        "returnvalues": [],
+        "parameters": [],
+        "examples": "",
+        "replaces": "",
+        "error": "",
+        "tparams": [],
+        "members": [
+          {
+            "name": "center1",
+            "doc": "First capsule center.",
+            "type": "vector3"
+          },
+          {
+            "name": "center2",
+            "doc": "Second capsule center.",
+            "type": "vector3"
+          },
+          {
+            "name": "radius",
+            "doc": "Capsule radius.",
+            "type": "number"
+          }
+        ],
+        "notes": [],
+        "language": ""
+      }
+    ]
+  },
+  "b2d.world": {
+    "info": {
+      "namespace": "b2d.world"
+    },
+    "elements": [
+      {
+        "type": "FUNCTION",
+        "name": "b2d.world.cast_mover",
+        "brief": "Cast a mover capsule.",
+        "description": "The return value is the fraction of <code>translation</code> that can be traveled before collision,\nor 1 if there is no hit.",
+        "returnvalues": [
+          {
+            "name": "fraction",
+            "doc": "travel fraction before collision",
+            "types": [
+              "number"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "world",
+            "doc": "world",
+            "types": [
+              "b2World"
+            ],
+            "is_optional": "False"
+          },
+          {
+            "name": "capsule",
+            "doc": "mover capsule",
+            "types": [
+              "b2d.mover_capsule"
+            ],
+            "is_optional": "False"
+          },
+          {
+            "name": "translation",
+            "doc": "capsule displacement",
+            "types": [
+              "vector3"
+            ],
+            "is_optional": "False"
+          },
+          {
+            "name": "filter",
+            "doc": "optional query filter",
+            "types": [
+              "b2d.query_filter"
+            ],
+            "is_optional": "True"
+          }
+        ],
+        "examples": "",
+        "replaces": "",
+        "error": "",
+        "tparams": [],
+        "members": [],
+        "notes": [],
+        "language": ""
+      }
+    ]
+  },
+  "sys": {
+    "info": {
+      "namespace": "sys"
+    },
+    "elements": [
+      {
+        "type": "STRUCT",
+        "name": "sys.sys_info",
+        "brief": "System information",
+        "description": "System information",
+        "returnvalues": [],
+        "parameters": [],
+        "examples": "",
+        "replaces": "",
+        "error": "",
+        "tparams": [],
+        "members": [
+          {
+            "name": "device_model?",
+            "doc": "Device model on iOS and Android.",
+            "type": "string"
+          },
+          {
+            "name": "manufacturer?",
+            "doc": "Device manufacturer on iOS and Android.",
+            "type": "string"
+          },
+          {
+            "name": "system_name",
+            "doc": "Operating-system name.",
+            "type": "string"
+          },
+          {
+            "name": "system_version",
+            "doc": "Operating-system version.",
+            "type": "string"
+          },
+          {
+            "name": "api_version",
+            "doc": "Platform API version.",
+            "type": "string"
+          },
+          {
+            "name": "language",
+            "doc": "ISO 639 language code.",
+            "type": "string"
+          },
+          {
+            "name": "device_language",
+            "doc": "Preferred device language, optionally followed by an ISO 15924 script code.",
+            "type": "string"
+          },
+          {
+            "name": "territory",
+            "doc": "ISO 3166-1 alpha-2 country code or UN M.49 numeric region code.",
+            "type": "string"
+          },
+          {
+            "name": "gmt_offset",
+            "doc": "Current GMT offset in minutes.",
+            "type": "number"
+          },
+          {
+            "name": "device_ident?",
+            "doc": "Operating-system-protected device identifier.",
+            "type": "string"
+          },
+          {
+            "name": "user_agent?",
+            "doc": "HTTP user agent on HTML5.",
+            "type": "string"
+          }
+        ],
+        "notes": [],
+        "language": ""
+      },
+      {
+        "type": "FUNCTION",
+        "name": "sys.get_sys_info",
+        "brief": "get system information",
+        "description": "Returns a table with system information.",
+        "returnvalues": [
+          {
+            "name": "sys_info",
+            "doc": "system information",
+            "types": [
+              "sys.sys_info"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "options",
+            "doc": "optional system-information options",
+            "types": [
+              "sys.sys_info_options"
+            ],
+            "is_optional": "True"
+          }
+        ],
+        "examples": "How to get system information:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">info</span> <span class=\"o\">=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">get_sys_info</span><span class=\"p\">()</span>\n<span class=\"kr\">if</span> <span class=\"n\">info</span><span class=\"p\">.</span><span class=\"n\">system_name</span> <span class=\"o\">==</span> <span class=\"s2\">&quot;HTML5&quot;</span> <span class=\"kr\">then</span>\n  <span class=\"c1\">-- We are running in a browser.</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+        "replaces": "",
+        "error": "",
+        "tparams": [],
+        "members": [],
+        "notes": [],
+        "language": ""
+      }
+    ]
+  }
+}
