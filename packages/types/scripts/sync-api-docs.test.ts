@@ -682,6 +682,27 @@ describe("upstream-coverage guard", () => {
     ]);
   });
 
+  test("a namespace segment containing an underscore is still a Lua namespace", () => {
+    const zip = fakeZip({
+      "doc/rigid.json": JSON.stringify({
+        info: { namespace: "phys.rigid_body" },
+        elements: [{ type: "FUNCTION", name: "phys.rigid_body.get_mass" }],
+      }),
+    });
+    const report = buildCoverageReport({
+      manifest: [],
+      moduleManifest: [],
+      unmapped: new Map(),
+      syncedDocs: [],
+      upstream: collectUpstreamNamespaces(zip),
+      upstreamMapped: new Set(),
+      ignoredUpstream: new Map(),
+    });
+    expect(report.unmappedUpstream).toEqual([
+      { namespace: "phys.rigid_body", zipEntry: "doc/rigid.json" },
+    ]);
+  });
+
   test("native-SDK, empty, and uppercase namespaces are never flagged", () => {
     const zip = fakeZip({
       "doc/sdk.json": JSON.stringify({

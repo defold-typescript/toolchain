@@ -115,11 +115,11 @@ export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
 export const UNMAPPED: ReadonlyMap<string, string> = new Map();
 
 // A Lua script namespace is a lowercase, dot-separated identifier (`sys`,
-// `b2d.body`). The native C/C++ SDK docs (`dmGraphics`, …), the C# bindings
+// `b2d.body`, `bullet3d.rigid_body`). The native C/C++ SDK docs (`dmGraphics`, …), the C# bindings
 // (`cs-*`), and the struct-only docs (empty `info.namespace`) fail this shape,
 // so the upstream-coverage guard skips them structurally rather than listing
 // each by hand — that keeps the guard self-maintaining as the SDK grows.
-const LUA_NAMESPACE = /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$/;
+const LUA_NAMESPACE = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
 
 // Lowercase-identifier namespaces that pass LUA_NAMESPACE but are intentionally
 // not wired through SYNC_MANIFEST, each with a sourced reason (mirrors the

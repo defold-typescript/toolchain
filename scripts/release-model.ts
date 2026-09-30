@@ -81,9 +81,8 @@ export function retainedVersions(all: readonly string[], to: string): string[] {
 }
 
 // Namespaces promoted into the generated surface for the first time at a given
-// release. Seeded with the 1.13.0 set formerly held as
-// `DEFOLD_1_13_PROMOTED_NAMESPACES` in the release importer.
-const PROMOTED_NAMESPACES_BY_VERSION: Readonly<Record<string, readonly string[]>> = {
+// release. Mirrored by `PROMOTED_NAMESPACES_BY_VERSION` in the release importer.
+export const PROMOTED_NAMESPACES_BY_VERSION: Readonly<Record<string, readonly string[]>> = {
   "1.13.0": [
     "b2d.chain",
     "b2d.fixture",
@@ -92,6 +91,14 @@ const PROMOTED_NAMESPACES_BY_VERSION: Readonly<Record<string, readonly string[]>
     "b2d.world",
     "compute",
     "material",
+  ],
+  "1.13.2": [
+    "bullet3d",
+    "bullet3d.collision_object",
+    "bullet3d.constraint",
+    "bullet3d.rigid_body",
+    "bullet3d.shape",
+    "bullet3d.world",
   ],
 };
 

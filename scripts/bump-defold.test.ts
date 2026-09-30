@@ -267,6 +267,7 @@ describe("applyTargetOps against a temporary registry", () => {
           coreTypesImport: "../src/core-types",
           source: null,
           modules: [{ namespace: "b2d", fixture: "b2d_doc.json", outFile: "b2d.d.ts" }],
+          editorModules: [{ namespace: "editor", fixture: "editor_doc.json" }],
         },
         {
           id: "defold-1.12.4",
@@ -307,6 +308,27 @@ describe("applyTargetOps against a temporary registry", () => {
     expect(demoted?.default).toBe(false);
     expect(demoted?.generatedDir).toBe("generated/versions/defold-1.13.0");
     expect(demoted?.coreTypesImport).toBe("../../../src/core-types");
+  });
+
+  // The new default is the predecessor's surface at a new version: any field
+  // describing that surface (modules, the editor document, the Lua stdlib) must
+  // carry over, or regen reads the new target as missing it.
+  test("the new default inherits every surface field of the prior default", () => {
+    const targetsPath = tmpTargets();
+    const before = JSON.parse(readFileSync(targetsPath, "utf8")) as {
+      targets: Array<Record<string, unknown>>;
+    };
+    const prior = before.targets.find((target) => target.default === true);
+    applyTargetOps(planBump("1.13.1", FIXED_MODEL), targetsPath);
+    const registry = JSON.parse(readFileSync(targetsPath, "utf8")) as {
+      targets: Array<Record<string, unknown>>;
+    };
+    const def = registry.targets.find((target) => target.id === "defold-1.13.1");
+    const identity = ["id", "default", "fixturesDir", "generatedDir", "coreTypesImport", "source"];
+    const surface = (target: Record<string, unknown> | undefined) =>
+      Object.fromEntries(Object.entries(target ?? {}).filter(([key]) => !identity.includes(key)));
+    expect(surface(def)).toEqual(surface(prior));
+    expect(def?.editorModules).toEqual([{ namespace: "editor", fixture: "editor_doc.json" }]);
   });
 
   // The predecessor's inputs are what make its demoted surface regenerable; a

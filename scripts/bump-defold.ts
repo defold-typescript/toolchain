@@ -221,11 +221,13 @@ interface TargetEntry {
   source: unknown;
   modules: unknown[];
   luaStdlib?: unknown[];
+  [surfaceField: string]: unknown;
 }
 
 // Programmatically apply a plan's target operations to `api-targets.json`, never
 // by hand. Both transition classes insert the new version as default (inheriting
-// the prior default's module surface as a starting point a human then curates)
+// every surface field of the prior default — modules, editor document, Lua
+// stdlib — as a starting point a human then curates)
 // and demote the prior default into `generated/versions/`, keeping its own
 // `fixturesDir` so the demoted surface still has the documents it was built from.
 export function applyTargetOps(plan: BumpPlan, targetsPath = TARGETS_PATH): void {
@@ -236,14 +238,13 @@ export function applyTargetOps(plan: BumpPlan, targetsPath = TARGETS_PATH): void
   for (const op of plan.targetOps) {
     if (op.kind === "add-default") {
       const newDefault: TargetEntry = {
+        ...structuredClone(priorDefault),
         id: `defold-${op.version}`,
         default: op.meta.default,
         fixturesDir: op.meta.fixturesDir,
         generatedDir: op.meta.generatedDir,
         coreTypesImport: op.meta.coreTypesImport,
         source: null,
-        modules: structuredClone(priorDefault.modules),
-        ...(priorDefault.luaStdlib ? { luaStdlib: structuredClone(priorDefault.luaStdlib) } : {}),
       };
       registry.targets.unshift(newDefault);
     } else {

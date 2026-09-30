@@ -6,11 +6,12 @@ import {
   DEFOLD_VERSIONS,
   PREVIOUS_STABLE_DEFOLD_VERSION,
 } from "../packages/cli/src/defold-version.ts";
-import { DEFOLD_1_13_PROMOTED_NAMESPACES } from "../packages/types/scripts/import-defold-release.ts";
+import { PROMOTED_NAMESPACES_BY_VERSION as IMPORTER_PROMOTED_NAMESPACES } from "../packages/types/scripts/import-defold-release.ts";
 import { DEFOLD_VERSION, SYNC_MANIFEST } from "../packages/types/scripts/sync-api-docs.ts";
 import {
   classifyTransition,
   fixtureDir,
+  PROMOTED_NAMESPACES_BY_VERSION,
   promotedNamespacesFor,
   RELEASE_MODEL,
   retainedVersions,
@@ -117,7 +118,7 @@ describe("release model", () => {
     });
 
     test("promoted namespaces read by import-defold-release match the model", () => {
-      expect(promotedNamespacesFor("1.13.0")).toEqual([...DEFOLD_1_13_PROMOTED_NAMESPACES]);
+      expect(IMPORTER_PROMOTED_NAMESPACES).toEqual(PROMOTED_NAMESPACES_BY_VERSION);
     });
   });
 });

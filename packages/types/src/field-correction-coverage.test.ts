@@ -189,7 +189,7 @@ describe("committedFieldCorrectionTargets", () => {
     );
     expect(groups).toEqual([
       { id: "v-default", entries: runtime },
-      { id: "v-fixture", entries: [versioned[1]] },
+      { id: "v-fixture", entries: [versioned[1] as VersionedModuleManifestEntry] },
     ]);
   });
 
