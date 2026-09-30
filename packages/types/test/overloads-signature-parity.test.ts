@@ -293,7 +293,7 @@ const OVERLOAD_COUNTS: Record<string, number> = {
   "go.set": 3,
   // the descriptions-side pin for this one, and its rationale, live in the
   // "no JSDoc description" test below
-  "go.property": 7,
+  "go.property": 8,
   "msg.post": 2,
   "msg.url": 6,
   "render.render_target": 2,
@@ -394,13 +394,13 @@ describe("curried and multi-paragraph overload rendering", () => {
     expect(get.slice(1)).toEqual([null, null]);
 
     const property = goDescriptions["go.property"] ?? [];
-    // 7 is the published overload count for `go.property` (one documented plus the
-    // six deprecated typed forms); the slice below enumerates the trailing six,
+    // 8 is the published overload count for `go.property` (one documented plus the
+    // seven deprecated typed forms); the slice below enumerates the trailing seven,
     // so the two assertions pin the same set from both ends.
-    expect(property).toHaveLength(7);
+    expect(property).toHaveLength(8);
     expect(typeof property[0]).toBe("string");
-    // the six trailing overloads carry a `@deprecated`-only JSDoc
-    expect(property.slice(1)).toEqual([null, null, null, null, null, null]);
+    // the seven trailing overloads carry a `@deprecated`-only JSDoc
+    expect(property.slice(1)).toEqual([null, null, null, null, null, null, null]);
   });
 
   test("msg.post's description keeps its paragraph breaks and bullet lines", () => {
