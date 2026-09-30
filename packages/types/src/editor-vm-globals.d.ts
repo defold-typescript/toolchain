@@ -19,6 +19,9 @@ import type {
 // sitting before a required one, or an empty `returnvalues` on a function
 // upstream's own prose says returns a value — are written out here as overload
 // sets. All three are withheld from the emit by `EDITOR_VM_SKIP_FUNCTIONS`. The
+// constant tables are VARIABLEs in 1.13.1; in 1.13.2 `zip.METHOD.*` and
+// `zip.ON_CONFLICT.*` are ENUM members and `http.server.*` are CONSTANTs, and the
+// entry's skip rules withhold them in every one of those shapes. The
 // contract is unchanged and still derived: this file declares exactly what the
 // emit leaves behind. The namespaces below merge with the emitted
 // `generated/editor-vm/` bodies rather than replacing them. Upstream records no

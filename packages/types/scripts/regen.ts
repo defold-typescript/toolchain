@@ -141,10 +141,11 @@ export interface ModuleManifestEntry {
   readonly namespace: string;
   readonly doc: unknown;
   readonly outFile: string;
-  // Each item drops one member of any element kind — a FUNCTION or a VARIABLE —
-  // by an exact stripped local (`get`), or — when it ends in `.` — a segment
-  // prefix dropping everything beneath it (`ui.`). The field keeps its historic
-  // name; its reach is not limited to functions.
+  // Each item drops one member of any element kind — a FUNCTION, a VARIABLE, a
+  // CONSTANT or an ENUM member — by an exact stripped local (`get`), or — when it
+  // ends in `.` — a segment prefix dropping everything beneath it (`ui.`). An
+  // ENUM whose every member is dropped emits no alias either. The field keeps its
+  // historic name; its reach is not limited to functions.
   readonly skipFunctions?: readonly string[];
   readonly skipOverloads?: readonly SkipOverloadRule[];
   readonly importsFrom?: string;
@@ -285,7 +286,8 @@ function oneLevelDeeper(importPath: string): string {
 // The `skipFunctions` rules a target declares in `api-targets.json` withhold
 // members for reasons the registry data alone cannot state. Rules are local
 // names — the `<namespace>.` prefix is stripped before matching — and they
-// withhold VARIABLEs as well as FUNCTIONs.
+// withhold any member: FUNCTIONs, VARIABLEs, CONSTANTs and ENUM members alike.
+// An ENUM whose every member is withheld emits no alias.
 //
 // On a `b2d.body` entry they withhold what that release documents but neither
 // Box2D binding registers, so the call would raise: `get_user_data`,
@@ -317,7 +319,9 @@ function oneLevelDeeper(importPath: string): string {
 // and `ZipPackOptions.method?: string` rejects that. Their brief is the literal
 // value, which looks like a string-literal type until you notice upstream's own
 // `zip.ON_CONFLICT.OVERWRITE` reads `"skip"`, so no type is derived from it.
-// The hand-authored declarations stay authoritative and these stay withheld.
+// Where upstream ships them as ENUM members (1.13.2) they carry a string type,
+// and the same rules still withhold them: the hand-authored declarations stay
+// authoritative and these stay withheld.
 export function loadTargetEditorModules(
   target: ApiTarget,
   packageRoot: string = PACKAGE_ROOT,
@@ -465,6 +469,17 @@ function prepareGeneratedModule(
   };
   module.functions = module.functions.filter((fn) => !withheld(fn.name));
   module.variables = module.variables.filter((v) => !withheld(v.name));
+  const withheldConstants = new Set<string>();
+  module.constants = module.constants.filter((c) => {
+    if (!withheld(c.name)) return true;
+    withheldConstants.add(c.name);
+    return false;
+  });
+  if (module.enums) {
+    module.enums = module.enums.filter(
+      (e) => e.members.length === 0 || !e.members.every((member) => withheldConstants.has(member)),
+    );
+  }
   module = withholdOverloads(module, entry.skipOverloads ?? []);
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
   const translations = options?.translations ?? loadTranslations();
