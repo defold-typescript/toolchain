@@ -675,6 +675,96 @@ describe("dispatch", () => {
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
+  const TEXT_PROPERTY_SCRIPT = [
+    'import { defineScript } from "@defold-typescript/types";',
+    "",
+    "defineScript({",
+    '  properties: { greeting: "Hello!\\nWelcome", speed: 1 },',
+    "});",
+    "",
+  ].join("\n");
+
+  function scaffoldTextPropertyBuild(target: string): void {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": target } });
+    writeFileSync(path.join(cwd, "src", "greeter.ts"), TEXT_PROPERTY_SCRIPT);
+  }
+
+  test("build refuses a text property on a pre-1.13.2 bundled target", async () => {
+    scaffoldTextPropertyBuild("1.12.4");
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(1);
+    expect(err()).toContain("src/greeter.ts:4:27");
+    expect(err()).toContain("1.13.2");
+    expect(err()).toContain("1.12.4");
+    expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(false);
+  });
+
+  test("build --json refuses a text property on a pre-1.13.2 ref-doc target", async () => {
+    scaffoldTextPropertyBuild("1.9.8");
+    const resolveOpts = labelRefDocResolveOpts();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { resolveOpts });
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out()) as { ok: boolean; error: string };
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error).toContain("src/greeter.ts:4:27");
+    expect(parsed.error).toContain("1.9.8");
+    expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(false);
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test("watch --json refuses a text property on a pre-1.13.2 target and keeps watching", async () => {
+    scaffoldTextPropertyBuild("1.12.4");
+    const { io, out } = captureStreams();
+    const factory: WatcherFactory = (_srcDir, _onEvent): Watcher => ({ close() {} });
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      watcherFactory: factory,
+      onWatchStart,
+      detectEditorVersion: () => null,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    let settled = false;
+    void Promise.resolve(result).then(() => {
+      settled = true;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(settled).toBe(false);
+
+    const build = out()
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as Record<string, unknown>)
+      .find((event) => event.event === "build");
+    expect(build?.ok).toBe(false);
+    expect(build?.errors).toContainEqual(
+      expect.objectContaining({ file: "src/greeter.ts", line: 4, column: 27 }),
+    );
+    expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(false);
+
+    handle.stop();
+    expect(await result).toBe(0);
+  });
+
+  test("build writes a text property on a 1.13.2 target", async () => {
+    scaffoldTextPropertyBuild("1.13.2");
+    const { io } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(true);
+  });
+
   test("build warns on a legacy defold-version pin key and still succeeds", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.12.4" } });
     const { io, err } = captureStreams();
