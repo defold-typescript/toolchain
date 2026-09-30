@@ -29,6 +29,9 @@ jobs:
 
   test:
     strategy:
+      # Each OS reports its own result: one runner's failure must not cancel
+      # another's and hide a platform-only regression.
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
