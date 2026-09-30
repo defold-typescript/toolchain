@@ -5841,3 +5841,272 @@ describe("STRUCT and TYPEDEF declarations", () => {
     expect(lines).toContain("  function take(action: go.on_input.action): void;");
   });
 });
+
+describe("upstream-pinned corrections", () => {
+  const emitted = (
+    namespace: string,
+    element: Record<string, unknown>,
+    declaredTypes?: ReadonlyMap<string, string>,
+  ): string =>
+    emitDeclarations(
+      parseDefoldApiDoc({ info: { namespace }, elements: [element] }),
+      declaredTypes === undefined ? {} : { declaredTypes },
+    );
+  const signature = (out: string, local: string): string =>
+    out.split("\n").find((line) => line.includes(`function ${local}(`)) ?? "";
+
+  // Slots verbatim from the Defold 1.13.2 ref-doc
+  // (`scripts-script_resource.cpp_doc.json`); the long prose fields are omitted.
+  const createTextureAsync = (pathTypes: readonly string[]) => ({
+    type: "FUNCTION",
+    name: "resource.create_texture_async",
+    brief: "create a texture async",
+    returnvalues: [
+      { name: "path", doc: "The path to the texture resource.", types: ["hash"] },
+      { name: "request_id", doc: "The request id for the async request.", types: ["integer"] },
+    ],
+    parameters: [
+      { name: "path", doc: "The path to the resource.", types: pathTypes, is_optional: "False" },
+      {
+        name: "table",
+        doc: "texture creation parameters",
+        types: ["resource.texture_creation_params"],
+        is_optional: "False",
+      },
+      {
+        name: "buffer",
+        doc: "optional buffer of precreated pixel data",
+        types: ["buffer_data"],
+        is_optional: "True",
+      },
+      {
+        name: "callback",
+        doc: "callback function invoked when the texture is created",
+        types: [
+          "fun(self:script_instance, request_id:integer, result:resource.texture_creation_result)",
+        ],
+        is_optional: "True",
+      },
+    ],
+  });
+
+  test("a slot upstream already fixed emits its upstream type without throwing", () => {
+    const out = emitted("resource", createTextureAsync(["string"]));
+    expect(signature(out, "create_texture_async")).toContain("(path: string, table:");
+  });
+
+  test("a slot still declaring the pinned spelling keeps its correction", () => {
+    const out = emitted("resource", createTextureAsync(["string", "hash"]));
+    expect(signature(out, "create_texture_async")).toContain("(path: string, table:");
+  });
+
+  // Verbatim from the Defold 1.13.2 ref-doc (`gamesys-camera_ddf.proto_doc.json`);
+  // the example is omitted.
+  const cameraProjection = (span: string) => ({
+    type: "PROPERTY",
+    name: "projection",
+    brief: `<span class="type">${span}</span> camera projection`,
+    description:
+      '<span class="mark">READ ONLY</span> The calculated projection matrix of the camera.\nThe type of the property is matrix4.',
+  });
+  const propertyType = (out: string): string | undefined => /\bprojection: (.+);/.exec(out)?.[1];
+
+  test("a property upstream fixed emits its upstream type", () => {
+    expect(propertyType(emitted("camera", cameraProjection("matrix4")))).toBe("Matrix4");
+  });
+
+  test("a property declaring neither pin keeps its upstream mapping", () => {
+    expect(propertyType(emitted("camera", cameraProjection("vector4")))).toBe("Vector4");
+  });
+
+  test("a property still declaring the pinned spelling keeps its correction", () => {
+    expect(propertyType(emitted("camera", cameraProjection("float")))).toBe("Matrix4");
+  });
+
+  // Verbatim from the Defold 1.13.2 ref-doc
+  // (`scripts-box2d-v3-script_box2d_shape_v3.cpp_doc.json`).
+  const rayCast = (hitTypes: readonly string[]) => ({
+    type: "FUNCTION",
+    name: "b2d.shape.ray_cast",
+    brief: "Ray cast a shape directly.",
+    description: "Ray cast a shape directly.",
+    returnvalues: [{ name: "hit", doc: "cast result, or <code>nil</code>", types: hitTypes }],
+    parameters: [
+      {
+        name: "shape_id",
+        doc: "shape handle from a shape info table, or pass <code>body, shape_index</code>",
+        types: ["b2Shape"],
+        is_optional: "False",
+      },
+      { name: "origin", doc: "world ray origin", types: ["vector3"], is_optional: "False" },
+      {
+        name: "translation",
+        doc: "world ray translation",
+        types: ["vector3"],
+        is_optional: "False",
+      },
+      {
+        name: "max_fraction",
+        doc: "optional maximum translation fraction, defaults to 1",
+        types: ["number"],
+        is_optional: "True",
+      },
+    ],
+  });
+
+  test("a return upstream retyped to a named struct emits the struct reference", () => {
+    // The struct is declared in `scripts-box2d-script_box2d.cpp_doc.json`, which
+    // routes it to the `b2d` module.
+    const declared = new Map([["b2d.shape_cast_output", "b2d.shape_cast_output"]]);
+    const out = emitted("b2d.shape", rayCast(["b2d.shape_cast_output", "nil"]), declared);
+    expect(signature(out, "ray_cast")).toEndWith("): b2d.shape_cast_output | undefined;");
+  });
+
+  test("a return still declaring the pinned spelling keeps its correction", () => {
+    const line = signature(emitted("b2d.shape", rayCast(["table"])), "ray_cast");
+    expect(line).toContain("iterations: number } | undefined;");
+  });
+
+  // The 1.13.2 spelling of each defect a correction carries as `retypedUpstream`.
+  // Slots verbatim from the Defold 1.13.2 ref-doc; the long prose fields are
+  // omitted.
+  const fn = (
+    name: string,
+    parameters: readonly Record<string, unknown>[],
+    returnvalues: readonly Record<string, unknown>[] = [],
+  ) => ({ type: "FUNCTION", name, brief: "", parameters, returnvalues });
+
+  // `render-render_script.cpp_doc.json`
+  const setRenderTarget = fn("render.set_render_target", [
+    {
+      name: "render_target",
+      doc: "render target to set. Omit it, pass <code>nil</code>, or use render.RENDER_TARGET_DEFAULT to set the default render target",
+      types: ["render_target", "string", "hash", "nil"],
+      is_optional: "True",
+    },
+    {
+      name: "options",
+      doc: "optional render-target activation options",
+      types: ["render.set_render_target_options"],
+      is_optional: "True",
+    },
+  ]);
+  const draw = fn("render.draw", [
+    {
+      name: "predicate",
+      doc: "predicate to draw for",
+      types: ["render_predicate"],
+      is_optional: "False",
+    },
+    {
+      name: "options",
+      doc: "optional draw options",
+      types: ["render.draw_options"],
+      is_optional: "True",
+    },
+  ]);
+  const predicate = fn(
+    "render.predicate",
+    [
+      {
+        name: "tags",
+        doc: "table of tags that the predicate should match. The tags can be of either hash or string type",
+        types: ["(string|hash)[]"],
+        is_optional: "False",
+      },
+    ],
+    [{ name: "predicate", doc: "new predicate", types: ["render_predicate"] }],
+  );
+  // `gameobject_script.cpp_doc.json`
+  const goDelete = fn("go.delete", [
+    {
+      name: "id",
+      doc: "optional id or table of id's of the instance(s) to delete, the instance of the calling script is deleted by default",
+      types: ["string", "hash", "url", "(string|hash|url)[]"],
+      is_optional: "True",
+    },
+    {
+      name: "recursive",
+      doc: "optional boolean, set to true to recursively delete child hiearchy in child to parent order",
+      types: ["boolean"],
+      is_optional: "True",
+    },
+  ]);
+  // `src-script_sys.cpp_doc.json`
+  const sysSave = fn("sys.save", [
+    { name: "filename", doc: "file to write to", types: ["string"], is_optional: "False" },
+    { name: "table", doc: "lua table to save", types: ["table<any, any>"], is_optional: "False" },
+  ]);
+  const sysSerialize = fn(
+    "sys.serialize",
+    [
+      {
+        name: "table",
+        doc: "lua table to serialize",
+        types: ["table<any, any>"],
+        is_optional: "False",
+      },
+    ],
+    [{ name: "buffer", doc: "serialized data buffer", types: ["string"] }],
+  );
+  // `luasocket-luasocket.doc_h_doc.json`
+  const protect = fn(
+    "socket.protect",
+    [
+      {
+        name: "func",
+        doc: "a function that calls a try function (or assert, or error) to throw exceptions.",
+        types: ["fun(...:any):any"],
+        is_optional: "False",
+      },
+    ],
+    [
+      {
+        name: "safe_func",
+        doc: "an equivalent function that instead of throwing exceptions, returns <code>nil</code> followed by an error message.",
+        types: ["fun(...:any):any"],
+      },
+    ],
+  );
+  const newtry = fn(
+    "socket.newtry",
+    [
+      {
+        name: "finalizer",
+        doc: "a function that will be called before the try throws the exception.",
+        types: ["fun()"],
+        is_optional: "False",
+      },
+    ],
+    [{ name: "try", doc: "the customized try function.", types: ["fun(...:any):any"] }],
+  );
+
+  test.each([
+    [
+      "render",
+      "set_render_target",
+      setRenderTarget,
+      'render_target?: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT,',
+    ],
+    ["render", "draw", draw, 'draw(predicate: Opaque<"render_predicate">,'],
+    ["render", "predicate", predicate, '): Opaque<"render_predicate">;'],
+    ["go", "_delete", goDelete, "id?: string | Hash | Url | (string | Hash | Url)[] | boolean,"],
+    ["sys", "save", sysSave, "table: LuaTable<AnyNotNil, unknown> | readonly unknown[])"],
+    ["sys", "serialize", sysSerialize, "table: LuaTable<AnyNotNil, unknown> | readonly unknown[])"],
+    [
+      "socket",
+      "protect",
+      protect,
+      "): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>;",
+    ],
+    ["socket", "newtry", newtry, "): <T>(value: T | undefined, ...rest: T extends"],
+  ] as const)("%s.%s keeps its correction on the 1.13.2 spelling", (namespace, local, element, slot) => {
+    expect(signature(emitted(namespace, element), local)).toContain(slot);
+  });
+
+  test("an added member the mapped union already has is emitted once", () => {
+    const line = signature(emitted("render", setRenderTarget), "set_render_target");
+    expect(line.match(/\| Hash\b/g)).toHaveLength(1);
+    expect(line.match(/\| string\b/g)).toHaveLength(1);
+  });
+});

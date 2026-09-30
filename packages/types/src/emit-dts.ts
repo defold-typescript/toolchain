@@ -11,6 +11,7 @@ import type {
   ApiVariable,
 } from "./api-doc";
 import { DEFOLD_TYPE_MAP } from "./core-types";
+import { correctionPins, pinMatches, propertyCorrectionPins } from "./correction-pins";
 import {
   type DocCommentParts,
   htmlToCodeText,
@@ -337,6 +338,8 @@ export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
 export interface ReturnTypeCorrection {
   readonly ts: string;
   readonly upstream: readonly string[];
+  // A later release's spelling of the same defect; see `correction-pins.ts`.
+  readonly retypedUpstream?: readonly (readonly string[])[];
   readonly reason: string;
   // The named value of a multi-return the correction rewrites; `ts` is then
   // that value's type. Absent, the correction rewrites a single return.
@@ -378,19 +381,25 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       slot: "code",
     },
   ],
+  // 1.13.2 declares `render_predicate`, whose TYPEDEF aliases `userdata`, and
+  // that still emits `number`.
   [
     "render.predicate",
     {
       ts: 'Opaque<"render_predicate">',
       upstream: ["number"],
+      retypedUpstream: [["render_predicate"]],
       reason: "new predicate",
     },
   ],
+  // 1.13.2 declares both as `fun(...:any):any`, which emits
+  // `(...args: unknown[]) => unknown` and still drops the contract.
   [
     "socket.protect",
     {
       ts: "(...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>",
       upstream: ["function(function())"],
+      retypedUpstream: [["fun(...:any):any"]],
       reason: "returns nil followed by an error message.",
     },
   ],
@@ -399,6 +408,7 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
     {
       ts: "<T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T",
       upstream: ["function"],
+      retypedUpstream: [["fun(...:any):any"]],
       reason: "the customized try function.",
     },
   ],
@@ -413,13 +423,16 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
 // what the slot also takes and `removes` drops members the binding raises on, so
 // the URL address alias, array curation and constant mapping stay live, and
 // optionality stays with `isDocOptional`. Each entry records the upstream tokens
-// it contradicts and `param-correction-provenance.test.ts` pins them against
-// every retained vendored ref-doc. Once no retained target still declares those
-// tokens the entry is deleted, never re-pinned.
+// it contradicts, plus any later spelling of the same defect in
+// `retypedUpstream`, and applies only to a slot still declaring one of them;
+// `param-correction-provenance.test.ts` pins them against every retained
+// vendored ref-doc. Once no retained target still declares any of them the
+// entry is deleted, never re-pinned.
 export interface ParamTypeCorrection {
   readonly adds?: string;
   readonly removes?: readonly string[];
   readonly upstream: readonly string[];
+  readonly retypedUpstream?: readonly (readonly string[])[];
   readonly reason: string;
 }
 
@@ -558,8 +571,9 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     {
       adds: "string | Hash | typeof render.RENDER_TARGET_DEFAULT",
       upstream: ["render_target"],
+      retypedUpstream: [["render_target", "string", "hash", "nil"]],
       reason:
-        "\"render.RENDER_TARGET_DEFAULT to set the default render target\"; example `render.set_render_target('my_rt_resource')`",
+        "\"render.RENDER_TARGET_DEFAULT to set the default render target\"; example `render.set_render_target('my_rt_resource')`; 1.13.2 adds the names but still omits the constant",
     },
   ],
   [
@@ -622,8 +636,9 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       adds: 'Opaque<"render_predicate">',
       removes: ["number"],
       upstream: ["number"],
+      retypedUpstream: [["render_predicate"]],
       reason:
-        "render_script.cpp:RenderScript_Draw reads the predicate with RenderScriptPredicate_Check, the userdata render.predicate returns",
+        "render_script.cpp:RenderScript_Draw reads the predicate with RenderScriptPredicate_Check, the userdata render.predicate returns; 1.13.2's `render_predicate` still emits `number`",
     },
   ],
   [
@@ -631,7 +646,9 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     {
       adds: "boolean",
       upstream: ["string", "hash", "url", "table"],
-      reason: "example `go.delete(true)` deletes the script game object and its children",
+      retypedUpstream: [["string", "hash", "url", "(string|hash|url)[]"]],
+      reason:
+        "example `go.delete(true)` deletes the script game object and its children; 1.13.2 types the id list but still omits `boolean`",
     },
   ],
   [
@@ -664,8 +681,9 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     {
       adds: "readonly unknown[]",
       upstream: ["table"],
+      retypedUpstream: [["table<any, any>"]],
       reason:
-        'example builds `my_table` with `table.insert(my_table, "my_value")` and passes it to `sys.save`',
+        'example builds `my_table` with `table.insert(my_table, "my_value")` and passes it to `sys.save`; 1.13.2\'s `table<any, any>` emits a `LuaTable`, which refuses an array',
     },
   ],
   [
@@ -673,8 +691,9 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     {
       adds: "readonly unknown[]",
       upstream: ["table"],
+      retypedUpstream: [["table<any, any>"]],
       reason:
-        'example builds `my_table` with `table.insert(my_table, "my_value")` and passes it to `sys.serialize`',
+        'example builds `my_table` with `table.insert(my_table, "my_value")` and passes it to `sys.serialize`; 1.13.2\'s `table<any, any>` emits a `LuaTable`, which refuses an array',
     },
   ],
 ]);
@@ -692,6 +711,8 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
 export interface PropertyTypeCorrection {
   readonly ts: string;
   readonly upstream: string;
+  // A later release's span for the same defect; see `correction-pins.ts`.
+  readonly retypedUpstream?: readonly string[];
   readonly reason: string;
 }
 
@@ -4782,11 +4803,14 @@ function parameterType(
         )
       : "unknown";
   const correction = PARAM_TYPE_CORRECTIONS.get(tableSlotKey(elementName, "param", p.name));
-  if (correction === undefined) return mapped;
+  if (correction === undefined || !pinMatches(p.types, correctionPins(correction))) return mapped;
   const kept =
     correction.removes === undefined ? mapped : withoutUnionMembers(mapped, correction.removes);
   if (correction.adds === undefined) return kept;
-  return kept === "" ? correction.adds : `${kept} | ${correction.adds}`;
+  if (kept === "") return correction.adds;
+  const present = new Set(unionMembers(kept));
+  const added = unionMembers(correction.adds).filter((member) => !present.has(member));
+  return added.length === 0 ? kept : `${kept} | ${added.join(" | ")}`;
 }
 
 function isFunctionTypeText(ts: string): boolean {
@@ -4800,22 +4824,29 @@ function isFunctionTypeText(ts: string): boolean {
   return false;
 }
 
-// Drops whole top-level members from a rendered union, leaving nested unions
-// inside brackets, braces or generics untouched.
-function withoutUnionMembers(union: string, removed: readonly string[]): string {
+// The top-level members of a rendered union, leaving nested unions inside
+// brackets, braces or generics whole.
+function unionMembers(union: string): string[] {
   const members: string[] = [];
   let depth = 0;
   let start = 0;
   for (let i = 0; i < union.length; i++) {
     const c = union[i];
     if (c === "(" || c === "[" || c === "{" || c === "<") depth++;
-    else if (c === ")" || c === "]" || c === "}" || c === ">") depth--;
+    else if (c === ")" || c === "]" || c === "}" || (c === ">" && union[i - 1] !== "=")) depth--;
     else if (c === "|" && depth === 0) {
       members.push(union.slice(start, i).trim());
       start = i + 1;
     }
   }
   members.push(union.slice(start).trim());
+  return members;
+}
+
+// Drops whole top-level members from a rendered union. Called only once the
+// slot's pin matched, so a removal that finds nothing is a real defect.
+function withoutUnionMembers(union: string, removed: readonly string[]): string {
+  const members = unionMembers(union);
   const kept = members.filter((member) => !removed.includes(member));
   if (kept.length === members.length) {
     throw new Error(`withoutUnionMembers: none of ${removed.join(", ")} is a member of ${union}`);
@@ -4927,7 +4958,9 @@ function emitReturn(
       position: index,
       name: rv.name,
       ts:
-        correction?.slot !== undefined && correction.slot === rv.name
+        correction?.slot !== undefined &&
+        correction.slot === rv.name &&
+        pinMatches(rv.types, correctionPins(correction))
           ? correction.ts
           : rv.types.length > 0
             ? mapSlotUnion(
@@ -4951,7 +4984,11 @@ function emitReturn(
   }
   const first = returnValues[0];
   if (!first) return { type: "void", trailing: "", slots: [] };
-  if (correction !== undefined && correction.slot === undefined) {
+  if (
+    correction !== undefined &&
+    correction.slot === undefined &&
+    pinMatches(first.types, correctionPins(correction))
+  ) {
     return {
       type: correction.ts,
       trailing: "",
@@ -4995,7 +5032,7 @@ function emitPropertyMembers(
   }
   const correction = PROPERTY_TYPE_CORRECTIONS.get(`${namespace}.${p.name}`);
   const ts =
-    correction !== undefined
+    correction !== undefined && pinMatches(p.types, propertyCorrectionPins(correction))
       ? correction.ts
       : p.types.length > 0
         ? unionFromTokens(p.types, mapType)
