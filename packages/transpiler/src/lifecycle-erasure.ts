@@ -208,18 +208,19 @@ function emitInitMerge(
   return [builderDecl, createAssignmentStatement(createIdentifier("init"), initFn, property)];
 }
 
-// The value-keyed `properties` field maps each `key: default` to a chunk-scope
-// `go.property("key", default)` the editor reads. Emitted before the hook
-// assignments and after the source's `local` consts, so a default referencing a
-// module const resolves.
-function emitPropertyRegistrations(
-  property: ts.ObjectLiteralElementLike,
-  context: TransformationContext,
-): Statement[] {
+export interface PropertyMember {
+  readonly name: string;
+  readonly initializer: ts.Expression;
+}
+
+// The `key: default` members of a factory's `properties` field that register as
+// script properties: a property assignment keyed by an identifier or a string
+// literal. Shared by the emitter and every analysis of what it registers.
+export function propertyMembers(property: ts.ObjectLiteralElementLike): PropertyMember[] {
   if (!ts.isPropertyAssignment(property) || !ts.isObjectLiteralExpression(property.initializer)) {
     return [];
   }
-  const registrations: Statement[] = [];
+  const members: PropertyMember[] = [];
   for (const member of property.initializer.properties) {
     if (!ts.isPropertyAssignment(member)) {
       continue;
@@ -228,30 +229,58 @@ function emitPropertyRegistrations(
     if (!ts.isIdentifier(key) && !ts.isStringLiteral(key)) {
       continue;
     }
-    registrations.push(
-      createExpressionStatement(
-        createCallExpression(
-          createTableIndexExpression(createIdentifier("go"), createStringLiteral("property")),
-          [createStringLiteral(key.text), context.transformExpression(member.initializer)],
-        ),
-      ),
-    );
+    members.push({ name: key.text, initializer: member.initializer });
   }
-  return registrations;
+  return members;
+}
+
+// The hooks object literal of a call to a lifecycle factory, or `undefined` when
+// the expression is not one the erasure rewrites.
+export function factoryHooks(
+  expression: ts.Expression,
+  checker: ts.TypeChecker,
+): ts.ObjectLiteralExpression | undefined {
+  if (!ts.isCallExpression(expression)) {
+    return undefined;
+  }
+  if (!resolvesToFactoryExport(expression.expression, checker)) {
+    return undefined;
+  }
+  const hooks = expression.arguments[0];
+  if (hooks === undefined || !ts.isObjectLiteralExpression(hooks)) {
+    return undefined;
+  }
+  return hooks;
+}
+
+export function isPropertiesHook(property: ts.ObjectLiteralElementLike): boolean {
+  return hookName(property) === "properties";
+}
+
+// The value-keyed `properties` field maps each `key: default` to a chunk-scope
+// `go.property("key", default)` the editor reads. Emitted before the hook
+// assignments and after the source's `local` consts, so a default referencing a
+// module const resolves.
+function emitPropertyRegistrations(
+  property: ts.ObjectLiteralElementLike,
+  context: TransformationContext,
+): Statement[] {
+  return propertyMembers(property).map(({ name, initializer }) =>
+    createExpressionStatement(
+      createCallExpression(
+        createTableIndexExpression(createIdentifier("go"), createStringLiteral("property")),
+        [createStringLiteral(name), context.transformExpression(initializer)],
+      ),
+    ),
+  );
 }
 
 function eraseFactoryCall(
   expression: ts.Expression,
   context: TransformationContext,
 ): Statement[] | undefined {
-  if (!ts.isCallExpression(expression)) {
-    return undefined;
-  }
-  if (!resolvesToFactoryExport(expression.expression, context.checker)) {
-    return undefined;
-  }
-  const hooks = expression.arguments[0];
-  if (hooks === undefined || !ts.isObjectLiteralExpression(hooks)) {
+  const hooks = factoryHooks(expression, context.checker);
+  if (hooks === undefined) {
     return undefined;
   }
   const registrations: Statement[] = [];

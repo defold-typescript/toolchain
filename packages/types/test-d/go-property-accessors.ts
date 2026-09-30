@@ -24,6 +24,11 @@ go.set<label.properties>()(url, "scale", v3);
 // @ts-expect-error the label component refuses a number scale
 go.set<label.properties>()(url, "scale", 2);
 
+// A label's text is a writable string property.
+const _labelText: string = go.get<label.properties>()(url, "text");
+void _labelText;
+go.set<label.properties>()(url, "text", "Hello");
+
 // @ts-expect-error wrong value type for a known property
 go.set(url, "position", "not a vector");
 

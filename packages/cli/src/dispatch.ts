@@ -961,6 +961,7 @@ function dispatchCommand(
             const scriptWorlds = scriptWorldsForBuild(sceneTypes, cwd);
             const { written, warnings, unreachableAddresses, crossWorldAddresses } = runBuild({
               cwd,
+              defoldVersion: head.version,
               ...(sceneIndex !== undefined ? { sceneIndex } : {}),
               ...(sceneObjects !== undefined ? { sceneObjects } : {}),
               ...(scriptWorlds !== undefined ? { scriptWorlds } : {}),
@@ -1001,6 +1002,7 @@ function dispatchCommand(
           const scriptWorlds = scriptWorldsForBuild(sceneTypes, cwd);
           const { written, warnings, unreachableAddresses, crossWorldAddresses } = runBuild({
             cwd,
+            defoldVersion: head.version,
             ...(sceneIndex !== undefined ? { sceneIndex } : {}),
             ...(sceneObjects !== undefined ? { sceneObjects } : {}),
             ...(scriptWorlds !== undefined ? { scriptWorlds } : {}),
@@ -1190,6 +1192,7 @@ function dispatchCommand(
           const editorAttached = lateEditorVersionCheck();
           const watchOpts: RunWatchOptions = {
             cwd,
+            defoldVersion: head.version,
             stdout: io.stdout,
             stderr: io.stderr,
             ...(internals?.watcherFactory ? { watcherFactory: internals.watcherFactory } : {}),

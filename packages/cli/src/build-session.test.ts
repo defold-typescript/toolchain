@@ -647,6 +647,41 @@ describe("createBuildSession (companion module emit)", () => {
   });
 });
 
+describe("createBuildSession (text script properties)", () => {
+  const GREETER =
+    'import { defineScript } from "@defold-typescript/types";\n' +
+    'defineScript({ properties: { greeting: "Hello" } });\n';
+
+  test("the first build fails on a pre-1.13.2 target naming both versions", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/greeter.ts", GREETER);
+
+    const session = createBuildSession({ cwd, defoldVersion: "1.13.1" });
+    let thrown: unknown;
+    try {
+      session.buildAll();
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const message = (thrown as BuildFailureError).message;
+    expect(message).toContain("src/greeter.ts:2:40");
+    expect(message).toContain("greeting");
+    expect(message).toContain("1.13.2");
+    expect(message).toContain("1.13.1");
+    expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(false);
+  });
+
+  test("builds on a 1.13.2 target", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/greeter.ts", GREETER);
+
+    const session = createBuildSession({ cwd, defoldVersion: "1.13.2" });
+    expect(session.buildAll().written).toContain("src/greeter.ts.script");
+  });
+});
+
 describe("createBuildSession — the incremental claim inventory", () => {
   // Two include roots collapsing under one `outDir` is the shape that puts two
   // sources on one output rel without either being renamed, so a rebuild of one

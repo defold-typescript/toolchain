@@ -268,6 +268,27 @@ describe("lifecycle erasure", () => {
     expect(result.lua).not.toContain("properties");
   });
 
+  test("registers a multi-line string default beside a number default", () => {
+    const source = [
+      'import { defineScript } from "@defold-typescript/types";',
+      "",
+      "defineScript({",
+      '  properties: { greeting: "Hello!\\nWelcome", speed: 1 },',
+      "});",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      go.property("greeting", "Hello!\\nWelcome")
+      go.property("speed", 1)
+      return ____exports
+      "
+    `);
+  });
+
   test("parameterizes the init builder so the body reads properties from self", () => {
     const source = [
       'import { defineScript } from "@defold-typescript/types";',

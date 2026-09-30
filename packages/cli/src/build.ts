@@ -37,6 +37,7 @@ import {
 } from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
+import { throwOnTextPropertiesBeforeTarget } from "./text-property-gate";
 import { loadUrlParameterTable } from "./url-parameter-table";
 import {
   type CrossWorldAddressEntry,
@@ -83,6 +84,12 @@ export interface RunBuildOptions {
    * same reason `sceneIndex` is.
    */
   readonly sceneObjects?: SceneObjectComponents;
+  /**
+   * The Defold version the build targets, which gates source features the
+   * engine gained later. Optional for the same reason `sceneIndex` is: a caller
+   * that knows no target gets no version gate.
+   */
+  readonly defoldVersion?: string;
 }
 
 export interface RunBuildResult {
@@ -95,7 +102,7 @@ export interface RunBuildResult {
 }
 
 export function runBuild(opts: RunBuildOptions): RunBuildResult {
-  const { cwd, sceneIndex, sceneObjects, scriptWorlds } = opts;
+  const { cwd, sceneIndex, sceneObjects, scriptWorlds, defoldVersion } = opts;
   const config = readBuildConfig(cwd);
 
   const seen = new Set<string>();
@@ -165,6 +172,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     const preEmitProgram = session.getProgram();
     if (preEmitProgram) {
       throwOnCompanionViolations({ program: preEmitProgram, scriptSources });
+      throwOnTextPropertiesBeforeTarget({ program: preEmitProgram, scriptSources, defoldVersion });
     }
     throwOnUnresolvedRequires({
       lua: luaBySource,

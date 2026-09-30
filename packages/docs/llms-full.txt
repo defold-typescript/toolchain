@@ -1669,6 +1669,31 @@ export default defineScript({
 
 Property-backed fields are present on `self` before `init` runs, so they need not appear in `init`'s return. The state `init` returns is still checked on its own — an omitted state field remains a compile error, while omitted property-backed fields are correct.
 
+##### Text properties
+
+A string default declares a text property, which the editor shows as a multi-line text field. Defold supports text script properties from 1.13.2:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  properties: {
+    greeting: "Hello!\nWelcome", // self.greeting: string
+  },
+  init(self) {
+    print(self.greeting);
+  },
+});
+```
+
+When the project [targets](./pinning-defold-target.md) an older Defold, [`build`](./build.md) and [`watch`](./watch.md) refuse the script before writing anything, naming the property, its position, and both versions:
+
+```text
+src/greeter.ts:5:15: script property "greeting" has a string default, which needs Defold 1.13.2 or later; the target is 1.12.4
+```
+
+The same release lets a script read and write a label's text as a component property: `go.get<label.properties>()("#label", "text")`.
+
 ##### Reading properties in `init`
 
 Defold applies the declared property values to `self` *before* `init` runs, so `init` can read them at spawn time. Give `init` a `self` parameter and it is typed as the property channel — exactly the declared `properties`, for reading. This is the natural home for setup that depends on a property, such as playing the initial animation without waiting a frame:
