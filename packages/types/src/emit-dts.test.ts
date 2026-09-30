@@ -56,10 +56,12 @@ import {
   CONSTANT_UNION_ALIASES,
   collectHandleMethodGroups,
   constantUnionAlias,
+  defaultMapType,
   emitDeclarations,
   emitSymbolSignatures,
   HOMOGENEOUS_ARRAY_SLOTS,
   inlineTableType,
+  isKnownDefoldTypeToken,
   MAPPING_TABLE_SLOTS,
   NESTED_FIELD_CURATIONS,
   OPTIONAL_SLOT_CORRECTIONS,
@@ -5230,5 +5232,35 @@ describe("corrections the engine bindings demand", () => {
     expect(line(b2dWorldDoc, "function cast_shape(")).toContain(
       "radius: number; center1: Vector3; center2: Vector3 }",
     );
+  });
+});
+
+describe("defaultMapType LuaLS fallback", () => {
+  test("a whole-token miss resolves through the LuaLS grammar", () => {
+    expect(defaultMapType("hash[]")).toBe("Hash[]");
+    expect(defaultMapType("table<string|hash, any>")).toBe("LuaTable<string | Hash, unknown>");
+    expect(
+      defaultMapType("fun(self:script_instance, handle:timer_handle, time_elapsed:number)"),
+    ).toBe("(self: unknown, handle: number, time_elapsed: number) => void");
+    expect(defaultMapType("buffer_data")).toBe('Opaque<"buffer">');
+    expect(defaultMapType("socket_client")).toBe("client");
+    expect(defaultMapType("message.physics.collision_event")).toBe(
+      'BuiltinMessages["collision_event"]',
+    );
+  });
+
+  test("1.13.1 tokens keep their whole-token mapping", () => {
+    expect(defaultMapType("table")).toBe("Record<string | number, unknown>");
+    expect(defaultMapType("function(self, url, result)")).toBe(
+      "(self: unknown, url: unknown, result: unknown) => void",
+    );
+  });
+
+  test("a composite is known only when every leaf resolves", () => {
+    expect(isKnownDefoldTypeToken("hash[]")).toBe(true);
+    expect(isKnownDefoldTypeToken("table<string|hash, any>")).toBe(true);
+    expect(isKnownDefoldTypeToken("message.physics.collision_event")).toBe(true);
+    expect(isKnownDefoldTypeToken("hash|mystery_leaf")).toBe(false);
+    expect(isKnownDefoldTypeToken("message.physics.collision_info")).toBe(false);
   });
 });

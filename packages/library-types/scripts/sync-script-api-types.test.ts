@@ -295,7 +295,8 @@ describe("script_api fidelity", () => {
     expect(resolver.resolves("boolean")).toBe(true);
     expect(resolver.resolves("table")).toBe(true);
     expect(resolver.resolves("function")).toBe(true);
-    expect(resolver.resolves("string | nil")).toBe(false);
+    expect(resolver.resolves("string | nil")).toBe(true);
+    expect(resolver.resolves("string | Frobnicate")).toBe(false);
     expect(resolver.resolves("Frobnicate")).toBe(false);
   });
 

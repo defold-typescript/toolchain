@@ -188,6 +188,10 @@ export interface Url {
   readonly fragment: Hash | undefined;
 }
 
+const BUFFER_TYPE = 'Opaque<"buffer">';
+const BUFFERSTREAM_TYPE =
+  'Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }';
+
 export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   number: "number",
   int: "number",
@@ -216,9 +220,8 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   constant: 'Opaque<"constant">',
   constant_buffer:
     'Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }',
-  buffer: 'Opaque<"buffer">',
-  bufferstream:
-    'Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }',
+  buffer: BUFFER_TYPE,
+  bufferstream: BUFFERSTREAM_TYPE,
   userdata: 'Opaque<"userdata">',
   // Vocabulary, not a shipped brand: no current ref-doc fixture types a slot
   // `resource`, so nothing hand-written may name `Opaque<"resource">`. Kept so a
@@ -243,4 +246,20 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   server: "server",
   unconnected: "unconnected",
   any: "unknown",
+  // 1.13.2 renames of the leaves above, same slots. Upstream declares each only as
+  // a `userdata`/`number` handle TYPEDEF, so each keeps its 1.13.1 mapping, with
+  // two exceptions: `script_instance` is the untyped `self` a callback recovery
+  // emits, and `resource_data` (1.13.1 `resource`, only in the hand-authored
+  // `go.get`/`go.set`/`go.property` slots) is a path hash.
+  buffer_data: BUFFER_TYPE,
+  buffer_stream: BUFFERSTREAM_TYPE,
+  script_instance: "unknown",
+  resource_data: "Hash",
+  timer_handle: "number",
+  render_predicate: "number",
+  socket_client: "client",
+  socket_connected: "connected",
+  socket_master: "master",
+  socket_server: "server",
+  socket_unconnected: "unconnected",
 } as const;
