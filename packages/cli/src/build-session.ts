@@ -41,7 +41,7 @@ import {
 } from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
-import { throwOnTextPropertiesBeforeTarget } from "./text-property-gate";
+import { mergeTextPropertyFailures } from "./text-property-gate";
 import { loadUrlParameterTable } from "./url-parameter-table";
 import {
   type CrossWorldAddressEntry,
@@ -215,11 +215,6 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       const program = session.getProgram();
       if (program) {
         throwOnCompanionViolations({ program, scriptSources });
-        throwOnTextPropertiesBeforeTarget({
-          program,
-          scriptSources,
-          defoldVersion: opts.defoldVersion,
-        });
       }
       throwOnUnresolvedRequires({
         lua: luaBySource,
@@ -240,6 +235,17 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
           ? [{ label: TIMERS_RUNTIME_LABEL, outputRel: timersModuleRel(config) }]
           : []),
       ]);
+    }
+
+    // Outside the clean-program check, for the reason `runBuild` gates there: a
+    // script the target cannot load is never written beside another failure.
+    const gateProgram = session.getProgram();
+    if (gateProgram) {
+      mergeTextPropertyFailures(failures, {
+        program: gateProgram,
+        scriptSources,
+        defoldVersion: opts.defoldVersion,
+      });
     }
 
     // Claimed before anything is written, for the reason `runBuild` claims

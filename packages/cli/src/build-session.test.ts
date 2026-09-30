@@ -673,6 +673,36 @@ describe("createBuildSession (text script properties)", () => {
     expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(false);
   });
 
+  test("refuses the text property beside a failing source, and after it is fixed", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/broken.ts", 'export const n: number = "x";\n');
+    writeIn(cwd, "src/greeter.ts", GREETER);
+    writeIn(cwd, "src/util.ts", "export const one = 1;\n");
+
+    const session = createBuildSession({ cwd, defoldVersion: "1.13.1" });
+    const failedFiles = (run: () => unknown): string[] => {
+      try {
+        run();
+      } catch (error) {
+        expect(error).toBeInstanceOf(BuildFailureError);
+        return [...new Set((error as BuildFailureError).entries.map((entry) => entry.file))];
+      }
+      throw new Error("expected the build to fail");
+    };
+
+    expect(failedFiles(() => session.buildAll()).sort()).toEqual([
+      "src/broken.ts",
+      "src/greeter.ts",
+    ]);
+    expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(false);
+
+    writeIn(cwd, "src/broken.ts", "export const n: number = 1;\n");
+    expect(failedFiles(() => session.applyEvents(["src/broken.ts"], []))).toEqual([
+      "src/greeter.ts",
+    ]);
+    expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(false);
+  });
+
   test("builds on a 1.13.2 target", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
     writeIn(cwd, "src/greeter.ts", GREETER);

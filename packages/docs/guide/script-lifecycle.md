@@ -112,7 +112,7 @@ export default defineScript({
 });
 ```
 
-When the project [targets](./pinning-defold-target.md) an older Defold, [`build`](./build.md) and [`watch`](./watch.md) refuse the script before writing anything, naming the property, its position, and both versions:
+When the project [targets](./pinning-defold-target.md) an older Defold, [`build`](./build.md) and [`watch`](./watch.md) refuse the script and write nothing for it, naming the property, its position, and both versions. Any default that may hold a string counts, such as a `string | Hash` union or a branded string, and the refusal is reported beside every other failure while clean sources are still written:
 
 ```text
 src/greeter.ts:5:15: script property "greeting" has a string default, which needs Defold 1.13.2 or later; the target is 1.12.4

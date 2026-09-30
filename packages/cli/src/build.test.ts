@@ -1415,6 +1415,41 @@ describe("runBuild (text script properties)", () => {
     expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(false);
   });
 
+  test("refuses the text property beside a failing source and still writes clean files", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/broken.ts", 'export const n: number = "x";\n');
+    writeFile("src/greeter.ts", TEXT_PROPERTY);
+    writeFile("src/util.ts", "export const one = 1;\n");
+
+    const thrown = thrownBy(() => runBuild({ cwd, defoldVersion: "1.12.4" }));
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const error = thrown as BuildFailureError;
+    expect(error.entries.map((entry) => entry.file)).toContain("src/broken.ts");
+    expect(error.entries).toContainEqual(
+      expect.objectContaining({ file: "src/greeter.ts", line: 4, column: 27 }),
+    );
+    expect(error.message).toContain("src/greeter.ts:4:27");
+    expect(error.message).toContain("1.13.2");
+    expect(error.message).toContain("1.12.4");
+    expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/util.lua"))).toBe(true);
+  });
+
+  test("a 1.13.2 target fails only the broken source and writes the text property", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/broken.ts", 'export const n: number = "x";\n');
+    writeFile("src/greeter.ts", TEXT_PROPERTY);
+    writeFile("src/util.ts", "export const one = 1;\n");
+
+    const thrown = thrownBy(() => runBuild({ cwd, defoldVersion: "1.13.2" }));
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const files = new Set((thrown as BuildFailureError).entries.map((entry) => entry.file));
+    expect([...files]).toEqual(["src/broken.ts"]);
+    expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(true);
+  });
+
   test("a single-digit minor compares numerically, not as text", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/greeter.ts", TEXT_PROPERTY);
