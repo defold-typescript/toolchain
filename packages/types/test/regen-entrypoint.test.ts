@@ -2,13 +2,18 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { assertSrcAugmentationScoping, SRC_AUGMENTATION_MODULES } from "../scripts/regen";
+import {
+  assertSrcAugmentationScoping,
+  committedFieldCorrectionTargets,
+  SRC_AUGMENTATION_MODULES,
+} from "../scripts/regen";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
-// Matches the contract line `regen.ts` prints once the guard has run; see the
-// comment beside that `console.log`.
+// Match the contract lines `regen.ts` prints once each guard has run; see the
+// comment beside each `console.log`.
 const SCOPING_CHECKED_PREFIX = "src augmentation scoping checked:";
+const COVERAGE_CHECKED_PREFIX = "field correction coverage checked:";
 
 // A surface root the production loader accepts: every name it will look for
 // exists, and only the one under test re-opens anything.
@@ -46,7 +51,7 @@ describe("assertSrcAugmentationScoping", () => {
 });
 
 describe("the regeneration entry point", () => {
-  test("runs the scoping guard before it writes anything, and exits clean", () => {
+  test("runs the scoping and coverage guards before it writes anything, and exits clean", () => {
     const proc = Bun.spawnSync(["bun", "scripts/regen.ts"], {
       cwd: PACKAGE_ROOT,
       stdout: "pipe",
@@ -67,5 +72,11 @@ describe("the regeneration entry point", () => {
 
     const count = (lines[checked] ?? "").slice(SCOPING_CHECKED_PREFIX.length).match(/\d+/)?.[0];
     expect(count).toBe(String(SRC_AUGMENTATION_MODULES.length));
+
+    const covered = lines.findIndex((line) => line.startsWith(COVERAGE_CHECKED_PREFIX));
+    expect(covered).toBeGreaterThanOrEqual(0);
+    expect(covered).toBeLessThan(firstWrite);
+    const targets = (lines[covered] ?? "").slice(COVERAGE_CHECKED_PREFIX.length).match(/\d+/)?.[0];
+    expect(targets).toBe(String(committedFieldCorrectionTargets().length));
   });
 });

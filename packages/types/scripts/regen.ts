@@ -532,16 +532,51 @@ export function targetFieldCorrectionGaps(
   );
 }
 
-export function assertTargetFieldCorrectionCoverage(
-  targetId: string,
-  entries: readonly ModuleManifestEntry[],
-): void {
-  const gaps = targetFieldCorrectionGaps(entries);
-  if (gaps.length > 0) {
-    throw new Error(
-      `target "${targetId}": field corrections no slot or member carries:\n${formatFieldCorrectionGaps(gaps)}`,
-    );
+export interface FieldCorrectionTarget {
+  readonly id: string;
+  readonly entries: readonly ModuleManifestEntry[];
+}
+
+// The runtime surfaces committed generation writes: the default target's, then
+// each fixture-backed version's. ref-doc targets are never pre-baked, and an
+// editor document carries no field correction.
+export function committedFieldCorrectionTargets(
+  targets: readonly ApiTarget[] = API_TARGETS,
+  runtime: readonly ModuleManifestEntry[] = MODULE_MANIFEST,
+  versioned: readonly VersionedModuleManifestEntry[] = VERSIONED_MODULE_MANIFEST,
+): FieldCorrectionTarget[] {
+  const defaultTarget = targets.find((target) => target.default === true);
+  return [
+    ...(defaultTarget ? [{ id: defaultTarget.id, entries: runtime }] : []),
+    ...targets
+      .filter((target) => target.default !== true && (target.source ?? null) == null)
+      .map((target) => ({
+        id: target.id,
+        entries: versioned.filter(
+          (entry) => entry.versionId === target.id && entry.editor !== true,
+        ),
+      })),
+  ];
+}
+
+// Every committed target is judged before any rejection, so one failure names
+// all the stranded corrections at once. Returns how many targets it judged.
+export function assertCommittedFieldCorrectionCoverage(
+  targets: readonly FieldCorrectionTarget[] = committedFieldCorrectionTargets(),
+  tables?: FieldCorrectionTables,
+): number {
+  const failures = targets.flatMap(({ id, entries }) => {
+    const gaps = targetFieldCorrectionGaps(entries, tables);
+    return gaps.length === 0
+      ? []
+      : [
+          `target "${id}": field corrections no slot or member carries:\n${formatFieldCorrectionGaps(gaps)}`,
+        ];
+  });
+  if (failures.length > 0) {
+    throw new Error(failures.join("\n"));
   }
+  return targets.length;
 }
 
 export function generateModuleDeclaration(
@@ -896,16 +931,12 @@ if (import.meta.main) {
   // would let the guard be deleted or reordered with the line still intact.
   const checked = await assertSrcAugmentationScoping();
   console.log(`src augmentation scoping checked: ${checked} file(s)`);
-  assertTargetFieldCorrectionCoverage(DEFAULT_TARGET.id, MODULE_MANIFEST);
-  for (const target of API_TARGETS) {
-    if (target.default === true || (target.source ?? null) != null) continue;
-    assertTargetFieldCorrectionCoverage(
-      target.id,
-      VERSIONED_MODULE_MANIFEST.filter(
-        (entry) => entry.versionId === target.id && entry.editor !== true,
-      ),
-    );
-  }
+  // Ordering contract: `regen-entrypoint.test.ts` reads this line's prefix to
+  // prove the coverage gate runs before the first write. Print the count the gate
+  // returns — never `committedFieldCorrectionTargets().length` or any other count
+  // not taken from the gate, which would keep the line alive with the gate gone.
+  const targets = assertCommittedFieldCorrectionCoverage();
+  console.log(`field correction coverage checked: ${targets} target(s)`);
 
   const generated = resolve(import.meta.dir, "..", "generated");
   mkdirSync(resolve(generated, "editor-vm"), { recursive: true });
