@@ -41,6 +41,7 @@ import {
 } from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
+import { throwOnTextPropertiesBeforeTarget } from "./text-property-gate";
 import { loadUrlParameterTable } from "./url-parameter-table";
 import {
   type CrossWorldAddressEntry,
@@ -78,6 +79,11 @@ export interface CreateBuildSessionOptions {
    * the author has since added.
    */
   readonly sceneObjects?: () => SceneObjectComponents | undefined;
+  /**
+   * The Defold version the build targets, which gates source features the
+   * engine gained later; `undefined` means no target is known and no gate runs.
+   */
+  readonly defoldVersion?: string;
 }
 
 export interface BuildResult {
@@ -209,6 +215,11 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       const program = session.getProgram();
       if (program) {
         throwOnCompanionViolations({ program, scriptSources });
+        throwOnTextPropertiesBeforeTarget({
+          program,
+          scriptSources,
+          defoldVersion: opts.defoldVersion,
+        });
       }
       throwOnUnresolvedRequires({
         lua: luaBySource,
