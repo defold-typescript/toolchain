@@ -3128,7 +3128,7 @@ describe("grouped overload blocks (committed artifacts)", () => {
     expect(counts.shared).toBeGreaterThan(0);
   });
 
-  test("an overload block heads with its count badge and lists its forms before anything else", () => {
+  test("an overload block heads with its count badge and puts only shared prose ahead of its forms", () => {
     let checked = 0;
     for (const page of pages) {
       const md = render(page);
@@ -3139,33 +3139,36 @@ describe("grouped overload blocks (committed artifacts)", () => {
       for (const group of groupOverloadForms(functionRows(page))) {
         const [head] = group;
         if (group.length < 2 || head === undefined) continue;
-        const lines = blockOf(md, overloadHeading(group)).split("\n");
+        const block = blockOf(md, overloadHeading(group));
         expect({
           name: head.name,
-          heading: lines[0]?.startsWith(
+          heading: block.startsWith(
             `### \`${overloadHeading(group)}\` <span class="api-overload-count">${group.length} overloads</span>`,
           ),
         }).toEqual({ name: head.name, heading: true });
-        const body = lines.indexOf('<div class="api-symbol-body">');
-        const rest = lines
-          .slice(body + 1)
-          .join("\n")
-          .trimStart();
-        // An availability note every form shares is the one thing allowed above
-        // the forms, stated once for the block.
-        const note = rest.startsWith('<div class="api-availability"')
-          ? rest.slice(0, rest.indexOf("</div>") + "</div>".length)
-          : "";
-        const afterNote = rest.slice(note.length).trimStart();
-        expect({ name: head.name, first: afterNote.split("\n")[0] }).toEqual({
+        // Ahead of the forms: the shared availability note, description and
+        // authored note. Tables and examples belong to the forms they follow.
+        const list = block.indexOf('<ol class="api-overloads">');
+        const lead = block.slice(0, list);
+        expect({
           name: head.name,
-          first: '<ol class="api-overloads">',
-        });
-        if (note) {
-          expect({
+          list: list > -1,
+          tables: lead.includes("**Parameters**") || lead.includes("**Returns**"),
+          // A fence quoted inside the authored note is the note's own sample.
+          example: /^```/m.test(lead),
+        }).toEqual({ name: head.name, list: true, tables: false, example: false });
+        // After the forms, shared tables precede the shared example.
+        const tail = block.slice(block.indexOf("</ol>"));
+        const example = tail.search(/^```/m);
+        const lastTable = Math.max(
+          tail.lastIndexOf("**Parameters**"),
+          tail.lastIndexOf("**Returns**"),
+        );
+        if (example > -1) {
+          expect({ name: head.name, tableAfterExample: lastTable > example }).toEqual({
             name: head.name,
-            repeated: afterNote.includes('class="api-availability"'),
-          }).toEqual({ name: head.name, repeated: false });
+            tableAfterExample: false,
+          });
         }
         checked += 1;
       }

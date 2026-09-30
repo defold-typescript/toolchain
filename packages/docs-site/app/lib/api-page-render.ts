@@ -811,20 +811,21 @@ export function apiPageMarkdown(
       return ['<li class="api-overload">', "", parts.join("\n\n"), "", "</li>"].join("\n");
     });
     // An availability note every form shares heads the block, since it qualifies
-    // all of them; otherwise the forms lead, each carrying its own note under its
-    // signature. An authored note follows the forms, still ahead of the shared
-    // example it warns about.
+    // all of them; otherwise each form carries its own note under its signature.
+    // The shared description and the authored note that qualifies it come next,
+    // ahead of the forms they describe. The shared example closes the block, after
+    // every signature and table it illustrates.
     const body: string[] = [];
     if (sameBadges && badges[0]) body.push(badges[0]);
-    body.push(['<ol class="api-overloads">', ...items, "</ol>"].join("\n"));
+    if (sameDoc && linked[0]?.docMarkdown) body.push(linked[0].docMarkdown);
     const note = noteFor(head.name);
     if (note) body.push(note);
-    if (sameDoc && linked[0]?.docMarkdown) body.push(linked[0].docMarkdown);
-    if (blockExample) body.push(blockExample);
+    body.push(['<ol class="api-overloads">', ...items, "</ol>"].join("\n"));
     if (sameParams && (tableForm?.parameters.length ?? 0) > 0) {
       body.push(paramSection("Parameters", tableForm?.parameters ?? []));
     }
     if (sharedReturnTable) body.push(paramSection("Returns", tableForm?.returnValues ?? []));
+    if (blockExample) body.push(blockExample);
     lines.push(
       `${heading} ${dots}`.trimEnd(),
       "",

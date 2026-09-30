@@ -51,6 +51,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **The ten `in.*` library types are checked against `britzl/defold-input` `4.8.0`**, and their API reference pages name that tag; the declarations are unchanged.
 - **Library parameters typed as string-keyed tables accept an object literal as well as a `LuaTable`**, such as the `components` of `decore.create` and the `nodes` of `panthera.create_gui`; tables a library returns stay `LuaTable`.
 - **[druid](/api/druid) types follow `Insality/druid` `1.4.0`**: the button, drag, scroll, input and slider styles take optional hover cursors, such as `druid.druid_button_style.ON_HOVER_CURSOR`, a slider exposes its `druid.druid_slider.hover` component, and rich text word metrics report `druid.druid_rich_text_metrics.visible_width`.
+- **Overloaded functions in the API reference lead with their description**: the shared description and its warning sit above the forms and the shared example follows the parameter tables, so `go.property` reads as one description followed by its eight forms, and its description, in hovers too, states that a `string` default needs Defold 1.13.2.
 
 ### Fixed
 
