@@ -81,7 +81,7 @@ describe("declaredKinds", () => {
 
   test("the program is built on the target's entry", () => {
     const entry = program.getRootFileNames()[0] ?? "";
-    expect(entry.endsWith("packages/types/index.d.ts")).toBe(true);
+    expect(entry.replaceAll("\\", "/").endsWith("packages/types/index.d.ts")).toBe(true);
     const source = program.getSourceFile(entry);
     if (!source) throw new Error(`entry not in program: ${entry}`);
     const diagnostics = [

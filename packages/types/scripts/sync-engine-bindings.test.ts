@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import {
   bindingsDir,
   type EngineBindingManifest,
@@ -20,7 +20,7 @@ const TREE_FIXTURE = resolve(
 function listFiles(dir: string): string[] {
   return readdirSync(dir, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
-    .map((entry) => relative(dir, join(entry.parentPath, entry.name)));
+    .map((entry) => relative(dir, join(entry.parentPath, entry.name)).split(sep).join("/"));
 }
 
 describe("selectBindingPaths", () => {

@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 import { type ApiTarget, loadApiTargets } from "./regen";
 import { bindingsDir } from "./sync-engine-bindings";
 
@@ -487,10 +487,12 @@ function findTables(file: string, tokens: readonly Token[]): RegTable[] {
   return tables;
 }
 
+// Paths are recorded with `/` on every platform: backend and directory checks
+// match on segments such as `/box2d/v2/`.
 function listCpp(dir: string): string[] {
   return readdirSync(dir, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(".cpp"))
-    .map((entry) => relative(dir, join(entry.parentPath, entry.name)))
+    .map((entry) => relative(dir, join(entry.parentPath, entry.name)).split(sep).join("/"))
     .sort();
 }
 
