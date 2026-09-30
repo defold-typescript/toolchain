@@ -3,6 +3,7 @@
 // machine, needs a platform the desktop engine is not, or takes a handle
 // nothing can produce.
 const LIFECYCLE = "a lifecycle hook the script defines, not an engine function";
+const NO_BULLET3D = "the probe project runs 2D physics, so no bullet3d world or object exists";
 const PROPERTY_DEFAULT =
   "a go.property default bob reads at build time; the runtime does not define it";
 
@@ -14,6 +15,12 @@ export const PROBE_DENYLIST: Readonly<Record<string, string>> = {
   "liveupdate.*": "mounts and downloads archives",
   "crash.write_dump": "writes a crash dump beside the engine",
   "html5.*": "exists only in HTML5 builds",
+  "bullet3d.*": NO_BULLET3D,
+  "bullet3d.collision_object.*": NO_BULLET3D,
+  "bullet3d.constraint.*": NO_BULLET3D,
+  "bullet3d.rigid_body.*": NO_BULLET3D,
+  "bullet3d.shape.*": NO_BULLET3D,
+  "bullet3d.world.*": NO_BULLET3D,
   "window.set_mouse_lock": "grabs the host pointer",
   "render.dispatch_compute":
     "crashes the engine's command parse when no compute program is set, and the probe project has none",

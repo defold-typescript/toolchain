@@ -102,7 +102,7 @@ editor.command({
 
 // The editor VM libraries, reachable only from this surface. Returns bind to
 // explicitly annotated consts so a regression to `unknown` reds here.
-const _response: Record<string | number, unknown> = http.request("http://localhost", {
+const _response: http.request.response = http.request("http://localhost", {
   method: "GET",
 });
 const _serverUrl: string = http.server.url;
@@ -192,7 +192,9 @@ const _heading: Opaque<"component"> = editor.ui.heading({
   text: "Confirm",
   color: editor.ui.COLOR.TEXT,
 });
-const _confirm: Opaque<"component"> = editor.ui.button({ text: "OK", result: true });
+const _confirm: Opaque<"component"> = editor.ui.dialog_button({ text: "OK", result: true });
+// @ts-expect-error `result` is a dialog_button prop; a plain button has no dialog to return to
+void editor.ui.button({ text: "OK", result: true });
 const _confirmDialog: Opaque<"component"> = editor.ui.dialog({
   title: "Confirm",
   content: editor.ui.vertical({ children: [_heading] }),

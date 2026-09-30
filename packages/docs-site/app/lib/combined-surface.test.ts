@@ -638,9 +638,7 @@ describe("combinedAuthoritativeSignatures (committed artifacts)", () => {
     const entry = compute.entries.find((e) => e.identity.name === "compute.get_constants");
     expect(entry).toBeDefined();
     const inner = map?.get(symbolIdentityKey((entry as NonNullable<typeof entry>).identity));
-    expect(inner).toBe(
-      "compute.get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[]",
-    );
+    expect(inner).toBe("compute.get_constants(path: Hash | string): material.constant_info[]");
     expect(inner).not.toContain("Record<string | number, unknown>");
   });
 });
@@ -690,6 +688,8 @@ describe("namespaceBadgeCounts (committed artifacts)", () => {
     expect(counts.changed).toBe(0);
   });
 
+  // 1.13.2 respells every vmath signature and newly documents its `vector`
+  // type; neither is a marked change.
   test("a stable namespace (vmath) is {0,0,0}", () => {
     expect(namespaceBadgeCounts(real("vmath"))).toEqual({ new: 0, changed: 0, deprecated: 0 });
   });

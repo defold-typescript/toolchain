@@ -132,11 +132,11 @@ declare module 'panthera.panthera' {
 	/**
 	 * Load and create a game object animation state from a Lua table or JSON file.
 	 */
-	export function create_go(this: void, animation_or_path: string | LuaTable, collection_name?: string | undefined, objects?: LuaTable<string | Hash, string | Hash> | Record<string, string | Hash> | undefined): panthera_animation;
+	export function create_go(this: void, animation_or_path: string | LuaTable, collection_name?: string | undefined, objects?: LuaMap<string | Hash, string | Hash> | Record<string, string | Hash> | undefined): panthera_animation;
 	/**
 	 * Load and create a GUI animation state from a Lua table or JSON file.
 	 */
-	export function create_gui(this: void, animation_or_path: string | LuaTable, template?: string | undefined, nodes?: LuaTable<string | Hash, Opaque<"node">> | Record<string, Opaque<"node">> | undefined): panthera_animation;
+	export function create_gui(this: void, animation_or_path: string | LuaTable, template?: string | undefined, nodes?: LuaMap<string | Hash, Opaque<"node">> | Record<string, Opaque<"node">> | undefined): panthera_animation;
 	/**
 	 * Load an animation from a Lua table or JSON file and create an animation state using a specified adapter.
 	 */

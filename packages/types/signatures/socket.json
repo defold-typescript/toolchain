@@ -9,7 +9,7 @@
   },
   "socket.newtry": {
     "signatures": [
-      "socket.newtry(finalizer?: () => void): { <T>(result: LuaMultiReturn<[T | undefined, ...unknown[]]>): T; <T>(value: T | undefined, ...rest: unknown[]): T }"
+      "socket.newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T"
     ]
   },
   "socket.protect": {
@@ -19,12 +19,7 @@
   },
   "socket.select": {
     "signatures": [
-      "socket.select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>"
-    ]
-  },
-  "socket.skip": {
-    "signatures": [
-      "socket.skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): LuaMultiReturn<[unknown, unknown, unknown]>"
+      "socket.select(recvt: socket.socket_selectable[], sendt: socket.socket_selectable[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>"
     ]
   },
   "socket.sleep": {
@@ -66,7 +61,7 @@
     ]
   },
   "client:close": {
-    "signatures": ["client:close(): void"]
+    "signatures": ["client:close(): number"]
   },
   "client:dirty": {
     "signatures": ["client:dirty(): boolean"]
@@ -80,13 +75,17 @@
     ]
   },
   "client:getpeername": {
-    "signatures": ["client:getpeername(): string"]
+    "signatures": [
+      "client:getpeername(): LuaMultiReturn<[string | undefined, number | string, string | undefined]>"
+    ]
   },
   "client:getsockname": {
-    "signatures": ["client:getsockname(): string"]
+    "signatures": [
+      "client:getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>"
+    ]
   },
   "client:getstats": {
-    "signatures": ["client:getstats(): string"]
+    "signatures": ["client:getstats(): LuaMultiReturn<[number, number, number]>"]
   },
   "client:receive": {
     "signatures": [
@@ -107,12 +106,10 @@
     ]
   },
   "client:setstats": {
-    "signatures": [
-      "client:setstats(received: number, sent: number, age: number): number | undefined"
-    ]
+    "signatures": ["client:setstats(received?: number, sent?: number, age?: number): number"]
   },
   "client:settimeout": {
-    "signatures": ["client:settimeout(value: number, mode?: string): void"]
+    "signatures": ["client:settimeout(value?: number, mode?: string): number"]
   },
   "client:shutdown": {
     "signatures": ["client:shutdown(mode: string): number"]
@@ -121,7 +118,7 @@
     "signatures": ["server:accept(): LuaMultiReturn<[client | undefined, string | undefined]>"]
   },
   "server:close": {
-    "signatures": ["server:close(): void"]
+    "signatures": ["server:close(): number"]
   },
   "server:dirty": {
     "signatures": ["server:dirty(): boolean"]
@@ -135,10 +132,12 @@
     ]
   },
   "server:getsockname": {
-    "signatures": ["server:getsockname(): string"]
+    "signatures": [
+      "server:getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>"
+    ]
   },
   "server:getstats": {
-    "signatures": ["server:getstats(): string"]
+    "signatures": ["server:getstats(): LuaMultiReturn<[number, number, number]>"]
   },
   "server:setfd": {
     "signatures": ["server:setfd(handle: number): void"]
@@ -149,12 +148,10 @@
     ]
   },
   "server:setstats": {
-    "signatures": [
-      "server:setstats(received: number, sent: number, age: number): number | undefined"
-    ]
+    "signatures": ["server:setstats(received?: number, sent?: number, age?: number): number"]
   },
   "server:settimeout": {
-    "signatures": ["server:settimeout(value: number, mode?: string): void"]
+    "signatures": ["server:settimeout(value?: number, mode?: string): number"]
   },
   "master:bind": {
     "signatures": [
@@ -162,7 +159,7 @@
     ]
   },
   "master:close": {
-    "signatures": ["master:close(): void"]
+    "signatures": ["master:close(): number"]
   },
   "master:connect": {
     "signatures": [
@@ -176,10 +173,12 @@
     "signatures": ["master:getfd(): number"]
   },
   "master:getsockname": {
-    "signatures": ["master:getsockname(): string"]
+    "signatures": [
+      "master:getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>"
+    ]
   },
   "master:getstats": {
-    "signatures": ["master:getstats(): string"]
+    "signatures": ["master:getstats(): LuaMultiReturn<[number, number, number]>"]
   },
   "master:listen": {
     "signatures": [
@@ -190,15 +189,13 @@
     "signatures": ["master:setfd(handle: number): void"]
   },
   "master:setstats": {
-    "signatures": [
-      "master:setstats(received: number, sent: number, age: number): number | undefined"
-    ]
+    "signatures": ["master:setstats(received?: number, sent?: number, age?: number): number"]
   },
   "master:settimeout": {
-    "signatures": ["master:settimeout(value: number, mode?: string): void"]
+    "signatures": ["master:settimeout(value?: number, mode?: string): number"]
   },
   "connected:close": {
-    "signatures": ["connected:close(): void"]
+    "signatures": ["connected:close(): number"]
   },
   "connected:getoption": {
     "signatures": [
@@ -206,10 +203,14 @@
     ]
   },
   "connected:getpeername": {
-    "signatures": ["connected:getpeername(): string"]
+    "signatures": [
+      "connected:getpeername(): LuaMultiReturn<[string | undefined, number | string, string | undefined]>"
+    ]
   },
   "connected:getsockname": {
-    "signatures": ["connected:getsockname(): string"]
+    "signatures": [
+      "connected:getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>"
+    ]
   },
   "connected:receive": {
     "signatures": [
@@ -228,14 +229,14 @@
   },
   "connected:setpeername": {
     "signatures": [
-      "connected:setpeername(arg0: string): LuaMultiReturn<[number | undefined, string | undefined]>"
+      "connected:setpeername(address: string): LuaMultiReturn<[number | undefined, string | undefined]>"
     ]
   },
   "connected:settimeout": {
-    "signatures": ["connected:settimeout(value: number): void"]
+    "signatures": ["connected:settimeout(value?: number): number"]
   },
   "unconnected:close": {
-    "signatures": ["unconnected:close(): void"]
+    "signatures": ["unconnected:close(): number"]
   },
   "unconnected:getoption": {
     "signatures": [
@@ -243,7 +244,9 @@
     ]
   },
   "unconnected:getsockname": {
-    "signatures": ["unconnected:getsockname(): string"]
+    "signatures": [
+      "unconnected:getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>"
+    ]
   },
   "unconnected:receive": {
     "signatures": [
@@ -276,6 +279,9 @@
     ]
   },
   "unconnected:settimeout": {
-    "signatures": ["unconnected:settimeout(value: number): void"]
+    "signatures": ["unconnected:settimeout(value?: number): number"]
+  },
+  "socket.skip": {
+    "signatures": ["socket.skip(d: number, ...args: unknown[]): LuaMultiReturn<unknown[]>"]
   }
 }

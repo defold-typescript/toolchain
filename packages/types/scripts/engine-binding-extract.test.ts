@@ -4,7 +4,7 @@ import {
   readBindingsForTarget,
   UNBOUND_NAMESPACES,
 } from "./engine-binding-extract";
-import { MODULE_MANIFEST } from "./regen";
+import { loadApiTargets, MODULE_MANIFEST } from "./regen";
 
 const extraction = readBindingsForTarget("defold-1.13.1");
 
@@ -48,12 +48,45 @@ describe("registration", () => {
   });
 
   test("binds every engine namespace or names why it has no binding", () => {
-    const bound = new Set(extraction.functions.map((f) => f.namespace));
+    const bound = new Set(
+      readBindingsForTarget(
+        loadApiTargets().find((target) => target.default === true)?.id ?? "",
+      ).functions.map((f) => f.namespace),
+    );
     const missing = MODULE_MANIFEST.map((m) => m.namespace).filter(
       (ns) => !bound.has(ns) && !UNBOUND_NAMESPACES.has(ns),
     );
     expect(missing).toEqual([]);
     for (const ns of UNBOUND_NAMESPACES.keys()) expect(bound.has(ns)).toBe(false);
+  });
+});
+
+// 1.13.2's bullet3d registers each sub-table inside a helper: behind a
+// stack-neutral `dmScript::RegisterUserType`, through `lua_getfield` into an
+// existing sub-table, and with constants set by a `SetIntegerConstant` helper.
+describe("bullet3d registration idioms", () => {
+  const current = readBindingsForTarget("defold-1.13.2");
+  const names = (namespace: string) =>
+    current.functions.filter((f) => f.namespace === namespace).map((f) => f.name);
+
+  test("a sub-table registered after a stack-neutral helper keeps its namespace", () => {
+    expect(names("bullet3d.shape")).toContain("get_shape");
+    expect(names("bullet3d.constraint")).toContain("create_hinge");
+  });
+
+  test("functions registered into a sub-table fetched with lua_getfield bind there", () => {
+    expect(names("bullet3d.collision_object")).toContain("get_shapes");
+    expect(names("bullet3d.collision_object")).toContain("get_shape_count");
+  });
+
+  test("a metatable filled inside the helper binds nothing to the module", () => {
+    expect(names("bullet3d").filter((name) => name.startsWith("__"))).toEqual([]);
+  });
+
+  test("a constant set through a helper with a literal name is registered", () => {
+    expect(current.constants.get("bullet3d.shape")).toContain("SHAPE_TYPE_BOX");
+    expect(current.constants.get("bullet3d.constraint")).toContain("CONSTRAINT_TYPE_HINGE");
+    expect(current.constants.get("bullet3d.rigid_body")).toContain("BT_DISABLE_WORLD_GRAVITY");
   });
 });
 

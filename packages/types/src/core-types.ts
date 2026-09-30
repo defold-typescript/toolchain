@@ -235,6 +235,10 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   b2ContactEdge: 'Opaque<"b2ContactEdge">',
   b2MassData: 'Opaque<"b2MassData">',
   b2Transform: 'Opaque<"b2Transform">',
+  // bullet3d's collision-object functions also take a rigid body (its docs say
+  // so), so that handle's brand admits both; a rigid-body slot keeps its own.
+  btCollisionObject: 'Opaque<"btCollisionObject" | "btRigidBody">',
+  btRigidBody: 'Opaque<"btRigidBody">',
   b2BodyType:
     '(number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" })',
   // socket handle types resolve to the method-bearing `interface <receiver>`

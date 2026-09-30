@@ -8,8 +8,10 @@ declare global {
    */
   namespace b2d.shape {
     type b2Shape = Opaque<"b2Shape">;
+    type definition = { type: b2d.shape.SHAPE_TYPE; radius: number; center?: Vector3 } | { type: b2d.shape.SHAPE_TYPE; radius: number; center1: Vector3; center2: Vector3 } | { type: b2d.shape.SHAPE_TYPE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: b2d.shape.SHAPE_TYPE; hx: number; hy: number; center?: Vector3; angle?: number } | { type: b2d.shape.SHAPE_TYPE; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
+    type SHAPE_TYPE = typeof b2d.shape.SHAPE_TYPE_BOX | typeof b2d.shape.SHAPE_TYPE_CAPSULE | typeof b2d.shape.SHAPE_TYPE_CHAIN | typeof b2d.shape.SHAPE_TYPE_CIRCLE | typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_GRID | typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_SEGMENT;
     /**
-     * Uses the polygon enum value, but indicates the `hx`/`hy` box convenience format.
+     * Box shape type alias. Uses the polygon enum value, but indicates the `hx`/`hy` box convenience format.
      */
     const SHAPE_TYPE_BOX: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_BOX" };
     /**
@@ -25,7 +27,7 @@ declare global {
      */
     const SHAPE_TYPE_CIRCLE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CIRCLE" };
     /**
-     * Edge shape type.
+     * Edge shape type alias. Compatibility alias for `b2d.shape.SHAPE_TYPE_SEGMENT`.
      */
     const SHAPE_TYPE_EDGE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_EDGE" };
     /**
@@ -211,32 +213,32 @@ declare global {
      * Get touching contact data for a shape.
      *
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
-     * @returns array of contact tables
+     * @returns touching contacts
      */
-    function get_contact_data(shape_id: Opaque<"b2Shape">): Record<string | number, unknown>;
+    function get_contact_data(shape_id: Opaque<"b2Shape">): b2d.contact_data[];
     /**
      * Get touching contact data for a shape.
      *
      * @param body - The body that owns the shape.
      * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
-     * @returns array of contact tables
+     * @returns touching contacts
      */
-    function get_contact_data(body: Opaque<"b2Body">, shape_index: number): Record<string | number, unknown>;
+    function get_contact_data(body: Opaque<"b2Body">, shape_index: number): b2d.contact_data[];
     /**
      * Get mass data for a shape.
      *
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
-     * @returns table with `mass`, `center`, and `inertia`
+     * @returns shape mass data
      */
-    function get_mass_data(shape_id: Opaque<"b2Shape">): { mass: number; center: Vector3; inertia: number };
+    function get_mass_data(shape_id: Opaque<"b2Shape">): b2d.mass_data;
     /**
      * Get mass data for a shape.
      *
      * @param body - The body that owns the shape.
      * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
-     * @returns table with `mass`, `center`, and `inertia`
+     * @returns shape mass data
      */
-    function get_mass_data(body: Opaque<"b2Body">, shape_index: number): { mass: number; center: Vector3; inertia: number };
+    function get_mass_data(body: Opaque<"b2Body">, shape_index: number): b2d.mass_data;
     /**
      * Get shape material id.
      *
@@ -271,24 +273,24 @@ declare global {
      * Get sensor overlaps.
      *
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
-     * @returns array of shape info tables
+     * @returns overlapping shapes
      */
-    function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): { shape_id: number }[];
+    function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): b2d.shape_info[];
     /**
      * Get sensor overlaps.
      *
      * @param body - The body that owns the shape.
      * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
-     * @returns array of shape info tables
+     * @returns overlapping shapes
      */
-    function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): { shape_id: number }[];
+    function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): b2d.shape_info[];
     /**
      * Get a shape's geometry.
      *
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
      * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
      */
-    function get_shape(shape_id: Opaque<"b2Shape">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };
+    function get_shape(shape_id: Opaque<"b2Shape">): b2d.shape.definition;
     /**
      * Get a shape's geometry.
      *
@@ -296,7 +298,7 @@ declare global {
      * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
      */
-    function get_shape(body: Opaque<"b2Body">, shape_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };
+    function get_shape(body: Opaque<"b2Body">, shape_index: number): b2d.shape.definition;
     /**
      * Get the world owning a shape.
      *
@@ -334,9 +336,9 @@ declare global {
      * @param origin - world ray origin
      * @param translation - world ray translation
      * @param max_fraction - optional maximum translation fraction, defaults to 1
-     * @returns hit table with `point`, `normal`, `fraction`, and `iterations`, or nil
+     * @returns cast result, or `nil`
      */
-    function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number } | undefined;
+    function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.shape_cast_output | undefined;
     /**
      * Ray cast a shape directly.
      *
@@ -345,9 +347,9 @@ declare global {
      * @param origin - world ray origin
      * @param translation - world ray translation
      * @param max_fraction - optional maximum translation fraction, defaults to 1
-     * @returns hit table with `point`, `normal`, `fraction`, and `iterations`, or nil
+     * @returns cast result, or `nil`
      */
-    function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number } | undefined;
+    function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.shape_cast_output | undefined;
     /**
      * Set shape material id.
      *
@@ -376,7 +378,8 @@ declare global {
      * const body = b2d.get_body("#collisionobject");
      * if (body !== undefined) {
      *   const circle = b2d.shape.get_shape(body, 1);
-     *   b2d.shape.set_shape(body, 1, { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: circle.radius ?? 16, center: vmath.vector3(24, 0, 0) }, true);
+     *   const radius = "radius" in circle ? circle.radius : undefined;
+     *   b2d.shape.set_shape(body, 1, { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: radius ?? 16, center: vmath.vector3(24, 0, 0) }, true);
      *   b2d.shape.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_SEGMENT, v1: vmath.vector3(-32, 0, 0), v2: vmath.vector3(32, 0, 0) });
      * }
      * ```

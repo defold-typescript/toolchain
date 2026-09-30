@@ -21,12 +21,20 @@ declare global {
    * LuaSocket is free software, released under the MIT license (same license as the Lua core).
    */
   namespace socket {
+    type socket_client = client;
+    type socket_connected = connected;
+    type socket_master = master;
+    type socket_selectable = master | client | server | connected | unconnected | { getfd: (self: unknown) => number; dirty: (self: unknown) => boolean };
+    type socket_server = server;
+    type socket_unconnected = unconnected;
     interface client {
       /**
        * Closes the TCP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.
+       *
+       * @returns the value `1`.
        */
-      close(): void;
+      close(): number;
       /**
        * Check the read buffer status.
        * This is an internal method, any use is unlikely to be portable.
@@ -55,22 +63,16 @@ declare global {
       /**
        * Returns information about the remote side of a connected client object.
        * It makes no sense to call this method on server objects.
-       *
-       * @returns a string with the IP address of the peer, the port number that peer is using for the connection, and the family ("inet" or "inet6"). In case of error, the method returns `nil`.
        */
-      getpeername(): string;
+      getpeername(): LuaMultiReturn<[string | undefined, number | string, string | undefined]>;
       /**
        * Returns the local address information associated to the object.
-       *
-       * @returns a string with local IP address, the local port number, and the family ("inet" or "inet6"). In case of error, the method returns `nil`.
        */
-      getsockname(): string;
+      getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>;
       /**
        * Returns accounting information on the socket, useful for throttling of bandwidth.
-       *
-       * @returns a string with the number of bytes received, the number of bytes sent, and the age of the socket object in seconds.
        */
-      getstats(): string;
+      getstats(): LuaMultiReturn<[number, number, number]>;
       /**
        * Reads data from a client object, according to the specified `read pattern`. Patterns follow the Lua file I/O format, and the difference in performance between patterns is negligible.
        *
@@ -132,12 +134,12 @@ declare global {
       /**
        * Resets accounting information on the socket, useful for throttling of bandwidth.
        *
-       * @param received - the new number of bytes received.
-       * @param sent - the new number of bytes sent.
-       * @param age - the new age in seconds.
-       * @returns the value `1` in case of success, or `nil` in case of error.
+       * @param received - the new number of bytes received, or `nil` to preserve it.
+       * @param sent - the new number of bytes sent, or `nil` to preserve it.
+       * @param age - the new age in seconds, or `nil` to preserve it.
+       * @returns the value `1`.
        */
-      setstats(received: number, sent: number, age: number): number | undefined;
+      setstats(received?: number, sent?: number, age?: number): number;
       /**
        * Changes the timeout values for the object. By default, all I/O operations are blocking. That is, any call to the methods `send`, `receive`, and `accept` will block indefinitely, until the operation completes. The `settimeout` method defines a limit on the amount of time the I/O methods can block. When a timeout is set and the specified amount of time has elapsed, the affected methods give up and fail with an error code.
        * There are two timeout modes and both can be used together for fine tuning.
@@ -150,8 +152,9 @@ declare global {
        * block timeout. Specifies the upper limit on the amount of time LuaSocket can be blocked by the operating system while waiting for completion of any single I/O operation. This is the default mode;
        * `"t"`
        * total timeout. Specifies the upper limit on the amount of time LuaSocket can block a Lua script before returning from a call.
+       * @returns the value `1`.
        */
-      settimeout(value: number, mode?: string): void;
+      settimeout(value?: number, mode?: string): number;
       /**
        * Shuts down part of a full-duplex connection.
        *
@@ -171,8 +174,10 @@ declare global {
       /**
        * Closes a UDP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.
+       *
+       * @returns the value `1`.
        */
-      close(): void;
+      close(): number;
       /**
        * Gets an option value from the UDP object. See connected:setoption for description of the option names and values.
        *
@@ -193,17 +198,13 @@ declare global {
       /**
        * Retrieves information about the peer associated with a connected UDP object.
        * It makes no sense to call this method on unconnected objects.
-       *
-       * @returns a string with the IP address of the peer, the port number that peer is using for the connection, and the family ("inet" or "inet6"). In case of error, the method returns `nil`.
        */
-      getpeername(): string;
+      getpeername(): LuaMultiReturn<[string | undefined, number | string, string | undefined]>;
       /**
        * Returns the local address information associated to the object.
        * UDP sockets are not bound to any address until the `setsockname` or the `sendto` method is called for the first time (in which case it is bound to an ephemeral port and the wild-card address).
-       *
-       * @returns a string with local IP address, a number with the local port, and the family ("inet" or "inet6"). In case of error, the method returns `nil`.
        */
-      getsockname(): string;
+      getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>;
       /**
        * Receives a datagram from the UDP object. If the UDP object is connected, only datagrams coming from the peer are accepted. Otherwise, the returned datagram can come from any host.
        *
@@ -257,16 +258,17 @@ declare global {
        * For connected objects, outgoing datagrams will be sent to the specified peer, and datagrams received from other peers will be discarded by the OS. Connected UDP objects must use the `send` and `receive` methods instead of `sendto` and `receivefrom`.
        * Since the address of the peer does not have to be passed to and from the OS, the use of connected UDP objects is recommended when the same peer is used for several transmissions and can result in up to 30% performance gains.
        *
-       * @param arg0 - if address is "*" and the object is connected, the peer association is removed and the object becomes an unconnected object again.
+       * @param address - must be `"*"`. The peer association is removed and the object becomes an unconnected object again.
        */
-      setpeername(arg0: string): LuaMultiReturn<[number | undefined, string | undefined]>;
+      setpeername(address: string): LuaMultiReturn<[number | undefined, string | undefined]>;
       /**
        * Changes the timeout values for the object. By default, the `receive` and `receivefrom` operations are blocking. That is, any call to the methods will block indefinitely, until data arrives. The `settimeout` function defines a limit on the amount of time the functions can block. When a timeout is set and the specified amount of time has elapsed, the affected methods give up and fail with an error code.
        * In UDP, the `send` and `sendto` methods never block (the datagram is just passed to the OS and the call returns immediately). Therefore, the `settimeout` method has no effect on them.
        *
        * @param value - the amount of time to wait, in seconds. The `nil` timeout value allows operations to block indefinitely. Negative timeout values have the same effect.
+       * @returns the value `1`.
        */
-      settimeout(value: number): void;
+      settimeout(value?: number): number;
     }
     interface master {
       /**
@@ -279,8 +281,10 @@ declare global {
       /**
        * Closes the TCP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.
+       *
+       * @returns the value `1`.
        */
-      close(): void;
+      close(): number;
       /**
        * Attempts to connect a master object to a remote host, transforming it into a client object. Client objects support methods send, receive, getsockname, getpeername, settimeout, and close.
        * Note that the function `socket.connect` is available and is a shortcut for the creation of client sockets.
@@ -305,16 +309,12 @@ declare global {
       getfd(): number;
       /**
        * Returns the local address information associated to the object.
-       *
-       * @returns a string with local IP address, the local port number, and the family ("inet" or "inet6"). In case of error, the method returns `nil`.
        */
-      getsockname(): string;
+      getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>;
       /**
        * Returns accounting information on the socket, useful for throttling of bandwidth.
-       *
-       * @returns a string with the number of bytes received, the number of bytes sent, and the age of the socket object in seconds.
        */
-      getstats(): string;
+      getstats(): LuaMultiReturn<[number, number, number]>;
       /**
        * Specifies the socket is willing to receive connections, transforming the object into a server object. Server objects support the `accept`, `getsockname`, `setoption`, `settimeout`, and `close` methods.
        *
@@ -330,12 +330,12 @@ declare global {
       /**
        * Resets accounting information on the socket, useful for throttling of bandwidth.
        *
-       * @param received - the new number of bytes received.
-       * @param sent - the new number of bytes sent.
-       * @param age - the new age in seconds.
-       * @returns the value `1` in case of success, or `nil` in case of error.
+       * @param received - the new number of bytes received, or `nil` to preserve it.
+       * @param sent - the new number of bytes sent, or `nil` to preserve it.
+       * @param age - the new age in seconds, or `nil` to preserve it.
+       * @returns the value `1`.
        */
-      setstats(received: number, sent: number, age: number): number | undefined;
+      setstats(received?: number, sent?: number, age?: number): number;
       /**
        * Changes the timeout values for the object. By default, all I/O operations are blocking. That is, any call to the methods `send`, `receive`, and `accept` will block indefinitely, until the operation completes. The `settimeout` method defines a limit on the amount of time the I/O methods can block. When a timeout is set and the specified amount of time has elapsed, the affected methods give up and fail with an error code.
        * There are two timeout modes and both can be used together for fine tuning.
@@ -348,8 +348,9 @@ declare global {
        * block timeout. Specifies the upper limit on the amount of time LuaSocket can be blocked by the operating system while waiting for completion of any single I/O operation. This is the default mode;
        * `"t"`
        * total timeout. Specifies the upper limit on the amount of time LuaSocket can block a Lua script before returning from a call.
+       * @returns the value `1`.
        */
-      settimeout(value: number, mode?: string): void;
+      settimeout(value?: number, mode?: string): number;
     }
     interface server {
       /**
@@ -360,8 +361,10 @@ declare global {
       /**
        * Closes the TCP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.
+       *
+       * @returns the value `1`.
        */
-      close(): void;
+      close(): number;
       /**
        * Check the read buffer status.
        * This is an internal method, any use is unlikely to be portable.
@@ -389,16 +392,12 @@ declare global {
       getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;
       /**
        * Returns the local address information associated to the object.
-       *
-       * @returns a string with local IP address, the local port number, and the family ("inet" or "inet6"). In case of error, the method returns `nil`.
        */
-      getsockname(): string;
+      getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>;
       /**
        * Returns accounting information on the socket, useful for throttling of bandwidth.
-       *
-       * @returns a string with the number of bytes received, the number of bytes sent, and the age of the socket object in seconds.
        */
-      getstats(): string;
+      getstats(): LuaMultiReturn<[number, number, number]>;
       /**
        * Sets the underling socket descriptor or handle associated to the object. The current one is simply replaced, not closed, and no other change to the object state is made
        *
@@ -432,12 +431,12 @@ declare global {
       /**
        * Resets accounting information on the socket, useful for throttling of bandwidth.
        *
-       * @param received - the new number of bytes received.
-       * @param sent - the new number of bytes sent.
-       * @param age - the new age in seconds.
-       * @returns the value `1` in case of success, or `nil` in case of error.
+       * @param received - the new number of bytes received, or `nil` to preserve it.
+       * @param sent - the new number of bytes sent, or `nil` to preserve it.
+       * @param age - the new age in seconds, or `nil` to preserve it.
+       * @returns the value `1`.
        */
-      setstats(received: number, sent: number, age: number): number | undefined;
+      setstats(received?: number, sent?: number, age?: number): number;
       /**
        * Changes the timeout values for the object. By default, all I/O operations are blocking. That is, any call to the methods `send`, `receive`, and `accept` will block indefinitely, until the operation completes. The `settimeout` method defines a limit on the amount of time the I/O methods can block. When a timeout is set and the specified amount of time has elapsed, the affected methods give up and fail with an error code.
        * There are two timeout modes and both can be used together for fine tuning.
@@ -450,15 +449,18 @@ declare global {
        * block timeout. Specifies the upper limit on the amount of time LuaSocket can be blocked by the operating system while waiting for completion of any single I/O operation. This is the default mode;
        * `"t"`
        * total timeout. Specifies the upper limit on the amount of time LuaSocket can block a Lua script before returning from a call.
+       * @returns the value `1`.
        */
-      settimeout(value: number, mode?: string): void;
+      settimeout(value?: number, mode?: string): number;
     }
     interface unconnected {
       /**
        * Closes a UDP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.
+       *
+       * @returns the value `1`.
        */
-      close(): void;
+      close(): number;
       /**
        * Gets an option value from the UDP object. See unconnected:setoption for description of the option names and values.
        *
@@ -479,10 +481,8 @@ declare global {
       /**
        * Returns the local address information associated to the object.
        * UDP sockets are not bound to any address until the `setsockname` or the `sendto` method is called for the first time (in which case it is bound to an ephemeral port and the wild-card address).
-       *
-       * @returns a string with local IP address, a number with the local port, and the family ("inet" or "inet6"). In case of error, the method returns `nil`.
        */
-      getsockname(): string;
+      getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>;
       /**
        * Receives a datagram from the UDP object. If the UDP object is connected, only datagrams coming from the peer are accepted. Otherwise, the returned datagram can come from any host.
        *
@@ -561,8 +561,9 @@ declare global {
        * In UDP, the `send` and `sendto` methods never block (the datagram is just passed to the OS and the call returns immediately). Therefore, the `settimeout` method has no effect on them.
        *
        * @param value - the amount of time to wait, in seconds. The `nil` timeout value allows operations to block indefinitely. Negative timeout values have the same effect.
+       * @returns the value `1`.
        */
-      settimeout(value: number): void;
+      settimeout(value?: number): number;
     }
     /**
      * This constant contains the maximum number of sockets that the select function can handle.
@@ -660,11 +661,11 @@ declare global {
      * If you close a socket and pass it to select, it will be ignored.
      * (Using select with non-socket objects: Any object that implements `getfd` and `dirty` can be used with select, allowing objects from other libraries to be used within a socket.select driven loop.)
      *
-     * @param recvt - array with the sockets to test for characters available for reading.
-     * @param sendt - array with sockets that are watched to see if it is OK to immediately write on them.
+     * @param recvt - array with the sockets or compatible objects to test for characters available for reading.
+     * @param sendt - array with sockets or compatible objects that are watched to see if it is OK to immediately write on them.
      * @param timeout - the maximum amount of time (in seconds) to wait for a change in status. Nil, negative or omitted timeout value allows the function to block indefinitely.
      */
-    function select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>;
+    function select(recvt: socket.socket_selectable[], sendt: socket.socket_selectable[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>;
     /**
      * This function drops a number of arguments and returns the remaining.
      * It is useful to avoid creation of dummy variables:
@@ -672,9 +673,8 @@ declare global {
      * The function returns `retD+1` to `retN`.
      *
      * @param d - the number of arguments to drop.
-     * @param ret1 - argument 1.
-     * @param ret2 - argument 2.
-     * @param retN - argument N.
+     * @param args - the values from which to drop arguments.
+     * @returns the remaining values after the first `d` values are dropped.
      * @example
      * Instead of doing the following with dummy variables:
      * ```ts
@@ -690,7 +690,7 @@ declare global {
      * const [code, sep] = socket.skip(2, string.find(line, "^(%d%d%d)(.?)"));
      * ```
      */
-    function skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): LuaMultiReturn<[unknown, unknown, unknown]>;
+    function skip(d: number, ...args: unknown[]): LuaMultiReturn<unknown[]>;
     /**
      * Freezes the program execution during a given amount of time.
      *
@@ -717,30 +717,43 @@ declare global {
     function udp6(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;
     namespace dns {
       /**
+       * DNS address information
+       */
+      interface address_info {
+        /**
+         * `"inet"` for IPv4 or `"inet6"` for IPv6
+         */
+        family: string;
+        /**
+         * resolved IP address
+         */
+        addr: string;
+      }
+      /**
+       * DNS host information
+       */
+      interface host_info {
+        /**
+         * canonical host name
+         */
+        name: string;
+        /**
+         * host aliases
+         */
+        alias: string[];
+        /**
+         * resolved IPv4 addresses
+         */
+        ip: string[];
+      }
+      /**
        * This function converts a host name to IPv4 or IPv6 address.
        * The supplied address can be an IPv4 or IPv6 address or host name.
-       * The function returns a table with all information returned by the resolver:
-       *
-       * ```lua
-       * {
-       *  [1] = {
-       *     family = family-name-1,
-       *     addr = address-1
-       *   },
-       *   ...
-       *   [n] = {
-       *     family = family-name-n,
-       *     addr = address-n
-       *   }
-       * }
-       * ```
-       *
-       * Here, family contains the string `"inet"` for IPv4 addresses, and `"inet6"` for IPv6 addresses.
        * In case of error, the function returns nil followed by an error message.
        *
        * @param address - a hostname or an IPv4 or IPv6 address.
        */
-      function getaddrinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | undefined, string | undefined]>;
+      function getaddrinfo(address: string): LuaMultiReturn<[socket.dns.address_info[] | undefined, string | undefined]>;
       /**
        * Returns the standard host name for the machine as a string.
        *
@@ -762,21 +775,21 @@ declare global {
        *
        * @param address - a hostname or an IPv4 or IPv6 address.
        */
-      function getnameinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | undefined, string | undefined]>;
+      function getnameinfo(address: string): LuaMultiReturn<[string[] | undefined, string | undefined]>;
       /**
        * This function converts from an IPv4 address to host name.
        * The address can be an IPv4 address or a host name.
        *
        * @param address - an IPv4 address or host name.
        */
-      function tohostname(address: string): LuaMultiReturn<[string | undefined, Record<string | number, unknown> | string]>;
+      function tohostname(address: string): LuaMultiReturn<[string | undefined, socket.dns.host_info | string]>;
       /**
        * This function converts a host name to IPv4 address.
        * The address can be an IP address or a host name.
        *
        * @param address - a hostname or an IP address.
        */
-      function toip(address: string): LuaMultiReturn<[string | undefined, Record<string | number, unknown> | string]>;
+      function toip(address: string): LuaMultiReturn<[string | undefined, socket.dns.host_info | string]>;
     }
   }
 }

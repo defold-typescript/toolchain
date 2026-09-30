@@ -7,6 +7,36 @@ declare global {
    */
   namespace model {
     /**
+     * Axis-aligned bounding box
+     */
+    interface aabb {
+      /**
+       * minimum local-space bounds
+       */
+      min: Vector3;
+      /**
+       * maximum local-space bounds
+       */
+      max: Vector3;
+    }
+    /**
+     * Model animation playback properties
+     */
+    interface play_properties {
+      /**
+       * duration of a linear blend from the current animation
+       */
+      blend_duration?: number;
+      /**
+       * normalized initial animation cursor
+       */
+      offset?: number;
+      /**
+       * positive animation playback rate
+       */
+      playback_rate?: number;
+    }
+    /**
      * Cancels all animation on a model component.
      *
      * @param url - the model for which to cancel the animation
@@ -14,17 +44,16 @@ declare global {
     function cancel(url: string | Hash | Url): void;
     /**
      * Get AABB of the whole model in local coordinate space.
-     * AABB information return as a table with `min` and `max` fields, where `min` and `max` has type `vmath.vector3`.
      *
      * @param url - the model
-     * @returns A table containing AABB of the model. If model has no meshes - return vmath.vector3(0,0,0) for min and max fields.
+     * @returns model bounds; an empty model returns zero vectors
      * @example
      * ```ts
      * model.get_aabb("#model"); // => { min = vmath.vector3(-2.5, -3.0, 0), max = vmath.vector3(1.5, 5.5, 0) }
      * model.get_aabb("#empty"); // => { min = vmath.vector3(0, 0, 0), max = vmath.vector3(0, 0, 0) }
      * ```
      */
-    function get_aabb(url: string | Hash | Url): { min: Vector3; max: Vector3 };
+    function get_aabb(url: string | Hash | Url): model.aabb;
     /**
      * Returns a table of numbers with one entry per morph target on the first mesh of the model that has morph targets.
      * Values reflect the rig state at call time (after animation, and any active script override from model.set_blend_weights).
@@ -65,16 +94,15 @@ declare global {
     function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;
     /**
      * Get AABB of all meshes.
-     * AABB information return as a table with `min` and `max` fields, where `min` and `max` has type `vmath.vector3`.
      *
      * @param url - the model
-     * @returns A table containing info about all AABB in the format
+     * @returns mesh bounds keyed by mesh identifier
      * @example
      * ```ts
      * model.get_mesh_aabb("#model"); // => { hash("Sword") = { min = vmath.vector3(-0.5, -0.5, 0), max = vmath.vector3(0.5, 0.5, 0) }, hash("Shield") = { min = vmath.vector3(-0.5, -0.5, -0.5), max = vmath.vector3(0.5, 0.5, 0.5) } }
      * ```
      */
-    function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;
+    function get_mesh_aabb(url: string | Hash | Url): LuaTable<Hash, model.aabb>;
     /**
      * Get the enabled state of a mesh
      *
@@ -115,34 +143,15 @@ declare global {
      * @param url - the model for which to play the animation
      * @param anim_id - id of the animation to play
      * @param playback - playback mode of the animation
-     *
-     * - `go.PLAYBACK_ONCE_FORWARD`
-     * - `go.PLAYBACK_ONCE_BACKWARD`
-     * - `go.PLAYBACK_ONCE_PINGPONG`
-     * - `go.PLAYBACK_LOOP_FORWARD`
-     * - `go.PLAYBACK_LOOP_BACKWARD`
-     * - `go.PLAYBACK_LOOP_PINGPONG`
-     * @param play_properties - optional table with properties
-     * Play properties table:
-     *
-     * `blend_duration`
-     * number Duration of a linear blend between the current and new animation.
-     * `offset`
-     * number The normalized initial value of the animation cursor when the animation starts playing.
-     * `playback_rate`
-     * number The rate with which the animation will be played. Must be positive.
+     * @param play_properties - optional playback properties
      * @param complete_function - function to call when the animation has completed.
      *
      * `self`
-     * object The current object.
+     * script_instance The current script instance.
      * `message_id`
      * hash The name of the completion message, `"model_animation_done"`.
      * `message`
-     * table Information about the completion:
-     *
-     * - hash `animation_id` - the animation that was completed.
-     * - constant `playback` - the playback mode for the animation.
-     *
+     * message.model.model_animation_done Information about the completion.
      * `sender`
      * url The invoker of the callback: the model component.
      * @example
@@ -171,7 +180,7 @@ declare global {
      * });
      * ```
      */
-    function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void;
+    function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.PLAYBACK, play_properties?: model.play_properties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"], sender: Url) => void): void;
     /**
      * Resets a shader constant for a model component.
      * The constant must be defined in the material assigned to the model.

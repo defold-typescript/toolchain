@@ -25,3 +25,15 @@ if (isWindowEvent(event, data, window.WINDOW_EVENT_FOCUS_LOST)) {
 
 // @ts-expect-error DIMMING_ON is not a window event constant
 void isWindowEvent(event, data, window.DIMMING_ON);
+
+// The engine registers the deprecated `WINDOW_EVENT_ICONFIED` with the value of
+// `WINDOW_EVENT_ICONIFIED`, so a listener compares and guards with either spelling.
+window.set_listener((_self, received, payload) => {
+  if (received === window.WINDOW_EVENT_ICONIFIED || received === window.WINDOW_EVENT_ICONFIED) {
+    return;
+  }
+  if (isWindowEvent(received, payload, window.WINDOW_EVENT_ICONIFIED)) {
+    const _none: undefined = payload;
+    void _none;
+  }
+});

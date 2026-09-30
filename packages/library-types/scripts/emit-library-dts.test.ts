@@ -1224,10 +1224,10 @@ test("a string-keyed table param accepts an object literal while the same return
   const out = emitLibraryDeclarations(stringTableModel, { moduleId: "demo.demo" });
 
   expect(out).toContain(
-    "export function create(this: void, components: LuaTable<string, unknown> | Record<string, unknown>): LuaTable<string, unknown>;",
+    "export function create(this: void, components: LuaMap<string, unknown> | Record<string, unknown>): LuaTable<string, unknown>;",
   );
   expect(out).toContain(
-    "merge(self: registry, extra: LuaTable<string, number> | Record<string, number>): LuaTable<string, number>;",
+    "merge(self: registry, extra: LuaMap<string, number> | Record<string, number>): LuaTable<string, number>;",
   );
   expect(out).toContain("entries: LuaTable<string, number>;");
 });

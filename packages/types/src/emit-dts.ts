@@ -30,7 +30,7 @@ import {
   indexBaseNoteResolver,
   OVERRIDE_RETURN_SLOT,
 } from "./index-slot-classifications";
-import { type LualsPosition, mapLualsExpression } from "./luals-type-expr";
+import { type LualsPosition, mapLualsExpression, needsArrayParens } from "./luals-type-expr";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
 export { summaryFor };
@@ -228,6 +228,18 @@ export const ARBITRARY_TABLE_SLOT_KEYS = new Set([
 // set to keep the `droppedMembers` count honest; an uncovered skip (e.g. a new
 // `skipFunctions` entry with no matching overload) still counts, so the gate
 // stays a real signal. Mirrors the ARBITRARY_TABLE_SLOTS audit-honesty pattern.
+// A slot the engine treats as omissible on a function OVERLOAD_COVERED_SKIPS
+// hands to a `*-overloads.d.ts` form without it, where no generated declaration
+// exists for OPTIONAL_SLOT_CORRECTIONS to reach. Availability identity reads it
+// as optional, so a ref-doc that starts marking it is no change. The value is
+// the evidence, as in OPTIONAL_SLOT_CORRECTIONS.
+export const HAND_DECLARED_OPTIONAL_SLOTS: ReadonlyMap<string, string> = new Map(
+  (["y", "z"] as const).map((slot) => [
+    `vmath.euler_to_quat:param:${slot}`,
+    "example `vmath.euler_to_quat(v)` passes a vector3 alone; vmath-overloads.d.ts declares that form",
+  ]),
+);
+
 export const OVERLOAD_COVERED_SKIPS = new Set([
   // go-overloads.d.ts supplies the typed go.get / go.set / go.property shapes.
   "go.get",
@@ -284,6 +296,12 @@ export const UNBOUND_SKIPS = new Set([
   "b2d.body.set_user_data",
   "b2d.body.reset_mass_data",
 ]);
+
+// skipFunction FQNs withheld because another lane's declaration takes the same
+// global name: the runtime `http.response` table beside the editor VM's
+// `http.response` handle. The audit leaves them out of `droppedMembers`, since
+// a slot that needs the shape types it inline.
+export const NAME_CLASH_SKIPS = new Set(["http.response"]);
 
 // Element names whose `table` slot is a prose-only `a table mapping X to Y`
 // shape the field-list parser cannot read, but whose key/value a human curated
@@ -705,6 +723,34 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
         'example builds `my_table` with `table.insert(my_table, "my_value")` and passes it to `sys.serialize`; 1.13.2\'s `table<any, any>` emits a `LuaTable`, which refuses an array',
     },
   ],
+  [
+    "window.set_dim_mode:param:mode",
+    {
+      removes: ["window.DIMMING"],
+      adds: "window.DimModeStateSettable",
+      upstream: ["window.DIMMING"],
+      reason:
+        'script_window.cpp:SetDimMode raises "The dim mode specified is not supported." for anything but DIMMING_ON and DIMMING_OFF',
+    },
+  ],
+  ...(["texture", "render_target"] as const).map((handle): [string, ParamTypeCorrection] => [
+    `resource.get_${handle}_info:param:path`,
+    {
+      adds: "number",
+      upstream: ["hash", "string", handle],
+      reason:
+        "script_resource.cpp reads any number in slot 1 as the handle, which `info.handle` returns and older targets declared as `number`",
+    },
+  ]),
+  [
+    "tilemap.set_tile:param:transform_bitmask",
+    {
+      adds: "number",
+      upstream: ["tilemap.TRANSFORM"],
+      reason:
+        "a bitmask: the ref-doc example passes tilemap.H_FLIP + tilemap.V_FLIP + tilemap.ROTATE_90, a sum no single TRANSFORM member names",
+    },
+  ],
 ]);
 
 // A property whose upstream `<span class="type">` states a type the engine does
@@ -903,6 +949,14 @@ export const REQUIRED_SLOT_CORRECTIONS: ReadonlyMap<string, RequiredSlotCorrecti
   string,
   RequiredSlotCorrection
 >([
+  [
+    "resource.create_texture_async:param:callback",
+    {
+      nil: false,
+      evidence:
+        "script_resource.cpp:CreateTextureAsync hands argument 4 to dmScript::CreateCallback, which raises through luaL_checktype(L, 4, LUA_TFUNCTION)",
+    },
+  ],
   ...(["factory", "collectionfactory"] as const).flatMap((namespace) => {
     const file = namespace === "factory" ? "script_factory.cpp" : "script_collection_factory.cpp";
     const prefix = namespace === "factory" ? "FactoryComp" : "CollectionFactoryComp";
@@ -1646,7 +1700,11 @@ export const HOMOGENEOUS_ARRAY_SLOTS: ReadonlyMap<string, string | readonly stri
 // (`tilemap.get_tiles` → `tiles[row][col]`).
 export type NestedMapping = { key: string; value: string };
 
-export type TableSlotCuration =
+// A curation applies where the slot declares the prose `table` token, or a later
+// spelling a newer release retypes the same slot to without fixing it
+// (`retypedUpstream`, matched whole): 1.13.2's `table<hash, table<string|hash, any>>`
+// for `collectionfactory.create`'s properties.
+export type TableSlotCuration = (
   | { kind: "mapping"; key: string; value: string | readonly TableField[] | NestedMapping }
   | { kind: "array"; element: string | readonly string[] }
   | { kind: "object"; fields: readonly TableField[] }
@@ -1658,7 +1716,8 @@ export type TableSlotCuration =
   | { kind: "keyed-object" }
   // A slot whose faithful shape no field list can carry, such as a union
   // discriminated on `type`. `ts` is emitted verbatim, already mapped.
-  | { kind: "verbatim"; ts: string };
+  | { kind: "verbatim"; ts: string }
+) & { readonly retypedUpstream?: readonly string[] };
 
 export const SOCKET_HANDLE_TOKENS = ["client", "master", "unconnected"] as const;
 
@@ -1824,6 +1883,25 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   string,
   TableSlotCuration
 >([
+  // gui_script.cpp:LuaGet and LuaSet read the `key` and `keys` options. On a
+  // prose `table` slot TABLE_SLOT_FIELD_ADDITIONS supplies them; 1.13.2 types the
+  // slots as an inline record and a struct that omit them.
+  ...(
+    [
+      ["gui.get:param:options", "{ index?:integer }"],
+      ["gui.set:param:options", "gui.set_options"],
+    ] as const
+  ).map(
+    ([key, retyped]) =>
+      [
+        key,
+        {
+          kind: "verbatim",
+          ts: "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
+          retypedUpstream: [retyped],
+        },
+      ] as const,
+  ),
   // buffer.create's `declaration` is "a table where each entry (table) describes
   // a stream", and upstream's example passes a list of stream records whose
   // `type` is a buffer.VALUE_TYPE_* constant.
@@ -1843,7 +1921,12 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   // the object-literal form this slot accepted as a bare `table`.
   [
     "collectionfactory.create:param:properties",
-    { kind: "mapping", key: "hash | string", value: "table" },
+    {
+      kind: "mapping",
+      key: "hash | string",
+      value: "table",
+      retypedUpstream: ["table<hash, table<string|hash, any>>"],
+    },
   ],
   ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
   // font.get_info's `info` return is a `<dl>` with `path: hash` and a nested
@@ -1974,8 +2057,22 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ],
   ["socket.select:param:recvt", { kind: "array", element: SOCKET_HANDLE_TOKENS }],
   ["socket.select:param:sendt", { kind: "array", element: SOCKET_HANDLE_TOKENS }],
-  ["socket.select:return:sockets_r", { kind: "array", element: SOCKET_HANDLE_TOKENS }],
-  ["socket.select:return:sockets_w", { kind: "array", element: SOCKET_HANDLE_TOKENS }],
+  [
+    "socket.select:return:sockets_r",
+    {
+      kind: "array",
+      element: SOCKET_HANDLE_TOKENS,
+      retypedUpstream: ["table<integer|socket_selectable, socket_selectable|integer>"],
+    },
+  ],
+  [
+    "socket.select:return:sockets_w",
+    {
+      kind: "array",
+      element: SOCKET_HANDLE_TOKENS,
+      retypedUpstream: ["table<integer|socket_selectable, socket_selectable|integer>"],
+    },
+  ],
   [
     "tilemap.get_tile_info:return:tile_info",
     {
@@ -2083,6 +2180,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "render.clear:param:buffers",
     {
+      retypedUpstream: ["table<graphics.BUFFER_TYPE, number|vector4>"],
       kind: "mapping",
       key: "graphics.BUFFER_TYPE_COLOR0_BIT | graphics.BUFFER_TYPE_DEPTH_BIT | graphics.BUFFER_TYPE_STENCIL_BIT",
       value: "number | vector4",
@@ -2274,6 +2372,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.body.create_fixture:param:definition",
     {
+      retypedUpstream: ["b2d.fixture_definition"],
       kind: "object",
       fields: [
         { name: "shape", types: ["table"], tsType: B2D_V2_SHAPE_TS },
@@ -2315,6 +2414,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.body.create_shape:param:definition",
     {
+      retypedUpstream: ["b2d.shape_create_definition"],
       kind: "verbatim",
       ts: `({ shape: ${B2D_V3_SHAPE_TS} } | ${B2D_V3_SHAPE_TS}) & { density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }`,
     },
@@ -2366,10 +2466,16 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ["b2d.fixture.get_filter_data:return:filter", { kind: "object", fields: B2D_FILTER_DATA_FIELDS }],
   ["b2d.fixture.set_filter_data:param:filter", { kind: "object", fields: B2D_FILTER_DATA_FIELDS }],
   ["b2d.fixture.get_shape:return:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
-  ["b2d.fixture.set_shape:param:shape", { kind: "verbatim", ts: B2D_V2_SHAPE_TS }],
+  [
+    "b2d.fixture.set_shape:param:shape",
+    { kind: "verbatim", ts: B2D_V2_SHAPE_TS, retypedUpstream: ["b2d.shape.definition"] },
+  ],
   // b2d.shape
   ["b2d.shape.get_shape:return:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
-  ["b2d.shape.set_shape:param:definition", { kind: "verbatim", ts: B2D_V3_SHAPE_TS }],
+  [
+    "b2d.shape.set_shape:param:definition",
+    { kind: "verbatim", ts: B2D_V3_SHAPE_TS, retypedUpstream: ["b2d.shape.definition"] },
+  ],
   ["b2d.shape.get_mass_data:return:data", { kind: "object", fields: B2D_MASS_DATA_FIELDS }],
   [
     "b2d.shape.get_sensor_overlaps:return:overlaps",
@@ -2552,7 +2658,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ],
   ["b2d.world.overlap_aabb:return:hits", { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS }],
   ["b2d.world.overlap_aabb:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
-  ["b2d.world.overlap_shape:param:shape", B2D_SHAPE_DEFINITION],
+  [
+    "b2d.world.overlap_shape:param:shape",
+    { ...B2D_SHAPE_DEFINITION, retypedUpstream: ["b2d.shape.definition"] },
+  ],
   ["b2d.world.overlap_shape:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
   [
     "b2d.world.overlap_shape:return:fixtures",
@@ -2579,7 +2688,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
-  ["b2d.world.cast_shape:param:shape", B2D_SHAPE_DEFINITION],
+  [
+    "b2d.world.cast_shape:param:shape",
+    { ...B2D_SHAPE_DEFINITION, retypedUpstream: ["b2d.shape.definition"] },
+  ],
   ["b2d.world.cast_shape:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
   ["b2d.world.cast_shape:return:hits", { kind: "array-object", fields: B2D_CAST_HIT_FIELDS }],
   ["b2d.world.cast_shape:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
@@ -2690,6 +2802,22 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["gui.set:param:options:key", "string | Hash"],
   ["render.set_render_target:param:options:transient", "graphics.BufferType[]"],
   ["resource.create_sound_data:param:options:data", 'string | Opaque<"buffer">'],
+  // The same two slots where 1.13.2 types the option bag as a STRUCT, whose
+  // members still carry the narrower upstream types.
+  ["gui.set_options:member:key", "string | Hash"],
+  ["resource.sound_data_options:member:data", 'string | Opaque<"buffer">'],
+  // Bitmasks typed as their flag enum: the create_texture example passes
+  // TEXTURE_USAGE_FLAG_STORAGE + TEXTURE_USAGE_FLAG_SAMPLE, a sum no single member
+  // names, and a reported value combines them the same way.
+  ...(
+    [
+      "resource.texture_creation_params",
+      "resource.texture_info",
+      "resource.render_target_attachment_info",
+      "material.texture_info",
+    ] as const
+  ).map((struct) => [`${struct}:member:flags`, "graphics.TEXTURE_USAGE_FLAG | number"] as const),
+  ["render.render_target_buffer_params:member:flags", "render.RENDER_TARGET_FLAG | number"],
 ]);
 
 // A field the engine accepts on an option bag whose `<dl>` upstream otherwise
@@ -2859,6 +2987,16 @@ const filterDataFields = (slot: string, evidence: string) =>
   (["category_bits", "mask_bits", "group_index"] as const).map(
     (field) => [`${slot}:filter.${field}`, evidence] as const,
   );
+
+// A `STRUCT` member upstream marks required while the engine binding reads it
+// only when present, keyed `<struct>:member:<field>` like REQUIRED_FIELD_CORRECTIONS
+// and valued with the same binding evidence.
+export const OPTIONAL_MEMBER_CORRECTIONS: ReadonlyMap<string, string> = new Map([
+  [
+    "sound.stop_properties:member:play_id",
+    "script_sound.cpp:Sound_Stop reads play_id with luaL_checknumber only when it is not nil",
+  ],
+]);
 
 export const REQUIRED_FIELD_CORRECTIONS: ReadonlyMap<string, string> = new Map<string, string>([
   ...(["mass", "center", "inertia"] as const).map(
@@ -3582,22 +3720,30 @@ function structDeclaration(
   const name = path.slice(path.lastIndexOf(".") + 1);
   const memberPrefix = memberCorrectionKey(struct.name, "");
   const declared = new Set(struct.members.map((member) => member.name));
-  const stale = [...REQUIRED_FIELD_CORRECTIONS.keys(), ...LIST_FIELD_CORRECTIONS.keys()].filter(
-    (key) => key.startsWith(memberPrefix) && !declared.has(key.slice(memberPrefix.length)),
-  );
+  const stale = [
+    ...REQUIRED_FIELD_CORRECTIONS.keys(),
+    ...LIST_FIELD_CORRECTIONS.keys(),
+    ...TABLE_FIELD_TYPE_OVERRIDES.keys(),
+    ...OPTIONAL_MEMBER_CORRECTIONS.keys(),
+  ].filter((key) => key.startsWith(memberPrefix) && !declared.has(key.slice(memberPrefix.length)));
   if (stale.length > 0) {
     throw new Error(`member-keyed field correction names no member: ${stale.sort().join(", ")}`);
   }
   const members = struct.members.map((member) => {
     const key = memberCorrectionKey(struct.name, member.name);
     const list = LIST_FIELD_CORRECTIONS.get(key);
-    const optional = member.isOptional && !REQUIRED_FIELD_CORRECTIONS.has(key);
+    const retyped = TABLE_FIELD_TYPE_OVERRIDES.get(key);
+    const optional =
+      (member.isOptional || OPTIONAL_MEMBER_CORRECTIONS.has(key)) &&
+      !REQUIRED_FIELD_CORRECTIONS.has(key);
     const type =
       list !== undefined
         ? correctedListMemberType(struct, member, list, structs, mapType)
-        : member.type === ""
-          ? "unknown"
-          : mapType(member.type);
+        : retyped !== undefined
+          ? retyped
+          : member.type === ""
+            ? "unknown"
+            : mapType(member.type);
     return {
       doc: member.doc,
       line: `${TS_IDENTIFIER.test(member.name) ? member.name : JSON.stringify(member.name)}${optional ? "?" : ""}: ${type};`,
@@ -3675,8 +3821,10 @@ function moduleTypeMappers(
  * module that declares it. A declaration the home already declares under the
  * same kind and name, or that an earlier module already routed there, is
  * dropped, so the home's own copy wins; a type sharing a value's name
- * (`resource.atlas`) is untouched. Modules with nothing moved in or out are
- * returned as-is.
+ * (`resource.atlas`) is untouched. A function moves the same way (1.13.2 files
+ * `bullet3d.collision_object.get_shapes` in the shape doc), since the emitter
+ * declares only the functions under a module's own namespace. Modules with
+ * nothing moved in or out are returned as-is.
  */
 export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[] {
   const homeOf = (name: string, declaring: string): string => {
@@ -3690,11 +3838,14 @@ export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[
     }
     return home;
   };
-  const incoming = new Map<string, { structs: ApiStruct[]; typedefs: ApiTypedef[] }>();
+  const incoming = new Map<
+    string,
+    { structs: ApiStruct[]; typedefs: ApiTypedef[]; functions: ApiFunction[] }
+  >();
   const into = (namespace: string) => {
     let bucket = incoming.get(namespace);
     if (bucket === undefined) {
-      bucket = { structs: [], typedefs: [] };
+      bucket = { structs: [], typedefs: [], functions: [] };
       incoming.set(namespace, bucket);
     }
     return bucket;
@@ -3713,10 +3864,17 @@ export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[
       into(home).typedefs.push(typedef);
       return false;
     });
+    const functions = module.functions.filter((fn) => {
+      const home = homeOf(fn.name, module.namespace);
+      if (home === module.namespace) return true;
+      into(home).functions.push(fn);
+      return false;
+    });
     return structs.length === (module.structs ?? []).length &&
-      typedefs.length === module.typedefs.length
+      typedefs.length === module.typedefs.length &&
+      functions.length === module.functions.length
       ? module
-      : { ...module, structs, typedefs };
+      : { ...module, structs, typedefs, functions };
   });
   return kept.map((module) => {
     const bucket = incoming.get(module.namespace);
@@ -3728,10 +3886,17 @@ export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[
     };
     const structNames = new Set((module.structs ?? []).map((struct) => struct.name));
     const typedefNames = new Set(module.typedefs.map((typedef) => typedef.name));
+    // A function keeps every overload one doc files, so the home's own name wins
+    // over another doc's copy of it without collapsing the incoming overloads.
+    const functionNames = new Set(module.functions.map((fn) => fn.name));
     return {
       ...module,
       structs: [...(module.structs ?? []), ...bucket.structs.filter(unclaimed(structNames))],
       typedefs: [...module.typedefs, ...bucket.typedefs.filter(unclaimed(typedefNames))],
+      functions: [
+        ...module.functions,
+        ...bucket.functions.filter((fn) => !functionNames.has(fn.name)),
+      ],
     };
   });
 }
@@ -4550,8 +4715,13 @@ export const NIL_CONSTANTS: ReadonlyMap<string, string> = new Map([
 // with the doc the emit carries. A surface gains an entry only where its ref-doc
 // leaves the constant out and its engine bindings register it.
 // `undocumented-constant-provenance.test.ts` reds an entry no committed target
-// still needs.
-export const UNDOCUMENTED_CONSTANTS: ReadonlyMap<string, { readonly doc: string }> = new Map([
+// still needs. `sameValueAs` names the documented constant the engine registers
+// with the same value; where the surface declares it, the back-fill takes its
+// type, so a value compares equal to either spelling.
+export const UNDOCUMENTED_CONSTANTS: ReadonlyMap<
+  string,
+  { readonly doc: string; readonly sameValueAs?: string }
+> = new Map([
   [
     "render.CONTEXT_EVENT_CONTEXT_LOST",
     {
@@ -4564,6 +4734,13 @@ export const UNDOCUMENTED_CONSTANTS: ReadonlyMap<string, { readonly doc: string 
       doc: "The rendering context was restored. Rendering is still paused and graphics resources are still invalid, but can be reloaded. Passed to the `render.set_listener` callback.",
     },
   ],
+  [
+    "window.WINDOW_EVENT_ICONFIED",
+    {
+      doc: "Deprecated misspelling of `window.WINDOW_EVENT_ICONIFIED`, with the same value. The engine still registers it.",
+      sameValueAs: "window.WINDOW_EVENT_ICONIFIED",
+    },
+  ],
 ]);
 
 function withUndocumentedConstants(
@@ -4573,11 +4750,18 @@ function withUndocumentedConstants(
   const prefix = `${module.namespace}.`;
   const documented = new Set(module.constants.map((c) => c.name));
   const backfill: ApiConstant[] = [];
-  for (const [fqn, { doc }] of UNDOCUMENTED_CONSTANTS) {
+  for (const [fqn, { doc, sameValueAs }] of UNDOCUMENTED_CONSTANTS) {
     if (!fqn.startsWith(prefix) || fqn.slice(prefix.length).includes(".")) continue;
     if (documented.has(fqn)) continue;
     if (registered !== undefined && !registered.has(fqn)) continue;
-    backfill.push({ name: fqn, brief: doc, description: "" });
+    const aliasOf =
+      sameValueAs !== undefined && documented.has(sameValueAs) ? sameValueAs : undefined;
+    backfill.push({
+      name: fqn,
+      brief: doc,
+      description: "",
+      ...(aliasOf === undefined ? {} : { aliasOf }),
+    });
   }
   return backfill.length === 0
     ? module
@@ -4597,6 +4781,7 @@ function brandType(fqn: string, constant?: ApiConstant): string {
 // only: a slot naming it still takes the brand, as the value it is documented to
 // accept.
 function constantType(c: PreparedConstant): string {
+  if (c.original.aliasOf !== undefined) return `typeof ${c.original.aliasOf}`;
   const brand = brandType(c.fqn, c.original);
   return c.original.nilable === true && brand !== "undefined" ? `${brand} | undefined` : brand;
 }
@@ -4636,11 +4821,19 @@ function aliasReservedSegments(
   }
 }
 
+// A variable whose ref-doc states its type only in prose, keyed by FQN. Each
+// entry fills a slot upstream left empty; `emit-dts.test.ts` reds once the
+// default target's ref-doc types it.
+export const VARIABLE_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
+  // "A `string`, either:" followed by the four platform ids.
+  ["editor.platform", '"x86_64-win32" | "x86_64-macos" | "arm64-macos" | "x86_64-linux"'],
+]);
+
 function emitVariable(prepared: PreparedVariable, name: string, mapType: DefoldTypeMapper): string {
   const ts =
     prepared.original.types.length > 0
       ? unionFromTokens(prepared.original.types, mapType)
-      : "unknown";
+      : (VARIABLE_TYPE_OVERRIDES.get(prepared.original.name) ?? "unknown");
   return `const ${name}: ${ts};`;
 }
 
@@ -5153,6 +5346,11 @@ function emitReturn(
           first.name,
         )
       : "unknown";
+  // A LuaLS vararg return (`...`) is every value the call returns, however many.
+  if (first.name === "...") {
+    const type = `LuaMultiReturn<${needsArrayParens(ts) ? `(${ts})` : ts}[]>`;
+    return { type, trailing: "", slots: [{ position: 0, name: first.name, ts }] };
+  }
   return { type: ts, trailing: "", slots: [{ position: 0, name: first.name, ts }] };
 }
 
@@ -5219,11 +5417,12 @@ function mapSlotUnion(
       }
     }
     let ts: string;
-    if (token === "table") {
-      const curation =
-        slotKind !== undefined && slotName !== undefined
-          ? TABLE_SLOT_CURATIONS.get(tableSlotKey(elementName, slotKind, slotName))
-          : undefined;
+    const slotCuration =
+      slotKind !== undefined && slotName !== undefined
+        ? TABLE_SLOT_CURATIONS.get(tableSlotKey(elementName, slotKind, slotName))
+        : undefined;
+    if (token === "table" || slotCuration?.retypedUpstream?.includes(token) === true) {
+      const curation = slotCuration;
       const mapping =
         curation?.kind === "mapping" ? curation : MAPPING_TABLE_SLOTS.get(elementName);
       const element =

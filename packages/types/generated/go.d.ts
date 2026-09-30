@@ -1,13 +1,32 @@
 /** @noSelfInFile */
-import type { Hash, Matrix4, Opaque, Quaternion, Url, Vector, Vector3, Vector4 } from "../src/core-types";
+import type { Hash, Matrix4, Quaternion, Url, Vector, Vector3, Vector4 } from "../src/core-types";
 
 declare global {
   /**
    * Game object API documentation
    */
   namespace go {
+    /**
+     * Options for accessing indexed or internal component properties with go.get and go.set.
+     */
+    export interface property_options {
+      /**
+       * Index into an array property, starting at one.
+       */
+      index?: number;
+      /**
+       * Name of an internal property.
+       */
+      key?: Hash;
+      /**
+       * Internal component resources identified by key, such as particle FX emitters.
+       */
+      keys?: Hash[];
+    }
     export type Easing = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE;
     export type Playback = typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_PINGPONG | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_PINGPONG;
+    export type EASING = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE;
+    export type PLAYBACK = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG;
     /**
      * in-back
      */
@@ -228,7 +247,7 @@ declare global {
      *
      * `self`
      *
-     * object The current object.
+     * script_instance The current script instance.
      *
      * `url`
      *
@@ -257,7 +276,7 @@ declare global {
      * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);
      * ```
      */
-    export function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
+    export function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay?: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void;
     /**
      * By calling this function, all or specified stored property animations of the game object or component will be canceled.
      * See the properties guide for which properties can be animated and the animation guide for how to animate them.
@@ -316,7 +335,7 @@ declare global {
      * go.delete(ids, true);
      * ```
      */
-    function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean, recursive?: boolean): void;
+    function _delete(id?: SceneGameObjectAddress | Hash | Url | (string | Hash | Url)[] | boolean, recursive?: boolean): void;
     /**
      * This function can check for game objects in any collection by specifying
      * the collection name in the URL.
@@ -340,7 +359,7 @@ declare global {
      * be used to e.g. take some last action, report the finalization to other game object instances, delete spawned objects
      * or release user input focus (see release_input_focus).
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @example
      * ```ts
      * export default defineScript({
@@ -355,17 +374,17 @@ declare global {
      * });
      * ```
      */
-    export function final(self: Opaque<"userdata">): void;
+    export function final(self: unknown): void;
     /**
      * This is a callback-function, which is called by the engine at fixed intervals to update the state of a script
      * component. The function will be called if 'Fixed Update Frequency' is enabled in the Engine section of game.project.
      * It can for instance be used to update game logic with the physics simulation if using a fixed timestep for the
      * physics (enabled by ticking 'Use Fixed Timestep' in the Physics section of game.project).
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @param dt - the time-step of the frame update
      */
-    export function fixed_update(self: Opaque<"userdata">, dt: number): void;
+    export function fixed_update(self: unknown, dt: number): void;
     /**
      * Returns or constructs an instance identifier. The instance id is a hash
      * of the absolute path to the instance.
@@ -576,7 +595,7 @@ declare global {
      * This is a callback-function, which is called by the engine when a script component is initialized. It can be used
      * to set the initial state of the script.
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @example
      * ```ts
      * export default defineScript({
@@ -587,15 +606,15 @@ declare global {
      * });
      * ```
      */
-    export function init(self: Opaque<"userdata">): void;
+    export function init(self: unknown): void;
     /**
      * This is a callback-function, which is called by the engine at the end of the frame to update the state of a script
      * component. Use it to make final adjustments to the game object instance.
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @param dt - the time-step of the frame update
      */
-    export function late_update(self: Opaque<"userdata">, dt: number): void;
+    export function late_update(self: unknown, dt: number): void;
     /**
      * This is a callback-function, which is called by the engine when user input is sent to the game object instance of the script.
      * It can be used to take action on the input, e.g. move the instance according to the input.
@@ -607,159 +626,10 @@ declare global {
      * to signal that it wants input to be consumed.
      * See the documentation of acquire_input_focus for more
      * information.
-     * The `action` parameter is a table containing data about the input mapped to the
-     * `action_id`.
-     * For mapped actions it specifies the value of the input and if it was just pressed or released.
-     * Actions are mapped to input in an input_binding-file.
-     * Mouse movement is specifically handled and uses `nil` as its `action_id`.
-     * The `action` only contains positional parameters in this case, such as x and y of the pointer.
-     * Here is a brief description of the available table fields:
      *
-     * Field
-     * Description
-     *
-     * `value`
-     * The amount of input given by the user. This is usually 1 for buttons and 0-1 for analogue inputs. This is not present for mouse movement and text input.
-     *
-     * `pressed`
-     * If the input was pressed this frame. This is not present for mouse movement and text input.
-     *
-     * `released`
-     * If the input was released this frame. This is not present for mouse movement and text input.
-     *
-     * `repeated`
-     * If the input was repeated this frame. This is similar to how a key on a keyboard is repeated when you hold it down. This is not present for mouse movement and text input.
-     *
-     * `x`
-     * The x value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `y`
-     * The y value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `screen_x`
-     * The screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `screen_y`
-     * The screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `dx`
-     * The change in x value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `dy`
-     * The change in y value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `screen_dx`
-     * The change in screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `screen_dy`
-     * The change in screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
-     *
-     * `gamepad`
-     * The index of the gamepad device that provided the input. See table below about gamepad input.
-     *
-     * `touch`
-     * List of touch input, one element per finger, if present. See table below about touch input
-     *
-     * `text`
-     * Text input from a (virtual) keyboard or similar.
-     *
-     * `marked_text`
-     * Sequence of entered symbols while entering a symbol combination, for example Japanese Kana.
-     *
-     * Gamepad specific fields:
-     *
-     * Field
-     * Description
-     *
-     * `gamepad`
-     * The index of the gamepad device that provided the input.
-     *
-     * `userid`
-     * Id of the user associated with the controller. Usually only relevant on consoles.
-     *
-     * `gamepad_guid`
-     * The guid of the gamepad controller. Only passed with "connected" action.
-     *
-     * `gamepad_guid_info`
-     * Parsed guid info table. Only passed with "connected" action. See table below.
-     *
-     * `gamepad_unknown`
-     * True if the input originated from an unknown/unmapped gamepad.
-     *
-     * `gamepad_name`
-     * Name of the gamepad
-     *
-     * `gamepad_axis`
-     * List of gamepad axis values. For raw gamepad input only.
-     *
-     * `gamepadhats`
-     * List of gamepad hat values. For raw gamepad input only.
-     *
-     * `gamepad_buttons`
-     * List of gamepad button values. For raw gamepad input only.
-     *
-     * Touch input table:
-     *
-     * Field
-     * Description
-     *
-     * `id`
-     * A number identifying the touch input during its duration.
-     *
-     * `pressed`
-     * True if the finger was pressed this frame.
-     *
-     * `released`
-     * True if the finger was released this frame.
-     *
-     * `tap_count`
-     * Number of taps, one for single, two for double-tap, etc
-     *
-     * `x`
-     * The x touch location.
-     *
-     * `y`
-     * The y touch location.
-     *
-     * `dx`
-     * The change in x value.
-     *
-     * `dy`
-     * The change in y value.
-     *
-     * `acc_x`
-     * Accelerometer x value (if present).
-     *
-     * `acc_y`
-     * Accelerometer y value (if present).
-     *
-     * `acc_z`
-     * Accelerometer z value (if present).
-     *
-     * Guid info table:
-     * This info is only passed with a `connected` action.
-     *
-     * Field
-     * Description
-     *
-     * `vendor`
-     * USB vendor id. E.g. Nintendo 0x057e, Sony 0x054c, or Microsoft 0x045e
-     *
-     * `product`
-     * USB product id
-     *
-     * `bus`
-     * How device is communicating. E.g.0x0003 for USB devices and 0x0005 for Bluetooth devices.
-     *
-     * `crc`
-     * SDL CRC16 signature, typically used when vendor and product ids are unavailable
-     *
-     * `version`
-     * The device or firmware version
-     *
-     * @param self - reference to the script state to be used for storing data
-     * @param action_id - id of the received input action, as mapped in the input_binding-file
-     * @param action - a table containing the input data, see above for a description
+     * @param self - script instance used for storing state
+     * @param action_id - id of the received input action, as mapped in the input_binding-file, or `nil` for mouse movement
+     * @param action - input data for the action. **0️⃣ `gamepad` is 0-based; passed to Defold unchanged.**
      * @returns optional boolean to signal if the input should be consumed (not passed on to others) or not, default is false
      * @example
      * ```ts
@@ -796,14 +666,14 @@ declare global {
      * });
      * ```
      */
-    export function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;
+    export function on_input(self: unknown, action_id: Hash | undefined, action: go.on_input.action): boolean | undefined;
     /**
      * This is a callback-function, which is called by the engine whenever a message has been sent to the script component.
      * It can be used to take action on the message, e.g. send a response back to the sender of the message.
      * The `message` parameter is a table containing the message data. If the message is sent from the engine, the
      * documentation of the message specifies which data is supplied.
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @param message_id - id of the received message
      * @param message - a table containing the message data
      * @param sender - address of the sender
@@ -844,12 +714,12 @@ declare global {
      * });
      * ```
      */
-    export function on_message(self: Opaque<"userdata">, message_id: Hash, message: Record<string | number, unknown>, sender: Url): void;
+    export function on_message(self: unknown, message_id: Hash, message: LuaMap<AnyNotNil, unknown> | Record<string, unknown>, sender: Url): void;
     /**
      * This is a callback-function, which is called by the engine when the script component is reloaded, e.g. from the editor.
      * It can be used for live development, e.g. to tweak constants or set up the state properly for the instance.
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @example
      * ```ts
      * // This example demonstrates how to tweak the speed of a game object instance that is moved on user input.
@@ -890,7 +760,7 @@ declare global {
      * });
      * ```
      */
-    export function on_reload(self: Opaque<"userdata">): void;
+    export function on_reload(self: unknown): void;
     /**
      * Sets the parent for a game object instance. This means that the instance will exist in the geometrical space of its parent,
      * like a basic transformation hierarchy or scene graph. If no parent is specified, the instance will be detached from any parent and exist in world
@@ -1007,7 +877,7 @@ declare global {
      * This is a callback-function, which is called by the engine every frame to update the state of a script component.
      * It can be used to perform any kind of game related tasks, e.g. moving the game object instance.
      *
-     * @param self - reference to the script state to be used for storing data
+     * @param self - script instance used for storing state
      * @param dt - the time-step of the frame update
      * @example
      * ```ts
@@ -1025,7 +895,7 @@ declare global {
      * });
      * ```
      */
-    export function update(self: Opaque<"userdata">, dt: number): void;
+    export function update(self: unknown, dt: number): void;
     /**
      * Recalculates and updates the cached world transform immediately for the target instance
      * and its ancestors (parent chain up to the collection root). Descendants (children) are
@@ -1079,6 +949,195 @@ declare global {
      */
     export function world_to_local_transform(transformation: Matrix4, url?: SceneGameObjectAddress | Hash | Url): Matrix4;
     export { _delete as delete };
+    export namespace on_input {
+      /**
+       * Data supplied to the global `on_input` lifecycle function.
+       */
+      interface action {
+        /**
+         * Amount of input, usually 1 for buttons or between 0 and 1 for analogue input; absent for pointer movement and text input.
+         */
+        value?: number;
+        /**
+         * Whether the input was pressed this frame; absent for pointer movement and text input.
+         */
+        pressed?: boolean;
+        /**
+         * Whether the input was released this frame; absent for pointer movement and text input.
+         */
+        released?: boolean;
+        /**
+         * Whether the input was repeated this frame; absent for pointer movement and text input.
+         */
+        repeated?: boolean;
+        /**
+         * Pointer x-coordinate; absent for gamepad, key, and text input.
+         */
+        x?: number;
+        /**
+         * Pointer y-coordinate; absent for gamepad, key, and text input.
+         */
+        y?: number;
+        /**
+         * Pointer x-coordinate in screen space; absent for gamepad, key, and text input.
+         */
+        screen_x?: number;
+        /**
+         * Pointer y-coordinate in screen space; absent for gamepad, key, and text input.
+         */
+        screen_y?: number;
+        /**
+         * Change in the pointer x-coordinate; absent for gamepad, key, and text input.
+         */
+        dx?: number;
+        /**
+         * Change in the pointer y-coordinate; absent for gamepad, key, and text input.
+         */
+        dy?: number;
+        /**
+         * Change in the pointer x-coordinate in screen space; absent for gamepad, key, and text input.
+         */
+        screen_dx?: number;
+        /**
+         * Change in the pointer y-coordinate in screen space; absent for gamepad, key, and text input.
+         */
+        screen_dy?: number;
+        /**
+         * Accelerometer x value, when present.
+         */
+        acc_x?: number;
+        /**
+         * Accelerometer y value, when present.
+         */
+        acc_y?: number;
+        /**
+         * Accelerometer z value, when present.
+         */
+        acc_z?: number;
+        /**
+         * Index of the gamepad that provided the input.
+         */
+        gamepad?: number;
+        /**
+         * Id of the user associated with the controller.
+         */
+        userid?: number;
+        /**
+         * SDL-compatible guid, supplied with a gamepad-connected action.
+         */
+        gamepad_guid?: string;
+        /**
+         * Parsed guid information, supplied with a gamepad-connected action.
+         */
+        gamepad_guid_info?: go.on_input.gamepad_guid_info;
+        /**
+         * Whether the input originated from an unknown or unmapped gamepad.
+         */
+        gamepad_unknown?: boolean;
+        /**
+         * Name of a connected gamepad.
+         */
+        gamepad_name?: string;
+        /**
+         * Axis values, supplied only for raw gamepad input.
+         */
+        gamepad_axis?: number[];
+        /**
+         * Hat values, supplied only for raw gamepad input.
+         */
+        gamepad_hats?: number[];
+        /**
+         * Button values, supplied only for raw gamepad input.
+         */
+        gamepad_buttons?: number[];
+        /**
+         * Touch inputs, one entry per finger.
+         */
+        touch?: go.on_input.touch[];
+        /**
+         * Text entered by a text action, or the current sequence for marked-text composition such as Japanese Kana.
+         */
+        text?: string;
+      }
+      /**
+       * Parsed fields from a connected gamepad guid.
+       */
+      interface gamepad_guid_info {
+        /**
+         * USB vendor id.
+         */
+        vendor: number;
+        /**
+         * USB product id.
+         */
+        product: number;
+        /**
+         * Bus used to communicate with the device.
+         */
+        bus: number;
+        /**
+         * SDL CRC16 signature.
+         */
+        crc: number;
+        /**
+         * Device or firmware version.
+         */
+        version: number;
+      }
+      /**
+       * One touch entry in on_input.action.
+       */
+      interface touch {
+        /**
+         * Identifier for the touch during its lifetime.
+         */
+        id: number;
+        /**
+         * Whether the finger was pressed this frame.
+         */
+        pressed: boolean;
+        /**
+         * Whether the finger was released this frame.
+         */
+        released: boolean;
+        /**
+         * Number of taps, such as one for a single tap and two for a double tap.
+         */
+        tap_count: number;
+        /**
+         * Touch x-coordinate.
+         */
+        x: number;
+        /**
+         * Touch y-coordinate.
+         */
+        y: number;
+        /**
+         * Touch x-coordinate in screen space.
+         */
+        screen_x: number;
+        /**
+         * Touch y-coordinate in screen space.
+         */
+        screen_y: number;
+        /**
+         * Change in the touch x-coordinate.
+         */
+        dx: number;
+        /**
+         * Change in the touch y-coordinate.
+         */
+        dy: number;
+        /**
+         * Change in the touch x-coordinate in screen space.
+         */
+        screen_dx: number;
+        /**
+         * Change in the touch y-coordinate in screen space.
+         */
+        screen_dy: number;
+      }
+    }
     export interface properties {
       /**
        * The rotation of the game object expressed in Euler angles.

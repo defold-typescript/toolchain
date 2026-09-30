@@ -171,7 +171,7 @@ model.cancel(msg.url());
 const _bone: Hash = model.get_go(msg.url(), go.get_id("root"));
 model.set_mesh_enabled(msg.url(), "mesh", true);
 const _meshOn: boolean = model.get_mesh_enabled(msg.url(), "mesh");
-const _aabb: Record<string | number, unknown> = model.get_aabb(msg.url());
+const _aabb: { min: Vector3; max: Vector3 } = model.get_aabb(msg.url());
 
 // @ts-expect-error model.set_mesh_enabled enabled arg is boolean, not a string
 model.set_mesh_enabled(msg.url(), "mesh", "yes");

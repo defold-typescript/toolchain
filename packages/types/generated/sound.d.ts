@@ -8,6 +8,54 @@ declare global {
    */
   namespace sound {
     /**
+     * Data passed to the completion callback of sound.play. The callback's
+     * `message_id` indicates whether playback finished or was stopped manually.
+     */
+    interface play_completion {
+      /**
+       * The sequential play identifier for the playback.
+       */
+      play_id: number;
+    }
+    /**
+     * Sound playback properties
+     */
+    interface play_properties {
+      /**
+       * Delay in seconds before playback starts. The default is 0.
+       */
+      delay?: number;
+      /**
+       * Gain from 0 to 1. The default is 1; this combines with the group and master gains.
+       */
+      gain?: number;
+      /**
+       * Pan from -1 to 1. The default is 0; this is added to the component pan.
+       */
+      pan?: number;
+      /**
+       * Playback speed from 0 to 50. The default is 1; this is multiplied by the component speed.
+       */
+      speed?: number;
+      /**
+       * Playback offset in seconds. Mutually exclusive with `start_frame`.
+       */
+      start_time?: number;
+      /**
+       * Playback offset in frames or samples. Takes precedence over `start_time`.
+       */
+      start_frame?: number;
+    }
+    /**
+     * Sound stop properties
+     */
+    interface stop_properties {
+      /**
+       * Sequential playback identifier returned by sound.play.
+       */
+      play_id?: number;
+    }
+    /**
      * Get mixer group gain
      *
      * @param group - group name
@@ -158,30 +206,15 @@ declare global {
      * A sound will continue to play even if the game object the sound component belonged to is deleted. You can call `sound.stop()` to stop the sound.
      *
      * @param url - the sound that should play
-     * @param play_properties - optional table with properties:
-     * `delay`
-     * number delay in seconds before the sound starts playing, default is 0.
-     * `gain`
-     * number sound gain between 0 and 1, default is 1. The final gain of the sound will be a combination of this gain, the group gain and the master gain.
-     * `pan`
-     * number sound pan between -1 and 1, default is 0. The final pan of the sound will be an addition of this pan and the sound pan.
-     * `speed`
-     * number sound speed where 1.0 is normal speed, 0.5 is half speed and 2.0 is double speed. Valid range is 0.0 to 50.0. The final speed of the sound will be a multiplication of this speed and the sound speed.
-     * `start_time`
-     * number start playback offset (seconds). Optional, mutually exclusive with `start_frame`.
-     * `start_frame`
-     * number start playback offset (frames/samples). Optional, mutually exclusive with `start_time`. If both are provided, `start_frame` is used.
+     * @param play_properties - optional playback properties
      * @param complete_function - function to call when the sound has finished playing or stopped manually via sound.stop.
      *
      * `self`
-     * object The current object.
+     * script_instance The current script instance.
      * `message_id`
      * hash The name of the completion message, which can be either `"sound_done"` if the sound has finished playing, or `"sound_stopped"` if it was stopped manually.
      * `message`
-     * table Information about the completion:
-     *
-     * - number `play_id` - the sequential play identifier that was given by the sound.play function.
-     *
+     * sound.play_completion Information about the completed or stopped playback.
      * `sender`
      * url The invoker of the callback: the sound component.
      * @returns The identifier for the sound voice
@@ -208,7 +241,7 @@ declare global {
      * });
      * ```
      */
-    function play(url: string | Hash | Url, play_properties?: { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): number;
+    function play(url: string | Hash | Url, play_properties?: sound.play_properties, complete_function?: (self: unknown, message_id: Hash, message: sound.play_completion, sender: Url) => void): number;
     /**
      * Set gain on all active playing voices of a sound.
      *
@@ -252,9 +285,7 @@ declare global {
      * Stop playing all active voices or just one voice if `play_id` provided
      *
      * @param url - the sound component that should stop
-     * @param stop_properties - optional table with properties:
-     * `play_id`
-     * number the sequential play identifier that should be stopped (was given by the sound.play() function)
+     * @param stop_properties - optional playback to stop
      * @example
      * ```ts
      * // Assuming the script belongs to an instance with a sound-component with id
@@ -264,7 +295,7 @@ declare global {
      * sound.stop("#sound", { play_id: id });
      * ```
      */
-    function stop(url: string | Hash | Url, stop_properties?: { play_id?: number }): void;
+    function stop(url: string | Hash | Url, stop_properties?: sound.stop_properties): void;
     interface properties {
       /**
        * The gain on the sound-component. Note that gain is in linear scale,

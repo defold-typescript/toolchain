@@ -8,15 +8,31 @@ declare global {
    */
   namespace collectionproxy {
     /**
-     * It's impossible to change the collection if the collection is already loaded.
+     * Data delivered to a collectionproxy.load callback. The available
+     * field depends on the callback message identifier.
+     */
+    interface load_data {
+      /**
+       * Loading progress from 0 to 1 for `proxy_loading`.
+       */
+      progress?: number;
+      /**
+       * Error code for `proxy_error`.
+       */
+      code?: number;
+    }
+    type TIME_STEP_MODE = 0 | 1;
+    type RESULT = typeof collectionproxy.RESULT_ALREADY_LOADED | typeof collectionproxy.RESULT_LOADING | typeof collectionproxy.RESULT_NOT_EXCLUDED;
+    /**
+     * The collection proxy is already loaded, so its collection cannot be changed.
      */
     const RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" };
     /**
-     * It's impossible to change the collection while the collection proxy is loading.
+     * The collection proxy is loading, so its collection cannot be changed.
      */
     const RESULT_LOADING: number & { readonly __brand: "collectionproxy.RESULT_LOADING" };
     /**
-     * It's impossible to change the collection for a proxy that isn't excluded.
+     * The collection proxy is not excluded from the bundle; only excluded proxies can change collections.
      */
     const RESULT_NOT_EXCLUDED: number & { readonly __brand: "collectionproxy.RESULT_NOT_EXCLUDED" };
     /**
@@ -62,7 +78,7 @@ declare global {
      * });
      * ```
      */
-    function load(url: string | Hash | Url, options: Record<string | number, unknown> | undefined, callback: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): void;
+    function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): void;
     /**
      * The collection should be loaded by the collection proxy.
      * Setting the collection to "nil" will revert it back to the original collection.
@@ -86,7 +102,7 @@ declare global {
      * msg.post("/go#collectionproxy", "enable");
      * ```
      */
-    function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number]>;
+    function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.RESULT]>;
   }
 }
 

@@ -33,7 +33,7 @@ declare global {
      * @param callback - The interaction callback. Pass an empty function or `nil` if you no longer wish to receive callbacks.
      *
      * `self`
-     * object The calling script
+     * script_instance The calling script instance
      * @example
      * ```ts
      * function on_interaction(self: unknown) {

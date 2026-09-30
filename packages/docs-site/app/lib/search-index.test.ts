@@ -36,8 +36,8 @@ const TRACKED_VERSIONS = versionsWithDiskFixtures(REAL_TYPES_DIR).map((v) =>
 const OLDEST_VERSION = TRACKED_VERSIONS[TRACKED_VERSIONS.length - 1] as string;
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
-// The release a namespace's surviving-but-not-universal symbols were introduced
-// in, read off the Combined projection production renders from. The lifecycle
+// The oldest release a namespace's surviving-but-not-universal symbols were
+// introduced in, read off the Combined projection production renders from. The lifecycle
 // prose is keyed on *that* release, not on whichever one is newest: a symbol
 // promoted two releases ago keeps naming its own release forever, and asserting
 // the newest version only held while it happened to be the promoting one.
@@ -50,10 +50,11 @@ function introducedVersionFor(namespace: string): string {
       )
       .map((e) => e.availableIn[e.availableIn.length - 1] as string),
   );
-  if (introduced.size !== 1) {
-    throw new Error(`${namespace}: expected one introducing release, got [${[...introduced]}]`);
-  }
-  return [...introduced][0] as string;
+  // The oldest: a later release can introduce further symbols (1.13.2 documents
+  // new nil returns in b2d.body), while the prose checked here is the original one.
+  const oldest = TRACKED_VERSIONS.filter((version) => introduced.has(version)).at(-1);
+  if (oldest === undefined) throw new Error(`${namespace}: no introducing release`);
+  return oldest;
 }
 
 // The release that dropped a symbol: the one immediately newer than the last

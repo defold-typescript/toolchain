@@ -141,13 +141,17 @@ describe("rendered slot types agree with the signature above them", () => {
     const params = backed.filter((s) => s.kind === "param");
     // A row is labelled with its ref-doc name; the declaration prints the emitted
     // one, which escapes a reserved word with a trailing `_` and replaces a
-    // non-identifier.
+    // non-identifier. A `...` row names one element of the `...args` rest array.
     const mismatches = params
       .filter((s) => {
         const q = s.isOptional ? "?" : "";
-        return ![s.name, `${s.name}_`, `arg${s.index}`].some((name) =>
-          s.signature.includes(`${name}${q}: ${s.rendered}`),
+        const labels = [s.name, `${s.name}_`, `arg${s.index}`].map(
+          (name) => `${name}${q}: ${s.rendered}`,
         );
+        if (s.name === "...") {
+          labels.push(`...args: ${s.rendered}[]`, `...args: (${s.rendered})[]`);
+        }
+        return !labels.some((label) => s.signature.includes(label));
       })
       .map(
         (s) => `${s.symbol} ${s.name}${s.isOptional ? "?" : ""}: ${s.rendered} — ${s.signature}`,
@@ -189,11 +193,11 @@ describe("rendered slot types agree with the signature above them", () => {
     expect(clear?.parameters[0]?.types[0]).not.toContain("Record<string | number, unknown>");
 
     const enableState = symbols.find((s) => s.name === "render.enable_state");
-    expect(enableState?.parameters[0]?.types[0]).toBe("graphics.State");
+    expect(enableState?.parameters[0]?.types[0]).toBe("graphics.STATE");
     expect(enableState?.parameters[0]?.types[0]).not.toContain('Opaque<"constant">');
 
     // The alias each of them names is a symbol on its home page, so neither row
-    // is a dead end: `ClearBufferKey` is render's own, `State` is graphics'.
+    // is a dead end: `ClearBufferKey` is render's own, `STATE` is graphics'.
     const renderTypes = symbols.filter((s) => s.kind === "type").map((s) => s.name);
     expect(renderTypes).toContain("ClearBufferKey");
     const graphics = combined.namespaces.find((ns) => ns.namespace === "graphics");
@@ -201,7 +205,7 @@ describe("rendered slot types agree with the signature above them", () => {
     const graphicsTypes = apiModuleSymbols(combinedNamespaceToApiPage(graphics))
       .filter((s) => s.kind === "type")
       .map((s) => s.name);
-    expect(graphicsTypes).toContain("State");
+    expect(graphicsTypes).toContain("STATE");
   });
 
   test("a lua-stdlib page the artifact never covers still renders its slot types", () => {

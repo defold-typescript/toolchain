@@ -71,6 +71,60 @@
     "optionalAsRequired": 0,
     "bindingOpen": 0
   },
+  "bullet3d": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
+  },
+  "bullet3d.collision_object": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
+  },
+  "bullet3d.constraint": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
+  },
+  "bullet3d.rigid_body": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
+  },
+  "bullet3d.shape": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
+  },
+  "bullet3d.world": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
+  },
   "camera": {
     "droppedElements": 0,
     "unknownTokens": [],

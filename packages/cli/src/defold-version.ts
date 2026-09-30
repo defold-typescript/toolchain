@@ -15,7 +15,7 @@
 // and push the rule's pick down a position, so between bumps the tuple's
 // positions are not the rule's positions. Read a slot as "whatever is there",
 // and the next bump as the moment the rule is reapplied.
-export const DEFOLD_VERSIONS = ["1.13.1", "1.13.0", "1.12.4"] as const;
+export const DEFOLD_VERSIONS = ["1.13.2", "1.12.4"] as const;
 
 export const CURRENT_STABLE_DEFOLD_VERSION = DEFOLD_VERSIONS[0];
 

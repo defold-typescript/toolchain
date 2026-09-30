@@ -11,7 +11,7 @@ import { MODULE_MANIFEST } from "./regen";
 // model because the per-package `rootDir` boundary forbids a types-package
 // module importing outside its own tree; `scripts/release-model.test.ts`
 // correspondence-guards these against the model so drift fails CI.
-export const DEFOLD_VERSION = "1.13.1";
+export const DEFOLD_VERSION = "1.13.2";
 export const refDocUrl = (version = DEFOLD_VERSION): string =>
   `https://github.com/defold/defold/releases/download/${version}/ref-doc.zip`;
 
@@ -52,13 +52,24 @@ export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
     "doc/scripts-box2d-v3-script_box2d_world_v3.cpp_doc.json",
   ]),
   entry("buffer", "doc/scripts-script_buffer.cpp_doc.json"),
+  entry("bullet3d", "doc/scripts-bullet3d-script_bullet3d.cpp_doc.json"),
+  entry(
+    "bullet3d.collision_object",
+    "doc/scripts-bullet3d-script_bullet3d_collision_object.cpp_doc.json",
+  ),
+  entry("bullet3d.constraint", "doc/scripts-bullet3d-script_bullet3d_constraint.cpp_doc.json"),
+  entry("bullet3d.rigid_body", "doc/scripts-bullet3d-script_bullet3d_rigid_body.cpp_doc.json"),
+  entry("bullet3d.shape", "doc/scripts-bullet3d-script_bullet3d_shape.cpp_doc.json"),
+  entry("bullet3d.world", "doc/scripts-bullet3d-script_bullet3d_world.cpp_doc.json"),
   // Camera and component namespaces merge their DDF messages/properties into
   // the callable script API so release snapshots retain every declared symbol.
   entry("camera", "doc/gamesys-camera_ddf.proto_doc.json", undefined, [
     "doc/render-render_script_camera.cpp_doc.json",
   ]),
   entry("collectionfactory", "doc/scripts-script_collection_factory.cpp_doc.json"),
-  entry("collectionproxy", "doc/scripts-script_collectionproxy.cpp_doc.json"),
+  entry("collectionproxy", "doc/scripts-script_collectionproxy.cpp_doc.json", undefined, [
+    "doc/gamesys-collectionproxy_ddf.proto_doc.json",
+  ]),
   entry("compute", "doc/scripts-script_compute.cpp_doc.json"),
   entry("crash", "doc/script_crash.cpp_doc.json"),
   entry("factory", "doc/scripts-script_factory.cpp_doc.json"),
@@ -205,7 +216,7 @@ function editorVm(namespace: string): SyncManifestEntry {
 function entry(
   namespace: string,
   zipEntry: string,
-  fixture: string = `fixtures/defold-1.13.1/${namespace.replace(/\./g, "_")}_doc.json`,
+  fixture: string = `fixtures/defold-1.13.2/${namespace.replace(/\./g, "_")}_doc.json`,
   mergeEntries?: readonly string[],
 ): SyncManifestEntry {
   return { namespace, zipEntry, fixture, ...(mergeEntries ? { mergeEntries } : {}) };

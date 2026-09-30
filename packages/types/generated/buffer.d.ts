@@ -6,41 +6,44 @@ declare global {
    * Functions for manipulating buffers and streams
    */
   namespace buffer {
+    type buffer_data = Opaque<"buffer">;
+    type buffer_stream = Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
     type ValueType = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8;
+    type VALUE_TYPE = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8;
     /**
-     * Float, single precision, 4 bytes
+     * float32 Float, single precision, 4 bytes
      */
     const VALUE_TYPE_FLOAT32: number & { readonly __brand: "buffer.VALUE_TYPE_FLOAT32" };
     /**
-     * Signed integer, 2 bytes
+     * int16 Signed integer, 2 bytes
      */
     const VALUE_TYPE_INT16: number & { readonly __brand: "buffer.VALUE_TYPE_INT16" };
     /**
-     * Signed integer, 4 bytes
+     * int32 Signed integer, 4 bytes
      */
     const VALUE_TYPE_INT32: number & { readonly __brand: "buffer.VALUE_TYPE_INT32" };
     /**
-     * Signed integer, 8 bytes
+     * int64 Signed integer, 8 bytes
      */
     const VALUE_TYPE_INT64: number & { readonly __brand: "buffer.VALUE_TYPE_INT64" };
     /**
-     * Signed integer, 1 byte
+     * int8 Signed integer, 1 byte
      */
     const VALUE_TYPE_INT8: number & { readonly __brand: "buffer.VALUE_TYPE_INT8" };
     /**
-     * Unsigned integer, 2 bytes
+     * uint16 Unsigned integer, 2 bytes
      */
     const VALUE_TYPE_UINT16: number & { readonly __brand: "buffer.VALUE_TYPE_UINT16" };
     /**
-     * Unsigned integer, 4 bytes
+     * uint32 Unsigned integer, 4 bytes
      */
     const VALUE_TYPE_UINT32: number & { readonly __brand: "buffer.VALUE_TYPE_UINT32" };
     /**
-     * Unsigned integer, 8 bytes
+     * uint64 Unsigned integer, 8 bytes
      */
     const VALUE_TYPE_UINT64: number & { readonly __brand: "buffer.VALUE_TYPE_UINT64" };
     /**
-     * Unsigned integer, 1 byte
+     * uint8 Unsigned integer, 1 byte
      */
     const VALUE_TYPE_UINT8: number & { readonly __brand: "buffer.VALUE_TYPE_UINT8" };
     /**
@@ -102,7 +105,7 @@ declare global {
      * @param declaration - A table where each entry (table) describes a stream
      *
      * - hash | string `name`: The name of the stream
-     * - constant `type`: The data type of the stream
+     * - buffer.VALUE_TYPE `type`: The data type of the stream
      * - number `count`: The number of values each element should hold
      * @returns the new buffer
      * @example
@@ -129,7 +132,7 @@ declare global {
      * });
      * ```
      */
-    function create(element_count: number, declaration: { name?: Hash | string; type: buffer.ValueType; count?: number }[]): Opaque<"buffer">;
+    function create(element_count: number, declaration: ({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]): Opaque<"buffer">;
     /**
      * Get a copy of all the bytes from a specified stream as a Lua string.
      *
@@ -153,7 +156,7 @@ declare global {
      * if (values) print(`${values.length} values in 'somefloats'`);
      * ```
      */
-    function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;
+    function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.VALUE_TYPE | undefined]>;
     /**
      * Get a specified stream from a buffer.
      *
@@ -182,7 +185,7 @@ declare global {
      * buffer.set_metadata(buf, hash("somefloats"), [-2.5, 10.0, 32.2], buffer.VALUE_TYPE_FLOAT32);
      * ```
      */
-    function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;
+    function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: buffer.VALUE_TYPE): void;
   }
 }
 

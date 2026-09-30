@@ -5,6 +5,21 @@ declare global {
    */
   namespace crash {
     /**
+     * Loaded crash module
+     */
+    interface module_info {
+      /**
+       * module name
+       */
+      name: string;
+      /**
+       * module load address
+       */
+      address: string;
+    }
+    type USERFIELD = number;
+    type SYSFIELD = typeof crash.SYSFIELD_ENGINE_VERSION | typeof crash.SYSFIELD_ENGINE_HASH | typeof crash.SYSFIELD_DEVICE_MODEL | typeof crash.SYSFIELD_MANUFACTURER | typeof crash.SYSFIELD_SYSTEM_NAME | typeof crash.SYSFIELD_SYSTEM_VERSION | typeof crash.SYSFIELD_LANGUAGE | typeof crash.SYSFIELD_DEVICE_LANGUAGE | typeof crash.SYSFIELD_TERRITORY | typeof crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT;
+    /**
      * android build fingerprint
      */
     const SYSFIELD_ANDROID_BUILD_FINGERPRINT: number & { readonly __brand: "crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT" };
@@ -62,7 +77,7 @@ declare global {
      * @param handle - crash dump handle
      * @returns table containing the backtrace
      */
-    function get_backtrace(handle: number): Record<string | number, unknown>;
+    function get_backtrace(handle: number): string[];
     /**
      * The format of read text blob is platform specific
      * and not guaranteed
@@ -73,13 +88,12 @@ declare global {
      */
     function get_extra_data(handle: number): string;
     /**
-     * The function returns a table containing entries with sub-tables that
-     * have fields 'name' and 'address' set for all loaded modules.
+     * get all loaded modules from when the crash occured
      *
      * @param handle - crash dump handle
-     * @returns module table
+     * @returns loaded modules
      */
-    function get_modules(handle: number): Record<string | number, unknown>;
+    function get_modules(handle: number): crash.module_info[];
     /**
      * read signal number from a crash report
      *
@@ -94,7 +108,7 @@ declare global {
      * @param index - system field enum. Must be less than crash.SYSFIELD_MAX
      * @returns value recorded in the crash dump, or `nil` if it didn't exist
      */
-    function get_sys_field(handle: number, index: number): string | undefined;
+    function get_sys_field(handle: number, index: crash.SYSFIELD): string | undefined;
     /**
      * reads user field from a loaded crash dump
      *
@@ -102,7 +116,7 @@ declare global {
      * @param index - user data slot index. **0️⃣ 0-based; passed to Defold unchanged.**
      * @returns user data value recorded in the crash dump
      */
-    function get_user_field(handle: number, index: number): string;
+    function get_user_field(handle: number, index: crash.USERFIELD): string;
     /**
      * The crash dump will be removed from disk upon a successful
      * load, so loading is one-shot.
@@ -130,7 +144,7 @@ declare global {
      * @param index - slot index. 0-indexed. **0️⃣ 0-based; passed to Defold unchanged.**
      * @param value - string value to store
      */
-    function set_user_field(index: number, value: string): void;
+    function set_user_field(index: crash.USERFIELD, value: string): void;
     /**
      * Performs the same steps as if a crash had just occured but
      * allows the program to continue.

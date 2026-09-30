@@ -7,15 +7,491 @@ declare global {
    */
   namespace resource {
     /**
+     * Animation data accepted when creating or updating an atlas. Specify either
+     * `frames`, or both `frame_start` and `frame_end`.
+     */
+    interface animation {
+      /**
+       * Animation id.
+       */
+      id: string;
+      /**
+       * Animation width.
+       */
+      width: number;
+      /**
+       * Animation height.
+       */
+      height: number;
+      /**
+       * Geometry indices for the animation frames.
+       */
+      frames?: number[];
+      /**
+       * First geometry index for the legacy contiguous frame range.
+       */
+      frame_start?: number;
+      /**
+       * Non-inclusive last geometry index for the legacy contiguous frame range.
+       */
+      frame_end?: number;
+      /**
+       * Playback mode. The default is `go.PLAYBACK_ONCE_FORWARD`.
+       */
+      playback?: go.PLAYBACK;
+      /**
+       * Animation frame rate. The default is 30.
+       */
+      fps?: number;
+      /**
+       * Whether to flip the animation vertically. The default is false.
+       */
+      flip_vertical?: boolean;
+      /**
+       * Whether to flip the animation horizontally. The default is false.
+       */
+      flip_horizontal?: boolean;
+    }
+    /**
+     * Animation data returned by resource.get_atlas.
+     */
+    interface animation_data {
+      /**
+       * Animation id.
+       */
+      id: string;
+      /**
+       * Animation width.
+       */
+      width: number;
+      /**
+       * Animation height.
+       */
+      height: number;
+      /**
+       * Geometry indices for the animation frames.
+       */
+      frames: number[];
+      /**
+       * Playback mode.
+       */
+      playback: go.PLAYBACK;
+      /**
+       * Animation frame rate.
+       */
+      fps: number;
+      /**
+       * Whether the animation is flipped vertically.
+       */
+      flip_vertical: boolean;
+      /**
+       * Whether the animation is flipped horizontally.
+       */
+      flip_horizontal: boolean;
+    }
+    /**
+     * Data accepted by resource.create_atlas and resource.set_atlas.
+     */
+    interface atlas {
+      /**
+       * Path to the texture resource, for example `"/main/my_texture.texturec"`.
+       */
+      texture: string | Hash;
+      /**
+       * Animations in the atlas.
+       */
+      animations: [Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...(Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]];
+      /**
+       * Geometries that map to the texture data.
+       */
+      geometries: [resource.geometry, ...resource.geometry[]];
+    }
+    /**
+     * Data returned by resource.get_atlas.
+     */
+    interface atlas_data {
+      /**
+       * Path to the texture resource.
+       */
+      texture: string | Hash;
+      /**
+       * Animations in the atlas.
+       */
+      animations: resource.animation_data[];
+      /**
+       * Geometries that map to the texture data.
+       */
+      geometries: resource.geometry_data[];
+    }
+    /**
+     * Buffer-resource creation parameters
+     */
+    interface buffer_creation_params {
+      /**
+       * Buffer to bind to the resource.
+       */
+      buffer: Opaque<"buffer">;
+      /**
+       * Whether the resource takes ownership of the buffer. The default is true.
+       */
+      transfer_ownership?: boolean;
+    }
+    /**
+     * Buffer-resource update options
+     */
+    interface buffer_update_options {
+      /**
+       * Whether the resource takes ownership of the buffer. The default is false.
+       */
+      transfer_ownership?: boolean;
+    }
+    /**
+     * Geometry data accepted when creating or updating an atlas. Vertex, UV, and
+     * index values are zero-based.
+     */
+    interface geometry {
+      /**
+       * Geometry name, used when matching animations between atlases.
+       */
+      id?: string;
+      /**
+       * Width of the image represented by the geometry. If omitted, it is calculated from the vertices.
+       */
+      width?: number;
+      /**
+       * Height of the image represented by the geometry. If omitted, it is calculated from the vertices.
+       */
+      height?: number;
+      /**
+       * Horizontal pivot in unit coordinates. The default is 0.5.
+       */
+      pivot_x?: number;
+      /**
+       * Vertical pivot in unit coordinates. The default is 0.5.
+       */
+      pivot_y?: number;
+      /**
+       * Whether the image is rotated 90 degrees counter-clockwise in the atlas.
+       */
+      rotated?: boolean;
+      /**
+       * Vertex coordinates in image space as `{px0, py0, px1, py1, ...}`.
+       */
+      vertices: number[];
+      /**
+       * UV coordinates in image space as `{u0, v0, u1, v1, ...}`.
+       */
+      uvs: number[];
+      /**
+       * Geometry indices where each group of three entries represents a triangle.
+       */
+      indices: number[];
+    }
+    /**
+     * Geometry data returned by resource.get_atlas.
+     */
+    interface geometry_data {
+      /**
+       * Width of the image represented by the geometry.
+       */
+      width: number;
+      /**
+       * Height of the image represented by the geometry.
+       */
+      height: number;
+      /**
+       * Horizontal pivot in unit coordinates.
+       */
+      pivot_x: number;
+      /**
+       * Vertical pivot in unit coordinates.
+       */
+      pivot_y: number;
+      /**
+       * Whether the image is rotated 90 degrees counter-clockwise in the atlas.
+       */
+      rotated: boolean;
+      /**
+       * Vertex coordinates in image space as `{px0, py0, px1, py1, ...}`.
+       */
+      vertices: number[];
+      /**
+       * UV coordinates in image space as `{u0, v0, u1, v1, ...}`.
+       */
+      uvs: number[];
+      /**
+       * Geometry indices where each group of three entries represents a triangle.
+       */
+      indices: number[];
+    }
+    /**
+     * Render target attachment information
+     */
+    interface render_target_attachment_info {
+      /**
+       * Opaque texture handle.
+       */
+      handle: Opaque<"texture">;
+      /**
+       * Texture width.
+       */
+      width: number;
+      /**
+       * Texture height.
+       */
+      height: number;
+      /**
+       * Texture depth or layer count.
+       */
+      depth: number;
+      /**
+       * Texture page count.
+       */
+      page_count: number;
+      /**
+       * Number of mipmaps.
+       */
+      mipmaps: number;
+      /**
+       * Texture usage flags.
+       */
+      flags: graphics.TEXTURE_USAGE_FLAG | number;
+      /**
+       * Texture type.
+       */
+      type: graphics.TEXTURE_TYPE;
+      /**
+       * Render-target buffer type.
+       */
+      buffer_type: graphics.BUFFER_TYPE;
+      /**
+       * Backing texture resource, when present.
+       */
+      texture?: Hash;
+    }
+    /**
+     * Render target information
+     */
+    interface render_target_info {
+      /**
+       * Opaque render-target handle.
+       */
+      handle: Opaque<"render_target">;
+      /**
+       * Effective sample count shared by all render-target attachments.
+       */
+      sample_count: number;
+      /**
+       * Render-target attachments.
+       */
+      attachments: resource.render_target_attachment_info[];
+    }
+    type resource_data = Hash;
+    /**
+     * Sound-data creation options
+     */
+    interface sound_data_options {
+      /**
+       * Raw sound file data, including the file header.
+       */
+      data: string | Opaque<"buffer">;
+      /**
+       * Complete file size when `data` is partial.
+       */
+      filesize?: number;
+      /**
+       * Whether `data` contains only the initial file chunk.
+       */
+      partial?: boolean;
+    }
+    /**
+     * Text metrics
+     */
+    interface text_metrics {
+      /**
+       * Text width.
+       */
+      width: number;
+      /**
+       * Text height.
+       */
+      height: number;
+      /**
+       * Maximum ascent.
+       */
+      max_ascent: number;
+      /**
+       * Maximum descent.
+       */
+      max_descent: number;
+    }
+    /**
+     * Text metric options
+     */
+    interface text_metrics_options {
+      /**
+       * Text-field width; unused when `line_break` is false.
+       */
+      width?: number;
+      /**
+       * Line leading. The default is 1.
+       */
+      leading?: number;
+      /**
+       * Character tracking. The default is 0.
+       */
+      tracking?: number;
+      /**
+       * Whether to account for line breaks. The default is false.
+       */
+      line_break?: boolean;
+    }
+    /**
+     * Texture creation parameters
+     */
+    interface texture_creation_params {
+      /**
+       * Texture type.
+       */
+      type: graphics.TEXTURE_TYPE;
+      /**
+       * Texture width in pixels; must be greater than zero.
+       */
+      width: number;
+      /**
+       * Texture height in pixels; must be greater than zero.
+       */
+      height: number;
+      /**
+       * Texture depth; used by 3D texture types and must be greater than zero.
+       */
+      depth?: number;
+      /**
+       * Number of pages for a 2D array texture.
+       */
+      page_count?: number;
+      /**
+       * Texture format. Device-specific unsupported constants evaluate to `nil`.
+       */
+      format: graphics.TEXTURE_FORMAT;
+      /**
+       * Creation-usage hints. The default is graphics.TEXTURE_USAGE_FLAG_SAMPLE.
+       */
+      flags?: graphics.TEXTURE_USAGE_FLAG | number;
+      /**
+       * Maximum mipmap count. The default is zero.
+       */
+      max_mipmaps?: number;
+      /**
+       * Compression used by the supplied buffer. The default is graphics.COMPRESSION_TYPE_DEFAULT.
+       */
+      compression_type?: graphics.COMPRESSION_TYPE;
+    }
+    /**
+     * Asynchronous texture creation result
+     */
+    interface texture_creation_result {
+      /**
+       * Created texture resource path.
+       */
+      path: Hash;
+    }
+    /**
+     * Texture information
+     */
+    interface texture_info {
+      /**
+       * Opaque texture handle.
+       */
+      handle: Opaque<"texture">;
+      /**
+       * Texture width.
+       */
+      width: number;
+      /**
+       * Texture height.
+       */
+      height: number;
+      /**
+       * Texture depth or layer count.
+       */
+      depth: number;
+      /**
+       * Texture page count.
+       */
+      page_count: number;
+      /**
+       * Number of mipmaps.
+       */
+      mipmaps: number;
+      /**
+       * Texture usage flags.
+       */
+      flags: graphics.TEXTURE_USAGE_FLAG | number;
+      /**
+       * Texture type.
+       */
+      type: graphics.TEXTURE_TYPE;
+    }
+    /**
+     * Texture update parameters
+     */
+    interface texture_update_params {
+      /**
+       * Texture type.
+       */
+      type: graphics.TEXTURE_TYPE;
+      /**
+       * Update width in pixels.
+       */
+      width: number;
+      /**
+       * Update height in pixels.
+       */
+      height: number;
+      /**
+       * Update depth for a 3D texture.
+       */
+      depth?: number;
+      /**
+       * Texture format. Device-specific unsupported constants evaluate to `nil`.
+       */
+      format: graphics.TEXTURE_FORMAT;
+      /**
+       * X offset in pixels.
+       */
+      x?: number;
+      /**
+       * Y offset in pixels.
+       */
+      y?: number;
+      /**
+       * Z offset for a 3D texture.
+       */
+      z?: number;
+      /**
+       * Zero-based page of a 2D array texture.
+       */
+      page?: number;
+      /**
+       * Mipmap level to update.
+       */
+      mipmap?: number;
+      /**
+       * Compression used by the supplied buffer. The default is graphics.COMPRESSION_TYPE_DEFAULT.
+       */
+      compression_type?: graphics.COMPRESSION_TYPE;
+    }
+    /**
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     * - Return a hash to the run-time version of the resource
+     * - Create a resource reference that resolves to the hashed path of the run-time resource
      *
      * This function can only be called within go.property function calls.
      *
      * @param path - optional resource path string to the resource
-     * @returns a path hash to the binary version of the resource
+     * @returns a reference to the binary version of the resource
      * @example
      * Load an atlas and set it to a sprite:
      * ```ts
@@ -50,12 +526,12 @@ declare global {
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     * - Return a hash to the run-time version of the resource
+     * - Create a resource reference that resolves to the hashed path of the run-time resource
      *
      * This function can only be called within go.property function calls.
      *
      * @param path - optional resource path string to the resource
-     * @returns a path hash to the binary version of the resource
+     * @returns a reference to the binary version of the resource
      * @example
      * ```ts
      * // Set a unique buffer it to a sprite:
@@ -84,84 +560,22 @@ declare global {
      * and not necessarily that it will be deleted.
      *
      * @param path - The path to the resource.
-     * @param table - A table containing info about how to create the atlas. Supported entries:
-     *
-     * - `texture`
-     * string | hash the path to the texture resource, e.g "/main/my_texture.texturec"
-     *
-     * - `animations`
-     * table a list of the animations in the atlas. Supports the following fields:
-     *
-     * - `id`
-     * string the id of the animation, used in e.g sprite.play_animation
-     *
-     * - `width`
-     * number the width of the animation
-     *
-     * - `height`
-     * number the height of the animation
-     *
-     * - `frame_start`
-     * number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 .. in atlas.
-     *
-     * - `frame_end`
-     * number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 .. in atlas.
-     *
-     * - `playback`
-     * constant optional playback mode of the animation, the default value is go.PLAYBACK_ONCE_FORWARD
-     *
-     * - `fps`
-     * number optional fps of the animation, the default value is 30
-     *
-     * - `flip_vertical`
-     * boolean optional flip the animation vertically, the default value is false
-     *
-     * - `flip_horizontal`
-     * boolean optional flip the animation horizontally, the default value is false
-     *
-     * - `geometries`
-     * table A list of the geometries that should map to the texture data. Supports the following fields:
-     *
-     * - `id`
-     * string The name of the geometry. Used when matching animations between multiple atlases
-     *
-     * - `width`
-     * number The width of the image the sprite geometry represents
-     *
-     * - `height`
-     * number The height of the image the sprite geometry represents
-     *
-     * - `pivot_x`
-     * number The pivot x value of the image in unit coords. (0,0) is upper left corner, (1,1) is bottom right. Default is 0.5.
-     *
-     * - `pivot_y`
-     * number The pivot y value of the image in unit coords. (0,0) is upper left corner, (1,1) is bottom right. Default is 0.5.
-     *
-     * - `rotated`
-     * boolean Whether the image is rotated 90 degrees counter-clockwise in the atlas. This affects UV coordinate generation for proper rendering. Default is false.
-     *
-     * - `vertices`
-     * table a list of the vertices in image space of the geometry in the form {px0, py0, px1, py1, ..., pxn, pyn}
-     *
-     * - `uvs`
-     * table a list of the uv coordinates in image space of the geometry in the form of {u0, v0, u1, v1, ..., un, vn}.
-     *
-     * - `indices`
-     * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
-     *
-     * **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
+     * @param table - atlas creation data. **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
      * @returns Returns the atlas resource path
      * @example
      * ```ts
      * // Create a backing texture and an atlas
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return;
      *     // create an empty texture
      *     const tparams = {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *     };
      *     const my_texture_id = resource.create_texture("/my_texture.texturec", tparams);
      *
@@ -201,7 +615,7 @@ declare global {
      * });
      * ```
      */
-    function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
+    function create_atlas(path: string, table: resource.atlas): Hash;
     /**
      * This function creates a new buffer resource that can be used in the same way as any buffer created during build time.
      * The function requires a valid buffer created from either buffer.create or another pre-existing buffer resource.
@@ -213,13 +627,7 @@ declare global {
      * The path must also be unique, attempting to create a buffer with the same name as an existing resource will raise an error.
      *
      * @param path - The path to the resource.
-     * @param table - A table containing info about how to create the buffer. Supported entries:
-     *
-     * - `buffer`
-     * buffer the buffer to bind to this resource
-     *
-     * - `transfer_ownership`
-     * boolean optional flag to determine whether or not the resource should take over ownership of the buffer object (default true)
+     * @param table - buffer-resource creation parameters
      * @returns Returns the buffer resource path
      * @example
      * Create a buffer object and bind it to a buffer resource
@@ -274,20 +682,13 @@ declare global {
      * });
      * ```
      */
-    function create_buffer(path: string, table: { buffer: Opaque<"buffer">; transfer_ownership?: boolean }): Hash;
+    function create_buffer(path: string, table: resource.buffer_creation_params): Hash;
     /**
      * Creates a sound data resource
      * Supported formats are .oggc, .opusc and .wavc
      *
      * @param path - the path to the resource. Must not already exist.
-     * @param options - A table containing parameters for the text. Supported entries:
-     *
-     * `data`
-     * string The raw data of the file. May be partial, but must include the header of the file
-     * `filesize`
-     * number If the file is partial, it must also specify the full size of the complete file.
-     * `partial`
-     * boolean Is the data not representing the full file, but just the initial chunk?
+     * @param options - optional sound-data parameters
      * @returns the resulting path hash to the resource
      * @example
      * ```ts
@@ -307,7 +708,7 @@ declare global {
      * });
      * ```
      */
-    function create_sound_data(path: string, options: { data: string | Opaque<"buffer">; filesize?: number; partial?: boolean }): Hash;
+    function create_sound_data(path: string, options: resource.sound_data_options): Hash;
     /**
      * Creates a new texture resource that can be used in the same way as any texture created during build time.
      * The path used for creating the texture must be unique, trying to create a resource at a path that is already
@@ -317,83 +718,21 @@ declare global {
      * If the texture is created without a buffer, the pixel data will be blank.
      *
      * @param path - The path to the resource.
-     * @param table - A table containing info about how to create the texture. Supported entries:
-     *
-     * `type`
-     * number The texture type. Supported values:
-     *
-     * - `graphics.TEXTURE_TYPE_2D`
-     * - `graphics.TEXTURE_TYPE_IMAGE_2D`
-     * - `graphics.TEXTURE_TYPE_3D`
-     * - `graphics.TEXTURE_TYPE_IMAGE_3D`
-     * - `graphics.TEXTURE_TYPE_CUBE_MAP`
-     *
-     * `width`
-     * number The width of the texture (in pixels). Must be larger than 0.
-     * `height`
-     * number The width of the texture (in pixels). Must be larger than 0.
-     * `depth`
-     * number The depth of the texture (in pixels). Must be larger than 0. Only used when `type` is `graphics.TEXTURE_TYPE_3D` or `graphics.TEXTURE_TYPE_IMAGE_3D`.
-     * `format`
-     * number The texture format, note that some of these formats might not be supported by the running device. Supported values:
-     *
-     * - `graphics.TEXTURE_FORMAT_LUMINANCE`
-     * - `graphics.TEXTURE_FORMAT_RGB`
-     * - `graphics.TEXTURE_FORMAT_RGBA`
-     *
-     * These constants might not be available on the device:
-     *
-     * - `graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGB_ETC1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_ETC2`
-     * - `graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4`
-     * - `graphics.TEXTURE_FORMAT_RGB_BC1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_BC3`
-     * - `graphics.TEXTURE_FORMAT_R_BC4`
-     * - `graphics.TEXTURE_FORMAT_RG_BC5`
-     * - `graphics.TEXTURE_FORMAT_RGBA_BC7`
-     * - `graphics.TEXTURE_FORMAT_RGB16F`
-     * - `graphics.TEXTURE_FORMAT_RGB32F`
-     * - `graphics.TEXTURE_FORMAT_RGBA16F`
-     * - `graphics.TEXTURE_FORMAT_RGBA32F`
-     * - `graphics.TEXTURE_FORMAT_R16F`
-     * - `graphics.TEXTURE_FORMAT_RG16F`
-     * - `graphics.TEXTURE_FORMAT_R32F`
-     * - `graphics.TEXTURE_FORMAT_RG32F`
-     *
-     * You can test if the device supports these values by checking if a specific enum is nil or not:
-     *
-     * ```ts
-     * if (graphics.TEXTURE_FORMAT_RGBA16F !== undefined) {
-     *   // it is safe to use this format
-     * }
-     * ```
-     *
-     * `flags`
-     * number Texture creation flags that can be used to dictate how the texture is created. The default value is graphics.TEXTURE_USAGE_FLAG_SAMPLE, which means that the texture can be sampled from a shader.
-     * These flags may or may not be supported on the running device and/or the underlying graphics API and is simply used internally as a 'hint' when creating the texture. There is no guarantee that any of these will have any effect. Supported values:
-     *
-     * - `graphics.TEXTURE_USAGE_FLAG_SAMPLE` - The texture can be sampled from a shader (default)
-     * - `graphics.TEXTURE_USAGE_FLAG_MEMORYLESS` - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
-     * - `graphics.TEXTURE_USAGE_FLAG_STORAGE` - The texture can be used as a storage texture, which is required for a shader to write to the texture
-     *
-     * `max_mipmaps`
-     * number optional max number of mipmaps. Defaults to zero, i.e no mipmap support
-     * `compression_type`
-     * number optional specify the compression type for the data in the buffer object that holds the texture data. Will only be used when a compressed buffer has been passed into the function.
-     * Creating an empty texture with no buffer data is not supported as a core feature. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
-     *
-     * - `COMPRESSION_TYPE_DEFAULT`
-     * - `COMPRESSION_TYPE_BASIS_UASTC`
+     * @param table - texture creation parameters
      * @param buffer - optional buffer of precreated pixel data
      * @returns The path to the resource.
-     * 3D Textures are currently only supported on OpenGL and Vulkan adapters. To check if your device supports 3D textures, use:
+     * @example
+     * Check whether a texture format is supported by the device:
+     * ```ts
+     * if (graphics.TEXTURE_FORMAT_RGBA16F !== undefined) {
+     *   // It is safe to use this format.
+     * }
+     * ```
+     * @example
+     * 3D textures are currently only supported on OpenGL and Vulkan adapters. Check whether the device supports 3D textures before using them:
      * ```ts
      * if (graphics.TEXTURE_TYPE_3D !== undefined) {
-     *   // Device and graphics adapter support 3D textures
+     *   // The device and graphics adapter support 3D textures.
      * }
      * ```
      * @example
@@ -402,11 +741,14 @@ declare global {
      * // How to create an 128x128 RGBA texture resource and assign it to a model
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return;
      *     const tparams = {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *     };
      *     const my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams);
      *     go.set("#model", "texture0", my_texture_id);
@@ -419,6 +761,9 @@ declare global {
      * // How to create an 128x128 floating point texture (RGBA32F) resource from a buffer object
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA32F;
+     *     if (format === undefined) return;
      *     // Create a new buffer with 4 components and FLOAT32 type
      *     const tbuffer = buffer.create(128 * 128, [{ name: hash("rgba"), type: buffer.VALUE_TYPE_FLOAT32, count: 4 }]);
      *     const tstream = buffer.get_stream(tbuffer, hash("rgba"));
@@ -439,7 +784,7 @@ declare global {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA32F,
+     *       format,
      *     };
      *
      *     // Note that we pass the buffer as the last argument here!
@@ -456,12 +801,16 @@ declare global {
      * // How to create a 32x32x32 floating point 3D texture that can be used to generate volumetric data in a compute shader
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture type or format only when the driver supports it
+     *     const type = graphics.TEXTURE_TYPE_IMAGE_3D;
+     *     const format = graphics.TEXTURE_FORMAT_RGBA32F;
+     *     if (type === undefined || format === undefined) return;
      *     const t_volume = resource.create_texture("/my_backing_texture.texturec", {
-     *       type: graphics.TEXTURE_TYPE_IMAGE_3D,
+     *       type,
      *       width: 32,
      *       height: 32,
      *       depth: 32,
-     *       format: graphics.TEXTURE_FORMAT_RGBA32F,
+     *       format,
      *       flags: graphics.TEXTURE_USAGE_FLAG_STORAGE + graphics.TEXTURE_USAGE_FLAG_SAMPLE,
      *     });
      *
@@ -474,16 +823,20 @@ declare global {
      * How to create 512x512 texture array with 5 pages.
      * ```ts
      * // How to create 512x512 texture array with 5 pages.
-     * const new_tex = resource.create_texture("/runtime/example_array.texturec", {
-     *   type: graphics.TEXTURE_TYPE_2D_ARRAY,
-     *   width: 512,
-     *   height: 512,
-     *   page_count: 5,
-     *   format: graphics.TEXTURE_FORMAT_RGB,
-     * });
+     * // the engine registers a texture format only when the driver supports it
+     * const format = graphics.TEXTURE_FORMAT_RGB;
+     * if (format !== undefined) {
+     *   const new_tex = resource.create_texture("/runtime/example_array.texturec", {
+     *     type: graphics.TEXTURE_TYPE_2D_ARRAY,
+     *     width: 512,
+     *     height: 512,
+     *     page_count: 5,
+     *     format,
+     *   });
+     * }
      * ```
      */
-    function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer">): Hash;
+    function create_texture(path: string, table: resource.texture_creation_params, buffer?: Opaque<"buffer">): Hash;
     /**
      * Creates a new texture resource that can be used in the same way as any texture created during build time.
      * The path used for creating the texture must be unique, trying to create a resource at a path that is already
@@ -497,97 +850,46 @@ declare global {
      * new texture. Be careful when using the initial texture handle handle as it will not be valid after the upload has finished.
      *
      * @param path - The path to the resource.
-     * @param table - A table containing info about how to create the texture. Supported entries:
-     * `type`
-     * number The texture type. Supported values:
-     *
-     * - `graphics.TEXTURE_TYPE_2D`
-     * - `graphics.TEXTURE_TYPE_IMAGE_2D`
-     * - `graphics.TEXTURE_TYPE_3D`
-     * - `graphics.TEXTURE_TYPE_IMAGE_3D`
-     * - `graphics.TEXTURE_TYPE_CUBE_MAP`
-     *
-     * `width`
-     * number The width of the texture (in pixels). Must be larger than 0.
-     * `height`
-     * number The width of the texture (in pixels). Must be larger than 0.
-     * `depth`
-     * number The depth of the texture (in pixels). Must be larger than 0. Only used when `type` is `graphics.TEXTURE_TYPE_3D` or `graphics.TEXTURE_TYPE_IMAGE_3D`.
-     * `format`
-     * number The texture format, note that some of these formats might not be supported by the running device. Supported values:
-     *
-     * - `graphics.TEXTURE_FORMAT_LUMINANCE`
-     * - `graphics.TEXTURE_FORMAT_RGB`
-     * - `graphics.TEXTURE_FORMAT_RGBA`
-     *
-     * These constants might not be available on the device:
-     *
-     * - `graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGB_ETC1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_ETC2`
-     * - `graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4`
-     * - `graphics.TEXTURE_FORMAT_RGB_BC1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_BC3`
-     * - `graphics.TEXTURE_FORMAT_R_BC4`
-     * - `graphics.TEXTURE_FORMAT_RG_BC5`
-     * - `graphics.TEXTURE_FORMAT_RGBA_BC7`
-     * - `graphics.TEXTURE_FORMAT_RGB16F`
-     * - `graphics.TEXTURE_FORMAT_RGB32F`
-     * - `graphics.TEXTURE_FORMAT_RGBA16F`
-     * - `graphics.TEXTURE_FORMAT_RGBA32F`
-     * - `graphics.TEXTURE_FORMAT_R16F`
-     * - `graphics.TEXTURE_FORMAT_RG16F`
-     * - `graphics.TEXTURE_FORMAT_R32F`
-     * - `graphics.TEXTURE_FORMAT_RG32F`
-     *
-     * You can test if the device supports these values by checking if a specific enum is nil or not:
-     *
+     * @param table - texture creation parameters
+     * @param buffer - optional buffer of precreated pixel data
+     * @param callback - callback function invoked when the texture is created
+     * @example
+     * Check whether a texture format is supported by the device:
      * ```ts
      * if (graphics.TEXTURE_FORMAT_RGBA16F !== undefined) {
-     *   // it is safe to use this format
+     *   // It is safe to use this format.
      * }
      * ```
-     *
-     * `flags`
-     * number Texture creation flags that can be used to dictate how the texture is created. Supported values:
-     *
-     * - `graphics.TEXTURE_USAGE_FLAG_SAMPLE` - The texture can be sampled from a shader (default)
-     * - `graphics.TEXTURE_USAGE_FLAG_MEMORYLESS` - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
-     * - `graphics.TEXTURE_USAGE_FLAG_STORAGE` - The texture can be used as a storage texture, which is required for a shader to write to the texture
-     *
-     * `max_mipmaps`
-     * number optional max number of mipmaps. Defaults to zero, i.e no mipmap support
-     * `compression_type`
-     * number optional specify the compression type for the data in the buffer object that holds the texture data. Will only be used when a compressed buffer has been passed into the function.
-     * Creating an empty texture with no buffer data is not supported as a core feature. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
-     *
-     * - `COMPRESSION_TYPE_DEFAULT`
-     * - `COMPRESSION_TYPE_BASIS_UASTC`
-     * @param buffer - optional buffer of precreated pixel data
-     * @param callback - callback function when texture is created (self, request_id, resource)
+     * @example
+     * 3D textures are currently only supported on OpenGL and Vulkan adapters. Check whether the device supports 3D textures before using them:
+     * ```ts
+     * if (graphics.TEXTURE_TYPE_3D !== undefined) {
+     *   // The device and graphics adapter support 3D textures.
+     * }
+     * ```
      * @example
      * Create a texture resource asyncronously with a buffer and a callback
      * ```ts
      * // Create a texture resource asyncronously with a buffer and a callback
-     * function callback(self: unknown, request_id: unknown, texture_path: unknown) {
+     * function callback(self: unknown, request_id: number, result: resource.texture_creation_result) {
      *   // The resource has been updated with a new texture,
      *   // so we can update other systems with the new handle,
      *   // or update components to use the resource if we want
-     *   const tinfo = resource.get_texture_info(texture_path as Hash);
+     *   const tinfo = resource.get_texture_info(result.path);
      *   msg.post("@render:", "set_backing_texture", { handle: tinfo.handle });
      * }
      *
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return;
      *     // Create a texture resource async
      *     const tparams = {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *     };
      *
      *     // Create a new buffer with 4 components
@@ -618,12 +920,15 @@ declare global {
      * // Create a texture resource asyncronously without handling its completion
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return;
      *     // Create a texture resource async
      *     const tparams = {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *     };
      *
      *     // Create a new buffer with 4 components
@@ -650,17 +955,17 @@ declare global {
      * });
      * ```
      */
-    function create_texture_async(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer"> | undefined, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
+    function create_texture_async(path: string, table: resource.texture_creation_params, buffer: Opaque<"buffer"> | undefined, callback: (self: unknown, request_id: number, result: resource.texture_creation_result) => void): LuaMultiReturn<[Hash, number]>;
     /**
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     * - Return a hash to the run-time version of the resource
+     * - Create a resource reference that resolves to the hashed path of the run-time resource
      *
      * This function can only be called within go.property function calls.
      *
      * @param path - optional resource path string to the resource
-     * @returns a path hash to the binary version of the resource
+     * @returns a reference to the binary version of the resource
      * @example
      * Load a font and set it to a label:
      * ```ts
@@ -695,19 +1000,9 @@ declare global {
      * Returns the atlas data for an atlas
      *
      * @param path - The path to the atlas resource
-     * @returns A table with the following entries:
-     *
-     * - texture
-     * - geometries
-     * - animations
-     *
-     * Each animation entry also contains a `frames` table with indices into
-     * `geometries`, preserving the frame-to-geometry mapping used by the atlas.
-     * See resource.set_atlas for a detailed description of each field
-     *
-     * **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
+     * @returns atlas data. **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
      */
-    function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };
+    function get_atlas(path: Hash | string): resource.atlas_data;
     /**
      * gets the buffer from a resource
      *
@@ -734,38 +1029,7 @@ declare global {
      * Gets render target info from a render target resource path or a render target handle
      *
      * @param path - The path to the resource or a render target handle
-     * @returns A table containing info about the render target:
-     *
-     * `handle`
-     * number the opaque handle to the texture resource
-     * 'attachments'
-     * table a table of attachments, where each attachment contains the following entries:
-     * `width`
-     * number width of the texture
-     * `height`
-     * number height of the texture
-     * `depth`
-     * number depth of the texture (i.e 1 for a 2D texture and 6 for a cube map)
-     * `mipmaps`
-     * number number of mipmaps of the texture
-     * `type`
-     * number The texture type. Supported values:
-     *
-     * - `graphics.TEXTURE_TYPE_2D`
-     * - `graphics.TEXTURE_TYPE_CUBE_MAP`
-     * - `graphics.TEXTURE_TYPE_2D_ARRAY`
-     *
-     * `buffer_type`
-     * number The attachment buffer type. Supported values:
-     *
-     * - `resource.BUFFER_TYPE_COLOR0`
-     * - `resource.BUFFER_TYPE_COLOR1`
-     * - `resource.BUFFER_TYPE_COLOR2`
-     * - `resource.BUFFER_TYPE_COLOR3`
-     * - `resource.BUFFER_TYPE_DEPTH`
-     * - `resource.BUFFER_TYPE_STENCIL`
-     * - `texture`
-     * hash The hashed path to the attachment texture resource. This field is only available if the render target passed in is a resource.
+     * @returns render-target information
      * @example
      * Get the metadata from a render target resource
      * ```ts
@@ -795,28 +1059,16 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_info(path: Hash | string | number): { handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] };
+    function get_render_target_info(path: Hash | string | Opaque<"render_target"> | number): resource.render_target_info;
     /**
-     * Gets the text metrics from a font
+     * Gets the text metrics from a font. Rich text markup is measured using its
+     * visible text and font sizes. If markup cannot be parsed, the text is measured literally.
+     * Inline sprites reserve their specified dimensions, or one em by default.
      *
      * @param url - the font to get the (unscaled) metrics from
      * @param text - text to measure
-     * @param options - A table containing parameters for the text. Supported entries:
-     *
-     * `width`
-     * number The width of the text field. Not used if `line_break` is false.
-     * `leading`
-     * number The leading (default 1.0)
-     * `tracking`
-     * number The tracking (default 0.0)
-     * `line_break`
-     * boolean If the calculation should consider line breaks (default false)
-     * @returns a table with the following fields:
-     *
-     * - width
-     * - height
-     * - max_ascent
-     * - max_descent
+     * @param options - optional text-metric options
+     * @returns measured text metrics
      * @example
      * ```ts
      * export default defineScript({
@@ -828,48 +1080,27 @@ declare global {
      * });
      * ```
      */
-    function get_text_metrics(url: Hash | string, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };
+    function get_text_metrics(url: Hash | string, text: string, options?: resource.text_metrics_options): resource.text_metrics;
     /**
      * Gets texture info from a texture resource path or a texture handle
      *
      * @param path - The path to the resource or a texture handle
-     * @returns A table containing info about the texture:
-     *
-     * `handle`
-     * number the opaque handle to the texture resource
-     * `width`
-     * number width of the texture
-     * `height`
-     * number height of the texture
-     * `depth`
-     * number depth of the texture (i.e 1 for a 2D texture, 6 for a cube map, the actual depth of a 3D texture)
-     * `page_count`
-     * number number of pages of the texture array. For 2D texture value is 1. For cube map - 6
-     * `mipmaps`
-     * number number of mipmaps of the texture
-     * `flags`
-     * number usage hints of the texture.
-     * `type`
-     * number The texture type. Supported values:
-     *
-     * - `graphics.TEXTURE_TYPE_2D`
-     * - `graphics.TEXTURE_TYPE_2D_ARRAY`
-     * - `graphics.TEXTURE_TYPE_IMAGE_2D`
-     * - `graphics.TEXTURE_TYPE_3D`
-     * - `graphics.TEXTURE_TYPE_IMAGE_3D`
-     * - `graphics.TEXTURE_TYPE_CUBE_MAP`
+     * @returns texture information
      * @example
      * Create a new texture and get the metadata from it
      * ```ts
      * // Create a new texture and get the metadata from it
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return;
      *     // create an empty texture
      *     const tparams = {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *     };
      *
      *     const my_texture_path = resource.create_texture("/my_texture.texturec", tparams);
@@ -903,7 +1134,7 @@ declare global {
      * });
      * ```
      */
-    function get_texture_info(path: Hash | string | number): { handle: number; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: number; type: number };
+    function get_texture_info(path: Hash | string | Opaque<"texture"> | number): resource.texture_info;
     /**
      * Loads the resource data for a specific resource.
      *
@@ -929,12 +1160,12 @@ declare global {
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     * - Return a hash to the run-time version of the resource
+     * - Create a resource reference that resolves to the hashed path of the run-time resource
      *
      * This function can only be called within go.property function calls.
      *
      * @param path - optional resource path string to the resource
-     * @returns a path hash to the binary version of the resource
+     * @returns a reference to the binary version of the resource
      * @example
      * Load a material and set it to a sprite:
      * ```ts
@@ -976,12 +1207,12 @@ declare global {
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     * - Return a hash to the run-time version of the resource
+     * - Create a resource reference that resolves to the hashed path of the run-time resource
      *
      * This function can only be called within go.property function calls.
      *
      * @param path - optional resource path string to the resource
-     * @returns a path hash to the binary version of the resource
+     * @returns a reference to the binary version of the resource
      * @example
      * ```ts
      * // Set a render target color attachment as a model texture:
@@ -1026,54 +1257,7 @@ declare global {
      * this function.
      *
      * @param path - The path to the atlas resource
-     * @param table - A table containing info about the atlas. Supported entries:
-     *
-     * - `texture`
-     * string | hash the path to the texture resource, e.g "/main/my_texture.texturec"
-     *
-     * - `animations`
-     * table a list of the animations in the atlas. Supports the following fields:
-     *
-     * - `id`
-     * string the id of the animation, used in e.g sprite.play_animation
-     *
-     * - `width`
-     * number the width of the animation
-     *
-     * - `height`
-     * number the height of the animation
-     *
-     * - `frame_start`
-     * number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 .. in atlas.
-     *
-     * - `frame_end`
-     * number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 .. in atlas.
-     *
-     * - `playback`
-     * constant optional playback mode of the animation, the default value is go.PLAYBACK_ONCE_FORWARD
-     *
-     * - `fps`
-     * number optional fps of the animation, the default value is 30
-     *
-     * - `flip_vertical`
-     * boolean optional flip the animation vertically, the default value is false
-     *
-     * - `flip_horizontal`
-     * boolean optional flip the animation horizontally, the default value is false
-     *
-     * - `geometries`
-     * table A list of the geometries that should map to the texture data. Supports the following fields:
-     *
-     * - `vertices`
-     * table a list of the vertices in texture space of the geometry in the form {px0, py0, px1, py1, ..., pxn, pyn}
-     *
-     * - `uvs`
-     * table a list of the uv coordinates in texture space of the geometry in the form of {u0, v0, u1, v1, ..., un, vn}
-     *
-     * - `indices`
-     * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
-     *
-     * **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
+     * @param table - atlas data. **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
      * @example
      * Add a new animation to an existing atlas
      * ```ts
@@ -1092,14 +1276,19 @@ declare global {
      *       flip_vertical: false,
      *       flip_horizontal: false,
      *     };
-     *     data.animations.push(my_animation);
+     *     // set_atlas takes each animation's frames as a non-empty list
+     *     const animations = data.animations.flatMap((animation) => {
+     *       // an animation described by frame_start/frame_end passes through as-is
+     *       if (!("frames" in animation)) return [animation];
+     *       const [first, ...rest] = (animation.frames as number[] | undefined) ?? [];
+     *       return first === undefined ? [] : [{ ...animation, frames: [first, ...rest] as [number, ...number[]] }];
+     *     });
      *     // set_atlas needs at least one animation and one geometry
-     *     const [first_animation, ...animations] = data.animations;
      *     const [first_geometry, ...geometries] = data.geometries;
-     *     if (first_animation !== undefined && first_geometry !== undefined) {
+     *     if (first_geometry !== undefined) {
      *       resource.set_atlas("/main/my_atlas.a.texturesetc", {
      *         ...data,
-     *         animations: [first_animation, ...animations],
+     *         animations: [my_animation, ...animations],
      *         geometries: [first_geometry, ...geometries],
      *       });
      *     }
@@ -1135,7 +1324,7 @@ declare global {
      * });
      * ```
      */
-    function set_atlas(path: Hash | string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;
+    function set_atlas(path: Hash | string, table: resource.atlas): void;
     /**
      * Sets the buffer of a resource. By default, setting the resource buffer will either copy the data from the incoming buffer object
      * to the buffer stored in the destination resource, or make a new buffer object if the sizes between the source buffer and the destination buffer
@@ -1147,10 +1336,7 @@ declare global {
      *
      * @param path - The path to the resource
      * @param buffer - The resource buffer
-     * @param table - A table containing info about how to set the buffer. Supported entries:
-     *
-     * - `transfer_ownership`
-     * boolean optional flag to determine whether or not the resource should take over ownership of the buffer object (default false)
+     * @param table - optional buffer-resource update options
      * @example
      * ```ts
      * // How to set the data from a buffer
@@ -1185,7 +1371,7 @@ declare global {
      * });
      * ```
      */
-    function set_buffer(path: Hash | string, buffer: Opaque<"buffer">, table?: { transfer_ownership?: boolean }): void;
+    function set_buffer(path: Hash | string, buffer: Opaque<"buffer">, table?: resource.buffer_update_options): void;
     /**
      * Update internal sound resource (wavc/oggc/opusc) with new data
      *
@@ -1197,80 +1383,22 @@ declare global {
      * Sets the pixel data for a specific texture.
      *
      * @param path - The path to the resource
-     * @param table - A table containing info about the texture. Supported entries:
-     *
-     * `type`
-     * number The texture type. Supported values:
-     *
-     * - `graphics.TEXTURE_TYPE_2D`
-     * - `graphics.TEXTURE_TYPE_IMAGE_2D`
-     * - `graphics.TEXTURE_TYPE_3D`
-     * - `graphics.TEXTURE_TYPE_IMAGE_3D`
-     * - `graphics.TEXTURE_TYPE_CUBE_MAP`
-     *
-     * `width`
-     * number The width of the texture (in pixels)
-     * `height`
-     * number The width of the texture (in pixels)
-     * `format`
-     * number The texture format, note that some of these formats are platform specific. Supported values:
-     *
-     * - `graphics.TEXTURE_FORMAT_LUMINANCE`
-     * - `graphics.TEXTURE_FORMAT_RGB`
-     * - `graphics.TEXTURE_FORMAT_RGBA`
-     *
-     * These constants might not be available on the device:
-     * - `graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
-     * - `graphics.TEXTURE_FORMAT_RGB_ETC1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_ETC2`
-     * - `graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4`
-     * - `graphics.TEXTURE_FORMAT_RGB_BC1`
-     * - `graphics.TEXTURE_FORMAT_RGBA_BC3`
-     * - `graphics.TEXTURE_FORMAT_R_BC4`
-     * - `graphics.TEXTURE_FORMAT_RG_BC5`
-     * - `graphics.TEXTURE_FORMAT_RGBA_BC7`
-     * - `graphics.TEXTURE_FORMAT_RGB16F`
-     * - `graphics.TEXTURE_FORMAT_RGB32F`
-     * - `graphics.TEXTURE_FORMAT_RGBA16F`
-     * - `graphics.TEXTURE_FORMAT_RGBA32F`
-     * - `graphics.TEXTURE_FORMAT_R16F`
-     * - `graphics.TEXTURE_FORMAT_RG16F`
-     * - `graphics.TEXTURE_FORMAT_R32F`
-     * - `graphics.TEXTURE_FORMAT_RG32F`
-     * You can test if the device supports these values by checking if a specific enum is nil or not:
-     *
-     * ```ts
-     * if (graphics.TEXTURE_FORMAT_RGBA16F !== undefined) {
-     *   // it is safe to use this format
-     * }
-     * ```
-     *
-     * `x`
-     * number optional x offset of the texture (in pixels)
-     * `y`
-     * number optional y offset of the texture (in pixels)
-     * `z`
-     * number optional z offset of the texture (in pixels). Only applies to 3D textures
-     * `page`
-     * number optional slice of the array texture. Only applies to 2D texture arrays. Zero-based
-     * `mipmap`
-     * number optional mipmap to upload the data to
-     * `compression_type`
-     * number optional specify the compression type for the data in the buffer object that holds the texture data. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
-     *
-     * - `COMPRESSION_TYPE_DEFAULT`
-     * - `COMPRESSION_TYPE_BASIS_UASTC`
-     *
-     * **0️⃣ `page` is 0-based; passed to Defold unchanged.** **0️⃣ `mipmap` is 0-based; passed to Defold unchanged.**
+     * @param table - texture update parameters. **0️⃣ `page` is 0-based; passed to Defold unchanged.** **0️⃣ `mipmap` is 0-based; passed to Defold unchanged.**
      * @param buffer - The buffer of precreated pixel data
      * To update a cube map texture you need to pass in six times the amount of data via the buffer, since a cube map has six sides!
-     * 3D Textures are currently only supported on OpenGL and Vulkan adapters. To check if your device supports 3D textures, use:
+     * 3D textures are currently only supported on OpenGL and Vulkan adapters.
+     * @example
+     * Check whether a texture format is supported by the device:
+     * ```ts
+     * if (graphics.TEXTURE_FORMAT_RGBA16F !== undefined) {
+     *   // It is safe to use this format.
+     * }
+     * ```
+     * @example
+     * Check whether the device supports 3D textures before using them:
      * ```ts
      * if (graphics.TEXTURE_TYPE_3D !== undefined) {
-     *   // Device and graphics adapter support 3D textures
+     *   // The device and graphics adapter support 3D textures.
      * }
      * ```
      * @example
@@ -1293,9 +1421,13 @@ declare global {
      *       }
      *     }
      *
-     *     const resource_path = go.get<model.properties>()("#model", "texture0");
-     *     const args = { width, height, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
-     *     resource.set_texture(resource_path, args, buf);
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGB;
+     *     if (format !== undefined) {
+     *       const resource_path = go.get<model.properties>()("#model", "texture0");
+     *       const args = { width, height, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };
+     *       resource.set_texture(resource_path, args, buf);
+     *     }
      *     return { buffer: buf, stream };
      *   },
      * });
@@ -1322,9 +1454,13 @@ declare global {
      *       }
      *     }
      *
-     *     const resource_path = go.get<model.properties>()("#model", "texture0");
-     *     const args = { width, height, x, y, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
-     *     resource.set_texture(resource_path, args, buf);
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGB;
+     *     if (format !== undefined) {
+     *       const resource_path = go.get<model.properties>()("#model", "texture0");
+     *       const args = { width, height, x, y, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };
+     *       resource.set_texture(resource_path, args, buf);
+     *     }
      *     return { buffer: buf, stream };
      *   },
      * });
@@ -1339,13 +1475,16 @@ declare global {
      *   properties: { my_buffer: resource.buffer("/my_default_buffer.buffer") },
      *
      *   init(self) {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGB;
+     *     if (format === undefined) return;
      *     const resource_path = go.get<model.properties>()("#model", "texture0");
      *     // the "my_buffer" resource is expected to hold 128 * 128 * 3 bytes!
      *     const args = {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGB,
+     *       format,
      *     };
      *     // Note that the extra resource.get_buffer call is a requirement here
      *     // since the "self.my_buffer" is just pointing to a buffer resource path
@@ -1357,18 +1496,22 @@ declare global {
      * @example
      * Update an existing 3D texture from a lua buffer
      * ```ts
-     * // Update an existing 3D texture from a buffer
+     * // Update an existing 3D texture from a lua buffer
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture type or format only when the driver supports it
+     *     const type = graphics.TEXTURE_TYPE_IMAGE_3D;
+     *     const format = graphics.TEXTURE_FORMAT_RGBA32F;
+     *     if (type === undefined || format === undefined) return;
      *     // create a buffer that can hold the data of a 8x8x8 texture
      *     const tbuffer = buffer.create(8 * 8 * 8, [{ name: hash("rgba"), type: buffer.VALUE_TYPE_FLOAT32, count: 4 }]);
      *     const tstream = buffer.get_stream(tbuffer, hash("rgba"));
      *
      *     // populate the buffer with some data
      *     let index = 0;
-     *     for (let z = 0; z < 8; z++) {
-     *       for (let y = 0; y < 8; y++) {
-     *         for (let x = 0; x < 8; x++) {
+     *     for (let z = 1; z <= 8; z++) {
+     *       for (let y = 1; y <= 8; y++) {
+     *         for (let x = 1; x <= 8; x++) {
      *           tstream[index + 0] = x;
      *           tstream[index + 1] = y;
      *           tstream[index + 2] = z;
@@ -1379,11 +1522,11 @@ declare global {
      *     }
      *
      *     const t_args = {
-     *       type: graphics.TEXTURE_TYPE_IMAGE_3D,
+     *       type,
      *       width: 8,
      *       height: 8,
      *       depth: 8,
-     *       format: graphics.TEXTURE_FORMAT_RGBA32F,
+     *       format,
      *     };
      *
      *     // This expects that the texture resource "/my_3d_texture.texturec" already exists
@@ -1394,11 +1537,14 @@ declare global {
      * });
      * ```
      * @example
+     * Update texture 2nd array page with loaded texture from png
      * ```ts
      * // Update texture 2nd array page with loaded texture from png
      * const tex_path = "/bundle_resources/page_02.png";
      * const [data] = sys.load_resource(tex_path);
-     * if (data !== undefined) {
+     * // the engine registers a texture format only when the driver supports it
+     * const format = graphics.TEXTURE_FORMAT_RGB;
+     * if (data !== undefined && format !== undefined) {
      *   const buf = image.load_buffer(data);
      *   if (buf !== undefined) {
      *     // new_tex is the resource handle of a texture created via resource.create_texture
@@ -1407,7 +1553,7 @@ declare global {
      *       width: buf.width,
      *       height: buf.height,
      *       page_count: 2,
-     *       format: graphics.TEXTURE_FORMAT_RGB,
+     *       format,
      *     });
      *     resource.set_texture(
      *       new_tex,
@@ -1416,7 +1562,7 @@ declare global {
      *         width: buf.width,
      *         height: buf.height,
      *         page: 1,
-     *         format: graphics.TEXTURE_FORMAT_RGB,
+     *         format,
      *       },
      *       buf.buffer,
      *     );
@@ -1425,17 +1571,17 @@ declare global {
      * }
      * ```
      */
-    function set_texture(path: Hash | string, table: { type: number; width: number; height: number; format: number; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: number }, buffer: Opaque<"buffer">): void;
+    function set_texture(path: Hash | string, table: resource.texture_update_params, buffer: Opaque<"buffer">): void;
     /**
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     * - Return a hash to the run-time version of the resource
+     * - Create a resource reference that resolves to the hashed path of the run-time resource
      *
      * This function can only be called within go.property function calls.
      *
      * @param path - optional resource path string to the resource
-     * @returns a path hash to the binary version of the resource
+     * @returns a reference to the binary version of the resource
      * @example
      * ```ts
      * // Load a texture and set it to a model:
@@ -1455,12 +1601,12 @@ declare global {
      * Constructor-like function with two purposes:
      *
      * - Load the specified resource as part of loading the script
-     * - Return a hash to the run-time version of the resource
+     * - Create a resource reference that resolves to the hashed path of the run-time resource
      *
      * This function can only be called within go.property function calls.
      *
      * @param path - optional resource path string to the resource
-     * @returns a path hash to the binary version of the resource
+     * @returns a reference to the binary version of the resource
      * @example
      * ```ts
      * // Load tile source and set it to a tile map:

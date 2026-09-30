@@ -42,7 +42,7 @@ function aliasMembers(statement: ts.Statement): string[] | undefined {
 // Every declared constant, read in the script its namespace runs in, and every
 // numeric constant alias, whose members must hold pairwise-distinct values. A
 // Box2D backend registers its own constants, so the v3 pass reads the `b2d`
-// namespaces again. A constant declared as nil is read bare and must stay nil.
+// namespaces again. A constant declared as nil, or as possibly nil, is read bare.
 export function constantProbes(
   target: ApiTarget = probeTarget(),
   program: ts.Program = surfaceProgram(target),
@@ -60,14 +60,16 @@ export function constantProbes(
     const kinds = kindsOf(checker.getTypeOfSymbol(symbol), checker);
     if (kinds !== "any" && kinds.join() === "number") numeric.add(fqn);
     const conditional = isAdapterConditional(fqn);
-    const nil = kinds !== "any" && kinds.join() === "nil";
+    const nilable = kinds !== "any" && kinds.includes("nil");
     calls.push({
       name: fqn,
       variant: "constant",
       kind: contextFor(namespace).kind,
-      call: conditional || nil ? fqn : `defined(${fqn})`,
+      call: conditional || nilable ? fqn : `defined(${fqn})`,
       returns: {
-        kinds: [conditional && kinds !== "any" ? [...kinds, "nil" as const].sort() : kinds],
+        kinds: [
+          conditional && kinds !== "any" ? [...new Set([...kinds, "nil" as const])].sort() : kinds,
+        ],
         variadic: false,
       },
     });
