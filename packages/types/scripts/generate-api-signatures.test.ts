@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import committed from "../api-signatures.json" with { type: "json" };
 import { OVERLOAD_COVERED_SKIPS } from "../src/emit-dts";
+import { splitTopLevel } from "../src/luals-type-expr";
 import { registeredConstantFqns } from "./engine-binding-extract";
 import { selectCompleteVersionSurfaces } from "./generate-api-availability";
 import {
@@ -62,6 +63,18 @@ describe("authoritative signature artifact", () => {
     return keys;
   };
 
+  // A struct signs as its interface on one line, while the .d.ts spreads its
+  // members over lines with doc comments between them, so each member line is
+  // what appears verbatim.
+  const declaredIn = (blob: string, signature: string): boolean => {
+    const struct = /^interface \w+ \{ (.*) \}$/.exec(signature);
+    if (struct === null) return signature.split("\n").every((arm) => blob.includes(arm));
+    return splitTopLevel(struct[1] as string, ";")
+      .map((member) => member.trim())
+      .filter((member) => member.length > 0)
+      .every((member) => blob.includes(`${member};`));
+  };
+
   test("every generated authoritative signature appears verbatim in that version's committed .d.ts", () => {
     for (const target of COMPLETE_TARGETS) {
       const version = target.id.replace(/^defold-/, "");
@@ -69,8 +82,7 @@ describe("authoritative signature artifact", () => {
       const folded = foldedKeysFor(target);
       const blob = committedDtsBlob(version);
       const missing = Object.entries(perSymbol).filter(
-        ([key, signature]) =>
-          !folded.has(key) && !signature.split("\n").every((arm) => blob.includes(arm)),
+        ([key, signature]) => !folded.has(key) && !declaredIn(blob, signature),
       );
       expect(missing).toEqual([]);
       // The exclusion must not swallow the whole assertion.
@@ -116,12 +128,13 @@ describe("authoritative signature artifact", () => {
     };
     expect(find("model", "model.set_blend_weights")).toContain("weights?: number[]");
     expect(find("compute", "compute.set_constants")).toContain(
-      "constants: Record<string, { type?: number; value?:",
+      "Record<string, material.constant_options>",
     );
     expect(find("material", "material.set_vertex_attributes")).toContain(
-      "attributes: Record<string, {",
+      "Record<string, material.vertex_attribute_options>",
     );
-    // The 7 compute/material getters render as array-of-records.
+    // The 7 compute/material getters render as arrays of records, inline or the
+    // named `material.*_info` structs 1.13.2 declares.
     for (const [ns, name] of [
       ["compute", "compute.get_constants"],
       ["compute", "compute.get_samplers"],
@@ -131,7 +144,7 @@ describe("authoritative signature artifact", () => {
       ["material", "material.get_textures"],
       ["material", "material.get_vertex_attributes"],
     ] as const) {
-      expect(find(ns, name)).toMatch(/\}\[\];$/);
+      expect(find(ns, name)).toMatch(/(\}|\bmaterial\.\w+_info)\[\];$/);
     }
   });
 });
@@ -206,7 +219,7 @@ describe("per-slot rendered types travel with the signature", () => {
 
     const stateKey = functionKey(CURRENT_VERSION, "render", "render.enable_state");
     const state = artifact.slotTypes[CURRENT_VERSION]?.[stateKey]?.["param:0:state"]?.type;
-    expect(state).toBe("graphics.State");
+    expect(state).toBe("graphics.STATE");
     expect(state).not.toContain('Opaque<"constant">');
   });
 

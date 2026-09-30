@@ -37,10 +37,18 @@ function elementsOf(modules: readonly ModuleManifestEntry[], namespace: string):
   return (entry.doc as { elements: DocElement[] }).elements;
 }
 
+// A release declares each constant as a CONSTANT element or, from 1.13.2, as a
+// member of the ENUM that groups them.
 function semanticConstants(modules: readonly ModuleManifestEntry[]): string[] {
   return elementsOf(modules, "graphics")
-    .filter((e) => e.type === "CONSTANT" && e.name.startsWith(SEMANTIC_PREFIX))
-    .map((e) => e.name)
+    .flatMap((e) =>
+      e.type === "ENUM"
+        ? ((e as { members?: { name: string }[] }).members ?? []).map((member) => member.name)
+        : e.type === "CONSTANT"
+          ? [e.name]
+          : [],
+    )
+    .filter((name) => name.startsWith(SEMANTIC_PREFIX))
     .sort();
 }
 
@@ -108,11 +116,23 @@ describe("constant families the engine registers and prose names", () => {
 });
 
 describe("synthesizeProseConstants", () => {
-  test("each committed target's graphics module declares exactly the semantic types its material doc evidences", () => {
+  // The raw graphics doc's own declarations count too: 1.13.2 declares the family
+  // as an ENUM, and its material prose no longer lists the members.
+  test("each committed target's graphics module declares exactly the semantic types its docs evidence", () => {
     for (const target of committedTargets()) {
+      const path = resolve(PACKAGE_ROOT, target.fixturesDir, "graphics_doc.json");
+      const raw = existsSync(path)
+        ? semanticConstants([
+            {
+              namespace: "graphics",
+              outFile: "graphics.d.ts",
+              doc: JSON.parse(readFileSync(path, "utf8")),
+            },
+          ])
+        : [];
       expect({ target: target.id, names: semanticConstants(loadTargetModules(target)) }).toEqual({
         target: target.id,
-        names: evidencedNames(target),
+        names: [...new Set([...evidencedNames(target), ...raw])].sort(),
       });
     }
   });

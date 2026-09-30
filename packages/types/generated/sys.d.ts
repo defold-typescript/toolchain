@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Opaque } from "../src/core-types";
+import type { Opaque } from "../src/core-types";
 
 declare global {
   /**
@@ -7,29 +7,162 @@ declare global {
    * error handling and debugging.
    */
   namespace sys {
-    type NetworkConnectivity = typeof sys.NETWORK_DISCONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_CONNECTED;
     /**
-     * network connected through other, non cellular, connection
+     * Application information
+     */
+    interface application_info {
+      /**
+       * Whether the queried application is installed.
+       */
+      installed: boolean;
+    }
+    /**
+     * Engine information
+     */
+    interface engine_info {
+      /**
+       * Defold engine version.
+       */
+      version: string;
+      /**
+       * Engine build SHA-1.
+       */
+      version_sha1: string;
+      /**
+       * Whether this is a debug engine build.
+       */
+      is_debug: boolean;
+    }
+    /**
+     * Network-interface information
+     */
+    interface interface_info {
+      /**
+       * Interface name.
+       */
+      name: string;
+      /**
+       * IP address, when available.
+       */
+      address?: string;
+      /**
+       * Hardware MAC address, when available.
+       */
+      mac?: string;
+      /**
+       * Whether the interface can transmit and receive data.
+       */
+      up: boolean;
+      /**
+       * Whether the interface is running.
+       */
+      running: boolean;
+    }
+    /**
+     * Asynchronous buffer-load result
+     */
+    interface load_buffer_result {
+      /**
+       * Request status.
+       */
+      status: sys.REQUEST_STATUS;
+      /**
+       * Loaded payload for a successful request.
+       */
+      buffer?: Opaque<"buffer">;
+    }
+    /**
+     * URL opening attributes
+     */
+    interface open_url_attributes {
+      /**
+       * HTML5 browsing context: `_self`, `_blank`, `_parent`, `_top`, or a named window.
+       */
+      target?: string;
+    }
+    /**
+     * System information
+     */
+    interface sys_info {
+      /**
+       * Device model on iOS and Android.
+       */
+      device_model?: string;
+      /**
+       * Device manufacturer on iOS and Android.
+       */
+      manufacturer?: string;
+      /**
+       * Operating-system name.
+       */
+      system_name: string;
+      /**
+       * Operating-system version.
+       */
+      system_version: string;
+      /**
+       * Platform API version.
+       */
+      api_version: string;
+      /**
+       * ISO 639 language code.
+       */
+      language: string;
+      /**
+       * Preferred device language, optionally followed by an ISO 15924 script code.
+       */
+      device_language: string;
+      /**
+       * ISO 3166-1 alpha-2 country code or UN M.49 numeric region code.
+       */
+      territory: string;
+      /**
+       * Current GMT offset in minutes.
+       */
+      gmt_offset: number;
+      /**
+       * Operating-system-protected device identifier.
+       */
+      device_ident?: string;
+      /**
+       * HTTP user agent on HTML5.
+       */
+      user_agent?: string;
+    }
+    /**
+     * System-information options
+     */
+    interface sys_info_options {
+      /**
+       * Omit operating-system-protected values such as `device_ident`.
+       */
+      ignore_secure?: boolean;
+    }
+    type NetworkConnectivity = typeof sys.NETWORK_DISCONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_CONNECTED;
+    type NETWORK = typeof sys.NETWORK_CONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_DISCONNECTED;
+    type REQUEST_STATUS = typeof sys.REQUEST_STATUS_ERROR_IO_ERROR | typeof sys.REQUEST_STATUS_ERROR_NOT_FOUND | typeof sys.REQUEST_STATUS_FINISHED;
+    /**
+     * Connected through Wi-Fi or another non-cellular network.
      */
     const NETWORK_CONNECTED: number & { readonly __brand: "sys.NETWORK_CONNECTED" };
     /**
-     * network connected through mobile cellular
+     * Connected through a cellular network.
      */
     const NETWORK_CONNECTED_CELLULAR: number & { readonly __brand: "sys.NETWORK_CONNECTED_CELLULAR" };
     /**
-     * no network connection found
+     * No network connection was found.
      */
     const NETWORK_DISCONNECTED: number & { readonly __brand: "sys.NETWORK_DISCONNECTED" };
     /**
-     * an asyncronous request is unable to read the resource
+     * An I/O error occurred.
      */
     const REQUEST_STATUS_ERROR_IO_ERROR: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_IO_ERROR" };
     /**
-     * an asyncronous request is unable to locate the resource
+     * The requested resource was not found.
      */
     const REQUEST_STATUS_ERROR_NOT_FOUND: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_NOT_FOUND" };
     /**
-     * an asyncronous request has finished successfully
+     * The request completed successfully.
      */
     const REQUEST_STATUS_FINISHED: number & { readonly __brand: "sys.REQUEST_STATUS_FINISHED" };
     /**
@@ -45,7 +178,7 @@ declare global {
      * const table = sys.deserialize(buffer);
      * ```
      */
-    function deserialize(buffer: string): Record<string | number, unknown>;
+    function deserialize(buffer: string): LuaTable<AnyNotNil, unknown>;
     /**
      * Check if a path exists
      * Good for checking if a file exists before loading a large file
@@ -90,10 +223,7 @@ declare global {
      * On Android, the `app_string` is the package identifier for the app.
      *
      * @param app_string - platform specific string with application package or query, see above for details.
-     * @returns table with application information in the following fields:
-     *
-     * `installed`
-     * boolean `true` if the application is installed, `false` otherwise.
+     * @returns application information
      * @example
      * Check if twitter is installed:
      * ```ts
@@ -121,7 +251,7 @@ declare global {
      * // ...
      * ```
      */
-    function get_application_info(app_string: string): { installed: boolean };
+    function get_application_info(app_string: string): sys.application_info;
     /**
      * The path from which the application is run.
      * This function will raise a Lua error if unable to get the application support path.
@@ -202,11 +332,7 @@ declare global {
      * on mobile platforms.
      * On desktop, this function always return `sys.NETWORK_CONNECTED`.
      *
-     * @returns network connectivity status:
-     *
-     * - `sys.NETWORK_DISCONNECTED` (no network connection is found)
-     * - `sys.NETWORK_CONNECTED_CELLULAR` (connected through mobile cellular)
-     * - `sys.NETWORK_CONNECTED` (otherwise, Wifi)
+     * @returns network connectivity status
      * @example
      * ```ts
      * // Check if we are connected through a cellular connection
@@ -215,18 +341,11 @@ declare global {
      * }
      * ```
      */
-    function get_connectivity(): sys.NetworkConnectivity;
+    function get_connectivity(): sys.NETWORK;
     /**
      * Returns a table with engine information.
      *
-     * @returns table with engine information in the following fields:
-     *
-     * `version`
-     * string The current Defold engine version, i.e. "1.2.96"
-     * `version_sha1`
-     * string The SHA1 for the current engine build, i.e. "0060183cce2e29dbd09c85ece83cbb72068ee050"
-     * `is_debug`
-     * boolean If the engine is a debug or release version
+     * @returns engine information
      * @example
      * ```ts
      * // How to retrieve engine information:
@@ -236,7 +355,7 @@ declare global {
      * gui.set_text(gui.get_node("version"), version_str);
      * ```
      */
-    function get_engine_info(): { version: string; version_sha1: string; is_debug: boolean };
+    function get_engine_info(): sys.engine_info;
     /**
      * Create a path to the host device for unit testing
      * Useful for saving logs etc during development
@@ -261,18 +380,7 @@ declare global {
     /**
      * Returns an array of tables with information on network interfaces.
      *
-     * @returns an array of tables. Each table entry contain the following fields:
-     *
-     * `name`
-     * string Interface name
-     * `address`
-     * string IP address. might be `nil` if not available.
-     * `mac`
-     * string Hardware MAC address. might be nil if not available.
-     * `up`
-     * boolean `true` if the interface is up (available to transmit and receive data), `false` otherwise.
-     * `running`
-     * boolean `true` if the interface is running, `false` otherwise.
+     * @returns network interfaces
      * @example
      * ```ts
      * // How to get the IP address of interface "en0":
@@ -284,7 +392,7 @@ declare global {
      * }
      * ```
      */
-    function get_ifaddrs(): { name: string; address?: string; mac?: string; up: boolean; running: boolean }[];
+    function get_ifaddrs(): sys.interface_info[];
     /**
      * The save-file path is operating system specific and is typically located under the user's home directory.
      * This function will raise a Lua error if unable to get the save file path.
@@ -320,32 +428,8 @@ declare global {
     /**
      * Returns a table with system information.
      *
-     * @param options - optional options table
-     * - ignore_secure boolean this flag ignores values might be secured by OS e.g. `device_ident`
-     * @returns table with system information in the following fields:
-     *
-     * `device_model`
-     * string Only available on iOS and Android.
-     * `manufacturer`
-     * string Only available on iOS and Android.
-     * `system_name`
-     * string The system name: "Darwin", "Linux", "Windows", "HTML5", "Android" or "iPhone OS"
-     * `system_version`
-     * string The system OS version.
-     * `api_version`
-     * string The API version on the system.
-     * `language`
-     * string Two character ISO-639 format, i.e. "en".
-     * `device_language`
-     * string Two character ISO-639 format (i.e. "sr") and, if applicable, followed by a dash (-) and an ISO 15924 script code (i.e. "sr-Cyrl" or "sr-Latn"). Reflects the device preferred language.
-     * `territory`
-     * string Two character ISO-3166 format, i.e. "US".
-     * `gmt_offset`
-     * number The current offset from GMT (Greenwich Mean Time), in minutes.
-     * `device_ident`
-     * string This value secured by OS. "identifierForVendor" on iOS. "android_id" on Android. On Android, you need to add `READ_PHONE_STATE` permission to be able to get this data. We don't use this permission in Defold.
-     * `user_agent`
-     * string The HTTP user agent, i.e. "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8"
+     * @param options - optional system-information options
+     * @returns system information
      * @example
      * ```ts
      * // How to get system information:
@@ -355,7 +439,7 @@ declare global {
      * }
      * ```
      */
-    function get_sys_info(options?: { ignore_secure?: boolean }): { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string };
+    function get_sys_info(options?: sys.sys_info_options): sys.sys_info;
     /**
      * If the file exists, it must have been created by `sys.save` to be loaded.
      * This function will raise a Lua error if an error occurs while loading the file.
@@ -372,7 +456,7 @@ declare global {
      * }
      * ```
      */
-    function load(filename: string): Record<string | number, unknown>;
+    function load(filename: string): LuaTable<AnyNotNil, unknown>;
     /**
      * The sys.load_buffer function will first try to load the resource
      * from any of the mounted resource locations and return the data if
@@ -414,29 +498,20 @@ declare global {
      * included:
      * For example "main/data/,assets/level_data.json".
      * Note that issuing multiple requests of the same resource will yield
-     * individual buffers per request. There is no implic caching of the buffers
+     * individual buffers per request. There is no implicit caching of the buffers
      * based on request path.
      *
      * @param path - the path to load the buffer from
-     * @param status_callback - A status callback that will be invoked when a request has been handled, or an error occured. The result is a table containing:
-     *
-     * `status`
-     * number The status of the request, supported values are:
-     *
-     * - `resource.REQUEST_STATUS_FINISHED`
-     * - `resource.REQUEST_STATUS_ERROR_IO_ERROR`
-     * - `resource.REQUEST_STATUS_ERROR_NOT_FOUND`
-     *
-     * `buffer`
-     * buffer If the request was successfull, this will contain the request payload in a buffer object, and nil otherwise. Make sure to check the status before doing anything with the buffer value!
+     * @param status_callback - callback invoked when the request completes or fails
      * @returns a handle to the request
      * @example
      * Load binary data from a custom project resource and update a texture resource:
      * ```ts
-     * function my_callback(self: unknown, request_id: unknown, result: unknown) {
-     *   const { status, buf } = result as { status: number; buf: Opaque<"buffer"> };
-     *   if (status === sys.REQUEST_STATUS_FINISHED) {
-     *     resource.set_texture("/my_texture", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format: graphics.TEXTURE_FORMAT_RGBA }, buf);
+     * // Load binary data from a custom project resource and update a texture resource:
+     * function my_callback(self: unknown, request_id: number, result: sys.load_buffer_result) {
+     *   const format = graphics.TEXTURE_FORMAT_RGBA;
+     *   if (result.status === sys.REQUEST_STATUS_FINISHED && result.buffer !== undefined && format !== undefined) {
+     *     resource.set_texture("/my_texture", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format }, result.buffer);
      *   }
      * }
      *
@@ -445,32 +520,29 @@ declare global {
      * @example
      * Load binary data from non-custom resource files on disk:
      * ```ts
-     * function my_callback(self: unknown, request_id: unknown, result: unknown) {
-     *   const { first_asset, second_asset } = self as { first_asset: Hash; second_asset: Hash };
-     *   if ((result as { status: number }).status !== sys.REQUEST_STATUS_FINISHED) {
+     * // Load binary data from non-custom resource files on disk:
+     * function my_callback(self: unknown, request_id: number, result: sys.load_buffer_result) {
+     *   const { first_request, second_request } = self as { first_request: number; second_request: number };
+     *   if (result.status !== sys.REQUEST_STATUS_FINISHED) {
      *     // uh oh! File could not be found, do something graceful
-     *   } else if (request_id === first_asset) {
+     *   } else if (request_id === first_request) {
      *     // result.buffer contains data from my_level_asset.bin
-     *   } else if (request_id === second_asset) {
+     *   } else if (request_id === second_request) {
      *     // result.buffer contains data from 'my_level.bin'
      *   }
      * }
      *
      * export default defineScript({
      *   init() {
-     *     const first_path = "folder_next_to_binary/my_level_asset.bin";
-     *     const second_path = "/some_absolute_path/my_level.bin";
      *     return {
-     *       first_asset: hash(first_path),
-     *       second_asset: hash(second_path),
-     *       first_request: sys.load_buffer_async(first_path, my_callback),
-     *       second_request: sys.load_buffer_async(second_path, my_callback),
+     *       first_request: sys.load_buffer_async("folder_next_to_binary/my_level_asset.bin", my_callback),
+     *       second_request: sys.load_buffer_async("/some_absolute_path/my_level.bin", my_callback),
      *     };
      *   },
      * });
      * ```
      */
-    function load_buffer_async(path: string, status_callback: (self: unknown, request_id: unknown, result: unknown) => void): number;
+    function load_buffer_async(path: string, status_callback: (self: unknown, request_id: number, result: sys.load_buffer_result) => void): number;
     /**
      * Loads a custom resource. Specify the full filename of the resource that you want
      * to load. When loaded, the file data is returned as a string.
@@ -501,14 +573,7 @@ declare global {
      * Open URL in default application, typically a browser
      *
      * @param url - url to open
-     * @param attributes - table with attributes
-     * `target`
-     * - string : Optional. Specifies the target attribute or the name of the window. The following values are supported:
-     * - `_self` - (default value) URL replaces the current page.
-     * - `_blank` - URL is loaded into a new window, or tab.
-     * - `_parent` - URL is loaded into the parent frame.
-     * - `_top` - URL replaces any framesets that may be loaded.
-     * - `name` - The name of the window (Note: the name does not specify the title of the new window).
+     * @param attributes - optional URL opening attributes
      * @returns a boolean indicating if the url could be opened or not
      * @example
      * ```ts
@@ -519,7 +584,7 @@ declare global {
      * }
      * ```
      */
-    function open_url(url: string, attributes?: { target?: string }): boolean;
+    function open_url(url: string, attributes?: sys.open_url_attributes): boolean;
     /**
      * Reboots the game engine with a specified set of arguments.
      * Arguments will be translated into command line arguments. Calling reboot
@@ -564,7 +629,7 @@ declare global {
      * sys.save(my_file_path, my_table);
      * ```
      */
-    function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): boolean;
+    function save(filename: string, table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): boolean;
     /**
      * The buffer can later deserialized by `sys.deserialize`.
      * This function has all the same limitations as `sys.save`.
@@ -580,7 +645,7 @@ declare global {
      * const buffer = sys.serialize(my_table);
      * ```
      */
-    function serialize(table: Record<string | number, unknown> | readonly unknown[]): string;
+    function serialize(table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): string;
     /**
      * Sets the host that is used to check for network connectivity against.
      *
@@ -626,7 +691,7 @@ declare global {
      * });
      * ```
      */
-    function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;
+    function set_error_handler(error_handler: (source: string, message: string, traceback: string) => void): void;
     /**
      * Disables rendering
      *
@@ -639,13 +704,24 @@ declare global {
      */
     function set_render_enabled(enable: boolean): void;
     /**
-     * Set game update-frequency (frame cap). This option is equivalent to `display.update_frequency` in
-     * the "game.project" settings but set in run-time. If `Vsync` checked in "game.project", the rate will
-     * be clamped to a swap interval that matches any detected main monitor refresh rate. If `Vsync` is
-     * unchecked the engine will try to respect the rate in software using timers. There is no
-     * guarantee that the frame cap will be achieved depending on platform specifics and hardware settings.
+     * Set game update-frequency (frame cap). This option is equivalent to
+     * `display.update_frequency` in the "game.project" settings but set at run-time.
+     * On platforms where Defold owns the application loop, a positive value uses
+     * timer pacing and requests a swap interval of 0 to avoid an additional vsync
+     * wait where supported. Setting the frequency to 0 restores the requested swap
+     * interval and uses variable-rate updates. Platform-owned loops, such as HTML5
+     * and iOS, retain their platform scheduling and presentation behavior. There is
+     * no guarantee that the frame cap will be achieved depending on platform and
+     * hardware constraints.
+     * With engine-side timer pacing, the update dt can be shortened or enlarged to
+     * account for elapsed time; the frame cap does not guarantee a constant dt.
+     * Elapsed time beyond max(engine.max_time_step, 1 / frequency) is discarded,
+     * so accumulated dt can trail wall-clock time after hitches. An intentional
+     * fixed interval longer than engine.max_time_step is allowed. This setting
+     * is separate from the fixed_update() timestep.
      *
-     * @param frequency - target frequency. 60 for 60 fps
+     * @param frequency - target frequency in hertz. 0 selects a variable
+     * frame rate; negative values are treated as 0.
      * @example
      * ```ts
      * // Setting the update frequency to 60 frames per second
@@ -654,20 +730,22 @@ declare global {
      */
     function set_update_frequency(frequency: number): void;
     /**
-     * Set the vsync swap interval. The interval with which to swap the front and back buffers
-     * in sync with vertical blanks (v-blank), the hardware event where the screen image is updated
-     * with data from the front buffer. A value of 1 swaps the buffers at every v-blank, a value of
-     * 2 swaps the buffers every other v-blank and so on. A value of 0 disables waiting for v-blank
-     * before swapping the buffers. Default value is 1.
-     * When setting the swap interval to 0 and having `vsync` disabled in
-     * "game.project", the engine will try to respect the set frame cap value from
-     * "game.project" in software instead.
+     * Request a presentation interval relative to vertical blanks (v-blank).
+     * 0 requests disabling vsync and 1 requests presenting every refresh (the default).
+     * OpenGL may support larger intervals, such as 2 for every other refresh.
+     * Vulkan and Metal treat any nonzero interval as enabling vsync; DX12 clamps
+     * intervals to the supported range 0 through 4. Actual behavior depends on
+     * the backend, platform, and driver.
+     * On platforms where Defold owns the application loop, a positive
+     * `display.update_frequency` or a positive value set by `sys.set_update_frequency()`
+     * uses timer pacing and requests a swap interval of 0. The requested
+     * swap interval is retained and applied again when the update frequency is set to 0.
      * This setting may be overridden by driver settings.
      *
      * @param swap_interval - target swap interval.
      * @example
      * ```ts
-     * // Setting the swap intervall to swap every v-blank
+     * // Setting the swap interval to swap every v-blank
      * sys.set_vsync_swap_interval(1);
      * ```
      */

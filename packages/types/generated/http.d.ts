@@ -7,6 +7,31 @@ declare global {
    */
   namespace http {
     /**
+     * HTTP request options
+     */
+    interface request_options {
+      /**
+       * timeout in seconds
+       */
+      timeout?: number;
+      /**
+       * absolute destination path; overwritten only for status 200
+       */
+      path?: string;
+      /**
+       * do not return cached data for status 304; unavailable on HTML5
+       */
+      ignore_cache?: boolean;
+      /**
+       * use chunked transfer encoding for HTTPS requests larger than 16 KB; defaults to true and is unavailable on HTML5
+       */
+      chunked_transfer?: boolean;
+      /**
+       * report transferred and total byte counts to the callback
+       */
+      report_progress?: boolean;
+    }
+    /**
      * Perform a HTTP/HTTPS request.
      * If no timeout value is passed, the configuration value "network.http_timeout" is used. If that is not set, the timeout value is `0` (which blocks indefinitely).
      *
@@ -15,31 +40,12 @@ declare global {
      * @param callback - response callback function
      *
      * `self`
-     * object The script instance
+     * script_instance The current script instance
      * `id`
      * hash Internal message identifier. Do not use!
-     * `response`
-     * table The response data. Contains the fields:
-     *
-     * - number `status`: the status of the response
-     * - string `response`: the response data (if not saved on disc)
-     * - table `headers`: all the returned headers (if status is 200 or 206)
-     * - string `path`: the stored path (if saved to disc)
-     * - string `error`: if any unforeseen errors occurred (e.g. file I/O)
-     * - number `bytes_received`: the amount of bytes received/sent for a request, only if option `report_progress` is true
-     * - number `bytes_total`: the total amount of bytes for a request, only if option `report_progress` is true
-     * - number `range_start`: the start offset into the requested file
-     * - number `range_end`: the end offset into the requested file (inclusive)
-     * - number `document_size`: the full size of the requested file
      * @param headers - optional table with custom headers
      * @param post_data - optional data to send
-     * @param options - optional table with request parameters. Supported entries:
-     *
-     * - number `timeout`: timeout in seconds
-     * - string `path`: path on disc where to download the file. Only overwrites the path if status is 200. Path should be absolute
-     * - boolean `ignore_cache`: don't return cached data if we get a 304. Not available in HTML5 build
-     * - boolean `chunked_transfer`: use chunked transfer encoding for https requests larger than 16kb. Defaults to true. Not available in HTML5 build
-     * - boolean `report_progress`: when it is true, the amount of bytes sent and/or received for a request will be passed into the callback function
+     * @param options - optional request options
      * @example
      * ```ts
      * function update_my_progress_bar(self: unknown, fraction: number) {
@@ -70,7 +76,7 @@ declare global {
      * });
      * ```
      */
-    function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;
+    function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: http.request_options): void;
   }
 }
 

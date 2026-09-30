@@ -154,7 +154,12 @@ describe("surface retention", () => {
     ]);
   });
 
-  test("the live tuple carries the rule's keep set plus one deliberate restoration", () => {
+  // The entries the tuple holds beyond the rule's keep set. The 1.13.2 rotation
+  // reapplied the rule, which took 1.13.0 back out of the tuple; it stays a
+  // registered, resolvable target through its api-targets.json entry.
+  const RESTORED: readonly (typeof DEFOLD_VERSIONS)[number][] = [];
+
+  test("the live tuple carries the rule's keep set plus the recorded restorations", () => {
     const keep = retainedVersions([...DEFOLD_VERSIONS], CURRENT_STABLE_DEFOLD_VERSION);
 
     // Both derived from the live pin rather than written as literals, so the
@@ -175,9 +180,7 @@ describe("surface retention", () => {
     expect(keep[0]).toBe(CURRENT_STABLE_DEFOLD_VERSION);
     expect(keep[1]).toBe(previousMinorOfCurrent);
 
-    expect(DEFOLD_VERSIONS.filter((version) => !keep.includes(version))).toEqual([
-      PREVIOUS_STABLE_DEFOLD_VERSION,
-    ]);
+    expect(DEFOLD_VERSIONS.filter((version) => !keep.includes(version))).toEqual([...RESTORED]);
 
     expect(retainedVersions([...DEFOLD_VERSIONS], nextPatch)).toEqual([
       nextPatch,

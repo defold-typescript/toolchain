@@ -13,7 +13,14 @@ import {
   negativeWitness,
   uncoveredKinds,
 } from "./negative-witness";
-import { generateProbes, PROBE_FILES, type ProbeCall, probeTarget, renderFile } from "./witness";
+import {
+  generateProbes,
+  PROBE_FILES,
+  type ProbeCall,
+  probeTarget,
+  renderFile,
+  urlsIn,
+} from "./witness";
 
 const RUNTIME = resolve(import.meta.dir, "..", "project", "probe", "runtime.ts");
 const extraction = readBindingsForTarget(probeTarget().id);
@@ -141,7 +148,7 @@ describe("negative call generation", () => {
 });
 
 function transpileErrors(calls: ProbeCall[]): string[] {
-  const file = renderFile("go", calls, new Set());
+  const file = renderFile("go", calls, new Set(calls.flatMap((call) => urlsIn(call.call))));
   const result = transpileProject({
     files: { "probe/runtime.ts": readFileSync(RUNTIME, "utf8"), "main/probe_go.ts": file },
   });
@@ -265,19 +272,21 @@ describe("accepted call generation", () => {
         ].join("\n"),
       );
       const legacy = v2.calls.find(
-        (call) => call.name === "image.load" && call.variant === "accepted-2-boolean",
+        (call) => call.name === "tilemap.set_tile" && call.variant === "accepted-6-boolean",
       );
-      if (legacy?.witness === undefined) throw new Error("no image.load accepted-2-boolean call");
-      expect(legacy.witness.verdict).toBe("*:image.load:too-narrow:2");
+      if (legacy?.witness === undefined) {
+        throw new Error("no tilemap.set_tile accepted-6-boolean call");
+      }
+      expect(legacy.witness.verdict).toBe("*:tilemap.set_tile:too-narrow:6");
       const negative = v2.calls.find(
-        (call) => call.name === "image.load" && call.variant === "negative-2",
+        (call) => call.name === "tilemap.set_tile" && call.variant === "negative-6",
       );
-      expect(negative?.call.replace(/, 1\)$/, ", true)")).toBe(legacy.call);
+      expect(negative?.call.replace(/, \{\}\)$/, ", true)")).toBe(legacy.call);
       const { verdict: _recorded, ...witness } = legacy.witness;
       const unrecorded = { ...legacy, witness };
       expect(renderFile("go", [unrecorded], new Set())).not.toContain("@ts-expect-error");
       expect(transpileErrors([unrecorded])).toEqual([
-        "image.load:accepted-2-boolean slot 2 too narrow: the declaration rejects a boolean, which gamesys/src/gamesys/scripts/script_image.cpp accepts",
+        "tilemap.set_tile:accepted-6-boolean slot 6 too narrow: the declaration rejects a boolean, which gamesys/src/gamesys/scripts/script_tilemap.cpp accepts",
       ]);
       expect(transpileErrors([legacy])).toEqual([]);
     },
@@ -337,20 +346,18 @@ describe("kind coverage", () => {
     expect(problems).toEqual([]);
   });
 
+  // No retained binding reads a kind without an accepted witness, so the skip is
+  // recorded in place of the accepted `gui.get_node` hash call.
   test("a kind-level skip accounts for its kind only", () => {
     const record = {
-      name: "render.draw",
-      slot: 2,
-      kind: "userdata",
-      reason: "no accepted witness for a userdata",
+      name: "gui.get_node",
+      slot: 1,
+      kind: "hash",
+      reason: "no accepted witness for a hash",
     } as const;
-    expect(v2.skipped).toContainEqual(record);
-    const skipped = v2.skipped.filter(
-      (s) => !(s.name === record.name && s.slot === record.slot && s.kind === record.kind),
-    );
-    expect(uncoveredKinds({ ...v2, skipped })).toEqual([
-      { name: "render.draw", slot: 2, kind: "userdata" },
-    ]);
+    const withoutHash = withoutCall(v2, "gui.get_node", "accepted-1-hash");
+    expect(uncoveredKinds({ ...withoutHash, skipped: [...v2.skipped, record] })).toEqual([]);
+    expect(uncoveredKinds(withoutHash)).toEqual([{ name: "gui.get_node", slot: 1, kind: "hash" }]);
   });
 
   test("a slot-level skip accounts for every kind of its slot", () => {

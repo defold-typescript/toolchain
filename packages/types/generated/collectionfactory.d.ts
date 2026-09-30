@@ -8,16 +8,17 @@ declare global {
    */
   namespace collectionfactory {
     type Status = typeof collectionfactory.STATUS_UNLOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_LOADED;
+    type STATUS = typeof collectionfactory.STATUS_LOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_UNLOADED;
     /**
-     * loaded
+     * The collection factory resources are loaded.
      */
     const STATUS_LOADED: number & { readonly __brand: "collectionfactory.STATUS_LOADED" };
     /**
-     * loading
+     * The collection factory resources are loading.
      */
     const STATUS_LOADING: number & { readonly __brand: "collectionfactory.STATUS_LOADING" };
     /**
-     * unloaded
+     * The collection factory resources are unloaded.
      */
     const STATUS_UNLOADED: number & { readonly __brand: "collectionfactory.STATUS_UNLOADED" };
     /**
@@ -85,19 +86,15 @@ declare global {
      * }
      * ```
      */
-    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaMap<Hash, Hash>;
+    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash>;
     /**
      * This returns status of the collection factory.
      * Calling this function when the factory is not marked as dynamic loading always returns COMP_COLLECTION_FACTORY_STATUS_LOADED.
      *
      * @param url - the collection factory component to get status from
      * @returns status of the collection factory component
-     *
-     * - `collectionfactory.STATUS_UNLOADED`
-     * - `collectionfactory.STATUS_LOADING`
-     * - `collectionfactory.STATUS_LOADED`
      */
-    function get_status(url: string | Hash | Url): collectionfactory.Status;
+    function get_status(url: string | Hash | Url): collectionfactory.STATUS;
     /**
      * Resources loaded are referenced by the collection factory component until the existing (parent) collection is destroyed or collectionfactory.unload is called.
      * Calling this function when the factory is not marked as dynamic loading does nothing.
@@ -106,7 +103,7 @@ declare global {
      * @param complete_function - function to call when resources are loaded.
      *
      * `self`
-     * object The current object.
+     * script_instance The current script instance.
      * `url`
      * url url of the collection factory component
      * `result`
@@ -117,7 +114,7 @@ declare global {
      * collectionfactory.load("#factory", (self, url, result) => {});
      * ```
      */
-    function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;
+    function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
     /**
      * Changes the prototype for the collection factory.
      * Setting the prototype to "nil" will revert back to the original prototype.

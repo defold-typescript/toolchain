@@ -1,122 +1,137 @@
 import type { Hash, Url } from "./core-types";
 
-// Field docs are hand-reconciled from the `on_input` description's "Touch input
-// table:" prose (not structured ref-doc data); a future ref-doc re-pin is
-// reconciled by hand, drift-guarded against that prose in lifecycle-member-docs.
+// Fields and docs follow the go ref-doc's `on_input.touch` STRUCT, whose keys are
+// the ones comp_script.cpp pushes; lifecycle-member-docs drift-guards the docs
+// against it, and a ref-doc re-pin is reconciled by hand.
 export interface InputTouch {
   /**
-   * A number identifying the touch input during its duration.
+   * Identifier for the touch during its lifetime.
    */
   id?: number;
   /**
-   * True if the finger was pressed this frame.
+   * Whether the finger was pressed this frame.
    */
   pressed?: boolean;
   /**
-   * True if the finger was released this frame.
+   * Whether the finger was released this frame.
    */
   released?: boolean;
   /**
-   * Number of taps, one for single, two for double-tap, etc
+   * Number of taps, such as one for a single tap and two for a double tap.
    */
   tap_count?: number;
   /**
-   * The x touch location.
+   * Touch x-coordinate.
    */
   x?: number;
   /**
-   * The y touch location.
+   * Touch y-coordinate.
    */
   y?: number;
   /**
-   * The change in x value.
+   * Change in the touch x-coordinate.
    */
   dx?: number;
   /**
-   * The change in y value.
+   * Change in the touch y-coordinate.
    */
   dy?: number;
   /**
-   * Accelerometer x value (if present).
-   */
-  acc_x?: number;
-  /**
-   * Accelerometer y value (if present).
-   */
-  acc_y?: number;
-  /**
-   * Accelerometer z value (if present).
-   */
-  acc_z?: number;
-}
-
-// Field docs are hand-reconciled from the `on_input` description's main action
-// and "Gamepad specific fields:" prose (not structured ref-doc data); a future
-// ref-doc re-pin is reconciled by hand, drift-guarded against that prose in
-// lifecycle-member-docs.
-export interface InputAction {
-  /**
-   * The amount of input given by the user. This is usually 1 for buttons and 0-1 for analogue inputs. This is not present for mouse movement and text input.
-   */
-  value?: number;
-  /**
-   * If the input was pressed this frame. This is not present for mouse movement and text input.
-   */
-  pressed?: boolean;
-  /**
-   * If the input was released this frame. This is not present for mouse movement and text input.
-   */
-  released?: boolean;
-  /**
-   * If the input was repeated this frame. This is similar to how a key on a keyboard is repeated when you hold it down. This is not present for mouse movement and text input.
-   */
-  repeated?: boolean;
-  /**
-   * The x value of a pointer device, if present. This is not present for gamepad, key and text input.
-   */
-  x?: number;
-  /**
-   * The y value of a pointer device, if present. This is not present for gamepad, key and text input.
-   */
-  y?: number;
-  /**
-   * The screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
+   * Touch x-coordinate in screen space.
    */
   screen_x?: number;
   /**
-   * The screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
+   * Touch y-coordinate in screen space.
    */
   screen_y?: number;
   /**
-   * The change in x value of a pointer device, if present. This is not present for gamepad, key and text input.
-   */
-  dx?: number;
-  /**
-   * The change in y value of a pointer device, if present. This is not present for gamepad, key and text input.
-   */
-  dy?: number;
-  /**
-   * The change in screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
+   * Change in the touch x-coordinate in screen space.
    */
   screen_dx?: number;
   /**
-   * The change in screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
+   * Change in the touch y-coordinate in screen space.
+   */
+  screen_dy?: number;
+}
+
+// Fields and docs follow the go ref-doc's `on_input.action` STRUCT, whose keys are
+// the ones comp_script.cpp pushes; lifecycle-member-docs drift-guards the docs
+// against it, and a ref-doc re-pin is reconciled by hand.
+export interface InputAction {
+  /**
+   * Amount of input, usually 1 for buttons or between 0 and 1 for analogue input; absent for pointer movement and text input.
+   */
+  value?: number;
+  /**
+   * Whether the input was pressed this frame; absent for pointer movement and text input.
+   */
+  pressed?: boolean;
+  /**
+   * Whether the input was released this frame; absent for pointer movement and text input.
+   */
+  released?: boolean;
+  /**
+   * Whether the input was repeated this frame; absent for pointer movement and text input.
+   */
+  repeated?: boolean;
+  /**
+   * Pointer x-coordinate; absent for gamepad, key, and text input.
+   */
+  x?: number;
+  /**
+   * Pointer y-coordinate; absent for gamepad, key, and text input.
+   */
+  y?: number;
+  /**
+   * Pointer x-coordinate in screen space; absent for gamepad, key, and text input.
+   */
+  screen_x?: number;
+  /**
+   * Pointer y-coordinate in screen space; absent for gamepad, key, and text input.
+   */
+  screen_y?: number;
+  /**
+   * Change in the pointer x-coordinate; absent for gamepad, key, and text input.
+   */
+  dx?: number;
+  /**
+   * Change in the pointer y-coordinate; absent for gamepad, key, and text input.
+   */
+  dy?: number;
+  /**
+   * Change in the pointer x-coordinate in screen space; absent for gamepad, key, and text input.
+   */
+  screen_dx?: number;
+  /**
+   * Change in the pointer y-coordinate in screen space; absent for gamepad, key, and text input.
    */
   screen_dy?: number;
   /**
-   * The index of the gamepad device that provided the input. See table below about gamepad input.
+   * Accelerometer x value, when present.
+   */
+  acc_x?: number;
+  /**
+   * Accelerometer y value, when present.
+   */
+  acc_y?: number;
+  /**
+   * Accelerometer z value, when present.
+   */
+  acc_z?: number;
+  /**
+   * Index of the gamepad that provided the input.
    */
   gamepad?: number;
   /**
-   * Id of the user associated with the controller. Usually only relevant on consoles.
+   * Id of the user associated with the controller.
    */
   userid?: number;
   /**
-   * The guid of the gamepad controller. Only passed with "connected" action.
+   * SDL-compatible guid, supplied with a gamepad-connected action.
    */
   gamepad_guid?: string;
   /**
-   * Parsed guid info table. Only passed with "connected" action. See table below.
+   * Parsed guid information, supplied with a gamepad-connected action.
    */
   gamepad_guid_info?: {
     vendor: number;
@@ -126,37 +141,33 @@ export interface InputAction {
     version: number;
   };
   /**
-   * True if the input originated from an unknown/unmapped gamepad.
+   * Whether the input originated from an unknown or unmapped gamepad.
    */
   gamepad_unknown?: boolean;
   /**
-   * Name of the gamepad
+   * Name of a connected gamepad.
    */
   gamepad_name?: string;
   /**
-   * List of gamepad axis values. For raw gamepad input only.
+   * Axis values, supplied only for raw gamepad input.
    */
   gamepad_axis?: number[];
   /**
-   * List of gamepad hat values. For raw gamepad input only.
+   * Hat values, supplied only for raw gamepad input.
    */
-  gamepadhats?: number[];
+  gamepad_hats?: number[];
   /**
-   * List of gamepad button values. For raw gamepad input only.
+   * Button values, supplied only for raw gamepad input.
    */
   gamepad_buttons?: number[];
   /**
-   * List of touch input, one element per finger, if present. See table below about touch input
+   * Touch inputs, one entry per finger.
    */
   touch?: InputTouch[];
   /**
-   * Text input from a (virtual) keyboard or similar.
+   * Text entered by a text action, or the current sequence for marked-text composition such as Japanese Kana.
    */
   text?: string;
-  /**
-   * Sequence of entered symbols while entering a symbol combination, for example Japanese Kana.
-   */
-  marked_text?: string;
 }
 
 /**
@@ -277,159 +288,10 @@ export interface ScriptHooks<TSelf, TInitState = TSelf> {
    * to signal that it wants input to be consumed.
    * See the documentation of acquire_input_focus for more
    * information.
-   * The `action` parameter is a table containing data about the input mapped to the
-   * `action_id`.
-   * For mapped actions it specifies the value of the input and if it was just pressed or released.
-   * Actions are mapped to input in an input_binding-file.
-   * Mouse movement is specifically handled and uses `nil` as its `action_id`.
-   * The `action` only contains positional parameters in this case, such as x and y of the pointer.
-   * Here is a brief description of the available table fields:
-   *
-   * Field
-   * Description
-   *
-   * `value`
-   * The amount of input given by the user. This is usually 1 for buttons and 0-1 for analogue inputs. This is not present for mouse movement and text input.
-   *
-   * `pressed`
-   * If the input was pressed this frame. This is not present for mouse movement and text input.
-   *
-   * `released`
-   * If the input was released this frame. This is not present for mouse movement and text input.
-   *
-   * `repeated`
-   * If the input was repeated this frame. This is similar to how a key on a keyboard is repeated when you hold it down. This is not present for mouse movement and text input.
-   *
-   * `x`
-   * The x value of a pointer device, if present. This is not present for gamepad, key and text input.
-   *
-   * `y`
-   * The y value of a pointer device, if present. This is not present for gamepad, key and text input.
-   *
-   * `screen_x`
-   * The screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
-   *
-   * `screen_y`
-   * The screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
-   *
-   * `dx`
-   * The change in x value of a pointer device, if present. This is not present for gamepad, key and text input.
-   *
-   * `dy`
-   * The change in y value of a pointer device, if present. This is not present for gamepad, key and text input.
-   *
-   * `screen_dx`
-   * The change in screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
-   *
-   * `screen_dy`
-   * The change in screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
-   *
-   * `gamepad`
-   * The index of the gamepad device that provided the input. See table below about gamepad input.
-   *
-   * `touch`
-   * List of touch input, one element per finger, if present. See table below about touch input
-   *
-   * `text`
-   * Text input from a (virtual) keyboard or similar.
-   *
-   * `marked_text`
-   * Sequence of entered symbols while entering a symbol combination, for example Japanese Kana.
-   *
-   * Gamepad specific fields:
-   *
-   * Field
-   * Description
-   *
-   * `gamepad`
-   * The index of the gamepad device that provided the input.
-   *
-   * `userid`
-   * Id of the user associated with the controller. Usually only relevant on consoles.
-   *
-   * `gamepad_guid`
-   * The guid of the gamepad controller. Only passed with "connected" action.
-   *
-   * `gamepad_guid_info`
-   * Parsed guid info table. Only passed with "connected" action. See table below.
-   *
-   * `gamepad_unknown`
-   * True if the input originated from an unknown/unmapped gamepad.
-   *
-   * `gamepad_name`
-   * Name of the gamepad
-   *
-   * `gamepad_axis`
-   * List of gamepad axis values. For raw gamepad input only.
-   *
-   * `gamepadhats`
-   * List of gamepad hat values. For raw gamepad input only.
-   *
-   * `gamepad_buttons`
-   * List of gamepad button values. For raw gamepad input only.
-   *
-   * Touch input table:
-   *
-   * Field
-   * Description
-   *
-   * `id`
-   * A number identifying the touch input during its duration.
-   *
-   * `pressed`
-   * True if the finger was pressed this frame.
-   *
-   * `released`
-   * True if the finger was released this frame.
-   *
-   * `tap_count`
-   * Number of taps, one for single, two for double-tap, etc
-   *
-   * `x`
-   * The x touch location.
-   *
-   * `y`
-   * The y touch location.
-   *
-   * `dx`
-   * The change in x value.
-   *
-   * `dy`
-   * The change in y value.
-   *
-   * `acc_x`
-   * Accelerometer x value (if present).
-   *
-   * `acc_y`
-   * Accelerometer y value (if present).
-   *
-   * `acc_z`
-   * Accelerometer z value (if present).
-   *
-   * Guid info table:
-   * This info is only passed with a `connected` action.
-   *
-   * Field
-   * Description
-   *
-   * `vendor`
-   * USB vendor id. E.g. Nintendo 0x057e, Sony 0x054c, or Microsoft 0x045e
-   *
-   * `product`
-   * USB product id
-   *
-   * `bus`
-   * How device is communicating. E.g.0x0003 for USB devices and 0x0005 for Bluetooth devices.
-   *
-   * `crc`
-   * SDL CRC16 signature, typically used when vendor and product ids are unavailable
-   *
-   * `version`
-   * The device or firmware version
    *
    * @param self - reference to the script state to be used for storing data
    * @param action_id - id of the received input action, as mapped in the input_binding-file
-   * @param action - a table containing the input data, see above for a description
+   * @param action - a table containing the input data; `InputAction` documents its fields
    * @example
    * ```ts
    * on_input(self, action_id, action) {

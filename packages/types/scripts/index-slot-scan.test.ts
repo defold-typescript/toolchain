@@ -72,6 +72,22 @@ describe("scanIndexSlots over the defold-1.13.1 ref-doc", () => {
   });
 });
 
+describe("scanIndexSlots over a ref-doc STRUCT", () => {
+  const label = JSON.parse(
+    readFileSync(join(FIXTURES, "..", "defold-1.13.2", "label_doc.json"), "utf8"),
+  );
+
+  test("keys a base a slot's struct member states to that member", () => {
+    const hits = new Map(scanIndexSlots(label, "label").map((hit) => [hit.key, hit.evidence]));
+    expect(hits.get("label.get_layout_objects:return:objects:text_offset")).toBe("prose-0-based");
+    expect(hits.has("label.get_layout_objects:return:objects")).toBe(false);
+  });
+
+  test("declares each member of a slot's struct as a field of the slot", () => {
+    expect(refDocSlotKeys(label)).toContain("label.get_layout_objects:return:objects:text_offset");
+  });
+});
+
 function statementsIn(file: string, namespace: string): Map<string, string> {
   const doc = JSON.parse(readFileSync(join(FIXTURES, file), "utf8"));
   return new Map(scanFunctionBaseStatements(doc, namespace).map((s) => [s.fn, s.class]));

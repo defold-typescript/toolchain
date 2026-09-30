@@ -6,33 +6,232 @@ declare global {
    * Collision object physics API documentation
    */
   namespace physics {
+    type event = BuiltinMessages["contact_point_event"] | BuiltinMessages["collision_event"] | BuiltinMessages["trigger_event"] | BuiltinMessages["ray_cast_response"] | BuiltinMessages["ray_cast_missed"];
     /**
-     * The following properties are available when connecting a joint of `JOINT_TYPE_FIXED` type:
+     * The available fields depend on the joint type.
+     */
+    interface joint_properties {
+      /**
+       * whether the connected objects should collide
+       */
+      collide_connected?: boolean;
+      /**
+       * Natural spring length between the anchor points.
+       */
+      length?: number;
+      /**
+       * Mass-spring-damper frequency in Hertz; zero disables softness.
+       */
+      frequency?: number;
+      /**
+       * Damping ratio, where zero is no damping and one is critical damping.
+       */
+      damping?: number;
+      /**
+       * Maximum fixed-joint rope length.
+       */
+      max_length?: number;
+      /**
+       * Local translation unit axis in the first body.
+       */
+      local_axis_a?: Vector3;
+      /**
+       * Angle of the second body relative to the first body, in radians.
+       */
+      reference_angle?: number;
+      /**
+       * Lower angular limit in radians.
+       */
+      lower_angle?: number;
+      /**
+       * Upper angular limit in radians.
+       */
+      upper_angle?: number;
+      /**
+       * Lower translation limit, usually in meters.
+       */
+      lower_translation?: number;
+      /**
+       * Upper translation limit, usually in meters.
+       */
+      upper_translation?: number;
+      /**
+       * Maximum motor torque used to reach the desired speed, usually in N-m.
+       */
+      max_motor_torque?: number;
+      /**
+       * Maximum motor force used to reach the desired speed.
+       */
+      max_motor_force?: number;
+      /**
+       * Desired motor speed.
+       */
+      motor_speed?: number;
+      /**
+       * Whether joint limits are enabled.
+       */
+      enable_limit?: boolean;
+      /**
+       * Whether the joint motor is enabled.
+       */
+      enable_motor?: boolean;
+    }
+    /**
+     * The available optional fields depend on the joint type.
+     */
+    interface joint_properties_info {
+      /**
+       * whether the connected objects collide
+       */
+      collide_connected: boolean;
+      /**
+       * spring length
+       */
+      length?: number;
+      /**
+       * spring frequency
+       */
+      frequency?: number;
+      /**
+       * damping ratio
+       */
+      damping?: number;
+      /**
+       * fixed-joint maximum length
+       */
+      max_length?: number;
+      /**
+       * local joint axis
+       */
+      local_axis_a?: Vector3;
+      /**
+       * reference angle
+       */
+      reference_angle?: number;
+      /**
+       * lower angular limit
+       */
+      lower_angle?: number;
+      /**
+       * upper angular limit
+       */
+      upper_angle?: number;
+      /**
+       * lower translation limit
+       */
+      lower_translation?: number;
+      /**
+       * upper translation limit
+       */
+      upper_translation?: number;
+      /**
+       * maximum motor torque
+       */
+      max_motor_torque?: number;
+      /**
+       * maximum motor force
+       */
+      max_motor_force?: number;
+      /**
+       * motor speed
+       */
+      motor_speed?: number;
+      /**
+       * whether limits are enabled
+       */
+      enable_limit?: boolean;
+      /**
+       * whether the motor is enabled
+       */
+      enable_motor?: boolean;
+      /**
+       * Read-only current hinge angle in radians.
+       */
+      joint_angle?: number;
+      /**
+       * Read-only current hinge angular speed or slider/wheel translation speed.
+       */
+      joint_speed?: number;
+      /**
+       * Read-only current slider or wheel translation, usually in meters.
+       */
+      joint_translation?: number;
+    }
+    /**
+     * Ray-cast options
+     */
+    interface raycast_options {
+      /**
+       * Return every hit instead of only the closest hit.
+       */
+      all?: boolean;
+    }
+    /**
+     * The available geometry fields depend on `type`.
+     */
+    interface shape_data {
+      /**
+       * shape type
+       */
+      type: physics.SHAPE_TYPE;
+      /**
+       * sphere diameter or capsule pole diameter
+       */
+      diameter?: number;
+      /**
+       * box dimensions
+       */
+      dimensions?: Vector3;
+      /**
+       * capsule height
+       */
+      height?: number;
+    }
+    type JOINT_TYPE = typeof physics.JOINT_TYPE_FIXED | typeof physics.JOINT_TYPE_HINGE | typeof physics.JOINT_TYPE_SLIDER | typeof physics.JOINT_TYPE_SPRING | typeof physics.JOINT_TYPE_WELD | typeof physics.JOINT_TYPE_WHEEL;
+    type SHAPE_TYPE = typeof physics.SHAPE_TYPE_BOX | typeof physics.SHAPE_TYPE_CAPSULE | typeof physics.SHAPE_TYPE_HULL | typeof physics.SHAPE_TYPE_MESH | typeof physics.SHAPE_TYPE_SPHERE;
+    /**
+     * Fixed joint; uses `max_length` from physics.joint_properties.
      */
     const JOINT_TYPE_FIXED: number & { readonly __brand: "physics.JOINT_TYPE_FIXED" };
     /**
-     * The following properties are available when connecting a joint of `JOINT_TYPE_HINGE` type:
+     * Hinge joint; uses the angular-limit and motor fields from physics.joint_properties.
      */
     const JOINT_TYPE_HINGE: number & { readonly __brand: "physics.JOINT_TYPE_HINGE" };
     /**
-     * The following properties are available when connecting a joint of `JOINT_TYPE_SLIDER` type:
+     * Slider joint; uses the translation-limit and motor fields from physics.joint_properties.
      */
     const JOINT_TYPE_SLIDER: number & { readonly __brand: "physics.JOINT_TYPE_SLIDER" };
     /**
-     * The following properties are available when connecting a joint of `JOINT_TYPE_SPRING` type:
+     * Spring joint; uses `length`, `frequency`, and `damping` from physics.joint_properties.
      */
     const JOINT_TYPE_SPRING: number & { readonly __brand: "physics.JOINT_TYPE_SPRING" };
     /**
-     * The following properties are available when connecting a joint of `JOINT_TYPE_WELD` type:
+     * Weld joint; uses `reference_angle`, `frequency`, and `damping` from physics.joint_properties.
      */
     const JOINT_TYPE_WELD: number & { readonly __brand: "physics.JOINT_TYPE_WELD" };
     /**
-     * The following properties are available when connecting a joint of `JOINT_TYPE_WHEEL` type:
+     * Wheel joint; uses the axis, motor, frequency, and damping fields from physics.joint_properties.
      */
     const JOINT_TYPE_WHEEL: number & { readonly __brand: "physics.JOINT_TYPE_WHEEL" };
+    /**
+     * Box shape.
+     */
     const SHAPE_TYPE_BOX: number & { readonly __brand: "physics.SHAPE_TYPE_BOX" };
+    /**
+     * Capsule shape; supported only by 3D physics.
+     */
     const SHAPE_TYPE_CAPSULE: number & { readonly __brand: "physics.SHAPE_TYPE_CAPSULE" };
+    /**
+     * Convex hull shape.
+     */
     const SHAPE_TYPE_HULL: number & { readonly __brand: "physics.SHAPE_TYPE_HULL" };
+    /**
+     * Triangle mesh shape; supported only by the Bullet 3D backend.
+     */
+    const SHAPE_TYPE_MESH: number & { readonly __brand: "physics.SHAPE_TYPE_MESH" };
+    /**
+     * Sphere shape.
+     */
     const SHAPE_TYPE_SPHERE: number & { readonly __brand: "physics.SHAPE_TYPE_SPHERE" };
     /**
      * Create a physics joint between two collision object components.
@@ -44,11 +243,9 @@ declare global {
      * @param position_a - local position where to attach the joint on the first collision object
      * @param collisionobject_b - second collision object
      * @param position_b - local position where to attach the joint on the second collision object
-     * @param properties - optional joint specific properties table
-     * See each joint type for possible properties field. The one field that is accepted for all joint types is:
-     * - boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
+     * @param properties - optional joint-specific properties
      */
-    function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: { collide_connected?: boolean }): void;
+    function create_joint(joint_type: physics.JOINT_TYPE, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: physics.joint_properties): void;
     /**
      * Destroy an already physics joint. The joint has to be created before a
      * destroy can be issued.
@@ -82,7 +279,7 @@ declare global {
      *
      * @param url - the collision object to return the group of.
      * @returns hash value of the group.
-     *
+     * @example
      * ```ts
      * function check_is_enemy(): boolean {
      *   const group = physics.get_group("#collisionobject");
@@ -98,11 +295,9 @@ declare global {
      *
      * @param collisionobject - collision object where the joint exist
      * @param joint_id - id of the joint
-     * @returns properties table. See the joint types for what fields are available, the only field available for all types is:
-     *
-     * - boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
+     * @returns joint properties
      */
-    function get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): { collide_connected: boolean };
+    function get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): physics.joint_properties_info;
     /**
      * Get the reaction force for a joint. The joint has to be created before
      * the reaction force can be calculated.
@@ -130,7 +325,7 @@ declare global {
      * @param url - the collision object to check the mask of.
      * @param group - the name of the group to check for.
      * @returns boolean value of the maskbit. 'true' if present, 'false' otherwise.
-     *
+     * @example
      * ```ts
      * function is_invincible(): boolean {
      *   // check if the collisionobject would collide with the "bullet" group
@@ -145,34 +340,8 @@ declare global {
      *
      * @param url - the collision object.
      * @param shape - the name of the shape to get data for.
-     * @returns A table containing meta data about the physics shape
-     *
-     * `type`
-     * number The shape type. Supported values:
-     *
-     * - `physics.SHAPE_TYPE_SPHERE`
-     * - `physics.SHAPE_TYPE_BOX`
-     * - `physics.SHAPE_TYPE_CAPSULE` *Only supported for 3D physics*
-     * - `physics.SHAPE_TYPE_HULL`
-     *
-     * The returned table contains different fields depending on which type the shape is.
-     * If the shape is a sphere:
-     *
-     * `diameter`
-     * number the diameter of the sphere shape
-     *
-     * If the shape is a box:
-     *
-     * `dimensions`
-     * vector3 a `vmath.vector3` of the box dimensions
-     *
-     * If the shape is a capsule:
-     *
-     * `diameter`
-     * number the diameter of the capsule poles
-     * `height`
-     * number the height of the capsule
-     *
+     * @returns collision shape data
+     * @example
      * ```ts
      * function get_shape_meta() {
      *   const sphere = physics.get_shape("#collisionobject", "my_sphere_shape");
@@ -181,7 +350,7 @@ declare global {
      * }
      * ```
      */
-    function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };
+    function get_shape(url: string | Hash | Url, shape: string | Hash): physics.shape_data;
     /**
      * Ray casts are used to test for intersections against collision objects in the physics world.
      * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects
@@ -193,10 +362,7 @@ declare global {
      * @param from - the world position of the start of the ray
      * @param to - the world position of the end of the ray
      * @param groups - a lua table containing the hashed groups for which to test collisions against
-     * @param options - a lua table containing options for the raycast.
-     *
-     * `all`
-     * boolean Set to `true` to return all ray cast hits. If `false`, it will only return the closest hit.
+     * @param options - optional ray-cast options
      * @returns It returns a list. If missed it returns `nil`. See ray_cast_response for details on the returned values.
      * @example
      * ```ts
@@ -216,7 +382,8 @@ declare global {
      *     const to = vmath.vector3(from.x, from.y - 100, from.z);
      *     const results = physics.raycast(from, to, self.groups, { all: true });
      *     if (results !== undefined) {
-     *       for (const result of results) {
+     *       // with `all` set, the ray cast returns every hit as a list
+     *       for (const result of Array.isArray(results) ? results : [results]) {
      *         handle_result(result);
      *       }
      *     }
@@ -224,7 +391,7 @@ declare global {
      * });
      * ```
      */
-    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined;
+    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.raycast_options): BuiltinMessages["ray_cast_response"][] | BuiltinMessages["ray_cast_response"] | undefined;
     /**
      * Ray casts are used to test for intersections against collision objects in the physics world.
      * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects
@@ -272,21 +439,18 @@ declare global {
     /**
      * Only one physics world event listener can be set at a time.
      *
-     * @param callback - A callback that receives an information about all the physics interactions in this physics world.
+     * @param callback - A callback that receives information about all physics interactions in this physics world. Pass `nil` to remove the listener.
      *
      * `self`
-     * object The calling script
-     * `event`
-     * constant The type of event. Can be one of these messages:
+     * script_instance The calling script instance
+     * `events`
+     * physics.event[] An array of event tables. Each event table contains a `type` field with the hashed name of one of these messages, together with fields specific to that event type:
      *
      * - contact_point_event
      * - collision_event
      * - trigger_event
      * - ray_cast_response
      * - ray_cast_missed
-     *
-     * `data`
-     * table The callback value data is a table that contains event-related data. See the documentation for details on the messages.
      * @example
      * ```ts
      * function physics_world_listener(self: unknown, events: unknown) {
@@ -369,7 +533,7 @@ declare global {
      * });
      * ```
      */
-    function set_event_listener(callback?: (self: unknown, events: unknown) => void): void;
+    function set_event_listener(callback?: (self: unknown, events: physics.event[]) => void): void;
     /**
      * Set the gravity in runtime. The gravity change is not global, it will only affect
      * the collection that the function is called from.
@@ -394,7 +558,7 @@ declare global {
      *
      * @param url - the collision object affected.
      * @param group - the new group name to be assigned.
-     *
+     * @example
      * ```ts
      * function change_collision_group() {
      *   physics.set_group("#collisionobject", "enemy");
@@ -429,14 +593,14 @@ declare global {
      * @param properties - joint specific properties table
      * Note: The `collide_connected` field cannot be updated/changed after a connection has been made.
      */
-    function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean }): void;
+    function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: physics.joint_properties): void;
     /**
      * Sets or clears the masking of a group (maskbit) in a collision object.
      *
      * @param url - the collision object to change the mask of.
      * @param group - the name of the group (maskbit) to modify in the mask.
      * @param maskbit - boolean value of the new maskbit. 'true' to enable, 'false' to disable.
-     *
+     * @example
      * ```ts
      * function make_invincible() {
      *   // no longer collide with the "bullet" group
@@ -452,9 +616,9 @@ declare global {
      *
      * @param url - the collision object.
      * @param shape - the name of the shape to get data for.
-     * @param table - the shape data to update the shape with.
-     * See physics.get_shape for a detailed description of each field in the data table.
-     *
+     * @param table - updated collision shape data
+     * Hull and mesh geometry cannot be changed with this function.
+     * @example
      * ```ts
      * function set_shape_data() {
      *   // set capsule shape data
@@ -478,7 +642,7 @@ declare global {
      * }
      * ```
      */
-    function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;
+    function set_shape(url: string | Hash | Url, shape: string | Hash, table: physics.shape_data): void;
     /**
      * Flips the collision shapes vertically for a collision object
      *
@@ -513,7 +677,7 @@ declare global {
      * efficiency reasons. This function wakes them up.
      *
      * @param url - the collision object to wake.
-     *
+     * @example
      * ```ts
      * export default defineScript({
      *   on_input(self, action_id, action) {
@@ -525,6 +689,73 @@ declare global {
      * ```
      */
     function wakeup(url: string | Hash | Url): void;
+    namespace message {
+      namespace physics {
+        /**
+         * collision object information
+         */
+        interface collision_info {
+          /**
+           * object position in world space
+           */
+          position: Vector3;
+          /**
+           * object identifier
+           */
+          id: Hash;
+          /**
+           * object collision group
+           */
+          group: Hash;
+        }
+        /**
+         * contact-point object information
+         */
+        interface contact_point_info {
+          /**
+           * contact point position in world space
+           */
+          position: Vector3;
+          /**
+           * object position in world space
+           */
+          instance_position: Vector3;
+          /**
+           * contact normal pointing from the other object toward this object
+           */
+          normal: Vector3;
+          /**
+           * object velocity relative to the other object
+           */
+          relative_velocity: Vector3;
+          /**
+           * object mass in kilograms
+           */
+          mass: number;
+          /**
+           * object identifier
+           */
+          id: Hash;
+          /**
+           * object collision group
+           */
+          group: Hash;
+        }
+        /**
+         * trigger interaction object information
+         */
+        interface trigger_info {
+          /**
+           * object identifier
+           */
+          id: Hash;
+          /**
+           * object collision group
+           */
+          group: Hash;
+        }
+      }
+    }
     interface properties {
       /**
        * The angular damping value for the collision object. Setting this value alters the damping of

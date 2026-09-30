@@ -25,7 +25,10 @@ declare global {
     model_animation_done: { animation_id: Hash; playback: number };
     play_animation: { id: Hash };
     play_sound: { delay?: number; gain?: number; play_id?: number; start_time?: number; start_frame?: number };
+    proxy_error: { code: number };
     proxy_loaded: Record<string, never>;
+    proxy_loading: { progress: number };
+    proxy_ready: Record<string, never>;
     proxy_unloaded: Record<string, never>;
     ray_cast_missed: { group: Hash; request_id: number };
     ray_cast_response: { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number };
@@ -47,6 +50,9 @@ declare global {
     start_record: { file_name: string; frame_period: number; fps: number };
     stop_record: Record<string, never>;
     stop_sound: Record<string, never>;
+    text_object_clicked: { id: Hash; type: Hash; src: string };
+    text_object_hovered: { id: Hash; type: Hash; src: string };
+    text_object_unhovered: { id: Hash; type: Hash; src: string };
     toggle_physics_debug: Record<string, never>;
     toggle_profile: Record<string, never>;
     trigger_event: { enter: boolean; a: Record<string | number, unknown>; b: Record<string | number, unknown> };

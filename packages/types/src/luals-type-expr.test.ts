@@ -75,20 +75,32 @@ describe("mapLualsExpression position-aware tables", () => {
 
   test("a string-keyed table widens to accept an object literal only in input position", () => {
     expect(input("table<string|hash, number>")).toBe(
-      "LuaTable<string | Hash, number> | Record<string, number>",
+      "LuaMap<string | Hash, number> | Record<string, number>",
     );
     expect(output("table<string|hash, number>")).toBe("LuaTable<string | Hash, number>");
     expect(map("table<string|hash, number>").ts).toBe("LuaTable<string | Hash, number>");
   });
 
-  test("a hash-only key cannot carry an object literal's keys, so it never widens", () => {
-    expect(input("table<hash, number>")).toBe("LuaTable<Hash, number>");
+  test("a hash-only key cannot carry an object literal's keys, so it takes only a Lua table", () => {
+    expect(input("table<hash, number>")).toBe("LuaMap<Hash, number>");
     expect(output("table<hash, number>")).toBe("LuaTable<Hash, number>");
+  });
+
+  // `LuaMap` is the input builder both TSTL constructors satisfy: a `LuaTable`
+  // is assignable to it, while a `LuaMap` is not assignable to a `LuaTable`.
+  test("an input table takes a LuaMap, and an output table stays a LuaTable", () => {
+    expect(input("table<integer, number>")).toBe("LuaMap<number, number>");
+    expect(output("table<integer, number>")).toBe("LuaTable<number, number>");
+  });
+
+  test("an any-keyed table admits string keys, so it widens in input position", () => {
+    expect(input("table<any, any>")).toBe("LuaMap<AnyNotNil, unknown> | Record<string, unknown>");
+    expect(output("table<any, any>")).toBe("LuaTable<AnyNotNil, unknown>");
   });
 
   test("a nested string-keyed table widens at every level in input position and none in output", () => {
     expect(input("table<string, table<string, number>>")).toBe(
-      "LuaTable<string, LuaTable<string, number> | Record<string, number>> | Record<string, LuaTable<string, number> | Record<string, number>>",
+      "LuaMap<string, LuaMap<string, number> | Record<string, number>> | Record<string, LuaMap<string, number> | Record<string, number>>",
     );
     expect(output("table<string, table<string, number>>")).toBe(
       "LuaTable<string, LuaTable<string, number>>",
@@ -97,19 +109,19 @@ describe("mapLualsExpression position-aware tables", () => {
 
   test("input position reaches through optionals, unions, arrays and inline records", () => {
     expect(input("table<string, number>?")).toBe(
-      "LuaTable<string, number> | Record<string, number> | undefined",
+      "LuaMap<string, number> | Record<string, number> | undefined",
     );
     expect(input("table<string, number>[]")).toBe(
-      "(LuaTable<string, number> | Record<string, number>)[]",
+      "(LuaMap<string, number> | Record<string, number>)[]",
     );
     expect(input("{ values: table<string, number> }")).toBe(
-      "{ values: LuaTable<string, number> | Record<string, number> }",
+      "{ values: LuaMap<string, number> | Record<string, number> }",
     );
   });
 
   test("a callback's params are handed over by the engine, its return is supplied by the caller", () => {
     expect(input("fun(t: table<string, number>): table<string, number>")).toBe(
-      "(t: LuaTable<string, number>) => LuaTable<string, number> | Record<string, number>",
+      "(t: LuaTable<string, number>) => LuaMap<string, number> | Record<string, number>",
     );
     expect(output("fun(t: table<string, number>): table<string, number>")).toBe(
       "(t: LuaTable<string, number>) => LuaTable<string, number>",
@@ -118,7 +130,7 @@ describe("mapLualsExpression position-aware tables", () => {
 
   test("a widened table maps its value once, so an unknown leaf is reported once", () => {
     expect(mapLualsExpression("table<string, buffer_data>", resolveLeaf, "input")).toEqual({
-      ts: "LuaTable<string, unknown> | Record<string, unknown>",
+      ts: "LuaMap<string, unknown> | Record<string, unknown>",
       unknowns: ["buffer_data"],
     });
   });
@@ -129,7 +141,7 @@ describe("mapLualsExpression position-aware tables", () => {
       "(t: LuaTable<string, number>): LuaTable<string, number>",
     );
     expect(mapLualsCallSignatureExpression(token, resolveLeaf, "input").ts).toBe(
-      "(t: LuaTable<string, number>): LuaTable<string, number> | Record<string, number>",
+      "(t: LuaTable<string, number>): LuaMap<string, number> | Record<string, number>",
     );
   });
 });

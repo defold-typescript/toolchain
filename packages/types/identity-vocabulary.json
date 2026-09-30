@@ -1,0 +1,561 @@
+{
+  "tables": [
+    "b2d.aabb",
+    "b2d.chain_definition",
+    "b2d.chain_geometry",
+    "b2d.contact_data",
+    "b2d.contact_point",
+    "b2d.explosion_definition",
+    "b2d.filter",
+    "b2d.filter_options",
+    "b2d.fixture_cast_hit",
+    "b2d.fixture_definition",
+    "b2d.fixture_info",
+    "b2d.joint.distance_definition",
+    "b2d.joint.friction_definition",
+    "b2d.joint.gear_definition",
+    "b2d.joint.motor_definition",
+    "b2d.joint.mouse_definition",
+    "b2d.joint.prismatic_definition",
+    "b2d.joint.pulley_definition",
+    "b2d.joint.revolute_definition",
+    "b2d.joint.rope_definition",
+    "b2d.joint.weld_definition",
+    "b2d.joint.wheel_definition",
+    "b2d.mass_data",
+    "b2d.mover_capsule",
+    "b2d.mover_plane",
+    "b2d.query_filter",
+    "b2d.shape_cast_hit",
+    "b2d.shape_cast_output",
+    "b2d.shape_info",
+    "b2d.transform",
+    "b2d.tree_stats",
+    "b2d.version_info",
+    "b2d.world_counters",
+    "b2d.world_profile",
+    "bullet3d.constraint.anchor_axes_params",
+    "bullet3d.constraint.cone_twist_params",
+    "bullet3d.constraint.generic_6dof_params",
+    "bullet3d.constraint.generic_6dof_spring_params",
+    "bullet3d.constraint.hinge_params",
+    "bullet3d.constraint.point_to_point_params",
+    "bullet3d.constraint.slider_params",
+    "bullet3d.version_info",
+    "bullet3d.world.aabb",
+    "bullet3d.world.cast_result",
+    "bullet3d.world.contact_result",
+    "bullet3d.world.query_filter",
+    "collectionproxy.load_data",
+    "crash.module_info",
+    "font.file_info",
+    "font.info",
+    "go.property_options",
+    "graphics.adapter_info",
+    "graphics.adapter_limits",
+    "gui.layout_object",
+    "gui.play_properties",
+    "gui.set_options",
+    "http.request_options",
+    "http.response",
+    "image.astc_header",
+    "image.load_buffer_result",
+    "image.load_options",
+    "image.load_result",
+    "json.decode_options",
+    "json.encode_options",
+    "label.layout_object",
+    "material.constant_info",
+    "material.constant_options",
+    "material.named_vertex_attribute_options",
+    "material.sampler_info",
+    "material.sampler_options",
+    "material.texture_info",
+    "material.vertex_attribute_info",
+    "material.vertex_attribute_options",
+    "message.physics.collision_info",
+    "message.physics.contact_point_info",
+    "message.physics.trigger_info",
+    "model.aabb",
+    "model.play_properties",
+    "on_input.action",
+    "on_input.gamepad_guid_info",
+    "on_input.touch",
+    "particlefx.stop_options",
+    "physics.joint_properties",
+    "physics.joint_properties_info",
+    "physics.raycast_options",
+    "physics.shape_data",
+    "render.camera_options",
+    "render.debug_draw_options",
+    "render.dispatch_options",
+    "render.draw_options",
+    "render.render_target_buffer_params",
+    "render.set_render_target_options",
+    "resource.animation",
+    "resource.animation_data",
+    "resource.atlas",
+    "resource.atlas_data",
+    "resource.buffer_creation_params",
+    "resource.buffer_update_options",
+    "resource.geometry",
+    "resource.geometry_data",
+    "resource.render_target_attachment_info",
+    "resource.render_target_info",
+    "resource.sound_data_options",
+    "resource.text_metrics",
+    "resource.text_metrics_options",
+    "resource.texture_creation_params",
+    "resource.texture_creation_result",
+    "resource.texture_info",
+    "resource.texture_update_params",
+    "socket.dns.address_info",
+    "socket.dns.host_info",
+    "sound.play_completion",
+    "sound.play_properties",
+    "sound.stop_properties",
+    "sprite.play_properties",
+    "sys.application_info",
+    "sys.engine_info",
+    "sys.interface_info",
+    "sys.load_buffer_result",
+    "sys.open_url_attributes",
+    "sys.sys_info",
+    "sys.sys_info_options",
+    "timer.info",
+    "window.event_data",
+    "window.safe_area"
+  ],
+  "enums": {
+    "b2d.body.B2": "number",
+    "b2d.joint.JOINT_TYPE": "number",
+    "b2d.joint.LIMIT_STATE": "number",
+    "b2d.shape.SHAPE_TYPE": "number",
+    "buffer.VALUE_TYPE": "number",
+    "buffer.ValueType": "number",
+    "bullet3d.collision_object.ACTIVATION_STATE": "number",
+    "bullet3d.collision_object.COLLISION_FLAG": "number",
+    "bullet3d.collision_object.INTERNAL_TYPE": "number",
+    "bullet3d.constraint.CONSTRAINT_TYPE": "number",
+    "bullet3d.rigid_body.FLAG": "number",
+    "bullet3d.shape.SHAPE_TYPE": "number",
+    "camera.ORTHO_MODE": "number",
+    "collectionfactory.Status": "number",
+    "collectionfactory.STATUS": "number",
+    "collectionproxy.RESULT": "number",
+    "crash.SYSFIELD": "number",
+    "factory.Status": "number",
+    "factory.STATUS": "number",
+    "go.Easing": "number",
+    "go.EASING": "number",
+    "go.Playback": "number",
+    "go.PLAYBACK": "number",
+    "graphics.BLEND_EQUATION": "number",
+    "graphics.BLEND_FACTOR": "number",
+    "graphics.BUFFER_TYPE": "number",
+    "graphics.BufferType": "number",
+    "graphics.COMPARE_FUNC": "number",
+    "graphics.COMPRESSION_TYPE": "number",
+    "graphics.CONTEXT_FEATURE": "number",
+    "graphics.COORDINATE_SPACE": "number",
+    "graphics.DATA_TYPE": "number",
+    "graphics.FACE_TYPE": "number",
+    "graphics.SEMANTIC_TYPE": "number",
+    "graphics.State": "number",
+    "graphics.STATE": "number",
+    "graphics.STENCIL_OP": "number",
+    "graphics.TEXTURE_FILTER": "number",
+    "graphics.TEXTURE_FORMAT": "number",
+    "graphics.TEXTURE_TYPE": "number",
+    "graphics.TEXTURE_USAGE_FLAG": "number",
+    "graphics.TEXTURE_WRAP": "number",
+    "gui.ADJUST": "number",
+    "gui.AdjustMode": "number",
+    "gui.ANCHOR": "number",
+    "gui.BLEND": "number",
+    "gui.BlendMode": "number",
+    "gui.CLIPPING_MODE": "number",
+    "gui.ClippingMode": "number",
+    "gui.Easing": "number",
+    "gui.EASING": "number",
+    "gui.KEYBOARD_TYPE": "number",
+    "gui.KeyboardType": "number",
+    "gui.NodeType": "number",
+    "gui.PieBounds": "number",
+    "gui.PIEBOUNDS": "number",
+    "gui.Pivot": "number",
+    "gui.PIVOT": "number",
+    "gui.Playback": "number",
+    "gui.PLAYBACK": "number",
+    "gui.PROP": "number",
+    "gui.Property": "number",
+    "gui.RESULT": "number",
+    "gui.SAFE_AREA": "number",
+    "gui.SafeAreaMode": "number",
+    "gui.SIZE_MODE": "number",
+    "gui.SizeMode": "number",
+    "gui.TYPE": "number",
+    "gui.XAnchor": "number",
+    "gui.YAnchor": "number",
+    "image.TYPE": "string",
+    "liveupdate.LIVEUPDATE": "number",
+    "material.CONSTANT_TYPE": "number",
+    "particlefx.EMITTER_STATE": "number",
+    "physics.JOINT_TYPE": "number",
+    "physics.SHAPE_TYPE": "number",
+    "profiler.Mode": "number",
+    "profiler.MODE": "number",
+    "profiler.VIEW_MODE": "number",
+    "profiler.ViewMode": "number",
+    "render.ClearBufferKey": "number",
+    "render.CONTEXT_EVENT": "number",
+    "render.FRUSTUM_PLANES": "number",
+    "render.RENDER_TARGET_FLAG": "number",
+    "render.SORT": "number",
+    "sys.NETWORK": "number",
+    "sys.NetworkConnectivity": "number",
+    "sys.REQUEST_STATUS": "number",
+    "tilemap.TRANSFORM": "number",
+    "window.DIMMING": "number",
+    "window.DimModeState": "number",
+    "window.DimModeStateSettable": "number",
+    "window.WINDOW_EVENT": "number"
+  },
+  "stringConstants": [
+    "image.TYPE_LUMINANCE",
+    "image.TYPE_LUMINANCE_ALPHA",
+    "image.TYPE_RGB",
+    "image.TYPE_RGBA"
+  ],
+  "aliases": {
+    "b2d.joint.filter_definition": ["{}"],
+    "b2d.shape_create_definition": [
+      "{ shape:b2d.shape.definition, density?:number, friction?:number, restitution?:number, material?:integer, sensor?:boolean, is_sensor?:boolean, filter?:b2d.filter }",
+      "{ type:b2d.shape.SHAPE_TYPE, radius?:number, center?:vector3, center1?:vector3, center2?:vector3, v0?:vector3, v1?:vector3, v2?:vector3, v3?:vector3, hx?:number, hy?:number, angle?:number, vertices?:vector3[], density?:number, friction?:number, restitution?:number, material?:integer, sensor?:boolean, is_sensor?:boolean, filter?:b2d.filter }"
+    ],
+    "b2d.shape.definition": [
+      "{ type:b2d.shape.SHAPE_TYPE, radius:number, center?:vector3 }",
+      "{ type:b2d.shape.SHAPE_TYPE, radius:number, center1:vector3, center2:vector3 }",
+      "{ type:b2d.shape.SHAPE_TYPE, v1:vector3, v2:vector3, v0?:vector3, v3?:vector3 }",
+      "{ type:b2d.shape.SHAPE_TYPE, hx:number, hy:number, center?:vector3, angle?:number }",
+      "{ type:b2d.shape.SHAPE_TYPE, vertices:vector3[], loop?:boolean, prev_vertex?:vector3, next_vertex?:vector3 }"
+    ],
+    "bullet3d.shape.definition": [
+      "{ type:bullet3d.shape.SHAPE_TYPE, diameter:number, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }",
+      "{ type:bullet3d.shape.SHAPE_TYPE, dimensions:vector3, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }",
+      "{ type:bullet3d.shape.SHAPE_TYPE, diameter:number, height:number, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }",
+      "{ type:bullet3d.shape.SHAPE_TYPE, vertices:vector3[], position?:vector3, rotation?:quaternion, target_rotation?:quaternion }"
+    ],
+    "collectionproxy.TIME_STEP_MODE": ["0", "1"],
+    "crash.USERFIELD": ["integer"],
+    "material.constant_info_value": ["vector4", "matrix4", "vector4[]", "matrix4[]"],
+    "material.constant_value": [
+      "number",
+      "vector3",
+      "vector4",
+      "matrix4",
+      "(number|vector3|vector4|matrix4)[]"
+    ],
+    "material.vertex_attribute_value": ["number", "vector3", "vector4", "matrix4", "number[]"],
+    "physics.event": [
+      "message.physics.contact_point_event",
+      "message.physics.collision_event",
+      "message.physics.trigger_event",
+      "message.physics.ray_cast_response",
+      "message.physics.ray_cast_missed"
+    ],
+    "render_target": ["number"],
+    "render.render_target_params": [
+      "{ sample_count?:integer, [graphics.BUFFER_TYPE]:render.render_target_buffer_params }"
+    ],
+    "socket_selectable": [
+      "socket_master",
+      "socket_client",
+      "socket_server",
+      "socket_connected",
+      "socket_unconnected",
+      "{ getfd:fun(self:any):integer, dirty:fun(self:any):boolean }"
+    ],
+    "texture": ["number"],
+    "timer_handle": ["number"]
+  },
+  "optionalSlots": [
+    "b2d.fixture.set_density:param:update_mass",
+    "b2d.fixture.set_shape:param:update_mass",
+    "b2d.joint.create_distance:param:definition",
+    "b2d.joint.create_filter:param:definition",
+    "b2d.joint.create_friction:param:definition",
+    "b2d.joint.create_gear:param:definition",
+    "b2d.joint.create_motor:param:definition",
+    "b2d.joint.create_mouse:param:definition",
+    "b2d.joint.create_prismatic:param:definition",
+    "b2d.joint.create_pulley:param:definition",
+    "b2d.joint.create_revolute:param:definition",
+    "b2d.joint.create_rope:param:definition",
+    "b2d.joint.create_weld:param:definition",
+    "b2d.joint.create_wheel:param:definition",
+    "b2d.shape.ray_cast:param:max_fraction",
+    "b2d.shape.set_shape:param:update_mass",
+    "go.cancel_animations:param:url",
+    "go.world_to_local_position:param:url",
+    "go.world_to_local_transform:param:url",
+    "gui.new_texture:param:flip",
+    "gui.set_texture_data:param:flip",
+    "iap.buy:param:options",
+    "render.set_render_target:param:render_target",
+    "resource.create_texture:param:buffer",
+    "resource.create_texture_async:param:buffer",
+    "socket.newtry:param:finalizer",
+    "vmath.euler_to_quat:param:y",
+    "vmath.euler_to_quat:param:z"
+  ],
+  "requiredSlots": [
+    "collectionfactory.get_status:param:url",
+    "collectionfactory.load:param:complete_function",
+    "collectionfactory.load:param:url",
+    "collectionfactory.set_prototype:param:prototype",
+    "collectionfactory.set_prototype:param:url",
+    "collectionfactory.unload:param:url",
+    "collectionproxy.set_collection:param:prototype",
+    "collectionproxy.set_collection:param:url",
+    "factory.get_status:param:url",
+    "factory.load:param:complete_function",
+    "factory.load:param:url",
+    "factory.set_prototype:param:prototype",
+    "factory.set_prototype:param:url",
+    "factory.unload:param:url",
+    "gui.move_above:param:reference",
+    "gui.move_below:param:reference",
+    "gui.set:param:value",
+    "gui.set_parent:param:parent",
+    "html5.set_interaction_listener:param:callback",
+    "resource.create_buffer:param:table",
+    "resource.create_sound_data:param:options",
+    "resource.create_texture_async:param:callback",
+    "sound.set_gain:param:gain",
+    "sound.set_pan:param:pan",
+    "window.set_listener:param:callback"
+  ],
+  "parameterCorrections": {
+    "buffer.get_bytes:param:stream_name": { "pins": [["hash"]], "adds": ["string"] },
+    "camera.get_aspect_ratio:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.get_auto_aspect_ratio:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.get_enabled:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.get_far_z:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.get_fov:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.get_near_z:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.get_orthographic_auto_zoom:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.get_orthographic_mode:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.get_orthographic_zoom:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.get_projection:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.get_view:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.screen_to_world:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.screen_xy_to_world:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.set_aspect_ratio:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.set_auto_aspect_ratio:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.set_far_z:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.set_fov:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.set_near_z:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.set_orthographic_mode:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.set_orthographic_zoom:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "camera.world_to_screen:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "collectionproxy.get_resources:param:collectionproxy": {
+      "pins": [["url"]],
+      "adds": ["string", "Hash"]
+    },
+    "go.delete:param:id": {
+      "pins": [
+        ["string", "hash", "url", "table"],
+        ["string", "hash", "url", "(string|hash|url)[]"]
+      ],
+      "adds": ["boolean"]
+    },
+    "gui.animate:param:property": { "pins": [["string", "constant"]], "adds": ["Hash"] },
+    "gui.cancel_animations:param:property": {
+      "pins": [["nil", "string", "constant"]],
+      "adds": ["Hash"]
+    },
+    "gui.screen_to_local:param:screen_position": { "pins": [["vector3"]], "adds": ["Vector4"] },
+    "gui.set_rotation:param:rotation": { "pins": [["quaternion", "vector4"]], "adds": ["Vector3"] },
+    "gui.set_screen_position:param:screen_position": { "pins": [["vector3"]], "adds": ["Vector4"] },
+    "gui.set:param:value": {
+      "pins": [["number", "vector4", "vector3", "quaternion"]],
+      "adds": ["Matrix4", "Hash"]
+    },
+    "model.get_mesh_enabled:param:mesh_id": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Url"]
+    },
+    "model.set_mesh_enabled:param:mesh_id": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Url"]
+    },
+    "particlefx.set_constant:param:value": { "pins": [["vector4"]], "adds": ["Matrix4"] },
+    "physics.get_maskbit:param:group": { "pins": [["string"]], "adds": ["Hash"] },
+    "physics.set_group:param:group": { "pins": [["string"]], "adds": ["Hash"] },
+    "physics.set_maskbit:param:group": { "pins": [["string"]], "adds": ["Hash"] },
+    "render.disable_texture:param:binding": {
+      "pins": [["texture", "string", "hash"]],
+      "adds": ["number"]
+    },
+    "render.draw:param:predicate": {
+      "pins": [["number"], ["render_predicate"]],
+      "adds": ["Opaque<\"render_predicate\">"],
+      "removes": ["number"]
+    },
+    "render.enable_texture:param:handle_or_name": {
+      "pins": [["texture", "string", "hash"]],
+      "adds": ["Opaque<\"render_target\">", "number"]
+    },
+    "render.get_render_target_height:param:render_target": {
+      "pins": [["render_target"]],
+      "adds": ["string", "Hash"]
+    },
+    "render.get_render_target_width:param:render_target": {
+      "pins": [["render_target"]],
+      "adds": ["string", "Hash"]
+    },
+    "render.set_camera:param:camera": {
+      "pins": [["url", "number", "nil"]],
+      "adds": ["string", "Hash"]
+    },
+    "render.set_render_target_size:param:render_target": {
+      "pins": [["render_target"]],
+      "adds": ["string", "Hash"]
+    },
+    "render.set_render_target:param:render_target": {
+      "pins": [["render_target"], ["render_target", "string", "hash", "nil"]],
+      "adds": ["string", "Hash", "typeof render.RENDER_TARGET_DEFAULT"]
+    },
+    "resource.create_texture_async:param:path": {
+      "pins": [["string", "hash"]],
+      "removes": ["Hash"]
+    },
+    "resource.get_render_target_info:param:path": {
+      "pins": [["hash", "string", "render_target"]],
+      "adds": ["number"]
+    },
+    "resource.get_text_metrics:param:url": { "pins": [["hash"]], "adds": ["string"] },
+    "resource.get_texture_info:param:path": {
+      "pins": [["hash", "string", "texture"]],
+      "adds": ["number"]
+    },
+    "sound.get_group_name:param:group": { "pins": [["string", "hash"]], "removes": ["string"] },
+    "sys.save:param:table": {
+      "pins": [["table"], ["table<any, any>"]],
+      "adds": ["readonly unknown[]"]
+    },
+    "sys.serialize:param:table": {
+      "pins": [["table"], ["table<any, any>"]],
+      "adds": ["readonly unknown[]"]
+    },
+    "tilemap.set_tile:param:transform_bitmask": {
+      "pins": [["tilemap.TRANSFORM"]],
+      "adds": ["number"]
+    },
+    "window.set_dim_mode:param:mode": {
+      "pins": [["window.DIMMING"]],
+      "adds": ["window.DimModeStateSettable"],
+      "removes": ["window.DIMMING"]
+    }
+  },
+  "returnCorrections": {
+    "b2d.get_body": { "pins": [["b2Body"]], "replaces": ["Opaque<\"b2Body\">", "undefined"] },
+    "b2d.shape.ray_cast": {
+      "pins": [["table"]],
+      "replaces": [
+        "{ point: Vector3; normal: Vector3; fraction: number; iterations: number }",
+        "undefined"
+      ]
+    },
+    "b2d.world.cast_ray_closest": {
+      "pins": [["table"]],
+      "replaces": [
+        "{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number }",
+        "undefined"
+      ]
+    },
+    "gui.new_texture": {
+      "pins": [["number"]],
+      "replaces": ["number", "undefined"],
+      "slot": "code"
+    },
+    "render.predicate": {
+      "pins": [["number"], ["render_predicate"]],
+      "replaces": ["Opaque<\"render_predicate\">"]
+    },
+    "socket.newtry": {
+      "pins": [["function"], ["fun(...:any):any"]],
+      "replaces": [
+        "<T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T"
+      ]
+    },
+    "socket.protect": {
+      "pins": [["function(function())"], ["fun(...:any):any"]],
+      "replaces": ["(...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>"]
+    }
+  }
+}

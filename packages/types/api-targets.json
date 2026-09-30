@@ -1,9 +1,9 @@
 {
   "targets": [
     {
-      "id": "defold-1.13.1",
+      "id": "defold-1.13.2",
       "default": true,
-      "fixturesDir": "fixtures/defold-1.13.1",
+      "fixturesDir": "fixtures/defold-1.13.2",
       "generatedDir": "generated",
       "coreTypesImport": "../src/core-types",
       "source": null,
@@ -17,10 +17,401 @@
           "namespace": "b2d.body",
           "fixture": "b2d_body_doc.json",
           "outFile": "b2d_body.d.ts",
+          "skipFunctions": ["get_user_data", "set_user_data"],
+          "skipOverloads": [
+            {
+              "name": "create_fixture",
+              "param": "shape",
+              "type": "b2Shape"
+            },
+            {
+              "name": "set_mass_data",
+              "param": "data",
+              "type": "b2MassData"
+            }
+          ]
+        },
+        {
+          "namespace": "b2d.chain",
+          "fixture": "b2d_chain_doc.json",
+          "outFile": "b2d_chain.d.ts"
+        },
+        {
+          "namespace": "b2d.fixture",
+          "fixture": "b2d_fixture_doc.json",
+          "outFile": "b2d_fixture.d.ts"
+        },
+        {
+          "namespace": "b2d.joint",
+          "fixture": "b2d_joint_doc.json",
+          "outFile": "b2d_joint.d.ts"
+        },
+        {
+          "namespace": "b2d.shape",
+          "fixture": "b2d_shape_doc.json",
+          "outFile": "b2d_shape.d.ts"
+        },
+        {
+          "namespace": "b2d.world",
+          "fixture": "b2d_world_doc.json",
+          "outFile": "b2d_world.d.ts"
+        },
+        {
+          "namespace": "buffer",
+          "fixture": "buffer_doc.json",
+          "outFile": "buffer.d.ts"
+        },
+        {
+          "namespace": "bullet3d",
+          "fixture": "bullet3d_doc.json",
+          "outFile": "bullet3d.d.ts"
+        },
+        {
+          "namespace": "bullet3d.collision_object",
+          "fixture": "bullet3d_collision_object_doc.json",
+          "outFile": "bullet3d_collision_object.d.ts"
+        },
+        {
+          "namespace": "bullet3d.constraint",
+          "fixture": "bullet3d_constraint_doc.json",
+          "outFile": "bullet3d_constraint.d.ts"
+        },
+        {
+          "namespace": "bullet3d.rigid_body",
+          "fixture": "bullet3d_rigid_body_doc.json",
+          "outFile": "bullet3d_rigid_body.d.ts"
+        },
+        {
+          "namespace": "bullet3d.shape",
+          "fixture": "bullet3d_shape_doc.json",
+          "outFile": "bullet3d_shape.d.ts"
+        },
+        {
+          "namespace": "bullet3d.world",
+          "fixture": "bullet3d_world_doc.json",
+          "outFile": "bullet3d_world.d.ts"
+        },
+        {
+          "namespace": "camera",
+          "fixture": "camera_doc.json",
+          "outFile": "camera.d.ts"
+        },
+        {
+          "namespace": "collectionfactory",
+          "fixture": "collectionfactory_doc.json",
+          "outFile": "collectionfactory.d.ts"
+        },
+        {
+          "namespace": "collectionproxy",
+          "fixture": "collectionproxy_doc.json",
+          "outFile": "collectionproxy.d.ts"
+        },
+        {
+          "namespace": "compute",
+          "fixture": "compute_doc.json",
+          "outFile": "compute.d.ts"
+        },
+        {
+          "namespace": "crash",
+          "fixture": "crash_doc.json",
+          "outFile": "crash.d.ts"
+        },
+        {
+          "namespace": "factory",
+          "fixture": "factory_doc.json",
+          "outFile": "factory.d.ts"
+        },
+        {
+          "namespace": "font",
+          "fixture": "font_doc.json",
+          "outFile": "font.d.ts"
+        },
+        {
+          "namespace": "go",
+          "fixture": "go_doc.json",
+          "outFile": "go.d.ts",
+          "skipFunctions": ["get", "set", "property"]
+        },
+        {
+          "namespace": "graphics",
+          "fixture": "graphics_doc.json",
+          "outFile": "graphics.d.ts"
+        },
+        {
+          "namespace": "gui",
+          "fixture": "gui_doc.json",
+          "outFile": "gui.d.ts"
+        },
+        {
+          "namespace": "html5",
+          "fixture": "html5_doc.json",
+          "outFile": "html5.d.ts"
+        },
+        {
+          "namespace": "http",
+          "fixture": "http_doc.json",
+          "outFile": "http.d.ts",
+          "skipFunctions": ["response"]
+        },
+        {
+          "namespace": "image",
+          "fixture": "image_doc.json",
+          "outFile": "image.d.ts"
+        },
+        {
+          "namespace": "json",
+          "fixture": "json_doc.json",
+          "outFile": "json.d.ts"
+        },
+        {
+          "namespace": "label",
+          "fixture": "label_doc.json",
+          "outFile": "label.d.ts"
+        },
+        {
+          "namespace": "liveupdate",
+          "fixture": "liveupdate_doc.json",
+          "outFile": "liveupdate.d.ts"
+        },
+        {
+          "namespace": "material",
+          "fixture": "material_doc.json",
+          "outFile": "material.d.ts"
+        },
+        {
+          "namespace": "model",
+          "fixture": "model_doc.json",
+          "outFile": "model.d.ts"
+        },
+        {
+          "namespace": "msg",
+          "fixture": "msg_doc.json",
+          "outFile": "msg.d.ts",
+          "skipFunctions": ["post", "url"]
+        },
+        {
+          "namespace": "particlefx",
+          "fixture": "particlefx_doc.json",
+          "outFile": "particlefx.d.ts"
+        },
+        {
+          "namespace": "physics",
+          "fixture": "physics_doc.json",
+          "outFile": "physics.d.ts"
+        },
+        {
+          "namespace": "profiler",
+          "fixture": "profiler_doc.json",
+          "outFile": "profiler.d.ts"
+        },
+        {
+          "namespace": "render",
+          "fixture": "render_doc.json",
+          "outFile": "render.d.ts",
+          "skipFunctions": ["render_target"]
+        },
+        {
+          "namespace": "resource",
+          "fixture": "resource_doc.json",
+          "outFile": "resource.d.ts"
+        },
+        {
+          "namespace": "socket",
+          "fixture": "socket_doc.json",
+          "outFile": "socket.d.ts"
+        },
+        {
+          "namespace": "sound",
+          "fixture": "sound_doc.json",
+          "outFile": "sound.d.ts"
+        },
+        {
+          "namespace": "sprite",
+          "fixture": "sprite_doc.json",
+          "outFile": "sprite.d.ts"
+        },
+        {
+          "namespace": "sys",
+          "fixture": "sys_doc.json",
+          "outFile": "sys.d.ts",
+          "skipFunctions": ["get_config_string", "set_engine_throttle"]
+        },
+        {
+          "namespace": "tilemap",
+          "fixture": "tilemap_doc.json",
+          "outFile": "tilemap.d.ts"
+        },
+        {
+          "namespace": "timer",
+          "fixture": "timer_doc.json",
+          "outFile": "timer.d.ts"
+        },
+        {
+          "namespace": "types",
+          "fixture": "types_doc.json",
+          "outFile": "types.d.ts"
+        },
+        {
+          "namespace": "vmath",
+          "fixture": "vmath_doc.json",
+          "outFile": "vmath.d.ts",
+          "skipFunctions": [
+            "clamp",
+            "euler_to_quat",
+            "lerp",
+            "slerp",
+            "mul_per_elem",
+            "normalize",
+            "vector"
+          ]
+        },
+        {
+          "namespace": "window",
+          "fixture": "window_doc.json",
+          "outFile": "window.d.ts"
+        },
+        {
+          "namespace": "zlib",
+          "fixture": "zlib_doc.json",
+          "outFile": "zlib.d.ts"
+        }
+      ],
+      "editorModules": [
+        {
+          "namespace": "editor",
+          "fixture": "editor_doc.json",
+          "outFile": "editor.d.ts",
+          "mapType": "editor",
+          "skipFunctions": [
+            "command",
+            "http.",
+            "image.",
+            "json.",
+            "localization.",
+            "pprint",
+            "tilemap.",
+            "zip.",
+            "zlib."
+          ]
+        },
+        {
+          "namespace": "http",
+          "fixture": "editor_http_doc.json",
+          "outFile": "editor-vm/http.d.ts",
+          "mapType": "editor",
+          "skipFunctions": ["server.local_url", "server.port", "server.route", "server.url"]
+        },
+        {
+          "namespace": "image",
+          "fixture": "editor_image_doc.json",
+          "outFile": "editor-vm/image.d.ts",
+          "mapType": "editor"
+        },
+        {
+          "namespace": "json",
+          "fixture": "editor_json_doc.json",
+          "outFile": "editor-vm/json.d.ts",
+          "mapType": "editor",
+          "skipFunctions": ["decode", "encode"]
+        },
+        {
+          "namespace": "localization",
+          "fixture": "editor_localization_doc.json",
+          "outFile": "editor-vm/localization.d.ts",
+          "mapType": "editor"
+        },
+        {
+          "namespace": "zip",
+          "fixture": "editor_zip_doc.json",
+          "outFile": "editor-vm/zip.d.ts",
+          "mapType": "editor",
+          "skipFunctions": ["METHOD.", "ON_CONFLICT.", "pack", "unpack"]
+        },
+        {
+          "namespace": "zlib",
+          "fixture": "editor_zlib_doc.json",
+          "outFile": "editor-vm/zlib.d.ts",
+          "mapType": "editor"
+        },
+        {
+          "namespace": "tilemap.tiles",
+          "fixture": "editor_tilemap_tiles_doc.json",
+          "outFile": "editor-vm/tilemap_tiles.d.ts",
+          "mapType": "editor"
+        }
+      ],
+      "luaStdlib": [
+        {
+          "namespace": "base",
+          "fixture": "base_doc.json"
+        },
+        {
+          "namespace": "bit",
+          "fixture": "bit_doc.json"
+        },
+        {
+          "namespace": "math",
+          "fixture": "math_doc.json"
+        },
+        {
+          "namespace": "os",
+          "fixture": "os_doc.json"
+        },
+        {
+          "namespace": "string",
+          "fixture": "string_doc.json"
+        },
+        {
+          "namespace": "table",
+          "fixture": "table_doc.json"
+        },
+        {
+          "namespace": "coroutine",
+          "fixture": "coroutine_doc.json"
+        },
+        {
+          "namespace": "debug",
+          "fixture": "debug_doc.json"
+        },
+        {
+          "namespace": "io",
+          "fixture": "io_doc.json"
+        },
+        {
+          "namespace": "package",
+          "fixture": "package_doc.json"
+        }
+      ]
+    },
+    {
+      "id": "defold-1.13.1",
+      "default": false,
+      "fixturesDir": "fixtures/defold-1.13.1",
+      "generatedDir": "generated/versions/defold-1.13.1",
+      "coreTypesImport": "../../../src/core-types",
+      "source": null,
+      "modules": [
+        {
+          "namespace": "b2d",
+          "fixture": "b2d_doc.json",
+          "outFile": "b2d.d.ts"
+        },
+        {
+          "namespace": "b2d.body",
+          "fixture": "b2d_body_doc.json",
+          "outFile": "b2d_body.d.ts",
           "skipFunctions": ["get_contact_list", "get_user_data", "set_user_data"],
           "skipOverloads": [
-            { "name": "create_fixture", "param": "shape", "type": "b2Shape" },
-            { "name": "set_mass_data", "param": "data", "type": "b2MassData" }
+            {
+              "name": "create_fixture",
+              "param": "shape",
+              "type": "b2Shape"
+            },
+            {
+              "name": "set_mass_data",
+              "param": "data",
+              "type": "b2MassData"
+            }
           ]
         },
         {
@@ -363,8 +754,16 @@
           "outFile": "b2d_body.d.ts",
           "skipFunctions": ["get_contact_list", "get_user_data", "set_user_data"],
           "skipOverloads": [
-            { "name": "create_fixture", "param": "shape", "type": "b2Shape" },
-            { "name": "set_mass_data", "param": "data", "type": "b2MassData" }
+            {
+              "name": "create_fixture",
+              "param": "shape",
+              "type": "b2Shape"
+            },
+            {
+              "name": "set_mass_data",
+              "param": "data",
+              "type": "b2MassData"
+            }
           ]
         },
         {

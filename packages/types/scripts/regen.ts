@@ -7,7 +7,13 @@ import {
   type SkipOverloadRule,
   withholdOverloads,
 } from "../src/api-doc";
-import { emitDeclarations, emitSymbolSignatures, type SymbolSignature } from "../src/emit-dts";
+import {
+  declaredTypePaths,
+  emitDeclarations,
+  emitSymbolSignatures,
+  routeTypeDeclarations,
+  type SymbolSignature,
+} from "../src/emit-dts";
 import {
   applyMessageDeprecations,
   applyMessageFieldCorrections,
@@ -35,6 +41,7 @@ import {
 } from "./doc-source";
 import { loadTranslations } from "./example-store-io";
 import { synthesizeProseConstants } from "./prose-constants";
+import { restoreSharedHandleMethods } from "./shared-handle-methods";
 import { type readZip, SYNC_MANIFEST, type SyncManifestEntry } from "./sync-api-docs";
 
 export interface ApiTargetModule {
@@ -135,7 +142,7 @@ export function loadTargetModules(
     };
     return withSkipRules(entry, module);
   });
-  return synthesizeProseConstants(modules);
+  return restoreSharedHandleMethods(synthesizeProseConstants(modules));
 }
 
 export interface ModuleManifestEntry {
@@ -298,6 +305,10 @@ function oneLevelDeeper(importPath: string): string {
 // 1.12.4. The engine-binding diff reports a missing binding the moment one is
 // declared again.
 //
+// On the 1.13.2 `http` entry, `response` withholds the runtime response table:
+// the editor VM's `http.response` handle takes that name in the same global
+// namespace, and the `http.request` callback already types the table inline.
+//
 // On the `editor` entry, the editor VM's own `http`/`json`/`zip`/`zlib`/
 // `pprint`/`localization`/`tilemap.tiles` sit in that same upstream document
 // under their own top-level namespaces. They are emitted from their own
@@ -449,6 +460,7 @@ interface PreparedGeneratedModule {
   urlParameters: UrlParameterTable;
   registeredConstants: ReadonlySet<string> | undefined;
   typeLeaves: Readonly<Record<string, string>> | undefined;
+  declaredTypes: ReadonlyMap<string, string> | undefined;
   dropped: string[];
 }
 
@@ -460,7 +472,8 @@ function prepareGeneratedModule(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): PreparedGeneratedModule {
-  const { module, dropped } = withheldApiModule(entry);
+  const routed = routedModuleOf(entry);
+  const { module, dropped } = routed?.prepared ?? withheldApiModule(entry);
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
   const translations = options?.translations ?? loadTranslations();
   const urlParameters = options?.urlParameters ?? committedUrlParameters();
@@ -471,7 +484,107 @@ function prepareGeneratedModule(
     urlParameters,
     registeredConstants: options?.registeredConstants,
     typeLeaves: entry.typeLeaves,
+    declaredTypes: routed?.declaredTypes,
     dropped,
+  };
+}
+
+interface RoutedSurface {
+  readonly modules: ReadonlyMap<ModuleManifestEntry, { module: ApiModule; dropped: string[] }>;
+  readonly declaredTypes: ReadonlyMap<string, string>;
+}
+
+const routedSurfaces = new Map<string, RoutedSurface>();
+
+// A doc may declare a type another module owns (`b2d.joint.revolute_definition`
+// in the `b2d` doc) or name one another doc declares (`material.constant_info`
+// in `compute`), so each committed surface is routed as a whole: the runtime
+// modules and the editor modules of one target, never across targets. An entry
+// outside every committed manifest routes alone, as a single-module surface.
+function routedModuleOf(entry: ModuleManifestEntry):
+  | {
+      prepared: { module: ApiModule; dropped: string[] };
+      declaredTypes: ReadonlyMap<string, string>;
+    }
+  | undefined {
+  const located = committedSurfaceOf(entry);
+  if (located === undefined) return undefined;
+  let surface = routedSurfaces.get(located.key);
+  if (surface === undefined) {
+    const withheld = located.entries.map(withheldApiModule);
+    const routed = routeTypeDeclarations(withheld.map(({ module }) => module));
+    surface = {
+      modules: new Map(
+        located.entries.map((member, index) => [
+          member,
+          {
+            module: routed[index] as ApiModule,
+            dropped: (withheld[index] as { dropped: string[] }).dropped,
+          },
+        ]),
+      ),
+      declaredTypes: declaredTypePaths(routed),
+    };
+    routedSurfaces.set(located.key, surface);
+  }
+  const prepared = surface.modules.get(located.member);
+  return prepared === undefined ? undefined : { prepared, declaredTypes: surface.declaredTypes };
+}
+
+const committedDocText = new WeakMap<ModuleManifestEntry, string>();
+
+// The committed entry `entry` stands for: itself, or — for an entry a caller
+// re-loaded from the registry — the committed one with the same module, output,
+// import root, skip rules and document.
+function committedMemberOf(
+  entry: ModuleManifestEntry,
+  candidates: readonly ModuleManifestEntry[],
+): ModuleManifestEntry | undefined {
+  if (candidates.includes(entry)) return entry;
+  const shape = (member: ModuleManifestEntry) =>
+    JSON.stringify([
+      member.namespace,
+      member.outFile,
+      member.importsFrom,
+      member.moduleId,
+      member.skipFunctions,
+      member.skipOverloads,
+    ]);
+  const same = candidates.filter((candidate) => shape(candidate) === shape(entry));
+  if (same.length === 0) return undefined;
+  const text = JSON.stringify(entry.doc);
+  return same.find((candidate) => {
+    let committed = committedDocText.get(candidate);
+    if (committed === undefined) {
+      committed = JSON.stringify(candidate.doc);
+      committedDocText.set(candidate, committed);
+    }
+    return committed === text;
+  });
+}
+
+function committedSurfaceOf(
+  entry: ModuleManifestEntry,
+):
+  | { key: string; member: ModuleManifestEntry; entries: readonly ModuleManifestEntry[] }
+  | undefined {
+  const runtime = committedMemberOf(entry, MODULE_MANIFEST);
+  if (runtime !== undefined) return { key: "default", member: runtime, entries: MODULE_MANIFEST };
+  const editor = committedMemberOf(entry, DEFAULT_EDITOR_MODULES);
+  if (editor !== undefined) {
+    return { key: "default/editor", member: editor, entries: DEFAULT_EDITOR_MODULES };
+  }
+  const versioned = committedMemberOf(entry, VERSIONED_MODULE_MANIFEST) as
+    | VersionedModuleManifestEntry
+    | undefined;
+  if (versioned === undefined) return undefined;
+  const isEditor = versioned.editor === true;
+  return {
+    key: `${versioned.versionId}${isEditor ? "/editor" : ""}`,
+    member: versioned,
+    entries: VERSIONED_MODULE_MANIFEST.filter(
+      (member) => member.versionId === versioned.versionId && (member.editor === true) === isEditor,
+    ),
   };
 }
 
@@ -593,6 +706,7 @@ export function generateModuleDeclaration(
     urlParameters,
     registeredConstants,
     typeLeaves,
+    declaredTypes,
     dropped,
   } = prepareGeneratedModule(entry, options);
   const emitted = emitDeclarations(module, {
@@ -601,6 +715,7 @@ export function generateModuleDeclaration(
     urlParameters,
     ...(registeredConstants ? { registeredConstants } : {}),
     ...(typeLeaves ? { typeLeaves } : {}),
+    ...(declaredTypes ? { declaredTypes } : {}),
     ...(entry.indexBaseSource ? { indexBaseSource: entry.indexBaseSource } : {}),
   });
   const importsFrom = entry.importsFrom ?? "../src/core-types";
@@ -618,13 +733,20 @@ export function generateModuleSignatures(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): SymbolSignature[] {
-  const { module, knownConstantFqns, urlParameters, registeredConstants, typeLeaves } =
-    prepareGeneratedModule(entry, options);
+  const {
+    module,
+    knownConstantFqns,
+    urlParameters,
+    registeredConstants,
+    typeLeaves,
+    declaredTypes,
+  } = prepareGeneratedModule(entry, options);
   return emitSymbolSignatures(module, {
     knownConstantFqns,
     urlParameters,
     ...(registeredConstants ? { registeredConstants } : {}),
     ...(typeLeaves ? { typeLeaves } : {}),
+    ...(declaredTypes ? { declaredTypes } : {}),
   });
 }
 

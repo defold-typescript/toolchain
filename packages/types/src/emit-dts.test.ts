@@ -84,6 +84,7 @@ import {
   TABLE_SLOT_FIELD_ADDITIONS,
   type TableField,
   UNDOCUMENTED_CONSTANTS,
+  VARIABLE_TYPE_OVERRIDES,
 } from "./emit-dts";
 import { hashExampleSource } from "./example-store";
 import type { UrlParameterTable } from "./url-parameters";
@@ -266,7 +267,7 @@ describe("emitDeclarations", () => {
       typedefs: [],
     };
     expect(emitDeclarations(module)).toContain(
-      "function set_constants(constants: LuaTable<string | Hash, number> | Record<string, number>, keyed: LuaTable<Hash, number>): LuaTable<string | Hash, number>;",
+      "function set_constants(constants: LuaMap<string | Hash, number> | Record<string, number>, keyed: LuaMap<Hash, number>): LuaTable<string | Hash, number>;",
     );
   });
 
@@ -2733,6 +2734,8 @@ describe("TABLE_SLOT_CURATIONS", () => {
     // spot-checked structurally below, one per curation kind the promoted 1.13.0
     // surface introduced.
     expect([...TABLE_SLOT_CURATIONS.keys()]).toEqual([
+      "gui.get:param:options",
+      "gui.set:param:options",
       "buffer.create:param:declaration",
       "collectionfactory.create:param:properties",
       "collectionfactory.create:return:ids",
@@ -4040,6 +4043,37 @@ describe("slot-level array-of-object recovery", () => {
     expect(out).toContain(
       '  namespace GROUP {\n    /**\n     * `"m"`\n     */\n    const MEMBER: unknown;\n  }',
     );
+  });
+
+  test("a VARIABLE the ref-doc leaves untyped takes its VARIABLE_TYPE_OVERRIDES type", () => {
+    const module: ApiModule = {
+      namespace: "editor",
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [{ name: "editor.platform", brief: "", description: "", types: [] }],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    expect(emitDeclarations(module)).toContain(
+      '  const platform: "x86_64-win32" | "x86_64-macos" | "arm64-macos" | "x86_64-linux";',
+    );
+  });
+
+  test("each VARIABLE_TYPE_OVERRIDES entry fills a variable the default ref-doc leaves untyped", () => {
+    const editor = parseDefoldApiDoc(
+      JSON.parse(
+        readFileSync(
+          join(import.meta.dir, "..", "fixtures", "defold-1.13.2", "editor_doc.json"),
+          "utf8",
+        ),
+      ),
+    );
+    for (const name of VARIABLE_TYPE_OVERRIDES.keys()) {
+      const variable = editor.variables.find((v) => v.name === name);
+      expect({ name, types: variable?.types }).toEqual({ name, types: [] });
+    }
   });
 
   test("a nested member named `enum` is recovered through the alias escape", () => {
@@ -5955,16 +5989,34 @@ describe("STRUCT and TYPEDEF declarations", () => {
     expect(out).toContain(`    animations: [${animation}, ...(${animation})[]];`);
   });
 
-  test("resource.sound_data_options emits its member-keyed required data", () => {
+  test("resource.sound_data_options emits its member-keyed required, retyped data", () => {
     const lines = emitDeclarations(resource113_2).split("\n");
     const start = lines.indexOf("  interface sound_data_options {");
     expect(start).toBeGreaterThan(-1);
     const end = lines.indexOf("  }", start);
     expect(lines.slice(start, end).filter((line) => /^ {4}\w/.test(line))).toEqual([
-      "    data: string;",
+      '    data: string | Opaque<"buffer">;',
       "    filesize?: number;",
       "    partial?: boolean;",
     ]);
+  });
+
+  // Verbatim 1.13.2 member (`scripts-script_resource.cpp_doc.json`): a bitmask the
+  // create_texture example builds as TEXTURE_USAGE_FLAG_STORAGE + TEXTURE_USAGE_FLAG_SAMPLE.
+  test("a usage-flag member takes a sum of flags", () => {
+    const out = emitDeclarations(
+      parseDefoldApiDoc({
+        info: { namespace: "resource" },
+        elements: [
+          {
+            type: "STRUCT",
+            name: "resource.texture_creation_params",
+            members: [{ name: "flags?", doc: "", type: "graphics.TEXTURE_USAGE_FLAG" }],
+          },
+        ],
+      }),
+    );
+    expect(out).toContain("    flags?: graphics.TEXTURE_USAGE_FLAG | number;");
   });
 
   test("a member-keyed correction naming no member of a declared struct throws", () => {
@@ -6236,8 +6288,18 @@ describe("upstream-pinned corrections", () => {
     ["render", "draw", draw, 'draw(predicate: Opaque<"render_predicate">,'],
     ["render", "predicate", predicate, '): Opaque<"render_predicate">;'],
     ["go", "_delete", goDelete, "id?: string | Hash | Url | (string | Hash | Url)[] | boolean,"],
-    ["sys", "save", sysSave, "table: LuaTable<AnyNotNil, unknown> | readonly unknown[])"],
-    ["sys", "serialize", sysSerialize, "table: LuaTable<AnyNotNil, unknown> | readonly unknown[])"],
+    [
+      "sys",
+      "save",
+      sysSave,
+      "table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[])",
+    ],
+    [
+      "sys",
+      "serialize",
+      sysSerialize,
+      "table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[])",
+    ],
     [
       "socket",
       "protect",
@@ -6253,6 +6315,154 @@ describe("upstream-pinned corrections", () => {
     const line = signature(emitted("render", setRenderTarget), "set_render_target");
     expect(line.match(/\| Hash\b/g)).toHaveLength(1);
     expect(line.match(/\| string\b/g)).toHaveLength(1);
+  });
+
+  // Verbatim 1.13.2 slot (`gamesys-script_collection_factory.cpp_doc.json`),
+  // prose omitted: the retyped spelling keeps the 1.13.1 mapping curation.
+  const collectionfactoryCreate = (types: readonly string[]) => ({
+    type: "FUNCTION",
+    name: "collectionfactory.create",
+    parameters: [{ name: "properties", doc: "", types, is_optional: "True" }],
+  });
+
+  test("a table curation applies on the retyped spelling it pins", () => {
+    expect(
+      signature(
+        emitted(
+          "collectionfactory",
+          collectionfactoryCreate(["table<hash, table<string|hash, any>>"]),
+        ),
+        "create",
+      ),
+    ).toContain(
+      "properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>",
+    );
+  });
+
+  // Verbatim 1.13.2 struct (`gamesys-script_sound.cpp_doc.json`), which marks
+  // `play_id` required while Sound_Stop reads it only when it is not nil.
+  test("an optional-member correction marks a required struct member optional", () => {
+    const out = emitDeclarations(
+      parseDefoldApiDoc({
+        info: { namespace: "sound" },
+        elements: [
+          {
+            type: "STRUCT",
+            name: "sound.stop_properties",
+            brief: "Sound stop properties",
+            members: [
+              {
+                name: "play_id",
+                doc: "The sequential play identifier for the playback.",
+                type: "number",
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(out).toContain("    play_id?: number;");
+  });
+
+  // Verbatim 1.13.2 slot (`gamesys-script_tilemap.cpp_doc.json`): a bitmask the
+  // doc's own example builds as `tilemap.H_FLIP + tilemap.V_FLIP`.
+  test("a transform bitmask takes a sum of TRANSFORM flags", () => {
+    const setTile = {
+      type: "FUNCTION",
+      name: "tilemap.set_tile",
+      parameters: [
+        {
+          name: "transform_bitmask",
+          doc: "optional flip and/or rotation should be applied to the tile",
+          types: ["tilemap.TRANSFORM"],
+          is_optional: "True",
+        },
+      ],
+    };
+    const declared = new Map([["tilemap.TRANSFORM", "tilemap.TRANSFORM"]]);
+    expect(signature(emitted("tilemap", setTile, declared), "set_tile")).toContain(
+      "transform_bitmask?: tilemap.TRANSFORM | number)",
+    );
+  });
+
+  // Verbatim 1.13.2 slots (`gamesys-script_resource.cpp_doc.json`): the binding
+  // reads any number as the handle, which older targets declared as `number`.
+  test("the texture and render target info getters take a numeric handle", () => {
+    for (const [name, handle] of [
+      ["get_texture_info", "texture"],
+      ["get_render_target_info", "render_target"],
+    ] as const) {
+      const getter = {
+        type: "FUNCTION",
+        name: `resource.${name}`,
+        parameters: [
+          {
+            name: "path",
+            doc: "The path to the resource or a handle",
+            types: ["hash", "string", handle],
+            is_optional: "False",
+          },
+        ],
+      };
+      expect(signature(emitted("resource", getter, new Map()), name)).toContain(
+        `(path: Hash | string | Opaque<"${handle}"> | number)`,
+      );
+    }
+  });
+
+  // Verbatim 1.13.2 slot (`gamesys-script_window.cpp_doc.json`): SetDimMode
+  // raises for DIMMING_UNKNOWN, which the whole enum includes.
+  test("set_dim_mode takes only the settable dim modes", () => {
+    const setDimMode = {
+      type: "FUNCTION",
+      name: "window.set_dim_mode",
+      parameters: [{ name: "mode", doc: "", types: ["window.DIMMING"], is_optional: "False" }],
+    };
+    const declared = new Map([["window.DIMMING", "window.DIMMING"]]);
+    expect(signature(emitted("window", setDimMode, declared), "set_dim_mode")).toContain(
+      "(mode: window.DimModeStateSettable)",
+    );
+  });
+
+  // Verbatim 1.13.2 element (`scripts-socket.cpp_doc.json`), prose omitted.
+  test("a sole vararg return emits every value it returns", () => {
+    const skip = {
+      type: "FUNCTION",
+      name: "socket.skip",
+      parameters: [
+        { name: "d", doc: "", types: ["integer"], is_optional: "False" },
+        { name: "...", doc: "", types: ["any"], is_optional: "False" },
+      ],
+      returnvalues: [{ name: "...", doc: "", types: ["any"] }],
+    };
+    expect(signature(emitted("socket", skip), "skip")).toContain(
+      "(d: number, ...args: unknown[]): LuaMultiReturn<unknown[]>;",
+    );
+  });
+
+  // Verbatim 1.13.2 slots (`gamesys-gui_script.cpp_doc.json`): LuaGet and LuaSet
+  // read the `key` and `keys` options neither spelling documents.
+  test.each([
+    ["get", ["{ index?:integer }"]],
+    ["set", ["gui.set_options"]],
+  ] as const)("gui.%s options keep the key options the engine reads", (local, types) => {
+    const element = {
+      type: "FUNCTION",
+      name: `gui.${local}`,
+      parameters: [{ name: "options", doc: "", types, is_optional: "True" }],
+    };
+    expect(signature(emitted("gui", element), local)).toContain(
+      "options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
+    );
+  });
+
+  test("a table curation stays off a retyped spelling it does not pin", () => {
+    expect(
+      signature(
+        emitted("collectionfactory", collectionfactoryCreate(["table<hash, number>"])),
+        "create",
+      ),
+    ).toContain("properties?: LuaMap<Hash, number>)");
   });
 });
 
@@ -6307,6 +6517,24 @@ describe("UNDOCUMENTED_CONSTANTS back-fill", () => {
     const block = jsdocBefore(out, LOST_DECL);
     expect(block).toContain(upstream);
     expect(block).not.toContain(tableDoc(LOST).split(".")[0] ?? "");
+  });
+
+  test("a back-filled alias takes the type of the constant it shares a value with", () => {
+    const windowModule = (constants: ApiConstant[]): ApiModule => ({
+      ...renderModule(constants),
+      namespace: "window",
+    });
+    const ICONIFIED = "window.WINDOW_EVENT_ICONIFIED";
+    const documented = emitDeclarations(
+      windowModule([{ name: ICONIFIED, brief: "", description: "" }]),
+    );
+    expect(documented).toContain(
+      "const WINDOW_EVENT_ICONFIED: typeof window.WINDOW_EVENT_ICONIFIED;",
+    );
+    // Where the ref-doc lacks the constant it aliases, the back-fill keeps its own brand.
+    expect(emitDeclarations(windowModule([]))).toContain(
+      'const WINDOW_EVENT_ICONFIED: number & { readonly __brand: "window.WINDOW_EVENT_ICONFIED" };',
+    );
   });
 
   test("the authoritative signatures carry the back-filled constant too", () => {

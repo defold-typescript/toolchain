@@ -13,11 +13,15 @@ declare const shapeId: Opaque<"b2Shape">;
 declare const jointA: Opaque<"b2Joint">;
 declare const jointB: Opaque<"b2Joint">;
 
+// The engine registers a texture format only when the graphics driver supports
+// it, so the constant may be nil and needs a guard before use.
+const rgba = graphics.TEXTURE_FORMAT_RGBA;
+if (rgba === undefined) throw new Error("RGBA textures are unsupported");
 const tparams = {
   type: graphics.TEXTURE_TYPE_2D,
   width: 128,
   height: 128,
-  format: graphics.TEXTURE_FORMAT_RGBA,
+  format: rgba,
 };
 
 // resource.create_texture — "optional buffer of precreated pixel data".

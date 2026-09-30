@@ -6,6 +6,7 @@ declare global {
    * Functions and constants to access resources.
    */
   namespace liveupdate {
+    type LIVEUPDATE = typeof liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH | typeof liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_FORMAT_ERROR | typeof liveupdate.LIVEUPDATE_INVAL | typeof liveupdate.LIVEUPDATE_INVALID_HEADER | typeof liveupdate.LIVEUPDATE_INVALID_RESOURCE | typeof liveupdate.LIVEUPDATE_IO_ERROR | typeof liveupdate.LIVEUPDATE_MEM_ERROR | typeof liveupdate.LIVEUPDATE_OK | typeof liveupdate.LIVEUPDATE_SCHEME_MISMATCH | typeof liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH | typeof liveupdate.LIVEUPDATE_UNKNOWN | typeof liveupdate.LIVEUPDATE_VERSION_MISMATCH;
     /**
      * Mismatch between between expected bundled resources and actual bundled resources. The manifest expects a resource to be in the bundle, but it was not found in the bundle. This is typically the case when a non-excluded resource was modified between publishing the bundle and publishing the manifest.
      */
@@ -39,7 +40,7 @@ declare global {
      */
     const LIVEUPDATE_MEM_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_MEM_ERROR" };
     /**
-     * LIVEUPDATE_OK
+     * Operation completed successfully.
      */
     const LIVEUPDATE_OK: number & { readonly __brand: "liveupdate.LIVEUPDATE_OK" };
     /**
@@ -68,7 +69,7 @@ declare global {
      * @param callback - Callback after the asynchronous request completed
      * - `name` hash Unique name of the mount
      * - `uri` string The uri of the mount
-     * - `result` number The result of the request
+     * - `result` liveupdate.LIVEUPDATE The result of the request
      * @returns The result of the request
      * @example
      * ```ts
@@ -78,7 +79,7 @@ declare global {
      * liveupdate.add_mount("season_pack_1", "zip:/path/to/easter_pack_1.zip", 30, (result) => {}); // season pack, overriding content in the other packs
      * ```
      */
-    function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: unknown, uri: unknown, result: unknown) => void): number;
+    function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: Hash, uri: string, result: liveupdate.LIVEUPDATE) => void): liveupdate.LIVEUPDATE;
     /**
      * Get an array of the current mounts
      * This can be used to determine if a new mount is needed or not
@@ -107,7 +108,7 @@ declare global {
      * // }
      * ```
      */
-    function get_mounts(): { name: string; uri: string; priority: number }[];
+    function get_mounts(): ({ name: Hash; uri: string; priority: number })[];
     /**
      * Checks if the bundled application was built with one or more resources
      * excluded from the main bundle, through a collection proxy with
@@ -135,7 +136,7 @@ declare global {
      * liveupdate.remove_mount("season_pack_1");
      * ```
      */
-    function remove_mount(name: string | Hash): number;
+    function remove_mount(name: string | Hash): liveupdate.LIVEUPDATE;
   }
 }
 

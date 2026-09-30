@@ -376,7 +376,8 @@ declare global {
      * const body = b2d.get_body("#collisionobject");
      * if (body !== undefined) {
      *   const circle = b2d.shape.get_shape(body, 1);
-     *   b2d.shape.set_shape(body, 1, { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: circle.radius ?? 16, center: vmath.vector3(24, 0, 0) }, true);
+     *   const radius = "radius" in circle ? circle.radius : undefined;
+     *   b2d.shape.set_shape(body, 1, { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: radius ?? 16, center: vmath.vector3(24, 0, 0) }, true);
      *   b2d.shape.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_SEGMENT, v1: vmath.vector3(-32, 0, 0), v2: vmath.vector3(32, 0, 0) });
      * }
      * ```

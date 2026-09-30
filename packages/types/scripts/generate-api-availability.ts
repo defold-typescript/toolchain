@@ -11,6 +11,21 @@ import {
   validateAvailability,
 } from "../src/api-availability";
 import { type ApiModule, parseDefoldApiDoc, withholdOverloads } from "../src/api-doc";
+import {
+  buildIdentityVocabulary,
+  type IdentityCorrections,
+  type IdentityVocabulary,
+} from "../src/api-identity";
+import { correctionPins } from "../src/correction-pins";
+import {
+  CONSTANT_UNION_ALIASES,
+  HAND_DECLARED_OPTIONAL_SLOTS,
+  OPTIONAL_SLOT_CORRECTIONS,
+  PARAM_TYPE_CORRECTIONS,
+  REQUIRED_SLOT_CORRECTIONS,
+  RETURN_TYPE_CORRECTIONS,
+} from "../src/emit-dts";
+import { splitTopLevel } from "../src/luals-type-expr";
 import { type ApiTarget, loadApiTargets, loadTargetModules } from "./regen";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
@@ -71,6 +86,56 @@ export function loadMigrationCatalog(path: string = MIGRATIONS_PATH): ApiMigrati
   return raw as ApiMigrationCatalog;
 }
 
+// The emitter's corrections in the form identity applies them.
+export function identityCorrections(): IdentityCorrections {
+  const union = (ts: string): string[] => splitTopLevel(ts, "|").map((arm) => arm.trim());
+  return {
+    optionalSlots: [...OPTIONAL_SLOT_CORRECTIONS.keys(), ...HAND_DECLARED_OPTIONAL_SLOTS.keys()],
+    requiredSlots: [...REQUIRED_SLOT_CORRECTIONS.keys()],
+    parameterCorrections: Object.fromEntries(
+      [...PARAM_TYPE_CORRECTIONS].map(([key, correction]) => [
+        key,
+        {
+          pins: correctionPins(correction),
+          ...(correction.adds === undefined ? {} : { adds: union(correction.adds) }),
+          ...(correction.removes === undefined ? {} : { removes: [...correction.removes] }),
+        },
+      ]),
+    ),
+    returnCorrections: Object.fromEntries(
+      [...RETURN_TYPE_CORRECTIONS].map(([element, correction]) => [
+        element,
+        {
+          pins: correctionPins(correction),
+          replaces: union(correction.ts),
+          ...(correction.slot === undefined ? {} : { slot: correction.slot }),
+        },
+      ]),
+    ),
+    constantFamilies: Object.fromEntries(
+      CONSTANT_UNION_ALIASES.map((alias) => [`${alias.home}.${alias.name}`, alias.members]),
+    ),
+  };
+}
+
+export const IDENTITY_VOCABULARY_PATH = resolve(PACKAGE_ROOT, "identity-vocabulary.json");
+
+// The vocabulary every committed target declares, which the availability
+// identities and every downstream join resolve ref-doc tokens against.
+export function deriveIdentityVocabulary(
+  packageRoot: string = PACKAGE_ROOT,
+  registryPath: string = resolve(packageRoot, "api-targets.json"),
+): IdentityVocabulary {
+  return buildIdentityVocabulary(
+    loadApiTargets(registryPath)
+      .filter((target) => target.source == null)
+      .flatMap((target) =>
+        loadTargetModules(target, packageRoot).map((entry) => parseDefoldApiDoc(entry.doc)),
+      ),
+    identityCorrections(),
+  );
+}
+
 export interface BuildAvailabilityOptions {
   readonly packageRoot?: string;
   readonly registryPath?: string;
@@ -93,16 +158,20 @@ export function buildAvailabilityArtifact(
     modules: parse(target),
   }));
   const versions = surfaces.map((surface) => surface.version);
+  const vocabulary = deriveIdentityVocabulary(packageRoot, registryPath);
 
-  const derived = deriveAvailabilityMatrix({ surfaces });
+  const derived = deriveAvailabilityMatrix({ surfaces, vocabulary });
   const catalog =
     options.catalog ?? loadMigrationCatalog(resolve(packageRoot, "api-migrations.json"));
-  const universe = collectSymbolIdentities(surfaces.flatMap((surface) => surface.modules));
+  const universe = collectSymbolIdentities(
+    surfaces.flatMap((surface) => surface.modules),
+    vocabulary,
+  );
   const records = applyMigrationOverlay({ derived, catalog, universe, versions });
 
   const newestSurface = surfaces[0] as VersionSurface;
   const currentSurface = new Set(
-    collectSymbolIdentities(newestSurface.modules).map(symbolIdentityKey),
+    collectSymbolIdentities(newestSurface.modules, vocabulary).map(symbolIdentityKey),
   );
   const knownIdentities = new Set(universe.map(symbolIdentityKey));
   const errors = validateAvailability({ records, versions, currentSurface, knownIdentities });
@@ -113,13 +182,10 @@ export function buildAvailabilityArtifact(
   return { versions, records };
 }
 
-function biomeFormatJson(raw: string): string {
-  const out = Bun.spawnSync(
-    ["bunx", "biome", "format", "--stdin-file-path=api-availability.json"],
-    {
-      stdin: Buffer.from(raw),
-    },
-  );
+function biomeFormatJson(raw: string, name = "api-availability.json"): string {
+  const out = Bun.spawnSync(["bunx", "biome", "format", `--stdin-file-path=${name}`], {
+    stdin: Buffer.from(raw),
+  });
   if (out.exitCode !== 0) {
     throw new Error(`biome format failed: ${out.stderr.toString()}`);
   }
@@ -133,6 +199,11 @@ export function serializeAvailabilityArtifact(artifact: AvailabilityArtifact): s
 if (import.meta.main) {
   const artifact = buildAvailabilityArtifact();
   if (process.argv.includes("--write")) {
+    Bun.write(
+      IDENTITY_VOCABULARY_PATH,
+      biomeFormatJson(JSON.stringify(deriveIdentityVocabulary()), "identity-vocabulary.json"),
+    );
+    console.log(`wrote ${IDENTITY_VOCABULARY_PATH}`);
     Bun.write(AVAILABILITY_PATH, serializeAvailabilityArtifact(artifact));
     console.log(`wrote ${AVAILABILITY_PATH} (${artifact.records.length} records)`);
   } else {

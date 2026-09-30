@@ -1,10 +1,10 @@
 /// <reference path="../index.d.ts" />
-import type { Hash, Opaque } from "../src/core-types";
+import type { Hash } from "../src/core-types";
 
 // json: round-trip string -> table -> string is the headline proof. Both params
 // emit as required (the optional-emits-as-required gotcha), so pass the options table.
 const _encoded: string = json.encode({}, {});
-const _decoded: Record<string | number, unknown> = json.decode("[]", {});
+const _decoded: unknown = json.decode("[]", {});
 const _roundtrip: string = json.encode(json.decode(json.encode({}, {}), {}), {});
 void _encoded;
 void _decoded;
@@ -45,10 +45,9 @@ const _signum: number = crash.get_signum(0);
 // image.load returns the concrete record or `undefined` — a documented `nil`
 // return typed `T | undefined`, not a collapsed `unknown`. The fields are
 // readable only after an explicit `!== undefined` guard.
-const _img:
-  | { width: number; height: number; type: Opaque<"constant">; buffer: string }
-  | undefined = image.load("data", {});
-const _mounts: { name: string; uri: string; priority: number }[] = liveupdate.get_mounts();
+const _img: { width: number; height: number; type: image.TYPE; buffer: string } | undefined =
+  image.load("data", {});
+const _mounts: { name: Hash; uri: string; priority: number }[] = liveupdate.get_mounts();
 const _mem: number = profiler.get_memory_usage();
 const _socketTime: number = socket.gettime();
 // @ts-expect-error the record may be undefined, so the field is not readable before the guard

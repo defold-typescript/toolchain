@@ -74,7 +74,7 @@ const POSITIVE_FILES: Record<string, string> = {
   "compute.ts": [
     // A keyed-by-constant-name table of args tables (the documented example).
     'compute.set_constants("/my_compute.computec", { tint: { value: vmath.vector4(1, 0, 0, 1) } });',
-    'compute.set_samplers("/my_compute.computec", { texture_sampler: { u_wrap: 0 } });',
+    'compute.set_samplers("/my_compute.computec", { texture_sampler: { u_wrap: graphics.TEXTURE_WRAP_REPEAT } });',
     // The getters return arrays of records — index and iterate every one.
     'const cc = compute.get_constants("/my_compute.computec");',
     "const ccName: Hash = cc[0].name;",

@@ -902,8 +902,6 @@ describe("engine pages withhold the overloads the declarations withhold", () => 
       expect(entry?.authoritativeSignature).not.toBe("");
       expect(entry?.authoritativeSignature).not.toContain("Record<string | number, unknown>");
     }
-    expect(entries("set_mass_data")[0]?.authoritativeSignature).toContain(
-      "data: { mass: number; center: Vector3; inertia: number }",
-    );
+    expect(entries("set_mass_data")[0]?.authoritativeSignature).toContain("data: b2d.mass_data");
   });
 });

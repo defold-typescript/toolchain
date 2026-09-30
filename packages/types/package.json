@@ -57,6 +57,7 @@
     "api-targets.json",
     "api-migrations.json",
     "api-availability.json",
+    "identity-vocabulary.json",
     "api-signatures.json",
     "url-parameters.json",
     "index.d.ts",

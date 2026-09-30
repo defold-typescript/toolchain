@@ -150,50 +150,16 @@ function interfaceFieldNames(span: string): string[] {
   return [...span.matchAll(/^\s*([A-Za-z_]\w*)\?:/gm)].map((m) => m[1] as string);
 }
 
-// Split the `on_input` JSDoc prose into its three field->description sub-tables
-// (main action, gamepad-specific, touch). Each entry is a line that is exactly
-// `` `name` `` followed by its one-line description. Re-parsing the prose (not
-// the fixture HTML) pins the field docs to the same `go` fixture the existing
-// on_input drift guard already covers.
-function onInputFieldDocs(source: string): {
-  action: Map<string, string>;
-  gamepad: Map<string, string>;
-  touch: Map<string, string>;
-} {
-  const lines = source.split("\n");
-  const memberIdx = lines.findIndex((l) => /^\s*on_input\?\(/.test(l));
-  if (memberIdx === -1) throw new Error("no on_input member");
-  let close = memberIdx - 1;
-  while (close >= 0 && (lines[close] ?? "").trim() === "") close--;
-  let open = close;
-  while (open >= 0 && !(lines[open] ?? "").trim().startsWith("/**")) open--;
-  const body = lines
-    .slice(open + 1, close)
-    .map((l) => l.replace(/^\s*\*\s?/, "").replace(/\s+$/, ""));
-
-  const gamepadHdr = body.indexOf("Gamepad specific fields:");
-  const touchHdr = body.indexOf("Touch input table:");
-  const fieldLine = /^`([A-Za-z_]\w*)`$/;
-  const parse = (section: string[]): Map<string, string> => {
-    const map = new Map<string, string>();
-    for (let i = 0; i < section.length; i++) {
-      const m = fieldLine.exec(section[i] ?? "");
-      if (!m) continue;
-      const desc: string[] = [];
-      for (let j = i + 1; j < section.length; j++) {
-        const t = section[j] ?? "";
-        if (t === "" || fieldLine.test(t)) break;
-        desc.push(t);
-      }
-      map.set(m[1] as string, desc.join("\n"));
-    }
-    return map;
-  };
-  return {
-    action: parse(body.slice(0, gamepadHdr)),
-    gamepad: parse(body.slice(gamepadHdr, touchHdr)),
-    touch: parse(body.slice(touchHdr)),
-  };
+// The field docs of an `on_input` table, keyed by field: the go fixture's
+// `on_input.<struct>` STRUCT members, which document the fields since 1.13.2.
+function onInputStructDocs(struct: string): Map<string, string> {
+  const entry = MODULE_MANIFEST.find((m) => m.namespace === "go");
+  if (!entry) throw new Error('no MODULE_MANIFEST entry for namespace "go"');
+  const found = (parseDefoldApiDoc(entry.doc).structs ?? []).find(
+    (candidate) => candidate.name === `on_input.${struct}`,
+  );
+  if (!found) throw new Error(`the go fixture declares no on_input.${struct}`);
+  return new Map(found.members.map((member) => [member.name, htmlToDocText(member.doc)]));
 }
 
 describe("lifecycle hook-member docs", () => {
@@ -243,7 +209,7 @@ describe("lifecycle hook-member docs", () => {
     // InputAction's documented field count. `interfaceFieldNames` is a regex
     // extractor with no second source to cross-check, so without this a partial
     // parse would silently make the per-field doc loop below vacuous.
-    expect(fields.length).toBe(24);
+    expect(fields.length).toBe(26);
     for (const f of fields) {
       expect(memberHasPrecedingDoc(span, new RegExp(`^\\s*${f}\\?:`))).toBe(true);
     }
@@ -253,28 +219,28 @@ describe("lifecycle hook-member docs", () => {
     const span = interfaceBraceSpan(lifecycleSource, "InputTouch");
     const fields = interfaceFieldNames(span);
     // InputTouch's documented field count — same partial-parse guard as InputAction.
-    expect(fields.length).toBe(11);
+    expect(fields.length).toBe(12);
     for (const f of fields) {
       expect(memberHasPrecedingDoc(span, new RegExp(`^\\s*${f}\\?:`))).toBe(true);
     }
   });
 
-  test("each InputAction field summary equals its on_input prose (drift guard)", () => {
-    const docs = onInputFieldDocs(lifecycleSource);
+  test("each InputAction field summary equals its on_input.action member doc (drift guard)", () => {
+    const docs = onInputStructDocs("action");
     const span = interfaceBraceSpan(lifecycleSource, "InputAction");
     for (const f of interfaceFieldNames(span)) {
-      const expected = docs.action.get(f) ?? docs.gamepad.get(f);
-      if (expected === undefined) throw new Error(`no on_input prose for InputAction.${f}`);
+      const expected = docs.get(f);
+      if (expected === undefined) throw new Error(`no on_input.action member for InputAction.${f}`);
       expect(memberBlock(span, f, "prop").summary).toBe(expected);
     }
   });
 
-  test("each InputTouch field summary equals its touch-scope prose (drift guard)", () => {
-    const docs = onInputFieldDocs(lifecycleSource);
+  test("each InputTouch field summary equals its on_input.touch member doc (drift guard)", () => {
+    const docs = onInputStructDocs("touch");
     const span = interfaceBraceSpan(lifecycleSource, "InputTouch");
     for (const f of interfaceFieldNames(span)) {
-      const expected = docs.touch.get(f);
-      if (expected === undefined) throw new Error(`no on_input prose for InputTouch.${f}`);
+      const expected = docs.get(f);
+      if (expected === undefined) throw new Error(`no on_input.touch member for InputTouch.${f}`);
       expect(memberBlock(span, f, "prop").summary).toBe(expected);
     }
   });

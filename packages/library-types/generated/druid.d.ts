@@ -748,7 +748,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set current component nodes, returned from `gui.clone_tree` function.
 		 */
-		set_nodes(nodes?: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_component;
+		set_nodes(nodes?: LuaMap<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_component;
 		/**
 		 * Get component node by node_id. Respect to current template and nodes.
 		 */
@@ -1768,7 +1768,7 @@ declare module 'druid.druid' {
 		/**
 		 * Create new Druid widget instance
 		 */
-		new_widget<T extends druid_component>(widget: T, template?: string | undefined, nodes?: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...args: unknown[]): T;
+		new_widget<T extends druid_component>(widget: T, template?: string | undefined, nodes?: LuaMap<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...args: unknown[]): T;
 		/**
 		 * Create Button component
 		 */

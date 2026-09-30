@@ -7,15 +7,81 @@ declare global {
    */
   namespace label {
     /**
+     * Rich-text layout object
+     */
+    interface layout_object {
+      /**
+       * object type, currently `link` or `sprite`
+       */
+      type: string;
+      /**
+       * the object's `id` attribute, or its generated layout object id
+       */
+      id: Hash;
+      /**
+       * zero-based UTF-32 offset in the visible text
+       */
+      text_offset: number;
+      /**
+       * visible UTF-32 text length covered by the object
+       */
+      text_length: number;
+      /**
+       * lower-left x-coordinate relative to the label's upper-left layout origin
+       */
+      x: number;
+      /**
+       * lower-left y-coordinate relative to the label's upper-left layout origin
+       */
+      y: number;
+      /**
+       * resolved object width
+       */
+      width: number;
+      /**
+       * resolved object height
+       */
+      height: number;
+      /**
+       * markup attributes keyed by name
+       */
+      attributes: LuaTable<string, string>;
+    }
+    /**
+     * Returns the sprites and links found in the label's current layout.
+     * Each entry contains `type`, `id`, the zero-based UTF-32 `text_offset`,
+     * `text_length`, resolved `x`, `y`, `width`
+     * and `height`, and an `attributes` table. The position is the lower-left
+     * object corner relative to the label's upper-left layout origin.
+     * Inline resource rendering is not part of this MVP; sprites use their explicit
+     * dimensions or a one-em square fallback.
+     *
+     * @param url - the label to inspect
+     * @returns layout objects in source order. **0️⃣ `text_offset` is 0-based; passed to Defold unchanged.**
+     * @example
+     * ```ts
+     * const objects = label.get_layout_objects("#label");
+     * for (const object of objects) {
+     *   if (object.type === "link") {
+     *     print(object.attributes.get("src"), object.text_offset, object.text_length);
+     *   } else if (object.type === "sprite") {
+     *     print(object.attributes.get("src"), object.x, object.y, object.width, object.height);
+     *   }
+     * }
+     * ```
+     */
+    function get_layout_objects(url: string | Hash | Url): label.layout_object[];
+    /**
      * Gets the text from a label component
+     * This function is deprecated. Use `go.get("#label", "text")` instead.
      *
      * @param url - the label to get the text from
      * @returns the label text
      * @example
      * ```ts
      * export default defineScript({
-     *   init(self) {
-     *     const text = label.get_text("#label");
+     *   init() {
+     *     const text = go.get<label.properties>()("#label", "text");
      *     print(text);
      *   },
      * });
@@ -24,6 +90,7 @@ declare global {
     function get_text(url: string | Hash | Url): string;
     /**
      * Sets the text of a label component
+     * This function is deprecated. Use `go.set("#label", "text", value)` instead.
      * This method uses the message passing that means the value will be set after `dispatch messages` step.
      * More information is available in the Application Lifecycle manual.
      *
@@ -32,8 +99,8 @@ declare global {
      * @example
      * ```ts
      * export default defineScript({
-     *   init(self) {
-     *     label.set_text("#label", "Hello World!");
+     *   init() {
+     *     go.set<label.properties>()("#label", "text", "Hello World!");
      *   },
      * });
      * ```
@@ -80,6 +147,10 @@ declare global {
        * The type of the property is vector3.
        */
       size: Vector3;
+      /**
+       * The text of the label.
+       */
+      text: string;
       /**
        * The tracking of the label.
        * This value is used to adjust the vertical spacing of characters in the text.

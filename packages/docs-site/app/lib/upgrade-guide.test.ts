@@ -10,16 +10,18 @@ import { renderMarkdown } from "./markdown";
 import { releaseSection, releaseSections } from "./upgrade-guide";
 
 const SLUG = "upgrading-defold-versions";
-// The currently-pinned release, and the only marked section: a patch replaces its
-// predecessor in place, so the current section carries the whole 1.12.4 -> current
-// migration rather than one section per replaced patch.
-const RELEASE = "1.13.1";
-// The release immediately before the current one. It keeps its own marked section
-// and its own shipped `/api/defold-1.13.0/…` family, so the guide both documents
-// it and links into it.
-const PREDECESSOR = "1.13.0";
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const TYPES_DIR = join(import.meta.dir, "../../../../packages/types");
+// The currently-pinned release and the one before it, read off the availability
+// catalog's version axis. The predecessor keeps its own marked section and its
+// own shipped `/api/defold-<version>/…` family, so the guide both documents it
+// and links into it.
+const [RELEASE = "", PREDECESSOR = ""] = availabilityDoc().versions;
+// The releases whose notes these tests read by content: 1.13.0 describes the
+// Live Update mounts and `model.material`, 1.13.1 the additive
+// `collectionproxy.load` and `gui.set` changes.
+const LIVE_UPDATE_RELEASE = "1.13.0";
+const PATCH_NOTES_RELEASE = "1.13.1";
 
 const guideBody = readFileSync(join(GUIDE_DIR, `${SLUG}.md`), "utf8");
 
@@ -41,7 +43,7 @@ const guideHtml = await renderGuidePage(GUIDE_DIR, guidePage);
 // line, so the same splitter reads the rendered page as well as the source.
 const releaseBody = releaseSection(guideBody, RELEASE) ?? "";
 // The hop a baseline project actually makes spans every release after the
-// baseline up to the current one — 1.13.0 and 1.13.1 both — so migration coverage
+// baseline up to the current one — 1.13.0 through 1.13.2 — so migration coverage
 // is asserted over their union, mirroring `collectMigrationGuide`. Each release
 // keeps its own notes under its own marker rather than being relabelled forward.
 const BASELINE = "1.12.4";
@@ -53,7 +55,7 @@ function spanOf(source: string): string {
 }
 const spanBody = spanOf(guideBody);
 const spanHtml = spanOf(guideHtml);
-const predecessorBody = releaseSection(guideBody, PREDECESSOR) ?? "";
+const liveUpdateBody = releaseSection(guideBody, LIVE_UPDATE_RELEASE) ?? "";
 
 interface AvailabilityRecord {
   identity: { namespace: string; kind: string; name: string; signature: string };
@@ -259,13 +261,17 @@ describe("upgrading-defold-versions guide", () => {
     }
   });
 
-  test("the predecessor release's per-symbol notes render at h4 with bare-symbol ids", () => {
-    const body = releaseSection(guideHtml, PREDECESSOR) ?? "";
+  test("the predecessor release documents its own section", () => {
+    expect(releaseSection(guideBody, PREDECESSOR)).not.toBeNull();
+  });
+
+  test("a patch release's per-symbol notes render at h4 with bare-symbol ids", () => {
+    const body = releaseSection(guideHtml, PATCH_NOTES_RELEASE) ?? "";
     const ids = pageHeadings(body)
       .filter((h) => h.level === 4)
       .map((h) => h.id);
-    expect(ids).toContain("liveupdateadd_mount");
-    expect(ids).toContain("modelmaterial");
+    expect(ids).toContain("collectionproxyload");
+    expect(ids).toContain("guiset");
   });
 
   // Heading depth is the page's structure contract, not decoration: the h2 wrapper
@@ -510,12 +516,12 @@ describe("upgrading-defold-versions guide", () => {
   // transition — the `name` parameter widened to accept a hash — not as removed
   // symbols, so the guide must describe a parameter-type change.
   test("describes the Live Update mounts as a parameter-type change, not a removal", () => {
-    const predecessorHtml = releaseSection(guideHtml, PREDECESSOR) ?? "";
-    const groups = pageHeadings(predecessorHtml)
+    const liveUpdateHtml = releaseSection(guideHtml, LIVE_UPDATE_RELEASE) ?? "";
+    const groups = pageHeadings(liveUpdateHtml)
       .filter((h) => h.level === 3)
       .map((h) => h.text);
     expect(groups).toContain("Changed Lua API signatures");
-    const collapsed = predecessorBody.replace(/\s+/g, " ");
+    const collapsed = liveUpdateBody.replace(/\s+/g, " ");
     expect(collapsed).toContain("`liveupdate.add_mount` was **not** removed");
     expect(collapsed).toContain("widened from `string` to `string | Hash`");
     expect(collapsed).not.toContain("auto-mount API is gone");

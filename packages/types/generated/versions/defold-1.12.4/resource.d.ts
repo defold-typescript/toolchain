@@ -149,19 +149,22 @@ declare global {
      * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
      *
-     * **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
+     * **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
      * @returns Returns the atlas resource path
      * @example
      * ```ts
      * // Create a backing texture and an atlas
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return;
      *     // create an empty texture
      *     const tparams = {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *     };
      *     const my_texture_id = resource.create_texture("/my_texture.texturec", tparams);
      *
@@ -402,11 +405,14 @@ declare global {
      * // How to create an 128x128 RGBA texture resource and assign it to a model
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return;
      *     const tparams = {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *     };
      *     const my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams);
      *     go.set("#model", "texture0", my_texture_id);
@@ -419,6 +425,9 @@ declare global {
      * // How to create an 128x128 floating point texture (RGBA32F) resource from a buffer object
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA32F;
+     *     if (format === undefined) return;
      *     // Create a new buffer with 4 components and FLOAT32 type
      *     const tbuffer = buffer.create(128 * 128, [{ name: hash("rgba"), type: buffer.VALUE_TYPE_FLOAT32, count: 4 }]);
      *     const tstream = buffer.get_stream(tbuffer, hash("rgba"));
@@ -439,7 +448,7 @@ declare global {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA32F,
+     *       format,
      *     };
      *
      *     // Note that we pass the buffer as the last argument here!
@@ -474,13 +483,17 @@ declare global {
      * How to create 512x512 texture array with 5 pages.
      * ```ts
      * // How to create 512x512 texture array with 5 pages.
-     * const new_tex = resource.create_texture("/runtime/example_array.texturec", {
-     *   type: graphics.TEXTURE_TYPE_2D_ARRAY,
-     *   width: 512,
-     *   height: 512,
-     *   page_count: 5,
-     *   format: graphics.TEXTURE_FORMAT_RGB,
-     * });
+     * // the engine registers a texture format only when the driver supports it
+     * const format = graphics.TEXTURE_FORMAT_RGB;
+     * if (format !== undefined) {
+     *   const new_tex = resource.create_texture("/runtime/example_array.texturec", {
+     *     type: graphics.TEXTURE_TYPE_2D_ARRAY,
+     *     width: 512,
+     *     height: 512,
+     *     page_count: 5,
+     *     format,
+     *   });
+     * }
      * ```
      */
     function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer">): Hash;
@@ -618,12 +631,15 @@ declare global {
      * // Create a texture resource asyncronously without handling its completion
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return;
      *     // Create a texture resource async
      *     const tparams = {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *     };
      *
      *     // Create a new buffer with 4 components
@@ -705,7 +721,7 @@ declare global {
      * `geometries`, preserving the frame-to-geometry mapping used by the atlas.
      * See resource.set_atlas for a detailed description of each field
      *
-     * **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
+     * **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
      */
     function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };
     /**
@@ -864,12 +880,15 @@ declare global {
      * // Create a new texture and get the metadata from it
      * export default defineScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return;
      *     // create an empty texture
      *     const tparams = {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *     };
      *
      *     const my_texture_path = resource.create_texture("/my_texture.texturec", tparams);
@@ -1073,7 +1092,7 @@ declare global {
      * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
      *
-     * **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
+     * **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frame_start` is 1-based; passed to Defold unchanged.** **⚠️ `frame_end` is 1-based; passed to Defold unchanged.** **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
      * @example
      * Add a new animation to an existing atlas
      * ```ts
@@ -1092,14 +1111,19 @@ declare global {
      *       flip_vertical: false,
      *       flip_horizontal: false,
      *     };
-     *     data.animations.push(my_animation);
+     *     // set_atlas takes each animation's frames as a non-empty list
+     *     const animations = data.animations.flatMap((animation) => {
+     *       // an animation described by frame_start/frame_end passes through as-is
+     *       if (!("frames" in animation)) return [animation];
+     *       const [first, ...rest] = (animation.frames as number[] | undefined) ?? [];
+     *       return first === undefined ? [] : [{ ...animation, frames: [first, ...rest] as [number, ...number[]] }];
+     *     });
      *     // set_atlas needs at least one animation and one geometry
-     *     const [first_animation, ...animations] = data.animations;
      *     const [first_geometry, ...geometries] = data.geometries;
-     *     if (first_animation !== undefined && first_geometry !== undefined) {
+     *     if (first_geometry !== undefined) {
      *       resource.set_atlas("/main/my_atlas.a.texturesetc", {
      *         ...data,
-     *         animations: [first_animation, ...animations],
+     *         animations: [my_animation, ...animations],
      *         geometries: [first_geometry, ...geometries],
      *       });
      *     }
@@ -1293,9 +1317,13 @@ declare global {
      *       }
      *     }
      *
-     *     const resource_path = go.get<model.properties>()("#model", "texture0");
-     *     const args = { width, height, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
-     *     resource.set_texture(resource_path, args, buf);
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGB;
+     *     if (format !== undefined) {
+     *       const resource_path = go.get<model.properties>()("#model", "texture0");
+     *       const args = { width, height, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };
+     *       resource.set_texture(resource_path, args, buf);
+     *     }
      *     return { buffer: buf, stream };
      *   },
      * });
@@ -1322,9 +1350,13 @@ declare global {
      *       }
      *     }
      *
-     *     const resource_path = go.get<model.properties>()("#model", "texture0");
-     *     const args = { width, height, x, y, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
-     *     resource.set_texture(resource_path, args, buf);
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGB;
+     *     if (format !== undefined) {
+     *       const resource_path = go.get<model.properties>()("#model", "texture0");
+     *       const args = { width, height, x, y, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };
+     *       resource.set_texture(resource_path, args, buf);
+     *     }
      *     return { buffer: buf, stream };
      *   },
      * });
@@ -1339,13 +1371,16 @@ declare global {
      *   properties: { my_buffer: resource.buffer("/my_default_buffer.buffer") },
      *
      *   init(self) {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGB;
+     *     if (format === undefined) return;
      *     const resource_path = go.get<model.properties>()("#model", "texture0");
      *     // the "my_buffer" resource is expected to hold 128 * 128 * 3 bytes!
      *     const args = {
      *       width: 128,
      *       height: 128,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGB,
+     *       format,
      *     };
      *     // Note that the extra resource.get_buffer call is a requirement here
      *     // since the "self.my_buffer" is just pointing to a buffer resource path
@@ -1398,7 +1433,9 @@ declare global {
      * // Update texture 2nd array page with loaded texture from png
      * const tex_path = "/bundle_resources/page_02.png";
      * const [data] = sys.load_resource(tex_path);
-     * if (data !== undefined) {
+     * // the engine registers a texture format only when the driver supports it
+     * const format = graphics.TEXTURE_FORMAT_RGB;
+     * if (data !== undefined && format !== undefined) {
      *   const buf = image.load_buffer(data);
      *   if (buf !== undefined) {
      *     // new_tex is the resource handle of a texture created via resource.create_texture
@@ -1407,7 +1444,7 @@ declare global {
      *       width: buf.width,
      *       height: buf.height,
      *       page_count: 2,
-     *       format: graphics.TEXTURE_FORMAT_RGB,
+     *       format,
      *     });
      *     resource.set_texture(
      *       new_tex,
@@ -1416,7 +1453,7 @@ declare global {
      *         width: buf.width,
      *         height: buf.height,
      *         page: 1,
-     *         format: graphics.TEXTURE_FORMAT_RGB,
+     *         format,
      *       },
      *       buf.buffer,
      *     );

@@ -68,7 +68,7 @@ describe("withIndexBaseNotes", () => {
 
   test("a nested returned field names its own key", () => {
     expect(withIndexBaseNotes("resource.get_atlas", "return", "data", "the atlas.")).toBe(
-      "the atlas. **0️⃣ `indices` is 0-based; passed to Defold unchanged.**",
+      "the atlas. **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**",
     );
   });
 });

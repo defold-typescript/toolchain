@@ -5,7 +5,8 @@
 // faithful "any lua table" type, not a fidelity loss. Reading a concrete field
 // requires narrowing/casting; writing accepts any table literal.
 
-// Decoded/loaded tables are arbitrary records — usable as a table.
+// Loaded tables are arbitrary records, usable as a table; a decoded JSON value
+// may be any JSON value, so it is `unknown`.
 const arbTableDecoded = json.decode('{"hp":3}');
 const arbTableLoaded = sys.load("/save.dat");
 const arbTableDeserialized = sys.deserialize("...");
@@ -17,7 +18,7 @@ void arbTableDeserialized;
 const _arbTableBad: number = json.decode('{"hp":3}').hp;
 
 // Narrow at the point of use, exactly as with any other `unknown`.
-const arbTableOk: number = json.decode('{"hp":3}').hp as number;
+const arbTableOk: number = (json.decode('{"hp":3}') as { hp: number }).hp;
 void arbTableOk;
 
 // The encode/save/serialize inputs accept an arbitrary table literal.

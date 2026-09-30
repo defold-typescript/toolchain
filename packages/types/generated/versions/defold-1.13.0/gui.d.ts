@@ -1461,7 +1461,7 @@ declare global {
      *
      * @param self - reference to the script state to be used for storing data
      * @param action_id - id of the received input action, as mapped in the input_binding-file
-     * @param action - a table containing the input data, see above for a description
+     * @param action - a table containing the input data, see above for a description. **0️⃣ `gamepad` is 0-based; passed to Defold unchanged.**
      * @returns optional boolean to signal if the input should be consumed (not passed on to others) or not, default is false
      * @example
      * ```ts

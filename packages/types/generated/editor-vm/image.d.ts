@@ -10,7 +10,7 @@ declare global {
      * @param path - External file path, resolved against project root if relative
      * @returns image userdata
      */
-    function load_file(path: string): unknown;
+    function load_file(path: string): editor.image;
     /**
      * Return the color of a pixel from a loaded image.
      * Coordinates are 1-based, with `1, 1` at the top-left corner.
@@ -19,7 +19,7 @@ declare global {
      * @param x - 1-based horizontal pixel coordinate. **⚠️ 1-based; passed to Defold unchanged.**
      * @param y - 1-based vertical pixel coordinate. **⚠️ 1-based; passed to Defold unchanged.**
      */
-    function pixel(image: unknown, x: number, y: number): LuaMultiReturn<[number, number, number, number]>;
+    function pixel(image: editor.image, x: number, y: number): LuaMultiReturn<[number, number, number, number]>;
     /**
      * Iterate over pixels in a loaded image.
      * The iterator returns pixels row by row from top-left to bottom-right. Coordinates are 1-based.
@@ -35,13 +35,13 @@ declare global {
      * end
      * ```
      */
-    function pixels(image: unknown): (...args: unknown[]) => unknown;
+    function pixels(image: editor.image): (...args: unknown[]) => unknown;
     /**
      * Return the width and height of a loaded image.
      *
      * @param image - image userdata returned by `image.load_file()`
      */
-    function size(image: unknown): LuaMultiReturn<[number, number]>;
+    function size(image: editor.image): LuaMultiReturn<[number, number]>;
   }
 }
 

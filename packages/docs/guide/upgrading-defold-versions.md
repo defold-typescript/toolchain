@@ -244,8 +244,7 @@ the target platform behaves differently.
 
 ## Defold 1.13.1
 
-Defold 1.13.1 is the current stable release and the toolchain's default API
-target. It is a **patch** over [1.13.0](#defold-1130), which stays a
+Defold 1.13.1 is a **patch** over [1.13.0](#defold-1130), which stays a
 shipped surface beside it: nothing was removed, nothing was deprecated, and the
 only Lua API deltas are the two additive changes below. **A project already on
 1.13.0 needs no source migration** — move the pin and rebuild. A project on 1.12.4
@@ -280,3 +279,331 @@ it already took, so a property can be cleared rather than only reassigned.
 Existing calls are unaffected — the change is a widening. The current signature is
 on the 1.13.1 [`gui`](/api/defold-1.13.1/gui) surface; the [1.13.0 `gui`
 page](/api/defold-1.13.0/gui) shows the narrower one for comparison.
+
+<!-- release: 1.13.2 -->
+
+## Defold 1.13.2
+
+Defold 1.13.2 is the current stable release and the toolchain's default API
+target. Most of its API changes widen a type or name a table shape that was
+anonymous before, so code written against 1.13.1 keeps compiling. A few changes
+can break a build: `b2d.get_world`, `b2d.body.get_name` and `b2d.body.get_next`
+may return nothing, `json.decode` returns `unknown`, and the LuaSocket
+`getpeername`, `getsockname` and `getstats` methods return several values instead
+of one string. The notes below link the 1.13.1 pages that keep the old
+signatures. A project on 1.12.4 migrates through the 1.13.0 and 1.13.1 notes above
+as well; the [1.12.4 reference](/api/defold-1.12.4/go) keeps that release's
+surface.
+
+The runbook above, with this release's concrete targets:
+
+```sh
+# what you ship today
+bunx @defold-typescript/cli build --defold-target 1.13.1
+
+# the same project against the new surface
+bunx @defold-typescript/cli build --defold-target 1.13.2
+```
+
+### Added Lua APIs
+
+These are additive, so no existing call changes. A project that uses them must
+pin `--defold-target 1.13.2` or newer.
+
+- **Bullet 3D physics.** The [`bullet3d`](/api/defold-1.13.2/bullet3d) namespaces
+  (`bullet3d.world`, `bullet3d.collision_object`, `bullet3d.rigid_body`,
+  `bullet3d.shape`, `bullet3d.constraint`) script the 3D physics world directly.
+  They exist only in a project whose `game.project` sets 3D physics.
+- **Rich-text layout objects.** `label.get_layout_objects` and
+  `gui.get_layout_objects` list the inline sprites and links in a label or text
+  node, and the new `text_object_hovered`, `text_object_unhovered` and
+  `text_object_clicked` messages report pointer interaction with them.
+- **Collection proxy progress messages.** `proxy_loading`, `proxy_ready` and
+  `proxy_error` report the state of a collection proxy load.
+- **Mesh collision shapes.** `physics.SHAPE_TYPE_MESH` and
+  `bullet3d.shape.SHAPE_TYPE_MESH` name the triangle-mesh shape kind.
+- **Multisampled render targets.** The `render.render_target` table takes a
+  `sample_count` key, and `resource.get_render_target_info` reports it.
+- **Opening a resource at a position.** `editor.ui.open_resource` takes an
+  optional `view` and view-specific `args`, such as a one-based `{ line: 42 }`
+  cursor for the Code and Text views.
+
+### Changes that can break a build
+
+#### b2d.get_world
+
+`b2d.get_world` now returns `Opaque<"b2World"> | undefined`, because the world is
+absent until physics starts. Check the result, or assert it with `!` where the
+world is known to exist. The [1.13.1 `b2d` page](/api/defold-1.13.1/b2d) keeps the
+old signature.
+
+#### b2d.body.get_name
+
+`b2d.body.get_name` returns `string | undefined`, because a body without a name
+returns `nil`. Handle the missing case. Compare the [1.13.1 `b2d.body`
+page](/api/defold-1.13.1/b2d.body).
+
+#### b2d.body.get_next
+
+`b2d.body.get_next` returns `Opaque<"b2Body"> | undefined`, because the last body
+in the world list has no next body. End the walk when it returns nothing.
+
+#### json.decode
+
+`json.decode` returns `unknown` instead of a string-keyed table, because a JSON
+document can decode to any Lua value. Narrow the result before reading fields
+from it, for example with a type guard or a cast to the shape you expect. Compare
+the [1.13.1 `json` page](/api/defold-1.13.1/json).
+
+#### socket.client:getpeername
+
+`getpeername` returns `LuaMultiReturn<[host, port, family]>` instead of one
+string, matching what LuaSocket returns. Destructure it:
+`const [host, port] = client.getpeername()`. The
+[1.13.1 `socket` page](/api/defold-1.13.1/socket) keeps the old form.
+
+#### socket.connected:getpeername
+
+Same change as `socket.client:getpeername`: destructure the host, port and
+family.
+
+#### socket.client:getsockname
+
+`getsockname` returns `LuaMultiReturn<[host, port, family]>` instead of one
+string. Destructure it the same way as `getpeername`.
+
+#### socket.connected:getsockname
+
+Same change as `socket.client:getsockname`.
+
+#### socket.master:getsockname
+
+Same change as `socket.client:getsockname`.
+
+#### socket.server:getsockname
+
+Same change as `socket.client:getsockname`.
+
+#### socket.unconnected:getsockname
+
+Same change as `socket.client:getsockname`.
+
+#### socket.client:getstats
+
+`getstats` returns `LuaMultiReturn<[received, sent, age]>` as three numbers
+instead of one string. Destructure the counts:
+`const [received, sent, age] = client.getstats()`.
+
+#### socket.master:getstats
+
+Same change as `socket.client:getstats`.
+
+#### socket.server:getstats
+
+Same change as `socket.client:getstats`.
+
+### Widened signatures
+
+These signatures accept more than before or return a more precise type. A call
+written against 1.13.1 keeps compiling.
+
+#### b2d.world.cast_ray
+
+The `filter` and `max_results` arguments are optional on every form, and the
+filter and hit tables are the named `b2d.query_filter` and `b2d.fixture_cast_hit`
+or `b2d.shape_cast_hit` types. Compare the [1.13.1 `b2d.world`
+page](/api/defold-1.13.1/b2d.world).
+
+#### b2d.world.cast_ray_closest
+
+Same change as `b2d.world.cast_ray`: `filter` is optional on every form.
+
+#### b2d.world.cast_shape
+
+Same change as `b2d.world.cast_ray`.
+
+#### b2d.world.overlap_aabb
+
+Same change as `b2d.world.cast_ray`, with `b2d.aabb` as the box type.
+
+#### b2d.world.overlap_shape
+
+Same change as `b2d.world.cast_ray`.
+
+#### gui.new_texture
+
+The `type` parameter takes `string | image.TYPE`, so an `image.TYPE_*` constant
+passes without a cast. The second return value narrows from `number` to
+`gui.RESULT`. Compare the [1.13.1 `gui` page](/api/defold-1.13.1/gui).
+
+#### gui.set_texture_data
+
+The `type` parameter takes `string | image.TYPE`, as for `gui.new_texture`.
+
+#### image.load
+
+`options` also accepts a boolean, the older premultiply-alpha flag, and the
+options and result tables are the named `image.load_options` and
+`image.load_result` types. Compare the [1.13.1 `image`
+page](/api/defold-1.13.1/image).
+
+#### image.load_buffer
+
+Same change as `image.load`, with `image.load_buffer_result` as the result type.
+
+#### json.encode
+
+`json.encode` accepts any value, not only a table, and its options table is the
+named `json.encode_options` type.
+
+#### socket.skip
+
+`socket.skip` takes any number of values after the count and returns the values
+it keeps, so a call with more than three values compiles.
+
+#### socket.client:close
+
+`close` returns the number LuaSocket reports instead of `void`. Existing calls
+that ignore the result are unaffected.
+
+#### socket.connected:close
+
+Same change as `socket.client:close`.
+
+#### socket.master:close
+
+Same change as `socket.client:close`.
+
+#### socket.server:close
+
+Same change as `socket.client:close`.
+
+#### socket.unconnected:close
+
+Same change as `socket.client:close`.
+
+#### socket.client:setstats
+
+Every argument is optional and the return is a plain `number`.
+
+#### socket.master:setstats
+
+Same change as `socket.client:setstats`.
+
+#### socket.server:setstats
+
+Same change as `socket.client:setstats`.
+
+#### socket.client:settimeout
+
+The timeout value is optional and the method returns a `number` instead of
+`void`.
+
+#### socket.connected:settimeout
+
+Same change as `socket.client:settimeout`.
+
+#### socket.master:settimeout
+
+Same change as `socket.client:settimeout`.
+
+#### socket.server:settimeout
+
+Same change as `socket.client:settimeout`.
+
+#### socket.unconnected:settimeout
+
+Same change as `socket.client:settimeout`.
+
+### Changes to the reference only
+
+The engine reference re-documents these symbols, so the API catalog records a new
+signature, but the TypeScript declarations you compile against are unchanged. No
+action is needed.
+
+#### b2d.body.get_contact_list
+
+The 1.13.2 reference no longer documents `b2d.body.get_contact_list`. The typed
+surface never declared it, because neither Box2D binding registers it and the
+call would raise, so no code changes.
+
+#### b2d.body.get_world_center
+
+The 1.13.0 and 1.13.1 references typed the return as a number. The declarations
+already return `Vector3`, which the 1.13.2 reference now documents.
+
+#### go.get
+
+The reference lists `string` among the values `go.get` returns and drops the
+resource handle. The typed `go.get` overloads are unchanged; see the [1.13.1 `go`
+page](/api/defold-1.13.1/go) for comparison.
+
+#### go.set
+
+The reference lists `string` among the values `go.set` accepts. The typed overloads
+are unchanged.
+
+#### go.property
+
+The reference lists `string` among the default values `go.property` accepts. The
+typed overloads are unchanged.
+
+#### go.on_input
+
+The reference documents `action_id` as `nil` for pointer movement. The typed hook
+already declares it `Hash | undefined`.
+
+#### gui.on_input
+
+Same change as `go.on_input`.
+
+#### gui.on_message
+
+The reference now documents the `sender` argument of the GUI hook. The typed hook
+already passes it.
+
+#### render.render_target
+
+The reference drops the deprecated leading name argument. Both typed forms,
+with and without the name, still compile; see the [1.13.1 `render`
+page](/api/defold-1.13.1/render).
+
+#### sys.get_config_string
+
+The reference documents that the lookup can return `nil`. The typed overloads
+already return `string | undefined` without a default and `string` with one; see
+the [1.13.1 `sys` page](/api/defold-1.13.1/sys).
+
+#### socket.client
+
+The reference describes the LuaSocket object types in a new form. The
+`socket.client` interface keeps its name, and its method changes are listed
+above.
+
+#### socket.master
+
+Same change as `socket.client`.
+
+#### socket.unconnected
+
+Same change as `socket.client`.
+
+### Deprecated Lua APIs
+
+These still compile and run against the 1.13.2 surface.
+
+#### window.WINDOW_EVENT_ICONFIED
+
+The misspelled `window.WINDOW_EVENT_ICONFIED` is deprecated in favor of
+`window.WINDOW_EVENT_ICONIFIED`, which the reference now documents. The engine
+registers both with the same value, and the declarations give them the same
+type, so either compares equal to a `window.set_listener` event. Switch to the
+correct spelling. The [1.13.1 `window` page](/api/defold-1.13.1/window) shows only
+the old name.
+
+- **`label.get_text`, `label.set_text`.** Deprecated in favor of the label
+  component's `text` property: read it with `go.get` and write it with `go.set`
+  on the `"text"` key.
+
+<!-- no-action: label.get_text -->
+<!-- no-action: label.set_text -->

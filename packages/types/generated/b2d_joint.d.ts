@@ -8,6 +8,484 @@ declare global {
   namespace b2d.joint {
     type b2Joint = Opaque<"b2Joint">;
     /**
+     * Box2D distance-joint definition
+     */
+    interface distance_definition {
+      /**
+       * Local anchor on the first body.
+       */
+      local_anchor_a?: Vector3;
+      /**
+       * Local anchor on the second body.
+       */
+      local_anchor_b?: Vector3;
+      /**
+       * Rest length.
+       */
+      length?: number;
+      /**
+       * Minimum length.
+       */
+      min_length?: number;
+      /**
+       * Maximum length.
+       */
+      max_length?: number;
+      /**
+       * Whether the spring is enabled.
+       */
+      enable_spring?: boolean;
+      /**
+       * Spring frequency in hertz.
+       */
+      hertz?: number;
+      /**
+       * Legacy spring frequency alias.
+       */
+      frequency?: number;
+      /**
+       * Spring damping ratio.
+       */
+      damping_ratio?: number;
+      /**
+       * Legacy spring damping-ratio alias.
+       */
+      damping?: number;
+      /**
+       * Whether length limits are enabled.
+       */
+      enable_limit?: boolean;
+      /**
+       * Whether the motor is enabled.
+       */
+      enable_motor?: boolean;
+      /**
+       * Maximum motor force.
+       */
+      max_motor_force?: number;
+      /**
+       * Motor speed.
+       */
+      motor_speed?: number;
+      /**
+       * Whether connected bodies collide.
+       */
+      collide_connected?: boolean;
+    }
+    type filter_definition = {};
+    /**
+     * Box2D friction-joint definition
+     */
+    interface friction_definition {
+      /**
+       * Local anchor on the first body.
+       */
+      local_anchor_a?: Vector3;
+      /**
+       * Local anchor on the second body.
+       */
+      local_anchor_b?: Vector3;
+      /**
+       * Maximum friction force.
+       */
+      max_force?: number;
+      /**
+       * Maximum friction torque.
+       */
+      max_torque?: number;
+      /**
+       * Whether connected bodies collide.
+       */
+      collide_connected?: boolean;
+    }
+    /**
+     * Box2D gear-joint definition
+     */
+    interface gear_definition {
+      /**
+       * Gear ratio.
+       */
+      ratio?: number;
+      /**
+       * Whether connected bodies collide.
+       */
+      collide_connected?: boolean;
+    }
+    /**
+     * Box2D motor-joint definition
+     */
+    interface motor_definition {
+      /**
+       * Linear target offset.
+       */
+      linear_offset?: Vector3;
+      /**
+       * Angular target offset.
+       */
+      angular_offset?: number;
+      /**
+       * Maximum motor force.
+       */
+      max_force?: number;
+      /**
+       * Maximum motor torque.
+       */
+      max_torque?: number;
+      /**
+       * Position correction factor.
+       */
+      correction_factor?: number;
+      /**
+       * Whether connected bodies collide.
+       */
+      collide_connected?: boolean;
+    }
+    /**
+     * Box2D mouse-joint definition
+     */
+    interface mouse_definition {
+      /**
+       * Target position.
+       */
+      target?: Vector3;
+      /**
+       * Maximum force.
+       */
+      max_force?: number;
+      /**
+       * Spring frequency in hertz.
+       */
+      hertz?: number;
+      /**
+       * Legacy spring frequency alias.
+       */
+      frequency?: number;
+      /**
+       * Spring damping ratio.
+       */
+      damping_ratio?: number;
+      /**
+       * Legacy spring damping-ratio alias.
+       */
+      damping?: number;
+      /**
+       * Whether connected bodies collide.
+       */
+      collide_connected?: boolean;
+    }
+    /**
+     * Box2D prismatic-joint definition
+     */
+    interface prismatic_definition {
+      /**
+       * Local anchor on the first body.
+       */
+      local_anchor_a?: Vector3;
+      /**
+       * Local anchor on the second body.
+       */
+      local_anchor_b?: Vector3;
+      /**
+       * Local translation axis on the first body.
+       */
+      local_axis_a?: Vector3;
+      /**
+       * Reference angle.
+       */
+      reference_angle?: number;
+      /**
+       * Whether the spring is enabled.
+       */
+      enable_spring?: boolean;
+      /**
+       * Spring frequency in hertz.
+       */
+      hertz?: number;
+      /**
+       * Legacy spring frequency alias.
+       */
+      frequency?: number;
+      /**
+       * Spring damping ratio.
+       */
+      damping_ratio?: number;
+      /**
+       * Legacy spring damping-ratio alias.
+       */
+      damping?: number;
+      /**
+       * Whether translation limits are enabled.
+       */
+      enable_limit?: boolean;
+      /**
+       * Lower translation limit.
+       */
+      lower_translation?: number;
+      /**
+       * Upper translation limit.
+       */
+      upper_translation?: number;
+      /**
+       * Whether the motor is enabled.
+       */
+      enable_motor?: boolean;
+      /**
+       * Maximum motor force.
+       */
+      max_motor_force?: number;
+      /**
+       * Motor speed.
+       */
+      motor_speed?: number;
+      /**
+       * Whether connected bodies collide.
+       */
+      collide_connected?: boolean;
+    }
+    /**
+     * Box2D pulley-joint definition
+     */
+    interface pulley_definition {
+      /**
+       * First ground anchor.
+       */
+      ground_anchor_a?: Vector3;
+      /**
+       * Second ground anchor.
+       */
+      ground_anchor_b?: Vector3;
+      /**
+       * Local anchor on the first body.
+       */
+      local_anchor_a?: Vector3;
+      /**
+       * Local anchor on the second body.
+       */
+      local_anchor_b?: Vector3;
+      /**
+       * First segment length.
+       */
+      length_a?: number;
+      /**
+       * Second segment length.
+       */
+      length_b?: number;
+      /**
+       * Pulley ratio.
+       */
+      ratio?: number;
+      /**
+       * Whether connected bodies collide.
+       */
+      collide_connected?: boolean;
+    }
+    /**
+     * Box2D revolute-joint definition
+     */
+    interface revolute_definition {
+      /**
+       * Local anchor on the first body.
+       */
+      local_anchor_a?: Vector3;
+      /**
+       * Local anchor on the second body.
+       */
+      local_anchor_b?: Vector3;
+      /**
+       * Reference angle.
+       */
+      reference_angle?: number;
+      /**
+       * Whether the spring is enabled.
+       */
+      enable_spring?: boolean;
+      /**
+       * Spring frequency in hertz.
+       */
+      hertz?: number;
+      /**
+       * Legacy spring frequency alias.
+       */
+      frequency?: number;
+      /**
+       * Spring damping ratio.
+       */
+      damping_ratio?: number;
+      /**
+       * Legacy spring damping-ratio alias.
+       */
+      damping?: number;
+      /**
+       * Whether angular limits are enabled.
+       */
+      enable_limit?: boolean;
+      /**
+       * Lower angular limit.
+       */
+      lower_angle?: number;
+      /**
+       * Upper angular limit.
+       */
+      upper_angle?: number;
+      /**
+       * Whether the motor is enabled.
+       */
+      enable_motor?: boolean;
+      /**
+       * Maximum motor torque.
+       */
+      max_motor_torque?: number;
+      /**
+       * Motor speed.
+       */
+      motor_speed?: number;
+      /**
+       * Whether connected bodies collide.
+       */
+      collide_connected?: boolean;
+    }
+    /**
+     * Box2D rope-joint definition
+     */
+    interface rope_definition {
+      /**
+       * Local anchor on the first body.
+       */
+      local_anchor_a?: Vector3;
+      /**
+       * Local anchor on the second body.
+       */
+      local_anchor_b?: Vector3;
+      /**
+       * Maximum rope length.
+       */
+      max_length?: number;
+      /**
+       * Whether connected bodies collide.
+       */
+      collide_connected?: boolean;
+    }
+    /**
+     * Box2D weld-joint definition
+     */
+    interface weld_definition {
+      /**
+       * Local anchor on the first body.
+       */
+      local_anchor_a?: Vector3;
+      /**
+       * Local anchor on the second body.
+       */
+      local_anchor_b?: Vector3;
+      /**
+       * Reference angle.
+       */
+      reference_angle?: number;
+      /**
+       * Legacy spring frequency in hertz.
+       */
+      hertz?: number;
+      /**
+       * Legacy spring frequency.
+       */
+      frequency?: number;
+      /**
+       * Legacy spring damping ratio.
+       */
+      damping_ratio?: number;
+      /**
+       * Legacy spring damping-ratio alias.
+       */
+      damping?: number;
+      /**
+       * Linear spring frequency in hertz.
+       */
+      linear_hertz?: number;
+      /**
+       * Angular spring frequency in hertz.
+       */
+      angular_hertz?: number;
+      /**
+       * Linear damping ratio.
+       */
+      linear_damping_ratio?: number;
+      /**
+       * Angular damping ratio.
+       */
+      angular_damping_ratio?: number;
+      /**
+       * Whether connected bodies collide.
+       */
+      collide_connected?: boolean;
+    }
+    /**
+     * Box2D wheel-joint definition
+     */
+    interface wheel_definition {
+      /**
+       * Local anchor on the first body.
+       */
+      local_anchor_a?: Vector3;
+      /**
+       * Local anchor on the second body.
+       */
+      local_anchor_b?: Vector3;
+      /**
+       * Local suspension axis on the first body.
+       */
+      local_axis_a?: Vector3;
+      /**
+       * Whether the spring is enabled.
+       */
+      enable_spring?: boolean;
+      /**
+       * Spring frequency in hertz.
+       */
+      hertz?: number;
+      /**
+       * Legacy spring frequency alias.
+       */
+      frequency?: number;
+      /**
+       * Spring damping ratio.
+       */
+      damping_ratio?: number;
+      /**
+       * Legacy spring damping-ratio alias.
+       */
+      damping?: number;
+      /**
+       * Whether translation limits are enabled.
+       */
+      enable_limit?: boolean;
+      /**
+       * Lower translation limit.
+       */
+      lower_translation?: number;
+      /**
+       * Upper translation limit.
+       */
+      upper_translation?: number;
+      /**
+       * Whether the motor is enabled.
+       */
+      enable_motor?: boolean;
+      /**
+       * Maximum motor torque.
+       */
+      max_motor_torque?: number;
+      /**
+       * Motor speed.
+       */
+      motor_speed?: number;
+      /**
+       * Whether connected bodies collide.
+       */
+      collide_connected?: boolean;
+    }
+    type JOINT_TYPE = typeof b2d.joint.JOINT_TYPE_DISTANCE | typeof b2d.joint.JOINT_TYPE_FILTER | typeof b2d.joint.JOINT_TYPE_FRICTION | typeof b2d.joint.JOINT_TYPE_GEAR | typeof b2d.joint.JOINT_TYPE_MOTOR | typeof b2d.joint.JOINT_TYPE_MOUSE | typeof b2d.joint.JOINT_TYPE_PRISMATIC | typeof b2d.joint.JOINT_TYPE_PULLEY | typeof b2d.joint.JOINT_TYPE_REVOLUTE | typeof b2d.joint.JOINT_TYPE_ROPE | typeof b2d.joint.JOINT_TYPE_UNKNOWN | typeof b2d.joint.JOINT_TYPE_WELD | typeof b2d.joint.JOINT_TYPE_WHEEL;
+    type LIMIT_STATE = typeof b2d.joint.LIMIT_STATE_AT_LOWER | typeof b2d.joint.LIMIT_STATE_AT_UPPER | typeof b2d.joint.LIMIT_STATE_EQUAL | typeof b2d.joint.LIMIT_STATE_INACTIVE;
+    /**
      * Distance joint type.
      */
     const JOINT_TYPE_DISTANCE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_DISTANCE" };
@@ -80,10 +558,10 @@ declare global {
      *
      * @param body_a - first body
      * @param body_b - second body
-     * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `length`, `frequency`, `damping_ratio`, and `collide_connected`
+     * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; length?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
+    function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.distance_definition): Opaque<"b2Joint">;
     /**
      * Create a filter joint.
      *
@@ -92,97 +570,97 @@ declare global {
      * @param definition - optional definition table
      * @returns created joint
      */
-    function create_filter(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_filter(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.filter_definition): Opaque<"b2Joint">;
     /**
      * Create a friction joint.
      *
      * @param body_a - first body
      * @param body_b - second body
-     * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `max_force`, `max_torque`, and `collide_connected`
+     * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_force?: number; max_torque?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
+    function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.friction_definition): Opaque<"b2Joint">;
     /**
      * Create a gear joint.
      *
      * @param joint1 - first revolute or prismatic joint
      * @param joint2 - second revolute or prismatic joint
-     * @param definition - optional definition with `ratio`
+     * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition?: { ratio?: number }): Opaque<"b2Joint">;
+    function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition?: b2d.joint.gear_definition): Opaque<"b2Joint">;
     /**
      * Create a motor joint.
      *
      * @param body_a - first body
      * @param body_b - second body
-     * @param definition - optional definition with `linear_offset`, `angular_offset`, `max_force`, `max_torque`, `correction_factor`, and `collide_connected`
+     * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { linear_offset?: Vector3; angular_offset?: number; max_force?: number; max_torque?: number; correction_factor?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
+    function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.motor_definition): Opaque<"b2Joint">;
     /**
      * Create a mouse joint.
      *
      * @param body_a - first body
      * @param body_b - second body
-     * @param definition - optional definition with `target`, `max_force`, `frequency`, `damping_ratio`, and `collide_connected`
+     * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { target?: Vector3; max_force?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
+    function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.mouse_definition): Opaque<"b2Joint">;
     /**
      * Create a prismatic joint.
      *
      * @param body_a - first body
      * @param body_b - second body
-     * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `local_axis_a`, `reference_angle`, `enable_limit`, `lower_translation`, `upper_translation`, `enable_motor`, `max_motor_force`, `motor_speed`, and `collide_connected`
+     * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_translation?: number; upper_translation?: number; enable_motor?: boolean; max_motor_force?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
+    function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.prismatic_definition): Opaque<"b2Joint">;
     /**
      * Create a pulley joint.
      *
      * @param body_a - first body
      * @param body_b - second body
-     * @param definition - optional definition with `ground_anchor_a`, `ground_anchor_b`, `local_anchor_a`, `local_anchor_b`, `length_a`, `length_b`, `ratio`, and `collide_connected`
+     * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { ground_anchor_a?: Vector3; ground_anchor_b?: Vector3; local_anchor_a?: Vector3; local_anchor_b?: Vector3; length_a?: number; length_b?: number; ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
+    function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.pulley_definition): Opaque<"b2Joint">;
     /**
      * Create a revolute joint.
      *
      * @param body_a - first body
      * @param body_b - second body
-     * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `reference_angle`, `enable_limit`, `lower_angle`, `upper_angle`, `enable_motor`, `max_motor_torque`, `motor_speed`, and `collide_connected`
+     * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_angle?: number; upper_angle?: number; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
+    function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.revolute_definition): Opaque<"b2Joint">;
     /**
      * Create a rope joint.
      *
      * @param body_a - first body
      * @param body_b - second body
-     * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `max_length`, and `collide_connected`
+     * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_length?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
+    function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.rope_definition): Opaque<"b2Joint">;
     /**
      * Create a weld joint.
      *
      * @param body_a - first body
      * @param body_b - second body
-     * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `reference_angle`, `frequency`, `damping_ratio`, and `collide_connected`
+     * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
+    function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.weld_definition): Opaque<"b2Joint">;
     /**
      * Create a wheel joint.
      *
      * @param body_a - first body
      * @param body_b - second body
-     * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `local_axis_a`, `enable_motor`, `max_motor_torque`, `motor_speed`, `frequency`, `damping_ratio`, and `collide_connected`
+     * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
+    function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.wheel_definition): Opaque<"b2Joint">;
     /**
      * Destroy a joint created by `b2d.joint`.
      *
@@ -377,7 +855,7 @@ declare global {
      * @param joint - rope joint
      * @returns one of the `LIMIT_STATE_*` constants
      */
-    function get_limit_state(joint: Opaque<"b2Joint">): number;
+    function get_limit_state(joint: Opaque<"b2Joint">): b2d.joint.LIMIT_STATE;
     /**
      * Get weld joint linear damping ratio.
      *
@@ -577,7 +1055,7 @@ declare global {
      * @param joint - joint
      * @returns one of the `JOINT_TYPE_*` constants
      */
-    function get_type(joint: Opaque<"b2Joint">): number;
+    function get_type(joint: Opaque<"b2Joint">): b2d.joint.JOINT_TYPE;
     /**
      * Get the upper joint limit.
      *

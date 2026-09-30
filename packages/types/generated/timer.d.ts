@@ -9,6 +9,24 @@ declare global {
    */
   namespace timer {
     /**
+     * Timer information
+     */
+    interface info {
+      /**
+       * Time remaining until the next callback.
+       */
+      time_remaining: number;
+      /**
+       * Timer interval.
+       */
+      delay: number;
+      /**
+       * Whether the timer repeats until cancelled.
+       */
+      repeating: boolean;
+    }
+    type timer_handle = number;
+    /**
      * Indicates an invalid timer handle
      */
     const INVALID_TIMER_HANDLE: number & { readonly __brand: "timer.INVALID_TIMER_HANDLE" };
@@ -17,14 +35,14 @@ declare global {
      * Cancelling a timer that is already executed or cancelled is safe.
      *
      * @param handle - the timer handle returned by timer.delay()
-     * @returns if the timer was active, false if the timer is already cancelled / complete
+     * @returns `true` if the timer was active and cancelled, `false` if the timer was already cancelled or complete
      * @example
      * ```ts
      * function cancel_ticking(self: { handle: number }) {
      *   self.handle = timer.delay(1, true, () => print("print every second"));
      *   // ...
-     *   const result = timer.cancel(self.handle);
-     *   if (!result) {
+     *   const cancelled = timer.cancel(self.handle);
+     *   if (!cancelled) {
      *     print("the timer is already cancelled");
      *   }
      * }
@@ -44,9 +62,9 @@ declare global {
      * @param callback - timer callback function
      *
      * `self`
-     * object The current object
+     * script_instance The current script instance
      * `handle`
-     * number The handle of the timer
+     * timer_handle The handle of the timer
      * `time_elapsed`
      * number The elapsed time - on first trigger it is time since timer.delay call, otherwise time since last trigger
      * @returns identifier for the create timer, returns timer.INVALID_TIMER_HANDLE if the timer can not be created
@@ -73,19 +91,12 @@ declare global {
      * }
      * ```
      */
-    function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: unknown, time_elapsed: unknown) => void): number;
+    function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: number, time_elapsed: number) => void): number;
     /**
      * Get information about timer.
      *
      * @param handle - the timer handle returned by timer.delay()
-     * @returns table or `nil` if timer is cancelled/completed. table with data in the following fields:
-     *
-     * `time_remaining`
-     * number Time remaining until the next time a timer.delay() fires.
-     * `delay`
-     * number Time interval.
-     * `repeating`
-     * boolean true = repeat timer until cancel, false = one-shot timer.
+     * @returns timer information, or `nil` if the timer is cancelled or complete
      * @example
      * ```ts
      * function report_ticking(self: { handle: number }) {
@@ -100,19 +111,19 @@ declare global {
      * }
      * ```
      */
-    function get_info(handle: number): { time_remaining: number; delay: number; repeating: boolean } | undefined;
+    function get_info(handle: number): timer.info | undefined;
     /**
      * Manual triggering a callback for a timer.
      *
      * @param handle - the timer handle returned by timer.delay()
-     * @returns if the timer was active, false if the timer is already cancelled / complete
+     * @returns `true` if the timer was active and triggered, `false` if the timer was already cancelled or complete
      * @example
      * ```ts
      * function trigger_ticking(self: { handle: number }) {
      *   self.handle = timer.delay(1, true, () => print("print every second or manually by timer.trigger"));
      *   // ...
-     *   const result = timer.trigger(self.handle);
-     *   if (!result) {
+     *   const triggered = timer.trigger(self.handle);
+     *   if (!triggered) {
      *     print("the timer is already cancelled or complete");
      *   }
      * }
