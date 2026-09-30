@@ -120,6 +120,30 @@ describe("availability derivation over the committed target snapshots", () => {
     );
     expect(bothVersions).toHaveLength(0);
   });
+
+  test("a function one doc files under another namespace takes its owning namespace", () => {
+    for (const name of [
+      "bullet3d.collision_object.get_shape",
+      "bullet3d.collision_object.get_shape_count",
+      "bullet3d.collision_object.get_shapes",
+    ]) {
+      const records = artifact.records.filter(
+        (r) => r.identity.kind === "FUNCTION" && r.identity.name === name,
+      );
+      expect(records.length).toBeGreaterThan(0);
+      for (const record of records) {
+        expect(record.identity.namespace).toBe("bullet3d.collision_object");
+        expect(record.availableIn).toContain("1.13.2");
+      }
+    }
+    expect(
+      artifact.records.filter(
+        (r) =>
+          r.identity.namespace === "bullet3d.shape" &&
+          r.identity.name.startsWith("bullet3d.collision_object."),
+      ),
+    ).toEqual([]);
+  });
 });
 
 describe("committed artifact drift gate", () => {

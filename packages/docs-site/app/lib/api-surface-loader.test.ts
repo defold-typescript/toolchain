@@ -905,3 +905,39 @@ describe("engine pages withhold the overloads the declarations withhold", () => 
     expect(entries("set_mass_data")[0]?.authoritativeSignature).toContain("data: b2d.mass_data");
   });
 });
+
+describe("engine pages route a function to the namespace that owns it", () => {
+  const MOVED = [
+    "bullet3d.collision_object.get_shape",
+    "bullet3d.collision_object.get_shape_count",
+    "bullet3d.collision_object.get_shapes",
+  ];
+
+  test("the exact-version page lists each moved function under its owning namespace only", () => {
+    const pages = loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.13.2");
+    const functionsOf = (namespace: string) =>
+      pages.find((page) => page.namespace === namespace)?.module.functions.map((fn) => fn.name) ??
+      [];
+    const owner = functionsOf("bullet3d.collision_object");
+    const shape = functionsOf("bullet3d.shape");
+    for (const name of MOVED) {
+      expect(owner).toContain(name);
+      expect(shape).not.toContain(name);
+    }
+  });
+
+  test("the Combined surface joins each moved function to an authoritative signature", () => {
+    const { namespaces } = loadCombinedSurface(REAL_TYPES_DIR);
+    const owner = namespaces.find((ns) => ns.namespace === "bullet3d.collision_object");
+    const shape = namespaces.find((ns) => ns.namespace === "bullet3d.shape");
+    const ownerFunctions = owner?.module.functions.map((fn) => fn.name) ?? [];
+    for (const name of MOVED) {
+      expect(ownerFunctions).toContain(name);
+      const entry = owner?.entries.find((e) => e.identity.name === name);
+      expect(entry?.identity.namespace).toBe("bullet3d.collision_object");
+      expect(entry?.authoritativeSignature).not.toBe("");
+      expect(shape?.module.functions.map((fn) => fn.name) ?? []).not.toContain(name);
+      expect(shape?.entries.map((e) => e.identity.name) ?? []).not.toContain(name);
+    }
+  });
+});

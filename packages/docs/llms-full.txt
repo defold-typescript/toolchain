@@ -9726,6 +9726,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_position(object: Opaque<"btCollisionObject" | "btRigidBody">): Vector3; [since 1.13.2]
 - function get_restitution(object: Opaque<"btCollisionObject" | "btRigidBody">): number; [since 1.13.2]
 - function get_rotation(object: Opaque<"btCollisionObject" | "btRigidBody">): Quaternion; [since 1.13.2]
+- function get_shape(object: Opaque<"btCollisionObject" | "btRigidBody">, shape_index: number): bullet3d.shape.btCollisionShape; [since 1.13.2]
+- function get_shape_count(object: Opaque<"btCollisionObject" | "btRigidBody">): number; [since 1.13.2]
+- function get_shapes(object: Opaque<"btCollisionObject" | "btRigidBody">): bullet3d.shape.btCollisionShape[]; [since 1.13.2]
 - function get_world_transform(object: Opaque<"btCollisionObject" | "btRigidBody">): LuaMultiReturn<[Vector3, Quaternion]>; [since 1.13.2]
 - function has_collision_flag(object: Opaque<"btCollisionObject" | "btRigidBody">, flag: number): boolean; [since 1.13.2]
 - function has_contact_response(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean; [since 1.13.2]
@@ -9904,9 +9907,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### bullet3d.shape
 
-- bullet3d.collision_object.get_shape(object: Opaque<"btCollisionObject" | "btRigidBody">, shape_index: number): btCollisionShape
-- bullet3d.collision_object.get_shape_count(object: Opaque<"btCollisionObject" | "btRigidBody">): number
-- bullet3d.collision_object.get_shapes(object: Opaque<"btCollisionObject" | "btRigidBody">): btCollisionShape[]
 - function get_collision_object(shape: bullet3d.shape.btCollisionShape): Opaque<"btCollisionObject" | "btRigidBody">; [since 1.13.2]
 - function get_index(shape: bullet3d.shape.btCollisionShape): number; [since 1.13.2]
 - function get_local_transform(shape: bullet3d.shape.btCollisionShape): LuaMultiReturn<[Vector3, Quaternion]>; [since 1.13.2]
