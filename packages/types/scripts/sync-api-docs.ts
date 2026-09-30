@@ -52,13 +52,24 @@ export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
     "doc/scripts-box2d-v3-script_box2d_world_v3.cpp_doc.json",
   ]),
   entry("buffer", "doc/scripts-script_buffer.cpp_doc.json"),
+  entry("bullet3d", "doc/scripts-bullet3d-script_bullet3d.cpp_doc.json"),
+  entry(
+    "bullet3d.collision_object",
+    "doc/scripts-bullet3d-script_bullet3d_collision_object.cpp_doc.json",
+  ),
+  entry("bullet3d.constraint", "doc/scripts-bullet3d-script_bullet3d_constraint.cpp_doc.json"),
+  entry("bullet3d.rigid_body", "doc/scripts-bullet3d-script_bullet3d_rigid_body.cpp_doc.json"),
+  entry("bullet3d.shape", "doc/scripts-bullet3d-script_bullet3d_shape.cpp_doc.json"),
+  entry("bullet3d.world", "doc/scripts-bullet3d-script_bullet3d_world.cpp_doc.json"),
   // Camera and component namespaces merge their DDF messages/properties into
   // the callable script API so release snapshots retain every declared symbol.
   entry("camera", "doc/gamesys-camera_ddf.proto_doc.json", undefined, [
     "doc/render-render_script_camera.cpp_doc.json",
   ]),
   entry("collectionfactory", "doc/scripts-script_collection_factory.cpp_doc.json"),
-  entry("collectionproxy", "doc/scripts-script_collectionproxy.cpp_doc.json"),
+  entry("collectionproxy", "doc/scripts-script_collectionproxy.cpp_doc.json", undefined, [
+    "doc/gamesys-collectionproxy_ddf.proto_doc.json",
+  ]),
   entry("compute", "doc/scripts-script_compute.cpp_doc.json"),
   entry("crash", "doc/script_crash.cpp_doc.json"),
   entry("factory", "doc/scripts-script_factory.cpp_doc.json"),
