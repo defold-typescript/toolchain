@@ -774,3 +774,47 @@ for (const namespace of ["saver.storage", "saver.saver"]) {
     }
   });
 }
+
+test("a string-keyed table param lowers to the same widened type the emitter declares", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "create",
+        brief: "",
+        generics: [],
+        params: [
+          {
+            name: "components",
+            types: ["table<string, any>"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+          },
+        ],
+        returns: [
+          {
+            name: "",
+            types: ["table<string, any>"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+          },
+        ],
+      },
+    ],
+  };
+
+  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "demo" }));
+  expect(fn?.parameters).toEqual([
+    {
+      name: "components",
+      doc: "",
+      types: ["LuaTable<string, unknown> | Record<string, unknown>"],
+      is_optional: "False",
+      is_vararg: "False",
+    },
+  ]);
+  expect(fn?.returnvalues).toEqual([{ name: "", doc: "", types: ["LuaTable<string, unknown>"] }]);
+});
