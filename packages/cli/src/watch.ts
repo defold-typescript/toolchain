@@ -127,6 +127,8 @@ export interface RunWatchOptions {
    * use so a `.go` save that adds a component is picked up.
    */
   readonly sceneObjects?: () => SceneObjectComponents | undefined;
+  /** The Defold version every build in this watch targets; see `runBuild`. */
+  readonly defoldVersion?: string;
   readonly json?: boolean;
   /** Whether stderr's severity words carry color; dispatch decides it from the stream. */
   readonly color?: boolean;
@@ -267,6 +269,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       ...(opts.sceneIndex ? { sceneIndex: opts.sceneIndex } : {}),
       ...(opts.scriptWorlds ? { scriptWorlds: opts.scriptWorlds } : {}),
       ...(opts.sceneObjects ? { sceneObjects: opts.sceneObjects } : {}),
+      ...(opts.defoldVersion !== undefined ? { defoldVersion: opts.defoldVersion } : {}),
     });
     config = readBuildConfig(cwd);
     if (!opts.json) stdout.write(BUILD_STARTED_LINE);

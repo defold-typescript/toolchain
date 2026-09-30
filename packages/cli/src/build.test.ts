@@ -1378,6 +1378,81 @@ describe("runBuild (companion closure violations)", () => {
   });
 });
 
+describe("runBuild (text script properties)", () => {
+  const TEXT_PROPERTY = [
+    'import { defineScript } from "@defold-typescript/types";',
+    "",
+    "defineScript({",
+    '  properties: { greeting: "Hello!\\nWelcome", speed: 1 },',
+    "});",
+    "",
+  ].join("\n");
+
+  function thrownBy(run: () => unknown): unknown {
+    try {
+      run();
+    } catch (error) {
+      return error;
+    }
+    return undefined;
+  }
+
+  test("fails on a pre-1.13.2 target naming both versions and writes no output", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/greeter.ts", TEXT_PROPERTY);
+
+    const thrown = thrownBy(() => runBuild({ cwd, defoldVersion: "1.12.4" }));
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const error = thrown as BuildFailureError;
+    expect(error.message).toContain("src/greeter.ts:4:27");
+    expect(error.message).toContain("greeting");
+    expect(error.message).toContain("1.13.2");
+    expect(error.message).toContain("1.12.4");
+    expect(error.entries).toEqual([
+      expect.objectContaining({ file: "src/greeter.ts", line: 4, column: 27 }),
+    ]);
+    expect(existsSync(path.join(cwd, "src/greeter.ts.script"))).toBe(false);
+  });
+
+  test("a single-digit minor compares numerically, not as text", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/greeter.ts", TEXT_PROPERTY);
+
+    expect(thrownBy(() => runBuild({ cwd, defoldVersion: "1.9.9" }))).toBeInstanceOf(
+      BuildFailureError,
+    );
+  });
+
+  test("builds on a 1.13.2 target and when no target is known", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/greeter.ts", TEXT_PROPERTY);
+
+    expect(runBuild({ cwd, defoldVersion: "1.13.2" }).written).toContain("src/greeter.ts.script");
+    rmSync(path.join(cwd, "src/greeter.ts.script"));
+    expect(runBuild({ cwd }).written).toContain("src/greeter.ts.script");
+  });
+
+  test("a prerelease suffix is decided by its numeric core", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/greeter.ts", TEXT_PROPERTY);
+
+    expect(runBuild({ cwd, defoldVersion: "1.13.2-beta" }).written).toContain(
+      "src/greeter.ts.script",
+    );
+  });
+
+  test("a script without a text property builds on an older target", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/mover.ts",
+      'import { defineScript } from "@defold-typescript/types";\n\ndefineScript({ properties: { speed: 1 } });\n',
+    );
+
+    expect(runBuild({ cwd, defoldVersion: "1.12.4" }).written).toContain("src/mover.ts.script");
+  });
+});
+
 describe("runBuild (companion module emit)", () => {
   // The bug-199 arrangement itself: a door component that owns lifecycle hooks
   // and also exports a value the player reads.
