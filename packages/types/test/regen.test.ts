@@ -343,6 +343,45 @@ describe("editor namespace emit", () => {
     expect(contents).not.toContain("transaction_step[;");
   });
 
+  // Verbatim 1.13.2 tokens: a composite that names an editor handle keeps its
+  // brand, while a leaf the editor map does not know still maps to `unknown`.
+  test("resolves the handle leaves inside a 1.13.2 composite editor token", () => {
+    const slot = (name: string, token: string) => ({
+      name,
+      doc: "",
+      types: [token],
+      is_optional: "False",
+    });
+    const fn = (name: string, parameters: object[], returnvalues: object[]) => ({
+      type: "FUNCTION",
+      name,
+      brief: "",
+      description: "",
+      parameters,
+      returnvalues,
+    });
+    const component = "fun(props:T):editor.component";
+    const doc = {
+      info: { namespace: "editor", brief: "", description: "" },
+      elements: [
+        fn("editor.transact", [slot("txs", "editor.transaction_step[]")], []),
+        fn("editor.ui.component", [slot("fn", component)], [slot("value", component)]),
+        fn(
+          "editor.prefs.schema.tuple",
+          [slot("items", "editor.schema[]")],
+          [slot("value", "editor.schema")],
+        ),
+      ],
+    };
+    const { contents } = generateModuleDeclaration({ ...editorEntry(), doc });
+    expect(contents).toContain('function transact(txs: Opaque<"transaction_step">[]): void;');
+    expect(contents).toContain(
+      'function component(fn: (props: unknown) => Opaque<"component">): ' +
+        '(props: unknown) => Opaque<"component">;',
+    );
+    expect(contents).toContain("function tuple(items: unknown[]): unknown;");
+  });
+
   test("emits a documented vararg as a rest parameter under its own name", () => {
     const { contents } = generateModuleDeclaration(editorEntry());
     expect(contents).toContain(

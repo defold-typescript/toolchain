@@ -8,9 +8,9 @@ import {
   withholdOverloads,
 } from "../src/api-doc";
 import {
-  defaultMapType,
   emitDeclarations,
   emitSymbolSignatures,
+  mapTypeWithLeaves,
   type SymbolSignature,
 } from "../src/emit-dts";
 import {
@@ -248,9 +248,7 @@ const EDITOR_TYPE_MAP: Readonly<Record<string, string>> = {
   "editor.message": 'Opaque<"message">',
 };
 
-function mapEditorType(token: string): string {
-  return EDITOR_TYPE_MAP[token] ?? defaultMapType(token);
-}
+const mapEditorType = mapTypeWithLeaves(EDITOR_TYPE_MAP);
 
 // The named type maps an `editorModules` entry may select. A closed set, so an
 // unknown selector fails loudly instead of silently falling back to the runtime

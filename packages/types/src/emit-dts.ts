@@ -4931,3 +4931,18 @@ export function isKnownDefoldTypeToken(token: string): boolean {
 export function defaultMapType(token: string): string {
   return wholeTokenMapping(token) ?? mapLualsExpression(token, resolveDefoldLeaf).ts;
 }
+
+/**
+ * A mapper that resolves `leaves` both as whole tokens and as leaves inside a
+ * composite expression, falling back to the engine vocabulary for the rest.
+ */
+export function mapTypeWithLeaves(
+  leaves: Readonly<Record<string, string>>,
+): (token: string) => string {
+  const resolveLeaf = (leaf: string): string | undefined =>
+    Object.hasOwn(leaves, leaf) ? leaves[leaf] : resolveDefoldLeaf(leaf);
+  return (token) => {
+    if (Object.hasOwn(leaves, token)) return leaves[token] as string;
+    return wholeTokenMapping(token) ?? mapLualsExpression(token, resolveLeaf).ts;
+  };
+}
