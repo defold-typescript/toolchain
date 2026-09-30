@@ -3,6 +3,7 @@
 // evidence a return-side correction rests on lives in the slot's HTML prose and
 // the parser discards it.
 
+import { correctionPins, pinMatches } from "./correction-pins";
 import type { ReturnFieldOptionalityCorrection, ReturnTypeCorrection } from "./emit-dts";
 import type { ProvenanceSurface } from "./optional-correction-provenance";
 
@@ -237,10 +238,6 @@ const RETURN_VERDICT_RANK: Record<ReturnVerdict, number> = {
   resolved: 0,
 };
 
-function baseTokens(tokens: readonly string[]): string {
-  return tokens.filter((token) => token !== "nil").join("|");
-}
-
 // The return-type class has the same two-sided evidence: the declared tokens
 // still say what the correction contradicts, and the slot prose still states the
 // contradiction. A target that fixes either half no longer needs the entry.
@@ -257,7 +254,7 @@ export function returnCorrectionProvenance(
 ): ReturnTypeProvenance[] {
   return entries.map(([key, correction]) => {
     const namespace = namespaceOf(key);
-    const pinned = baseTokens(correction.upstream);
+    const pins = correctionPins(correction);
 
     const verdicts = new Map<string, ReturnVerdict>();
     const drift = new Map<string, Set<string>>();
@@ -269,12 +266,12 @@ export function returnCorrectionProvenance(
         const tokens = slot.types ?? [];
 
         let verdict: ReturnVerdict;
-        if (baseTokens(tokens) !== pinned) {
+        if (!pinMatches(tokens, pins)) {
           verdict = "drift";
           const messages = drift.get(surface.target) ?? new Set<string>();
           drift.set(surface.target, messages);
           messages.add(
-            `${surface.target}: pinned ${correction.upstream.join("|")}, found ${tokens.join("|")}`,
+            `${surface.target}: pinned ${pins.map((pin) => pin.join("|")).join(" or ")}, found ${tokens.join("|")}`,
           );
         } else if (
           tokens.includes("nil") ||
