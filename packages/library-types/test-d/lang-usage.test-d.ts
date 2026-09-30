@@ -19,3 +19,13 @@ lang.set_next_lang();
 // `set_lang`'s trailing `function?` param lowers to an optional callable, so a
 // plain literal is accepted where the type used to be `unknown | undefined`.
 lang.set_lang("en", () => {});
+
+// A string-keyed table the library hands back stays a `LuaTable`: only the
+// caller-supplied side widens to accept an object literal.
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+const _langTableReturn: Equal<
+  ReturnType<typeof lang.get_lang_table>,
+  LuaTable<string, string>
+> = true;
+void _langTableReturn;

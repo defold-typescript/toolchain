@@ -51,7 +51,7 @@
           "name": "objects",
           "doc": "Table with game objects from collectionfactory. Pass nil if no objects are used",
           "types": [
-            "LuaTable<string | Hash, string | Hash> | undefined"
+            "LuaTable<string | Hash, string | Hash> | Record<string, string | Hash> | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -95,7 +95,7 @@
           "name": "nodes",
           "doc": "Table with nodes from gui.clone_tree() function. Pass nil if no nodes are used",
           "types": [
-            "LuaTable<string | Hash, Opaque<\"node\">> | undefined"
+            "LuaTable<string | Hash, Opaque<\"node\">> | Record<string, Opaque<\"node\">> | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"

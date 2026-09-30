@@ -16,6 +16,7 @@
 import {
   LUALS_VARARG_TOKEN,
   type LualsLeafResolver,
+  type LualsPosition,
   mapLualsCallSignatureExpression,
   mapLualsExpression,
   matchBracket,
@@ -106,8 +107,12 @@ function leafResolver(ctx: MapContext): LualsLeafResolver {
 }
 
 /** Map one raw LuaLS type token to a TypeScript type string. */
-export function mapLualsType(token: string, ctx: MapContext): MapResult {
-  return mapLualsExpression(token, leafResolver(ctx));
+export function mapLualsType(
+  token: string,
+  ctx: MapContext,
+  position: LualsPosition = "output",
+): MapResult {
+  return mapLualsExpression(token, leafResolver(ctx), position);
 }
 
 /**
