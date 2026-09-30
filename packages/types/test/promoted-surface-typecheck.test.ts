@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node
 import * as os from "node:os";
 import * as path from "node:path";
 
-// Consumer type-proofs for the promoted Defold 1.13.0 surface: each documented
+// Consumer type-proofs for the promoted Defold 1.13.0 and 1.13.2 surfaces: each documented
 // usage must compile against the shipped `@defold-typescript/types/script`
 // declarations, and a paired negative control must fail the same compile. This
 // is the end-to-end backstop for the curation work — it exercises the emitted
@@ -119,6 +119,19 @@ const POSITIVE_FILES: Record<string, string> = {
     "const point = hits[0].point;",
     "const visits: number = stats.node_visits;",
   ].join("\n"),
+  "bullet3d.ts": [
+    'const body = bullet3d.get_rigid_body("#collisionobject");',
+    "if (body !== undefined) {",
+    "  const mass: number = bullet3d.rigid_body.get_mass(body);",
+    // A rigid body is a collision object: the shared functions accept it.
+    "  const position = bullet3d.collision_object.get_position(body);",
+    "  const world = bullet3d.rigid_body.get_world(body);",
+    "  const hits = bullet3d.world.cast_ray(world, position, vmath.vector3(0, -10, 0));",
+    "  const hitPosition = bullet3d.collision_object.get_position(hits[0].object);",
+    "  void mass;",
+    "  void hitPosition;",
+    "}",
+  ].join("\n"),
   "graphics.ts": [
     "const info = graphics.get_adapter_info();",
     "const family: string = info.family;",
@@ -128,7 +141,7 @@ const POSITIVE_FILES: Record<string, string> = {
   ].join("\n"),
 };
 
-describe("promoted 1.13.0 surface — documented usages compile", () => {
+describe("promoted surfaces — documented usages compile", () => {
   test(
     "every documented promoted-surface usage type-checks against the shipped declarations",
     () => {
@@ -152,6 +165,11 @@ const NEGATIVE_CASES: Record<string, string> = {
     "declare const world: Parameters<typeof b2d.world.cast_ray>[0];",
     "b2d.world.cast_ray(world, vmath.vector3(), vmath.vector3(), { bogus_bits: 1 }, 4);",
   ].join("\n"),
+  "bullet3d rigid-body functions reject a collision object that may be a ghost": [
+    'const object = bullet3d.get_collision_object("#collisionobject");',
+    "if (object !== undefined) bullet3d.rigid_body.get_mass(object);",
+  ].join("\n"),
+  "bullet3d handles are not component URLs": 'bullet3d.rigid_body.get_mass("#collisionobject");',
   "graphics adapter limit is a number, not a string":
     "const bad: string = graphics.get_adapter_info().limits.max_texture_size_2d;",
   "compute.get_constants returns an array, not a record":
@@ -160,7 +178,7 @@ const NEGATIVE_CASES: Record<string, string> = {
     'const b: boolean = material.get_vertex_attributes("/m.materialc").normalize;',
 };
 
-describe("promoted 1.13.0 surface — negative controls fail the same compile", () => {
+describe("promoted surfaces — negative controls fail the same compile", () => {
   for (const [name, source] of Object.entries(NEGATIVE_CASES)) {
     test(
       name,
