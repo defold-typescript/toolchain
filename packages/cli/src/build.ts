@@ -37,7 +37,7 @@ import {
 } from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
-import { throwOnTextPropertiesBeforeTarget } from "./text-property-gate";
+import { mergeTextPropertyFailures } from "./text-property-gate";
 import { loadUrlParameterTable } from "./url-parameter-table";
 import {
   type CrossWorldAddressEntry,
@@ -172,7 +172,6 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     const preEmitProgram = session.getProgram();
     if (preEmitProgram) {
       throwOnCompanionViolations({ program: preEmitProgram, scriptSources });
-      throwOnTextPropertiesBeforeTarget({ program: preEmitProgram, scriptSources, defoldVersion });
     }
     throwOnUnresolvedRequires({
       lua: luaBySource,
@@ -194,6 +193,14 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
         ? [{ label: TIMERS_RUNTIME_LABEL, outputRel: timersModuleRel(config) }]
         : []),
     ]);
+  }
+
+  // Outside the clean-program check, so a script the target cannot load is never
+  // written beside another source's type error; it joins `failures` and so
+  // drops out of the write set while clean sources are still written.
+  const gateProgram = session.getProgram();
+  if (gateProgram) {
+    mergeTextPropertyFailures(failures, { program: gateProgram, scriptSources, defoldVersion });
   }
 
   // Every output path is claimed before anything is written, so a contested path
