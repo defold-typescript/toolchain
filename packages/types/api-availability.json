@@ -1688,6 +1688,15 @@
       "identity": {
         "namespace": "b2d.joint",
         "kind": "TYPEDEF",
+        "name": "b2d.joint.filter_definition",
+        "signature": ""
+      },
+      "availableIn": ["1.13.2"]
+    },
+    {
+      "identity": {
+        "namespace": "b2d.joint",
+        "kind": "TYPEDEF",
         "name": "b2Joint",
         "signature": ""
       },
@@ -2336,15 +2345,6 @@
       "identity": {
         "namespace": "b2d",
         "kind": "TYPEDEF",
-        "name": "b2d.joint.filter_definition",
-        "signature": ""
-      },
-      "availableIn": ["1.13.2"]
-    },
-    {
-      "identity": {
-        "namespace": "b2d",
-        "kind": "TYPEDEF",
         "name": "b2d.shape_create_definition",
         "signature": ""
       },
@@ -2662,6 +2662,33 @@
         "kind": "FUNCTION",
         "name": "bullet3d.collision_object.get_rotation",
         "signature": "[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Quaternion\"],\"isOptional\":false}]"
+      },
+      "availableIn": ["1.13.2"]
+    },
+    {
+      "identity": {
+        "namespace": "bullet3d.collision_object",
+        "kind": "FUNCTION",
+        "name": "bullet3d.collision_object.get_shape_count",
+        "signature": "[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
+      },
+      "availableIn": ["1.13.2"]
+    },
+    {
+      "identity": {
+        "namespace": "bullet3d.collision_object",
+        "kind": "FUNCTION",
+        "name": "bullet3d.collision_object.get_shape",
+        "signature": "[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]"
+      },
+      "availableIn": ["1.13.2"]
+    },
+    {
+      "identity": {
+        "namespace": "bullet3d.collision_object",
+        "kind": "FUNCTION",
+        "name": "bullet3d.collision_object.get_shapes",
+        "signature": "[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
       "availableIn": ["1.13.2"]
     },
@@ -3958,33 +3985,6 @@
         "kind": "CONSTANT",
         "name": "bullet3d.shape.SHAPE_TYPE_SPHERE",
         "signature": ""
-      },
-      "availableIn": ["1.13.2"]
-    },
-    {
-      "identity": {
-        "namespace": "bullet3d.shape",
-        "kind": "FUNCTION",
-        "name": "bullet3d.collision_object.get_shape_count",
-        "signature": "[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
-      },
-      "availableIn": ["1.13.2"]
-    },
-    {
-      "identity": {
-        "namespace": "bullet3d.shape",
-        "kind": "FUNCTION",
-        "name": "bullet3d.collision_object.get_shape",
-        "signature": "[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]"
-      },
-      "availableIn": ["1.13.2"]
-    },
-    {
-      "identity": {
-        "namespace": "bullet3d.shape",
-        "kind": "FUNCTION",
-        "name": "bullet3d.collision_object.get_shapes",
-        "signature": "[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
       "availableIn": ["1.13.2"]
     },
