@@ -61,6 +61,14 @@ function sightings(key: string): Sighting[] {
   return out;
 }
 
+// Property corrections a retained target already declares correctly while an
+// older one still needs them, each with the targets whose span changed to the
+// corrected type. A changed span in every retained target is a deletion instead.
+const PROPERTY_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
+  "camera.projection": ["defold-1.13.2"],
+  "camera.view": ["defold-1.13.2"],
+};
+
 describe("property-type correction provenance", () => {
   const entries = [...PROPERTY_TYPE_CORRECTIONS.entries()];
 
@@ -74,7 +82,9 @@ describe("property-type correction provenance", () => {
     const drifted: string[] = [];
     for (const [key, correction] of entries) {
       const pins = propertyCorrectionPins(correction);
+      const resolvedIn = PROPERTY_CORRECTIONS_RESOLVED_UPSTREAM[key] ?? [];
       for (const sighting of sightings(key)) {
+        if (resolvedIn.includes(sighting.target)) continue;
         if (sighting.token === undefined || !pinMatches(spanTokens(sighting.token), pins)) {
           drifted.push(
             `${key} in ${sighting.target}: pinned ${[correction.upstream, ...(correction.retypedUpstream ?? [])].join(" or ")}, found ${sighting.token ?? "no type span"}`,
@@ -83,6 +93,31 @@ describe("property-type correction provenance", () => {
       }
     }
     expect(drifted).toEqual([]);
+  });
+
+  test("each recorded resolution is a target whose span no longer carries a pin, while an older target still does", () => {
+    const stale: string[] = [];
+    for (const [key, targets] of Object.entries(PROPERTY_CORRECTIONS_RESOLVED_UPSTREAM)) {
+      const correction = PROPERTY_TYPE_CORRECTIONS.get(key);
+      if (correction === undefined) {
+        stale.push(`${key}: no such correction`);
+        continue;
+      }
+      const pins = propertyCorrectionPins(correction);
+      const pinned = (sighting: Sighting) =>
+        sighting.token !== undefined && pinMatches(spanTokens(sighting.token), pins);
+      const found = sightings(key);
+      for (const target of targets) {
+        const own = found.filter((sighting) => sighting.target === target);
+        if (own.length === 0 || own.some(pinned)) {
+          stale.push(`${key}: ${target} still declares the pinned span — drop the record`);
+        }
+      }
+      if (!found.some((sighting) => !targets.includes(sighting.target) && pinned(sighting))) {
+        stale.push(`${key}: no older target still needs it — delete the correction`);
+      }
+    }
+    expect(stale).toEqual([]);
   });
 
   test("every correction states why it overrides upstream", () => {

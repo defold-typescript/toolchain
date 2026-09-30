@@ -44,6 +44,13 @@ export const OVERRIDE_RETURN_SLOT = "result";
 
 const CREATE_SHAPE_INDEX = `b2d.body.create_shape:return:${OVERRIDE_RETURN_SLOT}:index`;
 
+const BULLET3D_CAST_SHAPE_INDEXES = [
+  "bullet3d.world.cast_ray:return:hits:shape_index",
+  "bullet3d.world.cast_ray_closest:return:hit:shape_index",
+  "bullet3d.world.cast_shape:return:hits:shape_index",
+  "bullet3d.world.cast_shape_closest:return:hit:shape_index",
+];
+
 // Keyed `<element>:<param|return>:<slot>[:<field>]`, the shape
 // `OPTIONAL_SLOT_CORRECTIONS` and `TABLE_FIELD_TYPE_OVERRIDES` use.
 // `scripts/index-slot-scan.test.ts` reds on a scanned slot missing here and on
@@ -166,6 +173,42 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
     key,
     { class: "not-a-position", evidence: "Box2D collision group, not a position" },
   ]),
+  ...[
+    "enable_spring",
+    "get_6dof_angle",
+    "get_6dof_axis",
+    "get_6dof_motor",
+    "get_6dof_position",
+    "get_limit",
+    "is_limited",
+    "set_6dof_motor",
+    "set_limit",
+    "set_spring_damping",
+    "set_spring_equilibrium_point",
+    "set_spring_stiffness",
+  ].map((name): [string, IndexSlotClassification] => [
+    `bullet3d.constraint.${name}:param:axis`,
+    {
+      class: "native-1",
+      evidence: "one-based axis, from 1 to 6 or from 1 to 3 for an angular axis",
+    },
+  ]),
+  [
+    "bullet3d.collision_object.get_shape:param:shape_index",
+    {
+      class: "native-1",
+      evidence: "one-based shape index",
+      pairsWith: ["bullet3d.shape.get_index:return:shape_index", ...BULLET3D_CAST_SHAPE_INDEXES],
+    },
+  ],
+  [
+    "bullet3d.shape.get_index:return:shape_index",
+    { class: "native-1", evidence: "Get the one-based child index." },
+  ],
+  ...BULLET3D_CAST_SHAPE_INDEXES.map((key): [string, IndexSlotClassification] => [
+    key,
+    { class: "native-1", evidence: "one-based compound child index" },
+  ]),
   ...["client:send:param:i", "client:send:param:j"].map(
     (key): [string, IndexSlotClassification] => [
       key,
@@ -205,6 +248,13 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
     },
   ],
   ["crash.set_user_field:param:index", { class: "native-0", evidence: "slot index. 0-indexed" }],
+  [
+    "editor.ui.open_resource:param:args",
+    {
+      class: "native-1",
+      evidence: "Code and Text views accept a one-based cursor or range in `args`",
+    },
+  ],
   ...[
     "go.get:param:options:index",
     "go.set:param:options:index",
@@ -221,6 +271,13 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
       evidence: "the binding counts preceding siblings from 0 (gui_script.cpp LuaGetIndex)",
     },
   ],
+  ...[
+    "gui.get_layout_objects:return:objects:text_offset",
+    "label.get_layout_objects:return:objects:text_offset",
+  ].map((key): [string, IndexSlotClassification] => [
+    key,
+    { class: "native-0", evidence: "zero-based UTF-32 offset in the visible text" },
+  ]),
   ...["image.pixel:param:x", "image.pixel:param:y"].map(
     (key): [string, IndexSlotClassification] => [
       key,
@@ -231,6 +288,13 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
   [
     "model.set_blend_weights:param:weights",
     { class: "not-a-position", evidence: "array of weight values (1-based indices)" },
+  ],
+  [
+    "on_input:param:action:gamepad",
+    {
+      class: "native-0",
+      evidence: "comp_script.cpp pushes the engine's 0-based m_GamepadIndex unchanged",
+    },
   ],
   [
     "profiler.view_recorded_frame:param:frame_index",
@@ -245,6 +309,10 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
     "resource.create_atlas:param:table:frame_end",
     "resource.set_atlas:param:table:frame_start",
     "resource.set_atlas:param:table:frame_end",
+    "resource.create_atlas:param:table:animations:frame_start",
+    "resource.create_atlas:param:table:animations:frame_end",
+    "resource.set_atlas:param:table:animations:frame_start",
+    "resource.set_atlas:param:table:animations:frame_end",
   ].map((key): [string, IndexSlotClassification] => [
     key,
     {
@@ -261,6 +329,7 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
       class: "native-1",
       evidence:
         "script_resource.cpp:CheckAtlasArguments checks each frame against 1 .. <number-of-geometries>",
+      pairsWith: ["resource.get_atlas:return:data:animations:frames"],
     },
   ]),
   [
@@ -287,12 +356,27 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
     },
   ]),
   [
+    "resource.get_atlas:return:data:animations:frames",
+    {
+      class: "native-1",
+      evidence: "script_resource.cpp:GetAtlas pushes each frame's geometry_index + 1",
+    },
+  ],
+  [
     "resource.get_atlas:return:data:geometries:indices",
     {
       class: "native-0",
       evidence: "script_resource.cpp:GetAtlas pushes each m_Indices value unchanged",
     },
   ],
+  ...["sockets_r", "sockets_w"].map((slot, tupleSlot): [string, IndexSlotClassification] => [
+    `socket.select:return:${slot}`,
+    {
+      class: "not-a-position",
+      evidence: "a list of ready sockets, keyed both by integer and by socket",
+      tupleSlot,
+    },
+  ]),
   ...(["x", "y"] as const).flatMap((axis) =>
     ["tilemap.set_tile", "tilemap.get_tile", "tilemap.get_tile_info"].map(
       (fn): [string, IndexSlotClassification] => [

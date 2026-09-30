@@ -8,16 +8,17 @@ declare global {
    */
   namespace factory {
     type Status = typeof factory.STATUS_UNLOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_LOADED;
+    type STATUS = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED;
     /**
-     * loaded
+     * The factory resources are loaded.
      */
     const STATUS_LOADED: number & { readonly __brand: "factory.STATUS_LOADED" };
     /**
-     * loading
+     * The factory resources are loading.
      */
     const STATUS_LOADING: number & { readonly __brand: "factory.STATUS_LOADING" };
     /**
-     * unloaded
+     * The factory resources are unloaded.
      */
     const STATUS_UNLOADED: number & { readonly __brand: "factory.STATUS_UNLOADED" };
     /**
@@ -58,7 +59,7 @@ declare global {
      * });
      * ```
      */
-    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash;
+    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash;
     /**
      * This returns status of the factory.
      * Calling this function when the factory is not marked as dynamic loading always returns
@@ -66,12 +67,8 @@ declare global {
      *
      * @param url - the factory component to get status from
      * @returns status of the factory component
-     *
-     * - `factory.STATUS_UNLOADED`
-     * - `factory.STATUS_LOADING`
-     * - `factory.STATUS_LOADED`
      */
-    function get_status(url: string | Hash | Url): factory.Status;
+    function get_status(url: string | Hash | Url): factory.STATUS;
     /**
      * Resources are referenced by the factory component until the existing (parent) collection is destroyed or factory.unload is called.
      * Calling this function when the factory is not marked as dynamic loading does nothing.
@@ -80,7 +77,7 @@ declare global {
      * @param complete_function - function to call when resources are loaded.
      *
      * `self`
-     * object The current object.
+     * script_instance The current script instance.
      * `url`
      * url url of the factory component
      * `result`
@@ -91,7 +88,7 @@ declare global {
      * factory.load("#factory", (self, url, result) => {});
      * ```
      */
-    function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;
+    function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
     /**
      * Changes the prototype for the factory.
      *

@@ -2947,8 +2947,11 @@ describe("loadApiSurface translations and /api rendering", () => {
     expect(md).not.toContain("<span");
   });
 
+  // 1.13.2 drops the sample from this return doc, so the 1.13.1 surface carries it.
   test("physics.get_maskbit's return doc renders its prose sample as the pinned TypeScript", () => {
-    const physicsPage = pages.find((p) => p.namespace === "physics");
+    const physicsPage = loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.13.1").find(
+      (p) => p.namespace === "physics",
+    );
     expect(physicsPage).toBeDefined();
     if (!physicsPage) return;
     const symbol = apiModuleSymbols(
@@ -4060,7 +4063,14 @@ describe("canonical /api pages render every resolvable authored translation", ()
 
   test("resource.set_texture renders on /api/resource what the versioned page renders", () => {
     const canonical = pages.find((page) => page.route === "/api/resource");
-    const versioned = loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.13.1").find(
+    // The canonical page is the current release's, so it matches that release's own page.
+    const current = (
+      JSON.parse(readFileSync(join(REAL_TYPES_DIR, "api-targets.json"), "utf8")) as {
+        targets: { id: string; default?: boolean }[];
+      }
+    ).targets.find((target) => target.default === true)?.id;
+    if (current === undefined) throw new Error("no default target");
+    const versioned = loadApiSurfaceForVersion(REAL_TYPES_DIR, current).find(
       (page) => page.namespace === "resource",
     );
     expect(canonical).toBeDefined();

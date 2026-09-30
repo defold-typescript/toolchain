@@ -5,6 +5,24 @@ declare global {
    */
   namespace json {
     /**
+     * JSON decoding options
+     */
+    export interface decode_options {
+      /**
+       * Decode JSON `null` as json.null instead of `nil`.
+       */
+      decode_null_as_userdata?: boolean;
+    }
+    /**
+     * JSON encoding options
+     */
+    export interface encode_options {
+      /**
+       * Encode an empty table as an object instead of an array. The default is true.
+       */
+      encode_empty_table_as_object?: boolean;
+    }
+    /**
      * Represents the null primitive from a json file
      */
     const _null: unknown;
@@ -13,10 +31,8 @@ declare global {
      * A Lua error is raised for syntax errors.
      *
      * @param json - json data
-     * @param options - table with decode options
-     *
-     * - boolean `decode_null_as_userdata`: whether to decode a JSON null value as json.null or nil (default is nil)
-     * @returns decoded json
+     * @param options - optional decoding options
+     * @returns decoded JSON value
      * @example
      * Converting a string containing JSON data into a Lua table:
      * ```ts
@@ -43,15 +59,13 @@ declare global {
      * // }
      * ```
      */
-    export function decode(json: string, options?: { decode_null_as_userdata?: boolean }): Record<string | number, unknown>;
+    export function decode(json: string, options?: json.decode_options): unknown;
     /**
      * Encode a lua table to a JSON string.
      * A Lua error is raised for syntax errors.
      *
-     * @param tbl - lua table to encode
-     * @param options - table with encode options
-     *
-     * - string `encode_empty_table_as_object`: whether to encode an empty table as an JSON object or array (default is object)
+     * @param tbl - Lua value to encode
+     * @param options - optional encoding options
      * @returns encoded json
      * @example
      * Convert a lua table to a JSON string:
@@ -72,7 +86,7 @@ declare global {
      * // {"persons":[{"name":"John Doe"},{"name":"Darth Vader"}]}
      * ```
      */
-    export function encode(tbl: Record<string | number, unknown>, options?: { encode_empty_table_as_object?: string }): string;
+    export function encode(tbl: unknown, options?: json.encode_options): string;
     export { _null as null };
   }
 }

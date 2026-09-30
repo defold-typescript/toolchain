@@ -19,6 +19,9 @@ import {
 import { KIND_MODULE_MANIFEST, loadApiTargets } from "./regen";
 
 const surfaces = await exampleSurfaces();
+const committedTargets = loadApiTargets().filter((target) => (target.source ?? null) === null);
+const DEFAULT = committedTargets.find((target) => target.default === true)?.id ?? "";
+const OLDER = committedTargets.find((target) => target.default !== true)?.id ?? "";
 const store = loadTranslations();
 const ownership = translationOwnership(store, surfaces);
 
@@ -46,7 +49,7 @@ describe("surface inventory", () => {
 
   test("the default target contributes all four committed kind entrypoints", () => {
     const kinds = surfaces
-      .filter((surface) => surface.targetId === "defold-1.13.1" && surface.kind !== null)
+      .filter((surface) => surface.targetId === DEFAULT && surface.kind !== null)
       .sort((a, b) => a.id.localeCompare(b.id));
     expect(kinds.map((surface) => surface.kind)).toEqual([
       "editor-script",
@@ -188,11 +191,11 @@ describe("factory-bound ownership", () => {
   }
 
   const everyRuntimeSurface = [
-    "defold-1.13.1",
-    "defold-1.13.0",
-    "defold-1.13.1/kinds/script",
-    "defold-1.13.1/kinds/gui-script",
-    "defold-1.13.1/kinds/render-script",
+    DEFAULT,
+    OLDER,
+    `${DEFAULT}/kinds/script`,
+    `${DEFAULT}/kinds/gui-script`,
+    `${DEFAULT}/kinds/render-script`,
   ];
 
   test("the factory inventory is the manifest's, not a hand-list", () => {
@@ -210,7 +213,7 @@ describe("factory-bound ownership", () => {
       "export default defineScript({ init(self) {} });",
       everyRuntimeSurface,
     );
-    expect(kept).toEqual(["defold-1.13.1", "defold-1.13.1/kinds/script"]);
+    expect(kept).toEqual([DEFAULT, `${DEFAULT}/kinds/script`]);
     for (const id of kept) expect(surfaceOf(id).exports.values).toContain("defineScript");
   });
 
@@ -232,7 +235,7 @@ describe("factory-bound ownership", () => {
       "// defineGuiScript is the gui equivalent\nlabel.set_text('#label', 'hi');",
       everyRuntimeSurface,
     );
-    expect(kept).toEqual(["defold-1.13.1", "defold-1.13.1/kinds/gui-script"]);
+    expect(kept).toEqual([DEFAULT, `${DEFAULT}/kinds/gui-script`]);
   });
 
   test("binding empties no owner list on the committed store", () => {

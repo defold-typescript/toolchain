@@ -22,7 +22,7 @@ declare global {
      * - `"arm64-macos"`
      * - `"x86_64-linux"`
      */
-    const platform: unknown;
+    const platform: "x86_64-win32" | "x86_64-macos" | "arm64-macos" | "x86_64-linux";
     /**
      * A string, version name of Defold
      */
@@ -127,7 +127,7 @@ declare global {
      * @example
      * Create a resource with custom content:
      * ```ts
-     * editor.create_resources([["/npc.script", "go.property('hp', 100)"]]);
+     * editor.create_resources([{ 1: "/npc.script", 2: "go.property('hp', 100)" }]);
      * ```
      */
     function create_resources(resources: unknown): void;
@@ -850,7 +850,7 @@ declare global {
        *
        * const counterButton = editor.ui.component((props) => {
        *   const [count, setCount] = editor.ui.use_state((props as { count: unknown }).count);
-       *   const onPressed = editor.ui.use_memo(makeListener, setCount);
+       *   const onPressed = editor.ui.use_memo(makeListener, setCount) as () => void;
        *   return editor.ui.button({
        *     text: tostring(count),
        *     on_pressed: onPressed,

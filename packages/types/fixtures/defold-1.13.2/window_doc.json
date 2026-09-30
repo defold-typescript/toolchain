@@ -1,0 +1,426 @@
+{
+  "elements": [
+    {
+      "type": "ENUM",
+      "name": "window.DIMMING",
+      "brief": "Screen-dimming modes",
+      "description": "Screen-dimming modes",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "window.DIMMING_OFF",
+          "doc": "dimming mode off Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.",
+          "type": ""
+        },
+        {
+          "name": "window.DIMMING_ON",
+          "doc": "dimming mode on Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.",
+          "type": ""
+        },
+        {
+          "name": "window.DIMMING_UNKNOWN",
+          "doc": "dimming mode unknown Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction. This mode indicates that the dim mode can't be determined, or that the platform doesn't support dimming.",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "window.WINDOW_EVENT",
+      "brief": "Window events",
+      "description": "Window events",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "window.WINDOW_EVENT_DEICONIFIED",
+          "doc": "deiconified window event <span class=\"icon-osx\"></span> <span class=\"icon-windows\"></span> <span class=\"icon-linux\"></span> This event is sent to a window event listener when the game window or app screen is restored after being iconified.",
+          "type": ""
+        },
+        {
+          "name": "window.WINDOW_EVENT_FOCUS_GAINED",
+          "doc": "focus gained window event This event is sent to a window event listener when the game window or app screen has gained focus. This event is also sent at game startup and the engine gives focus to the game.",
+          "type": ""
+        },
+        {
+          "name": "window.WINDOW_EVENT_FOCUS_LOST",
+          "doc": "focus lost window event This event is sent to a window event listener when the game window or app screen has lost focus.",
+          "type": ""
+        },
+        {
+          "name": "window.WINDOW_EVENT_ICONIFIED",
+          "doc": "iconify window event <span class=\"icon-osx\"></span> <span class=\"icon-windows\"></span> <span class=\"icon-linux\"></span> This event is sent to a window event listener when the game window or app screen is iconified (reduced to an application icon in a toolbar, application tray or similar).",
+          "type": ""
+        },
+        {
+          "name": "window.WINDOW_EVENT_RESIZED",
+          "doc": "resized window event This event is sent to a window event listener when the game window or app screen is resized. The new size is passed along in the data field to the event listener.",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "window.event_data",
+      "brief": "Window event data",
+      "description": "Width and height are present for <a href=\"/ref/window#window.WINDOW_EVENT_RESIZED\">window.WINDOW_EVENT_RESIZED</a> and\nabsent for other window events.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "width?",
+          "doc": "Window width after a resize.",
+          "type": "integer"
+        },
+        {
+          "name": "height?",
+          "doc": "Window height after a resize.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "window.safe_area",
+      "brief": "Window safe-area data",
+      "description": "Window safe-area data",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "x",
+          "doc": "Safe-area x-coordinate.",
+          "type": "integer"
+        },
+        {
+          "name": "y",
+          "doc": "Safe-area y-coordinate.",
+          "type": "integer"
+        },
+        {
+          "name": "width",
+          "doc": "Safe-area width.",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "doc": "Safe-area height.",
+          "type": "integer"
+        },
+        {
+          "name": "inset_left",
+          "doc": "Inset from the left window edge.",
+          "type": "integer"
+        },
+        {
+          "name": "inset_top",
+          "doc": "Inset from the top window edge.",
+          "type": "integer"
+        },
+        {
+          "name": "inset_right",
+          "doc": "Inset from the right window edge.",
+          "type": "integer"
+        },
+        {
+          "name": "inset_bottom",
+          "doc": "Inset from the bottom window edge.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window.set_listener",
+      "brief": "sets a window event listener",
+      "description": "Sets a window event listener. Only one window event listener can be set at a time.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "A callback which receives info about window events. Pass an empty function or <code>nil</code> if you no longer wish to receive callbacks.",
+          "types": [
+            "fun(self:script_instance, event:window.WINDOW_EVENT, data:window.event_data)",
+            "nil"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">window_callback</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">event</span><span class=\"p\">,</span> <span class=\"n\">data</span><span class=\"p\">)</span>\n    <span class=\"kr\">if</span> <span class=\"n\">event</span> <span class=\"o\">==</span> <span class=\"n\">window</span><span class=\"p\">.</span><span class=\"n\">WINDOW_EVENT_FOCUS_LOST</span> <span class=\"kr\">then</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;window.WINDOW_EVENT_FOCUS_LOST&quot;</span><span class=\"p\">)</span>\n    <span class=\"kr\">elseif</span> <span class=\"n\">event</span> <span class=\"o\">==</span> <span class=\"n\">window</span><span class=\"p\">.</span><span class=\"n\">WINDOW_EVENT_FOCUS_GAINED</span> <span class=\"kr\">then</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;window.WINDOW_EVENT_FOCUS_GAINED&quot;</span><span class=\"p\">)</span>\n    <span class=\"kr\">elseif</span> <span class=\"n\">event</span> <span class=\"o\">==</span> <span class=\"n\">window</span><span class=\"p\">.</span><span class=\"n\">WINDOW_EVENT_ICONIFIED</span> <span class=\"kr\">then</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;window.WINDOW_EVENT_ICONIFIED&quot;</span><span class=\"p\">)</span>\n    <span class=\"kr\">elseif</span> <span class=\"n\">event</span> <span class=\"o\">==</span> <span class=\"n\">window</span><span class=\"p\">.</span><span class=\"n\">WINDOW_EVENT_DEICONIFIED</span> <span class=\"kr\">then</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;window.WINDOW_EVENT_DEICONIFIED&quot;</span><span class=\"p\">)</span>\n    <span class=\"kr\">elseif</span> <span class=\"n\">event</span> <span class=\"o\">==</span> <span class=\"n\">window</span><span class=\"p\">.</span><span class=\"n\">WINDOW_EVENT_RESIZED</span> <span class=\"kr\">then</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;Window resized: &quot;</span><span class=\"p\">,</span> <span class=\"n\">data</span><span class=\"p\">.</span><span class=\"n\">width</span><span class=\"p\">,</span> <span class=\"n\">data</span><span class=\"p\">.</span><span class=\"n\">height</span><span class=\"p\">)</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">window</span><span class=\"p\">.</span><span class=\"n\">set_listener</span><span class=\"p\">(</span><span class=\"n\">window_callback</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window.set_mouse_lock",
+      "brief": "set the locking state for current mouse cursor",
+      "description": "Set the locking state for current mouse cursor on a PC platform.\nThis function locks or unlocks the mouse cursor to the center point of the window. While the cursor is locked,\nmouse position updates will still be sent to the scripts as usual.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "flag",
+          "doc": "The lock state for the mouse cursor",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window.set_dim_mode",
+      "brief": "set the mode for screen dimming",
+      "description": "<span class=\"icon-ios\"></span> <span class=\"icon-android\"></span> Sets the dimming mode on a mobile device.\nThe dimming mode specifies whether or not a mobile device should dim the screen after a period without user interaction. The dimming mode will only affect the mobile device while the game is in focus on the device, but not when the game is running in the background.\nThis function has no effect on platforms that does not support dimming.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "mode",
+          "doc": "The mode for screen dimming",
+          "types": ["window.DIMMING"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window.get_dim_mode",
+      "brief": "get the mode for screen dimming",
+      "description": "<span class=\"icon-ios\"></span> <span class=\"icon-android\"></span> Returns the current dimming mode set on a mobile device.\nThe dimming mode specifies whether or not a mobile device should dim the screen after a period without user interaction.\nOn platforms that does not support dimming, <code>window.DIMMING_UNKNOWN</code> is always returned.",
+      "returnvalues": [
+        {
+          "name": "mode",
+          "doc": "The mode for screen dimming",
+          "types": ["window.DIMMING"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window.get_size",
+      "brief": "get the window size",
+      "description": "This returns the current window size (width and height).",
+      "returnvalues": [
+        {
+          "name": "width",
+          "doc": "The window width",
+          "types": ["integer"]
+        },
+        {
+          "name": "height",
+          "doc": "The window height",
+          "types": ["integer"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window.get_safe_area",
+      "brief": "get the safe area",
+      "description": "This returns the safe area rectangle (x, y, width, height) and the inset\nvalues relative to the window edges. On platforms without a safe area,\nthis returns the full window size and zero insets.",
+      "returnvalues": [
+        {
+          "name": "safe_area",
+          "doc": "safe area data",
+          "types": ["window.safe_area"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window.get_mouse_lock",
+      "brief": "get the cursor lock state",
+      "description": "This returns the current lock state of the mouse cursor",
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "The lock state",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window.get_display_scale",
+      "brief": "get the display scale",
+      "description": "This returns the content scale of the current display.",
+      "returnvalues": [
+        {
+          "name": "scale",
+          "doc": "The display scale",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window.set_title",
+      "brief": "set the title of the window",
+      "description": "Sets the window title. Works on desktop platforms.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "title",
+          "doc": "The title, encoded as UTF-8",
+          "types": ["string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window.set_size",
+      "brief": "set the size of the window",
+      "description": "Sets the window size. Works on desktop platforms only.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "width",
+          "doc": "Width of window",
+          "types": ["integer"],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Height of window",
+          "types": ["integer"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window.set_position",
+      "brief": "set the position of the window",
+      "description": "Sets the window position.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "Horizontal position of window",
+          "types": ["integer"],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "Vertical position of window",
+          "types": ["integer"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "window",
+    "name": "Window",
+    "brief": "Window API documentation",
+    "description": "Functions and constants to access the window, window event listeners\nand screen dimming.",
+    "path": "engine/gamesys/src/gamesys/scripts/script_window.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

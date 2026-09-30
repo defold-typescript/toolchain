@@ -1843,6 +1843,9 @@ function simulateRegistration(
     unresolved: string[];
   },
   visiting: Set<CFunction>,
+  // The string literal a caller passed for each of this helper's parameters, so
+  // `SetIntegerConstant(L, "SHAPE_TYPE_BOX", …)` registers the name it is given.
+  literals: ReadonlyMap<string, string> = new Map(),
 ): void {
   if (visiting.has(fn) || depth > 6) return;
   visiting.add(fn);
@@ -1888,11 +1891,30 @@ function simulateRegistration(
         out.unresolved.push(
           `${fn.file}: ${fn.name} registers ${table.name} under a non-literal name`,
         );
+        // The call still pushes the table it fills.
+        stack.push({ kind: "table", namespace: null, functions: [table], constants: [] });
       }
       continue;
     }
-    if (name === "lua_newtable" || name === "lua_createtable") {
+    if (name === "lua_newtable" || name === "lua_createtable" || name === "luaL_newmetatable") {
       stack.push({ kind: "table", namespace: null, functions: [], constants: [] });
+      continue;
+    }
+    // Fetching an existing sub-table of a namespaced table pushes that sub-table,
+    // so functions registered into it bind under its namespace.
+    if (name === "lua_getfield" && intLiteral(args[1] ?? []) === -1) {
+      const key = args[2]?.[0];
+      const top = stack[stack.length - 1];
+      stack.push(
+        key?.kind === "string" && top?.kind === "table" && top.namespace
+          ? {
+              kind: "table",
+              namespace: `${top.namespace}.${key.value}`,
+              functions: [],
+              constants: [],
+            }
+          : { kind: "value" },
+      );
       continue;
     }
     if (PUSH_KINDS.has(name)) {
@@ -1900,10 +1922,17 @@ function simulateRegistration(
       continue;
     }
     if (name === "lua_setfield" && intLiteral(args[1] ?? []) === -2) {
-      const key = args[2]?.[0];
+      const token = args[2]?.[0];
+      const keyName =
+        token?.kind === "string"
+          ? token.value
+          : args[2]?.length === 1 && token?.kind === "ident"
+            ? literals.get(token.text)
+            : undefined;
       const value = stack.pop();
       const target = stack[stack.length - 1];
-      if (key?.kind !== "string" || target?.kind !== "table" || !value) continue;
+      if (keyName === undefined || target?.kind !== "table" || !value) continue;
+      const key = { value: keyName };
       if (value.kind === "value") {
         if (target.namespace) setConstant(target.namespace, key.value ?? "", fn.file);
         else target.constants.push({ name: key.value ?? "", file: fn.file });
@@ -1923,7 +1952,18 @@ function simulateRegistration(
     }
     if (args[0]?.length === 1 && args[0][0]?.text === "L") {
       for (const callee of index.functionsNamed(name, fn.file)) {
-        if (callee !== fn) simulateRegistration(callee, index, stack, depth + 1, out, visiting);
+        if (callee === fn) continue;
+        const passed = new Map<string, string>();
+        callee.params.forEach((param, i) => {
+          const arg = args[i];
+          if (arg?.length === 1 && arg[0]?.kind === "string") passed.set(param, arg[0].value ?? "");
+        });
+        // A helper asserting `DM_LUA_STACK_CHECK(L, 0)` leaves its caller's stack as
+        // it found it, whatever the walk makes of its body (`dmScript::RegisterUserType`).
+        const neutral = declaredStackEffect(callee) === 0;
+        const saved = [...stack];
+        simulateRegistration(callee, index, stack, depth + 1, out, visiting, passed);
+        if (neutral) stack.splice(0, stack.length, ...saved);
       }
     }
   }

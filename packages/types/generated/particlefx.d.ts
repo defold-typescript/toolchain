@@ -8,19 +8,29 @@ declare global {
    */
   namespace particlefx {
     /**
-     * The emitter is not spawning any particles, but has particles that are still alive.
+     * Options used when stopping particle effects.
+     */
+    interface stop_options {
+      /**
+       * Instantly clear spawned particles.
+       */
+      clear?: boolean;
+    }
+    type EMITTER_STATE = typeof particlefx.EMITTER_STATE_POSTSPAWN | typeof particlefx.EMITTER_STATE_PRESPAWN | typeof particlefx.EMITTER_STATE_SLEEPING | typeof particlefx.EMITTER_STATE_SPAWNING;
+    /**
+     * postspawn state The emitter is not spawning any particles, but has particles that are still alive.
      */
     const EMITTER_STATE_POSTSPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_POSTSPAWN" };
     /**
-     * The emitter will be in this state when it has been started but before spawning any particles. Normally the emitter is in this state for a short time, depending on if a start delay has been set for this emitter or not.
+     * prespawn state The emitter will be in this state when it has been started but before spawning any particles. Normally the emitter is in this state for a short time, depending on if a start delay has been set for this emitter or not.
      */
     const EMITTER_STATE_PRESPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_PRESPAWN" };
     /**
-     * The emitter does not have any living particles and will not spawn any particles in this state.
+     * sleeping state The emitter does not have any living particles and will not spawn any particles in this state.
      */
     const EMITTER_STATE_SLEEPING: number & { readonly __brand: "particlefx.EMITTER_STATE_SLEEPING" };
     /**
-     * The emitter is spawning particles.
+     * spawning state The emitter is spawning particles.
      */
     const EMITTER_STATE_SPAWNING: number & { readonly __brand: "particlefx.EMITTER_STATE_SPAWNING" };
     /**
@@ -31,20 +41,6 @@ declare global {
      *
      * @param url - the particle fx that should start playing.
      * @param emitter_state_function - optional callback function that will be called when an emitter attached to this particlefx changes state.
-     *
-     * `self`
-     * object The current object
-     * `id`
-     * hash The id of the particle fx component
-     * `emitter`
-     * hash The id of the emitter
-     * `state`
-     * constant the new state of the emitter:
-     *
-     * - `particlefx.EMITTER_STATE_SLEEPING`
-     * - `particlefx.EMITTER_STATE_PRESPAWN`
-     * - `particlefx.EMITTER_STATE_SPAWNING`
-     * - `particlefx.EMITTER_STATE_POSTSPAWN`
      * @example
      * ```ts
      * // How to play a particle fx when a game object is created.
@@ -63,7 +59,7 @@ declare global {
      * });
      * ```
      */
-    function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: unknown, emitter: unknown, state: unknown) => void): void;
+    function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: Hash, emitter: Hash, state: particlefx.EMITTER_STATE) => void): void;
     /**
      * Resets a shader constant for a particle FX component emitter.
      * The constant must be defined in the material assigned to the emitter.
@@ -122,9 +118,7 @@ declare global {
      * Which particle FX to stop is identified by the URL.
      *
      * @param url - the particle fx that should stop playing
-     * @param options - Options when stopping the particle fx. Supported options:
-     *
-     * - boolean `clear`: instantly clear spawned particles
+     * @param options - options used when stopping the particle fx
      * @example
      * ```ts
      * // How to stop a particle fx when a game object is deleted and immediately also
@@ -136,7 +130,7 @@ declare global {
      * });
      * ```
      */
-    function stop(url: string | Hash | Url, options?: { clear?: boolean }): void;
+    function stop(url: string | Hash | Url, options?: particlefx.stop_options): void;
     interface properties {
       /**
        * The animation used during rendering by an emitter in a particle FX component.

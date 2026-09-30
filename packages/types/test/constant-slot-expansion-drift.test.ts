@@ -196,10 +196,12 @@ describe("documented constant slots reach both shipped surfaces", () => {
         let topLevel = signature;
         while (/\{[^{}]*\}/.test(topLevel)) topLevel = topLevel.replace(/\{[^{}]*\}/g, "");
         const generic = topLevel.split('Opaque<"constant">').length - 1;
+        // A residual applies only where the slot still declares the bare `constant`
+        // token; 1.13.2 types `gui.new_texture`'s `type` as `string|image.TYPE`.
         const residuals = [
-          ...fn.parameters.map((p) => `${fn.name}:param:${p.name}`),
-          ...fn.returnValues.map((rv) => `${fn.name}:return:${rv.name}`),
-        ].filter(isResidual).length;
+          ...fn.parameters.map((p) => [`${fn.name}:param:${p.name}`, p.types] as const),
+          ...fn.returnValues.map((rv) => [`${fn.name}:return:${rv.name}`, rv.types] as const),
+        ].filter(([key, types]) => isResidual(key) && types.includes("constant")).length;
         if (generic !== residuals) {
           unexplained.push(
             `${surface.target}: ${fn.name} emits ${generic} top-level Opaque<"constant"> for ${residuals} residual slot(s)`,

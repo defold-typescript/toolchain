@@ -6,19 +6,133 @@ declare global {
    * Rendering API documentation
    */
   namespace render {
+    /**
+     * Render-camera options
+     */
+    interface camera_options {
+      /**
+       * Use the camera view-projection matrix for frustum culling. The default is false.
+       */
+      use_frustum?: boolean;
+    }
     type constant_buffer = Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };
+    /**
+     * Debug-draw options
+     */
+    interface debug_draw_options {
+      /**
+       * Frustum matrix used for culling renderable items.
+       */
+      frustum?: Matrix4;
+      /**
+       * Frustum planes used for culling. The default is render.FRUSTUM_PLANES_SIDES.
+       */
+      frustum_planes?: render.FRUSTUM_PLANES;
+    }
+    /**
+     * Compute-dispatch options
+     */
+    interface dispatch_options {
+      /**
+       * Constants used by the compute program. The values are copied when `render.dispatch_compute()` is called.
+       */
+      constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };
+    }
+    /**
+     * Render draw options
+     */
+    interface draw_options {
+      /**
+       * Frustum matrix used for culling renderable items.
+       */
+      frustum?: Matrix4;
+      /**
+       * Frustum planes used for culling. The default is render.FRUSTUM_PLANES_SIDES.
+       */
+      frustum_planes?: render.FRUSTUM_PLANES;
+      /**
+       * Constants used while rendering. The values are copied when `render.draw()` is called.
+       */
+      constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };
+      /**
+       * World-entry sort order. The default is the renderer's preferred back-to-front order.
+       */
+      sort_order?: render.SORT;
+    }
+    type render_predicate = number;
     type render_target = Opaque<"render_target">;
+    /**
+     * Render-target attachment parameters
+     */
+    interface render_target_buffer_params {
+      /**
+       * Attachment texture format.
+       */
+      format: graphics.TEXTURE_FORMAT;
+      /**
+       * Attachment width.
+       */
+      width: number;
+      /**
+       * Attachment height.
+       */
+      height: number;
+      /**
+       * Minification filter.
+       */
+      min_filter?: graphics.TEXTURE_FILTER;
+      /**
+       * Magnification filter.
+       */
+      mag_filter?: graphics.TEXTURE_FILTER;
+      /**
+       * Horizontal wrap mode.
+       */
+      u_wrap?: graphics.TEXTURE_WRAP;
+      /**
+       * Vertical wrap mode.
+       */
+      v_wrap?: graphics.TEXTURE_WRAP;
+      /**
+       * Depth wrap mode.
+       */
+      w_wrap?: graphics.TEXTURE_WRAP;
+      /**
+       * Attachment creation flags, applicable only to depth and stencil buffers.
+       */
+      flags?: render.RENDER_TARGET_FLAG | number;
+    }
+    type render_target_params = { sample_count?: number } & { [key: number]: render.render_target_buffer_params };
+    /**
+     * Render-target activation options
+     */
+    interface set_render_target_options {
+      /**
+       * Buffers whose contents become undefined after the target is deactivated. Missing buffers are ignored; combined depth-stencil buffers remain non-transient unless both are selected.
+       */
+      transient?: graphics.BUFFER_TYPE[];
+    }
     type texture = Opaque<"texture">;
     type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
+    type CONTEXT_EVENT = typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED;
+    type FRUSTUM_PLANES = typeof render.FRUSTUM_PLANES_ALL | typeof render.FRUSTUM_PLANES_SIDES;
+    type RENDER_TARGET_FLAG = typeof render.TEXTURE_BIT;
+    type SORT = typeof render.SORT_BACK_TO_FRONT | typeof render.SORT_FRONT_TO_BACK | typeof render.SORT_NONE;
     /**
-     * The rendering context was lost. Rendering is paused and all graphics resources become invalid. Passed to the `render.set_listener` callback.
+     * rendering context was lost; rendering pauses and graphics resources become invalid
      */
     const CONTEXT_EVENT_CONTEXT_LOST: number & { readonly __brand: "render.CONTEXT_EVENT_CONTEXT_LOST" };
     /**
-     * The rendering context was restored. Rendering is still paused and graphics resources are still invalid, but can be reloaded. Passed to the `render.set_listener` callback.
+     * rendering context was restored; rendering remains paused while resources can be reloaded
      */
     const CONTEXT_EVENT_CONTEXT_RESTORED: number & { readonly __brand: "render.CONTEXT_EVENT_CONTEXT_RESTORED" };
+    /**
+     * All six frustum planes.
+     */
     const FRUSTUM_PLANES_ALL: number & { readonly __brand: "render.FRUSTUM_PLANES_ALL" };
+    /**
+     * Left, right, top, and bottom frustum planes.
+     */
     const FRUSTUM_PLANES_SIDES: number & { readonly __brand: "render.FRUSTUM_PLANES_SIDES" };
     const RENDER_TARGET_DEFAULT: undefined;
     /**
@@ -34,7 +148,7 @@ declare global {
      */
     const SORT_NONE: number & { readonly __brand: "render.SORT_NONE" };
     /**
-     * Render target buffer flag that samples a depth or stencil buffer as a texture, for `render.render_target`.
+     * Create a texture-backed depth or stencil attachment.
      */
     const TEXTURE_BIT: number & { readonly __brand: "render.TEXTURE_BIT" };
     /**
@@ -168,7 +282,7 @@ declare global {
      * });
      * ```
      */
-    function disable_state(state: graphics.State): void;
+    function disable_state(state: graphics.STATE): void;
     /**
      * Disables a texture that has previourly been enabled.
      *
@@ -210,10 +324,7 @@ declare global {
      * @param x - global work group size X
      * @param y - global work group size Y
      * @param z - global work group size Z
-     * @param options - optional table with properties:
-     *
-     * `constants`
-     * constant_buffer optional constants to use while rendering
+     * @param options - optional compute-dispatch options
      * @example
      * ```ts
      * export default defineRenderScript({
@@ -246,7 +357,7 @@ declare global {
      * render.dispatch_compute(32, 32, 32, { constants });
      * ```
      */
-    function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;
+    function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;
     /**
      * Draws all objects that match a specified predicate. An optional constant buffer can be
      * provided to override the default constants. If no constants buffer is provided, a default
@@ -254,20 +365,7 @@ declare global {
      * go.set (or particlefx.set_constant) on visual components.
      *
      * @param predicate - predicate to draw for
-     * @param options - optional table with properties:
-     *
-     * `frustum`
-     * matrix4 A frustum matrix used to cull renderable items. (E.g. `local frustum = proj * view`). default=nil
-     * `frustum_planes`
-     * int Determines which sides of the frustum will be used. Default is render.FRUSTUM_PLANES_SIDES.
-     *
-     * - render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
-     * - render.FRUSTUM_PLANES_ALL : All 6 sides of the frustum.
-     *
-     * `constants`
-     * constant_buffer optional constants to use while rendering
-     * `sort_order`
-     * int How to sort draw order for world-ordered entries. Default uses the renderer's preferred world sorting (back-to-front).
+     * @param options - optional draw options
      * @example
      * ```ts
      * export default defineRenderScript({
@@ -308,19 +406,11 @@ declare global {
      * }
      * ```
      */
-    function draw(predicate: Opaque<"render_predicate">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;
+    function draw(predicate: Opaque<"render_predicate">, options?: render.draw_options): void;
     /**
      * Draws all 3d debug graphics such as lines drawn with "draw_line" messages and physics visualization.
      *
-     * @param options - optional table with properties:
-     *
-     * `frustum`
-     * matrix4 A frustum matrix used to cull renderable items. (E.g. `local frustum = proj * view`). May be nil.
-     * `frustum_planes`
-     * int Determines which sides of the frustum will be used. Default is render.FRUSTUM_PLANES_SIDES.
-     *
-     * - render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
-     * - render.FRUSTUM_PLANES_ALL : All sides of the frustum.
+     * @param options - optional debug-draw options
      * @example
      * ```ts
      * export default defineRenderScript({
@@ -331,7 +421,7 @@ declare global {
      * });
      * ```
      */
-    function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;
+    function draw_debug3d(options?: render.debug_draw_options): void;
     /**
      * If another material was already enabled, it will be automatically disabled
      * and the specified material is used instead.
@@ -383,7 +473,7 @@ declare global {
      * });
      * ```
      */
-    function enable_state(state: graphics.State): void;
+    function enable_state(state: graphics.STATE): void;
     /**
      * Sets the specified texture handle for a render target attachment or a regular texture
      * that should be used for rendering. The texture can be bound to either a texture unit
@@ -399,22 +489,7 @@ declare global {
      *
      * @param binding - texture binding, either by texture unit, string or hash for the sampler name that the texture should be bound to
      * @param handle_or_name - render target or texture handle that should be bound, or a named resource in the "Render Resource" table in the currently assigned .render file
-     * @param buffer_type - optional buffer type from which to enable the texture. Note that this argument only applies to render targets. Defaults to `graphics.BUFFER_TYPE_COLOR0_BIT`. These values are supported:
-     *
-     * - `graphics.BUFFER_TYPE_COLOR0_BIT`
-     *
-     * If The render target has been created as depth and/or stencil textures, these buffer types can be used:
-     *
-     * - `graphics.BUFFER_TYPE_DEPTH_BIT`
-     * - `graphics.BUFFER_TYPE_STENCIL_BIT`
-     *
-     * If the render target has been created with multiple color attachments, these buffer types can be used
-     * to enable those textures as well. Currently 4 color attachments are supported:
-     *
-     * - `graphics.BUFFER_TYPE_COLOR0_BIT`
-     * - `graphics.BUFFER_TYPE_COLOR1_BIT`
-     * - `graphics.BUFFER_TYPE_COLOR2_BIT`
-     * - `graphics.BUFFER_TYPE_COLOR3_BIT`
+     * @param buffer_type - optional render-target attachment. Defaults to `graphics.BUFFER_TYPE_COLOR0_BIT`. Depth and stencil attachments must have been created as textures; color attachments beyond the first require a render target with multiple color attachments (up to four are supported).
      * @example
      * ```ts
      * export default defineRenderScript({
@@ -484,7 +559,7 @@ declare global {
      * });
      * ```
      */
-    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BufferType): void;
+    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BUFFER_TYPE): void;
     /**
      * Returns the logical window height that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints
@@ -538,7 +613,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
+    function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
     /**
      * Returns the specified buffer width from a render target.
      *
@@ -580,13 +655,13 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
+    function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
     /**
      * Returns the logical window width that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints
      * or user input.
      *
-     * @returns specified window width (number)
+     * @returns specified window width
      * @example
      * ```ts
      * // Get the width of the window.
@@ -647,7 +722,7 @@ declare global {
      * render.set_blend_equation_separate(graphics.BLEND_EQUATION_ADD, graphics.BLEND_EQUATION_REVERSE_SUBTRACT);
      * ```
      */
-    function set_blend_equation_separate(equation_color: number, equation_alpha: number): void;
+    function set_blend_equation_separate(equation_color: graphics.BLEND_EQUATION, equation_alpha: graphics.BLEND_EQUATION): void;
     /**
      * Specifies the arithmetic used when computing pixel values that are written to the frame
      * buffer. In RGBA mode, pixels can be drawn using a function that blends the source RGBA
@@ -662,56 +737,6 @@ declare global {
      * The source scale factor is referred to as (sR,sG,sB,sA).
      * The destination scale factor is referred to as (dR,dG,dB,dA).
      * The color values have integer values between 0 and (kR,kG,kB,kA), where kc = 2mc - 1 and mc is the number of bitplanes for that color. I.e for 8 bit color depth, color values are between `0` and `255`.
-     * Available factor constants and corresponding scale factors:
-     *
-     * Factor constant
-     * Scale factor (fR,fG,fB,fA)
-     *
-     * `graphics.BLEND_FACTOR_ZERO`
-     * (0,0,0,0)
-     *
-     * `graphics.BLEND_FACTOR_ONE`
-     * (1,1,1,1)
-     *
-     * `graphics.BLEND_FACTOR_SRC_COLOR`
-     * (Rs/kR,Gs/kG,Bs/kB,As/kA)
-     *
-     * `graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR`
-     * (1,1,1,1) - (Rs/kR,Gs/kG,Bs/kB,As/kA)
-     *
-     * `graphics.BLEND_FACTOR_DST_COLOR`
-     * (Rd/kR,Gd/kG,Bd/kB,Ad/kA)
-     *
-     * `graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR`
-     * (1,1,1,1) - (Rd/kR,Gd/kG,Bd/kB,Ad/kA)
-     *
-     * `graphics.BLEND_FACTOR_SRC_ALPHA`
-     * (As/kA,As/kA,As/kA,As/kA)
-     *
-     * `graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA`
-     * (1,1,1,1) - (As/kA,As/kA,As/kA,As/kA)
-     *
-     * `graphics.BLEND_FACTOR_DST_ALPHA`
-     * (Ad/kA,Ad/kA,Ad/kA,Ad/kA)
-     *
-     * `graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA`
-     * (1,1,1,1) - (Ad/kA,Ad/kA,Ad/kA,Ad/kA)
-     *
-     * `graphics.BLEND_FACTOR_CONSTANT_COLOR`
-     * (Rc,Gc,Bc,Ac)
-     *
-     * `graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR`
-     * (1,1,1,1) - (Rc,Gc,Bc,Ac)
-     *
-     * `graphics.BLEND_FACTOR_CONSTANT_ALPHA`
-     * (Ac,Ac,Ac,Ac)
-     *
-     * `graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA`
-     * (1,1,1,1) - (Ac,Ac,Ac,Ac)
-     *
-     * `graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE`
-     * (i,i,i,1) where i = min(As, kA - Ad) /kA
-     *
      * The blended RGBA values of a pixel comes from the following equations:
      *
      * - Rd = min(kR, Rs * sR + Rd * dR)
@@ -731,7 +756,7 @@ declare global {
      * render.set_blend_func(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
      * ```
      */
-    function set_blend_func(source_factor: number, destination_factor: number): void;
+    function set_blend_func(source_factor: graphics.BLEND_FACTOR, destination_factor: graphics.BLEND_FACTOR): void;
     /**
      * Sets the blend function with separate blend factors for the color and alpha channels.
      *
@@ -755,10 +780,7 @@ declare global {
      * Note that the frustum plane option in render.draw can still be used together with the camera.
      *
      * @param camera - camera id to use, or nil to reset
-     * @param options - optional table with properties:
-     *
-     * `use_frustum`
-     * boolean If true, the renderer will use the cameras view-projection matrix for frustum culling (default: false)
+     * @param options - optional camera options
      * @example
      * Set the current camera to be used for rendering
      * ```ts
@@ -780,7 +802,7 @@ declare global {
      * }
      * ```
      */
-    function set_camera(camera?: Url | number | string | Hash, options?: { use_frustum?: boolean }): void;
+    function set_camera(camera?: Url | number | string | Hash, options?: render.camera_options): void;
     /**
      * Specifies whether the individual color components in the frame buffer is enabled for writing (`true`) or disabled (`false`). For example, if `blue` is `false`, nothing is written to the blue component of any pixel in any of the color buffers, regardless of the drawing operation attempted. Note that writing are either enabled or disabled for entire color components, not the individual bits of a component.
      * The component masks are all initially `true`.
@@ -828,10 +850,6 @@ declare global {
      * `face_type` is `graphics.FACE_TYPE_BACK`.
      *
      * @param face_type - face type
-     *
-     * - `graphics.FACE_TYPE_FRONT`
-     * - `graphics.FACE_TYPE_BACK`
-     * - `graphics.FACE_TYPE_FRONT_AND_BACK`
      * @example
      * ```ts
      * // How to enable polygon culling and set front face culling:
@@ -839,23 +857,12 @@ declare global {
      * render.set_cull_face(graphics.FACE_TYPE_FRONT);
      * ```
      */
-    function set_cull_face(face_type: number): void;
+    function set_cull_face(face_type: graphics.FACE_TYPE): void;
     /**
      * Specifies the function that should be used to compare each incoming pixel
      * depth value with the value present in the depth buffer.
      * The comparison is performed only if depth testing is enabled and specifies
      * the conditions under which a pixel will be drawn.
-     * Function constants:
-     *
-     * - `graphics.COMPARE_FUNC_NEVER` (never passes)
-     * - `graphics.COMPARE_FUNC_LESS` (passes if the incoming depth value is less than the stored value)
-     * - `graphics.COMPARE_FUNC_LEQUAL` (passes if the incoming depth value is less than or equal to the stored value)
-     * - `graphics.COMPARE_FUNC_GREATER` (passes if the incoming depth value is greater than the stored value)
-     * - `graphics.COMPARE_FUNC_GEQUAL` (passes if the incoming depth value is greater than or equal to the stored value)
-     * - `graphics.COMPARE_FUNC_EQUAL` (passes if the incoming depth value is equal to the stored value)
-     * - `graphics.COMPARE_FUNC_NOTEQUAL` (passes if the incoming depth value is not equal to the stored value)
-     * - `graphics.COMPARE_FUNC_ALWAYS` (always passes)
-     *
      * The depth function is initially set to `graphics.COMPARE_FUNC_LESS`.
      *
      * @param func - depth test function, see the description for available values
@@ -866,7 +873,7 @@ declare global {
      * render.set_depth_func(graphics.COMPARE_FUNC_NOTEQUAL);
      * ```
      */
-    function set_depth_func(func: number): void;
+    function set_depth_func(func: graphics.COMPARE_FUNC): void;
     /**
      * Specifies whether the depth buffer is enabled for writing. The supplied mask governs
      * if depth buffer writing is enabled (`true`) or disabled (`false`).
@@ -881,18 +888,10 @@ declare global {
      */
     function set_depth_mask(depth: boolean): void;
     /**
-     * Set or remove listener. Currenly only only two type of events can arrived:
-     * `render.CONTEXT_EVENT_CONTEXT_LOST` - when rendering context lost. Rending paused and all graphics resources become invalid.
-     * `render.CONTEXT_EVENT_CONTEXT_RESTORED` - when rendering context was restored. Rendering still paused and graphics resources still
-     * invalid but can be reloaded.
+     * Set or remove the rendering-context event listener.
      *
      * @param callback - A callback that receives all render related events.
      * Pass `nil` if want to remove listener.
-     *
-     * `self`
-     * object The render script
-     * `event_type`
-     * string Rendering event. Possible values: `render.CONTEXT_EVENT_CONTEXT_LOST`, `render.CONTEXT_EVENT_CONTEXT_RESTORED`
      * @example
      * ```ts
      * // Set listener and handle render context events.
@@ -910,7 +909,7 @@ declare global {
      * });
      * ```
      */
-    function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;
+    function set_listener(callback?: (self: unknown, event_type: render.CONTEXT_EVENT) => void): void;
     /**
      * Sets the scale and units used to calculate depth values.
      * If `graphics.STATE_POLYGON_OFFSET_FILL` is enabled, each fragment's depth value
@@ -956,17 +955,8 @@ declare global {
      * render target until it is replaced by a subsequent call to set_render_target.
      * This function supports render targets created by a render script, or a render target resource.
      *
-     * @param render_target - render target to set. render.RENDER_TARGET_DEFAULT to set the default render target
-     * @param options - optional table with behaviour parameters
-     *
-     * `transient`
-     * table Transient frame buffer types are only valid while the render target is active, i.e becomes undefined when a new target is set by a subsequent call to set_render_target.
-     * Default is all non-transient. Be aware that some hardware uses a combined depth stencil buffer and when this is the case both are considered non-transient if exclusively selected!
-     * A buffer type defined that doesn't exist in the render target is silently ignored.
-     *
-     * - `graphics.BUFFER_TYPE_COLOR0_BIT`
-     * - `graphics.BUFFER_TYPE_DEPTH_BIT`
-     * - `graphics.BUFFER_TYPE_STENCIL_BIT`
+     * @param render_target - render target to set. Omit it, pass `nil`, or use render.RENDER_TARGET_DEFAULT to set the default render target
+     * @param options - optional render-target activation options
      * @example
      * How to set a render target and draw to it and then switch back to the default render target
      * The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support
@@ -1021,7 +1011,7 @@ declare global {
      * });
      * ```
      */
-    function set_render_target(render_target?: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: graphics.BufferType[] }): void;
+    function set_render_target(render_target?: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: render.set_render_target_options): void;
     /**
      * Sets the render target size for a render target created from
      * either a render script, or from a render target resource.
@@ -1052,23 +1042,13 @@ declare global {
      * where to draw.
      * The stencil test discards a pixel based on the outcome of a comparison between the
      * reference value `ref` and the corresponding value in the stencil buffer.
-     * `func` specifies the comparison function. See the table below for values.
+     * `func` specifies the comparison function.
      * The initial value is `graphics.COMPARE_FUNC_ALWAYS`.
      * `ref` specifies the reference value for the stencil test. The value is clamped to
      * the range [0, 2n-1], where n is the number of bitplanes in the stencil buffer.
      * The initial value is `0`.
      * `mask` is ANDed with both the reference value and the stored stencil value when the test
      * is done. The initial value is all `1`'s.
-     * Function constant:
-     *
-     * - `graphics.COMPARE_FUNC_NEVER` (never passes)
-     * - `graphics.COMPARE_FUNC_LESS` (passes if (ref & mask) < (stencil & mask))
-     * - `graphics.COMPARE_FUNC_LEQUAL` (passes if (ref & mask) <= (stencil & mask))
-     * - `graphics.COMPARE_FUNC_GREATER` (passes if (ref & mask) > (stencil & mask))
-     * - `graphics.COMPARE_FUNC_GEQUAL` (passes if (ref & mask) >= (stencil & mask))
-     * - `graphics.COMPARE_FUNC_EQUAL` (passes if (ref & mask) = (stencil & mask))
-     * - `graphics.COMPARE_FUNC_NOTEQUAL` (passes if (ref & mask) != (stencil & mask))
-     * - `graphics.COMPARE_FUNC_ALWAYS` (always passes)
      *
      * @param func - stencil test function, see the description for available values
      * @param ref - reference value for the stencil test
@@ -1079,7 +1059,7 @@ declare global {
      * render.set_stencil_func(graphics.COMPARE_FUNC_EQUAL, 0, 1);
      * ```
      */
-    function set_stencil_func(func: number, ref: number, mask: number): void;
+    function set_stencil_func(func: graphics.COMPARE_FUNC, ref: number, mask: number): void;
     /**
      * The stencil mask controls the writing of individual bits in the stencil buffer.
      * The least significant `n` bits of the parameter `mask`, where `n` is the number of
@@ -1105,17 +1085,6 @@ declare global {
      * value while stenciling is enabled. If the stencil test fails, no change is made to the
      * pixel's color or depth buffers, and `sfail` specifies what happens to the stencil buffer
      * contents.
-     * Operator constants:
-     *
-     * - `graphics.STENCIL_OP_KEEP` (keeps the current value)
-     * - `graphics.STENCIL_OP_ZERO` (sets the stencil buffer value to 0)
-     * - `graphics.STENCIL_OP_REPLACE` (sets the stencil buffer value to `ref`, as specified by render.set_stencil_func)
-     * - `graphics.STENCIL_OP_INCR` (increments the stencil buffer value and clamp to the maximum representable unsigned value)
-     * - `graphics.STENCIL_OP_INCR_WRAP` (increments the stencil buffer value and wrap to zero when incrementing the maximum representable unsigned value)
-     * - `graphics.STENCIL_OP_DECR` (decrements the current stencil buffer value and clamp to 0)
-     * - `graphics.STENCIL_OP_DECR_WRAP` (decrements the current stencil buffer value and wrap to the maximum representable unsigned value when decrementing zero)
-     * - `graphics.STENCIL_OP_INVERT` (bitwise inverts the current stencil buffer value)
-     *
      * `dppass` and `dpfail` specify the stencil buffer actions depending on whether subsequent
      * depth buffer tests succeed (dppass) or fail (dpfail).
      * The initial value for all operators is `graphics.STENCIL_OP_KEEP`.
@@ -1132,7 +1101,7 @@ declare global {
      * render.set_stencil_op(graphics.STENCIL_OP_REPLACE, graphics.STENCIL_OP_KEEP, graphics.STENCIL_OP_KEEP);
      * ```
      */
-    function set_stencil_op(sfail: number, dpfail: number, dppass: number): void;
+    function set_stencil_op(sfail: graphics.STENCIL_OP, dpfail: graphics.STENCIL_OP, dppass: graphics.STENCIL_OP): void;
     /**
      * Sets the view matrix to use when rendering.
      *

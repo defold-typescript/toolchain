@@ -59,19 +59,21 @@ const hooks = defineScript<Self>({
     const _x: number | undefined = action.x;
     const _screenX: number | undefined = action.screen_x;
     const _text: string | undefined = action.text;
-    const _markedText: string | undefined = action.marked_text;
+    const _accX: number | undefined = action.acc_x;
+    // @ts-expect-error the engine sends no marked_text field
+    void action.marked_text;
     const touch = action.touch?.[0];
     if (touch) {
       const _touchId: number | undefined = touch.id;
       const _touchPressed: boolean | undefined = touch.pressed;
       const _tapCount: number | undefined = touch.tap_count;
       const _touchX: number | undefined = touch.x;
-      const _touchAccX: number | undefined = touch.acc_x;
+      const _touchScreenX: number | undefined = touch.screen_x;
       void _touchId;
       void _touchPressed;
       void _tapCount;
       void _touchX;
-      void _touchAccX;
+      void _touchScreenX;
       // @ts-expect-error unknown touch fields are rejected
       touch.no_such_field;
     }
@@ -84,7 +86,7 @@ const hooks = defineScript<Self>({
     void _x;
     void _screenX;
     void _text;
-    void _markedText;
+    void _accX;
     return true;
   },
   final(self) {

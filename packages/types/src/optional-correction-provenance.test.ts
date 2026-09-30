@@ -130,7 +130,24 @@ const SURFACES = retainedSurfaces(
 // Corrections some retained target already marks optional while an older one
 // still needs them, each with the targets that mark it. A metadata fix in one
 // target lands here instead of deleting a correction older targets still pay for.
-const CORRECTIONS_MARKED_UPSTREAM: Record<string, readonly string[]> = {};
+const CORRECTIONS_MARKED_UPSTREAM: Record<string, readonly string[]> = {
+  "resource.create_texture:param:buffer": ["defold-1.13.2"],
+  "resource.create_texture_async:param:buffer": ["defold-1.13.2"],
+  "b2d.shape.ray_cast:param:max_fraction": ["defold-1.13.2"],
+  "render.set_render_target:param:render_target": ["defold-1.13.2"],
+  "b2d.joint.create_distance:param:definition": ["defold-1.13.2"],
+  "b2d.joint.create_mouse:param:definition": ["defold-1.13.2"],
+  "b2d.joint.create_prismatic:param:definition": ["defold-1.13.2"],
+  "b2d.joint.create_revolute:param:definition": ["defold-1.13.2"],
+  "b2d.joint.create_weld:param:definition": ["defold-1.13.2"],
+  "b2d.joint.create_wheel:param:definition": ["defold-1.13.2"],
+  "b2d.joint.create_friction:param:definition": ["defold-1.13.2"],
+  "b2d.joint.create_rope:param:definition": ["defold-1.13.2"],
+  "b2d.joint.create_pulley:param:definition": ["defold-1.13.2"],
+  "b2d.joint.create_gear:param:definition": ["defold-1.13.2"],
+  "b2d.joint.create_motor:param:definition": ["defold-1.13.2"],
+  "b2d.joint.create_filter:param:definition": ["defold-1.13.2"],
+};
 
 describe("optional-slot correction provenance", () => {
   const entries = [...OPTIONAL_SLOT_CORRECTIONS.entries()];
@@ -194,6 +211,7 @@ describe("modules upstream leaves wholly unmarked", () => {
   // and gets a real optionality audit there, and a new target records its own
   // row, including any module that arrives unmarked.
   const UNMARKED_BY_TARGET: Record<string, string[]> = {
+    "defold-1.13.2": [],
     "defold-1.13.1": [],
     "defold-1.13.0": [],
     "defold-1.12.4": [],

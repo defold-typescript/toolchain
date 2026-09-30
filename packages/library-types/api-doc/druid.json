@@ -4243,7 +4243,7 @@
               "name": "nodes",
               "doc": "The nodes table from gui.clone_tree or prefab node to use for clone or node id to clone",
               "types": [
-                "LuaTable<Hash, Opaque<\"node\">> | Opaque<\"node\"> | string | undefined"
+                "LuaMap<Hash, Opaque<\"node\">> | Opaque<\"node\"> | string | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -9874,7 +9874,7 @@
               "name": "nodes",
               "doc": "The nodes table from gui.clone_tree or prefab node to use for clone or node id to clone",
               "types": [
-                "LuaTable<Hash, Opaque<\"node\">> | Opaque<\"node\"> | string | undefined"
+                "LuaMap<Hash, Opaque<\"node\">> | Opaque<\"node\"> | string | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"

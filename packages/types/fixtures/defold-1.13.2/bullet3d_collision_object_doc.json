@@ -1,0 +1,1206 @@
+{
+  "elements": [
+    {
+      "type": "ENUM",
+      "name": "bullet3d.collision_object.ACTIVATION_STATE",
+      "brief": "Collision object activation states",
+      "description": "Collision object activation states",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "ACTIVE_TAG",
+          "doc": "Active simulation state.",
+          "type": ""
+        },
+        {
+          "name": "ISLAND_SLEEPING",
+          "doc": "Sleeping simulation state.",
+          "type": ""
+        },
+        {
+          "name": "WANTS_DEACTIVATION",
+          "doc": "Wants-deactivation simulation state.",
+          "type": ""
+        },
+        {
+          "name": "DISABLE_DEACTIVATION",
+          "doc": "Disable automatic deactivation.",
+          "type": ""
+        },
+        {
+          "name": "DISABLE_SIMULATION",
+          "doc": "Disable simulation.",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "bullet3d.collision_object.COLLISION_FLAG",
+      "brief": "Collision object flags",
+      "description": "Collision object flags",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "CF_DYNAMIC_OBJECT",
+          "doc": "Zero-valued default dynamic-object flag. Compare the complete collision-flags value with this constant; do not pass it to <code>has_collision_flag</code>, since zero is not a bit that can be tested.",
+          "type": ""
+        },
+        {
+          "name": "CF_STATIC_OBJECT",
+          "doc": "Static collision object flag.",
+          "type": ""
+        },
+        {
+          "name": "CF_KINEMATIC_OBJECT",
+          "doc": "Kinematic collision object flag.",
+          "type": ""
+        },
+        {
+          "name": "CF_NO_CONTACT_RESPONSE",
+          "doc": "Disable contact response flag.",
+          "type": ""
+        },
+        {
+          "name": "CF_CUSTOM_MATERIAL_CALLBACK",
+          "doc": "Custom material callback flag.",
+          "type": ""
+        },
+        {
+          "name": "CF_CHARACTER_OBJECT",
+          "doc": "Character collision object flag.",
+          "type": ""
+        },
+        {
+          "name": "CF_DISABLE_VISUALIZE_OBJECT",
+          "doc": "Disable debug visualization flag.",
+          "type": ""
+        },
+        {
+          "name": "CF_DISABLE_SPU_COLLISION_PROCESSING",
+          "doc": "Disable SPU collision processing flag.",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "bullet3d.collision_object.INTERNAL_TYPE",
+      "brief": "Native collision object types",
+      "description": "Native collision object types",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "CO_COLLISION_OBJECT",
+          "doc": "Generic collision object type.",
+          "type": ""
+        },
+        {
+          "name": "CO_RIGID_BODY",
+          "doc": "Rigid body collision object type.",
+          "type": ""
+        },
+        {
+          "name": "CO_GHOST_OBJECT",
+          "doc": "Ghost collision object type.",
+          "type": ""
+        },
+        {
+          "name": "CO_SOFT_BODY",
+          "doc": "Soft body collision object type.",
+          "type": ""
+        },
+        {
+          "name": "CO_HF_FLUID",
+          "doc": "Height-field fluid collision object type.",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.is_valid",
+      "brief": "Test whether a collision object handle is valid",
+      "description": "Test whether a collision object handle is valid",
+      "returnvalues": [
+        {
+          "name": "valid",
+          "doc": "<code>true</code> if the native object still exists",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_world_transform",
+      "brief": "Get the world transform",
+      "description": "Get the world transform",
+      "returnvalues": [
+        {
+          "name": "position",
+          "doc": "world position in Defold units",
+          "types": ["vector3"]
+        },
+        {
+          "name": "rotation",
+          "doc": "world rotation",
+          "types": ["quaternion"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.set_world_transform",
+      "brief": "Set the world transform",
+      "description": "The owning game object's position and rotation are updated as well, so the\ntransform persists when Defold synchronizes game objects into Bullet.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "position",
+          "doc": "finite world position in Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "rotation",
+          "doc": "finite, non-zero world rotation; normalized by the binding",
+          "types": ["quaternion"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Move a collision object while preserving its rotation:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">object</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_collision_object</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject&quot;</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">position</span><span class=\"p\">,</span> <span class=\"n\">rotation</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">collision_object</span><span class=\"p\">.</span><span class=\"n\">get_world_transform</span><span class=\"p\">(</span><span class=\"n\">object</span><span class=\"p\">)</span>\n    <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">collision_object</span><span class=\"p\">.</span><span class=\"n\">set_world_transform</span><span class=\"p\">(</span>\n        <span class=\"n\">object</span><span class=\"p\">,</span>\n        <span class=\"n\">position</span> <span class=\"o\">+</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">5</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n        <span class=\"n\">rotation</span><span class=\"p\">)</span>\n    <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">collision_object</span><span class=\"p\">.</span><span class=\"n\">activate</span><span class=\"p\">(</span><span class=\"n\">object</span><span class=\"p\">,</span> <span class=\"kc\">true</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_position",
+      "brief": "Get the world position",
+      "description": "Get the world position",
+      "returnvalues": [
+        {
+          "name": "position",
+          "doc": "world position in Defold units",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.set_position",
+      "brief": "Set the world position",
+      "description": "The owning game object's position is updated as well.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "position",
+          "doc": "finite world position in Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_rotation",
+      "brief": "Get the world rotation",
+      "description": "Get the world rotation",
+      "returnvalues": [
+        {
+          "name": "rotation",
+          "doc": "world rotation",
+          "types": ["quaternion"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.set_rotation",
+      "brief": "Set the world rotation",
+      "description": "The owning game object's rotation is updated as well.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "rotation",
+          "doc": "finite, non-zero world rotation; normalized by the binding",
+          "types": ["quaternion"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_activation_state",
+      "brief": "Get the activation state",
+      "description": "Get the activation state",
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "activation state",
+          "types": ["bullet3d.collision_object.ACTIVATION_STATE"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.set_activation_state",
+      "brief": "Set the activation state",
+      "description": "Set the activation state",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "state",
+          "doc": "activation state",
+          "types": ["bullet3d.collision_object.ACTIVATION_STATE"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.force_activation_state",
+      "brief": "Force the activation state",
+      "description": "Force the activation state",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "state",
+          "doc": "activation state",
+          "types": ["bullet3d.collision_object.ACTIVATION_STATE"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.activate",
+      "brief": "Activate a collision object",
+      "description": "Activate a collision object",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "force",
+          "doc": "force activation of a static or kinematic object; defaults to <code>false</code>",
+          "types": ["boolean"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.is_active",
+      "brief": "Test whether a collision object is active",
+      "description": "This exposes Bullet's native <code>btCollisionObject::isActive</code> result. It is\n<code>false</code> for <code>ISLAND_SLEEPING</code> and <code>DISABLE_SIMULATION</code>, and <code>true</code> for the\nother activation states available to Defold collision objects. It is\nunrelated to whether the Defold component is enabled.",
+      "returnvalues": [
+        {
+          "name": "active",
+          "doc": "active state",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.is_awake",
+      "brief": "Test whether a collision object is awake",
+      "description": "Box2D-style name for the same simulation state returned by\n<a href=\"#bullet3d\">bullet3d.collision_object.is_active</a>.",
+      "returnvalues": [
+        {
+          "name": "awake",
+          "doc": "<code>false</code> when sleeping or simulation is disabled",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.set_awake",
+      "brief": "Set whether a collision object is awake",
+      "description": "Passing <code>true</code> calls Bullet's <code>activate()</code>. Passing <code>false</code> requests the\nnative <code>ISLAND_SLEEPING</code> state. As in Bullet, static or kinematic objects are\nnot activated without force, and protected <code>DISABLE_DEACTIVATION</code> or\n<code>DISABLE_SIMULATION</code> states are not replaced by a sleeping request.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "awake",
+          "doc": "requested awake state",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_deactivation_time",
+      "brief": "Get deactivation time",
+      "description": "Get deactivation time",
+      "returnvalues": [
+        {
+          "name": "seconds",
+          "doc": "deactivation time",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.set_deactivation_time",
+      "brief": "Set deactivation time",
+      "description": "Set deactivation time",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "seconds",
+          "doc": "finite deactivation time",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_friction",
+      "brief": "Get friction",
+      "description": "Get friction",
+      "returnvalues": [
+        {
+          "name": "friction",
+          "doc": "friction coefficient",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.set_friction",
+      "brief": "Set friction",
+      "description": "Set friction",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "friction",
+          "doc": "finite friction coefficient",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_restitution",
+      "brief": "Get restitution",
+      "description": "Get restitution",
+      "returnvalues": [
+        {
+          "name": "restitution",
+          "doc": "restitution coefficient",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.set_restitution",
+      "brief": "Set restitution",
+      "description": "Set restitution",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "restitution",
+          "doc": "finite restitution coefficient",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_contact_processing_threshold",
+      "brief": "Get the contact processing threshold",
+      "description": "Get the contact processing threshold",
+      "returnvalues": [
+        {
+          "name": "threshold",
+          "doc": "threshold in Defold units",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.set_contact_processing_threshold",
+      "brief": "Set the contact processing threshold",
+      "description": "Set the contact processing threshold",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "threshold",
+          "doc": "finite threshold in Defold units",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_ccd_swept_sphere_radius",
+      "brief": "Get the CCD swept sphere radius",
+      "description": "Get the CCD swept sphere radius",
+      "returnvalues": [
+        {
+          "name": "radius",
+          "doc": "radius in Defold units",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.set_ccd_swept_sphere_radius",
+      "brief": "Set the CCD swept sphere radius",
+      "description": "Set the CCD swept sphere radius",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "radius",
+          "doc": "finite non-negative radius in Defold units",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_ccd_motion_threshold",
+      "brief": "Get the CCD motion threshold",
+      "description": "Get the CCD motion threshold",
+      "returnvalues": [
+        {
+          "name": "threshold",
+          "doc": "threshold in Defold units",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.set_ccd_motion_threshold",
+      "brief": "Set the CCD motion threshold",
+      "description": "Set the CCD motion threshold",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "threshold",
+          "doc": "finite non-negative threshold in Defold units",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Enable continuous collision detection for a small, fast-moving body:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">body</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_rigid_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject&quot;</span><span class=\"p\">)</span>\n    <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">collision_object</span><span class=\"p\">.</span><span class=\"n\">set_ccd_swept_sphere_radius</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"mf\">0.25</span><span class=\"p\">)</span>\n    <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">collision_object</span><span class=\"p\">.</span><span class=\"n\">set_ccd_motion_threshold</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"mf\">0.5</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_collision_flags",
+      "brief": "Get collision flags",
+      "description": "Get collision flags",
+      "returnvalues": [
+        {
+          "name": "flags",
+          "doc": "bit field of <code>CF_*</code> constants",
+          "types": ["integer"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_collision_filter_group",
+      "brief": "Get the collision filter group",
+      "description": "Returns the raw unsigned 16-bit filter group that Defold assigned to the\nobject's Bullet broadphase proxy. Use this value as <code>category_bits</code> in a\n<code>bullet3d.world</code> query filter. Bullet applies reciprocal filtering: the\nquery's <code>mask_bits</code> must include this group, and the query's <code>category_bits</code>\nmust be included in the object's filter mask.",
+      "returnvalues": [
+        {
+          "name": "group",
+          "doc": "raw unsigned 16-bit collision filter group",
+          "types": ["integer"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object in a Bullet world",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_collision_filter_mask",
+      "brief": "Get the collision filter mask",
+      "description": "Returns the raw unsigned 16-bit filter mask that Defold assigned to the\nobject's Bullet broadphase proxy. Use this value as <code>mask_bits</code> in a\n<code>bullet3d.world</code> query filter. Bullet applies reciprocal filtering: the\nquery's <code>category_bits</code> must be included in this mask, and the query's\n<code>mask_bits</code> must include the object's filter group.",
+      "returnvalues": [
+        {
+          "name": "mask",
+          "doc": "raw unsigned 16-bit collision filter mask",
+          "types": ["integer"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object in a Bullet world",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.has_collision_flag",
+      "brief": "Test a collision flag",
+      "description": "Test a collision flag",
+      "returnvalues": [
+        {
+          "name": "set",
+          "doc": "<code>true</code> when all requested flag bits are set",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "flag",
+          "doc": "collision flag or mask",
+          "types": ["integer"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.get_internal_type",
+      "brief": "Get the Bullet collision object type",
+      "description": "Get the Bullet collision object type",
+      "returnvalues": [
+        {
+          "name": "type",
+          "doc": "native collision object type",
+          "types": ["bullet3d.collision_object.INTERNAL_TYPE"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.is_static",
+      "brief": "Test whether the object is static",
+      "description": "Test whether the object is static",
+      "returnvalues": [
+        {
+          "name": "static",
+          "doc": "static state",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.is_kinematic",
+      "brief": "Test whether the object is kinematic",
+      "description": "Test whether the object is kinematic",
+      "returnvalues": [
+        {
+          "name": "kinematic",
+          "doc": "kinematic state",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.is_static_or_kinematic",
+      "brief": "Test whether the object is static or kinematic",
+      "description": "Test whether the object is static or kinematic",
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "static or kinematic state",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.has_contact_response",
+      "brief": "Test whether the object responds to contacts",
+      "description": "Test whether the object responds to contacts",
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "contact response state",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.is_rigid_body",
+      "brief": "Test whether the object is a rigid body",
+      "description": "Test whether the object is a rigid body",
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "rigid body state",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.collision_object.is_ghost_object",
+      "brief": "Test whether the object is a ghost trigger",
+      "description": "Test whether the object is a ghost trigger",
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "ghost object state",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "collision object",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "bullet3d.collision_object",
+    "name": "bullet3d.collision_object",
+    "brief": "Bullet collision object API",
+    "description": "Functions shared by rigid bodies and trigger ghost objects. Defold keeps\nownership of each object's user pointer, motion state, collision shape, and\nworld membership. Logical child shapes are inspected and mutated through\n`bullet3d.shape`; ownership is not transferred to Lua.\n\nPositions, distances, and CCD thresholds use Defold units. Rotations,\ncoefficients, flags, activation state, and time values use Bullet values.\nFloating-point and vector inputs must be finite. CCD radii and motion\nthresholds must also be non-negative.",
+    "path": "engine/gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_collision_object.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

@@ -465,6 +465,36 @@
       "payload": []
     },
     {
+      "name": "proxy_loading",
+      "origin": "collectionproxy",
+      "description": "Reports that a collection proxy is loading.",
+      "payload": [
+        {
+          "name": "progress",
+          "types": ["number"],
+          "doc": "The loading progress (0.0 to 1.0)."
+        }
+      ]
+    },
+    {
+      "name": "proxy_ready",
+      "origin": "collectionproxy",
+      "description": "Reports that a collection proxy has been loaded and is running.",
+      "payload": []
+    },
+    {
+      "name": "proxy_error",
+      "origin": "collectionproxy",
+      "description": "Reports that an error occurred while loading or initializing a collection.",
+      "payload": [
+        {
+          "name": "code",
+          "types": ["number"],
+          "doc": "Error code."
+        }
+      ]
+    },
+    {
       "name": "clear_color",
       "origin": "render",
       "description": "Set the colour the render target is cleared to.",
@@ -875,6 +905,72 @@
       "origin": "sys",
       "description": "Resume rendering.\nThis message can only be sent to the designated <code>@system</code> socket.",
       "payload": []
+    },
+    {
+      "name": "text_object_hovered",
+      "origin": "label",
+      "description": "Sent when the pointer enters an interactive rich-text object in a label (to the owning game object) or a GUI text node (to the GUI script).",
+      "payload": [
+        {
+          "name": "id",
+          "types": ["hash"],
+          "doc": "The object's id attribute, or its generated layout object id."
+        },
+        {
+          "name": "type",
+          "types": ["hash"],
+          "doc": "The layout object type, currently link."
+        },
+        {
+          "name": "src",
+          "types": ["string"],
+          "doc": "The application-defined target from the object's src attribute."
+        }
+      ]
+    },
+    {
+      "name": "text_object_unhovered",
+      "origin": "label",
+      "description": "Sent when the pointer leaves an interactive rich-text object in a label (to the owning game object) or a GUI text node (to the GUI script).",
+      "payload": [
+        {
+          "name": "id",
+          "types": ["hash"],
+          "doc": "The object's id attribute, or its generated layout object id."
+        },
+        {
+          "name": "type",
+          "types": ["hash"],
+          "doc": "The layout object type, currently link."
+        },
+        {
+          "name": "src",
+          "types": ["string"],
+          "doc": "The application-defined target from the object's src attribute."
+        }
+      ]
+    },
+    {
+      "name": "text_object_clicked",
+      "origin": "label",
+      "description": "Sent when the pointer clicks an interactive rich-text object in a label (to the owning game object) or a GUI text node (to the GUI script).",
+      "payload": [
+        {
+          "name": "id",
+          "types": ["hash"],
+          "doc": "The object's id attribute, or its generated layout object id."
+        },
+        {
+          "name": "type",
+          "types": ["hash"],
+          "doc": "The layout object type, currently link."
+        },
+        {
+          "name": "src",
+          "types": ["string"],
+          "doc": "The application-defined target from the object's src attribute."
+        }
+      ]
     }
   ]
 }

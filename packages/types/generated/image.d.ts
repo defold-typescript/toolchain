@@ -7,33 +7,111 @@ declare global {
    */
   namespace image {
     /**
-     * luminance image type
+     * ASTC image header
+     */
+    interface astc_header {
+      /**
+       * Image width.
+       */
+      width: number;
+      /**
+       * Image height.
+       */
+      height: number;
+      /**
+       * Image depth.
+       */
+      depth: number;
+      /**
+       * Block size on the x-axis.
+       */
+      block_size_x: number;
+      /**
+       * Block size on the y-axis.
+       */
+      block_size_y: number;
+      /**
+       * Block size on the z-axis.
+       */
+      block_size_z: number;
+    }
+    /**
+     * Loaded buffer image data
+     */
+    interface load_buffer_result {
+      /**
+       * Image width.
+       */
+      width: number;
+      /**
+       * Image height.
+       */
+      height: number;
+      /**
+       * Image type.
+       */
+      type: image.TYPE;
+      /**
+       * Script buffer containing the decompressed image data.
+       */
+      buffer: Opaque<"buffer">;
+    }
+    /**
+     * Image loading options
+     */
+    interface load_options {
+      /**
+       * Whether to premultiply alpha into the color components. Defaults to `false`.
+       */
+      premultiply_alpha?: boolean;
+      /**
+       * Whether to flip the image contents vertically. Defaults to `false`.
+       */
+      flip_vertically?: boolean;
+    }
+    /**
+     * Loaded string image data
+     */
+    interface load_result {
+      /**
+       * Image width.
+       */
+      width: number;
+      /**
+       * Image height.
+       */
+      height: number;
+      /**
+       * Image type.
+       */
+      type: image.TYPE;
+      /**
+       * Raw image data.
+       */
+      buffer: string;
+    }
+    type TYPE = typeof image.TYPE_RGB | typeof image.TYPE_RGBA | typeof image.TYPE_LUMINANCE | typeof image.TYPE_LUMINANCE_ALPHA;
+    /**
+     * Luminance image type.
      */
     const TYPE_LUMINANCE: string & { readonly __brand: "image.TYPE_LUMINANCE" };
     /**
-     * luminance image type
+     * Luminance-alpha image type.
      */
     const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: "image.TYPE_LUMINANCE_ALPHA" };
     /**
-     * RGB image type
+     * RGB image type.
      */
     const TYPE_RGB: string & { readonly __brand: "image.TYPE_RGB" };
     /**
-     * RGBA image type
+     * RGBA image type.
      */
     const TYPE_RGBA: string & { readonly __brand: "image.TYPE_RGBA" };
     /**
      * get the header of an .astc buffer
      *
      * @param buffer - .astc file data buffer
-     * @returns header or `nil` if buffer is not a valid .astc. The header has these fields:
-     *
-     * - number `width`: image width
-     * - number `height`: image height
-     * - number `depth`: image depth
-     * - number `block_size_x`: block size x
-     * - number `block_size_y`: block size y
-     * - number `block_size_z`: block size z
+     * @returns header, or `nil` if the buffer is not a valid ASTC image
      * @example
      * ```ts
      * // How to get the block size and dimensions from a .astc file
@@ -44,27 +122,13 @@ declare global {
      * }
      * ```
      */
-    function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined;
+    function get_astc_header(buffer: string): image.astc_header | undefined;
     /**
      * Load image (PNG or JPEG) from buffer.
      *
      * @param buffer - image data buffer
-     * @param options - An optional table containing parameters for loading the image. Supported entries:
-     *
-     * `premultiply_alpha`
-     * boolean True if alpha should be premultiplied into the color components. Defaults to `false`.
-     * `flip_vertically`
-     * boolean True if the image contents should be flipped vertically. Defaults to `false`.
-     * @returns object or `nil` if loading fails. The object is a table with the following fields:
-     *
-     * - number `width`: image width
-     * - number `height`: image height
-     * - constant `type`: image type
-     *   - `image.TYPE_RGB`
-     *   - `image.TYPE_RGBA`
-     *   - `image.TYPE_LUMINANCE`
-     *   - `image.TYPE_LUMINANCE_ALPHA`
-     * - string `buffer`: the raw image data
+     * @param options - Optional loading parameters. A boolean is accepted for backwards compatibility and controls `premultiply_alpha`.
+     * @returns loaded image, or `nil` if loading fails
      * @example
      * ```ts
      * // How to load an image from an URL and create a GUI texture from it:
@@ -77,27 +141,13 @@ declare global {
      * });
      * ```
      */
-    function load(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined;
+    function load(buffer: string, options?: boolean | image.load_options): image.load_result | undefined;
     /**
      * Load image (PNG or JPEG) from a string buffer.
      *
      * @param buffer - image data buffer
-     * @param options - An optional table containing parameters for loading the image. Supported entries:
-     *
-     * `premultiply_alpha`
-     * boolean True if alpha should be premultiplied into the color components. Defaults to `false`.
-     * `flip_vertically`
-     * boolean True if the image contents should be flipped vertically. Defaults to `false`.
-     * @returns object or `nil` if loading fails. The object is a table with the following fields:
-     *
-     * - number `width`: image width
-     * - number `height`: image height
-     * - constant `type`: image type
-     *   - `image.TYPE_RGB`
-     *   - `image.TYPE_RGBA`
-     *   - `image.TYPE_LUMINANCE`
-     *   - `image.TYPE_LUMINANCE_ALPHA`
-     * - buffer `buffer`: the script buffer that holds the decompressed image data. See buffer.create how to use the buffer.
+     * @param options - Optional loading parameters. A boolean is accepted for backwards compatibility and controls `premultiply_alpha`.
+     * @returns loaded image, or `nil` if loading fails
      * @example
      * ```ts
      * // Load an image from an URL as a buffer and create a texture resource from it:
@@ -107,12 +157,14 @@ declare global {
      *     response.response !== undefined
      *       ? image.load_buffer(response.response, { flip_vertically: true })
      *       : undefined;
-     *   if (img !== undefined) {
+     *   // the engine registers a texture format only when the driver supports it
+     *   const format = graphics.TEXTURE_FORMAT_RGBA;
+     *   if (img !== undefined && format !== undefined) {
      *     const tparams = {
      *       width: img.width,
      *       height: img.height,
      *       type: graphics.TEXTURE_TYPE_2D,
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *     };
      *
      *     const my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams, img.buffer);
@@ -122,7 +174,7 @@ declare global {
      * });
      * ```
      */
-    function load_buffer(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined;
+    function load_buffer(buffer: string, options?: boolean | image.load_options): image.load_buffer_result | undefined;
   }
 }
 

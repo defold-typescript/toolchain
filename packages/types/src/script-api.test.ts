@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { readdirSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
 import { parse } from "yaml";
+import { EXTENSION_GOLDEN_MANIFEST } from "../scripts/extension-goldens";
 import { parseDefoldApiDoc } from "./api-doc";
 import { examplesHtmlToMarkdown } from "./doc-comment";
 import { emitDeclarations } from "./emit-dts";
@@ -407,35 +406,24 @@ describe("scriptApiToRefDoc pipe-separated types", () => {
   // not committed, so the offline guard that the split moves no frozen golden runs
   // over the emitted fixtures: none of them carries a pipe-bearing type token,
   // therefore none of them can re-emit differently once `|` is split.
-  it("no committed engine fixture carries a pipe-bearing type token", () => {
+  // Engine ref-doc fixtures from 1.13.2 carry LuaLS expressions, whose `|` sits
+  // inside a composite token (`table<string|hash, V>`) and never reaches this split.
+  it("no committed extension-golden fixture carries a pipe-bearing type token", () => {
     const offenders: string[] = [];
-    const walk = (dir: string): void => {
-      for (const entry of readdirSync(dir, { withFileTypes: true })) {
-        const path = join(dir, entry.name);
-        if (entry.isDirectory()) {
-          walk(path);
-          continue;
-        }
-        if (!entry.name.endsWith(".json")) continue;
-        let doc: unknown;
-        try {
-          doc = JSON.parse(readFileSync(path, "utf8"));
-        } catch {
-          continue;
-        }
-        const elements = (doc as { elements?: unknown }).elements;
-        if (!Array.isArray(elements)) continue;
-        for (const element of elements as RefDocFunctionElement[]) {
-          const slots = [...(element.parameters ?? []), ...(element.returnvalues ?? [])];
-          for (const slot of slots) {
-            for (const token of slot.types ?? []) {
-              if (token.includes("|")) offenders.push(`${path}: ${element.name} -> ${token}`);
-            }
+    for (const entry of EXTENSION_GOLDEN_MANIFEST) {
+      const elements = (entry.doc as { elements?: unknown }).elements;
+      if (!Array.isArray(elements)) continue;
+      for (const element of elements as RefDocFunctionElement[]) {
+        const slots = [...(element.parameters ?? []), ...(element.returnvalues ?? [])];
+        for (const slot of slots) {
+          for (const token of slot.types ?? []) {
+            if (token.includes("|"))
+              offenders.push(`${entry.namespace}: ${element.name} -> ${token}`);
           }
         }
       }
-    };
-    walk(resolve(import.meta.dir, "..", "fixtures"));
+    }
+    expect(EXTENSION_GOLDEN_MANIFEST.length).toBeGreaterThan(0);
     expect(offenders).toEqual([]);
   });
 });

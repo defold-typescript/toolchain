@@ -115,7 +115,7 @@ function wrapForUnion(tsExpr: string): string {
 }
 
 /** An array element needs parentheses when it is a union, a function, or an object. */
-function needsArrayParens(tsExpr: string): boolean {
+export function needsArrayParens(tsExpr: string): boolean {
   return (
     splitTopLevel(tsExpr, "|").length > 1 || hasTopLevelArrow(tsExpr) || tsExpr.startsWith("{")
   );
@@ -139,11 +139,12 @@ function luaTableKey(mapped: string): string {
 /**
  * TSTL's `LuaTable` is built with `new LuaTable()`, so an object literal is not
  * assignable to it although both compile to the same Lua table. A caller-supplied
- * table whose key admits `string` also takes `Record<string, V>`; a `Hash` or
- * numeric key cannot be spelled as an object literal's key, so it stays `LuaTable`.
+ * table whose key admits `string` (`AnyNotNil` does) also takes
+ * `Record<string, V>`; a `Hash` or numeric key cannot be spelled as an object
+ * literal's key, so it takes only a Lua table.
  */
 function acceptsObjectLiteral(key: string): boolean {
-  return splitTopLevel(key, "|").some((arm) => arm.trim() === "string");
+  return splitTopLevel(key, "|").some((arm) => ["string", "AnyNotNil"].includes(arm.trim()));
 }
 
 interface Walk {
@@ -295,9 +296,13 @@ function mapToken(raw: string, walk: Walk): string {
   if (token.startsWith("table<") && token.endsWith(">")) {
     const args = splitTopLevel(token.slice(6, -1), ",").map((a) => mapToken(a.trim(), walk));
     if (args.length > 0) args[0] = luaTableKey(args[0] as string);
-    const table = `LuaTable<${args.join(", ")}>`;
+    // A caller may build the table with either TSTL constructor. `LuaMap` takes
+    // both, since a `LuaTable` is assignable to it; the engine hands back a
+    // `LuaTable`, which a caller may still store as a `LuaMap`.
+    if (walk.position !== "input") return `LuaTable<${args.join(", ")}>`;
+    const table = `LuaMap<${args.join(", ")}>`;
     const [key, value] = args;
-    if (walk.position === "input" && args.length === 2 && acceptsObjectLiteral(key as string)) {
+    if (args.length === 2 && acceptsObjectLiteral(key as string)) {
       return `${table} | Record<string, ${value}>`;
     }
     return table;

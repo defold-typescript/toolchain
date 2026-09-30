@@ -468,23 +468,28 @@ describe("validateAvailability", () => {
   });
 });
 
-describe("committed deprecation catalog (1.12.4 / 1.13.0 audit outcome)", () => {
+describe("committed deprecation catalog (per-release audit outcome)", () => {
   const catalog = JSON.parse(
     readFileSync(join(import.meta.dir, "..", "api-migrations.json"), "utf8"),
   ) as ApiMigrationCatalog;
 
-  test("holds only the verified reset_constant deprecations (deprecatedSince 1.13.0, no replacement)", () => {
-    const names = catalog.migrations.map((m) => m.identity.name).sort();
-    expect(names).toEqual([
-      "model.reset_constant",
-      "sprite.reset_constant",
-      "tilemap.reset_constant",
-    ]);
+  // 1.13.0 marks the reset_constant calls DEPRECATED!; 1.13.2 deprecates the label
+  // text calls for the `text` property and the misspelled window event constant.
+  test("holds only the verified deprecations, each with its release and no replacement", () => {
+    const deprecated = Object.fromEntries(
+      catalog.migrations.map((m) => [`${m.identity.kind} ${m.identity.name}`, m.deprecatedSince]),
+    );
+    expect(deprecated).toEqual({
+      "FUNCTION model.reset_constant": "1.13.0",
+      "FUNCTION sprite.reset_constant": "1.13.0",
+      "FUNCTION tilemap.reset_constant": "1.13.0",
+      "FUNCTION label.get_text": "1.13.2",
+      "FUNCTION label.set_text": "1.13.2",
+      "CONSTANT window.WINDOW_EVENT_ICONFIED": "1.13.2",
+    });
     for (const migration of catalog.migrations) {
-      expect(migration.identity.kind).toBe("FUNCTION");
-      expect(migration.deprecatedSince).toBe("1.13.0");
-      // The 1.13.0 ref-doc marks these DEPRECATED! but names no replacement API,
-      // so the catalog carries deprecatedSince only (no fabricated `replacement`).
+      // The ref-docs name no replacement symbol the catalog could link, so it
+      // carries deprecatedSince only (no fabricated `replacement`).
       expect(migration.replacement).toBeUndefined();
     }
   });

@@ -1,0 +1,81 @@
+{
+  "elements": [
+    {
+      "type": "STRUCT",
+      "name": "json.decode.options",
+      "brief": "options for json.decode",
+      "description": "Options for json.decode",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "all?",
+          "doc": "if true, decodes all JSON values in a string and returns an array",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "json.decode",
+      "brief": "decode JSON string to Lua value",
+      "description": "Decode JSON string to Lua value",
+      "returnvalues": [],
+      "parameters": [
+        { "name": "json", "doc": "json data", "types": ["string"], "is_optional": "False" },
+        {
+          "name": "options",
+          "doc": "decoding options",
+          "types": ["json.decode.options"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "json.encode",
+      "brief": "encode Lua value to JSON string",
+      "description": "Encode Lua value to JSON string",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "any Lua value that may be represented as JSON",
+          "types": ["any"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "json",
+    "name": "Editor",
+    "brief": "Editor scripting documentation",
+    "description": "Editor scripting documentation",
+    "path": "",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

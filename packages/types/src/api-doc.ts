@@ -80,6 +80,8 @@ export interface ApiConstant {
   valueType?: "string";
   /** Present when an `ENUM` member is typed `<ENUM>|nil`: some platforms leave it unset. */
   nilable?: true;
+  /** The documented constant a back-filled one shares its value, and so its type, with. */
+  aliasOf?: string;
   /** See {@link ApiFunction.global}. */
   global?: true;
 }
@@ -379,6 +381,12 @@ function parseConstant(element: Record<string, unknown>): ApiConstant {
 // A member carries one `doc` string where a constant carried `brief` and
 // `description`; both take it.
 function parseEnumMembers(element: Record<string, unknown>): ApiConstant[] {
+  // A member named bare (1.13.2's bullet3d enums) is registered on the enum's
+  // own namespace, so it takes that prefix.
+  const enumName = stringOr(element.name, "");
+  const owner = enumName.includes(".") ? enumName.slice(0, enumName.lastIndexOf(".")) : "";
+  const qualify = (name: string): string =>
+    name.includes(".") || owner === "" ? name : `${owner}.${name}`;
   const [value] = parseParameterList(element.parameters);
   const valueType = value?.types.length === 1 && value.types[0] === "string" ? "string" : null;
   const raw = Array.isArray(element.members) ? element.members : [];
@@ -387,7 +395,7 @@ function parseEnumMembers(element: Record<string, unknown>): ApiConstant[] {
     if (!isRecord(member)) continue;
     const doc = stringOr(member.doc, "");
     out.push({
-      name: stringOr(member.name, ""),
+      name: qualify(stringOr(member.name, "")),
       brief: doc,
       description: doc,
       ...(valueType === null ? {} : { valueType }),

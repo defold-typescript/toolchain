@@ -412,6 +412,9 @@ export function namespaceBadgeCounts(
   let changed = 0;
   let deprecated = 0;
   for (const entry of ns.entries) {
+    // A type renders as a section with no marker dot, so the tally counts only
+    // the members a page marks.
+    if (entry.identity.kind === "TYPEDEF") continue;
     const category = windowedBadgeCategory(
       entry.availableIn,
       entry.deprecatedSince,
@@ -682,11 +685,19 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
   const entryFor = (identity: ApiSymbolIdentity): CombinedEntry => {
     const key = symbolIdentityKey(identity);
     const presenceIn = presence.get(key)?.availableIn ?? [];
-    // The signature lookup stays on real presence — a widened version has no
-    // typings to draw a declaration from.
-    const newest = versions.find((version) => presenceIn.includes(version)) ?? versions[0] ?? "";
     const facts = curatedFacts(overlayRecords?.get(key));
     const availableIn = availableWithDeprecation(presenceIn, facts.deprecatedSince, versions);
+    // The signature comes from the newest version whose typings declare the symbol:
+    // a version widened in by a deprecation has none unless its declarations
+    // back-fill the symbol the reference omits.
+    const newest =
+      versions.find(
+        (version) =>
+          availableIn.includes(version) && input.signatures.versions[version]?.[key] !== undefined,
+      ) ??
+      versions.find((version) => presenceIn.includes(version)) ??
+      versions[0] ??
+      "";
     const transition = transitionNames.has(symbolNameKey(identity));
     const slotTypes = input.signatures.slotTypes?.[newest]?.[key];
     return {

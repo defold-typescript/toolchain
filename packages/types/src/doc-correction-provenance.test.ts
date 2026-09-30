@@ -71,6 +71,17 @@ function sightings(key: string): Sighting[] {
   return out;
 }
 
+// Doc corrections a retained target already documents correctly while an older
+// one still needs them, each with the targets whose upstream doc changed into
+// the fix. The hash gate leaves the correction inert there.
+const DOC_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
+  // 1.13.2 returns a `graphics.adapter_info` STRUCT whose members carry the fields.
+  "graphics.get_adapter_info#return:info": ["defold-1.13.2"],
+};
+
+const resolvedIn = (key: string, sighting: Sighting): boolean =>
+  (DOC_CORRECTIONS_RESOLVED_UPSTREAM[key] ?? []).includes(sighting.target);
+
 describe("doc correction provenance", () => {
   const entries = [...DOC_CORRECTIONS.entries()];
 
@@ -81,11 +92,13 @@ describe("doc correction provenance", () => {
   });
 
   // A red here means upstream changed the slot's doc: re-read it, and delete the
-  // entry if upstream fixed it rather than re-pinning the hash.
+  // entry if upstream fixed it rather than re-pinning the hash — or, while an
+  // older retained target still needs it, record the fixing target above.
   test("every vendored ref-doc still carries the exact upstream doc the correction replaces", () => {
     const drifted: string[] = [];
     for (const [key, correction] of entries) {
       for (const sighting of sightings(key)) {
+        if (resolvedIn(key, sighting)) continue;
         const found = fnv1a64(sighting.doc);
         if (found !== correction.upstreamHash) {
           drifted.push(
@@ -103,6 +116,7 @@ describe("doc correction provenance", () => {
       const [owner, slotKey] = key.split("#") as [string, string];
       const [slot, slotName] = slotKey.split(":") as [string, string];
       for (const sighting of sightings(key)) {
+        if (resolvedIn(key, sighting)) continue;
         const module = parseDefoldApiDoc(JSON.parse(readFileSync(sighting.path, "utf8")));
         let doc: string | undefined;
         if (slot === "property") {
@@ -116,5 +130,28 @@ describe("doc correction provenance", () => {
       }
     }
     expect(missed).toEqual([]);
+  });
+
+  test("each recorded resolution is a target whose doc left the pin, while an older target keeps it", () => {
+    const stale: string[] = [];
+    for (const [key, targets] of Object.entries(DOC_CORRECTIONS_RESOLVED_UPSTREAM)) {
+      const correction = DOC_CORRECTIONS.get(key);
+      if (correction === undefined) {
+        stale.push(`${key}: no such correction`);
+        continue;
+      }
+      const pinned = (sighting: Sighting) => fnv1a64(sighting.doc) === correction.upstreamHash;
+      const found = sightings(key);
+      for (const target of targets) {
+        const own = found.filter((sighting) => sighting.target === target);
+        if (own.length === 0 || own.some(pinned)) {
+          stale.push(`${key}: ${target} still carries the pinned doc — drop the record`);
+        }
+      }
+      if (!found.some((sighting) => !targets.includes(sighting.target) && pinned(sighting))) {
+        stale.push(`${key}: no older target still needs it — delete the correction`);
+      }
+    }
+    expect(stale).toEqual([]);
   });
 });

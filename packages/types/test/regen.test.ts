@@ -248,6 +248,36 @@ describe("go facade skip", () => {
   });
 });
 
+describe("surface-wide type routing", () => {
+  const emitted = (namespace: string): string => {
+    const entry = MODULE_MANIFEST.find((e) => e.namespace === namespace);
+    if (!entry) throw new Error(`${namespace} manifest entry missing`);
+    return generateModuleDeclaration(entry).contents;
+  };
+
+  test("a struct another module's doc declares resolves by name", () => {
+    expect(emitted("compute")).toContain(
+      "function get_constants(path: Hash | string): material.constant_info[];",
+    );
+    expect(emitted("b2d.world")).toMatch(
+      /function cast_ray\([^)]*\): LuaMultiReturn<\[b2d\.fixture_cast_hit\[\], b2d\.tree_stats\]>;/,
+    );
+  });
+
+  // 1.13.2 files `bullet3d.collision_object.get_shape(s)` in the shape doc.
+  test("a function named under another module is declared there, not dropped", () => {
+    expect(emitted("bullet3d.collision_object")).toContain("function get_shapes(");
+    expect(emitted("bullet3d.collision_object")).toContain("function get_shape_count(");
+    expect(emitted("bullet3d.shape")).not.toContain("function get_shapes(");
+  });
+
+  test("a struct named under another module is declared there, not where its doc lists it", () => {
+    expect(emitted("b2d.joint")).toContain("interface revolute_definition {");
+    expect(emitted("b2d.joint")).toContain("definition?: b2d.joint.revolute_definition");
+    expect(emitted("b2d")).not.toContain("interface revolute_definition {");
+  });
+});
+
 describe("reserved-name member recovery", () => {
   test("go no longer drops go.delete (recovered via alias) but still drops the skip-functions", () => {
     const go = MODULE_MANIFEST.find((e) => e.namespace === "go");
@@ -505,7 +535,7 @@ describe("editor namespace emit", () => {
   test("brands the component handle so a builder and show_dialog share one type", () => {
     const { contents } = generateModuleDeclaration(editorEntry());
     expect(contents).toContain(
-      'function button(props: Record<string | number, unknown>): Opaque<"component">;',
+      'function button(props: editor.ui.button.props): Opaque<"component">;',
     );
     expect(contents).toContain('function show_dialog(dialog: Opaque<"component">)');
   });
@@ -773,10 +803,10 @@ describe("editor namespace emit", () => {
     }
   });
 
-  test("emits a documented vararg as a rest parameter under its own name", () => {
+  test("emits a documented vararg as a rest parameter", () => {
     const { contents } = generateModuleDeclaration(editorEntry());
     expect(contents).toContain(
-      "function bob(options?: Record<string | number, unknown>, ...commands: string[]): void;",
+      "function bob(options?: LuaMap<string, string | number | boolean | (string | number | boolean)[]> | Record<string, string | number | boolean | (string | number | boolean)[]>, ...args: string[]): void;",
     );
     expect(contents).not.toContain("arg1");
   });
@@ -787,7 +817,7 @@ describe("editor namespace emit", () => {
     const { contents } = generateModuleDeclaration(editorEntry());
     expect(contents).toContain(
       "function execute(command: string, " +
-        "...args: (string | { reload_resources?: boolean; out?: string; err?: string })[]" +
+        "...args: (string | editor.execute.options)[]" +
         "): undefined | string;",
     );
   });
@@ -807,13 +837,12 @@ describe("editor namespace emit", () => {
   });
 
   // The rest-parameter rule only fires on a `...`-prefixed ref-doc parameter
-  // name, and no committed runtime doc declares one — so it provably cannot move
-  // any runtime namespace's emitted surface. Read from the shipped manifests, so
-  // a future runtime doc introducing a vararg reds this instead of silently
-  // reshaping a signature. Editor documents are out of scope on both axes: they
+  // name, and the only committed runtime doc declaring one is 1.13.2's
+  // `socket.skip`. Read from the shipped manifests, so a further runtime doc
+  // introducing a vararg reds this instead of silently reshaping a signature. Editor documents are out of scope on both axes: they
   // do declare varargs, and `MODULE_MANIFEST` already excludes the default
   // target's, so the versioned manifest's editor entries drop out here too.
-  test("no committed runtime module doc declares a vararg parameter", () => {
+  test("socket.skip is the only committed runtime vararg parameter", () => {
     const offenders: string[] = [];
     const versionedRuntime = VERSIONED_MODULE_MANIFEST.filter((entry) => entry.editor !== true);
     for (const entry of [...MODULE_MANIFEST, ...versionedRuntime]) {
@@ -823,7 +852,7 @@ describe("editor namespace emit", () => {
         }
       }
     }
-    expect(offenders).toEqual([]);
+    expect([...new Set(offenders)]).toEqual(["socket.skip(...)"]);
   });
 
   test.each(

@@ -1,7 +1,8 @@
 /// <reference path="../index.d.ts" />
+import type { Hash } from "../src/core-types";
 
 for (const _mount of liveupdate.get_mounts()) {
-  const _mountName: string = _mount.name;
+  const _mountName: Hash = _mount.name;
   const _mountUri: string = _mount.uri;
   const _mountPriority: number = _mount.priority;
   void _mountName;

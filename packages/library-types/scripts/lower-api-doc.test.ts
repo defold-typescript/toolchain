@@ -811,7 +811,7 @@ test("a string-keyed table param lowers to the same widened type the emitter dec
     {
       name: "components",
       doc: "",
-      types: ["LuaTable<string, unknown> | Record<string, unknown>"],
+      types: ["LuaMap<string, unknown> | Record<string, unknown>"],
       is_optional: "False",
       is_vararg: "False",
     },

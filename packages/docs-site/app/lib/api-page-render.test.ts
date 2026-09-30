@@ -1740,8 +1740,7 @@ describe("Combined page authoritative render + markers", () => {
 
   test("compute page heading and its function-overview anchor slugify the authoritative signature", () => {
     const md = apiPageMarkdown(combinedPage("compute"), noLink, { combinedMarkers: true });
-    const authoritative =
-      "compute.get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[]";
+    const authoritative = "compute.get_constants(path: Hash | string): material.constant_info[]";
     const headingLine = md
       .split("\n")
       .find((l) => l.startsWith("### `") && l.includes("compute.get_constants("));
@@ -1771,8 +1770,7 @@ describe("Combined page authoritative render + markers", () => {
       apiPageMarkdown(combinedPage("compute"), noLink, { combinedMarkers: true }),
       { highlightSignatureHeadings: true },
     );
-    const authoritative =
-      "compute.get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[]";
+    const authoritative = "compute.get_constants(path: Hash | string): material.constant_info[]";
     const slug = slugify(authoritative);
     expect(html).toContain(`id="${slug}"`);
     expect(html).toContain(`href="#${slug}"`);
@@ -3008,8 +3006,10 @@ describe("grouped overload blocks (committed artifacts)", () => {
     };
     expect(placement("go", "go.get")).toEqual({ forms: [false, true, true], block: false });
     expect(placement("go", "go.set")).toEqual({ forms: [false, true, true], block: false });
+    // 1.13.2 documents render_target(table) alone, so the table sits under both
+    // hand-authored forms.
     expect(placement("render", "render.render_target")).toEqual({
-      forms: [false, true],
+      forms: [true, true],
       block: false,
     });
     expect(placement("vmath", "vmath.euler_to_quat")).toEqual({
@@ -3205,16 +3205,16 @@ describe("grouped overload blocks (committed artifacts)", () => {
 });
 
 describe("a slot doc carrying a list stays under its bullet", () => {
-  test("collectionfactory.get_status's status values nest under the status bullet", async () => {
+  test("render.enable_state's state values nest under the state bullet", async () => {
     const ns = loadCombinedSurface(REAL_TYPES_DIR).namespaces.find(
-      (candidate) => candidate.namespace === "collectionfactory",
+      (candidate) => candidate.namespace === "render",
     );
-    if (!ns) throw new Error("collectionfactory namespace missing from the combined surface");
+    if (!ns) throw new Error("render namespace missing from the combined surface");
     const html = await renderMarkdown(
       apiPageMarkdown(combinedNamespaceToApiPage(ns), (text) => text),
     );
-    const start = html.indexOf("status of the collection factory component");
-    const end = html.indexOf("collectionfactory.STATUS_UNLOADED", start);
+    const start = html.indexOf("state to enable");
+    const end = html.indexOf("graphics.STATE_DEPTH_TEST", start);
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
     const between = html.slice(start, end);

@@ -29,9 +29,9 @@ import type {
 
 declare global {
   /**
-   * Pretty-print a Lua value
+   * Pretty-print Lua values
    */
-  function pprint(value: unknown): void;
+  function pprint(...values: unknown[]): void;
 
   namespace http {
     namespace server {

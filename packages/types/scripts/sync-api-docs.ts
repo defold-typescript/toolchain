@@ -11,7 +11,7 @@ import { MODULE_MANIFEST } from "./regen";
 // model because the per-package `rootDir` boundary forbids a types-package
 // module importing outside its own tree; `scripts/release-model.test.ts`
 // correspondence-guards these against the model so drift fails CI.
-export const DEFOLD_VERSION = "1.13.1";
+export const DEFOLD_VERSION = "1.13.2";
 export const refDocUrl = (version = DEFOLD_VERSION): string =>
   `https://github.com/defold/defold/releases/download/${version}/ref-doc.zip`;
 
@@ -216,7 +216,7 @@ function editorVm(namespace: string): SyncManifestEntry {
 function entry(
   namespace: string,
   zipEntry: string,
-  fixture: string = `fixtures/defold-1.13.1/${namespace.replace(/\./g, "_")}_doc.json`,
+  fixture: string = `fixtures/defold-1.13.2/${namespace.replace(/\./g, "_")}_doc.json`,
   mergeEntries?: readonly string[],
 ): SyncManifestEntry {
   return { namespace, zipEntry, fixture, ...(mergeEntries ? { mergeEntries } : {}) };
