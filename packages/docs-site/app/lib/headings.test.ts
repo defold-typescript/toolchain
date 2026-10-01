@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { allPageHeadings, pageHeadings, slugify } from "./headings";
+import { join } from "node:path";
+import { apiPageMarkdown } from "./api-page-render";
+import { loadCombinedSurface } from "./api-surface-loader";
+import { combinedNamespaceToApiPage } from "./combined-surface";
+import { allPageHeadings, type Heading, pageHeadings, slugify } from "./headings";
+import { renderMarkdown } from "./markdown";
 
 describe("slugify", () => {
   test("keeps underscores so on_message-style ids match GitHub", () => {
@@ -64,9 +69,9 @@ describe("pageHeadings", () => {
       '<h3 id="added-lua-apis">Added Lua APIs</h3>' +
       '<h4 id="collectionproxyload">collectionproxy.load</h4>';
     expect(pageHeadings(html)).toEqual([
-      { text: "Defold 1.13.1", id: "defold-1131", level: 2 },
-      { text: "Added Lua APIs", id: "added-lua-apis", level: 3 },
-      { text: "collectionproxy.load", id: "collectionproxyload", level: 4 },
+      { text: "Defold 1.13.1", id: "defold-1131", level: 2, code: false },
+      { text: "Added Lua APIs", id: "added-lua-apis", level: 3, code: false },
+      { text: "collectionproxy.load", id: "collectionproxyload", level: 4, code: false },
     ]);
   });
 });
@@ -82,12 +87,12 @@ describe("allPageHeadings", () => {
 
   test("returns h1 through h6 in document order, with tags stripped, entities decoded, and an explicit id preferred over the slug fallback outside h2..h4", () => {
     expect(allPageHeadings(fullDepthHtml)).toEqual([
-      { text: "Upgrading Defold versions", id: "upgrading-defold-versions", level: 1 },
-      { text: "Defold 1.13.1", id: "defold-1131", level: 2 },
-      { text: "Added Lua APIs", id: "added-lua-apis", level: 3 },
-      { text: "collectionproxy.load", id: "collectionproxyload", level: 4 },
-      { text: 'Opaque<"node">', id: "opaquenode", level: 5 },
-      { text: "Deep note", id: "minted-deep", level: 6 },
+      { text: "Upgrading Defold versions", id: "upgrading-defold-versions", level: 1, code: false },
+      { text: "Defold 1.13.1", id: "defold-1131", level: 2, code: false },
+      { text: "Added Lua APIs", id: "added-lua-apis", level: 3, code: false },
+      { text: "collectionproxy.load", id: "collectionproxyload", level: 4, code: false },
+      { text: 'Opaque<"node">', id: "opaquenode", level: 5, code: false },
+      { text: "Deep note", id: "minted-deep", level: 6, code: false },
     ]);
   });
 
@@ -99,6 +104,7 @@ describe("allPageHeadings", () => {
         text: "f(...): number",
         id: "fx",
         level: 3,
+        code: true,
         badge: { start: 2, end: 5, label: "2 overloads" },
       },
     ]);
@@ -112,6 +118,7 @@ describe("allPageHeadings", () => {
         text: "g<T>(...)",
         id: "gx",
         level: 3,
+        code: true,
         badge: { start: 5, end: 8, label: "3 <overloads>" },
       },
     ]);
@@ -125,9 +132,63 @@ describe("allPageHeadings", () => {
 
   test("pageHeadings over the same html keeps the h2..h4 table-of-contents bound", () => {
     expect(pageHeadings(fullDepthHtml)).toEqual([
-      { text: "Defold 1.13.1", id: "defold-1131", level: 2 },
-      { text: "Added Lua APIs", id: "added-lua-apis", level: 3 },
-      { text: "collectionproxy.load", id: "collectionproxyload", level: 4 },
+      { text: "Defold 1.13.1", id: "defold-1131", level: 2, code: false },
+      { text: "Added Lua APIs", id: "added-lua-apis", level: 3, code: false },
+      { text: "collectionproxy.load", id: "collectionproxyload", level: 4, code: false },
     ]);
+  });
+});
+
+describe("pageHeadings over rendered /api pages (Combined surface, committed artifacts)", async () => {
+  const pages = loadCombinedSurface(join(import.meta.dir, "../../../types")).namespaces.map(
+    combinedNamespaceToApiPage,
+  );
+  const markdownOf = (page: (typeof pages)[number]) =>
+    apiPageMarkdown(page, (t) => t, { combinedMarkers: true });
+  const headingsOf = async (markdown: string): Promise<Heading[]> =>
+    pageHeadings(await renderMarkdown(markdown, { highlightSignatureHeadings: true }));
+  const goPage = pages.find((p) => p.namespace === "go");
+  if (!goPage) throw new Error("namespace go missing from the Combined surface");
+  const deprecatedPage = pages.find((p) => markdownOf(p).includes("api-badge-dot--deprecated"));
+  if (!deprecatedPage) throw new Error("no Combined namespace carries a deprecated chip");
+  const go = await headingsOf(markdownOf(goPage));
+  const deprecated = await headingsOf(markdownOf(deprecatedPage));
+  const marked = [...go, ...deprecated].filter((h) => h.markers !== undefined);
+
+  test("the pages exercise new, changed and deprecated chips", () => {
+    const kinds = new Set(marked.flatMap((h) => (h.markers ?? []).map((m) => m.kind)));
+    expect([...kinds].filter((k) => ["new", "changed", "deprecated"].includes(k)).sort()).toEqual([
+      "changed",
+      "deprecated",
+      "new",
+    ]);
+  });
+
+  test("a chipped heading's text is the bare signature the slugger minted its id from", () => {
+    expect(marked.length).toBeGreaterThan(0);
+    for (const h of marked) {
+      const base = slugify(h.text);
+      expect({ id: h.id, matches: new RegExp(`^${base}(-\\d+)?$`).test(h.id) }).toEqual({
+        id: h.id,
+        matches: true,
+      });
+    }
+  });
+
+  test("go.get carries its Changed chip as a marker, in place of the glyph in its text", () => {
+    const get = go.find((h) => h.id === "goget");
+    expect(get?.text).toBe("go.get(...)");
+    expect(get?.markers).toEqual([
+      { kind: "changed", label: "Changed", glyph: "C", hidden: false },
+    ]);
+  });
+
+  test("every function heading on go is code, and the Functions heading is not", () => {
+    const functionsAt = go.findIndex((h) => h.level === 2 && h.text === "Functions");
+    const nextSection = go.findIndex((h, i) => i > functionsAt && h.level === 2);
+    const functions = go.slice(functionsAt + 1, nextSection < 0 ? undefined : nextSection);
+    expect(functions.length).toBeGreaterThan(0);
+    expect(go[functionsAt]?.code).toBe(false);
+    expect(functions.filter((h) => !h.code).map((h) => h.id)).toEqual([]);
   });
 });
