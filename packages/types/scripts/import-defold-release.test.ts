@@ -355,6 +355,23 @@ describe("buildReleaseImportPlan", () => {
     expect(seeded.info.namespace).toBe("globals");
     expect(seeded.elements).toEqual(canonical.elements);
   });
+
+  test("apply vendors the release's annotation files verbatim under annotations/", () => {
+    const annotation = "---@meta\n---@param value number\nfunction alpha.old(value) end\n";
+    const jsonZip = fakeZip({ "doc/alpha.json": apiDoc("alpha", [fn("alpha.old")]) });
+    const zip: ZipAccessor = {
+      entries: () => [...jsonZip.entries(), "doc/alpha.lua"],
+      has: (entry) => entry === "doc/alpha.lua" || jsonZip.has(entry),
+      read: (entry) => (entry === "doc/alpha.lua" ? annotation : jsonZip.read(entry)),
+    };
+    const plan = buildReleaseImportPlan({ version: "1.13.0", zip, baseline });
+    const root = mkdtempSync(join(tmpdir(), "release-import-annotations-"));
+
+    const written = applyReleaseImport(plan, root);
+    const relative = "fixtures/defold-1.13.0/annotations/alpha.lua";
+    expect(written).toContain(relative);
+    expect(readFileSync(join(root, relative), "utf8")).toBe(annotation);
+  });
 });
 
 describe("parseReleaseImportArgs", () => {

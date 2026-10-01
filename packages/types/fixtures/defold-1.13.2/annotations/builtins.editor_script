@@ -1,0 +1,16 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---Pretty-print Lua values
+---@param ... any Lua values to pretty-print
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#pprint:...)
+function pprint(...) end

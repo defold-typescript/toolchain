@@ -64,6 +64,7 @@
     "fixtures/messages_doc.json",
     "fixtures/defold-*",
     "!fixtures/defold-*/engine-bindings",
+    "!fixtures/defold-*/annotations",
     "examples/translations.json",
     "!src/**/*.test.ts",
     "!scripts/**/*.test.ts",
@@ -82,7 +83,8 @@
     "!scripts/engine-binding-verdicts.ts",
     "!scripts/engine-binding-verdicts.json",
     "!scripts/lua-kind.ts",
-    "!scripts/index-slot-scan.ts"
+    "!scripts/index-slot-scan.ts",
+    "!scripts/lua-annotations.ts"
   ],
   "publishConfig": {
     "access": "public"
