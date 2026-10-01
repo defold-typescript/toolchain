@@ -72,6 +72,10 @@ const COMMANDS: readonly HelpCommand[] = [
       },
       { flag: "--force", desc: "rebuild even when outputs look current" },
       {
+        flag: "--editor-compile",
+        desc: "after writing, compile the project in the attached Defold 1.13.2+ editor and fail on its errors",
+      },
+      {
         flag: "--fail-on-drift",
         desc: "exit non-zero when the detected Defold editor differs from the version pin",
       },

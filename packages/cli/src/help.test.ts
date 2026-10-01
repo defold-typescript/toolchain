@@ -239,6 +239,21 @@ describe("--no-update-check help listing", () => {
   });
 });
 
+describe("--editor-compile help listing", () => {
+  test("build help and build JSON list --editor-compile against the 1.13.2 editor", () => {
+    expect(renderHelp("build")).toContain("--editor-compile");
+    const parsed = JSON.parse(renderHelpJson("build"));
+    const flag = parsed.flags.find((f: { flag: string }) => f.flag === "--editor-compile");
+
+    expect(flag).toBeDefined();
+    expect(flag.desc).toContain("1.13.2");
+  });
+
+  test("watch does not list --editor-compile", () => {
+    expect(renderHelp("watch")).not.toContain("--editor-compile");
+  });
+});
+
 describe("--no-color help listing", () => {
   test("global help lists --no-color and its NO_COLOR equivalent", () => {
     const text = renderHelp(null);
