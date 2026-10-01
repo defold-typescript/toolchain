@@ -9,11 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.41.1
+## v0.42.0
+
+### Improved
+
+- **Overloaded functions whose forms span different Defold releases open with a summary in the API reference**, such as "1 overload added in Defold 1.13.2" and "1 overload removed in Defold 1.13.2" on `json.decode`, above the forms they describe.
 
 ### Fixed
 
-- The API reference marks the `go.property(name: string, value: string)` form "Since Defold 1.13.2" instead of showing it as available on every version, while the other `go.property` forms keep their full span.
+- The API reference marks the `go.property(name: string, value: string)` form "Since Defold 1.13.2" instead of showing it as available on every version, while the other `go.property` forms keep their full span and the function's heading reads Changed.
+- **The API reference scores each function once**: a function whose signature changed between Defold releases, such as `json.decode`, `go.get` or `gui.set`, reads Changed on its heading and counts once as changed in the namespace title and sidebar pills, rather than also as new.
 
 ## v0.41.0
 

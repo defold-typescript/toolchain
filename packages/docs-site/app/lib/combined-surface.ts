@@ -18,7 +18,7 @@ import {
   type ApiPage,
   type AvailabilityLookup,
   type CategoryWindow,
-  windowedBadgeCategory,
+  functionBadgeCategory,
 } from "./api-surface";
 import type { BadgeCountTable } from "./api-surface-pref";
 import type { VersionWindow } from "./version-window";
@@ -385,10 +385,12 @@ export interface NamespaceBadgeCounts {
 
 /**
  * Tally the color-badge categories over a Combined namespace's entries: each
- * entry adds to every category it carries (a changed-and-deprecated symbol bumps
- * both). Derives from each entry's `availableIn` + `deprecatedSince` through the
- * shared {@link windowedBadgeCategory}, so the title pills, the sidebar pills and
- * the per-symbol dots can never disagree.
+ * function or member adds to every category it carries (a changed-and-deprecated
+ * symbol bumps both). The entries sharing a kind and name are one symbol whatever
+ * their overload signatures, scored once through the shared
+ * {@link functionBadgeCategory}, so a signature transition counts as one Changed
+ * rather than one New plus one Changed, and the title pills, the sidebar pills
+ * and the heading dots can never disagree.
  *
  * `window` scopes the categories to a selected range; omitting it measures the
  * full tracked axis, which is what the entry's precomputed absolute `label`
@@ -408,19 +410,21 @@ export function namespaceBadgeCounts(
     from: versions[versions.length - 1] ?? "",
     to: versions[0] ?? "",
   };
-  let isNew = 0;
-  let changed = 0;
-  let deprecated = 0;
+  const functions = new Map<string, CombinedEntry[]>();
   for (const entry of ns.entries) {
     // A type renders as a section with no marker dot, so the tally counts only
     // the members a page marks.
     if (entry.identity.kind === "TYPEDEF") continue;
-    const category = windowedBadgeCategory(
-      entry.availableIn,
-      entry.deprecatedSince,
-      versions,
-      scope,
-    );
+    const key = `${entry.identity.kind}\u0000${entry.identity.name}`;
+    const group = functions.get(key);
+    if (group) group.push(entry);
+    else functions.set(key, [entry]);
+  }
+  let isNew = 0;
+  let changed = 0;
+  let deprecated = 0;
+  for (const members of functions.values()) {
+    const category = functionBadgeCategory(members, versions, scope);
     if (category.isNew) isNew += 1;
     if (category.isChanged) changed += 1;
     if (category.isDeprecated) deprecated += 1;

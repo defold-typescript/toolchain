@@ -248,21 +248,121 @@ export function windowedBadgeCategory(
   versions: readonly string[],
   window: CategoryWindow,
 ): BadgeCategory {
+  return functionBadgeCategory(
+    [deprecatedSince === undefined ? { availableIn } : { availableIn, deprecatedSince }],
+    versions,
+    window,
+  );
+}
+
+/** One ref-doc identity of a function: its presence and curated deprecation. */
+export interface BadgeMember {
+  readonly availableIn: readonly string[];
+  readonly deprecatedSince?: string;
+}
+
+interface CategorySlice {
+  readonly axis: readonly string[];
+  readonly slice: readonly string[];
+  readonly toIndex: number;
+}
+
+// The window's inclusive slice of the bare axis. Untracked or inverted bounds
+// widen to the whole axis, so a hand-edited URL never empties the slice.
+function categorySlice(versions: readonly string[], window: CategoryWindow): CategorySlice {
   const axis = versions.map(bareId);
   const newestIndex = axis.indexOf(bareId(window.to));
   const oldestIndex = axis.indexOf(bareId(window.from));
   const unresolvable = newestIndex === -1 || oldestIndex === -1 || newestIndex > oldestIndex;
-  const slice = unresolvable ? axis : axis.slice(newestIndex, oldestIndex + 1);
-  const present = availableIn.map(bareId).filter((version) => slice.includes(version));
+  return {
+    axis,
+    slice: unresolvable ? axis : axis.slice(newestIndex, oldestIndex + 1),
+    toIndex: unresolvable ? 0 : newestIndex,
+  };
+}
+
+function deprecatedAt(member: BadgeMember, { axis, toIndex }: CategorySlice): boolean {
+  if (member.deprecatedSince === undefined) return false;
+  const deprecatedIndex = axis.indexOf(bareId(member.deprecatedSince));
+  return deprecatedIndex === -1 || deprecatedIndex >= toIndex;
+}
+
+/**
+ * One category for a whole function, scored from every ref-doc identity of it
+ * the window contains, so a heading, its overview card and the namespace counts
+ * answer for the function rather than for its overload forms. The union of the
+ * present members' spans decides New (the function itself first appears inside
+ * the window); otherwise the function is Changed when that union is bounded or
+ * gapped, when any member's span differs from the union, or when only some
+ * members are deprecated. Deprecated needs every present member deprecated.
+ *
+ * A member the window does not contain is ignored, and with none present the
+ * function carries no category. With a single member this is exactly
+ * {@link windowedBadgeCategory}, including its widening of unresolvable bounds
+ * and its `to`-bounded deprecation.
+ */
+export function functionBadgeCategory(
+  members: readonly BadgeMember[],
+  versions: readonly string[],
+  window: CategoryWindow,
+): BadgeCategory {
+  const scope = categorySlice(versions, window);
+  const { slice } = scope;
+  const present = members
+    .map((member) => ({
+      member,
+      inSlice: new Set(member.availableIn.map(bareId).filter((version) => slice.includes(version))),
+    }))
+    .filter(({ inSlice }) => inSlice.size > 0);
   if (present.length === 0) return badgeCategoryFromLabel("all", false);
 
-  const deprecated = deprecatedSince === undefined ? false : bareId(deprecatedSince);
-  const deprecatedIndex = deprecated === false ? -1 : axis.indexOf(deprecated);
-  const toIndex = unresolvable ? 0 : newestIndex;
-  const isDeprecated =
-    deprecated !== false && (deprecatedIndex === -1 || deprecatedIndex >= toIndex);
+  const union = slice.filter((version) => present.some(({ inSlice }) => inSlice.has(version)));
+  const kind = availabilityLabel(union, slice).kind;
+  const deprecatedCount = present.filter(({ member }) => deprecatedAt(member, scope)).length;
+  const isNew = kind === "since";
+  const isChanged =
+    !isNew &&
+    (badgeCategoryFromLabel(kind, false).isChanged ||
+      present.some(({ inSlice }) => inSlice.size !== union.length) ||
+      (deprecatedCount > 0 && deprecatedCount < present.length));
+  return { isNew, isChanged, isDeprecated: deprecatedCount === present.length };
+}
 
-  return badgeCategoryFromLabel(availabilityLabel(present, slice).kind, isDeprecated);
+/**
+ * Every ref-doc identity a page's module declares for the function `name`, as
+ * the members {@link functionBadgeCategory} scores. An identity with no record is
+ * present across the whole axis, which is why the lookup holds none for it. A
+ * page with no availability lookup yields no members, so the caller decides
+ * what stands for the function there.
+ */
+export function functionBadgeMembers(
+  page: Pick<ApiPage, "module" | "availability">,
+  name: string,
+): BadgeMember[] {
+  const availability = page.availability;
+  if (!availability) return [];
+  const seen = new Set<string>();
+  const members: BadgeMember[] = [];
+  for (const fn of page.module.functions) {
+    if (fn.name !== name) continue;
+    const identity = symbolIdentityKey({
+      namespace: page.module.namespace,
+      kind: "FUNCTION",
+      name: fn.name,
+      signature: normalizedFunctionSignature(fn),
+    });
+    if (seen.has(identity)) continue;
+    seen.add(identity);
+    const record = availability.records.get(identity);
+    members.push(
+      record === undefined
+        ? { availableIn: availability.versions }
+        : record.deprecatedSince === undefined
+          ? { availableIn: record.availableIn }
+          : { availableIn: record.availableIn, deprecatedSince: record.deprecatedSince },
+    );
+  }
+  return members;
 }
 
 // Flat prose form for the search index: the badge labels plus the replacement's
