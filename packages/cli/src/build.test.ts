@@ -25,7 +25,7 @@ import {
   timersModuleRel,
 } from "./build-output";
 import { dispatch } from "./dispatch";
-import type { CompileAnswer, EditorIssue } from "./editor-attach";
+import type { CompileAnswer, EditorIssue, RunAnswer } from "./editor-attach";
 import { runInit } from "./init";
 import {
   runSceneTypes,
@@ -788,6 +788,10 @@ interface BuildEditor {
   compileCount(): number;
   /** Whether the built chunk was already on disk when each compile was posted. */
   chunkWrittenAtCompile(): readonly boolean[];
+  /** The `focus` each run was posted with, in order. */
+  runFocuses(): readonly boolean[];
+  /** Whether the built chunk was already on disk when each run was posted. */
+  chunkWrittenAtRun(): readonly boolean[];
   /** The signal production handed the most recent resolve, if any. */
   lastResolveSignal(): AbortSignal | undefined;
 }
@@ -797,12 +801,22 @@ const COMPILE_SUCCEEDED: CompileAnswer = {
   result: { success: true, issues: [] },
 };
 
+const RUNNING_AT = "http://127.0.0.1:57069";
+
+const RUN_SUCCEEDED: RunAnswer = {
+  outcome: "ran",
+  result: { success: true, issues: [], targetUrl: RUNNING_AT },
+};
+
 function makeBuildEditor(
   baseUrl: string | null,
   compileAnswer: (cwd: string) => CompileAnswer = () => COMPILE_SUCCEEDED,
+  runAnswer: (cwd: string) => RunAnswer = () => RUN_SUCCEEDED,
 ): BuildEditor {
   const counts = { resolves: 0, consoles: 0, posts: 0, compiles: 0 };
   const chunkWritten: boolean[] = [];
+  const runFocuses: boolean[] = [];
+  const chunkWrittenAtRun: boolean[] = [];
   let lastSignal: AbortSignal | undefined;
   return {
     client: {
@@ -824,12 +838,19 @@ function makeBuildEditor(
         chunkWritten.push(existsSync(path.join(projectDir, "src/main.ts.script")));
         return Promise.resolve(compileAnswer(projectDir));
       },
+      run(projectDir, options) {
+        runFocuses.push(options.focus);
+        chunkWrittenAtRun.push(existsSync(path.join(projectDir, "src/main.ts.script")));
+        return Promise.resolve(runAnswer(projectDir));
+      },
     },
     resolveCount: () => counts.resolves,
     consoleOpenCount: () => counts.consoles,
     postCount: () => counts.posts,
     compileCount: () => counts.compiles,
     chunkWrittenAtCompile: () => chunkWritten,
+    runFocuses: () => runFocuses,
+    chunkWrittenAtRun: () => chunkWrittenAtRun,
     lastResolveSignal: () => lastSignal,
   };
 }
@@ -859,6 +880,8 @@ function makeHungBuildEditor(): BuildEditor {
     postCount: () => counts.posts,
     compileCount: () => 0,
     chunkWrittenAtCompile: () => [],
+    runFocuses: () => [],
+    chunkWrittenAtRun: () => [],
     lastResolveSignal: () => lastSignal,
   };
 }
@@ -956,24 +979,24 @@ describe("build editor attach", () => {
   });
 });
 
+/** An issue on the built chunk's `vmath.vector3` line, which is authored line 2. */
+function chunkIssue(projectDir: string): EditorIssue {
+  const lua = readFileSync(path.join(projectDir, "src/main.ts.script"), "utf8").split("\n");
+  const line = lua.findIndex((text) => text.includes("vmath.vector3"));
+  expect(line).toBeGreaterThan(-1);
+  return {
+    message: "attempt to call a nil value",
+    severity: "error",
+    resource: "/src/main.ts.script",
+    range: { start: { line, character: 4 }, end: { line, character: 17 } },
+  };
+}
+
 describe("build --editor-compile", () => {
   beforeEach(() => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/main.ts", MAIN_SCRIPT);
   });
-
-  /** An issue on the built chunk's `vmath.vector3` line, which is authored line 2. */
-  function chunkIssue(projectDir: string): EditorIssue {
-    const lua = readFileSync(path.join(projectDir, "src/main.ts.script"), "utf8").split("\n");
-    const line = lua.findIndex((text) => text.includes("vmath.vector3"));
-    expect(line).toBeGreaterThan(-1);
-    return {
-      message: "attempt to call a nil value",
-      severity: "error",
-      resource: "/src/main.ts.script",
-      range: { start: { line, character: 4 }, end: { line, character: 17 } },
-    };
-  }
 
   const failedCompile = (projectDir: string): CompileAnswer => ({
     outcome: "compiled",
@@ -1105,6 +1128,185 @@ describe("build --editor-compile", () => {
     expect(code).toBe(0);
     expect(editor.compileCount()).toBe(0);
     expect("editorCompile" in JSON.parse(out())).toBe(false);
+  });
+});
+
+describe("build --editor-run", () => {
+  beforeEach(() => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", MAIN_SCRIPT);
+  });
+
+  const failedRun = (projectDir: string): RunAnswer => ({
+    outcome: "ran",
+    result: { success: false, issues: [chunkIssue(projectDir)] },
+  });
+
+  test("a running game exits 0, is posted once after the output is on disk, without focus", async () => {
+    const editor = makeBuildEditor("http://localhost:4242");
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", "--editor-run", cwd], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(0);
+    expect(editor.runFocuses()).toEqual([false]);
+    expect(editor.chunkWrittenAtRun()).toEqual([true]);
+    expect(err()).toContain(`defold-typescript build: editor: running at ${RUNNING_AT}\n`);
+  });
+
+  test("--editor-focus posts the run with focus", async () => {
+    const editor = makeBuildEditor("http://localhost:4242");
+    const { io } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--editor-run", "--editor-focus"], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(0);
+    expect(editor.runFocuses()).toEqual([true]);
+  });
+
+  test("a failed run exits 1 and prints the issue at its authored location", async () => {
+    const editor = makeBuildEditor("http://localhost:4242", undefined, failedRun);
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--editor-run"], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(1);
+    expect(err()).toMatch(
+      /defold-typescript build: editor: src\/main\.ts:2:\d+ \(\/src\/main\.ts\.script:\d+\): error: attempt to call a nil value/,
+    );
+  });
+
+  test("a failed run under --json reports ok false, the issue count and each mapped issue", async () => {
+    const editor = makeBuildEditor("http://localhost:4242", undefined, failedRun);
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--editor-run", "--json"], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(1);
+    const payload = JSON.parse(out());
+    expect(payload.ok).toBe(false);
+    expect(payload.error).toContain("1 issue");
+    expect(payload.editorRun.outcome).toBe("ran");
+    expect(payload.editorRun.success).toBe(false);
+    expect(payload.editorRun).not.toHaveProperty("targetUrl");
+    expect(payload.editorRun.issues).toHaveLength(1);
+    expect(payload.editorRun.issues[0]).toMatchObject({
+      message: "attempt to call a nil value",
+      resource: "/src/main.ts.script",
+      source: { file: "src/main.ts", line: 2 },
+    });
+  });
+
+  test("a running game under --json carries its target URL and stays ok", async () => {
+    const editor = makeBuildEditor("http://localhost:4242");
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--editor-run", "--json"], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(0);
+    const payload = JSON.parse(out());
+    expect(payload.ok).toBe(true);
+    expect(payload.editorRun).toEqual({
+      outcome: "ran",
+      success: true,
+      issues: [],
+      targetUrl: RUNNING_AT,
+    });
+  });
+
+  test("a run with no target URL exits 0, prints the warning and says no URL came back", async () => {
+    const warning: EditorIssue = {
+      message: "The engine did not report its URL in time",
+      severity: "warning",
+    };
+    const editor = makeBuildEditor("http://localhost:4242", undefined, () => ({
+      outcome: "ran",
+      result: { success: true, issues: [warning] },
+    }));
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--editor-run"], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(0);
+    expect(err()).toContain(
+      "defold-typescript build: editor: warning: The engine did not report its URL in time\n",
+    );
+    expect(err()).toContain("defold-typescript build: editor: no target URL");
+
+    const json = captureStreams();
+    await dispatch(["build", cwd, "--editor-run", "--json"], json.io, {
+      editorClient: editor.client,
+    });
+    const payload = JSON.parse(json.out());
+    expect(payload.ok).toBe(true);
+    expect(payload.editorRun).not.toHaveProperty("targetUrl");
+  });
+
+  test.each([
+    ["unsupported", "--editor-run needs Defold 1.13.2"],
+    ["unavailable", "no Defold editor is attached"],
+  ] as const)("%s exits 0 with one plain stderr line and only the outcome in --json", async (outcome, wording) => {
+    const editor = makeBuildEditor(null, undefined, () => ({ outcome, result: null }));
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--editor-run"], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(0);
+    const lines = err().trimEnd().split("\n");
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain(wording);
+
+    const json = captureStreams();
+    const jsonCode = await dispatch(["build", cwd, "--editor-run", "--json"], json.io, {
+      editorClient: editor.client,
+    });
+    expect(jsonCode).toBe(0);
+    const payload = JSON.parse(json.out());
+    expect(payload.ok).toBe(true);
+    expect(payload.editorRun).toEqual({ outcome });
+  });
+
+  test("--editor-run with --editor-compile posts only the run", async () => {
+    const editor = makeBuildEditor("http://localhost:4242");
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--editor-compile", "--editor-run", "--json"], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(0);
+    expect(editor.runFocuses()).toHaveLength(1);
+    expect(editor.compileCount()).toBe(0);
+    const payload = JSON.parse(out());
+    expect(payload.editorRun.outcome).toBe("ran");
+    expect("editorCompile" in payload).toBe(false);
+  });
+
+  test("without the flag no run is posted and --json has no editorRun key", async () => {
+    const editor = makeBuildEditor("http://localhost:4242");
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--editor-focus", "--json"], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(0);
+    expect(editor.runFocuses()).toEqual([]);
+    expect("editorRun" in JSON.parse(out())).toBe(false);
   });
 });
 
