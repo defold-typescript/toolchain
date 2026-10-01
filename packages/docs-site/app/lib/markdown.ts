@@ -15,7 +15,7 @@ import { TooltipTrigger } from "../components/ui/tooltip";
 import { linkApiTypeTokens } from "./api-type-links";
 import { withBase } from "./base";
 import { glyphSvg } from "./glyph";
-import { slugify } from "./headings";
+import { BADGE_DOT_RE, slugify } from "./headings";
 import { imageMaxWidthStyle } from "./image-style";
 import { phosphorDuotone } from "./phosphor";
 import { type Glyph, PLATFORM_MARKER, platformIcon } from "./platform-icons";
@@ -361,7 +361,7 @@ export async function renderMarkdown(
       // `<...>` inside a code span is neither, so signatures like `Opaque<"node">`
       // are untouched.
       const text = inline.content
-        .replace(/\s*<span class="api-badge-dot[^"]*"[^>]*>[^<]*<\/span>/g, "")
+        .replace(BADGE_DOT_RE, "")
         .replace(/\s*<span class="api-overload-count"[^>]*>[^<]*<\/span>/g, "")
         .replace(/\s*<span\b[^>]*><\/span>/g, "");
       const base = slugify(text);
