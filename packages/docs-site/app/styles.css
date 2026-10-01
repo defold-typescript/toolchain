@@ -1176,8 +1176,10 @@
 
   /* Availability category layer — one compact labeled chip per active category
    * on a symbol heading, carrying a visible `N`/`C`/`D` glyph so the category is
-   * legible without color, additive over the accessible `aria-label`/`title`. */
-  .prose .api-badge-dot,
+   * legible without color, additive over the accessible `aria-label`/`title`.
+   * The heading chip is unscoped so the outline entry and its tooltip, outside
+   * `.prose`, show the same colored chip the heading does. */
+  .api-badge-dot,
   .prose .api-availability-mark {
     display: inline-flex;
     align-items: center;
@@ -1193,21 +1195,21 @@
     vertical-align: middle;
   }
 
-  .prose .api-badge-dot {
+  .api-badge-dot {
     margin-left: 0.3em;
   }
 
-  .prose .api-badge-dot--new,
+  .api-badge-dot--new,
   .prose .api-availability-mark--new {
     background: var(--color-badge-new);
   }
 
-  .prose .api-badge-dot--changed,
+  .api-badge-dot--changed,
   .prose .api-availability-mark--changed {
     background: var(--color-badge-changed);
   }
 
-  .prose .api-badge-dot--deprecated,
+  .api-badge-dot--deprecated,
   .prose .api-availability-mark--deprecated {
     background: var(--color-badge-deprecated);
   }
@@ -1228,11 +1230,11 @@
     top: -2px;
   }
 
-  .prose .api-badge-dot--global {
+  .api-badge-dot--global {
     background: var(--color-badge-global);
   }
 
-  .prose .api-badge-dot--upstream {
+  .api-badge-dot--upstream {
     background: var(--color-badge-upstream);
   }
 

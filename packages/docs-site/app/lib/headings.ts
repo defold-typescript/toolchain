@@ -24,6 +24,21 @@ export interface AnyHeading {
    * end)` is the text it replaces, and `label` is what the element itself reads.
    */
   badge?: HeadingBadge;
+  /** The heading's `api-badge-dot` chips, in source order; absent when it has none. */
+  markers?: HeadingMarker[];
+  /** True when the whole heading text sits in one `<code>` element (a signature). */
+  code: boolean;
+}
+
+export interface HeadingMarker {
+  /** The `api-badge-dot--<kind>` suffix: `new`, `changed`, `deprecated`, `global`, `upstream`. */
+  kind: string;
+  /** The chip's `aria-label`, decoded. */
+  label: string;
+  /** The visible letter the chip carries. */
+  glyph: string;
+  /** True for a chip the server emitted inactive (`display:none`) for the default window. */
+  hidden: boolean;
 }
 
 export interface HeadingBadge {
@@ -44,6 +59,17 @@ const TAG_RE = /<[^>]+>/g;
 const TOC_TEXT_RE = /<(\w+)\b[^>]*\sdata-toc-text="([^"]*)"[^>]*>([\s\S]*?)<\/\1>/g;
 const FIRST_TOC_TEXT_RE = new RegExp(TOC_TEXT_RE.source);
 const ID_RE = /\sid="([^"]+)"/i;
+/**
+ * One heading chip (see `badgeDots` in `api-page-render.ts`) with the whitespace
+ * before it. The outline and the heading slugger in `markdown.ts` both strip it
+ * by this pattern, so the outline text and the minted id see the same signature.
+ */
+export const BADGE_DOT_RE = /\s*<span class="api-badge-dot[^"]*"[^>]*>[^<]*<\/span>/g;
+const BADGE_KIND_RE = /\bapi-badge-dot--([\w-]+)/;
+const ARIA_LABEL_RE = /\saria-label="([^"]*)"/;
+const HIDDEN_STYLE_RE = /\sstyle="[^"]*display:\s*none/;
+const CHIP_GLYPH_RE = />([^<]*)<\/span>$/;
+const CODE_RE = /<code\b[^>]*>([\s\S]*?)<\/code>/g;
 const NAMED_ENTITY: Record<string, string> = {
   "&lt;": "<",
   "&gt;": ">",
@@ -79,6 +105,22 @@ function outlineText(html: string): string {
   return decodeEntities(html.replace(TOC_TEXT_RE, "$2").replace(TAG_RE, ""));
 }
 
+function markersOf(inner: string): HeadingMarker[] {
+  return [...inner.matchAll(BADGE_DOT_RE)].map(([chip]) => ({
+    kind: chip.match(BADGE_KIND_RE)?.[1] ?? "",
+    label: decodeEntities(chip.match(ARIA_LABEL_RE)?.[1] ?? ""),
+    glyph: decodeEntities(chip.match(CHIP_GLYPH_RE)?.[1] ?? "").trim(),
+    hidden: HIDDEN_STYLE_RE.test(chip),
+  }));
+}
+
+function isCode(inner: string, text: string): boolean {
+  for (const match of inner.matchAll(CODE_RE)) {
+    if (outlineText(match[1] ?? "").trim() === text) return true;
+  }
+  return false;
+}
+
 // Offsets are measured on the decoded, tag-stripped text so they index into the
 // heading's `text`; the split sits on a tag boundary, so decoding the prefix
 // alone yields the same characters as decoding the whole heading.
@@ -99,7 +141,8 @@ export function allPageHeadings(html: string): AnyHeading[] {
   for (const match of html.matchAll(HEADING_RE)) {
     const level = Number(match[1]) as HeadingLevel;
     const rawAttrs = match[2] ?? "";
-    const inner = match[3] ?? "";
+    const chipped = match[3] ?? "";
+    const inner = chipped.replace(BADGE_DOT_RE, "");
     const idMatch = rawAttrs.match(ID_RE);
     const untrimmed = outlineText(inner);
     const text = untrimmed.trim();
@@ -108,9 +151,12 @@ export function allPageHeadings(html: string): AnyHeading[] {
       text,
       id: idMatch?.[1] ?? slugify(text),
       level,
+      code: isCode(inner, text),
     };
     const badge = badgeOf(inner, untrimmed);
     if (badge) heading.badge = badge;
+    const markers = markersOf(chipped);
+    if (markers.length > 0) heading.markers = markers;
     out.push(heading);
   }
   return out;
