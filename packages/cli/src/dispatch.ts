@@ -184,6 +184,8 @@ const EDITOR_RUN_NOTICES: Readonly<Record<RunOutcome, string>> = {
   unavailable: "editor run skipped: no Defold editor is attached",
 };
 
+const BUILD_ONLY_EDITOR_FLAGS = ["--editor-compile", "--editor-run", "--editor-focus"] as const;
+
 function parseScriptFlag(argv: string[]): { script: string | undefined; rest: string[] } {
   let script: string | undefined;
   const rest: string[] = [];
@@ -422,6 +424,21 @@ function dispatchCommand(
   if (removedTargetFlag !== undefined) {
     const message =
       "defold-typescript: --defold-version/--channel were removed; use --defold-target <version|stable|beta|alpha>";
+    if (json) {
+      io.stdout.write(renderResult({ command: "build", error: message }));
+    } else {
+      writeError(message);
+    }
+    return 1;
+  }
+
+  // Only `build` drives the attached editor; any other command would drop the
+  // flag silently. Scanned on `head` so an engine argument after `run ... --`
+  // still reaches the engine.
+  const misplacedEditorFlag =
+    command === "build" ? undefined : BUILD_ONLY_EDITOR_FLAGS.find((flag) => head.includes(flag));
+  if (misplacedEditorFlag !== undefined) {
+    const message = `defold-typescript: ${misplacedEditorFlag} is a build flag; use: defold-typescript build ${misplacedEditorFlag}`;
     if (json) {
       io.stdout.write(renderResult({ command: "build", error: message }));
     } else {
