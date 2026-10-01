@@ -79,8 +79,9 @@ carries no banner, so the first build after the upgrade stops and names it.
 
 If a Defold editor is open on this project, `build` names it on stderr
 (`attached to Defold editor at http://localhost:<port>`) and moves on. It is a
-one-shot command, so nothing is streamed and nothing is posted to the editor; for
-the loop that surfaces the running game's runtime errors as they happen, see
+one-shot command, so nothing is streamed and nothing is posted to the editor
+unless you pass [`--editor-compile`](#compile-in-the-editor); for the loop that
+surfaces the running game's runtime errors as they happen, see
 [`watch`](./watch.md#runtime-errors-in-the-terminal). With no editor open — the
 ordinary case in CI — `build` prints nothing extra and behaves exactly as before.
 The probe is time-bounded: an editor that does not answer promptly is treated as
@@ -183,11 +184,44 @@ version locked alongside your `@defold-typescript/types`. Reserve `@latest` for
 
 ## Flags
 
+- `--editor-compile` — after the Lua is written, ask the attached Defold 1.13.2+
+  editor to compile the project and fail the build on its errors. See
+  [Compile in the editor](#compile-in-the-editor).
 - `--json` — emit the build result as a single JSON object (including the
   `warnings` array and, when either address check found any, a structured
   `unreachableAddresses` and `crossWorldAddresses` array) for agents and
   scripts. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output).
+
+## Compile in the editor
+
+A clean `build` proves the TypeScript side only. A bad `.collection`, a missing
+resource, or a Lua error in the generated code still shows up only when the game
+runs. `build --editor-compile` closes that gap: once every output file is on disk
+it asks the open Defold editor to compile the project, without running it, and
+waits for the answer.
+
+```sh
+bunx @defold-typescript/cli build --editor-compile
+```
+
+Each issue the editor reports is printed on stderr. An issue in a generated
+script points at the TypeScript line it came from, with the editor's own
+location kept beside it:
+
+```text
+defold-typescript build: editor: src/player.ts:12:5 (/src/player.ts.script:40): error: attempt to call a nil value
+```
+
+The build exits `1` when the editor reports a failed compile, and `0` when it
+succeeds, warnings included. Three other answers are reported in one plain line
+and never fail the build: no editor is open, the editor is older than Defold
+1.13.2 (it has no compile command), or the editor refused the request. Under
+`--json` the result carries an `editorCompile` object; see
+[Agent runbooks](./agent-runbooks.md#compile-in-the-editor-after-a-build).
+
+The flag needs the editor open on this project. The compile has no time limit,
+since the editor answers only once it has finished.
 
 ## Headless builds (no editor)
 

@@ -13,6 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
+- **`build --editor-compile` compiles the project in the open Defold 1.13.2+ editor** after writing the Lua, prints each issue at its TypeScript line, and exits `1` on a failed compile; `--json` carries the result as `editorCompile`, and an older editor or no editor is reported in one line without failing the build. See [Compile in the editor](./build.md#compile-in-the-editor).
 - **Overloaded functions whose forms span different Defold releases open with a summary in the API reference**, such as "1 overload added in Defold 1.13.2" on `go.property`, and a form dropped in a release shows below the forms as a "Removed in Defold …" line led by a `C` chip.
 
 ### Fixed

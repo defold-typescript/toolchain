@@ -11,6 +11,7 @@ import {
   SPEC_BODY,
 } from "../test/fixtures/editor-openapi";
 import {
+  compileInEditor,
   consoleLines,
   consoleWatermark,
   type EditorResponse,
@@ -303,6 +304,90 @@ describe("postCommand", () => {
     expect(await outcomeFor(403)).toBe("skipped");
     expect(await outcomeFor(404)).toBe("unavailable");
     expect(await outcomeFor(500)).toBe("unavailable");
+  });
+});
+
+describe("compileInEditor", () => {
+  test("posts /command/compile on the port the editor published", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const { transport, calls } = recordingTransport(() =>
+      response(200, JSON.stringify({ success: true, issues: [] })),
+    );
+
+    await compileInEditor(cwd, transport);
+
+    expect(calls).toEqual([{ url: "http://localhost:58433/command/compile", method: "POST" }]);
+  });
+
+  test("a 200 is a finished compile carrying its result", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const { transport } = recordingTransport(() =>
+      response(200, JSON.stringify({ success: true, issues: [] })),
+    );
+
+    expect(await compileInEditor(cwd, transport)).toEqual({
+      outcome: "compiled",
+      result: { success: true, issues: [] },
+    });
+  });
+
+  test("a 422 is a finished compile carrying the editor's issue unchanged", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const issue = {
+      message: "Missing resource '/main/missing.atlas'",
+      severity: "error",
+      resource: "/main/main.collection",
+      range: { start: { line: 3, character: 0 }, end: { line: 3, character: 12 } },
+    };
+    const { transport } = recordingTransport(() =>
+      response(422, JSON.stringify({ success: false, issues: [issue] })),
+    );
+
+    expect(await compileInEditor(cwd, transport)).toEqual({
+      outcome: "compiled",
+      result: { success: false, issues: [issue] },
+    });
+  });
+
+  test("a 200 whose body is not a result is a finished compile with no result", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const { transport } = recordingTransport(() => response(200, "<html>"));
+
+    expect(await compileInEditor(cwd, transport)).toEqual({ outcome: "compiled", result: null });
+  });
+
+  test("404 from an editor before 1.13.2 is unsupported, never no editor", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const { transport } = recordingTransport(() => response(404));
+
+    expect(await compileInEditor(cwd, transport)).toEqual({
+      outcome: "unsupported",
+      result: null,
+    });
+  });
+
+  test("403 is skipped; 500, a refused connection and a missing port file are unavailable", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const outcomeFor = async (status: number) =>
+      (await compileInEditor(cwd, recordingTransport(() => response(status)).transport)).outcome;
+
+    expect(await outcomeFor(403)).toBe("skipped");
+    expect(await outcomeFor(500)).toBe("unavailable");
+    expect((await compileInEditor(cwd, rejectingTransport)).outcome).toBe("unavailable");
+
+    const noEditor = tempProject();
+    const { transport, calls } = recordingTransport(() => response(200));
+    expect(await compileInEditor(noEditor, transport)).toEqual({
+      outcome: "unavailable",
+      result: null,
+    });
+    expect(calls).toEqual([]);
   });
 });
 
