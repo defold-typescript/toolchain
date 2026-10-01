@@ -34,6 +34,7 @@ import {
   availabilityItems,
   availabilityLabels,
   bareId,
+  functionAnchorText,
   groupOverloadForms,
   overloadHeading,
   splitCallForm,
@@ -50,7 +51,7 @@ import {
   combinedNamespaceToApiPage,
   namespaceBadgeCounts,
 } from "./combined-surface";
-import { slugify } from "./headings";
+import { pageHeadings, slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 import type { LibraryListing } from "./nav";
 import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
@@ -1270,9 +1271,16 @@ describe("availability badges", () => {
   test("a note one form carries alone sits right under that form's signature", () => {
     const md = apiPageMarkdown(overloadPage(["1.12.4"], ["1.13.0"]), noLink);
     const block = blockOf(md, "### `model.material");
-    expect(block.indexOf('<div class="api-availability"')).toBeGreaterThan(
-      block.indexOf('<ol class="api-overloads">'),
-    );
+    // Only the block's overload summary may precede the forms; no form's own
+    // note is hoisted ahead of them.
+    const lead = block.slice(0, block.indexOf('<ol class="api-overloads">'));
+    const leadItems = lead
+      .split("\n")
+      .filter((line) => line.startsWith("- <span"))
+      .map((line) => line.replace(/^- <span[^>]*>[^<]*<\/span> /, ""));
+    expect(leadItems.length).toBeGreaterThan(0);
+    for (const item of leadItems)
+      expect(item).toMatch(/^\d+ overloads? (?:added|removed) in Defold /);
     const forms = block.split('<li class="api-overload">').slice(1);
     expect(forms).toHaveLength(2);
     for (const form of forms) {
@@ -1686,7 +1694,18 @@ describe("windowed page dots follow the selected range", () => {
       window,
     });
 
-  const NAMESPACES = ["graphics", "compute", "liveupdate", "model", "vmath"];
+  const NAMESPACES = [
+    "graphics",
+    "compute",
+    "liveupdate",
+    "model",
+    "vmath",
+    "go",
+    "gui",
+    "json",
+    "socket",
+    "b2d.body",
+  ];
 
   test("the committed axis tracks more than one version", () => {
     expect(axis.length).toBeGreaterThan(1);
@@ -3261,5 +3280,123 @@ describe("per-form availability on an authored override", () => {
     ).toEqual(labels);
     expect(stringItem).toContain(`data-span-oldest="${record.availableIn.at(-1)}"`);
     expect(numberItem).not.toContain('class="api-availability"');
+  });
+});
+
+describe("function-level markers on the canonical go page", () => {
+  const page = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
+    (p) => p.namespace === "go",
+  );
+  if (!page) throw new Error("no canonical go page");
+  const md = apiPageMarkdown(page, apiLinkify([page]), { combinedMarkers: true });
+  const heading = overloadHeading(groupFor(page, "go.property"));
+  const headingLine = md.split("\n").find((l) => l.startsWith(`### \`${heading}\``)) ?? "";
+  const categoryDots = (line: string): string[] =>
+    [
+      ...line.matchAll(
+        /<span class="api-badge-dot api-badge-dot--(?:new|changed|deprecated)"[^>]*>[^<]*<\/span>/g,
+      ),
+    ].map((m) => m[0]);
+  const visible = (line: string, kind: string): boolean =>
+    categoryDots(line).some((dot) => dot.includes(`--${kind}"`) && !dot.includes("display:none"));
+
+  test("the go.property heading reads Changed and never New", () => {
+    expect(headingLine).not.toBe("");
+    expect(visible(headingLine, "changed")).toBe(true);
+    expect(headingLine).not.toContain("api-badge-dot--new");
+    const cats = headingLine.match(/class="api-symbol-span"[^>]*data-span-cats="([^"]*)"/)?.[1];
+    expect(cats).toBeDefined();
+    expect(cats).not.toContain("N");
+  });
+
+  test("the string form keeps its own New dot", () => {
+    const stringLine = blockOf(md, heading)
+      .split("\n")
+      .find((l) => l.startsWith("`") && l.includes("(name: string, value: string)"));
+    expect(stringLine).toBeDefined();
+    expect(visible(stringLine ?? "", "new")).toBe(true);
+  });
+
+  test("the go.property overview card carries the heading's dots", () => {
+    const card = md.split("\n").find((l) => l.startsWith(`- [\`${heading}\``)) ?? "";
+    expect(card).not.toBe("");
+    expect(categoryDots(card)).toEqual(categoryDots(headingLine));
+    expect(categoryDots(card).length).toBeGreaterThan(0);
+  });
+});
+
+describe("overload added/removed summary", () => {
+  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const pageOf = (namespace: string): ApiPage => {
+    const page = pages.find((p) => p.namespace === namespace);
+    if (!page) throw new Error(`no canonical ${namespace} page`);
+    return page;
+  };
+  const render = (page: ApiPage): string =>
+    apiPageMarkdown(page, apiLinkify([page]), { combinedMarkers: true });
+  // The block body ahead of its form list, where a block-level summary sits.
+  const lead = (page: ApiPage, name: string): string => {
+    const block = blockOf(render(page), overloadHeading(groupFor(page, name)));
+    const forms = block.indexOf('<ol class="api-overloads">');
+    expect(forms).toBeGreaterThan(-1);
+    return block.slice(0, forms);
+  };
+  const lists = (text: string): string[][] =>
+    [...text.matchAll(/<div class="api-availability"[^>]*>([\s\S]*?)<\/div>/g)].map((m) =>
+      (m[1] ?? "")
+        .split("\n")
+        .filter((line) => line.startsWith("- "))
+        .map((line) => line.replace(/^- <span[^>]*>[^<]*<\/span> /, "")),
+    );
+  const SUMMARY = /\boverloads? (?:added|removed) in Defold\b/;
+
+  test("go.property opens with one line naming the overload its string form added", () => {
+    const page = pageOf("go");
+    const stringForm = groupFor(page, "go.property").find((s) =>
+      s.signature.includes("(name: string, value: string)"),
+    );
+    const added = stringForm?.availability?.availableIn.at(-1);
+    expect(added).toBeDefined();
+    expect(lists(lead(page, "go.property"))).toEqual([[`1 overload added in Defold ${added}`]]);
+  });
+
+  test("json.decode names the overload added and the one removed", () => {
+    const page = pageOf("json");
+    const axis = (page.availability?.versions ?? []).map(bareId);
+    const spans = groupFor(page, "json.decode").map((s) =>
+      (s.availability?.availableIn ?? []).map(bareId),
+    );
+    const union = new Set(spans.flat());
+    const oldest = axis.filter((v) => union.has(v)).at(-1);
+    const newest = axis.find((v) => union.has(v));
+    const added = spans.find((span) => span.at(-1) !== oldest)?.at(-1);
+    const lastOfRemoved = spans.find((span) => span[0] !== newest)?.[0];
+    const removed = lastOfRemoved === undefined ? undefined : axis[axis.indexOf(lastOfRemoved) - 1];
+    expect(added).toBe("1.13.2");
+    expect(removed).toBe("1.13.2");
+    expect(lists(lead(page, "json.decode"))).toEqual([
+      [`1 overload added in Defold ${added}`, `1 overload removed in Defold ${removed}`],
+    ]);
+  });
+
+  for (const [namespace, name] of [
+    ["go", "go.get"],
+    ["msg", "msg.url"],
+    ["vmath", "vmath.lerp"],
+  ] as const) {
+    test(`${name}, whose forms share one span, carries no summary`, () => {
+      expect(lead(pageOf(namespace), name)).not.toMatch(SUMMARY);
+    });
+  }
+
+  test("the go.property heading id and text stay the anchor the overview links", async () => {
+    const page = pageOf("go");
+    const group = groupFor(page, "go.property");
+    const html = await renderMarkdown(render(page), { highlightSignatureHeadings: true });
+    const id = slugify(functionAnchorText(group));
+    const heading = pageHeadings(html).find((h) => h.id === id);
+    expect(heading).toBeDefined();
+    expect(heading?.text.startsWith(overloadHeading(group))).toBe(true);
+    expect(heading?.text ?? "").not.toMatch(SUMMARY);
   });
 });

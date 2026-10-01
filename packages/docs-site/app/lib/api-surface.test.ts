@@ -27,6 +27,7 @@ import {
   badgeCategory,
   exampleMarkdownFor,
   functionAnchorText,
+  functionBadgeCategory,
   functionOverviewCards,
   groupFunctionSymbols,
   groupOverloadForms,
@@ -3947,6 +3948,84 @@ describe("windowedBadgeCategory", () => {
           { from: "1.13.0", to: "1.14.0" },
         ),
       ).toEqual(bare);
+    });
+  });
+});
+
+describe("functionBadgeCategory", () => {
+  const AXIS = ["1.13.2", "1.13.1", "1.13.0", "1.12.4"];
+  const full = { from: "1.12.4", to: "1.13.2" };
+  const cat = (isNew: boolean, isChanged: boolean, isDeprecated = false) => ({
+    isNew,
+    isChanged,
+    isDeprecated,
+  });
+
+  describe("a signature transition [through 1.13.1, since 1.13.2]", () => {
+    const members = [{ availableIn: ["1.13.1", "1.13.0", "1.12.4"] }, { availableIn: ["1.13.2"] }];
+
+    test("is Changed only at the full range", () => {
+      expect(functionBadgeCategory(members, AXIS, full)).toEqual(cat(false, true));
+    });
+
+    test("carries no category in a window holding only the new form", () => {
+      expect(functionBadgeCategory(members, AXIS, { from: "1.13.2", to: "1.13.2" })).toEqual(
+        cat(false, false),
+      );
+    });
+  });
+
+  describe("a function added in 1.13.0 and changed in 1.13.2", () => {
+    const members = [{ availableIn: ["1.13.1", "1.13.0"] }, { availableIn: ["1.13.2"] }];
+
+    test("is New only at the full range", () => {
+      expect(functionBadgeCategory(members, AXIS, full)).toEqual(cat(true, false));
+    });
+
+    test("is Changed only in a window starting after it appeared", () => {
+      expect(functionBadgeCategory(members, AXIS, { from: "1.13.1", to: "1.13.2" })).toEqual(
+        cat(false, true),
+      );
+    });
+  });
+
+  test("two members spanning the whole axis carry no category", () => {
+    expect(
+      functionBadgeCategory([{ availableIn: AXIS }, { availableIn: AXIS }], AXIS, full),
+    ).toEqual(cat(false, false));
+  });
+
+  describe("deprecation answers for the function", () => {
+    test("every member deprecated is Deprecated and not Changed", () => {
+      const members = [
+        { availableIn: AXIS, deprecatedSince: "1.13.1" },
+        { availableIn: AXIS, deprecatedSince: "1.13.1" },
+      ];
+      expect(functionBadgeCategory(members, AXIS, full)).toEqual(cat(false, false, true));
+    });
+
+    test("one member deprecated is Changed and not Deprecated", () => {
+      const members = [{ availableIn: AXIS, deprecatedSince: "1.13.1" }, { availableIn: AXIS }];
+      expect(functionBadgeCategory(members, AXIS, full)).toEqual(cat(false, true, false));
+    });
+  });
+
+  describe("members the window does not contain are ignored", () => {
+    const window = { from: "1.13.0", to: "1.13.2" };
+
+    test("an absent member neither bounds nor deprecates the function", () => {
+      const members = [
+        { availableIn: ["1.12.4"], deprecatedSince: "1.12.4" },
+        { availableIn: ["1.13.2", "1.13.1", "1.13.0"] },
+      ];
+      expect(functionBadgeCategory(members, AXIS, window)).toEqual(cat(false, false));
+    });
+
+    test("no member present carries no category", () => {
+      expect(functionBadgeCategory([{ availableIn: ["1.12.4"] }], AXIS, window)).toEqual(
+        cat(false, false),
+      );
+      expect(functionBadgeCategory([], AXIS, window)).toEqual(cat(false, false));
     });
   });
 });

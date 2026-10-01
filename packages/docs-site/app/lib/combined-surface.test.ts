@@ -699,6 +699,58 @@ describe("namespaceBadgeCounts (committed artifacts)", () => {
   });
 });
 
+describe("namespaceBadgeCounts scores each function once", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const narrowed = (namespace: string, name: string): CombinedNamespace => {
+    const ns = surface.namespaces.find((n) => n.namespace === namespace);
+    if (!ns) throw new Error(`namespace ${namespace} missing from combined surface`);
+    const entries = ns.entries.filter((entry) => entry.identity.name === name);
+    expect(new Set(entries.map((entry) => symbolIdentityKey(entry.identity))).size).toBeGreaterThan(
+      1,
+    );
+    return { ...ns, entries };
+  };
+
+  test("go.property, a signature transition, counts one Changed and no New", () => {
+    expect(namespaceBadgeCounts(narrowed("go", "go.property"))).toEqual({
+      new: 0,
+      changed: 1,
+      deprecated: 0,
+    });
+  });
+
+  test("json.decode, a signature transition, counts one Changed and no New", () => {
+    expect(namespaceBadgeCounts(narrowed("json", "json.decode"))).toEqual({
+      new: 0,
+      changed: 1,
+      deprecated: 0,
+    });
+  });
+
+  test("no tally exceeds the namespace's distinct functions and members", () => {
+    const ids = surface.versions.map((v) => `defold-${v}`);
+    const table = buildBadgeCountTable(surface.namespaces, ids);
+    for (const ns of surface.namespaces) {
+      const symbols = new Set(
+        ns.entries
+          .filter((entry) => entry.identity.kind !== "TYPEDEF")
+          .map((entry) => `${entry.identity.kind}\u0000${entry.identity.name}`),
+      ).size;
+      for (const [key, [isNew, changed, deprecated]] of Object.entries(table[ns.namespace] ?? {})) {
+        expect({
+          namespace: ns.namespace,
+          key,
+          over: [isNew, changed, deprecated].filter((n) => n > symbols),
+        }).toEqual({
+          namespace: ns.namespace,
+          key,
+          over: [],
+        });
+      }
+    }
+  });
+});
+
 describe("namespaceBadgeCounts over a window", () => {
   const surface = loadCombinedSurface(REAL_TYPES_DIR);
   const signatures = loadSignaturesArtifact(REAL_TYPES_DIR);
