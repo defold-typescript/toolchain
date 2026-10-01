@@ -1,4 +1,5 @@
-import type { EditorIssue } from "./editor-attach";
+import type { CompileOutcome, EditorIssue } from "./editor-attach";
+import type { CompileIssue } from "./editor-compile";
 import type { InitOperation } from "./init";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 
@@ -113,6 +114,13 @@ export interface RenderResultInput {
   // Present only when the editor returned a verdict (Defold 1.13.2+); absent for
   // an older editor, which answers a reload with no result at all.
   readonly editorIssues?: readonly EditorIssue[];
+  // `build --editor-compile` only. `success` and `issues` are present only when
+  // the editor finished the compile and returned a verdict.
+  readonly editorCompile?: {
+    readonly outcome: CompileOutcome;
+    readonly success?: boolean;
+    readonly issues?: readonly CompileIssue[];
+  };
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -216,10 +224,14 @@ export function renderResult(input: RenderResultInput): string {
     "consoleWindowComplete" in input
       ? { ...withConsoleObserved, consoleWindowComplete: input.consoleWindowComplete }
       : withConsoleObserved;
-  const payload =
+  const withEditorIssues =
     "editorIssues" in input
       ? { ...withConsoleWindow, editorIssues: input.editorIssues }
       : withConsoleWindow;
+  const payload =
+    "editorCompile" in input
+      ? { ...withEditorIssues, editorCompile: input.editorCompile }
+      : withEditorIssues;
   return `${JSON.stringify(payload)}\n`;
 }
 

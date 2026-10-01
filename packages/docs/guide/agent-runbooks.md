@@ -51,7 +51,8 @@ A failure flips `ok` to `false` and carries an `error` string instead of
 lines, the scene-resource-mismatch lines, the unreachable-address lines and the
 cross-world-address lines (empty when there are none). Optional fields
 (`defoldVersion`, `defoldChannel`, `apiSurface`, `materializedSurface`,
-`unreachableAddresses`, `crossWorldAddresses`, …) appear only when they apply.
+`unreachableAddresses`, `crossWorldAddresses`, `editorCompile`, …) appear only
+when they apply.
 
 `unreachableAddresses` is the structured half of the unreachable-address
 findings, so you never parse the English `warnings` line to learn which file and
@@ -879,6 +880,46 @@ then recover in order: fix the import as in
 re-run `bunx @defold-typescript/cli build --json`, and clear the Defold project's
 `build/` output if stale compiled resources keep failing.
 
+## Compile in the editor after a build
+
+**Goal:** learn whether the Defold side of the project is broken — a bad
+`.collection`, a missing resource, a Lua error in the generated code — without
+running the game. This is the edit, build, compile loop.
+
+**Command (run from the project root, with the Defold editor open on it):**
+
+```sh
+bunx @defold-typescript/cli build --editor-compile --json
+```
+
+Once every output file is written, [`build`](./build.md#compile-in-the-editor)
+asks the attached Defold 1.13.2+ editor to compile the project and waits for its
+answer; there is no time limit. The result gains an `editorCompile` object:
+
+```json
+{"command":"build","ok":false,"error":"the Defold editor failed to compile the project with 1 issue","editorCompile":{"outcome":"compiled","success":false,"issues":[{"message":"attempt to call a nil value","severity":"error","resource":"/src/main.ts.script","range":{"start":{"line":3,"character":4},"end":{"line":3,"character":17}},"source":{"file":"src/main.ts","line":5,"column":11}}]}}
+```
+
+Branch on `editorCompile.outcome`:
+
+- `"compiled"` with `success: false` — the build exits `1` with `ok: false`. Each
+  issue carries the editor's `message`, `severity`, and, when sent, `resource`
+  and a zero-based `range`. `source` is the authored TypeScript location, present
+  only when the build's source map resolved it; an issue in a `.collection` or
+  the lualib bundle has none. Fix the issues and rerun.
+- `"compiled"` with `success: true` — the project compiled. `issues` may still
+  hold warnings; the build stays `ok`.
+- `"compiled"` with no `success` — the editor answered but its body could not be
+  read. Nothing was proven; the build stays `ok`.
+- `"unsupported"` — the editor is older than Defold 1.13.2 and has no compile
+  command. Upgrade the editor.
+- `"skipped"` — the editor refused the request.
+- `"unavailable"` — no editor is open on the project. Open it and rerun.
+
+Only `success: false` fails the build, so the flag is safe in a script that also
+runs where no editor is open. Without the flag nothing is posted and the result
+has no `editorCompile` key.
+
 ## Hot reload the running game
 
 **Goal:** get an edit into the *already running* game and find out whether an
@@ -953,7 +994,9 @@ error thrown after it closes, or on a frame the game has not reached, is missed.
 Widen `--wait` for a reload that does real work before it can fail. Two failure
 classes never reach the console at all — Defold's own build errors (a bad
 component reference, a missing atlas, a Lua syntax error) go to the editor's
-Build Errors tab.
+Build Errors tab. Against Defold 1.13.2 or later,
+[`build --editor-compile`](#compile-in-the-editor-after-a-build) reports them
+before you reload.
 
 When `reload` reports no error but the game behaves as before, check `on_reload`
 rather than the reload: hot reload runs the **new code against the old state** and does
