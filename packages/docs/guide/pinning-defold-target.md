@@ -489,7 +489,8 @@ bun run import-defold-release -- 1.13.0 --check --json --zip /path/to/ref-doc.zi
 
 Remove `--check` to write the audited fixtures and `import-manifest.json` into
 the version-named Defold 1.13.0 fixture directory; from 1.13.2 the release's
-LuaLS annotation files land beside them under `annotations/`. The importer does not change
+LuaLS annotation files land beside them under `annotations/`, and the manifest's
+`annotationFiles` lists them. The importer does not change
 the default target. A report is blocked when a function-bearing namespace has no
 output mapping or a mapped symbol uses an unknown ref-doc type token.
 
