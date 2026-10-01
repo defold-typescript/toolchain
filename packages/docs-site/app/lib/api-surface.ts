@@ -616,7 +616,10 @@ function closingBracket(text: string, start: number, open: string, close: string
  * start with its name, or is not a call (`package.path: string`), comes back
  * whole as `params`.
  */
-export function splitCallForm(symbol: ApiSymbol): { params: string; returns: string | null } {
+export function splitCallForm(symbol: Pick<ApiSymbol, "name" | "signature">): {
+  params: string;
+  returns: string | null;
+} {
   const { name, signature } = symbol;
   if (!signature.startsWith(name)) return { params: signature, returns: null };
   let open = name.length;
@@ -625,6 +628,79 @@ export function splitCallForm(symbol: ApiSymbol): { params: string; returns: str
   const close = closingBracket(signature, open, "(", ")");
   const tail = signature.slice(close + 1);
   return { params: signature.slice(name.length, close + 1), returns: tail === "" ? null : tail };
+}
+
+// `text` split on every `separator` outside brackets and string literal types.
+function splitTopLevel(text: string, separator: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let quote: string | null = null;
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i] ?? "";
+    if (quote !== null) {
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") quote = ch;
+    else if (ch === ">" && text[i - 1] === "=") continue;
+    else if ("([{<".includes(ch)) depth++;
+    else if (")]}>".includes(ch)) depth--;
+    else if (depth === 0 && text.startsWith(separator, i)) {
+      parts.push(text.slice(start, i));
+      start = i + separator.length;
+      i = start - 1;
+    }
+  }
+  parts.push(text.slice(start));
+  return parts;
+}
+
+// Each parameter's union members, or `null` for a form whose types are not plain
+// names: a generic head binds them to the call site.
+function formParameterTypes(name: string, signature: string): string[][] | null {
+  const { params } = splitCallForm({ name, signature });
+  if (!params.startsWith("(") || !params.endsWith(")")) return null;
+  const list = params.slice(1, -1).trim();
+  if (list === "") return [];
+  return splitTopLevel(list, ",").map((param) => {
+    const colon = param.indexOf(":");
+    return splitTopLevel(param.slice(colon + 1), " | ").map((type) => type.trim());
+  });
+}
+
+function identitySlotTypes(record: ApiAvailability): string[][] | null {
+  const signature = record.identity.signature ?? "";
+  const arrow = signature.indexOf("]->[");
+  if (arrow < 0) return null;
+  const slots = JSON.parse(signature.slice(0, arrow + 1)) as { types: string[] }[];
+  return slots.map((slot) => slot.types);
+}
+
+/**
+ * The span of one authored form that collapses several ref-doc identities: the
+ * merged record of just the identities whose parameter types admit every type
+ * the form names, or `undefined` when that set is empty or every identity, so
+ * a form nothing singles out keeps whatever span its group gives it.
+ */
+function formAvailability(
+  signature: string,
+  name: string,
+  records: readonly ApiAvailability[],
+  versions: readonly string[],
+): ApiAvailability | undefined {
+  const form = formParameterTypes(name, signature);
+  if (form === null) return undefined;
+  const admitting = records.filter((record) => {
+    const slots = identitySlotTypes(record);
+    return (
+      slots !== null &&
+      slots.length === form.length &&
+      form.every((types, i) => types.every((type) => slots[i]?.includes(type)))
+    );
+  });
+  if (admitting.length === 0 || admitting.length === records.length) return undefined;
+  return mergedAvailability(admitting, versions);
 }
 
 /**
@@ -1393,23 +1469,28 @@ export function apiModuleSymbols(
     // overload it identifies. Authored-override extra rows below share the raw
     // symbol and carry no badge of their own.
     //
-    // An authored override renders the same forms on every version, so a ref-doc
-    // signature change that collapses into them never reaches the reader: the row
-    // carries the span of every identity it stands for, not one record's half.
+    // An authored override renders one set of forms across every version, so a
+    // ref-doc signature change that collapses into them reaches the reader only
+    // through the forms it singles out: a form whose parameter types only some
+    // identities admit spans just those, and every other row carries the span of
+    // every identity it stands for, not one record's half.
+    const versions = page.availability?.versions ?? [];
+    const overrideRecords =
+      ov === null || collapsed
+        ? []
+        : (overrideEntries.get(fn.name) ?? [fn])
+            .map(functionIdentity)
+            .filter((id) => {
+              const signature = authoritative?.get(id);
+              return signature === undefined || rowSignatures.includes(signature);
+            })
+            .map((id) => availabilityForIdentity(page.availability, id))
+            .filter((record) => record !== undefined);
     const av =
       ov === null || collapsed
         ? availabilityForIdentity(page.availability, identity)
-        : mergedAvailability(
-            (overrideEntries.get(fn.name) ?? [fn])
-              .map(functionIdentity)
-              .filter((id) => {
-                const signature = authoritative?.get(id);
-                return signature === undefined || rowSignatures.includes(signature);
-              })
-              .map((id) => availabilityForIdentity(page.availability, id))
-              .filter((record) => record !== undefined),
-            page.availability?.versions ?? [],
-          );
+        : (formAvailability(primarySignature, fn.name, overrideRecords, versions) ??
+          mergedAvailability(overrideRecords, versions));
     if (av) symbol.availability = av;
     symbols.push(symbol);
     if (primarySlots !== undefined) artifactBacked.add(symbol);
@@ -1466,6 +1547,7 @@ export function apiModuleSymbols(
       for (const [k, signature] of ov.signatures.slice(1).entries()) {
         const entry = rowEntry(k + 1);
         const example = rowExample(k + 1);
+        const formAv = formAvailability(signature, fn.name, overrideRecords, versions);
         symbols.push({
           kind: "function",
           name: fn.name,
@@ -1494,6 +1576,7 @@ export function apiModuleSymbols(
               )
             : [],
           ...(example ? { exampleMarkdown: example } : {}),
+          ...(formAv ? { availability: formAv } : {}),
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
           ...(fn.global ? { global: true } : {}),
           ...(fn.docSource ? { docSource: fn.docSource } : {}),
