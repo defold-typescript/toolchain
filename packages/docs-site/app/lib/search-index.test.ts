@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
+import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
 import { apiVersionAxis, windowedApiPages } from "./api-content";
 import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import {
@@ -16,10 +17,12 @@ import {
   apiSearchRecords,
   buildSearchIndex,
   combinedSearchRecords,
+  type SearchRecord,
   searchIndexFileForRoute,
   toPlainText,
   versionSearchIndexRecords,
 } from "./search-index";
+import { buildSymbolIndex, combinedSymbolIndexRecords, memberAnchors } from "./symbol-index";
 import { resolveVersionWindow } from "./version-window";
 
 const API_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
@@ -220,23 +223,60 @@ describe("versionSearchIndexRecords", () => {
 });
 
 describe("apiSearchRecords", () => {
-  test("returns one record per ApiPage with the page route and a `<namespace> API` title", () => {
+  const fixtureRecords = apiSearchRecords([memberAnchorPage]);
+  const fixtureIndex = buildSymbolIndex([memberAnchorPage]);
+  const fixtureRecord = (key: string) => {
+    const record = fixtureRecords.find((r) => r.route === fixtureIndex[key]?.route);
+    if (!record) throw new Error(`no search record for ${key}`);
+    return record;
+  };
+
+  test("returns one page record per ApiPage with the page route and a `<namespace> API` title", () => {
     const pages = loadApiSurface(API_FIXTURE_DIR);
     const records = apiSearchRecords(pages);
-    expect(records).toHaveLength(pages.length);
+    const pageRecords = records.filter((r) => !r.route.includes("#"));
+    expect(pageRecords).toHaveLength(pages.length);
     for (const page of pages) {
-      const record = records.find((r) => r.route === page.route);
+      const record = pageRecords.find((r) => r.route === page.route);
       expect(record).toBeDefined();
       expect(record?.title).toBe(`${page.namespace} API`);
     }
   });
 
-  test("indexes the namespace plus a symbol name and its brief into text", () => {
+  test("routes one record per member heading at the symbol index's anchor, titled by its key", () => {
+    expect(fixtureRecords.map((r): (string | undefined)[] => [r.route, r.title])).toEqual([
+      ["/api/demo", "demo API"],
+      [fixtureIndex["demo.LIMIT"]?.route, "demo.LIMIT"],
+      [fixtureIndex["demo.move"]?.route, "demo.move"],
+      [fixtureIndex["demo.speed"]?.route, "demo.speed"],
+    ]);
+  });
+
+  test("keeps the module intro on the page record and every member's text off it", () => {
+    const pageRecord = fixtureRecords.find((r) => r.route === "/api/demo");
+    expect(pageRecord?.text).toContain("introToken");
+    expect(pageRecord?.text).not.toContain("demo.move(");
+    expect(pageRecord?.text).not.toContain("ProseToken");
+  });
+
+  test("folds both overload forms into the group's one record", () => {
+    const move = fixtureRecord("demo.move");
+    expect(move.text).toContain("demo.move(dx: number): boolean");
+    expect(move.text).toContain("demo.move(x: number, y: number)");
+    expect(move.text).toContain("stepProseToken");
+    expect(move.text).toContain("pointProseToken");
+    expect(fixtureRecord("demo.LIMIT").text).toContain("limitProseToken");
+    expect(fixtureRecord("demo.speed").text).toContain("fastProseToken");
+  });
+
+  test("indexes the namespace plus a symbol name and its brief into the member's text", () => {
     const camera = loadApiSurface(API_FIXTURE_DIR).find((p) => p.namespace === "camera");
     if (!camera) throw new Error("expected a camera fixture page");
     const fn = camera.module.functions[0];
     if (!fn) throw new Error("expected the camera fixture to carry a function");
-    const [record] = apiSearchRecords([camera]);
+    const route = buildSymbolIndex([camera])[fn.name]?.route;
+    const record = apiSearchRecords([camera]).find((r) => r.route === route);
+    expect(route).toContain("#");
     expect(record?.text).toContain("camera");
     expect(record?.text).toContain(fn.name);
     // the page renders `description || brief`; assert whichever it emits is indexed
@@ -244,36 +284,9 @@ describe("apiSearchRecords", () => {
   });
 
   test("excludes Lua example fenced blocks from text", () => {
-    const page: ApiPage = {
-      namespace: "demo",
-      route: "/api/demo",
-      brief: "Demo brief",
-      module: {
-        namespace: "demo",
-        brief: "Demo brief",
-        description: "Demo module.",
-        functions: [
-          {
-            name: "demo.run",
-            brief: "run it",
-            description: "Runs the demo.",
-            parameters: [],
-            returnValues: [],
-            examples: "local secretExampleToken = demo.run()",
-          },
-        ],
-        variables: [],
-        constants: [],
-        properties: [],
-        typedefs: [],
-      },
-      translations: {},
-      signatures: {},
-      category: "engine",
-    };
-    const [record] = apiSearchRecords([page]);
-    expect(record?.text).toContain("demo.run");
-    expect(record?.text).not.toContain("secretExampleToken");
+    const move = fixtureRecord("demo.move");
+    expect(move.text).toContain("demo.move");
+    for (const record of fixtureRecords) expect(record.text).not.toContain("secretExampleToken");
   });
 
   test("returns records in stable route-sorted order regardless of input order", () => {
@@ -295,119 +308,119 @@ describe("apiSearchRecords", () => {
     expect(record?.text).toContain("monarch");
   });
 
-  test("indexes parameter and return doc prose into text while preserving the schema", () => {
-    const page: ApiPage = {
-      namespace: "demo",
-      route: "/api/demo",
-      brief: "Demo brief",
-      module: {
-        namespace: "demo",
-        brief: "Demo brief",
-        description: "Demo module.",
-        functions: [
-          {
-            name: "demo.run",
-            brief: "run it",
-            description: "Runs the demo.",
-            parameters: [
-              {
-                name: "loop",
-                doc: "<p>keepLoopingDocToken</p>",
-                types: ["boolean"],
-                isOptional: true,
-              },
-            ],
-            returnValues: [
-              {
-                name: "",
-                doc: "<p>frameCounterDocToken</p>",
-                types: ["number"],
-                isOptional: false,
-              },
-            ],
-          },
-        ],
-        variables: [],
-        constants: [],
-        properties: [],
-        typedefs: [],
-      },
-      translations: {},
-      signatures: {},
-      category: "engine",
-    };
-    const [record] = apiSearchRecords([page]);
-    expect(record?.text).toContain("keepLoopingDocToken");
-    expect(record?.text).toContain("frameCounterDocToken");
-    expect(Object.keys(record ?? {}).sort()).toEqual(["route", "text", "title"]);
-    expect(record?.title).toBe("demo API");
+  test("indexes parameter and return doc prose into the member's text while preserving the schema", () => {
+    const move = fixtureRecord("demo.move");
+    expect(move.text).toContain("stepParamToken");
+    expect(move.text).toContain("movedReturnToken");
+    for (const record of fixtureRecords) {
+      expect(Object.keys(record).sort()).toEqual(["route", "text", "title"]);
+    }
   });
 
-  test("threads lifecycle prose into the default index and keeps removed symbols historical-only", () => {
+  test("threads lifecycle prose into member records and keeps removed symbols historical-only", () => {
+    // The member records of one page: every record routed at an anchor on it.
+    const membersOf = (records: SearchRecord[], namespace: string) => {
+      const pageRecord = records.find((r) => r.title === `${namespace} API`);
+      if (!pageRecord) throw new Error(`no ${namespace} page record`);
+      return {
+        pageRecord,
+        members: records.filter((r) => r.route.startsWith(`${pageRecord.route}#`)),
+      };
+    };
     const defaultRecords = apiSearchRecords(loadApiSurface(REAL_TYPES_DIR));
-    const body = defaultRecords.find((r) => r.title === "b2d.body API");
-    expect(body).toBeDefined();
-    expect(body?.text).toContain(`Since Defold ${introducedVersionFor("b2d.body")}`);
+    const since = `Since Defold ${introducedVersionFor("b2d.body")}`;
+    const body = membersOf(defaultRecords, "b2d.body");
+    expect(body.members.some((r) => r.text.includes(since))).toBe(true);
+    expect(body.pageRecord.text).not.toContain(since);
 
     // `model.material` is present through 1.12.4 only, so the canonical surface
     // neither renders it nor carries its removed-in badge.
-    const defaultModel = defaultRecords.find((r) => r.title === "model API");
-    expect(defaultModel).toBeDefined();
-    expect(defaultModel?.text).not.toContain("Removed in Defold");
+    const defaultModel = membersOf(defaultRecords, "model");
+    for (const record of [defaultModel.pageRecord, ...defaultModel.members]) {
+      expect(record.text).not.toContain("Removed in Defold");
+    }
 
     const historicalRecords = apiSearchRecords(
       loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.12.4"),
     );
-    const historicalModel = historicalRecords.find((r) => r.title === "model API");
-    expect(historicalModel).toBeDefined();
-    expect(historicalModel?.text).toContain(
-      `Removed in Defold ${removedVersionFor("model", "material")}`,
-    );
+    const removed = `Removed in Defold ${removedVersionFor("model", "material")}`;
+    const historicalModel = membersOf(historicalRecords, "model");
+    expect(historicalModel.members.some((r) => r.text.includes(removed))).toBe(true);
+    expect(historicalModel.pageRecord.text).not.toContain(removed);
   });
 });
 
 describe("combinedSearchRecords", () => {
   const combined = loadCombinedSurface(REAL_TYPES_DIR);
+  const records = combinedSearchRecords(combined);
+  const index = combinedSymbolIndexRecords(combined);
+  const memberRecord = (key: string): SearchRecord => {
+    const record = records.find((r) => r.route === index[key]?.route);
+    if (!record) throw new Error(`no search record for ${key}`);
+    return record;
+  };
+  const memberTexts = (namespace: string): string[] =>
+    records.filter((r) => r.route.startsWith(`/api/${namespace}#`)).map((r) => r.text);
+  const pageText = (namespace: string): string =>
+    records.find((r) => r.route === `/api/${namespace}`)?.text ?? "";
 
-  test("emits one record per Combined namespace, routed under canonical /api", () => {
-    const records = combinedSearchRecords(combined);
-    expect(records).toHaveLength(combined.namespaces.length);
+  test("emits one page record per Combined namespace, routed under canonical /api", () => {
     const routes = records.map((r) => r.route);
-    expect(routes).toEqual([...routes].sort());
+    expect(routes).toEqual([...routes].sort((a, b) => a.localeCompare(b)));
+    const pageRecords = records.filter((r) => !r.route.includes("#"));
+    expect(pageRecords).toHaveLength(combined.namespaces.length);
     for (const ns of combined.namespaces) {
-      const record = records.find((r) => r.route === `/api/${ns.namespace}`);
+      const record = pageRecords.find((r) => r.route === `/api/${ns.namespace}`);
       expect(record).toBeDefined();
       expect(record?.title).toBe(`${ns.namespace} API`);
     }
   });
 
+  test("routes one record per member heading at the anchor its symbol-index key carries", () => {
+    const anchored = records.filter((r) => r.route.includes("#"));
+    expect(anchored.length).toBeGreaterThan(1000);
+    expect(new Set(anchored.map((r) => r.route)).size).toBe(anchored.length);
+    const misrouted = anchored
+      .filter((r) => index[r.title]?.route !== r.route)
+      .map((r) => `${r.title} -> ${r.route}`);
+    expect(misrouted).toEqual([]);
+    expect(memberRecord("go.get_position").text).toContain("get_position(");
+  });
+
   test("sources text from the projection's authoritative signatures", () => {
-    const model = combinedSearchRecords(combined).find((r) => r.route === "/api/model");
-    expect(model).toBeDefined();
     // the declaration-backed, drift-free shape — not the ref-doc token form
-    expect(model?.text).toContain(
+    expect(memberRecord("model.set_blend_weights").text).toContain(
       "set_blend_weights(url: string | Hash | Url, weights?: number[])",
     );
+    expect(pageText("model")).not.toContain("set_blend_weights(");
   });
 
   test("threads availability prose for symbols that are not present in every version", () => {
-    const records = combinedSearchRecords(combined);
-    const compute = records.find((r) => r.route === "/api/compute");
-    expect(compute?.text).toContain(`Since Defold ${introducedVersionFor("compute")}`);
-    const live = records.find((r) => r.route === "/api/liveupdate");
-    expect(live?.text).toContain(
-      `Signature changed in Defold ${introducedVersionFor("liveupdate")}`,
-    );
+    const since = `Since Defold ${introducedVersionFor("compute")}`;
+    expect(memberTexts("compute").some((text) => text.includes(since))).toBe(true);
+    expect(pageText("compute")).not.toContain(since);
+    const changed = `Signature changed in Defold ${introducedVersionFor("liveupdate")}`;
+    expect(memberTexts("liveupdate").some((text) => text.includes(changed))).toBe(true);
+    expect(pageText("liveupdate")).not.toContain(changed);
   });
 
   test("threads a verified upstream deprecation into the Combined search text", () => {
-    const model = combinedSearchRecords(combined).find((r) => r.route === "/api/model");
-    expect(model?.text).toContain("Deprecated since 1.13.0");
+    expect(memberTexts("model").some((text) => text.includes("Deprecated since 1.13.0"))).toBe(
+      true,
+    );
+    expect(pageText("model")).not.toContain("Deprecated since 1.13.0");
   });
 });
 
 describe("per-version search reads the pages its version route renders", () => {
   const outputs = searchIndexOutputs({ typesDir: REAL_TYPES_DIR });
+  // The record a version page's member heading owns: the page route plus the
+  // member's anchor on that page.
+  const memberText = (version: string, page: ApiPage, kind: string, name: string): string => {
+    const anchor = memberAnchors(page).get(`${kind}:${name}`);
+    if (anchor === undefined) throw new Error(`no ${kind} ${name} anchor on ${page.route}`);
+    return recordText(version, `${page.route}#${anchor}`);
+  };
   const recordText = (version: string, route: string): string => {
     const file = outputs.find((output) => output.file === `search-index-${version}.json`);
     if (!file) throw new Error(`no search index for ${version}`);
@@ -417,22 +430,23 @@ describe("per-version search reads the pages its version route renders", () => {
   };
 
   test("a slot correction reaches the version record as the declaration prints it", () => {
-    const factory = recordText("defold-1.13.1", "/api/defold-1.13.1/factory");
+    const window = resolveVersionWindow(apiVersionAxis(REAL_TYPES_DIR), "defold-1.13.1", null);
+    if (!window) throw new Error("1.13.1 is not a tracked version");
+    const pages = windowedApiPages(window, REAL_TYPES_DIR);
+    const factoryPage = pages.find((page) => page.namespace === "factory");
+    if (!factoryPage) throw new Error("factory page missing from the 1.13.1 window");
+    const factory = memberText("defold-1.13.1", factoryPage, "function", "factory.get_status");
     expect(factory).toContain("factory.get_status(url: string | Hash | Url)");
     expect(factory).not.toContain("factory.get_status(url?:");
 
-    const window = resolveVersionWindow(apiVersionAxis(REAL_TYPES_DIR), "defold-1.13.1", null);
-    if (!window) throw new Error("1.13.1 is not a tracked version");
-    const resource = windowedApiPages(window, REAL_TYPES_DIR).find(
-      (page) => page.namespace === "resource",
-    );
+    const resource = pages.find((page) => page.namespace === "resource");
     if (!resource) throw new Error("resource page missing from the 1.13.1 window");
     const createTexture = apiModuleSymbols(resource, resource.translations, resource.signatures)
       .filter((s) => s.name === "resource.create_texture")
       .map((s) => s.signature)
       .find((signature) => signature.includes("buffer?:"));
     if (!createTexture) throw new Error("no create_texture declaration with an optional buffer");
-    expect(recordText("defold-1.13.1", "/api/defold-1.13.1/resource")).toContain(
+    expect(memberText("defold-1.13.1", resource, "function", "resource.create_texture")).toContain(
       toPlainText(createTexture),
     );
   });
@@ -447,13 +461,13 @@ describe("per-version search reads the pages its version route renders", () => {
       const window = resolveVersionWindow(axis, id, null);
       if (!window) throw new Error(`${id} is not a tracked version`);
       for (const page of windowedApiPages(window, REAL_TYPES_DIR)) {
-        const text = recordText(id, page.route);
         const rows = apiModuleSymbols(page, page.translations, page.signatures)
           .filter((symbol) => symbol.kind === "function")
           .map((symbol) => ({ symbol, plain: toPlainText(symbol.signature) }));
         const generated = new Set([...(page.authoritativeArms?.values() ?? [])].flat());
         for (const [index, { symbol, plain }] of rows.entries()) {
           compared += 1;
+          const text = memberText(id, page, "function", symbol.name);
           if (!text.includes(plain)) missing.push(`${id} ${symbol.signature}`);
           if (symbol.declarationIdentity !== undefined) continue;
           // An arm whose text another row already contains could be found through that row.
