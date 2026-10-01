@@ -5,6 +5,8 @@ import { refDocCacheDir, resolveRefDoc } from "./doc-source";
 import {
   apiElementIdentity,
   EDITOR_MANIFEST,
+  type ExtractedFixture,
+  extractAnnotationFixtures,
   IGNORED_UPSTREAM,
   mergeApiDocs,
   readZip,
@@ -164,6 +166,8 @@ export interface ReleaseImportManifest {
 export type ReleaseImportPlan = Omit<ReleaseImportManifest, "snapshots"> & {
   readonly manifest: ReleaseImportManifest;
   readonly snapshots: ReleaseImportSnapshot[];
+  // The release's LuaLS annotation files, vendored verbatim. Empty before 1.13.2.
+  readonly annotations: ExtractedFixture[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -259,7 +263,9 @@ function unknownTypeBlockers(
   return out;
 }
 
-function reportWithoutSnapshots(plan: Omit<ReleaseImportPlan, "manifest">): ReleaseImportManifest {
+function reportWithoutSnapshots(
+  plan: Omit<ReleaseImportPlan, "manifest" | "annotations">,
+): ReleaseImportManifest {
   return {
     version: plan.version,
     baseline: plan.baseline,
@@ -429,7 +435,7 @@ export function buildReleaseImportPlan(input: {
     snapshots,
   };
   const manifest = reportWithoutSnapshots(planBase);
-  return { ...planBase, manifest };
+  return { ...planBase, manifest, annotations: extractAnnotationFixtures(input.zip) };
 }
 
 export function releaseImportReportJson(plan: ReleaseImportPlan): string {
@@ -446,6 +452,13 @@ export function applyReleaseImport(plan: ReleaseImportPlan, packageRoot = PACKAG
     const path = resolve(packageRoot, relative);
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, `${JSON.stringify(snapshot.doc, null, 2)}\n`);
+    written.push(relative);
+  }
+  for (const annotation of plan.annotations) {
+    const relative = `${relativeRoot}/${annotation.fixture}`;
+    const path = resolve(packageRoot, relative);
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, annotation.contents);
     written.push(relative);
   }
   // The prefixless builtins (`hash`, `pprint`, ...) are hand-vendored rather than

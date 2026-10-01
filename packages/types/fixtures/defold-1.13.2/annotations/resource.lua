@@ -1,0 +1,1063 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---@class defold_api.resource
+---Functions and constants to access resources.
+resource = {}
+
+---Constructor-like function with two purposes:
+---
+---- Load the specified resource as part of loading the script
+---- Create a resource reference that resolves to the hashed path of the run-time resource
+---
+---This function can only be called within `go.property` function calls.
+---
+---**Examples:**
+---
+---Load an atlas and set it to a sprite:
+---
+---```lua
+---go.property("my_atlas", resource.atlas("/atlas.atlas"))
+---function init(self)
+---  go.set("#sprite", "image", self.my_atlas)
+---end
+---```
+---
+---Load an atlas and set it to a gui:
+---
+---```lua
+---go.property("my_atlas", resource.atlas("/atlas.atlas"))
+---function init(self)
+---  go.set("#gui", "textures", self.my_atlas, {key = "my_atlas"})
+---end
+---```
+---@param path? string optional resource path string to the resource
+---@return resource_data resource a reference to the binary version of the resource
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.atlas:path)
+function resource.atlas(path) end
+
+---Constructor-like function with two purposes:
+---
+---- Load the specified resource as part of loading the script
+---- Create a resource reference that resolves to the hashed path of the run-time resource
+---
+---This function can only be called within `go.property` function calls.
+---
+---**Examples:**
+---
+---Set a unique buffer it to a sprite:
+---
+---```lua
+---go.property("my_buffer", resource.buffer("/cube.buffer"))
+---function init(self)
+---  go.set("#mesh", "vertices", self.my_buffer)
+---end
+---```
+---@param path? string optional resource path string to the resource
+---@return resource_data resource a reference to the binary version of the resource
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.buffer:path)
+function resource.buffer(path) end
+
+---This function creates a new atlas resource that can be used in the same way as any atlas created during build time.
+---The path used for creating the atlas must be unique, trying to create a resource at a path that is already
+---registered will trigger an error. If the intention is to instead modify an existing atlas, use the `resource.set_atlas`
+---function. Also note that the path to the new atlas resource must have a '.texturesetc' extension,
+---meaning "/path/my_atlas" is not a valid path but "/path/my_atlas.texturesetc" is.
+---
+---When creating the atlas, at least one geometry and one animation is required, and an error will be
+---raised if these requirements are not met. A reference to the resource will be held by the collection
+---that created the resource and will automatically be released when that collection is destroyed.
+---Note that releasing a resource essentially means decreasing the reference count of that resource,
+---and not necessarily that it will be deleted.
+---
+---**Examples:**
+---
+---Create a backing texture and an atlas
+---
+---```lua
+---function init(self)
+---    -- create an empty texture
+---    local tparams = {
+---        width          = 128,
+---        height         = 128,
+---        type           = graphics.TEXTURE_TYPE_2D,
+---        format         = graphics.TEXTURE_FORMAT_RGBA,
+---    }
+---    local my_texture_id = resource.create_texture("/my_texture.texturec", tparams)
+---
+---    -- optionally use resource.set_texture to upload data to texture
+---
+---    -- create an atlas with one animation and one square geometry
+---    -- note that the function doesn't support hashes for the texture,
+---    -- you need to use a string for the texture path here aswell
+---    local aparams = {
+---        texture = "/my_texture.texturec",
+---        animations = {
+---            {
+---                id          = "my_animation",
+---                width       = 128,
+---                height      = 128,
+---                frames      = { 1 }
+---            }
+---        },
+---        geometries = {
+---            {
+---                id = 'idle0',
+---                width = 128,
+---                height = 128,
+---                pivot_x = 0.5,
+---                pivot_y = 0.5,
+---                vertices  = {
+---                    0,   0,
+---                    0,   128,
+---                    128, 128,
+---                    128, 0
+---                },
+---                uvs = {
+---                    0,   0,
+---                    0,   128,
+---                    128, 128,
+---                    128, 0
+---                },
+---                indices = {0,1,2,0,2,3}
+---            }
+---        }
+---    }
+---    local my_atlas_id = resource.create_atlas("/my_atlas.texturesetc", aparams)
+---
+---    -- assign the atlas to the 'sprite' component on the same go
+---    go.set("#sprite", "image", my_atlas_id)
+---end
+---```
+---@param path string The path to the resource.
+---@param table resource.atlas atlas creation data
+---@return hash path Returns the atlas resource path
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.create_atlas:path-table)
+function resource.create_atlas(path, table) end
+
+---This function creates a new buffer resource that can be used in the same way as any buffer created during build time.
+---The function requires a valid buffer created from either `buffer.create` or another pre-existing buffer resource.
+---By default, the new resource will take ownership of the buffer lua reference, meaning the buffer will not automatically be removed
+---when the lua reference to the buffer is garbage collected. This behaviour can be overruled by specifying 'transfer_ownership = false'
+---in the argument table. If the new buffer resource is created from a buffer object that is created by another resource,
+---the buffer object will be copied and the new resource will effectively own a copy of the buffer instead.
+---
+---Note that the path to the new resource must have the '.bufferc' extension, "/path/my_buffer" is not a valid path but "/path/my_buffer.bufferc" is.
+---The path must also be unique, attempting to create a buffer with the same name as an existing resource will raise an error.
+---
+---**Examples:**
+---
+---Create a buffer object and bind it to a buffer resource
+---
+---```lua
+---function init(self)
+---    local size = 1
+---    local positions = {
+---        -- triangle 1
+---         size,  size, 0,
+---        -size, -size, 0,
+---         size, -size, 0,
+---        -- triangle 2
+---         size, size,  0,
+---        -size,  size, 0,
+---        -size, -size, 0,
+---    }
+---
+---    local buffer_handle = buffer.create(#positions, {
+---        {
+---            name  = hash("position"),
+---            type  = buffer.VALUE_TYPE_FLOAT32,
+---            count = 3
+---        }
+---    })
+---
+---    local stream = buffer.get_stream(buffer_handle, hash("position"))
+---
+---    -- transfer vertex data to buffer
+---    for k=1,#positions do
+---        stream[k] = positions[k]
+---    end
+---
+---    local my_buffer = resource.create_buffer("/my_buffer.bufferc", { buffer = buffer_handle })
+---    go.set("/go#mesh", "vertices", my_buffer)
+---end
+---```
+---
+---Create a buffer resource from existing resource
+---
+---```lua
+---function init(self)
+---    local res = resource.get_buffer("/my_buffer_path.bufferc")
+---    -- create a cloned buffer resource from another resource buffer
+---    local buf = reource.create_buffer("/my_cloned_buffer.bufferc", { buffer = res })
+---    -- assign cloned buffer to a mesh component
+---    go.set("/go#mesh", "vertices", buf)
+---end
+---```
+---@param path string The path to the resource.
+---@param table resource.buffer_creation_params buffer-resource creation parameters
+---@return hash path Returns the buffer resource path
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.create_buffer:path-table)
+function resource.create_buffer(path, table) end
+
+---Creates a sound data resource
+---Supported formats are .oggc, .opusc and .wavc
+---
+---**Examples:**
+---
+---```lua
+---function init(self)
+---    -- create a new sound resource, given the initial chunk of the file
+---    local relative_path = "/a/unique/resource/name.oggc"
+---    local hash = resource.create_sound_data(relative_path, { data = data, filesize = filesize, partial = true })
+---    go.set("#music", "sound", hash) -- override the previous sound resource
+---    sound.play("#music") -- start the playing
+---end
+---```
+---@param path string the path to the resource. Must not already exist.
+---@param options? resource.sound_data_options optional sound-data parameters
+---@return hash path_hash the resulting path hash to the resource
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.create_sound_data:path-options)
+function resource.create_sound_data(path, options) end
+
+---Creates a new texture resource that can be used in the same way as any texture created during build time.
+---The path used for creating the texture must be unique, trying to create a resource at a path that is already
+---registered will trigger an error. If the intention is to instead modify an existing texture, use the `resource.set_texture`
+---function. Also note that the path to the new texture resource must have a '.texturec' extension,
+---meaning "/path/my_texture" is not a valid path but "/path/my_texture.texturec" is.
+---If the texture is created without a buffer, the pixel data will be blank.
+---
+---**Examples:**
+---
+---Check whether a texture format is supported by the device:
+---
+---```lua
+---if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
+---    -- It is safe to use this format.
+---end
+---```
+---
+---<span class="icon-attention"></span> 3D textures are currently only supported on OpenGL and Vulkan adapters. Check whether the device supports 3D textures before using them:
+---
+---```lua
+---if graphics.TEXTURE_TYPE_3D ~= nil then
+---    -- The device and graphics adapter support 3D textures.
+---end
+---```
+---
+---How to create an 128x128 RGBA texture resource and assign it to a model
+---
+---```lua
+---function init(self)
+---    local tparams = {
+---       width          = 128,
+---       height         = 128,
+---       type           = graphics.TEXTURE_TYPE_2D,
+---       format         = graphics.TEXTURE_FORMAT_RGBA,
+---   }
+---   local my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams)
+---   go.set("#model", "texture0", my_texture_id)
+---end
+---```
+---
+---How to create an 128x128 floating point texture (RGBA32F) resource from a buffer object
+---
+---```lua
+---function init(self)
+---    -- Create a new buffer with 4 components and FLOAT32 type
+---    local tbuffer = buffer.create(128 * 128, { {name=hash("rgba"), type=buffer.VALUE_TYPE_FLOAT32, count=4} } )
+---    local tstream = buffer.get_stream(tbuffer, hash("rgba"))
+---
+---    -- Fill the buffer stream with some float values
+---    for y=1,128 do
+---        for x=1,128 do
+---            local index = (y-1) * 128 * 4 + (x-1) * 4 + 1
+---            tstream[index + 0] = 999.0
+---            tstream[index + 1] = -1.0
+---            tstream[index + 2] = 0.5
+---            tstream[index + 3] = 1.0
+---        end
+---    end
+---
+---    -- Create a 2D Texture with a RGBA23F format
+---    local tparams = {
+---       width          = 128,
+---       height         = 128,
+---       type           = graphics.TEXTURE_TYPE_2D,
+---       format         = graphics.TEXTURE_FORMAT_RGBA32F,
+---   }
+---
+---   -- Note that we pass the buffer as the last argument here!
+---   local my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams, tbuffer)
+---
+---   -- assign the texture to a model
+---   go.set("#model", "texture0", my_texture_id)
+---end
+---```
+---
+---How to create a 32x32x32 floating point 3D texture that can be used to generate volumetric data in a compute shader
+---
+---```lua
+---function init(self)
+---    local t_volume = resource.create_texture("/my_backing_texture.texturec", {
+---        type   = graphics.TEXTURE_TYPE_IMAGE_3D,
+---        width  = 32,
+---        height = 32,
+---        depth  = 32,
+---        format = graphics.TEXTURE_FORMAT_RGBA32F,
+---        flags  = graphics.TEXTURE_USAGE_FLAG_STORAGE + graphics.TEXTURE_USAGE_FLAG_SAMPLE,
+---    })
+---
+---    -- pass the backing texture to the render script
+---    msg.post("@render:", "add_textures", { t_volume })
+---end
+---```
+---
+---How to create 512x512 texture array with 5 pages.
+---
+---```lua
+---		local new_tex = resource.create_texture("/runtime/example_array.texturec", {
+---			type = graphics.TEXTURE_TYPE_2D_ARRAY,
+---			width = 512,
+---			height = 512,
+---			page_count = 5,
+---			format = graphics.TEXTURE_FORMAT_RGB,
+---		})
+---```
+---@param path string The path to the resource.
+---@param table resource.texture_creation_params texture creation parameters
+---@param buffer? buffer_data optional buffer of precreated pixel data
+---@return hash path The path to the resource.
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.create_texture:path-table-buffer)
+function resource.create_texture(path, table, buffer) end
+
+---Creates a new texture resource that can be used in the same way as any texture created during build time.
+---The path used for creating the texture must be unique, trying to create a resource at a path that is already
+---registered will trigger an error. If the intention is to instead modify an existing texture, use the `resource.set_texture`
+---function. Also note that the path to the new texture resource must have a '.texturec' extension,
+---meaning "/path/my_texture" is not a valid path but "/path/my_texture.texturec" is.
+---If the texture is created without a buffer, the pixel data will be blank.
+---
+---The difference between the async version and `resource.create_texture` is that the texture data will be uploaded
+---in a graphics worker thread. The function will return a resource immediately that contains a 1x1 blank texture which can be used
+---immediately after the function call. When the new texture has been uploaded, the initial blank texture will be deleted and replaced with the
+---new texture. Be careful when using the initial texture handle handle as it will not be valid after the upload has finished.
+---
+---**Examples:**
+---
+---Check whether a texture format is supported by the device:
+---
+---```lua
+---if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
+---    -- It is safe to use this format.
+---end
+---```
+---
+---<span class="icon-attention"></span> 3D textures are currently only supported on OpenGL and Vulkan adapters. Check whether the device supports 3D textures before using them:
+---
+---```lua
+---if graphics.TEXTURE_TYPE_3D ~= nil then
+---    -- The device and graphics adapter support 3D textures.
+---end
+---```
+---
+---Create a texture resource asyncronously with a buffer and a callback
+---
+---```lua
+---function callback(self, request_id, result)
+---    -- The resource has been updated with a new texture,
+---    -- so we can update other systems with the new handle,
+---    -- or update components to use the resource if we want
+---    local tinfo = resource.get_texture_info(result.path)
+---    msg.post("@render:", "set_backing_texture", tinfo.handle)
+---end
+---function init(self)
+---    -- Create a texture resource async
+---    local tparams = {
+---        width          = 128,
+---        height         = 128,
+---        type           = graphics.TEXTURE_TYPE_2D,
+---        format         = graphics.TEXTURE_FORMAT_RGBA,
+---    }
+---
+---    -- Create a new buffer with 4 components
+---    local tbuffer = buffer.create(tparams.width * tparams.height, { {name=hash("rgba"), type=buffer.VALUE_TYPE_UINT8, count=4} } )
+---    local tstream = buffer.get_stream(tbuffer, hash("rgba"))
+---
+---    -- Fill the buffer stream with some float values
+---    for y=1,tparams.width do
+---        for x=1,tparams.height do
+---            local index = (y-1) * 128 * 4 + (x-1) * 4 + 1
+---            tstream[index + 0] = 255
+---            tstream[index + 1] = 0
+---            tstream[index + 2] = 255
+---            tstream[index + 3] = 255
+---        end
+---    end
+---    -- create the texture
+---    local tpath, request_id = resource.create_texture_async("/my_texture.texturec", tparams, tbuffer, callback)
+---    -- at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture
+---    -- that will be removed once the new texture has been updated
+---    go.set("#model", "texture0", tpath)
+---end
+---```
+---
+---Create a texture resource asyncronously without a callback
+---
+---```lua
+---function init(self)
+---    -- Create a texture resource async
+---    local tparams = {
+---        width          = 128,
+---        height         = 128,
+---        type           = graphics.TEXTURE_TYPE_2D,
+---        format         = graphics.TEXTURE_FORMAT_RGBA,
+---    }
+---
+---    -- Create a new buffer with 4 components
+---    local tbuffer = buffer.create(tparams.width * tparams.height, { {name=hash("rgba"), type=buffer.VALUE_TYPE_UINT8, count=4} } )
+---    local tstream = buffer.get_stream(tbuffer, hash("rgba"))
+---
+---    -- Fill the buffer stream with some float values
+---    for y=1,tparams.width do
+---        for x=1,tparams.height do
+---            local index = (y-1) * 128 * 4 + (x-1) * 4 + 1
+---            tstream[index + 0] = 255
+---            tstream[index + 1] = 0
+---            tstream[index + 2] = 255
+---            tstream[index + 3] = 255
+---        end
+---    end
+---    -- create the texture
+---    local tpath, request_id = resource.create_texture_async("/my_texture.texturec", tparams, tbuffer)
+---    -- at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture
+---    -- that will be removed once the new texture has been updated
+---    go.set("#model", "texture0", tpath)
+---end
+---```
+---@param path string The path to the resource.
+---@param table resource.texture_creation_params texture creation parameters
+---@param buffer? buffer_data optional buffer of precreated pixel data
+---@param callback? fun(self:script_instance, request_id:integer, result:resource.texture_creation_result) callback function invoked when the texture is created
+---@return hash path The path to the texture resource.
+---@return integer request_id The request id for the async request.
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.create_texture_async:path-table-buffer-callback)
+function resource.create_texture_async(path, table, buffer, callback) end
+
+---Constructor-like function with two purposes:
+---
+---- Load the specified resource as part of loading the script
+---- Create a resource reference that resolves to the hashed path of the run-time resource
+---
+---This function can only be called within `go.property` function calls.
+---
+---**Examples:**
+---
+---Load a font and set it to a label:
+---
+---```lua
+---go.property("my_font", resource.font("/font.font"))
+---function init(self)
+---  go.set("#label", "font", self.my_font)
+---end
+---```
+---
+---Load a font and set it to a gui:
+---
+---```lua
+---go.property("my_font", resource.font("/font.font"))
+---function init(self)
+---  go.set("#gui", "fonts", self.my_font, {key = "my_font"})
+---end
+---```
+---@param path? string optional resource path string to the resource
+---@return resource_data resource a reference to the binary version of the resource
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.font:path)
+function resource.font(path) end
+
+---Returns the atlas data for an atlas
+---@param path hash|string The path to the atlas resource
+---@return resource.atlas_data data atlas data
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.get_atlas:path)
+function resource.get_atlas(path) end
+
+---gets the buffer from a resource
+---
+---**Examples:**
+---
+---How to get the data from a buffer
+---
+---```lua
+---function init(self)
+---
+---    local res_path = go.get("#mesh", "vertices")
+---    local buf = resource.get_buffer(res_path)
+---    local stream_positions = buffer.get_stream(buf, "position")
+---
+---    for i=1,#stream_positions do
+---        print(i, stream_positions[i])
+---    end
+---end
+---```
+---@param path hash|string The path to the resource
+---@return buffer_data buffer The resource buffer
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.get_buffer:path)
+function resource.get_buffer(path) end
+
+---Gets render target info from a render target resource path or a render target handle
+---
+---**Examples:**
+---
+---Get the metadata from a render target resource
+---
+---```lua
+---function init(self)
+---    local info = resource.get_render_target_info("/my_render_target.render_targetc")
+---    -- the info table contains meta data about all the render target attachments
+---    -- so it's not necessary to use resource.get_texture here, but we do it here
+---    -- just to show that it's possible:
+---    local info_attachment_1 = resource.get_texture_info(info.attachments[1].handle)
+---end
+---```
+---
+---Get a texture attachment from a render target and set it on a model component
+---
+---```lua
+---function init(self)
+---    local info = resource.get_render_target_info("/my_render_target.render_targetc")
+---    local attachment = info.attachments[1].texture
+---    -- you can also get texture info from the 'texture' field, since it's a resource hash
+---    local texture_info = resource.get_texture_info(attachment)
+---    go.set("#model", "texture0", attachment)
+---end
+---```
+---@param path hash|string|render_target The path to the resource or a render target handle
+---@return resource.render_target_info table render-target information
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.get_render_target_info:path)
+function resource.get_render_target_info(path) end
+
+---Gets the text metrics from a font. Rich text markup is measured using its
+---visible text and font sizes. If markup cannot be parsed, the text is measured literally.
+---Inline sprites reserve their specified dimensions, or one em by default.
+---
+---**Examples:**
+---
+---```lua
+---function init(self)
+---    local font = go.get("#label", "font")
+---    local metrics = resource.get_text_metrics(font, "The quick brown fox\n jumps over the lazy dog")
+---    pprint(metrics)
+---end
+---```
+---@param url hash the font to get the (unscaled) metrics from
+---@param text string text to measure
+---@param options? resource.text_metrics_options optional text-metric options
+---@return resource.text_metrics metrics measured text metrics
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.get_text_metrics:url-text-options)
+function resource.get_text_metrics(url, text, options) end
+
+---Gets texture info from a texture resource path or a texture handle
+---
+---**Examples:**
+---
+---Create a new texture and get the metadata from it
+---
+---```lua
+---function init(self)
+---    -- create an empty texture
+---    local tparams = {
+---        width          = 128,
+---        height         = 128,
+---        type           = graphics.TEXTURE_TYPE_2D,
+---        format         = graphics.TEXTURE_FORMAT_RGBA,
+---    }
+---
+---    local my_texture_path = resource.create_texture("/my_texture.texturec", tparams)
+---    local my_texture_info = resource.get_texture_info(my_texture_path)
+---
+---    -- my_texture_info now contains
+---    -- {
+---    --      handle = <the-numeric-handle>,
+---    --      width = 128,
+---    --      height = 128,
+---    --      depth = 1
+---    --      mipmaps = 1,
+---    --      page_count = 1,
+---    --      type = graphics.TEXTURE_TYPE_2D,
+---    --      flags = graphics.TEXTURE_USAGE_FLAG_SAMPLE
+---    -- }
+---end
+---```
+---
+---Get the meta data from an atlas resource
+---
+---```lua
+---function init(self)
+---    local my_atlas_info   = resource.get_atlas("/my_atlas.a.texturesetc")
+---    local my_texture_info = resource.get_texture_info(my_atlas_info.texture)
+---
+---    -- my_texture_info now contains the information about the texture that is backing the atlas
+---end
+---```
+---@param path hash|string|texture The path to the resource or a texture handle
+---@return resource.texture_info table texture information
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.get_texture_info:path)
+function resource.get_texture_info(path) end
+
+---Loads the resource data for a specific resource.
+---
+---**Examples:**
+---
+---```lua
+----- read custom resource data into buffer
+---local buffer = resource.load("/resources/datafile")
+---```
+---
+---In order for the engine to include custom resources in the build process, you need
+---to specify them in the "game.project" settings file:
+---
+---```ini
+---[project]
+---title = My project
+---version = 0.1
+---custom_resources = resources/,assets/level_data.json
+---```
+---@param path string The path to the resource
+---@return buffer_data buffer Returns the buffer stored on disc
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.load:path)
+function resource.load(path) end
+
+---Constructor-like function with two purposes:
+---
+---- Load the specified resource as part of loading the script
+---- Create a resource reference that resolves to the hashed path of the run-time resource
+---
+---This function can only be called within `go.property` function calls.
+---
+---**Examples:**
+---
+---Load a material and set it to a sprite:
+---
+---```lua
+---go.property("my_material", resource.material("/material.material"))
+---function init(self)
+---  go.set("#sprite", "material", self.my_material)
+---end
+---```
+---
+---Load a material resource and update a named material with the resource:
+---
+---```lua
+---go.property("my_material", resource.material("/material.material"))
+---function init(self)
+---  go.set("#gui", "materials", self.my_material, {key = "my_material"})
+---end
+---```
+---@param path? string optional resource path string to the resource
+---@return resource_data resource a reference to the binary version of the resource
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.material:path)
+function resource.material(path) end
+
+---Release a resource.
+---
+---This is a potentially dangerous operation, releasing resources currently being used can cause unexpected behaviour.
+---@param path hash|string The path to the resource.
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.release:path)
+function resource.release(path) end
+
+---Constructor-like function with two purposes:
+---
+---- Load the specified resource as part of loading the script
+---- Create a resource reference that resolves to the hashed path of the run-time resource
+---
+---This function can only be called within `go.property` function calls.
+---
+---**Examples:**
+---
+---Set a render target color attachment as a model texture:
+---
+---```lua
+---go.property("my_render_target", resource.render_target("/rt.render_target"))
+---function init(self)
+---  local rt_info = resource.get_render_target_info(self.my_render_target)
+---  go.set("#model", "texture0", rt_info.attachments[1].texture)
+---end
+---```
+---@param path? string optional resource path string to the resource
+---@return resource_data resource a reference to the binary version of the resource
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.render_target:path)
+function resource.render_target(path) end
+
+---Sets the resource data for a specific resource
+---
+---**Examples:**
+---
+---Assuming the folder "/res" is added to the project custom resources:
+---
+---```lua
+----- load a texture resource and set it on a sprite
+---local buffer = resource.load("/res/new.texturec")
+---resource.set(go.get("#sprite", "texture0"), buffer)
+---```
+---@param path string|hash The path to the resource
+---@param buffer buffer_data The buffer of precreated data, suitable for the intended resource type
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.set:path-buffer)
+function resource.set(path, buffer) end
+
+---Sets the data for a specific atlas resource. Setting new atlas data is specified by passing in
+---a texture path for the backing texture of the atlas, a list of geometries and a list of animations
+---that map to the entries in the geometry list. The geometry entries are represented by three lists:
+---vertices, uvs and indices that together represent triangles that are used in other parts of the
+---engine to produce render objects from.
+---
+---Vertex and uv coordinates for the geometries are expected to be
+---in pixel coordinates where 0,0 is the top left corner of the texture.
+---
+---There is no automatic padding or margin support when setting custom data,
+---which could potentially cause filtering artifacts if used with a material sampler that has linear filtering.
+---If that is an issue, you need to calculate padding and margins manually before passing in the geometry data to
+---this function.
+---
+---**Examples:**
+---
+---Add a new animation to an existing atlas
+---
+---```lua
+---function init(self)
+---    local data = resource.get_atlas("/main/my_atlas.a.texturesetc")
+---    local my_animation = {
+---        id          = "my_new_animation",
+---        width       = 128,
+---        height      = 128,
+---        frame_start = 1,
+---        frame_end   = 6,
+---        playback    = go.PLAYBACK_LOOP_PINGPONG,
+---        fps         = 8
+---    }
+---    table.insert(data.animations, my_animation)
+---    resource.set_atlas("/main/my_atlas.a.texturesetc", data)
+---end
+---```
+---
+---Sets atlas data for a 256x256 texture with a single animation being rendered as a quad
+---
+---```lua
+---function init(self)
+---    local params = {
+---        texture = "/main/my_256x256_texture.texturec",
+---        animations = {
+---            {
+---                id          = "my_animation",
+---                width       = 256,
+---                height      = 256,
+---                frames      = { 1 }
+---            }
+---        },
+---        geometries = {
+---            {
+---                vertices = {
+---                    0,   0,
+---                    0,   256,
+---                    256, 256,
+---                    256, 0
+---                },
+---                uvs = {
+---                    0, 0,
+---                    0, 256,
+---                    256, 256,
+---                    256, 0
+---                },
+---                indices = { 0,1,2,0,2,3 }
+---            }
+---        }
+---    }
+---    resource.set_atlas("/main/test.a.texturesetc", params)
+---end
+---```
+---@param path hash|string The path to the atlas resource
+---@param table resource.atlas atlas data
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.set_atlas:path-table)
+function resource.set_atlas(path, table) end
+
+---Sets the buffer of a resource. By default, setting the resource buffer will either copy the data from the incoming buffer object
+---to the buffer stored in the destination resource, or make a new buffer object if the sizes between the source buffer and the destination buffer
+---stored in the resource differs. In some cases, e.g performance reasons, it might be beneficial to just set the buffer object on the resource without copying or cloning.
+---To achieve this, set the `transfer_ownership` flag to true in the argument table. Transferring ownership from a lua buffer to a resource with this function
+---works exactly the same as `resource.create_buffer`: the destination resource will take ownership of the buffer held by the lua reference, i.e the buffer will not automatically be removed
+---when the lua reference to the buffer is garbage collected.
+---
+---Note: When setting a buffer with `transfer_ownership = true`, the currently bound buffer in the resource will be destroyed.
+---
+---**Examples:**
+---
+---How to set the data from a buffer
+---
+---```lua
+---local function fill_stream(stream, verts)
+---    for key, value in ipairs(verts) do
+---        stream[key] = verts[key]
+---    end
+---end
+---
+---function init(self)
+---
+---    local res_path = go.get("#mesh", "vertices")
+---
+---    local positions = {
+---         1, -1, 0,
+---         1,  1, 0,
+---         -1, -1, 0
+---    }
+---
+---    local num_verts = #positions / 3
+---
+---    -- create a new buffer
+---    local buf = buffer.create(num_verts, {
+---        { name = hash("position"), type=buffer.VALUE_TYPE_FLOAT32, count = 3 }
+---    })
+---
+---    local buf = resource.get_buffer(res_path)
+---    local stream_positions = buffer.get_stream(buf, "position")
+---
+---    fill_stream(stream_positions, positions)
+---
+---    resource.set_buffer(res_path, buf)
+---end
+---```
+---@param path hash|string The path to the resource
+---@param buffer buffer_data The resource buffer
+---@param table? resource.buffer_update_options optional buffer-resource update options
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.set_buffer:path-buffer-table)
+function resource.set_buffer(path, buffer, table) end
+
+---Update internal sound resource (wavc/oggc/opusc) with new data
+---@param path hash|string The path to the resource
+---@param buffer string A lua string containing the binary sound data
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.set_sound:path-buffer)
+function resource.set_sound(path, buffer) end
+
+---Sets the pixel data for a specific texture.
+---
+---**Examples:**
+---
+---Check whether a texture format is supported by the device:
+---
+---```lua
+---if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
+---    -- It is safe to use this format.
+---end
+---```
+---
+---Check whether the device supports 3D textures before using them:
+---
+---```lua
+---if graphics.TEXTURE_TYPE_3D ~= nil then
+---    -- The device and graphics adapter support 3D textures.
+---end
+---```
+---
+---How to set all pixels of an atlas
+---
+---```lua
+---function init(self)
+---  self.height = 128
+---  self.width = 128
+---  self.buffer = buffer.create(self.width * self.height, { {name=hash("rgb"), type=buffer.VALUE_TYPE_UINT8, count=3} } )
+---  self.stream = buffer.get_stream(self.buffer, hash("rgb"))
+---
+---  for y=1,self.height do
+---      for x=1,self.width do
+---          local index = (y-1) * self.width * 3 + (x-1) * 3 + 1
+---          self.stream[index + 0] = 0xff
+---          self.stream[index + 1] = 0x80
+---          self.stream[index + 2] = 0x10
+---      end
+---  end
+---
+---  local resource_path = go.get("#model", "texture0")
+---  local args = { width=self.width, height=self.height, type=graphics.TEXTURE_TYPE_2D, format=graphics.TEXTURE_FORMAT_RGB, num_mip_maps=1 }
+---  resource.set_texture( resource_path, args, self.buffer )
+---end
+---```
+---
+---How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.
+---
+---```lua
+---function init(self)
+---  self.x = 16
+---  self.y = 16
+---  self.height = 128 - self.x * 2
+---  self.width = 128 - self.y * 2
+---  self.buffer = buffer.create(self.width * self.height, { {name=hash("rgb"), type=buffer.VALUE_TYPE_UINT8, count=3} } )
+---  self.stream = buffer.get_stream(self.buffer, hash("rgb"))
+---
+---  for y=1,self.height do
+---      for x=1,self.width do
+---          local index = (y-1) * self.width * 3 + (x-1) * 3 + 1
+---          self.stream[index + 0] = 0xff
+---          self.stream[index + 1] = 0x80
+---          self.stream[index + 2] = 0x10
+---      end
+---  end
+---
+---  local resource_path = go.get("#model", "texture0")
+---  local args = { width=self.width, height=self.height, x=self.x, y=self.y, type=graphics.TEXTURE_TYPE_2D, format=graphics.TEXTURE_FORMAT_RGB, num_mip_maps=1 }
+---  resource.set_texture(resource_path, args, self.buffer )
+---end
+---```
+---
+---Update a texture from a buffer resource
+---```lua
+---go.property("my_buffer", resource.buffer("/my_default_buffer.buffer"))
+---
+---function init(self)
+---    local resource_path = go.get("#model", "texture0")
+---    -- the "my_buffer" resource is expected to hold 128 * 128 * 3 bytes!
+---    local args = {
+---         width  = 128,
+---         height = 128,
+---         type   = graphics.TEXTURE_TYPE_2D,
+---         format = graphics.TEXTURE_FORMAT_RGB
+---     }
+---    -- Note that the extra resource.get_buffer call is a requirement here
+---    -- since the "self.my_buffer" is just pointing to a buffer resource path
+---    -- and not an actual buffer object or buffer resource.
+---    resource.set_texture(resource_path, args, resource.get_buffer(self.my_buffer))
+---end
+---```
+---
+---Update an existing 3D texture from a lua buffer
+---
+---```lua
+---
+---function init(self)
+---    -- create a buffer that can hold the data of a 8x8x8 texture
+---    local tbuffer = buffer.create(8 * 8 * 8, { {name=hash("rgba"), type=buffer.VALUE_TYPE_FLOAT32, count=4} } )
+---    local tstream = buffer.get_stream(tbuffer, hash("rgba"))
+---
+---    -- populate the buffer with some data
+---    local index = 1
+---    for z=1,8 do
+---        for y=1,8 do
+---            for x=1,8 do
+---                tstream[index + 0] = x
+---                tstream[index + 1] = y
+---                tstream[index + 2] = z
+---                tstream[index + 3] = 1.0
+---                index = index + 4
+---            end
+---        end
+---    end
+---
+---    local t_args = {
+---        type   = graphics.TEXTURE_TYPE_IMAGE_3D,
+---        width  = 8,
+---        height = 8,
+---        depth  = 8,
+---        format = graphics.TEXTURE_FORMAT_RGBA32F
+---    }
+---
+---    -- This expects that the texture resource "/my_3d_texture.texturec" already exists
+---    -- and is a 3D texture resource. To create a dynamic 3D texture resource
+---    -- use the "resource.create_texture" function.
+---    resource.set_texture("/my_3d_texture.texturec", t_args, tbuffer)
+---end
+---```
+---
+---Update texture 2nd array page with loaded texture from png
+---
+---```lua
+---	-- new_tex is resource handle of texture which was created via resource.create_resource
+---	local tex_path = "/bundle_resources/page_02.png"
+---	local data = sys.load_resource(tex_path)
+---	local buf = image.load_buffer(data)
+---	resource.set_texture(new_tex, {
+---		type = graphics.TEXTURE_TYPE_2D_ARRAY,
+---		width = buf.width,
+---		height = buf.height,
+---		page = 1,
+---		format = graphics.TEXTURE_FORMAT_RGB
+---	}, buf.buffer)
+---	go.set("#mesh", "texture0", new_tex)
+---```
+---@param path hash|string The path to the resource
+---@param table resource.texture_update_params texture update parameters
+---@param buffer buffer_data The buffer of precreated pixel data  To update a cube map texture you need to pass in six times the amount of data via the buffer, since a cube map has six sides!  3D textures are currently only supported on OpenGL and Vulkan adapters.
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.set_texture:path-table-buffer)
+function resource.set_texture(path, table, buffer) end
+
+---Constructor-like function with two purposes:
+---
+---- Load the specified resource as part of loading the script
+---- Create a resource reference that resolves to the hashed path of the run-time resource
+---
+---This function can only be called within `go.property` function calls.
+---
+---**Examples:**
+---
+---Load a texture and set it to a model:
+---
+---```lua
+---go.property("my_texture", resource.texture("/texture.png"))
+---function init(self)
+---  go.set("#model", "texture0", self.my_texture)
+---end
+---```
+---@param path? string optional resource path string to the resource
+---@return resource_data resource a reference to the binary version of the resource
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.texture:path)
+function resource.texture(path) end
+
+---Constructor-like function with two purposes:
+---
+---- Load the specified resource as part of loading the script
+---- Create a resource reference that resolves to the hashed path of the run-time resource
+---
+---This function can only be called within `go.property` function calls.
+---
+---**Examples:**
+---
+---Load tile source and set it to a tile map:
+---
+---```lua
+---go.property("my_tile_source", resource.tile_source("/tilesource.tilesource"))
+---function init(self)
+---  go.set("#tilemap", "tile_source", self.my_tile_source)
+---end
+---```
+---@param path? string optional resource path string to the resource
+---@return resource_data resource a reference to the binary version of the resource
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.tile_source:path)
+function resource.tile_source(path) end

@@ -1,6 +1,6 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { type ApiModule, parseDefoldApiDoc } from "../src/api-doc";
 import { DEFOLD_TYPE_MAP } from "../src/core-types";
 import { parseScriptApi } from "../src/script-api";
@@ -404,6 +404,21 @@ export function extractFixtures(
   });
 }
 
+// Since 1.13.2 the ref-doc zip ships LuaLS annotation files beside the JSON:
+// `doc/<namespace>.lua` for the game runtime and `doc/<namespace>.editor_script`
+// for the editor VM. They are vendored verbatim, never parsed at sync time.
+const ANNOTATION_ENTRY = /^doc\/([^/]+\.(?:lua|editor_script))$/;
+
+export function extractAnnotationFixtures(zip: ZipAccessor): ExtractedFixture[] {
+  const out: ExtractedFixture[] = [];
+  for (const zipEntry of [...zip.entries()].sort()) {
+    const file = ANNOTATION_ENTRY.exec(zipEntry)?.[1];
+    if (file === undefined) continue;
+    out.push({ namespace: file, fixture: `annotations/${file}`, contents: zip.read(zipEntry) });
+  }
+  return out;
+}
+
 export type FixtureSyncStatus = "clean" | "drift" | "created";
 
 export interface FixtureSyncResult {
@@ -442,7 +457,8 @@ export function syncFixtures(zip: ZipAccessor, options: SyncOptions = {}): Fixtu
 
 // Compare/write a set of already-extracted fixtures against disk. Shared by
 // the core (zip) and extension (`.script_api`) sync paths so both honor the
-// identical created/clean/drift + format-on-write semantics.
+// identical created/clean/drift + format-on-write semantics. A non-JSON fixture
+// (a vendored annotation file) compares and writes byte-for-byte.
 export function syncExtractedFixtures(
   items: readonly ExtractedFixture[],
   options: Omit<SyncOptions, "manifest"> = {},
@@ -453,15 +469,21 @@ export function syncExtractedFixtures(
   const results: FixtureSyncResult[] = [];
   for (const item of items) {
     const path = resolve(root, item.fixture);
+    const json = item.fixture.endsWith(".json");
     const existing = readFixtureOrNull(path);
     const status: FixtureSyncStatus =
       existing === null
         ? "created"
-        : canonicalJson(existing) === canonicalJson(item.contents)
+        : (
+              json
+                ? canonicalJson(existing) === canonicalJson(item.contents)
+                : existing === item.contents
+            )
           ? "clean"
           : "drift";
     if (!check && status !== "clean") {
-      writeFileSync(path, format(item.contents));
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, json ? format(item.contents) : item.contents);
     }
     results.push({ namespace: item.namespace, fixture: item.fixture, status });
   }
@@ -641,11 +663,16 @@ if (import.meta.main) {
   const luaStdlibFixtures = extractFixtures(zip, LUA_STDLIB_MANIFEST);
   const editorFixtures = extractFixtures(zip, EDITOR_MANIFEST);
   const editorVmFixtures = extractFixtures(zip, EDITOR_VM_MANIFEST);
+  const annotationFixtures = extractAnnotationFixtures(zip);
   const results = [
     ...syncExtractedFixtures(coreFixtures, { check }),
     ...syncExtractedFixtures(luaStdlibFixtures, { check }),
     ...syncExtractedFixtures(editorFixtures, { check }),
     ...syncExtractedFixtures(editorVmFixtures, { check }),
+    ...syncExtractedFixtures(annotationFixtures, {
+      check,
+      fixturesRoot: resolve(PACKAGE_ROOT, `fixtures/defold-${DEFOLD_VERSION}`),
+    }),
   ];
   const syncedDocs = coreFixtures.map((f) => ({
     namespace: f.namespace,
