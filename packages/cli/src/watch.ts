@@ -17,6 +17,8 @@ import { mapConsoleLine } from "./console-source-map";
 import {
   type CommandAnswer,
   type CommandResult,
+  type CompileAnswer,
+  compileInEditor,
   consoleLines,
   consoleWatermark,
   type EditorEndpoint,
@@ -64,12 +66,19 @@ export interface WatchEditorClient {
     endpoint: EditorEndpoint,
     signal?: AbortSignal,
   ): Promise<AsyncIterable<string> | null>;
+  /**
+   * Asks the editor to compile the project. Optional for the same reason as
+   * `openConsole`: only `build --editor-compile` calls it, and a client without
+   * it reads as no editor.
+   */
+  compile?(cwd: string, signal?: AbortSignal): Promise<CompileAnswer>;
 }
 
 export function createWatchEditorClient(transport?: EditorTransport): WatchEditorClient {
   return {
     resolve: (cwd, signal) => resolveEditor(cwd, transport, signal),
     postCommand: (cwd, name, signal) => postCommand(cwd, name, transport, signal),
+    compile: (cwd, signal) => compileInEditor(cwd, transport, signal),
     async openConsole(endpoint, signal) {
       // The watermark is read before the stream opens: /console/stream replays
       // the whole session, so without it every attach reprints history as news.

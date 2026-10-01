@@ -250,6 +250,32 @@ export function editorIssues(result: CommandResult | null): readonly EditorIssue
 }
 
 /**
+ * `null` for no editor: no port file, or a transport that threw. Otherwise the
+ * status, plus the parsed `{ success, issues }` body for a finished command
+ * (200 or 422), which every caller reads the same way.
+ */
+async function sendCommand(
+  cwd: string,
+  name: string,
+  transport: EditorTransport,
+  signal: AbortSignal | undefined,
+): Promise<{ readonly status: number; readonly result: CommandResult | null } | null> {
+  const port = readEditorPort(cwd);
+  if (port === null) return null;
+  try {
+    const res = await transport(`http://localhost:${port}/command/${name}`, {
+      method: "POST",
+      signal,
+    });
+    if (res.status !== 200 && res.status !== 422) return { status: res.status, result: null };
+    const body = await res.text().catch(() => "");
+    return { status: res.status, result: parseCommandResult(body) };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Posts `/command/<name>`. The port is re-read per call and never memoized: a
  * restarted editor gets a new random port, and a cached one would post into a
  * dead socket or another project's editor.
@@ -264,23 +290,45 @@ export async function postCommand(
   transport: EditorTransport = defaultTransport,
   signal?: AbortSignal,
 ): Promise<CommandAnswer> {
-  const port = readEditorPort(cwd);
-  if (port === null) return { outcome: "unavailable", result: null };
-  try {
-    const res = await transport(`http://localhost:${port}/command/${name}`, {
-      method: "POST",
-      signal,
-    });
-    if (res.status === 200 || res.status === 422) {
-      const body = await res.text().catch(() => "");
-      return { outcome: "accepted", result: parseCommandResult(body) };
-    }
-    if (res.status === 202) return { outcome: "accepted", result: null };
-    if (res.status === 403) return { outcome: "skipped", result: null };
-    return { outcome: "unavailable", result: null };
-  } catch {
-    return { outcome: "unavailable", result: null };
-  }
+  const sent = await sendCommand(cwd, name, transport, signal);
+  if (sent === null) return { outcome: "unavailable", result: null };
+  if (sent.status === 200 || sent.status === 422)
+    return { outcome: "accepted", result: sent.result };
+  if (sent.status === 202) return { outcome: "accepted", result: null };
+  if (sent.status === 403) return { outcome: "skipped", result: null };
+  return { outcome: "unavailable", result: null };
+}
+
+/**
+ * `unsupported` is an editor that answered but has no `/command/compile` --
+ * anything before Defold 1.13.2 answers 404. It is kept apart from
+ * `unavailable` because the fix differs: upgrade the editor, not open one.
+ */
+export type CompileOutcome = "compiled" | "unsupported" | "skipped" | "unavailable";
+
+export interface CompileAnswer {
+  readonly outcome: CompileOutcome;
+  /** `null` unless the editor finished the compile and its body parsed. */
+  readonly result: CommandResult | null;
+}
+
+/**
+ * Asks the attached editor to compile the project without running it. The post
+ * has no deadline: 1.13.2 answers only once the compile has finished, however
+ * long a large project takes.
+ */
+export async function compileInEditor(
+  cwd: string,
+  transport: EditorTransport = defaultTransport,
+  signal?: AbortSignal,
+): Promise<CompileAnswer> {
+  const sent = await sendCommand(cwd, "compile", transport, signal);
+  if (sent === null) return { outcome: "unavailable", result: null };
+  if (sent.status === 200 || sent.status === 422)
+    return { outcome: "compiled", result: sent.result };
+  if (sent.status === 404) return { outcome: "unsupported", result: null };
+  if (sent.status === 403) return { outcome: "skipped", result: null };
+  return { outcome: "unavailable", result: null };
 }
 
 export function hotReload(
