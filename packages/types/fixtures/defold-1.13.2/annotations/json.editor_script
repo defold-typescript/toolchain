@@ -1,0 +1,26 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---@class defold_api.json
+json = {}
+
+---Decode JSON string to Lua value
+---@param json string json data
+---@param options? json.decode.options decoding options
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#json.decode:json-options)
+function json.decode(json, options) end
+
+---Encode Lua value to JSON string
+---@param value any any Lua value that may be represented as JSON
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#json.encode:value)
+function json.encode(value) end

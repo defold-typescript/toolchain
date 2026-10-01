@@ -1,0 +1,3399 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---An opaque handle to the native Box2D body of a collision-object component.
+---Obtain it with `b2d.get_body` and pass it to functions in `b2d.body`.
+---The collision object owns the body, so the handle becomes invalid when its
+---component or game object is deleted.
+---
+---**Examples:**
+---
+---```lua
+---local body = b2d.get_body("#collisionobject")
+---if body then
+---    print(b2d.body.get_position(body))
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2Body)
+---@alias b2Body userdata
+---An opaque handle to a chain of connected segment shapes attached to a
+---`b2Body`. Create one with `b2d.body.create_chain`, use the functions
+---in `b2d.chain` to inspect or configure it, and release it with
+---`b2d.chain.destroy`. Destroying its body also destroys the chain.
+---
+---**Examples:**
+---
+---```lua
+---local body = b2d.get_body("#collisionobject")
+---local chain = b2d.body.create_chain(body, {
+---    vertices = {
+---        vmath.vector3(-64, 0, 0),
+---        vmath.vector3(0, 16, 0),
+---        vmath.vector3(64, 0, 0),
+---    },
+---})
+---print(b2d.chain.get_segment_count(chain))
+---```
+---
+---[Open in Browser](https://defold.com/ref/b2d.chain-lua#b2Chain)
+---@alias b2Chain userdata
+---An opaque handle connecting two `b2Body` values. Create one with a
+---function such as `b2d.joint.create_distance`, use the functions in
+---`b2d.joint` to inspect or configure it, and release it with
+---`b2d.joint.destroy`. Joints are also destroyed when either connected body
+---or its physics world is destroyed.
+---
+---**Examples:**
+---
+---```lua
+---local body_a = b2d.get_body("#collisionobject_a")
+---local body_b = b2d.get_body("#collisionobject_b")
+---local joint = b2d.joint.create_distance(body_a, body_b)
+---print(b2d.joint.get_type(joint))
+---```
+---
+---[Open in Browser](https://defold.com/ref/b2d.joint-lua#b2Joint)
+---@alias b2Joint userdata
+---An opaque handle to one collision shape attached to a `b2Body`. Obtain
+---shape handles from `b2d.body.get_shapes` or when creating shapes, then use
+---the functions in `b2d.shape` to inspect or modify them. A shape is owned by its
+---body and its handle becomes invalid when the shape or body is destroyed.
+---
+---**Examples:**
+---
+---```lua
+---local body = b2d.get_body("#collisionobject")
+---local shapes = b2d.body.get_shapes(body)
+---local shape = shapes[1].shape_id
+---pprint(b2d.shape.get_shape(shape))
+---```
+---
+---[Open in Browser](https://defold.com/ref/b2d.shape-lua#b2Shape)
+---@alias b2Shape userdata
+---An opaque handle to the Box2D physics world owned by the current collection.
+---Obtain it with `b2d.get_world` and pass it to functions in `b2d.world`.
+---The engine creates and destroys the world together with the collection; it
+---cannot be constructed directly from Lua.
+---
+---**Examples:**
+---
+---```lua
+---local world = b2d.get_world()
+---if world then
+---    pprint(world)
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2World)
+---@alias b2World userdata
+---The optional definition passed to `b2d.joint.create_filter`. Filter joints
+---currently have no configurable fields, so omit the argument or pass an empty
+---table. The type is reserved for future options.
+---
+---**Examples:**
+---
+---```lua
+---local body_a = b2d.get_body("#collisionobject_a")
+---local body_b = b2d.get_body("#collisionobject_b")
+---local joint = b2d.joint.create_filter(body_a, body_b, {})
+---```
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.filter_definition)
+---@alias b2d.joint.filter_definition {}
+---A reusable table describing Box2D shape geometry. It is accepted by shape
+---creation, query, cast, and update functions, and is returned by
+---`b2d.shape.get_shape` or `b2d.fixture.get_shape`. Available fields
+---depend on `type`:
+---
+---- Circle: `radius` and optional `center`.
+---- Capsule: `radius`, `center1`, and `center2`.
+---- Edge or segment: `v1`, `v2`, and optional ghost vertices `v0` and `v3`.
+---- Box: half-extents `hx` and `hy`, with optional `center` and `angle` in radians.
+---- Polygon: `vertices`.
+---- Chain: `vertices`, with optional loop and ghost-vertex fields.
+---
+---The union covers both supported Box2D runtime versions; some shape types are
+---only available with one version.
+---
+---**Examples:**
+---
+---```lua
+---local circle = {
+---    type = b2d.shape.SHAPE_TYPE_CIRCLE,
+---    radius = 16,
+---    center = vmath.vector3(0, 8, 0),
+---}
+---
+---local box = {
+---    type = b2d.shape.SHAPE_TYPE_BOX,
+---    hx = 32,
+---    hy = 8,
+---    angle = math.rad(15),
+---}
+---```
+---
+---[Open in Browser](https://defold.com/ref/b2d.shape-lua#b2d.shape.definition)
+---@alias b2d.shape.definition { type:b2d.shape.SHAPE_TYPE, radius:number, center?:vector3 }|{ type:b2d.shape.SHAPE_TYPE, radius:number, center1:vector3, center2:vector3 }|{ type:b2d.shape.SHAPE_TYPE, v1:vector3, v2:vector3, v0?:vector3, v3?:vector3 }|{ type:b2d.shape.SHAPE_TYPE, hx:number, hy:number, center?:vector3, angle?:number }|{ type:b2d.shape.SHAPE_TYPE, vertices:vector3[], loop?:boolean, prev_vertex?:vector3, next_vertex?:vector3 }
+---Geometry and material properties accepted by `b2d.body.create_shape`. The
+---geometry can be supplied in the `shape` field as a `b2d.shape.definition`,
+---or its fields can be placed directly in this table. Material properties such
+---as `density`, `friction`, `restitution`, and `filter` are optional.
+---
+---**Examples:**
+---
+---Create a circular shape using an inline geometry definition:
+---
+---```lua
+---local body = b2d.get_body("#collisionobject")
+---local shape = b2d.body.create_shape(body, {
+---    type = b2d.shape.SHAPE_TYPE_CIRCLE,
+---    radius = 16,
+---    density = 1,
+---    friction = 0.4,
+---})
+---```
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.shape_create_definition)
+---@alias b2d.shape_create_definition { shape:b2d.shape.definition, density?:number, friction?:number, restitution?:number, material?:integer, sensor?:boolean, is_sensor?:boolean, filter?:b2d.filter }|{ type:b2d.shape.SHAPE_TYPE, radius?:number, center?:vector3, center1?:vector3, center2?:vector3, v0?:vector3, v1?:vector3, v2?:vector3, v3?:vector3, hx?:number, hy?:number, angle?:number, vertices?:vector3[], density?:number, friction?:number, restitution?:number, material?:integer, sensor?:boolean, is_sensor?:boolean, filter?:b2d.filter }
+---Bullet collision object
+---
+---[Open in Browser](https://defold.com/ref/bullet3d-lua#btCollisionObject)
+---@alias btCollisionObject userdata
+---Shape handles identify logical child slots and resolve the current native
+---shape on every call.
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.shape-lua#btCollisionShape)
+---@alias btCollisionShape userdata
+---Bullet dynamics world
+---
+---[Open in Browser](https://defold.com/ref/bullet3d-lua#btDiscreteDynamicsWorld)
+---@alias btDiscreteDynamicsWorld userdata
+---Rigid bodies use the same Lua userdata representation as collision objects,
+---but rigid-body functions validate the native type before upcasting it.
+---
+---[Open in Browser](https://defold.com/ref/bullet3d-lua#btRigidBody)
+---@alias btRigidBody userdata
+---Bullet typed constraint
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.constraint-lua#btTypedConstraint)
+---@alias btTypedConstraint userdata
+---A buffer stores one or more named streams of typed values. Create a buffer
+---with `buffer.create`, or obtain one from APIs such as
+---`resource.get_buffer`, `sys.load_buffer`, or `image.load`. Use
+---`buffer.get_stream` to access the values in an individual stream.
+---
+---**Examples:**
+---
+---```lua
+---local vertices = buffer.create(3, {
+---    { name = hash("position"), type = buffer.VALUE_TYPE_FLOAT32, count = 3 }
+---})
+---```
+---
+---[Open in Browser](https://defold.com/ref/buffer-lua#buffer_data)
+---@alias buffer_data userdata
+---An indexable view of one named stream in a `buffer_data`. Obtain a
+---stream with `buffer.get_stream`. Reading or writing the stream accesses
+---the values in its underlying buffer.
+---
+---**Examples:**
+---
+---```lua
+---local vertices = buffer.create(1, {
+---    { name = hash("position"), type = buffer.VALUE_TYPE_FLOAT32, count = 3 }
+---})
+---local positions = buffer.get_stream(vertices, "position")
+---positions[1] = 10
+---positions[2] = 20
+---positions[3] = 0
+---```
+---
+---[Open in Browser](https://defold.com/ref/buffer-lua#buffer_stream)
+---@alias buffer_stream userdata
+---A sphere has `diameter`; a box has `dimensions`; a capsule has `diameter`
+---and cylindrical-section `height`; and a convex hull has `vertices`.
+---Query functions also accept optional `position`, `rotation`, and
+---`target_rotation` fields. Lengths use Defold units.
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.shape-lua#bullet3d.shape.definition)
+---@alias bullet3d.shape.definition { type:bullet3d.shape.SHAPE_TYPE, diameter:number, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }|{ type:bullet3d.shape.SHAPE_TYPE, dimensions:vector3, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }|{ type:bullet3d.shape.SHAPE_TYPE, diameter:number, height:number, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }|{ type:bullet3d.shape.SHAPE_TYPE, vertices:vector3[], position?:vector3, rotation?:quaternion, target_rotation?:quaternion }
+---The runtime message uses numeric modes rather than exported Lua constants:
+---0 updates continuously and 1 updates in discrete steps.
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#collectionproxy.TIME_STEP_MODE)
+---@alias collectionproxy.TIME_STEP_MODE 0|1
+---A mutable collection of shader constants created with
+---`render.constant_buffer`. Assign constants by name using `vector4`
+---or `matrix4` values, or arrays of those values, then pass the buffer in
+---the `constants` option to `render.draw`. Constant buffers are Lua
+---userdata and cannot be iterated with `pairs()` or `ipairs()`.
+---
+---**Examples:**
+---
+---```lua
+---local constants = render.constant_buffer()
+---constants.tint = vmath.vector4(1, 0.5, 0.5, 1)
+---render.draw(self.model_predicate, { constants = constants })
+---```
+---
+---[Open in Browser](https://defold.com/ref/render-lua#constant_buffer)
+---@alias constant_buffer userdata
+---An integer index identifying one of the 32 user-defined fields stored in a
+---crash dump. Valid indices are 0 through 31. Each field stores a string of at
+---most `crash.USERFIELD_SIZE` bytes; longer strings are truncated.
+---
+---**Examples:**
+---
+---```lua
+---crash.set_user_field(0, "level=forest")
+---crash.set_user_field(1, "checkpoint=3")
+---```
+---
+---[Open in Browser](https://defold.com/ref/crash-lua#crash.USERFIELD)
+---@alias crash.USERFIELD integer
+---The value of a user constant returned in a `material.constant_info`
+---entry by `material.get_constants`. A scalar constant is returned as a
+---`vector4` or `matrix4`; a shader constant array is returned as an
+---array of those values. Non-user constants do not include a `value` field.
+---
+---**Examples:**
+---
+---```lua
+---for _, constant in ipairs(material.get_constants(self.material)) do
+---    if constant.value then
+---        pprint(constant.name, constant.value)
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/material-lua#material.constant_info_value)
+---@alias material.constant_info_value vector4|matrix4|vector4[]|matrix4[]
+---A value accepted by `material.set_constants` when updating a shader
+---constant. Use a number or vector for user vector constants, a `matrix4`
+---for matrix constants, and an array to update a shader constant array.
+---
+---**Examples:**
+---
+---```lua
+---material.set_constants(self.material, {
+---    tint = { value = vmath.vector4(1, 0.5, 0.5, 1) },
+---    weights = { value = { 0.25, 0.5, 0.75, 1 } }
+---})
+---```
+---
+---[Open in Browser](https://defold.com/ref/material-lua#material.constant_value)
+---@alias material.constant_value number|vector3|vector4|matrix4|(number|vector3|vector4|matrix4)[]
+---A vertex attribute value accepted by `material.set_vertex_attributes`
+---and returned by `material.get_vertex_attributes`. Use a number or vector
+---for scalar and vector attributes, `matrix4` for a 4x4 matrix, and a flat
+---array of numbers for matrix shapes that do not map to `matrix4`.
+---
+---**Examples:**
+---
+---```lua
+---material.set_vertex_attributes(self.material, {
+---    tint = { value = vmath.vector4(1, 0, 0, 1) },
+---    transform_2d = { value = { 1, 0, 0, 0, 1, 0, 0, 0, 1 } }
+---})
+---```
+---
+---[Open in Browser](https://defold.com/ref/material-lua#material.vertex_attribute_value)
+---@alias material.vertex_attribute_value number|vector3|vector4|matrix4|number[]
+---An opaque handle to a node in the current GUI scene. Obtain a node with
+---`gui.get_node`, create one with a `gui.new_*_node` function, or clone an
+---existing node. A handle becomes invalid when its node is deleted.
+---
+---**Examples:**
+---
+---```lua
+---local health_bar = gui.get_node("health_bar")
+---gui.set_color(health_bar, vmath.vector4(1, 0, 0, 1))
+---
+---local marker = gui.new_box_node(vmath.vector3(100, 100, 0), vmath.vector3(16, 16, 0))
+---```
+---
+---[Open in Browser](https://defold.com/ref/gui-lua#node)
+---@alias node userdata
+---An event delivered to a physics world listener. Inspect its `type` field to
+---determine which event-specific fields are available.
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#physics.event)
+---@alias physics.event message.physics.contact_point_event|message.physics.collision_event|message.physics.trigger_event|message.physics.ray_cast_response|message.physics.ray_cast_missed
+---`sample_count` defaults to 1 and is normalized by the graphics adapter to
+---a supported power-of-two value.
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.render_target_params)
+---@alias render.render_target_params { sample_count?:integer, [graphics.BUFFER_TYPE]:render.render_target_buffer_params }
+---An opaque filter that selects renderable objects by material tag. Create a
+---predicate with `render.predicate` and pass it to `render.draw`. When
+---multiple tags are supplied, an object's material must contain all of them.
+---Predicates are intended for use in render scripts.
+---
+---**Examples:**
+---
+---```lua
+---local opaque = render.predicate({ "opaque" })
+---render.draw(opaque)
+---```
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render_predicate)
+---@alias render_predicate userdata
+---An opaque graphics handle identifying an off-screen render target. Create
+---one with `render.render_target`, draw into it with
+---`render.set_render_target`, and release dynamically created targets with
+---`render.delete_render_target`. A render-target resource handle can also
+---be obtained from `resource.get_render_target_info`.
+---
+---**Examples:**
+---
+---```lua
+---function init(self)
+---    local color_params = {
+---        format = graphics.TEXTURE_FORMAT_RGBA,
+---        width = 320,
+---        height = 180,
+---    }
+---    self.target = render.render_target({
+---        [graphics.BUFFER_TYPE_COLOR0_BIT] = color_params,
+---    })
+---end
+---
+---function update(self)
+---    if not self.target then
+---        return
+---    end
+---    render.set_render_target(self.target)
+---    -- Draw off-screen content here.
+---    render.set_render_target(render.RENDER_TARGET_DEFAULT)
+---end
+---
+---function on_message(self, message_id)
+---    if message_id == hash("release_render_target") and self.target then
+---        render.delete_render_target(self.target)
+---        self.target = nil
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render_target)
+---@alias render_target number
+---An opaque declaration-time reference to a Defold resource. Resource references
+---are created by functions such as `resource.atlas`, `resource.font`, and
+---`resource.material`. They can only be used as default values passed to
+---`go.property`.
+---
+---The referenced resource is loaded together with the script. At runtime, the
+---property contains the hashed path of the compiled resource.
+---
+---**Examples:**
+---
+---```lua
+---go.property("player_atlas", resource.atlas("/main/player.atlas"))
+---
+---function init(self)
+---    go.set("#sprite", "image", self.player_atlas)
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource_data)
+---@alias resource_data userdata
+---In addition to LuaSocket TCP and UDP objects, `socket.select()` accepts any
+---object that implements compatible `getfd` and `dirty` methods.
+---
+---**Examples:**
+---
+---Test whether a client can be read without blocking:
+---
+---```lua
+---local client = assert(socket.connect("127.0.0.1", 8000))
+---local readable = socket.select({ client }, {}, 0)
+---if #readable > 0 then
+---    local data = client:receive()
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/socket-lua#socket_selectable)
+---@alias socket_selectable socket_master|socket_client|socket_server|socket_connected|socket_unconnected|{ getfd:fun(self:any):integer, dirty:fun(self:any):boolean }
+---An opaque graphics handle identifying a texture. Texture handles are
+---returned by APIs such as `resource.get_texture_info`,
+---`material.get_textures`, and `compute.get_textures`. Pass a handle
+---to `render.enable_texture` to bind the texture in a render script. The
+---resource or render target that owns the texture controls its lifetime.
+---
+---**Examples:**
+---
+---```lua
+---local texture_info = resource.get_texture_info("/assets/logo.texturec")
+---local texture_handle = texture_info.handle
+---render.enable_texture("texture_sampler", texture_handle)
+---```
+---
+---[Open in Browser](https://defold.com/ref/render-lua#texture)
+---@alias texture number
+---An opaque numeric identifier returned by `timer.delay`. Pass it to
+---`timer.cancel`, `timer.trigger`, or `timer.get_info` to control
+---the timer. Timers are owned by the script that created them and are removed
+---automatically when the script is deleted. A failed creation returns
+---`timer.INVALID_TIMER_HANDLE`.
+---
+---**Examples:**
+---
+---```lua
+---local handle = timer.delay(1, true, function()
+---    print("tick")
+---end)
+---
+---timer.cancel(handle)
+---```
+---
+---[Open in Browser](https://defold.com/ref/timer-lua#timer_handle)
+---@alias timer_handle number
+---A vector containing an arbitrary number of floating-point values, created
+---with `vmath.vector`. Unlike `vector3` and `vector4`, its length
+---is determined by the table supplied to the constructor. Dynamically sized
+---vectors are primarily used to define custom animation easing curves.
+---
+---**Examples:**
+---
+---```lua
+---local easing = vmath.vector({ 0, 0.1, 0.8, 1 })
+---go.animate(".", "position.x", go.PLAYBACK_ONCE_FORWARD, 100, easing, 1)
+---```
+---
+---[Open in Browser](https://defold.com/ref/vmath-lua#vector)
+---@alias vector userdata
+
+---@class b2d.aabb
+---Box2D axis-aligned bounding box
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.aabb)
+---@field lower vector3 Lower bound.
+---@field upper vector3 Upper bound.
+
+---@class b2d.chain_definition
+---Box2D 3.x chain definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.chain_definition)
+---@field vertices vector3[] Chain vertices.
+---@field loop? boolean Whether the chain is closed.
+---@field prev_vertex? vector3 Ghost vertex preceding an open chain.
+---@field next_vertex? vector3 Ghost vertex following an open chain.
+---@field friction? number Segment friction.
+---@field restitution? number Segment restitution.
+---@field material? integer Segment material identifier.
+---@field filter? b2d.filter_options Collision filter fields to override.
+---@field enable_sensor_events? boolean Whether to enable sensor events.
+
+---@class b2d.chain_geometry
+---Box2D chain geometry
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.chain_geometry)
+---@field loop boolean Whether the chain is closed.
+---@field segment_count integer Number of chain segments.
+---@field vertices vector3[] Chain vertices.
+---@field prev_vertex? vector3 Ghost vertex preceding an open chain.
+---@field next_vertex? vector3 Ghost vertex following an open chain.
+
+---@class b2d.contact_data
+---Box2D contact data
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.contact_data)
+---@field shape_a b2d.shape_info First contact shape.
+---@field shape_b b2d.shape_info Second contact shape.
+---@field normal vector3 Contact normal.
+---@field rolling_impulse number Rolling resistance impulse.
+---@field point_count integer Number of manifold points.
+---@field points b2d.contact_point[] Contact manifold points.
+
+---@class b2d.contact_point
+---Box2D contact manifold point
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.contact_point)
+---@field point vector3 World contact point.
+---@field anchor_a vector3 Contact anchor on the first body.
+---@field anchor_b vector3 Contact anchor on the second body.
+---@field separation number Contact separation.
+---@field normal_impulse number Normal impulse.
+---@field tangent_impulse number Tangent impulse.
+---@field total_normal_impulse number Total normal impulse.
+---@field normal_velocity number Relative normal velocity.
+---@field id integer Contact point identifier.
+---@field persisted boolean Whether the point persisted from the previous step.
+
+---@class b2d.explosion_definition
+---Box2D explosion definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.explosion_definition)
+---@field position vector3 Explosion center.
+---@field radius number Explosion radius.
+---@field falloff number Distance over which the impulse falls off.
+---@field impulse_per_length number Impulse applied per unit length.
+---@field mask_bits? integer Optional collision mask.
+
+---@class b2d.filter
+---Box2D collision filter
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.filter)
+---@field category_bits integer Collision category bits.
+---@field mask_bits integer Collision mask bits.
+---@field group_index integer Collision group index.
+
+---@class b2d.filter_options
+---Partial Box2D collision filter
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.filter_options)
+---@field category_bits? integer Collision category bits.
+---@field mask_bits? integer Collision mask bits.
+---@field group_index? integer Collision group index.
+
+---@class b2d.fixture_cast_hit
+---Box2D 2.x cast hit
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.fixture_cast_hit)
+---@field fixture b2d.fixture_info Hit fixture.
+---@field shape b2d.fixture_info Hit fixture child shape.
+---@field point vector3 Hit point.
+---@field normal vector3 Hit normal.
+---@field fraction number Hit fraction.
+---@field node_visits? integer Number of tree nodes visited by a closest query.
+---@field leaf_visits? integer Number of tree leaves visited by a closest query.
+
+---@class b2d.fixture_definition
+---Box2D 2.x fixture definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.fixture_definition)
+---@field shape b2d.shape.definition Shape definition.
+---@field friction? number Fixture friction.
+---@field restitution? number Fixture restitution.
+---@field density? number Fixture density.
+---@field sensor? boolean Whether the fixture is a sensor.
+---@field is_sensor? boolean Alias for `sensor`.
+---@field filter? b2d.filter Collision filter.
+
+---@class b2d.fixture_info
+---Box2D 2.x fixture information
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.fixture_info)
+---@field body? b2Body Owning body, when returned from a world query.
+---@field index integer Fixture index on the body.
+---@field child_index? integer Child-shape index, when returned from a world query.
+---@field type b2d.shape.SHAPE_TYPE Shape type.
+---@field sensor boolean Whether the fixture is a sensor.
+---@field density number Fixture density.
+---@field friction number Fixture friction.
+---@field restitution number Fixture restitution.
+---@field child_count integer Number of child shapes.
+
+---@class b2d.joint.distance_definition
+---Box2D distance-joint definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.distance_definition)
+---@field local_anchor_a? vector3 Local anchor on the first body.
+---@field local_anchor_b? vector3 Local anchor on the second body.
+---@field length? number Rest length.
+---@field min_length? number Minimum length.
+---@field max_length? number Maximum length.
+---@field enable_spring? boolean Whether the spring is enabled.
+---@field hertz? number Spring frequency in hertz.
+---@field frequency? number Legacy spring frequency alias.
+---@field damping_ratio? number Spring damping ratio.
+---@field damping? number Legacy spring damping-ratio alias.
+---@field enable_limit? boolean Whether length limits are enabled.
+---@field enable_motor? boolean Whether the motor is enabled.
+---@field max_motor_force? number Maximum motor force.
+---@field motor_speed? number Motor speed.
+---@field collide_connected? boolean Whether connected bodies collide.
+
+---@class b2d.joint.friction_definition
+---Box2D friction-joint definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.friction_definition)
+---@field local_anchor_a? vector3 Local anchor on the first body.
+---@field local_anchor_b? vector3 Local anchor on the second body.
+---@field max_force? number Maximum friction force.
+---@field max_torque? number Maximum friction torque.
+---@field collide_connected? boolean Whether connected bodies collide.
+
+---@class b2d.joint.gear_definition
+---Box2D gear-joint definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.gear_definition)
+---@field ratio? number Gear ratio.
+---@field collide_connected? boolean Whether connected bodies collide.
+
+---@class b2d.joint.motor_definition
+---Box2D motor-joint definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.motor_definition)
+---@field linear_offset? vector3 Linear target offset.
+---@field angular_offset? number Angular target offset.
+---@field max_force? number Maximum motor force.
+---@field max_torque? number Maximum motor torque.
+---@field correction_factor? number Position correction factor.
+---@field collide_connected? boolean Whether connected bodies collide.
+
+---@class b2d.joint.mouse_definition
+---Box2D mouse-joint definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.mouse_definition)
+---@field target? vector3 Target position.
+---@field max_force? number Maximum force.
+---@field hertz? number Spring frequency in hertz.
+---@field frequency? number Legacy spring frequency alias.
+---@field damping_ratio? number Spring damping ratio.
+---@field damping? number Legacy spring damping-ratio alias.
+---@field collide_connected? boolean Whether connected bodies collide.
+
+---@class b2d.joint.prismatic_definition
+---Box2D prismatic-joint definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.prismatic_definition)
+---@field local_anchor_a? vector3 Local anchor on the first body.
+---@field local_anchor_b? vector3 Local anchor on the second body.
+---@field local_axis_a? vector3 Local translation axis on the first body.
+---@field reference_angle? number Reference angle.
+---@field enable_spring? boolean Whether the spring is enabled.
+---@field hertz? number Spring frequency in hertz.
+---@field frequency? number Legacy spring frequency alias.
+---@field damping_ratio? number Spring damping ratio.
+---@field damping? number Legacy spring damping-ratio alias.
+---@field enable_limit? boolean Whether translation limits are enabled.
+---@field lower_translation? number Lower translation limit.
+---@field upper_translation? number Upper translation limit.
+---@field enable_motor? boolean Whether the motor is enabled.
+---@field max_motor_force? number Maximum motor force.
+---@field motor_speed? number Motor speed.
+---@field collide_connected? boolean Whether connected bodies collide.
+
+---@class b2d.joint.pulley_definition
+---Box2D pulley-joint definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.pulley_definition)
+---@field ground_anchor_a? vector3 First ground anchor.
+---@field ground_anchor_b? vector3 Second ground anchor.
+---@field local_anchor_a? vector3 Local anchor on the first body.
+---@field local_anchor_b? vector3 Local anchor on the second body.
+---@field length_a? number First segment length.
+---@field length_b? number Second segment length.
+---@field ratio? number Pulley ratio.
+---@field collide_connected? boolean Whether connected bodies collide.
+
+---@class b2d.joint.revolute_definition
+---Box2D revolute-joint definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.revolute_definition)
+---@field local_anchor_a? vector3 Local anchor on the first body.
+---@field local_anchor_b? vector3 Local anchor on the second body.
+---@field reference_angle? number Reference angle.
+---@field enable_spring? boolean Whether the spring is enabled.
+---@field hertz? number Spring frequency in hertz.
+---@field frequency? number Legacy spring frequency alias.
+---@field damping_ratio? number Spring damping ratio.
+---@field damping? number Legacy spring damping-ratio alias.
+---@field enable_limit? boolean Whether angular limits are enabled.
+---@field lower_angle? number Lower angular limit.
+---@field upper_angle? number Upper angular limit.
+---@field enable_motor? boolean Whether the motor is enabled.
+---@field max_motor_torque? number Maximum motor torque.
+---@field motor_speed? number Motor speed.
+---@field collide_connected? boolean Whether connected bodies collide.
+
+---@class b2d.joint.rope_definition
+---Box2D rope-joint definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.rope_definition)
+---@field local_anchor_a? vector3 Local anchor on the first body.
+---@field local_anchor_b? vector3 Local anchor on the second body.
+---@field max_length? number Maximum rope length.
+---@field collide_connected? boolean Whether connected bodies collide.
+
+---@class b2d.joint.weld_definition
+---Box2D weld-joint definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.weld_definition)
+---@field local_anchor_a? vector3 Local anchor on the first body.
+---@field local_anchor_b? vector3 Local anchor on the second body.
+---@field reference_angle? number Reference angle.
+---@field hertz? number Legacy spring frequency in hertz.
+---@field frequency? number Legacy spring frequency.
+---@field damping_ratio? number Legacy spring damping ratio.
+---@field damping? number Legacy spring damping-ratio alias.
+---@field linear_hertz? number Linear spring frequency in hertz.
+---@field angular_hertz? number Angular spring frequency in hertz.
+---@field linear_damping_ratio? number Linear damping ratio.
+---@field angular_damping_ratio? number Angular damping ratio.
+---@field collide_connected? boolean Whether connected bodies collide.
+
+---@class b2d.joint.wheel_definition
+---Box2D wheel-joint definition
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.joint.wheel_definition)
+---@field local_anchor_a? vector3 Local anchor on the first body.
+---@field local_anchor_b? vector3 Local anchor on the second body.
+---@field local_axis_a? vector3 Local suspension axis on the first body.
+---@field enable_spring? boolean Whether the spring is enabled.
+---@field hertz? number Spring frequency in hertz.
+---@field frequency? number Legacy spring frequency alias.
+---@field damping_ratio? number Spring damping ratio.
+---@field damping? number Legacy spring damping-ratio alias.
+---@field enable_limit? boolean Whether translation limits are enabled.
+---@field lower_translation? number Lower translation limit.
+---@field upper_translation? number Upper translation limit.
+---@field enable_motor? boolean Whether the motor is enabled.
+---@field max_motor_torque? number Maximum motor torque.
+---@field motor_speed? number Motor speed.
+---@field collide_connected? boolean Whether connected bodies collide.
+
+---@class b2d.mass_data
+---Mass properties for a Box2D body or shape.
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.mass_data)
+---@field mass number Body mass, usually in kilograms.
+---@field center vector3 Local center of mass.
+---@field inertia number Rotational inertia about the local origin.
+
+---@class b2d.mover_capsule
+---Box2D mover capsule
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.mover_capsule)
+---@field center1 vector3 First capsule center.
+---@field center2 vector3 Second capsule center.
+---@field radius number Capsule radius.
+
+---@class b2d.mover_plane
+---Box2D mover collision plane
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.mover_plane)
+---@field shape b2d.shape_info Colliding shape.
+---@field normal vector3 Plane normal.
+---@field offset number Plane offset.
+---@field hit boolean Whether the mover hit the plane.
+
+---@class b2d.query_filter
+---Box2D world-query filter
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.query_filter)
+---@field category_bits? integer Optional collision category bits.
+---@field mask_bits? integer Optional collision mask bits.
+---@field group_index? integer Optional collision group index. Supported by the Box2D 2.x backend.
+
+---@class b2d.shape_cast_hit
+---Box2D 3.x cast hit
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.shape_cast_hit)
+---@field shape b2d.shape_info Hit shape.
+---@field point vector3 Hit point.
+---@field normal vector3 Hit normal.
+---@field fraction number Hit fraction.
+---@field node_visits? integer Number of tree nodes visited by a closest query.
+---@field leaf_visits? integer Number of tree leaves visited by a closest query.
+
+---@class b2d.shape_cast_output
+---Direct Box2D shape cast result
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.shape_cast_output)
+---@field point vector3 Hit point.
+---@field normal vector3 Hit normal.
+---@field fraction number Hit fraction.
+---@field iterations integer Number of cast iterations.
+
+---@class b2d.shape_info
+---Box2D 3.x shape information
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.shape_info)
+---@field index integer Shape index on the body.
+---@field shape_id b2Shape Shape handle.
+---@field type b2d.shape.SHAPE_TYPE Shape type.
+---@field sensor boolean Whether the shape is a sensor.
+---@field density number Shape density.
+---@field friction number Shape friction.
+---@field restitution number Shape restitution.
+---@field material integer Shape material identifier.
+---@field child_count integer Number of child shapes.
+---@field is_chain_segment boolean Whether the shape belongs to a chain.
+
+---@class b2d.transform
+---World transform for a Box2D body.
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.transform)
+---@field position vector3 World position of the body origin.
+---@field angle number World rotation angle in radians.
+
+---@class b2d.tree_stats
+---Box2D broad-phase query statistics
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.tree_stats)
+---@field node_visits integer Number of tree nodes visited.
+---@field leaf_visits integer Number of tree leaves visited.
+
+---@class b2d.version_info
+---Box2D version information
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.version_info)
+---@field version string Full Box2D version string.
+---@field major integer Major version number.
+---@field middle integer Middle version number.
+---@field minor integer Minor version number.
+
+---@class b2d.world_counters
+---Box2D world counters
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.world_counters)
+---@field body_count integer Number of bodies.
+---@field shape_count integer Number of shapes.
+---@field contact_count integer Number of contacts.
+---@field joint_count integer Number of joints.
+---@field island_count integer Number of islands.
+---@field stack_used integer Stack bytes in use.
+---@field static_tree_height integer Static broad-phase tree height.
+---@field tree_height integer Dynamic broad-phase tree height.
+---@field byte_count integer Allocated byte count.
+---@field task_count integer Number of tasks.
+---@field color_counts integer[] Constraint graph color counts.
+
+---@class b2d.world_profile
+---Box2D world profiling data
+---
+---[Open in Browser](https://defold.com/ref/b2d-lua#b2d.world_profile)
+---@field step number Total step time.
+---@field pairs number Pair update time.
+---@field collide number Collision time.
+---@field solve number Solver time.
+---@field merge_islands number Island merge time.
+---@field prepare_stages number Stage preparation time.
+---@field solve_constraints number Constraint solver time.
+---@field prepare_constraints number Constraint preparation time.
+---@field integrate_velocities number Velocity integration time.
+---@field warm_start number Warm-start time.
+---@field solve_impulses number Impulse solver time.
+---@field integrate_positions number Position integration time.
+---@field relax_impulses number Impulse relaxation time.
+---@field apply_restitution number Restitution time.
+---@field store_impulses number Impulse storage time.
+---@field split_islands number Island splitting time.
+---@field transforms number Transform update time.
+---@field hit_events number Hit-event generation time.
+---@field refit number Tree refit time.
+---@field bullets number Bullet processing time.
+---@field sleep_islands number Island sleeping time.
+---@field sensors number Sensor processing time.
+
+---@class bullet3d.constraint.anchor_axes_params
+---Universal and hinge2 constraint parameters
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.constraint-lua#bullet3d.constraint.anchor_axes_params)
+---@field anchor vector3 world-space anchor
+---@field axis1 vector3 first non-zero world-space axis
+---@field axis2 vector3 second non-zero world-space axis, orthogonal to `axis1`
+---@field collide_connected? boolean whether connected bodies can collide; defaults to `false`
+
+---@class bullet3d.constraint.cone_twist_params
+---The frame-B fields are required for a two-body constraint.
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.constraint-lua#bullet3d.constraint.cone_twist_params)
+---@field frame_a_position vector3 local body-A frame position
+---@field frame_a_rotation quaternion local body-A frame rotation
+---@field frame_b_position? vector3 local body-B frame position
+---@field frame_b_rotation? quaternion local body-B frame rotation
+---@field angular_only? boolean whether to constrain angular motion only
+---@field collide_connected? boolean whether connected bodies can collide; defaults to `false`
+
+---@class bullet3d.constraint.generic_6dof_params
+---The frame-B fields are required for a two-body constraint.
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.constraint-lua#bullet3d.constraint.generic_6dof_params)
+---@field frame_a_position vector3 local body-A frame position
+---@field frame_a_rotation quaternion local body-A frame rotation
+---@field frame_b_position? vector3 local body-B frame position
+---@field frame_b_rotation? quaternion local body-B frame rotation
+---@field collide_connected? boolean whether connected bodies can collide; defaults to `false`
+
+---@class bullet3d.constraint.generic_6dof_spring_params
+---Generic spring 6-DOF constraint parameters
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.constraint-lua#bullet3d.constraint.generic_6dof_spring_params)
+---@field frame_a_position vector3 local body-A frame position
+---@field frame_a_rotation quaternion local body-A frame rotation
+---@field frame_b_position vector3 local body-B frame position
+---@field frame_b_rotation quaternion local body-B frame rotation
+---@field collide_connected? boolean whether connected bodies can collide; defaults to `false`
+
+---@class bullet3d.constraint.hinge_params
+---The frame-B fields are required for a two-body constraint.
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.constraint-lua#bullet3d.constraint.hinge_params)
+---@field frame_a_position vector3 local body-A frame position
+---@field frame_a_rotation quaternion local body-A frame rotation
+---@field frame_b_position? vector3 local body-B frame position
+---@field frame_b_rotation? quaternion local body-B frame rotation
+---@field use_reference_frame_a? boolean whether angular calculations reference frame A
+---@field angular_only? boolean whether to constrain angular motion only
+---@field collide_connected? boolean whether connected bodies can collide; defaults to `false`
+
+---@class bullet3d.constraint.point_to_point_params
+---`pivot_b` is required for a two-body constraint. For a one-body constraint,
+---it is an optional world-space anchor.
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.constraint-lua#bullet3d.constraint.point_to_point_params)
+---@field pivot_a vector3 local body-A pivot
+---@field pivot_b? vector3 local body-B pivot or world-space anchor
+---@field collide_connected? boolean whether connected bodies can collide; defaults to `false`
+
+---@class bullet3d.constraint.slider_params
+---The frame-B fields are required for a two-body constraint.
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.constraint-lua#bullet3d.constraint.slider_params)
+---@field frame_a_position vector3 local body-A frame position
+---@field frame_a_rotation quaternion local body-A frame rotation
+---@field frame_b_position? vector3 local body-B frame position
+---@field frame_b_rotation? quaternion local body-B frame rotation
+---@field use_linear_reference_frame_a? boolean whether linear calculations reference frame A
+---@field collide_connected? boolean whether connected bodies can collide; defaults to `false`
+
+---@class bullet3d.version_info
+---Bullet version information
+---
+---[Open in Browser](https://defold.com/ref/bullet3d-lua#bullet3d.version_info)
+---@field version string full Bullet version string
+---@field number integer compact numeric Bullet version
+---@field major integer major version number
+---@field minor integer minor version number
+
+---@class bullet3d.world.aabb
+---Bullet world axis-aligned bounding box
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.world-lua#bullet3d.world.aabb)
+---@field lower vector3 lower world-space bound in Defold units
+---@field upper vector3 upper world-space bound in Defold units
+
+---@class bullet3d.world.cast_result
+---Bullet world cast result
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.world-lua#bullet3d.world.cast_result)
+---@field object btCollisionObject hit collision object
+---@field point vector3 hit point in world space and Defold units
+---@field normal vector3 outward unit surface normal
+---@field fraction number fraction along the supplied translation in `[0, 1]`
+---@field shape_index? integer one-based compound child index
+---@field initial_overlap boolean whether the hit was synthesized from an initial overlap
+---@field inside boolean whether a synthesized ray-origin hit starts inside the object
+
+---@class bullet3d.world.contact_result
+---Bullet world contact result
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.world-lua#bullet3d.world.contact_result)
+---@field object_a btCollisionObject first collision object
+---@field object_b btCollisionObject second collision object
+---@field position_a vector3 contact point on object A in world space and Defold units
+---@field position_b vector3 contact point on object B in world space and Defold units
+---@field normal_on_b vector3 unit normal pointing from object B toward object A
+---@field distance number signed contact distance in Defold units
+
+---@class bullet3d.world.query_filter
+---Bullet world query filter
+---
+---[Open in Browser](https://defold.com/ref/bullet3d.world-lua#bullet3d.world.query_filter)
+---@field category_bits? integer unsigned 16-bit category bits; defaults to `65535`
+---@field mask_bits? integer unsigned 16-bit mask bits; defaults to `65535`
+---@field include_triggers? boolean whether to include objects without contact response; defaults to `true`
+---@field ignore? btCollisionObject|btCollisionObject[] one collision object or an array of collision objects to exclude
+---@field report_initial_overlaps? boolean whether casts synthesize fraction-zero hits for initial overlaps; defaults to `false`
+
+---@class collectionproxy.load_data
+---Data delivered to a `collectionproxy.load` callback. The available
+---field depends on the callback message identifier.
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#collectionproxy.load_data)
+---@field progress? number Loading progress from 0 to 1 for `proxy_loading`.
+---@field code? integer Error code for `proxy_error`.
+
+---@class crash.module_info
+---Loaded crash module
+---
+---[Open in Browser](https://defold.com/ref/crash-lua#crash.module_info)
+---@field name string module name
+---@field address string module load address
+
+---@class font.file_info
+---Associated font file information
+---
+---[Open in Browser](https://defold.com/ref/font-lua#font.file_info)
+---@field path string path to the `.ttf` or `.otf` font file
+---@field path_hash hash hashed font-file path
+
+---@class font.info
+---Font resource information
+---
+---[Open in Browser](https://defold.com/ref/font-lua#font.info)
+---@field path hash path hash of the `.fontc` resource
+---@field fonts font.file_info[] associated font files
+
+---@class go.property_options
+---Options for accessing indexed or internal component properties with `go.get` and `go.set`.
+---
+---[Open in Browser](https://defold.com/ref/go-lua#go.property_options)
+---@field index? integer Index into an array property, starting at one.
+---@field key? hash Name of an internal property.
+---@field keys? hash[] Internal component resources identified by key, such as particle FX emitters.
+
+---@class graphics.adapter_info
+---Graphics adapter information
+---
+---[Open in Browser](https://defold.com/ref/graphics-lua#graphics.adapter_info)
+---@field family string Adapter family name.
+---@field version_major integer Adapter API major version.
+---@field version_minor integer Adapter API minor version.
+---@field limits graphics.adapter_limits Hardware and driver limits.
+---@field extensions string[] Driver-reported extension names.
+---@field features graphics.CONTEXT_FEATURE[] Supported optional context features.
+
+---@class graphics.adapter_limits
+---Graphics context limits
+---
+---[Open in Browser](https://defold.com/ref/graphics-lua#graphics.adapter_limits)
+---@field max_texture_size_2d integer Maximum 2D texture dimension in texels.
+---@field max_texture_size_3d integer Maximum 3D texture dimension in texels.
+---@field max_texture_size_cube integer Maximum cube-map face dimension in texels.
+---@field max_texture_array_layers integer Maximum number of array texture layers.
+---@field max_framebuffer_width integer Maximum framebuffer width in pixels.
+---@field max_framebuffer_height integer Maximum framebuffer height in pixels.
+---@field max_color_attachments integer Maximum number of simultaneous color attachments.
+---@field max_samplers_per_stage integer Maximum number of texture samplers per shader stage.
+---@field max_textures_per_stage integer Maximum number of sampled textures per shader stage.
+---@field max_vertex_attributes integer Maximum number of vertex attributes.
+---@field max_vertex_buffers integer Maximum number of vertex-buffer bindings.
+---@field max_compute_workgroup_size_x integer Maximum compute workgroup size on the X axis.
+---@field max_compute_workgroup_size_y integer Maximum compute workgroup size on the Y axis.
+---@field max_compute_workgroup_size_z integer Maximum compute workgroup size on the Z axis.
+---@field max_compute_workgroup_invocations integer Maximum invocations per compute workgroup.
+---@field max_compute_shared_memory_size integer Maximum shared memory per compute workgroup in bytes.
+---@field max_uniform_buffer_range integer Maximum bindable uniform-buffer range in bytes.
+---@field max_storage_buffer_range integer Maximum bindable storage-buffer range in bytes.
+
+---@class gui.layout_object
+---Rich-text layout object
+---
+---[Open in Browser](https://defold.com/ref/gui-lua#gui.layout_object)
+---@field type string object type, currently `link` or `sprite`
+---@field id hash the object's `id` attribute, or its generated layout object id
+---@field text_offset integer zero-based UTF-32 offset in the visible text
+---@field text_length integer visible UTF-32 text length covered by the object
+---@field x number lower-left x-coordinate relative to the text node's upper-left layout origin
+---@field y number lower-left y-coordinate relative to the text node's upper-left layout origin
+---@field width number resolved object width
+---@field height number resolved object height
+---@field attributes table<string, string> markup attributes keyed by name
+
+---@class gui.play_properties
+---GUI flipbook playback properties
+---
+---[Open in Browser](https://defold.com/ref/gui-lua#gui.play_properties)
+---@field offset? number Normalized initial animation cursor.
+---@field playback_rate? number Positive animation playback rate.
+
+---@class gui.set_options
+---Generic GUI property options
+---
+---[Open in Browser](https://defold.com/ref/gui-lua#gui.set_options)
+---@field index? integer One-based material-constant array index.
+---@field key? hash Internal property name.
+
+---Defold represents resource paths, message names, object ids, and many other
+---identifiers as 64-bit hash values. Create one from a string with `hash`,
+---or receive one from an engine API. Hashes can be compared for equality and
+---used as table keys, but the original string is not generally recoverable in
+---release builds.
+---
+---**Examples:**
+---
+---```lua
+---local damage_message = hash("take_damage")
+---
+---function on_message(self, message_id, message, sender)
+---    if message_id == damage_message then
+---        self.health = self.health - message.amount
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/builtins-lua#hash)
+---@class hash: userdata
+
+---@class http.request_options
+---HTTP request options
+---
+---[Open in Browser](https://defold.com/ref/http-lua#http.request_options)
+---@field timeout? number timeout in seconds
+---@field path? string absolute destination path; overwritten only for status 200
+---@field ignore_cache? boolean do not return cached data for status 304; unavailable on HTML5
+---@field chunked_transfer? boolean use chunked transfer encoding for HTTPS requests larger than 16 KB; defaults to true and is unavailable on HTML5
+---@field report_progress? boolean report transferred and total byte counts to the callback
+
+---@class http.response
+---HTTP response data
+---
+---[Open in Browser](https://defold.com/ref/http-lua#http.response)
+---@field status integer response status
+---@field response? string response data when it is not saved to disk
+---@field headers? table<string, string> response headers for status 200 or 206
+---@field path? string destination path when the response is saved to disk
+---@field error? string unexpected error, such as a file I/O error
+---@field bytes_received? integer bytes transferred when progress reporting is enabled
+---@field bytes_total? integer total request size when progress reporting is enabled
+---@field range_start? integer requested-file start offset
+---@field range_end? integer requested-file end offset, inclusive
+---@field document_size? integer full requested-file size
+
+---@class image.astc_header
+---ASTC image header
+---
+---[Open in Browser](https://defold.com/ref/image-lua#image.astc_header)
+---@field width integer Image width.
+---@field height integer Image height.
+---@field depth integer Image depth.
+---@field block_size_x integer Block size on the x-axis.
+---@field block_size_y integer Block size on the y-axis.
+---@field block_size_z integer Block size on the z-axis.
+
+---@class image.load_buffer_result
+---Loaded buffer image data
+---
+---[Open in Browser](https://defold.com/ref/image-lua#image.load_buffer_result)
+---@field width integer Image width.
+---@field height integer Image height.
+---@field type image.TYPE Image type.
+---@field buffer buffer_data Script buffer containing the decompressed image data.
+
+---@class image.load_options
+---Image loading options
+---
+---[Open in Browser](https://defold.com/ref/image-lua#image.load_options)
+---@field premultiply_alpha? boolean Whether to premultiply alpha into the color components. Defaults to `false`.
+---@field flip_vertically? boolean Whether to flip the image contents vertically. Defaults to `false`.
+
+---@class image.load_result
+---Loaded string image data
+---
+---[Open in Browser](https://defold.com/ref/image-lua#image.load_result)
+---@field width integer Image width.
+---@field height integer Image height.
+---@field type image.TYPE Image type.
+---@field buffer string Raw image data.
+
+---@class json.decode_options
+---JSON decoding options
+---
+---[Open in Browser](https://defold.com/ref/json-lua#json.decode_options)
+---@field decode_null_as_userdata? boolean Decode JSON `null` as `json.null` instead of `nil`.
+
+---@class json.encode_options
+---JSON encoding options
+---
+---[Open in Browser](https://defold.com/ref/json-lua#json.encode_options)
+---@field encode_empty_table_as_object? boolean Encode an empty table as an object instead of an array. The default is true.
+
+---@class label.layout_object
+---Rich-text layout object
+---
+---[Open in Browser](https://defold.com/ref/label-lua#label.layout_object)
+---@field type string object type, currently `link` or `sprite`
+---@field id hash the object's `id` attribute, or its generated layout object id
+---@field text_offset integer zero-based UTF-32 offset in the visible text
+---@field text_length integer visible UTF-32 text length covered by the object
+---@field x number lower-left x-coordinate relative to the label's upper-left layout origin
+---@field y number lower-left y-coordinate relative to the label's upper-left layout origin
+---@field width number resolved object width
+---@field height number resolved object height
+---@field attributes table<string, string> markup attributes keyed by name
+
+---@class material.constant_info
+---Shader constant information
+---
+---[Open in Browser](https://defold.com/ref/material-lua#material.constant_info)
+---@field name hash Constant name.
+---@field type material.CONSTANT_TYPE Constant type.
+---@field value? material.constant_info_value Constant value or values. Present for user constants.
+
+---@class material.constant_options
+---Shader constant update
+---
+---[Open in Browser](https://defold.com/ref/material-lua#material.constant_options)
+---@field type? material.CONSTANT_TYPE Constant type.
+---@field value? material.constant_value Constant value or values.
+
+---@class material.named_vertex_attribute_options
+---Named material vertex attribute update
+---
+---[Open in Browser](https://defold.com/ref/material-lua#material.named_vertex_attribute_options)
+---@field name string|hash Attribute name.
+---@field value? material.vertex_attribute_value Attribute value.
+---@field normalize? boolean Whether integer data is normalized.
+---@field data_type? graphics.DATA_TYPE Attribute data type.
+---@field coordinate_space? graphics.COORDINATE_SPACE Attribute coordinate space.
+---@field semantic_type? graphics.SEMANTIC_TYPE Attribute semantic.
+
+---@class material.sampler_info
+---Texture sampler information
+---
+---[Open in Browser](https://defold.com/ref/material-lua#material.sampler_info)
+---@field name hash Sampler name.
+---@field type graphics.TEXTURE_TYPE Sampler texture type.
+---@field u_wrap graphics.TEXTURE_WRAP Horizontal wrap mode.
+---@field v_wrap graphics.TEXTURE_WRAP Vertical wrap mode.
+---@field w_wrap graphics.TEXTURE_WRAP Depth wrap mode.
+---@field min_filter graphics.TEXTURE_FILTER Minification filter.
+---@field mag_filter graphics.TEXTURE_FILTER Magnification filter.
+---@field max_anisotropy number Maximum anisotropy.
+
+---@class material.sampler_options
+---Texture sampler update
+---
+---[Open in Browser](https://defold.com/ref/material-lua#material.sampler_options)
+---@field u_wrap? graphics.TEXTURE_WRAP Horizontal wrap mode.
+---@field v_wrap? graphics.TEXTURE_WRAP Vertical wrap mode.
+---@field w_wrap? graphics.TEXTURE_WRAP Depth wrap mode.
+---@field min_filter? graphics.TEXTURE_FILTER Minification filter.
+---@field mag_filter? graphics.TEXTURE_FILTER Magnification filter.
+---@field max_anisotropy? number Maximum anisotropy.
+
+---@class material.texture_info
+---Texture information
+---
+---[Open in Browser](https://defold.com/ref/material-lua#material.texture_info)
+---@field path? hash Texture resource path, if backed by a resource.
+---@field handle texture Runtime texture handle.
+---@field width integer Texture width.
+---@field height integer Texture height.
+---@field depth integer Texture depth or layer count.
+---@field page_count integer Texture page count.
+---@field mipmaps integer Mipmap count.
+---@field type graphics.TEXTURE_TYPE Texture type.
+---@field flags graphics.TEXTURE_USAGE_FLAG Texture usage flags.
+
+---@class material.vertex_attribute_info
+---Material vertex attribute information
+---
+---[Open in Browser](https://defold.com/ref/material-lua#material.vertex_attribute_info)
+---@field name hash Attribute name.
+---@field value material.vertex_attribute_value Attribute value.
+---@field normalize boolean Whether integer data is normalized.
+---@field data_type graphics.DATA_TYPE Attribute data type.
+---@field coordinate_space graphics.COORDINATE_SPACE Attribute coordinate space.
+---@field semantic_type graphics.SEMANTIC_TYPE Attribute semantic.
+
+---@class material.vertex_attribute_options
+---Material vertex attribute update
+---
+---[Open in Browser](https://defold.com/ref/material-lua#material.vertex_attribute_options)
+---@field value? material.vertex_attribute_value Attribute value.
+---@field normalize? boolean Whether integer data is normalized.
+---@field data_type? graphics.DATA_TYPE Attribute data type.
+---@field coordinate_space? graphics.COORDINATE_SPACE Attribute coordinate space.
+---@field semantic_type? graphics.SEMANTIC_TYPE Attribute semantic.
+
+---@class matrix4
+---A 4x4 floating-point matrix used for 3D transformations and projections.
+---Create an identity matrix with `vmath.matrix4`, or use constructors such
+---as `vmath.matrix4_translation` and `vmath.matrix4_rotation_z`.
+---Matrices can be multiplied by other matrices, numbers, and `vector4`
+---values. Individual elements are exposed as `m00` through `m33`, and columns
+---as `c0` through `c3`.
+---
+---**Examples:**
+---
+---Transform a point using a translation matrix:
+---
+---```lua
+---local transform = vmath.matrix4_translation(vmath.vector3(100, 50, 0))
+---local point = transform * vmath.vector4(10, 20, 0, 1)
+---print(point) --> vmath.vector4(110, 70, 0, 1)
+---```
+---
+---[Open in Browser](https://defold.com/ref/vmath-lua#matrix4)
+---@field m00 number row 0, column 0
+---@field m01 number row 0, column 1
+---@field m02 number row 0, column 2
+---@field m03 number row 0, column 3
+---@field m10 number row 1, column 0
+---@field m11 number row 1, column 1
+---@field m12 number row 1, column 2
+---@field m13 number row 1, column 3
+---@field m20 number row 2, column 0
+---@field m21 number row 2, column 1
+---@field m22 number row 2, column 2
+---@field m23 number row 2, column 3
+---@field m30 number row 3, column 0
+---@field m31 number row 3, column 1
+---@field m32 number row 3, column 2
+---@field m33 number row 3, column 3
+---@field c0 vector4 column 0
+---@field c1 vector4 column 1
+---@field c2 vector4 column 2
+---@field c3 vector4 column 3
+---@operator mul(matrix4): matrix4
+---@operator mul(vector4): vector4
+---@operator mul(number): matrix4
+
+---@class message.physics.collision_info
+---collision object information
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#message.physics.collision_info)
+---@field position vector3 object position in world space
+---@field id hash object identifier
+---@field group hash object collision group
+
+---@class message.physics.contact_point_info
+---contact-point object information
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#message.physics.contact_point_info)
+---@field position vector3 contact point position in world space
+---@field instance_position vector3 object position in world space
+---@field normal vector3 contact normal pointing from the other object toward this object
+---@field relative_velocity vector3 object velocity relative to the other object
+---@field mass number object mass in kilograms
+---@field id hash object identifier
+---@field group hash object collision group
+
+---@class message.physics.trigger_info
+---trigger interaction object information
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#message.physics.trigger_info)
+---@field id hash object identifier
+---@field group hash object collision group
+
+---@class model.aabb
+---Axis-aligned bounding box
+---
+---[Open in Browser](https://defold.com/ref/model-lua#model.aabb)
+---@field min vector3 minimum local-space bounds
+---@field max vector3 maximum local-space bounds
+
+---@class model.play_properties
+---Model animation playback properties
+---
+---[Open in Browser](https://defold.com/ref/model-lua#model.play_properties)
+---@field blend_duration? number duration of a linear blend from the current animation
+---@field offset? number normalized initial animation cursor
+---@field playback_rate? number positive animation playback rate
+
+---@class on_input.action
+---Data supplied to the global `on_input` lifecycle function.
+---
+---[Open in Browser](https://defold.com/ref/go-lua#on_input.action)
+---@field value? number Amount of input, usually 1 for buttons or between 0 and 1 for analogue input; absent for pointer movement and text input.
+---@field pressed? boolean Whether the input was pressed this frame; absent for pointer movement and text input.
+---@field released? boolean Whether the input was released this frame; absent for pointer movement and text input.
+---@field repeated? boolean Whether the input was repeated this frame; absent for pointer movement and text input.
+---@field x? number Pointer x-coordinate; absent for gamepad, key, and text input.
+---@field y? number Pointer y-coordinate; absent for gamepad, key, and text input.
+---@field screen_x? number Pointer x-coordinate in screen space; absent for gamepad, key, and text input.
+---@field screen_y? number Pointer y-coordinate in screen space; absent for gamepad, key, and text input.
+---@field dx? number Change in the pointer x-coordinate; absent for gamepad, key, and text input.
+---@field dy? number Change in the pointer y-coordinate; absent for gamepad, key, and text input.
+---@field screen_dx? number Change in the pointer x-coordinate in screen space; absent for gamepad, key, and text input.
+---@field screen_dy? number Change in the pointer y-coordinate in screen space; absent for gamepad, key, and text input.
+---@field acc_x? number Accelerometer x value, when present.
+---@field acc_y? number Accelerometer y value, when present.
+---@field acc_z? number Accelerometer z value, when present.
+---@field gamepad? integer Index of the gamepad that provided the input.
+---@field userid? integer Id of the user associated with the controller.
+---@field gamepad_guid? string SDL-compatible guid, supplied with a gamepad-connected action.
+---@field gamepad_guid_info? on_input.gamepad_guid_info Parsed guid information, supplied with a gamepad-connected action.
+---@field gamepad_unknown? boolean Whether the input originated from an unknown or unmapped gamepad.
+---@field gamepad_name? string Name of a connected gamepad.
+---@field gamepad_axis? number[] Axis values, supplied only for raw gamepad input.
+---@field gamepad_hats? number[] Hat values, supplied only for raw gamepad input.
+---@field gamepad_buttons? number[] Button values, supplied only for raw gamepad input.
+---@field touch? on_input.touch[] Touch inputs, one entry per finger.
+---@field text? string Text entered by a text action, or the current sequence for marked-text composition such as Japanese Kana.
+
+---@class on_input.gamepad_guid_info
+---Parsed fields from a connected gamepad guid.
+---
+---[Open in Browser](https://defold.com/ref/go-lua#on_input.gamepad_guid_info)
+---@field vendor integer USB vendor id.
+---@field product integer USB product id.
+---@field bus integer Bus used to communicate with the device.
+---@field crc integer SDL CRC16 signature.
+---@field version integer Device or firmware version.
+
+---@class on_input.touch
+---One touch entry in `on_input.action`.
+---
+---[Open in Browser](https://defold.com/ref/go-lua#on_input.touch)
+---@field id integer Identifier for the touch during its lifetime.
+---@field pressed boolean Whether the finger was pressed this frame.
+---@field released boolean Whether the finger was released this frame.
+---@field tap_count integer Number of taps, such as one for a single tap and two for a double tap.
+---@field x number Touch x-coordinate.
+---@field y number Touch y-coordinate.
+---@field screen_x number Touch x-coordinate in screen space.
+---@field screen_y number Touch y-coordinate in screen space.
+---@field dx number Change in the touch x-coordinate.
+---@field dy number Change in the touch y-coordinate.
+---@field screen_dx number Change in the touch x-coordinate in screen space.
+---@field screen_dy number Change in the touch y-coordinate in screen space.
+
+---@class particlefx.stop_options
+---Options used when stopping particle effects.
+---
+---[Open in Browser](https://defold.com/ref/particlefx-lua#particlefx.stop_options)
+---@field clear? boolean Instantly clear spawned particles.
+
+---@class physics.joint_properties
+---The available fields depend on the joint type.
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#physics.joint_properties)
+---@field collide_connected? boolean whether the connected objects should collide
+---@field length? number Natural spring length between the anchor points.
+---@field frequency? number Mass-spring-damper frequency in Hertz; zero disables softness.
+---@field damping? number Damping ratio, where zero is no damping and one is critical damping.
+---@field max_length? number Maximum fixed-joint rope length.
+---@field local_axis_a? vector3 Local translation unit axis in the first body.
+---@field reference_angle? number Angle of the second body relative to the first body, in radians.
+---@field lower_angle? number Lower angular limit in radians.
+---@field upper_angle? number Upper angular limit in radians.
+---@field lower_translation? number Lower translation limit, usually in meters.
+---@field upper_translation? number Upper translation limit, usually in meters.
+---@field max_motor_torque? number Maximum motor torque used to reach the desired speed, usually in N-m.
+---@field max_motor_force? number Maximum motor force used to reach the desired speed.
+---@field motor_speed? number Desired motor speed.
+---@field enable_limit? boolean Whether joint limits are enabled.
+---@field enable_motor? boolean Whether the joint motor is enabled.
+
+---@class physics.joint_properties_info
+---The available optional fields depend on the joint type.
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#physics.joint_properties_info)
+---@field collide_connected boolean whether the connected objects collide
+---@field length? number spring length
+---@field frequency? number spring frequency
+---@field damping? number damping ratio
+---@field max_length? number fixed-joint maximum length
+---@field local_axis_a? vector3 local joint axis
+---@field reference_angle? number reference angle
+---@field lower_angle? number lower angular limit
+---@field upper_angle? number upper angular limit
+---@field lower_translation? number lower translation limit
+---@field upper_translation? number upper translation limit
+---@field max_motor_torque? number maximum motor torque
+---@field max_motor_force? number maximum motor force
+---@field motor_speed? number motor speed
+---@field enable_limit? boolean whether limits are enabled
+---@field enable_motor? boolean whether the motor is enabled
+---@field joint_angle? number Read-only current hinge angle in radians.
+---@field joint_speed? number Read-only current hinge angular speed or slider/wheel translation speed.
+---@field joint_translation? number Read-only current slider or wheel translation, usually in meters.
+
+---@class physics.raycast_options
+---Ray-cast options
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#physics.raycast_options)
+---@field all? boolean Return every hit instead of only the closest hit.
+
+---@class physics.shape_data
+---The available geometry fields depend on `type`.
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#physics.shape_data)
+---@field type physics.SHAPE_TYPE shape type
+---@field diameter? number sphere diameter or capsule pole diameter
+---@field dimensions? vector3 box dimensions
+---@field height? number capsule height
+
+---@class quaternion
+---A four-component value representing a 3D rotation. Create one with
+---`vmath.quat` or a specialized constructor such as
+---`vmath.quat_rotation_z`. Quaternion components are available as `x`,
+---`y`, `z`, and `w`.
+---
+---**Examples:**
+---
+---```lua
+---local rotation = vmath.quat_rotation_z(math.rad(90))
+---go.set_rotation(rotation)
+---```
+---
+---[Open in Browser](https://defold.com/ref/vmath-lua#quaternion)
+---@field x number x component
+---@field y number y component
+---@field z number z component
+---@field w number w component
+---@operator mul(quaternion): quaternion
+
+---@class render.camera_options
+---Render-camera options
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.camera_options)
+---@field use_frustum? boolean Use the camera view-projection matrix for frustum culling. The default is false.
+
+---@class render.debug_draw_options
+---Debug-draw options
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.debug_draw_options)
+---@field frustum? matrix4 Frustum matrix used for culling renderable items.
+---@field frustum_planes? render.FRUSTUM_PLANES Frustum planes used for culling. The default is `render.FRUSTUM_PLANES_SIDES`.
+
+---@class render.dispatch_options
+---Compute-dispatch options
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.dispatch_options)
+---@field constants? constant_buffer Constants used by the compute program. The values are copied when `render.dispatch_compute()` is called.
+
+---@class render.draw_options
+---Render draw options
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.draw_options)
+---@field frustum? matrix4 Frustum matrix used for culling renderable items.
+---@field frustum_planes? render.FRUSTUM_PLANES Frustum planes used for culling. The default is `render.FRUSTUM_PLANES_SIDES`.
+---@field constants? constant_buffer Constants used while rendering. The values are copied when `render.draw()` is called.
+---@field sort_order? render.SORT World-entry sort order. The default is the renderer's preferred back-to-front order.
+
+---@class render.render_target_buffer_params
+---Render-target attachment parameters
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.render_target_buffer_params)
+---@field format graphics.TEXTURE_FORMAT Attachment texture format.
+---@field width integer Attachment width.
+---@field height integer Attachment height.
+---@field min_filter? graphics.TEXTURE_FILTER Minification filter.
+---@field mag_filter? graphics.TEXTURE_FILTER Magnification filter.
+---@field u_wrap? graphics.TEXTURE_WRAP Horizontal wrap mode.
+---@field v_wrap? graphics.TEXTURE_WRAP Vertical wrap mode.
+---@field w_wrap? graphics.TEXTURE_WRAP Depth wrap mode.
+---@field flags? render.RENDER_TARGET_FLAG Attachment creation flags, applicable only to depth and stencil buffers.
+
+---@class render.set_render_target_options
+---Render-target activation options
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_render_target_options)
+---@field transient? graphics.BUFFER_TYPE[] Buffers whose contents become undefined after the target is deactivated. Missing buffers are ignored; combined depth-stencil buffers remain non-transient unless both are selected.
+
+---@class resource.animation
+---Animation data accepted when creating or updating an atlas. Specify either
+---`frames`, or both `frame_start` and `frame_end`.
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.animation)
+---@field id string Animation id.
+---@field width integer Animation width.
+---@field height integer Animation height.
+---@field frames? integer[] Geometry indices for the animation frames.
+---@field frame_start? integer First geometry index for the legacy contiguous frame range.
+---@field frame_end? integer Non-inclusive last geometry index for the legacy contiguous frame range.
+---@field playback? go.PLAYBACK Playback mode. The default is `go.PLAYBACK_ONCE_FORWARD`.
+---@field fps? integer Animation frame rate. The default is 30.
+---@field flip_vertical? boolean Whether to flip the animation vertically. The default is false.
+---@field flip_horizontal? boolean Whether to flip the animation horizontally. The default is false.
+
+---@class resource.animation_data
+---Animation data returned by `resource.get_atlas`.
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.animation_data)
+---@field id string Animation id.
+---@field width integer Animation width.
+---@field height integer Animation height.
+---@field frames integer[] Geometry indices for the animation frames.
+---@field playback go.PLAYBACK Playback mode.
+---@field fps integer Animation frame rate.
+---@field flip_vertical boolean Whether the animation is flipped vertically.
+---@field flip_horizontal boolean Whether the animation is flipped horizontally.
+
+---@class resource.atlas
+---Data accepted by `resource.create_atlas` and `resource.set_atlas`.
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.atlas)
+---@field texture string|hash Path to the texture resource, for example `"/main/my_texture.texturec"`.
+---@field animations resource.animation[] Animations in the atlas.
+---@field geometries resource.geometry[] Geometries that map to the texture data.
+
+---@class resource.atlas_data
+---Data returned by `resource.get_atlas`.
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.atlas_data)
+---@field texture string|hash Path to the texture resource.
+---@field animations resource.animation_data[] Animations in the atlas.
+---@field geometries resource.geometry_data[] Geometries that map to the texture data.
+
+---@class resource.buffer_creation_params
+---Buffer-resource creation parameters
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.buffer_creation_params)
+---@field buffer buffer_data Buffer to bind to the resource.
+---@field transfer_ownership? boolean Whether the resource takes ownership of the buffer. The default is true.
+
+---@class resource.buffer_update_options
+---Buffer-resource update options
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.buffer_update_options)
+---@field transfer_ownership? boolean Whether the resource takes ownership of the buffer. The default is false.
+
+---@class resource.geometry
+---Geometry data accepted when creating or updating an atlas. Vertex, UV, and
+---index values are zero-based.
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.geometry)
+---@field id? string Geometry name, used when matching animations between atlases.
+---@field width? number Width of the image represented by the geometry. If omitted, it is calculated from the vertices.
+---@field height? number Height of the image represented by the geometry. If omitted, it is calculated from the vertices.
+---@field pivot_x? number Horizontal pivot in unit coordinates. The default is 0.5.
+---@field pivot_y? number Vertical pivot in unit coordinates. The default is 0.5.
+---@field rotated? boolean Whether the image is rotated 90 degrees counter-clockwise in the atlas.
+---@field vertices number[] Vertex coordinates in image space as `{px0, py0, px1, py1, ...}`.
+---@field uvs number[] UV coordinates in image space as `{u0, v0, u1, v1, ...}`.
+---@field indices integer[] Geometry indices where each group of three entries represents a triangle.
+
+---@class resource.geometry_data
+---Geometry data returned by `resource.get_atlas`.
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.geometry_data)
+---@field width number Width of the image represented by the geometry.
+---@field height number Height of the image represented by the geometry.
+---@field pivot_x number Horizontal pivot in unit coordinates.
+---@field pivot_y number Vertical pivot in unit coordinates.
+---@field rotated boolean Whether the image is rotated 90 degrees counter-clockwise in the atlas.
+---@field vertices number[] Vertex coordinates in image space as `{px0, py0, px1, py1, ...}`.
+---@field uvs number[] UV coordinates in image space as `{u0, v0, u1, v1, ...}`.
+---@field indices integer[] Geometry indices where each group of three entries represents a triangle.
+
+---@class resource.render_target_attachment_info
+---Render target attachment information
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.render_target_attachment_info)
+---@field handle texture Opaque texture handle.
+---@field width integer Texture width.
+---@field height integer Texture height.
+---@field depth integer Texture depth or layer count.
+---@field page_count integer Texture page count.
+---@field mipmaps integer Number of mipmaps.
+---@field flags graphics.TEXTURE_USAGE_FLAG Texture usage flags.
+---@field type graphics.TEXTURE_TYPE Texture type.
+---@field buffer_type graphics.BUFFER_TYPE Render-target buffer type.
+---@field texture? hash Backing texture resource, when present.
+
+---@class resource.render_target_info
+---Render target information
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.render_target_info)
+---@field handle render_target Opaque render-target handle.
+---@field sample_count integer Effective sample count shared by all render-target attachments.
+---@field attachments resource.render_target_attachment_info[] Render-target attachments.
+
+---@class resource.sound_data_options
+---Sound-data creation options
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.sound_data_options)
+---@field data? string Raw sound file data, including the file header.
+---@field filesize? number Complete file size when `data` is partial.
+---@field partial? boolean Whether `data` contains only the initial file chunk.
+
+---@class resource.text_metrics
+---Text metrics
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.text_metrics)
+---@field width number Text width.
+---@field height number Text height.
+---@field max_ascent number Maximum ascent.
+---@field max_descent number Maximum descent.
+
+---@class resource.text_metrics_options
+---Text metric options
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.text_metrics_options)
+---@field width? number Text-field width; unused when `line_break` is false.
+---@field leading? number Line leading. The default is 1.
+---@field tracking? number Character tracking. The default is 0.
+---@field line_break? boolean Whether to account for line breaks. The default is false.
+
+---@class resource.texture_creation_params
+---Texture creation parameters
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.texture_creation_params)
+---@field type graphics.TEXTURE_TYPE Texture type.
+---@field width integer Texture width in pixels; must be greater than zero.
+---@field height integer Texture height in pixels; must be greater than zero.
+---@field depth? integer Texture depth; used by 3D texture types and must be greater than zero.
+---@field page_count? integer Number of pages for a 2D array texture.
+---@field format graphics.TEXTURE_FORMAT Texture format. Device-specific unsupported constants evaluate to `nil`.
+---@field flags? graphics.TEXTURE_USAGE_FLAG Creation-usage hints. The default is `graphics.TEXTURE_USAGE_FLAG_SAMPLE`.
+---@field max_mipmaps? integer Maximum mipmap count. The default is zero.
+---@field compression_type? graphics.COMPRESSION_TYPE Compression used by the supplied buffer. The default is `graphics.COMPRESSION_TYPE_DEFAULT`.
+
+---@class resource.texture_creation_result
+---Asynchronous texture creation result
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.texture_creation_result)
+---@field path hash Created texture resource path.
+
+---@class resource.texture_info
+---Texture information
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.texture_info)
+---@field handle texture Opaque texture handle.
+---@field width integer Texture width.
+---@field height integer Texture height.
+---@field depth integer Texture depth or layer count.
+---@field page_count integer Texture page count.
+---@field mipmaps integer Number of mipmaps.
+---@field flags graphics.TEXTURE_USAGE_FLAG Texture usage flags.
+---@field type graphics.TEXTURE_TYPE Texture type.
+
+---@class resource.texture_update_params
+---Texture update parameters
+---
+---[Open in Browser](https://defold.com/ref/resource-lua#resource.texture_update_params)
+---@field type graphics.TEXTURE_TYPE Texture type.
+---@field width integer Update width in pixels.
+---@field height integer Update height in pixels.
+---@field depth? integer Update depth for a 3D texture.
+---@field format graphics.TEXTURE_FORMAT Texture format. Device-specific unsupported constants evaluate to `nil`.
+---@field x? integer X offset in pixels.
+---@field y? integer Y offset in pixels.
+---@field z? integer Z offset for a 3D texture.
+---@field page? integer Zero-based page of a 2D array texture.
+---@field mipmap? integer Mipmap level to update.
+---@field compression_type? graphics.COMPRESSION_TYPE Compression used by the supplied buffer. The default is `graphics.COMPRESSION_TYPE_DEFAULT`.
+
+---An engine-created state container passed as `self` to script lifecycle
+---functions and callbacks. Each script component, GUI script, and render
+---script has its own instance. Values assigned to the instance remain
+---available for that instance's lifetime.
+---
+---Script instances cannot be created directly. Store state by assigning
+---fields to the `self` value supplied by the engine.
+---
+---**Examples:**
+---
+---Initialize state and access it from an engine callback:
+---
+---```lua
+---function init(self)
+---    self.health = 100
+---
+---    timer.delay(1, false, function(self, handle, time_elapsed)
+---        self.health = self.health - 10
+---        print(self.health)
+---    end)
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/builtins-lua#script_instance)
+---@class script_instance: userdata
+---@field [string] any
+
+---@class socket.dns.address_info
+---DNS address information
+---
+---[Open in Browser](https://defold.com/ref/socket-lua#socket.dns.address_info)
+---@field family string `"inet"` for IPv4 or `"inet6"` for IPv6
+---@field addr string resolved IP address
+
+---@class socket.dns.host_info
+---DNS host information
+---
+---[Open in Browser](https://defold.com/ref/socket-lua#socket.dns.host_info)
+---@field name string canonical host name
+---@field alias string[] host aliases
+---@field ip string[] resolved IPv4 addresses
+
+---A TCP socket connected to a remote endpoint. Create one with
+---`socket.connect`, or by calling `connect` on a `socket_master`. Use
+---`send` and `receive` to exchange stream data, and `close` when finished.
+---
+---**Examples:**
+---
+---```lua
+---local client = assert(socket.connect("127.0.0.1", 8000))
+---assert(client:send("ping\n"))
+---client:close()
+---```
+---
+---[Open in Browser](https://defold.com/ref/socket-lua#socket_client)
+---@class socket_client: userdata
+---@field close fun(self:socket_client):number Closes the TCP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.  It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though. [Open in Browser](https://defold.com/ref/socket-lua#client:close:)
+---@field dirty fun(self:socket_client):boolean Check the read buffer status.  This is an internal method, any use is unlikely to be portable. [Open in Browser](https://defold.com/ref/socket-lua#client:dirty:)
+---@field getfd fun(self:socket_client):number Returns the underlying socket descriptor or handle associated to the object.  This is an internal method, any use is unlikely to be portable. [Open in Browser](https://defold.com/ref/socket-lua#client:getfd:)
+---@field getoption fun(self:socket_client, option:string):(any|nil, string|nil) Gets options for the TCP object. See `client:setoption` for description of the option names and values. [Open in Browser](https://defold.com/ref/socket-lua#client:getoption:option)
+---@field getpeername fun(self:socket_client):(string|nil, integer|string, string|nil) Returns information about the remote side of a connected client object.  It makes no sense to call this method on server objects. [Open in Browser](https://defold.com/ref/socket-lua#client:getpeername:)
+---@field getsockname fun(self:socket_client):(string|nil, string, string|nil) Returns the local address information associated to the object. [Open in Browser](https://defold.com/ref/socket-lua#client:getsockname:)
+---@field getstats fun(self:socket_client):(number, number, number) Returns accounting information on the socket, useful for throttling of bandwidth. [Open in Browser](https://defold.com/ref/socket-lua#client:getstats:)
+---@field receive fun(self:socket_client, pattern?:string|number, prefix?:string):(string|nil, string|nil, string|nil) Reads data from a client object, according to the specified `read pattern`. Patterns follow the Lua file I/O format, and the difference in performance between patterns is negligible. [Open in Browser](https://defold.com/ref/socket-lua#client:receive:pattern-prefix)
+---@field send fun(self:socket_client, data:string, i?:number, j?:number):(number|nil, string|nil, number|nil) Sends data through client object. The optional arguments i and j work exactly like the standard `string.sub` Lua function to allow the selection of a substring to be sent.  Output is not buffered. For small strings, it is always better to concatenate them in Lua (with the `..` operator) and send the result in one call instead of calling the method several times. [Open in Browser](https://defold.com/ref/socket-lua#client:send:data-i-j)
+---@field setfd fun(self:socket_client, handle:number) Sets the underling socket descriptor or handle associated to the object. The current one is simply replaced, not closed, and no other change to the object state is made [Open in Browser](https://defold.com/ref/socket-lua#client:setfd:handle)
+---@field setoption fun(self:socket_client, option:string, value?:any):(number|nil, string|nil) Sets options for the TCP object. Options are only needed by low-level or time-critical applications. You should only modify an option if you are sure you need it. [Open in Browser](https://defold.com/ref/socket-lua#client:setoption:option-value)
+---@field setstats fun(self:socket_client, received?:number|nil, sent?:number|nil, age?:number|nil):number Resets accounting information on the socket, useful for throttling of bandwidth. [Open in Browser](https://defold.com/ref/socket-lua#client:setstats:received-sent-age)
+---@field settimeout fun(self:socket_client, value?:number|nil, mode?:string):number Changes the timeout values for the object. By default, all I/O operations are blocking. That is, any call to the methods `send`, `receive`, and `accept` will block indefinitely, until the operation completes. The `settimeout` method defines a limit on the amount of time the I/O methods can block. When a timeout is set and the specified amount of time has elapsed, the affected methods give up and fail with an error code.  There are two timeout modes and both can be used together for fine tuning.  Although timeout values have millisecond precision in LuaSocket, large blocks can cause I/O functions not to respect timeout values due to the time the library takes to transfer blocks to and from the OS and to and from the Lua interpreter. Also, function that accept host names and perform automatic name resolution might be blocked by the resolver for longer than the specified timeout value. [Open in Browser](https://defold.com/ref/socket-lua#client:settimeout:value-mode)
+---@field shutdown fun(self:socket_client, mode:string):number Shuts down part of a full-duplex connection. [Open in Browser](https://defold.com/ref/socket-lua#client:shutdown:mode)
+
+---A UDP socket associated with one remote peer. Start with a
+---`socket_unconnected` from `socket.udp` or `socket.udp6`, then call
+---`setpeername`. Connected UDP sockets use `send` and `receive` instead of
+---`sendto` and `receivefrom`.
+---
+---**Examples:**
+---
+---```lua
+---local udp = assert(socket.udp())
+---assert(udp:setpeername("127.0.0.1", 8000))
+---assert(udp:send("ping"))
+---```
+---
+---[Open in Browser](https://defold.com/ref/socket-lua#socket_connected)
+---@class socket_connected: userdata
+---@field close fun(self:socket_connected):number Closes a UDP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.  It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though. [Open in Browser](https://defold.com/ref/socket-lua#connected:close:)
+---@field getoption fun(self:socket_connected, option:string):(any|nil, string|nil) Gets an option value from the UDP object. See `connected:setoption` for description of the option names and values. [Open in Browser](https://defold.com/ref/socket-lua#connected:getoption:option)
+---@field getpeername fun(self:socket_connected):(string|nil, integer|string, string|nil) Retrieves information about the peer associated with a connected UDP object.  It makes no sense to call this method on unconnected objects. [Open in Browser](https://defold.com/ref/socket-lua#connected:getpeername:)
+---@field getsockname fun(self:socket_connected):(string|nil, string, string|nil) Returns the local address information associated to the object.  UDP sockets are not bound to any address until the `setsockname` or the `sendto` method is called for the first time (in which case it is bound to an ephemeral port and the wild-card address). [Open in Browser](https://defold.com/ref/socket-lua#connected:getsockname:)
+---@field receive fun(self:socket_connected, size?:number):(string|nil, string|nil) Receives a datagram from the UDP object. If the UDP object is connected, only datagrams coming from the peer are accepted. Otherwise, the returned datagram can come from any host. [Open in Browser](https://defold.com/ref/socket-lua#connected:receive:size)
+---@field send fun(self:socket_connected, datagram:string):(number|nil, string|nil) Sends a datagram to the UDP peer of a connected object.  In UDP, the send method never blocks and the only way it can fail is if the underlying transport layer refuses to send a message to the specified address (i.e. no interface accepts the address). [Open in Browser](https://defold.com/ref/socket-lua#connected:send:datagram)
+---@field setoption fun(self:socket_connected, option:string, value?:any):(number|nil, string|nil) Sets options for the UDP object. Options are only needed by low-level or time-critical applications. You should only modify an option if you are sure you need it. [Open in Browser](https://defold.com/ref/socket-lua#connected:setoption:option-value)
+---@field setpeername fun(self:socket_connected, address:string):(number|nil, string|nil) Changes the peer of a UDP object. This method turns an unconnected UDP object into a connected UDP object or vice versa.  For connected objects, outgoing datagrams will be sent to the specified peer, and datagrams received from other peers will be discarded by the OS. Connected UDP objects must use the `send` and `receive` methods instead of `sendto` and `receivefrom`.  Since the address of the peer does not have to be passed to and from the OS, the use of connected UDP objects is recommended when the same peer is used for several transmissions and can result in up to 30% performance gains. [Open in Browser](https://defold.com/ref/socket-lua#connected:setpeername:address)
+---@field settimeout fun(self:socket_connected, value?:number|nil):number Changes the timeout values for the object. By default, the `receive` and `receivefrom`  operations are blocking. That is, any call to the methods will block indefinitely, until data arrives. The `settimeout` function defines a limit on the amount of time the functions can block. When a timeout is set and the specified amount of time has elapsed, the affected methods give up and fail with an error code.  In UDP, the `send` and `sendto` methods never block (the datagram is just passed to the OS and the call returns immediately). Therefore, the `settimeout` method has no effect on them. [Open in Browser](https://defold.com/ref/socket-lua#connected:settimeout:value)
+
+---A newly created TCP socket that is not yet connected or listening. Obtain one
+---from `socket.tcp` or `socket.tcp6`. Calling `connect` transforms it into
+---a `socket_client`; calling `bind` followed by `listen` transforms it into a
+---`socket_server`.
+---
+---**Examples:**
+---
+---```lua
+---local tcp = assert(socket.tcp())
+---assert(tcp:bind("*", 8000))
+---assert(tcp:listen(32))
+---```
+---
+---[Open in Browser](https://defold.com/ref/socket-lua#socket_master)
+---@class socket_master: userdata
+---@field bind fun(self:socket_master, address:string, port:number):(number|nil, string|nil) Binds a master object to address and port on the local host. [Open in Browser](https://defold.com/ref/socket-lua#master:bind:address-port)
+---@field close fun(self:socket_master):number Closes the TCP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.  It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though. [Open in Browser](https://defold.com/ref/socket-lua#master:close:)
+---@field connect fun(self:socket_master, address:string, port:number):(number|nil, string|nil) Attempts to connect a master object to a remote host, transforming it into a client object. Client objects support methods send, receive, getsockname, getpeername, settimeout, and close.  Note that the function `socket.connect` is available and is a shortcut for the creation of client sockets. [Open in Browser](https://defold.com/ref/socket-lua#master:connect:address-port)
+---@field dirty fun(self:socket_master):boolean Check the read buffer status.  This is an internal method, any use is unlikely to be portable. [Open in Browser](https://defold.com/ref/socket-lua#master:dirty:)
+---@field getfd fun(self:socket_master):number Returns the underlying socket descriptor or handle associated to the object.  This is an internal method, any use is unlikely to be portable. [Open in Browser](https://defold.com/ref/socket-lua#master:getfd:)
+---@field getsockname fun(self:socket_master):(string|nil, string, string|nil) Returns the local address information associated to the object. [Open in Browser](https://defold.com/ref/socket-lua#master:getsockname:)
+---@field listen fun(self:socket_master, backlog:number):(number|nil, string|nil) Specifies the socket is willing to receive connections, transforming the object into a server object. Server objects support the `accept`, `getsockname`, `setoption`, `settimeout`, and `close` methods. [Open in Browser](https://defold.com/ref/socket-lua#master:listen:backlog)
+---@field setfd fun(self:socket_master, handle:number) Sets the underling socket descriptor or handle associated to the object. The current one is simply replaced, not closed, and no other change to the object state is made [Open in Browser](https://defold.com/ref/socket-lua#master:setfd:handle)
+---@field settimeout fun(self:socket_master, value?:number|nil, mode?:string):number Changes the timeout values for the object. By default, all I/O operations are blocking. That is, any call to the methods `send`, `receive`, and `accept` will block indefinitely, until the operation completes. The `settimeout` method defines a limit on the amount of time the I/O methods can block. When a timeout is set and the specified amount of time has elapsed, the affected methods give up and fail with an error code.  There are two timeout modes and both can be used together for fine tuning.  Although timeout values have millisecond precision in LuaSocket, large blocks can cause I/O functions not to respect timeout values due to the time the library takes to transfer blocks to and from the OS and to and from the Lua interpreter. Also, function that accept host names and perform automatic name resolution might be blocked by the resolver for longer than the specified timeout value. [Open in Browser](https://defold.com/ref/socket-lua#master:settimeout:value-mode)
+
+---A TCP socket listening for incoming connections. Create one by binding a
+---`socket_master` and calling its `listen` method. Calling `accept` returns a
+---`socket_client` for an incoming connection.
+---
+---**Examples:**
+---
+---```lua
+---local server = assert(socket.tcp())
+---assert(server:bind("*", 8000))
+---assert(server:listen(32))
+---local client = assert(server:accept())
+---```
+---
+---[Open in Browser](https://defold.com/ref/socket-lua#socket_server)
+---@class socket_server: userdata
+---@field accept fun(self:socket_server):(socket_client|nil, string|nil) Waits for a remote connection on the server object and returns a client object representing that connection.  Calling `socket.select` with a server object in the `recvt` parameter before a call to accept does not guarantee accept will return immediately. Use the `settimeout` method or accept might block until another client shows up. [Open in Browser](https://defold.com/ref/socket-lua#server:accept:)
+---@field close fun(self:socket_server):number Closes the TCP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.  It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though. [Open in Browser](https://defold.com/ref/socket-lua#server:close:)
+---@field dirty fun(self:socket_server):boolean Check the read buffer status.  This is an internal method, any use is unlikely to be portable. [Open in Browser](https://defold.com/ref/socket-lua#server:dirty:)
+---@field getfd fun(self:socket_server):number Returns the underlying socket descriptor or handle associated to the object.  This is an internal method, any use is unlikely to be portable. [Open in Browser](https://defold.com/ref/socket-lua#server:getfd:)
+---@field getoption fun(self:socket_server, option:string):(any|nil, string|nil) Gets options for the TCP object. See `server:setoption` for description of the option names and values. [Open in Browser](https://defold.com/ref/socket-lua#server:getoption:option)
+---@field getsockname fun(self:socket_server):(string|nil, string, string|nil) Returns the local address information associated to the object. [Open in Browser](https://defold.com/ref/socket-lua#server:getsockname:)
+---@field setfd fun(self:socket_server, handle:number) Sets the underling socket descriptor or handle associated to the object. The current one is simply replaced, not closed, and no other change to the object state is made [Open in Browser](https://defold.com/ref/socket-lua#server:setfd:handle)
+---@field setoption fun(self:socket_server, option:string, value?:any):(number|nil, string|nil) Sets options for the TCP object. Options are only needed by low-level or time-critical applications. You should only modify an option if you are sure you need it. [Open in Browser](https://defold.com/ref/socket-lua#server:setoption:option-value)
+---@field settimeout fun(self:socket_server, value?:number|nil, mode?:string):number Changes the timeout values for the object. By default, all I/O operations are blocking. That is, any call to the methods `send`, `receive`, and `accept` will block indefinitely, until the operation completes. The `settimeout` method defines a limit on the amount of time the I/O methods can block. When a timeout is set and the specified amount of time has elapsed, the affected methods give up and fail with an error code.  There are two timeout modes and both can be used together for fine tuning.  Although timeout values have millisecond precision in LuaSocket, large blocks can cause I/O functions not to respect timeout values due to the time the library takes to transfer blocks to and from the OS and to and from the Lua interpreter. Also, function that accept host names and perform automatic name resolution might be blocked by the resolver for longer than the specified timeout value. [Open in Browser](https://defold.com/ref/socket-lua#server:settimeout:value-mode)
+
+---A UDP socket without a fixed remote peer, created by `socket.udp` or
+---`socket.udp6`. Use `sendto` and `receivefrom` with explicit addresses, or
+---call `setpeername` to transform it into a `socket_connected`.
+---
+---**Examples:**
+---
+---```lua
+---local udp = assert(socket.udp())
+---assert(udp:sendto("ping", "127.0.0.1", 8000))
+---```
+---
+---[Open in Browser](https://defold.com/ref/socket-lua#socket_unconnected)
+---@class socket_unconnected: userdata
+---@field close fun(self:socket_unconnected):number Closes a UDP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.  It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though. [Open in Browser](https://defold.com/ref/socket-lua#unconnected:close:)
+---@field getoption fun(self:socket_unconnected, option:string):(any|nil, string|nil) Gets an option value from the UDP object. See `unconnected:setoption` for description of the option names and values. [Open in Browser](https://defold.com/ref/socket-lua#unconnected:getoption:option)
+---@field getsockname fun(self:socket_unconnected):(string|nil, string, string|nil) Returns the local address information associated to the object.  UDP sockets are not bound to any address until the `setsockname` or the `sendto` method is called for the first time (in which case it is bound to an ephemeral port and the wild-card address). [Open in Browser](https://defold.com/ref/socket-lua#unconnected:getsockname:)
+---@field receive fun(self:socket_unconnected, size?:number):(string|nil, string|nil) Receives a datagram from the UDP object. If the UDP object is connected, only datagrams coming from the peer are accepted. Otherwise, the returned datagram can come from any host. [Open in Browser](https://defold.com/ref/socket-lua#unconnected:receive:size)
+---@field receivefrom fun(self:socket_unconnected, size?:number):(string|nil, string, number|nil) Works exactly as the receive method, except it returns the IP address and port as extra return values (and is therefore slightly less efficient). [Open in Browser](https://defold.com/ref/socket-lua#unconnected:receivefrom:size)
+---@field sendto fun(self:socket_unconnected, datagram:string, ip:string, port:number):(number|nil, string|nil) Sends a datagram to the specified IP address and port number.  In UDP, the send method never blocks and the only way it can fail is if the underlying transport layer refuses to send a message to the specified address (i.e. no interface accepts the address). [Open in Browser](https://defold.com/ref/socket-lua#unconnected:sendto:datagram-ip-port)
+---@field setoption fun(self:socket_unconnected, option:string, value?:any):(number|nil, string|nil) Sets options for the UDP object. Options are only needed by low-level or time-critical applications. You should only modify an option if you are sure you need it. [Open in Browser](https://defold.com/ref/socket-lua#unconnected:setoption:option-value)
+---@field setpeername fun(self:socket_unconnected, address:string, port:number):(number|nil, string|nil) Changes the peer of a UDP object. This method turns an unconnected UDP object into a connected UDP object or vice versa.  For connected objects, outgoing datagrams will be sent to the specified peer, and datagrams received from other peers will be discarded by the OS. Connected UDP objects must use the `send` and `receive` methods instead of `sendto` and `receivefrom`.  Since the address of the peer does not have to be passed to and from the OS, the use of connected UDP objects is recommended when the same peer is used for several transmissions and can result in up to 30% performance gains. [Open in Browser](https://defold.com/ref/socket-lua#unconnected:setpeername:address-port)
+---@field setsockname fun(self:socket_unconnected, address:string, port:number):(number|nil, string|nil) Binds the UDP object to a local address.  This method can only be called before any datagram is sent through the UDP object, and only once. Otherwise, the system automatically binds the object to all local interfaces and chooses an ephemeral port as soon as the first datagram is sent. After the local address is set, either automatically by the system or explicitly by `setsockname`, it cannot be changed. [Open in Browser](https://defold.com/ref/socket-lua#unconnected:setsockname:address-port)
+---@field settimeout fun(self:socket_unconnected, value?:number|nil):number Changes the timeout values for the object. By default, the `receive` and `receivefrom`  operations are blocking. That is, any call to the methods will block indefinitely, until data arrives. The `settimeout` function defines a limit on the amount of time the functions can block. When a timeout is set and the specified amount of time has elapsed, the affected methods give up and fail with an error code.  In UDP, the `send` and `sendto` methods never block (the datagram is just passed to the OS and the call returns immediately). Therefore, the `settimeout` method has no effect on them. [Open in Browser](https://defold.com/ref/socket-lua#unconnected:settimeout:value)
+
+---@class sound.play_completion
+---Data passed to the completion callback of `sound.play`. The callback's
+---`message_id` indicates whether playback finished or was stopped manually.
+---
+---[Open in Browser](https://defold.com/ref/sound-lua#sound.play_completion)
+---@field play_id number The sequential play identifier for the playback.
+
+---@class sound.play_properties
+---Sound playback properties
+---
+---[Open in Browser](https://defold.com/ref/sound-lua#sound.play_properties)
+---@field delay? number Delay in seconds before playback starts. The default is 0.
+---@field gain? number Gain from 0 to 1. The default is 1; this combines with the group and master gains.
+---@field pan? number Pan from -1 to 1. The default is 0; this is added to the component pan.
+---@field speed? number Playback speed from 0 to 50. The default is 1; this is multiplied by the component speed.
+---@field start_time? number Playback offset in seconds. Mutually exclusive with `start_frame`.
+---@field start_frame? number Playback offset in frames or samples. Takes precedence over `start_time`.
+
+---@class sound.stop_properties
+---Sound stop properties
+---
+---[Open in Browser](https://defold.com/ref/sound-lua#sound.stop_properties)
+---@field play_id number Sequential playback identifier returned by `sound.play`.
+
+---@class sprite.play_properties
+---Sprite flipbook playback properties
+---
+---[Open in Browser](https://defold.com/ref/sprite-lua#sprite.play_properties)
+---@field offset? number Normalized initial animation cursor.
+---@field playback_rate? number Positive animation playback rate.
+
+---@class sys.application_info
+---Application information
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#sys.application_info)
+---@field installed boolean Whether the queried application is installed.
+
+---@class sys.engine_info
+---Engine information
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#sys.engine_info)
+---@field version string Defold engine version.
+---@field version_sha1 string Engine build SHA-1.
+---@field is_debug boolean Whether this is a debug engine build.
+
+---@class sys.interface_info
+---Network-interface information
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#sys.interface_info)
+---@field name string Interface name.
+---@field address? string IP address, when available.
+---@field mac? string Hardware MAC address, when available.
+---@field up boolean Whether the interface can transmit and receive data.
+---@field running boolean Whether the interface is running.
+
+---@class sys.load_buffer_result
+---Asynchronous buffer-load result
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#sys.load_buffer_result)
+---@field status sys.REQUEST_STATUS Request status.
+---@field buffer? buffer_data Loaded payload for a successful request.
+
+---@class sys.open_url_attributes
+---URL opening attributes
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#sys.open_url_attributes)
+---@field target? string HTML5 browsing context: `_self`, `_blank`, `_parent`, `_top`, or a named window.
+
+---@class sys.sys_info
+---System information
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#sys.sys_info)
+---@field device_model? string Device model on iOS and Android.
+---@field manufacturer? string Device manufacturer on iOS and Android.
+---@field system_name string Operating-system name.
+---@field system_version string Operating-system version.
+---@field api_version string Platform API version.
+---@field language string ISO 639 language code.
+---@field device_language string Preferred device language, optionally followed by an ISO 15924 script code.
+---@field territory string ISO 3166-1 alpha-2 country code or UN M.49 numeric region code.
+---@field gmt_offset number Current GMT offset in minutes.
+---@field device_ident? string Operating-system-protected device identifier.
+---@field user_agent? string HTTP user agent on HTML5.
+
+---@class sys.sys_info_options
+---System-information options
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#sys.sys_info_options)
+---@field ignore_secure? boolean Omit operating-system-protected values such as `device_ident`.
+
+---@class timer.info
+---Timer information
+---
+---[Open in Browser](https://defold.com/ref/timer-lua#timer.info)
+---@field time_remaining number Time remaining until the next callback.
+---@field delay number Timer interval.
+---@field repeating boolean Whether the timer repeats until cancelled.
+
+---@class url
+---A URL identifies a message endpoint in Defold. Its string form is
+---`[socket:][path][#fragment]`: the socket identifies a collection, the path
+---identifies a game object, and the fragment identifies a component. Missing
+---parts are resolved relative to the script that creates the URL.
+---
+---Create URLs with `msg.url`. The `socket`, `path`, and `fragment`
+---components are exposed as `hash` values and can be inspected or
+---replaced individually. URLs are commonly passed to `msg.post` and to
+---functions that address game objects or components.
+---
+---**Examples:**
+---
+---Create a relative URL for a component on the current game object:
+---
+---```lua
+---local sprite_url = msg.url("#sprite")
+---msg.post(sprite_url, "disable")
+---print(sprite_url.fragment) --> hash: [sprite]
+---```
+---
+---Create an absolute URL by specifying all three components:
+---
+---```lua
+---local controller_url = msg.url("main:/player#controller")
+---print(controller_url) --> url: [main:/player#controller]
+---```
+---
+---[Open in Browser](https://defold.com/ref/msg-lua#url)
+---@field socket hash socket component
+---@field path hash path component
+---@field fragment hash fragment component
+
+---@class vector3
+---A fixed-size value containing three floating-point components. Vector3
+---values are commonly used for positions, directions, scales, and Euler
+---angles. Create one with `vmath.vector3`, access its components through
+---`x`, `y`, and `z`, and use arithmetic operators to combine or scale values.
+---
+---**Examples:**
+---
+---```lua
+---local position = vmath.vector3(100, 50, 0)
+---local offset = vmath.vector3(10, 0, 0)
+---go.set_position(position + offset)
+---```
+---
+---[Open in Browser](https://defold.com/ref/vmath-lua#vector3)
+---@field x number x component
+---@field y number y component
+---@field z number z component
+---@operator add(vector3): vector3
+---@operator div(number): vector3
+---@operator mul(number): vector3
+---@operator sub(vector3): vector3
+---@operator unm: vector3
+
+---@class vector4
+---A fixed-size value containing four floating-point components. Vector4
+---values are commonly used for colors, shader constants, and homogeneous
+---coordinates. Create one with `vmath.vector4`, access its components
+---through `x`, `y`, `z`, and `w`, and use arithmetic operators to combine or
+---scale values.
+---
+---**Examples:**
+---
+---```lua
+---local tint = vmath.vector4(1, 0.5, 0.25, 1)
+---local faded_tint = tint * 0.5
+---go.set("#sprite", "tint", faded_tint)
+---```
+---
+---[Open in Browser](https://defold.com/ref/vmath-lua#vector4)
+---@field x number x component
+---@field y number y component
+---@field z number z component
+---@field w number w component
+---@operator add(vector4): vector4
+---@operator div(number): vector4
+---@operator mul(number): vector4
+---@operator sub(vector4): vector4
+---@operator unm: vector4
+
+---@class window.event_data
+---Width and height are present for `window.WINDOW_EVENT_RESIZED` and
+---absent for other window events.
+---
+---[Open in Browser](https://defold.com/ref/window-lua#window.event_data)
+---@field width? integer Window width after a resize.
+---@field height? integer Window height after a resize.
+
+---@class window.safe_area
+---Window safe-area data
+---
+---[Open in Browser](https://defold.com/ref/window-lua#window.safe_area)
+---@field x integer Safe-area x-coordinate.
+---@field y integer Safe-area y-coordinate.
+---@field width integer Safe-area width.
+---@field height integer Safe-area height.
+---@field inset_left integer Inset from the left window edge.
+---@field inset_top integer Inset from the top window edge.
+---@field inset_right integer Inset from the right window edge.
+---@field inset_bottom integer Inset from the bottom window edge.
+
+---@class message.camera.acquire_camera_focus
+---Post this message to a camera-component to activate it.
+---
+---Several cameras can be active at the same time, but only the camera that was last activated will be used for rendering.
+---When the camera is deactivated (see `release_camera_focus`), the previously activated camera will again be used for rendering automatically.
+---
+---The reason it is called "camera focus" is the similarity to how acquiring input focus works (see `acquire_input_focus`).
+---
+---**Examples:**
+---
+---In the examples, it is assumed that the instance of the script has a camera-component with id "camera".
+---
+---```lua
+---msg.post("#camera", "acquire_camera_focus")
+---```
+---
+---[Open in Browser](https://defold.com/ref/camera-lua#acquire_camera_focus)
+
+---@class message.camera.release_camera_focus
+---Post this message to a camera-component to deactivate it. The camera is then removed from the active cameras.
+---See `acquire_camera_focus` for more information how the active cameras are used in rendering.
+---
+---**Examples:**
+---
+---In the examples, it is assumed that the instance of the script has a camera-component with id "camera".
+---
+---```lua
+---msg.post("#camera", "release_camera_focus")
+---```
+---
+---[Open in Browser](https://defold.com/ref/camera-lua#release_camera_focus)
+
+---@class message.camera.set_camera
+---Post this message to a camera-component to set its properties at run-time.
+---
+---**Examples:**
+---
+---In the examples, it is assumed that the instance of the script has a camera-component with id "camera".
+---
+---```lua
+---msg.post("#camera", "set_camera", {aspect_ratio = 16/9, fov = math.pi * 0.5, near_z = 0.1, far_z = 500})
+---```
+---
+---[Open in Browser](https://defold.com/ref/camera-lua#set_camera)
+---@field aspect_ratio number aspect ratio of the screen (width divided by height)
+---@field fov number field of view of the lens, measured as the angle in radians between the right and left edge
+---@field near_z number position of the near clipping plane (distance from camera along relative z)
+---@field far_z number position of the far clipping plane (distance from camera along relative z)
+---@field orthographic_projection boolean set to use an orthographic projection
+---@field orthographic_zoom number positive zoom multiplier when the camera is using an orthographic projection
+---@field orthographic_mode camera.ORTHO_MODE orthographic zoom behavior when orthographic_projection is enabled
+
+---@class message.collectionproxy.async_load
+---Post this message to a collection-proxy-component to start background loading of the referenced collection.
+---When the loading has completed, the message `proxy_loaded` will be sent back to the script.
+---
+---A loaded collection must be initialized (message `init`) and enabled (message `enable`) in order to be simulated and drawn.
+---
+---**Examples:**
+---
+---In this example we use a collection proxy to load/unload a level (collection).
+---
+---The example assume the script belongs to an instance with collection-proxy-component with id "proxy".
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---    if message_id == hash("start_level") then
+---        -- some script tells us to start loading the level
+---        msg.post("#proxy", "async_load")
+---        -- store sender for later notification
+---        self.loader = sender
+---    elseif message_id == hash("proxy_loaded") then
+---        -- enable the collection and let the loader know
+---        msg.post(sender, "enable")
+---        msg.post(self.loader, message_id)
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#async_load)
+
+---@class message.collectionproxy.disable
+---Post this message to a collection-proxy-component to disable the referenced collection, which in turn disables the contained game objects and components.
+---
+---**Examples:**
+---
+---In this example we use a collection proxy to load/unload a level (collection).
+---
+---The example assumes the script belongs to an instance with a collection-proxy-component with id "proxy".
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---    if message_id == hash("end_level") then
+---        local proxy = msg.url("#proxy")
+---        msg.post(proxy, "disable")
+---        msg.post(proxy, "final")
+---        msg.post(proxy, "unload")
+---        -- store sender for later notification
+---        self.unloader = sender
+---    elseif message_id == hash("proxy_unloaded") then
+---        -- let unloader know
+---        msg.post(self.unloader, "level_ended")
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#disable)
+
+---@class message.collectionproxy.enable
+---Post this message to a collection-proxy-component to enable the referenced collection, which in turn enables the contained game objects and components.
+---If the referenced collection was not initialized prior to this call, it will automatically be initialized.
+---
+---**Examples:**
+---
+---In this example we use a collection proxy to load/unload a level (collection).
+---
+---The example assume the script belongs to an instance with collection-proxy-component with id "proxy".
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---    if message_id == hash("start_level") then
+---        -- some script tells us to start loading the level
+---        msg.post("#proxy", "load")
+---        -- store sender for later notification
+---        self.loader = sender
+---    elseif message_id == hash("proxy_loaded") then
+---        -- enable the collection and let the loader know
+---        msg.post(sender, "enable")
+---        msg.post(self.loader, "level_started")
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#enable)
+
+---@class message.collectionproxy.final
+---Post this message to a collection-proxy-component to finalize the referenced collection, which in turn finalizes the contained game objects and components.
+---
+---**Examples:**
+---
+---In this example we use a collection proxy to load/unload a level (collection).
+---
+---The example assumes the script belongs to an instance with a collection-proxy-component with id "proxy".
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---    if message_id == hash("end_level") then
+---        local proxy = msg.url("#proxy")
+---        msg.post(proxy, "disable")
+---        msg.post(proxy, "final")
+---        msg.post(proxy, "unload")
+---        -- store sender for later notification
+---        self.unloader = sender
+---    elseif message_id == hash("proxy_unloaded") then
+---        -- let unloader know
+---        msg.post(self.unloader, "level_ended")
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#final)
+
+---@class message.collectionproxy.init
+---Post this message to a collection-proxy-component to initialize the game objects and components in the referenced collection.
+---Sending `enable` to an uninitialized collection proxy automatically initializes it.
+---The `init` message simply provides a higher level of control.
+---
+---**Examples:**
+---
+---In this example we use a collection proxy to load/unload a level (collection).
+---
+---The example assume the script belongs to an instance with collection-proxy-component with id "proxy".
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---    if message_id == hash("load_level") then
+---        -- some script tells us to start loading the level
+---        msg.post("#proxy", "load")
+---        -- store sender for later notification
+---        self.loader = sender
+---    elseif message_id == hash("proxy_loaded") then
+---        -- only initialize the proxy at this point since we want to enable it at a later time for some reason
+---        msg.post(sender, "init")
+---        -- let loader know
+---        msg.post(self.loader, message_id)
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#init)
+
+---@class message.collectionproxy.load
+---Post this message to a collection-proxy-component to start the loading of the referenced collection.
+---When the loading has completed, the message `proxy_loaded` will be sent back to the script.
+---
+---A loaded collection must be initialized (message `init`) and enabled (message `enable`) in order to be simulated and drawn.
+---
+---**Examples:**
+---
+---In this example we use a collection proxy to load/unload a level (collection).
+---
+---The example assume the script belongs to an instance with collection-proxy-component with id "proxy".
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---    if message_id == hash("start_level") then
+---        -- some script tells us to start loading the level
+---        msg.post("#proxy", "load")
+---        -- store sender for later notification
+---        self.loader = sender
+---    elseif message_id == hash("proxy_loaded") then
+---        -- enable the collection and let the loader know
+---        msg.post(sender, "enable")
+---        msg.post(self.loader, message_id)
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#load)
+
+---@class message.collectionproxy.proxy_error
+---proxy
+---
+---**Examples:**
+---
+---```lua
+---function init(self)
+---  collectionproxy.load("#proxy", {}, function(self, message_id, message, sender)
+---     if message_id == hash("proxy_error") then
+---        print("Proxy loading error:", message.code)
+---     end
+---  end)
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#proxy_error)
+---@field code number error code
+
+---@class message.collectionproxy.proxy_loaded
+---This message is sent back to the script that initiated a collection proxy load when the referenced
+---collection is loaded. See documentation for `load` for examples how to use.
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#proxy_loaded)
+
+---@class message.collectionproxy.proxy_loading
+---reports that a collection proxy is loading
+---
+---**Examples:**
+---
+---```lua
+---function init(self)
+---  collectionproxy.load("#proxy", {}, function(self, message_id, message, sender)
+---     if message_id == hash("proxy_loading") then
+---        print("Proxy loading progress:", message.progress)
+---     end
+---  end)
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#proxy_loading)
+---@field progress number the loading progress (0.0 to 1.0)
+
+---@class message.collectionproxy.proxy_ready
+---reports that a collection proxy has been loaded and is running
+---
+---**Examples:**
+---
+---```lua
+---function init(self)
+---  collectionproxy.load("#proxy", {}, function(self, message_id, message, sender)
+---     if message_id == hash("proxy_ready") then
+---        print("Proxy has been loaded and is running")
+---     end
+---  end)
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#proxy_ready)
+
+---@class message.collectionproxy.proxy_unloaded
+---This message is sent back to the script that initiated an unload with a collection proxy when
+---the referenced collection is unloaded. See documentation for `unload` for examples how to use.
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#proxy_unloaded)
+
+---@class message.collectionproxy.set_time_step
+---Post this message to a collection-proxy-component to modify the time-step used when updating the collection controlled by the proxy.
+---The time-step is modified by a scaling `factor` and can be incremented either continuously or in discrete steps.
+---
+---The continuous mode can be used for slow-motion or fast-forward effects.
+---
+---The discrete mode is only useful when scaling the time-step to pass slower than real time (`factor` is below 1).
+---The time-step will then be set to 0 for as many frames as the scaling demands and then take on the full real-time-step for one frame,
+---to simulate pulses. E.g. if `factor` is set to `0.1` the time-step would be 0 for 9 frames, then be 1/60 for one
+---frame, 0 for 9 frames, and so on. The result in practice is that the game looks like it's updated at a much lower frequency than 60 Hz,
+---which can be useful for debugging when each frame needs to be inspected.
+---
+---**Examples:**
+---
+---The examples assumes the script belongs to an instance with a collection-proxy-component with id "proxy".
+---
+---Update the collection twice as fast:
+---
+---```lua
+---msg.post("#proxy", "set_time_step", {factor = 2, mode = 0})
+---```
+---
+---Update the collection twice as slow:
+---
+---```lua
+---msg.post("#proxy", "set_time_step", {factor = 0.5, mode = 0})
+---```
+---
+---Simulate 1 FPS for the collection:
+---
+---```lua
+---msg.post("#proxy", "set_time_step", {factor = 1/60, mode = 1})
+---```
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#set_time_step)
+---@field factor number time-step scaling factor
+---@field mode collectionproxy.TIME_STEP_MODE time-step mode
+
+---@class message.collectionproxy.unload
+---Post this message to a collection-proxy-component to start the unloading of the referenced collection.
+---When the unloading has completed, the message `proxy_unloaded` will be sent back to the script.
+---
+---**Examples:**
+---
+---In this example we use a collection proxy to load/unload a level (collection).
+---
+---The example assumes the script belongs to an instance with a collection-proxy-component with id "proxy".
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---    if message_id == hash("end_level") then
+---        local proxy = msg.url("#proxy")
+---        msg.post(proxy, "disable")
+---        msg.post(proxy, "final")
+---        msg.post(proxy, "unload")
+---        -- store sender for later notification
+---        self.unloader = sender
+---    elseif message_id == hash("proxy_unloaded") then
+---        -- let unloader know
+---        msg.post(self.unloader, "level_ended")
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/collectionproxy-lua#unload)
+
+---@class message.go.acquire_input_focus
+---Post this message to a game object instance to make that instance acquire the user input focus.
+---
+---User input is distributed by the engine to every instance that has
+---requested it. The last instance to request focus will receive it first.
+---This means that the scripts in the instance will have first-hand-chance
+---at reacting on user input, possibly consuming it (by returning
+---`true` from `on_input`) so that no other instances
+---can react on it. The most common case is for a script to send this message
+---to itself when it needs to respond to user input.
+---
+---A script belonging to an instance which has the user input focus will
+---receive the input actions in its `on_input` callback function.
+---See `on_input` for more information on how user input can be
+---handled.
+---
+---**Examples:**
+---
+---This example demonstrates how to acquire and act on user input.
+---
+---```lua
+---function init(self)
+---    -- acquire input focus as soon as the instance has been initialized
+---    msg.post(".", "acquire_input_focus")
+---end
+---
+---function on_input(self, action_id, action)
+---    -- check which input we received
+---    if action_id == hash("my_action") then
+---        -- act on the input
+---        self.my_action_amount = action.value
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/go-lua#acquire_input_focus)
+
+---@class message.go.disable
+---This message disables the receiving component. All components are enabled by default, which means they will receive input, updates
+---and be a part of the simulation. A component is disabled when it receives the `disable` message.
+---
+---Components that currently supports this message are:
+---
+---- Camera
+---- Collection Proxy
+---- Collision Object
+---- Gui
+---- Label
+---- Spine Model
+---- Sprite
+---- Tile Grid
+---- Model
+---- Mesh
+---
+---**Examples:**
+---
+---Disable the component "my_component":
+---
+---```lua
+---msg.post("#my_component", "disable")
+---```
+---
+---[Open in Browser](https://defold.com/ref/go-lua#disable)
+
+---@class message.go.enable
+---This message enables the receiving component. All components are enabled by default, which means they will receive input, updates
+---and be a part of the simulation. A component is disabled when it receives the `disable` message.
+---
+---Components that currently supports this message are:
+---
+---- Camera
+---- Collection Proxy
+---- Collision Object
+---- Gui
+---- Label
+---- Spine Model
+---- Sprite
+---- Tile Grid
+---- Model
+---- Mesh
+---
+---**Examples:**
+---
+---Enable the component "my_component":
+---
+---```lua
+---msg.post("#my_component", "enable")
+---```
+---
+---[Open in Browser](https://defold.com/ref/go-lua#enable)
+
+---@class message.go.release_input_focus
+---Post this message to an instance to make that instance release the user input focus.
+---See `acquire_input_focus` for more information on how the user input handling
+---works.
+---
+---**Examples:**
+---
+---How to make a game object stop receiving input:
+---
+---```lua
+---msg.post(".", "release_input_focus")
+---```
+---
+---[Open in Browser](https://defold.com/ref/go-lua#release_input_focus)
+
+---@class message.go.set_parent
+---When this message is sent to an instance, it sets the parent of that instance. This means that the instance will exist
+---in the geometrical space of its parent, like a basic transformation hierarchy or scene graph. If no parent is specified,
+---the instance will be detached from any parent and exist in world space. A script can send this message to itself to set
+---the parent of its instance.
+---
+---**Examples:**
+---
+---Attach myself to another instance "my_parent":
+---
+---```lua
+---msg.post(".", "set_parent", {parent_id = go.get_id("my_parent")})
+---```
+---
+---Attach an instance "my_instance" to another instance "my_parent":
+---
+---```lua
+---msg.post("my_instance", "set_parent", {parent_id = go.get_id("my_parent")})
+---```
+---
+---Detach an instance "my_instance" from its parent (if any):
+---
+---```lua
+---msg.post("my_instance", "set_parent")
+---```
+---
+---[Open in Browser](https://defold.com/ref/go-lua#set_parent)
+---@field parent_id hash the id of the new parent
+---@field keep_world_transform number if the world transform of the instance should be preserved when changing spaces, 0 for false and 1 for true. The default value is 1.
+
+---@class message.gui.layout_changed
+---This message is broadcast to every GUI component when a layout change has been initiated
+---on device.
+---
+---**Examples:**
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---   if message_id == hash("layout_changed") and message.id == hash("Landscape") then
+---       -- switching layout to "Landscape"...
+---       ...
+---   end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/gui-lua#layout_changed)
+---@field id hash the id of the layout the engine is changing to
+---@field previous_id hash the id of the layout the engine is changing from
+
+---@class message.gui.text_object_clicked
+---Sent to the GUI script when an interactive rich-text object is clicked.
+---
+---[Open in Browser](https://defold.com/ref/gui-lua#text_object_clicked)
+---@field id hash the object's `id` attribute, or its generated layout object id
+---@field type hash the layout object type, currently `link`
+---@field src string the application-defined target from the object's `src` attribute
+
+---@class message.gui.text_object_hovered
+---Sent to the GUI script when the pointer enters an interactive rich-text object.
+---
+---[Open in Browser](https://defold.com/ref/gui-lua#text_object_hovered)
+---@field id hash the object's `id` attribute, or its generated layout object id
+---@field type hash the layout object type, currently `link`
+---@field src string the application-defined target from the object's `src` attribute
+
+---@class message.gui.text_object_unhovered
+---Sent to the GUI script when the pointer leaves an interactive rich-text object.
+---
+---[Open in Browser](https://defold.com/ref/gui-lua#text_object_unhovered)
+---@field id hash the object's `id` attribute, or its generated layout object id
+---@field type hash the layout object type, currently `link`
+---@field src string the application-defined target from the object's `src` attribute
+
+---@class message.label.text_object_clicked
+---Sent to the owning game object when an interactive rich-text object is clicked.
+---
+---[Open in Browser](https://defold.com/ref/label-lua#text_object_clicked)
+---@field id hash the object's `id` attribute, or its generated layout object id
+---@field type hash the layout object type, currently `link`
+---@field src string the application-defined target from the object's `src` attribute
+
+---@class message.label.text_object_hovered
+---Sent to the owning game object when the pointer enters an interactive rich-text object.
+---
+---[Open in Browser](https://defold.com/ref/label-lua#text_object_hovered)
+---@field id hash the object's `id` attribute, or its generated layout object id
+---@field type hash the layout object type, currently `link`
+---@field src string the application-defined target from the object's `src` attribute
+
+---@class message.label.text_object_unhovered
+---Sent to the owning game object when the pointer leaves an interactive rich-text object.
+---
+---[Open in Browser](https://defold.com/ref/label-lua#text_object_unhovered)
+---@field id hash the object's `id` attribute, or its generated layout object id
+---@field type hash the layout object type, currently `link`
+---@field src string the application-defined target from the object's `src` attribute
+
+---@class message.model.model_animation_done
+---This message is sent when a Model animation has finished playing back to the script
+---that started the animation.
+---
+---No message is sent if a completion callback function was supplied
+---when the animation was started. No message is sent if the animation is cancelled with
+---model.cancel(). This message is sent only for animations that play with
+---the following playback modes:
+---
+---- `go.PLAYBACK_ONCE_FORWARD`
+---- `go.PLAYBACK_ONCE_BACKWARD`
+---- `go.PLAYBACK_ONCE_PINGPONG`
+---
+---**Examples:**
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---  if message_id == hash("model_animation_done") then
+---    if message.animation_id == hash("run") and message.playback == go.PLAYBACK_ONCE_FORWARD then
+---      -- The animation "run" has finished running forward.
+---    end
+---  end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/model-lua#model_animation_done)
+---@field animation_id hash the id of the completed animation
+---@field playback go.PLAYBACK the playback mode of the completed animation
+
+---@class message.physics.apply_force
+---Post this message to a collision-object-component to apply the specified force on the collision object.
+---The collision object must be dynamic.
+---
+---**Examples:**
+---
+---Assuming the instance of the script has a collision-object-component with id "co":
+---
+---```lua
+----- apply a force of 1 Newton towards world-x at the center of the game object instance
+---msg.post("#co", "apply_force", {force = vmath.vector3(1, 0, 0), position = go.get_world_position()})
+---```
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#apply_force)
+---@field force vector3 the force to be applied on the collision object, measured in Newton
+---@field position vector3 the position where the force should be applied
+
+---@class message.physics.collision_event
+---See `physics.set_event_listener`.
+---
+---This message is sent to a function specified in `physics.set_event_listener`
+---when two collision objects collide.
+---
+---This message only reports that a collision has occurred and will be sent once per frame and per colliding pair.
+---For more detailed information, check for the `contact_point_event`.
+---
+---**Examples:**
+---
+---How to take action when a collision occurs:
+---
+---```lua
+---physics.set_event_listener(function(self, event, data)
+---  if event == hash("collision_event") then
+---      pprint(data)
+---      -- {
+---      --  a = {
+---      --          group = hash: [default],
+---      --          position = vmath.vector3(183, 666, 0),
+---      --          id = hash: [/go1]
+---      --      },
+---      --  b = {
+---      --          group = hash: [default],
+---      --          position = vmath.vector3(185, 704.05865478516, 0),
+---      --          id = hash: [/go2]
+---      --      }
+---      -- }
+---  end
+---end)
+---```
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#collision_event)
+---@field a message.physics.collision_info collision information for object A
+---@field b message.physics.collision_info collision information for object B
+
+---@class message.physics.collision_response
+---This message is broadcasted to every component of an instance that has a collision object,
+---when the collision object collides with another collision object. For a script to take action
+---when such a collision happens, it should check for this message in its `on_message` callback
+---function.
+---
+---This message only reports that a collision actually happened and will only be sent once per
+---colliding pair and frame.
+---To retrieve more detailed information, check for the `contact_point_response` instead.
+---
+---**Examples:**
+---
+---How to take action when a collision occurs:
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---    -- check for the message
+---    if message_id == hash("collision_response") then
+---        -- take action
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#collision_response)
+---@field other_id hash the id of the instance the collision object collided with
+---@field other_position vector3 the world position of the instance the collision object collided with
+---@field other_group hash the collision group of the other collision object
+---@field own_group hash the collision group of the own collision object
+
+---@class message.physics.contact_point_event
+---See `physics.set_event_listener`.
+---
+---This message is sent to a function specified in `physics.set_event_listener` when
+---a collision object has contact points with another collision object.
+---
+---Since multiple contact points can occur for two colliding objects, this event can be sent
+---multiple times in the same frame for the same two colliding objects. To only be notified once
+---when the collision occurs, check for the `collision_event` event instead.
+---
+---**Examples:**
+---
+---How to take action when a contact point occurs:
+---
+---```lua
+---physics.set_event_listener(function(self, events)
+---  for _,event in ipairs(events) do
+---    if event['type'] == hash("contact_point_event") then
+---        pprint(event)
+---        -- {
+---        --  applied_impulse = 310.00769042969,
+---        --  distance = 0.0714111328125,
+---        --  a = {
+---        --      position = vmath.vector3(446, 371, 0),
+---        --      relative_velocity = vmath.vector3(1.1722083854693e-06, -20.667181015015, -0),
+---        --      mass = 0,
+---        --      group = hash: [default],
+---        --      id = hash: [/flat],
+---        --      normal = vmath.vector3(-0, -1, -0)
+---        --  },
+---        --  b = {
+---        --      position = vmath.vector3(185, 657.92858886719, 0),
+---        --      relative_velocity = vmath.vector3(-1.1722083854693e-06, 20.667181015015, 0),
+---        --      mass = 10,
+---        --      group = hash: [default],
+---        --      id = hash: [/go2],
+---        --      normal = vmath.vector3(0, 1, 0)
+---        --  },
+---        --  type = hash: [contact_point_event]
+---        -- }
+---     end
+---   end
+---end)
+---```
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#contact_point_event)
+---@field applied_impulse number the impulse the contact resulted in
+---@field distance number the penetration distance between the objects, which is always positive
+---@field a message.physics.contact_point_info contact point information for object A
+---@field b message.physics.contact_point_info contact point information for object B
+
+---@class message.physics.contact_point_response
+---This message is broadcasted to every component of an instance that has a collision object,
+---when the collision object has contact points with respect to another collision object.
+---For a script to take action when such contact points occur, it should check for this message
+---in its `on_message` callback function.
+---
+---Since multiple contact points can occur for two colliding objects, this message can be sent
+---multiple times in the same frame for the same two colliding objects. To only be notified once
+---when the collision occurs, check for the `collision_response` message instead.
+---
+---**Examples:**
+---
+---How to take action when a contact point occurs:
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---    -- check for the message
+---    if message_id == hash("contact_point_response") then
+---        -- take action
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#contact_point_response)
+---@field position vector3 world position of the contact point
+---@field normal vector3 normal in world space of the contact point, which points from the other object towards the current object
+---@field relative_velocity vector3 the relative velocity of the collision object as observed from the other object
+---@field distance number the penetration distance between the objects, which is always positive
+---@field applied_impulse number the impulse the contact resulted in
+---@field life_time number life time of the contact, **not currently used**
+---@field mass number the mass of the current collision object in kg
+---@field other_mass number the mass of the other collision object in kg
+---@field other_id hash the id of the instance the collision object is in contact with
+---@field other_position vector3 the world position of the other collision object
+---@field other_group hash the collision group of the other collision object
+---@field own_group hash the collision group of the own collision object
+
+---@class message.physics.ray_cast_missed
+---This message is sent back to the sender of a `ray_cast_request`, or to the physics world listener
+---if it is set (see `physics.set_event_listener`), if the ray didn't hit any collision object.
+---See `physics.raycast_async` for examples of how to use it.
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#ray_cast_missed)
+---@field request_id integer id supplied when the ray cast was requested
+
+---@class message.physics.ray_cast_response
+---This message is sent back to the sender of a `ray_cast_request`, or to the physics world listener
+---if it is set (see `physics.set_event_listener`), if the ray hits a collision object.
+---See `physics.raycast_async` for examples of how to use it.
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#ray_cast_response)
+---@field fraction number the fraction of the hit measured along the ray, where 0 is the start of the ray and 1 is the end
+---@field position vector3 the world position of the hit
+---@field normal vector3 the normal of the surface of the collision object where it was hit
+---@field id hash the instance id of the hit collision object
+---@field group hash the collision group of the hit collision object as a hashed name
+---@field request_id integer id supplied when the ray cast was requested
+
+---@class message.physics.trigger_event
+---See `physics.set_event_listener`.
+---
+---This message is sent to a function specified in `physics.set_event_listener`
+---when a collision object interacts with another collision object and one of them is a trigger.
+---
+---This message only reports that an interaction actually happened and will be sent once per colliding pair and frame.
+---For more detailed information, check for the `contact_point_event`.
+---
+---**Examples:**
+---
+---How to take action when a trigger interaction occurs:
+---
+---```lua
+---physics.set_event_listener(function(self, event, data)
+--- if event ==  hash("trigger_event") then
+---     if data.enter then
+---        -- take action for entry
+---     else
+---        -- take action for exit
+---     end
+---     pprint(data)
+---     -- {
+---     --  enter = true,
+---     --  b = {
+---     --      group = hash: [default],
+---     --      id = hash: [/go2]
+---     --  },
+---     --  a = {
+---     --      group = hash: [default],
+---     --      id = hash: [/go1]
+---     --  }
+---     -- },
+---  end
+---end)
+---```
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#trigger_event)
+---@field enter boolean if the interaction was an entry or not
+---@field a message.physics.trigger_info interaction information for object A
+---@field b message.physics.trigger_info interaction information for object B
+
+---@class message.physics.trigger_response
+---This message is broadcasted to every component of an instance that has a collision object,
+---when the collision object interacts with another collision object and one of them is a trigger.
+---For a script to take action when such an interaction happens, it should check for this message
+---in its `on_message` callback function.
+---
+---This message only reports that an interaction actually happened and will only be sent once per
+---colliding pair and frame. To retrieve more detailed information, check for the
+---`contact_point_response` instead.
+---
+---**Examples:**
+---
+---How to take action when a trigger interaction occurs:
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---    -- check for the message
+---    if message_id == hash("trigger_response") then
+---        if message.enter then
+---            -- take action for entry
+---        else
+---            -- take action for exit
+---        end
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/physics-lua#trigger_response)
+---@field other_id hash the id of the instance the collision object collided with
+---@field enter boolean if the interaction was an entry or not
+---@field other_group hash the collision group of the triggering collision object
+---@field own_group hash the collision group of the own collision object
+
+---@class message.render.clear_color
+---Set render clear color. This is the color that appears on the screen where nothing is rendered, i.e. background.
+---
+---**Examples:**
+---
+---```lua
+---msg.post("@render:", "clear_color", { color = vmath.vector4(1, 0, 0, 0) } )
+---```
+---
+---[Open in Browser](https://defold.com/ref/render-lua#clear_color)
+---@field color vector4 color to use as clear color
+
+---@class message.render.draw_debug_text
+---Draw a text on the screen. This should be used for debugging purposes only.
+---
+---**Examples:**
+---
+---```lua
+---msg.post("@render:", "draw_debug_text", { text = "Hello world!", position = vmath.vector3(200, 200, 0), color = vmath.vector4(1, 0, 0, 1) } )
+---```
+---
+---[Open in Browser](https://defold.com/ref/render-lua#draw_debug_text)
+---@field position vector3 position of the text
+---@field text string the text to draw
+---@field color vector4 color of the text
+
+---@class message.render.draw_line
+---Draw a line on the screen. This should mostly be used for debugging purposes.
+---
+---**Examples:**
+---
+---```lua
+----- draw a white line from (200, 200) to (200, 300)
+---msg.post("@render:", "draw_line", { start_point = vmath.vector3(200, 200, 0), end_point = vmath.vector3(200, 300, 0), color = vmath.vector4(1, 1, 1, 1) } )
+---```
+---
+---[Open in Browser](https://defold.com/ref/render-lua#draw_line)
+---@field start_point vector3 start point of the line
+---@field end_point vector3 end point of the line
+---@field color vector4 color of the line
+
+---@class message.render.resize
+---Set the size of the game window. Only works on desktop platforms.
+---
+---**Examples:**
+---
+---```lua
+---msg.post("@render:", "resize", { width = 1024, height = 768 } )
+---```
+---
+---[Open in Browser](https://defold.com/ref/render-lua#resize)
+---@field height number the new window height
+---@field width number the new window width
+
+---@class message.render.window_resized
+---Reports a change in window size. This is initiated on window resize on desktop or by orientation changes
+---on mobile devices.
+---
+---**Examples:**
+---
+---```lua
+---function on_message(self, message_id, message)
+---    -- check for the message
+---    if message_id == hash("window_resized") then
+---        -- the window was resized.
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/render-lua#window_resized)
+---@field height number the new window height
+---@field width number the new window width
+
+---@class message.sound.play_sound
+---Post this message to a sound-component to make it play its sound. Multiple voices is supported. The limit is set to 32 voices per sound component.
+---
+---Note that gain is in linear scale, between 0 and 1.
+---To get the dB value from the gain, use the formula `20 * log(gain)`.
+---Inversely, to find the linear value from a dB value, use the formula
+---`10db/20`.
+---
+---A sound will continue to play even if the game object the sound component belonged to is deleted. You can send a `stop_sound` to stop the sound.
+---
+---`play_id` should be specified in case you want to receive `sound_done` or `sound_stopped` in `on_message()`.
+---
+---**Examples:**
+---
+---Assuming the script belongs to an instance with a sound-component with id "sound", this will make the component play its sound after 1 second:
+---
+---```lua
+---msg.post("#sound", "play_sound", {delay = 1, gain = 0.5})
+---```
+---
+---```lua
+----- use `play_id` and `msg.post()` if you want to recieve `sound_done` or `sound_stopped` in on_message()
+---function init()
+--- msg.post("#sound", "play_sound", {play_id = 1, delay = 1, gain = 0.5})
+---end
+---
+---function on_message(self, message_id, message)
+--- if message_id == hash("sound_done") then
+---     print("Sound play id: "..message.play_id)
+--- end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/sound-lua#play_sound)
+---@field delay? number delay in seconds before the sound starts playing, default is 0.
+---@field gain? number sound gain between 0 and 1, default is 1.
+---@field play_id? number the identifier of the sound, can be used to distinguish between consecutive plays from the same component.
+---@field start_time? number optional start offset (seconds). Mutually exclusive with `start_frame`.
+---@field start_frame? number optional start offset (frames). If both are provided, `start_frame` is used.
+
+---@class message.sound.set_gain
+---Post this message to a sound-component to set gain on all active playing voices.
+---
+---Note that gain is in linear scale, between 0 and 1.
+---To get the dB value from the gain, use the formula `20 * log(gain)`.
+---Inversely, to find the linear value from a dB value, use the formula
+---`10db/20`.
+---
+---**Examples:**
+---
+---Assuming the script belongs to an instance with a sound-component with id "sound", this will set the gain to 0.5
+---
+---```lua
+---msg.post("#sound", "set_gain", {gain = 0.5})
+---```
+---
+---[Open in Browser](https://defold.com/ref/sound-lua#set_gain)
+---@field gain? number sound gain between 0 and 1, default is 1.
+
+---@class message.sound.sound_done
+---This message is sent back to the sender of a `play_sound` message
+---if the sound could be played to completion and a `play_id` was provided with the `play_sound` message.
+---
+---[Open in Browser](https://defold.com/ref/sound-lua#sound_done)
+---@field play_id? number id number supplied when the message was posted.
+
+---@class message.sound.sound_stopped
+---This message is sent back to the sender of a `play_sound` message, if the sound
+---has been manually stopped and a `play_id` was provided with the `play_sound` message.
+---
+---[Open in Browser](https://defold.com/ref/sound-lua#sound_stopped)
+---@field play_id? number id number supplied when the message was posted.
+
+---@class message.sound.stop_sound
+---Post this message to a sound-component to make it stop playing all active voices
+---
+---**Examples:**
+---
+---Assuming the script belongs to an instance with a sound-component with id "sound", this will make the component stop all playing voices:
+---
+---```lua
+---msg.post("#sound", "stop_sound")
+---```
+---
+---[Open in Browser](https://defold.com/ref/sound-lua#stop_sound)
+
+---@class message.sprite.animation_done
+---This message is sent to the sender of a `play_animation` message when the
+---animation has completed.
+---
+---Note that this message is sent only for animations that play with the following
+---playback modes:
+---
+---- Once Forward
+---- Once Backward
+---- Once Ping Pong
+---
+---See `play_animation` for more information and examples of how to use
+---this message.
+---
+---**Examples:**
+---
+---How to sequence two animations together.
+---
+---```lua
+---function init(self)
+---  -- play jump animation at init
+---  msg.post("#sprite", "play_animation", {id = hash("jump")})
+---end
+---
+---function on_message(self, message_id, message, sender)
+---  -- check for animation done response
+---  if message_id == hash("animation_done") then
+---    -- start the walk animation
+---    msg.post("#sprite", "play_animation", { id = hash("walk") })
+---  end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/sprite-lua#animation_done)
+---@field current_tile number the current tile of the sprite
+---@field id hash id of the animation that was completed
+
+---@class message.sprite.play_animation
+---Post this message to a sprite component to make it play an animation from its tile set.
+---
+---**Examples:**
+---
+---In the example, it is assumed that the instance of the script has a sprite-component with id "sprite". The sprite itself is assumed to be bound to a tile set with animations "walk" and "jump".
+---
+---```lua
+---msg.post("#sprite", "play_animation", {id = hash("jump")})
+---```
+---
+---[Open in Browser](https://defold.com/ref/sprite-lua#play_animation)
+---@field id hash the id of the animation to play
+---@field offset number the normalized initial value of the animation cursor when the animation starts playing
+---@field playback_rate number the rate with which the animation will be played. Must be positive
+
+---@class message.sys.exit
+---Terminates the game application and reports the specified `code` to the OS.
+---This message can only be sent to the designated `@system` socket.
+---
+---**Examples:**
+---
+---This examples demonstrates how to exit the application when some kind of quit messages is received (maybe from gui or similar):
+---
+---```lua
+---function on_message(self, message_id, message, sender)
+---    if message_id == hash("quit") then
+---        msg.post("@system:", "exit", {code = 0})
+---    end
+---end
+---```
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#exit)
+---@field code number exit code to report to the OS, 0 means clean exit
+
+---@class message.sys.reboot
+---Reboots the game engine with a specified set of arguments.
+---Arguments will be translated into command line arguments. Sending the reboot
+---command is equivalent to starting the engine with the same arguments.
+---
+---On startup the engine reads configuration from "game.project" in the
+---project root.
+---
+---This message can only be sent to the designated `@system` socket.
+---
+---**Examples:**
+---
+---How to reboot engine with a specific bootstrap collection.
+---
+---```lua
+---local arg1 = '--config=bootstrap.main_collection=/my.collectionc'
+---local arg2 = 'build/game.projectc'
+---msg.post("@system:", "reboot", {arg1 = arg1, arg2 = arg2})
+---```
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#reboot)
+---@field arg1 string argument 1
+---@field arg2 string argument 2
+---@field arg3 string argument 3
+---@field arg4 string argument 4
+---@field arg5 string argument 5
+---@field arg6 string argument 6
+
+---@class message.sys.resume_rendering
+---Resume rendering.
+---This message can only be sent to the designated `@system` socket.
+---
+---**Examples:**
+---
+---<pre>
+---msg.post("@system:", "resume_rendering")
+---</pre>
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#resume_rendering)
+
+---@class message.sys.set_update_frequency
+---Set game update-frequency (frame cap). This option is equivalent to
+---`display.update_frequency` in the "game.project" settings but set at run-time.
+---On platforms where Defold owns the application loop, a positive value uses
+---timer pacing and requests a swap interval of 0 to avoid an additional vsync
+---wait where supported. Setting the frequency to 0 restores the requested swap
+---interval and uses variable-rate updates. Platform-owned loops, such as HTML5
+---and iOS, retain their platform scheduling and presentation behavior. There is
+---no guarantee that the frame cap will be achieved depending on platform and
+---hardware constraints.
+---
+---With engine-side timer pacing, the update dt can be shortened or enlarged to
+---account for elapsed time; the frame cap does not guarantee a constant dt.
+---Elapsed time beyond max(engine.max_time_step, 1 / frequency) is discarded,
+---so accumulated dt can trail wall-clock time after hitches. An intentional
+---fixed interval longer than engine.max_time_step is allowed. This setting
+---is separate from the fixed_update() timestep.
+---
+---This message can only be sent to the designated `@system` socket.
+---
+---**Examples:**
+---
+---<pre>
+---msg.post("@system:", "set_update_frequency", { frequency = 60 } )
+---</pre>
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#set_update_frequency)
+---@field frequency number target frequency in hertz. 0 selects a variable frame rate; negative values are treated as 0.
+
+---@class message.sys.set_vsync
+---Request a presentation interval relative to vertical blanks (v-blank).
+---0 requests disabling vsync and 1 requests presenting every refresh (the default).
+---OpenGL may support larger intervals, such as 2 for every other refresh.
+---Vulkan and Metal treat any nonzero interval as enabling vsync; DX12 clamps
+---intervals to the supported range 0 through 4. Actual behavior depends on
+---the backend, platform, and driver.
+---
+---On platforms where Defold owns the application loop, a positive
+---`display.update_frequency` or a positive value set by `sys.set_update_frequency()`
+---uses timer pacing and requests a swap interval of 0. The requested
+---swap interval is retained and applied again when the update frequency is set to 0.
+---
+---This setting may be overridden by driver settings.
+---
+---This message can only be sent to the designated `@system` socket.
+---
+---**Examples:**
+---
+---<pre>
+---msg.post("@system:", "set_vsync", { swap_interval = 1 } )
+---</pre>
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#set_vsync)
+---@field swap_interval number target swap interval.
+
+---@class message.sys.start_record
+---Starts video recording of the game frame-buffer to file. Current video format is the
+---open vp8 codec in the ivf container. It's possible to upload this format directly
+---to YouTube. The VLC video player has native support but with the known issue that
+---not the entire file is played back. It's probably an issue with VLC.
+---The Miro Video Converter has support for vp8/ivf.
+---
+---Video recording is only supported on desktop platforms.
+---
+---Audio is currently not supported
+---
+---Window width and height must be a multiple of 8 to be able to record video.
+---
+---This message can only be sent to the designated `@system` socket.
+---
+---**Examples:**
+---
+---Record a video in 30 fps given that the native game fps is 60:
+---
+---```lua
+---msg.post("@system:", "start_record", { file_name = "test_rec.ivf" } )
+---```
+---
+---To write a video in 60 fps given that the native game fps is 60:
+---
+---```lua
+---msg.post("@system:", "start_record", { file_name = "test_rec.ivf", frame_period = 1, fps = 60 } )
+---```
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#start_record)
+---@field file_name string file name to write the video to
+---@field frame_period number frame period to record, ie write every nth frame. Default value is `2`
+---@field fps number frames per second. Playback speed for the video. Default value is `30`. The fps value doens't affect the recording. It's only meta-data in the written video file.
+
+---@class message.sys.stop_record
+---Stops the currently active video recording.
+---
+---Video recording is only supported on desktop platforms.
+---
+---This message can only be sent to the designated `@system` socket.
+---
+---**Examples:**
+---
+---```lua
+---msg.post("@system:", "stop_record")
+---```
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#stop_record)
+
+---@class message.sys.toggle_physics_debug
+---Toggles the on-screen physics visual debugging mode which is very useful for
+---tracking down issues related to physics. This mode visualizes
+---all collision object shapes and normals at detected contact points. Toggling
+---this mode on is equal to setting `physics.debug` in the "game.project" settings,
+---but set in run-time.
+---
+---This message can only be sent to the designated `@system` socket.
+---
+---**Examples:**
+---
+---
+---
+---```lua
+---msg.post("@system:", "toggle_physics_debug")
+---```
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#toggle_physics_debug)
+
+---@class message.sys.toggle_profile
+---Toggles the on-screen profiler.
+---The profiler is a real-time tool that shows the numbers of milliseconds spent
+---in each scope per frame as well as counters. The profiler is very useful for
+---tracking down performance and resource problems.
+---
+---In addition to the on-screen profiler, Defold includes a web-based profiler that
+---allows you to sample a series of data points and then analyze them in detail.
+---The web profiler is available at `http://:8002` where  is
+---the IP address of the device you are running your game on.
+---
+---This message can only be sent to the designated `@system` socket.
+---
+---**Examples:**
+---
+---```lua
+---msg.post("@system:", "toggle_profile")
+---```
+---
+---[Open in Browser](https://defold.com/ref/sys-lua#toggle_profile)

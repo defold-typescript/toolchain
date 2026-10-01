@@ -11,6 +11,7 @@ import {
   DEFOLD_VERSION,
   EDITOR_MANIFEST,
   EDITOR_VM_MANIFEST,
+  extractAnnotationFixtures,
   extractFixtures,
   IGNORED_UPSTREAM,
   LUA_STDLIB_MANIFEST,
@@ -20,6 +21,7 @@ import {
   SYNC_MANIFEST,
   type SyncManifestEntry,
   scriptApiToFixtureJson,
+  syncExtractedFixtures,
   syncFixtures,
   UNMAPPED,
   UPSTREAM_MAPPED_NAMESPACES,
@@ -394,6 +396,74 @@ describe("syncFixtures --check", () => {
       manifest,
     });
     expect(rechecked[0]?.status).toBe("clean");
+  });
+});
+
+describe("annotation fixtures", () => {
+  const vmathLua = "---@meta\n---@param value number\nfunction vmath.clamp(value) end\n";
+  const httpEditor = "---@meta\n---@param url string\nfunction http.request(url) end\n";
+  const zip = fakeZip({
+    "doc/vmath.lua": vmathLua,
+    "doc/http.editor_script": httpEditor,
+    "doc/vmath_doc.json": '{"info":{"namespace":"vmath"},"elements":[]}',
+    "doc/sub/x.lua": "x = {}\n",
+  });
+
+  function annotationsRoot(committed?: string): string {
+    const root = mkdtempSync(join(tmpdir(), "sync-annotations-"));
+    if (committed !== undefined) {
+      mkdirSync(join(root, "annotations"), { recursive: true });
+      writeFileSync(join(root, "annotations", "vmath.lua"), committed);
+    }
+    return root;
+  }
+
+  test("extracts every top-level .lua and .editor_script entry verbatim and nothing else", () => {
+    const extracted = extractAnnotationFixtures(zip);
+    expect(extracted.map((item) => item.fixture).sort()).toEqual([
+      "annotations/http.editor_script",
+      "annotations/vmath.lua",
+    ]);
+    const byFixture = new Map(extracted.map((item) => [item.fixture, item.contents]));
+    expect(byFixture.get("annotations/vmath.lua")).toBe(vmathLua);
+    expect(byFixture.get("annotations/http.editor_script")).toBe(httpEditor);
+  });
+
+  test("a zip without annotation entries yields an empty set", () => {
+    expect(extractAnnotationFixtures(fakeZip({ "doc/vmath_doc.json": "{}" }))).toEqual([]);
+  });
+
+  test("--check reports drift for a committed annotation file that differs, without writing", () => {
+    const committed = "---@meta\nfunction vmath.clamp() end\n";
+    const root = annotationsRoot(committed);
+    const results = syncExtractedFixtures(extractAnnotationFixtures(zip), {
+      fixturesRoot: root,
+      check: true,
+    });
+    const vmath = results.find((r) => r.fixture === "annotations/vmath.lua");
+    expect(vmath?.status).toBe("drift");
+    expect(results.find((r) => r.fixture === "annotations/http.editor_script")?.status).toBe(
+      "created",
+    );
+    expect(readFileSync(join(root, "annotations", "vmath.lua"), "utf8")).toBe(committed);
+  });
+
+  test("a write vendors the text unformatted and re-checks clean", () => {
+    const root = annotationsRoot();
+    const written = syncExtractedFixtures(extractAnnotationFixtures(zip), {
+      fixturesRoot: root,
+      format: () => {
+        throw new Error("annotation text must not pass through the JSON formatter");
+      },
+    });
+    expect(written.every((r) => r.status === "created")).toBe(true);
+    expect(readFileSync(join(root, "annotations", "vmath.lua"), "utf8")).toBe(vmathLua);
+
+    const rechecked = syncExtractedFixtures(extractAnnotationFixtures(zip), {
+      fixturesRoot: root,
+      check: true,
+    });
+    expect(rechecked.map((r) => r.status)).toEqual(["clean", "clean"]);
   });
 });
 
