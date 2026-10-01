@@ -31,6 +31,7 @@ import {
   type ApiSymbol,
   type AvailabilityLookup,
   apiModuleSymbols,
+  availabilityItems,
   availabilityLabels,
   bareId,
   groupOverloadForms,
@@ -3223,5 +3224,42 @@ describe("a slot doc carrying a list stays under its bullet", () => {
     const between = html.slice(start, end);
     expect(between).toContain("<ul>");
     expect(between).not.toContain("</li>");
+  });
+});
+
+describe("per-form availability on an authored override", () => {
+  test("go.property's string form carries its own availability line and span", () => {
+    const page = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
+      (p) => p.namespace === "go",
+    );
+    if (!page) throw new Error("no canonical go page");
+    const record = apiModuleSymbols(page, page.translations, page.signatures).find(
+      (s) =>
+        s.name === "go.property" && s.signature.endsWith("value: string): ScriptProperty<string>"),
+    )?.availability;
+    if (!record) throw new Error("go.property's string form carries no availability");
+    const labels = availabilityItems(record, page.availability).map((item) => item.label);
+    expect(labels.length).toBeGreaterThan(0);
+
+    const items = apiPageMarkdown(page, apiLinkify([page]), { combinedMarkers: true })
+      .split('<li class="api-overload">')
+      .slice(1)
+      .map((item) => item.slice(0, item.indexOf("</li>")));
+    const stringItem = items.find((item) => item.includes("(name: string, value: string)"));
+    const numberItem = items.find((item) => item.includes("(name: string, value: number)"));
+    expect(stringItem).toBeDefined();
+    expect(numberItem).toBeDefined();
+
+    const listStart = stringItem?.indexOf('<div class="api-availability"') ?? -1;
+    const list = stringItem?.slice(listStart, stringItem.indexOf("</div>", listStart)) ?? "";
+    expect(list.startsWith('<div class="api-availability"')).toBe(true);
+    expect(
+      list
+        .split("\n")
+        .filter((line) => line.startsWith("- "))
+        .map((line) => line.replace(/^- <span[^>]*>[^<]*<\/span> /, "")),
+    ).toEqual(labels);
+    expect(stringItem).toContain(`data-span-oldest="${record.availableIn.at(-1)}"`);
+    expect(numberItem).not.toContain('class="api-availability"');
   });
 });
