@@ -2317,20 +2317,80 @@ describe("apiModuleSymbols", () => {
     for (const row of rows) expect(row.docMarkdown).toBe(rows[0]?.docMarkdown ?? "");
   });
 
+  function availabilityRecordsFor(page: ApiPage, name: string): ApiAvailability[] {
+    return [...(page.availability?.records.values() ?? [])].filter(
+      (record) => record.identity.name === name,
+    );
+  }
+
+  // The span a reader sees for a row: its own versions, else the page's whole axis.
+  function presentIn(page: ApiPage, symbol: ApiSymbol | undefined): Set<string> {
+    const own = symbol?.availability?.availableIn ?? [];
+    return new Set(own.length > 0 ? own : (page.availability?.versions ?? []));
+  }
+
+  function identitySlotTypes(record: ApiAvailability, slot: number): readonly string[] {
+    const signature = record.identity.signature ?? "";
+    const params = JSON.parse(signature.slice(0, signature.indexOf("]->[") + 1)) as {
+      types: string[];
+    }[];
+    return params[slot]?.types ?? [];
+  }
+
   test("go.property's rows span every version its ref-doc signatures cover", () => {
     const page = canonicalGoPage();
-    const records = [...(page.availability?.records.values() ?? [])].filter(
-      (record) => record.identity.name === "go.property",
-    );
-    // Two records: the ref-doc re-typed `value` in a later release, while the
-    // authored forms stay the same on every version.
+    const records = availabilityRecordsFor(page, "go.property");
+    // Two records: the ref-doc re-typed `value` in a later release, admitting a
+    // `string` value only from then on, so the authored string form is newer
+    // than the others while every other form spans both records.
     expect(records.length).toBeGreaterThan(1);
     const covered = new Set(records.flatMap((record) => record.availableIn));
 
-    const [head] = apiModuleSymbols(page, page.translations, page.signatures).filter(
+    const rows = apiModuleSymbols(page, page.translations, page.signatures).filter(
       (s) => s.name === "go.property",
     );
-    expect(new Set(head?.availability?.availableIn)).toEqual(covered);
+    const others = rows.filter(
+      (s) => !s.signature.endsWith("value: string): ScriptProperty<string>"),
+    );
+    expect(others.length).toBe(rows.length - 1);
+    expect(new Set(others[0]?.availability?.availableIn)).toEqual(covered);
+    for (const row of others) expect(presentIn(page, row)).toEqual(covered);
+  });
+
+  test("go.property's string form spans only the ref-doc signature that admits a string value", () => {
+    const page = canonicalGoPage();
+    const admitting = availabilityRecordsFor(page, "go.property").filter((record) =>
+      identitySlotTypes(record, 1).includes("string"),
+    );
+    expect(admitting).toHaveLength(1);
+
+    const stringRow = apiModuleSymbols(page, page.translations, page.signatures).find(
+      (s) =>
+        s.name === "go.property" && s.signature.endsWith("value: string): ScriptProperty<string>"),
+    );
+    expect(stringRow?.availability?.availableIn).toEqual(admitting[0]?.availableIn);
+  });
+
+  test("an override group whose forms no ref-doc signature singles out keeps one shared span", () => {
+    const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    for (const [namespace, name] of [
+      ["go", "go.get"],
+      ["go", "go.set"],
+      ["msg", "msg.url"],
+    ] as const) {
+      const page = pages.find((p) => p.module.namespace === namespace);
+      if (!page) throw new Error(`no canonical ${namespace} page`);
+      const rows = apiModuleSymbols(page, page.translations, page.signatures).filter(
+        (s) => s.name === name,
+      );
+      expect(rows.length).toBeGreaterThan(1);
+      const records = availabilityRecordsFor(page, name);
+      const union = records.flatMap((record) => record.availableIn);
+      expect(new Set(rows[0]?.availability?.availableIn ?? [])).toEqual(new Set(union));
+      for (const row of rows.slice(1)) expect(row.availability).toBeUndefined();
+      const head = presentIn(page, rows[0]);
+      for (const row of rows) expect(presentIn(page, row)).toEqual(head);
+    }
   });
 
   test("msg.post's primary row keeps the authored bullet list through the projection", () => {
