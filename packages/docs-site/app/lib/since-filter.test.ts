@@ -796,30 +796,30 @@ describe("overload forms with differing spans", () => {
     );
   const forms = (root: MiniElement) => root.querySelectorAll("li.api-overload");
 
-  test("narrowing hides the form it excludes and keeps the block", async () => {
+  test("the replaced form is one history line under a single signature", async () => {
     const root = await render();
-    expect(forms(root)).toHaveLength(2);
-    applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, AXIS_CONFIG);
-    const heading = headingFor(root, "demo.shift(...)");
-    expect(visible(heading)).toBe(true);
-    expect(visible(bodyAfter(heading))).toBe(true);
-    expect(visible(root.querySelector("main"))).toBe(true);
-    expect(forms(root).map((li) => visible(li))).toEqual([false, true]);
-
-    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, AXIS_CONFIG);
-    expect(forms(root).map((li) => visible(li))).toEqual([true, true]);
+    expect(root.querySelector("ol.api-overloads")).toBeNull();
+    const [line, ...rest] = forms(root);
+    expect(rest).toEqual([]);
+    expect(line?.className).toContain("api-overload--revision");
+    expect(line?.textContent.trim()).toStartWith(
+      `Signature changed in Defold ${MIDDLE} — before: `,
+    );
+    expect(line?.querySelector("[data-span-newest]")?.getAttribute("data-span-newest")).toBe(
+      OLDEST,
+    );
+    expect(headingFor(root, "demo.shift(a: number, b: number)")).toBeDefined();
   });
 
-  test("narrowing hides a form's heading dot but no availability list chip", async () => {
+  test("narrowing hides the history line and keeps the block", async () => {
     const root = await render();
-    const marks = root.querySelectorAll(".api-availability-mark");
-    expect(marks.length).toBeGreaterThan(0);
+    applySinceFilter(root, { from: NEWEST, to: PAGE_TO }, AXIS_CONFIG);
+    const heading = headingFor(root, "demo.shift(a: number, b: number)");
+    expect(visible(heading)).toBe(true);
+    expect(visible(bodyAfter(heading))).toBe(true);
+    expect(forms(root).map((li) => visible(li))).toEqual([false]);
 
-    applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, AXIS_CONFIG);
-    const formDots = forms(root).flatMap((li) =>
-      li.querySelectorAll("[class*=api-badge-dot--]").filter((dot) => !visible(dot)),
-    );
-    expect(formDots.length).toBeGreaterThan(0);
-    expect(marks.filter((mark) => !visible(mark)).map((mark) => mark.className)).toEqual([]);
+    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, AXIS_CONFIG);
+    expect(forms(root).map((li) => visible(li))).toEqual([true]);
   });
 });
