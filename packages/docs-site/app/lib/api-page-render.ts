@@ -5,6 +5,7 @@ import {
   type ApiSymbol,
   type ApiSymbolParam,
   type AvailabilityItem,
+  type AvailabilityItemCategory,
   type AvailabilityLookup,
   apiModuleSymbols,
   availabilityItems,
@@ -192,14 +193,16 @@ function availabilityList(items: readonly AvailabilityItem[]): string {
   return [
     '<div class="api-availability" aria-label="Availability">',
     "",
-    ...items.map((item) => {
-      const kind = item.category ?? "none";
-      const glyph = BADGE_KINDS.find((b) => b.kind === item.category)?.glyph ?? "";
-      return `- <span class="api-availability-mark api-availability-mark--${kind}" aria-hidden="true">${glyph}</span> ${item.label}`;
-    }),
+    ...items.map((item) => `- ${availabilityMark(item.category)} ${item.label}`),
     "",
     "</div>",
   ].join("\n");
+}
+
+function availabilityMark(category: AvailabilityItemCategory | undefined): string {
+  const kind = category ?? "none";
+  const glyph = BADGE_KINDS.find((b) => b.kind === category)?.glyph ?? "";
+  return `<span class="api-availability-mark api-availability-mark--${kind}" aria-hidden="true">${glyph}</span>`;
 }
 
 // The `/api` or `/api/<version>` index route for a page: its route with the
@@ -748,16 +751,22 @@ export function apiPageMarkdown(
   const chainSymbols = (group: FunctionRevisionGroup): ApiSymbol[] =>
     [...group.forms, ...group.removed].map(chainSymbol);
   // One history line: a replaced or removed form's code with its own span
-  // marker. The `api-overload` class makes the `?since=` filter hide the line
-  // once the window starts after the form's newest version.
-  const revisionLine = (label: string, code: string, symbol: ApiSymbol): string => {
+  // marker, led by the chip of its category in place of the list bullet. The
+  // `api-overload` class makes the `?since=` filter hide the line once the
+  // window starts after the form's newest version.
+  const revisionLine = (
+    category: AvailabilityItemCategory,
+    label: string,
+    code: string,
+    symbol: ApiSymbol,
+  ): string => {
     const marker = spanTracked
       ? ` ${symbolSpanMarker(presentIn(symbol), formCategories(symbol))}`
       : "";
     return [
       '<li class="api-overload api-overload--revision">',
       "",
-      `${label} \`${code}\`${marker}`,
+      `${availabilityMark(category)} ${label} \`${code}\`${marker}`,
       "",
       "</li>",
     ].join("\n");
@@ -765,6 +774,7 @@ export function apiPageMarkdown(
   const predecessorLines = (revision: FunctionRevision): string[] =>
     revision.predecessors.map(({ symbol, boundary }) =>
       revisionLine(
+        "changed",
         `Signature changed in Defold ${bareId(boundary)} — before:`,
         overloadFormCodes([revision.symbol, symbol])[1] ?? symbol.signature,
         symbol,
@@ -774,6 +784,7 @@ export function apiPageMarkdown(
     const live = group.forms.map((form) => form.symbol);
     return group.removed.flatMap((revision) => [
       revisionLine(
+        "changed",
         `Removed in Defold ${bareId(revision.boundary)}:`,
         overloadFormCodes([...live, revision.symbol]).at(-1) ?? revision.symbol.signature,
         revision.symbol,

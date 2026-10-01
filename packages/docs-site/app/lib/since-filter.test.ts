@@ -802,7 +802,11 @@ describe("overload forms with differing spans", () => {
     const [line, ...rest] = forms(root);
     expect(rest).toEqual([]);
     expect(line?.className).toContain("api-overload--revision");
-    expect(line?.textContent.trim()).toStartWith(
+    const chip = line?.querySelector(".api-availability-mark");
+    expect(chip?.className.split(" ")).toContain("api-availability-mark--changed");
+    expect(chip?.textContent).toBe("C");
+    expect(chip?.parentElement?.children[0]).toBe(chip ?? undefined);
+    expect(chip?.parentElement?.text.trimStart()).toStartWith(
       `Signature changed in Defold ${MIDDLE} — before: `,
     );
     expect(line?.querySelector("[data-span-newest]")?.getAttribute("data-span-newest")).toBe(

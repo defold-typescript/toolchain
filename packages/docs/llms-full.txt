@@ -7237,8 +7237,9 @@ questions:
   changed between releases renders under its current signature, with one
   `Signature changed in Defold <version> — before: …` line per form it replaced,
   as on `b2d.get_world`. A form dropped without a replacement shows as a
-  `Removed in Defold <version>: …` line. Both lines are absolute, like the version
-  note, and narrowing `From` past the old form hides its line.
+  `Removed in Defold <version>: …` line. Both lines lead with the `C` chip in place
+  of a bullet and are absolute, like the version note, and narrowing `From` past
+  the old form hides its line.
 
 #### Release notes
 
