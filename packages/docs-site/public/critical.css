@@ -454,10 +454,11 @@ header.topbar-critical .logo-mark {
   list-style: none;
   padding-left: 0;
 }
-/* The /api availability list leads each item with a category chip instead of a
-   bullet. Must live here (unlayered): the styles.css mirror is in @layer
-   components and loses to the `.prose ul` rule above. */
-.prose .api-availability ul {
+/* The /api availability list and signature history list lead each item with a
+   category chip instead of a bullet. Must live here (unlayered): the styles.css
+   mirror is in @layer components and loses to the `.prose ul` rule above. */
+.prose .api-availability ul,
+.prose .api-revisions {
   list-style: none;
   padding-left: 0;
 }

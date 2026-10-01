@@ -1786,9 +1786,9 @@ describe("Combined page authoritative render + markers", () => {
     const md = apiPageMarkdown(page, noLink, { combinedMarkers: true });
     const [current] = groupFor(page, "liveupdate.add_mount");
     expect(current?.signature).toContain("result: liveupdate.LIVEUPDATE");
-    const history = blockOf(md, current?.signature ?? "")
-      .split("\n")
-      .filter((l) => l.startsWith("Signature changed in Defold "));
+    const history = historyLines(blockOf(md, current?.signature ?? "")).filter((l) =>
+      l.startsWith("Signature changed in Defold "),
+    );
     expect(history).toHaveLength(1);
     expect(history[0]).toContain("(...args: unknown[]) => unknown");
   });
@@ -2888,6 +2888,21 @@ function blockOf(md: string, heading: string): string {
   return lines.slice(start, end < 0 ? undefined : end).join("\n");
 }
 
+// Each history line in a block, as its text after the `changed` chip it must
+// lead with.
+function historyLines(block: string): string[] {
+  return [...block.matchAll(/<ul class="api-revisions">([\s\S]*?)<\/ul>/g)]
+    .flatMap((m) => (m[1] ?? "").split("\n"))
+    .filter((line) => line !== "" && !/^<\/?li\b/.test(line))
+    .map((line) => {
+      const chip = line.match(
+        /^<span class="api-availability-mark api-availability-mark--(\w+)"[^>]*>([^<]*)<\/span> /,
+      );
+      expect([chip?.[1], chip?.[2]]).toEqual(["changed", "C"]);
+      return line.slice(chip?.[0].length ?? 0);
+    });
+}
+
 // The overload group `apiPageMarkdown` heads under `name`, gathered the way the
 // renderer gathers it.
 function groupFor(page: ApiPage, name: string): ApiSymbol[] {
@@ -3411,7 +3426,7 @@ describe("overload added/removed summary", () => {
     return {
       headings,
       block,
-      changed: block.split("\n").filter((l) => l.startsWith("Signature changed in Defold ")),
+      changed: historyLines(block).filter((l) => l.startsWith("Signature changed in Defold ")),
     };
   };
 
@@ -3428,6 +3443,36 @@ describe("overload added/removed summary", () => {
     expect(changed[0]).toStartWith(
       `Signature changed in Defold ${newest} — before: \`(): Opaque<"b2World">\``,
     );
+  });
+
+  test("b2d.get_world reads its whole revision chain's availability", () => {
+    const page = pageOf("b2d");
+    const axis = (page.availability?.versions ?? []).map(bareId);
+    const newest = page.availability?.versions[0] ?? "";
+    const rows = apiModuleSymbols(page, page.translations, page.signatures).filter(
+      (s) => s.name === "b2d.get_world",
+    );
+    const current = rows.find((s) => s.availability?.availableIn.includes(newest));
+    expect(current?.availability).toBeDefined();
+    const newestOnly = current?.availability
+      ? availabilityItems(current.availability, page.availability).map((i) => i.label)
+      : [];
+    expect(newestOnly.length).toBeGreaterThan(0);
+    const { headings, block } = revised(page, "b2d.get_world");
+    const listed = lists(block).flat();
+    for (const label of newestOnly) expect(listed).not.toContain(label);
+
+    const axisIndex = (version: string): number => axis.indexOf(bareId(version));
+    const oldestOf = (versions: readonly string[]): string =>
+      [...versions].sort((a, b) => axisIndex(b) - axisIndex(a))[0] ?? "";
+    const chainOldest = oldestOf(rows.flatMap((s) => s.availability?.availableIn ?? []));
+    const ownOldest = oldestOf(current?.availability?.availableIn ?? []);
+    expect(axisIndex(chainOldest)).toBeGreaterThan(axisIndex(ownOldest));
+    const span = headings[0]?.match(
+      /<span class="api-symbol-span" data-span-oldest="([^"]*)" data-span-newest="([^"]*)"/,
+    );
+    expect(span?.[1]).toBe(chainOldest);
+    expect(span?.[2]).toBe(newest);
   });
 
   test("json.decode renders one signature with one Signature changed line and no summary", () => {
@@ -3493,7 +3538,7 @@ describe("overload added/removed summary", () => {
     expect(md).not.toContain("api-overload-count");
     expect(block).not.toContain('<ol class="api-overloads">');
     expect(lists(block)[0]).toEqual(["1 overload removed in Defold 1.13.1"]);
-    expect(block.split("\n").filter((l) => l.startsWith("Removed in Defold 1.13.1: "))).toEqual([
+    expect(historyLines(block).filter((l) => l.startsWith("Removed in Defold 1.13.1: "))).toEqual([
       expect.stringMatching(
         /^Removed in Defold 1\.13\.1: `\(a: number, b: number\)` <span class="api-symbol-span" data-span-oldest="1\.12\.4" data-span-newest="1\.13\.0"/,
       ),
