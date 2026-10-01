@@ -248,7 +248,11 @@ describe("apiSearchRecords", () => {
       ["/api/demo", "demo API"],
       [fixtureIndex["demo.LIMIT"]?.route, "demo.LIMIT"],
       [fixtureIndex["demo.move"]?.route, "demo.move"],
+      [fixtureIndex["demo.Options"]?.route, "demo.Options"],
+      [fixtureIndex["demo.Options.no_stack"]?.route, "demo.Options.no_stack"],
+      [fixtureIndex["demo.Options.open"]?.route, "demo.Options.open"],
       [fixtureIndex["demo.speed"]?.route, "demo.speed"],
+      [fixtureIndex["demo.Mode"]?.route, "demo.Mode"],
     ]);
   });
 
@@ -257,6 +261,18 @@ describe("apiSearchRecords", () => {
     expect(pageRecord?.text).toContain("introToken");
     expect(pageRecord?.text).not.toContain("demo.move(");
     expect(pageRecord?.text).not.toContain("ProseToken");
+    for (const typeText of ["no_stack", "noStackProseToken", "openProseToken", "Options"]) {
+      expect(pageRecord?.text).not.toContain(typeText);
+    }
+  });
+
+  test("gives each type heading its own record holding its definition or member prose", () => {
+    expect(fixtureRecord("demo.Mode").text).toContain("typeof demo.LIMIT");
+    expect(fixtureRecord("demo.Options").text).toContain("interface Options extends BaseOptions");
+    expect(fixtureRecord("demo.Options.no_stack").text).toContain("noStackProseToken");
+    const open = fixtureRecord("demo.Options.open");
+    expect(open.text).toContain("openProseToken");
+    expect(open.text).not.toContain("secretTypeExampleToken");
   });
 
   test("folds both overload forms into the group's one record", () => {
@@ -385,6 +401,11 @@ describe("combinedSearchRecords", () => {
       .map((r) => `${r.title} -> ${r.route}`);
     expect(misrouted).toEqual([]);
     expect(memberRecord("go.get_position").text).toContain("get_position(");
+  });
+
+  test("routes a constant-union alias to its own type heading", () => {
+    expect(memberRecord("b2d.joint.JOINT_TYPE").text).toContain("type JOINT_TYPE =");
+    expect(pageText("b2d.joint")).not.toContain("JOINT_TYPE =");
   });
 
   test("sources text from the projection's authoritative signatures", () => {
