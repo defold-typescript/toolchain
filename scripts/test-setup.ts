@@ -10,6 +10,9 @@ import * as path from "node:path";
 // heavy test happened to sit nearest the line tripped nondeterministically:
 // a red run and its rerun failed on disjoint test sets, always on timeout,
 // never on an assertion. 30s clears the slowest observed test with headroom.
+// Bun 1.4 applies a preload's default only to the first test file of a run, so
+// the suite passes `--timeout 30000` (the `test` script and CI); this call
+// covers a single-file run without the flag.
 setDefaultTimeout(30_000);
 
 // The upstream-release notice is a production convenience that reaches the

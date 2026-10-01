@@ -50,4 +50,4 @@ jobs:
       # resolves @defold-typescript/transpiler through its built dist/. A clean
       # checkout has no dist, so test-without-build cannot resolve it.
       - run: bun run build
-      - run: bun test
+      - run: bun test --timeout 30000
