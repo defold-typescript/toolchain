@@ -1,7 +1,13 @@
 import { htmlToDocText } from "@defold-typescript/types";
-import { type ApiPage, apiModuleMarkdown } from "./api-surface";
-import type { CombinedEntry, CombinedNamespace, CombinedSurface } from "./combined-surface";
+import { type ApiPage, apiModuleSections } from "./api-surface";
+import {
+  type CombinedEntry,
+  type CombinedNamespace,
+  type CombinedSurface,
+  combinedNamespaceToApiPage,
+} from "./combined-surface";
 import type { GuidePage } from "./guide";
+import { memberAnchors, qualify } from "./symbol-index";
 
 export interface SearchRecord {
   route: string;
@@ -61,31 +67,73 @@ function combinedEntryProse(entry: CombinedEntry): string {
   return parts.length > 0 ? `${parts.join(". ")}.` : "";
 }
 
-function combinedNamespaceText(ns: CombinedNamespace): string {
-  const parts: string[] = [];
-  const intro = htmlToDocText(ns.module.description || ns.module.brief);
-  if (intro) parts.push(intro);
-  for (const entry of ns.entries) {
-    const signature = entry.authoritativeSignature || entry.identity.name;
-    const prose = combinedEntryProse(entry);
-    parts.push(prose ? `${signature} ${prose}` : signature);
+function combinedEntryText(entry: CombinedEntry): string {
+  const signature = entry.authoritativeSignature || entry.identity.name;
+  const prose = combinedEntryProse(entry);
+  return prose ? `${signature} ${prose}` : signature;
+}
+
+const flatten = (text: string): string => text.replace(/\s+/g, " ").trim();
+
+// A page's search records: the page record (`<namespace> API`) holding `pageText`,
+// then one record per member heading, routed at the heading anchor
+// `memberAnchors` gives it and titled by the member's qualified key. Members
+// sharing a heading (an overload group's forms) share its record; a member with
+// no anchor folds into the page record, so its text is never dropped.
+function pageSearchRecords(
+  page: ApiPage,
+  pageText: string[],
+  members: { kind: string; name: string; text: string }[],
+): SearchRecord[] {
+  const anchors = memberAnchors(page);
+  const byRoute = new Map<string, { title: string; text: string[] }>();
+  const unanchored: string[] = [];
+  for (const member of members) {
+    const anchor = anchors.get(`${member.kind}:${member.name}`);
+    if (anchor === undefined) {
+      unanchored.push(member.text);
+      continue;
+    }
+    const route = `${page.route}#${anchor}`;
+    const record = byRoute.get(route);
+    if (record) record.text.push(member.text);
+    else byRoute.set(route, { title: qualify(page.namespace, member.name), text: [member.text] });
   }
-  return parts.join(" ").replace(/\s+/g, " ").trim();
+  return [
+    {
+      route: page.route,
+      title: `${page.namespace} API`,
+      text: flatten([...pageText, ...unanchored].join(" ")),
+    },
+    ...[...byRoute].map(([route, { title, text }]) => ({
+      route,
+      title,
+      text: flatten(text.join(" ")),
+    })),
+  ];
 }
 
 /**
- * One search record per Combined namespace, sourced entirely from the shared
+ * Search records for every Combined namespace, sourced entirely from the shared
  * {@link CombinedSurface} projection — authoritative signatures and availability
- * prose, never a re-walk of the raw per-version surfaces. Routed at the canonical
- * unprefixed `/api/<namespace>` so a hit lands on the Combined page.
+ * prose, never a re-walk of the raw per-version surfaces. Each namespace yields
+ * a page record at the canonical unprefixed `/api/<namespace>` holding the module
+ * intro, plus one record per member heading anchored on that page, so a hit lands
+ * on the member it matched.
  */
 export function combinedSearchRecords(combined: CombinedSurface): SearchRecord[] {
   return combined.namespaces
-    .map((ns) => ({
-      route: `/api/${ns.namespace}`,
-      title: `${ns.namespace} API`,
-      text: combinedNamespaceText(ns),
-    }))
+    .flatMap((ns: CombinedNamespace) =>
+      pageSearchRecords(
+        combinedNamespaceToApiPage(ns),
+        [htmlToDocText(ns.module.description || ns.module.brief)],
+        ns.entries.map((entry) => ({
+          kind: entry.identity.kind.toLowerCase(),
+          name: entry.identity.name,
+          text: combinedEntryText(entry),
+        })),
+      ),
+    )
     .sort((a, b) => a.route.localeCompare(b.route));
 }
 
@@ -160,12 +208,20 @@ export function buildSearchIndex(
     .sort((a, b) => a.route.localeCompare(b.route));
 }
 
+/**
+ * A page record per API page holding its intro and `## Types` block, plus one
+ * record per member heading holding that member's signatures and prose, routed at
+ * the heading's anchor.
+ */
 export function apiSearchRecords(pages: ApiPage[]): SearchRecord[] {
   return pages
-    .map((page) => ({
-      route: page.route,
-      title: `${page.namespace} API`,
-      text: toPlainText(apiModuleMarkdown(page, page.translations)),
-    }))
+    .flatMap((page) => {
+      const { head, sections, tail } = apiModuleSections(page, page.translations);
+      return pageSearchRecords(
+        page,
+        [toPlainText(head), toPlainText(tail)],
+        sections.map(({ kind, name, markdown }) => ({ kind, name, text: toPlainText(markdown) })),
+      );
+    })
     .sort((a, b) => a.route.localeCompare(b.route));
 }
