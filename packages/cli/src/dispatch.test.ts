@@ -2058,6 +2058,97 @@ describe("dispatch", () => {
     expect(parsed.error).toContain("--defold-target");
   });
 
+  describe("build-only editor flags", () => {
+    function buildFlagLine(flag: string): string {
+      return `${flag} is a build flag; use: defold-typescript build ${flag}`;
+    }
+
+    function recordingRunInternals(spawned: string[][]) {
+      const projectc = path.join(cwd, "build/default/game.projectc");
+      const engine = path.join(cwd, "build/x86_64-linux/dmengine");
+      return {
+        platform: "linux" as const,
+        arch: "x64" as const,
+        probe: (p: string) => p === projectc || p === engine,
+        spawn: (argv: string[]) => {
+          spawned.push(argv);
+          return { kill: () => {}, exited: Promise.resolve(0) };
+        },
+        copyAside: (p: string) => p,
+        chmod: () => {},
+      };
+    }
+
+    test("run --editor-run is rejected before the engine spawns", async () => {
+      const spawned: string[][] = [];
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["run", cwd, "--editor-run"], io, {
+        detectEditorVersion: () => null,
+        runInternals: recordingRunInternals(spawned),
+      });
+
+      expect(code).toBe(1);
+      expect(err()).toContain(buildFlagLine("--editor-run"));
+      expect(spawned).toEqual([]);
+    });
+
+    test("watch --editor-compile is rejected before a watcher starts", async () => {
+      scaffoldBuildProject();
+      let watchers = 0;
+      const factory: WatcherFactory = (_srcDir, _onEvent): Watcher => {
+        watchers++;
+        return { close() {} };
+      };
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["watch", cwd, "--editor-compile"], io, {
+        watcherFactory: factory,
+        onWatchStart: (handle) => handle.stop(),
+        detectEditorVersion: () => null,
+      });
+
+      expect(code).toBe(1);
+      expect(err()).toContain(buildFlagLine("--editor-compile"));
+      expect(watchers).toBe(0);
+    });
+
+    test("scene-types --editor-focus is rejected", async () => {
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["scene-types", cwd, "--editor-focus"], io);
+
+      expect(code).toBe(1);
+      expect(err()).toContain(buildFlagLine("--editor-focus"));
+    });
+
+    test("a bare --editor-run with no command is rejected", async () => {
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["--editor-run"], io);
+
+      expect(code).toBe(1);
+      expect(err()).toContain(buildFlagLine("--editor-run"));
+    });
+
+    test("run --editor-run --json reports the rejection in the JSON envelope", async () => {
+      const spawned: string[][] = [];
+      const { io, out, err } = captureStreams();
+
+      const code = await dispatch(["run", cwd, "--editor-run", "--json"], io, {
+        detectEditorVersion: () => null,
+        runInternals: recordingRunInternals(spawned),
+      });
+
+      expect(code).toBe(1);
+      const parsed = JSON.parse(out()) as { ok: boolean; error: string };
+      expect(parsed.ok).toBe(false);
+      expect(parsed.error).toContain("--editor-run");
+      expect(err()).toBe("");
+      expect(spawned).toEqual([]);
+    });
+  });
+
   test("build --defold-target with a fixed version reports version with null channel and sha", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
@@ -5269,6 +5360,7 @@ describe("dispatch init --template", () => {
     ["-v"],
     ["--channel", "beta"],
     ["--defold-version=1.9.0"],
+    ["--editor-run"],
   ];
 
   for (const engineArgs of POST_DELIMITER_EARLY_EXIT_ARGS) {
