@@ -852,7 +852,7 @@ describe("overload block headings and form lines (committed artifacts)", () => {
     const rows = apiModuleSymbols(page, page.translations, page.signatures).filter(
       (s) => s.kind === "function",
     );
-    return { page, groups: groupOverloadForms(rows) };
+    return { page, groups: groupOverloadForms(rows, page.availability?.versions ?? []) };
   });
   const htmlOf = new Map<string, Promise<string>>();
   const render = (namespace: string, markdown: () => string): Promise<string> => {

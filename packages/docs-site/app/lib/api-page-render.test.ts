@@ -35,6 +35,7 @@ import {
   availabilityLabels,
   bareId,
   functionAnchorText,
+  groupFunctionRevisions,
   groupOverloadForms,
   overloadHeading,
   splitCallForm,
@@ -1251,8 +1252,12 @@ describe("availability badges", () => {
 
   // Both arms of `model.material` on one page, so they render as one overload
   // block; each arm's span is the only thing the two cases vary.
-  function overloadPage(oldSpan: string[], newSpan: string[]): ApiPage {
-    const page = modelPage(material, { availableIn: oldSpan }, "/api/model", [
+  function overloadPage(
+    oldSpan: string[],
+    newSpan: string[],
+    oldFacts: Partial<ApiAvailability> = {},
+  ): ApiPage {
+    const page = modelPage(material, { ...oldFacts, availableIn: oldSpan }, "/api/model", [
       { ...newMaterialArm, availableIn: newSpan },
     ]);
     page.module.functions.push(materialWithOptions);
@@ -1269,7 +1274,10 @@ describe("availability badges", () => {
   });
 
   test("a note one form carries alone sits right under that form's signature", () => {
-    const md = apiPageMarkdown(overloadPage(["1.12.4"], ["1.13.0"]), noLink);
+    const md = apiPageMarkdown(
+      overloadPage(["1.13.0", "1.12.4"], ["1.13.0"], { deprecatedSince: "1.13.0" }),
+      noLink,
+    );
     const block = blockOf(md, "### `model.material");
     // Only the block's overload summary may precede the forms; no form's own
     // note is hoisted ahead of them.
@@ -1773,16 +1781,16 @@ describe("Combined page authoritative render + markers", () => {
     expect(md).toContain(`(#${slugify(authoritative)})`);
   });
 
-  test("both liveupdate.add_mount arms render as distinct forms of one block, oldest-first", () => {
+  test("liveupdate.add_mount renders its current arm and the replaced arm as history", () => {
     const page = combinedPage("liveupdate");
     const md = apiPageMarkdown(page, noLink, { combinedMarkers: true });
-    const forms = blockOf(md, overloadHeading(groupFor(page, "liveupdate.add_mount")))
+    const [current] = groupFor(page, "liveupdate.add_mount");
+    expect(current?.signature).toContain("result: liveupdate.LIVEUPDATE");
+    const history = blockOf(md, current?.signature ?? "")
       .split("\n")
-      .filter((l) => l.startsWith("`("));
-    expect(forms).toHaveLength(2);
-    expect(forms[0]).not.toBe(forms[1]);
-    // Oldest arm (fewer params) leads.
-    expect((forms[0] as string).length).toBeLessThan((forms[1] as string).length);
+      .filter((l) => l.startsWith("Signature changed in Defold "));
+    expect(history).toHaveLength(1);
+    expect(history[0]).toContain("(...args: unknown[]) => unknown");
   });
 
   test("the authoritative-signature heading id drops the marker glyph and matches the overview anchor", async () => {
@@ -2886,7 +2894,9 @@ function groupFor(page: ApiPage, name: string): ApiSymbol[] {
   const rows = apiModuleSymbols(page, page.translations, page.signatures).filter(
     (s) => s.kind === "function",
   );
-  const group = groupOverloadForms(rows).find((g) => g[0]?.name === name);
+  const group = groupOverloadForms(rows, page.availability?.versions ?? []).find(
+    (g) => g[0]?.name === name,
+  );
   if (!group) throw new Error(`no function ${name} on ${page.namespace}`);
   return group;
 }
@@ -2974,37 +2984,35 @@ describe("grouped overload blocks (committed artifacts)", () => {
     for (const doc of docs) expect(occurrences(block, doc)).toBe(1);
   });
 
-  test("forms that never share a version state the newest form's example once, for the block", () => {
-    const axis = (pages[0]?.availability?.versions ?? []).map(bareId);
-    const newestIndex = (s: ApiSymbol) =>
-      Math.min(...(s.availability?.availableIn ?? []).map((v) => axis.indexOf(bareId(v))));
+  test("a function whose signature changed states its current form's example once", () => {
     let checked = 0;
     let guiSet = false;
     for (const page of pages) {
       const md = render(page);
-      for (const group of groupOverloadForms(functionRows(page))) {
-        const [head] = group;
-        if (group.length < 2 || head === undefined) continue;
-        const spans = group.map((s) => (s.availability?.availableIn ?? []).map(bareId));
-        if (spans.some((s) => s.length === 0)) continue;
-        const seen = spans.flat();
-        if (new Set(seen).size !== seen.length) continue;
-        if (new Set(group.map((s) => s.exampleMarkdown ?? "")).size < 2) continue;
-        const newest = [...group].sort((a, b) => newestIndex(a) - newestIndex(b))[0];
-        const block = blockOf(md, overloadHeading(group));
-        const forms = block.slice(block.indexOf("<ol"), block.indexOf("</ol>"));
-        expect({ name: head.name, formFences: occurrences(forms, "```") }).toEqual({
-          name: head.name,
-          formFences: 0,
-        });
+      const axis = page.availability?.versions ?? [];
+      for (const group of groupFunctionRevisions(functionRows(page), axis)) {
+        const [only] = group.forms;
+        if (group.forms.length !== 1 || only === undefined) continue;
+        const current = only.symbol.exampleMarkdown;
+        const replaced = only.predecessors.flatMap((p) =>
+          p.symbol.exampleMarkdown === undefined || p.symbol.exampleMarkdown === current
+            ? []
+            : [p.symbol.exampleMarkdown],
+        );
+        if (current === undefined || replaced.length === 0) continue;
+        const name = only.symbol.name;
+        const block = blockOf(md, only.symbol.signature);
+        // A replaced example that the current one extends shows only inside it.
         expect({
-          name: head.name,
-          once: occurrences(block, newest?.exampleMarkdown ?? "-"),
+          name,
+          current: occurrences(block, current),
+          replaced: replaced.map((example) => occurrences(block, example)),
         }).toEqual({
-          name: head.name,
-          once: 1,
+          name,
+          current: 1,
+          replaced: replaced.map((example) => occurrences(current, example)),
         });
-        if (head.name === "gui.set") guiSet = true;
+        if (name === "gui.set") guiSet = true;
         checked += 1;
       }
     }
@@ -3071,7 +3079,10 @@ describe("grouped overload blocks (committed artifacts)", () => {
     let checked = 0;
     for (const page of pages) {
       const md = render(page);
-      for (const group of groupOverloadForms(functionRows(page))) {
+      for (const group of groupOverloadForms(
+        functionRows(page),
+        page.availability?.versions ?? [],
+      )) {
         if (group.length < 2) continue;
         const spans = group.map((s) => JSON.stringify(s.availability ?? null));
         if (new Set(spans).size < 2) continue;
@@ -3099,7 +3110,10 @@ describe("grouped overload blocks (committed artifacts)", () => {
     let grouped = 0;
     for (const page of pages) {
       const md = render(page);
-      for (const group of groupOverloadForms(functionRows(page))) {
+      for (const group of groupOverloadForms(
+        functionRows(page),
+        page.availability?.versions ?? [],
+      )) {
         const [only] = group;
         if (group.length === 1 && only) {
           expect(md).toContain(`### \`${only.signature}\``);
@@ -3117,7 +3131,10 @@ describe("grouped overload blocks (committed artifacts)", () => {
     let lerpReturns = 0;
     for (const page of pages) {
       const md = render(page);
-      for (const group of groupOverloadForms(functionRows(page))) {
+      for (const group of groupOverloadForms(
+        functionRows(page),
+        page.availability?.versions ?? [],
+      )) {
         const [head] = group;
         if (group.length < 2 || head === undefined) continue;
         const block = blockOf(md, overloadHeading(group));
@@ -3156,7 +3173,10 @@ describe("grouped overload blocks (committed artifacts)", () => {
         namespace: page.namespace,
         labels: null,
       });
-      for (const group of groupOverloadForms(functionRows(page))) {
+      for (const group of groupOverloadForms(
+        functionRows(page),
+        page.availability?.versions ?? [],
+      )) {
         const [head] = group;
         if (group.length < 2 || head === undefined) continue;
         const block = blockOf(md, overloadHeading(group));
@@ -3201,7 +3221,10 @@ describe("grouped overload blocks (committed artifacts)", () => {
     for (const page of pages) {
       const md = render(page);
       const overview = md.split("\n");
-      for (const group of groupOverloadForms(functionRows(page))) {
+      for (const group of groupOverloadForms(
+        functionRows(page),
+        page.availability?.versions ?? [],
+      )) {
         const [head] = group;
         if (group.length < 2 || head === undefined) continue;
         const card = overview.findIndex((l) =>
@@ -3360,22 +3383,120 @@ describe("overload added/removed summary", () => {
     expect(lists(lead(page, "go.property"))).toEqual([[`1 overload added in Defold ${added}`]]);
   });
 
-  test("json.decode names the overload added and the one removed", () => {
-    const page = pageOf("json");
-    const axis = (page.availability?.versions ?? []).map(bareId);
-    const spans = groupFor(page, "json.decode").map((s) =>
-      (s.availability?.availableIn ?? []).map(bareId),
+  test("the go.property count pill counts its live forms", () => {
+    const page = pageOf("go");
+    const forms = groupFor(page, "go.property");
+    expect(forms.length).toBeGreaterThan(1);
+    const headingLine =
+      render(page)
+        .split("\n")
+        .find((l) => l.startsWith(`### \`${overloadHeading(forms)}\``)) ?? "";
+    expect(headingLine).toContain(
+      `<span class="api-overload-count">${forms.length} overloads</span>`,
     );
-    const union = new Set(spans.flat());
-    const oldest = axis.filter((v) => union.has(v)).at(-1);
-    const newest = axis.find((v) => union.has(v));
-    const added = spans.find((span) => span.at(-1) !== oldest)?.at(-1);
-    const lastOfRemoved = spans.find((span) => span[0] !== newest)?.[0];
-    const removed = lastOfRemoved === undefined ? undefined : axis[axis.indexOf(lastOfRemoved) - 1];
-    expect(added).toBe("1.13.2");
-    expect(removed).toBe("1.13.2");
-    expect(lists(lead(page, "json.decode"))).toEqual([
-      [`1 overload added in Defold ${added}`, `1 overload removed in Defold ${removed}`],
+  });
+
+  // The one-signature block a function whose signature changed renders under,
+  // and the `Signature changed` lines in it.
+  const revised = (page: ApiPage, name: string) => {
+    const newest = page.availability?.versions[0] ?? "";
+    const current = apiModuleSymbols(page, page.translations, page.signatures).filter(
+      (s) => s.name === name && s.availability?.availableIn.includes(newest),
+    );
+    expect(current).toHaveLength(1);
+    const signature = current[0]?.signature ?? "";
+    const md = render(page);
+    const headings = md.split("\n").filter((l) => l.startsWith(`### \`${name}`));
+    const block = blockOf(md, signature);
+    return {
+      headings,
+      block,
+      changed: block.split("\n").filter((l) => l.startsWith("Signature changed in Defold ")),
+    };
+  };
+
+  test("b2d.get_world renders one signature with one Signature changed line", () => {
+    const page = pageOf("b2d");
+    const newest = bareId(page.availability?.versions[0] ?? "");
+    const { headings, block, changed } = revised(page, "b2d.get_world");
+    expect(headings).toHaveLength(1);
+    expect(headings[0]).not.toContain("api-overload-count");
+    expect(headings[0]).not.toContain("api-badge-dot--new");
+    expect(block).not.toContain('<ol class="api-overloads">');
+    expect(block).not.toMatch(SUMMARY);
+    expect(changed).toHaveLength(1);
+    expect(changed[0]).toStartWith(
+      `Signature changed in Defold ${newest} — before: \`(): Opaque<"b2World">\``,
+    );
+  });
+
+  test("json.decode renders one signature with one Signature changed line and no summary", () => {
+    const page = pageOf("json");
+    const newest = bareId(page.availability?.versions[0] ?? "");
+    const { headings, block, changed } = revised(page, "json.decode");
+    expect(headings).toHaveLength(1);
+    expect(headings[0]).not.toContain("api-overload-count");
+    expect(block).not.toMatch(SUMMARY);
+    expect(changed).toHaveLength(1);
+    expect(changed[0]).toStartWith(`Signature changed in Defold ${newest} — before: `);
+  });
+
+  test("an overload removed before the newest version is uncounted history", () => {
+    const AXIS = ["1.13.2", "1.13.1", "1.13.0", "1.12.4"];
+    const param = (name: string) => ({ name, doc: "", types: ["number"], isOptional: false });
+    const fn = (params: string[]): ApiFunction => ({
+      name: "demo.shift",
+      brief: "",
+      description: "Shifts.",
+      parameters: params.map(param),
+      returnValues: [],
+    });
+    const always = fn(["a"]);
+    const gone = fn(["a", "b"]);
+    const records: ApiAvailability[] = [
+      [always, AXIS],
+      [gone, ["1.13.0", "1.12.4"]],
+    ].map(([f, availableIn]) => ({
+      identity: {
+        namespace: "demo",
+        kind: "FUNCTION",
+        name: "demo.shift",
+        signature: normalizedFunctionSignature(f as ApiFunction),
+      },
+      availableIn: availableIn as string[],
+    }));
+    const page: ApiPage = {
+      namespace: "demo",
+      route: "/api/demo",
+      brief: "",
+      module: {
+        namespace: "demo",
+        brief: "",
+        description: "",
+        functions: [always, gone],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+      translations: {},
+      signatures: {},
+      category: "engine",
+      availability: {
+        versions: AXIS,
+        records: new Map(records.map((r) => [symbolIdentityKey(r.identity), r])),
+        transitions: signatureTransitionNames(records, AXIS),
+      },
+    };
+    const md = apiPageMarkdown(page, (t) => t, { combinedMarkers: true });
+    const block = blockOf(md, "demo.shift(a: number)");
+    expect(md).not.toContain("api-overload-count");
+    expect(block).not.toContain('<ol class="api-overloads">');
+    expect(lists(block)[0]).toEqual(["1 overload removed in Defold 1.13.1"]);
+    expect(block.split("\n").filter((l) => l.startsWith("Removed in Defold 1.13.1: "))).toEqual([
+      expect.stringMatching(
+        /^Removed in Defold 1\.13\.1: `\(a: number, b: number\)` <span class="api-symbol-span" data-span-oldest="1\.12\.4" data-span-newest="1\.13\.0"/,
+      ),
     ]);
   });
 
