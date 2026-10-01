@@ -1216,10 +1216,12 @@
 
   /* The availability list swaps its bullets for the same chips, so each fact
    * reads with the category its heading shows. A fact with no category keeps an
-   * empty chip-sized slot, so every label starts at the same column. The list
-   * rule's authoritative copy is the unlayered mirror in critical.css, since
-   * this layered one loses to that file's `.prose ul`. */
-  .prose .api-availability ul {
+   * empty chip-sized slot, so every label starts at the same column. Signature
+   * history lines lead with the `changed` chip the same way. The list rule's
+   * authoritative copy is the unlayered mirror in critical.css, since this
+   * layered one loses to that file's `.prose ul`. */
+  .prose .api-availability ul,
+  .prose .api-revisions {
     list-style: none;
     padding-left: 0;
   }
