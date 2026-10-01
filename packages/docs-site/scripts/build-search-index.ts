@@ -33,7 +33,7 @@ const OUTPUT_DIR = join(SCRIPTS_DIR, "..", "public");
 
 // The engine pages `/api/<id>/<ns>` renders for a version: its full-range window,
 // so a version record carries the same declaration signatures as the page.
-function versionRoutePages(typesDir: string, versionId: string): ApiPage[] {
+export function versionRoutePages(typesDir: string, versionId: string): ApiPage[] {
   const window = resolveVersionWindow(apiVersionAxis(typesDir), versionId, null);
   return window ? windowedApiPages(window, typesDir) : [];
 }

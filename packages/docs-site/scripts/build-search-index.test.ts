@@ -6,7 +6,7 @@ import {
   HISTORICAL_ONLY_NAMESPACE,
   makeWindowedTypesDir,
 } from "../app/lib/__fixtures__/windowed-surface";
-import { apiVersionAxis, windowedApiPages } from "../app/lib/api-content";
+import { apiVersionAxis } from "../app/lib/api-content";
 import type { apiPageMarkdown } from "../app/lib/api-page-render";
 import type { ApiPage } from "../app/lib/api-surface";
 import {
@@ -17,8 +17,9 @@ import {
 } from "../app/lib/api-surface-loader";
 import { type CombinedSurface, combinedApiPages } from "../app/lib/combined-surface";
 import { combinedSearchRecords, type SearchRecord } from "../app/lib/search-index";
+import { buildSymbolIndex } from "../app/lib/symbol-index";
 import { resolveVersionWindow, windowCombinedSurface } from "../app/lib/version-window";
-import { searchIndexOutputs } from "./build-search-index";
+import { searchIndexOutputs, versionRoutePages } from "./build-search-index";
 
 const TYPES_DIR = join(import.meta.dir, "..", "..", "types");
 const LIBRARY_TYPES_DIR = join(import.meta.dir, "..", "..", "library-types");
@@ -235,7 +236,7 @@ describe("searchIndexOutputs — every anchored record lands on a rendered headi
     const window = resolveVersionWindow(apiVersionAxis(TYPES_DIR), newest, null);
     if (!window) throw new Error(`${newest} is not a tracked version`);
     const { checked, missing } = await unrenderedAnchors(`search-index-${newest}.json`, [
-      ...windowedApiPages(window, TYPES_DIR).map((page): [string, ApiPage, RenderOptions] => [
+      ...versionRoutePages(TYPES_DIR, newest).map((page): [string, ApiPage, RenderOptions] => [
         page.route,
         page,
         { combinedMarkers: true, window },
@@ -244,5 +245,56 @@ describe("searchIndexOutputs — every anchored record lands on a rendered headi
     ]);
     expect(checked).toBeGreaterThan(1000);
     expect(missing).toEqual([]);
+  });
+});
+
+// The other direction from the anchor gate above, which only checks records that
+// exist: every member route the symbol index gives a tooltip or cross-link must
+// also be a search hit. Pages are indexed one at a time so two pages sharing a
+// qualified key never hide each other's route.
+describe("searchIndexOutputs — every symbol-index member route is searchable", () => {
+  const outputs = searchIndexOutputs();
+  const sharedPages = loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR);
+
+  function unsearchableRoutes(
+    file: string,
+    pages: ApiPage[],
+  ): { expected: number; missing: string[] } {
+    const routes = new Set(
+      outputs.find((output) => output.file === file)?.records.map((record) => record.route),
+    );
+    const expected = new Set(
+      pages.flatMap((page) =>
+        Object.values(buildSymbolIndex([page]))
+          .map((entry) => entry.route)
+          .filter((route) => route.includes("#")),
+      ),
+    );
+    return {
+      expected: expected.size,
+      missing: [...expected].filter((route) => !routes.has(route)),
+    };
+  }
+
+  test("search-index.json holds a record at every canonical member route", () => {
+    const { expected, missing } = unsearchableRoutes("search-index.json", [
+      ...combinedApiPages(loadCombinedSurface(TYPES_DIR)),
+      ...sharedPages,
+    ]);
+    expect(expected).toBeGreaterThan(5000);
+    expect(missing).toEqual([]);
+  });
+
+  test("every version index holds a record at every member route its pages render", () => {
+    const versions = versionsWithDiskFixtures(TYPES_DIR);
+    expect(versions.length).toBeGreaterThan(0);
+    for (const { id } of versions) {
+      const { expected, missing } = unsearchableRoutes(`search-index-${id}.json`, [
+        ...versionRoutePages(TYPES_DIR, id),
+        ...sharedPages,
+      ]);
+      expect(expected).toBeGreaterThan(5000);
+      expect(missing).toEqual([]);
+    }
   });
 });
