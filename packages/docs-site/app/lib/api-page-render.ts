@@ -9,10 +9,13 @@ import {
   apiModuleSymbols,
   availabilityItems,
   type BadgeCategory,
+  type BadgeMember,
   badgeCategory,
   badgeCategoryFromLabel,
   bareId,
   type CategoryWindow,
+  functionBadgeCategory,
+  functionBadgeMembers,
   functionOverviewCards,
   groupFunctionSymbols,
   groupOverloadForms,
@@ -241,14 +244,13 @@ function categoryLetters(category: BadgeCategory): string {
   return letters || "-";
 }
 
-// The category the symbol would carry at each candidate `from` on the axis,
-// index-aligned with `versions` and always read against the page's own `to`. A
-// field newer than `to` would name a window with `from` after `to`, which is not
-// selectable, so it is left inert rather than describing a range the reader
-// cannot reach.
+// The category a form or function would carry at each candidate `from` on the
+// axis, index-aligned with `versions` and always read against the page's own
+// `to`. A field newer than `to` would name a window with `from` after `to`, which
+// is not selectable, so it is left inert rather than describing a range the
+// reader cannot reach.
 function spanCategories(
-  availableIn: readonly string[],
-  deprecatedSince: string | undefined,
+  members: readonly BadgeMember[],
   versions: readonly string[],
   window: CategoryWindow,
 ): BadgeCategory[] {
@@ -258,8 +260,17 @@ function spanCategories(
   return versions.map((from, index) =>
     toIndex >= 0 && index < toIndex
       ? inert
-      : windowedBadgeCategory(availableIn, deprecatedSince, versions, { from, to: window.to }),
+      : functionBadgeCategory(members, versions, { from, to: window.to }),
   );
+}
+
+// One form's own presence and deprecation. A form with no record scores no
+// category, exactly as a symbol with no curated fact always has.
+function formMember(symbol: ApiSymbol): BadgeMember {
+  const av = symbol.availability;
+  return av?.deprecatedSince === undefined
+    ? { availableIn: av?.availableIn ?? [] }
+    : { availableIn: av.availableIn, deprecatedSince: av.deprecatedSince };
 }
 
 // Every category any selectable window gives this symbol. The client only ever
@@ -594,29 +605,40 @@ export function apiPageMarkdown(
   const symbolCategories = (
     symbol: ApiSymbol,
   ): { active: BadgeCategory; reachable: BadgeCategory[] } => {
-    const availableIn = symbol.availability?.availableIn ?? [];
-    const deprecatedSince = symbol.availability?.deprecatedSince;
+    const member = formMember(symbol);
     // `badgeCategory` stays the no-window entry point, so a caller that states no
     // range keeps the exact answer it had before the layer became window-relative.
     // `api-page-render.test.ts` holds the two paths to byte-identical output over
     // the committed corpus.
     const active = window
-      ? windowedBadgeCategory(availableIn, deprecatedSince, pageAxis, window)
+      ? windowedBadgeCategory(member.availableIn, member.deprecatedSince, pageAxis, window)
       : badgeCategory(symbol.availability, pageAxis);
-    const reachable = spanCategories(availableIn, deprecatedSince, pageAxis, activeWindow);
+    const reachable = spanCategories([member], pageAxis, activeWindow);
     return { active, reachable };
   };
-  // An overload group's markers are the union of its forms': a category any form
-  // shows or can reach is one the group heading and its overview card show too.
-  // A group of one answers exactly as its only form does.
-  const groupDots = (forms: readonly ApiSymbol[]): string => {
-    const categories = forms.map(symbolCategories);
-    return badgeDots(
-      unionCategory(categories.map((c) => c.active)),
-      unionCategory(categories.flatMap((c) => c.reachable)),
+  const symbolDots = (symbol: ApiSymbol): string => {
+    const { active, reachable } = symbolCategories(symbol);
+    return badgeDots(active, unionCategory(reachable));
+  };
+  // A function heading answers for the function, not for its forms: every
+  // ref-doc identity of it scores together, so a signature transition reads
+  // Changed instead of New-and-Changed, and the heading, its overview card and
+  // the namespace counts agree. Without an availability lookup the forms stand
+  // for the function, a form with no record covering the whole axis.
+  const functionMembers = (forms: readonly ApiSymbol[]): BadgeMember[] => {
+    const members = forms[0] ? functionBadgeMembers(page, forms[0].name) : [];
+    if (members.length > 0) return members;
+    return forms.map((symbol) =>
+      symbol.availability ? formMember(symbol) : { availableIn: pageAxis },
     );
   };
-  const symbolDots = (symbol: ApiSymbol): string => groupDots([symbol]);
+  const groupDots = (forms: readonly ApiSymbol[]): string => {
+    const members = functionMembers(forms);
+    return badgeDots(
+      functionBadgeCategory(members, pageAxis, activeWindow),
+      unionCategory(spanCategories(members, pageAxis, activeWindow)),
+    );
+  };
   // Only the engine surface is version-tracked, so only it gets a presence
   // span. A `library` symbol is pinned to an upstream commit and a
   // `global-type` / `lua-stdlib` symbol to no version at all; stamping a Defold
@@ -625,25 +647,20 @@ export function apiPageMarkdown(
   const presentIn = (symbol: ApiSymbol): readonly string[] =>
     symbol.availability?.availableIn?.length ? symbol.availability.availableIn : pageAxis;
   const formCategories = (symbol: ApiSymbol): BadgeCategory[] =>
-    spanCategories(
-      symbol.availability?.availableIn ?? [],
-      symbol.availability?.deprecatedSince,
-      pageAxis,
-      activeWindow,
-    );
+    spanCategories([formMember(symbol)], pageAxis, activeWindow);
   // A group's span covers every version any form is present in, so the `?since=`
-  // filter hides the block only once every form is out of the window.
+  // filter hides the block only once every form is out of the window; its
+  // per-`from` categories are the function's, like its heading dots.
   const groupSpan = (forms: readonly ApiSymbol[]): string => {
     if (!spanTracked) return "";
     const axis = pageAxis.map(bareId);
     const present = [...new Set(forms.flatMap(presentIn))].sort(
       (a, b) => axis.indexOf(bareId(a)) - axis.indexOf(bareId(b)),
     );
-    const perForm = forms.map(formCategories);
-    const categories = pageAxis.map((_, index) =>
-      unionCategory(perForm.flatMap((c) => (c[index] ? [c[index]] : []))),
+    return symbolSpanMarker(
+      present,
+      spanCategories(functionMembers(forms), pageAxis, activeWindow),
     );
-    return symbolSpanMarker(present, categories);
   };
   const m = page.module;
   const indexRoute = apiIndexRoute(page.route);
@@ -701,15 +718,63 @@ export function apiPageMarkdown(
       indexRoute,
       symbol.deprecated,
     );
-  const emitSymbol = (symbol: ApiSymbol) => {
+  // A function's heading scores the function, so a single-form function over
+  // several identities reads like any other function; every other symbol is
+  // its own one identity.
+  const emitSymbol = (symbol: ApiSymbol, isFunction = false) => {
     const dots =
-      (combinedMarkers ? symbolDots(symbol) : "") +
+      (combinedMarkers ? (isFunction ? groupDots([symbol]) : symbolDots(symbol)) : "") +
       globalDot(symbol) +
       upstreamDot(symbol) +
-      (spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : "");
+      (isFunction
+        ? groupSpan([symbol])
+        : spanTracked
+          ? symbolSpanMarker(presentIn(symbol), formCategories(symbol))
+          : "");
     lines.push(
       symbolBlock(linkifySymbol(symbol), badgesFor(symbol), dots, noteFor(symbol.name)),
       "",
+    );
+  };
+  // The block-level account of a heading whose forms do not all span the same
+  // versions: how many forms each release added or removed, newest first. A form
+  // starting after the group's oldest version was added in its own oldest; one
+  // ending before the group's newest was removed in the next tracked release.
+  // Absolute like the form lines it summarizes, so it ignores the window.
+  const overloadSummary = (forms: readonly ApiSymbol[]): string => {
+    if (!spanTracked) return "";
+    const axis = pageAxis.map(bareId);
+    const spans = forms.map((symbol) =>
+      presentIn(symbol)
+        .map((version) => axis.indexOf(bareId(version)))
+        .filter((index) => index >= 0),
+    );
+    const union = spans.flat();
+    if (union.length === 0) return "";
+    const newest = Math.min(...union);
+    const oldest = Math.max(...union);
+    const events = new Map<string, { index: number; added: boolean; count: number }>();
+    const record = (index: number, added: boolean) => {
+      const key = `${index}|${added}`;
+      const event = events.get(key);
+      if (event) event.count += 1;
+      else events.set(key, { index, added, count: 1 });
+    };
+    for (const span of spans) {
+      if (span.length === 0) continue;
+      const formOldest = Math.max(...span);
+      const formNewest = Math.min(...span);
+      if (formOldest < oldest) record(formOldest, true);
+      if (formNewest > newest) record(formNewest - 1, false);
+    }
+    if (events.size === 0) return "";
+    return availabilityList(
+      [...events.values()]
+        .sort((a, b) => a.index - b.index || Number(b.added) - Number(a.added))
+        .map(({ index, added, count }) => ({
+          label: `${count} overload${count === 1 ? "" : "s"} ${added ? "added" : "removed"} in Defold ${axis[index]}`,
+          category: "changed",
+        })),
     );
   };
   // An overloaded function renders as one block: every form listed under the
@@ -816,6 +881,8 @@ export function apiPageMarkdown(
     // ahead of the forms they describe. The shared example closes the block, after
     // every signature and table it illustrates.
     const body: string[] = [];
+    const summary = overloadSummary(forms);
+    if (summary) body.push(summary);
     if (sameBadges && badges[0]) body.push(badges[0]);
     if (sameDoc && linked[0]?.docMarkdown) body.push(linked[0].docMarkdown);
     const note = noteFor(head.name);
@@ -849,7 +916,7 @@ export function apiPageMarkdown(
         lines.push(functionOverviewCards(fnGroup.symbols, overviewMarker), "");
         for (const forms of groupOverloadForms(fnGroup.symbols)) {
           const [only] = forms;
-          if (forms.length === 1 && only) emitSymbol(only);
+          if (forms.length === 1 && only) emitSymbol(only, true);
           else emitOverloads(forms);
         }
       }
