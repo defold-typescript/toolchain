@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { matchBracket, splitTopLevel } from "../src/luals-type-expr";
 import type { ApiTarget } from "./regen";
@@ -337,15 +337,46 @@ export function annotationsDir(
   return resolve(packageRoot, target.fixturesDir, "annotations");
 }
 
+// The annotation files the release import vendored, read from the
+// `annotationFiles` of the target's `import-manifest.json`; empty when the
+// manifest or the key is absent.
+export function annotationInventory(
+  target: Pick<ApiTarget, "fixturesDir">,
+  packageRoot: string = PACKAGE_ROOT,
+): string[] {
+  const path = resolve(packageRoot, target.fixturesDir, "import-manifest.json");
+  if (!existsSync(path)) return [];
+  const manifest = JSON.parse(readFileSync(path, "utf8")) as { annotationFiles?: unknown };
+  const files = manifest.annotationFiles;
+  if (files === undefined) return [];
+  if (!Array.isArray(files) || files.some((file) => typeof file !== "string"))
+    throw new Error(`${path}: annotationFiles is not a list of file names`);
+  return [...files].sort();
+}
+
 export function loadAnnotations(
   target: Pick<ApiTarget, "fixturesDir">,
   packageRoot: string = PACKAGE_ROOT,
 ): AnnotationModel {
   const dir = annotationsDir(target, packageRoot);
+  const inventory = annotationInventory(target, packageRoot);
+  if (inventory.length === 0) throw new Error(`no annotation files in ${dir}`);
   const names = readdirSync(dir)
     .filter((name) => name.endsWith(".lua") || name.endsWith(".editor_script"))
     .sort();
-  if (names.length === 0) throw new Error(`no annotation files in ${dir}`);
+  const listed = new Set(inventory);
+  const present = new Set(names);
+  const missing = inventory.filter((name) => !present.has(name));
+  const unexpected = names.filter((name) => !listed.has(name));
+  if (missing.length > 0 || unexpected.length > 0) {
+    throw new Error(
+      [
+        `${dir} does not match the import manifest's annotationFiles`,
+        ...(missing.length > 0 ? [`missing: ${missing.join(", ")}`] : []),
+        ...(unexpected.length > 0 ? [`unexpected: ${unexpected.join(", ")}`] : []),
+      ].join("; "),
+    );
+  }
   return parseAnnotations(
     names.map((name) => ({ name, text: readFileSync(resolve(dir, name), "utf8") })),
   );

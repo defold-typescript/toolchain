@@ -1,5 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { type AnnotationModel, loadAnnotations, parseAnnotations } from "./lua-annotations";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import {
+  type AnnotationModel,
+  annotationInventory,
+  annotationsDir,
+  loadAnnotations,
+  parseAnnotations,
+} from "./lua-annotations";
 import { loadApiTargets } from "./regen";
 
 const DEFAULT_TARGET = loadApiTargets().find((target) => target.default === true);
@@ -11,6 +20,44 @@ function fn(key: string) {
   if (!found) throw new Error(`no annotated function ${key}`);
   return found;
 }
+
+const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+
+function copyDefaultTarget(): string {
+  if (!DEFAULT_TARGET) throw new Error("api-targets.json has no default target");
+  const root = mkdtempSync(join(tmpdir(), "lua-annotations-inventory-"));
+  const from = resolve(PACKAGE_ROOT, DEFAULT_TARGET.fixturesDir);
+  const to = resolve(root, DEFAULT_TARGET.fixturesDir);
+  cpSync(join(from, "annotations"), join(to, "annotations"), { recursive: true });
+  cpSync(join(from, "import-manifest.json"), join(to, "import-manifest.json"));
+  return root;
+}
+
+describe("loadAnnotations against the import manifest's inventory", () => {
+  test("a listed file missing from the directory fails the load, naming it", () => {
+    const root = copyDefaultTarget();
+    expect(annotationInventory(DEFAULT_TARGET, root)).toContain("camera.lua");
+    rmSync(join(annotationsDir(DEFAULT_TARGET, root), "camera.lua"));
+    expect(() => loadAnnotations(DEFAULT_TARGET, root)).toThrow("camera.lua");
+  });
+
+  test("an unlisted file in the directory fails the load, naming it", () => {
+    const root = copyDefaultTarget();
+    expect(annotationInventory(DEFAULT_TARGET, root)).not.toContain("extra.lua");
+    writeFileSync(join(annotationsDir(DEFAULT_TARGET, root), "extra.lua"), "---@meta\n");
+    expect(() => loadAnnotations(DEFAULT_TARGET, root)).toThrow("extra.lua");
+  });
+
+  test("a manifest without an inventory fails the load instead of returning an empty model", () => {
+    const root = copyDefaultTarget();
+    const manifestPath = resolve(root, DEFAULT_TARGET.fixturesDir, "import-manifest.json");
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
+    delete manifest.annotationFiles;
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+    expect(annotationInventory(DEFAULT_TARGET, root)).toEqual([]);
+    expect(() => loadAnnotations(DEFAULT_TARGET, root)).toThrow("no annotation files");
+  });
+});
 
 describe("loadAnnotations over the default target", () => {
   test("vmath.clamp carries its generic constraint and T-typed params and return", () => {

@@ -59,6 +59,9 @@ The LuaLS annotation files a release's `ref-doc.zip` ships beside its JSON
 reports any that drift; `import-defold-release` writes them for a new version.
 `../scripts/lua-annotations.ts` parses them into per-function params, returns,
 generics and overloads, plus aliases, enums and classes. They are not published.
+The target's `import-manifest.json` lists them in `annotationFiles`, and
+`loadAnnotations` rejects a directory that is missing a listed file or holds an
+unlisted one.
 
 ## vmath_doc.json
 

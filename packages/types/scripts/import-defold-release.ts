@@ -155,6 +155,9 @@ export interface ReleaseImportManifest {
     readonly unknownTypes: UnknownTypeBlocker[];
     readonly unmappedFunctionNamespaces: UnmappedNamespaceBlocker[];
   };
+  // The file names vendored under `annotations/`, which `loadAnnotations` holds
+  // the directory to. Empty before 1.13.2; absent from manifests written earlier.
+  readonly annotationFiles: readonly string[];
   readonly snapshots: Array<{
     readonly namespace: string;
     readonly fixture: string;
@@ -275,6 +278,7 @@ function reportWithoutSnapshots(
     moved: plan.moved,
     symbols: plan.symbols,
     blockers: plan.blockers,
+    annotationFiles: plan.annotationFiles,
     snapshots: plan.snapshots.map(({ namespace, fixture, sourceEntries, symbolSources }) => ({
       namespace,
       fixture,
@@ -423,6 +427,7 @@ export function buildReleaseImportPlan(input: {
     (a, b) => a.namespace.localeCompare(b.namespace) || a.symbol.localeCompare(b.symbol),
   );
   const ready = unknownTypes.length === 0 && unmappedFunctionNamespaces.length === 0;
+  const annotations = extractAnnotationFixtures(input.zip);
   const planBase = {
     version: input.version,
     baseline: input.baseline.id,
@@ -432,10 +437,11 @@ export function buildReleaseImportPlan(input: {
     moved,
     symbols,
     blockers: { unknownTypes, unmappedFunctionNamespaces },
+    annotationFiles: annotations.map((annotation) => annotation.namespace).sort(),
     snapshots,
   };
   const manifest = reportWithoutSnapshots(planBase);
-  return { ...planBase, manifest, annotations: extractAnnotationFixtures(input.zip) };
+  return { ...planBase, manifest, annotations };
 }
 
 export function releaseImportReportJson(plan: ReleaseImportPlan): string {

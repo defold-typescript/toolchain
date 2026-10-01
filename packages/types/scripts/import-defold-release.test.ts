@@ -367,10 +367,28 @@ describe("buildReleaseImportPlan", () => {
     const plan = buildReleaseImportPlan({ version: "1.13.0", zip, baseline });
     const root = mkdtempSync(join(tmpdir(), "release-import-annotations-"));
 
+    expect(plan.manifest.annotationFiles).toEqual(plan.annotations.map((a) => a.namespace));
+    expect(plan.manifest.annotationFiles).toContain("alpha.lua");
+
     const written = applyReleaseImport(plan, root);
     const relative = "fixtures/defold-1.13.0/annotations/alpha.lua";
     expect(written).toContain(relative);
     expect(readFileSync(join(root, relative), "utf8")).toBe(annotation);
+    const manifest = JSON.parse(
+      readFileSync(join(root, "fixtures/defold-1.13.0/import-manifest.json"), "utf8"),
+    ) as { annotationFiles: readonly string[] };
+    expect(manifest.annotationFiles).toEqual(plan.manifest.annotationFiles);
+  });
+
+  test("a release that ships no annotation files records an empty inventory and still applies", () => {
+    const zip = fakeZip({ "doc/alpha.json": apiDoc("alpha", [fn("alpha.old")]) });
+    const plan = buildReleaseImportPlan({ version: "1.13.0", zip, baseline });
+    expect(plan.manifest.annotationFiles).toEqual([]);
+
+    const root = mkdtempSync(join(tmpdir(), "release-import-no-annotations-"));
+    const written = applyReleaseImport(plan, root);
+    expect(written).toContain("fixtures/defold-1.13.0/import-manifest.json");
+    expect(existsSync(join(root, "fixtures/defold-1.13.0/annotations"))).toBe(false);
   });
 });
 
