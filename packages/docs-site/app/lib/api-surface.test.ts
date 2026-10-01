@@ -31,6 +31,7 @@ import {
   functionAnchorText,
   functionBadgeCategory,
   functionOverviewCards,
+  groupFunctionRevisions,
   groupFunctionSymbols,
   groupOverloadForms,
   groupTypeSymbols,
@@ -3509,16 +3510,19 @@ describe("functionOverviewCards", () => {
   }
 
   test("emits one overview container and one linked bullet per symbol", () => {
-    const list = functionOverviewCards([
-      fnSymbol("go.get_position", {
-        signature: "go.get_position(): vector3",
-        docMarkdown: "Gets the world position. More prose.",
-      }),
-      fnSymbol("go.set_position", {
-        signature: "go.set_position(position: vector3): void",
-        docMarkdown: "Sets the world position.",
-      }),
-    ]);
+    const list = functionOverviewCards(
+      [
+        fnSymbol("go.get_position", {
+          signature: "go.get_position(): vector3",
+          docMarkdown: "Gets the world position. More prose.",
+        }),
+        fnSymbol("go.set_position", {
+          signature: "go.set_position(position: vector3): void",
+          docMarkdown: "Sets the world position.",
+        }),
+      ],
+      [],
+    );
     expect(list).toBe(
       [
         '<div class="api-overview" aria-label="Function overview">',
@@ -3540,6 +3544,7 @@ describe("functionOverviewCards", () => {
     ];
     const cards = functionOverviewCards(
       signatures.map((signature) => fnSymbol(signature, { signature })),
+      [],
     );
     for (const signature of signatures) {
       const id = await renderedHeadingId(signature);
@@ -3548,19 +3553,22 @@ describe("functionOverviewCards", () => {
   });
 
   test("keeps descriptions out of the overview and returns empty string for no symbols", async () => {
-    const list = functionOverviewCards([
-      fnSymbol("demo.escape", {
-        signature: 'demo.escape(value: "Hash | <Url> & string")',
-        docMarkdown: 'Uses `a | b` and <unsafe> "quotes" & ampersands. Second sentence.',
-      }),
-    ]);
+    const list = functionOverviewCards(
+      [
+        fnSymbol("demo.escape", {
+          signature: 'demo.escape(value: "Hash | <Url> & string")',
+          docMarkdown: 'Uses `a | b` and <unsafe> "quotes" & ampersands. Second sentence.',
+        }),
+      ],
+      [],
+    );
     expect(list).toContain(
       '[`demo.escape(value: "Hash | <Url> & string")`](#demoescapevalue-hash--url--string)',
     );
     expect(list).not.toContain("Uses `a | b`");
     expect(list).not.toContain("title=");
     expect(list).not.toContain("\\|");
-    expect(functionOverviewCards([])).toBe("");
+    expect(functionOverviewCards([], [])).toBe("");
 
     const html = await renderMarkdown(list, { highlightSignatureHeadings: true });
     expect(html).toContain('<code class="api-signature');
@@ -3573,6 +3581,7 @@ describe("functionOverviewCards", () => {
         fnSymbol("go.get_position", { signature: "go.get_position(): vector3" }),
         fnSymbol("go.set_position", { signature: "go.set_position(position: vector3): void" }),
       ],
+      [],
       (group) => `<i data-mark="${group[0]?.name}"></i>`,
     );
     expect(list).toContain(
@@ -3585,7 +3594,7 @@ describe("functionOverviewCards", () => {
 
   test("an empty markerFor return leaves output byte-identical to the no-callback form", () => {
     const symbols = [fnSymbol("go.get_position", { signature: "go.get_position(): vector3" })];
-    expect(functionOverviewCards(symbols, () => "")).toBe(functionOverviewCards(symbols));
+    expect(functionOverviewCards(symbols, [], () => "")).toBe(functionOverviewCards(symbols, []));
   });
 });
 
@@ -4418,23 +4427,39 @@ describe("overload grouping (committed artifacts)", () => {
   const functionRows = (page: ApiPage): ApiSymbol[] =>
     apiModuleSymbols(page, page.translations, page.signatures).filter((s) => s.kind === "function");
 
-  test("groupOverloadForms keeps first-appearance order and every form in input order", () => {
+  test("groupFunctionRevisions places every form once, in first-appearance and input order", () => {
     let grouped = 0;
+    let paired = 0;
     for (const page of combinedPages) {
       const rows = functionRows(page);
-      const groups = groupOverloadForms(rows);
-      expect(groups.flat()).toEqual(rows);
-      expect(groups.map((g) => g[0]?.name)).toEqual([...new Set(rows.map((r) => r.name))]);
-      for (const group of groups) expect(new Set(group.map((s) => s.name)).size).toBe(1);
-      grouped += groups.filter((g) => g.length > 1).length;
+      const axis = page.availability?.versions ?? [];
+      const groups = groupFunctionRevisions(rows, axis);
+      const placed = groups.flatMap((group) =>
+        [...group.forms, ...group.removed].flatMap((chain) => [
+          chain.symbol,
+          ...chain.predecessors.map((p) => p.symbol),
+        ]),
+      );
+      expect(placed).toHaveLength(rows.length);
+      expect(new Set(placed)).toEqual(new Set(rows));
+      const live = groupOverloadForms(rows, axis);
+      expect(live.flat()).toEqual(rows.filter((row) => live.flat().includes(row)));
+      expect(live.map((g) => g[0]?.name)).toEqual([...new Set(rows.map((r) => r.name))]);
+      for (const group of live) expect(new Set(group.map((s) => s.name)).size).toBe(1);
+      grouped += live.filter((g) => g.length > 1).length;
+      paired += groups.filter((g) => g.forms.some((f) => f.predecessors.length > 0)).length;
     }
     expect(grouped).toBeGreaterThan(0);
+    expect(paired).toBeGreaterThan(0);
   });
 
   test("an overload heading carries the return type every form shares, and names the anchor", () => {
     const counts = { shared: 0, differing: 0 };
     for (const page of combinedPages) {
-      for (const group of groupOverloadForms(functionRows(page))) {
+      for (const group of groupOverloadForms(
+        functionRows(page),
+        page.availability?.versions ?? [],
+      )) {
         const [head] = group;
         if (group.length < 2 || head === undefined) continue;
         const returns = group.map((s) => splitCallForm(s).returns);
@@ -4457,10 +4482,11 @@ describe("overload grouping (committed artifacts)", () => {
     for (const page of combinedPages) {
       const rows = functionRows(page);
       if (rows.length === 0) continue;
-      const lines = functionOverviewCards(rows)
+      const axis = page.availability?.versions ?? [];
+      const lines = functionOverviewCards(rows, axis)
         .split("\n")
         .filter((line) => /^\s*- /.test(line));
-      const expected = groupOverloadForms(rows).flatMap((group) => {
+      const expected = groupOverloadForms(rows, axis).flatMap((group) => {
         const [head] = group;
         if (head === undefined) return [];
         if (group.length === 1) return [`- [\`${head.signature}\`](#${slugify(head.signature)})`];
@@ -4520,6 +4546,195 @@ describe("overload grouping (committed artifacts)", () => {
   });
 });
 
+describe("groupFunctionRevisions", () => {
+  const AXIS = ["1.13.2", "1.13.1", "1.13.0", "1.12.4"];
+  const ALL = AXIS;
+  const NEW = ["1.13.2"];
+  const OLD = ["1.13.1", "1.13.0", "1.12.4"];
+  // One form of `demo.fn`: its parameter list, its presence (none = no record)
+  // and its return annotation.
+  const form = (params: string, availableIn?: readonly string[], returns = ""): ApiSymbol => {
+    const signature = `demo.fn(${params})${returns}`;
+    return fnSymbol("demo.fn", {
+      signature,
+      ...(availableIn === undefined
+        ? {}
+        : {
+            availability: {
+              identity: { namespace: "demo", kind: "FUNCTION", name: "demo.fn", signature },
+              availableIn,
+            },
+          }),
+    });
+  };
+  const shape = (symbols: ApiSymbol[], axis: readonly string[] = AXIS) =>
+    groupFunctionRevisions(symbols, axis).map((group) => ({
+      forms: group.forms.map((f) => ({
+        symbol: f.symbol.signature,
+        predecessors: f.predecessors.map((p) => [p.symbol.signature, p.boundary]),
+      })),
+      removed: group.removed.map((f) => ({
+        symbol: f.symbol.signature,
+        boundary: f.boundary,
+        predecessors: f.predecessors.map((p) => [p.symbol.signature, p.boundary]),
+      })),
+    }));
+
+  test("a retype is one form whose predecessor is the replaced form", () => {
+    const old = form("", OLD, ": X");
+    const current = form("", NEW, ": X | undefined");
+    const [group, ...rest] = groupFunctionRevisions([old, current], AXIS);
+    expect(rest).toEqual([]);
+    expect(group?.forms).toHaveLength(1);
+    expect(group?.forms[0]?.symbol).toBe(current);
+    expect(group?.forms[0]?.predecessors).toEqual([{ symbol: old, boundary: "1.13.2" }]);
+    expect(group?.removed).toEqual([]);
+    expect(functionAnchorText(groupOverloadForms([old, current], AXIS)[0] ?? [])).toBe(
+      current.signature,
+    );
+  });
+
+  test.each([
+    ["a parameter retype", form("a: number", OLD), form("a: string", NEW)],
+    ["an optional parameter added", form("a: number", OLD), form("a: number, b?: number", NEW)],
+    ["a parameter rename", form("a: number", OLD), form("b: number", NEW)],
+  ])("%s pairs its one ender with its one starter", (_label, old, current) => {
+    expect(shape([old, current])).toEqual([
+      {
+        forms: [{ symbol: current.signature, predecessors: [[old.signature, "1.13.2"]] }],
+        removed: [],
+      },
+    ]);
+  });
+
+  test("an ambiguous boundary pairs by parameter-name list", () => {
+    const oldA = form("a: number", OLD);
+    const oldAB = form("a: number, b: number", OLD);
+    const newA = form("a: string", NEW);
+    const newAB = form("a: string, b: string", NEW);
+    expect(shape([oldA, oldAB, newA, newAB])).toEqual([
+      {
+        forms: [
+          { symbol: newA.signature, predecessors: [[oldA.signature, "1.13.2"]] },
+          { symbol: newAB.signature, predecessors: [[oldAB.signature, "1.13.2"]] },
+        ],
+        removed: [],
+      },
+    ]);
+  });
+
+  test("an ambiguous boundary whose name lists all match pairs nothing", () => {
+    const enders = [form("a: number", OLD), form("a: boolean", OLD)];
+    const starters = [form("a: string", NEW), form("a: Hash", NEW)];
+    expect(shape([...enders, ...starters])).toEqual([
+      {
+        forms: starters.map((s) => ({ symbol: s.signature, predecessors: [] })),
+        removed: enders.map((e) => ({ symbol: e.signature, boundary: "1.13.2", predecessors: [] })),
+      },
+    ]);
+  });
+
+  test("a form added beside a form present everywhere is a second live form", () => {
+    const added = form("name: string", NEW);
+    const always = form("name: number", ALL);
+    expect(shape([added, always])).toEqual([
+      {
+        forms: [
+          { symbol: added.signature, predecessors: [] },
+          { symbol: always.signature, predecessors: [] },
+        ],
+        removed: [],
+      },
+    ]);
+  });
+
+  test("a form that stops early is a removed chain at the next newer version", () => {
+    const always = form("a: number", ALL);
+    const gone = form("a: number, b: number", ["1.13.0", "1.12.4"]);
+    expect(shape([always, gone])).toEqual([
+      {
+        forms: [{ symbol: always.signature, predecessors: [] }],
+        removed: [{ symbol: gone.signature, boundary: "1.13.1", predecessors: [] }],
+      },
+    ]);
+  });
+
+  test("overlapping spans, a gap and a form with no record never pair", () => {
+    const overlapNew = form("a: string", ["1.13.2", "1.13.1"]);
+    const overlapOld = form("a: number", OLD);
+    expect(shape([overlapNew, overlapOld])).toEqual([
+      {
+        forms: [{ symbol: overlapNew.signature, predecessors: [] }],
+        removed: [{ symbol: overlapOld.signature, boundary: "1.13.2", predecessors: [] }],
+      },
+    ]);
+    const gapNew = form("a: string", NEW);
+    const gapOld = form("a: number", ["1.13.0", "1.12.4"]);
+    expect(shape([gapNew, gapOld])).toEqual([
+      {
+        forms: [{ symbol: gapNew.signature, predecessors: [] }],
+        removed: [{ symbol: gapOld.signature, boundary: "1.13.1", predecessors: [] }],
+      },
+    ]);
+    const unrecorded = form("a: number");
+    const starter = form("a: string", NEW);
+    expect(shape([unrecorded, starter])).toEqual([
+      {
+        forms: [
+          { symbol: unrecorded.signature, predecessors: [] },
+          { symbol: starter.signature, predecessors: [] },
+        ],
+        removed: [],
+      },
+    ]);
+  });
+
+  test("an empty axis returns every form as its own live form", () => {
+    const old = form("", OLD, ": X");
+    const current = form("", NEW, ": X | undefined");
+    expect(shape([old, current], [])).toEqual([
+      {
+        forms: [
+          { symbol: old.signature, predecessors: [] },
+          { symbol: current.signature, predecessors: [] },
+        ],
+        removed: [],
+      },
+    ]);
+  });
+
+  test("adjacent spans chain into one live form, predecessors newest first", () => {
+    const oldest = form("", ["1.12.4"], ": A");
+    const middle = form("", ["1.13.1", "1.13.0"], ": B");
+    const newest = form("", NEW, ": C");
+    expect(shape([oldest, newest, middle])).toEqual([
+      {
+        forms: [
+          {
+            symbol: newest.signature,
+            predecessors: [
+              [middle.signature, "1.13.2"],
+              [oldest.signature, "1.13.0"],
+            ],
+          },
+        ],
+        removed: [],
+      },
+    ]);
+  });
+
+  test("groups by name in first-appearance order and groupOverloadForms keeps the live forms", () => {
+    const other = fnSymbol("demo.other");
+    const symbols = [form("", OLD, ": X"), other, form("", NEW, ": X | undefined")];
+    const groups = groupFunctionRevisions(symbols, AXIS);
+    expect(groups.map((g) => g.forms[0]?.symbol.name)).toEqual(["demo.fn", "demo.other"]);
+    expect(groupOverloadForms(symbols, AXIS)).toEqual(
+      groups.map((g) => g.forms.map((f) => f.symbol)),
+    );
+    expect(groupOverloadForms(symbols, AXIS)[0]).toEqual([symbols[2] as ApiSymbol]);
+  });
+});
+
 describe("functionOverviewCards over overload groups", () => {
   test("renders one card per grouped name, nesting one item per form under the group heading", () => {
     const shape = "b2d.shape.get_shape";
@@ -4528,14 +4743,14 @@ describe("functionOverviewCards over overload groups", () => {
       fnSymbol(shape, { signature: `${shape}(shape_id: number): Info` }),
       fnSymbol(shape, { signature: `${shape}(body: Opaque<"b2Body">, shape_index: number): Info` }),
     ];
-    const cards = functionOverviewCards([...forms, single]);
+    const cards = functionOverviewCards([...forms, single], []);
     const heading = `${shape}(...): Info`;
     expect(overloadHeading(forms)).toBe(heading);
     expect(cards.split("\n").filter((line) => /^\s*- /.test(line))).toEqual([
       `- [\`${heading}\` <span class="api-overload-count">2 overloads</span>](#${slugify(heading)})`,
       `  - [\`(shape_id: number)\`](#${slugify(heading)})`,
       `  - [\`(body: Opaque<"b2Body">, shape_index: number)\`](#${slugify(heading)})`,
-      ...functionOverviewCards([single])
+      ...functionOverviewCards([single], [])
         .split("\n")
         .filter((line) => line.startsWith("- ")),
     ]);

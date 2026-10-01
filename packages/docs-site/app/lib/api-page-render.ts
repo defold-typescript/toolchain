@@ -14,13 +14,16 @@ import {
   badgeCategoryFromLabel,
   bareId,
   type CategoryWindow,
+  type FunctionRevision,
+  type FunctionRevisionGroup,
   functionBadgeCategory,
   functionBadgeMembers,
   functionOverviewCards,
+  groupFunctionRevisions,
   groupFunctionSymbols,
-  groupOverloadForms,
   groupTypeSymbols,
   type LibraryMeta,
+  mergedAvailability,
   outerCallParams,
   outerCallSlots,
   overloadFormCodes,
@@ -718,41 +721,87 @@ export function apiPageMarkdown(
       indexRoute,
       symbol.deprecated,
     );
-  // A function's heading scores the function, so a single-form function over
-  // several identities reads like any other function; every other symbol is
-  // its own one identity.
-  const emitSymbol = (symbol: ApiSymbol, isFunction = false) => {
+  const emitSymbol = (symbol: ApiSymbol) => {
     const dots =
-      (combinedMarkers ? (isFunction ? groupDots([symbol]) : symbolDots(symbol)) : "") +
+      (combinedMarkers ? symbolDots(symbol) : "") +
       globalDot(symbol) +
       upstreamDot(symbol) +
-      (isFunction
-        ? groupSpan([symbol])
-        : spanTracked
-          ? symbolSpanMarker(presentIn(symbol), formCategories(symbol))
-          : "");
+      (spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : "");
     lines.push(
       symbolBlock(linkifySymbol(symbol), badgesFor(symbol), dots, noteFor(symbol.name)),
       "",
     );
   };
-  // The block-level account of a heading whose forms do not all span the same
-  // versions: how many forms each release added or removed, newest first. A form
-  // starting after the group's oldest version was added in its own oldest; one
-  // ending before the group's newest was removed in the next tracked release.
-  // Absolute like the form lines it summarizes, so it ignores the window.
-  const overloadSummary = (forms: readonly ApiSymbol[]): string => {
+  // A revision chain renders as its newest form, so that form stands for the
+  // whole chain: its badges, dots and span read the chain's combined presence,
+  // not the newest form's own.
+  const chainSymbol = (revision: FunctionRevision): ApiSymbol => {
+    if (revision.predecessors.length === 0) return revision.symbol;
+    const records = [revision.symbol, ...revision.predecessors.map((p) => p.symbol)].flatMap(
+      (symbol) => (symbol.availability ? [symbol.availability] : []),
+    );
+    const availability = mergedAvailability(records, pageAxis);
+    return availability ? { ...revision.symbol, availability } : revision.symbol;
+  };
+  // Every chain of the function, removed ones included, so the heading's span
+  // covers each version any form of it is present in.
+  const chainSymbols = (group: FunctionRevisionGroup): ApiSymbol[] =>
+    [...group.forms, ...group.removed].map(chainSymbol);
+  // One history line: a replaced or removed form's code with its own span
+  // marker. The `api-overload` class makes the `?since=` filter hide the line
+  // once the window starts after the form's newest version.
+  const revisionLine = (label: string, code: string, symbol: ApiSymbol): string => {
+    const marker = spanTracked
+      ? ` ${symbolSpanMarker(presentIn(symbol), formCategories(symbol))}`
+      : "";
+    return [
+      '<li class="api-overload api-overload--revision">',
+      "",
+      `${label} \`${code}\`${marker}`,
+      "",
+      "</li>",
+    ].join("\n");
+  };
+  const predecessorLines = (revision: FunctionRevision): string[] =>
+    revision.predecessors.map(({ symbol, boundary }) =>
+      revisionLine(
+        `Signature changed in Defold ${bareId(boundary)} — before:`,
+        overloadFormCodes([revision.symbol, symbol])[1] ?? symbol.signature,
+        symbol,
+      ),
+    );
+  const removedLines = (group: FunctionRevisionGroup): string[] => {
+    const live = group.forms.map((form) => form.symbol);
+    return group.removed.flatMap((revision) => [
+      revisionLine(
+        `Removed in Defold ${bareId(revision.boundary)}:`,
+        overloadFormCodes([...live, revision.symbol]).at(-1) ?? revision.symbol.signature,
+        revision.symbol,
+      ),
+      ...predecessorLines(revision),
+    ]);
+  };
+  const revisionList = (items: readonly string[]): string =>
+    items.length === 0 ? "" : ['<ul class="api-revisions">', ...items, "</ul>"].join("\n");
+  // The block-level account of a function whose chains do not all span the same
+  // versions, newest first: a live chain starting after the function's oldest
+  // version was added in its own oldest, and a removed chain was removed at its
+  // boundary. A paired signature change is neither. Absolute like the history
+  // lines it summarizes, so it ignores the window.
+  const overloadSummary = (group: FunctionRevisionGroup): string => {
     if (!spanTracked) return "";
     const axis = pageAxis.map(bareId);
-    const spans = forms.map((symbol) =>
-      presentIn(symbol)
-        .map((version) => axis.indexOf(bareId(version)))
-        .filter((index) => index >= 0),
-    );
-    const union = spans.flat();
-    if (union.length === 0) return "";
-    const newest = Math.min(...union);
-    const oldest = Math.max(...union);
+    const chainOldest = (revision: FunctionRevision): number =>
+      Math.max(
+        -1,
+        ...[revision.symbol, ...revision.predecessors.map((p) => p.symbol)].flatMap((symbol) =>
+          presentIn(symbol)
+            .map((version) => axis.indexOf(bareId(version)))
+            .filter((index) => index >= 0),
+        ),
+      );
+    const oldest = Math.max(...[...group.forms, ...group.removed].map(chainOldest));
+    if (oldest < 0) return "";
     const events = new Map<string, { index: number; added: boolean; count: number }>();
     const record = (index: number, added: boolean) => {
       const key = `${index}|${added}`;
@@ -760,12 +809,13 @@ export function apiPageMarkdown(
       if (event) event.count += 1;
       else events.set(key, { index, added, count: 1 });
     };
-    for (const span of spans) {
-      if (span.length === 0) continue;
-      const formOldest = Math.max(...span);
-      const formNewest = Math.min(...span);
-      if (formOldest < oldest) record(formOldest, true);
-      if (formNewest > newest) record(formNewest - 1, false);
+    for (const form of group.forms) {
+      const formOldest = chainOldest(form);
+      if (formOldest >= 0 && formOldest < oldest) record(formOldest, true);
+    }
+    for (const revision of group.removed) {
+      const index = axis.indexOf(bareId(revision.boundary));
+      if (index >= 0) record(index, false);
     }
     if (events.size === 0) return "";
     return availabilityList(
@@ -777,10 +827,33 @@ export function apiPageMarkdown(
         })),
     );
   };
-  // An overloaded function renders as one block: every form listed under the
-  // group heading, each fact the forms share stated once for the block, and each
-  // fact that differs kept under the form it belongs to.
-  const emitOverloads = (forms: ApiSymbol[]) => {
+  // A function with one live chain renders under its full signature, like any
+  // single-form function; its heading scores the function, so a form over
+  // several identities reads like any other function. Replaced and removed forms
+  // follow its availability as history lines.
+  const emitFunction = (group: FunctionRevisionGroup, revision: FunctionRevision) => {
+    const symbol = chainSymbol(revision);
+    const dots =
+      (combinedMarkers ? groupDots([symbol]) : "") +
+      globalDot(symbol) +
+      upstreamDot(symbol) +
+      groupSpan(chainSymbols(group));
+    const lead = [
+      overloadSummary(group),
+      badgesFor(symbol),
+      revisionList([...predecessorLines(revision), ...removedLines(group)]),
+    ].filter((part) => part !== "");
+    lines.push(
+      symbolBlock(linkifySymbol(symbol), lead.join("\n\n"), dots, noteFor(symbol.name)),
+      "",
+    );
+  };
+  // An overloaded function renders as one block: every live form listed under
+  // the group heading, each fact the forms share stated once for the block, and
+  // each fact that differs kept under the form it belongs to. A form's replaced
+  // signatures follow it; removed forms follow the list.
+  const emitOverloads = (group: FunctionRevisionGroup) => {
+    const forms = group.forms.map(chainSymbol);
     const [head] = forms;
     if (head === undefined) return;
     const linked = forms.map(linkifySymbol);
@@ -846,7 +919,7 @@ export function apiPageMarkdown(
       (combinedMarkers ? groupDots(forms) : "") +
       globalDot(forms.find((s) => s.global) ?? head) +
       upstreamDot(forms.find((s) => s.docSource) ?? head) +
-      groupSpan(forms);
+      groupSpan(chainSymbols(group));
     // The count badge stands where the heading reads `...`; the markdown renderer
     // splices it into the colored signature and keeps it out of the anchor.
     const heading = `### \`${overloadHeading(forms)}\` <span class="api-overload-count">${forms.length} overloads</span>`;
@@ -873,6 +946,9 @@ export function apiPageMarkdown(
       if (!sameReturnTables && table.returnValues.length > 0) {
         parts.push(paramSection("Returns", table.returnValues));
       }
+      const revision = group.forms[index];
+      const history = revision ? revisionList(predecessorLines(revision)) : "";
+      if (history) parts.push(history);
       return ['<li class="api-overload">', "", parts.join("\n\n"), "", "</li>"].join("\n");
     });
     // An availability note every form shares heads the block, since it qualifies
@@ -881,13 +957,15 @@ export function apiPageMarkdown(
     // ahead of the forms they describe. The shared example closes the block, after
     // every signature and table it illustrates.
     const body: string[] = [];
-    const summary = overloadSummary(forms);
+    const summary = overloadSummary(group);
     if (summary) body.push(summary);
     if (sameBadges && badges[0]) body.push(badges[0]);
     if (sameDoc && linked[0]?.docMarkdown) body.push(linked[0].docMarkdown);
     const note = noteFor(head.name);
     if (note) body.push(note);
     body.push(['<ol class="api-overloads">', ...items, "</ol>"].join("\n"));
+    const removed = revisionList(removedLines(group));
+    if (removed) body.push(removed);
     if (sameParams && (tableForm?.parameters.length ?? 0) > 0) {
       body.push(paramSection("Parameters", tableForm?.parameters ?? []));
     }
@@ -913,11 +991,11 @@ export function apiPageMarkdown(
       const overviewMarker = combinedMarkers ? groupDots : undefined;
       for (const fnGroup of groupFunctionSymbols(group)) {
         lines.push(`## ${fnGroup.label}`, "");
-        lines.push(functionOverviewCards(fnGroup.symbols, overviewMarker), "");
-        for (const forms of groupOverloadForms(fnGroup.symbols)) {
-          const [only] = forms;
-          if (forms.length === 1 && only) emitSymbol(only, true);
-          else emitOverloads(forms);
+        lines.push(functionOverviewCards(fnGroup.symbols, pageAxis, overviewMarker), "");
+        for (const group of groupFunctionRevisions(fnGroup.symbols, pageAxis)) {
+          const [only] = group.forms;
+          if (group.forms.length === 1 && only) emitFunction(group, only);
+          else emitOverloads(group);
         }
       }
       continue;

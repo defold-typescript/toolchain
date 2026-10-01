@@ -13,12 +13,13 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **Overloaded functions whose forms span different Defold releases open with a summary in the API reference**, such as "1 overload added in Defold 1.13.2" and "1 overload removed in Defold 1.13.2" on `json.decode`, above the forms they describe.
+- **Overloaded functions whose forms span different Defold releases open with a summary in the API reference**, such as "1 overload added in Defold 1.13.2" on `go.property`, and a form dropped in a release shows below the forms as a "Removed in Defold …" line.
 
 ### Fixed
 
 - **The API reference shows each function's history as it applies:**
   - **`go.property` forms** — the `go.property(name: string, value: string)` form reads "Since Defold 1.13.2" instead of showing as available on every version, while the other `go.property` forms keep their full span and the function's heading reads Changed.
+  - **Signature changes** — a function whose signature changed between Defold releases, such as `b2d.get_world` or `json.decode`, renders under its current signature with a "Signature changed in Defold 1.13.2 — before: …" line, instead of listing the replaced form as a second overload.
   - **One score per function** — a function whose signature changed between Defold releases, such as `json.decode`, `go.get` or `gui.set`, reads Changed on its heading and counts once as changed in the namespace title and sidebar pills, rather than also as new.
   - **"On this page" outline** — an entry and its hover tooltip show the heading's colored `N`/`C`/`D`/`G`/`U` chips instead of plain trailing letters, and hide a chip the version window hides; the tooltip shows the `3 overloads` pill in the signature's code font instead of `...`.
 - **API search hits open the member they matched.** Searching `get_position` lists `go.get_position` by name, and clicking a hit in the search box or on the search page scrolls to that member's heading instead of the top of the [go](/api/go) page; types and their fields land the same way, such as `b2d.joint.JOINT_TYPE` or `monarch.monarch.ShowOptions.no_stack`.

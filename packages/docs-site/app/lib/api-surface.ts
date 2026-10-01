@@ -63,7 +63,7 @@ function availabilityForIdentity(
 
 // One record standing for several identities of the same symbol: the newest
 // record's facts over the union of every record's versions, newest first.
-function mergedAvailability(
+export function mergedAvailability(
   records: readonly ApiAvailability[],
   versions: readonly string[],
 ): ApiAvailability | undefined {
@@ -640,20 +640,154 @@ export function groupTypeSymbols(types: ApiSymbol[]): ApiSymbolGroup[] {
 }
 
 /**
- * Partition function rows into overload groups: one group per `name`, in
- * first-appearance order, each keeping its forms in input order. A group of one
- * is an ordinary function; a larger group renders as one `/api` block.
- * Presentation-only, like {@link groupFunctionSymbols} — `apiModuleSymbols` keeps
- * one row per form for the search text and `llms-full.txt`.
+ * One callable form of a function and the forms it replaced, newest first. Each
+ * predecessor's `boundary` is the tracked version the form after it first
+ * appears in.
  */
-export function groupOverloadForms(symbols: ApiSymbol[]): ApiSymbol[][] {
+export interface FunctionRevision {
+  readonly symbol: ApiSymbol;
+  readonly predecessors: readonly { readonly symbol: ApiSymbol; readonly boundary: string }[];
+}
+
+/** A revision chain that ends before its function's newest version, at `boundary`. */
+export interface RemovedFunctionRevision extends FunctionRevision {
+  readonly boundary: string;
+}
+
+/**
+ * One function's forms paired into revision chains: `forms` are the chains that
+ * reach the function's newest present version, the overloads a caller picks
+ * between; `removed` are the chains that end earlier.
+ */
+export interface FunctionRevisionGroup {
+  readonly forms: readonly FunctionRevision[];
+  readonly removed: readonly RemovedFunctionRevision[];
+}
+
+interface RevisionNode {
+  readonly symbol: ApiSymbol;
+  readonly order: number;
+  readonly newest: number;
+  readonly oldest: number;
+  predecessor?: RevisionNode;
+  successor?: RevisionNode;
+}
+
+// The axis indices a form is present at, newest first: its record's versions,
+// or the whole axis when it has no record or names no tracked version.
+function revisionSpan(symbol: ApiSymbol, axis: readonly string[]): number[] {
+  const indices = (symbol.availability?.availableIn ?? [])
+    .map((version) => axis.indexOf(bareId(version)))
+    .filter((index) => index >= 0)
+    .sort((a, b) => a - b);
+  return indices.length > 0 ? indices : axis.map((_, index) => index);
+}
+
+function parameterNames(symbol: ApiSymbol): string {
+  return (outerCallParams(symbol.signature) ?? symbol.parameters.map((p) => p.name)).join(",");
+}
+
+// Pair the forms that end just before `boundary` with the forms that start at
+// it: first one-to-one by identical parameter-name list, then a lone remaining
+// ender with a lone remaining starter. Anything else stays unpaired.
+function pairAtBoundary(enders: RevisionNode[], starters: RevisionNode[]): void {
+  const link = (ender: RevisionNode, starter: RevisionNode) => {
+    ender.successor = starter;
+    starter.predecessor = ender;
+  };
+  const byNames = (nodes: RevisionNode[]) => {
+    const map = new Map<string, RevisionNode[]>();
+    for (const node of nodes) {
+      const key = parameterNames(node.symbol);
+      map.set(key, [...(map.get(key) ?? []), node]);
+    }
+    return map;
+  };
+  const startersByNames = byNames(starters);
+  for (const [key, sameEnders] of byNames(enders)) {
+    const sameStarters = startersByNames.get(key) ?? [];
+    const [ender] = sameEnders;
+    const [starter] = sameStarters;
+    if (sameEnders.length === 1 && sameStarters.length === 1 && ender && starter) {
+      link(ender, starter);
+    }
+  }
+  const leftEnders = enders.filter((node) => node.successor === undefined);
+  const leftStarters = starters.filter((node) => node.predecessor === undefined);
+  const [ender] = leftEnders;
+  const [starter] = leftStarters;
+  if (leftEnders.length === 1 && leftStarters.length === 1 && ender && starter) {
+    link(ender, starter);
+  }
+}
+
+function revisionChains(
+  symbols: readonly ApiSymbol[],
+  axis: readonly string[],
+): FunctionRevisionGroup {
+  if (axis.length === 0) {
+    return { forms: symbols.map((symbol) => ({ symbol, predecessors: [] })), removed: [] };
+  }
+  const bare = axis.map(bareId);
+  const nodes: RevisionNode[] = symbols.map((symbol, order) => {
+    const span = revisionSpan(symbol, bare);
+    return { symbol, order, newest: span[0] ?? 0, oldest: span[span.length - 1] ?? 0 };
+  });
+  for (let boundary = 0; boundary < bare.length - 1; boundary++) {
+    pairAtBoundary(
+      nodes.filter((node) => node.newest === boundary + 1),
+      nodes.filter((node) => node.oldest === boundary),
+    );
+  }
+  const functionNewest = Math.min(...nodes.map((node) => node.newest));
+  const forms: FunctionRevision[] = [];
+  const removed: RemovedFunctionRevision[] = [];
+  for (const head of nodes.filter((node) => node.successor === undefined)) {
+    const predecessors: { symbol: ApiSymbol; boundary: string }[] = [];
+    for (let node = head; node.predecessor; node = node.predecessor) {
+      predecessors.push({ symbol: node.predecessor.symbol, boundary: axis[node.oldest] ?? "" });
+    }
+    if (head.newest === functionNewest) forms.push({ symbol: head.symbol, predecessors });
+    else removed.push({ symbol: head.symbol, predecessors, boundary: axis[head.newest - 1] ?? "" });
+  }
+  return { forms, removed };
+}
+
+/**
+ * Partition function rows into one {@link FunctionRevisionGroup} per `name`, in
+ * first-appearance order, pairing each name's forms into revision chains over
+ * the newest-first tracked `axis`. A form whose span ends at the version just
+ * older than another form's first version is that form's predecessor; at one
+ * boundary, forms pair by identical parameter-name list, then as a lone ender
+ * with a lone starter. Overlapping or gapped spans never pair, a form with no
+ * record is present everywhere, and an empty axis pairs nothing. Chain heads
+ * keep the input order of their own symbol.
+ */
+export function groupFunctionRevisions(
+  symbols: readonly ApiSymbol[],
+  axis: readonly string[],
+): FunctionRevisionGroup[] {
   const byName = new Map<string, ApiSymbol[]>();
   for (const symbol of symbols) {
     const group = byName.get(symbol.name);
     if (group) group.push(symbol);
     else byName.set(symbol.name, [symbol]);
   }
-  return [...byName.values()];
+  return [...byName.values()].map((group) => revisionChains(group, axis));
+}
+
+/**
+ * Partition function rows into overload groups: one group per `name`, in
+ * first-appearance order, each holding the newest form of every live revision
+ * chain ({@link groupFunctionRevisions}). A group of one is an ordinary
+ * function; a larger group renders as one `/api` block. Presentation-only, like
+ * {@link groupFunctionSymbols} — `apiModuleSymbols` keeps one row per form for
+ * the search text and `llms-full.txt`.
+ */
+export function groupOverloadForms(symbols: ApiSymbol[], axis: readonly string[]): ApiSymbol[][] {
+  return groupFunctionRevisions(symbols, axis).map((group) =>
+    group.forms.map((form) => form.symbol),
+  );
 }
 
 /**
@@ -805,7 +939,8 @@ function formAvailability(
 
 /**
  * Compact per-group function index for the top of an `/api/<namespace>` page:
- * a bulleted list with one card per function name. A single-form function links
+ * a bulleted list with one card per function name, counting only the live forms
+ * of {@link groupOverloadForms}. A single-form function links
  * its full `signature` (parameter and return types included); an overloaded one
  * links its {@link overloadHeading} with the same `N overloads` count badge its
  * block heading carries, and nests one item per form under it, each
@@ -817,13 +952,16 @@ function formAvailability(
  */
 export function functionOverviewCards(
   symbols: ApiSymbol[],
+  // The page's tracked axis, which pairs a function's forms into revision chains
+  // so a card counts only live forms; `[]` pairs nothing.
+  axis: readonly string[],
   // Optional per-group marker HTML appended after the signature link in the same
   // list item (Combined pages pass the `badgeDots` category glyphs). An empty
   // return — and the default of no callback — leaves the row byte-unchanged.
   markerFor?: (group: ApiSymbol[]) => string,
 ): string {
   if (symbols.length === 0) return "";
-  const rows = groupOverloadForms(symbols).flatMap((group) => {
+  const rows = groupOverloadForms(symbols, axis).flatMap((group) => {
     const text = functionAnchorText(group);
     const anchor = slugify(text);
     const count =

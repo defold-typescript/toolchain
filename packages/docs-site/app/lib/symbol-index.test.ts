@@ -3,10 +3,11 @@ import { join } from "node:path";
 import type { ApiModule } from "@defold-typescript/types";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
 import { renderedHeadingIds } from "./__fixtures__/rendered-heading-ids";
-import { apiPages } from "./api-content";
-import type { ApiPage } from "./api-surface";
+import { apiPages, canonicalApiPages } from "./api-content";
+import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import { type ApiVersion, loadCombinedSurface } from "./api-surface-loader";
 import { combinedApiPages } from "./combined-surface";
+import { slugify } from "./headings";
 import {
   buildSymbolIndex,
   combinedSymbolIndexRecords,
@@ -165,6 +166,21 @@ describe("memberAnchors", () => {
     expect(index["demo.move"]?.route).toBe(`/api/demo#${anchors.get("function:demo.move")}`);
     expect(index["demo.LIMIT"]?.route).toBe(`/api/demo#${anchors.get("constant:demo.LIMIT")}`);
     expect(index["demo.speed"]?.route).toBe(`/api/demo#${anchors.get("property:speed")}`);
+  });
+
+  test("a function whose signature changed anchors at its current signature", () => {
+    const b2d = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
+      (p) => p.namespace === "b2d",
+    );
+    if (!b2d) throw new Error("no canonical b2d page");
+    const newest = b2d.availability?.versions[0];
+    const current = apiModuleSymbols(b2d, b2d.translations, b2d.signatures).filter(
+      (s) => s.name === "b2d.get_world" && s.availability?.availableIn.includes(newest ?? ""),
+    );
+    expect(current).toHaveLength(1);
+    const slug = slugify(current[0]?.signature ?? "");
+    expect(memberAnchors(b2d).get("function:b2d.get_world")).toBe(slug);
+    expect(buildSymbolIndex([b2d])["b2d.get_world"]?.route.endsWith(`#${slug}`)).toBe(true);
   });
 });
 
