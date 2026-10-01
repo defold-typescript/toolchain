@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.41.1
+
+### Fixed
+
+- The API reference marks the `go.property(name: string, value: string)` form "Since Defold 1.13.2" instead of showing it as available on every version, while the other `go.property` forms keep their full span.
+
 ## v0.41.0
 
 ### Breaking
