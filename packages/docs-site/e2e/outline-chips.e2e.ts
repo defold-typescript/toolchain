@@ -13,9 +13,7 @@ const backgroundOf = (el: Element) => getComputedStyle(el).backgroundColor;
 // from script, so an early read sees no background at all.
 async function headingChipBackground(page: Page): Promise<string> {
   const chip = page.locator("#goget .api-badge-dot--changed");
-  await expect
-    .poll(() => chip.evaluate(backgroundOf))
-    .not.toMatch(/^(|rgba\(0, 0, 0, 0\))$/);
+  await expect.poll(() => chip.evaluate(backgroundOf)).not.toMatch(/^(|rgba\(0, 0, 0, 0\))$/);
   return chip.evaluate(backgroundOf);
 }
 

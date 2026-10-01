@@ -1205,21 +1205,78 @@ function tsFence(body: string): string {
   return `\`\`\`ts\n${body.replace(/\n+$/, "")}\n\`\`\``;
 }
 
+type ApiModuleMarkdownPage = Pick<
+  ApiPage,
+  | "namespace"
+  | "module"
+  | "displayName"
+  | "category"
+  | "availability"
+  | "authoritativeSignatures"
+  | "authoritativeSlotTypes"
+  | "authoritativeArms"
+> &
+  Partial<Pick<ApiPage, "signatures">>;
+
+/** The member kinds `apiModuleMarkdown` renders a heading group for. */
+export type ApiSectionKind = "function" | "variable" | "constant" | "property";
+
+/** One member entry's share of the flat module markdown. */
+export interface ApiModuleSection {
+  kind: ApiSectionKind;
+  name: string;
+  markdown: string;
+}
+
+interface ModuleLines {
+  head: string[];
+  groups: {
+    heading: string;
+    sections: { kind: ApiSectionKind; name: string; lines: string[] }[];
+  }[];
+  tail: string[];
+}
+
+/**
+ * The flat search/index projection of a module: the title and intro, one `##`
+ * group per member kind holding each member's headings, prose, examples and
+ * parameter/return prose, then the `## Types` block.
+ */
 export function apiModuleMarkdown(
-  page: Pick<
-    ApiPage,
-    | "namespace"
-    | "module"
-    | "displayName"
-    | "category"
-    | "availability"
-    | "authoritativeSignatures"
-    | "authoritativeSlotTypes"
-    | "authoritativeArms"
-  > &
-    Partial<Pick<ApiPage, "signatures">>,
+  page: ApiModuleMarkdownPage,
   translations: TranslationStore = {},
 ): string {
+  const { head, groups, tail } = moduleLines(page, translations);
+  const lines = [...head];
+  for (const group of groups) {
+    lines.push(group.heading, "");
+    for (const section of group.sections) lines.push(...section.lines);
+  }
+  lines.push(...tail);
+  return lines.join("\n");
+}
+
+/**
+ * {@link apiModuleMarkdown} cut at its member boundaries: `head` is the title and
+ * intro, `sections` holds each function/variable/constant/property entry's own
+ * lines in page order, and `tail` is the `## Types` block. The group headings
+ * belong to none of them.
+ */
+export function apiModuleSections(
+  page: ApiModuleMarkdownPage,
+  translations: TranslationStore = {},
+): { head: string; sections: ApiModuleSection[]; tail: string } {
+  const { head, groups, tail } = moduleLines(page, translations);
+  return {
+    head: head.join("\n"),
+    sections: groups.flatMap((group) =>
+      group.sections.map(({ kind, name, lines }) => ({ kind, name, markdown: lines.join("\n") })),
+    ),
+    tail: tail.join("\n"),
+  };
+}
+
+function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore): ModuleLines {
   const m = page.module;
   const authoritative = page.authoritativeSignatures;
   // `library` JSON tokens are already TypeScript, so re-mapping them through the
@@ -1227,7 +1284,14 @@ export function apiModuleMarkdown(
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
   const isLibrary = page.category === "library";
   const libraryPage = libraryPageKey(page);
-  const lines: string[] = [`# ${page.displayName ?? m.namespace}`, ""];
+  const head: string[] = [`# ${page.displayName ?? m.namespace}`, ""];
+  const groups: ModuleLines["groups"] = [];
+  let lines = head;
+  const section = (kind: ApiSectionKind, name: string): string[] => {
+    const own: string[] = [];
+    groups.at(-1)?.sections.push({ kind, name, lines: own });
+    return own;
+  };
   if (page.displayName && page.displayName !== m.namespace) {
     lines.push(`\`${m.namespace}\``, "");
   }
@@ -1240,7 +1304,7 @@ export function apiModuleMarkdown(
   if (intro) lines.push(intro, "");
 
   if (m.functions.length > 0) {
-    lines.push("## Functions", "");
+    groups.push({ heading: "## Functions", sections: [] });
     // The page's own rows own the signature precedence (authoritative, authored
     // override, token render); each declaration heads the rows it renders, so an
     // override-collapsed later entry contributes its prose under the rows above.
@@ -1255,6 +1319,7 @@ export function apiModuleMarkdown(
       current?.push(symbol.signature);
     }
     for (const fn of m.functions) {
+      lines = section("function", fn.name);
       const identity = symbolIdentityKey({
         namespace: m.namespace,
         kind: "FUNCTION",
@@ -1300,8 +1365,9 @@ export function apiModuleMarkdown(
   }
 
   if (m.variables.length > 0) {
-    lines.push("## Variables", "");
+    groups.push({ heading: "## Variables", sections: [] });
     for (const v of m.variables) {
+      lines = section("variable", v.name);
       const authSig =
         authoritativeSignatureFor(authoritative, m.namespace, "VARIABLE", v.name, "") ??
         variableSignature(v, mapType);
@@ -1317,8 +1383,9 @@ export function apiModuleMarkdown(
   }
 
   if (m.constants.length > 0) {
-    lines.push("## Constants", "");
+    groups.push({ heading: "## Constants", sections: [] });
     for (const cst of m.constants) {
+      lines = section("constant", cst.name);
       const authSig =
         authoritativeSignatureFor(authoritative, m.namespace, "CONSTANT", cst.name, "") ??
         constantSignature(cst);
@@ -1334,8 +1401,9 @@ export function apiModuleMarkdown(
   }
 
   if (m.properties.length > 0) {
-    lines.push("## Properties", "");
+    groups.push({ heading: "## Properties", sections: [] });
     for (const prop of m.properties) {
+      lines = section("property", prop.name);
       const authSig =
         authoritativeSignatureFor(authoritative, m.namespace, "PROPERTY", prop.name, "") ??
         propertySignature(prop, mapType);
@@ -1350,6 +1418,8 @@ export function apiModuleMarkdown(
     }
   }
 
+  const tail: string[] = [];
+  lines = tail;
   const typedefs = renderableTypedefs(m.typedefs);
   if (typedefs.length > 0) {
     lines.push("## Types", "");
@@ -1386,7 +1456,7 @@ export function apiModuleMarkdown(
     }
   }
 
-  return lines.join("\n");
+  return { head, groups, tail };
 }
 
 /**

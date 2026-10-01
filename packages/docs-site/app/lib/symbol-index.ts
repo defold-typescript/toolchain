@@ -24,9 +24,37 @@ export interface SymbolEntry {
 // come bare (`position`); only prefix when the name is not already qualified.
 // The synthetic `globals` page documents prefixless ambient symbols (`hash`),
 // so its members are keyed bare.
-function qualify(namespace: string, name: string): string {
+export function qualify(namespace: string, name: string): string {
   if (namespace === "globals") return name;
   return name.startsWith(`${namespace}.`) ? name : `${namespace}.${name}`;
+}
+
+/**
+ * The heading anchor every member of a page renders under, keyed
+ * `<kind>:<name>` with the {@link apiModuleSymbols} kind. A function anchors at
+ * its overload group's heading, which is the only heading an overloaded name
+ * renders; every other member slugs its own signature. The symbol index and the
+ * search index both route through this map, so a tooltip link and a search hit
+ * land on the same heading.
+ */
+export function memberAnchors(page: ApiPage): Map<string, string> {
+  const symbols = apiModuleSymbols(page, page.translations, page.signatures);
+  const functionAnchors = new Map(
+    groupOverloadForms(symbols.filter((s) => s.kind === "function")).map(
+      (group) => [group[0]?.name, functionAnchorText(group)] as const,
+    ),
+  );
+  const anchors = new Map<string, string>();
+  for (const symbol of symbols) {
+    anchors.set(
+      `${symbol.kind}:${symbol.name}`,
+      slugify(
+        (symbol.kind === "function" ? functionAnchors.get(symbol.name) : undefined) ??
+          symbol.signature,
+      ),
+    );
+  }
+  return anchors;
 }
 
 /**
@@ -45,23 +73,11 @@ export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> 
       brief: stripPlatformMarkers(htmlToDocText(module.description || module.brief)),
       route,
     };
-    const symbols = apiModuleSymbols(page, page.translations, page.signatures);
-    // A function member anchors at its overload group's heading, which is the
-    // only heading an overloaded name renders.
-    const functionAnchors = new Map(
-      groupOverloadForms(symbols.filter((s) => s.kind === "function")).map(
-        (group) => [group[0]?.name, functionAnchorText(group)] as const,
-      ),
-    );
-    for (const symbol of symbols) {
-      const key = qualify(namespace, symbol.name);
-      const anchor = slugify(
-        (symbol.kind === "function" ? functionAnchors.get(symbol.name) : undefined) ??
-          symbol.signature,
-      );
-      index[key] = {
+    const anchors = memberAnchors(page);
+    for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
+      index[qualify(namespace, symbol.name)] = {
         brief: stripPlatformMarkers(symbol.docMarkdown),
-        route: `${route}#${anchor}`,
+        route: `${route}#${anchors.get(`${symbol.kind}:${symbol.name}`)}`,
       };
     }
   }

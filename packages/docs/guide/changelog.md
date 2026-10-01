@@ -21,6 +21,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`go.property` forms** — the `go.property(name: string, value: string)` form reads "Since Defold 1.13.2" instead of showing as available on every version, while the other `go.property` forms keep their full span and the function's heading reads Changed.
   - **One score per function** — a function whose signature changed between Defold releases, such as `json.decode`, `go.get` or `gui.set`, reads Changed on its heading and counts once as changed in the namespace title and sidebar pills, rather than also as new.
   - **"On this page" outline** — an entry and its hover tooltip show the heading's colored `N`/`C`/`D`/`G`/`U` chips instead of plain trailing letters, and hide a chip the version window hides; the tooltip shows the `3 overloads` pill in the signature's code font instead of `...`.
+- **API search hits open the member they matched.** Searching `get_position` lists `go.get_position` by name, and clicking it in the search box or on the search page scrolls to that function's heading instead of the top of the [go](/api/go) page.
 
 ## v0.41.0
 
