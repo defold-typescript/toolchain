@@ -1219,7 +1219,7 @@ type ApiModuleMarkdownPage = Pick<
   Partial<Pick<ApiPage, "signatures">>;
 
 /** The member kinds `apiModuleMarkdown` renders a heading group for. */
-export type ApiSectionKind = "function" | "variable" | "constant" | "property";
+export type ApiSectionKind = "function" | "variable" | "constant" | "property" | "type";
 
 /** One member entry's share of the flat module markdown. */
 export interface ApiModuleSection {
@@ -1234,7 +1234,6 @@ interface ModuleLines {
     heading: string;
     sections: { kind: ApiSectionKind; name: string; lines: string[] }[];
   }[];
-  tail: string[];
 }
 
 /**
@@ -1246,33 +1245,33 @@ export function apiModuleMarkdown(
   page: ApiModuleMarkdownPage,
   translations: TranslationStore = {},
 ): string {
-  const { head, groups, tail } = moduleLines(page, translations);
+  const { head, groups } = moduleLines(page, translations);
   const lines = [...head];
   for (const group of groups) {
     lines.push(group.heading, "");
     for (const section of group.sections) lines.push(...section.lines);
   }
-  lines.push(...tail);
   return lines.join("\n");
 }
 
 /**
  * {@link apiModuleMarkdown} cut at its member boundaries: `head` is the title and
- * intro, `sections` holds each function/variable/constant/property entry's own
- * lines in page order, and `tail` is the `## Types` block. The group headings
- * belong to none of them.
+ * intro, and `sections` holds each function/variable/constant/property entry's
+ * own lines in page order, then each `## Types` entry's — a constant-union
+ * alias, a typedef's heading and definition, and each typedef function and
+ * property — named as {@link apiModuleSymbols} names its `type` symbols. The
+ * group headings belong to none of them.
  */
 export function apiModuleSections(
   page: ApiModuleMarkdownPage,
   translations: TranslationStore = {},
-): { head: string; sections: ApiModuleSection[]; tail: string } {
-  const { head, groups, tail } = moduleLines(page, translations);
+): { head: string; sections: ApiModuleSection[] } {
+  const { head, groups } = moduleLines(page, translations);
   return {
     head: head.join("\n"),
     sections: groups.flatMap((group) =>
       group.sections.map(({ kind, name, lines }) => ({ kind, name, markdown: lines.join("\n") })),
     ),
-    tail: tail.join("\n"),
   };
 }
 
@@ -1418,16 +1417,20 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
     }
   }
 
-  const tail: string[] = [];
-  lines = tail;
+  const aliases = authoritativeConstantUnionAliases(authoritative, m);
   const typedefs = renderableTypedefs(m.typedefs);
-  if (typedefs.length > 0) {
-    lines.push("## Types", "");
+  if (aliases.length > 0 || typedefs.length > 0) {
+    groups.push({ heading: "## Types", sections: [] });
+    for (const [name, definition] of aliases) {
+      section("type", name).push(`### ${name}`, "", `\`${definition}\``, "");
+    }
     for (const td of typedefs) {
+      lines = section("type", td.name);
       lines.push(`### ${td.name}`, "");
       const definition = typedefDefinitionSignature(td, mapType);
       if (definition) lines.push(`\`${definition}\``, "");
       for (const fn of td.functions ?? []) {
+        lines = section("type", typeMemberName(td.name, fn.name));
         lines.push(`#### \`${functionSignature(fn, mapType, isLibrary)}\``, "");
         const doc = htmlToDocText(fn.description || fn.brief);
         if (doc) lines.push(doc, "");
@@ -1444,6 +1447,7 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
         }
       }
       for (const prop of td.properties ?? []) {
+        lines = section("type", typeMemberName(td.name, prop.name));
         lines.push(`#### \`${variableSignature(prop, mapType)}\``, "");
         const doc = withFieldBaseNotes(
           libraryPage,
@@ -1456,7 +1460,7 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
     }
   }
 
-  return { head, groups, tail };
+  return { head, groups };
 }
 
 /**

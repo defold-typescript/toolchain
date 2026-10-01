@@ -16,6 +16,7 @@ import {
   symbolIdentityKey,
   type TranslationStore,
 } from "@defold-typescript/types";
+import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
 import { canonicalApiPages } from "./api-content";
 import { apiSignatureSymbolLinks } from "./api-page-render";
 import {
@@ -23,6 +24,7 @@ import {
   type ApiSymbol,
   type AvailabilityLookup,
   apiModuleMarkdown,
+  apiModuleSections,
   apiModuleSymbols,
   badgeCategory,
   exampleMarkdownFor,
@@ -1070,6 +1072,22 @@ describe("apiModuleMarkdown", () => {
     });
     expect(md).not.toContain("## Types");
     expect(md).not.toContain("Alias");
+  });
+
+  test("cuts the Types block into one section per type symbol, in symbol order", () => {
+    const typeSections = apiModuleSections(memberAnchorPage)
+      .sections.filter((s) => s.kind === "type")
+      .map(({ kind, name }) => [kind, name]);
+    const typeSymbols = apiModuleSymbols(memberAnchorPage)
+      .filter((s) => s.kind === "type")
+      .map(({ kind, name }) => [kind, name]);
+    expect(typeSections.length).toBeGreaterThan(0);
+    expect(typeSections).toEqual(typeSymbols);
+    const md = apiModuleMarkdown(memberAnchorPage);
+    expect(md).toContain("## Types");
+    expect(md).toContain("### Mode");
+    expect(md).toContain("`type Mode = typeof demo.LIMIT`");
+    expect(md).toContain("### Options");
   });
 });
 
