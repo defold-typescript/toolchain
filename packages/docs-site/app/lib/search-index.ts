@@ -128,7 +128,7 @@ export function combinedSearchRecords(combined: CombinedSurface): SearchRecord[]
         combinedNamespaceToApiPage(ns),
         [htmlToDocText(ns.module.description || ns.module.brief)],
         ns.entries.map((entry) => ({
-          kind: entry.identity.kind.toLowerCase(),
+          kind: entry.identity.kind === "TYPEDEF" ? "type" : entry.identity.kind.toLowerCase(),
           name: entry.identity.name,
           text: combinedEntryText(entry),
         })),
@@ -209,17 +209,17 @@ export function buildSearchIndex(
 }
 
 /**
- * A page record per API page holding its intro and `## Types` block, plus one
- * record per member heading holding that member's signatures and prose, routed at
- * the heading's anchor.
+ * A page record per API page holding its intro, plus one record per member or
+ * type heading holding that entry's signatures and prose, routed at the heading's
+ * anchor.
  */
 export function apiSearchRecords(pages: ApiPage[]): SearchRecord[] {
   return pages
     .flatMap((page) => {
-      const { head, sections, tail } = apiModuleSections(page, page.translations);
+      const { head, sections } = apiModuleSections(page, page.translations);
       return pageSearchRecords(
         page,
-        [toPlainText(head), toPlainText(tail)],
+        [toPlainText(head)],
         sections.map(({ kind, name, markdown }) => ({ kind, name, text: toPlainText(markdown) })),
       );
     })

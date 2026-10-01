@@ -152,6 +152,10 @@ describe("memberAnchors", () => {
       ["function:demo.move", "demomove"],
       ["constant:demo.LIMIT", "demolimit"],
       ["property:speed", "speed-number"],
+      ["type:Mode", "type-mode--typeof-demolimit"],
+      ["type:Options", "interface-options-extends-baseoptions"],
+      ["type:Options.open", "optionsopen"],
+      ["type:Options.no_stack", "optionsno_stack-boolean"],
     ]);
   });
 
