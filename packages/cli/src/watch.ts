@@ -30,7 +30,9 @@ import {
   openConsoleStream,
   postCommand,
   type ReloadOutcome,
+  type RunAnswer,
   resolveEditor,
+  runInEditor,
 } from "./editor-attach";
 import { renderWatchEvent } from "./json-output";
 import { isComponentPath, isScenePath, isSkipped } from "./script-kind";
@@ -72,6 +74,11 @@ export interface WatchEditorClient {
    * it reads as no editor.
    */
   compile?(cwd: string, signal?: AbortSignal): Promise<CompileAnswer>;
+  /**
+   * Asks the editor to build and launch the game. Optional like `compile`: only
+   * `build --editor-run` calls it, and a client without it reads as no editor.
+   */
+  run?(cwd: string, options: { readonly focus: boolean }, signal?: AbortSignal): Promise<RunAnswer>;
 }
 
 export function createWatchEditorClient(transport?: EditorTransport): WatchEditorClient {
@@ -79,6 +86,7 @@ export function createWatchEditorClient(transport?: EditorTransport): WatchEdito
     resolve: (cwd, signal) => resolveEditor(cwd, transport, signal),
     postCommand: (cwd, name, signal) => postCommand(cwd, name, transport, signal),
     compile: (cwd, signal) => compileInEditor(cwd, transport, signal),
+    run: (cwd, options, signal) => runInEditor(cwd, options, transport, signal),
     async openConsole(endpoint, signal) {
       // The watermark is read before the stream opens: /console/stream replays
       // the whole session, so without it every attach reprints history as news.

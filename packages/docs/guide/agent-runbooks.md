@@ -51,7 +51,7 @@ A failure flips `ok` to `false` and carries an `error` string instead of
 lines, the scene-resource-mismatch lines, the unreachable-address lines and the
 cross-world-address lines (empty when there are none). Optional fields
 (`defoldVersion`, `defoldChannel`, `apiSurface`, `materializedSurface`,
-`unreachableAddresses`, `crossWorldAddresses`, `editorCompile`, …) appear only
+`unreachableAddresses`, `crossWorldAddresses`, `editorCompile`, `editorRun`, …) appear only
 when they apply.
 
 `unreachableAddresses` is the structured half of the unreachable-address
@@ -919,6 +919,38 @@ Branch on `editorCompile.outcome`:
 Only `success: false` fails the build, so the flag is safe in a script that also
 runs where no editor is open. Without the flag nothing is posted and the result
 has no `editorCompile` key.
+
+## Run the game in the editor after a build
+
+**Goal:** start the game on the code just written and learn where it is running.
+This is the edit, build, run loop.
+
+**Command (run from the project root, with the Defold editor open on it):**
+
+```sh
+bunx @defold-typescript/cli build --editor-run --json
+```
+
+Once every output file is written, [`build`](./build.md#run-in-the-editor) asks
+the attached Defold 1.13.2+ editor to build and launch the game, and waits until
+the engine reports its address. The result gains an `editorRun` object:
+
+```json
+{"command":"build","ok":true,"written":["src/main.ts.script"],"editorRun":{"outcome":"ran","success":true,"issues":[],"targetUrl":"http://127.0.0.1:57069"}}
+```
+
+`editorRun` reads like [`editorCompile`](#compile-in-the-editor-after-a-build),
+with `"ran"` in place of `"compiled"`, plus:
+
+- `targetUrl` — the running engine's address, present only when the run
+  succeeded and the engine reported it. A successful run without it means the
+  engine quit or did not answer in time; read the warning in `issues`.
+
+The game window opens behind other windows; add `--editor-focus` to bring it to
+the front. With `--editor-compile` as well, only the run is posted and the
+result has no `editorCompile` key. Without `--editor-run` nothing is posted and
+the result has no `editorRun` key. To get later edits into the running game,
+switch to [hot reload](#hot-reload-the-running-game).
 
 ## Hot reload the running game
 

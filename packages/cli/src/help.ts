@@ -76,6 +76,14 @@ const COMMANDS: readonly HelpCommand[] = [
         desc: "after writing, compile the project in the attached Defold 1.13.2+ editor and fail on its errors",
       },
       {
+        flag: "--editor-run",
+        desc: "after writing, run the game from the attached Defold 1.13.2+ editor, print its URL and fail on its errors",
+      },
+      {
+        flag: "--editor-focus",
+        desc: "with --editor-run, bring the game window to the front",
+      },
+      {
         flag: "--fail-on-drift",
         desc: "exit non-zero when the detected Defold editor differs from the version pin",
       },

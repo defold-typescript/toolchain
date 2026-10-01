@@ -254,6 +254,21 @@ describe("--editor-compile help listing", () => {
   });
 });
 
+describe("--editor-run help listing", () => {
+  test("build help and help JSON list --editor-run and --editor-focus", () => {
+    const text = renderHelp("build");
+    expect(text).toContain("--editor-run");
+    expect(text).toContain("--editor-focus");
+
+    const parsed = JSON.parse(renderHelpJson("build"));
+    const flags = parsed.flags.map((f: { flag: string }) => f.flag);
+    expect(flags).toContain("--editor-run");
+    expect(flags).toContain("--editor-focus");
+    const run = parsed.flags.find((f: { flag: string }) => f.flag === "--editor-run");
+    expect(run.desc).toContain("1.13.2");
+  });
+});
+
 describe("--no-color help listing", () => {
   test("global help lists --no-color and its NO_COLOR equivalent", () => {
     const text = renderHelp(null);

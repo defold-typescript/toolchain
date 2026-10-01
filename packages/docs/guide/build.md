@@ -80,7 +80,8 @@ carries no banner, so the first build after the upgrade stops and names it.
 If a Defold editor is open on this project, `build` names it on stderr
 (`attached to Defold editor at http://localhost:<port>`) and moves on. It is a
 one-shot command, so nothing is streamed and nothing is posted to the editor
-unless you pass [`--editor-compile`](#compile-in-the-editor); for the loop that
+unless you pass [`--editor-compile`](#compile-in-the-editor) or
+[`--editor-run`](#run-in-the-editor); for the loop that
 surfaces the running game's runtime errors as they happen, see
 [`watch`](./watch.md#runtime-errors-in-the-terminal). With no editor open — the
 ordinary case in CI — `build` prints nothing extra and behaves exactly as before.
@@ -187,6 +188,11 @@ version locked alongside your `@defold-typescript/types`. Reserve `@latest` for
 - `--editor-compile` — after the Lua is written, ask the attached Defold 1.13.2+
   editor to compile the project and fail the build on its errors. See
   [Compile in the editor](#compile-in-the-editor).
+- `--editor-focus` — with `--editor-run`, bring the game window to the front.
+  Without `--editor-run` it does nothing.
+- `--editor-run` — after the Lua is written, ask the attached Defold 1.13.2+
+  editor to build and launch the game, print the running engine's URL, and fail
+  the build on its errors. See [Run in the editor](#run-in-the-editor).
 - `--json` — emit the build result as a single JSON object (including the
   `warnings` array and, when either address check found any, a structured
   `unreachableAddresses` and `crossWorldAddresses` array) for agents and
@@ -222,6 +228,37 @@ and never fail the build: no editor is open, the editor is older than Defold
 
 The flag needs the editor open on this project. The compile has no time limit,
 since the editor answers only once it has finished.
+
+## Run in the editor
+
+`build --editor-run` goes one step further than `--editor-compile`: once every
+output file is on disk it asks the open Defold editor to build and launch the
+game, and waits until the engine reports where it is running.
+
+```sh
+bunx @defold-typescript/cli build --editor-run
+```
+
+On success it prints the running engine's address on stderr, after any issue
+lines:
+
+```text
+defold-typescript build: editor: running at http://127.0.0.1:57069
+```
+
+The game window opens behind your terminal; add `--editor-focus` to bring it to
+the front. Issues are printed and mapped to the TypeScript line exactly as for
+[`--editor-compile`](#compile-in-the-editor), and the build exits `1` when the
+editor reports a failed run. When the run succeeds but the engine never reported
+its address — it quit early or took too long — the editor's warning is printed
+with one line saying no target URL came back, and the build still exits `0`. No
+editor, an editor older than Defold 1.13.2, or a refused request is reported in
+one plain line and never fails the build. Under `--json` the result carries an
+`editorRun` object; see
+[Agent runbooks](./agent-runbooks.md#run-the-game-in-the-editor-after-a-build).
+
+The run builds the project itself, so `--editor-run` together with
+`--editor-compile` posts only the run.
 
 ## Headless builds (no editor)
 

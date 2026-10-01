@@ -49,6 +49,8 @@ export interface EditorIssue {
 export interface CommandResult {
   readonly success: boolean;
   readonly issues: readonly EditorIssue[];
+  /** The running engine's URL, read only from a `run` answer. */
+  readonly targetUrl?: string;
 }
 
 export interface CommandAnswer {
@@ -219,7 +221,7 @@ function parseIssue(value: unknown): EditorIssue | null {
  * An unreadable body yields `null` rather than a throw: the editor did answer,
  * so the post is not "no editor", it only carries no verdict to report.
  */
-function parseCommandResult(body: string): CommandResult | null {
+function parseCommandResult(body: string, readTarget: boolean): CommandResult | null {
   let parsed: unknown;
   try {
     parsed = JSON.parse(body);
@@ -228,9 +230,14 @@ function parseCommandResult(body: string): CommandResult | null {
   }
   if (!isRecord(parsed) || typeof parsed.success !== "boolean") return null;
   const issues = Array.isArray(parsed.issues) ? parsed.issues : [];
+  const targetUrl =
+    readTarget && isRecord(parsed.target) && typeof parsed.target.url === "string"
+      ? parsed.target.url
+      : undefined;
   return {
     success: parsed.success,
     issues: issues.map(parseIssue).filter((issue): issue is EditorIssue => issue !== null),
+    ...(targetUrl === undefined ? {} : { targetUrl }),
   };
 }
 
@@ -249,6 +256,13 @@ export function editorIssues(result: CommandResult | null): readonly EditorIssue
   return result === null || result.success ? [] : result.issues;
 }
 
+interface SendOptions {
+  /** Appended to `/command/<name>` as is, without the leading `?`. */
+  readonly query?: string;
+  /** Only `run` answers with a `target`; every other command ignores one. */
+  readonly readTarget?: boolean;
+}
+
 /**
  * `null` for no editor: no port file, or a transport that threw. Otherwise the
  * status, plus the parsed `{ success, issues }` body for a finished command
@@ -259,17 +273,19 @@ async function sendCommand(
   name: string,
   transport: EditorTransport,
   signal: AbortSignal | undefined,
+  options: SendOptions = {},
 ): Promise<{ readonly status: number; readonly result: CommandResult | null } | null> {
   const port = readEditorPort(cwd);
   if (port === null) return null;
+  const query = options.query === undefined ? "" : `?${options.query}`;
   try {
-    const res = await transport(`http://localhost:${port}/command/${name}`, {
+    const res = await transport(`http://localhost:${port}/command/${name}${query}`, {
       method: "POST",
       signal,
     });
     if (res.status !== 200 && res.status !== 422) return { status: res.status, result: null };
     const body = await res.text().catch(() => "");
-    return { status: res.status, result: parseCommandResult(body) };
+    return { status: res.status, result: parseCommandResult(body, options.readTarget === true) };
   } catch {
     return null;
   }
@@ -326,6 +342,38 @@ export async function compileInEditor(
   if (sent === null) return { outcome: "unavailable", result: null };
   if (sent.status === 200 || sent.status === 422)
     return { outcome: "compiled", result: sent.result };
+  if (sent.status === 404) return { outcome: "unsupported", result: null };
+  if (sent.status === 403) return { outcome: "skipped", result: null };
+  return { outcome: "unavailable", result: null };
+}
+
+/** The {@link CompileOutcome} statuses, with `ran` for an answered run. */
+export type RunOutcome = "ran" | "unsupported" | "skipped" | "unavailable";
+
+export interface RunAnswer {
+  readonly outcome: RunOutcome;
+  /** `null` unless the editor finished the run and its body parsed. */
+  readonly result: CommandResult | null;
+}
+
+/**
+ * Asks the attached editor to build and launch the game. The editor answers
+ * once the engine has reported its URL or its own wait for it has ended, so the
+ * post has no deadline of its own; a run the engine never reported carries an
+ * issue and no `targetUrl`.
+ */
+export async function runInEditor(
+  cwd: string,
+  options: { readonly focus: boolean },
+  transport: EditorTransport = defaultTransport,
+  signal?: AbortSignal,
+): Promise<RunAnswer> {
+  const sent = await sendCommand(cwd, "run", transport, signal, {
+    query: `focus=${options.focus}`,
+    readTarget: true,
+  });
+  if (sent === null) return { outcome: "unavailable", result: null };
+  if (sent.status === 200 || sent.status === 422) return { outcome: "ran", result: sent.result };
   if (sent.status === 404) return { outcome: "unsupported", result: null };
   if (sent.status === 403) return { outcome: "skipped", result: null };
   return { outcome: "unavailable", result: null };

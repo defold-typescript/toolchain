@@ -1,4 +1,4 @@
-import type { CompileOutcome, EditorIssue } from "./editor-attach";
+import type { CompileOutcome, EditorIssue, RunOutcome } from "./editor-attach";
 import type { CompileIssue } from "./editor-compile";
 import type { InitOperation } from "./init";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
@@ -121,6 +121,14 @@ export interface RenderResultInput {
     readonly success?: boolean;
     readonly issues?: readonly CompileIssue[];
   };
+  // `build --editor-run` only. `targetUrl` is present only when the run
+  // succeeded and the engine reported its URL to the editor.
+  readonly editorRun?: {
+    readonly outcome: RunOutcome;
+    readonly success?: boolean;
+    readonly issues?: readonly CompileIssue[];
+    readonly targetUrl?: string;
+  };
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -228,10 +236,12 @@ export function renderResult(input: RenderResultInput): string {
     "editorIssues" in input
       ? { ...withConsoleWindow, editorIssues: input.editorIssues }
       : withConsoleWindow;
-  const payload =
+  const withEditorCompile =
     "editorCompile" in input
       ? { ...withEditorIssues, editorCompile: input.editorCompile }
       : withEditorIssues;
+  const payload =
+    "editorRun" in input ? { ...withEditorCompile, editorRun: input.editorRun } : withEditorCompile;
   return `${JSON.stringify(payload)}\n`;
 }
 

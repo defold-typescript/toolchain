@@ -26,7 +26,15 @@ import {
   resolveDefoldTarget,
   resolveTargetHead,
 } from "./defold-target";
-import type { CompileAnswer, CompileOutcome, EditorTransport } from "./editor-attach";
+import type {
+  CommandResult,
+  CompileAnswer,
+  CompileOutcome,
+  EditorTransport,
+  RunAnswer,
+  RunOutcome,
+} from "./editor-attach";
+import type { CompileIssue } from "./editor-compile";
 import {
   defaultRunEngine,
   launchEngine,
@@ -165,6 +173,15 @@ const EDITOR_COMPILE_NOTICES: Readonly<Record<CompileOutcome, string>> = {
     "editor compile skipped: the attached Defold editor has no compile command; --editor-compile needs Defold 1.13.2 or later",
   skipped: "editor compile skipped: the Defold editor refused the request",
   unavailable: "editor compile skipped: no Defold editor is attached",
+};
+
+/** The one line `build --editor-run` prints when the editor returned no verdict. */
+const EDITOR_RUN_NOTICES: Readonly<Record<RunOutcome, string>> = {
+  ran: "the Defold editor ran the project but returned no result to read",
+  unsupported:
+    "editor run skipped: the attached Defold editor has no run command; --editor-run needs Defold 1.13.2 or later",
+  skipped: "editor run skipped: the Defold editor refused the request",
+  unavailable: "editor run skipped: no Defold editor is attached",
 };
 
 function parseScriptFlag(argv: string[]): { script: string | undefined; rest: string[] } {
@@ -336,6 +353,8 @@ function dispatchCommand(
     head.includes("--no-update-check") || Boolean(process.env.DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK);
   const hotReload = head.includes("--hot-reload");
   const editorCompile = head.includes("--editor-compile");
+  const editorRun = head.includes("--editor-run");
+  const editorFocus = head.includes("--editor-focus");
   const reloadExtensions = isReload && head.includes("--extensions");
   const { value: waitFlag, rest: afterWaitArgs } = isReload
     ? parseValueFlag(head, "wait")
@@ -367,6 +386,8 @@ function dispatchCommand(
       a !== "--no-update-check" &&
       a !== "--hot-reload" &&
       a !== "--editor-compile" &&
+      a !== "--editor-run" &&
+      a !== "--editor-focus" &&
       !(isReload && a === "--extensions") &&
       a !== "--detected" &&
       a !== "--detect",
@@ -905,14 +926,35 @@ function dispatchCommand(
         // Only a failed verdict fails the build. No editor, an editor before
         // 1.13.2 and a refused request are all states a build in CI meets, and
         // none of them says the project is broken.
+        const editorVerdict = async (
+          result: CommandResult,
+          action: string,
+        ): Promise<{
+          readonly json: { readonly success: boolean; readonly issues: readonly CompileIssue[] };
+          readonly lines: readonly string[];
+          readonly error?: string;
+        }> => {
+          const { formatEditorIssue } = await import("./editor-attach");
+          const { mapCompileIssues } = await import("./editor-compile");
+          const { mapConsoleLine } = await import("./console-source-map");
+          const json = { success: result.success, issues: mapCompileIssues(cwd, result.issues) };
+          const lines = result.issues.map(
+            (issue) => `editor: ${mapConsoleLine(cwd, formatEditorIssue(issue))}`,
+          );
+          if (result.success) return { json, lines };
+          const count = result.issues.length;
+          return {
+            json,
+            lines,
+            error: `the Defold editor failed to ${action} with ${count} issue${count === 1 ? "" : "s"}`,
+          };
+        };
         const compileWithEditor = async (): Promise<{
           readonly json: NonNullable<RenderResultInput["editorCompile"]>;
           readonly lines: readonly string[];
           readonly error?: string;
         }> => {
-          const { compileInEditor, formatEditorIssue } = await import("./editor-attach");
-          const { mapCompileIssues } = await import("./editor-compile");
-          const { mapConsoleLine } = await import("./console-source-map");
+          const { compileInEditor } = await import("./editor-attach");
           const client = internals?.editorClient;
           const answer: CompileAnswer =
             client === undefined
@@ -924,21 +966,40 @@ function dispatchCommand(
           if (outcome !== "compiled" || result === null) {
             return { json: { outcome }, lines: [EDITOR_COMPILE_NOTICES[outcome]] };
           }
+          const verdict = await editorVerdict(result, "compile the project");
+          return { ...verdict, json: { outcome, ...verdict.json } };
+        };
+        const runWithEditor = async (): Promise<{
+          readonly json: NonNullable<RenderResultInput["editorRun"]>;
+          readonly lines: readonly string[];
+          readonly error?: string;
+        }> => {
+          const { runInEditor } = await import("./editor-attach");
+          const client = internals?.editorClient;
+          const options = { focus: editorFocus };
+          const answer: RunAnswer =
+            client === undefined
+              ? await runInEditor(cwd, options)
+              : client.run === undefined
+                ? { outcome: "unavailable", result: null }
+                : await client.run(cwd, options);
+          const { outcome, result } = answer;
+          if (outcome !== "ran" || result === null) {
+            return { json: { outcome }, lines: [EDITOR_RUN_NOTICES[outcome]] };
+          }
+          const verdict = await editorVerdict(result, "run the project");
+          const { targetUrl } = result;
           const json = {
             outcome,
-            success: result.success,
-            issues: mapCompileIssues(cwd, result.issues),
+            ...verdict.json,
+            ...(targetUrl === undefined ? {} : { targetUrl }),
           };
-          const lines = result.issues.map(
-            (issue) => `editor: ${mapConsoleLine(cwd, formatEditorIssue(issue))}`,
-          );
-          if (result.success) return { json, lines };
-          const count = result.issues.length;
-          return {
-            json,
-            lines,
-            error: `the Defold editor failed to compile the project with ${count} issue${count === 1 ? "" : "s"}`,
-          };
+          if (!result.success) return { ...verdict, json };
+          const status =
+            targetUrl === undefined
+              ? "editor: no target URL reported; the game may not have started"
+              : `editor: running at ${targetUrl}`;
+          return { ...verdict, json, lines: [...verdict.lines, status] };
         };
         const reportBuild = async (
           written: readonly string[],
@@ -949,15 +1010,19 @@ function dispatchCommand(
         ): Promise<number> => {
           ensureMaterializedReference(cwd, materializedDir);
           // Posted only once every output is on disk: the editor compiles what
-          // this run wrote, never the previous run's Lua.
-          const compiled = editorCompile ? await compileWithEditor() : null;
+          // this run wrote, never the previous run's Lua. `run` builds before it
+          // launches, so with both flags only the run is posted.
+          const ran = editorRun ? await runWithEditor() : null;
+          const compiled = editorCompile && !editorRun ? await compileWithEditor() : null;
+          const editor = ran ?? compiled;
           // walls are opt-in via the wall command
           if (json) {
             io.stdout.write(
               renderResult({
                 command: "build",
-                ...(compiled?.error === undefined ? {} : { error: compiled.error }),
+                ...(editor?.error === undefined ? {} : { error: editor.error }),
                 ...(compiled === null ? {} : { editorCompile: compiled.json }),
+                ...(ran === null ? {} : { editorRun: ran.json }),
                 written,
                 warnings: [...notices, ...targetDiagnostics, ...warnings],
                 // Absent rather than empty when there is nothing to report: a
@@ -986,14 +1051,14 @@ function dispatchCommand(
             for (const warning of warnings) {
               writeWarning(`defold-typescript build: ${warning}`);
             }
-            for (const line of compiled?.lines ?? []) {
+            for (const line of editor?.lines ?? []) {
               io.stderr.write(`defold-typescript build: ${line}\n`);
             }
-            if (compiled?.error !== undefined) {
-              writeError(`defold-typescript build: ${compiled.error}`);
+            if (editor?.error !== undefined) {
+              writeError(`defold-typescript build: ${editor.error}`);
             }
           }
-          return compiled?.error === undefined ? 0 : 1;
+          return editor?.error === undefined ? 0 : 1;
         };
         const reportError = (err: unknown): number => {
           const message = err instanceof Error ? err.message : String(err);

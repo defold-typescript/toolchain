@@ -24,6 +24,7 @@ import {
   readEditorPort,
   readEditorToken,
   resolveEditor,
+  runInEditor,
 } from "./editor-attach";
 
 function tempProject(): string {
@@ -384,6 +385,126 @@ describe("compileInEditor", () => {
     const noEditor = tempProject();
     const { transport, calls } = recordingTransport(() => response(200));
     expect(await compileInEditor(noEditor, transport)).toEqual({
+      outcome: "unavailable",
+      result: null,
+    });
+    expect(calls).toEqual([]);
+  });
+
+  test("a compile body that carries a target adds no key to the result", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const { transport } = recordingTransport(() =>
+      response(
+        200,
+        JSON.stringify({ success: true, issues: [], target: { url: "http://127.0.0.1:57069" } }),
+      ),
+    );
+
+    const answer = await compileInEditor(cwd, transport);
+
+    expect(JSON.stringify(answer)).toBe(
+      JSON.stringify({ outcome: "compiled", result: { success: true, issues: [] } }),
+    );
+  });
+});
+
+describe("runInEditor", () => {
+  const RUNNING = JSON.stringify({
+    success: true,
+    issues: [],
+    target: { url: "http://127.0.0.1:57069" },
+  });
+
+  test("posts /command/run with focus=false unless focus is asked for", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const { transport, calls } = recordingTransport(() => response(200, RUNNING));
+
+    await runInEditor(cwd, { focus: false }, transport);
+    await runInEditor(cwd, { focus: true }, transport);
+
+    expect(calls).toEqual([
+      { url: "http://localhost:58433/command/run?focus=false", method: "POST" },
+      { url: "http://localhost:58433/command/run?focus=true", method: "POST" },
+    ]);
+  });
+
+  test("a 200 with a target is a running game at that URL", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const { transport } = recordingTransport(() => response(200, RUNNING));
+
+    expect(await runInEditor(cwd, { focus: false }, transport)).toEqual({
+      outcome: "ran",
+      result: { success: true, issues: [], targetUrl: "http://127.0.0.1:57069" },
+    });
+  });
+
+  test("a 422 carries the editor's issue unchanged and no target URL", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const issue = {
+      message: "Missing resource '/main/missing.atlas'",
+      severity: "error",
+      resource: "/main/main.collection",
+      range: { start: { line: 3, character: 0 }, end: { line: 3, character: 12 } },
+    };
+    const { transport } = recordingTransport(() =>
+      response(422, JSON.stringify({ success: false, issues: [issue] })),
+    );
+
+    const answer = await runInEditor(cwd, { focus: false }, transport);
+
+    expect(answer).toEqual({ outcome: "ran", result: { success: false, issues: [issue] } });
+    expect(answer.result).not.toHaveProperty("targetUrl");
+  });
+
+  test("a success with no target, or a non-string URL, has no target URL", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const warning = {
+      message: "The engine did not report its URL in time",
+      severity: "warning",
+    };
+    const answerFor = async (body: unknown) =>
+      runInEditor(
+        cwd,
+        { focus: false },
+        recordingTransport(() => response(200, JSON.stringify(body))).transport,
+      );
+
+    const noTarget = await answerFor({ success: true, issues: [warning] });
+    const badUrl = await answerFor({ success: true, issues: [warning], target: { url: 57069 } });
+
+    for (const answer of [noTarget, badUrl]) {
+      expect(answer).toEqual({ outcome: "ran", result: { success: true, issues: [warning] } });
+      expect(answer.result).not.toHaveProperty("targetUrl");
+    }
+  });
+
+  test("404 is unsupported; 403 skipped; 500, a refused connection and no port file unavailable", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const outcomeFor = async (status: number) =>
+      (
+        await runInEditor(
+          cwd,
+          { focus: false },
+          recordingTransport(() => response(status)).transport,
+        )
+      ).outcome;
+
+    expect(await outcomeFor(404)).toBe("unsupported");
+    expect(await outcomeFor(403)).toBe("skipped");
+    expect(await outcomeFor(500)).toBe("unavailable");
+    expect((await runInEditor(cwd, { focus: false }, rejectingTransport)).outcome).toBe(
+      "unavailable",
+    );
+
+    const noEditor = tempProject();
+    const { transport, calls } = recordingTransport(() => response(200, RUNNING));
+    expect(await runInEditor(noEditor, { focus: false }, transport)).toEqual({
       outcome: "unavailable",
       result: null,
     });
