@@ -1,19 +1,23 @@
 import { describe, expect, test } from "bun:test";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
+import { renderedHeadingIds } from "../app/lib/__fixtures__/rendered-heading-ids";
 import {
   HISTORICAL_ONLY_NAMESPACE,
   makeWindowedTypesDir,
 } from "../app/lib/__fixtures__/windowed-surface";
+import { apiVersionAxis, windowedApiPages } from "../app/lib/api-content";
+import type { apiPageMarkdown } from "../app/lib/api-page-render";
+import type { ApiPage } from "../app/lib/api-surface";
 import {
   loadCombinedSurface,
   loadSignaturesArtifact,
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
 } from "../app/lib/api-surface-loader";
-import type { CombinedSurface } from "../app/lib/combined-surface";
+import { type CombinedSurface, combinedApiPages } from "../app/lib/combined-surface";
 import { combinedSearchRecords, type SearchRecord } from "../app/lib/search-index";
-import { windowCombinedSurface } from "../app/lib/version-window";
+import { resolveVersionWindow, windowCombinedSurface } from "../app/lib/version-window";
 import { searchIndexOutputs } from "./build-search-index";
 
 const TYPES_DIR = join(import.meta.dir, "..", "..", "types");
@@ -173,5 +177,72 @@ describe("searchIndexOutputs — the canonical index carries the full-range Comb
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+// A search hit links to `<route>#<anchor>`, so every anchor an emitted record
+// carries must be a heading id the page at that route renders. Each page renders
+// with the options its `/api` route passes: an engine page with the Combined
+// availability markers, a library page without its H1, any other shared
+// reference page plainly.
+describe("searchIndexOutputs — every anchored record lands on a rendered heading", () => {
+  const outputs = searchIndexOutputs();
+  const sharedPages = loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR);
+  type RenderOptions = Parameters<typeof apiPageMarkdown>[2];
+  const sharedRender = (page: ApiPage): [string, ApiPage, RenderOptions] => [
+    page.route,
+    page,
+    page.category === "library" ? { omitHeading: true } : {},
+  ];
+
+  async function unrenderedAnchors(
+    file: string,
+    pages: [string, ApiPage, RenderOptions][],
+  ): Promise<{ checked: number; missing: string[] }> {
+    const byRoute = new Map(pages.map(([route, page, opts]) => [route, { page, opts }]));
+    const anchorsByRoute = new Map<string, string[]>();
+    for (const record of outputs.find((output) => output.file === file)?.records ?? []) {
+      const [route, anchor] = record.route.split("#");
+      if (route === undefined || anchor === undefined) continue;
+      anchorsByRoute.set(route, [...(anchorsByRoute.get(route) ?? []), anchor]);
+    }
+    const missing: string[] = [];
+    let checked = 0;
+    for (const [route, anchors] of anchorsByRoute) {
+      const target = byRoute.get(route);
+      const ids = target ? await renderedHeadingIds(target.page, target.opts) : new Set<string>();
+      for (const anchor of anchors) {
+        checked += 1;
+        if (!ids.has(anchor)) missing.push(`${route}#${anchor}`);
+      }
+    }
+    return { checked, missing };
+  }
+
+  test("search-index.json anchors resolve on the canonical pages", async () => {
+    const { checked, missing } = await unrenderedAnchors("search-index.json", [
+      ...combinedApiPages(loadCombinedSurface(TYPES_DIR)).map(
+        (page): [string, ApiPage, RenderOptions] => [page.route, page, { combinedMarkers: true }],
+      ),
+      ...sharedPages.map(sharedRender),
+    ]);
+    expect(checked).toBeGreaterThan(1000);
+    expect(missing).toEqual([]);
+  });
+
+  test("the newest version index's anchors resolve on that version's pages", async () => {
+    const newest = versionsWithDiskFixtures(TYPES_DIR)[0]?.id ?? "";
+    const window = resolveVersionWindow(apiVersionAxis(TYPES_DIR), newest, null);
+    if (!window) throw new Error(`${newest} is not a tracked version`);
+    const { checked, missing } = await unrenderedAnchors(`search-index-${newest}.json`, [
+      ...windowedApiPages(window, TYPES_DIR).map((page): [string, ApiPage, RenderOptions] => [
+        page.route,
+        page,
+        { combinedMarkers: true, window },
+      ]),
+      ...sharedPages.map(sharedRender),
+    ]);
+    expect(checked).toBeGreaterThan(1000);
+    expect(missing).toEqual([]);
   });
 });

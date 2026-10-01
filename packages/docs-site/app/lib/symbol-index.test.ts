@@ -1,16 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import type { ApiModule } from "@defold-typescript/types";
+import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
+import { renderedHeadingIds } from "./__fixtures__/rendered-heading-ids";
 import { apiPages } from "./api-content";
-import { apiPageMarkdown } from "./api-page-render";
 import type { ApiPage } from "./api-surface";
 import { type ApiVersion, loadCombinedSurface } from "./api-surface-loader";
 import { combinedApiPages } from "./combined-surface";
-import { allPageHeadings } from "./headings";
-import { renderMarkdown } from "./markdown";
 import {
   buildSymbolIndex,
   combinedSymbolIndexRecords,
+  memberAnchors,
   symbolIndexFileForRoute,
   versionSymbolIndexRecords,
 } from "./symbol-index";
@@ -143,6 +143,24 @@ describe("buildSymbolIndex", () => {
     ]);
     expect(index.hash).toEqual({ brief: "Hashes a string", route: "/api/globals#hash" });
     expect(index["globals.hash"]).toBeUndefined();
+  });
+});
+
+describe("memberAnchors", () => {
+  test("anchors each member once, an overload group at its one shared heading", () => {
+    expect([...memberAnchors(memberAnchorPage)]).toEqual([
+      ["function:demo.move", "demomove"],
+      ["constant:demo.LIMIT", "demolimit"],
+      ["property:speed", "speed-number"],
+    ]);
+  });
+
+  test("is the anchor the symbol index routes every member key at", () => {
+    const index = buildSymbolIndex([memberAnchorPage]);
+    const anchors = memberAnchors(memberAnchorPage);
+    expect(index["demo.move"]?.route).toBe(`/api/demo#${anchors.get("function:demo.move")}`);
+    expect(index["demo.LIMIT"]?.route).toBe(`/api/demo#${anchors.get("constant:demo.LIMIT")}`);
+    expect(index["demo.speed"]?.route).toBe(`/api/demo#${anchors.get("property:speed")}`);
   });
 });
 
@@ -283,11 +301,7 @@ describe("buildSymbolIndex anchors (committed Combined pages)", () => {
     const missing: string[] = [];
     let checked = 0;
     for (const page of pages) {
-      const html = await renderMarkdown(
-        apiPageMarkdown(page, (text) => text, { combinedMarkers: true }),
-        { highlightSignatureHeadings: true },
-      );
-      const ids = new Set(allPageHeadings(html).map((h) => h.id));
+      const ids = await renderedHeadingIds(page, { combinedMarkers: true });
       for (const [key, entry] of Object.entries(index)) {
         const [route, anchor] = entry.route.split("#");
         if (route !== page.route || anchor === undefined) continue;
