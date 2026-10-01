@@ -31,9 +31,6 @@ import {
 } from "./defold-release-readiness.ts";
 
 const REPO_ROOT = join(import.meta.dir, "..");
-// Collecting evidence from the real repo runs close to Bun's 5 s default on a
-// loaded CI runner.
-const REAL_REPO_TEST_TIMEOUT_MS = 30_000;
 
 function baseImportManifest(): ImportManifestEvidence {
   return {
@@ -694,23 +691,17 @@ describe("collectTargets — physical committed-surface verification", () => {
     );
   });
 
-  test(
-    "regression lock: the real repo tree at HEAD reports ready",
-    () => {
-      const evidence = collectEvidence(REPO_ROOT, {
-        release: CURRENT_STABLE_DEFOLD_VERSION,
-        baseline: PREVIOUS_STABLE_DEFOLD_VERSION,
-      });
-      const result = evaluateReleaseReadiness(evidence);
-      if (!result.ok) {
-        throw new Error(
-          `expected ready, got blockers:\n${JSON.stringify(result.problems, null, 2)}`,
-        );
-      }
-      expect(result.ok).toBe(true);
-    },
-    REAL_REPO_TEST_TIMEOUT_MS,
-  );
+  test("regression lock: the real repo tree at HEAD reports ready", () => {
+    const evidence = collectEvidence(REPO_ROOT, {
+      release: CURRENT_STABLE_DEFOLD_VERSION,
+      baseline: PREVIOUS_STABLE_DEFOLD_VERSION,
+    });
+    const result = evaluateReleaseReadiness(evidence);
+    if (!result.ok) {
+      throw new Error(`expected ready, got blockers:\n${JSON.stringify(result.problems, null, 2)}`);
+    }
+    expect(result.ok).toBe(true);
+  });
 });
 
 describe("releaseIndexProblems — the generated index set must cover every manifest family", () => {
