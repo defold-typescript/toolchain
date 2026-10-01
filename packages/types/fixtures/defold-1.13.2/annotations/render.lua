@@ -1,0 +1,1111 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---@class defold_api.render
+---Rendering API documentation
+---rendering context was lost; rendering pauses and graphics resources become invalid
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.CONTEXT_EVENT)
+---@field CONTEXT_EVENT_CONTEXT_LOST render.CONTEXT_EVENT
+---rendering context was restored; rendering remains paused while resources can be reloaded
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.CONTEXT_EVENT)
+---@field CONTEXT_EVENT_CONTEXT_RESTORED render.CONTEXT_EVENT
+---All six frustum planes.
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.FRUSTUM_PLANES)
+---@field FRUSTUM_PLANES_ALL render.FRUSTUM_PLANES
+---Left, right, top, and bottom frustum planes.
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.FRUSTUM_PLANES)
+---@field FRUSTUM_PLANES_SIDES render.FRUSTUM_PLANES
+---[Open in Browser](https://defold.com/ref/render-lua#render.RENDER_TARGET_DEFAULT)
+---@field RENDER_TARGET_DEFAULT render_target
+---Depth sort far-to-near (default; good for transparent passes).
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.SORT)
+---@field SORT_BACK_TO_FRONT render.SORT
+---Depth sort near-to-far (good for opaque passes to reduce overdraw).
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.SORT)
+---@field SORT_FRONT_TO_BACK render.SORT
+---No per-call sorting; draw entries in insertion order.
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.SORT)
+---@field SORT_NONE render.SORT
+---Create a texture-backed depth or stencil attachment.
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.RENDER_TARGET_FLAG)
+---@field TEXTURE_BIT render.RENDER_TARGET_FLAG
+render = {}
+
+---@enum defold_enum.render.CONTEXT_EVENT: integer
+local __defold_enum_render_CONTEXT_EVENT = {
+    CONTEXT_EVENT_CONTEXT_LOST = nil,
+    CONTEXT_EVENT_CONTEXT_RESTORED = nil,
+}
+
+---Render context events
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.CONTEXT_EVENT)
+---@alias render.CONTEXT_EVENT defold_enum.render.CONTEXT_EVENT
+---| `render.CONTEXT_EVENT_CONTEXT_LOST`
+---| `render.CONTEXT_EVENT_CONTEXT_RESTORED`
+
+---@enum defold_enum.render.FRUSTUM_PLANES: integer
+local __defold_enum_render_FRUSTUM_PLANES = {
+    FRUSTUM_PLANES_ALL = nil,
+    FRUSTUM_PLANES_SIDES = nil,
+}
+
+---Frustum plane selections
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.FRUSTUM_PLANES)
+---@alias render.FRUSTUM_PLANES defold_enum.render.FRUSTUM_PLANES
+---| `render.FRUSTUM_PLANES_ALL`
+---| `render.FRUSTUM_PLANES_SIDES`
+
+---@enum defold_enum.render.RENDER_TARGET_FLAG: integer
+local __defold_enum_render_RENDER_TARGET_FLAG = {
+    TEXTURE_BIT = nil,
+}
+
+---Render-target creation flags
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.RENDER_TARGET_FLAG)
+---@alias render.RENDER_TARGET_FLAG defold_enum.render.RENDER_TARGET_FLAG
+---| `render.TEXTURE_BIT`
+
+---@enum defold_enum.render.SORT: integer
+local __defold_enum_render_SORT = {
+    SORT_BACK_TO_FRONT = nil,
+    SORT_FRONT_TO_BACK = nil,
+    SORT_NONE = nil,
+}
+
+---Render sort orders
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.SORT)
+---@alias render.SORT defold_enum.render.SORT
+---| `render.SORT_BACK_TO_FRONT`
+---| `render.SORT_FRONT_TO_BACK`
+---| `render.SORT_NONE`
+
+---Clear buffers in the currently enabled render target with specified value. If the render target has been created with multiple
+---color attachments, all buffers will be cleared with the same value.
+---
+---**Examples:**
+---
+---Clear the color buffer and the depth buffer.
+---
+---```lua
+---render.clear({[graphics.BUFFER_TYPE_COLOR0_BIT] = vmath.vector4(0, 0, 0, 0), [graphics.BUFFER_TYPE_DEPTH_BIT] = 1})
+---```
+---@param buffers table<graphics.BUFFER_TYPE, number|vector4> table with keys specifying which buffers to clear and values set to clear values. Available keys are:  - `graphics.BUFFER_TYPE_COLOR0_BIT` - `graphics.BUFFER_TYPE_DEPTH_BIT` - `graphics.BUFFER_TYPE_STENCIL_BIT`
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.clear:buffers)
+function render.clear(buffers) end
+
+---Constant buffers are used to set shader program variables and are optionally passed to the `render.draw()` function.
+---The buffer's constant elements can be indexed like an ordinary Lua table, but you can't iterate over them with pairs() or ipairs().
+---
+---**Examples:**
+---
+---Set a "tint" constant in a constant buffer in the render script:
+---
+---```lua
+---local constants = render.constant_buffer()
+---constants.tint = vmath.vector4(1, 1, 1, 1)
+---```
+---
+---Then use the constant buffer when drawing a predicate:
+---
+---```lua
+---render.draw(self.my_pred, {constants = constants})
+---```
+---
+---The constant buffer also supports array values by specifying constants in a table:
+---
+---```lua
+---local constants = render.constant_buffer()
+---constants.light_colors    = {}
+---constants.light_colors[1] = vmath.vector4(1, 0, 0, 1)
+---constants.light_colors[2] = vmath.vector4(0, 1, 0, 1)
+---constants.light_colors[3] = vmath.vector4(0, 0, 1, 1)
+---```
+---
+---You can also create the table by passing the vectors directly when creating the table:
+---
+---```lua
+---local constants = render.constant_buffer()
+---constants.light_colors    = {
+---     vmath.vector4(1, 0, 0, 1)
+---     vmath.vector4(0, 1, 0, 1)
+---     vmath.vector4(0, 0, 1, 1)
+---}
+---
+----- Add more constant to the array
+---constants.light_colors[4] = vmath.vector4(1, 1, 1, 1)
+---```
+---@return constant_buffer buffer new constant buffer
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.constant_buffer:)
+function render.constant_buffer() end
+
+---Deletes a render target created by a render script.
+---You cannot delete a render target resource.
+---
+---**Examples:**
+---
+---How to delete a render target:
+---
+---```lua
+--- render.delete_render_target(self.my_render_target)
+---```
+---@param render_target render_target render target to delete
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.delete_render_target:render_target)
+function render.delete_render_target(render_target) end
+
+---If a material is currently enabled, disable it.
+---
+---The name of the material must be specified in the ".render" resource set
+---in the "game.project" setting.
+---
+---**Examples:**
+---
+---Enable material named "glow", then draw my_pred with it.
+---
+---```lua
+---render.enable_material("glow")
+---render.draw(self.my_pred)
+---render.disable_material()
+---```
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.disable_material:)
+function render.disable_material() end
+
+---Disables a render state.
+---
+---**Examples:**
+---
+---Disable face culling when drawing the tile predicate:
+---
+---```lua
+---render.disable_state(graphics.STATE_CULL_FACE)
+---render.draw(self.tile_pred)
+---```
+---@param state graphics.STATE state to disable  - `graphics.STATE_DEPTH_TEST` - `graphics.STATE_STENCIL_TEST` - `graphics.STATE_BLEND` - `graphics.STATE_ALPHA_TEST` ( not available on iOS and Android) - `graphics.STATE_CULL_FACE` - `graphics.STATE_POLYGON_OFFSET_FILL`
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.disable_state:state)
+function render.disable_state(state) end
+
+---Disables a texture that has previourly been enabled.
+---
+---**Examples:**
+---
+---```lua
+---function update(self, dt)
+---    render.enable_texture(0, self.my_render_target, graphics.BUFFER_TYPE_COLOR0_BIT)
+---    -- draw a predicate with the render target available as texture 0 in the predicate
+---    -- material shader.
+---    render.draw(self.my_pred)
+---    -- done, disable the texture
+---    render.disable_texture(0)
+---end
+---```
+---@param binding texture|string|hash texture binding, either by texture unit, string or hash that should be disabled
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.disable_texture:binding)
+function render.disable_texture(binding) end
+
+---Dispatches the currently enabled compute program. The dispatch call takes three arguments x,y,z which constitutes
+---the 'global working group' of the compute dispatch. Together with the 'local working group' specified in the compute shader
+---as a layout qualifier, these two sets of parameters forms the number of invocations the compute shader will execute.
+---An optional constant buffer can be provided to override the default constants. If no constants buffer is provided, a default
+---system constants buffer is used containing constants as defined in the compute program.
+---
+---**Examples:**
+---
+---```lua
+---function init(self)
+---    local color_params = { format = graphics.TEXTURE_FORMAT_RGBA,
+---                           width = render.get_window_width(),
+---                           height = render.get_window_height()}
+---    self.scene_rt = render.render_target({[graphics.BUFFER_TYPE_COLOR0_BIT] = color_params})
+---end
+---
+---function update(self, dt)
+---    render.set_compute("bloom")
+---    render.enable_texture(0, self.backing_texture)
+---    render.enable_texture(1, self.scene_rt)
+---    render.dispatch_compute(128, 128, 1)
+---    render.set_compute()
+---end
+---```
+---
+---Dispatch a compute program with a constant buffer:
+---
+---```lua
+---local constants = render.constant_buffer()
+---constants.tint = vmath.vector4(1, 1, 1, 1)
+---render.dispatch_compute(32, 32, 32, {constants = constants})
+---```
+---@param x integer global work group size X
+---@param y integer global work group size Y
+---@param z integer global work group size Z
+---@param options? render.dispatch_options optional compute-dispatch options
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.dispatch_compute:x-y-z-options)
+function render.dispatch_compute(x, y, z, options) end
+
+---Draws all objects that match a specified predicate. An optional constant buffer can be
+---provided to override the default constants. If no constants buffer is provided, a default
+---system constants buffer is used containing constants as defined in materials and set through
+---`go.set` (or `particlefx.set_constant`) on visual components.
+---
+---**Examples:**
+---
+---```lua
+---function init(self)
+---    -- define a predicate matching anything with material tag "my_tag"
+---    self.my_pred = render.predicate({hash("my_tag")})
+---end
+---
+---function update(self, dt)
+---    -- draw everything in the my_pred predicate
+---    render.draw(self.my_pred)
+---end
+---```
+---
+---Draw predicate with constants:
+---
+---```lua
+---local constants = render.constant_buffer()
+---constants.tint = vmath.vector4(1, 1, 1, 1)
+---render.draw(self.my_pred, {constants = constants})
+---```
+---
+---Draw with predicate and frustum culling (without near+far planes):
+---
+---```lua
+---local frustum = self.proj * self.view
+---render.draw(self.my_pred, {frustum = frustum})
+---```
+---
+---Draw with predicate and frustum culling (with near+far planes):
+---
+---```lua
+---local frustum = self.proj * self.view
+---render.draw(self.my_pred, {frustum = frustum, frustum_planes = render.FRUSTUM_PLANES_ALL})
+---```
+---@param predicate render_predicate predicate to draw for
+---@param options? render.draw_options optional draw options
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.draw:predicate-options)
+function render.draw(predicate, options) end
+
+---Draws all 3d debug graphics such as lines drawn with "draw_line" messages and physics visualization.
+---
+---**Examples:**
+---
+---```lua
+---function update(self, dt)
+---    -- draw debug visualization
+---    render.draw_debug3d()
+---end
+---```
+---@param options? render.debug_draw_options optional debug-draw options
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.draw_debug3d:options)
+function render.draw_debug3d(options) end
+
+---If another material was already enabled, it will be automatically disabled
+---and the specified material is used instead.
+---
+---The name of the material must be specified in the ".render" resource set
+---in the "game.project" setting.
+---
+---**Examples:**
+---
+---Enable material named "glow", then draw my_pred with it.
+---
+---```lua
+---render.enable_material("glow")
+---render.draw(self.my_pred)
+---render.disable_material()
+---```
+---@param material_id string|hash material id to enable
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.enable_material:material_id)
+function render.enable_material(material_id) end
+
+---Enables a particular render state. The state will be enabled until disabled.
+---
+---**Examples:**
+---
+---Enable stencil test when drawing the gui predicate, then disable it:
+---
+---```lua
+---render.enable_state(graphics.STATE_STENCIL_TEST)
+---render.draw(self.gui_pred)
+---render.disable_state(graphics.STATE_STENCIL_TEST)
+---```
+---@param state graphics.STATE state to enable  - `graphics.STATE_DEPTH_TEST` - `graphics.STATE_STENCIL_TEST` - `graphics.STATE_BLEND` - `graphics.STATE_ALPHA_TEST` ( not available on iOS and Android) - `graphics.STATE_CULL_FACE` - `graphics.STATE_POLYGON_OFFSET_FILL`
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.enable_state:state)
+function render.enable_state(state) end
+
+---Sets the specified texture handle for a render target attachment or a regular texture
+---that should be used for rendering. The texture can be bound to either a texture unit
+---or to a sampler name by a hash or a string.
+---A texture can be bound to multiple units and sampler names at the same time,
+---the actual binding will be applied to the shaders when a shader program is bound.
+---
+---When mixing binding using both units and sampler names, you might end up in situations
+---where two different textures will be applied to the same bind location in the shader.
+---In this case, the texture set to the named sampler will take precedence over the unit.
+---
+---Note that you can bind multiple sampler names to the same texture, in case you want to reuse
+---the same texture for differnt use-cases. It is however recommended that you use the same name
+---everywhere for the textures that should be shared across different materials.
+---
+---**Examples:**
+---
+---```lua
+---function update(self, dt)
+---    -- enable target so all drawing is done to it
+---    render.set_render_target(self.my_render_target)
+---
+---    -- draw a predicate to the render target
+---    render.draw(self.my_pred)
+---
+---    -- disable target
+---    render.set_render_target(render.RENDER_TARGET_DEFAULT)
+---
+---    render.enable_texture(0, self.my_render_target, graphics.BUFFER_TYPE_COLOR0_BIT)
+---    -- draw a predicate with the render target available as texture 0 in the predicate
+---    -- material shader.
+---    render.draw(self.my_pred)
+---end
+---```
+---
+---```lua
+---function update(self, dt)
+---    -- enable render target by resource id
+---    render.set_render_target('my_rt_resource')
+---    render.draw(self.my_pred)
+---    render.set_render_target(render.RENDER_TARGET_DEFAULT)
+---
+---    render.enable_texture(0, 'my_rt_resource', graphics.BUFFER_TYPE_COLOR0_BIT)
+---    -- draw a predicate with the render target available as texture 0 in the predicate
+---    -- material shader.
+---    render.draw(self.my_pred)
+---end
+---```
+---
+---```lua
+---function update(self, dt)
+---    -- bind a texture to the texture unit 0
+---    render.enable_texture(0, self.my_texture_handle)
+---    -- bind the same texture to a named sampler
+---    render.enable_texture("my_texture_sampler", self.my_texture_handle)
+---end
+---```
+---@param binding number|string|hash texture binding, either by texture unit, string or hash for the sampler name that the texture should be bound to
+---@param handle_or_name texture|string|hash render target or texture handle that should be bound, or a named resource in the "Render Resource" table in the currently assigned .render file
+---@param buffer_type? graphics.BUFFER_TYPE optional render-target attachment. Defaults to `graphics.BUFFER_TYPE_COLOR0_BIT`. Depth and stencil attachments must have been created as textures; color attachments beyond the first require a render target with multiple color attachments (up to four are supported).
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.enable_texture:binding-handle_or_name-buffer_type)
+function render.enable_texture(binding, handle_or_name, buffer_type) end
+
+---Returns the logical window height that is set in the "game.project" settings.
+---Note that the actual window pixel size can change, either by device constraints
+---or user input.
+---
+---**Examples:**
+---
+---Get the height of the window
+---
+---```lua
+---local h = render.get_height()
+---```
+---@return integer height specified window height
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.get_height:)
+function render.get_height() end
+
+---Returns the specified buffer height from a render target.
+---
+---**Examples:**
+---
+---```lua
+----- get the height of the render target color buffer
+---local h = render.get_render_target_height(self.target_right, graphics.BUFFER_TYPE_COLOR0_BIT)
+----- get the height of a render target resource
+---local w = render.get_render_target_height('my_rt_resource', graphics.BUFFER_TYPE_COLOR0_BIT)
+---```
+---@param render_target render_target|string|hash render target from which to retrieve the buffer height
+---@param buffer_type graphics.BUFFER_TYPE which type of buffer to retrieve the height from  - `graphics.BUFFER_TYPE_COLOR0_BIT` - `graphics.BUFFER_TYPE_DEPTH_BIT` - `graphics.BUFFER_TYPE_STENCIL_BIT`
+---@return integer height the height of the render target buffer texture
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.get_render_target_height:render_target-buffer_type)
+function render.get_render_target_height(render_target, buffer_type) end
+
+---Returns the specified buffer width from a render target.
+---
+---**Examples:**
+---
+---```lua
+----- get the width of the render target color buffer
+---local w = render.get_render_target_width(self.target_right, graphics.BUFFER_TYPE_COLOR0_BIT)
+----- get the width of a render target resource
+---local w = render.get_render_target_width('my_rt_resource', graphics.BUFFER_TYPE_COLOR0_BIT)
+---```
+---@param render_target render_target|string|hash render target from which to retrieve the buffer width
+---@param buffer_type graphics.BUFFER_TYPE which type of buffer to retrieve the width from  - `graphics.BUFFER_TYPE_COLOR0_BIT` - `graphics.BUFFER_TYPE_COLOR[x]_BIT` (x: [0..3], if supported!) - `graphics.BUFFER_TYPE_DEPTH_BIT` - `graphics.BUFFER_TYPE_STENCIL_BIT`
+---@return integer width the width of the render target buffer texture
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.get_render_target_width:render_target-buffer_type)
+function render.get_render_target_width(render_target, buffer_type) end
+
+---Returns the logical window width that is set in the "game.project" settings.
+---Note that the actual window pixel size can change, either by device constraints
+---or user input.
+---
+---**Examples:**
+---
+---Get the width of the window.
+---
+---```lua
+---local w = render.get_width()
+---```
+---@return integer width specified window width
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.get_width:)
+function render.get_width() end
+
+---Returns the actual physical window height.
+---Note that this value might differ from the logical height that is set in the
+---"game.project" settings.
+---
+---**Examples:**
+---
+---Get the actual height of the window
+---
+---```lua
+---local h = render.get_window_height()
+---```
+---@return integer height actual window height
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.get_window_height:)
+function render.get_window_height() end
+
+---Returns the actual physical window width.
+---Note that this value might differ from the logical width that is set in the
+---"game.project" settings.
+---
+---**Examples:**
+---
+---Get the actual width of the window
+---
+---```lua
+---local w = render.get_window_width()
+---```
+---@return integer width actual window width
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.get_window_width:)
+function render.get_window_width() end
+
+---This function returns a new render predicate for objects with materials matching
+---the provided material tags. The provided tags are combined into a bit mask
+---for the predicate. If multiple tags are provided, the predicate matches materials
+---with all tags ANDed together.
+---
+---The current limit to the number of tags that can be defined is `64`.
+---
+---**Examples:**
+---
+---Create a new render predicate containing all visual objects that
+---have a material with material tags "opaque" AND "smoke".
+---
+---```lua
+---local p = render.predicate({hash("opaque"), hash("smoke")})
+---```
+---@param tags (string|hash)[] table of tags that the predicate should match. The tags can be of either hash or string type
+---@return render_predicate predicate new predicate
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.predicate:tags)
+function render.predicate(tags) end
+
+---Creates a new render target according to the supplied
+---specification table.
+---
+---The render target can be created to support multiple color attachments. Each attachment can have different format settings and texture filters,
+---but attachments must be added in sequence, meaning you cannot create a render target at slot 0 and 3.
+---Instead it has to be created with all four buffer types ranging from [0..3] (as denoted by graphics.BUFFER_TYPE_COLORX_BIT where 'X' is the attachment you want to create).
+---It is not guaranteed that the device running the script can support creating render targets with multiple color attachments. To check if the device can support multiple attachments,
+---you can check if the `render` table contains any of the `BUFFER_TYPE_COLOR1_BIT`, `BUFFER_TYPE_COLOR2_BIT` or `BUFFER_TYPE_COLOR3_BIT` constants:
+---
+---```lua
+---function init(self)
+---if graphics.BUFFER_TYPE_COLOR1_BIT == nil then
+----- this devices does not support multiple color attachments
+---end
+---end
+---```
+---
+---**Examples:**
+---
+---How to create a new render target and draw to it:
+---
+---```lua
+---function init(self)
+---    -- render target buffer parameters
+---    local color_params = { format = graphics.TEXTURE_FORMAT_RGBA,
+---                           width = render.get_window_width(),
+---                           height = render.get_window_height(),
+---                           min_filter = graphics.TEXTURE_FILTER_LINEAR,
+---                           mag_filter = graphics.TEXTURE_FILTER_LINEAR,
+---                           u_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+---                           v_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE }
+---    local depth_params = { format = graphics.TEXTURE_FORMAT_DEPTH,
+---                           width = render.get_window_width(),
+---                           height = render.get_window_height(),
+---                           u_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+---                           v_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE }
+---    self.my_render_target = render.render_target({sample_count = 4, [graphics.BUFFER_TYPE_COLOR0_BIT] = color_params, [graphics.BUFFER_TYPE_DEPTH_BIT] = depth_params })
+---end
+---
+---function update(self, dt)
+---    -- enable target so all drawing is done to it
+---    render.set_render_target(self.my_render_target)
+---
+---    -- draw a predicate to the render target
+---    render.draw(self.my_pred)
+---end
+---```
+---
+---How to create a render target with multiple outputs:
+---
+---```lua
+---function init(self)
+---    -- render target buffer parameters
+---    local color_params_rgba = { format = graphics.TEXTURE_FORMAT_RGBA,
+---                                width = render.get_window_width(),
+---                                height = render.get_window_height(),
+---                                min_filter = graphics.TEXTURE_FILTER_LINEAR,
+---                                mag_filter = graphics.TEXTURE_FILTER_LINEAR,
+---                                u_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+---                                v_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE }
+---    local color_params_float = { format = graphics.TEXTURE_FORMAT_RG32F,
+---                           width = render.get_window_width(),
+---                           height = render.get_window_height(),
+---                           min_filter = graphics.TEXTURE_FILTER_LINEAR,
+---                           mag_filter = graphics.TEXTURE_FILTER_LINEAR,
+---                           u_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+---                           v_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE }
+---
+---
+---    -- Create a render target with three color attachments
+---    -- Note: No depth buffer is attached here
+---    self.my_render_target = render.render_target({
+---           [graphics.BUFFER_TYPE_COLOR0_BIT] = color_params_rgba,
+---           [graphics.BUFFER_TYPE_COLOR1_BIT] = color_params_rgba,
+---           [graphics.BUFFER_TYPE_COLOR2_BIT] = color_params_float, })
+---end
+---
+---function update(self, dt)
+---    -- set target so all drawing is done to it
+---    render.set_render_target(self.my_render_target)
+---
+---    -- draw a predicate to the render target
+---    render.draw(self.my_pred)
+---end
+---```
+---@overload fun(name:string, parameters:render.render_target_params):render_target
+---@param parameters render.render_target_params render-target parameters
+---@return render_target render_target new render target
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.render_target:parameters)
+function render.render_target(parameters) end
+
+---Sets the blend equation with separate equations for the color and alpha channels.
+---
+---**Examples:**
+---
+---Set add for color and reverse subtract for alpha:
+---
+---```lua
+---render.set_blend_equation_separate(graphics.BLEND_EQUATION_ADD,
+---                                   graphics.BLEND_EQUATION_REVERSE_SUBTRACT)
+---```
+---@param equation_color graphics.BLEND_EQUATION color blend equation
+---@param equation_alpha graphics.BLEND_EQUATION alpha blend equation
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_blend_equation_separate:equation_color-equation_alpha)
+function render.set_blend_equation_separate(equation_color, equation_alpha) end
+
+---Specifies the arithmetic used when computing pixel values that are written to the frame
+---buffer. In RGBA mode, pixels can be drawn using a function that blends the source RGBA
+---pixel values with the destination pixel values already in the frame buffer.
+---Blending is initially disabled.
+---
+---`source_factor` specifies which method is used to scale the source color components.
+---`destination_factor` specifies which method is used to scale the destination color
+---components.
+---
+---Source color components are referred to as (Rs,Gs,Bs,As).
+---Destination color components are referred to as (Rd,Gd,Bd,Ad).
+---The color specified by setting the blendcolor is referred to as (Rc,Gc,Bc,Ac).
+---
+---The source scale factor is referred to as (sR,sG,sB,sA).
+---The destination scale factor is referred to as (dR,dG,dB,dA).
+---
+---The color values have integer values between 0 and (kR,kG,kB,kA), where kc = 2mc - 1 and mc is the number of bitplanes for that color. I.e for 8 bit color depth, color values are between `0` and `255`.
+---
+---The blended RGBA values of a pixel comes from the following equations:
+---
+---- Rd = min(kR, Rs * sR + Rd * dR)
+---- Gd = min(kG, Gs * sG + Gd * dG)
+---- Bd = min(kB, Bs * sB + Bd * dB)
+---- Ad = min(kA, As * sA + Ad * dA)
+---
+---Blend function `(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)` is useful for
+---drawing with transparency when the drawn objects are sorted from farthest to nearest.
+---It is also useful for drawing antialiased points and lines in arbitrary order.
+---
+---**Examples:**
+---
+---Set the blend func to the most common one:
+---
+---```lua
+---render.set_blend_func(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+---```
+---@param source_factor graphics.BLEND_FACTOR source factor
+---@param destination_factor graphics.BLEND_FACTOR destination factor
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_blend_func:source_factor-destination_factor)
+function render.set_blend_func(source_factor, destination_factor) end
+
+---Sets the blend function with separate blend factors for the color and alpha channels.
+---
+---**Examples:**
+---
+---Set standard alpha blending with separate alpha:
+---
+---```lua
+---render.set_blend_func_separate(graphics.BLEND_FACTOR_SRC_ALPHA,
+---                               graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+---                               graphics.BLEND_FACTOR_ONE,
+---                               graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+---```
+---@param source_factor_color number source color blend factor
+---@param destination_factor_color number destination color blend factor
+---@param source_factor_alpha number source alpha blend factor
+---@param destination_factor_alpha number destination alpha blend factor
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_blend_func_separate:source_factor_color-destination_factor_color-source_factor_alpha-destination_factor_alpha)
+function render.set_blend_func_separate(source_factor_color, destination_factor_color, source_factor_alpha, destination_factor_alpha) end
+
+---Sets the current render camera to be used for rendering. If a render camera
+---has been set by the render script, the renderer will be using its projection and view matrix
+---during rendering. If a projection and/or view matrix has been set by the render script,
+---they will not be used until the current render camera has been reset by calling `render.set_camera()`.
+---
+---If the 'use_frustum' flag in the options table has been set to true, the renderer will automatically use the
+---camera frustum for frustum culling regardless of what frustum is being passed into the render.draw() function.
+---Note that the frustum plane option in render.draw can still be used together with the camera.
+---
+---**Examples:**
+---
+---Set the current camera to be used for rendering
+---
+---```lua
+---render.set_camera("main:/my_go#camera")
+---render.draw(self.my_pred)
+---render.set_camera(nil)
+---```
+---
+---Use the camera frustum for frustum culling together with a specific frustum plane option for the draw command
+---
+---```lua
+----- The camera frustum will take precedence over the frustum plane option in render.draw
+---render.set_camera("main:/my_go#camera", { use_frustum = true })
+----- However, we can still customize the frustum planes regardless of the camera option!
+---render.draw(self.my_pred, { frustum_planes = render.FRUSTUM_PLANES_ALL })
+---render.set_camera()
+---```
+---@param camera url|number|nil camera id to use, or nil to reset
+---@param options? render.camera_options optional camera options
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_camera:camera-options)
+function render.set_camera(camera, options) end
+
+---Specifies whether the individual color components in the frame buffer is enabled for writing (`true`) or disabled (`false`). For example, if `blue` is `false`, nothing is written to the blue component of any pixel in any of the color buffers, regardless of the drawing operation attempted. Note that writing are either enabled or disabled for entire color components, not the individual bits of a component.
+---
+---The component masks are all initially `true`.
+---
+---**Examples:**
+---
+---```lua
+----- alpha cannot be written to frame buffer
+---render.set_color_mask(true, true, true, false)
+---```
+---@param red boolean red mask
+---@param green boolean green mask
+---@param blue boolean blue mask
+---@param alpha boolean alpha mask
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_color_mask:red-green-blue-alpha)
+function render.set_color_mask(red, green, blue, alpha) end
+
+---The name of the compute program must be specified in the ".render" resource set
+---in the "game.project" setting. If nil (or no arguments) are passed to this function,
+---the current compute program will instead be disabled.
+---
+---**Examples:**
+---
+---Enable compute program named "fractals", then dispatch it.
+---
+---```lua
+---render.set_compute("fractals")
+---render.enable_texture(0, self.backing_texture)
+---render.dispatch_compute(128, 128, 1)
+---render.set_compute()
+---```
+---@param compute string|hash|nil compute id to use, or nil to disable
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_compute:compute)
+function render.set_compute(compute) end
+
+---Specifies whether front- or back-facing polygons can be culled
+---when polygon culling is enabled. Polygon culling is initially disabled.
+---
+---If mode is `graphics.FACE_TYPE_FRONT_AND_BACK`, no polygons are drawn, but other
+---primitives such as points and lines are drawn. The initial value for
+---`face_type` is `graphics.FACE_TYPE_BACK`.
+---
+---**Examples:**
+---
+---How to enable polygon culling and set front face culling:
+---
+---```lua
+---render.enable_state(graphics.STATE_CULL_FACE)
+---render.set_cull_face(graphics.FACE_TYPE_FRONT)
+---```
+---@param face_type graphics.FACE_TYPE face type
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_cull_face:face_type)
+function render.set_cull_face(face_type) end
+
+---Specifies the function that should be used to compare each incoming pixel
+---depth value with the value present in the depth buffer.
+---The comparison is performed only if depth testing is enabled and specifies
+---the conditions under which a pixel will be drawn.
+---
+---The depth function is initially set to `graphics.COMPARE_FUNC_LESS`.
+---
+---**Examples:**
+---
+---Enable depth test and set the depth test function to "not equal".
+---
+---```lua
+---render.enable_state(graphics.STATE_DEPTH_TEST)
+---render.set_depth_func(graphics.COMPARE_FUNC_NOTEQUAL)
+---```
+---@param func graphics.COMPARE_FUNC depth test function, see the description for available values
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_depth_func:func)
+function render.set_depth_func(func) end
+
+---Specifies whether the depth buffer is enabled for writing. The supplied mask governs
+---if depth buffer writing is enabled (`true`) or disabled (`false`).
+---
+---The mask is initially `true`.
+---
+---**Examples:**
+---
+---How to turn off writing to the depth buffer:
+---
+---```lua
+---render.set_depth_mask(false)
+---```
+---@param depth boolean depth mask
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_depth_mask:depth)
+function render.set_depth_mask(depth) end
+
+---Set or remove the rendering-context event listener.
+---
+---**Examples:**
+---
+---Set listener and handle render context events.
+---
+---```lua
+------ custom.render_script
+---function init(self)
+---   render.set_listener(function(self, event_type)
+---       if event_type == render.CONTEXT_EVENT_CONTEXT_LOST then
+---           --- Some stuff when rendering context is lost
+---       elseif event_type == render.CONTEXT_EVENT_CONTEXT_RESTORED then
+---           --- Start reload resources, reload game, etc.
+---       end
+---   end)
+---end
+---```
+---@param callback fun(self:script_instance, event_type:render.CONTEXT_EVENT)|nil A callback that receives all render related events. Pass `nil` if want to remove listener.
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_listener:callback)
+function render.set_listener(callback) end
+
+---Sets the scale and units used to calculate depth values.
+---If `graphics.STATE_POLYGON_OFFSET_FILL` is enabled, each fragment's depth value
+---is offset from its interpolated value (depending on the depth value of the
+---appropriate vertices). Polygon offset can be used when drawing decals, rendering
+---hidden-line images etc.
+---
+---`factor` specifies a scale factor that is used to create a variable depth
+---offset for each polygon. The initial value is `0`.
+---
+---`units` is multiplied by an implementation-specific value to create a
+---constant depth offset. The initial value is `0`.
+---
+---The value of the offset is computed as `factor` × `DZ` + `r` × `units`
+---
+---`DZ` is a measurement of the depth slope of the polygon which is the change in z (depth)
+---values divided by the change in either x or y coordinates, as you traverse a polygon.
+---The depth values are in window coordinates, clamped to the range [0, 1].
+---
+---`r` is the smallest value that is guaranteed to produce a resolvable difference.
+---It's value is an implementation-specific constant.
+---
+---The offset is added before the depth test is performed and before the
+---value is written into the depth buffer.
+---
+---**Examples:**
+---
+---```lua
+---render.enable_state(graphics.STATE_POLYGON_OFFSET_FILL)
+---render.set_polygon_offset(1.0, 1.0)
+---```
+---@param factor number polygon offset factor
+---@param units number polygon offset units
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_polygon_offset:factor-units)
+function render.set_polygon_offset(factor, units) end
+
+---Sets the projection matrix to use when rendering.
+---
+---**Examples:**
+---
+---How to set the projection to orthographic with world origo at lower left,
+---width and height as set in project settings and depth (z) between -1 and 1:
+---
+---```lua
+---render.set_projection(vmath.matrix4_orthographic(0, render.get_width(), 0, render.get_height(), -1, 1))
+---```
+---@param matrix matrix4 projection matrix
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_projection:matrix)
+function render.set_projection(matrix) end
+
+---Sets a render target. Subsequent draw operations will be to the
+---render target until it is replaced by a subsequent call to set_render_target.
+---This function supports render targets created by a render script, or a render target resource.
+---
+---**Examples:**
+---
+---How to set a render target and draw to it and then switch back to the default render target
+---The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support
+---
+---```lua
+---function update(self, dt)
+---    -- set render target so all drawing is done to it
+---    render.set_render_target(self.my_render_target, { transient = { graphics.BUFFER_TYPE_DEPTH_BIT, graphics.BUFFER_TYPE_STENCIL_BIT } } )
+---
+---    -- draw a predicate to the render target
+---    render.draw(self.my_pred)
+---
+---    -- set default render target. This also invalidates the depth and stencil buffers of the current target (self.my_render_target)
+---    --  which can be an optimisation on some hardware
+---    render.set_render_target(render.RENDER_TARGET_DEFAULT)
+---
+---end
+---```
+---
+---```lua
+---function update(self, dt)
+---    -- set render target by a render target resource identifier
+---    render.set_render_target('my_rt_resource')
+---
+---    -- draw a predicate to the render target
+---    render.draw(self.my_pred)
+---
+---    -- reset the render target to the default backbuffer
+---    render.set_render_target(render.RENDER_TARGET_DEFAULT)
+---
+---end
+---```
+---@param render_target? render_target|string|hash|nil render target to set. Omit it, pass `nil`, or use render.RENDER_TARGET_DEFAULT to set the default render target
+---@param options? render.set_render_target_options optional render-target activation options
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_render_target:render_target-options)
+function render.set_render_target(render_target, options) end
+
+---Sets the render target size for a render target created from
+---either a render script, or from a render target resource.
+---
+---**Examples:**
+---
+---Resize render targets to the current window size:
+---
+---```lua
+---render.set_render_target_size(self.my_render_target, render.get_window_width(), render.get_window_height())
+---render.set_render_target_size('my_rt_resource', render.get_window_width(), render.get_window_height())
+---```
+---@param render_target render_target|string|hash render target to set size for
+---@param width integer new render target width
+---@param height integer new render target height
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_render_target_size:render_target-width-height)
+function render.set_render_target_size(render_target, width, height) end
+
+---Stenciling is similar to depth-buffering as it enables and disables drawing on a
+---per-pixel basis. First, GL drawing primitives are drawn into the stencil planes.
+---Second, geometry and images are rendered but using the stencil planes to mask out
+---where to draw.
+---
+---The stencil test discards a pixel based on the outcome of a comparison between the
+---reference value `ref` and the corresponding value in the stencil buffer.
+---
+---`func` specifies the comparison function.
+---The initial value is `graphics.COMPARE_FUNC_ALWAYS`.
+---
+---`ref` specifies the reference value for the stencil test. The value is clamped to
+---the range [0, 2n-1], where n is the number of bitplanes in the stencil buffer.
+---The initial value is `0`.
+---
+---`mask` is ANDed with both the reference value and the stored stencil value when the test
+---is done. The initial value is all `1`'s.
+---
+---**Examples:**
+---
+---```lua
+----- let only 0's pass the stencil test
+---render.set_stencil_func(graphics.COMPARE_FUNC_EQUAL, 0, 1)
+---```
+---@param func graphics.COMPARE_FUNC stencil test function, see the description for available values
+---@param ref number reference value for the stencil test
+---@param mask number mask that is ANDed with both the reference value and the stored stencil value when the test is done
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_stencil_func:func-ref-mask)
+function render.set_stencil_func(func, ref, mask) end
+
+---The stencil mask controls the writing of individual bits in the stencil buffer.
+---The least significant `n` bits of the parameter `mask`, where `n` is the number of
+---bits in the stencil buffer, specify the mask.
+---
+---Where a `1` bit appears in the mask, the corresponding
+---bit in the stencil buffer can be written. Where a `0` bit appears in the mask,
+---the corresponding bit in the stencil buffer is never written.
+---
+---The mask is initially all `1`'s.
+---
+---**Examples:**
+---
+---```lua
+----- set the stencil mask to all 1:s
+---render.set_stencil_mask(0xff)
+---```
+---@param mask number stencil mask
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_stencil_mask:mask)
+function render.set_stencil_mask(mask) end
+
+---The stencil test discards a pixel based on the outcome of a comparison between the
+---reference value `ref` and the corresponding value in the stencil buffer.
+---To control the test, call `render.set_stencil_func`.
+---
+---This function takes three arguments that control what happens to the stored stencil
+---value while stenciling is enabled. If the stencil test fails, no change is made to the
+---pixel's color or depth buffers, and `sfail` specifies what happens to the stencil buffer
+---contents.
+---
+---`dppass` and `dpfail` specify the stencil buffer actions depending on whether subsequent
+---depth buffer tests succeed (dppass) or fail (dpfail).
+---
+---The initial value for all operators is `graphics.STENCIL_OP_KEEP`.
+---
+---**Examples:**
+---
+---Set the stencil function to never pass and operator to always draw 1's
+---on test fail.
+---
+---```lua
+---render.set_stencil_func(graphics.COMPARE_FUNC_NEVER, 1, 0xFF)
+----- always draw 1's on test fail
+---render.set_stencil_op(graphics.STENCIL_OP_REPLACE, graphics.STENCIL_OP_KEEP, graphics.STENCIL_OP_KEEP)
+---```
+---@param sfail graphics.STENCIL_OP action to take when the stencil test fails
+---@param dpfail graphics.STENCIL_OP the stencil action when the stencil test passes
+---@param dppass graphics.STENCIL_OP the stencil action when both the stencil test and the depth test pass, or when the stencil test passes and either there is no depth buffer or depth testing is not enabled
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_stencil_op:sfail-dpfail-dppass)
+function render.set_stencil_op(sfail, dpfail, dppass) end
+
+---Sets the view matrix to use when rendering.
+---
+---**Examples:**
+---
+---How to set the view and projection matrices according to
+---the values supplied by a camera.
+---
+---```lua
+---function init(self)
+---  self.view = vmath.matrix4()
+---  self.projection = vmath.matrix4()
+---end
+---
+---function update(self, dt)
+---  -- set the view to the stored view value
+---  render.set_view(self.view)
+---  -- now we can draw with this view
+---end
+---
+---function on_message(self, message_id, message)
+---  if message_id == hash("set_view_projection") then
+---     -- camera view and projection arrives here.
+---     self.view = message.view
+---     self.projection = message.projection
+---  end
+---end
+---```
+---@param matrix matrix4 view matrix to set
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_view:matrix)
+function render.set_view(matrix) end
+
+---Set the render viewport to the specified rectangle.
+---
+---**Examples:**
+---
+---```lua
+----- Set the viewport to the window dimensions.
+---render.set_viewport(0, 0, render.get_window_width(), render.get_window_height())
+---```
+---@param x integer left corner
+---@param y integer bottom corner
+---@param width integer viewport width
+---@param height integer viewport height
+---
+---[Open in Browser](https://defold.com/ref/render-lua#render.set_viewport:x-y-width-height)
+function render.set_viewport(x, y, width, height) end

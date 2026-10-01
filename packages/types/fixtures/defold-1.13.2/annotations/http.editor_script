@@ -1,0 +1,129 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---@class defold_api.http
+---@field server defold_api.http.server
+http = {}
+
+---@class defold_api.http.server
+---Editor's HTTP server local url
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.server.local_url)
+---@field local_url string
+---Editor's HTTP server port
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.server.port)
+---@field port integer
+---Editor's HTTP server url
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.server.url)
+---@field url string
+http.server = {}
+
+---Perform an HTTP request
+---@param url string request URL
+---@param opts? http.request.options request options
+---@return http.request.response response HTTP response
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.request:url-opts)
+function http.request(url, opts) end
+
+---Create HTTP response that will stream the content of a file defined by the path
+---@param path string External file path, resolved against project root if relative
+---@param status? integer HTTP status code, an integer, default 200
+---@param headers? table<string, string> HTTP response headers, a table from lower-case header names to header values
+---@return http.response response HTTP response value, userdata
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.server.external_file_response:path-status-headers)
+function http.server.external_file_response(path, status, headers) end
+
+---Create HTTP response with a JSON value
+---@param value any Any Lua value that may be represented as JSON
+---@param status? integer HTTP status code, an integer, default 200
+---@param headers? table<string, string> HTTP response headers, a table from lower-case header names to header values
+---@return http.response response HTTP response value, userdata
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.server.json_response:value-status-headers)
+function http.server.json_response(value, status, headers) end
+
+---Create HTTP response that will stream the content of a resource defined by the resource path
+---@param resource_path string Resource path (starting with `/`)
+---@param status? integer HTTP status code, an integer, default 200
+---@param headers? table<string, string> HTTP response headers, a table from lower-case header names to header values
+---@return http.response response HTTP response value, userdata
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.server.resource_response:resource_path-status-headers)
+function http.server.resource_response(resource_path, status, headers) end
+
+---Create HTTP response
+---@param status? integer HTTP status code, an integer, default 200
+---@param headers? table<string, string> HTTP response headers, a table from lower-case header names to header values
+---@param body? string HTTP response body
+---@return http.response response HTTP response value, userdata
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.server.response:status-headers-body)
+function http.server.response(status, headers, body) end
+
+---Create route definition for the editor's HTTP server
+---
+---**Examples:**
+---
+---Receive JSON and respond with JSON:
+---```
+---http.server.route(
+---  "/json", "POST", "json",
+---  function(request)
+---    pprint(request.body)
+---    return 200
+---  end
+---)
+---```
+---Extract parts of the path:
+---```
+---http.server.route(
+---  "/users/{user}/orders",
+---  function(request)
+---    print(request.user)
+---  end
+---)
+---```
+---Simple file server:
+---```
+---http.server.route(
+---  "/files/{*file}",
+---  function(request)
+---    local attrs = editor.external_file_attributes(request.file)
+---    if attrs.is_file then
+---      return http.server.external_file_response(request.file)
+---    elseif attrs.is_directory then
+---      return 400
+---    else
+---      return 404
+---    end
+---  end
+---)
+---```
+---@overload fun(path:string, handler:http.server.handler):http.route
+---@overload fun(path:string, method:string, handler:http.server.handler):http.route
+---@overload fun(path:string, as:"string"|"json", handler:http.server.handler):http.route
+---@overload fun(path:string, openapi:table<string, any>, handler:http.server.handler):http.route
+---@overload fun(path:string, method:string, as:"string"|"json", handler:http.server.handler):http.route
+---@overload fun(path:string, method:string, openapi:table<string, any>, handler:http.server.handler):http.route
+---@overload fun(path:string, as:"string"|"json", openapi:table<string, any>, handler:http.server.handler):http.route
+---@param path string HTTP URI path, starts with `/`; may include path patterns (`{name}` for a single segment and `{*name}` for the rest of the request path) that will be extracted from the path and provided to the handler as a part of the request
+---@param method? string HTTP request method, default `"GET"`
+---@param as? "string"|"json" Request body converter, either `"string"` or `"json"`; the body will be discarded if not specified
+---@param openapi? table<string, any> Optional OpenAPI Operation Object for this route method, exposed from `/openapi.json`. Must follow `https://spec.openapis.org/oas/v3.0.3.html#operation-object`.
+---@param handler http.server.handler Request handler. Return either a single response value or arguments accepted by `http.server.response()`.
+---@return http.route route HTTP server route
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.server.route:path-method-as-openapi-handler)
+function http.server.route(path, method, as, openapi, handler) end

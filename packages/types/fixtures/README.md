@@ -50,6 +50,16 @@ sync, so re-run the script instead of editing a file.
 `../scripts/engine-binding-extract.ts` reads them into per-function slot kinds,
 optionality, table fields, returns and constants. They are not published.
 
+## defold-*/annotations/
+
+The LuaLS annotation files a release's `ref-doc.zip` ships beside its JSON
+(from 1.13.2): `doc/<namespace>.lua` for the game runtime and
+`doc/<namespace>.editor_script` for the editor VM, vendored byte-for-byte.
+`bun run sync-api-docs` writes them for the pinned release and `--check`
+reports any that drift; `import-defold-release` writes them for a new version.
+`../scripts/lua-annotations.ts` parses them into per-function params, returns,
+generics and overloads, plus aliases, enums and classes. They are not published.
+
 ## vmath_doc.json
 
 - **Defold version**: 1.12.4 (stable)
