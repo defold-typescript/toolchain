@@ -315,6 +315,26 @@ function compileOn<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, index
   }
 }
 
+const NOT_A_DELAY = -1;
+
+// Number-literal keys arrive as numbers in Lua and as canonical number strings in JavaScript.
+// A string key counts only when it reads back unchanged, which rejects "" (0 in JavaScript).
+function parseDelay(key: string | number): number {
+  if (typeof key === "number") {
+    return key;
+  }
+  let delay = NOT_A_DELAY;
+  try {
+    delay = (key as unknown as number) * 1;
+  } catch {
+    // Lua raises on arithmetic with a non-numeric string; delay keeps NOT_A_DELAY.
+  }
+  if (`${delay}` !== key) {
+    return NOT_A_DELAY;
+  }
+  return delay;
+}
+
 function compileAfter<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, index: number): void {
   const delays: number[] = [];
   const targets: number[] = [];
@@ -326,7 +346,7 @@ function compileAfter<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, in
   }
   const path = compiled.paths[index] as string;
   for (const key in after) {
-    const delay = (key as unknown as number) * 1;
+    const delay = parseDelay(key);
     if (!(delay >= 0)) {
       throw `hsm: state "${describePath(path)}" has an after delay "${key}" that is not a non-negative number`;
     }

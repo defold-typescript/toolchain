@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "@defold-typescript/transpiler": "workspace:*",
-    "@defold-typescript/types": "workspace:*"
+    "@defold-typescript/types": "workspace:*",
+    "lua-wasm-bindings": "0.5.3"
   }
 }
