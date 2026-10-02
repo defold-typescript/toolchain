@@ -20,7 +20,7 @@ export type PlayerEvent = { type: "JUMP" } | { type: "JUMP_RELEASED" };
 // already playing is never restarted. `update` hooks run leaf-first and the
 // first returned target wins, so the leaves check `ground_contact` themselves
 // and leave the walk-off-a-ledge step to `grounded`.
-export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>({
+export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
   initial: "airborne",
   states: {
     grounded: {

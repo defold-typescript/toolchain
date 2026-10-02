@@ -35,7 +35,7 @@ export interface DoorCtx {
 
 export type DoorEvent = MessageEvent<"trigger_response"> | { type: "OPENED" } | { type: "CLOSE" };
 
-export const doorMachine = defineMachine<DoorCtx, DoorEvent>({
+export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
   initial: "closed",
   states: {
     closed: {
@@ -68,6 +68,8 @@ export const doorEvents = messageEvents(["trigger_response"]);
 ```
 
 `on` accepts only the `type` values of `DoorEvent`, and each handler sees the matching event variant: the guard above reads `event.enter` because a `trigger_response` payload has one. `defineMachine` checks the config once and throws on an unknown target or a compound state with no `initial`, naming the state path, so a broken definition fails when the module loads rather than when the transition fires.
+
+`defineMachine<DoorCtx, DoorEvent>()` takes the context and event types, and the second call takes the config, so TypeScript infers the config's state paths. Started instances use them: `matches()` accepts only `"closed"`, `"opening"` and `"open"`, and `path` is one of those, or `""` once the machine is stopped. A target or `initial` that names no state, or an `on` key that names no event, makes `doorMachine.start(...)` fail to compile, so the mistake shows up wherever the machine is used. Paths are checked four levels deep; below that, any string under the fourth-level path is accepted. Hooks and actions receive an instance whose `path` and `matches()` use plain `string`.
 
 ## One instance per object, on `self`
 
@@ -144,7 +146,7 @@ export interface PlayerCtx {
 
 export type PlayerEvent = { type: "JUMP" } | { type: "JUMP_RELEASED" };
 
-export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>({
+export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
   initial: "airborne",
   states: {
     grounded: {
