@@ -49,8 +49,7 @@ Then open `docs/examples/platformer/game.project` in the Defold editor and Build
 - `game.project`, `game/`, `assets/`, `input/` — the upstream Defold project assets. The embedded `player` component runs `/src/player.ts.script`, emitted from `src/player.ts`.
 - `.gitignore`, `.vscode/`, `mise.toml` — scaffolded or refreshed by `init` and the local update task. A normal consumer project also keeps the generated `package.json` and `biome.json`; this checked-in example omits them after refresh so it stays tied to the workspace.
 - `src/player.ts` — the hand-converted player logic, written with `defineScript`. It keeps the physics and drives the player machine.
-- `src/player-machine.ts` — `playerMachine`, the player's ground/air and animation states as one [`hsm`](../../../packages/docs/guide/state-machines.md#migrate-a-script) machine.
-- `src/vendor/hsm/` — the vendored `hsm` library. Refresh it from the repo root with `bun packages/cli/src/bin.ts vendor hsm docs/examples/platformer`.
+- `src/player-machine.ts` — `playerMachine`, the player's ground/air and animation states as one [`hsm`](../../../packages/docs/guide/state-machines.md#migrate-a-script) machine. It imports `defineMachine` from `@defold-typescript/types/hsm`, and the build writes the library to `defold_typescript_hsm/` (gitignored, like the other build output).
 - `src/env.d.ts` — import-only shim that pulls in the script subpath for the standalone editor/tsc path; it declares no extra globals.
 - `tsconfig.json` — type-checks against the working-tree types via `paths` (no install needed).
 

@@ -9,6 +9,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "declarations": "bun scripts/emit-declarations.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "bun test"
   },

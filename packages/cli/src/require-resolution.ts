@@ -1,5 +1,6 @@
 import {
   findEmittedRequires,
+  hsmRequireName,
   LUALIB_REQUIRE_NAME,
   requirePathForRel,
   rewriteEmittedRequires,
@@ -62,6 +63,8 @@ export interface RequireRewritesInput {
   readonly lualibRel?: string;
   /** Where the timers polyfill runtime lands, when the build emits one. */
   readonly timersRel?: string;
+  /** Where each hsm module the program requires lands, keyed by module name. */
+  readonly hsmRels?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -83,7 +86,7 @@ export interface RequireRewritesInput {
  * diagnostic still fires against it.
  */
 export function requireRewrites(input: RequireRewritesInput): Map<string, string> {
-  const { sources, companions, lualibRel, timersRel } = input;
+  const { sources, companions, lualibRel, timersRel, hsmRels = {} } = input;
   const rewrites = new Map<string, string>();
 
   const add = (requirePath: string, outputRel: string): void => {
@@ -108,6 +111,9 @@ export function requireRewrites(input: RequireRewritesInput): Map<string, string
   }
   if (timersRel !== undefined) {
     add(TIMERS_REQUIRE_NAME, timersRel);
+  }
+  for (const [name, outputRel] of Object.entries(hsmRels)) {
+    add(hsmRequireName(name), outputRel);
   }
 
   return rewrites;
@@ -135,7 +141,7 @@ export interface RuntimeArtifact {
 /**
  * Fail the build on a generated runtime artifact no require can name.
  *
- * These two are the one silent half of the require/output agreement: they are
+ * These are the one silent half of the require/output agreement: they are
  * backed by no source, so `findUnresolvedRequires` never scans their chunks and
  * exempts their names besides. When the output rel does not round-trip through
  * the require rule — a dot in the `outDir` is kept in the path and underscored

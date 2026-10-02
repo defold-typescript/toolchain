@@ -45,6 +45,12 @@
     "./timers": {
       "types": "./src/timers.d.ts"
     },
+    "./hsm": {
+      "types": "./hsm/index.d.ts"
+    },
+    "./hsm/defold": {
+      "types": "./hsm/defold.d.ts"
+    },
     "./api-availability.json": "./api-availability.json",
     "./api-signatures.json": "./api-signatures.json",
     "./url-parameters.json": "./url-parameters.json",
@@ -53,6 +59,7 @@
   "files": [
     "src",
     "generated",
+    "hsm",
     "scripts",
     "api-targets.json",
     "api-migrations.json",

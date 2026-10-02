@@ -1,6 +1,6 @@
 import { copyFileSync, mkdirSync } from "node:fs";
 import * as path from "node:path";
-import { hsmSourceFiles } from "../src/vendor-hsm";
+import { hsmSourceFiles } from "../src/hsm-builtin";
 
 const sourceDir = path.resolve(import.meta.dir, "../../hsm/src");
 const destDir = path.resolve(import.meta.dir, "../dist/hsm");

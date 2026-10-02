@@ -5,6 +5,7 @@ import * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
 import { type CompanionEmitter, createCompanionEmitPlugin } from "./companion-emit";
 import { editorScriptErasurePlugin } from "./editor-script-erasure";
+import { hsmLoweringPlugin } from "./hsm-builtin";
 import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
@@ -44,6 +45,7 @@ function compilerOptions(companionEmit: CompanionEmitter): tstl.CompilerOptions 
       { plugin: windowEventGuardLoweringPlugin },
       { plugin: messageDispatchLoweringPlugin },
       { plugin: timersLoweringPlugin },
+      { plugin: hsmLoweringPlugin },
       { plugin: typeApplicationErasurePlugin },
       { plugin: companionEmit.plugin },
     ],
