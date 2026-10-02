@@ -46,6 +46,7 @@ function declared(overrides: Partial<DeclaredFunction> = {}): DeclaredFunction {
     maxArgs: slots.length,
     slots,
     returnCounts: [0],
+    returnSlots: [],
     ...overrides,
   };
 }

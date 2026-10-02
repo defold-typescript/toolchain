@@ -44,13 +44,27 @@
     "annotated": "table|userdata",
     "declared": "table"
   },
+  "runtime:b2d.body.get_mass_data:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "table",
+    "declared": "table|userdata"
+  },
+  "runtime:b2d.body.get_transform:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "table",
+    "declared": "table|userdata"
+  },
   "runtime:b2d.body.get_user_data:missing-declaration": {
     "verdict": "accepted",
-    "reason": "api-targets.json skipFunctions drops b2d.body get_user_data and set_user_data from the declarations"
+    "reason": "api-targets.json skipFunctions drops b2d.body get_user_data and set_user_data from the declarations",
+    "annotated": "annotated",
+    "declared": "absent"
   },
   "runtime:b2d.body.set_user_data:missing-declaration": {
     "verdict": "accepted",
-    "reason": "api-targets.json skipFunctions drops b2d.body get_user_data and set_user_data from the declarations"
+    "reason": "api-targets.json skipFunctions drops b2d.body get_user_data and set_user_data from the declarations",
+    "annotated": "annotated",
+    "declared": "absent"
   },
   "runtime:b2d.fixture.set_density:arity": {
     "verdict": "open",
@@ -59,7 +73,9 @@
   },
   "runtime:b2d.fixture.set_density:required-as-optional:4": {
     "verdict": "corrected",
-    "correction": "OPTIONAL_SLOT_CORRECTIONS:b2d.fixture.set_density:param:update_mass"
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:b2d.fixture.set_density:param:update_mass",
+    "annotated": "required",
+    "declared": "optional"
   },
   "runtime:b2d.fixture.set_shape:arity": {
     "verdict": "open",
@@ -68,7 +84,9 @@
   },
   "runtime:b2d.fixture.set_shape:required-as-optional:4": {
     "verdict": "corrected",
-    "correction": "OPTIONAL_SLOT_CORRECTIONS:b2d.fixture.set_shape:param:update_mass"
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:b2d.fixture.set_shape:param:update_mass",
+    "annotated": "required",
+    "declared": "optional"
   },
   "runtime:b2d.shape.are_contact_events_enabled:arity": {
     "verdict": "open",
@@ -217,7 +235,9 @@
   },
   "runtime:b2d.shape.set_shape:required-as-optional:3": {
     "verdict": "corrected",
-    "correction": "OPTIONAL_SLOT_CORRECTIONS:b2d.shape.set_shape:param:update_mass"
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:b2d.shape.set_shape:param:update_mass",
+    "annotated": "required",
+    "declared": "optional"
   },
   "runtime:b2d.shape.set_shape:too-loose:2": {
     "verdict": "open",
@@ -231,91 +251,135 @@
   },
   "runtime:buffer.get_bytes:too-loose:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:buffer.get_bytes:param:stream_name"
+    "correction": "PARAM_TYPE_CORRECTIONS:buffer.get_bytes:param:stream_name",
+    "annotated": "hash",
+    "declared": "hash|string"
   },
   "runtime:camera.get_aspect_ratio:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_aspect_ratio:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_aspect_ratio:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.get_auto_aspect_ratio:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_auto_aspect_ratio:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_auto_aspect_ratio:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.get_enabled:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_enabled:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_enabled:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.get_far_z:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_far_z:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_far_z:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.get_fov:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_fov:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_fov:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.get_near_z:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_near_z:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_near_z:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.get_orthographic_auto_zoom:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_orthographic_auto_zoom:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_orthographic_auto_zoom:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.get_orthographic_mode:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_orthographic_mode:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_orthographic_mode:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.get_orthographic_zoom:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_orthographic_zoom:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_orthographic_zoom:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.get_projection:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_projection:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_projection:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.get_view:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_view:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_view:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.screen_to_world:too-loose:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.screen_to_world:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.screen_to_world:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.screen_xy_to_world:too-loose:3": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.screen_xy_to_world:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.screen_xy_to_world:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.set_aspect_ratio:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_aspect_ratio:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_aspect_ratio:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.set_auto_aspect_ratio:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_auto_aspect_ratio:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_auto_aspect_ratio:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.set_far_z:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_far_z:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_far_z:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.set_fov:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_fov:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_fov:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.set_near_z:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_near_z:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_near_z:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.set_orthographic_mode:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_orthographic_mode:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_orthographic_mode:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.set_orthographic_zoom:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_orthographic_zoom:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_orthographic_zoom:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:camera.world_to_screen:too-loose:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:camera.world_to_screen:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.world_to_screen:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:collectionfactory.get_status:arity": {
     "verdict": "open",
@@ -324,7 +388,9 @@
   },
   "runtime:collectionfactory.get_status:optional-as-required:1": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.get_status:param:url"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.get_status:param:url",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:collectionfactory.load:arity": {
     "verdict": "open",
@@ -333,11 +399,15 @@
   },
   "runtime:collectionfactory.load:optional-as-required:1": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.load:param:url"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.load:param:url",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:collectionfactory.load:optional-as-required:2": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.load:param:complete_function"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.load:param:complete_function",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:collectionfactory.set_prototype:arity": {
     "verdict": "open",
@@ -346,7 +416,9 @@
   },
   "runtime:collectionfactory.set_prototype:optional-as-required:1": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.set_prototype:param:url"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.set_prototype:param:url",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:collectionfactory.unload:arity": {
     "verdict": "open",
@@ -355,11 +427,15 @@
   },
   "runtime:collectionfactory.unload:optional-as-required:1": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.unload:param:url"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.unload:param:url",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:collectionproxy.get_resources:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:collectionproxy.get_resources:param:collectionproxy"
+    "correction": "PARAM_TYPE_CORRECTIONS:collectionproxy.get_resources:param:collectionproxy",
+    "annotated": "url",
+    "declared": "hash|string|url"
   },
   "runtime:collectionproxy.set_collection:arity": {
     "verdict": "open",
@@ -368,7 +444,9 @@
   },
   "runtime:collectionproxy.set_collection:optional-as-required:1": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionproxy.set_collection:param:url"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionproxy.set_collection:param:url",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:factory.get_status:arity": {
     "verdict": "open",
@@ -377,16 +455,22 @@
   },
   "runtime:factory.get_status:optional-as-required:1": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.get_status:param:url"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.get_status:param:url",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:factory.load:arity": { "verdict": "open", "annotated": "0..2", "declared": "2..2" },
   "runtime:factory.load:optional-as-required:1": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.load:param:url"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.load:param:url",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:factory.load:optional-as-required:2": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.load:param:complete_function"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.load:param:complete_function",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:factory.set_prototype:arity": {
     "verdict": "open",
@@ -395,12 +479,16 @@
   },
   "runtime:factory.set_prototype:optional-as-required:1": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.set_prototype:param:url"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.set_prototype:param:url",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:factory.unload:arity": { "verdict": "open", "annotated": "0..1", "declared": "1..1" },
   "runtime:factory.unload:optional-as-required:1": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.unload:param:url"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.unload:param:url",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:go.cancel_animations:arity": {
     "verdict": "open",
@@ -409,11 +497,15 @@
   },
   "runtime:go.cancel_animations:required-as-optional:1": {
     "verdict": "corrected",
-    "correction": "OPTIONAL_SLOT_CORRECTIONS:go.cancel_animations:param:url"
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:go.cancel_animations:param:url",
+    "annotated": "required",
+    "declared": "optional"
   },
   "runtime:go.delete:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:go.delete:param:id"
+    "correction": "PARAM_TYPE_CORRECTIONS:go.delete:param:id",
+    "annotated": "hash|string|table|url",
+    "declared": "boolean|hash|string|table|url"
   },
   "runtime:go.final:missing-annotation": {
     "verdict": "open",
@@ -424,6 +516,11 @@
     "verdict": "open",
     "annotated": "absent",
     "declared": "declared"
+  },
+  "runtime:go.get:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
+    "declared": "boolean|hash|number|quat|url|vector3|vector4"
   },
   "runtime:go.init:missing-annotation": {
     "verdict": "open",
@@ -477,7 +574,9 @@
   },
   "runtime:go.world_to_local_position:required-as-optional:2": {
     "verdict": "corrected",
-    "correction": "OPTIONAL_SLOT_CORRECTIONS:go.world_to_local_position:param:url"
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:go.world_to_local_position:param:url",
+    "annotated": "required",
+    "declared": "optional"
   },
   "runtime:go.world_to_local_transform:arity": {
     "verdict": "open",
@@ -486,7 +585,9 @@
   },
   "runtime:go.world_to_local_transform:required-as-optional:2": {
     "verdict": "corrected",
-    "correction": "OPTIONAL_SLOT_CORRECTIONS:go.world_to_local_transform:param:url"
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:go.world_to_local_transform:param:url",
+    "annotated": "required",
+    "declared": "optional"
   },
   "runtime:gui.animate:too-narrow:2": {
     "verdict": "open",
@@ -518,7 +619,9 @@
   "runtime:gui.new_texture:arity": { "verdict": "open", "annotated": "6..6", "declared": "5..6" },
   "runtime:gui.new_texture:required-as-optional:6": {
     "verdict": "corrected",
-    "correction": "OPTIONAL_SLOT_CORRECTIONS:gui.new_texture:param:flip"
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:gui.new_texture:param:flip",
+    "annotated": "required",
+    "declared": "optional"
   },
   "runtime:gui.on_input:missing-annotation": {
     "verdict": "open",
@@ -537,16 +640,22 @@
   },
   "runtime:gui.screen_to_local:too-loose:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:gui.screen_to_local:param:screen_position"
+    "correction": "PARAM_TYPE_CORRECTIONS:gui.screen_to_local:param:screen_position",
+    "annotated": "vector3",
+    "declared": "vector3|vector4"
   },
   "runtime:gui.set_parent:arity": { "verdict": "open", "annotated": "1..3", "declared": "2..3" },
   "runtime:gui.set_rotation:too-loose:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:gui.set_rotation:param:rotation"
+    "correction": "PARAM_TYPE_CORRECTIONS:gui.set_rotation:param:rotation",
+    "annotated": "quat|vector4",
+    "declared": "quat|vector3|vector4"
   },
   "runtime:gui.set_screen_position:too-loose:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:gui.set_screen_position:param:screen_position"
+    "correction": "PARAM_TYPE_CORRECTIONS:gui.set_screen_position:param:screen_position",
+    "annotated": "vector3",
+    "declared": "vector3|vector4"
   },
   "runtime:gui.set_texture_data:arity": {
     "verdict": "open",
@@ -555,12 +664,16 @@
   },
   "runtime:gui.set_texture_data:required-as-optional:6": {
     "verdict": "corrected",
-    "correction": "OPTIONAL_SLOT_CORRECTIONS:gui.set_texture_data:param:flip"
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:gui.set_texture_data:param:flip",
+    "annotated": "required",
+    "declared": "optional"
   },
   "runtime:gui.set:arity": { "verdict": "open", "annotated": "2..4", "declared": "3..4" },
   "runtime:gui.set:too-loose:3": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:gui.set:param:value"
+    "correction": "PARAM_TYPE_CORRECTIONS:gui.set:param:value",
+    "annotated": "number|quat|vector3|vector4",
+    "declared": "hash|matrix4|number|quat|vector3|vector4"
   },
   "runtime:gui.set:too-narrow:2": {
     "verdict": "open",
@@ -579,27 +692,39 @@
   },
   "runtime:model.get_mesh_enabled:too-narrow:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:model.get_mesh_enabled:param:mesh_id"
+    "correction": "PARAM_TYPE_CORRECTIONS:model.get_mesh_enabled:param:mesh_id",
+    "annotated": "hash|string|url",
+    "declared": "hash|string"
   },
   "runtime:model.set_mesh_enabled:too-narrow:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:model.set_mesh_enabled:param:mesh_id"
+    "correction": "PARAM_TYPE_CORRECTIONS:model.set_mesh_enabled:param:mesh_id",
+    "annotated": "hash|string|url",
+    "declared": "hash|string"
   },
   "runtime:particlefx.set_constant:too-loose:4": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:particlefx.set_constant:param:value"
+    "correction": "PARAM_TYPE_CORRECTIONS:particlefx.set_constant:param:value",
+    "annotated": "vector4",
+    "declared": "matrix4|vector4"
   },
   "runtime:physics.get_maskbit:too-loose:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:physics.get_maskbit:param:group"
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.get_maskbit:param:group",
+    "annotated": "string",
+    "declared": "hash|string"
   },
   "runtime:physics.set_group:too-loose:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_group:param:group"
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_group:param:group",
+    "annotated": "string",
+    "declared": "hash|string"
   },
   "runtime:physics.set_maskbit:too-loose:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_maskbit:param:group"
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_maskbit:param:group",
+    "annotated": "string",
+    "declared": "hash|string"
   },
   "runtime:render.delete_render_target:too-loose:1": {
     "verdict": "open",
@@ -613,11 +738,15 @@
   },
   "runtime:render.disable_texture:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:render.disable_texture:param:binding"
+    "correction": "PARAM_TYPE_CORRECTIONS:render.disable_texture:param:binding",
+    "annotated": "hash|number|string",
+    "declared": "hash|number|string|userdata"
   },
   "runtime:render.enable_texture:too-loose:2": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:render.enable_texture:param:handle_or_name"
+    "correction": "PARAM_TYPE_CORRECTIONS:render.enable_texture:param:handle_or_name",
+    "annotated": "hash|number|string",
+    "declared": "hash|number|string|userdata"
   },
   "runtime:render.get_render_target_height:optional-as-required:2": {
     "verdict": "open",
@@ -649,9 +778,21 @@
     "annotated": "hash|number|string",
     "declared": "hash|string|userdata"
   },
+  "runtime:render.render_target:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "number",
+    "declared": "userdata"
+  },
+  "runtime:render.render_target:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "number",
+    "declared": "userdata"
+  },
   "runtime:render.set_camera:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:render.set_camera:param:camera"
+    "correction": "PARAM_TYPE_CORRECTIONS:render.set_camera:param:camera",
+    "annotated": "number|url",
+    "declared": "hash|number|string|url"
   },
   "runtime:render.set_render_target_size:too-loose:1": {
     "verdict": "open",
@@ -665,11 +806,35 @@
   },
   "runtime:render.set_render_target:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:render.set_render_target:param:render_target"
+    "correction": "PARAM_TYPE_CORRECTIONS:render.set_render_target:param:render_target",
+    "annotated": "hash|number|string",
+    "declared": "hash|string|userdata"
   },
   "runtime:render.set_render_target:too-narrow:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:render.set_render_target:param:render_target"
+    "correction": "PARAM_TYPE_CORRECTIONS:render.set_render_target:param:render_target",
+    "annotated": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "runtime:resource.atlas:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:resource.atlas:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:resource.buffer:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:resource.buffer:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
   },
   "runtime:resource.create_sound_data:arity": {
     "verdict": "open",
@@ -678,7 +843,9 @@
   },
   "runtime:resource.create_sound_data:optional-as-required:2": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:resource.create_sound_data:param:options"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:resource.create_sound_data:param:options",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:resource.create_texture_async:arity": {
     "verdict": "open",
@@ -687,46 +854,166 @@
   },
   "runtime:resource.create_texture_async:optional-as-required:4": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:resource.create_texture_async:param:callback"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:resource.create_texture_async:param:callback",
+    "annotated": "optional",
+    "declared": "required"
+  },
+  "runtime:resource.font:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:resource.font:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
   },
   "runtime:resource.get_render_target_info:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:resource.get_render_target_info:param:path"
+    "correction": "PARAM_TYPE_CORRECTIONS:resource.get_render_target_info:param:path",
+    "annotated": "hash|number|string",
+    "declared": "hash|number|string|userdata"
   },
   "runtime:resource.get_text_metrics:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:resource.get_text_metrics:param:url"
+    "correction": "PARAM_TYPE_CORRECTIONS:resource.get_text_metrics:param:url",
+    "annotated": "hash",
+    "declared": "hash|string"
   },
   "runtime:resource.get_texture_info:too-loose:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:resource.get_texture_info:param:path"
+    "correction": "PARAM_TYPE_CORRECTIONS:resource.get_texture_info:param:path",
+    "annotated": "hash|number|string",
+    "declared": "hash|number|string|userdata"
+  },
+  "runtime:resource.material:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:resource.material:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:resource.render_target:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:resource.render_target:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:resource.texture:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:resource.texture:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:resource.tile_source:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:resource.tile_source:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "hash"
+  },
+  "runtime:socket.connect:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "table"
+  },
+  "runtime:socket.connect:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "table"
   },
   "runtime:socket.newtry:arity": { "verdict": "open", "annotated": "1..1", "declared": "0..1" },
   "runtime:socket.newtry:required-as-optional:1": {
     "verdict": "corrected",
-    "correction": "OPTIONAL_SLOT_CORRECTIONS:socket.newtry:param:finalizer"
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:socket.newtry:param:finalizer",
+    "annotated": "required",
+    "declared": "optional"
+  },
+  "runtime:socket.tcp:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "table"
+  },
+  "runtime:socket.tcp:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "table"
+  },
+  "runtime:socket.tcp6:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "table"
+  },
+  "runtime:socket.tcp6:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "table"
+  },
+  "runtime:socket.udp:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "table"
+  },
+  "runtime:socket.udp:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "table"
+  },
+  "runtime:socket.udp6:too-loose:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "table"
+  },
+  "runtime:socket.udp6:too-narrow:return1": {
+    "verdict": "open",
+    "annotated": "userdata",
+    "declared": "table"
   },
   "runtime:sound.get_group_name:too-narrow:1": {
     "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:sound.get_group_name:param:group"
+    "correction": "PARAM_TYPE_CORRECTIONS:sound.get_group_name:param:group",
+    "annotated": "hash|string",
+    "declared": "hash"
   },
   "runtime:sound.set_gain:arity": { "verdict": "open", "annotated": "1..2", "declared": "2..2" },
   "runtime:sound.set_gain:optional-as-required:2": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:sound.set_gain:param:gain"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:sound.set_gain:param:gain",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:sound.set_pan:arity": { "verdict": "open", "annotated": "1..2", "declared": "2..2" },
   "runtime:sound.set_pan:optional-as-required:2": {
     "verdict": "corrected",
-    "correction": "REQUIRED_SLOT_CORRECTIONS:sound.set_pan:param:pan"
+    "correction": "REQUIRED_SLOT_CORRECTIONS:sound.set_pan:param:pan",
+    "annotated": "optional",
+    "declared": "required"
   },
   "runtime:sys.set_engine_throttle:arity": {
     "verdict": "accepted",
-    "reason": "src/sys-overloads.d.ts splits on enable: cooldown is omitted only with enable false, so the merged overloads read slot 2 as optional"
+    "reason": "src/sys-overloads.d.ts splits on enable: cooldown is omitted only with enable false, so the merged overloads read slot 2 as optional",
+    "annotated": "2..2",
+    "declared": "1..2"
   },
   "runtime:sys.set_engine_throttle:required-as-optional:2": {
     "verdict": "accepted",
-    "reason": "src/sys-overloads.d.ts splits on enable: cooldown is omitted only with enable false, so the merged overloads read slot 2 as optional"
+    "reason": "src/sys-overloads.d.ts splits on enable: cooldown is omitted only with enable false, so the merged overloads read slot 2 as optional",
+    "annotated": "required",
+    "declared": "optional"
   },
   "runtime:sys.set_render_enable:missing-declaration": {
     "verdict": "open",
@@ -740,11 +1027,15 @@
   },
   "runtime:vmath.vector:arity": {
     "verdict": "accepted",
-    "reason": "src/vmath-overloads.d.ts declares a no-argument form because the engine raises on an explicit nil"
+    "reason": "src/vmath-overloads.d.ts declares a no-argument form because the engine raises on an explicit nil",
+    "annotated": "1..1",
+    "declared": "0..1"
   },
   "runtime:vmath.vector:required-as-optional:1": {
     "verdict": "accepted",
-    "reason": "src/vmath-overloads.d.ts declares a no-argument form because the engine raises on an explicit nil"
+    "reason": "src/vmath-overloads.d.ts declares a no-argument form because the engine raises on an explicit nil",
+    "annotated": "required",
+    "declared": "optional"
   },
   "runtime:window.set_listener:arity": {
     "verdict": "open",
