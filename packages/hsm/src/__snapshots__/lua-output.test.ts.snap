@@ -272,22 +272,42 @@ function ____exports.defineMachine(config)
     local afterDelays = compiled.afterDelays
     local afterTargets = compiled.afterTargets
     local function start(ctx)
-        local enterState, exitTo, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, active, elapsed, fired, scratch, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, instance
+        local enterState, exitTo, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, active, elapsed, fired, scratch, entryId, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, instance
         function enterState(state)
             local level = depth[state + 1]
             active[level + 1] = state
             elapsed[level + 1] = 0
             fired[level + 1] = 0
             leafDepth = level
-            local hook = configs[state + 1].enter
+            entryCount = entryCount + 1
+            local id = entryCount
+            entryId[level + 1] = id
+            local config = configs[state + 1]
+            local hook = config.enter
             if hook ~= nil then
                 hook(ctx, instance)
+            end
+            local invoke = config.invoke
+            if invoke ~= nil then
+                local settled = false
+                invoke(
+                    ctx,
+                    function(event)
+                        if settled or not running or stopRequested or entryId[level + 1] ~= id then
+                            return
+                        end
+                        settled = true
+                        send(event)
+                    end,
+                    instance
+                )
             end
         end
         function exitTo(level)
             while leafDepth > level do
                 local state = active[leafDepth + 1]
                 active[leafDepth + 1] = NO_STATE
+                entryId[leafDepth + 1] = 0
                 leafDepth = leafDepth - 1
                 local hook = configs[state + 1].exit
                 if hook ~= nil then
@@ -342,12 +362,12 @@ function ____exports.defineMachine(config)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue72
+                        local __continue75
                         repeat
                             local state = active[level + 1]
                             local listIndex = onIndex[state + 1][event.type]
                             if type(listIndex) ~= "number" then
-                                __continue72 = true
+                                __continue75 = true
                                 break
                             end
                             local list = transitions[listIndex + 1]
@@ -368,9 +388,9 @@ function ____exports.defineMachine(config)
                                     i = i + 1
                                 end
                             end
-                            __continue72 = true
+                            __continue75 = true
                         until true
-                        if not __continue72 then
+                        if not __continue75 then
                             break
                         end
                     end
@@ -424,12 +444,12 @@ function ____exports.defineMachine(config)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue88
+                        local __continue91
                         repeat
                             local state = active[level + 1]
                             local hook = configs[state + 1].update
                             if hook == nil then
-                                __continue88 = true
+                                __continue91 = true
                                 break
                             end
                             local target = hook(ctx, dt, instance)
@@ -446,9 +466,9 @@ function ____exports.defineMachine(config)
                                 )
                                 return true
                             end
-                            __continue88 = true
+                            __continue91 = true
                         until true
-                        if not __continue88 then
+                        if not __continue91 then
                             break
                         end
                     end
@@ -523,6 +543,7 @@ function ____exports.defineMachine(config)
         elapsed = {}
         fired = {}
         scratch = {}
+        entryId = {}
         do
             local i = 0
             while i < slots do
@@ -530,9 +551,11 @@ function ____exports.defineMachine(config)
                 elapsed[i + 1] = 0
                 fired[i + 1] = 0
                 scratch[i + 1] = NO_STATE
+                entryId[i + 1] = 0
                 i = i + 1
             end
         end
+        entryCount = 0
         queue = {}
         queueHead = 0
         queueTail = 0
@@ -555,6 +578,40 @@ function ____exports.defineMachine(config)
         return instance
     end
     return {start = start}
+end
+return ____exports
+"
+`;
+
+exports[`hsm Defold adapter Lua output matches the reviewed Lua snapshot 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.messageEvents(ids)
+    local hashes = {}
+    do
+        local i = 0
+        while i < #ids do
+            hashes[i + 1] = hash(ids[i + 1])
+            i = i + 1
+        end
+    end
+    return {toEvent = function(message_id, message)
+        do
+            local i = 0
+            while i < #hashes do
+                if hashes[i + 1] == message_id then
+                    local event = {}
+                    for key in pairs(message) do
+                        event[key] = message[key]
+                    end
+                    event.type = ids[i + 1]
+                    return event
+                end
+                i = i + 1
+            end
+        end
+        return nil
+    end}
 end
 return ____exports
 "

@@ -23,3 +23,21 @@ describe("hsm core Lua output", () => {
     expect(lua).toMatchSnapshot();
   });
 });
+
+describe("hsm Defold adapter Lua output", () => {
+  const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
+  const result = transpileProject({
+    files: { "hsm/index.ts": read("./index.ts"), "hsm/defold.ts": read("./defold.ts") },
+  });
+  const lua = result.lua["hsm/defold.ts"] ?? "";
+
+  test("transpiles with no diagnostics and no lualib", () => {
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lualib).toBeUndefined();
+    expect(lua).not.toContain('require("lualib_bundle")');
+  });
+
+  test("matches the reviewed Lua snapshot", () => {
+    expect(lua).toMatchSnapshot();
+  });
+});
