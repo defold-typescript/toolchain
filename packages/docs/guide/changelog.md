@@ -20,7 +20,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **`defold-typescript vendor hsm <path>` vendors `hsm`, a typed hierarchical state machine library shipped inside the CLI,** into `src/vendor/hsm/` with a `VERSION` stamp, leaving your own files in that folder untouched on upgrade, and `--json` reports `library`, `version`, `previousVersion` and `written`. Machines type their events, context and state paths, so `matches()` takes only the machine's paths and an unknown target or `initial` fails to compile, and the new [State machines](./state-machines.md) guide covers defining machines, one instance per object on `self`, the message bridge, engine callbacks, and a [walkthrough that migrates the platformer example's player](./state-machines.md#migrate-a-script) onto one machine.
+- **`defold-typescript vendor hsm <path>` vendors `hsm`, a typed hierarchical state machine library shipped inside the CLI,** into `src/vendor/hsm/` with a `VERSION` stamp, leaving your own files in that folder untouched on upgrade, and `--json` reports `library`, `version`, `previousVersion` and `written`. Machines type their events, context and state paths, so `matches()` takes only the machine's paths and an unknown target or `initial` fails to compile, an `after` key that is not a non-negative number fails at definition with the same message in Defold as in TypeScript, and the new [State machines](./state-machines.md) guide covers defining machines, one instance per object on `self`, the message bridge, engine callbacks, and a [walkthrough that migrates the platformer example's player](./state-machines.md#migrate-a-script) onto one machine.
 
 ## v0.42.0
 
