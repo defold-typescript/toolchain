@@ -22,7 +22,7 @@ import { defineMachine } from "./vendor/hsm/index";
 
 type Ev = MessageEvent<"trigger_response"> | { type: "CLOSE" };
 
-const door = defineMachine<{ opened: number }, Ev>({
+const door = defineMachine<{ opened: number }, Ev>()({
   initial: "closed",
   states: {
     closed: { on: { trigger_response: "open" } },
