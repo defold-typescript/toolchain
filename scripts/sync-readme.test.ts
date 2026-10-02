@@ -1,6 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
-import { generateRootReadme, ROOT_README, SOURCE_README } from "./sync-readme";
+import {
+  AVAILABILITY_JSON,
+  generateRootReadme,
+  ROOT_README,
+  readSupportedVersions,
+  SOURCE_README,
+  supportedVersionsLine,
+  withSupportedVersions,
+} from "./sync-readme";
 
 // Every markdown link target and `<img src>` in the generated root README, in
 // authored order. GitHub resolves each of these from the repository root, so a
@@ -50,5 +58,28 @@ describe("sync-readme", () => {
 
     expect(local.length).toBeGreaterThan(0);
     expect(local.some((target) => target.startsWith("packages/docs/guide/"))).toBe(true);
+  });
+
+  test("the guide README lists every Defold version with a complete API surface", () => {
+    const source = readFileSync(SOURCE_README, "utf8");
+    const versions = readSupportedVersions(readFileSync(AVAILABILITY_JSON, "utf8"));
+
+    expect(versions.length).toBeGreaterThan(0);
+    expect(source.split("\n")).toContain(supportedVersionsLine(versions));
+  });
+
+  test("orders the supported versions oldest first, numerically", () => {
+    expect(
+      readSupportedVersions(JSON.stringify({ versions: ["1.13.2", "1.9.10", "1.13.0"] })),
+    ).toEqual(["1.9.10", "1.13.0", "1.13.2"]);
+  });
+
+  test("rewrites the supported-versions line in place", () => {
+    const source = "intro\n\n> Defold versions supported: 1.0.0\n\n> [!NOTE]\n";
+
+    expect(withSupportedVersions(source, ["1.12.4", "1.13.2"])).toBe(
+      "intro\n\n> Defold versions supported: 1.12.4, 1.13.2\n\n> [!NOTE]\n",
+    );
+    expect(() => withSupportedVersions("intro\n", ["1.13.2"])).toThrow();
   });
 });

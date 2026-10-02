@@ -3,6 +3,9 @@ import { resolve } from "node:path";
 
 export const SOURCE_README = "packages/docs/guide/README.md";
 export const ROOT_README = "README.md";
+export const AVAILABILITY_JSON = "packages/types/api-availability.json";
+
+const SUPPORTED_VERSIONS_PREFIX = "> Defold versions supported:";
 
 // Published docs base. The root README lives on GitHub, where guide-local `.md`
 // links and `/api` routes have no meaning, so both are rewritten to the live
@@ -42,6 +45,37 @@ function rewriteGuideImagesForGitHub(markdown: string): string {
   );
 }
 
+function compareVersions(a: string, b: string): number {
+  const left = a.split(".").map(Number);
+  const right = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    const diff = (left[i] ?? 0) - (right[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+// The versions axis of `api-availability.json` is every Defold release with a
+// complete committed API surface, so it is the list the guide advertises.
+export function readSupportedVersions(availabilityJson: string): string[] {
+  const { versions } = JSON.parse(availabilityJson) as { versions: string[] };
+  return [...versions].sort(compareVersions);
+}
+
+export function supportedVersionsLine(versions: readonly string[]): string {
+  return `${SUPPORTED_VERSIONS_PREFIX} ${versions.join(", ")}`;
+}
+
+export function withSupportedVersions(source: string, versions: readonly string[]): string {
+  const lines = source.split("\n");
+  const index = lines.findIndex((line) => line.startsWith(SUPPORTED_VERSIONS_PREFIX));
+  if (index === -1) {
+    throw new Error(`${SOURCE_README} has no "${SUPPORTED_VERSIONS_PREFIX}" line`);
+  }
+  lines[index] = supportedVersionsLine(versions);
+  return lines.join("\n");
+}
+
 export function generateRootReadme(source: string): string {
   const body = rewriteGuideLinksForSite(rewriteGuideImagesForGitHub(stripFrontmatter(source)));
   return `${GENERATED_HEADER}${body.trimEnd()}\n`;
@@ -58,12 +92,21 @@ if (import.meta.main) {
 
   const sourcePath = resolve(SOURCE_README);
   const rootPath = resolve(ROOT_README);
-  const expected = generateRootReadme(readFileSync(sourcePath, "utf8"));
+  const source = readFileSync(sourcePath, "utf8");
+  const versions = readSupportedVersions(readFileSync(resolve(AVAILABILITY_JSON), "utf8"));
+  const expectedSource = withSupportedVersions(source, versions);
+  const expected = generateRootReadme(expectedSource);
 
   if (mode === "--write") {
+    writeFileSync(sourcePath, expectedSource);
     writeFileSync(rootPath, expected);
     console.log(`${ROOT_README} synced from ${SOURCE_README}`);
     process.exit(0);
+  }
+
+  if (source !== expectedSource) {
+    console.error(`${SOURCE_README} lists stale Defold versions. Run: bun run readme:sync`);
+    process.exit(1);
   }
 
   const actual = readFileSync(rootPath, "utf8");

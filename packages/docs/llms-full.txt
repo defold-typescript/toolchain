@@ -30,6 +30,8 @@ To target one project: (1) resolve the project's configured Defold target and it
 
 Build your [Defold](https://defold.com/) game in [TypeScript](https://www.typescriptlang.org/) and get VSCode's full editor experience — autocomplete, inline type errors, and safe refactors — across the whole Defold API, while still shipping the plain [Lua](https://www.lua.org/) the engine runs.
 
+> Defold versions supported: 1.12.4, 1.13.0, 1.13.1, 1.13.2
+
 > [!NOTE]
 > **Want to help shape v1.0?** Nothing is locked in yet, and the project ships often — see the [changelog](./changelog.md). Use it on a real project and [open an issue](https://github.com/defold-typescript/toolchain/issues) about whatever you hit: a missing or mistyped API, a rough edge in the tooling, docs that left your coding agent guessing, or what you would want built next. Pull requests stay closed until the release.
 
