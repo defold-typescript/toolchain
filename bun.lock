@@ -76,6 +76,10 @@
         "vite": "^8.2.1",
       },
     },
+    "packages/hsm": {
+      "name": "@defold-typescript/hsm",
+      "version": "0.0.0",
+    },
     "packages/library-types": {
       "name": "@defold-typescript/library-types",
       "version": "0.0.0",
@@ -175,6 +179,8 @@
     "@defold-typescript/docs": ["@defold-typescript/docs@workspace:packages/docs"],
 
     "@defold-typescript/docs-site": ["@defold-typescript/docs-site@workspace:packages/docs-site"],
+
+    "@defold-typescript/hsm": ["@defold-typescript/hsm@workspace:packages/hsm"],
 
     "@defold-typescript/library-types": ["@defold-typescript/library-types@workspace:packages/library-types"],
 
