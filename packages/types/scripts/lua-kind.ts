@@ -131,6 +131,9 @@ export interface DeclaredFunction {
   readonly slots: DeclaredSlot[];
   // One per signature; `"variadic"` for a multi-return with a rest element.
   readonly returnCounts: (number | "variadic")[];
+  // One per return position: the kinds every signature returning that position
+  // gives it, nil removed. A multi-return contributes its fixed elements only.
+  readonly returnSlots: DeclaredKinds[];
 }
 
 export interface DeclaredSurface {
@@ -224,6 +227,38 @@ function returnCount(signature: ts.Signature, checker: ts.TypeChecker): number |
   return 1;
 }
 
+function returnTypes(signature: ts.Signature, checker: ts.TypeChecker): readonly ts.Type[] {
+  const type = signature.getReturnType();
+  if (type.flags & (ts.TypeFlags.Void | ts.TypeFlags.Undefined)) return [];
+  if (type.aliasSymbol?.name === "LuaMultiReturn") {
+    const tuple = type.aliasTypeArguments?.[0];
+    if (!tuple || !checker.isTupleType(tuple)) return [];
+    const target = (tuple as ts.TypeReference).target as ts.TupleType;
+    return checker.getTypeArguments(tuple as ts.TypeReference).slice(0, target.fixedLength);
+  }
+  return [type];
+}
+
+// An unmapped type is reported under `label` and read as `"any"`.
+function mappedKinds(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+  unmapped: string[],
+  label: string,
+): DeclaredKinds {
+  try {
+    return declaredKinds(type, checker);
+  } catch (error) {
+    if (!(error instanceof UnmappedLuaKindError)) throw error;
+    unmapped.push(`${label}: ${error.typeText}`);
+    return "any";
+  }
+}
+
+function withoutNilKinds(kinds: Set<LuaKind> | "any"): DeclaredKinds {
+  return kinds === "any" ? "any" : [...kinds].filter((kind) => kind !== "nil").sort();
+}
+
 interface SlotAccumulator {
   kinds: Set<LuaKind> | "any";
   optional: boolean;
@@ -242,6 +277,7 @@ function readFunction(
   let minArgs = Number.POSITIVE_INFINITY;
   let maxArgs: number | "variadic" = 0;
   const returnCounts: (number | "variadic")[] = [];
+  const returnSlots: (Set<LuaKind> | "any")[] = [];
   const counts: { length: number; variadic: boolean }[] = [];
 
   for (const signature of signatures) {
@@ -268,14 +304,7 @@ function readFunction(
       if (rest && checker.isArrayType(paramType)) {
         paramType = checker.getTypeArguments(paramType as ts.TypeReference)[0] ?? paramType;
       }
-      let kinds: DeclaredKinds;
-      try {
-        kinds = declaredKinds(paramType, checker);
-      } catch (error) {
-        if (!(error instanceof UnmappedLuaKindError)) throw error;
-        unmapped.push(`${name} slot ${i + 1}: ${error.typeText}`);
-        kinds = "any";
-      }
+      const kinds = mappedKinds(paramType, checker, unmapped, `${name} slot ${i + 1}`);
       const slot = slots.get(i + 1) ?? { kinds: new Set<LuaKind>(), optional: false, fields: null };
       if (kinds === "any") slot.kinds = "any";
       else if (slot.kinds !== "any") for (const kind of kinds) slot.kinds.add(kind);
@@ -292,17 +321,20 @@ function readFunction(
     else if (maxArgs !== "variadic") maxArgs = Math.max(maxArgs, params.length);
     counts.push({ length: params.length, variadic });
     returnCounts.push(returnCount(signature, checker));
+    returnTypes(signature, checker).forEach((returned, i) => {
+      const kinds = mappedKinds(returned, checker, unmapped, `${name} return ${i + 1}`);
+      const slot = returnSlots[i] ?? new Set<LuaKind>();
+      returnSlots[i] = kinds === "any" || slot === "any" ? "any" : new Set([...slot, ...kinds]);
+    });
   }
 
   const declaredSlots: DeclaredSlot[] = [...slots.entries()]
     .sort(([a], [b]) => a - b)
     .map(([index, slot]) => {
       const absentSomewhere = counts.some((c) => !c.variadic && c.length < index);
-      const kinds =
-        slot.kinds === "any" ? "any" : [...slot.kinds].filter((k) => k !== "nil").sort();
       return {
         index,
-        kinds,
+        kinds: withoutNilKinds(slot.kinds),
         optional: slot.optional || absentSomewhere,
         fields: slot.fields ? [...slot.fields].sort() : null,
       };
@@ -313,6 +345,7 @@ function readFunction(
     maxArgs,
     slots: declaredSlots,
     returnCounts: [...new Set(returnCounts)],
+    returnSlots: returnSlots.map(withoutNilKinds),
   };
 }
 

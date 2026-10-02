@@ -17,6 +17,7 @@ import {
 import {
   type AnnotatedFunction,
   type AnnotatedGeneric,
+  type AnnotatedReturn,
   type AnnotationModel,
   type AnnotationSurface,
   loadAnnotations,
@@ -189,7 +190,8 @@ export interface AnnotationMismatch {
   readonly name: string;
   readonly rule: AnnotationRule;
   readonly slot?: string;
-  // The annotated parameter name at `slot`, which correction tables key by.
+  // The annotated parameter name at `slot`, or the annotated return name at a
+  // `return<n>` slot, which correction tables key by.
   readonly param?: string;
   readonly annotated: string;
   readonly declared: string;
@@ -210,11 +212,23 @@ interface AnnotatedSlot {
   nilable: boolean;
 }
 
+interface AnnotatedReturnSlot {
+  readonly index: number;
+  readonly name?: string;
+  readonly types: string[];
+}
+
 interface MergedSignatures {
   readonly minArgs: number;
   readonly maxArgs: number | "variadic";
   readonly slots: AnnotatedSlot[];
   readonly returnCounts: (number | "variadic")[];
+  // Kinds unioned per position over the signatures carrying `@return`.
+  readonly returnSlots: AnnotatedReturnSlot[];
+}
+
+function isVarargReturn(returned: AnnotatedReturn): boolean {
+  return returned.name === "..." || returned.types.includes("...");
 }
 
 // Overloads merge per slot the way `readDeclaredSurface` merges declared ones:
@@ -226,6 +240,7 @@ function mergeSignatures(fn: AnnotatedFunction): MergedSignatures {
   let minArgs = Number.POSITIVE_INFINITY;
   let maxArgs: number | "variadic" = 0;
   const returnCounts = new Set<number | "variadic">();
+  const returnSlots = new Map<number, AnnotatedReturnSlot>();
   for (const signature of [fn, ...fn.overloads]) {
     let required = 0;
     let variadic = false;
@@ -252,9 +267,15 @@ function mergeSignatures(fn: AnnotatedFunction): MergedSignatures {
     if (variadic) maxArgs = "variadic";
     else if (maxArgs !== "variadic") maxArgs = Math.max(maxArgs, signature.params.length);
     if (signature.returns.length > 0) {
-      const vararg = signature.returns.some((r) => r.name === "..." || r.types.includes("..."));
+      const vararg = signature.returns.some(isVarargReturn);
       returnCounts.add(vararg ? "variadic" : signature.returns.length);
     }
+    signature.returns.forEach((returned, i) => {
+      if (isVarargReturn(returned)) return;
+      const slot = returnSlots.get(i + 1) ?? { index: i + 1, name: returned.name, types: [] };
+      for (const type of returned.types) if (!slot.types.includes(type)) slot.types.push(type);
+      returnSlots.set(i + 1, slot);
+    });
   }
   for (const slot of slots.values()) {
     if (lengths.some((l) => !l.variadic && l.length < slot.index)) slot.omissible = true;
@@ -264,6 +285,7 @@ function mergeSignatures(fn: AnnotatedFunction): MergedSignatures {
     maxArgs,
     slots: [...slots.values()].sort((a, b) => a.index - b.index),
     returnCounts: [...returnCounts],
+    returnSlots: [...returnSlots.values()].sort((a, b) => a.index - b.index),
   };
 }
 
@@ -273,6 +295,40 @@ function arityText(min: number, max: number | "variadic"): string {
 
 function kindsText(kinds: DeclaredKinds | readonly LuaKind[]): string {
   return kinds === "any" ? "any" : kinds.join("|");
+}
+
+type SlotBase = Pick<AnnotationMismatch, "surface" | "name" | "slot" | "param">;
+
+// An unmapped annotation is reported and never compared; otherwise kinds are
+// compared with nil removed from both sides, and never against `any`.
+function kindMismatches(
+  base: SlotBase,
+  resolved: AnnotationKinds,
+  target: DeclaredKinds,
+): AnnotationMismatch[] {
+  if (resolved.unmapped.length > 0) {
+    return [
+      {
+        ...base,
+        rule: "unmapped",
+        annotated: resolved.unmapped.join("|"),
+        declared: kindsText(target),
+      },
+    ];
+  }
+  if (resolved.kinds === "any" || target === "any") return [];
+  const accepted: readonly LuaKind[] = resolved.kinds.filter((kind) => kind !== "nil");
+  const declaredKinds: readonly LuaKind[] = target;
+  if (accepted.length === 0 || declaredKinds.length === 0) return [];
+  const evidence = { annotated: kindsText(accepted), declared: kindsText(declaredKinds) };
+  const out: AnnotationMismatch[] = [];
+  if (declaredKinds.some((kind) => !accepted.includes(kind))) {
+    out.push({ ...base, rule: "too-loose", ...evidence });
+  }
+  if (accepted.some((kind) => !declaredKinds.includes(kind))) {
+    out.push({ ...base, rule: "too-narrow", ...evidence });
+  }
+  return out;
 }
 
 export function diffAnnotated(
@@ -313,26 +369,7 @@ export function diffAnnotated(
     const base = { surface, name, slot: String(slot.index), param: slot.name };
     const resolved = annotationKinds(model, surface, slot.types, annotated.generics);
     const nilable = slot.nilable || (resolved.kinds !== "any" && resolved.kinds.includes("nil"));
-    if (resolved.unmapped.length > 0) {
-      out.push({
-        ...base,
-        rule: "unmapped",
-        annotated: resolved.unmapped.join("|"),
-        declared: kindsText(target.kinds),
-      });
-    } else if (resolved.kinds !== "any" && target.kinds !== "any") {
-      const accepted: readonly LuaKind[] = resolved.kinds.filter((kind) => kind !== "nil");
-      const declaredKinds: readonly LuaKind[] = target.kinds;
-      if (accepted.length > 0 && declaredKinds.length > 0) {
-        const evidence = { annotated: kindsText(accepted), declared: kindsText(declaredKinds) };
-        if (declaredKinds.some((kind) => !accepted.includes(kind))) {
-          out.push({ ...base, rule: "too-loose", ...evidence });
-        }
-        if (accepted.some((kind) => !declaredKinds.includes(kind))) {
-          out.push({ ...base, rule: "too-narrow", ...evidence });
-        }
-      }
-    }
+    out.push(...kindMismatches(base, resolved, target.kinds));
     const optional = slot.omissible || nilable;
     if (optional && !target.optional) {
       out.push({
@@ -361,6 +398,13 @@ export function diffAnnotated(
         annotated: merged.returnCounts.join("|"),
         declared: declared.returnCounts.join("|"),
       });
+    }
+    for (const returned of merged.returnSlots) {
+      const target = declared.returnSlots[returned.index - 1];
+      if (target === undefined) continue;
+      const base = { surface, name, slot: `return${returned.index}`, param: returned.name };
+      const resolved = annotationKinds(model, surface, returned.types, annotated.generics);
+      out.push(...kindMismatches(base, resolved, target));
     }
   }
   return out.sort((a, b) => annotationMismatchKey(a).localeCompare(annotationMismatchKey(b)));
@@ -582,6 +626,32 @@ const RULE_CORRECTION_TABLES: Partial<Record<AnnotationRule, SlotCorrection["tab
   "optional-as-required": "REQUIRED_SLOT_CORRECTIONS",
 };
 
+function paramCorrection(
+  mismatch: AnnotationMismatch,
+  corrections: readonly SlotCorrection[],
+): SlotCorrection | undefined {
+  const table = RULE_CORRECTION_TABLES[mismatch.rule];
+  if (!table || mismatch.param === undefined) return undefined;
+  const key = `${mismatch.name}:param:${mismatch.param}`;
+  return corrections.find((c) => c.table === table && c.key === key);
+}
+
+// A return correction names its multi-return value by `slot`; without one it
+// rewrites the single, first return.
+function returnCorrection(
+  mismatch: AnnotationMismatch,
+  corrections: readonly SlotCorrection[],
+): SlotCorrection | undefined {
+  if (mismatch.rule !== "too-loose" && mismatch.rule !== "too-narrow") return undefined;
+  const correction = corrections.find(
+    (c) => c.table === "RETURN_TYPE_CORRECTIONS" && c.key === mismatch.name,
+  );
+  if (correction?.table !== "RETURN_TYPE_CORRECTIONS") return undefined;
+  const slot = correction.entry.slot;
+  const matches = slot === undefined ? mismatch.slot === "return1" : slot === mismatch.param;
+  return matches ? correction : undefined;
+}
+
 // The correction that already fixes the slot a mismatch reports, when upstream's
 // annotation repeats the defect it corrects.
 function seedCorrection(
@@ -589,37 +659,108 @@ function seedCorrection(
   model: AnnotationModel,
   corrections: readonly SlotCorrection[],
 ): SlotCorrection | undefined {
-  const table = RULE_CORRECTION_TABLES[mismatch.rule];
   const annotated = model.functions.get(`${mismatch.surface}:${mismatch.name}`);
-  if (!table || mismatch.param === undefined || !annotated) return undefined;
-  const key = `${mismatch.name}:param:${mismatch.param}`;
-  const correction = corrections.find((c) => c.table === table && c.key === key);
+  if (!annotated) return undefined;
+  const correction = mismatch.slot?.startsWith("return")
+    ? returnCorrection(mismatch, corrections)
+    : paramCorrection(mismatch, corrections);
   if (!correction) return undefined;
   return correctionAgreement(correction, annotated, model) === "repeats" ? correction : undefined;
 }
 
-// Keeps every accepted and corrected verdict whose mismatch remains, records a
-// new mismatch as corrected when a correction already fixes its slot and as open
+export function correctionId(correction: SlotCorrection): string {
+  return `${correction.table}:${correction.key}`;
+}
+
+function sameEvidence(verdict: AnnotationVerdict, mismatch: AnnotationMismatch): boolean {
+  return verdict.annotated === mismatch.annotated && verdict.declared === mismatch.declared;
+}
+
+// Every verdict holds only while the mismatch it was triaged against reports the
+// same evidence, and a corrected one only while its correction is the one seeding
+// would pick: live, mapped to this rule and slot, and still repeated upstream.
+export function annotationVerdictProblems(
+  mismatches: ReadonlyMap<string, AnnotationMismatch>,
+  verdicts: Readonly<Record<string, AnnotationVerdict>>,
+  model: AnnotationModel,
+): string[] {
+  const corrections = allSlotCorrections();
+  const live = new Set(corrections.map(correctionId));
+  const problems: string[] = [];
+  for (const [key, m] of mismatches) {
+    if (!(key in verdicts)) {
+      problems.push(
+        `${key} (annotated ${m.annotated}, declared ${m.declared}): record a verdict in packages/types/scripts/lua-annotation-verdicts.json`,
+      );
+    }
+  }
+  for (const [key, v] of Object.entries(verdicts)) {
+    const m = mismatches.get(key);
+    if (!m) {
+      problems.push(`${key}: the mismatch is gone; delete the verdict`);
+      continue;
+    }
+    if (v.verdict === "accepted" && !(v.reason ?? "").trim()) {
+      problems.push(`${key}: accepted with no reason; name one`);
+    }
+    if (!sameEvidence(v, m)) {
+      problems.push(
+        `${key}: recorded ${v.annotated} / ${v.declared}, now ${m.annotated} / ${m.declared}; re-triage`,
+      );
+    }
+    if (v.verdict !== "corrected") continue;
+    if (!live.has(v.correction ?? "")) {
+      problems.push(`${key}: ${v.correction} names no live correction`);
+      continue;
+    }
+    const seeded = seedCorrection(m, model, corrections);
+    if (!seeded || correctionId(seeded) !== v.correction) {
+      problems.push(
+        `${key}: ${v.correction} no longer fixes this mismatch (seeding picks ${seeded ? correctionId(seeded) : "none"}); re-triage`,
+      );
+    }
+  }
+  return problems;
+}
+
+export interface SeededVerdicts {
+  readonly verdicts: Record<string, AnnotationVerdict>;
+  // Accepted or corrected verdicts reseeded because their evidence or correction
+  // no longer holds.
+  readonly retriage: string[];
+}
+
+// Keeps an accepted verdict while its evidence is unchanged and a corrected one
+// while its correction is also still the one seeding picks; reseeds every other
+// mismatch as corrected when a correction already fixes its slot and as open
 // otherwise, and drops verdicts whose mismatch is gone.
 export function seedAnnotationVerdicts(
   mismatches: ReadonlyMap<string, AnnotationMismatch>,
   prior: Readonly<Record<string, AnnotationVerdict>>,
   model: AnnotationModel,
-): Record<string, AnnotationVerdict> {
-  const corrections = allSlotCorrections();
-  const next: Record<string, AnnotationVerdict> = {};
+  corrections: readonly SlotCorrection[] = allSlotCorrections(),
+): SeededVerdicts {
+  const verdicts: Record<string, AnnotationVerdict> = {};
+  const retriage: string[] = [];
   for (const [key, m] of mismatches) {
     const kept = prior[key];
-    if (kept && kept.verdict !== "open") {
-      next[key] = kept;
-      continue;
-    }
+    const evidence = { annotated: m.annotated, declared: m.declared };
     const correction = seedCorrection(m, model, corrections);
-    next[key] = correction
-      ? { verdict: "corrected", correction: `${correction.table}:${correction.key}` }
-      : { verdict: "open", annotated: m.annotated, declared: m.declared };
+    const seededId = correction ? correctionId(correction) : undefined;
+    if (kept && kept.verdict !== "open") {
+      const holds =
+        sameEvidence(kept, m) && (kept.verdict === "accepted" || kept.correction === seededId);
+      if (holds) {
+        verdicts[key] = kept;
+        continue;
+      }
+      retriage.push(key);
+    }
+    verdicts[key] = seededId
+      ? { verdict: "corrected", correction: seededId, ...evidence }
+      : { verdict: "open", ...evidence };
   }
-  return next;
+  return { verdicts, retriage };
 }
 
 // Corrections whose slot upstream's annotation already types the corrected way:
@@ -651,7 +792,7 @@ if (import.meta.main) {
     } catch {
       prior = {};
     }
-    const next = seedAnnotationVerdicts(mismatches, prior, model);
+    const { verdicts: next, retriage } = seedAnnotationVerdicts(mismatches, prior, model);
     const formatted = Bun.spawnSync(
       ["bunx", "biome", "format", "--stdin-file-path=lua-annotation-verdicts.json"],
       { stdin: Buffer.from(JSON.stringify(next)) },
@@ -659,6 +800,9 @@ if (import.meta.main) {
     if (formatted.exitCode !== 0) throw new Error(formatted.stderr.toString());
     await Bun.write(ANNOTATION_VERDICTS_FILE, formatted.stdout.toString());
     console.log(`wrote ${Object.keys(next).length} verdicts to ${ANNOTATION_VERDICTS_FILE}`);
+    if (retriage.length > 0) {
+      console.error(`re-triage these reseeded verdicts:\n${retriage.join("\n")}`);
+    }
   } else {
     for (const [key, m] of mismatches) console.log(`${key}\t${m.annotated}\t${m.declared}`);
   }

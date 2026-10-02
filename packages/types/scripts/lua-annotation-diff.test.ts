@@ -1,18 +1,16 @@
 import { describe, expect, test } from "bun:test";
-import {
-  OPTIONAL_SLOT_CORRECTIONS,
-  PARAM_TYPE_CORRECTIONS,
-  REQUIRED_SLOT_CORRECTIONS,
-  RETURN_TYPE_CORRECTIONS,
-} from "../src/emit-dts";
+import { OPTIONAL_SLOT_CORRECTIONS, PARAM_TYPE_CORRECTIONS } from "../src/emit-dts";
 import {
   type AnnotationMismatch,
   annotationKinds,
   annotationMismatchKey,
+  annotationVerdictProblems,
   correctionAgreement,
   diffAllAnnotated,
   diffAnnotated,
   readAnnotationVerdicts,
+  type SlotCorrection,
+  seedAnnotationVerdicts,
 } from "./lua-annotation-diff";
 import {
   type AnnotatedFunction,
@@ -20,7 +18,12 @@ import {
   type AnnotationModel,
   loadAnnotations,
 } from "./lua-annotations";
-import type { DeclaredFunction, DeclaredSlot } from "./lua-kind";
+import {
+  type DeclaredFunction,
+  type DeclaredSlot,
+  readDeclaredSurface,
+  surfaceProgram,
+} from "./lua-kind";
 import { loadApiTargets } from "./regen";
 
 const DEFAULT_TARGET = loadApiTargets().find((target) => target.default === true);
@@ -125,6 +128,7 @@ function declared(overrides: Partial<DeclaredFunction> = {}): DeclaredFunction {
     maxArgs: slots.length,
     slots,
     returnCounts: [0],
+    returnSlots: [],
     ...overrides,
   };
 }
@@ -280,6 +284,149 @@ describe("diffAnnotated", () => {
   });
 });
 
+describe("declared return slots", () => {
+  const sys = readDeclaredSurface(surfaceProgram(DEFAULT_TARGET), ["sys"]).functions;
+
+  test("each return position reads its kinds, a multi-return per element, nil removed", () => {
+    expect(sys.get("sys.get_save_file")?.returnSlots).toEqual([["string"]]);
+    expect(sys.get("sys.load_resource")?.returnSlots).toEqual([["string"], ["string"]]);
+    expect(sys.get("sys.exists")?.returnSlots).toEqual([["boolean"]]);
+  });
+});
+
+describe("return kinds", () => {
+  const returnsNumber = annotated({ returns: [{ types: ["number"] }] });
+  const declaresString = declared({ returnCounts: [1], returnSlots: [["string"]] });
+
+  test("a kind change at the same count reports both directions and no return-count", () => {
+    expect(rules(diffAnnotated(returnsNumber, declaresString, EMPTY_MODEL))).toEqual([
+      { rule: "too-loose", slot: "return1", annotated: "number", declared: "string" },
+      { rule: "too-narrow", slot: "return1", annotated: "number", declared: "string" },
+    ]);
+  });
+
+  test("a declared kind upstream lacks is too loose; an annotated kind not declared is too narrow", () => {
+    const loose = diffAnnotated(
+      returnsNumber,
+      declared({ returnCounts: [1], returnSlots: [["number", "string"]] }),
+      EMPTY_MODEL,
+    );
+    expect(rules(loose)).toEqual([
+      { rule: "too-loose", slot: "return1", annotated: "number", declared: "number|string" },
+    ]);
+    const narrow = diffAnnotated(
+      annotated({ returns: [{ types: ["number", "string"] }] }),
+      declared({ returnCounts: [1], returnSlots: [["number"]] }),
+      EMPTY_MODEL,
+    );
+    expect(rules(narrow)).toEqual([
+      { rule: "too-narrow", slot: "return1", annotated: "number|string", declared: "number" },
+    ]);
+  });
+
+  test("no @return, a variadic side, any, and merged overloads compare nothing", () => {
+    expect(diffAnnotated(annotated(), declaresString, EMPTY_MODEL)).toEqual([]);
+    expect(
+      diffAnnotated(
+        annotated({ returns: [{ types: ["number"] }, { name: "...", types: ["number"] }] }),
+        declaresString,
+        EMPTY_MODEL,
+      ),
+    ).toEqual([]);
+    expect(
+      diffAnnotated(
+        returnsNumber,
+        declared({ returnCounts: ["variadic"], returnSlots: [["string"]] }),
+        EMPTY_MODEL,
+      ),
+    ).toEqual([]);
+    expect(
+      diffAnnotated(annotated({ returns: [{ types: ["any"] }] }), declaresString, EMPTY_MODEL),
+    ).toEqual([]);
+    expect(
+      diffAnnotated(
+        returnsNumber,
+        declared({ returnCounts: [1], returnSlots: ["any"] }),
+        EMPTY_MODEL,
+      ),
+    ).toEqual([]);
+    expect(
+      diffAnnotated(
+        annotated({
+          returns: [{ types: ["number"] }],
+          overloads: [{ params: [param("a", ["number"])], returns: [{ types: ["string"] }] }],
+        }),
+        declared({ returnCounts: [1], returnSlots: [["number", "string"]] }),
+        EMPTY_MODEL,
+      ),
+    ).toEqual([]);
+  });
+
+  test("an unmapped annotated return is reported and not compared by kind", () => {
+    const found = diffAnnotated(
+      annotated({ returns: [{ types: ["mystery"] }] }),
+      declaresString,
+      EMPTY_MODEL,
+    );
+    expect(rules(found)).toEqual([
+      { rule: "unmapped", slot: "return1", annotated: "mystery", declared: "string" },
+    ]);
+  });
+
+  test("seeding maps a return-kind mismatch to the return correction its annotation repeats", () => {
+    const fn = annotated({ returns: [{ types: ["number"] }] });
+    const fnModel = { ...EMPTY_MODEL, functions: new Map([["runtime:test.fn", fn]]) };
+    const found = new Map(
+      diffAnnotated(fn, declaresString, fnModel).map((m) => [annotationMismatchKey(m), m]),
+    );
+    const correction = (upstream: string[]): SlotCorrection => ({
+      table: "RETURN_TYPE_CORRECTIONS",
+      key: "test.fn",
+      entry: { ts: "string", upstream, reason: "binding returns a string" },
+    });
+    const repeated = seedAnnotationVerdicts(found, {}, fnModel, [correction(["number"])]);
+    expect(repeated.verdicts["runtime:test.fn:too-loose:return1"]).toEqual({
+      verdict: "corrected",
+      correction: "RETURN_TYPE_CORRECTIONS:test.fn",
+      annotated: "number",
+      declared: "string",
+    });
+    expect(repeated.verdicts["runtime:test.fn:too-narrow:return1"]?.verdict).toBe("corrected");
+    const fixed = seedAnnotationVerdicts(found, {}, fnModel, [correction(["boolean"])]);
+    expect(fixed.verdicts["runtime:test.fn:too-loose:return1"]?.verdict).toBe("open");
+  });
+
+  test("a named return correction maps only to the position carrying that name", () => {
+    const fn = annotated({
+      returns: [
+        { name: "ok", types: ["boolean"] },
+        { name: "value", types: ["number"] },
+      ],
+    });
+    const fnModel = { ...EMPTY_MODEL, functions: new Map([["runtime:test.fn", fn]]) };
+    const found = new Map(
+      diffAnnotated(
+        fn,
+        declared({ returnCounts: [2], returnSlots: [["string"], ["string"]] }),
+        fnModel,
+      ).map((m) => [annotationMismatchKey(m), m]),
+    );
+    const correction: SlotCorrection = {
+      table: "RETURN_TYPE_CORRECTIONS",
+      key: "test.fn",
+      entry: {
+        ts: "string",
+        upstream: ["number"],
+        reason: "binding returns a string",
+        slot: "value",
+      },
+    };
+    const seeded = seedAnnotationVerdicts(found, {}, fnModel, [correction]);
+    expect(seeded.verdicts["runtime:test.fn:too-loose:return2"]?.verdict).toBe("corrected");
+    expect(seeded.verdicts["runtime:test.fn:too-loose:return1"]?.verdict).toBe("open");
+  });
+});
+
 describe("correctionAgreement", () => {
   const optional = {
     table: "OPTIONAL_SLOT_CORRECTIONS",
@@ -317,7 +464,7 @@ describe("correctionAgreement", () => {
 });
 
 describe("annotation verdict gate", () => {
-  const { mismatches, unmapped } = diffAllAnnotated();
+  const { mismatches, unmapped, model: diffModel } = diffAllAnnotated();
   const verdicts = readAnnotationVerdicts();
 
   test("every declared slot type maps to a Lua kind", () => {
@@ -335,59 +482,83 @@ describe("annotation verdict gate", () => {
     expect(mismatches.has("editor:json.decode:return-count")).toBe(false);
   });
 
-  test("every mismatch has a verdict", () => {
-    const missing = [...mismatches]
-      .filter(([key]) => !(key in verdicts))
-      .map(([key, m]) => `${key} (annotated ${m.annotated}, declared ${m.declared})`);
-    if (missing.length > 0) {
-      throw new Error(
-        `record a verdict in packages/types/scripts/lua-annotation-verdicts.json for:\n${missing.join("\n")}`,
-      );
+  test("every verdict holds for the evidence and correction it was triaged against", () => {
+    expect(annotationVerdictProblems(mismatches, verdicts, diffModel)).toEqual([]);
+  });
+
+  function withEvidence(key: string, change: Partial<AnnotationMismatch>) {
+    const m = mismatches.get(key);
+    if (!m) throw new Error(`${key} is not a mismatch`);
+    return new Map([...mismatches, [key, { ...m, ...change }]]);
+  }
+
+  test("an accepted verdict is re-triaged when either side of its evidence changes", () => {
+    const key = "runtime:vmath.vector:arity";
+    expect(verdicts[key]?.verdict).toBe("accepted");
+    for (const change of [{ declared: "9..9" }, { annotated: "9..9" }]) {
+      const problems = annotationVerdictProblems(withEvidence(key, change), verdicts, diffModel);
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toContain(key);
+      expect(problems[0]).toContain("re-triage");
     }
   });
 
-  test("every verdict still has its mismatch", () => {
-    const stale = Object.keys(verdicts).filter((key) => !mismatches.has(key));
-    if (stale.length > 0) {
-      throw new Error(`the mismatch is gone; delete the verdict:\n${stale.join("\n")}`);
-    }
-  });
-
-  test("accepted verdicts name a reason", () => {
-    const bare = Object.entries(verdicts)
-      .filter(([, v]) => v.verdict === "accepted" && !(v.reason ?? "").trim())
-      .map(([key]) => key);
-    expect(bare).toEqual([]);
-  });
-
-  test("an open verdict still carries the evidence it was recorded with", () => {
-    const changed = Object.entries(verdicts).flatMap(([key, v]) => {
-      const m = mismatches.get(key);
-      if (v.verdict !== "open" || !m) return [];
-      if (v.annotated === m.annotated && v.declared === m.declared) return [];
-      return [
-        `${key}: recorded ${v.annotated} / ${v.declared}, now ${m.annotated} / ${m.declared}`,
-      ];
-    });
-    if (changed.length > 0) {
-      throw new Error(`re-triage these changed mismatches:\n${changed.join("\n")}`);
-    }
-  });
-
-  test("a corrected verdict names a correction that still exists", () => {
-    const tables: Record<string, ReadonlyMap<string, unknown>> = {
-      PARAM_TYPE_CORRECTIONS,
-      RETURN_TYPE_CORRECTIONS,
-      OPTIONAL_SLOT_CORRECTIONS,
-      REQUIRED_SLOT_CORRECTIONS,
+  test("a corrected verdict naming another live correction is a problem", () => {
+    const key = "runtime:camera.get_fov:too-loose:1";
+    const other = "PARAM_TYPE_CORRECTIONS:camera.get_far_z:param:camera";
+    expect(verdicts[key]?.verdict).toBe("corrected");
+    expect(PARAM_TYPE_CORRECTIONS.has(other.slice(other.indexOf(":") + 1))).toBe(true);
+    const rewritten = {
+      ...verdicts,
+      [key]: { ...verdicts[key], verdict: "corrected" as const, correction: other },
     };
-    const dangling = Object.entries(verdicts).flatMap(([key, v]) => {
-      if (v.verdict !== "corrected") return [];
-      const separator = (v.correction ?? "").indexOf(":");
-      const table = tables[(v.correction ?? "").slice(0, separator)];
-      const entry = (v.correction ?? "").slice(separator + 1);
-      return separator > 0 && table?.has(entry) ? [] : [`${key}: ${v.correction}`];
+    const problems = annotationVerdictProblems(mismatches, rewritten, diffModel);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain(key);
+  });
+
+  test("a corrected verdict whose annotation no longer repeats the defect is a problem", () => {
+    const key = "runtime:go.cancel_animations:required-as-optional:1";
+    const verdict = verdicts[key];
+    expect(verdict?.correction).toBe("OPTIONAL_SLOT_CORRECTIONS:go.cancel_animations:param:url");
+    const fn = diffModel.functions.get("runtime:go.cancel_animations");
+    if (!fn) throw new Error("go.cancel_animations is not annotated");
+    const fixed = {
+      ...fn,
+      params: fn.params.map((p) => (p.name === "url" ? { ...p, optional: true } : p)),
+    };
+    const functions = new Map(diffModel.functions);
+    functions.set("runtime:go.cancel_animations", fixed);
+    const fixedModel = { ...diffModel, functions };
+    const correction = {
+      table: "OPTIONAL_SLOT_CORRECTIONS",
+      key: "go.cancel_animations:param:url",
+      entry: OPTIONAL_SLOT_CORRECTIONS.get("go.cancel_animations:param:url") ?? "",
+    } as const;
+    expect(correctionAgreement(correction, fixed, fixedModel)).toBe("agrees");
+    const problems = annotationVerdictProblems(mismatches, verdicts, fixedModel);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain(key);
+  });
+
+  test("seeding round-trips the committed verdicts", () => {
+    expect(seedAnnotationVerdicts(mismatches, verdicts, diffModel)).toEqual({
+      verdicts,
+      retriage: [],
     });
-    expect(dangling).toEqual([]);
+  });
+
+  test("seeding reopens an accepted verdict whose evidence changed and keeps the rest", () => {
+    const key = "runtime:vmath.vector:arity";
+    const untouched = "runtime:vmath.vector:required-as-optional:1";
+    const seeded = seedAnnotationVerdicts(
+      withEvidence(key, { declared: "9..9" }),
+      verdicts,
+      diffModel,
+    );
+    expect(seeded.verdicts[key]).toEqual({ verdict: "open", annotated: "1..1", declared: "9..9" });
+    expect(seeded.retriage).toEqual([key]);
+    expect(seeded.verdicts[untouched]).toEqual(verdicts[untouched]);
+    expect(seeded.verdicts[untouched]?.reason).toBeTruthy();
   });
 });
