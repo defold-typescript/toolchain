@@ -3,6 +3,8 @@ import * as path from "node:path";
 import {
   type BuildConfig,
   computeOutputRel,
+  HSM_REQUIRE_ROOT,
+  hsmModules,
   parseBuildConfig,
   type ScriptKind,
   type SourceOutputKind,
@@ -109,6 +111,7 @@ export function detectSourceOutputKind(source: string): SourceOutputKind {
 // print and says what the file is instead.
 export const LUALIB_BUNDLE_LABEL = "the TypeScript standard-library bundle";
 export const TIMERS_RUNTIME_LABEL = "the timers polyfill runtime";
+export const HSM_LIBRARY_LABEL = "the hsm state machine library";
 
 // Defold resolves `require("lualib_bundle")` to `lualib_bundle.lua` at the
 // project/output root, so the synthesized bundle lands once there regardless of
@@ -130,6 +133,42 @@ export function timersModuleRel(config: BuildConfig): string {
     return "defold_typescript_timers.lua";
   }
   return path.posix.join(outDir, "defold_typescript_timers.lua");
+}
+
+// Each hsm module lands at `defold_typescript_hsm/<module>.lua` under the
+// project/output root, the path `require("defold_typescript_hsm.<module>")`
+// opens, so it resolves regardless of which subfolder a script lives in.
+export function hsmModuleRel(config: BuildConfig, name: string): string {
+  const rel = `${HSM_REQUIRE_ROOT}/${name}.lua`;
+  const { outDir } = config;
+  if (outDir === undefined || outDir === "" || outDir === ".") {
+    return rel;
+  }
+  return path.posix.join(outDir, rel);
+}
+
+/** Where each named hsm module lands, keyed by module name. */
+export function hsmModuleRels(
+  config: BuildConfig,
+  names: Iterable<string>,
+): Record<string, string> {
+  const rels: Record<string, string> = {};
+  for (const name of names) {
+    rels[name] = hsmModuleRel(config, name);
+  }
+  return rels;
+}
+
+// Every path the build writes on its own behalf rather than for a source: the
+// lualib bundle, the timers runtime, and every hsm module. Each is written only
+// when a program needs it, but any of them may be on disk from an earlier build,
+// so watch and the orphan scan treat the whole set as the build's own.
+export function builtinRuntimeRels(config: BuildConfig): string[] {
+  return [
+    lualibBundleRel(config),
+    timersModuleRel(config),
+    ...hsmModules().map(({ name }) => hsmModuleRel(config, name)),
+  ];
 }
 
 export function outputRelsForSource(rel: string, config: BuildConfig): string[] {

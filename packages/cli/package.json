@@ -33,7 +33,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "rm -rf dist && bun scripts/copy-hsm.ts && bun build src/index.ts src/bin.ts --target=node --format=esm --packages=external --outdir=dist && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "build": "rm -rf dist && bun build src/index.ts src/bin.ts --target=node --format=esm --packages=external --outdir=dist && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "bun test"
   },

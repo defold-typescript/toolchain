@@ -1,17 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import { transpileProject } from "@defold-typescript/transpiler";
+import { compileHsmModules } from "@defold-typescript/transpiler";
 
 const LUA_LINE_BUDGET = 600;
 
+// The Lua the build writes into a project, from the transpiler's own compile:
+// `compileHsmModules` throws on any diagnostic or lualib dependency, so reaching
+// these assertions already proves both.
 describe("hsm core Lua output", () => {
-  const source = readFileSync(new URL("./index.ts", import.meta.url), "utf8");
-  const result = transpileProject({ files: { "hsm/index.ts": source } });
-  const lua = result.lua["hsm/index.ts"] ?? "";
+  const lua = compileHsmModules().index ?? "";
 
-  test("transpiles with no diagnostics and no lualib", () => {
-    expect(result.diagnostics).toEqual([]);
-    expect(result.lualib).toBeUndefined();
+  test("does not require the lualib bundle", () => {
     expect(lua).not.toContain('require("lualib_bundle")');
   });
 
@@ -25,15 +23,9 @@ describe("hsm core Lua output", () => {
 });
 
 describe("hsm Defold adapter Lua output", () => {
-  const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
-  const result = transpileProject({
-    files: { "hsm/index.ts": read("./index.ts"), "hsm/defold.ts": read("./defold.ts") },
-  });
-  const lua = result.lua["hsm/defold.ts"] ?? "";
+  const lua = compileHsmModules().defold ?? "";
 
-  test("transpiles with no diagnostics and no lualib", () => {
-    expect(result.diagnostics).toEqual([]);
-    expect(result.lualib).toBeUndefined();
+  test("does not require the lualib bundle", () => {
     expect(lua).not.toContain('require("lualib_bundle")');
   });
 

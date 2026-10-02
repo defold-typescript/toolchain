@@ -10,6 +10,7 @@ Thumbs.db
 /src/*.ts.script
 /src/*.ts.script.map
 /.defold-types/
+/defold_typescript_hsm/
 
 # Local install artifacts, if you choose to `bun install` here.
 /node_modules/

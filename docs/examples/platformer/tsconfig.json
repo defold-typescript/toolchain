@@ -10,7 +10,9 @@
     "paths": {
       "@defold-typescript/types": ["../../../packages/types/src/index.ts"],
       "@defold-typescript/types/script": ["../../../packages/types/generated/kinds/script.d.ts"],
-      "@defold-typescript/types/timers": ["../../../packages/types/src/timers.d.ts"]
+      "@defold-typescript/types/timers": ["../../../packages/types/src/timers.d.ts"],
+      "@defold-typescript/types/hsm": ["../../../packages/types/hsm/index.d.ts"],
+      "@defold-typescript/types/hsm/defold": ["../../../packages/types/hsm/defold.d.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"]

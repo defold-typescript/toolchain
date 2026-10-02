@@ -1,0 +1,649 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`hsm as a built-in import importing defineMachine lowers to the index require and selects only index 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local _____40NoResolution_3Adefold_typescript_hsm_2Eindex = require("defold_typescript_hsm.index")
+local defineMachine = _____40NoResolution_3Adefold_typescript_hsm_2Eindex.defineMachine
+____exports.door = defineMachine()({initial = "closed", states = {closed = {on = {OPEN = "open"}}, open = {on = {CLOSE = "closed"}}}})
+local instance = ____exports.door.start({})
+instance.send({type = "OPEN"})
+return ____exports
+"
+`;
+
+exports[`hsm as a built-in import importing defineMachine lowers to the index require and selects only index 2`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local ROOT = 0
+local NO_STATE = -1
+local function describePath(path)
+    return path == "" and "(root)" or path
+end
+local function lookupPath(compiled, path)
+    local index = compiled.pathIndex[path]
+    local ____temp_0
+    if type(index) == "number" then
+        ____temp_0 = index
+    else
+        ____temp_0 = nil
+    end
+    return ____temp_0
+end
+local function resolveTarget(compiled, source, target)
+    local path
+    if string.sub(target, 1, 1) == "#" then
+        path = string.sub(target, 2)
+    else
+        local base = source == ROOT and ROOT or compiled.parent[source + 1]
+        local ____temp_1
+        if base == ROOT then
+            ____temp_1 = target
+        else
+            ____temp_1 = (compiled.paths[base + 1] .. ".") .. target
+        end
+        path = ____temp_1
+    end
+    local index = lookupPath(compiled, path)
+    if index == nil then
+        error(
+            ((("hsm: state \\"" .. describePath(compiled.paths[source + 1])) .. "\\" targets unknown state \\"") .. target) .. "\\"",
+            0
+        )
+    end
+    return index
+end
+local function registerState(compiled, config, parentIndex, path)
+    local index = compiled.count
+    compiled.count = index + 1
+    local depth = parentIndex == NO_STATE and 0 or compiled.depth[parentIndex + 1] + 1
+    if depth > compiled.maxDepth then
+        compiled.maxDepth = depth
+    end
+    compiled.configs[index + 1] = config
+    compiled.paths[index + 1] = path
+    compiled.parent[index + 1] = parentIndex
+    compiled.depth[index + 1] = depth
+    compiled.initialChild[index + 1] = NO_STATE
+    compiled.pathIndex[path] = index
+    local children = config.states
+    if children == nil then
+        return
+    end
+    for name in pairs(children) do
+        local ____registerState_5 = registerState
+        local ____compiled_3 = compiled
+        local ____children_name_4 = children[name]
+        local ____temp_2
+        if path == "" then
+            ____temp_2 = name
+        else
+            ____temp_2 = (path .. ".") .. name
+        end
+        ____registerState_5(____compiled_3, ____children_name_4, index, ____temp_2)
+    end
+end
+local function hasChildren(config)
+    local children = config.states
+    if children == nil then
+        return false
+    end
+    for _name in pairs(children) do
+        return true
+    end
+    return false
+end
+local function compileInitial(compiled, index)
+    local config = compiled.configs[index + 1]
+    local path = compiled.paths[index + 1]
+    local initial = config.initial
+    if not hasChildren(config) then
+        if initial ~= nil then
+            error(
+                ((("hsm: state \\"" .. describePath(path)) .. "\\" has initial \\"") .. initial) .. "\\" but no child states",
+                0
+            )
+        end
+        return
+    end
+    if initial == nil then
+        error(
+            ("hsm: compound state \\"" .. describePath(path)) .. "\\" has no initial",
+            0
+        )
+    end
+    local ____lookupPath_8 = lookupPath
+    local ____compiled_7 = compiled
+    local ____temp_6
+    if path == "" then
+        ____temp_6 = initial
+    else
+        ____temp_6 = (path .. ".") .. initial
+    end
+    local child = ____lookupPath_8(____compiled_7, ____temp_6)
+    if child == nil or compiled.parent[child + 1] ~= index then
+        error(
+            ((("hsm: state \\"" .. describePath(path)) .. "\\" has initial \\"") .. initial) .. "\\", which is not one of its children",
+            0
+        )
+    end
+    compiled.initialChild[index + 1] = child
+end
+local function compileTransition(compiled, source, spec)
+    if type(spec) == "string" then
+        return {
+            target = resolveTarget(compiled, source, spec),
+            guard = nil,
+            actions = {},
+            reenter = false
+        }
+    end
+    local actions = {}
+    local declared = spec.actions
+    if type(declared) == "function" then
+        actions[#actions + 1] = declared
+    elseif declared ~= nil then
+        do
+            local i = 0
+            while i < #declared do
+                actions[#actions + 1] = declared[i + 1]
+                i = i + 1
+            end
+        end
+    end
+    return {
+        target = spec.target == nil and NO_STATE or resolveTarget(compiled, source, spec.target),
+        guard = spec.guard,
+        actions = actions,
+        reenter = spec.reenter == true
+    }
+end
+local function compileOn(compiled, index)
+    local ____table = {}
+    compiled.onIndex[index + 1] = ____table
+    local on = compiled.configs[index + 1].on
+    if on == nil then
+        return
+    end
+    for ____type in pairs(on) do
+        do
+            local __continue30
+            repeat
+                local spec = on[____type]
+                if spec == nil then
+                    __continue30 = true
+                    break
+                end
+                local list = {}
+                if type(spec) == "string" or spec[1] == nil then
+                    list[#list + 1] = compileTransition(compiled, index, spec)
+                else
+                    local candidates = spec
+                    do
+                        local i = 0
+                        while i < #candidates do
+                            list[#list + 1] = compileTransition(compiled, index, candidates[i + 1])
+                            i = i + 1
+                        end
+                    end
+                end
+                ____table[____type] = #compiled.transitions
+                local ____compiled_transitions_9 = compiled.transitions
+                ____compiled_transitions_9[#____compiled_transitions_9 + 1] = list
+                __continue30 = true
+            until true
+            if not __continue30 then
+                break
+            end
+        end
+    end
+end
+local NOT_A_DELAY = -1
+local function parseDelay(key)
+    if type(key) == "number" then
+        return key
+    end
+    local delay = NOT_A_DELAY
+    do
+        pcall(function()
+            delay = key * 1
+        end)
+    end
+    if tostring(delay) ~= key then
+        return NOT_A_DELAY
+    end
+    return delay
+end
+local function compileAfter(compiled, index)
+    local delays = {}
+    local targets = {}
+    compiled.afterDelays[index + 1] = delays
+    compiled.afterTargets[index + 1] = targets
+    local after = compiled.configs[index + 1].after
+    if after == nil then
+        return
+    end
+    local path = compiled.paths[index + 1]
+    for key in pairs(after) do
+        local delay = parseDelay(key)
+        if not (delay >= 0) then
+            error(
+                ((("hsm: state \\"" .. describePath(path)) .. "\\" has an after delay \\"") .. key) .. "\\" that is not a non-negative number",
+                0
+            )
+        end
+        local target = resolveTarget(compiled, index, after[key])
+        local slot = #delays
+        while slot > 0 and delays[slot] > delay do
+            delays[slot + 1] = delays[slot]
+            targets[slot + 1] = targets[slot]
+            slot = slot - 1
+        end
+        delays[slot + 1] = delay
+        targets[slot + 1] = target
+    end
+end
+local function compile(config)
+    local compiled = {
+        count = 0,
+        maxDepth = 0,
+        configs = {},
+        paths = {},
+        parent = {},
+        depth = {},
+        initialChild = {},
+        onIndex = {},
+        transitions = {},
+        afterDelays = {},
+        afterTargets = {},
+        pathIndex = {}
+    }
+    registerState(compiled, config, NO_STATE, "")
+    do
+        local index = 0
+        while index < compiled.count do
+            compileInitial(compiled, index)
+            compileOn(compiled, index)
+            compileAfter(compiled, index)
+            index = index + 1
+        end
+    end
+    return compiled
+end
+local function isAncestorOrSelf(compiled, ancestor, state)
+    local ancestorDepth = compiled.depth[ancestor + 1]
+    local current = state
+    while compiled.depth[current + 1] > ancestorDepth do
+        current = compiled.parent[current + 1]
+    end
+    return current == ancestor
+end
+local function transitionDomain(compiled, source, target, reenter)
+    if source == ROOT or not reenter and isAncestorOrSelf(compiled, source, target) then
+        return source
+    end
+    local domain = compiled.parent[source + 1]
+    while domain ~= ROOT and (domain == target or not isAncestorOrSelf(compiled, domain, target)) do
+        domain = compiled.parent[domain + 1]
+    end
+    return domain
+end
+local function createMachine(config)
+    local compiled = compile(config)
+    local paths = compiled.paths
+    local parent = compiled.parent
+    local depth = compiled.depth
+    local initialChild = compiled.initialChild
+    local configs = compiled.configs
+    local onIndex = compiled.onIndex
+    local transitions = compiled.transitions
+    local afterDelays = compiled.afterDelays
+    local afterTargets = compiled.afterTargets
+    local function start(ctx)
+        local enterState, exitTo, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, active, elapsed, fired, scratch, entryId, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, instance
+        function enterState(state)
+            local level = depth[state + 1]
+            active[level + 1] = state
+            elapsed[level + 1] = 0
+            fired[level + 1] = 0
+            leafDepth = level
+            entryCount = entryCount + 1
+            local id = entryCount
+            entryId[level + 1] = id
+            local config = configs[state + 1]
+            local hook = config.enter
+            if hook ~= nil then
+                hook(ctx, instance)
+            end
+            local invoke = config.invoke
+            if invoke ~= nil then
+                local settled = false
+                invoke(
+                    ctx,
+                    function(event)
+                        if settled or not running or stopRequested or entryId[level + 1] ~= id then
+                            return
+                        end
+                        settled = true
+                        send(event)
+                    end,
+                    instance
+                )
+            end
+        end
+        function exitTo(level)
+            while leafDepth > level do
+                local state = active[leafDepth + 1]
+                active[leafDepth + 1] = NO_STATE
+                entryId[leafDepth + 1] = 0
+                leafDepth = leafDepth - 1
+                local hook = configs[state + 1].exit
+                if hook ~= nil then
+                    hook(ctx, instance)
+                end
+            end
+        end
+        function enterDown(from, target)
+            local count = 0
+            local state = target
+            while state ~= from do
+                scratch[count + 1] = state
+                count = count + 1
+                state = parent[state + 1]
+            end
+            while count > 0 do
+                count = count - 1
+                enterState(scratch[count + 1])
+                scratch[count + 1] = NO_STATE
+            end
+            state = target
+            while initialChild[state + 1] ~= NO_STATE do
+                state = initialChild[state + 1]
+                enterState(state)
+            end
+            instance.path = paths[active[leafDepth + 1] + 1]
+        end
+        function transition(source, target, reenter, actions, event)
+            if target == NO_STATE then
+                runActions(actions, event)
+                return
+            end
+            local domain = transitionDomain(compiled, source, target, reenter)
+            exitTo(depth[domain + 1])
+            runActions(actions, event)
+            enterDown(domain, target)
+        end
+        function runActions(actions, event)
+            if actions == nil or event == nil then
+                return
+            end
+            do
+                local i = 0
+                while i < #actions do
+                    actions[i + 1](ctx, event, instance)
+                    i = i + 1
+                end
+            end
+        end
+        function processEvent(event)
+            do
+                local level = leafDepth
+                while level >= 0 do
+                    do
+                        local __continue79
+                        repeat
+                            local state = active[level + 1]
+                            local listIndex = onIndex[state + 1][event.type]
+                            if type(listIndex) ~= "number" then
+                                __continue79 = true
+                                break
+                            end
+                            local list = transitions[listIndex + 1]
+                            do
+                                local i = 0
+                                while i < #list do
+                                    local candidate = list[i + 1]
+                                    if candidate.guard == nil or candidate.guard(ctx, event) then
+                                        transition(
+                                            state,
+                                            candidate.target,
+                                            candidate.reenter,
+                                            candidate.actions,
+                                            event
+                                        )
+                                        return
+                                    end
+                                    i = i + 1
+                                end
+                            end
+                            __continue79 = true
+                        until true
+                        if not __continue79 then
+                            break
+                        end
+                    end
+                    level = level - 1
+                end
+            end
+        end
+        function clearQueue()
+            while queueHead < queueTail do
+                queue[queueHead + 1] = nil
+                queueHead = queueHead + 1
+            end
+            queueHead = 0
+            queueTail = 0
+        end
+        function stopNow()
+            running = false
+            busy = true
+            clearQueue()
+            exitTo(NO_STATE)
+            instance.path = ""
+            busy = false
+        end
+        function endStep()
+            while not stopRequested and queueHead < queueTail do
+                local event = queue[queueHead + 1]
+                queue[queueHead + 1] = nil
+                queueHead = queueHead + 1
+                processEvent(event)
+            end
+            clearQueue()
+            busy = false
+            if stopRequested then
+                stopNow()
+            end
+        end
+        function send(event)
+            if not running or stopRequested then
+                return
+            end
+            queue[queueTail + 1] = event
+            queueTail = queueTail + 1
+            if busy then
+                return
+            end
+            busy = true
+            endStep()
+        end
+        function fireUpdateHooks(dt)
+            do
+                local level = leafDepth
+                while level >= 0 do
+                    do
+                        local __continue95
+                        repeat
+                            local state = active[level + 1]
+                            local hook = configs[state + 1].update
+                            if hook == nil then
+                                __continue95 = true
+                                break
+                            end
+                            local target = hook(ctx, dt, instance)
+                            if stopRequested then
+                                return true
+                            end
+                            if type(target) == "string" then
+                                transition(
+                                    state,
+                                    resolveTarget(compiled, state, target),
+                                    false,
+                                    nil,
+                                    nil
+                                )
+                                return true
+                            end
+                            __continue95 = true
+                        until true
+                        if not __continue95 then
+                            break
+                        end
+                    end
+                    level = level - 1
+                end
+            end
+            return false
+        end
+        function fireTimers(dt)
+            do
+                local level = 0
+                while level <= leafDepth do
+                    elapsed[level + 1] = elapsed[level + 1] + dt
+                    level = level + 1
+                end
+            end
+            do
+                local level = leafDepth
+                while level >= 0 do
+                    local state = active[level + 1]
+                    local delays = afterDelays[state + 1]
+                    local next = fired[level + 1]
+                    if next < #delays and delays[next + 1] <= elapsed[level + 1] then
+                        fired[level + 1] = next + 1
+                        transition(
+                            state,
+                            afterTargets[state + 1][next + 1],
+                            false,
+                            nil,
+                            nil
+                        )
+                        return
+                    end
+                    level = level - 1
+                end
+            end
+        end
+        function update(dt)
+            if not running or busy or stopRequested then
+                return
+            end
+            busy = true
+            if not fireUpdateHooks(dt) then
+                fireTimers(dt)
+            end
+            endStep()
+        end
+        function stop()
+            if not running then
+                return
+            end
+            if busy then
+                stopRequested = true
+                return
+            end
+            stopNow()
+        end
+        function matches(path)
+            do
+                local level = 1
+                while level <= leafDepth do
+                    if paths[active[level + 1] + 1] == path then
+                        return true
+                    end
+                    level = level + 1
+                end
+            end
+            return false
+        end
+        local slots = compiled.maxDepth + 1
+        active = {}
+        elapsed = {}
+        fired = {}
+        scratch = {}
+        entryId = {}
+        do
+            local i = 0
+            while i < slots do
+                active[i + 1] = NO_STATE
+                elapsed[i + 1] = 0
+                fired[i + 1] = 0
+                scratch[i + 1] = NO_STATE
+                entryId[i + 1] = 0
+                i = i + 1
+            end
+        end
+        entryCount = 0
+        queue = {}
+        queueHead = 0
+        queueTail = 0
+        leafDepth = NO_STATE
+        running = true
+        busy = false
+        stopRequested = false
+        instance = {
+            ctx = ctx,
+            path = "",
+            matches = matches,
+            send = send,
+            update = update,
+            stop = stop
+        }
+        busy = true
+        enterState(ROOT)
+        enterDown(ROOT, ROOT)
+        endStep()
+        return instance
+    end
+    return {start = start}
+end
+function ____exports.defineMachine()
+    return createMachine
+end
+return ____exports
+"
+`;
+
+exports[`hsm as a built-in import importing only the bridge selects only defold 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.messageEvents(ids)
+    local hashes = {}
+    do
+        local i = 0
+        while i < #ids do
+            hashes[i + 1] = hash(ids[i + 1])
+            i = i + 1
+        end
+    end
+    return {toEvent = function(message_id, message)
+        do
+            local i = 0
+            while i < #hashes do
+                if hashes[i + 1] == message_id then
+                    local event = {}
+                    for key in pairs(message) do
+                        event[key] = message[key]
+                    end
+                    event.type = ids[i + 1]
+                    return event
+                end
+                i = i + 1
+            end
+        end
+        return nil
+    end}
+end
+return ____exports
+"
+`;

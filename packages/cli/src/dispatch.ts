@@ -71,7 +71,6 @@ import {
   upstreamRefreshDue,
 } from "./upstream-notice";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
-import { resolveHsmSourceDir, runVendorHsm } from "./vendor-hsm";
 import type { CheckboxPrompt } from "./wall-interactive";
 import type { RunWatchHandle, RunWatchOptions, WatchEditorClient, WatcherFactory } from "./watch";
 
@@ -383,8 +382,8 @@ function dispatchCommand(
   // The tail is re-appended verbatim so `runDashIndex`/`extraArgs` below keep the
   // exact math they had when the delimiter was still an ordinary positional.
   const rest = dashIndex === -1 ? headRest : [...headRest, "--", ...tail];
-  // bob-cwd-is-second-positional: bob's leading positional is its subcommand, and
-  // vendor's is the library name, so their project dir is `rest[1]`; `run` takes
+  // bob-cwd-is-second-positional: bob's leading positional is its subcommand, so
+  // its project dir is `rest[1]`; `run` takes
   // its project dir from the first positional *before* `--` (engine args follow
   // `--`, so `rest[0]` may be `--` itself); every other command takes it from
   // `rest[0]`. Resolving it uniformly here keeps the pin, its namespace
@@ -392,12 +391,7 @@ function dispatchCommand(
   // built.
   const runDashIndex = rest.indexOf("--");
   const runProjectArg = (runDashIndex === -1 ? rest : rest.slice(0, runDashIndex))[0];
-  const cwdArg =
-    command === "bob" || command === "vendor"
-      ? rest[1]
-      : command === "run"
-        ? runProjectArg
-        : rest[0];
+  const cwdArg = command === "bob" ? rest[1] : command === "run" ? runProjectArg : rest[0];
   const cwd = cwdArg ? path.resolve(cwdArg) : process.cwd();
 
   // Hard cutover: the two-flag surface collapsed into `--defold-target`. Reject
@@ -442,50 +436,6 @@ function dispatchCommand(
       writeError(message);
     }
     return 1;
-  }
-
-  if (command === "vendor") {
-    // A file copy, not a target resolver: it never runs the resolution machinery
-    // below, so vendoring works in a folder with no package.json yet.
-    try {
-      if (rest[0] !== "hsm") {
-        throw new Error(
-          rest[0] === undefined
-            ? "defold-typescript vendor: name a library to vendor. hsm is the only one: defold-typescript vendor hsm <path>"
-            : `defold-typescript vendor: unknown library "${rest[0]}". hsm is the only one: defold-typescript vendor hsm <path>`,
-        );
-      }
-      if (rest[1] === undefined) {
-        throw new Error(
-          'defold-typescript vendor: a destination folder is required. Pass "." for the current folder, or a path like "path/to/project".',
-        );
-      }
-      const result = runVendorHsm({
-        cwd,
-        sourceDir: resolveHsmSourceDir(),
-        version: internals?.cliVersion ?? readCliVersion(),
-      });
-      if (json) {
-        io.stdout.write(renderResult({ command: "vendor", library: "hsm", ...result }));
-      } else {
-        const change =
-          result.previousVersion === null
-            ? result.version
-            : `${result.previousVersion} -> ${result.version}`;
-        io.stdout.write(
-          `defold-typescript vendor: hsm ${change}, wrote ${result.written.length} files: ${result.written.join(", ")}\n`,
-        );
-      }
-      return 0;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (json) {
-        io.stdout.write(renderResult({ command: "vendor", error: message }));
-      } else {
-        writeError(message);
-      }
-      return 1;
-    }
   }
 
   // Every lane that asks the running editor waits under one deadline, so the

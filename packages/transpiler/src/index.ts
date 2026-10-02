@@ -20,6 +20,15 @@ export {
   guiScriptResourceOf,
   guiScriptResourcesOf,
 } from "./gui-node-index";
+export type { HsmModule } from "./hsm-builtin";
+export {
+  HSM_MODULE_SPECIFIER,
+  HSM_REQUIRE_ROOT,
+  hsmModules,
+  hsmRequireName,
+  hsmSourceFiles,
+  resolveHsmSourceDir,
+} from "./hsm-builtin";
 export { buildInputActionIndex } from "./input-action-index";
 export type {
   ExtensionDependency,
@@ -99,7 +108,7 @@ export type {
   TranspileProjectResult,
   TranspileResult,
 } from "./transpile";
-export { transpile, transpileProject } from "./transpile";
+export { compileHsmModules, transpile, transpileProject } from "./transpile";
 export type { ClassifiedSlot } from "./url-address-slots";
 export {
   addressClassOfArgument,

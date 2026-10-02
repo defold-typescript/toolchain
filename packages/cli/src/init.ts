@@ -77,6 +77,7 @@ const GITIGNORE_LINES = [
   "/lualib_bundle.lua.map",
   "/defold_typescript_timers.lua",
   "/defold_typescript_timers.lua.map",
+  "/defold_typescript_hsm/",
 ];
 
 // The Defold editor's empty-template `.gitattributes` verbatim: linguist-language
