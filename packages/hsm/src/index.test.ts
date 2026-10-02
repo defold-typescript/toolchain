@@ -283,6 +283,40 @@ describe("events", () => {
     expect(m.path).toBe("a");
   });
 
+  test("transition lists must be non-empty, while {} stays a targetless handler", () => {
+    defineMachine<Ctx, Ev>({
+      initial: "idle",
+      states: {
+        idle: {
+          on: {
+            // @ts-expect-error an empty transition list would consume HIT
+            HIT: [],
+            GO: [{ target: "x" }],
+            STEP: [{ guard: (_ctx, event) => event.n > 0, target: "x" }, { target: "idle" }],
+          },
+        },
+        x: {},
+      },
+    });
+
+    const def = defineMachine<Ctx, Ev>({
+      initial: "p",
+      states: {
+        p: {
+          initial: "c",
+          states: { c: { on: { HIT: {} } } },
+          on: { HIT: "z" },
+        },
+        z: logged("z"),
+      },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    m.send({ type: "HIT" });
+    expect(m.path).toBe("p.c");
+    expect(ctx.log).toEqual([]);
+  });
+
   test("a root-level transition to the active state exits and re-enters it", () => {
     const def = defineMachine<Ctx, Ev>({
       initial: "stunned",

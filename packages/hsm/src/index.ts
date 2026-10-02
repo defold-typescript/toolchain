@@ -29,7 +29,8 @@ export interface TransitionConfig<Ctx, E extends EventObject, V extends E = E> {
 export type TransitionSpec<Ctx, E extends EventObject, V extends E = E> =
   | string
   | TransitionConfig<Ctx, E, V>
-  | readonly TransitionConfig<Ctx, E, V>[];
+  // Lua cannot tell [] from {}, so an empty list would compile to a targetless transition.
+  | readonly [TransitionConfig<Ctx, E, V>, ...TransitionConfig<Ctx, E, V>[]];
 
 export type OnConfig<Ctx, E extends EventObject> = {
   readonly [K in E["type"]]?: TransitionSpec<Ctx, E, Extract<E, { type: K }>>;
