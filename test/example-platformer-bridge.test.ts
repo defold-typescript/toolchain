@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
+import { hsmSourceFiles } from "../packages/cli/src/vendor-hsm";
 
 const repoRoot = join(import.meta.dir, "..");
 const exampleDir = join(repoRoot, "docs/examples/platformer");
@@ -49,6 +50,26 @@ describe("platformer example bridge", () => {
     }
     expect(exitCode).toBe(0);
   }, 60_000);
+
+  test("vendors the current hsm source", () => {
+    const sourceDir = join(repoRoot, "packages/hsm/src");
+    const vendorDir = join(exampleDir, "src/vendor/hsm");
+    const fix = "bun packages/cli/src/bin.ts vendor hsm docs/examples/platformer";
+    const names = hsmSourceFiles(sourceDir);
+    expect(names.length).toBeGreaterThan(0);
+    for (const name of names) {
+      const vendored = join(vendorDir, name);
+      if (
+        !existsSync(vendored) ||
+        !readFileSync(vendored).equals(readFileSync(join(sourceDir, name)))
+      ) {
+        throw new Error(`src/vendor/hsm/${name} differs from packages/hsm/src; run: ${fix}`);
+      }
+    }
+    if (!existsSync(join(vendorDir, "VERSION"))) {
+      throw new Error(`src/vendor/hsm/VERSION is missing; run: ${fix}`);
+    }
+  });
 
   test("mise.toml runs the working-tree CLI, not the published bunx form", () => {
     const mise = readFileSync(join(exampleDir, "mise.toml"), "utf8");
