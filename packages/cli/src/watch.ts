@@ -288,6 +288,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
 
   let session: BuildSession;
   let config: ReturnType<typeof readBuildConfig>;
+  // Whether the Lua on disk came from the latest transpile, so an editor's
+  // compile judges this watch's output rather than a failed build's leftovers.
+  let outputCurrent = false;
   if (opts.json) {
     // The diagnostics ride `start`, not the initial `build` event: a compile
     // failure routes to reportFailure, whose payload carries no warnings, so
@@ -316,6 +319,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     if (!opts.json) stdout.write(BUILD_STARTED_LINE);
     try {
       const { written, warnings, unreachableAddresses, crossWorldAddresses } = session.buildAll();
+      outputCurrent = true;
       if (opts.json) {
         stdout.write(
           renderWatchEvent({
@@ -336,6 +340,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       // A compile failure is non-fatal: report it and fall through to open the
       // watcher. A genuine setup failure (thrown above) still rejects.
       if (!(buildErr instanceof BuildFailureError)) throw buildErr;
+      outputCurrent = false;
       reportFailure(buildErr, "build");
     }
     if (!opts.json) stdout.write(BUILD_FINISHED_LINE);
@@ -588,8 +593,10 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     if (announce && endpoint.baseUrl !== refusedBaseUrl) {
       const announcedBefore = announcedBaseUrl;
       noteAttached(endpoint.baseUrl);
-      // A newly found editor has compiled nothing this watch wrote.
-      if (announcedBefore !== endpoint.baseUrl) requestCompile();
+      // A newly found editor has compiled nothing this watch wrote. After a
+      // failed transpile it would judge stale Lua, so the announcement is spent
+      // and the next successful rebuild's own compile covers it.
+      if (announcedBefore !== endpoint.baseUrl && outputCurrent) requestCompile();
     }
     if (client.openConsole !== undefined && !consoleRunning) {
       consoleRunning = true;
@@ -793,6 +800,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
         changed,
         removed,
       );
+      outputCurrent = true;
       if (opts.json) {
         stdout.write(
           renderWatchEvent({
@@ -816,6 +824,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       // after one would judge that same stale Lua.
       if (!scheduleReload(written)) requestCompile();
     } catch (err) {
+      outputCurrent = false;
       reportFailure(err, "rebuild");
     }
     if (!opts.json) stdout.write(BUILD_FINISHED_LINE);
