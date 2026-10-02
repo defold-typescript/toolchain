@@ -84,7 +84,10 @@
     "!scripts/engine-binding-verdicts.json",
     "!scripts/lua-kind.ts",
     "!scripts/index-slot-scan.ts",
-    "!scripts/lua-annotations.ts"
+    "!scripts/lua-annotations.ts",
+    "!scripts/lua-annotation-diff.ts",
+    "!scripts/lua-annotation-verdicts.ts",
+    "!scripts/lua-annotation-verdicts.json"
   ],
   "publishConfig": {
     "access": "public"

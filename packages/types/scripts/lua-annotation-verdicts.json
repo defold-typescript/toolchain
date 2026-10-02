@@ -1,0 +1,754 @@
+{
+  "editor:editor.execute:too-loose:2": {
+    "verdict": "open",
+    "annotated": "string",
+    "declared": "string|table"
+  },
+  "editor:http.server.route:optional-as-required:2": {
+    "verdict": "open",
+    "annotated": "optional",
+    "declared": "required"
+  },
+  "editor:http.server.route:too-narrow:2": {
+    "verdict": "open",
+    "annotated": "function|string|table",
+    "declared": "function|string"
+  },
+  "editor:http.server.route:too-narrow:3": {
+    "verdict": "open",
+    "annotated": "function|string|table",
+    "declared": "function|string"
+  },
+  "editor:zip.pack:optional-as-required:2": {
+    "verdict": "open",
+    "annotated": "optional",
+    "declared": "required"
+  },
+  "editor:zip.pack:too-loose:2": {
+    "verdict": "open",
+    "annotated": "table",
+    "declared": "string|table"
+  },
+  "editor:zip.pack:too-loose:3": {
+    "verdict": "open",
+    "annotated": "table",
+    "declared": "string|table"
+  },
+  "runtime:b2d.body.create_fixture:arity": {
+    "verdict": "open",
+    "annotated": "2..3",
+    "declared": "2..2"
+  },
+  "runtime:b2d.body.create_fixture:too-narrow:2": {
+    "verdict": "open",
+    "annotated": "table|userdata",
+    "declared": "table"
+  },
+  "runtime:b2d.body.get_user_data:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "api-targets.json skipFunctions drops b2d.body get_user_data and set_user_data from the declarations"
+  },
+  "runtime:b2d.body.set_user_data:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "api-targets.json skipFunctions drops b2d.body get_user_data and set_user_data from the declarations"
+  },
+  "runtime:b2d.fixture.set_density:arity": {
+    "verdict": "open",
+    "annotated": "4..4",
+    "declared": "3..4"
+  },
+  "runtime:b2d.fixture.set_density:required-as-optional:4": {
+    "verdict": "corrected",
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:b2d.fixture.set_density:param:update_mass"
+  },
+  "runtime:b2d.fixture.set_shape:arity": {
+    "verdict": "open",
+    "annotated": "4..4",
+    "declared": "3..4"
+  },
+  "runtime:b2d.fixture.set_shape:required-as-optional:4": {
+    "verdict": "corrected",
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:b2d.fixture.set_shape:param:update_mass"
+  },
+  "runtime:b2d.shape.are_contact_events_enabled:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.are_hit_events_enabled:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.are_pre_solve_events_enabled:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.are_sensor_events_enabled:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.enable_contact_events:arity": {
+    "verdict": "open",
+    "annotated": "2..2",
+    "declared": "2..3"
+  },
+  "runtime:b2d.shape.enable_contact_events:too-loose:2": {
+    "verdict": "open",
+    "annotated": "boolean",
+    "declared": "boolean|number"
+  },
+  "runtime:b2d.shape.enable_hit_events:arity": {
+    "verdict": "open",
+    "annotated": "2..2",
+    "declared": "2..3"
+  },
+  "runtime:b2d.shape.enable_hit_events:too-loose:2": {
+    "verdict": "open",
+    "annotated": "boolean",
+    "declared": "boolean|number"
+  },
+  "runtime:b2d.shape.enable_pre_solve_events:arity": {
+    "verdict": "open",
+    "annotated": "2..2",
+    "declared": "2..3"
+  },
+  "runtime:b2d.shape.enable_pre_solve_events:too-loose:2": {
+    "verdict": "open",
+    "annotated": "boolean",
+    "declared": "boolean|number"
+  },
+  "runtime:b2d.shape.enable_sensor_events:arity": {
+    "verdict": "open",
+    "annotated": "2..2",
+    "declared": "2..3"
+  },
+  "runtime:b2d.shape.enable_sensor_events:too-loose:2": {
+    "verdict": "open",
+    "annotated": "boolean",
+    "declared": "boolean|number"
+  },
+  "runtime:b2d.shape.get_body:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.get_closest_point:arity": {
+    "verdict": "open",
+    "annotated": "2..2",
+    "declared": "2..3"
+  },
+  "runtime:b2d.shape.get_closest_point:too-loose:2": {
+    "verdict": "open",
+    "annotated": "vector3",
+    "declared": "number|vector3"
+  },
+  "runtime:b2d.shape.get_contact_capacity:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.get_contact_data:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.get_mass_data:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.get_material:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.get_sensor_capacity:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.get_sensor_overlaps:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.get_shape:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.get_world:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.is_valid:arity": {
+    "verdict": "open",
+    "annotated": "1..1",
+    "declared": "1..2"
+  },
+  "runtime:b2d.shape.ray_cast:arity": {
+    "verdict": "open",
+    "annotated": "3..4",
+    "declared": "3..5"
+  },
+  "runtime:b2d.shape.ray_cast:too-loose:2": {
+    "verdict": "open",
+    "annotated": "vector3",
+    "declared": "number|vector3"
+  },
+  "runtime:b2d.shape.ray_cast:too-loose:4": {
+    "verdict": "open",
+    "annotated": "number",
+    "declared": "number|vector3"
+  },
+  "runtime:b2d.shape.set_material:arity": {
+    "verdict": "open",
+    "annotated": "2..2",
+    "declared": "2..3"
+  },
+  "runtime:b2d.shape.set_shape:arity": {
+    "verdict": "open",
+    "annotated": "3..3",
+    "declared": "2..4"
+  },
+  "runtime:b2d.shape.set_shape:required-as-optional:3": {
+    "verdict": "corrected",
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:b2d.shape.set_shape:param:update_mass"
+  },
+  "runtime:b2d.shape.set_shape:too-loose:2": {
+    "verdict": "open",
+    "annotated": "table",
+    "declared": "number|table"
+  },
+  "runtime:b2d.shape.set_shape:too-loose:3": {
+    "verdict": "open",
+    "annotated": "boolean",
+    "declared": "boolean|table"
+  },
+  "runtime:buffer.get_bytes:too-loose:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:buffer.get_bytes:param:stream_name"
+  },
+  "runtime:camera.get_aspect_ratio:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_aspect_ratio:param:camera"
+  },
+  "runtime:camera.get_auto_aspect_ratio:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_auto_aspect_ratio:param:camera"
+  },
+  "runtime:camera.get_enabled:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_enabled:param:camera"
+  },
+  "runtime:camera.get_far_z:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_far_z:param:camera"
+  },
+  "runtime:camera.get_fov:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_fov:param:camera"
+  },
+  "runtime:camera.get_near_z:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_near_z:param:camera"
+  },
+  "runtime:camera.get_orthographic_auto_zoom:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_orthographic_auto_zoom:param:camera"
+  },
+  "runtime:camera.get_orthographic_mode:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_orthographic_mode:param:camera"
+  },
+  "runtime:camera.get_orthographic_zoom:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_orthographic_zoom:param:camera"
+  },
+  "runtime:camera.get_projection:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_projection:param:camera"
+  },
+  "runtime:camera.get_view:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.get_view:param:camera"
+  },
+  "runtime:camera.screen_to_world:too-loose:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.screen_to_world:param:camera"
+  },
+  "runtime:camera.screen_xy_to_world:too-loose:3": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.screen_xy_to_world:param:camera"
+  },
+  "runtime:camera.set_aspect_ratio:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_aspect_ratio:param:camera"
+  },
+  "runtime:camera.set_auto_aspect_ratio:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_auto_aspect_ratio:param:camera"
+  },
+  "runtime:camera.set_far_z:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_far_z:param:camera"
+  },
+  "runtime:camera.set_fov:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_fov:param:camera"
+  },
+  "runtime:camera.set_near_z:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_near_z:param:camera"
+  },
+  "runtime:camera.set_orthographic_mode:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_orthographic_mode:param:camera"
+  },
+  "runtime:camera.set_orthographic_zoom:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.set_orthographic_zoom:param:camera"
+  },
+  "runtime:camera.world_to_screen:too-loose:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:camera.world_to_screen:param:camera"
+  },
+  "runtime:collectionfactory.get_status:arity": {
+    "verdict": "open",
+    "annotated": "0..1",
+    "declared": "1..1"
+  },
+  "runtime:collectionfactory.get_status:optional-as-required:1": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.get_status:param:url"
+  },
+  "runtime:collectionfactory.load:arity": {
+    "verdict": "open",
+    "annotated": "0..2",
+    "declared": "2..2"
+  },
+  "runtime:collectionfactory.load:optional-as-required:1": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.load:param:url"
+  },
+  "runtime:collectionfactory.load:optional-as-required:2": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.load:param:complete_function"
+  },
+  "runtime:collectionfactory.set_prototype:arity": {
+    "verdict": "open",
+    "annotated": "0..2",
+    "declared": "2..2"
+  },
+  "runtime:collectionfactory.set_prototype:optional-as-required:1": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.set_prototype:param:url"
+  },
+  "runtime:collectionfactory.unload:arity": {
+    "verdict": "open",
+    "annotated": "0..1",
+    "declared": "1..1"
+  },
+  "runtime:collectionfactory.unload:optional-as-required:1": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.unload:param:url"
+  },
+  "runtime:collectionproxy.get_resources:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:collectionproxy.get_resources:param:collectionproxy"
+  },
+  "runtime:collectionproxy.set_collection:arity": {
+    "verdict": "open",
+    "annotated": "0..2",
+    "declared": "2..2"
+  },
+  "runtime:collectionproxy.set_collection:optional-as-required:1": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:collectionproxy.set_collection:param:url"
+  },
+  "runtime:factory.get_status:arity": {
+    "verdict": "open",
+    "annotated": "0..1",
+    "declared": "1..1"
+  },
+  "runtime:factory.get_status:optional-as-required:1": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.get_status:param:url"
+  },
+  "runtime:factory.load:arity": { "verdict": "open", "annotated": "0..2", "declared": "2..2" },
+  "runtime:factory.load:optional-as-required:1": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.load:param:url"
+  },
+  "runtime:factory.load:optional-as-required:2": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.load:param:complete_function"
+  },
+  "runtime:factory.set_prototype:arity": {
+    "verdict": "open",
+    "annotated": "0..2",
+    "declared": "2..2"
+  },
+  "runtime:factory.set_prototype:optional-as-required:1": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.set_prototype:param:url"
+  },
+  "runtime:factory.unload:arity": { "verdict": "open", "annotated": "0..1", "declared": "1..1" },
+  "runtime:factory.unload:optional-as-required:1": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:factory.unload:param:url"
+  },
+  "runtime:go.cancel_animations:arity": {
+    "verdict": "open",
+    "annotated": "1..2",
+    "declared": "0..2"
+  },
+  "runtime:go.cancel_animations:required-as-optional:1": {
+    "verdict": "corrected",
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:go.cancel_animations:param:url"
+  },
+  "runtime:go.delete:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:go.delete:param:id"
+  },
+  "runtime:go.final:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:go.fixed_update:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:go.init:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:go.late_update:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:go.on_input:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:go.on_message:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:go.on_reload:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:go.property:too-narrow:2": {
+    "verdict": "open",
+    "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
+    "declared": "boolean|hash|number|quat|string|url|vector3|vector4"
+  },
+  "runtime:go.set:too-loose:3": {
+    "verdict": "open",
+    "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
+    "declared": "boolean|hash|number|quat|table|url|vector3|vector4"
+  },
+  "runtime:go.set:too-narrow:3": {
+    "verdict": "open",
+    "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
+    "declared": "boolean|hash|number|quat|table|url|vector3|vector4"
+  },
+  "runtime:go.update:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:go.world_to_local_position:arity": {
+    "verdict": "open",
+    "annotated": "2..2",
+    "declared": "1..2"
+  },
+  "runtime:go.world_to_local_position:required-as-optional:2": {
+    "verdict": "corrected",
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:go.world_to_local_position:param:url"
+  },
+  "runtime:go.world_to_local_transform:arity": {
+    "verdict": "open",
+    "annotated": "2..2",
+    "declared": "1..2"
+  },
+  "runtime:go.world_to_local_transform:required-as-optional:2": {
+    "verdict": "corrected",
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:go.world_to_local_transform:param:url"
+  },
+  "runtime:gui.animate:too-narrow:2": {
+    "verdict": "open",
+    "annotated": "hash|number|string",
+    "declared": "hash|string"
+  },
+  "runtime:gui.cancel_animations:too-narrow:2": {
+    "verdict": "open",
+    "annotated": "hash|number|string",
+    "declared": "hash|string"
+  },
+  "runtime:gui.final:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:gui.get:too-narrow:2": {
+    "verdict": "open",
+    "annotated": "hash|number|string",
+    "declared": "hash|string"
+  },
+  "runtime:gui.init:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:gui.move_above:arity": { "verdict": "open", "annotated": "1..2", "declared": "2..2" },
+  "runtime:gui.move_below:arity": { "verdict": "open", "annotated": "1..2", "declared": "2..2" },
+  "runtime:gui.new_texture:arity": { "verdict": "open", "annotated": "6..6", "declared": "5..6" },
+  "runtime:gui.new_texture:required-as-optional:6": {
+    "verdict": "corrected",
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:gui.new_texture:param:flip"
+  },
+  "runtime:gui.on_input:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:gui.on_message:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:gui.on_reload:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:gui.screen_to_local:too-loose:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:gui.screen_to_local:param:screen_position"
+  },
+  "runtime:gui.set_parent:arity": { "verdict": "open", "annotated": "1..3", "declared": "2..3" },
+  "runtime:gui.set_rotation:too-loose:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:gui.set_rotation:param:rotation"
+  },
+  "runtime:gui.set_screen_position:too-loose:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:gui.set_screen_position:param:screen_position"
+  },
+  "runtime:gui.set_texture_data:arity": {
+    "verdict": "open",
+    "annotated": "6..6",
+    "declared": "5..6"
+  },
+  "runtime:gui.set_texture_data:required-as-optional:6": {
+    "verdict": "corrected",
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:gui.set_texture_data:param:flip"
+  },
+  "runtime:gui.set:arity": { "verdict": "open", "annotated": "2..4", "declared": "3..4" },
+  "runtime:gui.set:too-loose:3": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:gui.set:param:value"
+  },
+  "runtime:gui.set:too-narrow:2": {
+    "verdict": "open",
+    "annotated": "hash|number|string",
+    "declared": "hash|string"
+  },
+  "runtime:gui.update:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:html5.set_interaction_listener:arity": {
+    "verdict": "open",
+    "annotated": "0..1",
+    "declared": "1..1"
+  },
+  "runtime:model.get_mesh_enabled:too-narrow:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:model.get_mesh_enabled:param:mesh_id"
+  },
+  "runtime:model.set_mesh_enabled:too-narrow:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:model.set_mesh_enabled:param:mesh_id"
+  },
+  "runtime:particlefx.set_constant:too-loose:4": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:particlefx.set_constant:param:value"
+  },
+  "runtime:physics.get_maskbit:too-loose:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.get_maskbit:param:group"
+  },
+  "runtime:physics.set_group:too-loose:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_group:param:group"
+  },
+  "runtime:physics.set_maskbit:too-loose:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_maskbit:param:group"
+  },
+  "runtime:render.delete_render_target:too-loose:1": {
+    "verdict": "open",
+    "annotated": "number",
+    "declared": "userdata"
+  },
+  "runtime:render.delete_render_target:too-narrow:1": {
+    "verdict": "open",
+    "annotated": "number",
+    "declared": "userdata"
+  },
+  "runtime:render.disable_texture:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:render.disable_texture:param:binding"
+  },
+  "runtime:render.enable_texture:too-loose:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:render.enable_texture:param:handle_or_name"
+  },
+  "runtime:render.get_render_target_height:optional-as-required:2": {
+    "verdict": "open",
+    "annotated": "optional",
+    "declared": "required"
+  },
+  "runtime:render.get_render_target_height:too-loose:1": {
+    "verdict": "open",
+    "annotated": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "runtime:render.get_render_target_height:too-narrow:1": {
+    "verdict": "open",
+    "annotated": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "runtime:render.get_render_target_width:optional-as-required:2": {
+    "verdict": "open",
+    "annotated": "optional",
+    "declared": "required"
+  },
+  "runtime:render.get_render_target_width:too-loose:1": {
+    "verdict": "open",
+    "annotated": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "runtime:render.get_render_target_width:too-narrow:1": {
+    "verdict": "open",
+    "annotated": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "runtime:render.set_camera:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:render.set_camera:param:camera"
+  },
+  "runtime:render.set_render_target_size:too-loose:1": {
+    "verdict": "open",
+    "annotated": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "runtime:render.set_render_target_size:too-narrow:1": {
+    "verdict": "open",
+    "annotated": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "runtime:render.set_render_target:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:render.set_render_target:param:render_target"
+  },
+  "runtime:render.set_render_target:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:render.set_render_target:param:render_target"
+  },
+  "runtime:resource.create_sound_data:arity": {
+    "verdict": "open",
+    "annotated": "1..2",
+    "declared": "2..2"
+  },
+  "runtime:resource.create_sound_data:optional-as-required:2": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:resource.create_sound_data:param:options"
+  },
+  "runtime:resource.create_texture_async:arity": {
+    "verdict": "open",
+    "annotated": "2..4",
+    "declared": "4..4"
+  },
+  "runtime:resource.create_texture_async:optional-as-required:4": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:resource.create_texture_async:param:callback"
+  },
+  "runtime:resource.get_render_target_info:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:resource.get_render_target_info:param:path"
+  },
+  "runtime:resource.get_text_metrics:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:resource.get_text_metrics:param:url"
+  },
+  "runtime:resource.get_texture_info:too-loose:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:resource.get_texture_info:param:path"
+  },
+  "runtime:socket.newtry:arity": { "verdict": "open", "annotated": "1..1", "declared": "0..1" },
+  "runtime:socket.newtry:required-as-optional:1": {
+    "verdict": "corrected",
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:socket.newtry:param:finalizer"
+  },
+  "runtime:sound.get_group_name:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:sound.get_group_name:param:group"
+  },
+  "runtime:sound.set_gain:arity": { "verdict": "open", "annotated": "1..2", "declared": "2..2" },
+  "runtime:sound.set_gain:optional-as-required:2": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:sound.set_gain:param:gain"
+  },
+  "runtime:sound.set_pan:arity": { "verdict": "open", "annotated": "1..2", "declared": "2..2" },
+  "runtime:sound.set_pan:optional-as-required:2": {
+    "verdict": "corrected",
+    "correction": "REQUIRED_SLOT_CORRECTIONS:sound.set_pan:param:pan"
+  },
+  "runtime:sys.set_engine_throttle:arity": {
+    "verdict": "accepted",
+    "reason": "src/sys-overloads.d.ts splits on enable: cooldown is omitted only with enable false, so the merged overloads read slot 2 as optional"
+  },
+  "runtime:sys.set_engine_throttle:required-as-optional:2": {
+    "verdict": "accepted",
+    "reason": "src/sys-overloads.d.ts splits on enable: cooldown is omitted only with enable false, so the merged overloads read slot 2 as optional"
+  },
+  "runtime:sys.set_render_enable:missing-declaration": {
+    "verdict": "open",
+    "annotated": "annotated",
+    "declared": "absent"
+  },
+  "runtime:sys.set_render_enabled:missing-annotation": {
+    "verdict": "open",
+    "annotated": "absent",
+    "declared": "declared"
+  },
+  "runtime:vmath.vector:arity": {
+    "verdict": "accepted",
+    "reason": "src/vmath-overloads.d.ts declares a no-argument form because the engine raises on an explicit nil"
+  },
+  "runtime:vmath.vector:required-as-optional:1": {
+    "verdict": "accepted",
+    "reason": "src/vmath-overloads.d.ts declares a no-argument form because the engine raises on an explicit nil"
+  },
+  "runtime:window.set_listener:arity": {
+    "verdict": "open",
+    "annotated": "0..1",
+    "declared": "1..1"
+  }
+}
