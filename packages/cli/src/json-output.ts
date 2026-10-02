@@ -15,7 +15,8 @@ export type CliCommand =
   | "run"
   | "reload"
   | "upgrade"
-  | "set-target";
+  | "set-target"
+  | "vendor";
 
 export interface ResolvedExtensionReportJson {
   readonly url: string;
@@ -63,6 +64,9 @@ export interface RenderResultInput {
   // whether this run actually rewrote it; an unchanged project reports the path
   // with an empty `written`.
   readonly declaration?: string;
+  readonly library?: string;
+  readonly version?: string;
+  readonly previousVersion?: string | null;
   readonly installCommand?: string;
   readonly manualSteps?: readonly string[];
   readonly actions?: Record<string, string>;
@@ -163,10 +167,18 @@ export function renderResult(input: RenderResultInput): string {
     "resolved" in input ? { ...withEligible, resolved: input.resolved } : withEligible;
   const withDeclaration =
     "declaration" in input ? { ...withResolved, declaration: input.declaration } : withResolved;
+  const withLibrary =
+    "library" in input ? { ...withDeclaration, library: input.library } : withDeclaration;
+  const withLibraryVersion =
+    "version" in input ? { ...withLibrary, version: input.version } : withLibrary;
+  const withPreviousVersion =
+    "previousVersion" in input
+      ? { ...withLibraryVersion, previousVersion: input.previousVersion }
+      : withLibraryVersion;
   const withInstall =
     "installCommand" in input
-      ? { ...withDeclaration, installCommand: input.installCommand }
-      : withDeclaration;
+      ? { ...withPreviousVersion, installCommand: input.installCommand }
+      : withPreviousVersion;
   const withManual =
     "manualSteps" in input ? { ...withInstall, manualSteps: input.manualSteps } : withInstall;
   const withActions = "actions" in input ? { ...withManual, actions: input.actions } : withManual;
