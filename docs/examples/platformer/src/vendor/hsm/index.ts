@@ -3,10 +3,10 @@ export interface EventObject {
 }
 
 /** @noSelf */
-export interface MachineInstance<Ctx, E extends EventObject> {
+export interface MachineInstance<Ctx, E extends EventObject, P extends string = string> {
   readonly ctx: Ctx;
-  readonly path: string;
-  readonly matches: (path: string) => boolean;
+  readonly path: P | "";
+  readonly matches: (path: P) => boolean;
   readonly send: (event: E) => void;
   readonly update: (dt: number) => void;
   readonly stop: () => void;
@@ -69,9 +69,66 @@ export interface MachineConfig<Ctx, E extends EventObject> extends StateConfig<C
 }
 
 /** @noSelf */
-export interface Machine<Ctx, E extends EventObject> {
-  readonly start: (ctx: Ctx) => MachineInstance<Ctx, E>;
+export interface Machine<Ctx, E extends EventObject, P extends string = string> {
+  readonly start: (ctx: Ctx) => MachineInstance<Ctx, E, P>;
 }
+
+type PathDepth = [never, 0, 1, 2, 3];
+
+type PathsBelow<S, D extends number> = S extends { readonly states: infer Children }
+  ? {
+      [K in keyof Children & string]:
+        | K
+        | `${K}.${D extends 1
+            ? Children[K] extends { readonly states: object }
+              ? string
+              : never
+            : PathsBelow<Children[K], PathDepth[D]>}`;
+    }[keyof Children & string]
+  : never;
+
+export type StatePath<C> = PathsBelow<C, 4>;
+
+type TargetCheck<Rel extends string, All extends string> = Rel | `#${All}`;
+
+interface TransitionCheck<T> {
+  readonly target?: T;
+  readonly guard?: unknown;
+  readonly actions?: unknown;
+  readonly reenter?: unknown;
+}
+
+type SpecCheck<T> = T | TransitionCheck<T> | readonly TransitionCheck<T>[];
+
+// Hooks are listed as unknown so a hooks-only leaf still shares a property with this
+// all-optional type; without them TypeScript rejects it as a weak-type mismatch.
+type PathCheck<S, Rel extends string, All extends string, Ev extends string> = {
+  readonly initial?: S extends { readonly states: infer Children }
+    ? keyof Children & string
+    : never;
+  readonly states?: S extends { readonly states: infer Children }
+    ? { readonly [K in keyof Children]: PathCheck<Children[K], StatePath<S>, All, Ev> }
+    : unknown;
+  readonly on?: S extends { readonly on: infer On }
+    ? { readonly [K in keyof On]: K extends Ev ? SpecCheck<TargetCheck<Rel, All>> : never }
+    : unknown;
+  readonly after?: S extends { readonly after: infer After }
+    ? { readonly [K in keyof After]: TargetCheck<Rel, All> }
+    : unknown;
+  readonly enter?: unknown;
+  readonly exit?: unknown;
+  readonly update?: unknown;
+  readonly invoke?: unknown;
+};
+
+export interface MachineConfigError {
+  readonly "hsm: an initial or target names an unknown state path, or an on key an unknown event": never;
+}
+
+export type DefinedMachine<Ctx, E extends EventObject, C> =
+  C extends PathCheck<C, StatePath<C>, StatePath<C>, E["type"]>
+    ? Machine<Ctx, E, StatePath<C>>
+    : MachineConfigError;
 
 type Guard<Ctx, E extends EventObject> = (ctx: Ctx, event: E) => boolean;
 
@@ -338,9 +395,7 @@ function transitionDomain<Ctx, E extends EventObject>(
   return domain;
 }
 
-export function defineMachine<Ctx, E extends EventObject>(
-  config: MachineConfig<Ctx, E>,
-): Machine<Ctx, E> {
+function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Machine<Ctx, E> {
   const compiled = compile(config);
   const { paths, parent, depth, initialChild, configs, onIndex, transitions } = compiled;
   const { afterDelays, afterTargets } = compiled;
@@ -614,4 +669,13 @@ export function defineMachine<Ctx, E extends EventObject>(
   }
 
   return { start };
+}
+
+// Ctx and E are given explicitly and the config is inferred, so the config takes a second call.
+export function defineMachine<Ctx, E extends EventObject>(): <
+  const C extends MachineConfig<Ctx, E>,
+>(
+  config: C,
+) => DefinedMachine<Ctx, E, C> {
+  return createMachine as never;
 }
