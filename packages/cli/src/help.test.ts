@@ -249,8 +249,18 @@ describe("--editor-compile help listing", () => {
     expect(flag.desc).toContain("1.13.2");
   });
 
-  test("watch does not list --editor-compile", () => {
-    expect(renderHelp("watch")).not.toContain("--editor-compile");
+  test("watch help and watch JSON list --editor-compile", () => {
+    expect(renderHelp("watch")).toContain("--editor-compile");
+    const parsed = JSON.parse(renderHelpJson("watch"));
+    const flags = parsed.flags.map((f: { flag: string }) => f.flag);
+
+    expect(flags).toContain("--editor-compile");
+  });
+
+  test("watch lists neither --editor-run nor --editor-focus", () => {
+    const text = renderHelp("watch");
+    expect(text).not.toContain("--editor-run");
+    expect(text).not.toContain("--editor-focus");
   });
 });
 

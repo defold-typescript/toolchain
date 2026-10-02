@@ -3,8 +3,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import * as os from "node:os";
 import * as path from "node:path";
 import { runBuild } from "./build";
-import type { EditorIssue } from "./editor-attach";
-import { mapCompileIssues } from "./editor-compile";
+import type { CompileOutcome, EditorIssue } from "./editor-attach";
+import { editorCompileReport, mapCompileIssues } from "./editor-compile";
 
 const MARKER = "defold_typescript_marker";
 
@@ -95,5 +95,59 @@ describe("mapCompileIssues", () => {
 
     expect(mapped).toEqual([collection, lualib, rangeless]);
     for (const entry of mapped) expect("source" in entry).toBe(false);
+  });
+});
+
+describe("editorCompileReport", () => {
+  test("a failed verdict carries the mapped issue, one authored line and the issue count", () => {
+    writeProjectFile("tsconfig.json", TSCONFIG);
+    writeProjectFile("src/main.ts", MARKER_SOURCE);
+    runBuild({ cwd });
+    const issue = issueAt("/src/main.ts.script", markerChunkLineZeroBased("src/main.ts.script"));
+
+    const report = editorCompileReport(cwd, {
+      outcome: "compiled",
+      result: { success: false, issues: [issue] },
+    });
+
+    expect(report.json).toEqual({
+      outcome: "compiled",
+      success: false,
+      issues: mapCompileIssues(cwd, [issue]),
+    });
+    expect(report.json.issues?.[0]?.source?.file).toBe("src/main.ts");
+    expect(report.lines).toHaveLength(1);
+    expect(report.lines[0]).toMatch(
+      new RegExp(
+        `^editor: src/main\\.ts:${MARKER_AUTHORED_LINE}:\\d+ \\(/src/main\\.ts\\.script:\\d+\\): error: attempt to index a nil value$`,
+      ),
+    );
+    expect(report.error).toBe("the Defold editor failed to compile the project with 1 issue");
+  });
+
+  test("a clean verdict reports no error", () => {
+    const report = editorCompileReport(cwd, {
+      outcome: "compiled",
+      result: { success: true, issues: [] },
+    });
+
+    expect(report).toEqual({
+      json: { outcome: "compiled", success: true, issues: [] },
+      lines: [],
+    });
+  });
+
+  test.each([
+    ["unsupported", null, "1.13.2"],
+    ["skipped", null, "refused the request"],
+    ["unavailable", null, "no Defold editor is attached"],
+    ["compiled", null, "returned no result"],
+  ] as const)("%s with no result carries only the outcome and its notice", (outcome, result, wording) => {
+    const report = editorCompileReport(cwd, { outcome: outcome as CompileOutcome, result });
+
+    expect(report.json).toEqual({ outcome });
+    expect(report.lines).toHaveLength(1);
+    expect(report.lines[0]).toContain(wording);
+    expect("error" in report).toBe(false);
   });
 });

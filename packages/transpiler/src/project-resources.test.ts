@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { isDefignoredPath } from "./project-resources";
+import { isDefignoredPath, parseDefignore } from "./project-resources";
 
 describe("isDefignoredPath", () => {
   test("a file under a managed line is ignored", () => {
@@ -22,5 +22,23 @@ describe("isDefignoredPath", () => {
 
   test("the bare directory itself matches", () => {
     expect(isDefignoredPath(".vscode")).toBe(true);
+  });
+});
+
+describe("parseDefignore", () => {
+  test("trims lines, drops blanks and anchors each at the root", () => {
+    expect(parseDefignore("/node_modules\n\n  /assets/raw  \nbig\n")).toEqual([
+      "/node_modules",
+      "/assets/raw",
+      "/big",
+    ]);
+  });
+
+  test("a project's own lines drive the match, prefix-anchored at a segment boundary", () => {
+    const lines = parseDefignore("/assets/raw\n");
+
+    expect(isDefignoredPath("assets/raw/a.png", lines)).toBe(true);
+    expect(isDefignoredPath("assets/rawer/a.png", lines)).toBe(false);
+    expect(isDefignoredPath("node_modules/pkg/fixture.atlas", lines)).toBe(false);
   });
 });

@@ -9,12 +9,25 @@
 // `.vscode`).
 export const SCAFFOLDED_DEFIGNORE_LINES = ["/node_modules", "/.defold-types", "/.vscode"];
 
-// Whether a project-relative display path lies under one of the lines `init`
-// scaffolds. Root-anchored, because a `.defignore` line is a root-relative
-// path: `assets/node_modules/tiles.atlas` is a resource Defold loads.
-export function isDefignoredPath(displayPath: string): boolean {
+// A project's own `.defignore` text as root-anchored lines, the shape
+// `isDefignoredPath` matches against. A line without its leading `/` names the
+// same root-relative path.
+export function parseDefignore(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "")
+    .map((line) => (line.startsWith("/") ? line : `/${line}`));
+}
+
+// Whether a project-relative display path lies under one of `lines`, by
+// default the ones `init` scaffolds. Root-anchored, because a `.defignore` line
+// is a root-relative path: `assets/node_modules/tiles.atlas` is a resource
+// Defold loads.
+export function isDefignoredPath(
+  displayPath: string,
+  lines: readonly string[] = SCAFFOLDED_DEFIGNORE_LINES,
+): boolean {
   const rooted = `/${displayPath.replace(/^\/+/, "")}`;
-  return SCAFFOLDED_DEFIGNORE_LINES.some(
-    (line) => rooted === line || rooted.startsWith(`${line}/`),
-  );
+  return lines.some((line) => rooted === line || rooted.startsWith(`${line}/`));
 }

@@ -786,3 +786,66 @@ describe("createBuildSession — the incremental claim inventory", () => {
     expect(statSync(path.join(cwd, "src/util.lua")).mtimeMs).toBe(utilMtime);
   });
 });
+
+describe("BuildSession.isOwnOutput", () => {
+  const ROOT_TSCONFIG = JSON.stringify(
+    {
+      compilerOptions: { target: "ES2022", module: "ESNext", strict: true },
+      include: ["main/**/*.ts", "lib/**/*.ts"],
+    },
+    null,
+    2,
+  );
+
+  test("emitted Lua and maps are the session's, authored Lua and resources are not", () => {
+    writeIn(cwd, "tsconfig.json", ROOT_TSCONFIG);
+    writeIn(cwd, "main/hero.ts", MAIN_NO_IMPORT);
+    writeIn(cwd, "lib/util.ts", UTIL);
+    writeIn(cwd, "lib/other.lua", "return {}\n");
+    writeIn(cwd, "main/main.collection", 'name: "main"\n');
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+
+    expect(session.isOwnOutput("main/hero.ts.script")).toBe(true);
+    expect(session.isOwnOutput("main/hero.ts.script.map")).toBe(true);
+    expect(session.isOwnOutput("lib/util.lua")).toBe(true);
+    expect(session.isOwnOutput("lualib_bundle.lua")).toBe(true);
+    expect(session.isOwnOutput("lib/other.lua")).toBe(false);
+    expect(session.isOwnOutput("main/main.collection")).toBe(false);
+  });
+
+  test("a removed source's pruned outputs still read as the session's", () => {
+    writeIn(cwd, "tsconfig.json", ROOT_TSCONFIG);
+    writeIn(cwd, "main/hero.ts", MAIN_NO_IMPORT);
+    writeIn(cwd, "lib/util.ts", UTIL);
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+
+    rmSync(path.join(cwd, "lib/util.ts"));
+    session.applyEvents([], ["lib/util.ts"]);
+
+    expect(session.isOwnOutput("lib/util.lua")).toBe(true);
+    expect(session.isOwnOutput("lib/util.lua.map")).toBe(true);
+  });
+
+  test("the outDir relocates what reads as the session's", () => {
+    writeIn(
+      cwd,
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build/lua" },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    writeIn(cwd, "src/util.ts", UTIL);
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+
+    expect(session.isOwnOutput(computeOutputRel("src/util.ts", OUTDIR_CONFIG, "module"))).toBe(
+      true,
+    );
+    expect(session.isOwnOutput(lualibBundleRel(OUTDIR_CONFIG))).toBe(true);
+    expect(session.isOwnOutput(`${timersModuleRel(OUTDIR_CONFIG)}.map`)).toBe(true);
+    expect(session.isOwnOutput("src/util.lua")).toBe(false);
+  });
+});

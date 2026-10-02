@@ -97,10 +97,10 @@ recorded before `watch` attached is skipped — attaching mid-session prints the
 next error rather than replaying old ones. Under `--json` these lines stay on
 stderr and never enter the event stream on stdout.
 
-What this does **not** surface is Defold's own build errors, such as a bad
-component reference or a missing atlas. Those are produced by pressing **Build**
-in the editor and go to its Build Errors tab, never to the console; a Lua syntax
-error lands there too. So silence here is not proof that a reload succeeded.
+The console does not carry Defold's own build errors, such as a bad component
+reference, a missing atlas or a Lua syntax error; those come from compiling the
+project. To see them in the terminal as well, run with
+[`--editor-compile`](#compile-in-the-editor).
 
 ## Hot reload
 
@@ -148,6 +148,43 @@ Hot reload runs the **new code against the old state** and does not re-run
 `init`. See [Script lifecycle](./script-lifecycle.md#hot-reload-and-on_reload)
 for what belongs in `on_reload`.
 
+## Compile in the editor
+
+`--editor-compile` asks the open Defold 1.13.2+ editor to compile the project,
+without running it, after every successful rebuild and every change to a
+project file such as a `.collection`, `.atlas` or hand-written `.lua`:
+
+```sh
+bunx @defold-typescript/cli watch --editor-compile
+```
+
+Each issue the editor reports is printed the way
+[`build --editor-compile`](./build.md#compile-in-the-editor) prints it, with
+generated-script locations pointing at the TypeScript line:
+
+```text
+defold-typescript watch: editor: src/player.ts:12:5 (/src/player.ts.script:40): error: attempt to call a nil value
+```
+
+How it behaves:
+
+- **A failed compile never ends the loop.** It prints the issues and an error
+  line, and the exit status stays `0`. Once the project compiles cleanly again,
+  one line says so.
+- **Only real project changes compile.** The Lua `watch` writes itself, `build/`,
+  `.internal/`, `.git/`, anything under `node_modules` or `.defold-types`, and
+  any path your `.defignore` lists are skipped. Edits to `.defignore` apply
+  straight away. A build that fails to transpile compiles nothing, so the
+  editor never judges stale Lua.
+- **One compile at a time.** Changes that land while a compile runs are folded
+  into one more compile after it finishes.
+- **No editor is not an error.** No editor, an editor older than 1.13.2, or a
+  refused request prints one line, and the line is not repeated until the state
+  changes. An editor found later is compiled once on arrival.
+- **With `--hot-reload`, the reload answers first.** A hot reload into a running
+  game returns the same verdict, so no separate compile follows it. When no game
+  is running the editor declines the reload, and the compile runs instead.
+
 If you want one reload rather than a loop — a script or an agent that builds,
 reloads, and then decides what to do next — use [`reload`](./reload.md), which
 posts a single reload, reads the console for a bounded window, and exits with a
@@ -157,12 +194,16 @@ status you can branch on.
 
 - `--hot-reload` — push a reload to the running game after every successful
   rebuild (see [Hot reload](#hot-reload)).
+- `--editor-compile` — compile in the attached Defold 1.13.2+ editor after
+  every successful rebuild and every project file change, and print its errors
+  (see [Compile in the editor](#compile-in-the-editor)).
 - `--json` — stream the build lifecycle as newline-delimited JSON for agents and
   scripts. See [Agent runbooks](./agent-runbooks.md#machine-readable-output)
   for the event stream. Each reload adds a `reload` event; a reload the editor
   declined because no game is running is silent, and one a Defold 1.13.2+
   editor rejected carries its issues in `editorIssues`. A late editor's version notice
-  arrives as an `editorVersion` event instead of on stderr.
+  arrives as an `editorVersion` event instead of on stderr. With
+  `--editor-compile`, each compile adds an `editorCompile` event.
 
 ## As a mise task
 
@@ -172,6 +213,9 @@ mise run # and pick defold-typescript:watch
 mise run defold-typescript:watch
 # with hot reload:
 mise run defold-typescript:watch-hr
+# with editor compiles, without and with hot reload:
+mise run defold-typescript:watch-ec
+mise run defold-typescript:watch-hr-ec
 ```
 
 If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` exposes the

@@ -1,6 +1,8 @@
-import { existsSync, watch as fsWatch } from "node:fs";
+import { existsSync, watch as fsWatch, readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
+  isDefignoredPath,
+  parseDefignore,
   SCRIPT_SUFFIX_BY_KIND,
   type SceneComponentIndex,
   type SceneObjectComponents,
@@ -18,6 +20,7 @@ import {
   type CommandAnswer,
   type CommandResult,
   type CompileAnswer,
+  type CompileOutcome,
   compileInEditor,
   consoleLines,
   consoleWatermark,
@@ -34,6 +37,7 @@ import {
   resolveEditor,
   runInEditor,
 } from "./editor-attach";
+import { editorCompileReport } from "./editor-compile";
 import { renderWatchEvent } from "./json-output";
 import { isComponentPath, isScenePath, isSkipped } from "./script-kind";
 import { colorConsoleTag, severityLine } from "./terminal-style";
@@ -70,8 +74,8 @@ export interface WatchEditorClient {
   ): Promise<AsyncIterable<string> | null>;
   /**
    * Asks the editor to compile the project. Optional for the same reason as
-   * `openConsole`: only `build --editor-compile` calls it, and a client without
-   * it reads as no editor.
+   * `openConsole`: only `--editor-compile` (on `build` and `watch`) calls it,
+   * and a client without it reads as no editor.
    */
   compile?(cwd: string, signal?: AbortSignal): Promise<CompileAnswer>;
   /**
@@ -102,6 +106,7 @@ export const defaultEditorClient: WatchEditorClient = createWatchEditorClient();
 const EDITOR_SCRIPT_SUFFIX = SCRIPT_SUFFIX_BY_KIND["editor-script"];
 
 const RELOAD_UNAVAILABLE = "no running Defold editor accepted the reload";
+const COMPILE_CLEARED = "the Defold editor compiles the project cleanly again";
 const RELOAD_REJECTED = "the Defold editor rejected the reload";
 
 function reloadCommandsFor(written: readonly string[]): EditorReloadCommand[] {
@@ -153,6 +158,12 @@ export interface RunWatchOptions {
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   readonly upstreamRelease?: { readonly current: string; readonly latest: string };
   readonly hotReload?: boolean;
+  /**
+   * Ask the editor to compile after every successful rebuild and every change
+   * to a project file the build did not write itself. Its verdict is reported
+   * and never ends the watch or changes its exit status.
+   */
+  readonly editorCompile?: boolean;
   readonly editorClient?: WatchEditorClient;
   readonly editorDiscoveryMs?: number;
   /** Receives the discovery tick and returns the function that stops it. */
@@ -213,6 +224,19 @@ function formatFailureLine(entry: {
 }
 
 const CONSOLE_PREFIX = "defold-typescript watch: editor: ";
+
+// Tool state, not project resources: the build tree the editor writes, its own
+// port file, and version control.
+const NON_RESOURCE_ROOTS = new Set(["build", ".internal", ".git"]);
+const NON_RESOURCE_SEGMENTS = ["node_modules", ".defold-types"];
+
+function readDefignoreLines(cwd: string): string[] {
+  try {
+    return parseDefignore(readFileSync(path.join(cwd, ".defignore"), "utf8"));
+  } catch {
+    return [];
+  }
+}
 
 function rewrapInitError(err: unknown): Error {
   const message = err instanceof Error ? err.message : String(err);
@@ -328,6 +352,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let syncScheduled: ReturnType<typeof setTimeout> | null = null;
   let resolveScheduled: ReturnType<typeof setTimeout> | null = null;
   let sceneScheduled: ReturnType<typeof setTimeout> | null = null;
+  let compileScheduled: ReturnType<typeof setTimeout> | null = null;
   let stopDiscovery: (() => void) | null = null;
   let rebuildBusy = false;
   let syncBusy = false;
@@ -335,6 +360,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let sceneBusy = false;
   let reloadBusy = false;
   let attachBusy = false;
+  let compileBusy = false;
+  let compilePending = false;
   // A set, not a flag: a superseded check can still be settling when the next
   // attachment starts its own, and the first to settle must not clear the other.
   const versionChecks = new Set<AbortController>();
@@ -350,6 +377,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       sceneBusy ||
       reloadBusy ||
       attachBusy ||
+      compileBusy ||
+      compileScheduled !== null ||
       versionChecks.size > 0
     )
       return;
@@ -359,6 +388,14 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   }
 
   const pendingReload = new Set<EditorReloadCommand>();
+  // Whether the queued `hot-reload` stands in for a compile: its verdict is the
+  // same one, so a compile follows only when the reload returned none.
+  let reloadCompileWish = false;
+  let defignoreLines: readonly string[] = opts.editorCompile ? readDefignoreLines(cwd) : [];
+  // A notice repeats only when the state changes: a missing editor would
+  // otherwise print on every save. A verdict resets it.
+  let noticedCompileOutcome: CompileOutcome | null = null;
+  let editorFailing = false;
   // The editor this watch is live against: it pauses discovery and scopes the
   // attachment's work, and clears whenever that attachment ends.
   let attachedBaseUrl: string | null = null;
@@ -548,7 +585,12 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     }
     // Guarded here rather than inside `noteAttached`: `pushReload`'s success
     // path calls it directly and is exactly the recovery that must announce.
-    if (announce && endpoint.baseUrl !== refusedBaseUrl) noteAttached(endpoint.baseUrl);
+    if (announce && endpoint.baseUrl !== refusedBaseUrl) {
+      const announcedBefore = announcedBaseUrl;
+      noteAttached(endpoint.baseUrl);
+      // A newly found editor has compiled nothing this watch wrote.
+      if (announcedBefore !== endpoint.baseUrl) requestCompile();
+    }
     if (client.openConsole !== undefined && !consoleRunning) {
       consoleRunning = true;
       const lines = await client.openConsole(endpoint, editorAbort.signal);
@@ -580,7 +622,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     });
   }
 
-  async function pushReload(commands: readonly EditorReloadCommand[]): Promise<void> {
+  /** Resolves whether the `hot-reload` post came back with the editor's verdict. */
+  async function pushReload(commands: readonly EditorReloadCommand[]): Promise<boolean> {
     const client = opts.editorClient ?? defaultEditorClient;
     // On this path attachment is the post's outcome, not the probe's: announcing
     // it up front would claim an attachment a refused reload cannot back.
@@ -589,18 +632,24 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       // Guarded here rather than inside `emitReloadEvent`, which the post
       // outcomes also reach: a cancelled reload is not a refused one.
       if (!stopped) emitReloadEvent("unavailable");
-      return;
+      return false;
     }
+    let verdict = false;
     for (const name of commands) {
       const { outcome, result } = await client.postCommand(cwd, name, editorAbort.signal);
-      if (stopped) return;
+      if (stopped) return false;
       if (outcome === "unavailable") {
         noteReloadFailed(endpoint.baseUrl);
       } else {
         noteAttached(endpoint.baseUrl);
       }
       emitReloadEvent(outcome, result);
+      if (name === "hot-reload" && result !== null) {
+        verdict = true;
+        noteEditorVerdict(result.success);
+      }
     }
+    return verdict;
   }
 
   // A latch, not a timer: a burst landing while a reload is in flight collapses
@@ -610,7 +659,10 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       while (pendingReload.size > 0) {
         const commands = [...pendingReload];
         pendingReload.clear();
-        await pushReload(commands);
+        const wantsCompile = reloadCompileWish;
+        reloadCompileWish = false;
+        const answered = await pushReload(commands);
+        if (wantsCompile && !answered) requestCompile();
       }
     } finally {
       reloadBusy = false;
@@ -618,12 +670,108 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     }
   }
 
-  function scheduleReload(written: readonly string[]): void {
-    if (!opts.hotReload || written.length === 0) return;
-    for (const command of reloadCommandsFor(written)) pendingReload.add(command);
-    if (reloadBusy) return;
-    reloadBusy = true;
-    void drainReloads();
+  /** Resolves whether a `hot-reload` was queued, which then owns the compile. */
+  function scheduleReload(written: readonly string[]): boolean {
+    if (!opts.hotReload || written.length === 0) return false;
+    const commands = reloadCommandsFor(written);
+    for (const command of commands) pendingReload.add(command);
+    const hot = commands.includes("hot-reload");
+    if (hot && opts.editorCompile) reloadCompileWish = true;
+    if (!reloadBusy) {
+      reloadBusy = true;
+      void drainReloads();
+    }
+    return hot;
+  }
+
+  /**
+   * Failing to clean is the one transition worth a line: a clean compile after
+   * a clean compile says nothing new. A `hot-reload` verdict counts, since it is
+   * the same verdict a compile would return.
+   */
+  function noteEditorVerdict(success: boolean): void {
+    if (!opts.editorCompile) return;
+    if (!success) {
+      editorFailing = true;
+      return;
+    }
+    if (!editorFailing) return;
+    editorFailing = false;
+    if (!opts.json) stderr.write(`defold-typescript watch: ${COMPILE_CLEARED}\n`);
+  }
+
+  function reportCompile(answer: CompileAnswer): void {
+    const report = editorCompileReport(cwd, answer);
+    const verdict = answer.outcome === "compiled" ? answer.result : null;
+    if (opts.json) {
+      stdout.write(
+        renderWatchEvent({
+          event: "editorCompile",
+          ...(report.error === undefined ? {} : { error: report.error }),
+          editorCompile: report.json,
+        }),
+      );
+    } else if (verdict !== null || noticedCompileOutcome !== answer.outcome) {
+      noticedCompileOutcome = verdict === null ? answer.outcome : null;
+      for (const line of report.lines) stderr.write(`defold-typescript watch: ${line}\n`);
+      if (report.error !== undefined) writeError(`defold-typescript watch: ${report.error}`);
+    }
+    if (verdict !== null) noteEditorVerdict(verdict.success);
+  }
+
+  // The same latch as `drainReloads`: one compile in flight, and everything
+  // asked for meanwhile collapses into exactly one follow-up.
+  async function drainCompiles(): Promise<void> {
+    const client = opts.editorClient ?? defaultEditorClient;
+    try {
+      while (compilePending && !stopped) {
+        compilePending = false;
+        const answer: CompileAnswer =
+          client.compile === undefined
+            ? { outcome: "unavailable", result: null }
+            : await client.compile(cwd, editorAbort.signal);
+        if (stopped) return;
+        reportCompile(answer);
+      }
+    } catch {
+      // An aborted post rejects rather than answering; that is the ordinary
+      // stop path, not a watch failure.
+    } finally {
+      compileBusy = false;
+      notifyIdle();
+    }
+  }
+
+  function requestCompile(): void {
+    if (!opts.editorCompile || stopped) return;
+    compilePending = true;
+    if (compileBusy) return;
+    compileBusy = true;
+    void drainCompiles();
+  }
+
+  /** Debounced like a rebuild, so a burst of saved files asks once. */
+  function scheduleCompile(): void {
+    if (!opts.editorCompile) return;
+    if (compileScheduled) clearTimeout(compileScheduled);
+    compileScheduled = setTimeout(() => {
+      compileScheduled = null;
+      requestCompile();
+      notifyIdle();
+    }, debounceMs);
+  }
+
+  /**
+   * Whether a change to `rel` can alter what the editor compiles. The build's
+   * own writes are excluded so a compile never feeds itself, and only the
+   * session knows which `.lua` it wrote: an authored one sits beside them.
+   */
+  function changeTriggersCompile(rel: string): boolean {
+    const segments = rel.split("/");
+    if (NON_RESOURCE_ROOTS.has(segments[0] ?? "")) return false;
+    if (NON_RESOURCE_SEGMENTS.some((segment) => segments.includes(segment))) return false;
+    if (isDefignoredPath(rel, defignoreLines)) return false;
+    return !session.isOwnOutput(rel);
   }
 
   function rebuild(): void {
@@ -664,8 +812,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
         }
       }
       // Inside the success branch on purpose: reloading after a failed build
-      // would push the previous emit's Lua into the running game.
-      scheduleReload(written);
+      // would push the previous emit's Lua into the running game, and compiling
+      // after one would judge that same stale Lua.
+      if (!scheduleReload(written)) requestCompile();
     } catch (err) {
       reportFailure(err, "rebuild");
     }
@@ -680,7 +829,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   function onEvent(e: WatchEvent): void {
     if (stopped) return;
     if (!e.path) return;
-    if (toPosix(e.path) === "game.project") {
+    const key = toPosix(e.path);
+    if (key === "game.project") {
       resolveBusy = true;
       // The resolve chains a scene regeneration, so `waitForIdle` has to cover
       // the pair from the moment the event lands — not from the moment the
@@ -688,10 +838,17 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       sceneBusy = true;
       if (resolveScheduled) clearTimeout(resolveScheduled);
       resolveScheduled = setTimeout(runResolveSurface, debounceMs);
+      scheduleCompile();
       return;
     }
-    if (!isTranspilerSource(e.path)) return;
-    const key = toPosix(e.path);
+    if (key === ".defignore") {
+      if (opts.editorCompile) defignoreLines = readDefignoreLines(cwd);
+      return;
+    }
+    if (!isTranspilerSource(e.path)) {
+      if (opts.editorCompile && changeTriggersCompile(key)) scheduleCompile();
+      return;
+    }
     if (!isFileIncluded(key, config.include)) return;
     rebuildBusy = true;
     pending.add(key);
@@ -846,6 +1003,10 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       clearTimeout(sceneScheduled);
       sceneScheduled = null;
     }
+    if (compileScheduled) {
+      clearTimeout(compileScheduled);
+      compileScheduled = null;
+    }
     if (stopDiscovery) {
       stopDiscovery();
       stopDiscovery = null;
@@ -868,6 +1029,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     sceneBusy = false;
     reloadBusy = false;
     attachBusy = false;
+    compileBusy = false;
+    compilePending = false;
     versionChecks.clear();
     notifyIdle();
     resolveDone(0);
@@ -881,6 +1044,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       !sceneBusy &&
       !reloadBusy &&
       !attachBusy &&
+      !compileBusy &&
+      compileScheduled === null &&
       versionChecks.size === 0
     ) {
       return Promise.resolve();

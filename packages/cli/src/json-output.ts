@@ -247,6 +247,7 @@ export function renderResult(input: RenderResultInput): string {
 
 export type WatchEventName =
   | "build"
+  | "editorCompile"
   | "editorVersion"
   | "rebuild"
   | "reload"
@@ -278,6 +279,9 @@ export interface RenderWatchEventInput {
   readonly error?: string;
   readonly errors?: readonly WatchErrorEntry[];
   readonly editorIssues?: readonly EditorIssue[];
+  // `watch --editor-compile` only, the same object `build --editor-compile`
+  // reports for one compile.
+  readonly editorCompile?: RenderResultInput["editorCompile"];
 }
 
 export function renderWatchEvent(input: RenderWatchEventInput): string {
@@ -309,9 +313,13 @@ export function renderWatchEvent(input: RenderWatchEventInput): string {
   const withTarget = "target" in input ? { ...withEditor, target: input.target } : withEditor;
   const withTargetSource =
     "targetSource" in input ? { ...withTarget, targetSource: input.targetSource } : withTarget;
-  const payload =
+  const withEditorIssues =
     "editorIssues" in input
       ? { ...withTargetSource, editorIssues: input.editorIssues }
       : withTargetSource;
+  const payload =
+    "editorCompile" in input
+      ? { ...withEditorIssues, editorCompile: input.editorCompile }
+      : withEditorIssues;
   return `${JSON.stringify(payload)}\n`;
 }
