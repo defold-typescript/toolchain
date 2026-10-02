@@ -27,7 +27,14 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     id: "core-concepts",
     label: "Core concepts",
     subtitle: "How Defold's script model works in TypeScript.",
-    slugs: ["script-lifecycle", "messages", "script-state", "vector-math", "editor-scripts"],
+    slugs: [
+      "script-lifecycle",
+      "messages",
+      "script-state",
+      "vector-math",
+      "editor-scripts",
+      "state-machines",
+    ],
   },
   {
     id: "cli",

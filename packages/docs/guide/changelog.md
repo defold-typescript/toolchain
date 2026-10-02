@@ -9,7 +9,17 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.42.1
+## v0.43.0
+
+> Summary:
+>
+> - **`vendor hsm` adds a typed state machine library to your project**: it [copies the `hsm` source](./state-machines.md#add-it-to-a-project) into `src/vendor/hsm/` with a `VERSION` stamp, and re-running it from a newer CLI upgrades in place.
+> - **Machines are checked at compile time**: events, their payloads and the machine's context are typed, and the library [compiles to plain Lua](./state-machines.md#define-a-machine-in-a-plain-module) with no `lualib_bundle`.
+> - **Defold messages and engine callbacks become typed machine events** through the [message bridge](./state-machines.md#the-message-bridge) and [`invoke` with `settle`](./state-machines.md#engine-callbacks-invoke-and-settle).
+
+### Improved
+
+- **`defold-typescript vendor hsm <path>` vendors `hsm`, a typed hierarchical state machine library shipped inside the CLI,** into `src/vendor/hsm/` with a `VERSION` stamp, leaving your own files in that folder untouched on upgrade, and `--json` reports `library`, `version`, `previousVersion` and `written`; the new [State machines](./state-machines.md) guide covers defining machines, one instance per object on `self`, the message bridge and engine callbacks.
 
 ## v0.42.0
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { hsmSourceFiles } from "./vendor-hsm";
 
 const PKG_DIR = resolve(import.meta.dir, "..");
 
@@ -47,6 +48,12 @@ describe("@defold-typescript/cli publish surface", () => {
     expect(paths).toContain("package.json");
     expect(paths).toContain("dist/bin.js");
     expect(paths).toContain("dist/index.js");
+  });
+
+  test("ships every hsm module the vendor command copies", () => {
+    for (const name of hsmSourceFiles(resolve(PKG_DIR, "../hsm/src"))) {
+      expect(paths).toContain(`dist/hsm/${name}`);
+    }
   });
 
   test("excludes tests and snapshots", () => {

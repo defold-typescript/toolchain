@@ -396,6 +396,7 @@ describe("buildNav", () => {
       "/script-state",
       "/vector-math",
       "/editor-scripts",
+      "/state-machines",
     ]);
     expect(byLabel("CLI")?.children?.map((c) => c.route)).toEqual([
       "/init",
