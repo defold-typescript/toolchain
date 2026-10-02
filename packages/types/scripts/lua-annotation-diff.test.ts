@@ -425,6 +425,69 @@ describe("return kinds", () => {
     expect(seeded.verdicts["runtime:test.fn:too-loose:return2"]?.verdict).toBe("corrected");
     expect(seeded.verdicts["runtime:test.fn:too-loose:return1"]?.verdict).toBe("open");
   });
+
+  test("a return correction seeds only when its pin covers every overload's kinds", () => {
+    const fn = annotated({
+      returns: [{ types: ["number"] }],
+      overloads: [{ params: [], returns: [{ types: ["boolean"] }] }],
+    });
+    const fnModel = { ...EMPTY_MODEL, functions: new Map([["runtime:test.fn", fn]]) };
+    const found = new Map(
+      diffAnnotated(fn, declaresString, fnModel).map((m) => [annotationMismatchKey(m), m]),
+    );
+    const correction = (upstream: string[]): SlotCorrection => ({
+      table: "RETURN_TYPE_CORRECTIONS",
+      key: "test.fn",
+      entry: { ts: "string", upstream, reason: "binding returns a string" },
+    });
+    const primaryOnly = seedAnnotationVerdicts(found, {}, fnModel, [correction(["number"])]);
+    expect(primaryOnly.verdicts["runtime:test.fn:too-loose:return1"]?.verdict).toBe("open");
+    expect(primaryOnly.verdicts["runtime:test.fn:too-narrow:return1"]?.verdict).toBe("open");
+    const merged = seedAnnotationVerdicts(found, {}, fnModel, [correction(["number", "boolean"])]);
+    expect(merged.verdicts["runtime:test.fn:too-loose:return1"]?.verdict).toBe("corrected");
+    expect(merged.verdicts["runtime:test.fn:too-narrow:return1"]?.verdict).toBe("corrected");
+  });
+
+  test("a named return correction is judged on the named slot merged across overloads", () => {
+    const fn = annotated({
+      returns: [
+        { name: "ok", types: ["boolean"] },
+        { name: "value", types: ["number"] },
+      ],
+      overloads: [
+        {
+          params: [],
+          returns: [
+            { name: "ok", types: ["boolean"] },
+            { name: "value", types: ["string"] },
+          ],
+        },
+      ],
+    });
+    const fnModel = { ...EMPTY_MODEL, functions: new Map([["runtime:test.fn", fn]]) };
+    const found = new Map(
+      diffAnnotated(
+        fn,
+        declared({ returnCounts: [2], returnSlots: [["string"], ["boolean"]] }),
+        fnModel,
+      ).map((m) => [annotationMismatchKey(m), m]),
+    );
+    const correction = (upstream: string[]): SlotCorrection => ({
+      table: "RETURN_TYPE_CORRECTIONS",
+      key: "test.fn",
+      entry: { ts: "string", upstream, reason: "binding returns a string", slot: "value" },
+    });
+    const verdictsAt = (seeded: ReturnType<typeof seedAnnotationVerdicts>, slot: string) =>
+      Object.entries(seeded.verdicts)
+        .filter(([key]) => key.endsWith(`:${slot}`))
+        .map(([, verdict]) => verdict.verdict);
+
+    const primaryOnly = seedAnnotationVerdicts(found, {}, fnModel, [correction(["number"])]);
+    expect(verdictsAt(primaryOnly, "return2")).toEqual(["open", "open"]);
+    const merged = seedAnnotationVerdicts(found, {}, fnModel, [correction(["number", "string"])]);
+    expect(verdictsAt(merged, "return2")).toEqual(["corrected", "corrected"]);
+    expect(verdictsAt(merged, "return1")).toEqual(["open", "open"]);
+  });
 });
 
 describe("correctionAgreement", () => {
@@ -460,6 +523,32 @@ describe("correctionAgreement", () => {
       ),
     ).toBe("agrees");
     expect(correctionAgreement(correction, annotated({ params: [] }), model)).toBe("absent");
+  });
+
+  test("a return correction is judged on the slot merged across overloads", () => {
+    const fn = annotated({
+      returns: [{ types: ["string"] }],
+      overloads: [{ params: [], returns: [{ types: ["number"] }] }],
+    });
+    const correction = (ts: string, upstream: string[]): SlotCorrection => ({
+      table: "RETURN_TYPE_CORRECTIONS",
+      key: "test.fn",
+      entry: { ts, upstream, reason: "binding returns either" },
+    });
+    expect(correctionAgreement(correction("string", ["boolean"]), fn, EMPTY_MODEL)).toBe("differs");
+    expect(correctionAgreement(correction("number | string", ["boolean"]), fn, EMPTY_MODEL)).toBe(
+      "agrees",
+    );
+    expect(correctionAgreement(correction("string", ["number", "string"]), fn, EMPTY_MODEL)).toBe(
+      "repeats",
+    );
+    expect(
+      correctionAgreement(
+        correction("string", ["number"]),
+        annotated({ overloads: [{ params: [], returns: [] }] }),
+        EMPTY_MODEL,
+      ),
+    ).toBe("absent");
   });
 });
 
