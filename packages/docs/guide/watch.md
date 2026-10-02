@@ -180,7 +180,8 @@ How it behaves:
   into one more compile after it finishes.
 - **No editor is not an error.** No editor, an editor older than 1.13.2, or a
   refused request prints one line, and the line is not repeated until the state
-  changes. An editor found later is compiled once on arrival.
+  changes. An editor found later is compiled once on arrival when the latest
+  build transpiled; after a failed one, the next successful rebuild compiles it.
 - **With `--hot-reload`, the reload answers first.** A hot reload into a running
   game returns the same verdict, so no separate compile follows it. When no game
   is running the editor declines the reload, and the compile runs instead.

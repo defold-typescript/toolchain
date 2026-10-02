@@ -3761,6 +3761,113 @@ describe("runWatch editor compile", () => {
     await watch.handle.done;
   });
 
+  test("a failed initial build announces the editor without compiling", async () => {
+    scaffoldResourceProject();
+    writeProjectFile("main/hero.ts", 'const x: number = "oops";\n');
+    const editor = makeEditor();
+    const watch = startCompileWatch(editor, { editorDiscoveryTicker: () => () => {} });
+    await watch.handle.waitForIdle();
+    expect(watch.err()).toContain("attached to Defold editor at http://localhost:4242");
+    expect(watch.err()).toContain("file(s) failed:");
+    expect(editor.compileCount()).toBe(0);
+
+    writeProjectFile("main/hero.ts", scriptSource(2));
+    await fire(watch, "main/hero.ts");
+    expect(editor.compileCount()).toBe(1);
+
+    watch.handle.stop();
+    await watch.handle.done;
+  });
+
+  test("a successful initial build compiles once when the editor is announced", async () => {
+    scaffoldResourceProject();
+    const editor = makeEditor();
+    const watch = startCompileWatch(editor, { editorDiscoveryTicker: () => () => {} });
+    await watch.handle.waitForIdle();
+    expect(watch.err()).toContain("attached to Defold editor at http://localhost:4242");
+    expect(editor.compileCount()).toBe(1);
+
+    watch.handle.stop();
+    await watch.handle.done;
+  });
+
+  function manualTicker(): {
+    tick: () => void;
+    ticker: NonNullable<RunWatchOptions["editorDiscoveryTicker"]>;
+  } {
+    let tick: () => void = () => {
+      throw new Error("the discovery ticker was never started");
+    };
+    return {
+      tick: () => tick(),
+      ticker: (next) => {
+        tick = next;
+        return () => {};
+      },
+    };
+  }
+
+  test("an editor found after valid output compiles once on arrival", async () => {
+    scaffoldResourceProject();
+    const editor = makeEditor(null);
+    const discovery = manualTicker();
+    const watch = startCompileWatch(editor, { editorDiscoveryTicker: discovery.ticker });
+    await watch.handle.waitForIdle();
+    expect(editor.compileCount()).toBe(0);
+
+    editor.setBaseUrl("http://localhost:7777");
+    discovery.tick();
+    await watch.handle.waitForIdle();
+    expect(watch.err()).toContain("attached to Defold editor at http://localhost:7777");
+    expect(editor.compileCount()).toBe(1);
+
+    watch.handle.stop();
+    await watch.handle.done;
+  });
+
+  test("an editor found after a repaired initial build compiles once on arrival", async () => {
+    scaffoldResourceProject();
+    writeProjectFile("main/hero.ts", 'const x: number = "oops";\n');
+    const editor = makeEditor(null);
+    const discovery = manualTicker();
+    const watch = startCompileWatch(editor, { editorDiscoveryTicker: discovery.ticker });
+    await watch.handle.waitForIdle();
+
+    writeProjectFile("main/hero.ts", scriptSource(2));
+    await fire(watch, "main/hero.ts");
+    const base = editor.compileCount();
+
+    editor.setBaseUrl("http://localhost:7777");
+    discovery.tick();
+    await watch.handle.waitForIdle();
+    expect(watch.err()).toContain("attached to Defold editor at http://localhost:7777");
+    expect(editor.compileCount() - base).toBe(1);
+
+    watch.handle.stop();
+    await watch.handle.done;
+  });
+
+  test("an editor first announced right after a failed rebuild compiles only after the fix", async () => {
+    scaffoldResourceProject();
+    const editor = makeEditor(null);
+    const watch = startCompileWatch(editor, { editorDiscoveryTicker: () => () => {} });
+    await watch.handle.waitForIdle();
+    expect(editor.compileCount()).toBe(0);
+
+    writeProjectFile("main/hero.ts", 'const x: number = "oops";\n');
+    editor.setBaseUrl("http://localhost:4242");
+    await fire(watch, "main/hero.ts");
+    expect(watch.err()).toContain("attached to Defold editor at http://localhost:4242");
+    expect(editor.compileCount()).toBe(0);
+
+    writeProjectFile("main/hero.ts", scriptSource(2));
+    await fire(watch, "main/hero.ts");
+    expect(editor.compileCount()).toBe(1);
+
+    watch.handle.stop();
+    await watch.handle.done;
+  });
+
   test("a hot reload's verdict stands in for the compile; a skipped reload compiles after it", async () => {
     scaffoldResourceProject();
     const editor = makeEditor();
