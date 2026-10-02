@@ -10,9 +10,12 @@ import {
 } from "@defold-typescript/transpiler";
 import {
   type BuildConfig,
+  builtinRuntimeRels,
   collectFailures,
   computeOutputRel,
   detectSourceOutputKind,
+  HSM_LIBRARY_LABEL,
+  hsmModuleRels,
   isTranspilerSource,
   LUALIB_BUNDLE_LABEL,
   lualibBundleRel,
@@ -204,11 +207,13 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     // The watch path rewrites the same chunks `runBuild` does, and for the same
     // reason: an incremental rebuild writes companions and generated runtimes
     // that the resolution check never scans.
+    const hsmRels = hsmModuleRels(config, Object.keys(result.hsmModules ?? {}));
     const rewrites = requireRewrites({
       sources: outputs,
       companions: companionBySource,
       ...(result.lualib !== undefined ? { lualibRel: lualibBundleRel(config) } : {}),
       ...(result.timersRuntime !== undefined ? { timersRel: timersModuleRel(config) } : {}),
+      hsmRels,
     });
     const luaBySource = rewriteAll(result.lua, rewrites);
     const companionLuaBySource = rewriteAll(result.companions ?? {}, rewrites);
@@ -218,6 +223,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       result.timersRuntime === undefined
         ? undefined
         : rewriteEmittedRequires(result.timersRuntime, rewrites);
+    const hsmLua = rewriteAll(result.hsmModules ?? {}, rewrites);
 
     if (failures.size === 0) {
       // Violations first, for the reason `runBuild` runs them first: an
@@ -245,6 +251,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
         ...(timersRuntime !== undefined
           ? [{ label: TIMERS_RUNTIME_LABEL, outputRel: timersModuleRel(config) }]
           : []),
+        ...Object.values(hsmRels).map((outputRel) => ({ label: HSM_LIBRARY_LABEL, outputRel })),
       ]);
     }
 
@@ -275,6 +282,9 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
     if (timersRuntime !== undefined) {
       claims.claim(timersModuleRel(config), runtimeArtifactClaimant(TIMERS_RUNTIME_LABEL));
+    }
+    for (const outputRel of Object.values(hsmRels)) {
+      claims.claim(outputRel, runtimeArtifactClaimant(HSM_LIBRARY_LABEL));
     }
 
     // Over the whole standing program rather than this rebuild's event batch,
@@ -330,6 +340,15 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       const runtimeRel = timersModuleRel(config);
       writeScriptFile(cwd, runtimeRel, timersRuntime, undefined);
       written.push(runtimeRel);
+    }
+    // No map: the `.ts` it would point at is not in the user's project, so a
+    // trace names the generated Lua instead.
+    for (const [name, lua] of Object.entries(hsmLua)) {
+      const moduleRel = hsmRels[name];
+      if (moduleRel !== undefined) {
+        writeScriptFile(cwd, moduleRel, lua, undefined);
+        written.push(moduleRel);
+      }
     }
     throwIfFailures(failures);
     return {
@@ -429,7 +448,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
   }
 
   function isOwnOutput(rel: string): boolean {
-    for (const runtimeRel of [lualibBundleRel(config), timersModuleRel(config)]) {
+    for (const runtimeRel of builtinRuntimeRels(config)) {
       if (rel === runtimeRel || rel === `${runtimeRel}.map`) return true;
     }
     for (const source of heldSources) {

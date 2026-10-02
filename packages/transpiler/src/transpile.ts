@@ -9,6 +9,13 @@ import {
   findDirectGoPropertyCalls,
   GO_PROPERTY_DIRECT_CALL_MESSAGE,
 } from "./go-property-direct-call";
+import {
+  HSM_REQUIRE_ROOT,
+  hsmClosure,
+  hsmLoweringPlugin,
+  hsmModules,
+  requireHsmSourceDir,
+} from "./hsm-builtin";
 import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
@@ -63,6 +70,13 @@ export interface TranspileProjectResult {
   // must write this to the output root. Present only when a user file imports
   // the module (pay-for-use).
   readonly timersRuntime?: string;
+  // The compiled `hsm` modules the program requires, keyed by module name
+  // (`index`, `defold`, ...). An hsm import lowers to
+  // `require("defold_typescript_hsm.<module>")`, so the CLI must write each one
+  // under the output root. Present only when some chunk requires one
+  // (pay-for-use); never carries a source map, since the `.ts` it would point
+  // at is not in the user's project.
+  readonly hsmModules?: Readonly<Record<string, string>>;
 }
 
 function flattenDiagnosticMessage(
@@ -180,6 +194,14 @@ function buildAmbientFiles(): Record<string, string> {
       "",
     ].join("\n"),
   };
+  // The generated `hsm` declarations, at the paths the package `exports` map
+  // names, so the build types user code against the same `.d.ts` tsserver
+  // reads. hsm's own `.ts` compiles separately, in `compileHsmModules`.
+  for (const entry of readdirSync(path.join(TYPES_PKG_ROOT, "hsm"))) {
+    if (entry.endsWith(".d.ts")) {
+      files[`node_modules/@defold-typescript/types/hsm/${entry}`] = readAmbient(`hsm/${entry}`);
+    }
+  }
   // Seed the Lua 5.1 standard library (math/os/string/table/coroutine + base
   // globals) so user code can call e.g. `math.randomseed(os.time())`.
   Object.assign(files, collectLuaTypesClosure());
@@ -287,6 +309,8 @@ export function collectOutputs(
     }
   }
 
+  const hsm = hsmClosure([...Object.values(lua), ...Object.values(companions)], compileHsmModules);
+
   return {
     lua,
     sourceMaps,
@@ -294,38 +318,48 @@ export function collectOutputs(
     ...(Object.keys(companions).length > 0 ? { companions } : {}),
     ...(lualib !== undefined ? { lualib } : {}),
     ...(timersImported ? { timersRuntime: TIMERS_RUNTIME } : {}),
+    ...(hsm !== undefined ? { hsmModules: hsm } : {}),
   };
+}
+
+function transpileVirtual(
+  files: Readonly<Record<string, string>>,
+  companionEmit: ReturnType<typeof createCompanionEmitPlugin>,
+): tstl.TranspileVirtualProjectResult {
+  return tstl.transpileVirtualProject(
+    { ...AMBIENT_FILES, ...files },
+    {
+      luaTarget: tstl.LuaTarget.Lua51,
+      sourceMap: true,
+      // Already-resolved CompilerOptions, so the value is the lib file name, not
+      // the tsconfig spelling "ES2022". Drops the default `lib.dom`, whose
+      // `declare var window` shadows Defold's `window` namespace.
+      lib: ["lib.es2022.d.ts"],
+      // Don't cross-check the seeded ambient .d.ts surface against itself; we only
+      // care about diagnostics on user files (mirrors the editor's skipLibCheck).
+      skipLibCheck: true,
+      // Defold scripts are not OO: free helper functions never receive a context,
+      // so suppress TSTL's implicit `self` parameter and the `_G` call-site filler.
+      noImplicitSelf: true,
+      luaPlugins: [
+        { plugin: lifecycleErasurePlugin },
+        { plugin: editorScriptErasurePlugin },
+        { plugin: messageGuardLoweringPlugin },
+        { plugin: windowEventGuardLoweringPlugin },
+        { plugin: messageDispatchLoweringPlugin },
+        { plugin: timersLoweringPlugin },
+        { plugin: hsmLoweringPlugin },
+        { plugin: typeApplicationErasurePlugin },
+        { plugin: companionEmit.plugin },
+      ],
+    },
+  );
 }
 
 export function transpileProject(input: TranspileProjectInput): TranspileProjectResult {
   const userKeys = new Set(Object.keys(input.files));
-  const merged: Record<string, string> = { ...AMBIENT_FILES, ...input.files };
   const companionEmit = createCompanionEmitPlugin();
-
-  const result = tstl.transpileVirtualProject(merged, {
-    luaTarget: tstl.LuaTarget.Lua51,
-    sourceMap: true,
-    // Already-resolved CompilerOptions, so the value is the lib file name, not
-    // the tsconfig spelling "ES2022". Drops the default `lib.dom`, whose
-    // `declare var window` shadows Defold's `window` namespace.
-    lib: ["lib.es2022.d.ts"],
-    // Don't cross-check the seeded ambient .d.ts surface against itself; we only
-    // care about diagnostics on user files (mirrors the editor's skipLibCheck).
-    skipLibCheck: true,
-    // Defold scripts are not OO: free helper functions never receive a context,
-    // so suppress TSTL's implicit `self` parameter and the `_G` call-site filler.
-    noImplicitSelf: true,
-    luaPlugins: [
-      { plugin: lifecycleErasurePlugin },
-      { plugin: editorScriptErasurePlugin },
-      { plugin: messageGuardLoweringPlugin },
-      { plugin: windowEventGuardLoweringPlugin },
-      { plugin: messageDispatchLoweringPlugin },
-      { plugin: timersLoweringPlugin },
-      { plugin: typeApplicationErasurePlugin },
-      { plugin: companionEmit.plugin },
-    ],
-  });
+  const result = transpileVirtual(input.files, companionEmit);
 
   return collectOutputs(
     result.transpiledFiles,
@@ -333,6 +367,54 @@ export function transpileProject(input: TranspileProjectInput): TranspileProject
     userKeys,
     companionEmit.companions,
   );
+}
+
+let compiledHsm: Readonly<Record<string, string>> | undefined;
+
+/**
+ * Every `hsm` module compiled to Lua, keyed by module name, once per process.
+ * The source is the shipped TypeScript, never a prebuilt Lua copy, so the Lua a
+ * project gets always comes from the compiler that builds it. Each file sits at
+ * `defold_typescript_hsm/<module>.ts`, so a require between modules is already
+ * spelled the way the user's lowered imports are. Throws when the compile
+ * reports anything or needs the lualib bundle, which hsm must never do.
+ */
+export function compileHsmModules(): Readonly<Record<string, string>> {
+  if (compiledHsm !== undefined) {
+    return compiledHsm;
+  }
+  const sourceDir = requireHsmSourceDir();
+  const nameByKey = new Map<string, string>();
+  const files: Record<string, string> = {};
+  for (const { name } of hsmModules()) {
+    const key = `${HSM_REQUIRE_ROOT}/${name}.ts`;
+    nameByKey.set(key, name);
+    files[key] = readFileSync(path.join(sourceDir, `${name}.ts`), "utf8");
+  }
+  const result = transpileVirtual(files, createCompanionEmitPlugin());
+
+  const problems = result.diagnostics.map(
+    (d) => `${d.file?.fileName ?? "(project)"}: ${flattenDiagnosticMessage(d.messageText)}`,
+  );
+  const lua: Record<string, string> = {};
+  for (const file of result.transpiledFiles) {
+    if (isLualibBundle(file)) {
+      problems.push("the compiled Lua requires lualib_bundle");
+      continue;
+    }
+    const source = file.sourceFiles.find((s) => nameByKey.has(s.fileName));
+    const name = source === undefined ? undefined : nameByKey.get(source.fileName);
+    if (name !== undefined && typeof file.lua === "string") {
+      lua[name] = file.lua;
+    }
+  }
+  if (problems.length > 0) {
+    throw new Error(
+      `@defold-typescript/transpiler: the hsm library does not compile:\n  ${problems.join("\n  ")}`,
+    );
+  }
+  compiledHsm = lua;
+  return lua;
 }
 
 export function transpile(source: string): TranspileResult {

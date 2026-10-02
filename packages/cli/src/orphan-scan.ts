@@ -2,11 +2,10 @@ import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
   type BuildConfig,
+  builtinRuntimeRels,
   GENERATED_BANNER,
-  lualibBundleRel,
   outputRelsForSource,
   stripIncludeBase,
-  timersModuleRel,
 } from "./build-output";
 import { scanFilesSync } from "./scan";
 
@@ -76,7 +75,7 @@ export function scanOrphanOutputs(
       explained.add(out);
     }
   }
-  for (const rel of [lualibBundleRel(config), timersModuleRel(config)]) {
+  for (const rel of builtinRuntimeRels(config)) {
     explained.add(rel);
     explained.add(`${rel}.map`);
   }

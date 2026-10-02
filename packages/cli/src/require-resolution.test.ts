@@ -2,9 +2,16 @@ import { describe, expect, test } from "bun:test";
 import {
   type BuildConfig,
   computeOutputRel,
+  findEmittedRequires,
+  rewriteEmittedRequires,
   transpileProject,
 } from "@defold-typescript/transpiler";
-import { detectSourceOutputKind, lualibBundleRel, timersModuleRel } from "./build-output";
+import {
+  detectSourceOutputKind,
+  hsmModuleRels,
+  lualibBundleRel,
+  timersModuleRel,
+} from "./build-output";
 import { findUnresolvedRequires, requireRewrites } from "./require-resolution";
 
 // The expected paths come from `computeOutputRel` and `detectSourceOutputKind`
@@ -243,10 +250,22 @@ function rewrites(
     companions,
     ...(result.lualib !== undefined ? { lualibRel: lualibBundleRel(config) } : {}),
     ...(result.timersRuntime !== undefined ? { timersRel: timersModuleRel(config) } : {}),
+    ...(result.hsmModules !== undefined
+      ? { hsmRels: hsmModuleRels(config, Object.keys(result.hsmModules)) }
+      : {}),
   });
 }
 
 const OUTDIR: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
+
+const HSM_IMPORT = [
+  'import { defineMachine } from "@defold-typescript/types/hsm";',
+  'export const door = defineMachine<{}, { type: "GO" }>()({',
+  '  initial: "idle",',
+  '  states: { idle: { on: { GO: "done" } }, done: {} },',
+  "});",
+  "",
+].join("\n");
 const DOTTED_OUTDIR: BuildConfig = { outDir: "build.out", include: ["src/**/*.ts"] };
 
 const TIMERS_ONLY =
@@ -339,5 +358,29 @@ describe("requireRewrites", () => {
 
   test("a dotted outDir leaves both runtime artifacts unmapped", () => {
     expect(rewrites({ "src/main.ts": TIMERS_AND_LUALIB }, DOTTED_OUTDIR)).toEqual(new Map());
+  });
+
+  test("an hsm module is mapped to the path the build writes it to", () => {
+    expect(rewrites({ "src/door.ts": HSM_IMPORT }, OUTDIR)).toEqual(
+      new Map([
+        ["src.door", "build.lua.door"],
+        ["defold_typescript_hsm.index", "build.lua.defold_typescript_hsm.index"],
+      ]),
+    );
+  });
+
+  test("the rewritten hsm require is never reported as unresolvable", () => {
+    const files = { "src/door.ts": HSM_IMPORT };
+    const lua = transpileProject({ files }).lua["src/door.ts"] ?? "";
+    expect(findEmittedRequires(lua)).toEqual([]);
+    const rewritten = rewriteEmittedRequires(lua, rewrites(files, OUTDIR));
+    expect(rewritten).toContain('require("build.lua.defold_typescript_hsm.index")');
+    expect(
+      findUnresolvedRequires({
+        lua: { "src/door.ts": rewritten },
+        sources: { "src/door.ts": "build/lua/door.lua" },
+        plannedOutputs: ["build/lua/door.lua"],
+      }),
+    ).toEqual([]);
   });
 });

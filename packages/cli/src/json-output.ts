@@ -15,8 +15,7 @@ export type CliCommand =
   | "run"
   | "reload"
   | "upgrade"
-  | "set-target"
-  | "vendor";
+  | "set-target";
 
 export interface ResolvedExtensionReportJson {
   readonly url: string;

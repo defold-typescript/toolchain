@@ -10,6 +10,8 @@ import {
   collectFailures,
   computeOutputRel,
   detectSourceOutputKind,
+  HSM_LIBRARY_LABEL,
+  hsmModuleRels,
   LUALIB_BUNDLE_LABEL,
   lualibBundleRel,
   pruneAlternativeOutputs,
@@ -146,11 +148,13 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   // Every chunk the build writes is respelled to the paths the build writes,
   // before the resolution check reads it: a require the map does not cover keeps
   // its source-rooted spelling, so the check still catches it.
+  const hsmRels = hsmModuleRels(config, Object.keys(result.hsmModules ?? {}));
   const rewrites = requireRewrites({
     sources: outputBySource,
     companions: companionBySource,
     ...(result.lualib !== undefined ? { lualibRel: lualibBundleRel(config) } : {}),
     ...(result.timersRuntime !== undefined ? { timersRel: timersModuleRel(config) } : {}),
+    hsmRels,
   });
   const luaBySource = rewriteAll(result.lua, rewrites);
   const companionLuaBySource = rewriteAll(result.companions ?? {}, rewrites);
@@ -160,6 +164,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     result.timersRuntime === undefined
       ? undefined
       : rewriteEmittedRequires(result.timersRuntime, rewrites);
+  const hsmLua = rewriteAll(result.hsmModules ?? {}, rewrites);
 
   // Before the write loop, so a build whose requires cannot resolve leaves no
   // half-correct output behind. Skipped while the program has type errors: the
@@ -192,6 +197,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
       ...(timersRuntime !== undefined
         ? [{ label: TIMERS_RUNTIME_LABEL, outputRel: timersModuleRel(config) }]
         : []),
+      ...Object.values(hsmRels).map((outputRel) => ({ label: HSM_LIBRARY_LABEL, outputRel })),
     ]);
   }
 
@@ -218,6 +224,9 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   }
   if (timersRuntime !== undefined) {
     claims.claim(timersModuleRel(config), runtimeArtifactClaimant(TIMERS_RUNTIME_LABEL));
+  }
+  for (const outputRel of Object.values(hsmRels)) {
+    claims.claim(outputRel, runtimeArtifactClaimant(HSM_LIBRARY_LABEL));
   }
   const writable = sources.filter((rel) => !failures.has(rel) && Boolean(luaBySource[rel]));
   for (const rel of writable) {
@@ -272,6 +281,15 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     const runtimeRel = timersModuleRel(config);
     writeScriptFile(cwd, runtimeRel, timersRuntime, undefined);
     written.push(runtimeRel);
+  }
+  // No map: the `.ts` it would point at is not in the user's project, so a
+  // trace names the generated Lua instead.
+  for (const [name, lua] of Object.entries(hsmLua)) {
+    const moduleRel = hsmRels[name];
+    if (moduleRel !== undefined) {
+      writeScriptFile(cwd, moduleRel, lua, undefined);
+      written.push(moduleRel);
+    }
   }
 
   throwIfFailures(failures);

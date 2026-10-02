@@ -84,6 +84,26 @@ describe("createTranspileSession", () => {
     expect(session.getProgram()?.getSourceFile("util.ts")).toBeUndefined();
   });
 
+  test("selects the same hsm modules as transpileProject", () => {
+    const files = {
+      "door.ts": [
+        'import { defineMachine } from "@defold-typescript/types/hsm";',
+        'export const door = defineMachine<{}, { type: "GO" }>()({',
+        '  initial: "idle",',
+        '  states: { idle: { on: { GO: "done" } }, done: {} },',
+        "});",
+        "",
+      ].join("\n"),
+    };
+    const sessionResult = createTranspileSession().update(files);
+    const projectResult = transpileProject({ files });
+
+    expect(sessionResult.diagnostics).toEqual([]);
+    expect(sessionResult.lua).toEqual(projectResult.lua);
+    expect(Object.keys(sessionResult.hsmModules ?? {})).toEqual(["index"]);
+    expect(sessionResult.hsmModules).toEqual(projectResult.hsmModules);
+  });
+
   test("surfaces the lualib bundle on the incremental update path", () => {
     const files = { "main.ts": "export const ks = Object.keys({ a: 1, b: 2 });\n" };
     const session = createTranspileSession();

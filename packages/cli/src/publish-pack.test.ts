@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { hsmSourceFiles } from "./vendor-hsm";
+import { hsmModules } from "@defold-typescript/transpiler";
 
 const PKG_DIR = resolve(import.meta.dir, "..");
 
@@ -50,10 +50,8 @@ describe("@defold-typescript/cli publish surface", () => {
     expect(paths).toContain("dist/index.js");
   });
 
-  test("ships every hsm module the vendor command copies", () => {
-    for (const name of hsmSourceFiles(resolve(PKG_DIR, "../hsm/src"))) {
-      expect(paths).toContain(`dist/hsm/${name}`);
-    }
+  test("ships no hsm source (the transpiler compiles it)", () => {
+    expect(paths.filter((path) => path.startsWith("dist/hsm/"))).toEqual([]);
   });
 
   test("excludes tests and snapshots", () => {
@@ -112,6 +110,20 @@ describe("@defold-typescript/cli publish surface", () => {
       for (const specifier of relativeImportSpecifiers(resolve(PKG_DIR, entry))) {
         expect(specifier).toMatch(/\.js$/);
       }
+    }
+  });
+});
+
+describe("@defold-typescript/types hsm surface", () => {
+  const typesDir = resolve(PKG_DIR, "../types");
+  const paths = packedPaths(typesDir);
+
+  test("ships a declaration and an export entry for every hsm module", async () => {
+    const manifest = await Bun.file(resolve(typesDir, "package.json")).json();
+    for (const { name, specifier } of hsmModules()) {
+      expect(paths).toContain(`hsm/${name}.d.ts`);
+      const subpath = `.${specifier.slice("@defold-typescript/types".length)}`;
+      expect(manifest.exports[subpath]).toEqual({ types: `./hsm/${name}.d.ts` });
     }
   });
 });

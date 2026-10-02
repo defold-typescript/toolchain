@@ -13,6 +13,7 @@ import * as path from "node:path";
 import {
   type BuildConfig,
   computeOutputRel,
+  hsmModules,
   requirePathForRel,
   type SceneComponentIndex,
 } from "@defold-typescript/transpiler";
@@ -20,10 +21,12 @@ import { runBuild } from "./build";
 import {
   BuildFailureError,
   GENERATED_BANNER,
+  hsmModuleRel,
   lualibBundleRel,
   timersModuleRel,
 } from "./build-output";
 import { createBuildSession } from "./build-session";
+import { scanOrphanOutputs } from "./orphan-scan";
 
 const OUTDIR_CONFIG: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
 
@@ -147,6 +150,45 @@ describe("createBuildSession", () => {
     expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(true);
     expect(result.written).toContain("lualib_bundle.lua");
     expect(readFileSync(runtimePath, "utf8")).toContain('require("lualib_bundle")');
+  });
+
+  test("hsm outputs stay current across rebuilds and are never read as orphans", () => {
+    const config: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
+    writeIn(
+      cwd,
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { outDir: "build/lua" }, include: ["src/**/*.ts"] }),
+    );
+    const machine = (target: string) =>
+      [
+        'import { defineMachine } from "@defold-typescript/types/hsm";',
+        'export const door = defineMachine<{}, { type: "GO" }>()({',
+        '  initial: "idle",',
+        `  states: { idle: { on: { GO: "${target}" } }, done: {}, gone: {} },`,
+        "});",
+        "",
+      ].join("\n");
+    writeIn(cwd, "src/door.ts", machine("done"));
+
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+    const indexRel = hsmModuleRel(config, "index");
+    expect(existsSync(path.join(cwd, indexRel))).toBe(true);
+
+    rmSync(path.join(cwd, indexRel));
+    writeIn(cwd, "src/door.ts", machine("gone"));
+    const rebuilt = session.applyEvents(["src/door.ts"], []);
+    expect(rebuilt.written).toContain(indexRel);
+    expect(existsSync(path.join(cwd, indexRel))).toBe(true);
+
+    for (const { name } of hsmModules()) {
+      expect(session.isOwnOutput(hsmModuleRel(config, name))).toBe(true);
+    }
+
+    writeIn(cwd, "src/door.ts", "export const door = 1;\n");
+    session.applyEvents(["src/door.ts"], []);
+    expect(existsSync(path.join(cwd, indexRel))).toBe(true);
+    expect(scanOrphanOutputs(cwd, ["src/door.ts"], config)).toEqual([]);
   });
 
   test("applyEvents removes a deleted helper file's module outputs and drops it from later builds", () => {
