@@ -81,6 +81,7 @@
       "version": "0.0.0",
       "devDependencies": {
         "@defold-typescript/transpiler": "workspace:*",
+        "@defold-typescript/types": "workspace:*",
       },
     },
     "packages/library-types": {
