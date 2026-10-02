@@ -11,6 +11,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 ## v0.42.0
 
+> Summary:
+>
+> - **`build` and `watch` drive the open Defold 1.13.2+ editor**: they [compile your project there](./build.md#compile-in-the-editor) or [build and launch the game](./build.md#run-in-the-editor), and report each issue at its TypeScript line.
+> - **The [API reference](/api) shows each function's history across Defold releases as it applies**: overloads added or removed in a release are summarized, and a changed signature reads as one function with its earlier form below it.
+> - **API search hits open the exact member they matched.**
+
 ### Improved
 
 - **`build --editor-compile`, `build --editor-run` and `watch --editor-compile` drive the open Defold 1.13.2+ editor:** `build` compiles the project or builds and launches the game once the Lua is written, printing the engine's URL (`--editor-focus` brings its window forward) and exiting `1` on failure, while `watch` compiles after every successful build and project file change, keeps running on a failed compile, and ships as the `defold-typescript:watch-ec` and `defold-typescript:watch-hr-ec` mise tasks. Each issue shows at its TypeScript line, `--json` carries the result as `editorCompile` or `editorRun` (one `editorCompile` event per compile under `watch`), an older or missing editor is reported in one line without failing, and every other command rejects the flags; see [Compile in the editor](./build.md#compile-in-the-editor), [Run in the editor](./build.md#run-in-the-editor) and [watch](./watch.md#compile-in-the-editor).
@@ -26,6 +32,13 @@ What changed in each published `defold-typescript` toolchain release.
 - **API search hits open the member they matched.** Searching `get_position` lists `go.get_position` by name, and clicking a hit in the search box or on the search page scrolls to that member's heading instead of the top of the [go](/api/go) page; types and their fields land the same way, such as `b2d.joint.JOINT_TYPE` or `monarch.monarch.ShowOptions.no_stack`.
 
 ## v0.41.0
+
+> Summary:
+>
+> - **Defold 1.13.2 is the default API target** ([what changed](./upgrading-defold-versions.md#defold-1132)), and its new APIs are typed, including the [bullet3d](/api/bullet3d) physics namespaces and [text script properties](./script-lifecycle.md#text-properties).
+> - **The breaking changes catch at compile time what used to fail when the script ran**: a missing required argument or table field, a call the engine's Lua bindings reject, or a value typed differently from what the engine returns; [`options.index`](./typescript-vs-lua.md#engine-array-properties-optionsindex) is also 1-based again.
+> - **Declarations stricter than the engine are relaxed**, curried `go.get<P>()` and `go.set<P>()` calls reach the engine, and [`reload`](./reload.md) and `watch --hot-reload` work against a 1.13.2 editor.
+> - **Hovers and the API reference [state the base of every index](./typescript-vs-lua.md#engine-indexes-use-defolds-base)** and show each example as its own TypeScript block with the engine's Lua sample beside it.
 
 ### Breaking
 
