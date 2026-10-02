@@ -14,13 +14,13 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **`vendor hsm` adds a typed state machine library to your project**: it [copies the `hsm` source](./state-machines.md#add-it-to-a-project) into `src/vendor/hsm/` with a `VERSION` stamp, and re-running it from a newer CLI upgrades in place.
-> - **Machines are checked at compile time**: events, their payloads and the machine's context are typed, and the library [compiles to plain Lua](./state-machines.md#define-a-machine-in-a-plain-module) with no `lualib_bundle`.
+> - **Machines are checked at compile time**: events, their payloads, the context and the [state paths](./state-machines.md#define-a-machine-in-a-plain-module) are typed, so a target that names no state fails to compile, and the library compiles to plain Lua with no `lualib_bundle`.
 > - **Defold messages and engine callbacks become typed machine events** through the [message bridge](./state-machines.md#the-message-bridge) and [`invoke` with `settle`](./state-machines.md#engine-callbacks-invoke-and-settle).
 > - **A worked migration shows the move from flags to states**: the platformer example's player now runs on one machine, and the guide [walks through the before and after](./state-machines.md#migrate-a-script).
 
 ### Improved
 
-- **`defold-typescript vendor hsm <path>` vendors `hsm`, a typed hierarchical state machine library shipped inside the CLI,** into `src/vendor/hsm/` with a `VERSION` stamp, leaving your own files in that folder untouched on upgrade, and `--json` reports `library`, `version`, `previousVersion` and `written`. The new [State machines](./state-machines.md) guide covers defining machines, one instance per object on `self`, the message bridge, engine callbacks, and a [walkthrough that migrates the platformer example's player](./state-machines.md#migrate-a-script) onto one machine.
+- **`defold-typescript vendor hsm <path>` vendors `hsm`, a typed hierarchical state machine library shipped inside the CLI,** into `src/vendor/hsm/` with a `VERSION` stamp, leaving your own files in that folder untouched on upgrade, and `--json` reports `library`, `version`, `previousVersion` and `written`. Machines type their events, context and state paths, so `matches()` takes only the machine's paths and an unknown target or `initial` fails to compile, and the new [State machines](./state-machines.md) guide covers defining machines, one instance per object on `self`, the message bridge, engine callbacks, and a [walkthrough that migrates the platformer example's player](./state-machines.md#migrate-a-script) onto one machine.
 
 ## v0.42.0
 

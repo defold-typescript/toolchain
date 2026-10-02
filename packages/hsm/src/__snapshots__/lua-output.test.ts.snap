@@ -260,7 +260,7 @@ local function transitionDomain(compiled, source, target, reenter)
     end
     return domain
 end
-function ____exports.defineMachine(config)
+local function createMachine(config)
     local compiled = compile(config)
     local paths = compiled.paths
     local parent = compiled.parent
@@ -578,6 +578,9 @@ function ____exports.defineMachine(config)
         return instance
     end
     return {start = start}
+end
+function ____exports.defineMachine()
+    return createMachine
 end
 return ____exports
 "

@@ -44,7 +44,7 @@ function thrownMessage(run: () => unknown): string {
 
 describe("defineMachine and start", () => {
   test("start enters the initial chain top-down and reports the leaf path", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       states: { a: { ...logged("a"), initial: "a1", states: { a1: logged("a1") } } },
     });
@@ -55,7 +55,7 @@ describe("defineMachine and start", () => {
   });
 
   test("instances started from one definition keep separate ctx and paths", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       states: { a: { ...logged("a"), on: { GO: "b" } }, b: logged("b") },
     });
@@ -73,7 +73,7 @@ describe("defineMachine and start", () => {
   });
 
   test("matches compares whole path prefixes, never partial segments", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       states: {
         a: { initial: "a1", states: { a1: {} }, on: { GO: "ab" } },
@@ -84,6 +84,7 @@ describe("defineMachine and start", () => {
     const m = def.start(newCtx());
     expect(m.matches("a")).toBe(true);
     expect(m.matches("a.a1")).toBe(true);
+    // @ts-expect-error a1 is a segment, not a path
     expect(m.matches("a1")).toBe(false);
     expect(m.matches("b")).toBe(false);
     m.send({ type: "GO" });
@@ -93,7 +94,7 @@ describe("defineMachine and start", () => {
 
   test("an unknown target throws at definition, naming the declaring state and the target", () => {
     const message = thrownMessage(() =>
-      defineMachine<Ctx, Ev>({
+      defineMachine<Ctx, Ev>()({
         initial: "attack",
         states: {
           attack: { initial: "recover", states: { recover: { on: { GO: "nope" } } } },
@@ -106,7 +107,7 @@ describe("defineMachine and start", () => {
 
   test("a compound state without initial throws, naming its path", () => {
     const message = thrownMessage(() =>
-      defineMachine<Ctx, Ev>({
+      defineMachine<Ctx, Ev>()({
         initial: "outer",
         states: {
           outer: { initial: "inner", states: { inner: { states: { leaf: {} } } } },
@@ -119,7 +120,7 @@ describe("defineMachine and start", () => {
 
   test("an initial naming a missing child throws, naming the path and the child", () => {
     const message = thrownMessage(() =>
-      defineMachine<Ctx, Ev>({
+      defineMachine<Ctx, Ev>()({
         initial: "outer",
         states: {
           outer: {
@@ -134,7 +135,7 @@ describe("defineMachine and start", () => {
   });
 
   test("a #-prefixed target resolves as an absolute path from the root", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "attack",
       states: {
         chase: {},
@@ -149,7 +150,7 @@ describe("defineMachine and start", () => {
 
 describe("events", () => {
   test("a transition exits leaf-first, runs actions, then enters top-down to a leaf", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       states: {
         a: {
@@ -177,7 +178,7 @@ describe("events", () => {
   });
 
   test("the first passing guard wins", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "idle",
       states: {
         idle: {
@@ -196,7 +197,7 @@ describe("events", () => {
   });
 
   test("guards after the first passing candidate are never evaluated", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "idle",
       states: {
         idle: {
@@ -231,7 +232,7 @@ describe("events", () => {
   });
 
   test("an event no candidate in the leaf accepts bubbles to the parent", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "p",
       states: {
         p: {
@@ -248,7 +249,7 @@ describe("events", () => {
   });
 
   test("an event no state handles changes nothing and does not throw", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       states: { a: { ...logged("a"), on: { GO: "b" } }, b: {} },
     });
@@ -260,7 +261,7 @@ describe("events", () => {
   });
 
   test("a targetless transition runs its actions with no exit or enter", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       states: {
         a: {
@@ -284,7 +285,7 @@ describe("events", () => {
   });
 
   test("transition lists must be non-empty, while {} stays a targetless handler", () => {
-    defineMachine<Ctx, Ev>({
+    defineMachine<Ctx, Ev>()({
       initial: "idle",
       states: {
         idle: {
@@ -299,7 +300,7 @@ describe("events", () => {
       },
     });
 
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "p",
       states: {
         p: {
@@ -318,7 +319,7 @@ describe("events", () => {
   });
 
   test("a root-level transition to the active state exits and re-enters it", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "stunned",
       on: { HIT: "stunned" },
       states: { stunned: logged("stunned") },
@@ -332,7 +333,7 @@ describe("events", () => {
 
   test("a state targeting its own child keeps itself active unless reenter is set", () => {
     const build = (reenter: boolean) =>
-      defineMachine<Ctx, Ev>({
+      defineMachine<Ctx, Ev>()({
         initial: "p",
         states: {
           p: {
@@ -360,7 +361,7 @@ describe("events", () => {
   });
 
   test("sends from a hook queue until the step's last enter and run in send order", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       on: {
         STEP: {
@@ -391,7 +392,7 @@ describe("events", () => {
 
   test("on keys are limited to event types and handlers see their own variant", () => {
     type Combat = { type: "HIT"; damage: number } | { type: "HEAL"; amount: number };
-    const def = defineMachine<{ hp: number }, Combat>({
+    const def = defineMachine<{ hp: number }, Combat>()({
       initial: "alive",
       states: {
         alive: {
@@ -407,12 +408,28 @@ describe("events", () => {
                 ctx.hp += event.amount;
               },
             },
-            // @ts-expect-error BOGUS is not a Combat event type
+          },
+        },
+      },
+    });
+    const bogus = defineMachine<{ hp: number }, Combat>()({
+      initial: "alive",
+      states: {
+        alive: {
+          on: {
+            HIT: {
+              actions: (ctx, event) => {
+                ctx.hp -= event.damage;
+              },
+            },
             BOGUS: "alive",
           },
         },
       },
     });
+    // @ts-expect-error BOGUS is not a Combat event type; with a callback in the config the
+    // error lands on start rather than on the key
+    bogus.start({ hp: 10 });
     const m = def.start({ hp: 10 });
     m.send({ type: "HIT", damage: 3 });
     m.send({ type: "HEAL", amount: 1 });
@@ -424,7 +441,7 @@ describe("events", () => {
 
 describe("update, after and stop", () => {
   test("update runs active hooks innermost-first and stops at the first returned target", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "p",
       states: {
         p: {
@@ -459,7 +476,7 @@ describe("update, after and stop", () => {
   });
 
   test("an after timer counts dt and restarts on re-entry", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       states: {
         a: { after: { 0.5: "b" }, on: { LEAVE: "c" } },
@@ -484,7 +501,7 @@ describe("update, after and stop", () => {
   });
 
   test("the shortest expired after entry fires first regardless of declaration order", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       states: { a: { after: { 1: "x", 0.5: "y" } }, x: {}, y: {} },
     });
@@ -497,7 +514,7 @@ describe("update, after and stop", () => {
   });
 
   test("events never advance a timer; only update does", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       states: { a: { after: { 0.5: "b" }, on: { PING: {} } }, b: {} },
     });
@@ -511,7 +528,7 @@ describe("update, after and stop", () => {
   });
 
   test("stop exits leaf-first and turns later calls into no-ops", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       states: {
         a: {
@@ -538,7 +555,7 @@ describe("update, after and stop", () => {
   });
 
   test("stop inside an enter hook takes effect when the step ends and drops queued events", () => {
-    const def = defineMachine<Ctx, Ev>({
+    const def = defineMachine<Ctx, Ev>()({
       initial: "a",
       on: {
         PING: {
@@ -606,7 +623,7 @@ describe("invoke", () => {
   }
 
   test("settle moves the machine through the entered state's on, after its enter hook", () => {
-    const def = defineMachine<LoadCtx, LoadEv>({
+    const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "loading",
       states: {
         loading: {
@@ -629,7 +646,7 @@ describe("invoke", () => {
   });
 
   test("settle is one-shot, and a later entry's settle replaces the earlier one", () => {
-    const def = defineMachine<LoadCtx, LoadEv>({
+    const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "loading",
       states: {
         loading: {
@@ -665,7 +682,7 @@ describe("invoke", () => {
   });
 
   test("a settle held from an exited entry is ignored, whether the level empties or a sibling fills it", () => {
-    const def = defineMachine<LoadCtx, LoadEv>({
+    const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "deep",
       states: {
         deep: {
@@ -695,7 +712,7 @@ describe("invoke", () => {
   });
 
   test("settle called inside invoke queues until the entry step completes", () => {
-    const def = defineMachine<LoadCtx, LoadEv>({
+    const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "loading",
       states: {
         loading: {
@@ -725,7 +742,7 @@ describe("invoke", () => {
   });
 
   test("a settle held across stop runs nothing", () => {
-    const def = defineMachine<LoadCtx, LoadEv>({
+    const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "loading",
       states: {
         loading: { ...logged("loading"), invoke: holdSettle("loading"), on: { LOADED: "ready" } },
@@ -742,7 +759,7 @@ describe("invoke", () => {
   });
 
   test("a reentering self-transition starts invoke again and drops the earlier settle", () => {
-    const def = defineMachine<LoadCtx, LoadEv>({
+    const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "loading",
       states: {
         loading: {
@@ -760,5 +777,119 @@ describe("invoke", () => {
     expect(m.path).toBe("loading");
     settleAt(ctx, 1)({ type: "LOADED" });
     expect(m.path).toBe("ready");
+  });
+});
+
+describe("typed paths", () => {
+  const motion = defineMachine<Ctx, Ev>()({
+    initial: "grounded",
+    states: {
+      grounded: {
+        initial: "idle",
+        on: {
+          GO: {
+            target: "airborne.rising",
+            guard: (ctx) => ctx.flag !== true,
+            actions: (ctx) => {
+              ctx.log.push("jump");
+            },
+          },
+        },
+        states: {
+          idle: { on: { STEP: "walk" } },
+          walk: {
+            update: (_ctx, dt) => (dt > 1 ? "idle" : undefined),
+            on: { BACK: "#airborne.falling" },
+          },
+        },
+      },
+      airborne: {
+        initial: "falling",
+        after: { 0.5: "grounded" },
+        states: {
+          rising: {},
+          falling: {
+            enter: (ctx) => {
+              ctx.log.push("fall");
+            },
+          },
+        },
+      },
+    },
+  });
+
+  test("relative, absolute and after targets compile and the inferred paths reach runtime", () => {
+    const ctx = newCtx();
+    const m = motion.start(ctx);
+    m.send({ type: "STEP", n: 1 });
+    expect(m.matches("grounded.walk")).toBe(true);
+    m.send({ type: "BACK" });
+    expect(m.matches("airborne.falling")).toBe(true);
+    m.update(0.5);
+    expect(m.path).toBe("grounded.idle");
+    m.send({ type: "GO" });
+    expect(m.path).toBe("airborne.rising");
+    expect(ctx.log).toEqual(["fall", "jump"]);
+    // @ts-expect-error a misspelled path is not one of the machine's states
+    expect(m.matches("grounded.wlak")).toBe(false);
+  });
+
+  test("paths are typed four levels deep and fall back to string below that", () => {
+    const deep = defineMachine<Ctx, Ev>()({
+      initial: "a",
+      states: {
+        a: { on: { GO: "#b.q.r.s", BACK: "#b.q.r.s.t" } },
+        b: {
+          initial: "q",
+          states: {
+            q: {
+              initial: "r",
+              states: { r: { initial: "s", states: { s: { initial: "t", states: { t: {} } } } } },
+            },
+          },
+        },
+      },
+    });
+    const m = deep.start(newCtx());
+    m.send({ type: "GO" });
+    expect(m.path).toBe("b.q.r.s.t");
+    expect(m.matches("b.q.r.s")).toBe(true);
+    expect(m.matches("b.q.r.s.t")).toBe(true);
+    expect(m.matches("b.q.r.s.unchecked")).toBe(false);
+    // @ts-expect-error the fourth level is still checked
+    expect(m.matches("b.q.r.x")).toBe(false);
+  });
+
+  test("an unknown on, guarded-list, after or initial target fails to compile at start", () => {
+    const unknownOn = () =>
+      defineMachine<Ctx, Ev>()({ initial: "a", states: { a: { on: { GO: "nope" } } } });
+    const unknownInList = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "a",
+        states: {
+          a: {
+            on: {
+              STEP: [{ guard: (_ctx, event) => event.n > 0, target: "b" }, { target: "ghost" }],
+            },
+          },
+          b: {},
+        },
+      });
+    const unknownAfter = () =>
+      defineMachine<Ctx, Ev>()({ initial: "a", states: { a: { after: { 1: "gone" } } } });
+    const unknownInitial = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "a",
+        states: { a: { initial: "missing", states: { leaf: {} } } },
+      });
+
+    // @ts-expect-error GO targets a state the machine does not have
+    expect(thrownMessage(() => unknownOn().start(newCtx()))).toContain("nope");
+    // @ts-expect-error the fallback transition targets a state the machine does not have
+    expect(thrownMessage(() => unknownInList().start(newCtx()))).toContain("ghost");
+    // @ts-expect-error the timer targets a state the machine does not have
+    expect(thrownMessage(() => unknownAfter().start(newCtx()))).toContain("gone");
+    // @ts-expect-error initial names no child of a
+    expect(thrownMessage(() => unknownInitial().start(newCtx()))).toContain("missing");
   });
 });

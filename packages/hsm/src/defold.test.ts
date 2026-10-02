@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 function waveMachine() {
-  return defineMachine<Ctx, Ev>({
+  return defineMachine<Ctx, Ev>()({
     initial: "idle",
     states: {
       idle: {
