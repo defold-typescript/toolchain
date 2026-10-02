@@ -45,6 +45,13 @@ export type UpdateHook<Ctx, E extends EventObject> = (
 ) => string | undefined;
 
 /** @noSelf */
+export type InvokeStart<Ctx, E extends EventObject> = (
+  ctx: Ctx,
+  settle: (event: E) => void,
+  m: MachineInstance<Ctx, E>,
+) => void;
+
+/** @noSelf */
 export interface StateConfig<Ctx, E extends EventObject> {
   readonly initial?: string;
   readonly states?: { readonly [name: string]: StateConfig<Ctx, E> };
@@ -53,6 +60,7 @@ export interface StateConfig<Ctx, E extends EventObject> {
   readonly enter?: StateHook<Ctx, E>;
   readonly exit?: StateHook<Ctx, E>;
   readonly update?: UpdateHook<Ctx, E>;
+  readonly invoke?: InvokeStart<Ctx, E>;
 }
 
 export interface MachineConfig<Ctx, E extends EventObject> extends StateConfig<Ctx, E> {
@@ -343,12 +351,15 @@ export function defineMachine<Ctx, E extends EventObject>(
     const elapsed: number[] = [];
     const fired: number[] = [];
     const scratch: number[] = [];
+    const entryId: number[] = [];
     for (let i = 0; i < slots; i++) {
       active[i] = NO_STATE;
       elapsed[i] = 0;
       fired[i] = 0;
       scratch[i] = NO_STATE;
+      entryId[i] = 0;
     }
+    let entryCount = 0;
     const queue: (E | undefined)[] = [];
     let queueHead = 0;
     let queueTail = 0;
@@ -372,9 +383,28 @@ export function defineMachine<Ctx, E extends EventObject>(
       elapsed[level] = 0;
       fired[level] = 0;
       leafDepth = level;
-      const hook = (configs[state] as StateConfig<Ctx, E>).enter;
+      entryCount++;
+      const id = entryCount;
+      entryId[level] = id;
+      const config = configs[state] as StateConfig<Ctx, E>;
+      const hook = config.enter;
       if (hook !== undefined) {
         hook(ctx, instance);
+      }
+      const invoke = config.invoke;
+      if (invoke !== undefined) {
+        let settled = false;
+        invoke(
+          ctx,
+          (event: E) => {
+            if (settled || !running || stopRequested || entryId[level] !== id) {
+              return;
+            }
+            settled = true;
+            send(event);
+          },
+          instance,
+        );
       }
     }
 
@@ -382,6 +412,7 @@ export function defineMachine<Ctx, E extends EventObject>(
       while (leafDepth > level) {
         const state = active[leafDepth] as number;
         active[leafDepth] = NO_STATE;
+        entryId[leafDepth] = 0;
         leafDepth--;
         const hook = (configs[state] as StateConfig<Ctx, E>).exit;
         if (hook !== undefined) {
