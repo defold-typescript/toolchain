@@ -21,6 +21,8 @@ import { type RunBuildResult, runBuild } from "./build";
 import {
   BuildFailureError,
   GENERATED_BANNER,
+  HSM_LIBRARY_LABEL,
+  hsmModuleRel,
   lualibBundleRel,
   timersModuleRel,
 } from "./build-output";
@@ -457,6 +459,108 @@ describe("runBuild", () => {
     runBuild({ cwd });
 
     expect(existsSync(path.join(cwd, "defold_typescript_timers.lua"))).toBe(false);
+  });
+
+  const HSM_SCRIPT = [
+    'import { defineScript } from "@defold-typescript/types";',
+    'import { defineMachine } from "@defold-typescript/types/hsm";',
+    'import { messageEvents } from "@defold-typescript/types/hsm/defold";',
+    "",
+    'const events = messageEvents(["trigger_response"]);',
+    'const door = defineMachine<{}, { type: "trigger_response"; enter: boolean }>()({',
+    '  initial: "closed",',
+    '  states: { closed: { on: { trigger_response: "open" } }, open: {} },',
+    "});",
+    "",
+    "export default defineScript({",
+    "  init() {",
+    "    door.start({});",
+    "  },",
+    "  on_message(_self, message_id, message) {",
+    "    events.toEvent(message_id, message);",
+    "  },",
+    "});",
+    "",
+  ].join("\n");
+
+  test("writes each hsm module a source imports under the output root, with no map", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/door.ts", HSM_SCRIPT);
+
+    const result = runBuild({ cwd });
+
+    for (const name of ["index", "defold"]) {
+      const rel = hsmModuleRel({ outDir: undefined, include: ["src/**/*.ts"] }, name);
+      expect(rel).toBe(`defold_typescript_hsm/${name}.lua`);
+      expect(result.written).toContain(rel);
+      const lua = readFileSync(path.join(cwd, rel), "utf8");
+      expect(lua.split("\n")).toContain(GENERATED_BANNER);
+      expect(lua).not.toContain("sourceMappingURL");
+      expect(existsSync(path.join(cwd, `${rel}.map`))).toBe(false);
+    }
+    const script = readFileSync(path.join(cwd, "src/door.ts.script"), "utf8");
+    expect(script).toContain('require("defold_typescript_hsm.index")');
+    expect(script).toContain('require("defold_typescript_hsm.defold")');
+  });
+
+  test("writes the hsm modules under outDir and respells the requires", () => {
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify(
+        { compilerOptions: { outDir: "out/lua", strict: true }, include: ["src/**/*.ts"] },
+        null,
+        2,
+      ),
+    );
+    writeFile("src/door.ts", HSM_SCRIPT);
+
+    const result = runBuild({ cwd });
+
+    const config: BuildConfig = { outDir: "out/lua", include: ["src/**/*.ts"] };
+    const indexRel = hsmModuleRel(config, "index");
+    expect(indexRel).toBe("out/lua/defold_typescript_hsm/index.lua");
+    expect(result.written).toContain(indexRel);
+    expect(result.written).toContain(hsmModuleRel(config, "defold"));
+    expect(existsSync(path.join(cwd, "defold_typescript_hsm"))).toBe(false);
+
+    const script = readFileSync(path.join(cwd, "out/lua/door.ts.script"), "utf8");
+    expect(script).toContain(`require("${requirePathForRel(indexRel)}")`);
+    expect(requirePathForRel(indexRel)).toBe("out.lua.defold_typescript_hsm.index");
+    expect(script).not.toContain('require("defold_typescript_hsm.index")');
+  });
+
+  test("writes no hsm module when no source imports one", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", MAIN_SCRIPT);
+
+    runBuild({ cwd });
+
+    expect(existsSync(path.join(cwd, "defold_typescript_hsm"))).toBe(false);
+  });
+
+  test("fails, writing nothing over it, when a source lands on an hsm output path", () => {
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify(
+        { compilerOptions: { outDir: "out/lua", strict: true }, include: ["src/**/*.ts"] },
+        null,
+        2,
+      ),
+    );
+    writeFile("src/door.ts", HSM_SCRIPT);
+    writeFile("src/defold_typescript_hsm/index.ts", "export const mine = 1;\n");
+
+    let failure: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(BuildFailureError);
+    const entries = (failure as BuildFailureError).entries;
+    expect(entries.map((entry) => entry.message).join("\n")).toContain(HSM_LIBRARY_LABEL);
+    expect(existsSync(path.join(cwd, "out/lua/defold_typescript_hsm/index.lua"))).toBe(false);
   });
 
   test("aggregates diagnostics across multiple broken files", () => {

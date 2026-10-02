@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
 import { join } from "node:path";
 
 interface Body {
@@ -20,6 +20,10 @@ interface PlayerModule {
 }
 
 const machinePath = join(import.meta.dir, "../docs/examples/platformer/src/player-machine.ts");
+
+// The example imports hsm through its shipped declarations, which have no
+// runtime half; Bun runs the library source those declarations are emitted from.
+mock.module("@defold-typescript/types/hsm", () => import("../packages/hsm/src/index.ts"));
 
 const globals = globalThis as unknown as { hash?: unknown; sprite?: unknown };
 let savedHash: unknown;

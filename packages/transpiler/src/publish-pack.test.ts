@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { hsmModules } from "./hsm-builtin";
 
 const PKG_DIR = resolve(import.meta.dir, "..");
 
@@ -47,6 +48,12 @@ describe("@defold-typescript/transpiler publish surface", () => {
     expect(paths).toContain("package.json");
     expect(paths).toContain("dist/index.js");
     expect(paths).toContain("dist/index.d.ts");
+  });
+
+  test("ships the hsm source the build compiles, one file per module", () => {
+    for (const { name } of hsmModules()) {
+      expect(paths).toContain(`dist/hsm/${name}.ts`);
+    }
   });
 
   test("excludes tests, snapshots, and dev scripts", () => {

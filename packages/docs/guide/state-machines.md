@@ -3,30 +3,31 @@ toc-title: State machines
 ---
 # State machines
 
-`hsm` is a small typed hierarchical state machine library that ships with the CLI. It drives whole-game flow (boot, menu, playing, paused) and per-object behavior (a door, an enemy, a UI widget) through one model: an XState-shaped config of `initial`, `states`, `on`, `after` and `guard`, ticked from `update(dt)` with timers on game time. Events, their payloads and the machine's context are all checked at compile time, and the library compiles to plain Lua with no `lualib_bundle`.
+`hsm` is a small typed hierarchical state machine library that ships with the toolchain. It drives whole-game flow (boot, menu, playing, paused) and per-object behavior (a door, an enemy, a UI widget) through one model: an XState-shaped config of `initial`, `states`, `on`, `after` and `guard`, ticked from `update(dt)` with timers on game time. Events, their payloads and the machine's context are all checked at compile time, and the library compiles to plain Lua with no `lualib_bundle`.
 
 It replaces the `if (self.state === ...)` branches that otherwise spread across `update` and `on_message`.
 
-This page covers the model first (states, transitions, timers and the order things run in), then how to use a machine from a script, its types, a worked migration, and a reference table. Every sample on it compiles against the library `vendor hsm` writes.
+This page covers the model first (states, transitions, timers and the order things run in), then how to use a machine from a script, its types, a worked migration, and a reference table. Every sample on it compiles against the declarations the import resolves to.
 
-## Add it to a project
+## Import it
 
-`hsm` is not an npm package. The CLI carries its source and copies it into your project:
+`hsm` is not a separate install. Its declarations ship in `@defold-typescript/types` and the build compiles its source, so you import it the way you import the [timers polyfill](./typescript-gotchas.md#asyncawait-work-but-there-is-no-event-loop):
 
-```sh
-bunx @defold-typescript/cli vendor hsm .
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+import { messageEvents } from "@defold-typescript/types/hsm/defold";
 ```
 
-That writes `src/vendor/hsm/index.ts` (the machine), `src/vendor/hsm/defold.ts` (the message bridge) and a `VERSION` file holding the CLI version the source came from. The files compile with the rest of your sources, so `build` emits `src/vendor/hsm/index.lua` and `src/vendor/hsm/defold.lua` beside them.
+`@defold-typescript/types/hsm` is the machine and `@defold-typescript/types/hsm/defold` is the message bridge. `build` and `watch` write each module your code uses to `defold_typescript_hsm/index.lua` or `defold_typescript_hsm/defold.lua` at the project root, or under `outDir` when one is set; a module nothing uses, or only uses for its types, is not written. The library upgrades with the CLI, and a project scaffolded by `init` gitignores `defold_typescript_hsm/` with the rest of the build output. A source of your own that would compile to one of those paths fails the build.
 
-To upgrade, run the same command from a newer CLI. It overwrites the library files and `VERSION`, reports the old and new version, and leaves any other file in `src/vendor/hsm/` alone. Treat the library files as read-only: a local edit is lost on the next upgrade. Add `--json` to read the outcome as `{ command: "vendor", library: "hsm", version, previousVersion, written }`.
+The library Lua ships with no source map. An error or a debugger frame inside the library names the generated `defold_typescript_hsm/<module>.lua`, not a TypeScript line.
 
 ## States and paths
 
 A machine is a tree of states. The config you pass to `defineMachine` is the root: it names its child `states` and the `initial` one to enter. A state with children of its own is a compound state and also needs an `initial`; a state without children is a leaf. Entering a compound state always continues into its `initial` child, so the active states form one chain from the root down to a leaf.
 
 ```ts
-import { defineMachine } from "./vendor/hsm/index";
+import { defineMachine } from "@defold-typescript/types/hsm";
 
 interface LampCtx {
   switches: number;
@@ -76,7 +77,7 @@ A state's path joins the names from the root down with dots: `on.dim`. `path` is
 - a non-empty list of those objects, tried in order.
 
 ```ts
-import { defineMachine } from "./vendor/hsm/index";
+import { defineMachine } from "@defold-typescript/types/hsm";
 
 interface EnemyCtx {
   health: number;
@@ -160,7 +161,7 @@ First the `update` hooks run, from the deepest active state up, each with `(ctx,
 Then, only if no hook transitioned, the `after` timers run. `after` maps a delay in seconds to a target. Every active state counts game time from the `dt` passed to `update`, from zero each time it is entered, so a machine whose `update` is not called is frozen in time. A state's timers fire in delay order. One `update` call fires at most one timer, checked from the deepest state up; another timer that is due waits for the next call.
 
 ```ts
-import { defineMachine } from "./vendor/hsm/index";
+import { defineMachine } from "@defold-typescript/types/hsm";
 
 interface FeetCtx {
   on_ground: boolean;
@@ -198,7 +199,7 @@ export const feet = defineMachine<FeetCtx, FeetEvent>()({
 A state that stays active keeps counting while its children change, so a parent's timer can bound a cycle among its children:
 
 ```ts
-import { defineMachine } from "./vendor/hsm/index";
+import { defineMachine } from "@defold-typescript/types/hsm";
 
 interface BlinkCtx {
   readonly sprite: Url;
@@ -236,7 +237,7 @@ Each `shown` and `hidden` entry restarts that child's own tenth-of-a-second time
 A machine handles one event at a time, to completion. A `send` from inside a hook, guard, action or `invoke` does not run at once: it queues the event, which runs after the current transition, every `enter` and `exit` included, has finished. Queued events run in order before the outer `send`, `update` or `start` call returns, so `start` hands back a machine that has already handled whatever its `enter` hooks sent.
 
 ```ts
-import { defineMachine } from "./vendor/hsm/index";
+import { defineMachine } from "@defold-typescript/types/hsm";
 
 interface LevelCtx {
   cached: boolean;
@@ -283,8 +284,8 @@ Release what a state holds (cancel an animation, a timer, a pending request) in 
 Put each machine definition in a plain module, a file with no `defineScript` export. A plain module compiles to `.lua`, which any script can `require`; a file that exports a `defineScript` factory compiles to a `.ts.script` component, which other files cannot import.
 
 ```ts title="door-machine.ts"
-import { type MessageEvent, messageEvents } from "./vendor/hsm/defold";
-import { defineMachine } from "./vendor/hsm/index";
+import { defineMachine } from "@defold-typescript/types/hsm";
+import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/defold";
 
 export interface DoorCtx {
   readonly sprite: Url;
@@ -369,7 +370,7 @@ A module-level instance (`const door = doorMachine.start(...)` at the top of a s
 **`StatePath<C>` lists a config's paths.** Paths are spelled out four levels deep; below that, any string under a fourth-level path is accepted.
 
 ```ts
-import type { StatePath } from "./vendor/hsm/index";
+import type { StatePath } from "@defold-typescript/types/hsm";
 
 const game = {
   initial: "menu",
@@ -393,7 +394,7 @@ const over: GamePath = "playing.over";
 **A bad config is a `MachineConfigError`.** When an `initial` or a target names no state, or an `on` key names no event, `defineMachine` returns `MachineConfigError` instead of a machine. It has no `start`, so the mistake fails to compile wherever the machine is started, and the error's text names what to look for:
 
 ```ts
-import { defineMachine } from "./vendor/hsm/index";
+import { defineMachine } from "@defold-typescript/types/hsm";
 
 type GoEvent = { type: "GO" };
 
@@ -474,7 +475,7 @@ After, those branches are states. Each state plays its animation once in `enter`
 
 ```ts title="player-machine.ts"
 import type { Vector3 } from "@defold-typescript/types";
-import { defineMachine } from "./vendor/hsm/index";
+import { defineMachine } from "@defold-typescript/types/hsm";
 
 const jump_takeoff_speed = 1200;
 const anim_walk = hash("walk");

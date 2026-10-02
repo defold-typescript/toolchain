@@ -1,5 +1,5 @@
 import type { Vector3 } from "@defold-typescript/types";
-import { defineMachine } from "./vendor/hsm/index";
+import { defineMachine } from "@defold-typescript/types/hsm";
 
 // Take-off speed when jumping in pixel units.
 const jump_takeoff_speed = 1200;

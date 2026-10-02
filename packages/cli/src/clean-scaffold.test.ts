@@ -57,6 +57,49 @@ describe("scaffolded project is clean out of the box", () => {
     }
   });
 
+  test("tsc --noEmit resolves the hsm imports through the types package exports", () => {
+    const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-hsm-"));
+    try {
+      runInit({ cwd });
+      linkTypes(cwd);
+      writeFileSync(
+        path.join(cwd, "src", "machine.ts"),
+        [
+          'import { defineMachine } from "@defold-typescript/types/hsm";',
+          'import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/defold";',
+          "",
+          'type DoorEvent = MessageEvent<"trigger_response"> | { type: "CLOSE" };',
+          "",
+          "export const doorMachine = defineMachine<{}, DoorEvent>()({",
+          '  initial: "closed",',
+          "  states: {",
+          '    closed: { on: { trigger_response: "open" } },',
+          '    open: { on: { CLOSE: "closed" } },',
+          "  },",
+          "});",
+          "",
+          'export const doorEvents = messageEvents(["trigger_response"]);',
+          "",
+          "const broken = defineMachine<{}, DoorEvent>()({",
+          '  initial: "closed",',
+          '  states: { closed: { on: { CLOSE: "nowhere" } } },',
+          "});",
+          "// @ts-expect-error an unknown target makes the result a MachineConfigError, so the import is not `any`",
+          "broken.start({});",
+          "",
+        ].join("\n"),
+      );
+
+      const { code, output } = run("tsc", ["--noEmit", "-p", "tsconfig.json"], cwd);
+      if (code !== 0) {
+        throw new Error(`tsc could not type the hsm imports on the scaffold:\n${output}`);
+      }
+      expect(code).toBe(0);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
   test("biome check passes on the scaffolded source surface", () => {
     const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-biome-"));
     try {

@@ -16,6 +16,7 @@
       "!**/dist",
       "!**/node_modules",
       "!**/generated",
+      "!packages/types/hsm",
       "!**/extension-goldens",
       "!**/api-doc",
       "!**/fidelity",

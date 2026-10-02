@@ -1,22 +1,22 @@
 /**
  * The State machines guide is the `hsm` manual, so every `ts` fence on it must
- * compile against the source `vendor hsm` writes into a project, at the
- * strictness `init` scaffolds. A fence that has to show a compile error does so
- * with `// @ts-expect-error`, which this gate then proves. Its reference tables
- * are held to the `StateConfig` and `MachineInstance` interfaces of that same
- * vendored source.
+ * compile against the declarations `@defold-typescript/types/hsm` ships, at the
+ * strictness `init` scaffolds, and transpile through the build. A fence that has
+ * to show a compile error does so with `// @ts-expect-error`, which this gate
+ * then proves. Its reference tables are held to the `StateConfig` and
+ * `MachineInstance` interfaces of the hsm source.
  */
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
 import * as ts from "typescript";
-import { HSM_VENDOR_DIR, resolveHsmSourceDir, runVendorHsm } from "./vendor-hsm";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const GUIDE_PATH = path.join(REPO_ROOT, "packages", "docs", "guide", "state-machines.md");
 const SCAFFOLD_TSCONFIG = path.join(import.meta.dir, "scaffold-tsconfig.json");
+const HSM_INDEX_SOURCE = path.join(REPO_ROOT, "packages", "hsm", "src", "index.ts");
 
 // The entries the platformer example's tsconfig maps, so the fences see the
 // same `@defold-typescript/types` surface a project in this repo does.
@@ -26,6 +26,8 @@ const TYPE_PATHS: Record<string, string[]> = {
     path.join(REPO_ROOT, "packages/types/generated/kinds/script.d.ts"),
   ],
   "@defold-typescript/types/timers": [path.join(REPO_ROOT, "packages/types/src/timers.d.ts")],
+  "@defold-typescript/types/hsm": [path.join(REPO_ROOT, "packages/types/hsm/index.d.ts")],
+  "@defold-typescript/types/hsm/defold": [path.join(REPO_ROOT, "packages/types/hsm/defold.d.ts")],
 };
 
 const ENV_DTS = 'import "@defold-typescript/types/script";\n';
@@ -80,15 +82,13 @@ interface FenceProject {
   readonly src: string;
   /** Fence rel to its source text, as written. */
   readonly sources: ReadonlyMap<string, string>;
-  /** Vendored rel (`vendor/hsm/<name>.ts`) to its source text. */
-  readonly vendored: ReadonlyMap<string, string>;
 }
 
 function writeFenceProject(fences: readonly Fence[]): FenceProject {
   const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-hsm-guide-"));
   tempRoots.push(cwd);
-  runVendorHsm({ cwd, sourceDir: resolveHsmSourceDir(), version: "test" });
   const src = path.join(cwd, "src");
+  mkdirSync(src, { recursive: true });
   writeFileSync(path.join(src, "env.d.ts"), ENV_DTS);
   const sources = new Map<string, string>();
   for (const fence of fences) {
@@ -98,12 +98,7 @@ function writeFenceProject(fences: readonly Fence[]): FenceProject {
     writeFileSync(file, text);
     sources.set(fence.rel, text);
   }
-  const vendorDir = path.join(cwd, HSM_VENDOR_DIR);
-  const vendored = new Map<string, string>();
-  for (const name of readdirSync(vendorDir).filter((n) => n.endsWith(".ts"))) {
-    vendored.set(`vendor/hsm/${name}`, readFileSync(path.join(vendorDir, name), "utf8"));
-  }
-  return { src, sources, vendored };
+  return { src, sources };
 }
 
 function compilerOptions(src: string): ts.CompilerOptions {
@@ -128,9 +123,7 @@ function describeDiagnostic(d: ts.Diagnostic): string {
 function typeCheck(project: FenceProject): Map<string, string[]> {
   const roots = [
     path.join(project.src, "env.d.ts"),
-    ...[...project.vendored.keys(), ...project.sources.keys()].map((rel) =>
-      path.join(project.src, rel),
-    ),
+    ...[...project.sources.keys()].map((rel) => path.join(project.src, rel)),
   ];
   const program = ts.createProgram(roots, compilerOptions(project.src));
   const byFile = new Map<string, string[]>();
@@ -162,13 +155,12 @@ describe("state machines guide fences", () => {
   });
 
   test(
-    "every ts fence type-checks against the vendored hsm at the scaffold strictness",
+    "every ts fence type-checks against the shipped hsm declarations at the scaffold strictness",
     () => {
       const found = typeCheck(pageFenceProject());
       const failing: Record<string, string[]> = {};
       const labelled: [string, string][] = [
         ["", "(global)"],
-        ...[...pageFenceProject().vendored.keys()].map((rel): [string, string] => [rel, rel]),
         ...guideFences(guide).map((fence): [string, string] => [fence.rel, fence.label]),
       ];
       for (const [rel, label] of labelled) {
@@ -185,7 +177,6 @@ describe("state machines guide fences", () => {
     () => {
       const project = pageFenceProject();
       const files: Record<string, string> = {};
-      for (const [rel, text] of project.vendored) files[rel] = text;
       for (const [rel, text] of project.sources) files[rel] = text;
       const errors = transpileProject({ files })
         .diagnostics.filter((d) => d.category === undefined)
@@ -202,7 +193,7 @@ describe("state machines guide fences", () => {
         label: "probe",
         rel: "probe.ts",
         body: [
-          'import { defineMachine } from "./vendor/hsm/index";',
+          'import { defineMachine } from "@defold-typescript/types/hsm";',
           "",
           'const machine = defineMachine<{}, { type: "GO" }>()({',
           '  initial: "idle",',
@@ -218,7 +209,7 @@ describe("state machines guide fences", () => {
   );
 });
 
-/** Member names of an interface the vendored `index.ts` declares. */
+/** Member names of an interface the hsm `index.ts` declares. */
 function interfaceMembers(source: string, name: string): string[] {
   const file = ts.createSourceFile("index.ts", source, ts.ScriptTarget.ES2022);
   for (const statement of file.statements) {
@@ -229,7 +220,7 @@ function interfaceMembers(source: string, name: string): string[] {
       });
     }
   }
-  throw new Error(`vendored index.ts declares no interface ${name}`);
+  throw new Error(`packages/hsm/src/index.ts declares no interface ${name}`);
 }
 
 /** The first-cell inline-code names of the table rows under `### <heading>` inside `## Reference`. */
@@ -251,9 +242,7 @@ function referenceRows(page: string, heading: string): string[] {
 describe("state machines guide reference", () => {
   for (const name of ["StateConfig", "MachineInstance"]) {
     test(`the ${name} table lists every member and nothing else`, () => {
-      const indexSource = pageFenceProject().vendored.get("vendor/hsm/index.ts");
-      expect(indexSource, "vendor hsm writes index.ts").toBeDefined();
-      const members = interfaceMembers(indexSource as string, name);
+      const members = interfaceMembers(readFileSync(HSM_INDEX_SOURCE, "utf8"), name);
       expect(members.length).toBeGreaterThan(0);
       expect(referenceRows(guide, name).sort()).toEqual([...members].sort());
     });

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
-import { hsmSourceFiles } from "../packages/cli/src/vendor-hsm";
+import { hsmModules } from "../packages/transpiler/src/hsm-builtin";
 
 const repoRoot = join(import.meta.dir, "..");
 const exampleDir = join(repoRoot, "docs/examples/platformer");
@@ -51,24 +51,16 @@ describe("platformer example bridge", () => {
     expect(exitCode).toBe(0);
   }, 60_000);
 
-  test("vendors the current hsm source", () => {
-    const sourceDir = join(repoRoot, "packages/hsm/src");
-    const vendorDir = join(exampleDir, "src/vendor/hsm");
-    const fix = "bun packages/cli/src/bin.ts vendor hsm docs/examples/platformer";
-    const names = hsmSourceFiles(sourceDir);
-    expect(names.length).toBeGreaterThan(0);
-    for (const name of names) {
-      const vendored = join(vendorDir, name);
-      if (
-        !existsSync(vendored) ||
-        !readFileSync(vendored).equals(readFileSync(join(sourceDir, name)))
-      ) {
-        throw new Error(`src/vendor/hsm/${name} differs from packages/hsm/src; run: ${fix}`);
-      }
+  test("imports hsm through the shipped declarations and vendors no copy", () => {
+    const tsconfig = JSON.parse(readFileSync(join(exampleDir, "tsconfig.json"), "utf8"));
+    for (const { name, specifier } of hsmModules()) {
+      expect(tsconfig.compilerOptions.paths[specifier]).toEqual([
+        `../../../packages/types/hsm/${name}.d.ts`,
+      ]);
     }
-    if (!existsSync(join(vendorDir, "VERSION"))) {
-      throw new Error(`src/vendor/hsm/VERSION is missing; run: ${fix}`);
-    }
+    expect(existsSync(join(exampleDir, "src/vendor"))).toBe(false);
+    const gitignore = readFileSync(join(exampleDir, ".gitignore"), "utf8");
+    expect(gitignore.split("\n")).toContain("/defold_typescript_hsm/");
   });
 
   test("mise.toml runs the working-tree CLI, not the published bunx form", () => {
