@@ -272,7 +272,11 @@ function mergeSignatures(fn: AnnotatedFunction): MergedSignatures {
     }
     signature.returns.forEach((returned, i) => {
       if (isVarargReturn(returned)) return;
-      const slot = returnSlots.get(i + 1) ?? { index: i + 1, name: returned.name, types: [] };
+      const slot: AnnotatedReturnSlot = returnSlots.get(i + 1) ?? {
+        index: i + 1,
+        ...(returned.name === undefined ? {} : { name: returned.name }),
+        types: [],
+      };
       for (const type of returned.types) if (!slot.types.includes(type)) slot.types.push(type);
       returnSlots.set(i + 1, slot);
     });
@@ -402,7 +406,12 @@ export function diffAnnotated(
     for (const returned of merged.returnSlots) {
       const target = declared.returnSlots[returned.index - 1];
       if (target === undefined) continue;
-      const base = { surface, name, slot: `return${returned.index}`, param: returned.name };
+      const base = {
+        surface,
+        name,
+        slot: `return${returned.index}`,
+        ...(returned.name === undefined ? {} : { param: returned.name }),
+      };
       const resolved = annotationKinds(model, surface, returned.types, annotated.generics);
       out.push(...kindMismatches(base, resolved, target));
     }
@@ -557,6 +566,8 @@ export type CorrectionAgreement = "repeats" | "agrees" | "differs" | "absent";
 
 // Whether upstream's annotation still shows the defect a correction fixes
 // (`repeats`), already types the slot the corrected way (`agrees`), or neither.
+// A return correction is judged on the overload-merged slot `diffAnnotated`
+// reports, so it holds only when it accounts for every signature's kinds.
 export function correctionAgreement(
   correction: SlotCorrection,
   annotated: AnnotatedFunction,
@@ -565,13 +576,13 @@ export function correctionAgreement(
   const surface = annotated.surface;
   const resolve = (types: readonly string[]) =>
     annotationKinds(model, surface, types, annotated.generics);
+  const merged = mergeSignatures(annotated);
 
   if (correction.table === "RETURN_TYPE_CORRECTIONS") {
     const { entry } = correction;
-    const returned =
-      entry.slot === undefined
-        ? annotated.returns[0]
-        : annotated.returns.find((r) => r.name === entry.slot);
+    const returned = merged.returnSlots.find((slot) =>
+      entry.slot === undefined ? slot.index === 1 : slot.name === entry.slot,
+    );
     if (!returned) return "absent";
     const found = resolve(returned.types);
     if (found.kinds === "any" || found.unmapped.length > 0) return "differs";
@@ -583,7 +594,6 @@ export function correctionAgreement(
   }
 
   const name = correction.key.slice(correction.key.indexOf(":param:") + ":param:".length);
-  const merged = mergeSignatures(annotated);
   const index = [annotated, ...annotated.overloads]
     .map((signature) => signature.params.findIndex((param) => param.name === name))
     .find((found) => found !== -1);
