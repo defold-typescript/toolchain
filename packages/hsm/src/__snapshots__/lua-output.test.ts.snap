@@ -186,6 +186,22 @@ local function compileOn(compiled, index)
         end
     end
 end
+local NOT_A_DELAY = -1
+local function parseDelay(key)
+    if type(key) == "number" then
+        return key
+    end
+    local delay = NOT_A_DELAY
+    do
+        pcall(function()
+            delay = key * 1
+        end)
+    end
+    if tostring(delay) ~= key then
+        return NOT_A_DELAY
+    end
+    return delay
+end
 local function compileAfter(compiled, index)
     local delays = {}
     local targets = {}
@@ -197,7 +213,7 @@ local function compileAfter(compiled, index)
     end
     local path = compiled.paths[index + 1]
     for key in pairs(after) do
-        local delay = key * 1
+        local delay = parseDelay(key)
         if not (delay >= 0) then
             error(
                 ((("hsm: state \\"" .. describePath(path)) .. "\\" has an after delay \\"") .. key) .. "\\" that is not a non-negative number",
@@ -362,12 +378,12 @@ local function createMachine(config)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue75
+                        local __continue79
                         repeat
                             local state = active[level + 1]
                             local listIndex = onIndex[state + 1][event.type]
                             if type(listIndex) ~= "number" then
-                                __continue75 = true
+                                __continue79 = true
                                 break
                             end
                             local list = transitions[listIndex + 1]
@@ -388,9 +404,9 @@ local function createMachine(config)
                                     i = i + 1
                                 end
                             end
-                            __continue75 = true
+                            __continue79 = true
                         until true
-                        if not __continue75 then
+                        if not __continue79 then
                             break
                         end
                     end
@@ -444,12 +460,12 @@ local function createMachine(config)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue91
+                        local __continue95
                         repeat
                             local state = active[level + 1]
                             local hook = configs[state + 1].update
                             if hook == nil then
-                                __continue91 = true
+                                __continue95 = true
                                 break
                             end
                             local target = hook(ctx, dt, instance)
@@ -466,9 +482,9 @@ local function createMachine(config)
                                 )
                                 return true
                             end
-                            __continue91 = true
+                            __continue95 = true
                         until true
-                        if not __continue91 then
+                        if not __continue95 then
                             break
                         end
                     end

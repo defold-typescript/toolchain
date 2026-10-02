@@ -82,6 +82,7 @@
       "devDependencies": {
         "@defold-typescript/transpiler": "workspace:*",
         "@defold-typescript/types": "workspace:*",
+        "lua-wasm-bindings": "0.5.3",
       },
     },
     "packages/library-types": {
@@ -356,6 +357,8 @@
 
     "@types/node": ["@types/node@25.9.1", "", { "dependencies": { "undici-types": ">=7.24.0 <7.24.7" } }, "sha512-xfrlY7UD5rMJk3ZVJP8BNzS28J36YJg+xp+LPXV1TdWxr8uMH5A860QNxYDGQe/ylDSgjxE52Q9VnO7p75tJxg=="],
 
+    "@types/semver": ["@types/semver@7.8.0", "", {}, "sha512-1mAINjtQCXXeLkJ9ehXkwOcBpqtLxiVtKhpUf83DdRNdQKV0iXZpaHYqRr7nj+wvxuJzoAmAwXI+sCNMv1CzLQ=="],
+
     "@types/unist": ["@types/unist@3.0.3", "", {}, "sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q=="],
 
     "@typescript-eslint/project-service": ["@typescript-eslint/project-service@8.61.0", "", { "dependencies": { "@typescript-eslint/tsconfig-utils": "^8.61.0", "@typescript-eslint/types": "^8.61.0", "debug": "^4.4.3" }, "peerDependencies": { "typescript": ">=4.8.4 <6.1.0" } }, "sha512-DV42F7MLJO6Rax7SK1yg43tcnEfGUrurSpSxKuVX+a3RCTzBlH3fuxprrOJXKCJGAaw82xXocikJ0uQaqwXgGA=="],
@@ -559,6 +562,8 @@
     "linkify-it": ["linkify-it@5.0.2", "", { "dependencies": { "uc.micro": "^2.0.0" } }, "sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q=="],
 
     "lua-types": ["lua-types@2.14.1", "", {}, "sha512-+EbnTjF+Bbfp5xmpfT0O9AZgC5J6Oq6jRnZei3HLb0pbWuCRHmdnIVRPIgEpUncWvHq21DHB2qTHhA4xGceHHg=="],
+
+    "lua-wasm-bindings": ["lua-wasm-bindings@0.5.3", "", { "dependencies": { "@types/semver": "^7.3.9", "semver": "^7.3.7" } }, "sha512-GnGSkZmYA2VzkNV/xkwOSoxwNsqEk/EcX6uvRLKQw0pCAxCauTymRO2KmJUIrG/psV3cloaS4Cjsr39iCRkrpQ=="],
 
     "magic-string": ["magic-string@0.30.21", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.5" } }, "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ=="],
 
