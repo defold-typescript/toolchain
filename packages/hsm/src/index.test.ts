@@ -571,3 +571,194 @@ describe("update, after and stop", () => {
     expect(m.path).toBe("");
   });
 });
+
+describe("invoke", () => {
+  type LoadEv =
+    | { type: "LOADED" }
+    | { type: "PING" }
+    | { type: "RELOAD" }
+    | { type: "UP" }
+    | { type: "SIDE" }
+    | { type: "AGAIN" };
+
+  interface LoadCtx {
+    log: string[];
+    settles: ((event: LoadEv) => void)[];
+  }
+
+  function loadCtx(): LoadCtx {
+    return { log: [], settles: [] };
+  }
+
+  function holdSettle(name: string) {
+    return (ctx: LoadCtx, settle: (event: LoadEv) => void) => {
+      ctx.log.push(`invoke ${name}`);
+      ctx.settles.push(settle);
+    };
+  }
+
+  function settleAt(ctx: LoadCtx, index: number): (event: LoadEv) => void {
+    const settle = ctx.settles[index];
+    if (settle === undefined) {
+      throw new Error(`no settle at ${index}`);
+    }
+    return settle;
+  }
+
+  test("settle moves the machine through the entered state's on, after its enter hook", () => {
+    const def = defineMachine<LoadCtx, LoadEv>({
+      initial: "loading",
+      states: {
+        loading: {
+          enter: (ctx) => {
+            ctx.log.push("enter loading");
+          },
+          invoke: holdSettle("loading"),
+          on: { LOADED: "ready" },
+        },
+        ready: {},
+      },
+    });
+    const ctx = loadCtx();
+    const m = def.start(ctx);
+    expect(ctx.log).toEqual(["enter loading", "invoke loading"]);
+    expect(m.path).toBe("loading");
+    settleAt(ctx, 0)({ type: "LOADED" });
+    expect(m.path).toBe("ready");
+    expect(ctx.settles.length).toBe(1);
+  });
+
+  test("settle is one-shot, and a later entry's settle replaces the earlier one", () => {
+    const def = defineMachine<LoadCtx, LoadEv>({
+      initial: "loading",
+      states: {
+        loading: {
+          invoke: holdSettle("loading"),
+          on: {
+            LOADED: "ready",
+            PING: {
+              actions: (ctx) => {
+                ctx.log.push("ping");
+              },
+            },
+          },
+        },
+        ready: { on: { RELOAD: "loading" } },
+      },
+    });
+    const ctx = loadCtx();
+    const m = def.start(ctx);
+    ctx.log.length = 0;
+    settleAt(ctx, 0)({ type: "PING" });
+    settleAt(ctx, 0)({ type: "PING" });
+    expect(ctx.log).toEqual(["ping"]);
+    settleAt(ctx, 0)({ type: "LOADED" });
+    expect(m.path).toBe("loading");
+
+    m.send({ type: "LOADED" });
+    m.send({ type: "RELOAD" });
+    expect(m.path).toBe("loading");
+    settleAt(ctx, 0)({ type: "LOADED" });
+    expect(m.path).toBe("loading");
+    settleAt(ctx, 1)({ type: "LOADED" });
+    expect(m.path).toBe("ready");
+  });
+
+  test("a settle held from an exited entry is ignored, whether the level empties or a sibling fills it", () => {
+    const def = defineMachine<LoadCtx, LoadEv>({
+      initial: "deep",
+      states: {
+        deep: {
+          initial: "loading",
+          states: {
+            loading: { invoke: holdSettle("loading"), on: { UP: "#shallow", SIDE: "other" } },
+            other: { on: { LOADED: "#done" } },
+          },
+        },
+        shallow: { on: { LOADED: "done", AGAIN: "#deep" } },
+        done: {},
+      },
+    });
+    const ctx = loadCtx();
+    const m = def.start(ctx);
+    m.send({ type: "UP" });
+    expect(m.path).toBe("shallow");
+    settleAt(ctx, 0)({ type: "LOADED" });
+    expect(m.path).toBe("shallow");
+
+    m.send({ type: "AGAIN" });
+    expect(m.path).toBe("deep.loading");
+    m.send({ type: "SIDE" });
+    expect(m.path).toBe("deep.other");
+    settleAt(ctx, 1)({ type: "LOADED" });
+    expect(m.path).toBe("deep.other");
+  });
+
+  test("settle called inside invoke queues until the entry step completes", () => {
+    const def = defineMachine<LoadCtx, LoadEv>({
+      initial: "loading",
+      states: {
+        loading: {
+          ...logged("loading"),
+          invoke: (ctx, settle) => {
+            settle({ type: "LOADED" });
+            ctx.log.push("after settle");
+          },
+          initial: "inner",
+          states: { inner: logged("inner") },
+          on: { LOADED: "ready" },
+        },
+        ready: logged("ready"),
+      },
+    });
+    const ctx = loadCtx();
+    const m = def.start(ctx);
+    expect(ctx.log).toEqual([
+      "enter loading",
+      "after settle",
+      "enter inner",
+      "exit inner",
+      "exit loading",
+      "enter ready",
+    ]);
+    expect(m.path).toBe("ready");
+  });
+
+  test("a settle held across stop runs nothing", () => {
+    const def = defineMachine<LoadCtx, LoadEv>({
+      initial: "loading",
+      states: {
+        loading: { ...logged("loading"), invoke: holdSettle("loading"), on: { LOADED: "ready" } },
+        ready: logged("ready"),
+      },
+    });
+    const ctx = loadCtx();
+    const m = def.start(ctx);
+    m.stop();
+    ctx.log.length = 0;
+    settleAt(ctx, 0)({ type: "LOADED" });
+    expect(ctx.log).toEqual([]);
+    expect(m.path).toBe("");
+  });
+
+  test("a reentering self-transition starts invoke again and drops the earlier settle", () => {
+    const def = defineMachine<LoadCtx, LoadEv>({
+      initial: "loading",
+      states: {
+        loading: {
+          invoke: holdSettle("loading"),
+          on: { LOADED: "ready", AGAIN: { target: "loading", reenter: true } },
+        },
+        ready: {},
+      },
+    });
+    const ctx = loadCtx();
+    const m = def.start(ctx);
+    m.send({ type: "AGAIN" });
+    expect(ctx.log).toEqual(["invoke loading", "invoke loading"]);
+    settleAt(ctx, 0)({ type: "LOADED" });
+    expect(m.path).toBe("loading");
+    settleAt(ctx, 1)({ type: "LOADED" });
+    expect(m.path).toBe("ready");
+  });
+});
