@@ -79,6 +79,9 @@
     "packages/hsm": {
       "name": "@defold-typescript/hsm",
       "version": "0.0.0",
+      "devDependencies": {
+        "@defold-typescript/transpiler": "workspace:*",
+      },
     },
     "packages/library-types": {
       "name": "@defold-typescript/library-types",
