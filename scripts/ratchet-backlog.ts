@@ -30,6 +30,12 @@ import {
   parseTypecheckPins,
   pinSlots,
 } from "../packages/types/scripts/example-pins.ts";
+import {
+  ANNOTATION_VERDICTS_DIR,
+  ANNOTATION_VERDICTS_FILE_NAME,
+  openAnnotationVerdictSlots,
+  parseAnnotationVerdicts,
+} from "../packages/types/scripts/lua-annotation-verdicts.ts";
 
 /** The coverage every floor is working toward; anything under it is backlog. */
 export const FLOOR_TARGET = 1;
@@ -80,6 +86,13 @@ export const RATCHET_SOURCES: readonly RatchetSource[] = [
     file: VERDICTS_FILE_NAME,
     parse: parseVerdicts,
     collect: openVerdictSlots,
+  },
+  {
+    id: "lua-annotation-open",
+    dir: ANNOTATION_VERDICTS_DIR,
+    file: ANNOTATION_VERDICTS_FILE_NAME,
+    parse: parseAnnotationVerdicts,
+    collect: openAnnotationVerdictSlots,
   },
 ];
 

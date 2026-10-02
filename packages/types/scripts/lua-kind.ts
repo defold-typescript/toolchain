@@ -151,6 +151,15 @@ export function surfaceProgram(target: ApiTarget): ts.Program {
   return ts.createProgram({ rootNames: [surfaceEntry(target)], options: gateCompilerOptions() });
 }
 
+// The surface an editor script loads: the editor and editor-VM declarations
+// plus their overlays. Only the default target ships one.
+export function editorSurfaceProgram(): ts.Program {
+  return ts.createProgram({
+    rootNames: [resolve(PACKAGE_ROOT, "generated", "kinds", "editor-script.d.ts")],
+    options: gateCompilerOptions(),
+  });
+}
+
 function globalNamespaces(program: ts.Program, checker: ts.TypeChecker): Map<string, ts.Symbol> {
   const found = new Map<string, ts.Symbol>();
   const visit = (statements: ts.NodeArray<ts.Statement>) => {

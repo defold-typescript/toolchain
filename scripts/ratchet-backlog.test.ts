@@ -14,6 +14,10 @@ import {
   parseTypecheckPins,
   pinSlots,
 } from "../packages/types/scripts/example-pins.ts";
+import {
+  ANNOTATION_VERDICTS_DIR,
+  ANNOTATION_VERDICTS_FILE_NAME,
+} from "../packages/types/scripts/lua-annotation-verdicts.ts";
 import { collectOpenSlots, openSlots, RATCHET_SOURCES } from "./ratchet-backlog.ts";
 
 const REPO_ROOT = join(import.meta.dir, "..");
@@ -29,6 +33,8 @@ const LINE_SHAPES: Record<string, RegExp> = {
     /^[A-Za-z0-9._-]+\.json: \S+:\S+:[0-9a-f]{16} diagnostics [0-9]+ \(target 0\)$/,
   "engine-binding-open":
     /^[A-Za-z0-9._-]+\.json: [^\s:]+:[^\s:]+:[a-z-]+(:\S+)? open \(extracted [^()]*, declared [^()]*\)$/,
+  "lua-annotation-open":
+    /^[A-Za-z0-9._-]+\.json: (runtime|editor):[^\s:]+:[a-z-]+(:\S+)? open \(annotated [^()]*, declared [^()]*\)$/,
 };
 
 // Spelled out rather than imported so relocating either manifest reds this suite.
@@ -39,6 +45,7 @@ function tempRoot(
   authored: unknown,
   pins: unknown = {},
   bindingVerdicts: unknown = {},
+  annotationVerdicts: unknown = {},
 ): string {
   const root = mkdtempSync(join(tmpdir(), "ratchet-backlog-"));
   const dir = join(root, MANIFEST_DIR);
@@ -53,6 +60,12 @@ function tempRoot(
   writeFileSync(
     join(verdictsDir, VERDICTS_FILE_NAME),
     `${JSON.stringify(bindingVerdicts, null, 2)}\n`,
+  );
+  const annotationDir = join(root, ANNOTATION_VERDICTS_DIR);
+  mkdirSync(annotationDir, { recursive: true });
+  writeFileSync(
+    join(annotationDir, ANNOTATION_VERDICTS_FILE_NAME),
+    `${JSON.stringify(annotationVerdicts, null, 2)}\n`,
   );
   return root;
 }
@@ -208,6 +221,63 @@ describe("engine-binding-open — open verdicts as backlog", () => {
     const root = tempRoot(...atTarget, { "*:gui.animate:arity": { verdict: "later" } });
     try {
       expect(() => collectOpenSlots(root, "engine-binding-open")).toThrow(/verdict/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("lua-annotation-open — open annotation mismatches as backlog", () => {
+  const atTarget = [
+    { "fidelity/a.json": 1 },
+    { "fidelity/authored/b.json": { callable: 1, field: 1 } },
+    {},
+    {},
+  ] as const;
+
+  test("one line per open verdict, none for accepted or corrected ones", () => {
+    const root = tempRoot(...atTarget, {
+      "runtime:gui.animate:too-narrow:4": {
+        verdict: "open",
+        annotated: "number|vector4",
+        declared: "number",
+      },
+      "runtime:b2d.body.get_user_data:missing-declaration": {
+        verdict: "accepted",
+        reason: "skipFunctions",
+      },
+      "runtime:gui.new_texture:required-as-optional:6": {
+        verdict: "corrected",
+        correction: "OPTIONAL_SLOT_CORRECTIONS:gui.new_texture:param:flip",
+      },
+    });
+    try {
+      expect(collectOpenSlots(root, "lua-annotation-open")).toEqual([
+        `${ANNOTATION_VERDICTS_FILE_NAME}: runtime:gui.animate:too-narrow:4 open (annotated number|vector4, declared number)`,
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("no open verdict left prints nothing", () => {
+    const root = tempRoot(...atTarget, {
+      "runtime:b2d.body.get_user_data:missing-declaration": {
+        verdict: "accepted",
+        reason: "skipFunctions",
+      },
+    });
+    try {
+      expect(collectOpenSlots(root, "lua-annotation-open")).toEqual([]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a verdict with no known verdict throws rather than reading as satisfied", () => {
+    const root = tempRoot(...atTarget, { "runtime:gui.animate:arity": { verdict: "manual" } });
+    try {
+      expect(() => collectOpenSlots(root, "lua-annotation-open")).toThrow(/verdict/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
