@@ -103,6 +103,10 @@ const COMMANDS: readonly HelpCommand[] = [
         desc: "push a reload to the running game after every successful rebuild",
       },
       {
+        flag: "--editor-compile",
+        desc: "after every rebuild or project file change, compile in the attached Defold 1.13.2+ editor and print its errors",
+      },
+      {
         flag: "--defold-target <version|stable|beta|alpha>",
         desc: "override the resolved Defold target",
       },

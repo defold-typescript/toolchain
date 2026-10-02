@@ -2093,7 +2093,52 @@ describe("dispatch", () => {
       expect(spawned).toEqual([]);
     });
 
-    test("watch --editor-compile is rejected before a watcher starts", async () => {
+    test("watch --editor-compile starts the watch with the compile loop on", async () => {
+      scaffoldBuildProject();
+      const editor = makeEditorClient();
+      let compiles = 0;
+      const client: WatchEditorClient = {
+        ...editor.client,
+        compile() {
+          compiles += 1;
+          return Promise.resolve({ outcome: "compiled", result: { success: true, issues: [] } });
+        },
+      };
+      let watchers = 0;
+      const factory: WatcherFactory = (_srcDir, _onEvent): Watcher => {
+        watchers++;
+        return { close() {} };
+      };
+      const { io, err } = captureStreams();
+      const { onWatchStart, ready } = watchHandle();
+
+      const result = dispatch(["watch", cwd, "--editor-compile"], io, {
+        watcherFactory: factory,
+        onWatchStart,
+        editorClient: client,
+        detectEditorVersion: () => null,
+        runningEditorVersion: async () => null,
+      });
+      const handle = await Promise.race([
+        ready,
+        Promise.resolve(result).then((code) => {
+          throw new Error(`watch exited with ${code} before it started: ${err()}`);
+        }),
+      ]);
+      await handle.waitForIdle();
+      handle.stop();
+
+      expect(await result).toBe(0);
+      expect(err()).not.toContain("--editor-compile");
+      expect(watchers).toBeGreaterThan(0);
+      // The newly attached editor is asked once, which only a forwarded flag does.
+      expect(compiles).toBe(1);
+    });
+
+    test.each([
+      "--editor-run",
+      "--editor-focus",
+    ])("watch %s is rejected before a watcher starts", async (flag) => {
       scaffoldBuildProject();
       let watchers = 0;
       const factory: WatcherFactory = (_srcDir, _onEvent): Watcher => {
@@ -2102,15 +2147,31 @@ describe("dispatch", () => {
       };
       const { io, err } = captureStreams();
 
-      const code = await dispatch(["watch", cwd, "--editor-compile"], io, {
+      const code = await dispatch(["watch", cwd, flag], io, {
         watcherFactory: factory,
         onWatchStart: (handle) => handle.stop(),
         detectEditorVersion: () => null,
       });
 
       expect(code).toBe(1);
-      expect(err()).toContain(buildFlagLine("--editor-compile"));
+      expect(err()).toContain(buildFlagLine(flag));
       expect(watchers).toBe(0);
+    });
+
+    test("run --editor-compile names it as a build or watch flag", async () => {
+      const spawned: string[][] = [];
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["run", cwd, "--editor-compile"], io, {
+        detectEditorVersion: () => null,
+        runInternals: recordingRunInternals(spawned),
+      });
+
+      expect(code).toBe(1);
+      expect(err()).toContain(
+        "--editor-compile is a build or watch flag; use: defold-typescript build --editor-compile or defold-typescript watch --editor-compile",
+      );
+      expect(spawned).toEqual([]);
     });
 
     test("scene-types --editor-focus is rejected", async () => {

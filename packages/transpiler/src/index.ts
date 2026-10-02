@@ -48,7 +48,11 @@ export {
   stripIncludeBase,
 } from "./output-paths";
 export { getProgramDiagnostics } from "./program-diagnostics";
-export { isDefignoredPath, SCAFFOLDED_DEFIGNORE_LINES } from "./project-resources";
+export {
+  isDefignoredPath,
+  parseDefignore,
+  SCAFFOLDED_DEFIGNORE_LINES,
+} from "./project-resources";
 export { rewriteEmittedRequires } from "./require-rewrite";
 export { buildSceneAddressDeclaration } from "./scene-address-declaration";
 export type { SceneCollectionRoles, SceneCollectionRolesInput } from "./scene-collection-roles";
