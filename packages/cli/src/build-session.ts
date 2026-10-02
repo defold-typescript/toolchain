@@ -16,6 +16,7 @@ import {
   isTranspilerSource,
   LUALIB_BUNDLE_LABEL,
   lualibBundleRel,
+  outputRelsForSource,
   pruneAlternativeOutputs,
   readBuildConfig,
   retargetSourceRoot,
@@ -107,6 +108,13 @@ export interface BuildSession {
     BuildResult,
     "warnings" | "unreachableAddresses" | "crossWorldAddresses"
   >;
+  /**
+   * Whether `rel` is a path this session writes or has written: a runtime
+   * artifact, or any output (or map) of a source it has held. A suffix rule
+   * cannot answer this, since an authored `.lua` sits beside the emitted ones
+   * and `outDir` relocates the latter.
+   */
+  isOwnOutput(rel: string): boolean;
 }
 
 export function createBuildSession(opts: CreateBuildSessionOptions): BuildSession {
@@ -120,6 +128,9 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
   // target reads as external library Lua, and an output written on an earlier
   // rebuild reads as never written.
   const sourceTexts = new Map<string, string>();
+  // Only grows: a removed source's pruned outputs still come back as watcher
+  // events after the source is gone, and they are this session's own writes.
+  const heldSources = new Set<string>();
 
   function plannedOutputBySource(): Record<string, string> {
     const outputs: Record<string, string> = {};
@@ -350,6 +361,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     sourceTexts.clear();
     for (const rel of sources) {
       sourceTexts.set(rel, files[rel] ?? "");
+      heldSources.add(rel);
     }
     const built = writeOutputs(result, sources, true);
     const reachability = scanReachability();
@@ -382,6 +394,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
 
     for (const rel of sourceChanged) {
       sourceTexts.set(rel, changes[rel] ?? "");
+      heldSources.add(rel);
     }
     for (const rel of sourceRemoved) {
       sourceTexts.delete(rel);
@@ -415,5 +428,15 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     };
   }
 
-  return { buildAll, applyEvents, rescanReachability };
+  function isOwnOutput(rel: string): boolean {
+    for (const runtimeRel of [lualibBundleRel(config), timersModuleRel(config)]) {
+      if (rel === runtimeRel || rel === `${runtimeRel}.map`) return true;
+    }
+    for (const source of heldSources) {
+      if (outputRelsForSource(source, config).includes(rel)) return true;
+    }
+    return false;
+  }
+
+  return { buildAll, applyEvents, rescanReachability, isOwnOutput };
 }

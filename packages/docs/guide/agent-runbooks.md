@@ -103,6 +103,7 @@ bunx @defold-typescript/cli watch --json
 # {"command":"watch","event":"rebuild","ok":false,"error":"..."}
 # {"command":"watch","event":"sceneTypes","ok":true,"written":[],"warnings":[]}
 # {"command":"watch","event":"resolve","ok":true,"written":[]}
+# {"command":"watch","event":"editorCompile","ok":true,"written":[],"editorCompile":{"outcome":"compiled","success":true,"issues":[]}}
 # {"command":"watch","event":"stop","ok":true,"written":[]}
 ```
 
@@ -121,7 +122,11 @@ extension surface (re-materializing `.defold-types/extensions/` from the declare
 `[dependencies]` URLs). An `editorVersion` event — `editor`, `target`, and
 `targetSource` (`pin`, `detected`, or `default`) — is emitted when an editor
 attached after startup runs a version other than the one the watch targets; it
-is diagnostic only and never changes the exit status. `start` arrives once, before the initial full build — the
+is diagnostic only and never changes the exit status. Under
+`watch --editor-compile`, each compile the editor answers emits an
+`editorCompile` event whose `editorCompile` object is exactly the one
+[`build --editor-compile`](#compile-in-the-editor-after-a-build) reports; a
+failed compile sets `ok: false` and `error`, and never stops the watch. `start` arrives once, before the initial full build — the
 process is up and listening. `stop` arrives once on graceful shutdown. A failed
 startup (missing `tsconfig.json`, etc.) emits `start` then exits non-zero with
 **no** `stop` line; a rebuild that fails emits an `ok: false` line **to stdout
@@ -919,6 +924,11 @@ Branch on `editorCompile.outcome`:
 Only `success: false` fails the build, so the flag is safe in a script that also
 runs where no editor is open. Without the flag nothing is posted and the result
 has no `editorCompile` key.
+
+To keep this check running while you edit, use
+[`watch --editor-compile --json`](./watch.md#compile-in-the-editor) instead: it
+emits the same object on an `editorCompile` event after every rebuild and every
+project file change.
 
 ## Run the game in the editor after a build
 
