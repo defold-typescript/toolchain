@@ -393,6 +393,63 @@ describe("dispatch", () => {
     expect(existsSync(path.join(cwd, "AGENTS.md"))).toBe(false);
   });
 
+  test("vendor hsm copies the library into the destination and returns 0", () => {
+    const { io, err } = captureStreams();
+
+    const code = dispatch(["vendor", "hsm", cwd], io);
+
+    expect(code).toBe(0);
+    expect(err()).toBe("");
+    expect(readFileSync(path.join(cwd, "src/vendor/hsm/VERSION"), "utf8")).toBe(
+      `${readCliVersion()}\n`,
+    );
+  });
+
+  test("vendor hsm --json reports the library, versions and written files", () => {
+    dispatch(["vendor", "hsm", cwd], captureStreams().io);
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["vendor", "hsm", cwd, "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as Record<string, unknown>;
+    expect(parsed.command).toBe("vendor");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.library).toBe("hsm");
+    expect(parsed.version).toBe(readCliVersion());
+    expect(parsed.previousVersion).toBe(readCliVersion());
+    expect(parsed.written).toContain("src/vendor/hsm/index.ts");
+    expect(parsed.written).toContain("src/vendor/hsm/VERSION");
+  });
+
+  test("vendor with an unknown library returns 1 and names hsm", () => {
+    const { io, out, err } = captureStreams();
+
+    const code = dispatch(["vendor", "nope", cwd], io);
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toContain('"nope"');
+    expect(err()).toContain("hsm");
+    expect(existsSync(path.join(cwd, "src"))).toBe(false);
+  });
+
+  test("vendor hsm with no destination folder returns 1 and writes nothing", () => {
+    const { io, out, err } = captureStreams();
+    const previous = process.cwd();
+    process.chdir(cwd);
+    try {
+      const code = dispatch(["vendor", "hsm"], io);
+
+      expect(code).toBe(1);
+      expect(out()).toBe("");
+      expect(err()).toContain("a destination folder is required");
+      expect(existsSync(path.join(cwd, "src"))).toBe(false);
+    } finally {
+      process.chdir(previous);
+    }
+  });
+
   describe("scaffold verbs never load the transpiler graph", () => {
     const dispatchSource = readFileSync(path.join(import.meta.dir, "dispatch.ts"), "utf8");
     const LAZY_SPECIFIERS = ["./build", "./watch", "./materialize", "./resolve", "./wall"] as const;
@@ -450,7 +507,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|vendor|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -463,7 +520,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|vendor|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -4528,7 +4585,7 @@ describe("dispatch bob", () => {
 
     expect(code).toBe(1);
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|vendor|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -5797,7 +5854,7 @@ describe("dispatch init --template", () => {
 
 describe("dispatch upgrade", () => {
   const USAGE =
-    "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+    "Usage: defold-typescript <init|init-agents|vendor|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
     "Run `defold-typescript --help` for per-command usage and flags.\n";
 
   function upgradeHarness(opts?: {

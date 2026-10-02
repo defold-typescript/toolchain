@@ -33,6 +33,13 @@ const COMMANDS: readonly HelpCommand[] = [
     usage: "bunx @defold-typescript/cli init-agents [path]",
     flags: [],
   },
+  {
+    name: "vendor",
+    summary:
+      "Copy a library shipped with the CLI into src/vendor/<library>/; re-run it to upgrade. hsm is the only library.",
+    usage: "bunx @defold-typescript/cli vendor hsm <path>",
+    flags: [],
+  },
   // `update` dispatches here too, but is deliberately absent from COMMANDS: it is
   // an alias, and listing it would advertise two verbs where there is one.
   {
