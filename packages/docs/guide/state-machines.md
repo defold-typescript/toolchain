@@ -101,6 +101,149 @@ export default defineScript({
 
 A module-level instance (`const door = doorMachine.start(...)` at the top of a script file) is shared by every object that runs the script; see [Where script state lives](./script-state.md).
 
+## Migrate a script
+
+The [platformer example](https://github.com/defold-typescript/toolchain/tree/main/docs/examples/platformer) moved its player onto one machine. Before, the player's state lived in flags that every frame re-read to pick an animation, and the jump checked a flag of its own:
+
+```ts
+// src/player.ts, before
+function update_animations(self: PlayerSelf): void {
+  // Make sure the player character faces the right way.
+  sprite.set_hflip("#sprite", self.facing_direction < 0);
+  if (self.ground_contact) {
+    if (self.velocity.x === 0) {
+      play_animation(self, anim_idle);
+    } else {
+      play_animation(self, anim_walk);
+    }
+  } else if (self.velocity.y > 0) {
+    play_animation(self, anim_jump);
+  } else {
+    play_animation(self, anim_fall);
+  }
+}
+
+function jump(self: PlayerSelf): void {
+  // Only allow jump from ground (extend with a counter for double-jumps).
+  if (self.ground_contact) {
+    self.velocity.y = jump_takeoff_speed;
+    play_animation(self, anim_jump);
+    self.ground_contact = false;
+  }
+}
+```
+
+After, those branches are states. Each state plays its animation once in `enter`, and `JUMP` is handled only in `grounded`, so the guard is the state itself:
+
+```ts
+// src/player-machine.ts
+export interface PlayerCtx {
+  readonly velocity: Vector3;
+  ground_contact: boolean;
+}
+
+export type PlayerEvent = { type: "JUMP" } | { type: "JUMP_RELEASED" };
+
+export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>({
+  initial: "airborne",
+  states: {
+    grounded: {
+      initial: "idle",
+      update: (ctx) => (ctx.ground_contact ? undefined : "airborne"),
+      on: {
+        // Only allow jump from ground (extend with a counter for double-jumps).
+        JUMP: {
+          target: "airborne.rising",
+          actions: (ctx) => {
+            ctx.velocity.y = jump_takeoff_speed;
+            ctx.ground_contact = false;
+          },
+        },
+      },
+      states: {
+        idle: {
+          enter: () => sprite.play_flipbook("#sprite", anim_idle),
+          update: (ctx) => (ctx.ground_contact && ctx.velocity.x !== 0 ? "walk" : undefined),
+        },
+        walk: {
+          enter: () => sprite.play_flipbook("#sprite", anim_walk),
+          update: (ctx) => (ctx.ground_contact && ctx.velocity.x === 0 ? "idle" : undefined),
+        },
+      },
+    },
+    airborne: {
+      initial: "falling",
+      update: (ctx) => {
+        if (!ctx.ground_contact) {
+          return undefined;
+        }
+        return ctx.velocity.x === 0 ? "grounded.idle" : "grounded.walk";
+      },
+      states: {
+        rising: {
+          enter: () => sprite.play_flipbook("#sprite", anim_jump),
+          on: {
+            // Cut the jump short if we are still going up.
+            JUMP_RELEASED: {
+              actions: (ctx) => {
+                ctx.velocity.y = ctx.velocity.y * 0.5;
+              },
+            },
+          },
+          update: (ctx) => (ctx.velocity.y <= 0 && !ctx.ground_contact ? "falling" : undefined),
+        },
+        falling: {
+          enter: () => sprite.play_flipbook("#sprite", anim_fall),
+        },
+      },
+    },
+  },
+});
+```
+
+`update` hooks run from the deepest active state up, and the first one to return a target wins. That is why `idle` and `walk` check `ground_contact` too: without it, a leaf whose own velocity check fires on the step the ground disappears (`idle` as the player starts to move off an edge) would move to its sibling, and the player would stay grounded for that step. Landing goes straight to `grounded.walk` when the player is moving, so it never flashes `idle`.
+
+The script keeps the physics and hands the rest to the machine:
+
+```ts
+// src/player.ts, after
+fixed_update(self, dt) {
+  const body = self.body;
+  // ... acceleration, gravity and movement, unchanged ...
+
+  // Make sure the player character faces the right way.
+  sprite.set_hflip("#sprite", body.facing_direction < 0);
+  // Step the motion machine (ground, air, move and idle), which plays the
+  // animations, while the contacts from the last physics step still hold.
+  self.motion.update(dt);
+
+  // Reset volatile state.
+  body.correction = vmath.vector3();
+  body.ground_contact = false;
+  body.wall_contact = false;
+},
+
+on_input(self, action_id, action) {
+  // ... walking, unchanged ...
+  } else if (action_id === input_jump) {
+    if (action.pressed) {
+      self.motion.send({ type: "JUMP" });
+    } else if (action.released) {
+      self.motion.send({ type: "JUMP_RELEASED" });
+    }
+  }
+},
+
+final(self) {
+  self.motion.stop();
+},
+```
+
+Two rules carry over to any migration:
+
+- **Give the machine an object, not `self`.** `init`'s return value is copied onto the engine-owned `self`, so a context built from loose fields in `init` would keep stale copies of them. The player's `init` builds one `body` object, starts the machine on it and returns `{ body, motion }`; every hook then reads and writes `self.body`, the same object the machine sees.
+- **A state is as fresh as its last update.** `grounded` reflects the contacts seen by the last `fixed_update`, while the old guard read `ground_contact` after the physics step that followed it. So the player can now jump on the one physics step after walking off a ledge, a single step of leniency the example accepts.
+
 ## The message bridge
 
 Defold delivers messages as a hashed `message_id` plus a payload table. `messageEvents(ids)` turns the ones you list into typed events `{ type: id, ...payload }`, reusing the payload types already declared through `BuiltinMessages` and `CustomMessages`, so a payload is declared once. Its `toEvent(message_id, message)` takes the `on_message` parameters of both `defineScript` and `defineGuiScript` and returns `undefined` for any id you did not list. Build the mapper once at module scope: it hashes the ids when it is created.
