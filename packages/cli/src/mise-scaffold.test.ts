@@ -16,6 +16,18 @@ describe("MISE_TASKS_TOML", () => {
     expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli watch --hot-reload"');
   });
 
+  test("watch-ec and watch-hr-ec run the watch verb with the editor-compile flag", () => {
+    const runOf = (task: string): string | undefined =>
+      MISE_TASKS_TOML.split(`[tasks."defold-typescript:${task}"]\n`)[1]?.match(
+        /run = "([^"]+)"/,
+      )?.[1];
+
+    expect(runOf("watch-ec")).toBe("bunx @defold-typescript/cli watch --editor-compile");
+    expect(runOf("watch-hr-ec")).toBe(
+      "bunx @defold-typescript/cli watch --hot-reload --editor-compile",
+    );
+  });
+
   test("setup-debug runs the CLI via bunx @defold-typescript/cli", () => {
     expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli setup-debug"');
   });
@@ -143,6 +155,28 @@ describe("mergeMiseToml", () => {
     const merged = mergeMiseToml(`${userContent}\n\n${priorManaged}`);
 
     expect(merged).toContain('[tasks."defold-typescript:watch-hr"]');
+    expect(merged).toContain(userContent);
+    for (const header of merged.match(/\[tasks\."defold-typescript:[^"]+"\]/g) ?? []) {
+      expect(merged.split(header).length - 1).toBe(1);
+    }
+  });
+
+  test("an upgraded project gains watch-ec and watch-hr-ec with its user content byte-identical", () => {
+    const added = [
+      '[tasks."defold-typescript:watch-ec"]',
+      '[tasks."defold-typescript:watch-hr-ec"]',
+    ];
+    const userContent = '[tools]\nbun = "1.3"\n\n[tasks.foo]\nrun = "echo hi"';
+    const priorManaged = MISE_TASKS_TOML.split("# managed by @defold-typescript\n")
+      .filter((block) => !added.some((header) => block.includes(header)))
+      .filter((block) => block !== "")
+      .map((block) => `# managed by @defold-typescript\n${block}`)
+      .join("");
+    for (const header of added) expect(priorManaged).not.toContain(header);
+
+    const merged = mergeMiseToml(`${userContent}\n\n${priorManaged}`);
+
+    for (const header of added) expect(merged).toContain(header);
     expect(merged).toContain(userContent);
     for (const header of merged.match(/\[tasks\."defold-typescript:[^"]+"\]/g) ?? []) {
       expect(merged.split(header).length - 1).toBe(1);

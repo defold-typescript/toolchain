@@ -11,10 +11,13 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
+import { runBuild } from "./build";
 import { GENERATED_BANNER } from "./build-output";
 import { readCliVersion } from "./cli-version";
+import { dispatch } from "./dispatch";
 import {
   type CommandResult,
+  type CompileAnswer,
   EDITOR_API_TITLE,
   EDITOR_PORT_FILE,
   type EditorTransport,
@@ -1190,6 +1193,11 @@ interface FakeEditor {
   lastResolveSignal(): AbortSignal | undefined;
   /** The signal production passed to the most recent post, if any. */
   lastPostSignal(): AbortSignal | undefined;
+  /** How many compiles production has asked for, held ones included. */
+  compileCount(): number;
+  setCompileAnswer(answer: CompileAnswer): void;
+  /** Suspend every compile started from now until the returned release is called. */
+  holdCompile(): () => void;
 }
 
 function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEditor {
@@ -1203,8 +1211,14 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
     resolveSignal: undefined as AbortSignal | undefined,
     postSignal: undefined as AbortSignal | undefined,
     consoleOpen: true,
+    compiles: 0,
+    compileAnswer: {
+      outcome: "compiled",
+      result: { success: true, issues: [] },
+    } as CompileAnswer,
   };
   let gate: Promise<void> | null = null;
+  let compileGate: Promise<void> | null = null;
   let resolveGate: Promise<void> | null = null;
   let consoleGate: Promise<void> | null = null;
   const client: WatchEditorClient = {
@@ -1222,6 +1236,12 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
       const open = gate;
       if (open) await open;
       return { outcome: state.outcome, result: state.result };
+    },
+    async compile() {
+      state.compiles += 1;
+      const open = compileGate;
+      if (open) await open;
+      return state.compileAnswer;
     },
     async openConsole(_endpoint, signal) {
       if (!state.consoleOpen) return null;
@@ -1282,6 +1302,20 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
     },
     lastResolveSignal: () => state.resolveSignal,
     lastPostSignal: () => state.postSignal,
+    compileCount: () => state.compiles,
+    setCompileAnswer(answer) {
+      state.compileAnswer = answer;
+    },
+    holdCompile() {
+      let release!: () => void;
+      compileGate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return () => {
+        compileGate = null;
+        release();
+      };
+    },
   };
 }
 
@@ -3559,6 +3593,307 @@ describe("runWatch hot reload editor result", () => {
 
     handle.stop();
     await handle.done;
+  });
+});
+
+describe("runWatch editor compile", () => {
+  const ROOT_TSCONFIG = JSON.stringify(
+    {
+      compilerOptions: { target: "ES2022", module: "ESNext", strict: true },
+      include: ["main/**/*.ts", "lib/**/*.ts"],
+    },
+    null,
+    2,
+  );
+  const CLEARED = "defold-typescript watch: the Defold editor compiles the project cleanly again";
+
+  function scaffoldResourceProject(): void {
+    writeProjectFile("tsconfig.json", ROOT_TSCONFIG);
+    writeProjectFile("main/hero.ts", scriptSource(1));
+    writeProjectFile("lib/util.ts", moduleSource(1));
+    writeProjectFile("lib/other.lua", "return {}\n");
+    writeProjectFile("main/main.collection", 'name: "main"\n');
+  }
+
+  function startCompileWatch(editor: FakeEditor, extra: Partial<RunWatchOptions> = {}) {
+    const streams = captureStreams();
+    const factory = makeFactory();
+    const handle = runWatch({
+      cwd,
+      stdout: streams.stdout,
+      stderr: streams.stderr,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+      editorCompile: true,
+      ...extra,
+    });
+    return { ...streams, factory, handle };
+  }
+
+  /** Fires `rel` and waits until every compile it asked for has answered. */
+  async function fire(
+    watch: ReturnType<typeof startCompileWatch>,
+    rel: string,
+    kind: "change" | "rename" = "change",
+  ): Promise<void> {
+    watch.factory.trigger(kind, rel);
+    await watch.handle.waitForIdle();
+  }
+
+  test("a resource change compiles once, and not at all without the flag", async () => {
+    scaffoldResourceProject();
+    for (const editorCompile of [true, false]) {
+      const editor = makeEditor();
+      const watch = startCompileWatch(editor, { editorCompile });
+      await watch.handle.waitForIdle();
+      const base = editor.compileCount();
+
+      await fire(watch, "main/main.collection");
+
+      expect(editor.compileCount() - base).toBe(editorCompile ? 1 : 0);
+      watch.handle.stop();
+      await watch.handle.done;
+    }
+  });
+
+  test("own outputs and tool paths compile nothing, an authored .lua compiles once", async () => {
+    scaffoldResourceProject();
+    writeProjectFile(".defignore", "/assets/raw\n");
+    const editor = makeEditor();
+    const watch = startCompileWatch(editor);
+    await watch.handle.waitForIdle();
+    const base = editor.compileCount();
+
+    for (const rel of [
+      "main/hero.ts.script",
+      "main/hero.ts.script.map",
+      "lib/util.lua",
+      "build/default/x",
+      ".internal/editor.port",
+      ".git/index",
+      "node_modules/pkg/index.lua",
+      "assets/node_modules/pkg/index.lua",
+      ".defold-types/sample.lua",
+      "assets/raw/a.png",
+    ]) {
+      await fire(watch, rel);
+    }
+    expect(editor.compileCount() - base).toBe(0);
+
+    await fire(watch, "lib/other.lua");
+    expect(editor.compileCount() - base).toBe(1);
+
+    watch.handle.stop();
+    await watch.handle.done;
+  });
+
+  test(".defignore edits change which paths compile", async () => {
+    scaffoldResourceProject();
+    const editor = makeEditor();
+    const watch = startCompileWatch(editor);
+    await watch.handle.waitForIdle();
+    const base = editor.compileCount();
+
+    writeProjectFile(".defignore", "/node_modules\n/assets/raw\n");
+    await fire(watch, ".defignore");
+    await fire(watch, "assets/raw/a.png");
+    expect(editor.compileCount() - base).toBe(0);
+
+    writeProjectFile(".defignore", "/node_modules\n");
+    await fire(watch, ".defignore");
+    await fire(watch, "assets/raw/a.png");
+    expect(editor.compileCount() - base).toBe(1);
+
+    watch.handle.stop();
+    await watch.handle.done;
+  });
+
+  test("changes landing during a compile collapse into one follow-up", async () => {
+    scaffoldResourceProject();
+    const editor = makeEditor();
+    const watch = startCompileWatch(editor, { debounceMs: 5 });
+    await watch.handle.waitForIdle();
+    const base = editor.compileCount();
+
+    const release = editor.holdCompile();
+    watch.factory.trigger("change", "main/main.collection");
+    await until(() => editor.compileCount() - base === 1);
+
+    for (const rel of [
+      "main/a.png",
+      "main/b.atlas",
+      "main/c.go",
+      "lib/other.lua",
+      "game.project",
+    ]) {
+      watch.factory.trigger("change", rel);
+    }
+    writeProjectFile("main/hero.ts", scriptSource(2));
+    watch.factory.trigger("change", "main/hero.ts");
+    await until(() => countMatches(watch.out(), /wrote \d+ files/g) === 2);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(editor.compileCount() - base).toBe(1);
+
+    release();
+    await watch.handle.waitForIdle();
+    expect(editor.compileCount() - base).toBe(2);
+
+    watch.handle.stop();
+    await watch.handle.done;
+  });
+
+  test("a rebuild that fails to transpile compiles nothing, the next good one compiles once", async () => {
+    scaffoldResourceProject();
+    const editor = makeEditor();
+    const watch = startCompileWatch(editor);
+    await watch.handle.waitForIdle();
+    const base = editor.compileCount();
+
+    writeProjectFile("main/hero.ts", 'const x: number = "oops";\n');
+    await fire(watch, "main/hero.ts");
+    expect(editor.compileCount() - base).toBe(0);
+
+    writeProjectFile("main/hero.ts", scriptSource(3));
+    await fire(watch, "main/hero.ts");
+    expect(editor.compileCount() - base).toBe(1);
+
+    watch.handle.stop();
+    await watch.handle.done;
+  });
+
+  test("a hot reload's verdict stands in for the compile; a skipped reload compiles after it", async () => {
+    scaffoldResourceProject();
+    const editor = makeEditor();
+    editor.setResult({ success: true, issues: [] });
+    const watch = startCompileWatch(editor, { hotReload: true });
+    await watch.handle.waitForIdle();
+    const base = editor.compileCount();
+
+    writeProjectFile("main/hero.ts", scriptSource(2));
+    await fire(watch, "main/hero.ts");
+    expect(editor.posts).toContain("hot-reload");
+    expect(editor.compileCount() - base).toBe(0);
+
+    editor.setOutcome("skipped");
+    editor.setResult(null);
+    const posts = editor.posts.length;
+    writeProjectFile("main/hero.ts", scriptSource(3));
+    await fire(watch, "main/hero.ts");
+    expect(editor.posts.length - posts).toBe(1);
+    expect(editor.compileCount() - base).toBe(1);
+
+    watch.handle.stop();
+    await watch.handle.done;
+  });
+
+  test("notices print once per state and the verdict never ends the watch", async () => {
+    scaffoldResourceProject();
+    const editor = makeEditor(null);
+    editor.setCompileAnswer({ outcome: "unavailable", result: null });
+    const watch = startCompileWatch(editor);
+    await watch.handle.waitForIdle();
+
+    for (let i = 0; i < 3; i++) await fire(watch, "main/main.collection");
+    expect(editor.compileCount()).toBe(3);
+    expect(
+      countMatches(
+        watch.err(),
+        /defold-typescript watch: editor compile skipped: no Defold editor is attached\n/g,
+      ),
+    ).toBe(1);
+
+    editor.setCompileAnswer({
+      outcome: "compiled",
+      result: {
+        success: false,
+        issues: [{ message: "Build failed", severity: "error", resource: "/main/main.collection" }],
+      },
+    });
+    await fire(watch, "main/main.collection");
+    expect(watch.err()).toContain(
+      "defold-typescript watch: editor: /main/main.collection: error: Build failed\n",
+    );
+    expect(watch.err()).toContain("the Defold editor failed to compile the project with 1 issue");
+    expect(watch.err()).not.toContain(CLEARED);
+
+    editor.setCompileAnswer({ outcome: "compiled", result: { success: true, issues: [] } });
+    await fire(watch, "main/main.collection");
+    await fire(watch, "main/main.collection");
+    expect(countMatches(watch.err(), new RegExp(`${CLEARED}\n`, "g"))).toBe(1);
+
+    let settled = false;
+    void watch.handle.done.then(() => {
+      settled = true;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(settled).toBe(false);
+    watch.handle.stop();
+    expect(await watch.handle.done).toBe(0);
+  });
+
+  test("--json carries the same editorCompile object build --editor-compile --json returns", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    runBuild({ cwd });
+    const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8").split("\n");
+    const line = lua.findIndex((text) => text.includes("vmath.vector3"));
+    expect(line).toBeGreaterThan(-1);
+    const editor = makeEditor();
+    editor.setCompileAnswer({
+      outcome: "compiled",
+      result: {
+        success: false,
+        issues: [
+          {
+            message: "attempt to call a nil value",
+            severity: "error",
+            resource: "/src/main.ts.script",
+            range: { start: { line, character: 4 }, end: { line, character: 17 } },
+          },
+        ],
+      },
+    });
+    const internals = {
+      editorClient: editor.client,
+      detectEditorVersion: () => null,
+      runningEditorVersion: async () => null,
+    };
+
+    const built = captureStreams();
+    await dispatch(["build", cwd, "--editor-compile", "--json"], built, internals);
+    const buildPayload = JSON.parse(built.out()) as { editorCompile: unknown; error: string };
+
+    const watched = captureStreams();
+    const factory = makeFactory();
+    let started: ((h: { stop(): void; waitForIdle(): Promise<void> }) => void) | null = null;
+    const ready = new Promise<{ stop(): void; waitForIdle(): Promise<void> }>((resolve) => {
+      started = resolve;
+    });
+    const result = dispatch(["watch", cwd, "--editor-compile", "--json"], watched, {
+      ...internals,
+      watcherFactory: factory.factory,
+      onWatchStart: (h) => started?.(h),
+    });
+    const handle = await Promise.race([
+      ready,
+      Promise.resolve(result).then((code) => {
+        throw new Error(`watch exited with ${code} before it started: ${watched.err()}`);
+      }),
+    ]);
+    await handle.waitForIdle();
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const events = watched
+      .out()
+      .trimEnd()
+      .split("\n")
+      .map((text) => JSON.parse(text) as Record<string, unknown>)
+      .filter((event) => event.event === "editorCompile");
+    expect(events.length).toBeGreaterThan(0);
+    expect(events[0]?.ok).toBe(false);
+    expect(events[0]?.error).toBe(buildPayload.error);
+    expect(events[0]?.editorCompile).toEqual(buildPayload.editorCompile);
   });
 });
 

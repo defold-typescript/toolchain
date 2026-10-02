@@ -260,8 +260,10 @@ one plain line and never fails the build. Under `--json` the result carries an
 The run builds the project itself, so `--editor-run` together with
 `--editor-compile` posts only the run.
 
-The `--editor-*` flags belong to `build`: every other command rejects them, and
-[`run`](#run-an-existing-build-no-bob) starts the engine without the editor.
+The `--editor-*` flags belong to `build`, apart from `--editor-compile`, which
+[`watch`](./watch.md#compile-in-the-editor) also takes. Every other command
+rejects them, and [`run`](#run-an-existing-build-no-bob) starts the engine
+without the editor.
 
 ## Headless builds (no editor)
 

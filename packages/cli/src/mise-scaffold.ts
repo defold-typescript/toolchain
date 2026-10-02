@@ -4,7 +4,7 @@
 // the block without disturbing user-authored `[tools]`/`[tasks.*]` content.
 const MANAGED_MARKER = "# managed by @defold-typescript";
 
-// Build/watch/watch-hr/resolve/setup-debug/init-agents run `bunx @defold-typescript/cli <cmd>`: inside an
+// Build/watch/watch-hr/watch-ec/watch-hr-ec/resolve/setup-debug/init-agents run `bunx @defold-typescript/cli <cmd>`: inside an
 // installed project bunx resolves the `@defold-typescript/cli` pinned in
 // `SCAFFOLD_DEV_DEPS`, so the task runs the version locked alongside
 // `@defold-typescript/types`. `:upgrade` is the deliberate `@latest` pull; it
@@ -24,6 +24,16 @@ ${MANAGED_MARKER}
 [tasks."defold-typescript:watch-hr"]
 description = "Watch, rebuild, and hot reload the running game (only reloads while the game is running)"
 run = "bunx @defold-typescript/cli watch --hot-reload"
+
+${MANAGED_MARKER}
+[tasks."defold-typescript:watch-ec"]
+description = "Watch, rebuild, and compile in the attached Defold editor after every change, printing its errors"
+run = "bunx @defold-typescript/cli watch --editor-compile"
+
+${MANAGED_MARKER}
+[tasks."defold-typescript:watch-hr-ec"]
+description = "Watch, rebuild, hot reload the running game, and compile in the attached Defold editor"
+run = "bunx @defold-typescript/cli watch --hot-reload --editor-compile"
 
 ${MANAGED_MARKER}
 [tasks."defold-typescript:resolve"]

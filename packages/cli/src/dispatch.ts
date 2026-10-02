@@ -26,15 +26,8 @@ import {
   resolveDefoldTarget,
   resolveTargetHead,
 } from "./defold-target";
-import type {
-  CommandResult,
-  CompileAnswer,
-  CompileOutcome,
-  EditorTransport,
-  RunAnswer,
-  RunOutcome,
-} from "./editor-attach";
-import type { CompileIssue } from "./editor-compile";
+import type { CompileAnswer, EditorTransport, RunAnswer, RunOutcome } from "./editor-attach";
+import type { EditorCompileReport } from "./editor-compile";
 import {
   defaultRunEngine,
   launchEngine,
@@ -165,15 +158,6 @@ const BOB_USAGE = "Usage: defold-typescript bob <resolve|build|bundle|status|run
 
 /** How long `build` waits for an editor to identify itself before giving up on it. */
 const EDITOR_PROBE_TIMEOUT_MS = 2000;
-
-/** The one line `build --editor-compile` prints when the editor returned no verdict. */
-const EDITOR_COMPILE_NOTICES: Readonly<Record<CompileOutcome, string>> = {
-  compiled: "the Defold editor compiled the project but returned no result to read",
-  unsupported:
-    "editor compile skipped: the attached Defold editor has no compile command; --editor-compile needs Defold 1.13.2 or later",
-  skipped: "editor compile skipped: the Defold editor refused the request",
-  unavailable: "editor compile skipped: no Defold editor is attached",
-};
 
 /** The one line `build --editor-run` prints when the editor returned no verdict. */
 const EDITOR_RUN_NOTICES: Readonly<Record<RunOutcome, string>> = {
@@ -432,13 +416,20 @@ function dispatchCommand(
     return 1;
   }
 
-  // Only `build` drives the attached editor; any other command would drop the
-  // flag silently. Scanned on `head` so an engine argument after `run ... --`
-  // still reaches the engine.
+  // Only `build` drives the attached editor, and `watch` its compile; any other
+  // command would drop the flag silently. Scanned on `head` so an engine
+  // argument after `run ... --` still reaches the engine.
   const misplacedEditorFlag =
-    command === "build" ? undefined : BUILD_ONLY_EDITOR_FLAGS.find((flag) => head.includes(flag));
+    command === "build"
+      ? undefined
+      : BUILD_ONLY_EDITOR_FLAGS.find(
+          (flag) => head.includes(flag) && !(command === "watch" && flag === "--editor-compile"),
+        );
   if (misplacedEditorFlag !== undefined) {
-    const message = `defold-typescript: ${misplacedEditorFlag} is a build flag; use: defold-typescript build ${misplacedEditorFlag}`;
+    const message =
+      misplacedEditorFlag === "--editor-compile"
+        ? "defold-typescript: --editor-compile is a build or watch flag; use: defold-typescript build --editor-compile or defold-typescript watch --editor-compile"
+        : `defold-typescript: ${misplacedEditorFlag} is a build flag; use: defold-typescript build ${misplacedEditorFlag}`;
     if (json) {
       io.stdout.write(renderResult({ command: "build", error: message }));
     } else {
@@ -943,35 +934,9 @@ function dispatchCommand(
         // Only a failed verdict fails the build. No editor, an editor before
         // 1.13.2 and a refused request are all states a build in CI meets, and
         // none of them says the project is broken.
-        const editorVerdict = async (
-          result: CommandResult,
-          action: string,
-        ): Promise<{
-          readonly json: { readonly success: boolean; readonly issues: readonly CompileIssue[] };
-          readonly lines: readonly string[];
-          readonly error?: string;
-        }> => {
-          const { formatEditorIssue } = await import("./editor-attach");
-          const { mapCompileIssues } = await import("./editor-compile");
-          const { mapConsoleLine } = await import("./console-source-map");
-          const json = { success: result.success, issues: mapCompileIssues(cwd, result.issues) };
-          const lines = result.issues.map(
-            (issue) => `editor: ${mapConsoleLine(cwd, formatEditorIssue(issue))}`,
-          );
-          if (result.success) return { json, lines };
-          const count = result.issues.length;
-          return {
-            json,
-            lines,
-            error: `the Defold editor failed to ${action} with ${count} issue${count === 1 ? "" : "s"}`,
-          };
-        };
-        const compileWithEditor = async (): Promise<{
-          readonly json: NonNullable<RenderResultInput["editorCompile"]>;
-          readonly lines: readonly string[];
-          readonly error?: string;
-        }> => {
+        const compileWithEditor = async (): Promise<EditorCompileReport> => {
           const { compileInEditor } = await import("./editor-attach");
+          const { editorCompileReport } = await import("./editor-compile");
           const client = internals?.editorClient;
           const answer: CompileAnswer =
             client === undefined
@@ -979,12 +944,7 @@ function dispatchCommand(
               : client.compile === undefined
                 ? { outcome: "unavailable", result: null }
                 : await client.compile(cwd);
-          const { outcome, result } = answer;
-          if (outcome !== "compiled" || result === null) {
-            return { json: { outcome }, lines: [EDITOR_COMPILE_NOTICES[outcome]] };
-          }
-          const verdict = await editorVerdict(result, "compile the project");
-          return { ...verdict, json: { outcome, ...verdict.json } };
+          return editorCompileReport(cwd, answer);
         };
         const runWithEditor = async (): Promise<{
           readonly json: NonNullable<RenderResultInput["editorRun"]>;
@@ -1004,7 +964,8 @@ function dispatchCommand(
           if (outcome !== "ran" || result === null) {
             return { json: { outcome }, lines: [EDITOR_RUN_NOTICES[outcome]] };
           }
-          const verdict = await editorVerdict(result, "run the project");
+          const { editorVerdict } = await import("./editor-compile");
+          const verdict = editorVerdict(cwd, result, "run the project");
           const { targetUrl } = result;
           const json = {
             outcome,
@@ -1352,6 +1313,7 @@ function dispatchCommand(
             ...(pinMismatch ? { pinMismatch } : {}),
             ...upstreamRelease,
             ...(hotReload ? { hotReload: true } : {}),
+            ...(editorCompile ? { editorCompile: true } : {}),
             ...(internals?.editorClient ? { editorClient: internals.editorClient } : {}),
             ...(editorAttached ? { editorAttached } : {}),
           };
