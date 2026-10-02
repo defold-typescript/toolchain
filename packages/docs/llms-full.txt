@@ -76,7 +76,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [Where script state lives](./script-state.md) — the four state tiers — per-instance `self`, a shared module local, a cross-script module singleton, and VM-global `declare global` — each grounded in the emitted Lua.
 - [Vector math](./vector-math.md) — the method-form arithmetic surface (`add`, `sub`, `mul`, `div`, `unm`) on `Vector3`, `Vector4`, `Quaternion`, and `Matrix4`, plus why you cannot write `v3 + v3`.
 - [Editor scripts](./editor-scripts.md) — extend the Defold editor with `defineEditorScript`; the `<name>.ts.editor_script` artifact, auto-load discovery, and the `EditorCommand` shape.
-- [State machines](./state-machines.md) — vendor the typed `hsm` library with `bunx @defold-typescript/cli vendor hsm .`, define machines in plain modules, run one instance per object on `self`, and turn Defold messages and engine callbacks into typed events.
+- [State machines](./state-machines.md) — vendor the typed `hsm` library with `bunx @defold-typescript/cli vendor hsm .`, learn how its events, transitions and timers run, define machines in plain modules, run one instance per object on `self`, and turn Defold messages and engine callbacks into typed events.
 
 ##### CLI
 
@@ -2758,6 +2758,8 @@ A component's `props` is an untyped table. Upstream documents every builder as t
 
 It replaces the `if (self.state === ...)` branches that otherwise spread across `update` and `on_message`.
 
+This page covers the model first (states, transitions, timers and the order things run in), then how to use a machine from a script, its types, a worked migration, and a reference table. Every sample on it compiles against the library `vendor hsm` writes.
+
 #### Add it to a project
 
 `hsm` is not an npm package. The CLI carries its source and copies it into your project:
@@ -2770,12 +2772,268 @@ That writes `src/vendor/hsm/index.ts` (the machine), `src/vendor/hsm/defold.ts` 
 
 To upgrade, run the same command from a newer CLI. It overwrites the library files and `VERSION`, reports the old and new version, and leaves any other file in `src/vendor/hsm/` alone. Treat the library files as read-only: a local edit is lost on the next upgrade. Add `--json` to read the outcome as `{ command: "vendor", library: "hsm", version, previousVersion, written }`.
 
+#### States and paths
+
+A machine is a tree of states. The config you pass to `defineMachine` is the root: it names its child `states` and the `initial` one to enter. A state with children of its own is a compound state and also needs an `initial`; a state without children is a leaf. Entering a compound state always continues into its `initial` child, so the active states form one chain from the root down to a leaf.
+
+```ts
+import { defineMachine } from "./vendor/hsm/index";
+
+interface LampCtx {
+  switches: number;
+}
+
+type LampEvent = { type: "TOGGLE" } | { type: "DIM" };
+
+export const lamp = defineMachine<LampCtx, LampEvent>()({
+  initial: "off",
+  states: {
+    off: {
+      on: { TOGGLE: "on" },
+    },
+    on: {
+      initial: "bright",
+      enter: (ctx) => {
+        ctx.switches += 1;
+      },
+      on: { TOGGLE: "off" },
+      states: {
+        bright: { on: { DIM: "dim" } },
+        dim: { on: { DIM: "bright" } },
+      },
+    },
+  },
+});
+
+const m = lamp.start({ switches: 0 });
+m.path; // "off"
+m.send({ type: "TOGGLE" });
+m.path; // "on.bright"
+m.matches("on"); // true: an ancestor of the current state
+m.send({ type: "DIM" });
+m.path; // "on.dim"
+```
+
+A state's path joins the names from the root down with dots: `on.dim`. `path` is the deepest active state, and `""` once the machine is stopped. `matches(p)` is true for every active state, ancestors included, so `matches("on")` holds in both `on.bright` and `on.dim`. The root has no name and is never matched.
+
+`defineMachine` checks the config when the module loads and throws, naming the state path, on a compound state with no `initial`, an `initial` that is not one of the state's children, or a target that names no state. Most of these mistakes fail to compile first; see [Types](#types).
+
+#### Events and transitions
+
+`on` maps an event's `type` to a transition. A transition is one of three things:
+
+- a target state, as a string;
+- an object of `target`, `guard`, `actions` and `reenter`, each optional;
+- a non-empty list of those objects, tried in order.
+
+```ts
+import { defineMachine } from "./vendor/hsm/index";
+
+interface EnemyCtx {
+  health: number;
+}
+
+type EnemyEvent =
+  | { type: "HIT"; damage: number }
+  | { type: "SEE_PLAYER" }
+  | { type: "LOSE_PLAYER" }
+  | { type: "FALL" }
+  | { type: "RESPAWN" };
+
+export const enemy = defineMachine<EnemyCtx, EnemyEvent>()({
+  initial: "alive",
+  states: {
+    alive: {
+      initial: "patrol",
+      on: {
+        HIT: [
+          { target: "dead", guard: (ctx, event) => ctx.health <= event.damage },
+          {
+            actions: (ctx, event) => {
+              ctx.health -= event.damage;
+            },
+          },
+        ],
+      },
+      states: {
+        patrol: { on: { SEE_PLAYER: "chase" } },
+        chase: {
+          on: {
+            LOSE_PLAYER: "patrol",
+            SEE_PLAYER: { target: "chase", reenter: true },
+            FALL: "#dead",
+          },
+        },
+      },
+    },
+    dead: {
+      on: {
+        RESPAWN: {
+          target: "alive",
+          actions: (ctx) => {
+            ctx.health = 3;
+          },
+        },
+      },
+    },
+  },
+});
+
+const m = enemy.start({ health: 3 });
+m.send({ type: "SEE_PLAYER" }); // alive.patrol -> alive.chase
+m.send({ type: "HIT", damage: 1 }); // handled by alive: health 2, still alive.chase
+m.send({ type: "FALL" }); // exits alive.chase and alive, enters dead
+```
+
+**Which transition runs.** An event starts at the deepest active state. If that state has no `on` entry for the event's `type`, or every guard in its entry fails, the event moves up to the parent, and so on to the root. The first transition with no guard, or whose guard returns `true`, runs, and the event goes no further. An event that no active state handles is dropped. Above, `HIT` sent in `alive.chase` finds nothing on `chase` and reaches `alive`, where the first entry moves to `dead` if the hit is fatal and the second takes the damage otherwise.
+
+**Targetless transitions.** A transition with no `target` runs its actions and nothing else: no state exits or enters. The damage branch of `HIT` is one.
+
+**Where a target points.** A target is resolved from the source state's parent, so a plain name is a sibling (`patrol` from `chase`) and `sibling.child` reaches into one. A state targets its own child through its own name, as `alive.patrol` from `alive`. A target that starts with `#` is a full path from the root, which reaches states outside the parent: `#dead` from `alive.chase`, where a plain `dead` would look for `alive.dead`. On the root's own `on`, every target is resolved from the root.
+
+**What runs, in what order.** A transition exits states from the deepest active state up, runs its actions, then enters states down to the target and on through each `initial` child. Only the states below the nearest one that contains both the source and the target exit and re-enter; that state stays active. With `alive.chase` active, a fatal `HIT` handled by `alive` runs:
+
+1. `exit` of `alive.chase`
+2. `exit` of `alive`
+3. the transition's actions
+4. `enter` of `dead`
+
+Targeting the source itself or one of its descendants keeps the source active and re-enters only below it: from `alive`, a target of `alive.patrol` exits the current child and enters `patrol`, while `alive` stays. `reenter: true` also exits and re-enters the source, which restarts its `after` timers and its `invoke`, as `SEE_PLAYER` in `chase` does above. Targeting an ancestor of the source exits and re-enters that ancestor.
+
+Guards receive `(ctx, event)` and actions `(ctx, event, m)`, where `event` is narrowed to the variant the `on` key names: the `HIT` guard reads `event.damage` with no cast. `actions` is one function or a list run in order.
+
+#### `update` and `after`
+
+`m.update(dt)` advances the machine by one tick in two phases.
+
+First the `update` hooks run, from the deepest active state up, each with `(ctx, dt, m)`. A hook returns a target to transition or `undefined` to pass. The first hook to return a target wins: the remaining hooks do not run, and the target is resolved from that hook's state like an `on` target. A hook transition has no actions.
+
+Then, only if no hook transitioned, the `after` timers run. `after` maps a delay in seconds to a target. Every active state counts game time from the `dt` passed to `update`, from zero each time it is entered, so a machine whose `update` is not called is frozen in time. A state's timers fire in delay order. One `update` call fires at most one timer, checked from the deepest state up; another timer that is due waits for the next call.
+
+```ts
+import { defineMachine } from "./vendor/hsm/index";
+
+interface FeetCtx {
+  on_ground: boolean;
+}
+
+type FeetEvent = { type: "JUMP" };
+
+const land = (ctx: FeetCtx) => (ctx.on_ground ? "grounded" : undefined);
+
+export const feet = defineMachine<FeetCtx, FeetEvent>()({
+  initial: "grounded",
+  states: {
+    grounded: {
+      update: (ctx) => (ctx.on_ground ? undefined : "coyote"),
+      on: { JUMP: "jumping" },
+    },
+    // Just after walking off a ledge, a jump still counts.
+    coyote: {
+      update: land,
+      after: { 0.1: "falling" },
+      on: { JUMP: "jumping" },
+    },
+    jumping: {
+      after: { 0.4: "falling" },
+    },
+    falling: {
+      update: land,
+    },
+  },
+});
+```
+
+`coyote` lands if the ground comes back, and otherwise becomes `falling` after a tenth of a second. Since a hook transition skips the timers, landing on the very tick the timer is due wins over falling.
+
+A state that stays active keeps counting while its children change, so a parent's timer can bound a cycle among its children:
+
+```ts
+import { defineMachine } from "./vendor/hsm/index";
+
+interface BlinkCtx {
+  readonly sprite: Url;
+}
+
+type BlinkEvent = { type: "HIT" };
+
+export const blink = defineMachine<BlinkCtx, BlinkEvent>()({
+  initial: "normal",
+  states: {
+    normal: { on: { HIT: "invulnerable" } },
+    invulnerable: {
+      initial: "shown",
+      after: { 2: "normal" },
+      exit: (ctx) => msg.post(ctx.sprite, "enable"),
+      states: {
+        shown: {
+          enter: (ctx) => msg.post(ctx.sprite, "enable"),
+          after: { 0.1: "hidden" },
+        },
+        hidden: {
+          enter: (ctx) => msg.post(ctx.sprite, "disable"),
+          after: { 0.1: "shown" },
+        },
+      },
+    },
+  },
+});
+```
+
+Each `shown` and `hidden` entry restarts that child's own tenth-of-a-second timer, while `invulnerable` counts its two seconds straight through.
+
+#### Run to completion, `invoke` and `stop`
+
+A machine handles one event at a time, to completion. A `send` from inside a hook, guard, action or `invoke` does not run at once: it queues the event, which runs after the current transition, every `enter` and `exit` included, has finished. Queued events run in order before the outer `send`, `update` or `start` call returns, so `start` hands back a machine that has already handled whatever its `enter` hooks sent.
+
+```ts
+import { defineMachine } from "./vendor/hsm/index";
+
+interface LevelCtx {
+  cached: boolean;
+}
+
+type LevelEvent = { type: "LOADED" } | { type: "QUIT" };
+
+export const level = defineMachine<LevelCtx, LevelEvent>()({
+  initial: "loading",
+  states: {
+    loading: {
+      enter: (ctx, m) => {
+        if (ctx.cached) {
+          m.send({ type: "LOADED" });
+        }
+      },
+      on: { LOADED: "playing" },
+    },
+    playing: { on: { QUIT: "done" } },
+    done: {
+      enter: (_ctx, m) => m.stop(),
+    },
+  },
+});
+
+const m = level.start({ cached: true });
+m.path; // "playing": start ran the queued LOADED before returning
+m.send({ type: "QUIT" });
+m.path; // "": done stopped the machine
+```
+
+`stop()` exits every active state, deepest first and the root last, and sets `path` to `""`. Called inside a step, as `done` does above, it lets that step finish, then drops any queued events instead of running them. After `stop`, `send` and `update` do nothing.
+
+##### Engine callbacks: `invoke` and `settle`
+
+An engine callback that finishes later (an animation, a proxy load, an HTTP response) belongs in a state's `invoke`. It runs after the state's `enter` hook on every entry and receives a one-shot `settle(event)`; pass it whichever typed event means success or failure. If the state was left, re-entered, or the machine was stopped before the callback fires, that `settle` is ignored, so a late callback never moves a machine that has moved on. The door's `opening` state [below](#define-a-machine-in-a-plain-module) settles when its fade ends.
+
+##### Cleanup goes in `exit`, never after an `await`
+
+Release what a state holds (cancel an animation, a timer, a pending request) in its `exit` hook, as the door's `opening` does. `exit` runs on every way out of the state, including `stop()`. Never put cleanup after an `await` in an `invoke` or a hook: by the time the awaited work resumes, the state may already be gone, and code that runs then cleans up after a state that no longer exists, or never runs at all.
+
 #### Define a machine in a plain module
 
 Put each machine definition in a plain module, a file with no `defineScript` export. A plain module compiles to `.lua`, which any script can `require`; a file that exports a `defineScript` factory compiles to a `.ts.script` component, which other files cannot import.
 
-```ts
-// src/door-machine.ts
+```ts title="door-machine.ts"
 import { type MessageEvent, messageEvents } from "./vendor/hsm/defold";
 import { defineMachine } from "./vendor/hsm/index";
 
@@ -2818,16 +3076,13 @@ export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
 export const doorEvents = messageEvents(["trigger_response"]);
 ```
 
-`on` accepts only the `type` values of `DoorEvent`, and each handler sees the matching event variant: the guard above reads `event.enter` because a `trigger_response` payload has one. `defineMachine` checks the config once and throws on an unknown target or a compound state with no `initial`, naming the state path, so a broken definition fails when the module loads rather than when the transition fires.
-
-`defineMachine<DoorCtx, DoorEvent>()` takes the context and event types, and the second call takes the config, so TypeScript infers the config's state paths. Started instances use them: `matches()` accepts only `"closed"`, `"opening"` and `"open"`, and `path` is one of those, or `""` once the machine is stopped. A target or `initial` that names no state, or an `on` key that names no event, makes `doorMachine.start(...)` fail to compile, so the mistake shows up wherever the machine is used. Paths are checked four levels deep; below that, any string under the fourth-level path is accepted. Hooks and actions receive an instance whose `path` and `matches()` use plain `string`.
+The guard reads `event.enter` because a `trigger_response` payload has one; the [message bridge](#the-message-bridge) turns that engine message into the event.
 
 #### One instance per object, on `self`
 
 `start(ctx)` creates an independent instance from the definition. Create it in `init` so it lands on `self`, one per game object, then tick it from `update(dt)` and stop it in `final`:
 
-```ts
-// src/door.ts
+```ts title="door.ts"
 import { defineScript } from "@defold-typescript/types";
 import { doorEvents, doorMachine } from "./door-machine";
 
@@ -2850,9 +3105,67 @@ export default defineScript({
 });
 ```
 
-`after` timers count the `dt` you pass to `update`, so a machine whose `update` is not called is frozen in time. `send` from inside a hook or an action queues the event and runs it after the current step. `self.door.matches("open")`, `self.door.path` and `self.door.ctx` read the current state. `stop()` exits every active state and turns later `send` and `update` calls into no-ops.
+`self.door.matches("open")`, `self.door.path` and `self.door.ctx` read the current state from any callback. Stopping in `final` runs the `exit` hooks of whatever is active, so `opening` cancels its animation even when the object is deleted mid-fade.
 
 A module-level instance (`const door = doorMachine.start(...)` at the top of a script file) is shared by every object that runs the script; see [Where script state lives](./script-state.md).
+
+#### Types
+
+**`defineMachine` takes two calls.** `defineMachine<Ctx, E>()` fixes the context and event types, and the second call takes the config. TypeScript cannot infer some type arguments of one call while you write the others, and the config has to be inferred: its literal shape is where the state paths come from.
+
+**Events are `EventObject`s.** `E` is a union of objects that each have a string `type`, plus any payload fields. `on` accepts only those `type` values as keys, and each guard and action sees the variant its key names.
+
+**`start` returns a `MachineInstance<Ctx, E, P>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `""`. Hooks, guards and actions are typed before the paths are known, so the `m` they receive is a `MachineInstance<Ctx, E>` whose `path` and `matches()` use plain `string`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`.
+
+**`StatePath<C>` lists a config's paths.** Paths are spelled out four levels deep; below that, any string under a fourth-level path is accepted.
+
+```ts
+import type { StatePath } from "./vendor/hsm/index";
+
+const game = {
+  initial: "menu",
+  states: {
+    menu: {},
+    playing: {
+      initial: "running",
+      states: { running: {}, paused: {} },
+    },
+  },
+} as const;
+
+// "menu" | "playing" | "playing.running" | "playing.paused"
+type GamePath = StatePath<typeof game>;
+
+const resume: GamePath = "playing.running";
+// @ts-expect-error -- "playing.over" is not one of the paths
+const over: GamePath = "playing.over";
+```
+
+**A bad config is a `MachineConfigError`.** When an `initial` or a target names no state, or an `on` key names no event, `defineMachine` returns `MachineConfigError` instead of a machine. It has no `start`, so the mistake fails to compile wherever the machine is started, and the error's text names what to look for:
+
+```ts
+import { defineMachine } from "./vendor/hsm/index";
+
+type GoEvent = { type: "GO" };
+
+const broken = defineMachine<{ steps: number }, GoEvent>()({
+  initial: "idle",
+  states: {
+    idle: { on: { GO: "nowhere" } },
+  },
+});
+
+// @ts-expect-error -- Property 'start' does not exist on type 'MachineConfigError'.
+broken.start({ steps: 0 });
+```
+
+**`MessageEvent<K>` and `messageEvents`** turn Defold messages into machine events; see the next section.
+
+##### The message bridge
+
+Defold delivers messages as a hashed `message_id` plus a payload table. `messageEvents(ids)` turns the ones you list into typed events `{ type: id, ...payload }`, reusing the payload types already declared through `BuiltinMessages` and `CustomMessages`, so a payload is declared once. `MessageEvent<K>` is that event's type, for the machine's event union. Its `toEvent(message_id, message)` takes the `on_message` parameters of both `defineScript` and `defineGuiScript` and returns `undefined` for any id you did not list. Build the mapper once at module scope: it hashes the ids when it is created.
+
+A script that already dispatches with `onMessage` (see [Messages](./messages.md)) has narrowed payloads in hand and can `send` them directly, with no mapper.
 
 #### Migrate a script
 
@@ -2860,6 +3173,28 @@ The [platformer example](https://github.com/defold-typescript/toolchain/tree/mai
 
 ```ts
 // src/player.ts, before
+import type { Vector3 } from "@defold-typescript/types";
+
+const jump_takeoff_speed = 1200;
+const anim_walk = hash("walk");
+const anim_idle = hash("idle");
+const anim_jump = hash("jump");
+const anim_fall = hash("fall");
+
+interface PlayerSelf {
+  velocity: Vector3;
+  facing_direction: number;
+  ground_contact: boolean;
+  anim?: Hash;
+}
+
+function play_animation(self: PlayerSelf, anim: Hash): void {
+  if (self.anim !== anim) {
+    sprite.play_flipbook("#sprite", anim);
+    self.anim = anim;
+  }
+}
+
 function update_animations(self: PlayerSelf): void {
   // Make sure the player character faces the right way.
   sprite.set_hflip("#sprite", self.facing_direction < 0);
@@ -2888,8 +3223,16 @@ function jump(self: PlayerSelf): void {
 
 After, those branches are states. Each state plays its animation once in `enter`, and `JUMP` is handled only in `grounded`, so the guard is the state itself:
 
-```ts
-// src/player-machine.ts
+```ts title="player-machine.ts"
+import type { Vector3 } from "@defold-typescript/types";
+import { defineMachine } from "./vendor/hsm/index";
+
+const jump_takeoff_speed = 1200;
+const anim_walk = hash("walk");
+const anim_idle = hash("idle");
+const anim_jump = hash("jump");
+const anim_fall = hash("fall");
+
 export interface PlayerCtx {
   readonly velocity: Vector3;
   ground_contact: boolean;
@@ -2958,38 +3301,52 @@ export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
 
 The script keeps the physics and hands the rest to the machine:
 
-```ts
-// src/player.ts, after
-fixed_update(self, dt) {
-  const body = self.body;
-  // ... acceleration, gravity and movement, unchanged ...
+```ts title="player.ts"
+import { defineScript } from "@defold-typescript/types";
+import { playerMachine } from "./player-machine";
 
-  // Make sure the player character faces the right way.
-  sprite.set_hflip("#sprite", body.facing_direction < 0);
-  // Step the motion machine (ground, air, move and idle), which plays the
-  // animations, while the contacts from the last physics step still hold.
-  self.motion.update(dt);
+const input_jump = hash("jump");
 
-  // Reset volatile state.
-  body.correction = vmath.vector3();
-  body.ground_contact = false;
-  body.wall_contact = false;
-},
+export default defineScript({
+  init() {
+    msg.post(".", "acquire_input_focus");
+    const body = {
+      velocity: vmath.vector3(0, 0, 0),
+      facing_direction: 0,
+      ground_contact: false,
+    };
+    return { body, motion: playerMachine.start(body) };
+  },
 
-on_input(self, action_id, action) {
-  // ... walking, unchanged ...
-  } else if (action_id === input_jump) {
-    if (action.pressed) {
-      self.motion.send({ type: "JUMP" });
-    } else if (action.released) {
-      self.motion.send({ type: "JUMP_RELEASED" });
+  fixed_update(self, dt) {
+    const body = self.body;
+    // ... acceleration, gravity and movement, unchanged ...
+
+    // Make sure the player character faces the right way.
+    sprite.set_hflip("#sprite", body.facing_direction < 0);
+    // Step the motion machine (ground, air, move and idle), which plays the
+    // animations, while the contacts from the last physics step still hold.
+    self.motion.update(dt);
+
+    // Reset volatile state.
+    body.ground_contact = false;
+  },
+
+  on_input(self, action_id, action) {
+    // ... walking, unchanged ...
+    if (action_id === input_jump) {
+      if (action.pressed) {
+        self.motion.send({ type: "JUMP" });
+      } else if (action.released) {
+        self.motion.send({ type: "JUMP_RELEASED" });
+      }
     }
-  }
-},
+  },
 
-final(self) {
-  self.motion.stop();
-},
+  final(self) {
+    self.motion.stop();
+  },
+});
 ```
 
 Two rules carry over to any migration:
@@ -2997,19 +3354,33 @@ Two rules carry over to any migration:
 - **Give the machine an object, not `self`.** `init`'s return value is copied onto the engine-owned `self`, so a context built from loose fields in `init` would keep stale copies of them. The player's `init` builds one `body` object, starts the machine on it and returns `{ body, motion }`; every hook then reads and writes `self.body`, the same object the machine sees.
 - **A state is as fresh as its last update.** `grounded` reflects the contacts seen by the last `fixed_update`, while the old guard read `ground_contact` after the physics step that followed it. So the player can now jump on the one physics step after walking off a ledge, a single step of leniency the example accepts.
 
-#### The message bridge
+#### Reference
 
-Defold delivers messages as a hashed `message_id` plus a payload table. `messageEvents(ids)` turns the ones you list into typed events `{ type: id, ...payload }`, reusing the payload types already declared through `BuiltinMessages` and `CustomMessages`, so a payload is declared once. Its `toEvent(message_id, message)` takes the `on_message` parameters of both `defineScript` and `defineGuiScript` and returns `undefined` for any id you did not list. Build the mapper once at module scope: it hashes the ids when it is created.
+##### `StateConfig`
 
-A script that already dispatches with `onMessage` (see [Messages](./messages.md)) has narrowed payloads in hand and can `send` them directly, with no mapper.
+Every field is optional on a state; the root config requires `initial` and `states`.
 
-#### Engine callbacks: `invoke` and `settle`
+| Field     | Type                                        | Meaning                                                                                       |
+| --------- | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `initial` | `string`                                    | The child entered with this state. Required when `states` is set.                             |
+| `states`  | `{ [name: string]: StateConfig }`           | Child states, by name.                                                                        |
+| `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`; see [Events and transitions](#events-and-transitions).           |
+| `after`   | `{ [seconds: number]: string }`             | Targets taken after this long in the state, in game time; see [`update` and `after`](#update-and-after). |
+| `enter`   | `(ctx, m) => void`                          | Runs each time the state is entered.                                                          |
+| `exit`    | `(ctx, m) => void`                          | Runs each time the state is left, including on `stop()`.                                      |
+| `update`  | `(ctx, dt, m) => string \| undefined`       | Runs on every `update(dt)` while active; a returned target transitions.                       |
+| `invoke`  | `(ctx, settle, m) => void`                  | Runs after `enter`; `settle(event)` sends one event if the state is still the one entered.     |
 
-An engine callback that finishes later (an animation, a proxy load, an HTTP response) belongs in a state's `invoke`. It runs after the state's `enter` hook on every entry and receives a one-shot `settle(event)`; pass it whichever typed event means success or failure. If the state was left, re-entered, or the machine was stopped before the callback fires, that `settle` is ignored, so a late callback never moves a machine that has moved on.
+##### `MachineInstance`
 
-#### Cleanup goes in `exit`, never after an `await`
-
-Release what a state holds (cancel an animation, a timer, a pending request) in its `exit` hook, as `opening` does above. `exit` runs on every way out of the state, including `stop()`. Never put cleanup after an `await` in an `invoke` or a hook: by the time the awaited work resumes, the state may already be gone, and code that runs then cleans up after a state that no longer exists, or never runs at all.
+| Member    | Type                    | Meaning                                                                            |
+| --------- | ----------------------- | ---------------------------------------------------------------------------------- |
+| `ctx`     | `Ctx`                   | The context passed to `start`.                                                     |
+| `path`    | `P \| ""`               | The deepest active state's path, or `""` once stopped.                             |
+| `matches` | `(path: P) => boolean`  | Whether the state at `path` is active, ancestors included.                         |
+| `send`    | `(event: E) => void`    | Handles `event`, or queues it when called during a step.                           |
+| `update`  | `(dt: number) => void`  | Runs the `update` hooks, then the `after` timers if no hook transitioned.          |
+| `stop`    | `() => void`            | Exits every active state; later `send` and `update` calls do nothing.              |
 
 ### Init
 
