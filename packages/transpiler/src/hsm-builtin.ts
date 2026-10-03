@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as ts from "typescript";
-import type { Plugin } from "typescript-to-lua";
+import { LuaLibFeature, type Plugin, type TransformationContext } from "typescript-to-lua";
 import { scanEmittedRequires } from "./lua-require-scan";
 
 // `@defold-typescript/types/hsm` is the `index` module; every other module is a
@@ -11,6 +11,10 @@ import { scanEmittedRequires } from "./lua-require-scan";
 // runtime.
 export const HSM_MODULE_SPECIFIER = "@defold-typescript/types/hsm";
 export const HSM_REQUIRE_ROOT = "defold_typescript_hsm";
+
+// The hsm modules whose Lua requires the lualib bundle. Every other module stays
+// plain Lua, so a program that imports none of these ships no bundle.
+export const HSM_LUALIB_MODULES: ReadonlySet<string> = new Set(["async"]);
 
 export interface HsmModule {
   /** The source file's basename without `.ts`. */
@@ -152,10 +156,27 @@ export function hsmClosure(
 
 // Rewrite an hsm specifier to its flat require, the way the timers lowering
 // does: `@NoResolution:` keeps TSTL from looking for a Lua source behind the
-// `.d.ts` the import type-checks against. No lualib feature is registered,
-// because hsm compiles to plain Lua.
+// `.d.ts` the import type-checks against.
 function lowerSpecifier(module: HsmModule): ts.StringLiteral {
   return ts.factory.createStringLiteral(`@NoResolution:${module.requireName}`);
+}
+
+type Lowered = ReturnType<TransformationContext["superTransformStatements"]>;
+
+// TSTL writes `lualib_bundle.lua` only for features a user chunk registers; it
+// never sees the hsm module's own source, which the CLI writes beside the build.
+// An elided import (type-only, unused) registers nothing.
+function registerLualib(
+  module: HsmModule,
+  lowered: Lowered,
+  context: TransformationContext,
+): Lowered {
+  const emitted = Array.isArray(lowered) ? lowered.length > 0 : lowered !== undefined;
+  if (emitted && HSM_LUALIB_MODULES.has(module.name)) {
+    context.usedLuaLibFeatures.add(LuaLibFeature.Promise);
+    context.usedLuaLibFeatures.add(LuaLibFeature.New);
+  }
+  return lowered;
 }
 
 export const hsmLoweringPlugin: Plugin = {
@@ -165,14 +186,18 @@ export const hsmLoweringPlugin: Plugin = {
       if (module === undefined) {
         return context.superTransformStatements(node);
       }
-      return context.superTransformStatements(
-        ts.factory.updateImportDeclaration(
-          node,
-          node.modifiers,
-          node.importClause,
-          lowerSpecifier(module),
-          node.attributes,
+      return registerLualib(
+        module,
+        context.superTransformStatements(
+          ts.factory.updateImportDeclaration(
+            node,
+            node.modifiers,
+            node.importClause,
+            lowerSpecifier(module),
+            node.attributes,
+          ),
         ),
+        context,
       );
     },
     [ts.SyntaxKind.ExportDeclaration]: (node, context) => {
@@ -180,15 +205,19 @@ export const hsmLoweringPlugin: Plugin = {
       if (module === undefined) {
         return context.superTransformStatements(node);
       }
-      return context.superTransformStatements(
-        ts.factory.updateExportDeclaration(
-          node,
-          node.modifiers,
-          node.isTypeOnly,
-          node.exportClause,
-          lowerSpecifier(module),
-          node.attributes,
+      return registerLualib(
+        module,
+        context.superTransformStatements(
+          ts.factory.updateExportDeclaration(
+            node,
+            node.modifiers,
+            node.isTypeOnly,
+            node.exportClause,
+            lowerSpecifier(module),
+            node.attributes,
+          ),
         ),
+        context,
       );
     },
   },

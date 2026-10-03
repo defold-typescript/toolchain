@@ -929,6 +929,105 @@ describe("invoke", () => {
     settleAt(ctx, 1)({ type: "LOADED" });
     expect(m.path).toBe("/ready");
   });
+
+  function withCleanup(name: string) {
+    let entries = 0;
+    return (ctx: LoadCtx) => {
+      entries++;
+      const entry = entries;
+      ctx.log.push(`invoke ${name} ${entry}`);
+      return () => {
+        ctx.log.push(`cleanup ${name} ${entry}`);
+      };
+    };
+  }
+
+  test("a returned cleanup runs once, after the exit hook, when a transition leaves the state", () => {
+    const def = defineMachine<LoadCtx, LoadEv>()({
+      initial: "/loading",
+      states: {
+        loading: {
+          ...logged("loading"),
+          invoke: withCleanup("loading"),
+          on: { LOADED: "/ready" },
+        },
+        ready: { ...logged("ready"), on: { RELOAD: "/loading" } },
+      },
+    });
+    const ctx = loadCtx();
+    const m = def.start(ctx);
+    m.send({ type: "LOADED" });
+    m.send({ type: "PING" });
+    expect(ctx.log).toEqual([
+      "enter loading",
+      "invoke loading 1",
+      "exit loading",
+      "cleanup loading 1",
+      "enter ready",
+    ]);
+  });
+
+  test("stop runs the active entry's cleanup once", () => {
+    const def = defineMachine<LoadCtx, LoadEv>()({
+      initial: "/outer",
+      states: {
+        outer: {
+          ...logged("outer"),
+          invoke: withCleanup("outer"),
+          initial: "/outer/loading",
+          states: { loading: { ...logged("loading"), invoke: withCleanup("loading") } },
+        },
+      },
+    });
+    const ctx = loadCtx();
+    const m = def.start(ctx);
+    ctx.log.length = 0;
+    m.stop();
+    m.stop();
+    expect(ctx.log).toEqual(["exit loading", "cleanup loading 1", "exit outer", "cleanup outer 1"]);
+  });
+
+  test("re-entering a state runs the old entry's cleanup before the new entry's invoke", () => {
+    const def = defineMachine<LoadCtx, LoadEv>()({
+      initial: "/loading",
+      states: {
+        loading: {
+          invoke: withCleanup("loading"),
+          on: { AGAIN: { target: "/loading", reenter: true } },
+        },
+      },
+    });
+    const ctx = loadCtx();
+    def.start(ctx).send({ type: "AGAIN" });
+    expect(ctx.log).toEqual(["invoke loading 1", "cleanup loading 1", "invoke loading 2"]);
+  });
+
+  test("an invoke that returns nothing leaves the state as before", () => {
+    const def = defineMachine<LoadCtx, LoadEv>()({
+      initial: "/loading",
+      states: {
+        loading: {
+          ...logged("loading"),
+          invoke: (ctx) => {
+            ctx.log.push("invoke loading");
+          },
+          on: { LOADED: "/ready" },
+        },
+        ready: logged("ready"),
+      },
+    });
+    const ctx = loadCtx();
+    const m = def.start(ctx);
+    m.send({ type: "LOADED" });
+    m.stop();
+    expect(ctx.log).toEqual([
+      "enter loading",
+      "invoke loading",
+      "exit loading",
+      "enter ready",
+      "exit ready",
+    ]);
+  });
 });
 
 describe("typed paths", () => {
@@ -1372,6 +1471,50 @@ describe("hot reload", () => {
     defineMachine<Ctx, Ev>("reload-timer")(config);
     m.update(0.6);
     expect(pathOf(m)).toBe("/b");
+  });
+
+  test("a rebind runs the cleanups of the states it drops, leaf first, and keeps the rest", () => {
+    const invokeLogging = (name: string) => (ctx: Ctx) => {
+      ctx.log.push(`invoke ${name}`);
+      return () => {
+        ctx.log.push(`cleanup ${name}`);
+      };
+    };
+    const def = defineMachine<Ctx, Ev>("reload-cleanup")({
+      initial: "/a",
+      states: {
+        a: {
+          invoke: invokeLogging("a"),
+          initial: "/a/b",
+          states: {
+            b: {
+              invoke: invokeLogging("a.b"),
+              initial: "/a/b/c",
+              states: { c: { invoke: invokeLogging("a.b.c") } },
+            },
+          },
+        },
+      },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    ctx.log.length = 0;
+    defineMachine<Ctx, Ev>("reload-cleanup")({
+      initial: "/a",
+      states: {
+        a: {
+          invoke: invokeLogging("a"),
+          initial: "/a/d",
+          states: { d: { invoke: invokeLogging("a.d") } },
+        },
+      },
+    });
+    m.update(0);
+    expect(pathOf(m)).toBe("/a/d");
+    expect(ctx.log).toEqual(["cleanup a.b.c", "cleanup a.b", "invoke a.d"]);
+    ctx.log.length = 0;
+    m.stop();
+    expect(ctx.log).toEqual(["cleanup a.d", "cleanup a"]);
   });
 
   test("a redefinition that throws leaves the old definition live", () => {

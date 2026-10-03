@@ -10,6 +10,7 @@ import {
   GO_PROPERTY_DIRECT_CALL_MESSAGE,
 } from "./go-property-direct-call";
 import {
+  HSM_LUALIB_MODULES,
   HSM_REQUIRE_ROOT,
   hsmClosure,
   hsmLoweringPlugin,
@@ -17,6 +18,7 @@ import {
   requireHsmSourceDir,
 } from "./hsm-builtin";
 import { lifecycleErasurePlugin } from "./lifecycle-erasure";
+import { scanEmittedRequires } from "./lua-require-scan";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { importsTimersModule, timersLoweringPlugin } from "./timers-lowering";
@@ -371,13 +373,18 @@ export function transpileProject(input: TranspileProjectInput): TranspileProject
 
 let compiledHsm: Readonly<Record<string, string>> | undefined;
 
+function requiresLualib(lua: string): boolean {
+  return scanEmittedRequires(lua).some(({ path: requirePath }) => requirePath === "lualib_bundle");
+}
+
 /**
  * Every `hsm` module compiled to Lua, keyed by module name, once per process.
  * The source is the shipped TypeScript, never a prebuilt Lua copy, so the Lua a
  * project gets always comes from the compiler that builds it. Each file sits at
  * `defold_typescript_hsm/<module>.ts`, so a require between modules is already
  * spelled the way the user's lowered imports are. Throws when the compile
- * reports anything or needs the lualib bundle, which hsm must never do.
+ * reports anything, or when a module outside `HSM_LUALIB_MODULES` needs the
+ * lualib bundle.
  */
 export function compileHsmModules(): Readonly<Record<string, string>> {
   if (compiledHsm !== undefined) {
@@ -399,14 +406,17 @@ export function compileHsmModules(): Readonly<Record<string, string>> {
   const lua: Record<string, string> = {};
   for (const file of result.transpiledFiles) {
     if (isLualibBundle(file)) {
-      problems.push("the compiled Lua requires lualib_bundle");
       continue;
     }
     const source = file.sourceFiles.find((s) => nameByKey.has(s.fileName));
     const name = source === undefined ? undefined : nameByKey.get(source.fileName);
-    if (name !== undefined && typeof file.lua === "string") {
-      lua[name] = file.lua;
+    if (name === undefined || typeof file.lua !== "string") {
+      continue;
     }
+    if (!HSM_LUALIB_MODULES.has(name) && requiresLualib(file.lua)) {
+      problems.push(`the compiled ${name} module requires lualib_bundle`);
+    }
+    lua[name] = file.lua;
   }
   if (problems.length > 0) {
     throw new Error(
