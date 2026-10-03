@@ -169,6 +169,12 @@ const EXPECTED: Record<string, string[]> = {
     'error: hsm: state "/a" has an after delay "" that is not a non-negative number',
     'error: hsm: state "/a" has an after delay "-1" that is not a non-negative number',
   ],
+  "onTransition reports every cause": [
+    "/idle -> /move/walk event GO",
+    "/move/walk -> /move/run after -",
+    "/move/run -> /rest update -",
+    "/rest -> (stopped) stop -",
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");

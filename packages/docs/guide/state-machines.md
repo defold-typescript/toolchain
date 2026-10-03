@@ -18,7 +18,7 @@ import { defineMachine } from "@defold-typescript/types/hsm";
 import { messageEvents } from "@defold-typescript/types/hsm/defold";
 ```
 
-`@defold-typescript/types/hsm` is the machine and `@defold-typescript/types/hsm/defold` is the message bridge. `build` and `watch` write each module your code uses to `defold_typescript_hsm/index.lua` or `defold_typescript_hsm/defold.lua` at the project root, or under `outDir` when one is set; a module nothing uses, or only uses for its types, is not written. The library upgrades with the CLI, and a project scaffolded by `init` gitignores `defold_typescript_hsm/` with the rest of the build output. A source of your own that would compile to one of those paths fails the build.
+`@defold-typescript/types/hsm` is the machine, `@defold-typescript/types/hsm/defold` is the message bridge and `@defold-typescript/types/hsm/debug` is the [debug inspector](#debug-a-machine). `build` and `watch` write each module your code uses to `defold_typescript_hsm/index.lua`, `defold_typescript_hsm/defold.lua` or `defold_typescript_hsm/debug.lua` at the project root, or under `outDir` when one is set; a module nothing uses, or only uses for its types, is not written. The library upgrades with the CLI, and a project scaffolded by `init` gitignores `defold_typescript_hsm/` with the rest of the build output. A source of your own that would compile to one of those paths fails the build.
 
 The library Lua ships with no source map. An error or a debugger frame inside the library names the generated `defold_typescript_hsm/<module>.lua`, not a TypeScript line.
 
@@ -458,6 +458,44 @@ A machine sees only its `ctx` and its events, never `self`, so script data a hoo
 
 A script that already dispatches with `onMessage` (see [Messages](./messages.md)) has narrowed payloads in hand and can `send` them directly, with no mapper. An event built by hand for a `MessageEvent` union includes `sender`, which the `onMessage` handler receives.
 
+## Debug a machine
+
+`inspect(instance, label)` from `@defold-typescript/types/hsm/debug` logs every move a machine makes and draws its current path over a game object. Call it once after `start`, keep the inspector it returns on `self`, and call its `draw` from `update`:
+
+```ts title="door-debug.ts"
+import { defineScript } from "@defold-typescript/types";
+import { inspect } from "@defold-typescript/types/hsm/debug";
+import { doorMachine } from "./door-machine";
+
+export default defineScript({
+  init() {
+    const door = doorMachine.start({ sprite: msg.url("#sprite"), opens: 0 });
+    return { door, inspector: inspect(door, "door") };
+  },
+  update(self, dt) {
+    self.door.update(dt);
+    self.inspector.draw(".");
+  },
+  final(self) {
+    self.door.stop();
+  },
+});
+```
+
+Each move prints one line to the console:
+
+```text
+hsm door frame 120: /closed -> /opening (trigger_response)
+hsm door frame 150: /opening -> /open (OPENED)
+hsm door frame 330: /open -> /closed (after)
+```
+
+The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update` or `stop`. After `stop()` the new path reads `(stopped)`. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the current path, 40 units above the target's world position.
+
+In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect` registers nothing and `draw` does nothing, so the calls can stay in shipped code.
+
+`inspect` is built on `onTransition(listener)`, which every instance has. The listener receives the old leaf path, the new one (`undefined` after `stop()`), the cause and the event (`undefined` unless the cause is `event`), after the move's `enter` hooks have run. Use it to feed your own tools.
+
 ## Migrate a script
 
 The [platformer example](https://github.com/defold-typescript/toolchain/tree/main/docs/examples/platformer) moved its player onto one machine. Before, the player's state lived in flags that every frame re-read to pick an animation, and the jump checked a flag of its own:
@@ -675,3 +713,4 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `send`    | `(event: E) => void`    | Handles `event`, or queues it when called during a step.                           |
 | `update`  | `(dt: number) => void`  | Runs the `update` hooks, then the `after` timers if no hook transitioned.          |
 | `stop`    | `() => void`            | Exits every active state; later `send` and `update` calls do nothing.              |
+| `onTransition` | `(listener: (from, to, cause, event) => void) => void` | Calls `listener` after each move with the old and new leaf, the cause and the event; `to` is `undefined` on `stop()`. |

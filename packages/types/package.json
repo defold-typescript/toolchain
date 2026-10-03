@@ -48,6 +48,9 @@
     "./hsm": {
       "types": "./hsm/index.d.ts"
     },
+    "./hsm/debug": {
+      "types": "./hsm/debug.d.ts"
+    },
     "./hsm/defold": {
       "types": "./hsm/defold.d.ts"
     },

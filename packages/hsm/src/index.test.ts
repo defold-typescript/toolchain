@@ -1085,3 +1085,185 @@ describe("typed paths", () => {
     expect(thrownMessage(() => bareInitial().start(newCtx()))).toContain('initial "leaf"');
   });
 });
+
+describe("onTransition", () => {
+  type Report = [string, string | undefined, string, string | undefined];
+
+  function record<P extends string>(m: MachineInstance<Ctx, Ev, P>): Report[] {
+    const reports: Report[] = [];
+    m.onTransition((from, to, cause, event) => {
+      reports.push([from, to, cause, event?.type]);
+    });
+    return reports;
+  }
+
+  test("send reports the old leaf, the new leaf, the event cause and the event", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/idle",
+      states: { idle: { on: { GO: "/walk" } }, walk: {} },
+    });
+    const m = def.start(newCtx());
+    const reports = record(m);
+    m.send({ type: "GO" });
+    expect(reports).toEqual([["/idle", "/walk", "event", "GO"]]);
+  });
+
+  test("a compound target reports its deepest entered leaf", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/idle",
+      states: {
+        idle: { on: { GO: "/move" } },
+        move: { initial: "/move/walk", states: { walk: {}, run: {} } },
+      },
+    });
+    const m = def.start(newCtx());
+    const reports = record(m);
+    m.send({ type: "GO" });
+    expect(reports).toEqual([["/idle", "/move/walk", "event", "GO"]]);
+  });
+
+  test("an after timer reports the after cause with no event", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/wait",
+      states: { wait: { after: { 1: "/done" } }, done: {} },
+    });
+    const m = def.start(newCtx());
+    const reports = record(m);
+    m.update(0.5);
+    expect(reports).toEqual([]);
+    m.update(0.6);
+    expect(reports).toEqual([["/wait", "/done", "after", undefined]]);
+  });
+
+  test("an update hook's returned path reports the update cause with no event", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/run",
+      states: { run: { update: () => "/rest" }, rest: {} },
+    });
+    const m = def.start(newCtx());
+    const reports = record(m);
+    m.update(0.1);
+    expect(reports).toEqual([["/run", "/rest", "update", undefined]]);
+  });
+
+  test("an invoke settle reports the event cause with the settled event", () => {
+    const settles: ((event: Ev) => void)[] = [];
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/loading",
+      states: {
+        loading: {
+          invoke: (_ctx, settle) => {
+            settles.push(settle);
+          },
+          on: { PING: "/ready" },
+        },
+        ready: {},
+      },
+    });
+    const m = def.start(newCtx());
+    const reports = record(m);
+    const settle = settles[0];
+    if (settle === undefined) {
+      throw new Error("invoke did not run");
+    }
+    settle({ type: "PING" });
+    expect(reports).toEqual([["/loading", "/ready", "event", "PING"]]);
+  });
+
+  test("a targetless transition and an unhandled event report nothing", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: {
+          on: {
+            HIT: {
+              actions: (ctx) => {
+                ctx.log.push("hit");
+              },
+            },
+          },
+        },
+      },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    const reports = record(m);
+    m.send({ type: "HIT" });
+    m.send({ type: "NOPE" });
+    expect(ctx.log).toEqual(["hit"]);
+    expect(reports).toEqual([]);
+  });
+
+  test("stop reports the leaf to undefined once, and a second stop reports nothing", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/on",
+      states: { on: { initial: "/on/dim", states: { dim: {} } } },
+    });
+    const m = def.start(newCtx());
+    const reports = record(m);
+    m.stop();
+    m.stop();
+    expect(reports).toEqual([["/on/dim", undefined, "stop", undefined]]);
+  });
+
+  test("stop from an enter hook reports once, after the step's transition", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: { on: { GO: "/b" } },
+        b: {
+          enter: (_ctx, m) => {
+            m.stop();
+          },
+        },
+      },
+    });
+    const m = def.start(newCtx());
+    const reports = record(m);
+    m.send({ type: "GO" });
+    expect(reports).toEqual([
+      ["/a", "/b", "event", "GO"],
+      ["/b", undefined, "stop", undefined],
+    ]);
+    expect(m.path).toBeUndefined();
+  });
+
+  test("an enter hook that sends an event yields two reports in order", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: { on: { GO: "/b" } },
+        b: {
+          enter: (_ctx, m) => {
+            m.send({ type: "PING" });
+          },
+          on: { PING: "/c" },
+        },
+        c: {},
+      },
+    });
+    const m = def.start(newCtx());
+    const reports = record(m);
+    m.send({ type: "GO" });
+    expect(reports).toEqual([
+      ["/a", "/b", "event", "GO"],
+      ["/b", "/c", "event", "PING"],
+    ]);
+  });
+
+  test("a listener's paths are the machine's typed state paths", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: { a: { on: { GO: "/b" } }, b: {} },
+    });
+    const m = def.start(newCtx());
+    let compared = false;
+    m.onTransition((from, to) => {
+      const sameTo: Equal<typeof to, "/a" | "/b" | undefined> = true;
+      // @ts-expect-error "/nope" is not one of the machine's state paths
+      compared = sameTo && from === "/nope";
+    });
+    m.send({ type: "GO" });
+    expect(compared).toBe(false);
+  });
+});
