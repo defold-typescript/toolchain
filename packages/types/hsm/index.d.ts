@@ -36,6 +36,7 @@ export type InvokeStart<Ctx, E extends EventObject> = (ctx: Ctx, settle: (event:
 /** @noSelf */
 export interface StateConfig<Ctx, E extends EventObject> {
     readonly initial?: string;
+    readonly history?: "shallow";
     readonly states?: {
         readonly [name: string]: StateConfig<Ctx, E>;
     };
@@ -78,6 +79,7 @@ type PathCheck<S, Self extends string, All extends string, Ev extends string> = 
     readonly initial?: S extends {
         readonly states: infer Children;
     } ? `${Self}/${keyof Children & string}` : never;
+    readonly history?: unknown;
     readonly states?: S extends {
         readonly states: infer Children;
     } ? {
