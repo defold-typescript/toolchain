@@ -17,14 +17,18 @@ export interface HsmBenchReport {
   readonly enemies: number;
   readonly avgMs: number;
   readonly maxMs: number;
-  readonly allocUpdates: number;
-  readonly allocSends: number;
-  readonly timedUpdates: number;
-  readonly timedSends: number;
-  readonly allocUpdateTransitions: number;
-  readonly allocSendTransitions: number;
-  readonly timedUpdateTransitions: number;
-  readonly timedSendTransitions: number;
+  readonly allocUpdateSlots: number;
+  readonly allocSendSlots: number;
+  readonly timedUpdateSlots: number;
+  readonly timedSendSlots: number;
+  readonly allocApproachUpdates: number;
+  readonly allocStalledUpdates: number;
+  readonly allocAliveHits: number;
+  readonly allocStalledHits: number;
+  readonly timedApproachUpdates: number;
+  readonly timedStalledUpdates: number;
+  readonly timedAliveHits: number;
+  readonly timedStalledHits: number;
   readonly timedHeapProbes: number;
   readonly updateKb: number;
   readonly sendKb: number;
@@ -42,14 +46,18 @@ const NUMBER_FIELDS = [
   "enemies",
   "avgMs",
   "maxMs",
-  "allocUpdates",
-  "allocSends",
-  "timedUpdates",
-  "timedSends",
-  "allocUpdateTransitions",
-  "allocSendTransitions",
-  "timedUpdateTransitions",
-  "timedSendTransitions",
+  "allocUpdateSlots",
+  "allocSendSlots",
+  "timedUpdateSlots",
+  "timedSendSlots",
+  "allocApproachUpdates",
+  "allocStalledUpdates",
+  "allocAliveHits",
+  "allocStalledHits",
+  "timedApproachUpdates",
+  "timedStalledUpdates",
+  "timedAliveHits",
+  "timedStalledHits",
   "timedHeapProbes",
   "updateKb",
   "sendKb",
