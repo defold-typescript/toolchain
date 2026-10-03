@@ -1,0 +1,13 @@
+[project]
+title = hsm-bench
+dependencies#0 = https://github.com/britzl/defold-metrics/archive/1.2.1.zip
+
+[bootstrap]
+main_collection = /main/bench.collectionc
+
+[input]
+game_binding = /builtins/input/all.input_bindingc
+
+[display]
+width = 320
+height = 240

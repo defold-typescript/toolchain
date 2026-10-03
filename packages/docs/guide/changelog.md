@@ -13,9 +13,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`hsm` migration](./state-machines.md#the-message-bridge)**: pass `sender` to `toEvent` and add `onTransition` to hand-built instances.
+> - **[`hsm` migration](./state-machines.md#the-message-bridge)**: pass `sender` to `toEvent`, add `onTransition` to hand-built instances.
 > - **[`hsm` inspector](./state-machines.md#debug-a-machine)** logs each move.
 > - **[`hsm` timers](./state-machines.md#update-and-after)** fire on time.
+> - **[`hsm` cost](./state-machines.md#performance)** is measured.
 
 ### Breaking
 
@@ -25,6 +26,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **`hsm` debug inspector:** `onTransition(listener)` on a machine instance calls the listener after each move with the old and new state path, the cause and the event. `inspect(instance, label)` from `@defold-typescript/types/hsm/debug` uses it to log each move and draw the active path over a game object, in debug builds only; see [Debug a machine](./state-machines.md#debug-a-machine).
+- **`hsm` performance:** 200 objects each running a three-level machine cost about 0.2 ms per frame in the stock engine, and `update` and `send` build no tables. [Performance](./state-machines.md#performance) records the numbers and shows how to hoist constant events off a hot path.
 
 ### Fixed
 

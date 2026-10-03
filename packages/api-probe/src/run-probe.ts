@@ -55,7 +55,7 @@ export function engineHead(target: ApiTarget): EngineHead {
 
 // Runs the engine from the temporary project, so a call that writes a relative
 // path (`sys.save("probe", ...)`) writes there.
-function captureSpawn(
+export function captureSpawn(
   cwd: string,
   output: string[],
   timeoutMs: number,
@@ -95,7 +95,7 @@ function captureSpawn(
 // `camera`, `model`, `font`, `image`, `material`, `compute`, `crash`), so it
 // cannot run a third of the surface. Both engines open a window and need a
 // display.
-async function stockEngine(head: EngineHead): Promise<string> {
+export async function stockEngine(head: EngineHead): Promise<string> {
   const platform = targetPlatform(process.platform, process.arch);
   const enginePath = engineCachePath({
     sha: head.sha,
