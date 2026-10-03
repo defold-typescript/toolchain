@@ -173,7 +173,7 @@ Note what is **not** there: no `local FOO`, no initializer, no `____exports.` pr
 | shared across different scripts (app state) | a module singleton (import a shared module) |
 | visible to the whole Lua VM, no import | `declare global` — real Lua/Defold globals only |
 
-A rule of thumb: `self` for per-instance state; a module singleton for deliberately-shared app state; `msg.post` or a dedicated manager object when ownership and lifecycle matter; `declare global` only for real Lua/Defold globals. One hot-reload caveat: module state — module locals and singletons alike — persists across `on_reload`, because the cached module is not re-`require`d; only `self` is rebuilt.
+A rule of thumb: `self` for per-instance state; a module singleton for deliberately-shared app state; `msg.post` or a dedicated manager object when ownership and lifecycle matter; `declare global` only for real Lua/Defold globals. One hot-reload caveat: a reload keeps state — `self` (see [Hot reload and `on_reload`](./script-lifecycle.md#hot-reload-and-on_reload)) and module state alike. When a changed module reloads, Defold re-runs its code, but `require` keeps returning the first table, so every importer keeps the old functions and any value it read from the module at load time.
 
 ## See also
 

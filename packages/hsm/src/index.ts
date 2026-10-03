@@ -2,7 +2,7 @@ export interface EventObject {
   readonly type: string;
 }
 
-export type TransitionCause = "event" | "after" | "update" | "stop";
+export type TransitionCause = "event" | "after" | "update" | "stop" | "reload";
 
 /** @noSelf */
 export type TransitionListener<E extends EventObject, P extends string = string> = (
@@ -421,25 +421,39 @@ function transitionDomain<Ctx, E extends EventObject>(
   return domain;
 }
 
-function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Machine<Ctx, E> {
-  const compiled = compile(config);
-  const { paths, parent, depth, initialChild, configs, onIndex, transitions } = compiled;
-  const { afterDelays, afterTargets } = compiled;
+interface Definition<Ctx, E extends EventObject> {
+  compiled: Compiled<Ctx, E>;
+  generation: number;
+}
 
+interface Registered<Ctx, E extends EventObject> {
+  readonly definition: Definition<Ctx, E>;
+  readonly machine: Machine<Ctx, E>;
+}
+
+const registered: { [key: string]: Registered<unknown, EventObject> } = {};
+
+function createMachine<Ctx, E extends EventObject>(
+  definition: Definition<Ctx, E>,
+): Machine<Ctx, E> {
   function start(ctx: Ctx): MachineInstance<Ctx, E> {
-    const slots = compiled.maxDepth + 1;
+    let compiled = definition.compiled;
+    let generation = definition.generation;
+    let paths = compiled.paths;
+    let parent = compiled.parent;
+    let depth = compiled.depth;
+    let initialChild = compiled.initialChild;
+    let configs = compiled.configs;
+    let onIndex = compiled.onIndex;
+    let transitions = compiled.transitions;
+    let afterDelays = compiled.afterDelays;
+    let afterTargets = compiled.afterTargets;
     const active: number[] = [];
     const elapsed: number[] = [];
     const fired: number[] = [];
     const scratch: number[] = [];
     const entryId: number[] = [];
-    for (let i = 0; i < slots; i++) {
-      active[i] = NO_STATE;
-      elapsed[i] = 0;
-      fired[i] = 0;
-      scratch[i] = NO_STATE;
-      entryId[i] = 0;
-    }
+    growSlots();
     let entryCount = 0;
     const queue: (E | undefined)[] = [];
     let queueHead = 0;
@@ -459,6 +473,61 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
       stop,
       onTransition,
     };
+
+    function growSlots(): void {
+      for (let i = active.length; i <= compiled.maxDepth; i++) {
+        active[i] = NO_STATE;
+        elapsed[i] = 0;
+        fired[i] = 0;
+        scratch[i] = NO_STATE;
+        entryId[i] = 0;
+      }
+    }
+
+    // Kept states hold their slot, timers and entry id; the first missing path and
+    // everything below it is dropped without exit hooks, since its config is gone.
+    function rebind(): void {
+      const from = instance.path as string;
+      const oldPaths = paths;
+      const oldLeafDepth = leafDepth;
+      compiled = definition.compiled;
+      generation = definition.generation;
+      paths = compiled.paths;
+      parent = compiled.parent;
+      depth = compiled.depth;
+      initialChild = compiled.initialChild;
+      configs = compiled.configs;
+      onIndex = compiled.onIndex;
+      transitions = compiled.transitions;
+      afterDelays = compiled.afterDelays;
+      afterTargets = compiled.afterTargets;
+      growSlots();
+      let survivor = 0;
+      active[0] = ROOT;
+      for (let level = 1; level <= oldLeafDepth; level++) {
+        const state = lookupPath(compiled, oldPaths[active[level] as number] as string);
+        if (state === undefined) {
+          break;
+        }
+        active[level] = state;
+        survivor = level;
+      }
+      for (let level = survivor + 1; level <= oldLeafDepth; level++) {
+        active[level] = NO_STATE;
+        elapsed[level] = 0;
+        fired[level] = 0;
+        entryId[level] = 0;
+      }
+      leafDepth = survivor;
+      const survivorState = active[survivor] as number;
+      if (survivor === oldLeafDepth && initialChild[survivorState] === NO_STATE) {
+        return;
+      }
+      enterDown(survivorState, survivorState);
+      if (listeners.length > 0) {
+        report(from, "reload", undefined);
+      }
+    }
 
     function onTransition(listener: TransitionListener<E>): void {
       listeners.push(listener);
@@ -640,6 +709,9 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
         return;
       }
       busy = true;
+      if (generation !== definition.generation) {
+        rebind();
+      }
       endStep();
     }
 
@@ -694,11 +766,16 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
         return;
       }
       busy = true;
-      for (let level = 0; level <= leafDepth; level++) {
-        elapsed[level] = (elapsed[level] as number) + dt;
+      if (generation !== definition.generation) {
+        rebind();
       }
-      if (!fireUpdateHooks(dt)) {
-        fireTimers();
+      if (!stopRequested) {
+        for (let level = 0; level <= leafDepth; level++) {
+          elapsed[level] = (elapsed[level] as number) + dt;
+        }
+        if (!fireUpdateHooks(dt)) {
+          fireTimers();
+        }
       }
       endStep();
     }
@@ -733,11 +810,31 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
   return { start };
 }
 
+function define<Ctx, E extends EventObject>(
+  key: string | undefined,
+  config: MachineConfig<Ctx, E>,
+): Machine<Ctx, E> {
+  const compiled = compile(config);
+  if (key === undefined) {
+    return createMachine({ compiled, generation: 0 });
+  }
+  const existing = registered[key] as unknown as Registered<Ctx, E> | undefined;
+  if (existing !== undefined) {
+    const definition = existing.definition;
+    definition.compiled = compiled;
+    definition.generation = definition.generation + 1;
+    return existing.machine;
+  }
+  const definition: Definition<Ctx, E> = { compiled, generation: 0 };
+  const machine = createMachine(definition);
+  registered[key] = { definition, machine } as unknown as Registered<unknown, EventObject>;
+  return machine;
+}
+
 // Ctx and E are given explicitly and the config is inferred, so the config takes a second call.
-export function defineMachine<Ctx, E extends EventObject>(): <
-  const C extends MachineConfig<Ctx, E>,
->(
-  config: C,
-) => DefinedMachine<Ctx, E, C> {
-  return createMachine as never;
+// A key makes a later definition under it (a hot-reloaded module re-running) rebind live instances.
+export function defineMachine<Ctx, E extends EventObject>(
+  key?: string,
+): <const C extends MachineConfig<Ctx, E>>(config: C) => DefinedMachine<Ctx, E, C> {
+  return ((config: MachineConfig<Ctx, E>) => define(key, config)) as never;
 }
