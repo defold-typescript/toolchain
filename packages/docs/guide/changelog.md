@@ -13,11 +13,8 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **`hsm`, a typed state machine library, ships with the toolchain**: [import it](./state-machines.md#import-it) from `@defold-typescript/types/hsm`, and `build` writes only the modules your code uses.
-> - **Machines are checked at compile time**: events, their payloads, the context and the [state paths](./state-machines.md#states-and-paths) are typed, every state is named by one full path such as `/on/dim`, so a target that names no state fails to compile, and the library compiles to plain Lua with no `lualib_bundle`.
-> - **Defold messages and engine callbacks become typed machine events** through the [message bridge](./state-machines.md#the-message-bridge) and [`invoke` with `settle`](./state-machines.md#engine-callbacks-invoke-and-settle).
-> - **The State machines guide teaches the model before the API**: [which transition an event runs](./state-machines.md#events-and-transitions), timers and run-to-completion, then a [worked migration](./state-machines.md#migrate-a-script) of the platformer example's player from flags to states, with every sample compiled against the shipped declarations.
-> - **A [beginner tutorial](./state-machines-tutorial.md) teaches state machines one click at a time**: eight live diagrams run the real `hsm` library in your browser, so you press buttons and watch states change, rules fire and timers fill.
+> - **New typed `hsm` state machine library**: [import it](./state-machines.md#import-it) from `@defold-typescript/types/hsm`.
+> - **Two new guides**: the [State machines](./state-machines.md) guide and a [beginner tutorial](./state-machines-tutorial.md) with live diagrams.
 
 ### Improved
 
