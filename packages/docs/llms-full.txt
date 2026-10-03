@@ -2988,6 +2988,51 @@ export const blink = defineMachine<BlinkCtx, BlinkEvent>()({
 
 Each `shown` and `hidden` entry restarts that child's own tenth-of-a-second timer, while `invulnerable` counts its two seconds straight through.
 
+#### Resume with history
+
+Set `history: "shallow"` on a compound state to make it remember which child was active when it was last left. Every later entry goes back to that child instead of `initial`:
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+type PlayEvent =
+  | { type: "JUMP" }
+  | { type: "FALL" }
+  | { type: "PAUSE" }
+  | { type: "RESUME" }
+  | { type: "RESTART" };
+
+export const game = defineMachine<object, PlayEvent>()({
+  initial: "/playing",
+  states: {
+    playing: {
+      history: "shallow",
+      initial: "/playing/ground",
+      on: { PAUSE: "/paused" },
+      states: {
+        ground: { on: { JUMP: "/playing/air" } },
+        air: {
+          initial: "/playing/air/rise",
+          states: {
+            rise: { on: { FALL: "/playing/air/fall" } },
+            fall: {},
+          },
+        },
+      },
+    },
+    paused: { on: { RESUME: "/playing", RESTART: "/playing/ground" } },
+  },
+});
+```
+
+Pausing in mid-air and sending `RESUME` lands on `/playing/air/rise`, running the `enter` hooks of `playing`, `air` and `rise`. The rules:
+
+- **Only the direct child is remembered.** Leaving from `/playing/air/fall` remembers `air`, and `air` is entered through its own `initial`, so the jump resumes at `/playing/air/rise`. Put `history` on `air` too to remember `fall`.
+- **A target inside the state wins.** `RESTART` names `/playing/ground`, so it lands there whatever `playing` remembers. Every other entry uses the memory: a target of `/playing` itself, a parent's `initial` chain that passes through `playing`, and a `reenter` transition on `playing`.
+- **The first entry uses `initial`.** Each instance keeps its own memory, so a new instance starts at `/playing/ground` even while another one is paused in the air.
+
+`history` on a state without children throws when the machine is defined.
+
 #### Run to completion, `invoke` and `stop`
 
 A machine handles one event at a time, to completion. A `send` from inside a hook, guard, action or `invoke` does not run at once: it queues the event, which runs after the current transition, every `enter` and `exit` included, has finished. Queued events run in order before the outer `send`, `update` or `start` call returns, so `start` hands back a machine that has already handled whatever its `enter` hooks sent.
@@ -3281,7 +3326,7 @@ An instance always keeps its `ctx`. What happens to its current state depends on
 | still exists, but now has child states | enters its `initial` child (and that child's `initial`, and so on), running their `enter` hooks. |
 | was removed | moves to the closest parent state that still exists and enters that parent's `initial` chain, running those `enter` hooks. The removed states run no `exit` hook, because their code is gone, but a cleanup their `invoke` returned still runs, deepest state first. |
 
-States are matched by path, so renaming `chase` to `hunt` counts as removing `/chase`. When the current state changes, `onTransition` listeners get the move with the cause `"reload"`, and the [debug inspector](#debug-a-machine) prints it.
+States are matched by path, so renaming `chase` to `hunt` counts as removing `/chase`. A state with [history](#resume-with-history) keeps its remembered child the same way: if the edit removed that child, the next entry uses `initial`. When the current state changes, `onTransition` listeners get the move with the cause `"reload"`, and the [debug inspector](#debug-a-machine) prints it.
 
 ##### Many objects, one machine
 
@@ -3681,6 +3726,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | Field     | Type                                        | Meaning                                                                                       |
 | --------- | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `initial` | `string`                                    | The full path of the child entered with this state (`/on/bright` inside `on`). Required when `states` is set. |
+| `history` | `"shallow"`                                 | Enter the child that was active when this state was last left, instead of `initial`; see [Resume with history](#resume-with-history). |
 | `states`  | `{ [name: string]: StateConfig }`           | Child states, by name. A name is non-empty and contains no `/`.                               |
 | `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`, each target a full path; see [Events and transitions](#events-and-transitions). |
 | `after`   | `{ [seconds: number]: string }`             | Full-path targets taken after this long in the state, in game time; see [`update` and `after`](#update-and-after). |
