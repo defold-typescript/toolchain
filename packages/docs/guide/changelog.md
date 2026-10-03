@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.43.1
+
+> Summary:
+>
+> - **[`hsm` timers](./state-machines.md#update-and-after)** fire on time.
+
+### Fixed
+
+- **`hsm` `after` timers on a parent no longer fire late:** when an `update` hook transitioned one of its children, the parent missed that call's `dt`, so its timer fired one tick late per such transition. Every active state now counts the `dt` of every `update` call, as the [State machines](./state-machines.md#update-and-after) guide describes; a timer due on the same tick a hook transitions still waits for the next call.
+
 ## v0.43.0
 
 > Summary:
