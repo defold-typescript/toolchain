@@ -1,9 +1,10 @@
 /**
- * The State machines guide is the `hsm` manual, so every `ts` fence on it must
- * compile against the declarations `@defold-typescript/types/hsm` ships, at the
- * strictness `init` scaffolds, and transpile through the build. A fence that has
- * to show a compile error does so with `// @ts-expect-error`, which this gate
- * then proves. Its reference tables are held to the `StateConfig` and
+ * The State machines guide is the `hsm` manual and the state machines tutorial
+ * teaches it, so every `ts` fence on either page must compile against the
+ * declarations `@defold-typescript/types/hsm` ships, at the strictness `init`
+ * scaffolds, and transpile through the build. A fence that has to show a
+ * compile error does so with `// @ts-expect-error`, which this gate then proves.
+ * The manual's reference tables are held to the `StateConfig` and
  * `MachineInstance` interfaces of the hsm source.
  */
 import { afterAll, describe, expect, test } from "bun:test";
@@ -14,7 +15,9 @@ import { transpileProject } from "@defold-typescript/transpiler";
 import * as ts from "typescript";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
-const GUIDE_PATH = path.join(REPO_ROOT, "packages", "docs", "guide", "state-machines.md");
+const GUIDE_DIR = path.join(REPO_ROOT, "packages", "docs", "guide");
+const REFERENCE_PAGE = "state-machines.md";
+const FENCED_PAGES = [REFERENCE_PAGE, "state-machines-tutorial.md"];
 const SCAFFOLD_TSCONFIG = path.join(import.meta.dir, "scaffold-tsconfig.json");
 const HSM_INDEX_SOURCE = path.join(REPO_ROOT, "packages", "hsm", "src", "index.ts");
 
@@ -137,55 +140,59 @@ function typeCheck(project: FenceProject): Map<string, string[]> {
   return byFile;
 }
 
-const guide = readFileSync(GUIDE_PATH, "utf8");
+for (const page of FENCED_PAGES) {
+  const guide = readFileSync(path.join(GUIDE_DIR, page), "utf8");
 
-let pageProject: FenceProject | undefined;
-function pageFenceProject(): FenceProject {
-  pageProject ??= writeFenceProject(guideFences(guide));
-  return pageProject;
+  let pageProject: FenceProject | undefined;
+  const pageFenceProject = (): FenceProject => {
+    pageProject ??= writeFenceProject(guideFences(guide));
+    return pageProject;
+  };
+
+  describe(`${page} fences`, () => {
+    test("the page has ts fences and no two share a title", () => {
+      const fences = guideFences(guide);
+      expect(fences.length).toBeGreaterThan(0);
+      const titled = fences.map((f) => f.rel).filter((rel) => !rel.startsWith("guide-fence-"));
+      const repeated = titled.filter((rel, i) => titled.indexOf(rel) !== i);
+      expect(repeated, "fence titles used twice").toEqual([]);
+    });
+
+    test(
+      "every ts fence type-checks against the shipped hsm declarations at the scaffold strictness",
+      () => {
+        const found = typeCheck(pageFenceProject());
+        const failing: Record<string, string[]> = {};
+        const labelled: [string, string][] = [
+          ["", "(global)"],
+          ...guideFences(guide).map((fence): [string, string] => [fence.rel, fence.label]),
+        ];
+        for (const [rel, label] of labelled) {
+          const diagnostics = found.get(rel);
+          if (diagnostics !== undefined) failing[label] = diagnostics;
+        }
+        expect(failing).toEqual({});
+      },
+      SLOW,
+    );
+
+    test(
+      "every ts fence transpiles to Lua",
+      () => {
+        const project = pageFenceProject();
+        const files: Record<string, string> = {};
+        for (const [rel, text] of project.sources) files[rel] = text;
+        const errors = transpileProject({ files })
+          .diagnostics.filter((d) => d.category === undefined)
+          .map((d) => `${d.file ?? "(project)"}:${d.line ?? 0}: ${d.message}`);
+        expect(errors).toEqual([]);
+      },
+      SLOW,
+    );
+  });
 }
 
-describe("state machines guide fences", () => {
-  test("the page has ts fences and no two share a title", () => {
-    const fences = guideFences(guide);
-    expect(fences.length).toBeGreaterThan(0);
-    const titled = fences.map((f) => f.rel).filter((rel) => !rel.startsWith("guide-fence-"));
-    const repeated = titled.filter((rel, i) => titled.indexOf(rel) !== i);
-    expect(repeated, "fence titles used twice").toEqual([]);
-  });
-
-  test(
-    "every ts fence type-checks against the shipped hsm declarations at the scaffold strictness",
-    () => {
-      const found = typeCheck(pageFenceProject());
-      const failing: Record<string, string[]> = {};
-      const labelled: [string, string][] = [
-        ["", "(global)"],
-        ...guideFences(guide).map((fence): [string, string] => [fence.rel, fence.label]),
-      ];
-      for (const [rel, label] of labelled) {
-        const diagnostics = found.get(rel);
-        if (diagnostics !== undefined) failing[label] = diagnostics;
-      }
-      expect(failing).toEqual({});
-    },
-    SLOW,
-  );
-
-  test(
-    "every ts fence transpiles to Lua",
-    () => {
-      const project = pageFenceProject();
-      const files: Record<string, string> = {};
-      for (const [rel, text] of project.sources) files[rel] = text;
-      const errors = transpileProject({ files })
-        .diagnostics.filter((d) => d.category === undefined)
-        .map((d) => `${d.file ?? "(project)"}:${d.line ?? 0}: ${d.message}`);
-      expect(errors).toEqual([]);
-    },
-    SLOW,
-  );
-
+describe("hsm guide fence gate", () => {
   test(
     "the gate can fail: a machine targeting an unknown state does not compile",
     () => {
@@ -239,12 +246,14 @@ function referenceRows(page: string, heading: string): string[] {
   return names;
 }
 
+const reference = readFileSync(path.join(GUIDE_DIR, REFERENCE_PAGE), "utf8");
+
 describe("state machines guide reference", () => {
   for (const name of ["StateConfig", "MachineInstance"]) {
     test(`the ${name} table lists every member and nothing else`, () => {
       const members = interfaceMembers(readFileSync(HSM_INDEX_SOURCE, "utf8"), name);
       expect(members.length).toBeGreaterThan(0);
-      expect(referenceRows(guide, name).sort()).toEqual([...members].sort());
+      expect(referenceRows(reference, name).sort()).toEqual([...members].sort());
     });
   }
 });

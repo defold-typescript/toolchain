@@ -22,6 +22,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [Defold editor](guide/defold-editor.md)
 - [Build Tetris](guide/tetris-tutorial.md)
 - [Vectors & rotations](guide/vectors-tutorial.md)
+- [Learn state machines](guide/state-machines-tutorial.md)
 - [TypeScript vs Lua](guide/typescript-vs-lua.md)
 - [TypeScript gotchas](guide/typescript-gotchas.md)
 - [Data structures](guide/data-structures.md)
