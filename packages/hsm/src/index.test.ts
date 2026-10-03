@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { defineMachine, type MachineInstance, type StatePath } from "./index";
+import { defineMachine, type MachineInstance, type StatePath, type TransitionCause } from "./index";
 
 interface Ctx {
   log: string[];
@@ -1731,5 +1731,202 @@ describe("shallow history", () => {
         },
       },
     });
+  });
+});
+
+describe("always", () => {
+  type Report = [string, string | undefined, string, string | undefined];
+
+  function record<P extends string>(m: MachineInstance<Ctx, Ev, P>): Report[] {
+    const reports: Report[] = [];
+    m.onTransition((from, to, cause, event) => {
+      reports.push([from, to, cause, event?.type]);
+    });
+    return reports;
+  }
+
+  function loopMessage(path: string): string {
+    return `hsm: state "${path}" took 10 always transitions in a row; check for an always loop`;
+  }
+
+  test("an always transition moves on right after entry", () => {
+    const ctx = newCtx();
+    ctx.flag = false;
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/idle",
+      states: {
+        idle: { on: { GO: "/route" } },
+        route: {
+          ...logged("route"),
+          always: [{ target: "/a", guard: (ctx) => ctx.flag === true }, { target: "/b" }],
+        },
+        a: logged("a"),
+        b: logged("b"),
+      },
+    }).start(ctx);
+    const reports = record(m);
+    m.send({ type: "GO" });
+    expect(m.path).toBe("/b");
+    expect(ctx.log).toEqual(["enter route", "exit route", "enter b"]);
+    expect(reports).toEqual([
+      ["/idle", "/route", "event", "GO"],
+      ["/route", "/b", "always", undefined],
+    ]);
+  });
+
+  test("a failing guard stays put until the next move", () => {
+    const ctx = newCtx();
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/idle",
+      states: {
+        idle: { on: { GO: "/route" } },
+        route: {
+          always: { target: "/a", guard: (ctx) => ctx.flag === true },
+          on: {
+            GO: { target: "/route", reenter: true },
+            PING: {
+              actions: (ctx) => {
+                ctx.log.push("ping");
+              },
+            },
+          },
+        },
+        a: {},
+      },
+    }).start(ctx);
+    m.send({ type: "GO" });
+    expect(m.path).toBe("/route");
+    ctx.flag = true;
+    m.update(0.1);
+    expect(m.path).toBe("/route");
+    m.send({ type: "PING" });
+    expect(ctx.log).toEqual(["ping"]);
+    expect(m.path).toBe("/route");
+    m.send({ type: "GO" });
+    expect(m.path).toBe("/a");
+  });
+
+  test("the deepest active state's always wins", () => {
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/idle",
+      states: {
+        idle: { on: { GO: "/p" } },
+        p: { initial: "/p/c", always: "/x", states: { c: { always: "/y" } } },
+        x: {},
+        y: {},
+      },
+    }).start(newCtx());
+    m.send({ type: "GO" });
+    expect(m.path).toBe("/y");
+  });
+
+  test("a chain of always moves runs before the next queued event", () => {
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/idle",
+      states: {
+        idle: { on: { GO: "/r1" } },
+        r1: {
+          enter: (_ctx, m) => {
+            m.send({ type: "LEAVE" });
+          },
+          always: "/r2",
+          on: { LEAVE: "/wrong" },
+        },
+        r2: { always: "/r3", on: { LEAVE: "/wrong" } },
+        r3: { on: { LEAVE: "/done" } },
+        wrong: {},
+        done: {},
+      },
+    }).start(newCtx());
+    const reports = record(m);
+    m.send({ type: "GO" });
+    expect(m.path).toBe("/done");
+    expect(reports).toEqual([
+      ["/idle", "/r1", "event", "GO"],
+      ["/r1", "/r2", "always", undefined],
+      ["/r2", "/r3", "always", undefined],
+      ["/r3", "/done", "event", "LEAVE"],
+    ]);
+  });
+
+  test("start runs always", () => {
+    const ctx = newCtx();
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/boot",
+      states: { boot: { ...logged("boot"), always: "/ready" }, ready: logged("ready") },
+    }).start(ctx);
+    expect(m.path).toBe("/ready");
+    expect(ctx.log).toEqual(["enter boot", "exit boot", "enter ready"]);
+  });
+
+  test("an always loop throws and leaves the instance usable", () => {
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/idle",
+      on: { BACK: "/c" },
+      states: {
+        idle: { on: { GO: "/a" } },
+        a: {
+          enter: (_ctx, m) => {
+            m.send({ type: "PING" });
+          },
+          always: "/b",
+          on: { PING: "/c" },
+        },
+        b: { always: "/a" },
+        c: {},
+      },
+    }).start(newCtx());
+    expect(thrownMessage(() => m.send({ type: "GO" }))).toContain(loopMessage("/a"));
+    expect(m.path).toBe("/a");
+    const reports = record(m);
+    m.send({ type: "BACK" });
+    expect(m.path).toBe("/c");
+    expect(reports).toEqual([["/a", "/c", "event", "BACK"]]);
+  });
+
+  test("always targets are checked at defineMachine", () => {
+    const unknownAlways = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "/route",
+        states: { route: { always: "/nope" } },
+      });
+    const noTarget = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "/route",
+        states: {
+          route: {
+            // @ts-expect-error an always transition must name a target
+            always: { guard: () => true },
+          },
+        },
+      });
+
+    // @ts-expect-error the always transition targets a state the machine does not have
+    expect(thrownMessage(() => unknownAlways().start(newCtx()))).toBe(
+      'hsm: state "/route" targets unknown state "/nope"',
+    );
+    expect(thrownMessage(noTarget)).toBe(
+      'hsm: state "/route" has an always transition with no target',
+    );
+  });
+
+  test("an always guard reads ctx as Ctx and the cause is typed", () => {
+    defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: {
+          always: {
+            target: "/b",
+            guard: (ctx) => {
+              const typed: Equal<typeof ctx, Ctx> = true;
+              return typed && ctx.flag === true;
+            },
+          },
+        },
+        b: {},
+      },
+    });
+    const cause: TransitionCause = "always";
+    expect(cause).toBe("always");
   });
 });
