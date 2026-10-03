@@ -318,6 +318,60 @@ export const hero = defineMachine<Hero, HeroEvent>()({
 
 An unknown target, or a candidate without a `target`, throws when the machine is defined.
 
+## Run regions side by side with `parallel`
+
+A state with `type: "parallel"` keeps every child active at once. Each child is a region with its own active state, so a player can run and fire independently:
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+type PlayerEvent = { type: "START_FIRE" } | { type: "DIE" } | { type: "REVIVE" };
+
+export const player = defineMachine<object, PlayerEvent>()({
+  initial: "/alive",
+  states: {
+    alive: {
+      type: "parallel",
+      on: { DIE: "/dead" },
+      states: {
+        move: {
+          initial: "/alive/move/idle",
+          states: {
+            idle: { on: { START_FIRE: "/alive/move/run" } },
+            run: {},
+          },
+        },
+        weapon: {
+          initial: "/alive/weapon/ready",
+          states: {
+            ready: { on: { START_FIRE: "/alive/weapon/cooldown" } },
+            cooldown: { after: { 0.5: "/alive/weapon/ready" } },
+          },
+        },
+      },
+    },
+    dead: { on: { REVIVE: "/alive" } },
+  },
+});
+
+const m = player.start({});
+m.send({ type: "START_FIRE" });
+m.leaves; // ["/alive/move/run", "/alive/weapon/cooldown"]
+m.path; // "/alive/move/run", the first of them
+```
+
+Entering `/alive` enters `move` and its `initial` chain, then `weapon` and its chain. A target inside one region, such as `/alive/weapon/cooldown`, enters that region through the target and every other region through its `initial`. Leaving `/alive` exits the last region first, each one deepest state first, then `/alive` itself. The rules:
+
+- **Each region moves on its own.** An event is offered to every region in order, and each takes at most its first enabled transition, from its active leaf up to the region's root. `START_FIRE` above moves both regions in one `send`, and each move is reported to `onTransition` with that region's old and new leaf.
+- **The parallel state waits for its regions.** An event reaches `/alive`'s own `on`, and bubbles above it, only when no region took it. A region transition that leaves or re-enters `/alive` ends the offer, so later regions do not see that event.
+- **Ticks and `always` run per region.** In `update(dt)`, each region runs its `update` hooks deepest first, then its first due `after` timer if no hook moved it, so `weapon`'s cooldown can end in the same frame that `move` changes. The parallel state's own hooks and timers run only when no region moved. `always` is checked in the same order, one move at a time, with the same limit of 10.
+- **A target in another region re-enters the parallel state.** A transition from `/alive/move/idle` to `/alive/weapon/cooldown` exits all of `/alive` and enters it again. A region's transitions to its own states leave the other regions alone.
+- **Regions run in name order.** Neither Lua nor JavaScript keeps the written order of a table's keys, so regions are ordered by child name: `move` before `weapon`, whatever order the config lists them in. Name regions to match the order you want.
+
+`path` stays one leaf, so code written for a machine without regions keeps working: it is the first region's leaf. `leaves` lists every active leaf in region order, and `matches` is true for every active state in every region. A region root can carry `history: "shallow"`, and resumes its last child when the parallel state is entered again.
+
+A parallel state with `initial`, `history` or no child states throws when the machine is defined, naming its path; `initial` is also a compile error. The root config cannot be parallel: put the regions in a child state, as `/alive` does above.
+
 ## Run to completion, `invoke` and `stop`
 
 A machine handles one event at a time, to completion. A `send` from inside a hook, guard, action or `invoke` does not run at once: it queues the event, which runs after the current transition, every `enter` and `exit` included, has finished. Queued events run in order before the outer `send`, `update` or `start` call returns, so `start` hands back a machine that has already handled whatever its `enter` hooks sent.
@@ -610,6 +664,8 @@ An instance always keeps its `ctx`. What happens to its current state depends on
 | still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The edited transitions, guards and hooks apply from now on. |
 | still exists, but now has child states | enters its `initial` child (and that child's `initial`, and so on), running their `enter` hooks. |
 | was removed | moves to the closest parent state that still exists and enters that parent's `initial` chain, running those `enter` hooks. The removed states run no `exit` hook, because their code is gone, but a cleanup their `invoke` returned still runs, deepest state first. |
+| is a [parallel](#run-regions-side-by-side-with-parallel) state that gained a region | keeps its other regions as they are and enters only the new one. |
+| was a parallel state and is now compound | keeps its first region in name order and drops the others like removed states. |
 
 States are matched by path, so renaming `chase` to `hunt` counts as removing `/chase`. A state with [history](#resume-with-history) keeps its remembered child the same way: if the edit removed that child, the next entry uses `initial`. When the current state changes, `onTransition` listeners get the move with the cause `"reload"`, and the [debug inspector](#debug-a-machine) prints it.
 
@@ -806,7 +862,7 @@ hsm door frame 150: /opening -> /open (OPENED)
 hsm door frame 330: /open -> /closed (after)
 ```
 
-The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update`, `always`, `stop` or `reload`. After `stop()` the new path reads `(stopped)`. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the current path, 40 units above the target's world position.
+The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update`, `always`, `stop` or `reload`. After `stop()` the new path reads `(stopped)`. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the active leaves joined by `, `, 40 units above the target's world position.
 
 In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect` registers nothing and `draw` does nothing, so the calls can stay in shipped code.
 
@@ -1010,7 +1066,8 @@ Every field is optional on a state; the root config requires `initial` and `stat
 
 | Field     | Type                                        | Meaning                                                                                       |
 | --------- | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `initial` | `string`                                    | The full path of the child entered with this state (`/on/bright` inside `on`). Required when `states` is set. |
+| `type`    | `"parallel"`                                | Keep every child active at once, each as a region; see [Run regions side by side with `parallel`](#run-regions-side-by-side-with-parallel). Not allowed on the root. |
+| `initial` | `string`                                    | The full path of the child entered with this state (`/on/bright` inside `on`). Required when `states` is set, unless the state is parallel. |
 | `history` | `"shallow"`                                 | Enter the child that was active when this state was last left, instead of `initial`; see [Resume with history](#resume-with-history). |
 | `states`  | `{ [name: string]: StateConfig }`           | Child states, by name. A name is non-empty and contains no `/`.                               |
 | `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`, each target a full path; see [Events and transitions](#events-and-transitions). |
@@ -1026,9 +1083,10 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | Member    | Type                    | Meaning                                                                            |
 | --------- | ----------------------- | ---------------------------------------------------------------------------------- |
 | `ctx`     | `Ctx`                   | The context passed to `start`.                                                     |
-| `path`    | `P \| undefined`        | The deepest active state's full path, or `undefined` once stopped.                 |
+| `path`    | `P \| undefined`        | The deepest active state's full path (the first region's leaf in a parallel state), or `undefined` once stopped. |
+| `leaves`  | `readonly P[]`          | Every active leaf's full path, in region order; one path without parallel states, empty once stopped. The same array, updated in place. |
 | `matches` | `(path: P) => boolean`  | Whether the state at the full path `path` is active, ancestors included.           |
 | `send`    | `(event: E) => void`    | Handles `event`, or queues it when called during a step.                           |
 | `update`  | `(dt: number) => void`  | Runs the `update` hooks, then the `after` timers if no hook transitioned.          |
 | `stop`    | `() => void`            | Exits every active state; later `send` and `update` calls do nothing.              |
-| `onTransition` | `(listener: (from, to, cause, event) => void) => void` | Calls `listener` after each move with the old and new leaf, the cause and the event; `to` is `undefined` on `stop()`. |
+| `onTransition` | `(listener: (from, to, cause, event) => void) => void` | Calls `listener` after each move with the old and new leaf, the cause and the event; inside a parallel state, the leaves are those of the region that moved. `to` is `undefined` on `stop()`. |
