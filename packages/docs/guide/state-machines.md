@@ -365,11 +365,11 @@ A module-level instance (`const door = doorMachine.start(...)` at the top of a s
 
 ## Performance
 
-The budget is 200 game objects, each running its own instance of one three-level machine, for under 0.5 ms of `update` and `send` per frame in the stock engine, with neither call building a table. A bench in the repository measures it: every enemy ticks its machine each frame through `after` timers and an `update` hook, and sends one event every 20 frames.
+The budget is 200 game objects, each running its own instance of one three-level machine, for under 0.5 ms of `update` and `send` per frame in the stock engine, with neither call building a table. A bench in the repository measures it: every enemy ticks its machine each frame through `after` timers and an `update` hook, and sends one event every 20 frames. It runs 300 frames that sample the heap around each call, then 300 frames that time each call, so neither measurement includes the other's probes.
 
 | Avg ms per frame | Worst frame ms | Allocating calls (update / send) | Heap KB (update / send) | Engine | System | Date |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0.19 | 0.82 | 4 of 60,000 / 6 of 3,000 | 2.7 / 7.1 | 1.13.2 | macOS, arm64 | 2026-10-03 |
+| 0.05 | 0.10 | 3 of 60,000 / 6 of 3,000 | 2.2 / 7.0 | 1.13.2 | macOS, arm64 | 2026-10-03 |
 
 The few allocating calls are the Lua VM's own one-time work the first time a path runs (a JIT trace, a deeper call stack), not the machine. Reproduce it from a clone of the repository with Java and a display:
 
