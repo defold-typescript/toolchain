@@ -344,6 +344,27 @@ const EXPECTED: Record<string, string[]> = {
     "/alive/move/idle -> (stopped) stop -",
     "path=(stopped) leaves=",
   ],
+  "unicode region order": [
+    "enter r",
+    "enter U+E000",
+    "enter U+E000.idle",
+    "enter U+10000",
+    "enter U+10000.idle",
+    "path=/r/U+E000/idle leaves=/r/U+E000/idle, /r/U+10000/idle",
+    "exit U+E000.idle",
+    "enter U+E000.done",
+    "/r/U+E000/idle -> /r/U+E000/done event GO",
+    "exit U+10000.idle",
+    "enter U+10000.done",
+    "/r/U+10000/idle -> /r/U+10000/done event GO",
+    "path=/r/U+E000/done leaves=/r/U+E000/done, /r/U+10000/done",
+    "exit U+10000.done",
+    "exit U+10000",
+    "exit U+E000.done",
+    "exit U+E000",
+    "exit r",
+    "/r/U+E000/done -> (stopped) stop -",
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
