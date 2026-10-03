@@ -89,8 +89,8 @@ describe("createTranspileSession", () => {
       "door.ts": [
         'import { defineMachine } from "@defold-typescript/types/hsm";',
         'export const door = defineMachine<{}, { type: "GO" }>()({',
-        '  initial: "idle",',
-        '  states: { idle: { on: { GO: "done" } }, done: {} },',
+        '  initial: "/idle",',
+        '  states: { idle: { on: { GO: "/done" } }, done: {} },',
         "});",
         "",
       ].join("\n"),

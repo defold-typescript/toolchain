@@ -2788,37 +2788,39 @@ interface LampCtx {
 type LampEvent = { type: "TOGGLE" } | { type: "DIM" };
 
 export const lamp = defineMachine<LampCtx, LampEvent>()({
-  initial: "off",
+  initial: "/off",
   states: {
     off: {
-      on: { TOGGLE: "on" },
+      on: { TOGGLE: "/on" },
     },
     on: {
-      initial: "bright",
+      initial: "/on/bright",
       enter: (ctx) => {
         ctx.switches += 1;
       },
-      on: { TOGGLE: "off" },
+      on: { TOGGLE: "/off" },
       states: {
-        bright: { on: { DIM: "dim" } },
-        dim: { on: { DIM: "bright" } },
+        bright: { on: { DIM: "/on/dim" } },
+        dim: { on: { DIM: "/on/bright" } },
       },
     },
   },
 });
 
 const m = lamp.start({ switches: 0 });
-m.path; // "off"
+m.path; // "/off"
 m.send({ type: "TOGGLE" });
-m.path; // "on.bright"
-m.matches("on"); // true: an ancestor of the current state
+m.path; // "/on/bright"
+m.matches("/on"); // true: an ancestor of the current state
 m.send({ type: "DIM" });
-m.path; // "on.dim"
+m.path; // "/on/dim"
 ```
 
-A state's path joins the names from the root down with dots: `on.dim`. `path` is the deepest active state, and `""` once the machine is stopped. `matches(p)` is true for every active state, ancestors included, so `matches("on")` holds in both `on.bright` and `on.dim`. The root has no name and is never matched.
+A state's path is its full path from the root: a leading `/`, then the names from the root down, separated by `/`, as in `/on/dim`. Every path in a machine is written this way: each target, each `initial`, `path` and `matches()`. `path` is the deepest active state, and `undefined` once the machine is stopped, so `if (m.path)` means the same in TypeScript and in Lua. `matches(p)` is true for every active state, ancestors included, so `matches("/on")` holds in both `/on/bright` and `/on/dim`. The root has no name: `/` alone is not a state, so the root is never a target and never matched.
 
-`defineMachine` checks the config when the module loads and throws, naming the state path, on a compound state with no `initial`, an `initial` that is not one of the state's children, or a target that names no state. Most of these mistakes fail to compile first; see [Types](#types).
+A state name must be non-empty and must not contain `/`. Any other character is allowed, `.` and `#` included.
+
+`defineMachine` checks the config when the module loads and throws, naming the state path, on a compound state with no `initial`, an `initial` that is not the full path of one of the state's children, a target that does not start with `/` or names no state, or a state name that is empty or contains `/`. Most of these mistakes fail to compile first; see [Types](#types).
 
 #### Events and transitions
 
@@ -2843,13 +2845,13 @@ type EnemyEvent =
   | { type: "RESPAWN" };
 
 export const enemy = defineMachine<EnemyCtx, EnemyEvent>()({
-  initial: "alive",
+  initial: "/alive",
   states: {
     alive: {
-      initial: "patrol",
+      initial: "/alive/patrol",
       on: {
         HIT: [
-          { target: "dead", guard: (ctx, event) => ctx.health <= event.damage },
+          { target: "/dead", guard: (ctx, event) => ctx.health <= event.damage },
           {
             actions: (ctx, event) => {
               ctx.health -= event.damage;
@@ -2858,12 +2860,12 @@ export const enemy = defineMachine<EnemyCtx, EnemyEvent>()({
         ],
       },
       states: {
-        patrol: { on: { SEE_PLAYER: "chase" } },
+        patrol: { on: { SEE_PLAYER: "/alive/chase" } },
         chase: {
           on: {
-            LOSE_PLAYER: "patrol",
-            SEE_PLAYER: { target: "chase", reenter: true },
-            FALL: "#dead",
+            LOSE_PLAYER: "/alive/patrol",
+            SEE_PLAYER: { target: "/alive/chase", reenter: true },
+            FALL: "/dead",
           },
         },
       },
@@ -2871,7 +2873,7 @@ export const enemy = defineMachine<EnemyCtx, EnemyEvent>()({
     dead: {
       on: {
         RESPAWN: {
-          target: "alive",
+          target: "/alive",
           actions: (ctx) => {
             ctx.health = 3;
           },
@@ -2882,25 +2884,25 @@ export const enemy = defineMachine<EnemyCtx, EnemyEvent>()({
 });
 
 const m = enemy.start({ health: 3 });
-m.send({ type: "SEE_PLAYER" }); // alive.patrol -> alive.chase
-m.send({ type: "HIT", damage: 1 }); // handled by alive: health 2, still alive.chase
-m.send({ type: "FALL" }); // exits alive.chase and alive, enters dead
+m.send({ type: "SEE_PLAYER" }); // /alive/patrol -> /alive/chase
+m.send({ type: "HIT", damage: 1 }); // handled by /alive: health 2, still /alive/chase
+m.send({ type: "FALL" }); // exits /alive/chase and /alive, enters /dead
 ```
 
-**Which transition runs.** An event starts at the deepest active state. If that state has no `on` entry for the event's `type`, or every guard in its entry fails, the event moves up to the parent, and so on to the root. The first transition with no guard, or whose guard returns `true`, runs, and the event goes no further. An event that no active state handles is dropped. Above, `HIT` sent in `alive.chase` finds nothing on `chase` and reaches `alive`, where the first entry moves to `dead` if the hit is fatal and the second takes the damage otherwise.
+**Which transition runs.** An event starts at the deepest active state. If that state has no `on` entry for the event's `type`, or every guard in its entry fails, the event moves up to the parent, and so on to the root. The first transition with no guard, or whose guard returns `true`, runs, and the event goes no further. An event that no active state handles is dropped. Above, `HIT` sent in `/alive/chase` finds nothing on `chase` and reaches `alive`, where the first entry moves to `/dead` if the hit is fatal and the second takes the damage otherwise.
 
 **Targetless transitions.** A transition with no `target` runs its actions and nothing else: no state exits or enters. The damage branch of `HIT` is one.
 
-**Where a target points.** A target is resolved from the source state's parent, so a plain name is a sibling (`patrol` from `chase`) and `sibling.child` reaches into one. A state targets its own child through its own name, as `alive.patrol` from `alive`. A target that starts with `#` is a full path from the root, which reaches states outside the parent: `#dead` from `alive.chase`, where a plain `dead` would look for `alive.dead`. On the root's own `on`, every target is resolved from the root.
+**Where a target points.** Every target is a full path from the root, wherever it is declared: `/dead` from `/alive/chase`, `/alive/chase` from its sibling `/alive/patrol`, and `/alive/patrol` from `/alive` for its own child. There are no relative targets: `./patrol`, `../patrol` and a bare name such as `patrol` are not paths, and `defineMachine` throws on them, naming the state that declares them.
 
-**What runs, in what order.** A transition exits states from the deepest active state up, runs its actions, then enters states down to the target and on through each `initial` child. Only the states below the nearest one that contains both the source and the target exit and re-enter; that state stays active. With `alive.chase` active, a fatal `HIT` handled by `alive` runs:
+**What runs, in what order.** A transition exits states from the deepest active state up, runs its actions, then enters states down to the target and on through each `initial` child. Only the states below the nearest one that contains both the source and the target exit and re-enter; that state stays active. With `/alive/chase` active, a fatal `HIT` handled by `alive` runs:
 
-1. `exit` of `alive.chase`
-2. `exit` of `alive`
+1. `exit` of `/alive/chase`
+2. `exit` of `/alive`
 3. the transition's actions
-4. `enter` of `dead`
+4. `enter` of `/dead`
 
-Targeting the source itself or one of its descendants keeps the source active and re-enters only below it: from `alive`, a target of `alive.patrol` exits the current child and enters `patrol`, while `alive` stays. `reenter: true` also exits and re-enters the source, which restarts its `after` timers and its `invoke`, as `SEE_PLAYER` in `chase` does above. Targeting an ancestor of the source exits and re-enters that ancestor.
+Targeting the source itself or one of its descendants keeps the source active and re-enters only below it: from `/alive`, a target of `/alive/patrol` exits the current child and enters `patrol`, while `alive` stays. `reenter: true` also exits and re-enters the source, which restarts its `after` timers and its `invoke`, as `SEE_PLAYER` in `chase` does above. Targeting an ancestor of the source exits and re-enters that ancestor.
 
 Guards receive `(ctx, event)` and actions `(ctx, event, m)`, where `event` is narrowed to the variant the `on` key names: the `HIT` guard reads `event.damage` with no cast. `actions` is one function or a list run in order.
 
@@ -2908,9 +2910,9 @@ Guards receive `(ctx, event)` and actions `(ctx, event, m)`, where `event` is na
 
 `m.update(dt)` advances the machine by one tick in two phases.
 
-First the `update` hooks run, from the deepest active state up, each with `(ctx, dt, m)`. A hook returns a target to transition or `undefined` to pass. The first hook to return a target wins: the remaining hooks do not run, and the target is resolved from that hook's state like an `on` target. A hook transition has no actions.
+First the `update` hooks run, from the deepest active state up, each with `(ctx, dt, m)`. A hook returns a target to transition or `undefined` to pass. The first hook to return a target wins: the remaining hooks do not run, and the target is a full path, like an `on` target. A hook transition has no actions.
 
-Then, only if no hook transitioned, the `after` timers run. `after` maps a delay in seconds to a target. Every active state counts game time from the `dt` passed to `update`, from zero each time it is entered, so a machine whose `update` is not called is frozen in time. A state's timers fire in delay order. One `update` call fires at most one timer, checked from the deepest state up; another timer that is due waits for the next call.
+Then, only if no hook transitioned, the `after` timers run. `after` maps a delay in seconds to a target path. Every active state counts game time from the `dt` passed to `update`, from zero each time it is entered, so a machine whose `update` is not called is frozen in time. A state's timers fire in delay order. One `update` call fires at most one timer, checked from the deepest state up; another timer that is due waits for the next call.
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -2921,23 +2923,23 @@ interface FeetCtx {
 
 type FeetEvent = { type: "JUMP" };
 
-const land = (ctx: FeetCtx) => (ctx.on_ground ? "grounded" : undefined);
+const land = (ctx: FeetCtx) => (ctx.on_ground ? "/grounded" : undefined);
 
 export const feet = defineMachine<FeetCtx, FeetEvent>()({
-  initial: "grounded",
+  initial: "/grounded",
   states: {
     grounded: {
-      update: (ctx) => (ctx.on_ground ? undefined : "coyote"),
-      on: { JUMP: "jumping" },
+      update: (ctx) => (ctx.on_ground ? undefined : "/coyote"),
+      on: { JUMP: "/jumping" },
     },
     // Just after walking off a ledge, a jump still counts.
     coyote: {
       update: land,
-      after: { 0.1: "falling" },
-      on: { JUMP: "jumping" },
+      after: { 0.1: "/falling" },
+      on: { JUMP: "/jumping" },
     },
     jumping: {
-      after: { 0.4: "falling" },
+      after: { 0.4: "/falling" },
     },
     falling: {
       update: land,
@@ -2960,21 +2962,21 @@ interface BlinkCtx {
 type BlinkEvent = { type: "HIT" };
 
 export const blink = defineMachine<BlinkCtx, BlinkEvent>()({
-  initial: "normal",
+  initial: "/normal",
   states: {
-    normal: { on: { HIT: "invulnerable" } },
+    normal: { on: { HIT: "/invulnerable" } },
     invulnerable: {
-      initial: "shown",
-      after: { 2: "normal" },
+      initial: "/invulnerable/shown",
+      after: { 2: "/normal" },
       exit: (ctx) => msg.post(ctx.sprite, "enable"),
       states: {
         shown: {
           enter: (ctx) => msg.post(ctx.sprite, "enable"),
-          after: { 0.1: "hidden" },
+          after: { 0.1: "/invulnerable/hidden" },
         },
         hidden: {
           enter: (ctx) => msg.post(ctx.sprite, "disable"),
-          after: { 0.1: "shown" },
+          after: { 0.1: "/invulnerable/shown" },
         },
       },
     },
@@ -2998,7 +3000,7 @@ interface LevelCtx {
 type LevelEvent = { type: "LOADED" } | { type: "QUIT" };
 
 export const level = defineMachine<LevelCtx, LevelEvent>()({
-  initial: "loading",
+  initial: "/loading",
   states: {
     loading: {
       enter: (ctx, m) => {
@@ -3006,9 +3008,9 @@ export const level = defineMachine<LevelCtx, LevelEvent>()({
           m.send({ type: "LOADED" });
         }
       },
-      on: { LOADED: "playing" },
+      on: { LOADED: "/playing" },
     },
-    playing: { on: { QUIT: "done" } },
+    playing: { on: { QUIT: "/done" } },
     done: {
       enter: (_ctx, m) => m.stop(),
     },
@@ -3016,12 +3018,12 @@ export const level = defineMachine<LevelCtx, LevelEvent>()({
 });
 
 const m = level.start({ cached: true });
-m.path; // "playing": start ran the queued LOADED before returning
+m.path; // "/playing": start ran the queued LOADED before returning
 m.send({ type: "QUIT" });
-m.path; // "": done stopped the machine
+m.path; // undefined: done stopped the machine
 ```
 
-`stop()` exits every active state, deepest first and the root last, and sets `path` to `""`. Called inside a step, as `done` does above, it lets that step finish, then drops any queued events instead of running them. After `stop`, `send` and `update` do nothing.
+`stop()` exits every active state, deepest first and the root last, and sets `path` to `undefined`. Called inside a step, as `done` does above, it lets that step finish, then drops any queued events instead of running them. After `stop`, `send` and `update` do nothing.
 
 ##### Engine callbacks: `invoke` and `settle`
 
@@ -3047,11 +3049,11 @@ export interface DoorCtx {
 export type DoorEvent = MessageEvent<"trigger_response"> | { type: "OPENED" } | { type: "CLOSE" };
 
 export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
-  initial: "closed",
+  initial: "/closed",
   states: {
     closed: {
       on: {
-        trigger_response: { target: "opening", guard: (_ctx, event) => event.enter },
+        trigger_response: { target: "/opening", guard: (_ctx, event) => event.enter },
       },
     },
     opening: {
@@ -3063,14 +3065,14 @@ export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
       exit: (ctx) => {
         go.cancel_animations(ctx.sprite, "tint.w");
       },
-      on: { OPENED: "open" },
+      on: { OPENED: "/open" },
     },
     open: {
       enter: (ctx) => {
         ctx.opens += 1;
       },
-      after: { 3: "closed" },
-      on: { CLOSE: "closed" },
+      after: { 3: "/closed" },
+      on: { CLOSE: "/closed" },
     },
   },
 });
@@ -3107,7 +3109,7 @@ export default defineScript({
 });
 ```
 
-`self.door.matches("open")`, `self.door.path` and `self.door.ctx` read the current state from any callback. Stopping in `final` runs the `exit` hooks of whatever is active, so `opening` cancels its animation even when the object is deleted mid-fade.
+`self.door.matches("/open")`, `self.door.path` and `self.door.ctx` read the current state from any callback. Stopping in `final` runs the `exit` hooks of whatever is active, so `opening` cancels its animation even when the object is deleted mid-fade.
 
 A module-level instance (`const door = doorMachine.start(...)` at the top of a script file) is shared by every object that runs the script; see [Where script state lives](./script-state.md).
 
@@ -3117,33 +3119,35 @@ A module-level instance (`const door = doorMachine.start(...)` at the top of a s
 
 **Events are `EventObject`s.** `E` is a union of objects that each have a string `type`, plus any payload fields. `on` accepts only those `type` values as keys, and each guard and action sees the variant its key names.
 
-**`start` returns a `MachineInstance<Ctx, E, P>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `""`. Hooks, guards and actions are typed before the paths are known, so the `m` they receive is a `MachineInstance<Ctx, E>` whose `path` and `matches()` use plain `string`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`.
+**`start` returns a `MachineInstance<Ctx, E, P>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, guards and actions are typed before the paths are known, so the `m` they receive is a `MachineInstance<Ctx, E>` whose `path` and `matches()` use plain `string`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`.
 
-**`StatePath<C>` lists a config's paths.** Paths are spelled out four levels deep; below that, any string under a fourth-level path is accepted.
+**`StatePath<C>` lists a config's paths,** each with its leading `/`. Paths are spelled out four levels deep; below that, any string under a fourth-level path is accepted.
 
 ```ts
 import type { StatePath } from "@defold-typescript/types/hsm";
 
 const game = {
-  initial: "menu",
+  initial: "/menu",
   states: {
     menu: {},
     playing: {
-      initial: "running",
+      initial: "/playing/running",
       states: { running: {}, paused: {} },
     },
   },
 } as const;
 
-// "menu" | "playing" | "playing.running" | "playing.paused"
+// "/menu" | "/playing" | "/playing/running" | "/playing/paused"
 type GamePath = StatePath<typeof game>;
 
-const resume: GamePath = "playing.running";
-// @ts-expect-error -- "playing.over" is not one of the paths
-const over: GamePath = "playing.over";
+const resume: GamePath = "/playing/running";
+// @ts-expect-error -- "/playing/over" is not one of the paths
+const over: GamePath = "/playing/over";
+// @ts-expect-error -- a path without the leading "/" is not a path
+const bare: GamePath = "playing";
 ```
 
-**A bad config is a `MachineConfigError`.** When an `initial` or a target names no state, or an `on` key names no event, `defineMachine` returns `MachineConfigError` instead of a machine. It has no `start`, so the mistake fails to compile wherever the machine is started, and the error's text names what to look for:
+**A bad config is a `MachineConfigError`.** When an `initial` or a target is not one of the machine's full paths (a bare name such as `"idle"` included), or an `on` key names no event, `defineMachine` returns `MachineConfigError` instead of a machine. It has no `start`, so the mistake fails to compile wherever the machine is started, and the error's text names what to look for:
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -3151,9 +3155,9 @@ import { defineMachine } from "@defold-typescript/types/hsm";
 type GoEvent = { type: "GO" };
 
 const broken = defineMachine<{ steps: number }, GoEvent>()({
-  initial: "idle",
+  initial: "/idle",
   states: {
-    idle: { on: { GO: "nowhere" } },
+    idle: { on: { GO: "/nowhere" } },
   },
 });
 
@@ -3243,15 +3247,15 @@ export interface PlayerCtx {
 export type PlayerEvent = { type: "JUMP" } | { type: "JUMP_RELEASED" };
 
 export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
-  initial: "airborne",
+  initial: "/airborne",
   states: {
     grounded: {
-      initial: "idle",
-      update: (ctx) => (ctx.ground_contact ? undefined : "airborne"),
+      initial: "/grounded/idle",
+      update: (ctx) => (ctx.ground_contact ? undefined : "/airborne"),
       on: {
         // Only allow jump from ground (extend with a counter for double-jumps).
         JUMP: {
-          target: "airborne.rising",
+          target: "/airborne/rising",
           actions: (ctx) => {
             ctx.velocity.y = jump_takeoff_speed;
             ctx.ground_contact = false;
@@ -3261,21 +3265,23 @@ export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
       states: {
         idle: {
           enter: () => sprite.play_flipbook("#sprite", anim_idle),
-          update: (ctx) => (ctx.ground_contact && ctx.velocity.x !== 0 ? "walk" : undefined),
+          update: (ctx) =>
+            ctx.ground_contact && ctx.velocity.x !== 0 ? "/grounded/walk" : undefined,
         },
         walk: {
           enter: () => sprite.play_flipbook("#sprite", anim_walk),
-          update: (ctx) => (ctx.ground_contact && ctx.velocity.x === 0 ? "idle" : undefined),
+          update: (ctx) =>
+            ctx.ground_contact && ctx.velocity.x === 0 ? "/grounded/idle" : undefined,
         },
       },
     },
     airborne: {
-      initial: "falling",
+      initial: "/airborne/falling",
       update: (ctx) => {
         if (!ctx.ground_contact) {
           return undefined;
         }
-        return ctx.velocity.x === 0 ? "grounded.idle" : "grounded.walk";
+        return ctx.velocity.x === 0 ? "/grounded/idle" : "/grounded/walk";
       },
       states: {
         rising: {
@@ -3288,7 +3294,8 @@ export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
               },
             },
           },
-          update: (ctx) => (ctx.velocity.y <= 0 && !ctx.ground_contact ? "falling" : undefined),
+          update: (ctx) =>
+            ctx.velocity.y <= 0 && !ctx.ground_contact ? "/airborne/falling" : undefined,
         },
         falling: {
           enter: () => sprite.play_flipbook("#sprite", anim_fall),
@@ -3299,7 +3306,7 @@ export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
 });
 ```
 
-`update` hooks run from the deepest active state up, and the first one to return a target wins. That is why `idle` and `walk` check `ground_contact` too: without it, a leaf whose own velocity check fires on the step the ground disappears (`idle` as the player starts to move off an edge) would move to its sibling, and the player would stay grounded for that step. Landing goes straight to `grounded.walk` when the player is moving, so it never flashes `idle`.
+`update` hooks run from the deepest active state up, and the first one to return a target wins. That is why `idle` and `walk` check `ground_contact` too: without it, a leaf whose own velocity check fires on the step the ground disappears (`idle` as the player starts to move off an edge) would move to its sibling, and the player would stay grounded for that step. Landing goes straight to `/grounded/walk` when the player is moving, so it never flashes `idle`.
 
 The script keeps the physics and hands the rest to the machine:
 
@@ -3364,13 +3371,13 @@ Every field is optional on a state; the root config requires `initial` and `stat
 
 | Field     | Type                                        | Meaning                                                                                       |
 | --------- | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `initial` | `string`                                    | The child entered with this state. Required when `states` is set.                             |
-| `states`  | `{ [name: string]: StateConfig }`           | Child states, by name.                                                                        |
-| `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`; see [Events and transitions](#events-and-transitions).           |
-| `after`   | `{ [seconds: number]: string }`             | Targets taken after this long in the state, in game time; see [`update` and `after`](#update-and-after). |
+| `initial` | `string`                                    | The full path of the child entered with this state (`/on/bright` inside `on`). Required when `states` is set. |
+| `states`  | `{ [name: string]: StateConfig }`           | Child states, by name. A name is non-empty and contains no `/`.                               |
+| `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`, each target a full path; see [Events and transitions](#events-and-transitions). |
+| `after`   | `{ [seconds: number]: string }`             | Full-path targets taken after this long in the state, in game time; see [`update` and `after`](#update-and-after). |
 | `enter`   | `(ctx, m) => void`                          | Runs each time the state is entered.                                                          |
 | `exit`    | `(ctx, m) => void`                          | Runs each time the state is left, including on `stop()`.                                      |
-| `update`  | `(ctx, dt, m) => string \| undefined`       | Runs on every `update(dt)` while active; a returned target transitions.                       |
+| `update`  | `(ctx, dt, m) => string \| undefined`       | Runs on every `update(dt)` while active; a returned full path transitions.                    |
 | `invoke`  | `(ctx, settle, m) => void`                  | Runs after `enter`; `settle(event)` sends one event if the state is still the one entered.     |
 
 ##### `MachineInstance`
@@ -3378,8 +3385,8 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | Member    | Type                    | Meaning                                                                            |
 | --------- | ----------------------- | ---------------------------------------------------------------------------------- |
 | `ctx`     | `Ctx`                   | The context passed to `start`.                                                     |
-| `path`    | `P \| ""`               | The deepest active state's path, or `""` once stopped.                             |
-| `matches` | `(path: P) => boolean`  | Whether the state at `path` is active, ancestors included.                         |
+| `path`    | `P \| undefined`        | The deepest active state's full path, or `undefined` once stopped.                 |
+| `matches` | `(path: P) => boolean`  | Whether the state at the full path `path` is active, ancestors included.           |
 | `send`    | `(event: E) => void`    | Handles `event`, or queues it when called during a step.                           |
 | `update`  | `(dt: number) => void`  | Runs the `update` hooks, then the `after` timers if no hook transitioned.          |
 | `stop`    | `() => void`            | Exits every active state; later `send` and `update` calls do nothing.              |
