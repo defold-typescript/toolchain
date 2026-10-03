@@ -4,7 +4,7 @@ llms-full: false
 ---
 # State machines, one click at a time
 
-A hands-on introduction to the `hsm` library for Defold and TypeScript, written for people who have never used a state machine. Every diagram on this page runs the real `hsm` library in your browser, and only Defold calls like `msg.post` and `go.animate` are imitated. Press the buttons and watch it work.
+A hands-on introduction to the `hsm` (Hierarchical State Machine) library for Defold and TypeScript, with no prior state machine experience needed. Every diagram on this page runs the real `hsm` library in your browser, and only Defold calls like `msg.post` and `go.animate` are imitated. Press the buttons and watch it work.
 
 When you want the full rules, [State machines](./state-machines.md) has them all.
 
@@ -136,6 +136,8 @@ export const lamp = defineMachine<LampCtx, LampEvent>()({
 - A child's path continues its parent's, like a file in a folder: `"/on/dim"`. `m.path` is the path of the innermost active state, and `m.matches("/on")` asks "is on active at all?" and is true in both children.
 
 Watch the log when you press `TOGGLE` in `/on/dim`: `dim` has no rule for it, so the event **climbs up** to its parent `on`, which does. An event no state handles is simply ignored. Try `DIM` while the lamp is off.
+
+> [!NOTE] **What the "h" in `hsm` means.** It stands for *hierarchical*: states can sit inside other states, forming a tree, like folders. A plain state machine is flat, so every state that shares a rule has to repeat it. In a hierarchical one the parent holds the shared rule once, and its children get it for free. That is why `TOGGLE` is written only on `on`.
 
 ### Remembering bright or dim
 
