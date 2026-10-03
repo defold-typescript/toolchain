@@ -37,6 +37,12 @@ const TYPE_PATHS: Record<string, string[]> = {
 
 const ENV_DTS = 'import "@defold-typescript/types/script";\n';
 
+// The library declarations a fence imports, as `resolve` writes them into a
+// project's `.defold-types/`; each becomes a project file next to the fences.
+const LIBRARY_DECLARATIONS = [
+  path.join(REPO_ROOT, "packages/library-types/generated/monarch.monarch.d.ts"),
+];
+
 const SLOW = 120_000;
 
 interface Fence {
@@ -87,6 +93,8 @@ interface FenceProject {
   readonly src: string;
   /** Fence rel to its source text, as written. */
   readonly sources: ReadonlyMap<string, string>;
+  /** Library declaration rel to its text. */
+  readonly declarations: ReadonlyMap<string, string>;
 }
 
 function writeFenceProject(fences: readonly Fence[]): FenceProject {
@@ -95,6 +103,13 @@ function writeFenceProject(fences: readonly Fence[]): FenceProject {
   const src = path.join(cwd, "src");
   mkdirSync(src, { recursive: true });
   writeFileSync(path.join(src, "env.d.ts"), ENV_DTS);
+  const declarations = new Map<string, string>();
+  for (const file of LIBRARY_DECLARATIONS) {
+    const rel = path.basename(file);
+    const text = readFileSync(file, "utf8");
+    writeFileSync(path.join(src, rel), text);
+    declarations.set(rel, text);
+  }
   const sources = new Map<string, string>();
   for (const fence of fences) {
     const text = `${fence.body}\nexport {};\n`;
@@ -103,7 +118,7 @@ function writeFenceProject(fences: readonly Fence[]): FenceProject {
     writeFileSync(file, text);
     sources.set(fence.rel, text);
   }
-  return { src, sources };
+  return { src, sources, declarations };
 }
 
 function compilerOptions(src: string): ts.CompilerOptions {
@@ -128,6 +143,7 @@ function describeDiagnostic(d: ts.Diagnostic): string {
 function typeCheck(project: FenceProject): Map<string, string[]> {
   const roots = [
     path.join(project.src, "env.d.ts"),
+    ...[...project.declarations.keys()].map((rel) => path.join(project.src, rel)),
     ...[...project.sources.keys()].map((rel) => path.join(project.src, rel)),
   ];
   const program = ts.createProgram(roots, compilerOptions(project.src));
@@ -167,6 +183,7 @@ for (const page of FENCED_PAGES) {
         const failing: Record<string, string[]> = {};
         const labelled: [string, string][] = [
           ["", "(global)"],
+          ...[...pageFenceProject().declarations.keys()].map((rel): [string, string] => [rel, rel]),
           ...guideFences(guide).map((fence): [string, string] => [fence.rel, fence.label]),
         ];
         for (const [rel, label] of labelled) {
@@ -183,6 +200,7 @@ for (const page of FENCED_PAGES) {
       () => {
         const project = pageFenceProject();
         const files: Record<string, string> = {};
+        for (const [rel, text] of project.declarations) files[rel] = text;
         for (const [rel, text] of project.sources) files[rel] = text;
         const errors = transpileProject({ files })
           .diagnostics.filter((d) => d.category === undefined)
