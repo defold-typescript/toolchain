@@ -13,9 +13,12 @@ const BENCH_DIR = resolve(import.meta.dir, "..", "bench", "hsm");
 
 export interface HsmBenchReport {
   readonly frames: number;
+  readonly allocFrames: number;
   readonly enemies: number;
   readonly avgMs: number;
   readonly maxMs: number;
+  readonly timedSends: number;
+  readonly timedHeapProbes: number;
   readonly updateKb: number;
   readonly sendKb: number;
   readonly updateAllocs: number;
@@ -29,9 +32,12 @@ export interface HsmBenchReport {
 
 const NUMBER_FIELDS = [
   "frames",
+  "allocFrames",
   "enemies",
   "avgMs",
   "maxMs",
+  "timedSends",
+  "timedHeapProbes",
   "updateKb",
   "sendKb",
   "updateAllocs",

@@ -15,10 +15,14 @@ beforeAll(async () => {
 }, 900_000);
 
 describe("hsm engine benchmark", () => {
-  test("runs 200 enemies for 300 measured frames and reports every number", () => {
+  test("runs 200 enemies for 300 allocation and 300 timed frames and reports every number", () => {
     expect(report.enemies).toBe(200);
+    expect(report.allocFrames).toBe(300);
     expect(report.frames).toBe(300);
     for (const value of [
+      report.allocFrames,
+      report.timedSends,
+      report.timedHeapProbes,
       report.avgMs,
       report.maxMs,
       report.updateKb,
@@ -33,7 +37,12 @@ describe("hsm engine benchmark", () => {
     }
   });
 
+  test("takes no heap samples while timing", () => {
+    expect(report.timedHeapProbes).toBe(0);
+  });
+
   test(`spends under ${BUDGET_MS} ms per frame in hsm calls on average`, () => {
+    expect(report.timedSends).toBeGreaterThan(0);
     expect(report.avgMs).toBeLessThan(BUDGET_MS);
   });
 
