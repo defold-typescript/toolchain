@@ -45,14 +45,12 @@ end
 local function registerState(compiled, config, parentIndex, path)
     local index = compiled.count
     compiled.count = index + 1
-    local depth = parentIndex == NO_STATE and 0 or compiled.depth[parentIndex + 1] + 1
-    if depth > compiled.maxDepth then
-        compiled.maxDepth = depth
-    end
     compiled.configs[index + 1] = config
     compiled.paths[index + 1] = path
     compiled.parent[index + 1] = parentIndex
-    compiled.depth[index + 1] = depth
+    compiled.depth[index + 1] = parentIndex == NO_STATE and 0 or compiled.depth[parentIndex + 1] + 1
+    compiled.children[index + 1] = {}
+    compiled.parallel[index + 1] = config.type == "parallel"
     compiled.initialChild[index + 1] = NO_STATE
     compiled.history[index + 1] = config.history == "shallow"
     compiled.pathIndex[path] = index
@@ -67,7 +65,16 @@ local function registerState(compiled, config, parentIndex, path)
                 0
             )
         end
-        registerState(compiled, children[name], index, (path .. "/") .. name)
+        local child = compiled.count
+        local childPath = (path .. "/") .. name
+        registerState(compiled, children[name], index, childPath)
+        local siblings = compiled.children[index + 1]
+        local slot = #siblings
+        while slot > 0 and childPath < compiled.paths[siblings[slot] + 1] do
+            siblings[slot + 1] = siblings[slot]
+            slot = slot - 1
+        end
+        siblings[slot + 1] = child
     end
 end
 local function hasChildren(config)
@@ -84,6 +91,24 @@ local function compileInitial(compiled, index)
     local config = compiled.configs[index + 1]
     local path = compiled.paths[index + 1]
     local initial = config.initial
+    if compiled.parallel[index + 1] == true then
+        if index == ROOT then
+            error(
+                ("hsm: state \\"" .. describePath(path)) .. "\\" is parallel; put the regions in a child state",
+                0
+            )
+        end
+        if initial ~= nil then
+            error(((("hsm: parallel state \\"" .. path) .. "\\" has initial \\"") .. initial) .. "\\"; every child is entered", 0)
+        end
+        if compiled.history[index + 1] == true then
+            error(("hsm: parallel state \\"" .. path) .. "\\" has history; only a compound state resumes a child", 0)
+        end
+        if not hasChildren(config) then
+            error(("hsm: parallel state \\"" .. path) .. "\\" has no child states", 0)
+        end
+        return
+    end
     if not hasChildren(config) then
         if initial ~= nil then
             error(
@@ -152,11 +177,11 @@ local function compileOn(compiled, index)
     end
     for ____type in pairs(on) do
         do
-            local __continue31
+            local __continue36
             repeat
                 local spec = on[____type]
                 if spec == nil then
-                    __continue31 = true
+                    __continue36 = true
                     break
                 end
                 local list = {}
@@ -175,9 +200,9 @@ local function compileOn(compiled, index)
                 ____table[____type] = #compiled.transitions
                 local ____compiled_transitions_1 = compiled.transitions
                 ____compiled_transitions_1[#____compiled_transitions_1 + 1] = list
-                __continue31 = true
+                __continue36 = true
             until true
-            if not __continue31 then
+            if not __continue36 then
                 break
             end
         end
@@ -260,11 +285,12 @@ end
 local function compile(config)
     local compiled = {
         count = 0,
-        maxDepth = 0,
         configs = {},
         paths = {},
         parent = {},
         depth = {},
+        children = {},
+        parallel = {},
         initialChild = {},
         history = {},
         onIndex = {},
@@ -296,11 +322,14 @@ local function isAncestorOrSelf(compiled, ancestor, state)
     return current == ancestor
 end
 local function transitionDomain(compiled, source, target, reenter)
-    if source == ROOT or not reenter and isAncestorOrSelf(compiled, source, target) then
-        return source
+    local domain = source
+    if source ~= ROOT and (reenter or not isAncestorOrSelf(compiled, source, target)) then
+        domain = compiled.parent[source + 1]
+        while domain ~= ROOT and (domain == target or not isAncestorOrSelf(compiled, domain, target)) do
+            domain = compiled.parent[domain + 1]
+        end
     end
-    local domain = compiled.parent[source + 1]
-    while domain ~= ROOT and (domain == target or not isAncestorOrSelf(compiled, domain, target)) do
+    while compiled.parallel[domain + 1] == true do
         domain = compiled.parent[domain + 1]
     end
     return domain
@@ -308,30 +337,69 @@ end
 local registered = {}
 local function createMachine(definition)
     local function start(ctx)
-        local growSlots, rebind, onTransition, report, enterState, runCleanup, exitTo, defaultChild, enterDown, transition, settleAlways, takeAlways, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, depth, initialChild, history, configs, onIndex, transitions, afterDelays, afterTargets, always, active, elapsed, fired, scratch, entryId, cleanup, remembered, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, listeners, instance
+        local clearSlot, growSlots, collectActive, rebind, onTransition, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, history, configs, onIndex, transitions, afterDelays, afterTargets, always, activeChild, isActive, elapsed, fired, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, instance
+        function clearSlot(state)
+            activeChild[state + 1] = NO_STATE
+            isActive[state + 1] = false
+            elapsed[state + 1] = 0
+            fired[state + 1] = 0
+            entryId[state + 1] = 0
+            cleanup[state + 1] = nil
+        end
         function growSlots()
+            while slotCount < compiled.count do
+                clearSlot(slotCount)
+                slotCount = slotCount + 1
+            end
+        end
+        function collectActive(state, order)
+            order[#order + 1] = state
+            local list = children[state + 1]
             do
-                local i = #active
-                while i <= compiled.maxDepth do
-                    active[i + 1] = NO_STATE
-                    elapsed[i + 1] = 0
-                    fired[i + 1] = 0
-                    scratch[i + 1] = NO_STATE
-                    entryId[i + 1] = 0
-                    cleanup[i + 1] = nil
+                local i = 0
+                while i < #list do
+                    local child = list[i + 1]
+                    if isActive[child + 1] == true then
+                        collectActive(child, order)
+                    end
                     i = i + 1
                 end
             end
         end
         function rebind()
             local from = instance.path
-            local oldPaths = paths
-            local oldLeafDepth = leafDepth
+            local order = {}
+            collectActive(ROOT, order)
+            local keptPaths = {}
+            local keptElapsed = {}
+            local keptFired = {}
+            local keptEntryId = {}
+            local keptCleanup = {}
+            do
+                local i = 0
+                while i < #order do
+                    local state = order[i + 1]
+                    keptPaths[i + 1] = paths[state + 1]
+                    keptElapsed[i + 1] = elapsed[state + 1]
+                    keptFired[i + 1] = fired[state + 1]
+                    keptEntryId[i + 1] = entryId[state + 1]
+                    keptCleanup[i + 1] = cleanup[state + 1]
+                    i = i + 1
+                end
+            end
+            do
+                local state = 0
+                while state < slotCount do
+                    clearSlot(state)
+                    state = state + 1
+                end
+            end
             compiled = definition.compiled
             generation = definition.generation
             paths = compiled.paths
             parent = compiled.parent
-            depth = compiled.depth
+            children = compiled.children
+            parallel = compiled.parallel
             initialChild = compiled.initialChild
             history = compiled.history
             configs = compiled.configs
@@ -341,63 +409,115 @@ local function createMachine(definition)
             afterTargets = compiled.afterTargets
             always = compiled.always
             growSlots()
-            local survivor = 0
-            active[1] = ROOT
+            local dropped = {}
             do
-                local level = 1
-                while level <= oldLeafDepth do
-                    local state = lookupPath(compiled, oldPaths[active[level + 1] + 1])
-                    if state == nil then
-                        break
+                local i = 0
+                while i < #order do
+                    do
+                        local __continue82
+                        repeat
+                            local state = lookupPath(compiled, keptPaths[i + 1])
+                            local owner = state == nil and NO_STATE or parent[state + 1]
+                            if state == nil or owner ~= NO_STATE and (isActive[owner + 1] ~= true or parallel[owner + 1] ~= true and activeChild[owner + 1] ~= NO_STATE) then
+                                dropped[#dropped + 1] = i
+                                __continue82 = true
+                                break
+                            end
+                            isActive[state + 1] = true
+                            if owner ~= NO_STATE and parallel[owner + 1] ~= true then
+                                activeChild[owner + 1] = state
+                            end
+                            elapsed[state + 1] = keptElapsed[i + 1]
+                            fired[state + 1] = keptFired[i + 1]
+                            entryId[state + 1] = keptEntryId[i + 1]
+                            cleanup[state + 1] = keptCleanup[i + 1]
+                            __continue82 = true
+                        until true
+                        if not __continue82 then
+                            break
+                        end
                     end
-                    active[level + 1] = state
-                    survivor = level
-                    level = level + 1
+                    i = i + 1
                 end
             end
             do
-                local level = oldLeafDepth
-                while level > survivor do
-                    active[level + 1] = NO_STATE
-                    elapsed[level + 1] = 0
-                    fired[level + 1] = 0
-                    entryId[level + 1] = 0
-                    runCleanup(level)
-                    level = level - 1
+                local i = #dropped - 1
+                while i >= 0 do
+                    local run = keptCleanup[dropped[i + 1] + 1]
+                    if run ~= nil then
+                        run()
+                    end
+                    i = i - 1
                 end
             end
-            leafDepth = survivor
-            local survivorState = active[survivor + 1]
-            if survivor == oldLeafDepth and initialChild[survivorState + 1] == NO_STATE then
+            local entriesBefore = entryCount
+            enterMissing(ROOT)
+            if #dropped == 0 and entryCount == entriesBefore then
                 return
             end
-            enterDown(survivorState, survivorState)
+            refreshLeaves()
             if #listeners > 0 then
-                report(from, "reload", nil)
+                report(from, instance.path, "reload", nil)
             end
             settleAlways()
         end
         function onTransition(listener)
             listeners[#listeners + 1] = listener
         end
-        function report(from, cause, event)
+        function report(from, to, cause, event)
             do
                 local i = 0
                 while i < #listeners do
-                    listeners[i + 1](from, instance.path, cause, event)
+                    listeners[i + 1](from, to, cause, event)
                     i = i + 1
                 end
             end
         end
+        function collectLeaves(state, count)
+            if parallel[state + 1] == true then
+                local list = children[state + 1]
+                local total = count
+                do
+                    local i = 0
+                    while i < #list do
+                        total = collectLeaves(list[i + 1], total)
+                        i = i + 1
+                    end
+                end
+                return total
+            end
+            local child = activeChild[state + 1]
+            if child ~= NO_STATE then
+                return collectLeaves(child, count)
+            end
+            leaves[count + 1] = paths[state + 1]
+            return count + 1
+        end
+        function refreshLeaves()
+            local ____temp_3
+            if isActive[ROOT + 1] == true then
+                ____temp_3 = collectLeaves(ROOT, 0)
+            else
+                ____temp_3 = 0
+            end
+            local count = ____temp_3
+            while #leaves > count do
+                table.remove(leaves)
+            end
+            instance.path = leaves[1]
+        end
         function enterState(state)
-            local level = depth[state + 1]
-            active[level + 1] = state
-            elapsed[level + 1] = 0
-            fired[level + 1] = 0
-            leafDepth = level
+            local owner = parent[state + 1]
+            if owner ~= NO_STATE and parallel[owner + 1] ~= true then
+                activeChild[owner + 1] = state
+            end
+            isActive[state + 1] = true
+            activeChild[state + 1] = NO_STATE
+            elapsed[state + 1] = 0
+            fired[state + 1] = 0
             entryCount = entryCount + 1
             local id = entryCount
-            entryId[level + 1] = id
+            entryId[state + 1] = id
             local config = configs[state + 1]
             local hook = config.enter
             if hook ~= nil then
@@ -405,11 +525,13 @@ local function createMachine(definition)
             end
             local invoke = config.invoke
             if invoke ~= nil then
+                local path = paths[state + 1]
                 local settled = false
                 local result = invoke(
                     ctx,
                     function(event)
-                        if settled or not running or stopRequested or entryId[level + 1] ~= id then
+                        local current = lookupPath(compiled, path)
+                        if settled or not running or stopRequested or current == nil or entryId[current + 1] ~= id then
                             return
                         end
                         settled = true
@@ -418,33 +540,42 @@ local function createMachine(definition)
                     instance
                 )
                 if type(result) == "function" then
-                    cleanup[level + 1] = result
+                    cleanup[state + 1] = result
                 end
             end
         end
-        function runCleanup(level)
-            local run = cleanup[level + 1]
-            if run ~= nil then
-                cleanup[level + 1] = nil
-                run()
+        function exitSubtree(state)
+            if parallel[state + 1] == true then
+                local list = children[state + 1]
+                do
+                    local i = #list - 1
+                    while i >= 0 do
+                        exitSubtree(list[i + 1])
+                        i = i - 1
+                    end
+                end
             end
-        end
-        function exitTo(level)
-            while leafDepth > level do
-                local exited = leafDepth
-                local state = active[exited + 1]
-                active[exited + 1] = NO_STATE
-                entryId[exited + 1] = 0
-                leafDepth = leafDepth - 1
-                local owner = parent[state + 1]
-                if owner ~= NO_STATE and history[owner + 1] == true then
+            local child = activeChild[state + 1]
+            if child ~= NO_STATE then
+                exitSubtree(child)
+            end
+            isActive[state + 1] = false
+            entryId[state + 1] = 0
+            local owner = parent[state + 1]
+            if owner ~= NO_STATE then
+                activeChild[owner + 1] = NO_STATE
+                if history[owner + 1] == true then
                     remembered[paths[owner + 1]] = paths[state + 1]
                 end
-                local hook = configs[state + 1].exit
-                if hook ~= nil then
-                    hook(ctx, instance)
-                end
-                runCleanup(exited)
+            end
+            local hook = configs[state + 1].exit
+            if hook ~= nil then
+                hook(ctx, instance)
+            end
+            local run = cleanup[state + 1]
+            if run ~= nil then
+                cleanup[state + 1] = nil
+                run()
             end
         end
         function defaultChild(state)
@@ -459,88 +590,184 @@ local function createMachine(definition)
             end
             return initialChild[state + 1]
         end
-        function enterDown(from, target)
-            local count = 0
-            local state = target
-            while state ~= from do
-                scratch[count + 1] = state
-                count = count + 1
-                state = parent[state + 1]
+        function enterDefaults(state)
+            if parallel[state + 1] == true then
+                local list = children[state + 1]
+                do
+                    local i = 0
+                    while i < #list do
+                        enterState(list[i + 1])
+                        enterDefaults(list[i + 1])
+                        i = i + 1
+                    end
+                end
+                return
             end
-            while count > 0 do
-                count = count - 1
-                enterState(scratch[count + 1])
-                scratch[count + 1] = NO_STATE
+            local child = defaultChild(state)
+            if child ~= NO_STATE then
+                enterState(child)
+                enterDefaults(child)
             end
-            state = defaultChild(target)
-            while state ~= NO_STATE do
-                enterState(state)
-                state = defaultChild(state)
+        end
+        function childToward(state, target)
+            local child = target
+            while parent[child + 1] ~= state do
+                child = parent[child + 1]
             end
-            instance.path = paths[active[leafDepth + 1] + 1]
+            return child
+        end
+        function enterToward(state, target)
+            enterState(state)
+            if state == target then
+                enterDefaults(state)
+                return
+            end
+            local next = childToward(state, target)
+            if parallel[state + 1] ~= true then
+                enterToward(next, target)
+                return
+            end
+            local list = children[state + 1]
+            do
+                local i = 0
+                while i < #list do
+                    local region = list[i + 1]
+                    if region == next then
+                        enterToward(region, target)
+                    else
+                        enterState(region)
+                        enterDefaults(region)
+                    end
+                    i = i + 1
+                end
+            end
+        end
+        function enterMissing(state)
+            if parallel[state + 1] == true then
+                local list = children[state + 1]
+                do
+                    local i = 0
+                    while i < #list do
+                        local region = list[i + 1]
+                        if isActive[region + 1] == true then
+                            enterMissing(region)
+                        else
+                            enterState(region)
+                            enterDefaults(region)
+                        end
+                        i = i + 1
+                    end
+                end
+                return
+            end
+            local child = activeChild[state + 1]
+            if child ~= NO_STATE then
+                enterMissing(child)
+                return
+            end
+            enterDefaults(state)
+        end
+        function firstLeaf(state)
+            local leaf = state
+            while true do
+                local ____temp_4
+                if parallel[leaf + 1] == true then
+                    ____temp_4 = children[leaf + 1][1]
+                else
+                    ____temp_4 = activeChild[leaf + 1]
+                end
+                local child = ____temp_4
+                if child == NO_STATE then
+                    return paths[leaf + 1]
+                end
+                leaf = child
+            end
         end
         function transition(source, target, reenter, actions, event, cause)
             if target == NO_STATE then
                 runActions(actions, event)
                 return
             end
-            local from = instance.path
             local domain = transitionDomain(compiled, source, target, reenter)
-            exitTo(depth[domain + 1])
-            runActions(actions, event)
-            enterDown(domain, target)
-            if #listeners > 0 then
-                report(from, cause, event)
+            local from = firstLeaf(domain)
+            local child = activeChild[domain + 1]
+            if child ~= NO_STATE then
+                exitSubtree(child)
             end
-            if cause ~= "always" then
-                settleAlways()
+            runActions(actions, event)
+            if target == domain then
+                enterDefaults(domain)
+            else
+                enterToward(
+                    childToward(domain, target),
+                    target
+                )
+            end
+            refreshLeaves()
+            moved = true
+            if #listeners > 0 then
+                report(
+                    from,
+                    firstLeaf(domain),
+                    cause,
+                    event
+                )
             end
         end
         function settleAlways()
             do
                 local moves = 0
                 while not stopRequested do
-                    if not takeAlways(moves == ALWAYS_LIMIT) then
+                    if not takeAlways(ROOT, moves == ALWAYS_LIMIT) then
                         return
                     end
                     moves = moves + 1
                 end
             end
         end
-        function takeAlways(overLimit)
-            do
-                local level = leafDepth
-                while level >= 0 do
-                    local state = active[level + 1]
-                    local list = always[state + 1]
-                    do
-                        local i = 0
-                        while i < #list do
-                            local candidate = list[i + 1]
-                            local guard = candidate.guard
-                            if guard == nil or guard(ctx) then
-                                if overLimit then
-                                    clearQueue()
-                                    busy = false
-                                    error(
-                                        ((("hsm: state \\"" .. describePath(paths[state + 1])) .. "\\" took ") .. tostring(ALWAYS_LIMIT)) .. " always transitions in a row; check for an always loop",
-                                        0
-                                    )
-                                end
-                                transition(
-                                    state,
-                                    candidate.target,
-                                    false,
-                                    nil,
-                                    nil,
-                                    "always"
-                                )
-                                return true
-                            end
-                            i = i + 1
+        function takeAlways(state, overLimit)
+            if parallel[state + 1] == true then
+                local list = children[state + 1]
+                do
+                    local i = 0
+                    while i < #list do
+                        if takeAlways(list[i + 1], overLimit) then
+                            return true
                         end
+                        i = i + 1
                     end
-                    level = level - 1
+                end
+            end
+            local child = activeChild[state + 1]
+            if child ~= NO_STATE and takeAlways(child, overLimit) then
+                return true
+            end
+            local list = always[state + 1]
+            do
+                local i = 0
+                while i < #list do
+                    local candidate = list[i + 1]
+                    local guard = candidate.guard
+                    if guard == nil or guard(ctx) then
+                        if overLimit then
+                            clearQueue()
+                            busy = false
+                            error(
+                                ((("hsm: state \\"" .. describePath(paths[state + 1])) .. "\\" took ") .. tostring(ALWAYS_LIMIT)) .. " always transitions in a row; check for an always loop",
+                                0
+                            )
+                        end
+                        transition(
+                            state,
+                            candidate.target,
+                            false,
+                            nil,
+                            nil,
+                            "always"
+                        )
+                        return true
+                    end
+                    i = i + 1
                 end
             end
             return false
@@ -557,47 +784,58 @@ local function createMachine(definition)
                 end
             end
         end
-        function processEvent(event)
+        function takeEvent(state, event)
+            local listIndex = onIndex[state + 1][event.type]
+            if type(listIndex) ~= "number" then
+                return false
+            end
+            local list = transitions[listIndex + 1]
             do
-                local level = leafDepth
-                while level >= 0 do
-                    do
-                        local __continue119
-                        repeat
-                            local state = active[level + 1]
-                            local listIndex = onIndex[state + 1][event.type]
-                            if type(listIndex) ~= "number" then
-                                __continue119 = true
-                                break
-                            end
-                            local list = transitions[listIndex + 1]
-                            do
-                                local i = 0
-                                while i < #list do
-                                    local candidate = list[i + 1]
-                                    if candidate.guard == nil or candidate.guard(ctx, event) then
-                                        transition(
-                                            state,
-                                            candidate.target,
-                                            candidate.reenter,
-                                            candidate.actions,
-                                            event,
-                                            "event"
-                                        )
-                                        return
-                                    end
-                                    i = i + 1
-                                end
-                            end
-                            __continue119 = true
-                        until true
-                        if not __continue119 then
-                            break
-                        end
+                local i = 0
+                while i < #list do
+                    local candidate = list[i + 1]
+                    if candidate.guard == nil or candidate.guard(ctx, event) then
+                        transition(
+                            state,
+                            candidate.target,
+                            candidate.reenter,
+                            candidate.actions,
+                            event,
+                            "event"
+                        )
+                        return true
                     end
-                    level = level - 1
+                    i = i + 1
                 end
             end
+            return false
+        end
+        function offerEvent(state, event)
+            if parallel[state + 1] == true then
+                local id = entryId[state + 1]
+                local list = children[state + 1]
+                local taken = false
+                do
+                    local i = 0
+                    while i < #list do
+                        if offerEvent(list[i + 1], event) then
+                            taken = true
+                            if stopRequested or entryId[state + 1] ~= id then
+                                return true
+                            end
+                        end
+                        i = i + 1
+                    end
+                end
+                if taken then
+                    return true
+                end
+            end
+            local child = activeChild[state + 1]
+            if child ~= NO_STATE and offerEvent(child, event) then
+                return true
+            end
+            return takeEvent(state, event)
         end
         function clearQueue()
             while queueHead < queueTail do
@@ -612,11 +850,11 @@ local function createMachine(definition)
             busy = true
             clearQueue()
             local from = instance.path
-            exitTo(NO_STATE)
-            instance.path = nil
+            exitSubtree(ROOT)
+            refreshLeaves()
             busy = false
             if #listeners > 0 then
-                report(from, "stop", nil)
+                report(from, nil, "stop", nil)
             end
         end
         function endStep()
@@ -624,7 +862,11 @@ local function createMachine(definition)
                 local event = queue[queueHead + 1]
                 queue[queueHead + 1] = nil
                 queueHead = queueHead + 1
-                processEvent(event)
+                moved = false
+                offerEvent(ROOT, event)
+                if moved then
+                    settleAlways()
+                end
             end
             clearQueue()
             busy = false
@@ -647,67 +889,92 @@ local function createMachine(definition)
             end
             endStep()
         end
-        function fireUpdateHooks(dt)
-            do
-                local level = leafDepth
-                while level >= 0 do
-                    do
-                        local __continue137
-                        repeat
-                            local state = active[level + 1]
-                            local hook = configs[state + 1].update
-                            if hook == nil then
-                                __continue137 = true
-                                break
-                            end
-                            local target = hook(ctx, dt, instance)
-                            if stopRequested then
-                                return true
-                            end
-                            if type(target) == "string" then
-                                transition(
-                                    state,
-                                    resolveTarget(compiled, state, target),
-                                    false,
-                                    nil,
-                                    nil,
-                                    "update"
-                                )
-                                return true
-                            end
-                            __continue137 = true
-                        until true
-                        if not __continue137 then
-                            break
-                        end
+        function addElapsed(state, dt)
+            elapsed[state + 1] = elapsed[state + 1] + dt
+            if parallel[state + 1] == true then
+                local list = children[state + 1]
+                do
+                    local i = 0
+                    while i < #list do
+                        addElapsed(list[i + 1], dt)
+                        i = i + 1
                     end
-                    level = level - 1
                 end
+            end
+            local child = activeChild[state + 1]
+            if child ~= NO_STATE then
+                addElapsed(child, dt)
+            end
+        end
+        function tickRegion(state, dt)
+            return fireUpdateHooks(state, dt) or fireTimers(state)
+        end
+        function fireUpdateHooks(state, dt)
+            if parallel[state + 1] == true then
+                local id = entryId[state + 1]
+                local list = children[state + 1]
+                local regionMoved = false
+                do
+                    local i = 0
+                    while i < #list do
+                        if tickRegion(list[i + 1], dt) then
+                            regionMoved = true
+                            if stopRequested or entryId[state + 1] ~= id then
+                                return true
+                            end
+                        end
+                        i = i + 1
+                    end
+                end
+                if regionMoved then
+                    return true
+                end
+            end
+            local child = activeChild[state + 1]
+            if child ~= NO_STATE and fireUpdateHooks(child, dt) then
+                return true
+            end
+            local hook = configs[state + 1].update
+            if hook == nil then
+                return false
+            end
+            local target = hook(ctx, dt, instance)
+            if stopRequested then
+                return true
+            end
+            if type(target) == "string" then
+                transition(
+                    state,
+                    resolveTarget(compiled, state, target),
+                    false,
+                    nil,
+                    nil,
+                    "update"
+                )
+                return true
             end
             return false
         end
-        function fireTimers()
-            do
-                local level = leafDepth
-                while level >= 0 do
-                    local state = active[level + 1]
-                    local delays = afterDelays[state + 1]
-                    local next = fired[level + 1]
-                    if next < #delays and delays[next + 1] <= elapsed[level + 1] then
-                        fired[level + 1] = next + 1
-                        transition(
-                            state,
-                            afterTargets[state + 1][next + 1],
-                            false,
-                            nil,
-                            nil,
-                            "after"
-                        )
-                        return
-                    end
-                    level = level - 1
-                end
+        function fireTimers(state)
+            local child = activeChild[state + 1]
+            if child ~= NO_STATE and fireTimers(child) then
+                return true
             end
+            local delays = afterDelays[state + 1]
+            local next = fired[state + 1]
+            if next < #delays and delays[next + 1] <= elapsed[state + 1] then
+                fired[state + 1] = next + 1
+                transition(
+                    state,
+                    afterTargets[state + 1][next + 1],
+                    false,
+                    nil,
+                    nil,
+                    "after"
+                )
+                return true
+            end
+            return false
         end
         function update(dt)
             if not running or busy or stopRequested then
@@ -718,15 +985,11 @@ local function createMachine(definition)
                 rebind()
             end
             if not stopRequested then
-                do
-                    local level = 0
-                    while level <= leafDepth do
-                        elapsed[level + 1] = elapsed[level + 1] + dt
-                        level = level + 1
-                    end
-                end
-                if not fireUpdateHooks(dt) then
-                    fireTimers()
+                addElapsed(ROOT, dt)
+                moved = false
+                tickRegion(ROOT, dt)
+                if moved then
+                    settleAlways()
                 end
             end
             endStep()
@@ -742,22 +1005,15 @@ local function createMachine(definition)
             stopNow()
         end
         function matches(path)
-            do
-                local level = 1
-                while level <= leafDepth do
-                    if paths[active[level + 1] + 1] == path then
-                        return true
-                    end
-                    level = level + 1
-                end
-            end
-            return false
+            local state = lookupPath(compiled, path)
+            return state ~= nil and state ~= ROOT and isActive[state + 1] == true
         end
         compiled = definition.compiled
         generation = definition.generation
         paths = compiled.paths
         parent = compiled.parent
-        depth = compiled.depth
+        children = compiled.children
+        parallel = compiled.parallel
         initialChild = compiled.initialChild
         history = compiled.history
         configs = compiled.configs
@@ -766,26 +1022,29 @@ local function createMachine(definition)
         afterDelays = compiled.afterDelays
         afterTargets = compiled.afterTargets
         always = compiled.always
-        active = {}
+        activeChild = {}
+        isActive = {}
         elapsed = {}
         fired = {}
-        scratch = {}
         entryId = {}
         cleanup = {}
         remembered = {}
+        slotCount = 0
         growSlots()
+        leaves = {}
         entryCount = 0
         queue = {}
         queueHead = 0
         queueTail = 0
-        leafDepth = NO_STATE
         running = true
         busy = false
         stopRequested = false
+        moved = false
         listeners = {}
         instance = {
             ctx = ctx,
             path = nil,
+            leaves = leaves,
             matches = matches,
             send = send,
             update = update,
@@ -794,7 +1053,8 @@ local function createMachine(definition)
         }
         busy = true
         enterState(ROOT)
-        enterDown(ROOT, ROOT)
+        enterDefaults(ROOT)
+        refreshLeaves()
         settleAlways()
         endStep()
         return instance

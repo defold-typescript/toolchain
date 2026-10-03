@@ -15,6 +15,17 @@ function shown(path: string | undefined): string {
   return path === undefined ? "(stopped)" : path;
 }
 
+function shownLeaves(leaves: readonly string[]): string {
+  if (leaves.length === 0) {
+    return "(stopped)";
+  }
+  let text = leaves[0] as string;
+  for (let i = 1; i < leaves.length; i++) {
+    text = `${text}, ${leaves[i] as string}`;
+  }
+  return text;
+}
+
 export function inspect<Ctx, E extends EventObject, P extends string>(
   instance: MachineInstance<Ctx, E, P>,
   label: string,
@@ -32,7 +43,7 @@ export function inspect<Ctx, E extends EventObject, P extends string>(
       frame++;
       const p = go.get_world_position(target);
       msg.post("@render:", "draw_debug_text", {
-        text: `${label} ${shown(instance.path)}`,
+        text: `${label} ${shownLeaves(instance.leaves)}`,
         position: vmath.vector3(p.x, p.y + TEXT_OFFSET_Y, p.z),
         color: vmath.vector4(1, 1, 1, 1),
       });

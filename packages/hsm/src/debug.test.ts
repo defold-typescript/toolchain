@@ -102,6 +102,29 @@ describe("inspect", () => {
     ]);
   });
 
+  test("draw shows every region's leaf of a parallel machine, and (stopped) once stopped", () => {
+    const player = defineMachine<object, DoorEv>()({
+      initial: "/alive",
+      states: {
+        alive: {
+          type: "parallel",
+          states: {
+            move: { initial: "/alive/move/idle", states: { idle: {} } },
+            weapon: { initial: "/alive/weapon/ready", states: { ready: {} } },
+          },
+        },
+      },
+    }).start({});
+    const inspector = inspect(player, "player");
+    inspector.draw("/player");
+    player.stop();
+    inspector.draw("/player");
+    expect(posted.map((args) => (args[2] as { text: string }).text)).toEqual([
+      "player /alive/move/idle, /alive/weapon/ready",
+      "player (stopped)",
+    ]);
+  });
+
   test("does nothing in a release build", () => {
     isDebug = false;
     const door = startDoor();
