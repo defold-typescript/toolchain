@@ -524,8 +524,8 @@ export default defineScript({
     self.door.update(dt);
   },
   // Defold message -> event
-  on_message(self, message_id, message) {
-    const event = doorEvents.toEvent(message_id, message);
+  on_message(self, message_id, message, sender) {
+    const event = doorEvents.toEvent(message_id, message, sender);
     if (event !== undefined) {
       self.door.send(event);
     }

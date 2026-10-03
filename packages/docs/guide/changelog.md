@@ -9,11 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.43.1
+## v0.44.0
 
 > Summary:
 >
+> - **[`toEvent` takes the sender](./state-machines.md#the-message-bridge)**.
 > - **[`hsm` timers](./state-machines.md#update-and-after)** fire on time.
+
+### Breaking
+
+- **`hsm` message events carry the sender:** `messageEvents(...).toEvent` takes the `on_message` `sender` as a required third argument, and every `MessageEvent` has an `event.sender` that guards and actions can reply to. Pass `sender` to each `toEvent` call and add it to any `MessageEvent` you build by hand; see [The message bridge](./state-machines.md#the-message-bridge).
 
 ### Fixed
 
