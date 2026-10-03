@@ -2,6 +2,16 @@ export interface EventObject {
   readonly type: string;
 }
 
+export type TransitionCause = "event" | "after" | "update" | "stop";
+
+/** @noSelf */
+export type TransitionListener<E extends EventObject, P extends string = string> = (
+  from: P,
+  to: P | undefined,
+  cause: TransitionCause,
+  event: E | undefined,
+) => void;
+
 /** @noSelf */
 export interface MachineInstance<Ctx, E extends EventObject, P extends string = string> {
   readonly ctx: Ctx;
@@ -10,6 +20,7 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
   readonly send: (event: E) => void;
   readonly update: (dt: number) => void;
   readonly stop: () => void;
+  readonly onTransition: (listener: TransitionListener<E, P>) => void;
 }
 
 export type TransitionAction<Ctx, E extends EventObject, V extends E = E> = (
@@ -437,6 +448,7 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
     let running = true;
     let busy = false;
     let stopRequested = false;
+    const listeners: TransitionListener<E>[] = [];
 
     const instance = {
       ctx,
@@ -445,7 +457,18 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
       send,
       update,
       stop,
+      onTransition,
     };
+
+    function onTransition(listener: TransitionListener<E>): void {
+      listeners.push(listener);
+    }
+
+    function report(from: string, cause: TransitionCause, event: E | undefined): void {
+      for (let i = 0; i < listeners.length; i++) {
+        (listeners[i] as TransitionListener<E>)(from, instance.path, cause, event);
+      }
+    }
 
     function enterState(state: number): void {
       const level = depth[state] as number;
@@ -518,15 +541,20 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
       reenter: boolean,
       actions: readonly TransitionAction<Ctx, E>[] | undefined,
       event: E | undefined,
+      cause: TransitionCause,
     ): void {
       if (target === NO_STATE) {
         runActions(actions, event);
         return;
       }
+      const from = instance.path as string;
       const domain = transitionDomain(compiled, source, target, reenter);
       exitTo(depth[domain] as number);
       runActions(actions, event);
       enterDown(domain, target);
+      if (listeners.length > 0) {
+        report(from, cause, event);
+      }
     }
 
     function runActions(
@@ -552,7 +580,14 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
         for (let i = 0; i < list.length; i++) {
           const candidate = list[i] as Transition<Ctx, E>;
           if (candidate.guard === undefined || candidate.guard(ctx, event)) {
-            transition(state, candidate.target, candidate.reenter, candidate.actions, event);
+            transition(
+              state,
+              candidate.target,
+              candidate.reenter,
+              candidate.actions,
+              event,
+              "event",
+            );
             return;
           }
         }
@@ -572,9 +607,13 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
       running = false;
       busy = true;
       clearQueue();
+      const from = instance.path as string;
       exitTo(NO_STATE);
       instance.path = undefined;
       busy = false;
+      if (listeners.length > 0) {
+        report(from, "stop", undefined);
+      }
     }
 
     function endStep(): void {
@@ -616,7 +655,14 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
           return true;
         }
         if (typeof target === "string") {
-          transition(state, resolveTarget(compiled, state, target), false, undefined, undefined);
+          transition(
+            state,
+            resolveTarget(compiled, state, target),
+            false,
+            undefined,
+            undefined,
+            "update",
+          );
           return true;
         }
       }
@@ -636,6 +682,7 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
             false,
             undefined,
             undefined,
+            "after",
           );
           return;
         }
