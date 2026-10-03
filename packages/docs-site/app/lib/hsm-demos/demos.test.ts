@@ -74,6 +74,24 @@ describe("hsm tutorial demos", () => {
     expect(d.run.path).toBe("/off");
   });
 
+  test("remembering-lamp: turning it back on returns to dim, entering on first", () => {
+    const d = drive("remembering-lamp");
+    d.press("TOGGLE");
+    expect(d.run.path).toBe("/on/bright");
+    d.press("DIM");
+    d.press("TOGGLE");
+    expect(d.run.path).toBe("/off");
+    const mark = d.lines.length;
+    d.press("TOGGLE");
+    expect(d.since(mark, "exit", "enter")).toEqual(["exit /off", "enter /on", "enter /on/dim"]);
+    expect(d.run.path).toBe("/on/dim");
+    expect(d.ctx.switches).toBe(2);
+    d.press("DIM");
+    d.press("TOGGLE");
+    d.press("TOGGLE");
+    expect(d.run.path).toBe("/on/bright");
+  });
+
   test("buddy: a bump that uses up the energy exits follow and alive, then enters resting", () => {
     const d = drive("buddy");
     d.press("SEE_PLAYER");
