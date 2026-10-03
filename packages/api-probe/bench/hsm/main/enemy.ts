@@ -30,6 +30,7 @@ export default defineScript({
       // allocates for itself (a JIT trace, a deeper Lua stack) the first time a
       // path runs, so the bench counts allocating calls rather than demanding
       // zero bytes.
+      let path = self.machine.path;
       let kb0 = collectgarbage("count");
       self.machine.update(dt);
       let kb1 = collectgarbage("count");
@@ -37,8 +38,11 @@ export default defineScript({
         benchStats.updateKb += math.abs(kb1 - kb0);
         benchStats.updateAllocs += 1;
       }
+      benchStats.allocUpdates += 1;
+      if (self.machine.path !== path) benchStats.allocUpdateTransitions += 1;
       if (sending) {
         self.sent += 1;
+        path = self.machine.path;
         kb0 = collectgarbage("count");
         self.machine.send(event);
         kb1 = collectgarbage("count");
@@ -46,23 +50,29 @@ export default defineScript({
           benchStats.sendKb += math.abs(kb1 - kb0);
           benchStats.sendAllocs += 1;
         }
-        benchStats.sends += 1;
+        benchStats.allocSends += 1;
+        if (self.machine.path !== path) benchStats.allocSendTransitions += 1;
       }
       return;
     }
 
     if (benchStats.phase === "time") {
+      let path = self.machine.path;
       let t0 = socket.gettime();
       self.machine.update(dt);
       let t1 = socket.gettime();
       benchStats.updateSeconds += t1 - t0;
+      benchStats.timedUpdates += 1;
+      if (self.machine.path !== path) benchStats.timedUpdateTransitions += 1;
       if (sending) {
         self.sent += 1;
+        path = self.machine.path;
         t0 = socket.gettime();
         self.machine.send(event);
         t1 = socket.gettime();
         benchStats.sendSeconds += t1 - t0;
         benchStats.timedSends += 1;
+        if (self.machine.path !== path) benchStats.timedSendTransitions += 1;
       }
       return;
     }
