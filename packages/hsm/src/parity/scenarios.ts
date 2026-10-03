@@ -584,6 +584,56 @@ function shallowHistory(): string[] {
   return log;
 }
 
+function alwaysTransitions(): string[] {
+  const log: string[] = [];
+  const ctx = newCtx(log);
+  const m = defineMachine<Ctx, Ev>()({
+    initial: "/boot",
+    on: { BACK: "/idle" },
+    states: {
+      boot: { ...logged("boot"), always: "/idle" },
+      idle: { ...logged("idle"), on: { GO: "/route", HIT: "/r1", UP: "/a" } },
+      route: {
+        ...logged("route"),
+        always: [{ target: "/x", guard: (ctx) => ctx.flag }, { target: "/y" }],
+      },
+      x: logged("x"),
+      y: logged("y"),
+      r1: {
+        enter: (ctx, m) => {
+          ctx.log.push("enter r1");
+          m.send({ type: "PING" });
+        },
+        always: "/r2",
+        on: { PING: "/y" },
+      },
+      r2: { always: "/r3", on: { PING: "/y" } },
+      r3: { on: { PING: "/x" } },
+      a: { always: "/b" },
+      b: { always: "/a" },
+    },
+  }).start(ctx);
+  log.push(`path=${shown(m.path)}`);
+  m.onTransition((from, to, cause, event) => {
+    log.push(`${shown(from)} -> ${shown(to)} ${cause} ${event === undefined ? "-" : event.type}`);
+  });
+  m.send({ type: "GO" });
+  log.push(`path=${shown(m.path)}`);
+  ctx.flag = true;
+  m.send({ type: "BACK" });
+  m.send({ type: "GO" });
+  log.push(`path=${shown(m.path)}`);
+  m.send({ type: "BACK" });
+  m.send({ type: "HIT" });
+  log.push(`path=${shown(m.path)}`);
+  m.send({ type: "BACK" });
+  recordError(log, () => m.send({ type: "UP" }));
+  log.push(`path=${shown(m.path)}`);
+  m.send({ type: "BACK" });
+  log.push(`path=${shown(m.path)}`);
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -599,6 +649,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "onTransition reports every cause", run: () => onTransitionReports() },
   { name: "hot reload", run: () => hotReload() },
   { name: "shallow history", run: () => shallowHistory() },
+  { name: "always transitions", run: () => alwaysTransitions() },
 ];
 
 export function runScenario(name: string): string {

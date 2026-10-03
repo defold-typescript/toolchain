@@ -2,7 +2,7 @@ export interface EventObject {
   readonly type: string;
 }
 
-export type TransitionCause = "event" | "after" | "update" | "stop" | "reload";
+export type TransitionCause = "event" | "after" | "update" | "stop" | "reload" | "always";
 
 /** @noSelf */
 export type TransitionListener<E extends EventObject, P extends string = string> = (
@@ -43,6 +43,17 @@ export type TransitionSpec<Ctx, E extends EventObject, V extends E = E> =
   // Lua cannot tell [] from {}, so an empty list would compile to a targetless transition.
   | readonly [TransitionConfig<Ctx, E, V>, ...TransitionConfig<Ctx, E, V>[]];
 
+/** @noSelf */
+export interface AlwaysConfig<Ctx> {
+  readonly target: string;
+  readonly guard?: (ctx: Ctx) => boolean;
+}
+
+export type AlwaysSpec<Ctx> =
+  | string
+  | AlwaysConfig<Ctx>
+  | readonly [AlwaysConfig<Ctx>, ...AlwaysConfig<Ctx>[]];
+
 export type OnConfig<Ctx, E extends EventObject> = {
   readonly [K in E["type"]]?: TransitionSpec<Ctx, E, Extract<E, { type: K }>>;
 };
@@ -70,6 +81,7 @@ export interface StateConfig<Ctx, E extends EventObject> {
   readonly states?: { readonly [name: string]: StateConfig<Ctx, E> };
   readonly on?: OnConfig<Ctx, E>;
   readonly after?: { readonly [seconds: number]: string };
+  readonly always?: AlwaysSpec<Ctx>;
   readonly enter?: StateHook<Ctx, E>;
   readonly exit?: StateHook<Ctx, E>;
   readonly update?: UpdateHook<Ctx, E>;
@@ -129,6 +141,7 @@ type PathCheck<S, Self extends string, All extends string, Ev extends string> = 
   readonly after?: S extends { readonly after: infer After }
     ? { readonly [K in keyof After]: All }
     : unknown;
+  readonly always?: S extends { readonly always: unknown } ? SpecCheck<All> : unknown;
   readonly enter?: unknown;
   readonly exit?: unknown;
   readonly update?: unknown;
@@ -166,11 +179,13 @@ interface Compiled<Ctx, E extends EventObject> {
   readonly transitions: Transition<Ctx, E>[][];
   readonly afterDelays: number[][];
   readonly afterTargets: number[][];
+  readonly always: Transition<Ctx, E>[][];
   readonly pathIndex: { [path: string]: number };
 }
 
 const ROOT = 0;
 const NO_STATE = -1;
+const ALWAYS_LIMIT = 10;
 
 function describePath(path: string): string {
   return path === "" ? "(root)" : path;
@@ -329,6 +344,29 @@ function compileOn<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, index
   }
 }
 
+function compileAlways<Ctx, E extends EventObject>(
+  compiled: Compiled<Ctx, E>,
+  index: number,
+): void {
+  const list: Transition<Ctx, E>[] = [];
+  compiled.always[index] = list;
+  const spec = (compiled.configs[index] as StateConfig<Ctx, E>).always;
+  if (spec === undefined) {
+    return;
+  }
+  const candidates: readonly (string | AlwaysConfig<Ctx>)[] =
+    typeof spec === "string" || (spec as readonly AlwaysConfig<Ctx>[])[0] === undefined
+      ? [spec as string | AlwaysConfig<Ctx>]
+      : (spec as readonly AlwaysConfig<Ctx>[]);
+  for (let i = 0; i < candidates.length; i++) {
+    const candidate = candidates[i] as string | AlwaysConfig<Ctx>;
+    if (typeof candidate !== "string" && candidate.target === undefined) {
+      throw `hsm: state "${describePath(compiled.paths[index] as string)}" has an always transition with no target`;
+    }
+    list.push(compileTransition(compiled, index, candidate as string | TransitionConfig<Ctx, E>));
+  }
+}
+
 const NOT_A_DELAY = -1;
 
 // Number-literal keys arrive as numbers in Lua and as canonical number strings in JavaScript.
@@ -390,6 +428,7 @@ function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Com
     transitions: [],
     afterDelays: [],
     afterTargets: [],
+    always: [],
     pathIndex: {},
   };
   registerState(compiled, config, NO_STATE, "");
@@ -397,6 +436,7 @@ function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Com
     compileInitial(compiled, index);
     compileOn(compiled, index);
     compileAfter(compiled, index);
+    compileAlways(compiled, index);
   }
   return compiled;
 }
@@ -458,6 +498,7 @@ function createMachine<Ctx, E extends EventObject>(
     let transitions = compiled.transitions;
     let afterDelays = compiled.afterDelays;
     let afterTargets = compiled.afterTargets;
+    let always = compiled.always;
     const active: number[] = [];
     const elapsed: number[] = [];
     const fired: number[] = [];
@@ -516,6 +557,7 @@ function createMachine<Ctx, E extends EventObject>(
       transitions = compiled.transitions;
       afterDelays = compiled.afterDelays;
       afterTargets = compiled.afterTargets;
+      always = compiled.always;
       growSlots();
       let survivor = 0;
       active[0] = ROOT;
@@ -543,6 +585,7 @@ function createMachine<Ctx, E extends EventObject>(
       if (listeners.length > 0) {
         report(from, "reload", undefined);
       }
+      settleAlways();
     }
 
     function onTransition(listener: TransitionListener<E>): void {
@@ -670,6 +713,38 @@ function createMachine<Ctx, E extends EventObject>(
       if (listeners.length > 0) {
         report(from, cause, event);
       }
+      if (cause !== "always") {
+        settleAlways();
+      }
+    }
+
+    function settleAlways(): void {
+      for (let moves = 0; !stopRequested; moves++) {
+        if (!takeAlways(moves === ALWAYS_LIMIT)) {
+          return;
+        }
+      }
+    }
+
+    function takeAlways(overLimit: boolean): boolean {
+      for (let level = leafDepth; level >= 0; level--) {
+        const state = active[level] as number;
+        const list = always[state] as Transition<Ctx, E>[];
+        for (let i = 0; i < list.length; i++) {
+          const candidate = list[i] as Transition<Ctx, E>;
+          const guard = candidate.guard as ((ctx: Ctx) => boolean) | undefined;
+          if (guard === undefined || guard(ctx)) {
+            if (overLimit) {
+              clearQueue();
+              busy = false;
+              throw `hsm: state "${describePath(paths[state] as string)}" took ${ALWAYS_LIMIT} always transitions in a row; check for an always loop`;
+            }
+            transition(state, candidate.target, false, undefined, undefined, "always");
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     function runActions(
@@ -849,6 +924,7 @@ function createMachine<Ctx, E extends EventObject>(
     busy = true;
     enterState(ROOT);
     enterDown(ROOT, ROOT);
+    settleAlways();
     endStep();
     return instance;
   }
