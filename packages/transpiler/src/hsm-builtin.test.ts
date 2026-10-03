@@ -37,10 +37,7 @@ const SEQUENCE = [
   '  initial: "/opening",',
   "  states: {",
   "    opening: {",
-  "      invoke: sequence(async (_ctx, signal) => {",
-  "        await signal.wait(0.5);",
-  '        return { type: "OPENED" };',
-  "      }),",
+  "      invoke: sequence((_ctx, signal) => signal.wait(0.5)),",
   '      on: { OPENED: "/open" },',
   "    },",
   "    open: {},",
@@ -102,6 +99,26 @@ describe("hsm as a built-in import", () => {
     expect(Object.keys(result.hsmModules ?? {})).toEqual(["async", "index"]);
     expect(result.lualib).toBeDefined();
     expect(result.hsmModules?.async).toContain('require("lualib_bundle")');
+    const required = new Set(result.hsmModules?.async?.match(/__TS__\w+/g));
+    expect(required.size).toBeGreaterThan(0);
+    for (const name of required) {
+      expect(result.lualib).toContain(`${name} = ${name}`);
+    }
+  });
+
+  test("a type-only async import selects nothing and ships no lualib bundle", () => {
+    const source = [
+      'import type { SequenceSignal } from "@defold-typescript/types/hsm/async";',
+      "",
+      "export function cancelled(signal: SequenceSignal): boolean {",
+      "  return signal.aborted;",
+      "}",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "cancel.ts": source } });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.hsmModules).toBeUndefined();
+    expect(result.lualib).toBeUndefined();
   });
 
   test("a program with no hsm import selects nothing", () => {

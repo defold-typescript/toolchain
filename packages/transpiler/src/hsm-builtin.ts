@@ -163,20 +163,47 @@ function lowerSpecifier(module: HsmModule): ts.StringLiteral {
 
 type Lowered = ReturnType<TransformationContext["superTransformStatements"]>;
 
+function loweredAnything(lowered: Lowered): boolean {
+  return Array.isArray(lowered) ? lowered.length > 0 : lowered !== undefined;
+}
+
+// The same resolver verdict TSTL's own import transform uses to decide which
+// bindings it requires, so the bundle and the emitted require cannot disagree.
+// Takes the original node: the resolver has no binding for a synthesized copy.
+function importSurvivesElision(
+  node: ts.ImportDeclaration,
+  context: TransformationContext,
+): boolean {
+  const clause = node.importClause;
+  if (clause === undefined) {
+    return true;
+  }
+  const { resolver } = context;
+  if (clause.name !== undefined && resolver.isReferencedAliasDeclaration(clause)) {
+    return true;
+  }
+  const bindings = clause.namedBindings;
+  if (bindings === undefined) {
+    return false;
+  }
+  if (ts.isNamespaceImport(bindings)) {
+    return resolver.isReferencedAliasDeclaration(bindings);
+  }
+  return bindings.elements.some((element) => resolver.isReferencedAliasDeclaration(element));
+}
+
 // TSTL writes `lualib_bundle.lua` only for features a user chunk registers; it
 // never sees the hsm module's own source, which the CLI writes beside the build.
-// An elided import (type-only, unused) registers nothing.
-function registerLualib(
-  module: HsmModule,
-  lowered: Lowered,
-  context: TransformationContext,
-): Lowered {
-  const emitted = Array.isArray(lowered) ? lowered.length > 0 : lowered !== undefined;
+// An elided import (type-only, unused) registers nothing. The import visitor
+// passes the resolver's elision verdict, because TSTL's import transform always
+// returns nothing and queues its require on the scope instead; the export
+// visitor passes whether its lowered statements are non-empty, because TSTL's
+// export transform returns them.
+function registerLualib(module: HsmModule, emitted: boolean, context: TransformationContext): void {
   if (emitted && HSM_LUALIB_MODULES.has(module.name)) {
     context.usedLuaLibFeatures.add(LuaLibFeature.Promise);
     context.usedLuaLibFeatures.add(LuaLibFeature.New);
   }
-  return lowered;
 }
 
 export const hsmLoweringPlugin: Plugin = {
@@ -186,18 +213,15 @@ export const hsmLoweringPlugin: Plugin = {
       if (module === undefined) {
         return context.superTransformStatements(node);
       }
-      return registerLualib(
-        module,
-        context.superTransformStatements(
-          ts.factory.updateImportDeclaration(
-            node,
-            node.modifiers,
-            node.importClause,
-            lowerSpecifier(module),
-            node.attributes,
-          ),
+      registerLualib(module, importSurvivesElision(node, context), context);
+      return context.superTransformStatements(
+        ts.factory.updateImportDeclaration(
+          node,
+          node.modifiers,
+          node.importClause,
+          lowerSpecifier(module),
+          node.attributes,
         ),
-        context,
       );
     },
     [ts.SyntaxKind.ExportDeclaration]: (node, context) => {
@@ -205,20 +229,18 @@ export const hsmLoweringPlugin: Plugin = {
       if (module === undefined) {
         return context.superTransformStatements(node);
       }
-      return registerLualib(
-        module,
-        context.superTransformStatements(
-          ts.factory.updateExportDeclaration(
-            node,
-            node.modifiers,
-            node.isTypeOnly,
-            node.exportClause,
-            lowerSpecifier(module),
-            node.attributes,
-          ),
+      const lowered = context.superTransformStatements(
+        ts.factory.updateExportDeclaration(
+          node,
+          node.modifiers,
+          node.isTypeOnly,
+          node.exportClause,
+          lowerSpecifier(module),
+          node.attributes,
         ),
-        context,
       );
+      registerLualib(module, loweredAnything(lowered), context);
+      return lowered;
     },
   },
 };

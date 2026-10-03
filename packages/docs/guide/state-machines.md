@@ -341,7 +341,39 @@ export const intro = defineMachine<IntroCtx, IntroEvent>()({
 });
 ```
 
-A sequence never resumes into a state it has left. Leaving `playing` (here on `SKIP`) cancels the pending `wait`, and the code after it never runs. An error thrown inside the sequence leaves the machine where it is and is raised again from a fresh timer callback, so it shows in the engine console. A `signal.wait` waits on `timer.delay`, not on `update(dt)`, so it keeps counting while a machine's updates are paused.
+Leaving the state cancels a pending `signal.wait`, so the code after it never runs: leaving `playing` (here on `SKIP`) stops the sequence at its current `wait`. An event the sequence returns after the state is left is ignored. An error thrown inside the sequence leaves the machine where it is and is raised again from a fresh timer callback, so it shows in the engine console. A `signal.wait` waits on `timer.delay`, not on `update(dt)`, so it keeps counting while a machine's updates are paused.
+
+Only `signal.wait` is cancelled. Any other promise you `await` (a request, a message reply, a promise of your own) can still resolve after the state is left, and the code after it then runs. Check `signal.aborted` after such an `await`, and return before doing work that belongs to the state:
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+import { sequence } from "@defold-typescript/types/hsm/async";
+
+declare function loadScores(): Promise<readonly number[]>;
+
+interface BoardCtx {
+  readonly board: Url;
+}
+
+type BoardEvent = { type: "LOADED" } | { type: "BACK" };
+
+export const scores = defineMachine<BoardCtx, BoardEvent>()({
+  initial: "/loading",
+  states: {
+    loading: {
+      invoke: sequence(async (ctx, signal) => {
+        const loaded = await loadScores();
+        if (signal.aborted) return;
+        msg.post(ctx.board, "enable");
+        return loaded.length > 0 ? { type: "LOADED" } : { type: "BACK" };
+      }),
+      on: { LOADED: "/shown", BACK: "/menu" },
+    },
+    shown: {},
+    menu: {},
+  },
+});
+```
 
 ### Watchdog
 
