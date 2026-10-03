@@ -253,19 +253,73 @@ local function transitionDomain(compiled, source, target, reenter)
     end
     return domain
 end
-local function createMachine(config)
-    local compiled = compile(config)
-    local paths = compiled.paths
-    local parent = compiled.parent
-    local depth = compiled.depth
-    local initialChild = compiled.initialChild
-    local configs = compiled.configs
-    local onIndex = compiled.onIndex
-    local transitions = compiled.transitions
-    local afterDelays = compiled.afterDelays
-    local afterTargets = compiled.afterTargets
+local registered = {}
+local function createMachine(definition)
     local function start(ctx)
-        local onTransition, report, enterState, exitTo, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, active, elapsed, fired, scratch, entryId, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, listeners, instance
+        local growSlots, rebind, onTransition, report, enterState, exitTo, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, depth, initialChild, configs, onIndex, transitions, afterDelays, afterTargets, active, elapsed, fired, scratch, entryId, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, listeners, instance
+        function growSlots()
+            do
+                local i = #active
+                while i <= compiled.maxDepth do
+                    active[i + 1] = NO_STATE
+                    elapsed[i + 1] = 0
+                    fired[i + 1] = 0
+                    scratch[i + 1] = NO_STATE
+                    entryId[i + 1] = 0
+                    i = i + 1
+                end
+            end
+        end
+        function rebind()
+            local from = instance.path
+            local oldPaths = paths
+            local oldLeafDepth = leafDepth
+            compiled = definition.compiled
+            generation = definition.generation
+            paths = compiled.paths
+            parent = compiled.parent
+            depth = compiled.depth
+            initialChild = compiled.initialChild
+            configs = compiled.configs
+            onIndex = compiled.onIndex
+            transitions = compiled.transitions
+            afterDelays = compiled.afterDelays
+            afterTargets = compiled.afterTargets
+            growSlots()
+            local survivor = 0
+            active[1] = ROOT
+            do
+                local level = 1
+                while level <= oldLeafDepth do
+                    local state = lookupPath(compiled, oldPaths[active[level + 1] + 1])
+                    if state == nil then
+                        break
+                    end
+                    active[level + 1] = state
+                    survivor = level
+                    level = level + 1
+                end
+            end
+            do
+                local level = survivor + 1
+                while level <= oldLeafDepth do
+                    active[level + 1] = NO_STATE
+                    elapsed[level + 1] = 0
+                    fired[level + 1] = 0
+                    entryId[level + 1] = 0
+                    level = level + 1
+                end
+            end
+            leafDepth = survivor
+            local survivorState = active[survivor + 1]
+            if survivor == oldLeafDepth and initialChild[survivorState + 1] == NO_STATE then
+                return
+            end
+            enterDown(survivorState, survivorState)
+            if #listeners > 0 then
+                report(from, "reload", nil)
+            end
+        end
         function onTransition(listener)
             listeners[#listeners + 1] = listener
         end
@@ -371,12 +425,12 @@ local function createMachine(config)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue84
+                        local __continue93
                         repeat
                             local state = active[level + 1]
                             local listIndex = onIndex[state + 1][event.type]
                             if type(listIndex) ~= "number" then
-                                __continue84 = true
+                                __continue93 = true
                                 break
                             end
                             local list = transitions[listIndex + 1]
@@ -398,9 +452,9 @@ local function createMachine(config)
                                     i = i + 1
                                 end
                             end
-                            __continue84 = true
+                            __continue93 = true
                         until true
-                        if not __continue84 then
+                        if not __continue93 then
                             break
                         end
                     end
@@ -451,6 +505,9 @@ local function createMachine(config)
                 return
             end
             busy = true
+            if generation ~= definition.generation then
+                rebind()
+            end
             endStep()
         end
         function fireUpdateHooks(dt)
@@ -458,12 +515,12 @@ local function createMachine(config)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue101
+                        local __continue111
                         repeat
                             local state = active[level + 1]
                             local hook = configs[state + 1].update
                             if hook == nil then
-                                __continue101 = true
+                                __continue111 = true
                                 break
                             end
                             local target = hook(ctx, dt, instance)
@@ -481,9 +538,9 @@ local function createMachine(config)
                                 )
                                 return true
                             end
-                            __continue101 = true
+                            __continue111 = true
                         until true
-                        if not __continue101 then
+                        if not __continue111 then
                             break
                         end
                     end
@@ -520,15 +577,20 @@ local function createMachine(config)
                 return
             end
             busy = true
-            do
-                local level = 0
-                while level <= leafDepth do
-                    elapsed[level + 1] = elapsed[level + 1] + dt
-                    level = level + 1
-                end
+            if generation ~= definition.generation then
+                rebind()
             end
-            if not fireUpdateHooks(dt) then
-                fireTimers()
+            if not stopRequested then
+                do
+                    local level = 0
+                    while level <= leafDepth do
+                        elapsed[level + 1] = elapsed[level + 1] + dt
+                        level = level + 1
+                    end
+                end
+                if not fireUpdateHooks(dt) then
+                    fireTimers()
+                end
             end
             endStep()
         end
@@ -554,23 +616,23 @@ local function createMachine(config)
             end
             return false
         end
-        local slots = compiled.maxDepth + 1
+        compiled = definition.compiled
+        generation = definition.generation
+        paths = compiled.paths
+        parent = compiled.parent
+        depth = compiled.depth
+        initialChild = compiled.initialChild
+        configs = compiled.configs
+        onIndex = compiled.onIndex
+        transitions = compiled.transitions
+        afterDelays = compiled.afterDelays
+        afterTargets = compiled.afterTargets
         active = {}
         elapsed = {}
         fired = {}
         scratch = {}
         entryId = {}
-        do
-            local i = 0
-            while i < slots do
-                active[i + 1] = NO_STATE
-                elapsed[i + 1] = 0
-                fired[i + 1] = 0
-                scratch[i + 1] = NO_STATE
-                entryId[i + 1] = 0
-                i = i + 1
-            end
-        end
+        growSlots()
         entryCount = 0
         queue = {}
         queueHead = 0
@@ -597,8 +659,25 @@ local function createMachine(config)
     end
     return {start = start}
 end
-function ____exports.defineMachine()
-    return createMachine
+local function define(key, config)
+    local compiled = compile(config)
+    if key == nil then
+        return createMachine({compiled = compiled, generation = 0})
+    end
+    local existing = registered[key]
+    if existing ~= nil then
+        local definition = existing.definition
+        definition.compiled = compiled
+        definition.generation = definition.generation + 1
+        return existing.machine
+    end
+    local definition = {compiled = compiled, generation = 0}
+    local machine = createMachine(definition)
+    registered[key] = {definition = definition, machine = machine}
+    return machine
+end
+function ____exports.defineMachine(key)
+    return function(config) return define(key, config) end
 end
 return ____exports
 "
