@@ -187,6 +187,7 @@ function proxyOf(s: Session, m: Instance): Instance {
       if (s.depth > 0) emit(s, "note", "stop() requested; finishing this step first");
       m.stop();
     },
+    onTransition: (listener) => m.onTransition(listener),
   };
   return s.proxy;
 }
