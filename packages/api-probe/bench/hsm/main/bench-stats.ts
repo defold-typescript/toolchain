@@ -8,14 +8,18 @@ export const benchStats: {
   sendKb: number;
   updateAllocs: number;
   sendAllocs: number;
-  allocUpdates: number;
-  allocSends: number;
-  timedUpdates: number;
-  timedSends: number;
-  allocUpdateTransitions: number;
-  allocSendTransitions: number;
-  timedUpdateTransitions: number;
-  timedSendTransitions: number;
+  allocUpdateSlots: number;
+  allocSendSlots: number;
+  timedUpdateSlots: number;
+  timedSendSlots: number;
+  allocApproachUpdates: number;
+  allocStalledUpdates: number;
+  allocAliveHits: number;
+  allocStalledHits: number;
+  timedApproachUpdates: number;
+  timedStalledUpdates: number;
+  timedAliveHits: number;
+  timedStalledHits: number;
   timedHeapProbes: number;
 } = {
   phase: "warmup",
@@ -25,13 +29,17 @@ export const benchStats: {
   sendKb: 0,
   updateAllocs: 0,
   sendAllocs: 0,
-  allocUpdates: 0,
-  allocSends: 0,
-  timedUpdates: 0,
-  timedSends: 0,
-  allocUpdateTransitions: 0,
-  allocSendTransitions: 0,
-  timedUpdateTransitions: 0,
-  timedSendTransitions: 0,
+  allocUpdateSlots: 0,
+  allocSendSlots: 0,
+  timedUpdateSlots: 0,
+  timedSendSlots: 0,
+  allocApproachUpdates: 0,
+  allocStalledUpdates: 0,
+  allocAliveHits: 0,
+  allocStalledHits: 0,
+  timedApproachUpdates: 0,
+  timedStalledUpdates: 0,
+  timedAliveHits: 0,
+  timedStalledHits: 0,
   timedHeapProbes: 0,
 };

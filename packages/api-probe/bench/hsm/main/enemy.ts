@@ -6,6 +6,12 @@ const SPOT = { type: "SPOT" } as const;
 const LOSE = { type: "LOSE" } as const;
 const HIT = { type: "HIT" } as const;
 
+// The witness counts rely on two hooks in enemy-machine.ts: approach's update
+// adds 1 to ctx.ticks on every call, and alive's HIT either adds 1 to ctx.hits
+// or moves to /dead.
+const APPROACH = "/alive/chase/approach";
+const DEAD = "/dead";
+
 const SEND_EVERY = 20;
 
 let spawned = 0;
@@ -31,6 +37,7 @@ export default defineScript({
       // path runs, so the bench counts allocating calls rather than demanding
       // zero bytes.
       let path = self.machine.path;
+      const ticks = self.machine.ctx.ticks;
       let kb0 = collectgarbage("count");
       self.machine.update(dt);
       let kb1 = collectgarbage("count");
@@ -38,11 +45,15 @@ export default defineScript({
         benchStats.updateKb += math.abs(kb1 - kb0);
         benchStats.updateAllocs += 1;
       }
-      benchStats.allocUpdates += 1;
-      if (self.machine.path !== path) benchStats.allocUpdateTransitions += 1;
+      benchStats.allocUpdateSlots += 1;
+      if (path === APPROACH) {
+        benchStats.allocApproachUpdates += 1;
+        if (self.machine.ctx.ticks !== ticks + 1) benchStats.allocStalledUpdates += 1;
+      }
       if (sending) {
         self.sent += 1;
         path = self.machine.path;
+        const hits = self.machine.ctx.hits;
         kb0 = collectgarbage("count");
         self.machine.send(event);
         kb1 = collectgarbage("count");
@@ -50,29 +61,44 @@ export default defineScript({
           benchStats.sendKb += math.abs(kb1 - kb0);
           benchStats.sendAllocs += 1;
         }
-        benchStats.allocSends += 1;
-        if (self.machine.path !== path) benchStats.allocSendTransitions += 1;
+        benchStats.allocSendSlots += 1;
+        if (event === HIT && path !== DEAD) {
+          benchStats.allocAliveHits += 1;
+          if (self.machine.ctx.hits === hits && self.machine.path === path) {
+            benchStats.allocStalledHits += 1;
+          }
+        }
       }
       return;
     }
 
     if (benchStats.phase === "time") {
       let path = self.machine.path;
+      const ticks = self.machine.ctx.ticks;
       let t0 = socket.gettime();
       self.machine.update(dt);
       let t1 = socket.gettime();
       benchStats.updateSeconds += t1 - t0;
-      benchStats.timedUpdates += 1;
-      if (self.machine.path !== path) benchStats.timedUpdateTransitions += 1;
+      benchStats.timedUpdateSlots += 1;
+      if (path === APPROACH) {
+        benchStats.timedApproachUpdates += 1;
+        if (self.machine.ctx.ticks !== ticks + 1) benchStats.timedStalledUpdates += 1;
+      }
       if (sending) {
         self.sent += 1;
         path = self.machine.path;
+        const hits = self.machine.ctx.hits;
         t0 = socket.gettime();
         self.machine.send(event);
         t1 = socket.gettime();
         benchStats.sendSeconds += t1 - t0;
-        benchStats.timedSends += 1;
-        if (self.machine.path !== path) benchStats.timedSendTransitions += 1;
+        benchStats.timedSendSlots += 1;
+        if (event === HIT && path !== DEAD) {
+          benchStats.timedAliveHits += 1;
+          if (self.machine.ctx.hits === hits && self.machine.path === path) {
+            benchStats.timedStalledHits += 1;
+          }
+        }
       }
       return;
     }
