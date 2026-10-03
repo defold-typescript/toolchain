@@ -16,6 +16,7 @@ export type TransitionListener<E extends EventObject, P extends string = string>
 export interface MachineInstance<Ctx, E extends EventObject, P extends string = string> {
   readonly ctx: Ctx;
   readonly path: P | undefined;
+  readonly leaves: readonly P[];
   readonly matches: (path: P) => boolean;
   readonly send: (event: E) => void;
   readonly update: (dt: number) => void;
@@ -76,6 +77,7 @@ export type InvokeStart<Ctx, E extends EventObject> = (
 
 /** @noSelf */
 export interface StateConfig<Ctx, E extends EventObject> {
+  readonly type?: "parallel";
   readonly initial?: string;
   readonly history?: "shallow";
   readonly states?: { readonly [name: string]: StateConfig<Ctx, E> };
@@ -126,9 +128,12 @@ type SpecCheck<T> = T | TransitionCheck<T> | readonly TransitionCheck<T>[];
 // Hooks are listed as unknown so a hooks-only leaf still shares a property with this
 // all-optional type; without them TypeScript rejects it as a weak-type mismatch.
 type PathCheck<S, Self extends string, All extends string, Ev extends string> = {
-  readonly initial?: S extends { readonly states: infer Children }
-    ? `${Self}/${keyof Children & string}`
-    : never;
+  readonly type?: unknown;
+  readonly initial?: S extends { readonly type: "parallel" }
+    ? never
+    : S extends { readonly states: infer Children }
+      ? `${Self}/${keyof Children & string}`
+      : never;
   readonly history?: unknown;
   readonly states?: S extends { readonly states: infer Children }
     ? {
@@ -168,11 +173,12 @@ interface Transition<Ctx, E extends EventObject> {
 
 interface Compiled<Ctx, E extends EventObject> {
   count: number;
-  maxDepth: number;
   readonly configs: StateConfig<Ctx, E>[];
   readonly paths: string[];
   readonly parent: number[];
   readonly depth: number[];
+  readonly children: number[][];
+  readonly parallel: boolean[];
   readonly initialChild: number[];
   readonly history: boolean[];
   readonly onIndex: { [type: string]: number }[];
@@ -223,14 +229,13 @@ function registerState<Ctx, E extends EventObject>(
 ): void {
   const index = compiled.count;
   compiled.count = index + 1;
-  const depth = parentIndex === NO_STATE ? 0 : (compiled.depth[parentIndex] as number) + 1;
-  if (depth > compiled.maxDepth) {
-    compiled.maxDepth = depth;
-  }
   compiled.configs[index] = config;
   compiled.paths[index] = path;
   compiled.parent[index] = parentIndex;
-  compiled.depth[index] = depth;
+  compiled.depth[index] =
+    parentIndex === NO_STATE ? 0 : (compiled.depth[parentIndex] as number) + 1;
+  compiled.children[index] = [];
+  compiled.parallel[index] = config.type === "parallel";
   compiled.initialChild[index] = NO_STATE;
   compiled.history[index] = config.history === "shallow";
   compiled.pathIndex[path] = index;
@@ -242,7 +247,17 @@ function registerState<Ctx, E extends EventObject>(
     if (name === "" || name.indexOf("/") !== -1) {
       throw `hsm: state "${describePath(path)}" has a child named "${name}"; state names must be non-empty and contain no "/"`;
     }
-    registerState(compiled, children[name] as StateConfig<Ctx, E>, index, `${path}/${name}`);
+    const child = compiled.count;
+    const childPath = `${path}/${name}`;
+    registerState(compiled, children[name] as StateConfig<Ctx, E>, index, childPath);
+    // Region order is child-name order: neither Lua's pairs nor JavaScript keeps the written order.
+    const siblings = compiled.children[index] as number[];
+    let slot = siblings.length;
+    while (slot > 0 && childPath < (compiled.paths[siblings[slot - 1] as number] as string)) {
+      siblings[slot] = siblings[slot - 1] as number;
+      slot--;
+    }
+    siblings[slot] = child;
   }
 }
 
@@ -264,6 +279,21 @@ function compileInitial<Ctx, E extends EventObject>(
   const config = compiled.configs[index] as StateConfig<Ctx, E>;
   const path = compiled.paths[index] as string;
   const initial = config.initial;
+  if (compiled.parallel[index] === true) {
+    if (index === ROOT) {
+      throw `hsm: state "${describePath(path)}" is parallel; put the regions in a child state`;
+    }
+    if (initial !== undefined) {
+      throw `hsm: parallel state "${path}" has initial "${initial}"; every child is entered`;
+    }
+    if (compiled.history[index] === true) {
+      throw `hsm: parallel state "${path}" has history; only a compound state resumes a child`;
+    }
+    if (!hasChildren(config)) {
+      throw `hsm: parallel state "${path}" has no child states`;
+    }
+    return;
+  }
   if (!hasChildren(config)) {
     if (initial !== undefined) {
       throw `hsm: state "${describePath(path)}" has initial "${initial}" but no child states`;
@@ -417,11 +447,12 @@ function compileAfter<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, in
 function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Compiled<Ctx, E> {
   const compiled: Compiled<Ctx, E> = {
     count: 0,
-    maxDepth: 0,
     configs: [],
     paths: [],
     parent: [],
     depth: [],
+    children: [],
+    parallel: [],
     initialChild: [],
     history: [],
     onIndex: [],
@@ -460,11 +491,15 @@ function transitionDomain<Ctx, E extends EventObject>(
   target: number,
   reenter: boolean,
 ): number {
-  if (source === ROOT || (!reenter && isAncestorOrSelf(compiled, source, target))) {
-    return source;
+  let domain = source;
+  if (source !== ROOT && (reenter || !isAncestorOrSelf(compiled, source, target))) {
+    domain = compiled.parent[source] as number;
+    while (domain !== ROOT && (domain === target || !isAncestorOrSelf(compiled, domain, target))) {
+      domain = compiled.parent[domain] as number;
+    }
   }
-  let domain = compiled.parent[source] as number;
-  while (domain !== ROOT && (domain === target || !isAncestorOrSelf(compiled, domain, target))) {
+  // Regions enter and exit together, so a move spanning a parallel state re-enters it.
+  while (compiled.parallel[domain] === true) {
     domain = compiled.parent[domain] as number;
   }
   return domain;
@@ -490,7 +525,8 @@ function createMachine<Ctx, E extends EventObject>(
     let generation = definition.generation;
     let paths = compiled.paths;
     let parent = compiled.parent;
-    let depth = compiled.depth;
+    let children = compiled.children;
+    let parallel = compiled.parallel;
     let initialChild = compiled.initialChild;
     let history = compiled.history;
     let configs = compiled.configs;
@@ -499,28 +535,31 @@ function createMachine<Ctx, E extends EventObject>(
     let afterDelays = compiled.afterDelays;
     let afterTargets = compiled.afterTargets;
     let always = compiled.always;
-    const active: number[] = [];
+    const activeChild: number[] = [];
+    const isActive: boolean[] = [];
     const elapsed: number[] = [];
     const fired: number[] = [];
-    const scratch: number[] = [];
     const entryId: number[] = [];
     const cleanup: ((() => void) | undefined)[] = [];
     // Keyed by path, not index, so a remembered child outlives a rebind's recompilation.
     const remembered: { [parentPath: string]: string } = {};
+    let slotCount = 0;
     growSlots();
+    const leaves: string[] = [];
     let entryCount = 0;
     const queue: (E | undefined)[] = [];
     let queueHead = 0;
     let queueTail = 0;
-    let leafDepth = NO_STATE;
     let running = true;
     let busy = false;
     let stopRequested = false;
+    let moved = false;
     const listeners: TransitionListener<E>[] = [];
 
     const instance = {
       ctx,
       path: undefined as string | undefined,
+      leaves,
       matches,
       send,
       update,
@@ -528,28 +567,61 @@ function createMachine<Ctx, E extends EventObject>(
       onTransition,
     };
 
+    function clearSlot(state: number): void {
+      activeChild[state] = NO_STATE;
+      isActive[state] = false;
+      elapsed[state] = 0;
+      fired[state] = 0;
+      entryId[state] = 0;
+      cleanup[state] = undefined;
+    }
+
     function growSlots(): void {
-      for (let i = active.length; i <= compiled.maxDepth; i++) {
-        active[i] = NO_STATE;
-        elapsed[i] = 0;
-        fired[i] = 0;
-        scratch[i] = NO_STATE;
-        entryId[i] = 0;
-        cleanup[i] = undefined;
+      while (slotCount < compiled.count) {
+        clearSlot(slotCount);
+        slotCount++;
       }
     }
 
-    // Kept states hold their slot, timers and entry id; the first missing path and
-    // everything below it is dropped without exit hooks, since its config is gone.
+    function collectActive(state: number, order: number[]): void {
+      order.push(state);
+      const list = children[state] as number[];
+      for (let i = 0; i < list.length; i++) {
+        const child = list[i] as number;
+        if (isActive[child] === true) {
+          collectActive(child, order);
+        }
+      }
+    }
+
+    // Kept states hold their timers and entry id; a state whose path is gone, or whose
+    // parent was dropped, is dropped without exit hooks, since its config is gone.
     function rebind(): void {
       const from = instance.path as string;
-      const oldPaths = paths;
-      const oldLeafDepth = leafDepth;
+      const order: number[] = [];
+      collectActive(ROOT, order);
+      const keptPaths: string[] = [];
+      const keptElapsed: number[] = [];
+      const keptFired: number[] = [];
+      const keptEntryId: number[] = [];
+      const keptCleanup: ((() => void) | undefined)[] = [];
+      for (let i = 0; i < order.length; i++) {
+        const state = order[i] as number;
+        keptPaths[i] = paths[state] as string;
+        keptElapsed[i] = elapsed[state] as number;
+        keptFired[i] = fired[state] as number;
+        keptEntryId[i] = entryId[state] as number;
+        keptCleanup[i] = cleanup[state];
+      }
+      for (let state = 0; state < slotCount; state++) {
+        clearSlot(state);
+      }
       compiled = definition.compiled;
       generation = definition.generation;
       paths = compiled.paths;
       parent = compiled.parent;
-      depth = compiled.depth;
+      children = compiled.children;
+      parallel = compiled.parallel;
       initialChild = compiled.initialChild;
       history = compiled.history;
       configs = compiled.configs;
@@ -559,31 +631,42 @@ function createMachine<Ctx, E extends EventObject>(
       afterTargets = compiled.afterTargets;
       always = compiled.always;
       growSlots();
-      let survivor = 0;
-      active[0] = ROOT;
-      for (let level = 1; level <= oldLeafDepth; level++) {
-        const state = lookupPath(compiled, oldPaths[active[level] as number] as string);
-        if (state === undefined) {
-          break;
+      const dropped: number[] = [];
+      for (let i = 0; i < order.length; i++) {
+        const state = lookupPath(compiled, keptPaths[i] as string);
+        const owner = state === undefined ? NO_STATE : (parent[state] as number);
+        if (
+          state === undefined ||
+          (owner !== NO_STATE &&
+            (isActive[owner] !== true ||
+              (parallel[owner] !== true && activeChild[owner] !== NO_STATE)))
+        ) {
+          dropped.push(i);
+          continue;
         }
-        active[level] = state;
-        survivor = level;
+        isActive[state] = true;
+        if (owner !== NO_STATE && parallel[owner] !== true) {
+          activeChild[owner] = state;
+        }
+        elapsed[state] = keptElapsed[i] as number;
+        fired[state] = keptFired[i] as number;
+        entryId[state] = keptEntryId[i] as number;
+        cleanup[state] = keptCleanup[i];
       }
-      for (let level = oldLeafDepth; level > survivor; level--) {
-        active[level] = NO_STATE;
-        elapsed[level] = 0;
-        fired[level] = 0;
-        entryId[level] = 0;
-        runCleanup(level);
+      for (let i = dropped.length - 1; i >= 0; i--) {
+        const run = keptCleanup[dropped[i] as number];
+        if (run !== undefined) {
+          run();
+        }
       }
-      leafDepth = survivor;
-      const survivorState = active[survivor] as number;
-      if (survivor === oldLeafDepth && initialChild[survivorState] === NO_STATE) {
+      const entriesBefore = entryCount;
+      enterMissing(ROOT);
+      if (dropped.length === 0 && entryCount === entriesBefore) {
         return;
       }
-      enterDown(survivorState, survivorState);
+      refreshLeaves();
       if (listeners.length > 0) {
-        report(from, "reload", undefined);
+        report(from, instance.path, "reload", undefined);
       }
       settleAlways();
     }
@@ -592,21 +675,54 @@ function createMachine<Ctx, E extends EventObject>(
       listeners.push(listener);
     }
 
-    function report(from: string, cause: TransitionCause, event: E | undefined): void {
+    function report(
+      from: string,
+      to: string | undefined,
+      cause: TransitionCause,
+      event: E | undefined,
+    ): void {
       for (let i = 0; i < listeners.length; i++) {
-        (listeners[i] as TransitionListener<E>)(from, instance.path, cause, event);
+        (listeners[i] as TransitionListener<E>)(from, to, cause, event);
       }
     }
 
+    function collectLeaves(state: number, count: number): number {
+      if (parallel[state] === true) {
+        const list = children[state] as number[];
+        let total = count;
+        for (let i = 0; i < list.length; i++) {
+          total = collectLeaves(list[i] as number, total);
+        }
+        return total;
+      }
+      const child = activeChild[state] as number;
+      if (child !== NO_STATE) {
+        return collectLeaves(child, count);
+      }
+      leaves[count] = paths[state] as string;
+      return count + 1;
+    }
+
+    function refreshLeaves(): void {
+      const count = isActive[ROOT] === true ? collectLeaves(ROOT, 0) : 0;
+      while (leaves.length > count) {
+        leaves.pop();
+      }
+      instance.path = leaves[0];
+    }
+
     function enterState(state: number): void {
-      const level = depth[state] as number;
-      active[level] = state;
-      elapsed[level] = 0;
-      fired[level] = 0;
-      leafDepth = level;
+      const owner = parent[state] as number;
+      if (owner !== NO_STATE && parallel[owner] !== true) {
+        activeChild[owner] = state;
+      }
+      isActive[state] = true;
+      activeChild[state] = NO_STATE;
+      elapsed[state] = 0;
+      fired[state] = 0;
       entryCount++;
       const id = entryCount;
-      entryId[level] = id;
+      entryId[state] = id;
       const config = configs[state] as StateConfig<Ctx, E>;
       const hook = config.enter;
       if (hook !== undefined) {
@@ -614,11 +730,20 @@ function createMachine<Ctx, E extends EventObject>(
       }
       const invoke = config.invoke;
       if (invoke !== undefined) {
+        // A path, not an index, so a settle held across a rebind still finds its entry.
+        const path = paths[state] as string;
         let settled = false;
         const result = invoke(
           ctx,
           (event: E) => {
-            if (settled || !running || stopRequested || entryId[level] !== id) {
+            const current = lookupPath(compiled, path);
+            if (
+              settled ||
+              !running ||
+              stopRequested ||
+              current === undefined ||
+              entryId[current] !== id
+            ) {
               return;
             }
             settled = true;
@@ -627,35 +752,39 @@ function createMachine<Ctx, E extends EventObject>(
           instance,
         );
         if (typeof result === "function") {
-          cleanup[level] = result;
+          cleanup[state] = result;
         }
       }
     }
 
-    function runCleanup(level: number): void {
-      const run = cleanup[level];
-      if (run !== undefined) {
-        cleanup[level] = undefined;
-        run();
+    function exitSubtree(state: number): void {
+      if (parallel[state] === true) {
+        const list = children[state] as number[];
+        for (let i = list.length - 1; i >= 0; i--) {
+          exitSubtree(list[i] as number);
+        }
       }
-    }
-
-    function exitTo(level: number): void {
-      while (leafDepth > level) {
-        const exited = leafDepth;
-        const state = active[exited] as number;
-        active[exited] = NO_STATE;
-        entryId[exited] = 0;
-        leafDepth--;
-        const owner = parent[state] as number;
-        if (owner !== NO_STATE && history[owner] === true) {
+      const child = activeChild[state] as number;
+      if (child !== NO_STATE) {
+        exitSubtree(child);
+      }
+      isActive[state] = false;
+      entryId[state] = 0;
+      const owner = parent[state] as number;
+      if (owner !== NO_STATE) {
+        activeChild[owner] = NO_STATE;
+        if (history[owner] === true) {
           remembered[paths[owner] as string] = paths[state] as string;
         }
-        const hook = (configs[state] as StateConfig<Ctx, E>).exit;
-        if (hook !== undefined) {
-          hook(ctx, instance);
-        }
-        runCleanup(exited);
+      }
+      const hook = (configs[state] as StateConfig<Ctx, E>).exit;
+      if (hook !== undefined) {
+        hook(ctx, instance);
+      }
+      const run = cleanup[state];
+      if (run !== undefined) {
+        cleanup[state] = undefined;
+        run();
       }
     }
 
@@ -672,25 +801,87 @@ function createMachine<Ctx, E extends EventObject>(
       return initialChild[state] as number;
     }
 
-    function enterDown(from: number, target: number): void {
-      let count = 0;
-      let state = target;
-      while (state !== from) {
-        scratch[count] = state;
-        count++;
-        state = parent[state] as number;
+    function enterDefaults(state: number): void {
+      if (parallel[state] === true) {
+        const list = children[state] as number[];
+        for (let i = 0; i < list.length; i++) {
+          enterState(list[i] as number);
+          enterDefaults(list[i] as number);
+        }
+        return;
       }
-      while (count > 0) {
-        count--;
-        enterState(scratch[count] as number);
-        scratch[count] = NO_STATE;
+      const child = defaultChild(state);
+      if (child !== NO_STATE) {
+        enterState(child);
+        enterDefaults(child);
       }
-      state = defaultChild(target);
-      while (state !== NO_STATE) {
-        enterState(state);
-        state = defaultChild(state);
+    }
+
+    function childToward(state: number, target: number): number {
+      let child = target;
+      while (parent[child] !== state) {
+        child = parent[child] as number;
       }
-      instance.path = paths[active[leafDepth] as number] as string;
+      return child;
+    }
+
+    function enterToward(state: number, target: number): void {
+      enterState(state);
+      if (state === target) {
+        enterDefaults(state);
+        return;
+      }
+      const next = childToward(state, target);
+      if (parallel[state] !== true) {
+        enterToward(next, target);
+        return;
+      }
+      const list = children[state] as number[];
+      for (let i = 0; i < list.length; i++) {
+        const region = list[i] as number;
+        if (region === next) {
+          enterToward(region, target);
+        } else {
+          enterState(region);
+          enterDefaults(region);
+        }
+      }
+    }
+
+    function enterMissing(state: number): void {
+      if (parallel[state] === true) {
+        const list = children[state] as number[];
+        for (let i = 0; i < list.length; i++) {
+          const region = list[i] as number;
+          if (isActive[region] === true) {
+            enterMissing(region);
+          } else {
+            enterState(region);
+            enterDefaults(region);
+          }
+        }
+        return;
+      }
+      const child = activeChild[state] as number;
+      if (child !== NO_STATE) {
+        enterMissing(child);
+        return;
+      }
+      enterDefaults(state);
+    }
+
+    function firstLeaf(state: number): string {
+      let leaf = state;
+      while (true) {
+        const child =
+          parallel[leaf] === true
+            ? ((children[leaf] as number[])[0] as number)
+            : (activeChild[leaf] as number);
+        if (child === NO_STATE) {
+          return paths[leaf] as string;
+        }
+        leaf = child;
+      }
     }
 
     function transition(
@@ -705,43 +896,58 @@ function createMachine<Ctx, E extends EventObject>(
         runActions(actions, event);
         return;
       }
-      const from = instance.path as string;
       const domain = transitionDomain(compiled, source, target, reenter);
-      exitTo(depth[domain] as number);
-      runActions(actions, event);
-      enterDown(domain, target);
-      if (listeners.length > 0) {
-        report(from, cause, event);
+      const from = firstLeaf(domain);
+      const child = activeChild[domain] as number;
+      if (child !== NO_STATE) {
+        exitSubtree(child);
       }
-      if (cause !== "always") {
-        settleAlways();
+      runActions(actions, event);
+      if (target === domain) {
+        enterDefaults(domain);
+      } else {
+        enterToward(childToward(domain, target), target);
+      }
+      refreshLeaves();
+      moved = true;
+      if (listeners.length > 0) {
+        report(from, firstLeaf(domain), cause, event);
       }
     }
 
     function settleAlways(): void {
       for (let moves = 0; !stopRequested; moves++) {
-        if (!takeAlways(moves === ALWAYS_LIMIT)) {
+        if (!takeAlways(ROOT, moves === ALWAYS_LIMIT)) {
           return;
         }
       }
     }
 
-    function takeAlways(overLimit: boolean): boolean {
-      for (let level = leafDepth; level >= 0; level--) {
-        const state = active[level] as number;
-        const list = always[state] as Transition<Ctx, E>[];
+    function takeAlways(state: number, overLimit: boolean): boolean {
+      if (parallel[state] === true) {
+        const list = children[state] as number[];
         for (let i = 0; i < list.length; i++) {
-          const candidate = list[i] as Transition<Ctx, E>;
-          const guard = candidate.guard as ((ctx: Ctx) => boolean) | undefined;
-          if (guard === undefined || guard(ctx)) {
-            if (overLimit) {
-              clearQueue();
-              busy = false;
-              throw `hsm: state "${describePath(paths[state] as string)}" took ${ALWAYS_LIMIT} always transitions in a row; check for an always loop`;
-            }
-            transition(state, candidate.target, false, undefined, undefined, "always");
+          if (takeAlways(list[i] as number, overLimit)) {
             return true;
           }
+        }
+      }
+      const child = activeChild[state] as number;
+      if (child !== NO_STATE && takeAlways(child, overLimit)) {
+        return true;
+      }
+      const list = always[state] as Transition<Ctx, E>[];
+      for (let i = 0; i < list.length; i++) {
+        const candidate = list[i] as Transition<Ctx, E>;
+        const guard = candidate.guard as ((ctx: Ctx) => boolean) | undefined;
+        if (guard === undefined || guard(ctx)) {
+          if (overLimit) {
+            clearQueue();
+            busy = false;
+            throw `hsm: state "${describePath(paths[state] as string)}" took ${ALWAYS_LIMIT} always transitions in a row; check for an always loop`;
+          }
+          transition(state, candidate.target, false, undefined, undefined, "always");
+          return true;
         }
       }
       return false;
@@ -759,29 +965,46 @@ function createMachine<Ctx, E extends EventObject>(
       }
     }
 
-    function processEvent(event: E): void {
-      for (let level = leafDepth; level >= 0; level--) {
-        const state = active[level] as number;
-        const listIndex = (onIndex[state] as { [type: string]: number })[event.type];
-        if (typeof listIndex !== "number") {
-          continue;
-        }
-        const list = transitions[listIndex] as Transition<Ctx, E>[];
-        for (let i = 0; i < list.length; i++) {
-          const candidate = list[i] as Transition<Ctx, E>;
-          if (candidate.guard === undefined || candidate.guard(ctx, event)) {
-            transition(
-              state,
-              candidate.target,
-              candidate.reenter,
-              candidate.actions,
-              event,
-              "event",
-            );
-            return;
-          }
+    function takeEvent(state: number, event: E): boolean {
+      const listIndex = (onIndex[state] as { [type: string]: number })[event.type];
+      if (typeof listIndex !== "number") {
+        return false;
+      }
+      const list = transitions[listIndex] as Transition<Ctx, E>[];
+      for (let i = 0; i < list.length; i++) {
+        const candidate = list[i] as Transition<Ctx, E>;
+        if (candidate.guard === undefined || candidate.guard(ctx, event)) {
+          transition(state, candidate.target, candidate.reenter, candidate.actions, event, "event");
+          return true;
         }
       }
+      return false;
+    }
+
+    // Each region takes at most one transition; the event bubbles past the parallel
+    // state only when none did, and a move that left or re-entered it ends the offer.
+    function offerEvent(state: number, event: E): boolean {
+      if (parallel[state] === true) {
+        const id = entryId[state];
+        const list = children[state] as number[];
+        let taken = false;
+        for (let i = 0; i < list.length; i++) {
+          if (offerEvent(list[i] as number, event)) {
+            taken = true;
+            if (stopRequested || entryId[state] !== id) {
+              return true;
+            }
+          }
+        }
+        if (taken) {
+          return true;
+        }
+      }
+      const child = activeChild[state] as number;
+      if (child !== NO_STATE && offerEvent(child, event)) {
+        return true;
+      }
+      return takeEvent(state, event);
     }
 
     function clearQueue(): void {
@@ -798,11 +1021,11 @@ function createMachine<Ctx, E extends EventObject>(
       busy = true;
       clearQueue();
       const from = instance.path as string;
-      exitTo(NO_STATE);
-      instance.path = undefined;
+      exitSubtree(ROOT);
+      refreshLeaves();
       busy = false;
       if (listeners.length > 0) {
-        report(from, "stop", undefined);
+        report(from, undefined, "stop", undefined);
       }
     }
 
@@ -811,7 +1034,11 @@ function createMachine<Ctx, E extends EventObject>(
         const event = queue[queueHead] as E;
         queue[queueHead] = undefined;
         queueHead++;
-        processEvent(event);
+        moved = false;
+        offerEvent(ROOT, event);
+        if (moved) {
+          settleAlways();
+        }
       }
       clearQueue();
       busy = false;
@@ -836,50 +1063,88 @@ function createMachine<Ctx, E extends EventObject>(
       endStep();
     }
 
-    function fireUpdateHooks(dt: number): boolean {
-      for (let level = leafDepth; level >= 0; level--) {
-        const state = active[level] as number;
-        const hook = (configs[state] as StateConfig<Ctx, E>).update;
-        if (hook === undefined) {
-          continue;
+    function addElapsed(state: number, dt: number): void {
+      elapsed[state] = (elapsed[state] as number) + dt;
+      if (parallel[state] === true) {
+        const list = children[state] as number[];
+        for (let i = 0; i < list.length; i++) {
+          addElapsed(list[i] as number, dt);
         }
-        const target = hook(ctx, dt, instance);
-        if (stopRequested) {
+      }
+      const child = activeChild[state] as number;
+      if (child !== NO_STATE) {
+        addElapsed(child, dt);
+      }
+    }
+
+    function tickRegion(state: number, dt: number): boolean {
+      return fireUpdateHooks(state, dt) || fireTimers(state);
+    }
+
+    // A parallel state's timers fire only after its regions tick, and only if none moved.
+    function fireUpdateHooks(state: number, dt: number): boolean {
+      if (parallel[state] === true) {
+        const id = entryId[state];
+        const list = children[state] as number[];
+        let regionMoved = false;
+        for (let i = 0; i < list.length; i++) {
+          if (tickRegion(list[i] as number, dt)) {
+            regionMoved = true;
+            if (stopRequested || entryId[state] !== id) {
+              return true;
+            }
+          }
+        }
+        if (regionMoved) {
           return true;
         }
-        if (typeof target === "string") {
-          transition(
-            state,
-            resolveTarget(compiled, state, target),
-            false,
-            undefined,
-            undefined,
-            "update",
-          );
-          return true;
-        }
+      }
+      const child = activeChild[state] as number;
+      if (child !== NO_STATE && fireUpdateHooks(child, dt)) {
+        return true;
+      }
+      const hook = (configs[state] as StateConfig<Ctx, E>).update;
+      if (hook === undefined) {
+        return false;
+      }
+      const target = hook(ctx, dt, instance);
+      if (stopRequested) {
+        return true;
+      }
+      if (typeof target === "string") {
+        transition(
+          state,
+          resolveTarget(compiled, state, target),
+          false,
+          undefined,
+          undefined,
+          "update",
+        );
+        return true;
       }
       return false;
     }
 
-    function fireTimers(): void {
-      for (let level = leafDepth; level >= 0; level--) {
-        const state = active[level] as number;
-        const delays = afterDelays[state] as number[];
-        const next = fired[level] as number;
-        if (next < delays.length && (delays[next] as number) <= (elapsed[level] as number)) {
-          fired[level] = next + 1;
-          transition(
-            state,
-            (afterTargets[state] as number[])[next] as number,
-            false,
-            undefined,
-            undefined,
-            "after",
-          );
-          return;
-        }
+    function fireTimers(state: number): boolean {
+      const child = activeChild[state] as number;
+      if (child !== NO_STATE && fireTimers(child)) {
+        return true;
       }
+      const delays = afterDelays[state] as number[];
+      const next = fired[state] as number;
+      if (next < delays.length && (delays[next] as number) <= (elapsed[state] as number)) {
+        fired[state] = next + 1;
+        transition(
+          state,
+          (afterTargets[state] as number[])[next] as number,
+          false,
+          undefined,
+          undefined,
+          "after",
+        );
+        return true;
+      }
+      return false;
     }
 
     function update(dt: number): void {
@@ -891,11 +1156,11 @@ function createMachine<Ctx, E extends EventObject>(
         rebind();
       }
       if (!stopRequested) {
-        for (let level = 0; level <= leafDepth; level++) {
-          elapsed[level] = (elapsed[level] as number) + dt;
-        }
-        if (!fireUpdateHooks(dt)) {
-          fireTimers();
+        addElapsed(ROOT, dt);
+        moved = false;
+        tickRegion(ROOT, dt);
+        if (moved) {
+          settleAlways();
         }
       }
       endStep();
@@ -913,17 +1178,14 @@ function createMachine<Ctx, E extends EventObject>(
     }
 
     function matches(path: string): boolean {
-      for (let level = 1; level <= leafDepth; level++) {
-        if (paths[active[level] as number] === path) {
-          return true;
-        }
-      }
-      return false;
+      const state = lookupPath(compiled, path);
+      return state !== undefined && state !== ROOT && isActive[state] === true;
     }
 
     busy = true;
     enterState(ROOT);
-    enterDown(ROOT, ROOT);
+    enterDefaults(ROOT);
+    refreshLeaves();
     settleAlways();
     endStep();
     return instance;

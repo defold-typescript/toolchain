@@ -1930,3 +1930,398 @@ describe("always", () => {
     expect(cause).toBe("always");
   });
 });
+
+describe("parallel regions", () => {
+  type PlayerEv =
+    | { type: "START_FIRE" }
+    | { type: "RUN" }
+    | { type: "DIE" }
+    | { type: "REVIVE" }
+    | { type: "REVIVE_FIRING" }
+    | { type: "WARP" }
+    | { type: "JAM" };
+
+  type Report = [string, string | undefined, string, string | undefined];
+
+  function record<P extends string>(m: MachineInstance<Ctx, PlayerEv, P>): Report[] {
+    const reports: Report[] = [];
+    m.onTransition((from, to, cause, event) => {
+      reports.push([from, to, cause, event?.type]);
+    });
+    return reports;
+  }
+
+  function player() {
+    return {
+      initial: "/alive",
+      states: {
+        alive: {
+          ...logged("alive"),
+          type: "parallel",
+          on: { DIE: "/dead" },
+          states: {
+            move: {
+              ...logged("move"),
+              initial: "/alive/move/idle",
+              states: {
+                idle: {
+                  ...logged("idle"),
+                  on: {
+                    START_FIRE: "/alive/move/run",
+                    RUN: "/alive/move/run",
+                    WARP: "/alive/weapon/cooldown",
+                  },
+                },
+                run: {
+                  ...logged("run"),
+                  update: (ctx: Ctx) => (ctx.flag === true ? "/alive/move/idle" : undefined),
+                },
+              },
+            },
+            weapon: {
+              ...logged("weapon"),
+              initial: "/alive/weapon/ready",
+              states: {
+                ready: {
+                  ...logged("ready"),
+                  on: { START_FIRE: "/alive/weapon/cooldown", JAM: "/alive/weapon/jammed" },
+                },
+                cooldown: { ...logged("cooldown"), after: { 0.5: "/alive/weapon/ready" } },
+                jammed: {
+                  always: { target: "/alive/weapon/ready", guard: (ctx: Ctx) => ctx.flag === true },
+                },
+              },
+            },
+          },
+        },
+        dead: {
+          ...logged("dead"),
+          on: { REVIVE: "/alive", REVIVE_FIRING: "/alive/weapon/cooldown" },
+        },
+      },
+    } as const;
+  }
+
+  function startPlayer(ctx: Ctx = newCtx()) {
+    return defineMachine<Ctx, PlayerEv>()(player()).start(ctx);
+  }
+
+  test("parallel regions each take their own transition", () => {
+    const m = startPlayer();
+    m.send({ type: "START_FIRE" });
+    expect(m.leaves).toEqual(["/alive/move/run", "/alive/weapon/cooldown"]);
+    expect(m.path).toBe("/alive/move/run");
+    for (const path of [
+      "/alive",
+      "/alive/move",
+      "/alive/weapon",
+      "/alive/move/run",
+      "/alive/weapon/cooldown",
+    ] as const) {
+      expect(m.matches(path)).toBe(true);
+    }
+    expect(m.matches("/alive/move/idle")).toBe(false);
+    expect(m.matches("/alive/weapon/ready")).toBe(false);
+  });
+
+  test("entering a parallel state enters every region", () => {
+    const ctx = newCtx();
+    const m = startPlayer(ctx);
+    expect(ctx.log).toEqual([
+      "enter alive",
+      "enter move",
+      "enter idle",
+      "enter weapon",
+      "enter ready",
+    ]);
+    expect(m.leaves).toEqual(["/alive/move/idle", "/alive/weapon/ready"]);
+    m.send({ type: "DIE" });
+    ctx.log.length = 0;
+    m.send({ type: "REVIVE_FIRING" });
+    expect(ctx.log).toEqual([
+      "exit dead",
+      "enter alive",
+      "enter move",
+      "enter idle",
+      "enter weapon",
+      "enter cooldown",
+    ]);
+    expect(m.leaves).toEqual(["/alive/move/idle", "/alive/weapon/cooldown"]);
+  });
+
+  test("an event bubbles above the regions only when none handled it", () => {
+    const m = startPlayer();
+    m.send({ type: "DIE" });
+    expect(m.path).toBe("/dead");
+    expect(m.leaves).toEqual(["/dead"]);
+
+    const config = player();
+    const handled = defineMachine<Ctx, PlayerEv>()({
+      ...config,
+      states: {
+        ...config.states,
+        alive: {
+          ...config.states.alive,
+          states: {
+            ...config.states.alive.states,
+            move: { ...config.states.alive.states.move, on: { DIE: "/alive/move/run" } },
+          },
+        },
+      },
+    }).start(newCtx());
+    handled.send({ type: "DIE" });
+    expect(handled.matches("/alive")).toBe(true);
+    expect(handled.leaves).toEqual(["/alive/move/run", "/alive/weapon/ready"]);
+  });
+
+  test("a region's move that leaves the parallel state ends the offer", () => {
+    const config = player();
+    const m = defineMachine<Ctx, PlayerEv>()({
+      ...config,
+      states: {
+        ...config.states,
+        alive: {
+          ...config.states.alive,
+          states: {
+            move: {
+              ...config.states.alive.states.move,
+              states: {
+                ...config.states.alive.states.move.states,
+                idle: { on: { START_FIRE: "/dead" } },
+              },
+            },
+            weapon: {
+              ...config.states.alive.states.weapon,
+              on: { START_FIRE: "/alive/weapon/cooldown" },
+            },
+          },
+        },
+      },
+    }).start(newCtx());
+    m.send({ type: "START_FIRE" });
+    expect(m.leaves).toEqual(["/dead"]);
+    expect(m.matches("/alive/weapon/cooldown")).toBe(false);
+  });
+
+  test("leaving a parallel state exits regions in reverse order", () => {
+    const ctx = newCtx();
+    const m = startPlayer(ctx);
+    ctx.log.length = 0;
+    m.send({ type: "DIE" });
+    expect(ctx.log).toEqual([
+      "exit ready",
+      "exit weapon",
+      "exit idle",
+      "exit move",
+      "exit alive",
+      "enter dead",
+    ]);
+
+    const stopped = newCtx();
+    const s = startPlayer(stopped);
+    const leaves = s.leaves;
+    stopped.log.length = 0;
+    s.stop();
+    expect(stopped.log).toEqual([
+      "exit ready",
+      "exit weapon",
+      "exit idle",
+      "exit move",
+      "exit alive",
+    ]);
+    expect(s.leaves).toEqual([]);
+    expect(s.leaves.length).toBe(0);
+    expect(s.leaves).toBe(leaves);
+    expect(s.path).toBeUndefined();
+  });
+
+  test("a cross-region target re-enters the parallel state", () => {
+    const ctx = newCtx();
+    const m = startPlayer(ctx);
+    ctx.log.length = 0;
+    m.send({ type: "WARP" });
+    expect(ctx.log).toEqual([
+      "exit ready",
+      "exit weapon",
+      "exit idle",
+      "exit move",
+      "exit alive",
+      "enter alive",
+      "enter move",
+      "enter idle",
+      "enter weapon",
+      "enter cooldown",
+    ]);
+    expect(m.leaves).toEqual(["/alive/move/idle", "/alive/weapon/cooldown"]);
+  });
+
+  test("ticks run per region", () => {
+    const ctx = newCtx();
+    const m = startPlayer(ctx);
+    m.send({ type: "START_FIRE" });
+    ctx.flag = true;
+    m.update(0.6);
+    expect(m.leaves).toEqual(["/alive/move/idle", "/alive/weapon/ready"]);
+
+    const timers = newCtx();
+    const t = startPlayer(timers);
+    t.send({ type: "START_FIRE" });
+    timers.flag = true;
+    t.update(0.3);
+    expect(t.leaves).toEqual(["/alive/move/idle", "/alive/weapon/cooldown"]);
+    timers.flag = false;
+    t.send({ type: "RUN" });
+    t.update(0.3);
+    expect(t.leaves).toEqual(["/alive/move/run", "/alive/weapon/ready"]);
+  });
+
+  test("always and history inside a region", () => {
+    const ctx = newCtx();
+    const m = startPlayer(ctx);
+    m.send({ type: "JAM" });
+    expect(m.leaves).toEqual(["/alive/move/idle", "/alive/weapon/jammed"]);
+    ctx.flag = true;
+    m.send({ type: "RUN" });
+    expect(m.leaves).toEqual(["/alive/move/run", "/alive/weapon/ready"]);
+
+    const config = player();
+    const remembering = defineMachine<Ctx, PlayerEv>()({
+      ...config,
+      states: {
+        ...config.states,
+        alive: {
+          ...config.states.alive,
+          states: {
+            ...config.states.alive.states,
+            move: { ...config.states.alive.states.move, history: "shallow" },
+          },
+        },
+      },
+    }).start(newCtx());
+    remembering.send({ type: "RUN" });
+    remembering.send({ type: "DIE" });
+    remembering.send({ type: "REVIVE" });
+    expect(remembering.leaves).toEqual(["/alive/move/run", "/alive/weapon/ready"]);
+  });
+
+  test("onTransition reports the moved region", () => {
+    const m = startPlayer();
+    const reports = record(m);
+    m.send({ type: "START_FIRE" });
+    m.send({ type: "DIE" });
+    expect(reports).toEqual([
+      ["/alive/move/idle", "/alive/move/run", "event", "START_FIRE"],
+      ["/alive/weapon/ready", "/alive/weapon/cooldown", "event", "START_FIRE"],
+      ["/alive/move/run", "/dead", "event", "DIE"],
+    ]);
+  });
+
+  test("hot reload keeps live regions", () => {
+    const config = player();
+    const ctx = newCtx();
+    const m = defineMachine<Ctx, PlayerEv>("parallel-reload")(config).start(ctx);
+    m.send({ type: "START_FIRE" });
+    m.update(0.3);
+    const reports = record(m);
+    ctx.log.length = 0;
+    defineMachine<Ctx, PlayerEv>("parallel-reload")({
+      ...config,
+      states: {
+        ...config.states,
+        alive: {
+          ...config.states.alive,
+          states: {
+            ...config.states.alive.states,
+            shield: {
+              ...logged("shield"),
+              initial: "/alive/shield/up",
+              states: { up: logged("up") },
+            },
+          },
+        },
+      },
+    });
+    m.update(0);
+    // The instance keeps the first definition's path types; the reload added /alive/shield.
+    const leaves: readonly string[] = m.leaves;
+    expect(ctx.log).toEqual(["enter shield", "enter up"]);
+    expect(leaves).toEqual(["/alive/move/run", "/alive/shield/up", "/alive/weapon/cooldown"]);
+    expect(reports).toEqual([["/alive/move/run", "/alive/move/run", "reload", undefined]]);
+    m.update(0.3);
+    expect(leaves).toEqual(["/alive/move/run", "/alive/shield/up", "/alive/weapon/ready"]);
+  });
+
+  test("a parallel state redefined as compound keeps its first region", () => {
+    const config = player();
+    const ctx = newCtx();
+    const m = defineMachine<Ctx, PlayerEv>("parallel-to-compound")(config).start(ctx);
+    ctx.log.length = 0;
+    const { type: _type, ...compound } = config.states.alive;
+    defineMachine<Ctx, PlayerEv>("parallel-to-compound")({
+      ...config,
+      states: { ...config.states, alive: { ...compound, initial: "/alive/weapon" } },
+    });
+    m.update(0);
+    expect(ctx.log).toEqual([]);
+    expect(m.leaves).toEqual(["/alive/move/idle"]);
+    expect(m.matches("/alive/weapon")).toBe(false);
+  });
+
+  test("invalid parallel definitions throw, naming the path", () => {
+    expect(
+      thrownMessage(() =>
+        defineMachine<Ctx, PlayerEv>()({
+          initial: "/alive",
+          states: {
+            alive: { type: "parallel", initial: "/alive/move", states: { move: {}, weapon: {} } },
+          },
+        }),
+      ),
+    ).toBe('hsm: parallel state "/alive" has initial "/alive/move"; every child is entered');
+    expect(
+      thrownMessage(() =>
+        defineMachine<Ctx, PlayerEv>()({
+          initial: "/alive",
+          states: { alive: { type: "parallel" } },
+        }),
+      ),
+    ).toBe('hsm: parallel state "/alive" has no child states');
+    expect(
+      thrownMessage(() =>
+        defineMachine<Ctx, PlayerEv>()({
+          initial: "/alive",
+          states: { alive: { type: "parallel", history: "shallow", states: { move: {} } } },
+        }),
+      ),
+    ).toBe('hsm: parallel state "/alive" has history; only a compound state resumes a child');
+    expect(
+      thrownMessage(() =>
+        defineMachine<Ctx, PlayerEv>()({
+          type: "parallel",
+          initial: "/move",
+          states: { move: {}, weapon: {} },
+        }),
+      ),
+    ).toBe('hsm: state "(root)" is parallel; put the regions in a child state');
+  });
+
+  test("parallel configs keep typed paths, and a parallel initial fails to compile", () => {
+    const config = player();
+    type PlayerPath = StatePath<typeof config>;
+    const regionPath: PlayerPath = "/alive/weapon/cooldown";
+    expect(regionPath).toBe("/alive/weapon/cooldown");
+    const m = defineMachine<Ctx, PlayerEv>()(config).start(newCtx());
+    const leavesTyped: Equal<typeof m.leaves, readonly PlayerPath[]> = true;
+    expect(leavesTyped).toBe(true);
+
+    const withInitial = () =>
+      defineMachine<Ctx, PlayerEv>()({
+        initial: "/alive",
+        states: {
+          alive: { type: "parallel", initial: "/alive/move", states: { move: {}, weapon: {} } },
+        },
+      });
+    // @ts-expect-error a parallel state enters every child, so it takes no initial
+    expect(thrownMessage(() => withInitial().start(newCtx()))).toContain("every child is entered");
+  });
+});

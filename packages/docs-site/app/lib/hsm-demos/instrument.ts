@@ -172,6 +172,9 @@ function proxyOf(s: Session, m: Instance): Instance {
     get path() {
       return m.path;
     },
+    get leaves() {
+      return m.leaves;
+    },
     matches: (path) => m.matches(path),
     send: (event) => {
       if (s.depth === 0) {
