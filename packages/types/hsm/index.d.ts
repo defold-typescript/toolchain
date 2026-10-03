@@ -2,7 +2,7 @@
 export interface EventObject {
     readonly type: string;
 }
-export type TransitionCause = "event" | "after" | "update" | "stop" | "reload";
+export type TransitionCause = "event" | "after" | "update" | "stop" | "reload" | "always";
 /** @noSelf */
 export type TransitionListener<E extends EventObject, P extends string = string> = (from: P, to: P | undefined, cause: TransitionCause, event: E | undefined) => void;
 /** @noSelf */
@@ -24,6 +24,12 @@ export interface TransitionConfig<Ctx, E extends EventObject, V extends E = E> {
     readonly reenter?: boolean;
 }
 export type TransitionSpec<Ctx, E extends EventObject, V extends E = E> = string | TransitionConfig<Ctx, E, V> | readonly [TransitionConfig<Ctx, E, V>, ...TransitionConfig<Ctx, E, V>[]];
+/** @noSelf */
+export interface AlwaysConfig<Ctx> {
+    readonly target: string;
+    readonly guard?: (ctx: Ctx) => boolean;
+}
+export type AlwaysSpec<Ctx> = string | AlwaysConfig<Ctx> | readonly [AlwaysConfig<Ctx>, ...AlwaysConfig<Ctx>[]];
 export type OnConfig<Ctx, E extends EventObject> = {
     readonly [K in E["type"]]?: TransitionSpec<Ctx, E, Extract<E, {
         type: K;
@@ -44,6 +50,7 @@ export interface StateConfig<Ctx, E extends EventObject> {
     readonly after?: {
         readonly [seconds: number]: string;
     };
+    readonly always?: AlwaysSpec<Ctx>;
     readonly enter?: StateHook<Ctx, E>;
     readonly exit?: StateHook<Ctx, E>;
     readonly update?: UpdateHook<Ctx, E>;
@@ -95,6 +102,9 @@ type PathCheck<S, Self extends string, All extends string, Ev extends string> = 
     } ? {
         readonly [K in keyof After]: All;
     } : unknown;
+    readonly always?: S extends {
+        readonly always: unknown;
+    } ? SpecCheck<All> : unknown;
     readonly enter?: unknown;
     readonly exit?: unknown;
     readonly update?: unknown;

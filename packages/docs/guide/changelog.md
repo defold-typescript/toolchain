@@ -15,7 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **[`hsm` migration](./state-machines.md#the-message-bridge)**: pass `sender` to `toEvent`, add `onTransition` to hand-built instances, brace value-returning `invoke` bodies.
 > - **[`hsm` sequences](./state-machines.md#scripted-sequences)** wait inside a state, and their waits stop when it is left.
-> - **[`hsm` history](./state-machines.md#resume-with-history)** resumes the child a state last left.
+> - **[`hsm` states](./state-machines.md#resume-with-history)** resume the child they last left, and [`always`](./state-machines.md#move-on-at-once-with-always) moves on from a state at once.
 > - **[`hsm` hot reload](./state-machines.md#hot-reload)** reaches running machines, and an [inspector](./state-machines.md#debug-a-machine) logs each move.
 > - **[`hsm` timers](./state-machines.md#update-and-after)** fire on time.
 
@@ -27,9 +27,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **`hsm` machines are easier to script, resume, debug, reload and budget:**
+- **`hsm` machines are easier to script, resume, branch, debug, reload and budget:**
   - **Scripted sequences** — an `invoke` may return a cleanup the machine runs on every way out of the state, and `sequence(async (ctx, signal) => ...)` from `@defold-typescript/types/hsm/async` builds one whose `await signal.wait(seconds)` never resumes after the state is left. Any other `await` in a sequence can resume after the state is left, so check `signal.aborted` after it; see [Scripted sequences](./state-machines.md#scripted-sequences).
   - **Shallow history** — `history: "shallow"` on a compound state enters the child that was active when the state was last left instead of its `initial`, per instance and across a hot reload; a target inside the state still lands where it names. See [Resume with history](./state-machines.md#resume-with-history).
+  - **`always` transitions** — `always` on a state lists targets taken right after any move that leaves it active, deepest state first, the first passing `guard(ctx)` winning, reported to `onTransition` with the cause `"always"`; an 11th `always` move in a row throws instead of looping. See [Move on at once with `always`](./state-machines.md#move-on-at-once-with-always).
   - **Debug inspector** — `onTransition(listener)` on a machine instance calls the listener after each move with the old and new state path, the cause and the event. `inspect(instance, label)` from `@defold-typescript/types/hsm/debug` uses it to log each move and draw the active path over a game object, in debug builds only; see [Debug a machine](./state-machines.md#debug-a-machine).
   - **Hot reload** — a definition made with `defineMachine<Ctx, E>("key")` reaches running instances on their next `send` or `update` after a reload, with no `on_reload`: kept states keep their context and timers, and a removed state falls back to its surviving parent's `initial`, reported to `onTransition` with the cause `"reload"`. See [Hot reload](./state-machines.md#hot-reload).
   - **Performance** — 200 objects each running a three-level machine cost about 0.05 ms per frame in the stock engine, and `update` and `send` build no tables. [Performance](./state-machines.md#performance) records the numbers and shows how to hoist constant events off a hot path.
