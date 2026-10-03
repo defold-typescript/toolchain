@@ -221,6 +221,46 @@ function resolveTarget<Ctx, E extends EventObject>(
   return index;
 }
 
+// A structural cast keeps each read a plain method call: native in JavaScript, string.byte in Lua.
+interface StringUnits {
+  charCodeAt(index: number): number;
+  byte(index: number): number;
+}
+
+// JavaScript strings hold UTF-16 code units; Lua strings hold UTF-8 bytes.
+const UTF16_UNITS = "\u{E000}".length === 1;
+
+function unitAt(text: string, index: number): number {
+  const units = text as unknown as StringUnits;
+  if (UTF16_UNITS) {
+    return units.charCodeAt(index);
+  }
+  return units.byte(index + 1);
+}
+
+// Moves surrogates above the rest of the BMP, so UTF-16 units compare in code-point order.
+// UTF-8 bytes already do, and every byte is below the surrogate range.
+function codePointRank(unit: number): number {
+  if (unit >= 0xd800 && unit < 0xe000) {
+    return unit + 0x2000;
+  }
+  if (unit >= 0xe000) {
+    return unit - 0x800;
+  }
+  return unit;
+}
+
+function precedes(left: string, right: string): boolean {
+  for (let i = 0; i < left.length && i < right.length; i++) {
+    const leftUnit = unitAt(left, i);
+    const rightUnit = unitAt(right, i);
+    if (leftUnit !== rightUnit) {
+      return codePointRank(leftUnit) < codePointRank(rightUnit);
+    }
+  }
+  return left.length < right.length;
+}
+
 function registerState<Ctx, E extends EventObject>(
   compiled: Compiled<Ctx, E>,
   config: StateConfig<Ctx, E>,
@@ -250,10 +290,14 @@ function registerState<Ctx, E extends EventObject>(
     const child = compiled.count;
     const childPath = `${path}/${name}`;
     registerState(compiled, children[name] as StateConfig<Ctx, E>, index, childPath);
-    // Region order is child-name order: neither Lua's pairs nor JavaScript keeps the written order.
+    // Region order is child-name order by code point, the same in both runtimes: neither Lua's
+    // pairs nor JavaScript keeps the written order.
     const siblings = compiled.children[index] as number[];
     let slot = siblings.length;
-    while (slot > 0 && childPath < (compiled.paths[siblings[slot - 1] as number] as string)) {
+    while (
+      slot > 0 &&
+      precedes(childPath, compiled.paths[siblings[slot - 1] as number] as string)
+    ) {
       siblings[slot] = siblings[slot - 1] as number;
       slot--;
     }

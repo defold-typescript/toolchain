@@ -42,6 +42,37 @@ local function resolveTarget(compiled, source, target)
     end
     return index
 end
+local UTF16_UNITS = #"" == 1
+local function unitAt(text, index)
+    local units = text
+    if UTF16_UNITS then
+        return units:charCodeAt(index)
+    end
+    return units:byte(index + 1)
+end
+local function codePointRank(unit)
+    if unit >= 55296 and unit < 57344 then
+        return unit + 8192
+    end
+    if unit >= 57344 then
+        return unit - 2048
+    end
+    return unit
+end
+local function precedes(left, right)
+    do
+        local i = 0
+        while i < #left and i < #right do
+            local leftUnit = unitAt(left, i)
+            local rightUnit = unitAt(right, i)
+            if leftUnit ~= rightUnit then
+                return codePointRank(leftUnit) < codePointRank(rightUnit)
+            end
+            i = i + 1
+        end
+    end
+    return #left < #right
+end
 local function registerState(compiled, config, parentIndex, path)
     local index = compiled.count
     compiled.count = index + 1
@@ -70,7 +101,7 @@ local function registerState(compiled, config, parentIndex, path)
         registerState(compiled, children[name], index, childPath)
         local siblings = compiled.children[index + 1]
         local slot = #siblings
-        while slot > 0 and childPath < compiled.paths[siblings[slot] + 1] do
+        while slot > 0 and precedes(childPath, compiled.paths[siblings[slot] + 1]) do
             siblings[slot + 1] = siblings[slot]
             slot = slot - 1
         end
@@ -177,11 +208,11 @@ local function compileOn(compiled, index)
     end
     for ____type in pairs(on) do
         do
-            local __continue36
+            local __continue45
             repeat
                 local spec = on[____type]
                 if spec == nil then
-                    __continue36 = true
+                    __continue45 = true
                     break
                 end
                 local list = {}
@@ -200,9 +231,9 @@ local function compileOn(compiled, index)
                 ____table[____type] = #compiled.transitions
                 local ____compiled_transitions_1 = compiled.transitions
                 ____compiled_transitions_1[#____compiled_transitions_1 + 1] = list
-                __continue36 = true
+                __continue45 = true
             until true
-            if not __continue36 then
+            if not __continue45 then
                 break
             end
         end
@@ -414,13 +445,13 @@ local function createMachine(definition)
                 local i = 0
                 while i < #order do
                     do
-                        local __continue82
+                        local __continue91
                         repeat
                             local state = lookupPath(compiled, keptPaths[i + 1])
                             local owner = state == nil and NO_STATE or parent[state + 1]
                             if state == nil or owner ~= NO_STATE and (isActive[owner + 1] ~= true or parallel[owner + 1] ~= true and activeChild[owner + 1] ~= NO_STATE) then
                                 dropped[#dropped + 1] = i
-                                __continue82 = true
+                                __continue91 = true
                                 break
                             end
                             isActive[state + 1] = true
@@ -431,9 +462,9 @@ local function createMachine(definition)
                             fired[state + 1] = keptFired[i + 1]
                             entryId[state + 1] = keptEntryId[i + 1]
                             cleanup[state + 1] = keptCleanup[i + 1]
-                            __continue82 = true
+                            __continue91 = true
                         until true
-                        if not __continue82 then
+                        if not __continue91 then
                             break
                         end
                     end
