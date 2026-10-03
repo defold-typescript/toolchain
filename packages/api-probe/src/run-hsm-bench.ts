@@ -17,13 +17,19 @@ export interface HsmBenchReport {
   readonly enemies: number;
   readonly avgMs: number;
   readonly maxMs: number;
+  readonly allocUpdates: number;
+  readonly allocSends: number;
+  readonly timedUpdates: number;
   readonly timedSends: number;
+  readonly allocUpdateTransitions: number;
+  readonly allocSendTransitions: number;
+  readonly timedUpdateTransitions: number;
+  readonly timedSendTransitions: number;
   readonly timedHeapProbes: number;
   readonly updateKb: number;
   readonly sendKb: number;
   readonly updateAllocs: number;
   readonly sendAllocs: number;
-  readonly sends: number;
   readonly fps: number;
   readonly memKb: number;
   readonly engine: string;
@@ -36,13 +42,19 @@ const NUMBER_FIELDS = [
   "enemies",
   "avgMs",
   "maxMs",
+  "allocUpdates",
+  "allocSends",
+  "timedUpdates",
   "timedSends",
+  "allocUpdateTransitions",
+  "allocSendTransitions",
+  "timedUpdateTransitions",
+  "timedSendTransitions",
   "timedHeapProbes",
   "updateKb",
   "sendKb",
   "updateAllocs",
   "sendAllocs",
-  "sends",
   "fps",
   "memKb",
 ] as const;
