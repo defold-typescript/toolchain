@@ -32,7 +32,7 @@ export type OnConfig<Ctx, E extends EventObject> = {
 export type StateHook<Ctx, E extends EventObject> = (ctx: Ctx, m: MachineInstance<Ctx, E>) => void;
 export type UpdateHook<Ctx, E extends EventObject> = (ctx: Ctx, dt: number, m: MachineInstance<Ctx, E>) => string | undefined;
 /** @noSelf */
-export type InvokeStart<Ctx, E extends EventObject> = (ctx: Ctx, settle: (event: E) => void, m: MachineInstance<Ctx, E>) => void;
+export type InvokeStart<Ctx, E extends EventObject> = (ctx: Ctx, settle: (event: E) => void, m: MachineInstance<Ctx, E>) => (() => void) | void;
 /** @noSelf */
 export interface StateConfig<Ctx, E extends EventObject> {
     readonly initial?: string;

@@ -12,6 +12,7 @@
       "@defold-typescript/types/script": ["../../../packages/types/generated/kinds/script.d.ts"],
       "@defold-typescript/types/timers": ["../../../packages/types/src/timers.d.ts"],
       "@defold-typescript/types/hsm": ["../../../packages/types/hsm/index.d.ts"],
+      "@defold-typescript/types/hsm/async": ["../../../packages/types/hsm/async.d.ts"],
       "@defold-typescript/types/hsm/debug": ["../../../packages/types/hsm/debug.d.ts"],
       "@defold-typescript/types/hsm/defold": ["../../../packages/types/hsm/defold.d.ts"]
     }

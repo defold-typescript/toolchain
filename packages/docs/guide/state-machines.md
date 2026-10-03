@@ -3,7 +3,7 @@ toc-title: State machines
 ---
 # State machines
 
-`hsm` is a small typed Hierarchical State Machine library that ships with the toolchain. It drives whole-game flow (boot, menu, playing, paused) and per-object behavior (a door, an enemy, a UI widget) through one model: an XState-shaped config of `initial`, `states`, `on`, `after` and `guard`, ticked from `update(dt)` with timers on game time. Events, their payloads and the machine's context are all checked at compile time, and the library compiles to plain Lua with no `lualib_bundle`.
+`hsm` is a small typed Hierarchical State Machine library that ships with the toolchain. It drives whole-game flow (boot, menu, playing, paused) and per-object behavior (a door, an enemy, a UI widget) through one model: an XState-shaped config of `initial`, `states`, `on`, `after` and `guard`, ticked from `update(dt)` with timers on game time. Events, their payloads and the machine's context are all checked at compile time, and the library compiles to plain Lua with no `lualib_bundle`; only the opt-in [scripted sequences](#scripted-sequences) module needs it.
 
 It replaces the `if (self.state === ...)` branches that otherwise spread across `update` and `on_message`.
 
@@ -18,7 +18,7 @@ import { defineMachine } from "@defold-typescript/types/hsm";
 import { messageEvents } from "@defold-typescript/types/hsm/defold";
 ```
 
-`@defold-typescript/types/hsm` is the machine, `@defold-typescript/types/hsm/defold` is the message bridge and `@defold-typescript/types/hsm/debug` is the [debug inspector](#debug-a-machine). `build` and `watch` write each module your code uses to `defold_typescript_hsm/index.lua`, `defold_typescript_hsm/defold.lua` or `defold_typescript_hsm/debug.lua` at the project root, or under `outDir` when one is set; a module nothing uses, or only uses for its types, is not written. The library upgrades with the CLI, and a project scaffolded by `init` gitignores `defold_typescript_hsm/` with the rest of the build output. A source of your own that would compile to one of those paths fails the build.
+`@defold-typescript/types/hsm` is the machine, `@defold-typescript/types/hsm/defold` is the message bridge, `@defold-typescript/types/hsm/debug` is the [debug inspector](#debug-a-machine) and `@defold-typescript/types/hsm/async` holds [scripted sequences](#scripted-sequences). `build` and `watch` write each module your code uses to `defold_typescript_hsm/index.lua`, `defold_typescript_hsm/defold.lua`, `defold_typescript_hsm/debug.lua` or `defold_typescript_hsm/async.lua` at the project root, or under `outDir` when one is set; a module nothing uses, or only uses for its types, is not written. The library upgrades with the CLI, and a project scaffolded by `init` gitignores `defold_typescript_hsm/` with the rest of the build output. A source of your own that would compile to one of those paths fails the build. Importing `@defold-typescript/types/hsm/async` also writes `lualib_bundle.lua`, which its promises need; the other modules never do.
 
 The library Lua ships with no source map. An error or a debugger frame inside the library names the generated `defold_typescript_hsm/<module>.lua`, not a TypeScript line.
 
@@ -279,9 +279,96 @@ m.path; // undefined: done stopped the machine
 
 An engine callback that finishes later (an animation, a proxy load, an HTTP response) belongs in a state's `invoke`. It runs after the state's `enter` hook on every entry and receives a one-shot `settle(event)`; pass it whichever typed event means success or failure. If the state was left, re-entered, or the machine was stopped before the callback fires, that `settle` is ignored, so a late callback never moves a machine that has moved on. The door's `opening` state [below](#define-a-machine-in-a-plain-module) settles when its fade ends.
 
-### Cleanup goes in `exit`, never after an `await`
+An `invoke` may return a cleanup function. The machine calls it once when that entry ends: after the state's `exit` hook, on `stop()`, before a re-entry starts the next `invoke`, and when a [hot reload](#hot-reload) removes the state.
 
-Release what a state holds (cancel an animation, a timer, a pending request) in its `exit` hook, as the door's `opening` does. `exit` runs on every way out of the state, including `stop()`. Never put cleanup after an `await` in an `invoke` or a hook: by the time the awaited work resumes, the state may already be gone, and code that runs then cleans up after a state that no longer exists, or never runs at all.
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+type BlinkEvent = { type: "HIDE" };
+
+export const blink = defineMachine<{ readonly sprite: Url }, BlinkEvent>()({
+  initial: "/blinking",
+  states: {
+    blinking: {
+      invoke: (ctx) => {
+        const handle = timer.delay(0.2, true, () => {
+          msg.post(ctx.sprite, "disable");
+        });
+        return () => {
+          timer.cancel(handle);
+        };
+      },
+      on: { HIDE: "/hidden" },
+    },
+    hidden: {},
+  },
+});
+```
+
+### Cleanup runs on exit, never after an `await`
+
+Release what a state holds (cancel an animation, a timer, a pending request) in its `exit` hook, as the door's `opening` does, or in the cleanup its `invoke` returns. Both run on every way out of the state, including `stop()`. Never put cleanup after an `await` in an `invoke` or a hook: by the time the awaited work resumes, the state may already be gone, and code that runs then cleans up after a state that no longer exists, or never runs at all.
+
+### Scripted sequences
+
+`sequence` from `@defold-typescript/types/hsm/async` turns an `async` function into an `invoke`. It receives the context and a `signal`: `await signal.wait(seconds)` pauses for that long in engine time, and the event the function returns is sent to the machine. `signal.aborted` turns `true` once the state is left.
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+import { sequence } from "@defold-typescript/types/hsm/async";
+
+interface IntroCtx {
+  readonly title: Url;
+}
+
+type IntroEvent = { type: "DONE" } | { type: "SKIP" };
+
+export const intro = defineMachine<IntroCtx, IntroEvent>()({
+  initial: "/playing",
+  states: {
+    playing: {
+      invoke: sequence(async (ctx, signal) => {
+        msg.post(ctx.title, "enable");
+        await signal.wait(2);
+        msg.post(ctx.title, "disable");
+        await signal.wait(0.5);
+        return { type: "DONE" };
+      }),
+      on: { DONE: "/menu", SKIP: "/menu" },
+    },
+    menu: {},
+  },
+});
+```
+
+A sequence never resumes into a state it has left. Leaving `playing` (here on `SKIP`) cancels the pending `wait`, and the code after it never runs. An error thrown inside the sequence leaves the machine where it is and is raised again from a fresh timer callback, so it shows in the engine console. A `signal.wait` waits on `timer.delay`, not on `update(dt)`, so it keeps counting while a machine's updates are paused.
+
+### Watchdog
+
+`invoke` and `sequence` take no timeout option. Put the deadline on the state instead: an `after` entry leaves the state when nothing settled in time, and leaving it ignores the late `settle` and runs the cleanup.
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+type FetchEvent = { type: "LOADED" } | { type: "FAILED" };
+
+export const fetcher = defineMachine<{ readonly url: string }, FetchEvent>()({
+  initial: "/loading",
+  states: {
+    loading: {
+      invoke: (ctx, settle) => {
+        http.request(ctx.url, "GET", (_self, _id, response) => {
+          settle(response.status === 200 ? { type: "LOADED" } : { type: "FAILED" });
+        });
+      },
+      after: { 5: "/failed" },
+      on: { LOADED: "/ready", FAILED: "/failed" },
+    },
+    ready: {},
+    failed: {},
+  },
+});
+```
 
 ## Define a machine in a plain module
 
@@ -408,7 +495,7 @@ An instance always keeps its `ctx`. What happens to its current state depends on
 | --- | --- |
 | still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The edited transitions, guards and hooks apply from now on. |
 | still exists, but now has child states | enters its `initial` child (and that child's `initial`, and so on), running their `enter` hooks. |
-| was removed | moves to the closest parent state that still exists and enters that parent's `initial` chain, running those `enter` hooks. The removed states run no `exit` hook, because their code is gone. |
+| was removed | moves to the closest parent state that still exists and enters that parent's `initial` chain, running those `enter` hooks. The removed states run no `exit` hook, because their code is gone, but a cleanup their `invoke` returned still runs, deepest state first. |
 
 States are matched by path, so renaming `chase` to `hunt` counts as removing `/chase`. When the current state changes, `onTransition` listeners get the move with the cause `"reload"`, and the [debug inspector](#debug-a-machine) prints it.
 
@@ -816,7 +903,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `enter`   | `(ctx, m) => void`                          | Runs each time the state is entered.                                                          |
 | `exit`    | `(ctx, m) => void`                          | Runs each time the state is left, including on `stop()`.                                      |
 | `update`  | `(ctx, dt, m) => string \| undefined`       | Runs on every `update(dt)` while active; a returned full path transitions.                    |
-| `invoke`  | `(ctx, settle, m) => void`                  | Runs after `enter`; `settle(event)` sends one event if the state is still the one entered.     |
+| `invoke`  | `(ctx, settle, m) => (() => void) \| void`  | Runs after `enter`; `settle(event)` sends one event if the state is still the one entered. A returned function runs once when that entry ends. |
 
 ### `MachineInstance`
 

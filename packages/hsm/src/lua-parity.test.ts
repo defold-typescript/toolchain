@@ -6,6 +6,32 @@ import { runScenario, scenarios } from "./parity/scenarios";
 
 const LUA_OK = 0;
 const SCENARIOS_FILE = "hsm/parity/scenarios.ts";
+const ASYNC_SCENARIO_FILE = "hsm/parity/async-scenario.ts";
+
+// Lua only: TSTL's promises run callbacks as soon as they resolve, while Bun's
+// wait for a microtask, so one synchronous Bun run cannot produce this trace.
+const ASYNC_EXPECTED = [
+  "enter run",
+  "wait",
+  "timer.delay 1 -> 1",
+  "resumed",
+  "exit run",
+  "enter done",
+  "path=/done",
+  "exit done",
+  "enter run",
+  "wait",
+  "timer.delay 1 -> 2",
+  "exit run",
+  "timer.cancel 2",
+  "enter away",
+  "aborted=true",
+  "path=/away",
+  "timer.delay 1 -> 3",
+  "timer.delay 0 -> 4",
+  "path=/fail",
+  "error: boom",
+];
 
 const EXPECTED: Record<string, string[]> = {
   start: [
@@ -193,7 +219,12 @@ const EXPECTED: Record<string, string[]> = {
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
 
 const result = transpileProject({
-  files: { "hsm/index.ts": read("./index.ts"), [SCENARIOS_FILE]: read("./parity/scenarios.ts") },
+  files: {
+    "hsm/index.ts": read("./index.ts"),
+    "hsm/async.ts": read("./async.ts"),
+    [SCENARIOS_FILE]: read("./parity/scenarios.ts"),
+    [ASYNC_SCENARIO_FILE]: read("./parity/async-scenario.ts"),
+  },
 });
 
 const moduleName = (rel: string) => rel.replace(/\.ts$/, "").split("/").join(".");
@@ -221,6 +252,13 @@ function runInBun(name: string): string[] {
 }
 
 function runInLua(name: string): string[] {
+  return runLuaEntry(
+    `return require(${JSON.stringify(moduleName(SCENARIOS_FILE))}).runScenario(${JSON.stringify(name)})`,
+    `scenario "${name}"`,
+  );
+}
+
+function runLuaEntry(chunk: string, label: string): string[] {
   const L = lauxlib.luaL_newstate();
   try {
     lualib.luaL_openlibs(L);
@@ -234,13 +272,9 @@ function runInLua(name: string): string[] {
       lua.lua_setfield(L, -2, module);
     }
     lua.lua_settop(L, 0);
-    const entry = JSON.stringify(moduleName(SCENARIOS_FILE));
-    const status = lauxlib.luaL_dostring(
-      L,
-      `return require(${entry}).runScenario(${JSON.stringify(name)})`,
-    );
+    const status = lauxlib.luaL_dostring(L, chunk);
     if (status !== LUA_OK) {
-      throw new Error(`Lua error in scenario "${name}": ${lua.lua_tostring(L, -1)}`);
+      throw new Error(`Lua error in ${label}: ${lua.lua_tostring(L, -1)}`);
     }
     return lua.lua_tostring(L, -1).split("\n");
   } finally {
@@ -249,7 +283,7 @@ function runInLua(name: string): string[] {
 }
 
 describe("hsm behavior in Bun and in Lua 5.1", () => {
-  test("the core and scenarios transpile cleanly and every require resolves", () => {
+  test("the core, async module and scenarios transpile cleanly and every require resolves", () => {
     expect(result.diagnostics).toEqual([]);
     const missing = emittedRequires().filter((name) => modules[name] === undefined);
     expect(missing).toEqual([]);
@@ -257,6 +291,13 @@ describe("hsm behavior in Bun and in Lua 5.1", () => {
 
   test("every scenario has an expected trace and every trace a scenario", () => {
     expect(Object.keys(EXPECTED).sort()).toEqual(scenarios.map((s) => s.name).sort());
+  });
+
+  test("a sequence resumes, settles, and never resumes into a state it left", () => {
+    const entry = JSON.stringify(moduleName(ASYNC_SCENARIO_FILE));
+    expect(
+      runLuaEntry(`return require(${entry}).runAsyncScenario()`, "the async scenario"),
+    ).toEqual(ASYNC_EXPECTED);
   });
 
   for (const scenario of scenarios) {

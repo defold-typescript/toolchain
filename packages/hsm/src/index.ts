@@ -60,7 +60,8 @@ export type InvokeStart<Ctx, E extends EventObject> = (
   ctx: Ctx,
   settle: (event: E) => void,
   m: MachineInstance<Ctx, E>,
-) => void;
+  // biome-ignore lint/suspicious/noConfusingVoidType: `void` keeps an expression-body invoke returning a void call (`=> go.animate(...)`) valid.
+) => (() => void) | void;
 
 /** @noSelf */
 export interface StateConfig<Ctx, E extends EventObject> {
@@ -453,6 +454,7 @@ function createMachine<Ctx, E extends EventObject>(
     const fired: number[] = [];
     const scratch: number[] = [];
     const entryId: number[] = [];
+    const cleanup: ((() => void) | undefined)[] = [];
     growSlots();
     let entryCount = 0;
     const queue: (E | undefined)[] = [];
@@ -481,6 +483,7 @@ function createMachine<Ctx, E extends EventObject>(
         fired[i] = 0;
         scratch[i] = NO_STATE;
         entryId[i] = 0;
+        cleanup[i] = undefined;
       }
     }
 
@@ -512,11 +515,12 @@ function createMachine<Ctx, E extends EventObject>(
         active[level] = state;
         survivor = level;
       }
-      for (let level = survivor + 1; level <= oldLeafDepth; level++) {
+      for (let level = oldLeafDepth; level > survivor; level--) {
         active[level] = NO_STATE;
         elapsed[level] = 0;
         fired[level] = 0;
         entryId[level] = 0;
+        runCleanup(level);
       }
       leafDepth = survivor;
       const survivorState = active[survivor] as number;
@@ -556,7 +560,7 @@ function createMachine<Ctx, E extends EventObject>(
       const invoke = config.invoke;
       if (invoke !== undefined) {
         let settled = false;
-        invoke(
+        const result = invoke(
           ctx,
           (event: E) => {
             if (settled || !running || stopRequested || entryId[level] !== id) {
@@ -567,19 +571,32 @@ function createMachine<Ctx, E extends EventObject>(
           },
           instance,
         );
+        if (typeof result === "function") {
+          cleanup[level] = result;
+        }
+      }
+    }
+
+    function runCleanup(level: number): void {
+      const run = cleanup[level];
+      if (run !== undefined) {
+        cleanup[level] = undefined;
+        run();
       }
     }
 
     function exitTo(level: number): void {
       while (leafDepth > level) {
-        const state = active[leafDepth] as number;
-        active[leafDepth] = NO_STATE;
-        entryId[leafDepth] = 0;
+        const exited = leafDepth;
+        const state = active[exited] as number;
+        active[exited] = NO_STATE;
+        entryId[exited] = 0;
         leafDepth--;
         const hook = (configs[state] as StateConfig<Ctx, E>).exit;
         if (hook !== undefined) {
           hook(ctx, instance);
         }
+        runCleanup(exited);
       }
     }
 
