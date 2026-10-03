@@ -593,6 +593,57 @@ describe("update, after and stop", () => {
     expect(again.path).toBe("/b");
   });
 
+  test("a parent's after timer counts the dt of a tick whose update hook transitions below it", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/airborne",
+      states: {
+        airborne: {
+          initial: "/airborne/rising",
+          after: { 0.75: "/timeout" },
+          states: {
+            rising: { update: (ctx) => (ctx.flag ? "/airborne/falling" : undefined) },
+            falling: { after: { 0.5: "/landed" } },
+          },
+        },
+        timeout: {},
+        landed: {},
+      },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    m.update(0.25);
+    ctx.flag = true;
+    m.update(0.25);
+    expect(m.path).toBe("/airborne/falling");
+    m.update(0.25);
+    expect(m.path).toBe("/timeout");
+  });
+
+  test("a timer due on a tick whose update hook transitions waits for the next update", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/p",
+      states: {
+        p: {
+          initial: "/p/a",
+          after: { 0.5: "/out" },
+          states: {
+            a: { update: (ctx) => (ctx.flag ? "/p/b" : undefined) },
+            b: {},
+          },
+        },
+        out: {},
+      },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    m.update(0.25);
+    ctx.flag = true;
+    m.update(0.25);
+    expect(m.path).toBe("/p/b");
+    m.update(0.25);
+    expect(m.path).toBe("/out");
+  });
+
   test("the shortest expired after entry fires first regardless of declaration order", () => {
     const def = defineMachine<Ctx, Ev>()({
       initial: "/a",

@@ -156,11 +156,11 @@ Guards receive `(ctx, event)` and actions `(ctx, event, m)`, where `event` is na
 
 ## `update` and `after`
 
-`m.update(dt)` advances the machine by one tick in two phases.
+`m.update(dt)` advances the machine by one tick. Every active state adds that `dt` to its own clock on every call, whether or not a hook transitions, and starts from zero each time it is entered, so a machine whose `update` is not called is frozen in time. The tick then runs in two phases.
 
 First the `update` hooks run, from the deepest active state up, each with `(ctx, dt, m)`. A hook returns a target to transition or `undefined` to pass. The first hook to return a target wins: the remaining hooks do not run, and the target is a full path, like an `on` target. A hook transition has no actions.
 
-Then, only if no hook transitioned, the `after` timers run. `after` maps a delay in seconds to a target path. Every active state counts game time from the `dt` passed to `update`, from zero each time it is entered, so a machine whose `update` is not called is frozen in time. A state's timers fire in delay order. One `update` call fires at most one timer, checked from the deepest state up; another timer that is due waits for the next call.
+Then, only if no hook transitioned, the `after` timers run. `after` maps a delay in seconds, measured on the state's clock, to a target path. A state's timers fire in delay order. One `update` call fires at most one timer, checked from the deepest state up; another timer that is due waits for the next call.
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
