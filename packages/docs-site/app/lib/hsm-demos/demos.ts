@@ -112,6 +112,66 @@ const nestedLamp = demo<LampCtx, LampEvent>({
   }),
 });
 
+type MemoryLampCtx = { switches: number; dimmed: boolean };
+
+const rememberingLamp = demo<MemoryLampCtx, LampEvent>({
+  title: "A lamp that remembers",
+  subtitle: "Turning it back on returns to bright or dim.",
+  config: {
+    initial: "/off",
+    states: {
+      off: {
+        on: {
+          TOGGLE: [
+            // was it dim? go straight back to dim
+            { target: "/on/dim", guard: (ctx) => ctx.dimmed },
+            // otherwise, bright
+            { target: "/on/bright" },
+          ],
+        },
+      },
+      on: {
+        initial: "/on/bright",
+        enter: (ctx) => {
+          ctx.switches += 1;
+        },
+        on: { TOGGLE: "/off" },
+        states: {
+          bright: {
+            enter: (ctx) => {
+              ctx.dimmed = false;
+            },
+            on: { DIM: "/on/dim" },
+          },
+          dim: {
+            enter: (ctx) => {
+              ctx.dimmed = true;
+            },
+            on: { DIM: "/on/bright" },
+          },
+        },
+      },
+    },
+  },
+  ctx: () => ({ switches: 0, dimmed: false }),
+  buttons: [
+    { label: "TOGGLE", event: { type: "TOGGLE" } },
+    { label: "DIM", event: { type: "DIM" } },
+  ],
+  readout: (m) => [
+    ["ctx.dimmed", String(m.ctx.dimmed)],
+    ["ctx.switches", String(m.ctx.switches)],
+  ],
+  visual: (m) => ({
+    kind: "bulb",
+    glow: m.matches("/on/bright") ? "lit" : m.matches("/on/dim") ? "dim" : "off",
+  }),
+  notes: {
+    "/off|on|TOGGLE|0": "if it was dim",
+    "/off|on|TOGGLE|1": "otherwise",
+  },
+});
+
 type BuddyCtx = { energy: number };
 type BuddyEvent =
   | { type: "BUMP"; cost: number }
@@ -388,6 +448,7 @@ const level = demo<LevelCtx, LevelEvent>({
 export const DEMOS = {
   lamp,
   "nested-lamp": nestedLamp,
+  "remembering-lamp": rememberingLamp,
   buddy,
   feet,
   sparkle,

@@ -89,9 +89,9 @@ m.send({ type: "TOGGLE" }); // press the switch
 m.path; // "/on"
 ```
 
-Don't trip over the two meanings of "on". The *state* is named `on`, and inside every state the *key* `on:` means "on this event, do this."
-
 Wherever you point at a state, you write its **path**: a `/`, then its name, like `"/off"`. It works like a file path, which matters once states live inside other states.
+
+Don't trip over the two meanings of "on". The *state* is named `on`, and inside every state the *key* `on:` means "on this event, do this." A rule that points at the state always writes it as a path, `"/on"`, so the slash tells you which one you're reading.
 
 That's the whole loop: **define** the machine once, **start** it to get a running copy, **send** events, and read `path` to see where it is.
 
@@ -136,6 +136,67 @@ export const lamp = defineMachine<LampCtx, LampEvent>()({
 - A child's path continues its parent's, like a file in a folder: `"/on/dim"`. `m.path` is the path of the innermost active state, and `m.matches("/on")` asks "is on active at all?" and is true in both children.
 
 Watch the log when you press `TOGGLE` in `/on/dim`: `dim` has no rule for it, so the event **climbs up** to its parent `on`, which does. An event no state handles is simply ignored. Try `DIM` while the lamp is off.
+
+### Remembering bright or dim
+
+In the lamp above, press `DIM`, then `TOGGLE` it off and on again. It comes back bright, because entering `on` always starts at its `initial`. To come back the way you left it, the lamp has to remember. Statecharts call this a *history state*. `hsm` has no built-in history, so you keep that memory in your data:
+
+<div data-hsm-demo="remembering-lamp"></div>
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+interface LampCtx {
+  switches: number;
+  dimmed: boolean; // was the lamp dim when it was last on?
+}
+
+type LampEvent = { type: "TOGGLE" } | { type: "DIM" };
+
+export const lamp = defineMachine<LampCtx, LampEvent>()({
+  initial: "/off",
+  states: {
+    off: {
+      on: {
+        // try each option from top to bottom
+        TOGGLE: [
+          // was it dim? go straight back to dim
+          { target: "/on/dim", guard: (ctx) => ctx.dimmed },
+          // otherwise, bright
+          { target: "/on/bright" },
+        ],
+      },
+    },
+    on: {
+      initial: "/on/bright",
+      enter: (ctx) => {
+        ctx.switches += 1;
+      },
+      on: { TOGGLE: "/off" },
+      states: {
+        bright: {
+          enter: (ctx) => {
+            ctx.dimmed = false; // write down where we are
+          },
+          on: { DIM: "/on/dim" },
+        },
+        dim: {
+          enter: (ctx) => {
+            ctx.dimmed = true;
+          },
+          on: { DIM: "/on/bright" },
+        },
+      },
+    },
+  },
+});
+
+const m = lamp.start({ switches: 0, dimmed: false });
+```
+
+- `bright` and `dim` write down which one is active in their `enter` hooks. Those run however the lamp gets there, so `ctx.dimmed` is always right.
+- `TOGGLE` in `off` is now a list of options. The first has a **guard**, a yes/no question: if the lamp was dim, go straight to `/on/dim`. Otherwise the next option goes to `/on/bright`. [Part 5](#5-conditions-and-side-effects) covers guards properly.
+- Going straight to `/on/dim` still enters `on` first, so `switches` still counts.
 
 ## 5. Conditions and side effects
 
