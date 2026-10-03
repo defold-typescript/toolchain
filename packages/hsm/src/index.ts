@@ -623,10 +623,7 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
       return false;
     }
 
-    function fireTimers(dt: number): void {
-      for (let level = 0; level <= leafDepth; level++) {
-        elapsed[level] = (elapsed[level] as number) + dt;
-      }
+    function fireTimers(): void {
       for (let level = leafDepth; level >= 0; level--) {
         const state = active[level] as number;
         const delays = afterDelays[state] as number[];
@@ -650,8 +647,11 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
         return;
       }
       busy = true;
+      for (let level = 0; level <= leafDepth; level++) {
+        elapsed[level] = (elapsed[level] as number) + dt;
+      }
       if (!fireUpdateHooks(dt)) {
-        fireTimers(dt);
+        fireTimers();
       }
       endStep();
     }

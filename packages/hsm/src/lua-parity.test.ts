@@ -108,6 +108,18 @@ const EXPECTED: Record<string, string[]> = {
     "enter y",
     "path=/y",
   ],
+  "hook tick timers": [
+    "enter airborne",
+    "enter airborne.rising",
+    "path=/airborne/rising",
+    "exit airborne.rising",
+    "enter airborne.falling",
+    "path=/airborne/falling",
+    "exit airborne.falling",
+    "exit airborne",
+    "enter timeout",
+    "path=/timeout",
+  ],
   stop: [
     "enter a",
     "exit a",
