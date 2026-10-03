@@ -17,6 +17,7 @@ exports[`hsm as a built-in import importing defineMachine lowers to the index re
 local ____exports = {}
 local ROOT = 0
 local NO_STATE = -1
+local ALWAYS_LIMIT = 10
 local function describePath(path)
     return path == "" and "(root)" or path
 end
@@ -182,6 +183,35 @@ local function compileOn(compiled, index)
         end
     end
 end
+local function compileAlways(compiled, index)
+    local list = {}
+    compiled.always[index + 1] = list
+    local spec = compiled.configs[index + 1].always
+    if spec == nil then
+        return
+    end
+    local ____temp_2
+    if type(spec) == "string" or spec[1] == nil then
+        ____temp_2 = {spec}
+    else
+        ____temp_2 = spec
+    end
+    local candidates = ____temp_2
+    do
+        local i = 0
+        while i < #candidates do
+            local candidate = candidates[i + 1]
+            if type(candidate) ~= "string" and candidate.target == nil then
+                error(
+                    ("hsm: state \\"" .. describePath(compiled.paths[index + 1])) .. "\\" has an always transition with no target",
+                    0
+                )
+            end
+            list[#list + 1] = compileTransition(compiled, index, candidate)
+            i = i + 1
+        end
+    end
+end
 local NOT_A_DELAY = -1
 local function parseDelay(key)
     if type(key) == "number" then
@@ -241,6 +271,7 @@ local function compile(config)
         transitions = {},
         afterDelays = {},
         afterTargets = {},
+        always = {},
         pathIndex = {}
     }
     registerState(compiled, config, NO_STATE, "")
@@ -250,6 +281,7 @@ local function compile(config)
             compileInitial(compiled, index)
             compileOn(compiled, index)
             compileAfter(compiled, index)
+            compileAlways(compiled, index)
             index = index + 1
         end
     end
@@ -276,7 +308,7 @@ end
 local registered = {}
 local function createMachine(definition)
     local function start(ctx)
-        local growSlots, rebind, onTransition, report, enterState, runCleanup, exitTo, defaultChild, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, depth, initialChild, history, configs, onIndex, transitions, afterDelays, afterTargets, active, elapsed, fired, scratch, entryId, cleanup, remembered, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, listeners, instance
+        local growSlots, rebind, onTransition, report, enterState, runCleanup, exitTo, defaultChild, enterDown, transition, settleAlways, takeAlways, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, depth, initialChild, history, configs, onIndex, transitions, afterDelays, afterTargets, always, active, elapsed, fired, scratch, entryId, cleanup, remembered, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, listeners, instance
         function growSlots()
             do
                 local i = #active
@@ -307,6 +339,7 @@ local function createMachine(definition)
             transitions = compiled.transitions
             afterDelays = compiled.afterDelays
             afterTargets = compiled.afterTargets
+            always = compiled.always
             growSlots()
             local survivor = 0
             active[1] = ROOT
@@ -342,6 +375,7 @@ local function createMachine(definition)
             if #listeners > 0 then
                 report(from, "reload", nil)
             end
+            settleAlways()
         end
         function onTransition(listener)
             listeners[#listeners + 1] = listener
@@ -458,6 +492,58 @@ local function createMachine(definition)
             if #listeners > 0 then
                 report(from, cause, event)
             end
+            if cause ~= "always" then
+                settleAlways()
+            end
+        end
+        function settleAlways()
+            do
+                local moves = 0
+                while not stopRequested do
+                    if not takeAlways(moves == ALWAYS_LIMIT) then
+                        return
+                    end
+                    moves = moves + 1
+                end
+            end
+        end
+        function takeAlways(overLimit)
+            do
+                local level = leafDepth
+                while level >= 0 do
+                    local state = active[level + 1]
+                    local list = always[state + 1]
+                    do
+                        local i = 0
+                        while i < #list do
+                            local candidate = list[i + 1]
+                            local guard = candidate.guard
+                            if guard == nil or guard(ctx) then
+                                if overLimit then
+                                    clearQueue()
+                                    busy = false
+                                    error(
+                                        ((("hsm: state \\"" .. describePath(paths[state + 1])) .. "\\" took ") .. tostring(ALWAYS_LIMIT)) .. " always transitions in a row; check for an always loop",
+                                        0
+                                    )
+                                end
+                                transition(
+                                    state,
+                                    candidate.target,
+                                    false,
+                                    nil,
+                                    nil,
+                                    "always"
+                                )
+                                return true
+                            end
+                            i = i + 1
+                        end
+                    end
+                    level = level - 1
+                end
+            end
+            return false
         end
         function runActions(actions, event)
             if actions == nil or event == nil then
@@ -476,12 +562,12 @@ local function createMachine(definition)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue102
+                        local __continue119
                         repeat
                             local state = active[level + 1]
                             local listIndex = onIndex[state + 1][event.type]
                             if type(listIndex) ~= "number" then
-                                __continue102 = true
+                                __continue119 = true
                                 break
                             end
                             local list = transitions[listIndex + 1]
@@ -503,9 +589,9 @@ local function createMachine(definition)
                                     i = i + 1
                                 end
                             end
-                            __continue102 = true
+                            __continue119 = true
                         until true
-                        if not __continue102 then
+                        if not __continue119 then
                             break
                         end
                     end
@@ -566,12 +652,12 @@ local function createMachine(definition)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue120
+                        local __continue137
                         repeat
                             local state = active[level + 1]
                             local hook = configs[state + 1].update
                             if hook == nil then
-                                __continue120 = true
+                                __continue137 = true
                                 break
                             end
                             local target = hook(ctx, dt, instance)
@@ -589,9 +675,9 @@ local function createMachine(definition)
                                 )
                                 return true
                             end
-                            __continue120 = true
+                            __continue137 = true
                         until true
-                        if not __continue120 then
+                        if not __continue137 then
                             break
                         end
                     end
@@ -679,6 +765,7 @@ local function createMachine(definition)
         transitions = compiled.transitions
         afterDelays = compiled.afterDelays
         afterTargets = compiled.afterTargets
+        always = compiled.always
         active = {}
         elapsed = {}
         fired = {}
@@ -708,6 +795,7 @@ local function createMachine(definition)
         busy = true
         enterState(ROOT)
         enterDown(ROOT, ROOT)
+        settleAlways()
         endStep()
         return instance
     end

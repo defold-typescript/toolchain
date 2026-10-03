@@ -281,6 +281,43 @@ Pausing in mid-air and sending `RESUME` lands on `/playing/air/rise`, running th
 
 `history` on a state without children throws when the machine is defined.
 
+## Move on at once with `always`
+
+`always` lists the targets a state moves to as soon as it is entered, without waiting for an event. Use it for a state that only decides where to go next:
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+interface Hero {
+  health: number;
+}
+
+type HeroEvent = { type: "HIT" };
+
+export const hero = defineMachine<Hero, HeroEvent>()({
+  initial: "/fine",
+  states: {
+    fine: { on: { HIT: "/hurt" } },
+    hurt: {
+      enter: (ctx) => {
+        ctx.health -= 1;
+      },
+      always: [{ target: "/dead", guard: (ctx) => ctx.health <= 0 }, { target: "/fine" }],
+    },
+    dead: {},
+  },
+});
+```
+
+`HIT` runs `hurt`'s `enter`, then moves on to `/dead` or back to `/fine` in the same `send`. The rules:
+
+- **Checked after every move.** That is `start`, an event, an `after` timer, a path returned from an `update` hook, a hot reload, and another `always` move. The active states are checked deepest first, the way events bubble, after the `enter` hooks and before the next queued event. The first candidate whose `guard` is missing or passes is taken, with the cause `always`.
+- **Not checked on ticks or targetless transitions.** A guard reading `ctx` that an action or an `update` hook changed waits for the next move. To watch a condition every frame, return a target from an `update` hook instead.
+- **No event and no actions.** A candidate is a `target` and an optional `guard(ctx)`. Put side effects in the target's `enter`.
+- **Loops throw.** At most 10 `always` moves follow one move. The 11th throws `hsm: state "<path>" took 10 always transitions in a row; check for an always loop`, drops the queued events and leaves the instance usable in the state it reached.
+
+An unknown target, or a candidate without a `target`, throws when the machine is defined.
+
 ## Run to completion, `invoke` and `stop`
 
 A machine handles one event at a time, to completion. A `send` from inside a hook, guard, action or `invoke` does not run at once: it queues the event, which runs after the current transition, every `enter` and `exit` included, has finished. Queued events run in order before the outer `send`, `update` or `start` call returns, so `start` hands back a machine that has already handled whatever its `enter` hooks sent.
@@ -769,7 +806,7 @@ hsm door frame 150: /opening -> /open (OPENED)
 hsm door frame 330: /open -> /closed (after)
 ```
 
-The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update`, `stop` or `reload`. After `stop()` the new path reads `(stopped)`. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the current path, 40 units above the target's world position.
+The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update`, `always`, `stop` or `reload`. After `stop()` the new path reads `(stopped)`. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the current path, 40 units above the target's world position.
 
 In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect` registers nothing and `draw` does nothing, so the calls can stay in shipped code.
 
@@ -978,6 +1015,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `states`  | `{ [name: string]: StateConfig }`           | Child states, by name. A name is non-empty and contains no `/`.                               |
 | `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`, each target a full path; see [Events and transitions](#events-and-transitions). |
 | `after`   | `{ [seconds: number]: string }`             | Full-path targets taken after this long in the state, in game time; see [`update` and `after`](#update-and-after). |
+| `always`  | `target \| config \| config[]`               | Full-path targets taken right after any move that leaves this state active; the first whose `guard(ctx)` is missing or passes wins. See [Move on at once with `always`](#move-on-at-once-with-always). |
 | `enter`   | `(ctx, m) => void`                          | Runs each time the state is entered.                                                          |
 | `exit`    | `(ctx, m) => void`                          | Runs each time the state is left, including on `stop()`.                                      |
 | `update`  | `(ctx, dt, m) => string \| undefined`       | Runs on every `update(dt)` while active; a returned full path transitions.                    |
