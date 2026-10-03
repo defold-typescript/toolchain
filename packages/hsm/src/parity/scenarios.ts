@@ -634,6 +634,68 @@ function alwaysTransitions(): string[] {
   return log;
 }
 
+// A concatenation loop, not join, so the scenario reads the same in both runtimes.
+function shownLeaves(leaves: readonly string[]): string {
+  let text = "";
+  for (let i = 0; i < leaves.length; i++) {
+    text = i === 0 ? (leaves[i] as string) : `${text}, ${leaves[i] as string}`;
+  }
+  return text;
+}
+
+function parallelRegions(): string[] {
+  const log: string[] = [];
+  const ctx = newCtx(log);
+  const m = defineMachine<Ctx, Ev>()({
+    initial: "/alive",
+    states: {
+      alive: {
+        ...logged("alive"),
+        type: "parallel",
+        on: { HIT: "/dead" },
+        states: {
+          move: {
+            ...logged("move"),
+            initial: "/alive/move/idle",
+            states: {
+              idle: { ...logged("idle"), on: { GO: "/alive/move/run" } },
+              run: {
+                ...logged("run"),
+                update: (ctx) => (ctx.flag ? "/alive/move/idle" : undefined),
+              },
+            },
+          },
+          weapon: {
+            ...logged("weapon"),
+            initial: "/alive/weapon/ready",
+            states: {
+              ready: { ...logged("ready"), on: { GO: "/alive/weapon/cooldown" } },
+              cooldown: { ...logged("cooldown"), after: { 0.5: "/alive/weapon/ready" } },
+            },
+          },
+        },
+      },
+      dead: { ...logged("dead"), on: { BACK: "/alive" } },
+    },
+  }).start(ctx);
+  log.push(`leaves=${shownLeaves(m.leaves)}`);
+  m.onTransition((from, to, cause, event) => {
+    log.push(`${shown(from)} -> ${shown(to)} ${cause} ${event === undefined ? "-" : event.type}`);
+  });
+  m.send({ type: "GO" });
+  log.push(`path=${shown(m.path)} leaves=${shownLeaves(m.leaves)}`);
+  log.push(`matches(/alive/weapon)=${m.matches("/alive/weapon")}`);
+  ctx.flag = true;
+  m.update(0.6);
+  log.push(`leaves=${shownLeaves(m.leaves)}`);
+  m.send({ type: "HIT" });
+  log.push(`leaves=${shownLeaves(m.leaves)}`);
+  m.send({ type: "BACK" });
+  m.stop();
+  log.push(`path=${shown(m.path)} leaves=${shownLeaves(m.leaves)}`);
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -650,6 +712,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "hot reload", run: () => hotReload() },
   { name: "shallow history", run: () => shallowHistory() },
   { name: "always transitions", run: () => alwaysTransitions() },
+  { name: "parallel regions", run: () => parallelRegions() },
 ];
 
 export function runScenario(name: string): string {

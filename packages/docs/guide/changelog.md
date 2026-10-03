@@ -13,24 +13,25 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`hsm` migration](./state-machines.md#the-message-bridge)**: pass `sender` to `toEvent`, add `onTransition` to hand-built instances, brace value-returning `invoke` bodies.
+> - **[`hsm` migration](./state-machines.md#the-message-bridge)**: pass `sender` to `toEvent`, add `onTransition` and `leaves` to hand-built instances, brace value-returning `invoke` bodies.
 > - **[`hsm` sequences](./state-machines.md#scripted-sequences)** wait inside a state, and their waits stop when it is left.
-> - **[`hsm` states](./state-machines.md#resume-with-history)** resume the child they last left, and [`always`](./state-machines.md#move-on-at-once-with-always) moves on from a state at once.
+> - **[`hsm` states](./state-machines.md#resume-with-history)** resume the child they last left, [`always`](./state-machines.md#move-on-at-once-with-always) moves on at once, and [`parallel`](./state-machines.md#run-regions-side-by-side-with-parallel) runs regions side by side.
 > - **[`hsm` hot reload](./state-machines.md#hot-reload)** reaches running machines, and an [inspector](./state-machines.md#debug-a-machine) logs each move.
 > - **[`hsm` timers](./state-machines.md#update-and-after)** fire on time.
 
 ### Breaking
 
 - **`hsm` message events carry the sender:** `messageEvents(...).toEvent` takes the `on_message` `sender` as a required third argument, and every `MessageEvent` has an `event.sender` that guards and actions can reply to. Pass `sender` to each `toEvent` call and add it to any `MessageEvent` you build by hand; see [The message bridge](./state-machines.md#the-message-bridge).
-- **`hsm` instances gain `onTransition`:** `MachineInstance` has a required `onTransition` member, so add or forward it on any object you build as a `MachineInstance` (a test mock, a proxy). Where a parameter typed `MachineInstance<Ctx, E>` receives an instance with more event types, widen its `E` to the machine's full event union; see [Debug a machine](./state-machines.md#debug-a-machine).
+- **`hsm` instances gain `onTransition` and `leaves`:** `MachineInstance` has required `onTransition` and `leaves` members, so add or forward both on any object you build as a `MachineInstance` (a test mock, a proxy). Where a parameter typed `MachineInstance<Ctx, E>` receives an instance with more event types, widen its `E` to the machine's full event union; see [Debug a machine](./state-machines.md#debug-a-machine).
 - **`hsm` `invoke` may return a cleanup:** an `invoke` written as an expression body that returns anything but a function, such as `(_ctx, settle) => timer.delay(...)`, no longer compiles. Wrap the body in braces; see [Engine callbacks](./state-machines.md#engine-callbacks-invoke-and-settle).
 
 ### Improved
 
-- **`hsm` machines are easier to script, resume, branch, debug, reload and budget:**
+- **`hsm` machines are easier to script, resume, branch, split into regions, debug, reload and budget:**
   - **Scripted sequences** — an `invoke` may return a cleanup the machine runs on every way out of the state, and `sequence(async (ctx, signal) => ...)` from `@defold-typescript/types/hsm/async` builds one whose `await signal.wait(seconds)` never resumes after the state is left. Any other `await` in a sequence can resume after the state is left, so check `signal.aborted` after it; see [Scripted sequences](./state-machines.md#scripted-sequences).
   - **Shallow history** — `history: "shallow"` on a compound state enters the child that was active when the state was last left instead of its `initial`, per instance and across a hot reload; a target inside the state still lands where it names. See [Resume with history](./state-machines.md#resume-with-history).
   - **`always` transitions** — `always` on a state lists targets taken right after any move that leaves it active, deepest state first, the first passing `guard(ctx)` winning, reported to `onTransition` with the cause `"always"`; an 11th `always` move in a row throws instead of looping. See [Move on at once with `always`](./state-machines.md#move-on-at-once-with-always).
+  - **Parallel regions** — a state with `type: "parallel"` keeps every child active at once, each region taking its own events, `update` ticks, `after` timers and `always` moves, while an event no region takes bubbles above it. `leaves` lists every active leaf, `path` stays the first, and the inspector draws them all; see [Run regions side by side with `parallel`](./state-machines.md#run-regions-side-by-side-with-parallel).
   - **Debug inspector** — `onTransition(listener)` on a machine instance calls the listener after each move with the old and new state path, the cause and the event. `inspect(instance, label)` from `@defold-typescript/types/hsm/debug` uses it to log each move and draw the active path over a game object, in debug builds only; see [Debug a machine](./state-machines.md#debug-a-machine).
   - **Hot reload** — a definition made with `defineMachine<Ctx, E>("key")` reaches running instances on their next `send` or `update` after a reload, with no `on_reload`: kept states keep their context and timers, and a removed state falls back to its surviving parent's `initial`, reported to `onTransition` with the cause `"reload"`. See [Hot reload](./state-machines.md#hot-reload).
   - **Performance** — 200 objects each running a three-level machine cost about 0.05 ms per frame in the stock engine, and `update` and `send` build no tables. [Performance](./state-machines.md#performance) records the numbers and shows how to hoist constant events off a hot path.

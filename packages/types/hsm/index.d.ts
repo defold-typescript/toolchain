@@ -9,6 +9,7 @@ export type TransitionListener<E extends EventObject, P extends string = string>
 export interface MachineInstance<Ctx, E extends EventObject, P extends string = string> {
     readonly ctx: Ctx;
     readonly path: P | undefined;
+    readonly leaves: readonly P[];
     readonly matches: (path: P) => boolean;
     readonly send: (event: E) => void;
     readonly update: (dt: number) => void;
@@ -41,6 +42,7 @@ export type UpdateHook<Ctx, E extends EventObject> = (ctx: Ctx, dt: number, m: M
 export type InvokeStart<Ctx, E extends EventObject> = (ctx: Ctx, settle: (event: E) => void, m: MachineInstance<Ctx, E>) => (() => void) | void;
 /** @noSelf */
 export interface StateConfig<Ctx, E extends EventObject> {
+    readonly type?: "parallel";
     readonly initial?: string;
     readonly history?: "shallow";
     readonly states?: {
@@ -83,7 +85,10 @@ interface TransitionCheck<T> {
 }
 type SpecCheck<T> = T | TransitionCheck<T> | readonly TransitionCheck<T>[];
 type PathCheck<S, Self extends string, All extends string, Ev extends string> = {
+    readonly type?: unknown;
     readonly initial?: S extends {
+        readonly type: "parallel";
+    } ? never : S extends {
         readonly states: infer Children;
     } ? `${Self}/${keyof Children & string}` : never;
     readonly history?: unknown;
