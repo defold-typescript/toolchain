@@ -21,14 +21,18 @@ describe("hsm engine benchmark", () => {
     expect(report.frames).toBe(300);
     for (const value of [
       report.allocFrames,
-      report.allocUpdates,
-      report.allocSends,
-      report.timedUpdates,
-      report.timedSends,
-      report.allocUpdateTransitions,
-      report.allocSendTransitions,
-      report.timedUpdateTransitions,
-      report.timedSendTransitions,
+      report.allocUpdateSlots,
+      report.allocSendSlots,
+      report.timedUpdateSlots,
+      report.timedSendSlots,
+      report.allocApproachUpdates,
+      report.allocStalledUpdates,
+      report.allocAliveHits,
+      report.allocStalledHits,
+      report.timedApproachUpdates,
+      report.timedStalledUpdates,
+      report.timedAliveHits,
+      report.timedStalledHits,
       report.timedHeapProbes,
       report.avgMs,
       report.maxMs,
@@ -43,18 +47,22 @@ describe("hsm engine benchmark", () => {
     }
   });
 
-  test("measures every update and send in both passes", () => {
-    expect(report.allocUpdates).toBe(60_000);
-    expect(report.allocSends).toBe(3_000);
-    expect(report.timedUpdates).toBe(60_000);
-    expect(report.timedSends).toBe(3_000);
+  test("fills every update and send slot in both passes", () => {
+    expect(report.allocUpdateSlots).toBe(60_000);
+    expect(report.allocSendSlots).toBe(3_000);
+    expect(report.timedUpdateSlots).toBe(60_000);
+    expect(report.timedSendSlots).toBe(3_000);
   });
 
-  test("every measured call kind moves some machine in both passes", () => {
-    expect(report.allocUpdateTransitions).toBeGreaterThan(0);
-    expect(report.allocSendTransitions).toBeGreaterThan(0);
-    expect(report.timedUpdateTransitions).toBeGreaterThan(0);
-    expect(report.timedSendTransitions).toBeGreaterThan(0);
+  test("every witnessed update and HIT ran in both passes", () => {
+    expect(report.allocStalledUpdates).toBe(0);
+    expect(report.allocStalledHits).toBe(0);
+    expect(report.timedStalledUpdates).toBe(0);
+    expect(report.timedStalledHits).toBe(0);
+    expect(report.allocApproachUpdates).toBeGreaterThan(0);
+    expect(report.allocAliveHits).toBeGreaterThan(0);
+    expect(report.timedApproachUpdates).toBeGreaterThan(0);
+    expect(report.timedAliveHits).toBeGreaterThan(0);
   });
 
   test("takes no heap samples while timing", () => {
