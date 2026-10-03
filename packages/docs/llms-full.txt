@@ -2755,7 +2755,7 @@ A component's `props` is an untyped table. Upstream documents every builder as t
 
 ### State machines
 
-`hsm` is a small typed hierarchical state machine library that ships with the toolchain. It drives whole-game flow (boot, menu, playing, paused) and per-object behavior (a door, an enemy, a UI widget) through one model: an XState-shaped config of `initial`, `states`, `on`, `after` and `guard`, ticked from `update(dt)` with timers on game time. Events, their payloads and the machine's context are all checked at compile time, and the library compiles to plain Lua with no `lualib_bundle`.
+`hsm` is a small typed Hierarchical State Machine library that ships with the toolchain. It drives whole-game flow (boot, menu, playing, paused) and per-object behavior (a door, an enemy, a UI widget) through one model: an XState-shaped config of `initial`, `states`, `on`, `after` and `guard`, ticked from `update(dt)` with timers on game time. Events, their payloads and the machine's context are all checked at compile time, and the library compiles to plain Lua with no `lualib_bundle`.
 
 It replaces the `if (self.state === ...)` branches that otherwise spread across `update` and `on_message`.
 
@@ -2777,6 +2777,8 @@ The library Lua ships with no source map. An error or a debugger frame inside th
 #### States and paths
 
 A machine is a tree of states. The config you pass to `defineMachine` is the root: it names its child `states` and the `initial` one to enter. A state with children of its own is a compound state and also needs an `initial`; a state without children is a leaf. Entering a compound state always continues into its `initial` child, so the active states form one chain from the root down to a leaf.
+
+This tree is the *h* in `hsm`: it is a **hierarchical** state machine, in the statechart style David Harel introduced in 1987. A flat state machine has one level, so behavior shared by several states is repeated in each of them. Here a parent holds what its children share: a transition on the parent applies in every child that does not handle that event itself, because an unhandled event moves up to the parent, and `matches()` on the parent is true whichever child is active.
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
