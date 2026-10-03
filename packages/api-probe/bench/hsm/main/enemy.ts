@@ -23,45 +23,54 @@ export default defineScript({
     self.frame += 1;
     const sending = self.frame % SEND_EVERY === 0;
     const event = self.sent % 3 === 0 ? SPOT : self.sent % 3 === 1 ? HIT : LOSE;
-    if (!benchStats.measuring) {
+    if (benchStats.phase === "alloc") {
+      // A nonzero heap delta in either direction means the call allocated: with
+      // the collector stopped only an allocation can move the count, and a
+      // collection can only start from one. The count also takes in what the VM
+      // allocates for itself (a JIT trace, a deeper Lua stack) the first time a
+      // path runs, so the bench counts allocating calls rather than demanding
+      // zero bytes.
+      let kb0 = collectgarbage("count");
       self.machine.update(dt);
+      let kb1 = collectgarbage("count");
+      if (kb1 !== kb0) {
+        benchStats.updateKb += math.abs(kb1 - kb0);
+        benchStats.updateAllocs += 1;
+      }
       if (sending) {
         self.sent += 1;
+        kb0 = collectgarbage("count");
         self.machine.send(event);
+        kb1 = collectgarbage("count");
+        if (kb1 !== kb0) {
+          benchStats.sendKb += math.abs(kb1 - kb0);
+          benchStats.sendAllocs += 1;
+        }
+        benchStats.sends += 1;
       }
       return;
     }
 
-    // A nonzero heap delta in either direction means the call allocated: with
-    // the collector stopped only an allocation can move the count, and a
-    // collection can only start from one. The count also takes in what the VM
-    // allocates for itself (a JIT trace, a deeper Lua stack) the first time a
-    // path runs, so the bench counts allocating calls rather than demanding
-    // zero bytes.
-    let t0 = socket.gettime();
-    let kb0 = collectgarbage("count");
-    self.machine.update(dt);
-    let kb1 = collectgarbage("count");
-    let t1 = socket.gettime();
-    benchStats.updateSeconds += t1 - t0;
-    if (kb1 !== kb0) {
-      benchStats.updateKb += math.abs(kb1 - kb0);
-      benchStats.updateAllocs += 1;
+    if (benchStats.phase === "time") {
+      let t0 = socket.gettime();
+      self.machine.update(dt);
+      let t1 = socket.gettime();
+      benchStats.updateSeconds += t1 - t0;
+      if (sending) {
+        self.sent += 1;
+        t0 = socket.gettime();
+        self.machine.send(event);
+        t1 = socket.gettime();
+        benchStats.sendSeconds += t1 - t0;
+        benchStats.timedSends += 1;
+      }
+      return;
     }
 
+    self.machine.update(dt);
     if (sending) {
       self.sent += 1;
-      t0 = socket.gettime();
-      kb0 = collectgarbage("count");
       self.machine.send(event);
-      kb1 = collectgarbage("count");
-      t1 = socket.gettime();
-      benchStats.sendSeconds += t1 - t0;
-      if (kb1 !== kb0) {
-        benchStats.sendKb += math.abs(kb1 - kb0);
-        benchStats.sendAllocs += 1;
-      }
-      benchStats.sends += 1;
     }
   },
   final(self) {
