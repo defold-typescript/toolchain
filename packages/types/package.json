@@ -48,6 +48,9 @@
     "./hsm": {
       "types": "./hsm/index.d.ts"
     },
+    "./hsm/async": {
+      "types": "./hsm/async.d.ts"
+    },
     "./hsm/debug": {
       "types": "./hsm/debug.d.ts"
     },
