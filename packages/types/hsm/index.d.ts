@@ -2,7 +2,7 @@
 export interface EventObject {
     readonly type: string;
 }
-export type TransitionCause = "event" | "after" | "update" | "stop";
+export type TransitionCause = "event" | "after" | "update" | "stop" | "reload";
 /** @noSelf */
 export type TransitionListener<E extends EventObject, P extends string = string> = (from: P, to: P | undefined, cause: TransitionCause, event: E | undefined) => void;
 /** @noSelf */
@@ -102,5 +102,5 @@ export interface MachineConfigError {
     readonly "hsm: an initial or target names an unknown state path, or an on key an unknown event": never;
 }
 export type DefinedMachine<Ctx, E extends EventObject, C> = C extends PathCheck<C, "", StatePath<C>, E["type"]> ? Machine<Ctx, E, StatePath<C>> : MachineConfigError;
-export declare function defineMachine<Ctx, E extends EventObject>(): <const C extends MachineConfig<Ctx, E>>(config: C) => DefinedMachine<Ctx, E, C>;
+export declare function defineMachine<Ctx, E extends EventObject>(key?: string): <const C extends MachineConfig<Ctx, E>>(config: C) => DefinedMachine<Ctx, E, C>;
 export {};

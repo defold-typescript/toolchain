@@ -175,6 +175,19 @@ const EXPECTED: Record<string, string[]> = {
     "/move/run -> /rest update -",
     "/rest -> (stopped) stop -",
   ],
+  "hot reload": [
+    "enter idle",
+    "same=true",
+    "exit idle",
+    "enter move",
+    "enter move.walk",
+    "/idle -> /move/walk event GO",
+    "path=/move/walk",
+    "path=/move/walk",
+    "enter move.run",
+    "/move/walk -> /move/run reload -",
+    "path=/move/run",
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
