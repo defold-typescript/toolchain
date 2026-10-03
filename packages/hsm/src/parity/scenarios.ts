@@ -543,6 +543,47 @@ function hotReload(): string[] {
   return log;
 }
 
+function shallowHistory(): string[] {
+  const log: string[] = [];
+  const def = defineMachine<Ctx, Ev>()({
+    initial: "/playing",
+    states: {
+      playing: {
+        ...logged("playing"),
+        history: "shallow",
+        initial: "/playing/ground",
+        on: { BACK: "/paused" },
+        states: {
+          ground: { ...logged("ground"), on: { GO: "/playing/air" } },
+          air: {
+            ...logged("air"),
+            initial: "/playing/air/rise",
+            states: {
+              rise: { ...logged("rise"), on: { UP: "/playing/air/fall" } },
+              fall: logged("fall"),
+            },
+          },
+        },
+      },
+      paused: { ...logged("paused"), on: { AGAIN: "/playing", HIT: "/playing/ground" } },
+    },
+  });
+  const m = def.start(newCtx(log));
+  log.push(`path=${shown(m.path)}`);
+  m.send({ type: "GO" });
+  m.send({ type: "UP" });
+  m.send({ type: "BACK" });
+  log.push(`path=${shown(m.path)}`);
+  const fresh = def.start(newCtx(log));
+  log.push(`fresh=${shown(fresh.path)}`);
+  m.send({ type: "AGAIN" });
+  log.push(`path=${shown(m.path)}`);
+  m.send({ type: "BACK" });
+  m.send({ type: "HIT" });
+  log.push(`path=${shown(m.path)}`);
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -557,6 +598,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "definition errors", run: () => definitionErrors() },
   { name: "onTransition reports every cause", run: () => onTransitionReports() },
   { name: "hot reload", run: () => hotReload() },
+  { name: "shallow history", run: () => shallowHistory() },
 ];
 
 export function runScenario(name: string): string {

@@ -41,6 +41,7 @@ local function registerState(compiled, config, parentIndex, path)
     compiled.parent[index + 1] = parentIndex
     compiled.depth[index + 1] = depth
     compiled.initialChild[index + 1] = NO_STATE
+    compiled.history[index + 1] = config.history == "shallow"
     compiled.pathIndex[path] = index
     local children = config.states
     if children == nil then
@@ -74,6 +75,12 @@ local function compileInitial(compiled, index)
         if initial ~= nil then
             error(
                 ((("hsm: state \\"" .. describePath(path)) .. "\\" has initial \\"") .. initial) .. "\\" but no child states",
+                0
+            )
+        end
+        if compiled.history[index + 1] == true then
+            error(
+                ("hsm: state \\"" .. describePath(path)) .. "\\" has history but no child states",
                 0
             )
         end
@@ -132,11 +139,11 @@ local function compileOn(compiled, index)
     end
     for ____type in pairs(on) do
         do
-            local __continue30
+            local __continue31
             repeat
                 local spec = on[____type]
                 if spec == nil then
-                    __continue30 = true
+                    __continue31 = true
                     break
                 end
                 local list = {}
@@ -155,9 +162,9 @@ local function compileOn(compiled, index)
                 ____table[____type] = #compiled.transitions
                 local ____compiled_transitions_1 = compiled.transitions
                 ____compiled_transitions_1[#____compiled_transitions_1 + 1] = list
-                __continue30 = true
+                __continue31 = true
             until true
-            if not __continue30 then
+            if not __continue31 then
                 break
             end
         end
@@ -217,6 +224,7 @@ local function compile(config)
         parent = {},
         depth = {},
         initialChild = {},
+        history = {},
         onIndex = {},
         transitions = {},
         afterDelays = {},
@@ -256,7 +264,7 @@ end
 local registered = {}
 local function createMachine(definition)
     local function start(ctx)
-        local growSlots, rebind, onTransition, report, enterState, runCleanup, exitTo, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, depth, initialChild, configs, onIndex, transitions, afterDelays, afterTargets, active, elapsed, fired, scratch, entryId, cleanup, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, listeners, instance
+        local growSlots, rebind, onTransition, report, enterState, runCleanup, exitTo, defaultChild, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, depth, initialChild, history, configs, onIndex, transitions, afterDelays, afterTargets, active, elapsed, fired, scratch, entryId, cleanup, remembered, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, listeners, instance
         function growSlots()
             do
                 local i = #active
@@ -281,6 +289,7 @@ local function createMachine(definition)
             parent = compiled.parent
             depth = compiled.depth
             initialChild = compiled.initialChild
+            history = compiled.history
             configs = compiled.configs
             onIndex = compiled.onIndex
             transitions = compiled.transitions
@@ -381,12 +390,28 @@ local function createMachine(definition)
                 active[exited + 1] = NO_STATE
                 entryId[exited + 1] = 0
                 leafDepth = leafDepth - 1
+                local owner = parent[state + 1]
+                if owner ~= NO_STATE and history[owner + 1] == true then
+                    remembered[paths[owner + 1]] = paths[state + 1]
+                end
                 local hook = configs[state + 1].exit
                 if hook ~= nil then
                     hook(ctx, instance)
                 end
                 runCleanup(exited)
             end
+        end
+        function defaultChild(state)
+            if history[state + 1] == true then
+                local path = remembered[paths[state + 1]]
+                if path ~= nil then
+                    local child = lookupPath(compiled, path)
+                    if child ~= nil and parent[child + 1] == state then
+                        return child
+                    end
+                end
+            end
+            return initialChild[state + 1]
         end
         function enterDown(from, target)
             local count = 0
@@ -401,10 +426,10 @@ local function createMachine(definition)
                 enterState(scratch[count + 1])
                 scratch[count + 1] = NO_STATE
             end
-            state = target
-            while initialChild[state + 1] ~= NO_STATE do
-                state = initialChild[state + 1]
+            state = defaultChild(target)
+            while state ~= NO_STATE do
                 enterState(state)
+                state = defaultChild(state)
             end
             instance.path = paths[active[leafDepth + 1] + 1]
         end
@@ -439,12 +464,12 @@ local function createMachine(definition)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue96
+                        local __continue102
                         repeat
                             local state = active[level + 1]
                             local listIndex = onIndex[state + 1][event.type]
                             if type(listIndex) ~= "number" then
-                                __continue96 = true
+                                __continue102 = true
                                 break
                             end
                             local list = transitions[listIndex + 1]
@@ -466,9 +491,9 @@ local function createMachine(definition)
                                     i = i + 1
                                 end
                             end
-                            __continue96 = true
+                            __continue102 = true
                         until true
-                        if not __continue96 then
+                        if not __continue102 then
                             break
                         end
                     end
@@ -529,12 +554,12 @@ local function createMachine(definition)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue114
+                        local __continue120
                         repeat
                             local state = active[level + 1]
                             local hook = configs[state + 1].update
                             if hook == nil then
-                                __continue114 = true
+                                __continue120 = true
                                 break
                             end
                             local target = hook(ctx, dt, instance)
@@ -552,9 +577,9 @@ local function createMachine(definition)
                                 )
                                 return true
                             end
-                            __continue114 = true
+                            __continue120 = true
                         until true
-                        if not __continue114 then
+                        if not __continue120 then
                             break
                         end
                     end
@@ -636,6 +661,7 @@ local function createMachine(definition)
         parent = compiled.parent
         depth = compiled.depth
         initialChild = compiled.initialChild
+        history = compiled.history
         configs = compiled.configs
         onIndex = compiled.onIndex
         transitions = compiled.transitions
@@ -647,6 +673,7 @@ local function createMachine(definition)
         scratch = {}
         entryId = {}
         cleanup = {}
+        remembered = {}
         growSlots()
         entryCount = 0
         queue = {}
