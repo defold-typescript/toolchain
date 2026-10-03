@@ -21,15 +21,15 @@ export type PlayerEvent = { type: "JUMP" } | { type: "JUMP_RELEASED" };
 // first returned target wins, so the leaves check `ground_contact` themselves
 // and leave the walk-off-a-ledge step to `grounded`.
 export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
-  initial: "airborne",
+  initial: "/airborne",
   states: {
     grounded: {
-      initial: "idle",
-      update: (ctx) => (ctx.ground_contact ? undefined : "airborne"),
+      initial: "/grounded/idle",
+      update: (ctx) => (ctx.ground_contact ? undefined : "/airborne"),
       on: {
         // Only allow jump from ground (extend with a counter for double-jumps).
         JUMP: {
-          target: "airborne.rising",
+          target: "/airborne/rising",
           actions: (ctx) => {
             ctx.velocity.y = jump_takeoff_speed;
             ctx.ground_contact = false;
@@ -39,21 +39,23 @@ export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
       states: {
         idle: {
           enter: () => sprite.play_flipbook("#sprite", anim_idle),
-          update: (ctx) => (ctx.ground_contact && ctx.velocity.x !== 0 ? "walk" : undefined),
+          update: (ctx) =>
+            ctx.ground_contact && ctx.velocity.x !== 0 ? "/grounded/walk" : undefined,
         },
         walk: {
           enter: () => sprite.play_flipbook("#sprite", anim_walk),
-          update: (ctx) => (ctx.ground_contact && ctx.velocity.x === 0 ? "idle" : undefined),
+          update: (ctx) =>
+            ctx.ground_contact && ctx.velocity.x === 0 ? "/grounded/idle" : undefined,
         },
       },
     },
     airborne: {
-      initial: "falling",
+      initial: "/airborne/falling",
       update: (ctx) => {
         if (!ctx.ground_contact) {
           return undefined;
         }
-        return ctx.velocity.x === 0 ? "grounded.idle" : "grounded.walk";
+        return ctx.velocity.x === 0 ? "/grounded/idle" : "/grounded/walk";
       },
       states: {
         rising: {
@@ -66,7 +68,8 @@ export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
               },
             },
           },
-          update: (ctx) => (ctx.velocity.y <= 0 && !ctx.ground_contact ? "falling" : undefined),
+          update: (ctx) =>
+            ctx.velocity.y <= 0 && !ctx.ground_contact ? "/airborne/falling" : undefined,
         },
         falling: {
           enter: () => sprite.play_flipbook("#sprite", anim_fall),

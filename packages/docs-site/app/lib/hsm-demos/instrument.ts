@@ -77,24 +77,30 @@ export function afterDelays(config: State): number[] {
     .sort((a, b) => a - b);
 }
 
-/** `"on.dim"` to `["on", "on.dim"]`. */
-export function activePaths(path: string): string[] {
-  if (path === "") return [];
-  const segments = path.split(".");
-  return segments.map((_, i) => segments.slice(0, i + 1).join("."));
+/** `"/on/dim"` to `["/on", "/on/dim"]`; a stopped machine (`undefined`) to `[]`. */
+export function activePaths(path: string | undefined): string[] {
+  if (path === undefined || path === "") return [];
+  const segments = path.split("/").slice(1);
+  return segments.map((_, i) => `/${segments.slice(0, i + 1).join("/")}`);
 }
 
+/** The root's path is `""`, so a child of the root is `/<name>`. */
 function childPath(parent: string, name: string): string {
-  return parent === "" ? name : `${parent}.${name}`;
+  return `${parent}/${name}`;
 }
 
+/** `"/on/dim"` to `"/on"`, and `"/on"` to the root's `""`. */
 function parentPath(path: string): string {
-  const dot = path.lastIndexOf(".");
-  return dot === -1 ? "" : path.slice(0, dot);
+  return path.slice(0, Math.max(0, path.lastIndexOf("/")));
 }
 
 function describe(path: string): string {
   return path === "" ? "(machine)" : path;
+}
+
+/** A path as the page's code would print it: quoted, or `undefined` once stopped. */
+export function describePath(path: string | undefined): string {
+  return path === undefined ? "undefined" : JSON.stringify(path);
 }
 
 function describeEvent(event: EventObject): string {
@@ -153,7 +159,7 @@ function fire(s: Session, chip: string): void {
 }
 
 function isStopped(s: Session): boolean {
-  return s.instance !== undefined && s.instance.path === "";
+  return s.instance !== undefined && s.instance.path === undefined;
 }
 
 function proxyOf(s: Session, m: Instance): Instance {
@@ -285,8 +291,7 @@ function wrapState(s: Session, config: State, path: string): State {
     noteTimer(s);
     const parent = parentPath(path);
     const viaInitial =
-      (s.configs.get(parent) as State).initial ===
-        path.slice(parent === "" ? 0 : parent.length + 1) &&
+      (s.configs.get(parent) as State).initial === path &&
       (parent === "" ? s.starting : s.entered.has(parent));
     s.clocks.set(path, 0);
     s.fired.set(path, 0);
@@ -356,7 +361,7 @@ function fromOutside(s: Session, event: EventObject | undefined, body: () => voi
     );
   }
   s.sent = [];
-  if (stopped && !wasStopped) emit(s, "note", 'stopped, path = ""');
+  if (stopped && !wasStopped) emit(s, "note", "stopped, path = undefined");
 }
 
 function sendFromOutside(s: Session, event: EventObject): void {
@@ -412,7 +417,7 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
   });
   s.starting = false;
   const instance = s.instance as unknown as Instance;
-  emit(s, "note", `start() returned, path = "${instance.path}"`);
+  emit(s, "note", `start() returned, path = ${describePath(instance.path)}`);
 
   const run: DemoRun = {
     demo,

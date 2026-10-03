@@ -68,28 +68,30 @@ type LampEvent = { type: "TOGGLE" };
 
 // 3. The machine itself
 export const lamp = defineMachine<LampCtx, LampEvent>()({
-  initial: "off", // which state to start in
+  initial: "/off", // which state to start in
   states: {
     off: {
-      on: { TOGGLE: "on" }, // in "off", TOGGLE means: go to "on"
+      on: { TOGGLE: "/on" }, // in "/off", TOGGLE means: go to "/on"
     },
     on: {
       // runs every time we enter "on"
       enter: (ctx) => {
         ctx.switches += 1;
       },
-      on: { TOGGLE: "off" },
+      on: { TOGGLE: "/off" },
     },
   },
 });
 
 const m = lamp.start({ switches: 0 }); // a running lamp, with starting data
-m.path; // "off"
+m.path; // "/off"
 m.send({ type: "TOGGLE" }); // press the switch
-m.path; // "on"
+m.path; // "/on"
 ```
 
 Don't trip over the two meanings of "on". The *state* is named `on`, and inside every state the *key* `on:` means "on this event, do this."
+
+Wherever you point at a state, you write its **path**: a `/`, then its name, like `"/off"`. It works like a file path, which matters once states live inside other states.
 
 That's the whole loop: **define** the machine once, **start** it to get a running copy, **send** events, and read `path` to see where it is.
 
@@ -111,18 +113,18 @@ interface LampCtx {
 type LampEvent = { type: "TOGGLE" } | { type: "DIM" };
 
 export const lamp = defineMachine<LampCtx, LampEvent>()({
-  initial: "off",
+  initial: "/off",
   states: {
-    off: { on: { TOGGLE: "on" } },
+    off: { on: { TOGGLE: "/on" } },
     on: {
-      initial: "bright", // a state with children must say where to start
+      initial: "/on/bright", // a state with children must say where to start
       enter: (ctx) => {
         ctx.switches += 1;
       },
-      on: { TOGGLE: "off" }, // written once, works in bright AND dim
+      on: { TOGGLE: "/off" }, // written once, works in bright AND dim
       states: {
-        bright: { on: { DIM: "dim" } },
-        dim: { on: { DIM: "bright" } },
+        bright: { on: { DIM: "/on/dim" } },
+        dim: { on: { DIM: "/on/bright" } },
       },
     },
   },
@@ -131,9 +133,9 @@ export const lamp = defineMachine<LampCtx, LampEvent>()({
 
 - When the lamp is in `bright` it's also in `on`. Both glow. The rule from part 1 becomes: **one active state at each level**.
 - A state with children must have an `initial`. Entering `on` always continues into `bright`; the log marks it as the initial child.
-- `m.path` is the full route with dots, like `"on.dim"`. `m.matches("on")` asks "is on active at all?" and is true in both children.
+- A child's path continues its parent's, like a file in a folder: `"/on/dim"`. `m.path` is the path of the innermost active state, and `m.matches("/on")` asks "is on active at all?" and is true in both children.
 
-Watch the log when you press `TOGGLE` in `on.dim`: `dim` has no rule for it, so the event **climbs up** to its parent `on`, which does. An event no state handles is simply ignored. Try `DIM` while the lamp is off.
+Watch the log when you press `TOGGLE` in `/on/dim`: `dim` has no rule for it, so the event **climbs up** to its parent `on`, which does. An event no state handles is simply ignored. Try `DIM` while the lamp is off.
 
 ## 5. Conditions and side effects
 
@@ -161,14 +163,14 @@ type BuddyEvent =
   | { type: "RECHARGE" };
 
 export const buddy = defineMachine<BuddyCtx, BuddyEvent>()({
-  initial: "alive",
+  initial: "/alive",
   states: {
     alive: {
-      initial: "wander",
+      initial: "/alive/wander",
       on: {
         // a list: try each option from top to bottom
         BUMP: [
-          { target: "resting", guard: (ctx, event) => ctx.energy <= event.cost },
+          { target: "/resting", guard: (ctx, event) => ctx.energy <= event.cost },
           {
             actions: (ctx, event) => {
               ctx.energy -= event.cost;
@@ -177,12 +179,12 @@ export const buddy = defineMachine<BuddyCtx, BuddyEvent>()({
         ],
       },
       states: {
-        wander: { on: { SEE_PLAYER: "follow" } },
+        wander: { on: { SEE_PLAYER: "/alive/follow" } },
         follow: {
           on: {
-            LOSE_PLAYER: "wander",
-            SEE_PLAYER: { target: "follow", reenter: true }, // restart the follow
-            FALL: "#resting", // # = from the top
+            LOSE_PLAYER: "/alive/wander",
+            SEE_PLAYER: { target: "/alive/follow", reenter: true }, // restart the follow
+            FALL: "/resting", // a full path reaches any state
           },
         },
       },
@@ -190,7 +192,7 @@ export const buddy = defineMachine<BuddyCtx, BuddyEvent>()({
     resting: {
       on: {
         RECHARGE: {
-          target: "alive",
+          target: "/alive",
           actions: (ctx) => {
             ctx.energy = 3;
           },
@@ -205,7 +207,7 @@ Read the `BUMP` list like an if/else. If this bump uses up the last of the energ
 
 | Write a rule as | Example | Use it when |
 | --- | --- | --- |
-| A state name | `LOSE_PLAYER: "wander"` | You only need to move. Most rules. |
+| A state path | `LOSE_PLAYER: "/alive/wander"` | You only need to move. Most rules. |
 | An object | `{ target, guard, actions }` | You need a condition or some code. Every field is optional. |
 | A list of objects | `[ {...}, {...} ]` | You need if / else-if choices. |
 
@@ -213,29 +215,29 @@ Read the `BUMP` list like an if/else. If this bump uses up the last of the energ
 
 Each state can have an `enter` hook that runs when you arrive and an `exit` hook that runs when you leave. Every transition does three steps, which you can see in the buddy's log after a big bump:
 
-1. **Exit** the old states, innermost first (`alive.follow`, then `alive`).
+1. **Exit** the old states, innermost first (`/alive/follow`, then `/alive`).
 2. Run the rule's **actions**.
 3. **Enter** the new states, outermost first, continuing into each initial child.
 
-A state you're not really leaving stays put. Going from `alive.follow` to `alive.wander` never exits `alive`. Press `SEE_PLAYER` twice while following to see `reenter: true`: it forces `follow` to exit and enter again, which restarts its timers.
+A state you're not really leaving stays put. Going from `/alive/follow` to `/alive/wander` never exits `/alive`. Press `SEE_PLAYER` twice while following to see `reenter: true`: it forces `follow` to exit and enter again, which restarts its timers.
 
 ### Pointing at the right state
 
-A target is looked up *next to* the state that owns the rule, among its siblings. To reach somewhere else, start from the top with `#`.
+Every target is the full path from the top, wherever the rule is written. A rule inside `/alive/follow` points at its sibling the same way a rule anywhere else would.
 
-| From `alive.follow`, write | Means | Goes to |
+| From `/alive/follow`, write | Means | Goes to |
 | --- | --- | --- |
-| `"wander"` | A sibling | `alive.wander` |
-| `"resting"` | A sibling called resting | `alive.resting`, which doesn't exist |
-| `"#resting"` | Start from the top | `resting` |
+| `"/alive/wander"` | A full path | `/alive/wander` |
+| `"/resting"` | A full path | `/resting` |
+| `"wander"`, `"./wander"` or `"../resting"` | Not a path: no leading `/` | Nothing: the machine refuses to start |
 
-Mistakes like the middle row are usually caught by TypeScript as a compile error, before your game ever runs.
+There are no shortcuts relative to the current state. A missing `/` or a misspelled path is usually caught by TypeScript as a compile error, before your game ever runs.
 
 ## 7. Time and every-frame checks
 
 Games run frame by frame, so the machine needs a heartbeat: call `m.update(dt)` every frame. That unlocks two things.
 
-- `update` runs a function every frame. Return a state name to move there, or `undefined` to stay.
+- `update` runs a function every frame. Return a state path to move there, or `undefined` to stay.
 - `after` is a timer: "after this many seconds in this state, go there."
 
 Here's the jump from part 1, done properly. The `coyote` state is a platformer trick: for a tenth of a second after walking off a ledge, jumping still works. The demo runs in slow motion so you can see the timer bars fill. Walk off a ledge and do nothing, then try again and jump in time.
@@ -251,21 +253,21 @@ interface FeetCtx {
 
 type FeetEvent = { type: "JUMP" };
 
-const land = (ctx: FeetCtx) => (ctx.on_ground ? "grounded" : undefined);
+const land = (ctx: FeetCtx) => (ctx.on_ground ? "/grounded" : undefined);
 
 export const feet = defineMachine<FeetCtx, FeetEvent>()({
-  initial: "grounded",
+  initial: "/grounded",
   states: {
     grounded: {
-      update: (ctx) => (ctx.on_ground ? undefined : "coyote"),
-      on: { JUMP: "jumping" },
+      update: (ctx) => (ctx.on_ground ? undefined : "/coyote"),
+      on: { JUMP: "/jumping" },
     },
     coyote: {
       update: land, // ground came back? land
-      after: { 0.1: "falling" }, // otherwise fall after 0.1 s
-      on: { JUMP: "jumping" }, // jumping still allowed here
+      after: { 0.1: "/falling" }, // otherwise fall after 0.1 s
+      on: { JUMP: "/jumping" }, // jumping still allowed here
     },
-    jumping: { after: { 0.4: "falling" } },
+    jumping: { after: { 0.4: "/falling" } },
     falling: { update: land },
   },
 });
@@ -294,16 +296,22 @@ interface SparkleCtx {
 type SparkleEvent = { type: "STAR" };
 
 export const sparkle = defineMachine<SparkleCtx, SparkleEvent>()({
-  initial: "normal",
+  initial: "/normal",
   states: {
-    normal: { on: { STAR: "sparkling" } },
+    normal: { on: { STAR: "/sparkling" } },
     sparkling: {
-      initial: "shown",
-      after: { 2: "normal" }, // the whole thing lasts 2 s
+      initial: "/sparkling/shown",
+      after: { 2: "/normal" }, // the whole thing lasts 2 s
       exit: (ctx) => msg.post(ctx.sprite, "enable"), // always end visible
       states: {
-        shown: { enter: (ctx) => msg.post(ctx.sprite, "enable"), after: { 0.1: "hidden" } },
-        hidden: { enter: (ctx) => msg.post(ctx.sprite, "disable"), after: { 0.1: "shown" } },
+        shown: {
+          enter: (ctx) => msg.post(ctx.sprite, "enable"),
+          after: { 0.1: "/sparkling/hidden" },
+        },
+        hidden: {
+          enter: (ctx) => msg.post(ctx.sprite, "disable"),
+          after: { 0.1: "/sparkling/shown" },
+        },
       },
     },
   },
@@ -331,11 +339,11 @@ interface DoorCtx {
 type DoorEvent = MessageEvent<"trigger_response"> | { type: "OPENED" } | { type: "CLOSE" };
 
 export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
-  initial: "closed",
+  initial: "/closed",
   states: {
     closed: {
       enter: (ctx) => go.set(ctx.sprite, "tint.w", 1),
-      on: { trigger_response: { target: "opening", guard: (_ctx, event) => event.enter } },
+      on: { trigger_response: { target: "/opening", guard: (_ctx, event) => event.enter } },
     },
     opening: {
       invoke: (ctx, settle) => {
@@ -344,14 +352,14 @@ export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
         });
       },
       exit: (ctx) => go.cancel_animations(ctx.sprite, "tint.w"), // cleanup!
-      on: { OPENED: "open", CLOSE: "closed" },
+      on: { OPENED: "/open", CLOSE: "/closed" },
     },
     open: {
       enter: (ctx) => {
         ctx.opens += 1;
       },
-      after: { 3: "closed" },
-      on: { CLOSE: "closed" },
+      after: { 3: "/closed" },
+      on: { CLOSE: "/closed" },
     },
   },
 });
@@ -363,7 +371,7 @@ export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
 
 You may call `m.send()` from inside a hook or action, but it won't run right away. The event waits in a queue until the current transition, every enter and exit included, has finished. All queued events run before the outer `send`, `update` or `start` call returns.
 
-Start the level with a cached save and watch the log: `loading` sends `LOADED` from its enter hook, the event is queued, and it's handled before `start()` returns. Then press `QUIT`: `done` calls `m.stop()`, which exits every state and leaves the path empty. After that, events do nothing.
+Start the level with a cached save and watch the log: `loading` sends `LOADED` from its enter hook, the event is queued, and it's handled before `start()` returns. Then press `QUIT`: `done` calls `m.stop()`, which exits every state and leaves `path` as `undefined`. After that, events do nothing.
 
 <div data-hsm-demo="level"></div>
 
@@ -377,15 +385,15 @@ interface LevelCtx {
 type LevelEvent = { type: "LOADED" } | { type: "QUIT" };
 
 export const level = defineMachine<LevelCtx, LevelEvent>()({
-  initial: "loading",
+  initial: "/loading",
   states: {
     loading: {
       enter: (ctx, m) => {
         if (ctx.cached) m.send({ type: "LOADED" }); // queued
       },
-      on: { LOADED: "playing" },
+      on: { LOADED: "/playing" },
     },
-    playing: { on: { QUIT: "done" } },
+    playing: { on: { QUIT: "/done" } },
     done: { enter: (_ctx, m) => m.stop() },
   },
 });
@@ -408,11 +416,11 @@ export type DoorEvent = MessageEvent<"trigger_response"> | { type: "OPENED" } | 
 
 // the door from part 8
 export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
-  initial: "closed",
+  initial: "/closed",
   states: {
     closed: {
       enter: (ctx) => go.set(ctx.sprite, "tint.w", 1),
-      on: { trigger_response: { target: "opening", guard: (_ctx, event) => event.enter } },
+      on: { trigger_response: { target: "/opening", guard: (_ctx, event) => event.enter } },
     },
     opening: {
       invoke: (ctx, settle) => {
@@ -421,14 +429,14 @@ export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
         });
       },
       exit: (ctx) => go.cancel_animations(ctx.sprite, "tint.w"),
-      on: { OPENED: "open", CLOSE: "closed" },
+      on: { OPENED: "/open", CLOSE: "/closed" },
     },
     open: {
       enter: (ctx) => {
         ctx.opens += 1;
       },
-      after: { 3: "closed" },
-      on: { CLOSE: "closed" },
+      after: { 3: "/closed" },
+      on: { CLOSE: "/closed" },
     },
   },
 });
@@ -483,7 +491,7 @@ export default defineScript({
 
 - Forgetting to call `update(dt)`, so timers never fire.
 - Forgetting `initial` on a state that has children.
-- Writing `"resting"` when you meant `"#resting"`.
+- Writing `"resting"` when you meant `"/resting"`. Every path starts with `/`.
 - Expecting `send()` inside a hook to happen instantly.
 - Cleaning up anywhere other than `exit`.
 - Starting the machine at the top of a script file instead of in `init`.

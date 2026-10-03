@@ -21,7 +21,7 @@ export type DemoVisual =
 /** What a readout or visual may read from a running demo. */
 export interface DemoView<Ctx> {
   readonly ctx: Ctx;
-  readonly path: string;
+  readonly path: string | undefined;
   readonly stopped: boolean;
   readonly matches: (path: string) => boolean;
 }
@@ -59,39 +59,39 @@ const lamp = demo<LampCtx, LampEvent>({
   title: "A lamp",
   subtitle: "Two states, one event.",
   config: {
-    initial: "off",
+    initial: "/off",
     states: {
-      off: { on: { TOGGLE: "on" } },
+      off: { on: { TOGGLE: "/on" } },
       on: {
         enter: (ctx) => {
           ctx.switches += 1;
         },
-        on: { TOGGLE: "off" },
+        on: { TOGGLE: "/off" },
       },
     },
   },
   ctx: () => ({ switches: 0 }),
   buttons: [{ label: "TOGGLE", event: { type: "TOGGLE" } }],
   readout: (m) => [["ctx.switches", String(m.ctx.switches)]],
-  visual: (m) => ({ kind: "bulb", glow: m.matches("on") ? "lit" : "off" }),
+  visual: (m) => ({ kind: "bulb", glow: m.matches("/on") ? "lit" : "off" }),
 });
 
 const nestedLamp = demo<LampCtx, LampEvent>({
   title: "A lamp with brightness",
   subtitle: "bright and dim live inside on.",
   config: {
-    initial: "off",
+    initial: "/off",
     states: {
-      off: { on: { TOGGLE: "on" } },
+      off: { on: { TOGGLE: "/on" } },
       on: {
-        initial: "bright",
+        initial: "/on/bright",
         enter: (ctx) => {
           ctx.switches += 1;
         },
-        on: { TOGGLE: "off" },
+        on: { TOGGLE: "/off" },
         states: {
-          bright: { on: { DIM: "dim" } },
-          dim: { on: { DIM: "bright" } },
+          bright: { on: { DIM: "/on/dim" } },
+          dim: { on: { DIM: "/on/bright" } },
         },
       },
     },
@@ -102,13 +102,13 @@ const nestedLamp = demo<LampCtx, LampEvent>({
     { label: "DIM", event: { type: "DIM" } },
   ],
   readout: (m) => [
-    ['matches("on")', String(m.matches("on"))],
-    ['matches("on.dim")', String(m.matches("on.dim"))],
+    ['matches("/on")', String(m.matches("/on"))],
+    ['matches("/on/dim")', String(m.matches("/on/dim"))],
     ["ctx.switches", String(m.ctx.switches)],
   ],
   visual: (m) => ({
     kind: "bulb",
-    glow: m.matches("on.bright") ? "lit" : m.matches("on.dim") ? "dim" : "off",
+    glow: m.matches("/on/bright") ? "lit" : m.matches("/on/dim") ? "dim" : "off",
   }),
 });
 
@@ -124,13 +124,13 @@ const buddy = demo<BuddyCtx, BuddyEvent>({
   title: "A robot buddy",
   subtitle: "BUMP is handled by alive, whichever child is active.",
   config: {
-    initial: "alive",
+    initial: "/alive",
     states: {
       alive: {
-        initial: "wander",
+        initial: "/alive/wander",
         on: {
           BUMP: [
-            { target: "resting", guard: (ctx, event) => ctx.energy <= event.cost },
+            { target: "/resting", guard: (ctx, event) => ctx.energy <= event.cost },
             {
               actions: (ctx, event) => {
                 ctx.energy -= event.cost;
@@ -139,12 +139,12 @@ const buddy = demo<BuddyCtx, BuddyEvent>({
           ],
         },
         states: {
-          wander: { on: { SEE_PLAYER: "follow" } },
+          wander: { on: { SEE_PLAYER: "/alive/follow" } },
           follow: {
             on: {
-              LOSE_PLAYER: "wander",
-              SEE_PLAYER: { target: "follow", reenter: true },
-              FALL: "#resting",
+              LOSE_PLAYER: "/alive/wander",
+              SEE_PLAYER: { target: "/alive/follow", reenter: true },
+              FALL: "/resting",
             },
           },
         },
@@ -152,7 +152,7 @@ const buddy = demo<BuddyCtx, BuddyEvent>({
       resting: {
         on: {
           RECHARGE: {
-            target: "alive",
+            target: "/alive",
             actions: (ctx) => {
               ctx.energy = 3;
             },
@@ -172,19 +172,19 @@ const buddy = demo<BuddyCtx, BuddyEvent>({
   ],
   readout: (m) => [
     ["ctx.energy", String(m.ctx.energy)],
-    ['matches("alive")', String(m.matches("alive"))],
+    ['matches("/alive")', String(m.matches("/alive"))],
   ],
   notes: {
-    "alive|on|BUMP|0": "if the bump uses up the energy",
-    "alive|on|BUMP|1": "lose energy",
-    "resting|on|RECHARGE|0": "energy = 3",
+    "/alive|on|BUMP|0": "if the bump uses up the energy",
+    "/alive|on|BUMP|1": "lose energy",
+    "/resting|on|RECHARGE|0": "energy = 3",
   },
 });
 
 type FeetCtx = { on_ground: boolean };
 type FeetEvent = { type: "JUMP" };
 
-const land = (ctx: FeetCtx) => (ctx.on_ground ? "grounded" : undefined);
+const land = (ctx: FeetCtx) => (ctx.on_ground ? "/grounded" : undefined);
 
 const feet = demo<FeetCtx, FeetEvent>({
   title: "Feet with coyote time",
@@ -192,18 +192,18 @@ const feet = demo<FeetCtx, FeetEvent>({
   timed: true,
   speed: 0.25,
   config: {
-    initial: "grounded",
+    initial: "/grounded",
     states: {
       grounded: {
-        update: (ctx) => (ctx.on_ground ? undefined : "coyote"),
-        on: { JUMP: "jumping" },
+        update: (ctx) => (ctx.on_ground ? undefined : "/coyote"),
+        on: { JUMP: "/jumping" },
       },
       coyote: {
         update: land,
-        after: { 0.1: "falling" },
-        on: { JUMP: "jumping" },
+        after: { 0.1: "/falling" },
+        on: { JUMP: "/jumping" },
       },
-      jumping: { after: { 0.4: "falling" } },
+      jumping: { after: { 0.4: "/falling" } },
       falling: { update: land },
     },
   },
@@ -226,9 +226,9 @@ const feet = demo<FeetCtx, FeetEvent>({
   ],
   readout: (m) => [["ctx.on_ground", String(m.ctx.on_ground)]],
   notes: {
-    "grounded|update": "no ground? go to coyote",
-    "coyote|update": "ground back? go to grounded",
-    "falling|update": "ground back? go to grounded",
+    "/grounded|update": "no ground? go to coyote",
+    "/coyote|update": "ground back? go to grounded",
+    "/falling|update": "ground back? go to grounded",
   },
 });
 
@@ -241,12 +241,12 @@ const sparkle = demo<SparkleCtx, SparkleEvent>({
   timed: true,
   speed: 0.5,
   config: {
-    initial: "normal",
+    initial: "/normal",
     states: {
-      normal: { on: { STAR: "sparkling" } },
+      normal: { on: { STAR: "/sparkling" } },
       sparkling: {
-        initial: "shown",
-        after: { 2: "normal" },
+        initial: "/sparkling/shown",
+        after: { 2: "/normal" },
         exit: (ctx) => {
           ctx.visible = true;
         },
@@ -255,13 +255,13 @@ const sparkle = demo<SparkleCtx, SparkleEvent>({
             enter: (ctx) => {
               ctx.visible = true;
             },
-            after: { 0.1: "hidden" },
+            after: { 0.1: "/sparkling/hidden" },
           },
           hidden: {
             enter: (ctx) => {
               ctx.visible = false;
             },
-            after: { 0.1: "shown" },
+            after: { 0.1: "/sparkling/shown" },
           },
         },
       },
@@ -291,13 +291,13 @@ const door = demo<DoorCtx, DoorEvent>({
   timed: true,
   speed: 0.5,
   config: {
-    initial: "closed",
+    initial: "/closed",
     states: {
       closed: {
         enter: (ctx) => {
           ctx.tint = 1;
         },
-        on: { trigger_response: { target: "opening", guard: (_ctx, event) => event.enter } },
+        on: { trigger_response: { target: "/opening", guard: (_ctx, event) => event.enter } },
       },
       opening: {
         invoke: (ctx, settle) => {
@@ -306,14 +306,14 @@ const door = demo<DoorCtx, DoorEvent>({
         exit: (ctx) => {
           if (ctx.cleanup) ctx.fade = undefined;
         },
-        on: { OPENED: "open", CLOSE: "closed" },
+        on: { OPENED: "/open", CLOSE: "/closed" },
       },
       open: {
         enter: (ctx) => {
           ctx.opens += 1;
         },
-        after: { 3: "closed" },
-        on: { CLOSE: "closed" },
+        after: { 3: "/closed" },
+        on: { CLOSE: "/closed" },
       },
     },
   },
@@ -345,7 +345,7 @@ const door = demo<DoorCtx, DoorEvent>({
     ["ctx.opens", String(m.ctx.opens)],
   ],
   visual: (m) => ({ kind: "door", opacity: m.ctx.tint }),
-  notes: { "closed|on|trigger_response|0": "if the player walked in" },
+  notes: { "/closed|on|trigger_response|0": "if the player walked in" },
 });
 
 type LevelCtx = { cached: boolean };
@@ -355,15 +355,15 @@ const level = demo<LevelCtx, LevelEvent>({
   title: "A level",
   subtitle: "Events sent from inside a hook wait their turn.",
   config: {
-    initial: "loading",
+    initial: "/loading",
     states: {
       loading: {
         enter: (ctx, m) => {
           if (ctx.cached) m.send({ type: "LOADED" });
         },
-        on: { LOADED: "playing" },
+        on: { LOADED: "/playing" },
       },
-      playing: { on: { QUIT: "done" } },
+      playing: { on: { QUIT: "/done" } },
       done: {
         enter: (_ctx, m) => {
           m.stop();

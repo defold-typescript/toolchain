@@ -32,12 +32,12 @@ afterEach(() => {
 
 function waveMachine() {
   return defineMachine<Ctx, Ev>()({
-    initial: "idle",
+    initial: "/idle",
     states: {
       idle: {
         on: {
           spawn_wave: {
-            target: "spawning",
+            target: "/spawning",
             actions: (ctx, event) => {
               const count: number = event.count;
               ctx.waves.push(count);
@@ -45,7 +45,7 @@ function waveMachine() {
           },
         },
       },
-      spawning: { on: { TICK: "idle" } },
+      spawning: { on: { TICK: "/idle" } },
     },
   });
 }
@@ -61,7 +61,7 @@ describe("messageEvents", () => {
     if (event !== undefined) {
       m.send(event);
     }
-    expect(m.path).toBe("spawning");
+    expect(m.path).toBe("/spawning");
     expect(ctx.waves).toEqual([3]);
   });
 
