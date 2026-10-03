@@ -363,6 +363,42 @@ export default defineScript({
 
 A module-level instance (`const door = doorMachine.start(...)` at the top of a script file) is shared by every object that runs the script; see [Where script state lives](./script-state.md).
 
+## Performance
+
+The budget is 200 game objects, each running its own instance of one three-level machine, for under 0.5 ms of `update` and `send` per frame in the stock engine, with neither call building a table. A bench in the repository measures it: every enemy ticks its machine each frame through `after` timers and an `update` hook, and sends one event every 20 frames.
+
+| Avg ms per frame | Worst frame ms | Allocating calls (update / send) | Heap KB (update / send) | Engine | System | Date |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0.19 | 0.82 | 4 of 60,000 / 6 of 3,000 | 2.7 / 7.1 | 1.13.2 | macOS, arm64 | 2026-10-03 |
+
+The few allocating calls are the Lua VM's own one-time work the first time a path runs (a JIT trace, a deeper call stack), not the machine. Reproduce it from a clone of the repository with Java and a display:
+
+```sh
+bun run --cwd packages/api-probe bench:hsm
+```
+
+`update` and `send` build nothing, but the event you pass is a table: an event literal written at the `send` call builds a new one on every call, and so does `toEvent` from the [message bridge](#the-message-bridge). On a hot path, hoist a constant event to the top of the module and send that:
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+type GuardEvent = { type: "SPOT" } | { type: "LOSE" };
+
+export const guard = defineMachine<{ seen: number }, GuardEvent>()({
+  initial: "/idle",
+  states: {
+    idle: { on: { SPOT: "/alert" } },
+    alert: { on: { LOSE: "/idle" } },
+  },
+});
+
+const SPOT = { type: "SPOT" } as const;
+
+const m = guard.start({ seen: 0 });
+m.send(SPOT); // the same table on every call
+m.send({ type: "LOSE" }); // a new table on every call
+```
+
 ## Types
 
 **`defineMachine` takes two calls.** `defineMachine<Ctx, E>()` fixes the context and event types, and the second call takes the config. TypeScript cannot infer some type arguments of one call while you write the others, and the config has to be inferred: its literal shape is where the state paths come from.
