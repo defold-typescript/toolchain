@@ -265,7 +265,19 @@ local function createMachine(config)
     local afterDelays = compiled.afterDelays
     local afterTargets = compiled.afterTargets
     local function start(ctx)
-        local enterState, exitTo, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, active, elapsed, fired, scratch, entryId, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, instance
+        local onTransition, report, enterState, exitTo, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, active, elapsed, fired, scratch, entryId, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, listeners, instance
+        function onTransition(listener)
+            listeners[#listeners + 1] = listener
+        end
+        function report(from, cause, event)
+            do
+                local i = 0
+                while i < #listeners do
+                    listeners[i + 1](from, instance.path, cause, event)
+                    i = i + 1
+                end
+            end
+        end
         function enterState(state)
             local level = depth[state + 1]
             active[level + 1] = state
@@ -328,15 +340,19 @@ local function createMachine(config)
             end
             instance.path = paths[active[leafDepth + 1] + 1]
         end
-        function transition(source, target, reenter, actions, event)
+        function transition(source, target, reenter, actions, event, cause)
             if target == NO_STATE then
                 runActions(actions, event)
                 return
             end
+            local from = instance.path
             local domain = transitionDomain(compiled, source, target, reenter)
             exitTo(depth[domain + 1])
             runActions(actions, event)
             enterDown(domain, target)
+            if #listeners > 0 then
+                report(from, cause, event)
+            end
         end
         function runActions(actions, event)
             if actions == nil or event == nil then
@@ -355,12 +371,12 @@ local function createMachine(config)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue79
+                        local __continue84
                         repeat
                             local state = active[level + 1]
                             local listIndex = onIndex[state + 1][event.type]
                             if type(listIndex) ~= "number" then
-                                __continue79 = true
+                                __continue84 = true
                                 break
                             end
                             local list = transitions[listIndex + 1]
@@ -374,16 +390,17 @@ local function createMachine(config)
                                             candidate.target,
                                             candidate.reenter,
                                             candidate.actions,
-                                            event
+                                            event,
+                                            "event"
                                         )
                                         return
                                     end
                                     i = i + 1
                                 end
                             end
-                            __continue79 = true
+                            __continue84 = true
                         until true
-                        if not __continue79 then
+                        if not __continue84 then
                             break
                         end
                     end
@@ -403,9 +420,13 @@ local function createMachine(config)
             running = false
             busy = true
             clearQueue()
+            local from = instance.path
             exitTo(NO_STATE)
             instance.path = nil
             busy = false
+            if #listeners > 0 then
+                report(from, "stop", nil)
+            end
         end
         function endStep()
             while not stopRequested and queueHead < queueTail do
@@ -437,12 +458,12 @@ local function createMachine(config)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue95
+                        local __continue101
                         repeat
                             local state = active[level + 1]
                             local hook = configs[state + 1].update
                             if hook == nil then
-                                __continue95 = true
+                                __continue101 = true
                                 break
                             end
                             local target = hook(ctx, dt, instance)
@@ -455,13 +476,14 @@ local function createMachine(config)
                                     resolveTarget(compiled, state, target),
                                     false,
                                     nil,
-                                    nil
+                                    nil,
+                                    "update"
                                 )
                                 return true
                             end
-                            __continue95 = true
+                            __continue101 = true
                         until true
-                        if not __continue95 then
+                        if not __continue101 then
                             break
                         end
                     end
@@ -484,7 +506,8 @@ local function createMachine(config)
                             afterTargets[state + 1][next + 1],
                             false,
                             nil,
-                            nil
+                            nil,
+                            "after"
                         )
                         return
                     end
@@ -556,13 +579,15 @@ local function createMachine(config)
         running = true
         busy = false
         stopRequested = false
+        listeners = {}
         instance = {
             ctx = ctx,
             path = nil,
             matches = matches,
             send = send,
             update = update,
-            stop = stop
+            stop = stop,
+            onTransition = onTransition
         }
         busy = true
         enterState(ROOT)
@@ -608,6 +633,48 @@ function ____exports.messageEvents(ids)
             end
         end
         return nil
+    end}
+end
+return ____exports
+"
+`;
+
+exports[`hsm debug inspector Lua output matches the reviewed Lua snapshot 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local SILENT = {draw = function()
+end}
+local TEXT_OFFSET_Y = 40
+local function shown(path)
+    return path == nil and "(stopped)" or path
+end
+function ____exports.inspect(instance, label)
+    if not sys.get_engine_info().is_debug then
+        return SILENT
+    end
+    local frame = 0
+    instance.onTransition(function(from, to, cause, event)
+        local ____temp_0
+        if event == nil then
+            ____temp_0 = cause
+        else
+            ____temp_0 = event.type
+        end
+        local reason = ____temp_0
+        print(((((((((("hsm " .. label) .. " frame ") .. tostring(frame)) .. ": ") .. from) .. " -> ") .. shown(to)) .. " (") .. reason) .. ")")
+    end)
+    return {draw = function(target)
+        frame = frame + 1
+        local p = go.get_world_position(target)
+        msg.post(
+            "@render:",
+            "draw_debug_text",
+            {
+                text = (label .. " ") .. shown(instance.path),
+                position = vmath.vector3(p.x, p.y + TEXT_OFFSET_Y, p.z),
+                color = vmath.vector4(1, 1, 1, 1)
+            }
+        )
     end}
 end
 return ____exports

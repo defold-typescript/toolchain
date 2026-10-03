@@ -2,6 +2,9 @@
 export interface EventObject {
     readonly type: string;
 }
+export type TransitionCause = "event" | "after" | "update" | "stop";
+/** @noSelf */
+export type TransitionListener<E extends EventObject, P extends string = string> = (from: P, to: P | undefined, cause: TransitionCause, event: E | undefined) => void;
 /** @noSelf */
 export interface MachineInstance<Ctx, E extends EventObject, P extends string = string> {
     readonly ctx: Ctx;
@@ -10,6 +13,7 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
     readonly send: (event: E) => void;
     readonly update: (dt: number) => void;
     readonly stop: () => void;
+    readonly onTransition: (listener: TransitionListener<E, P>) => void;
 }
 export type TransitionAction<Ctx, E extends EventObject, V extends E = E> = (ctx: Ctx, event: V, m: MachineInstance<Ctx, E>) => void;
 /** @noSelf */

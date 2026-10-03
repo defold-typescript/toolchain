@@ -13,12 +13,17 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
+> - **[`hsm` inspector](./state-machines.md#debug-a-machine)** logs each move.
 > - **[`toEvent` takes the sender](./state-machines.md#the-message-bridge)**.
 > - **[`hsm` timers](./state-machines.md#update-and-after)** fire on time.
 
 ### Breaking
 
 - **`hsm` message events carry the sender:** `messageEvents(...).toEvent` takes the `on_message` `sender` as a required third argument, and every `MessageEvent` has an `event.sender` that guards and actions can reply to. Pass `sender` to each `toEvent` call and add it to any `MessageEvent` you build by hand; see [The message bridge](./state-machines.md#the-message-bridge).
+
+### Improved
+
+- **`hsm` debug inspector:** every machine instance has `onTransition(listener)`, called after each move with the old and new state path, the cause and the event. `inspect(instance, label)` from `@defold-typescript/types/hsm/debug` uses it to log each move and draw the active path over a game object, in debug builds only; see [Debug a machine](./state-machines.md#debug-a-machine).
 
 ### Fixed
 

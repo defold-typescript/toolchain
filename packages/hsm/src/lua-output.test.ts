@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { compileHsmModules } from "@defold-typescript/transpiler";
 
-const LUA_LINE_BUDGET = 600;
+const LUA_LINE_BUDGET = 650;
 
 // The Lua the build writes into a project, from the transpiler's own compile:
 // `compileHsmModules` throws on any diagnostic or lualib dependency, so reaching
@@ -24,6 +24,18 @@ describe("hsm core Lua output", () => {
 
 describe("hsm Defold adapter Lua output", () => {
   const lua = compileHsmModules().defold ?? "";
+
+  test("does not require the lualib bundle", () => {
+    expect(lua).not.toContain('require("lualib_bundle")');
+  });
+
+  test("matches the reviewed Lua snapshot", () => {
+    expect(lua).toMatchSnapshot();
+  });
+});
+
+describe("hsm debug inspector Lua output", () => {
+  const lua = compileHsmModules().debug ?? "";
 
   test("does not require the lualib bundle", () => {
     expect(lua).not.toContain('require("lualib_bundle")');

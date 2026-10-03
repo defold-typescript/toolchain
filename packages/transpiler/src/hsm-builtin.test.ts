@@ -28,8 +28,13 @@ const BRIDGE = [
 ].join("\n");
 
 describe("hsm as a built-in import", () => {
-  test("the module list is index plus the Defold adapter", () => {
+  test("the module list is index plus the debug inspector and the Defold adapter", () => {
     expect(hsmModules()).toEqual([
+      {
+        name: "debug",
+        specifier: "@defold-typescript/types/hsm/debug",
+        requireName: "defold_typescript_hsm.debug",
+      },
       {
         name: "defold",
         specifier: "@defold-typescript/types/hsm/defold",

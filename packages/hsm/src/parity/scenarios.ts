@@ -478,6 +478,35 @@ function definitionErrors(): string[] {
   return log;
 }
 
+function onTransitionReports(): string[] {
+  const log: string[] = [];
+  const def = defineMachine<Ctx, Ev>()({
+    initial: "/idle",
+    states: {
+      idle: { on: { GO: "/move" } },
+      move: {
+        initial: "/move/walk",
+        states: {
+          walk: { after: { 0.5: "/move/run" } },
+          run: { update: (ctx) => (ctx.flag ? "/rest" : undefined) },
+        },
+      },
+      rest: {},
+    },
+  });
+  const ctx = newCtx(log);
+  const m = def.start(ctx);
+  m.onTransition((from, to, cause, event) => {
+    log.push(`${shown(from)} -> ${shown(to)} ${cause} ${event === undefined ? "-" : event.type}`);
+  });
+  m.send({ type: "GO" });
+  m.update(0.5);
+  ctx.flag = true;
+  m.update(0.1);
+  m.stop();
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -490,6 +519,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "invoke", run: () => invoke() },
   { name: "names and update targets", run: () => namesAndUpdateTargets() },
   { name: "definition errors", run: () => definitionErrors() },
+  { name: "onTransition reports every cause", run: () => onTransitionReports() },
 ];
 
 export function runScenario(name: string): string {
