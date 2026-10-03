@@ -5,7 +5,7 @@ export interface EventObject {
 /** @noSelf */
 export interface MachineInstance<Ctx, E extends EventObject, P extends string = string> {
     readonly ctx: Ctx;
-    readonly path: P | "";
+    readonly path: P | undefined;
     readonly matches: (path: P) => boolean;
     readonly send: (event: E) => void;
     readonly update: (dt: number) => void;
@@ -58,12 +58,11 @@ type PathDepth = [never, 0, 1, 2, 3];
 type PathsBelow<S, D extends number> = S extends {
     readonly states: infer Children;
 } ? {
-    [K in keyof Children & string]: K | `${K}.${D extends 1 ? Children[K] extends {
+    [K in keyof Children & string]: K | `${K}/${D extends 1 ? Children[K] extends {
         readonly states: object;
     } ? string : never : PathsBelow<Children[K], PathDepth[D]>}`;
 }[keyof Children & string] : never;
-export type StatePath<C> = PathsBelow<C, 4>;
-type TargetCheck<Rel extends string, All extends string> = Rel | `#${All}`;
+export type StatePath<C> = `/${PathsBelow<C, 4>}`;
 interface TransitionCheck<T> {
     readonly target?: T;
     readonly guard?: unknown;
@@ -71,24 +70,24 @@ interface TransitionCheck<T> {
     readonly reenter?: unknown;
 }
 type SpecCheck<T> = T | TransitionCheck<T> | readonly TransitionCheck<T>[];
-type PathCheck<S, Rel extends string, All extends string, Ev extends string> = {
+type PathCheck<S, Self extends string, All extends string, Ev extends string> = {
     readonly initial?: S extends {
         readonly states: infer Children;
-    } ? keyof Children & string : never;
+    } ? `${Self}/${keyof Children & string}` : never;
     readonly states?: S extends {
         readonly states: infer Children;
     } ? {
-        readonly [K in keyof Children]: PathCheck<Children[K], StatePath<S>, All, Ev>;
+        readonly [K in keyof Children]: PathCheck<Children[K], `${Self}/${K & string}`, All, Ev>;
     } : unknown;
     readonly on?: S extends {
         readonly on: infer On;
     } ? {
-        readonly [K in keyof On]: K extends Ev ? SpecCheck<TargetCheck<Rel, All>> : never;
+        readonly [K in keyof On]: K extends Ev ? SpecCheck<All> : never;
     } : unknown;
     readonly after?: S extends {
         readonly after: infer After;
     } ? {
-        readonly [K in keyof After]: TargetCheck<Rel, All>;
+        readonly [K in keyof After]: All;
     } : unknown;
     readonly enter?: unknown;
     readonly exit?: unknown;
@@ -98,6 +97,6 @@ type PathCheck<S, Rel extends string, All extends string, Ev extends string> = {
 export interface MachineConfigError {
     readonly "hsm: an initial or target names an unknown state path, or an on key an unknown event": never;
 }
-export type DefinedMachine<Ctx, E extends EventObject, C> = C extends PathCheck<C, StatePath<C>, StatePath<C>, E["type"]> ? Machine<Ctx, E, StatePath<C>> : MachineConfigError;
+export type DefinedMachine<Ctx, E extends EventObject, C> = C extends PathCheck<C, "", StatePath<C>, E["type"]> ? Machine<Ctx, E, StatePath<C>> : MachineConfigError;
 export declare function defineMachine<Ctx, E extends EventObject>(): <const C extends MachineConfig<Ctx, E>>(config: C) => DefinedMachine<Ctx, E, C>;
 export {};

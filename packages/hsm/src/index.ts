@@ -5,7 +5,7 @@ export interface EventObject {
 /** @noSelf */
 export interface MachineInstance<Ctx, E extends EventObject, P extends string = string> {
   readonly ctx: Ctx;
-  readonly path: P | "";
+  readonly path: P | undefined;
   readonly matches: (path: P) => boolean;
   readonly send: (event: E) => void;
   readonly update: (dt: number) => void;
@@ -79,7 +79,7 @@ type PathsBelow<S, D extends number> = S extends { readonly states: infer Childr
   ? {
       [K in keyof Children & string]:
         | K
-        | `${K}.${D extends 1
+        | `${K}/${D extends 1
             ? Children[K] extends { readonly states: object }
               ? string
               : never
@@ -87,9 +87,7 @@ type PathsBelow<S, D extends number> = S extends { readonly states: infer Childr
     }[keyof Children & string]
   : never;
 
-export type StatePath<C> = PathsBelow<C, 4>;
-
-type TargetCheck<Rel extends string, All extends string> = Rel | `#${All}`;
+export type StatePath<C> = `/${PathsBelow<C, 4>}`;
 
 interface TransitionCheck<T> {
   readonly target?: T;
@@ -102,18 +100,20 @@ type SpecCheck<T> = T | TransitionCheck<T> | readonly TransitionCheck<T>[];
 
 // Hooks are listed as unknown so a hooks-only leaf still shares a property with this
 // all-optional type; without them TypeScript rejects it as a weak-type mismatch.
-type PathCheck<S, Rel extends string, All extends string, Ev extends string> = {
+type PathCheck<S, Self extends string, All extends string, Ev extends string> = {
   readonly initial?: S extends { readonly states: infer Children }
-    ? keyof Children & string
+    ? `${Self}/${keyof Children & string}`
     : never;
   readonly states?: S extends { readonly states: infer Children }
-    ? { readonly [K in keyof Children]: PathCheck<Children[K], StatePath<S>, All, Ev> }
+    ? {
+        readonly [K in keyof Children]: PathCheck<Children[K], `${Self}/${K & string}`, All, Ev>;
+      }
     : unknown;
   readonly on?: S extends { readonly on: infer On }
-    ? { readonly [K in keyof On]: K extends Ev ? SpecCheck<TargetCheck<Rel, All>> : never }
+    ? { readonly [K in keyof On]: K extends Ev ? SpecCheck<All> : never }
     : unknown;
   readonly after?: S extends { readonly after: infer After }
-    ? { readonly [K in keyof After]: TargetCheck<Rel, All> }
+    ? { readonly [K in keyof After]: All }
     : unknown;
   readonly enter?: unknown;
   readonly exit?: unknown;
@@ -126,7 +126,7 @@ export interface MachineConfigError {
 }
 
 export type DefinedMachine<Ctx, E extends EventObject, C> =
-  C extends PathCheck<C, StatePath<C>, StatePath<C>, E["type"]>
+  C extends PathCheck<C, "", StatePath<C>, E["type"]>
     ? Machine<Ctx, E, StatePath<C>>
     : MachineConfigError;
 
@@ -174,16 +174,13 @@ function resolveTarget<Ctx, E extends EventObject>(
   source: number,
   target: string,
 ): number {
-  let path: string;
-  if (target.charAt(0) === "#") {
-    path = target.slice(1);
-  } else {
-    const base = source === ROOT ? ROOT : (compiled.parent[source] as number);
-    path = base === ROOT ? target : `${compiled.paths[base] as string}.${target}`;
+  const sourcePath = describePath(compiled.paths[source] as string);
+  if (target.charAt(0) !== "/") {
+    throw `hsm: state "${sourcePath}" targets "${target}", which is not a full path starting with "/"`;
   }
-  const index = lookupPath(compiled, path);
+  const index = lookupPath(compiled, target);
   if (index === undefined) {
-    throw `hsm: state "${describePath(compiled.paths[source] as string)}" targets unknown state "${target}"`;
+    throw `hsm: state "${sourcePath}" targets unknown state "${target}"`;
   }
   return index;
 }
@@ -211,12 +208,10 @@ function registerState<Ctx, E extends EventObject>(
     return;
   }
   for (const name in children) {
-    registerState(
-      compiled,
-      children[name] as StateConfig<Ctx, E>,
-      index,
-      path === "" ? name : `${path}.${name}`,
-    );
+    if (name === "" || name.indexOf("/") !== -1) {
+      throw `hsm: state "${describePath(path)}" has a child named "${name}"; state names must be non-empty and contain no "/"`;
+    }
+    registerState(compiled, children[name] as StateConfig<Ctx, E>, index, `${path}/${name}`);
   }
 }
 
@@ -247,7 +242,7 @@ function compileInitial<Ctx, E extends EventObject>(
   if (initial === undefined) {
     throw `hsm: compound state "${describePath(path)}" has no initial`;
   }
-  const child = lookupPath(compiled, path === "" ? initial : `${path}.${initial}`);
+  const child = lookupPath(compiled, initial);
   if (child === undefined || compiled.parent[child] !== index) {
     throw `hsm: state "${describePath(path)}" has initial "${initial}", which is not one of its children`;
   }
@@ -445,7 +440,7 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
 
     const instance = {
       ctx,
-      path: "",
+      path: undefined as string | undefined,
       matches,
       send,
       update,
@@ -578,7 +573,7 @@ function createMachine<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>
       busy = true;
       clearQueue();
       exitTo(NO_STATE);
-      instance.path = "";
+      instance.path = undefined;
       busy = false;
     }
 

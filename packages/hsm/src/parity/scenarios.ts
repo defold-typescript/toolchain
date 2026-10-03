@@ -43,10 +43,15 @@ function settleHeld(ctx: Ctx, index: number, event: Ev): void {
   settle(event);
 }
 
-function recordDefinitionError(log: string[], define: () => unknown): void {
+// Lua cannot concatenate nil, so a stopped machine's path is written as a fixed token.
+function shown(path: string | undefined): string {
+  return path === undefined ? "(stopped)" : path;
+}
+
+function recordError(log: string[], run: () => unknown): void {
   try {
-    define();
-    log.push("defined");
+    run();
+    log.push("ok");
   } catch (error) {
     log.push(`error: ${String(error)}`);
   }
@@ -55,54 +60,54 @@ function recordDefinitionError(log: string[], define: () => unknown): void {
 function start(): string[] {
   const log: string[] = [];
   const def = defineMachine<Ctx, Ev>()({
-    initial: "a",
+    initial: "/a",
     states: {
       a: {
         ...logged("a"),
-        initial: "b",
-        states: { b: { ...logged("a.b"), initial: "c", states: { c: logged("a.b.c") } } },
-        on: { GO: "ab" },
+        initial: "/a/b",
+        states: { b: { ...logged("a.b"), initial: "/a/b/c", states: { c: logged("a.b.c") } } },
+        on: { GO: "/ab" },
       },
       ab: logged("ab"),
     },
   });
   const m = def.start(newCtx(log));
-  log.push(`path=${m.path}`);
-  log.push(`matches(a)=${m.matches("a")}`);
-  log.push(`matches(a.b)=${m.matches("a.b")}`);
+  log.push(`path=${shown(m.path)}`);
+  log.push(`matches(/a)=${m.matches("/a")}`);
+  log.push(`matches(/a/b)=${m.matches("/a/b")}`);
   m.send({ type: "GO" });
-  log.push(`path=${m.path}`);
-  log.push(`matches(ab)=${m.matches("ab")}`);
-  log.push(`matches(a)=${m.matches("a")}`);
+  log.push(`path=${shown(m.path)}`);
+  log.push(`matches(/ab)=${m.matches("/ab")}`);
+  log.push(`matches(/a)=${m.matches("/a")}`);
   return log;
 }
 
 function numericNames(): string[] {
   const log: string[] = [];
   const def = defineMachine<Ctx, Ev>()({
-    initial: "0",
+    initial: "/0",
     states: {
-      "0": { ...logged("0"), on: { "10": "1" } },
-      "1": { ...logged("1"), initial: "0", states: { "0": logged("1.0") } },
+      "0": { ...logged("0"), on: { "10": "/1" } },
+      "1": { ...logged("1"), initial: "/1/0", states: { "0": logged("1.0") } },
     },
   });
   const m = def.start(newCtx(log));
-  log.push(`path=${m.path}`);
+  log.push(`path=${shown(m.path)}`);
   m.send({ type: "10" });
-  log.push(`path=${m.path}`);
-  log.push(`matches(1)=${m.matches("1")}`);
-  log.push(`matches(0)=${m.matches("0")}`);
+  log.push(`path=${shown(m.path)}`);
+  log.push(`matches(/1)=${m.matches("/1")}`);
+  log.push(`matches(/0)=${m.matches("/0")}`);
   return log;
 }
 
 function guardsAndBubbling(): string[] {
   const log: string[] = [];
   const def = defineMachine<Ctx, Ev>()({
-    initial: "p",
+    initial: "/p",
     states: {
       p: {
         ...logged("p"),
-        initial: "c",
+        initial: "/p/c",
         states: {
           c: {
             ...logged("p.c"),
@@ -113,49 +118,49 @@ function guardsAndBubbling(): string[] {
                     ctx.log.push("guard 1");
                     return false;
                   },
-                  target: "c",
+                  target: "/p/c",
                 },
                 {
                   guard: (ctx) => {
                     ctx.log.push("guard 2");
                     return ctx.flag;
                   },
-                  target: "d",
+                  target: "/p/d",
                 },
                 {
                   guard: (ctx) => {
                     ctx.log.push("guard 3");
                     return false;
                   },
-                  target: "c",
+                  target: "/p/c",
                 },
               ],
             },
           },
           d: logged("p.d"),
         },
-        on: { HIT: "z" },
+        on: { HIT: "/z" },
       },
       z: logged("z"),
     },
   });
   const first = def.start(newCtx(log, true));
   first.send({ type: "HIT" });
-  log.push(`path=${first.path}`);
+  log.push(`path=${shown(first.path)}`);
   log.push("second instance");
   const second = def.start(newCtx(log, false));
   second.send({ type: "HIT" });
-  log.push(`path=${second.path}`);
+  log.push(`path=${shown(second.path)}`);
   second.send({ type: "NOPE" });
-  log.push(`path=${second.path}`);
+  log.push(`path=${shown(second.path)}`);
   return log;
 }
 
 function targetlessAndReentry(): string[] {
   const log: string[] = [];
   const self = defineMachine<Ctx, Ev>()({
-    initial: "s",
-    on: { HIT: "s" },
+    initial: "/s",
+    on: { HIT: "/s" },
     states: {
       s: {
         ...logged("s"),
@@ -171,35 +176,35 @@ function targetlessAndReentry(): string[] {
   });
   const m = self.start(newCtx(log));
   m.send({ type: "PING" });
-  log.push(`path=${m.path}`);
+  log.push(`path=${shown(m.path)}`);
   m.send({ type: "HIT" });
-  log.push(`path=${m.path}`);
+  log.push(`path=${shown(m.path)}`);
 
   const build = (reenter: boolean) =>
     defineMachine<Ctx, Ev>()({
-      initial: "p",
+      initial: "/p",
       states: {
         p: {
           ...logged("p"),
-          initial: "c1",
+          initial: "/p/c1",
           states: { c1: logged("p.c1"), c2: logged("p.c2") },
-          on: { TO2: { target: "#p.c2", reenter } },
+          on: { TO2: { target: "/p/c2", reenter } },
         },
       },
     });
   const keep = build(false).start(newCtx(log));
   keep.send({ type: "TO2" });
-  log.push(`path=${keep.path}`);
+  log.push(`path=${shown(keep.path)}`);
   const reentered = build(true).start(newCtx(log));
   reentered.send({ type: "TO2" });
-  log.push(`path=${reentered.path}`);
+  log.push(`path=${shown(reentered.path)}`);
   return log;
 }
 
 function queuedSends(): string[] {
   const log: string[] = [];
   const def = defineMachine<Ctx, Ev>()({
-    initial: "a",
+    initial: "/a",
     on: {
       STEP: {
         actions: (ctx, event) => {
@@ -208,14 +213,14 @@ function queuedSends(): string[] {
       },
     },
     states: {
-      a: { ...logged("a"), on: { GO: "b" } },
+      a: { ...logged("a"), on: { GO: "/b" } },
       b: {
         enter: (ctx, m) => {
           ctx.log.push("enter b");
           m.send({ type: "STEP", n: 1 });
           m.send({ type: "STEP", n: 2 });
         },
-        initial: "b1",
+        initial: "/b/b1",
         states: {
           b1: {
             enter: (ctx, m) => {
@@ -230,27 +235,27 @@ function queuedSends(): string[] {
   const m = def.start(newCtx(log));
   m.send({ type: "GO" });
   m.send({ type: "STEP", n: 4 });
-  log.push(`path=${m.path}`);
+  log.push(`path=${shown(m.path)}`);
   return log;
 }
 
 function updateAndAfter(): string[] {
   const log: string[] = [];
   const updating = defineMachine<Ctx, Ev>()({
-    initial: "p",
+    initial: "/p",
     states: {
       p: {
         update: (ctx, dt) => {
           ctx.log.push(`update p ${dt}`);
           return undefined;
         },
-        initial: "c",
+        initial: "/p/c",
         states: {
           c: {
             ...logged("p.c"),
             update: (ctx, dt) => {
               ctx.log.push(`update p.c ${dt}`);
-              return ctx.flag ? "c2" : undefined;
+              return ctx.flag ? "/p/c2" : undefined;
             },
           },
           c2: logged("p.c2"),
@@ -263,37 +268,37 @@ function updateAndAfter(): string[] {
   u.update(0.25);
   ctx.flag = true;
   u.update(0.5);
-  log.push(`path=${u.path}`);
+  log.push(`path=${shown(u.path)}`);
 
   const timed = defineMachine<Ctx, Ev>()({
-    initial: "a",
+    initial: "/a",
     states: {
-      a: { ...logged("a"), after: { 1: "x", 0.5: "y" }, on: { GO: "b" } },
-      b: { ...logged("b"), on: { BACK: "a" } },
+      a: { ...logged("a"), after: { 1: "/x", 0.5: "/y" }, on: { GO: "/b" } },
+      b: { ...logged("b"), on: { BACK: "/a" } },
       x: logged("x"),
       y: logged("y"),
     },
   });
   const t = timed.start(newCtx(log));
   t.update(0.25);
-  log.push(`path=${t.path}`);
+  log.push(`path=${shown(t.path)}`);
   t.send({ type: "GO" });
   t.send({ type: "BACK" });
   t.update(0.25);
-  log.push(`path=${t.path}`);
+  log.push(`path=${shown(t.path)}`);
   t.update(0.25);
-  log.push(`path=${t.path}`);
+  log.push(`path=${shown(t.path)}`);
   log.push("second instance");
   const both = timed.start(newCtx(log));
   both.update(1);
-  log.push(`path=${both.path}`);
+  log.push(`path=${shown(both.path)}`);
   return log;
 }
 
 function stop(): string[] {
   const log: string[] = [];
   const def = defineMachine<Ctx, Ev>()({
-    initial: "a",
+    initial: "/a",
     on: {
       PING: {
         actions: (ctx) => {
@@ -302,7 +307,7 @@ function stop(): string[] {
       },
     },
     states: {
-      a: { ...logged("a"), after: { 0.5: "b" }, on: { GO: "b" } },
+      a: { ...logged("a"), after: { 0.5: "/b" }, on: { GO: "/b" } },
       b: {
         enter: (ctx, m) => {
           ctx.log.push("enter b");
@@ -312,26 +317,26 @@ function stop(): string[] {
         exit: (ctx) => {
           ctx.log.push("exit b");
         },
-        initial: "b1",
+        initial: "/b/b1",
         states: { b1: logged("b.b1") },
       },
     },
   });
   const m = def.start(newCtx(log));
   m.send({ type: "GO" });
-  log.push(`path=${m.path}`);
+  log.push(`path=${shown(m.path)}`);
   m.send({ type: "GO" });
   m.update(10);
   m.stop();
-  log.push(`path=${m.path}`);
-  log.push(`matches(a)=${m.matches("a")}`);
+  log.push(`path=${shown(m.path)}`);
+  log.push(`matches(/a)=${m.matches("/a")}`);
   return log;
 }
 
 function invoke(): string[] {
   const log: string[] = [];
   const def = defineMachine<Ctx, Ev>()({
-    initial: "loading",
+    initial: "/loading",
     states: {
       loading: {
         invoke: (ctx, settle) => {
@@ -344,63 +349,98 @@ function invoke(): string[] {
               ctx.log.push("ping");
             },
           },
-          LOADED: "ready",
-          AGAIN: { target: "loading", reenter: true },
-          UP: "idle",
+          LOADED: "/ready",
+          AGAIN: { target: "/loading", reenter: true },
+          UP: "/idle",
         },
       },
       ready: logged("ready"),
-      idle: { on: { BACK: "loading" } },
+      idle: { on: { BACK: "/loading" } },
     },
   });
   const ctx = newCtx(log);
   const m = def.start(ctx);
   m.send({ type: "AGAIN" });
   settleHeld(ctx, 0, { type: "LOADED" });
-  log.push(`path=${m.path}`);
+  log.push(`path=${shown(m.path)}`);
   settleHeld(ctx, 1, { type: "PING" });
   settleHeld(ctx, 1, { type: "PING" });
   settleHeld(ctx, 1, { type: "LOADED" });
-  log.push(`path=${m.path}`);
+  log.push(`path=${shown(m.path)}`);
   m.send({ type: "UP" });
-  log.push(`path=${m.path}`);
+  log.push(`path=${shown(m.path)}`);
   m.send({ type: "BACK" });
   m.send({ type: "UP" });
   settleHeld(ctx, 2, { type: "LOADED" });
-  log.push(`path=${m.path}`);
+  log.push(`path=${shown(m.path)}`);
   m.send({ type: "BACK" });
   m.stop();
   settleHeld(ctx, 3, { type: "LOADED" });
-  log.push(`path=${m.path}`);
+  log.push(`path=${shown(m.path)}`);
+  return log;
+}
+
+function namesAndUpdateTargets(): string[] {
+  const log: string[] = [];
+  const m = defineMachine<Ctx, Ev>()({
+    initial: "/v1.2",
+    states: {
+      "v1.2": { ...logged("v1.2"), on: { GO: "/#x" } },
+      "#x": { ...logged("#x"), update: () => "patrol" },
+    },
+  }).start(newCtx(log));
+  log.push(`path=${shown(m.path)}`);
+  log.push(`matches(/v1.2)=${m.matches("/v1.2")}`);
+  m.send({ type: "GO" });
+  log.push(`path=${shown(m.path)}`);
+  recordError(log, () => m.update(0.1));
   return log;
 }
 
 function definitionErrors(): string[] {
   const log: string[] = [];
   const define = defineMachine<Ctx, Ev>();
-  recordDefinitionError(log, () =>
+  recordError(log, () =>
     define({
-      initial: "attack",
-      states: { attack: { initial: "recover", states: { recover: { on: { GO: "nope" } } } } },
+      initial: "/attack",
+      states: {
+        attack: { initial: "/attack/recover", states: { recover: { on: { GO: "/nope" } } } },
+      },
     }),
   );
-  recordDefinitionError(log, () =>
+  recordError(log, () =>
     define({
-      initial: "outer",
-      states: { outer: { initial: "inner", states: { inner: { states: { leaf: {} } } } } },
+      initial: "/outer",
+      states: {
+        outer: { initial: "/outer/inner", states: { inner: { states: { leaf: {} } } } },
+      },
     }),
   );
-  recordDefinitionError(log, () =>
-    define({ initial: "outer", states: { outer: { initial: "ghost", states: { leaf: {} } } } }),
+  for (const initial of ["/outer/ghost", "leaf", "/leaf"]) {
+    recordError(log, () =>
+      define({ initial: "/outer", states: { outer: { initial, states: { leaf: {} } } } }),
+    );
+  }
+  for (const target of ["patrol", "./patrol", "../patrol", "/"]) {
+    recordError(log, () =>
+      define({ initial: "/idle", states: { idle: { on: { GO: target } }, patrol: {} } }),
+    );
+  }
+  recordError(log, () =>
+    define({ initial: "/idle", states: { idle: { after: { 1: "patrol" } }, patrol: {} } }),
   );
-  recordDefinitionError(log, () =>
-    define({ initial: "a", states: { a: { after: { abc: "a" } as never } } }),
+  recordError(log, () => define({ initial: "/a", states: { a: {}, "": {} } }));
+  recordError(log, () =>
+    define({ initial: "/p", states: { p: { initial: "/p/c", states: { c: {}, "a/b": {} } } } }),
   );
-  recordDefinitionError(log, () =>
-    define({ initial: "a", states: { a: { after: { "": "a" } as never } } }),
+  recordError(log, () =>
+    define({ initial: "/a", states: { a: { after: { abc: "/a" } as never } } }),
   );
-  recordDefinitionError(log, () =>
-    define({ initial: "a", states: { a: { after: { "-1": "a" } as never } } }),
+  recordError(log, () =>
+    define({ initial: "/a", states: { a: { after: { "": "/a" } as never } } }),
+  );
+  recordError(log, () =>
+    define({ initial: "/a", states: { a: { after: { "-1": "/a" } as never } } }),
   );
   return log;
 }
@@ -414,6 +454,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "update and after", run: () => updateAndAfter() },
   { name: "stop", run: () => stop() },
   { name: "invoke", run: () => invoke() },
+  { name: "names and update targets", run: () => namesAndUpdateTargets() },
   { name: "definition errors", run: () => definitionErrors() },
 ];
 

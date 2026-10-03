@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 // The state machines tutorial replaces each `[data-hsm-demo]` placeholder with a
 // live diagram running the real hsm library. Pressing the lamp's TOGGLE lights
-// its `on` box and narrates the step in the log.
+// its `on` box and narrates the step in the log, naming each state by its full path.
 
 test("the lamp demo toggles on and logs the transition", async ({ page }) => {
   await page.goto("/state-machines-tutorial");
@@ -19,5 +19,5 @@ test("the lamp demo toggles on and logs the transition", async ({ page }) => {
   await demo.getByRole("button", { name: "TOGGLE" }).click();
   await expect(onBox).toHaveClass(/hsm-on/);
   await expect(log).toHaveCount(before + 3);
-  await expect(log.last()).toHaveText("enter on");
+  await expect(log.last()).toHaveText("enter /on");
 });
