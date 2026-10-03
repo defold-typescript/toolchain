@@ -383,6 +383,7 @@ describe("buildNav", () => {
     expect(byLabel("Tutorials")?.children?.map((c) => c.route)).toEqual([
       "/tetris-tutorial",
       "/vectors-tutorial",
+      "/state-machines-tutorial",
     ]);
     expect(byLabel("TypeScript")?.children?.map((c) => c.route)).toEqual([
       "/typescript-vs-lua",

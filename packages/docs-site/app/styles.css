@@ -1480,3 +1480,329 @@
   border-color: var(--color-border-strong);
   color: var(--color-text);
 }
+
+/*
+ * Live state machine diagrams on the state machines tutorial (view.ts). Unlayered
+ * so the `.prose` list, heading and paragraph rules around them never reach in.
+ * Colors come from the theme tokens, so both themes work with no overrides.
+ */
+.hsm-demo {
+  --hsm-lit: var(--color-accent);
+  --hsm-event: var(--color-overload-count);
+  --hsm-exit: var(--color-badge-deprecated);
+  --hsm-action: var(--color-badge-global);
+  --hsm-queue: var(--color-warning);
+  container-type: inline-size;
+  margin: 1.5rem 0 2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  overflow: hidden;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.hsm-head {
+  padding: 0.9rem 1.1rem 0.2rem;
+}
+.hsm-title {
+  font-weight: 600;
+}
+.hsm-subtitle {
+  margin: 0.1rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+.hsm-body {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.hsm-diagram {
+  padding: 1rem 1.1rem 1.1rem;
+  min-width: 0;
+}
+.hsm-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-width: 0;
+  padding: 1rem 1.1rem 1.1rem;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}
+@container (min-width: 40rem) {
+  .hsm-body {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  }
+  .hsm-side {
+    border-top: 0;
+    border-left: 1px solid var(--color-border);
+  }
+}
+.hsm-level {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.hsm-kids {
+  margin-top: 0.5rem;
+}
+.hsm-state {
+  flex: 1 1 8rem;
+  min-width: 8rem;
+  padding: 0.5rem 0.6rem 0.55rem;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 10px;
+  background: var(--color-bg);
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s;
+}
+.hsm-compound {
+  flex: 2 1 14rem;
+}
+.hsm-state.hsm-on {
+  border-color: var(--hsm-lit);
+  box-shadow:
+    0 0 0 1px var(--hsm-lit),
+    0 0 18px color-mix(in srgb, var(--hsm-lit) 35%, transparent);
+}
+.hsm-state-name {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+.hsm-state.hsm-on > .hsm-state-name {
+  color: var(--hsm-lit);
+}
+.hsm-init {
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-style: italic;
+}
+.hsm-demo ul.hsm-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.hsm-demo li.hsm-rule {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  padding: 0.15rem 0.35rem;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  transition:
+    background-color 0.5s,
+    color 0.5s;
+}
+.hsm-ev {
+  color: var(--hsm-event);
+}
+.hsm-why {
+  font-family: var(--font-sans);
+  font-style: italic;
+}
+.hsm-demo li.hsm-rule.hsm-flash {
+  background: var(--hsm-lit);
+  color: var(--color-bg);
+  transition: none;
+}
+.hsm-rule.hsm-flash .hsm-ev {
+  color: var(--color-bg);
+}
+.hsm-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: var(--hsm-lit);
+}
+.hsm-hooks {
+  margin-top: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+.hsm-legend {
+  margin-top: 0.8rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+.hsm-legend i {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.3rem;
+  vertical-align: -1px;
+  border: 1.5px solid var(--hsm-lit);
+  border-radius: 3px;
+}
+.hsm-group-label {
+  margin-bottom: 0.3rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+.hsm-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.hsm-button {
+  padding: 0.35rem 0.75rem;
+  border: 1.5px solid color-mix(in srgb, var(--hsm-event) 60%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--hsm-event) 8%, transparent);
+  color: var(--hsm-event);
+  font: 600 0.78rem var(--font-mono);
+  cursor: pointer;
+}
+.hsm-button:hover {
+  background: color-mix(in srgb, var(--hsm-event) 18%, transparent);
+}
+.hsm-button.hsm-ghost {
+  border-color: var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 0.82rem var(--font-sans);
+}
+.hsm-button.hsm-ghost:hover {
+  color: var(--color-text);
+}
+.hsm-button:focus-visible,
+.hsm-speed:focus-visible {
+  outline: 2px solid var(--hsm-lit);
+  outline-offset: 2px;
+}
+.hsm-clock {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+.hsm-speed {
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: 0.8rem var(--font-sans);
+}
+.hsm-readout {
+  overflow-x: auto;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  background: var(--color-code-bg);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+.hsm-k {
+  color: var(--color-text-muted);
+}
+.hsm-v {
+  color: var(--hsm-lit);
+}
+.hsm-demo ol.hsm-log {
+  height: 13rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: var(--color-code-bg);
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+.hsm-log li {
+  margin: 0;
+  padding: 0.05rem 0;
+  color: var(--color-text-muted);
+}
+.hsm-log li.hsm-l-event {
+  margin-top: 0.3rem;
+  color: var(--hsm-event);
+}
+.hsm-log li.hsm-l-enter {
+  color: var(--hsm-lit);
+}
+.hsm-log li.hsm-l-exit {
+  color: var(--hsm-exit);
+}
+.hsm-log li.hsm-l-action {
+  color: var(--hsm-action);
+}
+.hsm-log li.hsm-l-timer {
+  color: var(--hsm-event);
+}
+.hsm-log li.hsm-l-queue,
+.hsm-log li.hsm-l-drop {
+  color: var(--hsm-queue);
+  font-style: italic;
+}
+.hsm-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 5rem;
+}
+.hsm-bulb {
+  width: 4rem;
+  height: 4rem;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-surface-2);
+  transition:
+    background-color 0.3s,
+    box-shadow 0.3s;
+}
+.hsm-bulb.hsm-lit {
+  border-color: var(--color-warning);
+  background: var(--color-warning);
+  box-shadow: 0 0 36px 8px color-mix(in srgb, var(--color-warning) 40%, transparent);
+}
+.hsm-bulb.hsm-dim {
+  border-color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 55%, var(--color-surface-2));
+  box-shadow: 0 0 14px 2px color-mix(in srgb, var(--color-warning) 18%, transparent);
+}
+.hsm-sprite {
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 12px;
+  background: var(--hsm-event);
+}
+.hsm-sprite.hsm-hidden {
+  opacity: 0.08;
+}
+.hsm-doorframe {
+  display: flex;
+  width: 4.6rem;
+  height: 6rem;
+  padding: 4px;
+  border: 3px solid var(--color-border-strong);
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+}
+.hsm-door {
+  flex: 1;
+  border-radius: 3px;
+  background: #8a6a4a;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hsm-demo *,
+  .hsm-demo li.hsm-rule {
+    transition: none;
+  }
+}

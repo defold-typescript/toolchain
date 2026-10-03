@@ -46,6 +46,7 @@
       "name": "@defold-typescript/docs-site",
       "version": "0.0.0",
       "dependencies": {
+        "@defold-typescript/hsm": "workspace:*",
         "@defold-typescript/types": "workspace:*",
         "@fontsource-variable/spline-sans-mono": "^5.3.0",
         "@fontsource/barlow": "^5.3.0",
