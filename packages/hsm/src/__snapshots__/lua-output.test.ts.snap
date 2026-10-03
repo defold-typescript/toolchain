@@ -470,14 +470,7 @@ local function createMachine(config)
             end
             return false
         end
-        function fireTimers(dt)
-            do
-                local level = 0
-                while level <= leafDepth do
-                    elapsed[level + 1] = elapsed[level + 1] + dt
-                    level = level + 1
-                end
-            end
+        function fireTimers()
             do
                 local level = leafDepth
                 while level >= 0 do
@@ -504,8 +497,15 @@ local function createMachine(config)
                 return
             end
             busy = true
+            do
+                local level = 0
+                while level <= leafDepth do
+                    elapsed[level + 1] = elapsed[level + 1] + dt
+                    level = level + 1
+                end
+            end
             if not fireUpdateHooks(dt) then
-                fireTimers(dt)
+                fireTimers()
             end
             endStep()
         end

@@ -295,6 +295,39 @@ function updateAndAfter(): string[] {
   return log;
 }
 
+function hookTickTimers(): string[] {
+  const log: string[] = [];
+  const def = defineMachine<Ctx, Ev>()({
+    initial: "/airborne",
+    states: {
+      airborne: {
+        ...logged("airborne"),
+        initial: "/airborne/rising",
+        after: { 0.75: "/timeout" },
+        states: {
+          rising: {
+            ...logged("airborne.rising"),
+            update: (ctx) => (ctx.flag ? "/airborne/falling" : undefined),
+          },
+          falling: { ...logged("airborne.falling"), after: { 0.5: "/landed" } },
+        },
+      },
+      timeout: logged("timeout"),
+      landed: logged("landed"),
+    },
+  });
+  const ctx = newCtx(log);
+  const m = def.start(ctx);
+  m.update(0.25);
+  log.push(`path=${shown(m.path)}`);
+  ctx.flag = true;
+  m.update(0.25);
+  log.push(`path=${shown(m.path)}`);
+  m.update(0.25);
+  log.push(`path=${shown(m.path)}`);
+  return log;
+}
+
 function stop(): string[] {
   const log: string[] = [];
   const def = defineMachine<Ctx, Ev>()({
@@ -452,6 +485,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "targetless and reentry", run: () => targetlessAndReentry() },
   { name: "queued sends", run: () => queuedSends() },
   { name: "update and after", run: () => updateAndAfter() },
+  { name: "hook tick timers", run: () => hookTickTimers() },
   { name: "stop", run: () => stop() },
   { name: "invoke", run: () => invoke() },
   { name: "names and update targets", run: () => namesAndUpdateTargets() },
