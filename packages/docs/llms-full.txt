@@ -3099,8 +3099,8 @@ export default defineScript({
   update(self, dt) {
     self.door.update(dt);
   },
-  on_message(self, message_id, message) {
-    const event = doorEvents.toEvent(message_id, message);
+  on_message(self, message_id, message, sender) {
+    const event = doorEvents.toEvent(message_id, message, sender);
     if (event !== undefined) {
       self.door.send(event);
     }
@@ -3171,9 +3171,44 @@ broken.start({ steps: 0 });
 
 ##### The message bridge
 
-Defold delivers messages as a hashed `message_id` plus a payload table. `messageEvents(ids)` turns the ones you list into typed events `{ type: id, ...payload }`, reusing the payload types already declared through `BuiltinMessages` and `CustomMessages`, so a payload is declared once. `MessageEvent<K>` is that event's type, for the machine's event union. Its `toEvent(message_id, message)` takes the `on_message` parameters of both `defineScript` and `defineGuiScript` and returns `undefined` for any id you did not list. Build the mapper once at module scope: it hashes the ids when it is created.
+Defold delivers messages as a hashed `message_id`, a payload table and the sender's URL. `messageEvents(ids)` turns the ones you list into typed events `{ type: id, ...payload, sender }`, reusing the payload types already declared through `BuiltinMessages` and `CustomMessages`, so a payload is declared once. `MessageEvent<K>` is that event's type, for the machine's event union, and carries `sender: Url`. Its `toEvent(message_id, message, sender)` takes the `on_message` parameters of both `defineScript` and `defineGuiScript` and returns `undefined` for any id you did not list. A payload field named `type` or `sender` never overrides the event's own. Build the mapper once at module scope: it hashes the ids when it is created.
 
-A script that already dispatches with `onMessage` (see [Messages](./messages.md)) has narrowed payloads in hand and can `send` them directly, with no mapper.
+A guard or action reads `event.sender` to answer whoever sent the message:
+
+```ts title="lift-machine.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/defold";
+
+declare global {
+  interface CustomMessages {
+    call_lift: { floor: number };
+    lift_arrived: { floor: number };
+  }
+}
+
+export const liftMachine = defineMachine<{ floor: number }, MessageEvent<"call_lift">>()({
+  initial: "/waiting",
+  states: {
+    waiting: {
+      on: {
+        call_lift: {
+          target: "/waiting",
+          actions: (ctx, event) => {
+            ctx.floor = event.floor;
+            msg.post(event.sender, "lift_arrived", { floor: ctx.floor });
+          },
+        },
+      },
+    },
+  },
+});
+
+export const liftEvents = messageEvents(["call_lift"]);
+```
+
+A machine sees only its `ctx` and its events, never `self`, so script data a hook needs goes into `ctx` at `start`.
+
+A script that already dispatches with `onMessage` (see [Messages](./messages.md)) has narrowed payloads in hand and can `send` them directly, with no mapper. An event built by hand for a `MessageEvent` union includes `sender`, which the `onMessage` handler receives.
 
 #### Migrate a script
 

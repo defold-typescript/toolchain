@@ -603,7 +603,7 @@ function ____exports.messageEvents(ids)
             i = i + 1
         end
     end
-    return {toEvent = function(message_id, message)
+    return {toEvent = function(message_id, message, sender)
         do
             local i = 0
             while i < #hashes do
@@ -613,6 +613,7 @@ function ____exports.messageEvents(ids)
                         event[key] = message[key]
                     end
                     event.type = ids[i + 1]
+                    event.sender = sender
                     return event
                 end
                 i = i + 1
