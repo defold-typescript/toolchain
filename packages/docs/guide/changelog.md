@@ -13,17 +13,18 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
+> - **[`hsm` migration](./state-machines.md#the-message-bridge)**: pass `sender` to `toEvent` and add `onTransition` to hand-built instances.
 > - **[`hsm` inspector](./state-machines.md#debug-a-machine)** logs each move.
-> - **[`toEvent` takes the sender](./state-machines.md#the-message-bridge)**.
 > - **[`hsm` timers](./state-machines.md#update-and-after)** fire on time.
 
 ### Breaking
 
 - **`hsm` message events carry the sender:** `messageEvents(...).toEvent` takes the `on_message` `sender` as a required third argument, and every `MessageEvent` has an `event.sender` that guards and actions can reply to. Pass `sender` to each `toEvent` call and add it to any `MessageEvent` you build by hand; see [The message bridge](./state-machines.md#the-message-bridge).
+- **`hsm` instances gain `onTransition`:** `MachineInstance` has a required `onTransition` member, so add or forward it on any object you build as a `MachineInstance` (a test mock, a proxy). Where a parameter typed `MachineInstance<Ctx, E>` receives an instance with more event types, widen its `E` to the machine's full event union; see [Debug a machine](./state-machines.md#debug-a-machine).
 
 ### Improved
 
-- **`hsm` debug inspector:** every machine instance has `onTransition(listener)`, called after each move with the old and new state path, the cause and the event. `inspect(instance, label)` from `@defold-typescript/types/hsm/debug` uses it to log each move and draw the active path over a game object, in debug builds only; see [Debug a machine](./state-machines.md#debug-a-machine).
+- **`hsm` debug inspector:** `onTransition(listener)` on a machine instance calls the listener after each move with the old and new state path, the cause and the event. `inspect(instance, label)` from `@defold-typescript/types/hsm/debug` uses it to log each move and draw the active path over a game object, in debug builds only; see [Debug a machine](./state-machines.md#debug-a-machine).
 
 ### Fixed
 
