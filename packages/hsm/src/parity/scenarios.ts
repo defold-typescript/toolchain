@@ -507,6 +507,42 @@ function onTransitionReports(): string[] {
   return log;
 }
 
+function hotReload(): string[] {
+  const log: string[] = [];
+  const first = defineMachine<Ctx, Ev>("parity hot reload")({
+    initial: "/idle",
+    states: {
+      idle: logged("idle"),
+      move: { ...logged("move"), initial: "/move/walk", states: { walk: logged("move.walk") } },
+    },
+  });
+  const m = first.start(newCtx(log));
+  m.onTransition((from, to, cause, event) => {
+    log.push(`${shown(from)} -> ${shown(to)} ${cause} ${event === undefined ? "-" : event.type}`);
+  });
+  const second = defineMachine<Ctx, Ev>("parity hot reload")({
+    initial: "/idle",
+    states: {
+      idle: { ...logged("idle"), on: { GO: "/move" } },
+      move: { ...logged("move"), initial: "/move/walk", states: { walk: logged("move.walk") } },
+    },
+  });
+  log.push(`same=${(second as unknown) === first}`);
+  m.send({ type: "GO" });
+  log.push(`path=${shown(m.path)}`);
+  defineMachine<Ctx, Ev>("parity hot reload")({
+    initial: "/idle",
+    states: {
+      idle: logged("idle"),
+      move: { ...logged("move"), initial: "/move/run", states: { run: logged("move.run") } },
+    },
+  });
+  log.push(`path=${shown(m.path)}`);
+  m.update(0);
+  log.push(`path=${shown(m.path)}`);
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -520,6 +556,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "names and update targets", run: () => namesAndUpdateTargets() },
   { name: "definition errors", run: () => definitionErrors() },
   { name: "onTransition reports every cause", run: () => onTransitionReports() },
+  { name: "hot reload", run: () => hotReload() },
 ];
 
 export function runScenario(name: string): string {

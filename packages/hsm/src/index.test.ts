@@ -1267,3 +1267,137 @@ describe("onTransition", () => {
     expect(compared).toBe(false);
   });
 });
+
+describe("hot reload", () => {
+  type Report = [string, string | undefined, string, string | undefined];
+
+  function record<P extends string>(m: MachineInstance<Ctx, Ev, P>): Report[] {
+    const reports: Report[] = [];
+    m.onTransition((from, to, cause, event) => {
+      reports.push([from, to, cause, event?.type]);
+    });
+    return reports;
+  }
+
+  function pathOf(m: { readonly path: string | undefined }): string | undefined {
+    return m.path;
+  }
+
+  test("defining the same key twice returns the same Machine", () => {
+    const first = defineMachine<Ctx, Ev>("reload-same")({ initial: "/a", states: { a: {} } });
+    const second = defineMachine<Ctx, Ev>("reload-same")({ initial: "/b", states: { b: {} } });
+    expect(second as unknown).toBe(first);
+    expect(pathOf(second.start(newCtx()))).toBe("/b");
+  });
+
+  test("a live instance rebinds onto a redefinition under the same key", () => {
+    const def = defineMachine<Ctx, Ev>("reload-rebind")({
+      initial: "/idle",
+      states: { idle: logged("idle") },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    const reports = record(m);
+    defineMachine<Ctx, Ev>("reload-rebind")({
+      initial: "/idle",
+      states: { idle: { ...logged("idle"), on: { GO: "/run" } }, run: logged("run") },
+    });
+    m.update(0);
+    expect(m.ctx).toBe(ctx);
+    expect(pathOf(m)).toBe("/idle");
+    expect(ctx.log).toEqual(["enter idle"]);
+    expect(reports).toEqual([]);
+    m.send({ type: "GO" });
+    expect(pathOf(m)).toBe("/run");
+    expect(ctx.log).toEqual(["enter idle", "exit idle", "enter run"]);
+    expect(reports).toEqual([["/idle", "/run", "event", "GO"]]);
+  });
+
+  test("a removed leaf falls back to the surviving parent's initial chain", () => {
+    const def = defineMachine<Ctx, Ev>("reload-removed-leaf")({
+      initial: "/a",
+      states: { a: { ...logged("a"), initial: "/a/b", states: { b: logged("a.b") } } },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    const reports = record(m);
+    ctx.log.length = 0;
+    defineMachine<Ctx, Ev>("reload-removed-leaf")({
+      initial: "/a",
+      states: { a: { ...logged("a"), initial: "/a/c", states: { c: logged("a.c") } } },
+    });
+    m.update(0);
+    expect(pathOf(m)).toBe("/a/c");
+    expect(ctx.log).toEqual(["enter a.c"]);
+    expect(reports).toEqual([["/a/b", "/a/c", "reload", undefined]]);
+  });
+
+  test("a removed top-level state falls back to the root's initial", () => {
+    const def = defineMachine<Ctx, Ev>("reload-removed-top")({
+      initial: "/x",
+      states: { x: logged("x") },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    ctx.log.length = 0;
+    defineMachine<Ctx, Ev>("reload-removed-top")({ initial: "/y", states: { y: logged("y") } });
+    m.send({ type: "PING" });
+    expect(pathOf(m)).toBe("/y");
+    expect(ctx.log).toEqual(["enter y"]);
+  });
+
+  test("a kept leaf that gained children enters its initial chain", () => {
+    const def = defineMachine<Ctx, Ev>("reload-gained-children")({
+      initial: "/a",
+      states: { a: logged("a") },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    const reports = record(m);
+    ctx.log.length = 0;
+    defineMachine<Ctx, Ev>("reload-gained-children")({
+      initial: "/a",
+      states: { a: { ...logged("a"), initial: "/a/b", states: { b: logged("a.b") } } },
+    });
+    m.update(0);
+    expect(pathOf(m)).toBe("/a/b");
+    expect(ctx.log).toEqual(["enter a.b"]);
+    expect(reports).toEqual([["/a", "/a/b", "reload", undefined]]);
+  });
+
+  test("a kept state keeps its after-timer progress", () => {
+    const config = { initial: "/a", states: { a: { after: { 2: "/b" } }, b: {} } } as const;
+    const m = defineMachine<Ctx, Ev>("reload-timer")(config).start(newCtx());
+    m.update(1.5);
+    defineMachine<Ctx, Ev>("reload-timer")(config);
+    m.update(0.6);
+    expect(pathOf(m)).toBe("/b");
+  });
+
+  test("a redefinition that throws leaves the old definition live", () => {
+    const def = defineMachine<Ctx, Ev>("reload-throws")({
+      initial: "/idle",
+      states: { idle: { on: { GO: "/walk" } }, walk: {} },
+    });
+    const m = def.start(newCtx());
+    expect(() =>
+      defineMachine<Ctx, Ev>("reload-throws")({
+        initial: "/idle",
+        states: { idle: { on: { GO: "/missing" as never } } },
+      }),
+    ).toThrow('hsm: state "/idle" targets unknown state "/missing"');
+    m.send({ type: "GO" });
+    expect(pathOf(m)).toBe("/walk");
+    expect(pathOf(def.start(newCtx()))).toBe("/idle");
+  });
+
+  test("definitions without a key never rebind each other", () => {
+    const config = { initial: "/idle", states: { idle: { on: { GO: "/a" } }, a: {} } } as const;
+    const first = defineMachine<Ctx, Ev>()(config);
+    expect(defineMachine<Ctx, Ev>()(config) as unknown).not.toBe(first);
+    const m = first.start(newCtx());
+    defineMachine<Ctx, Ev>()({ initial: "/idle", states: { idle: { on: { GO: "/b" } }, b: {} } });
+    m.send({ type: "GO" });
+    expect(pathOf(m)).toBe("/a");
+  });
+});

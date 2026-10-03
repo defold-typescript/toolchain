@@ -2535,7 +2535,7 @@ Note what is **not** there: no `local FOO`, no initializer, no `____exports.` pr
 | shared across different scripts (app state) | a module singleton (import a shared module) |
 | visible to the whole Lua VM, no import | `declare global` — real Lua/Defold globals only |
 
-A rule of thumb: `self` for per-instance state; a module singleton for deliberately-shared app state; `msg.post` or a dedicated manager object when ownership and lifecycle matter; `declare global` only for real Lua/Defold globals. One hot-reload caveat: module state — module locals and singletons alike — persists across `on_reload`, because the cached module is not re-`require`d; only `self` is rebuilt.
+A rule of thumb: `self` for per-instance state; a module singleton for deliberately-shared app state; `msg.post` or a dedicated manager object when ownership and lifecycle matter; `declare global` only for real Lua/Defold globals. One hot-reload caveat: a reload keeps state — `self` (see [Hot reload and `on_reload`](./script-lifecycle.md#hot-reload-and-on_reload)) and module state alike. When a changed module reloads, Defold re-runs its code, but `require` keeps returning the first table, so every importer keeps the old functions and any value it read from the module at load time.
 
 #### See also
 
@@ -3115,6 +3115,34 @@ export default defineScript({
 
 A module-level instance (`const door = doorMachine.start(...)` at the top of a script file) is shared by every object that runs the script; see [Where script state lives](./script-state.md).
 
+#### Hot reload
+
+Give `defineMachine` a key, and a running game picks up an edited definition:
+
+```ts title="enemy-machine.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+export interface EnemyCtx {
+  speed: number;
+}
+
+export type EnemyEvent = { type: "SPOTTED" } | { type: "LOST" };
+
+export const enemyMachine = defineMachine<EnemyCtx, EnemyEvent>("enemy")({
+  initial: "/patrol",
+  states: {
+    patrol: { on: { SPOTTED: "/chase" } },
+    chase: { on: { LOST: "/patrol" }, after: { 5: "/patrol" } },
+  },
+});
+```
+
+When [`watch --hot-reload`](./watch.md#hot-reload) or [`reload`](./reload.md) pushes a changed module, Defold re-runs its code, but every script keeps the object its first `require` returned. Under a key, the re-run `defineMachine` call swaps the new states into that same machine instead of building a new one, so the instances already on `self` follow the edit. A definition-only edit needs no `on_reload`.
+
+Each live instance rebinds on its next `send` or `update`; until then `path` reads the old value. The rebind keeps `ctx`, and every active state whose path the new definition still has stays active, keeps its `after` timers running and runs no hook. From then on the new definition's transitions, guards and hooks apply. When the active leaf is gone, or now has child states, the instance enters the `initial` chain of the deepest state that survived, running those `enter` hooks, and reports the move to `onTransition` listeners with the cause `"reload"`. Removed states run no `exit` hook, because their config is gone. A redefinition that throws leaves the old definition live.
+
+Keys must be unique across the project: two definitions under one key replace each other. Without a key, each `defineMachine` call builds a separate machine, and a reload never reaches live instances.
+
 #### Performance
 
 The budget is 200 game objects, each running its own instance of one three-level machine, for under 0.5 ms of `update` and `send` per frame in the stock engine, with neither call building a table. A bench in the repository measures it: every enemy ticks its machine each frame through `after` timers and an `update` hook, and sends one event every 20 frames. It runs 300 frames that sample the heap around each call, then 300 frames that time each call, so neither measurement includes the other's probes.
@@ -3153,7 +3181,7 @@ m.send({ type: "LOSE" }); // a new table on every call
 
 #### Types
 
-**`defineMachine` takes two calls.** `defineMachine<Ctx, E>()` fixes the context and event types, and the second call takes the config. TypeScript cannot infer some type arguments of one call while you write the others, and the config has to be inferred: its literal shape is where the state paths come from.
+**`defineMachine` takes two calls.** `defineMachine<Ctx, E>()` fixes the context and event types (and takes an optional [hot reload](#hot-reload) key), and the second call takes the config. TypeScript cannot infer some type arguments of one call while you write the others, and the config has to be inferred: its literal shape is where the state paths come from.
 
 **Events are `EventObject`s.** `E` is a union of objects that each have a string `type`, plus any payload fields. `on` accepts only those `type` values as keys, and each guard and action sees the variant its key names.
 
@@ -3278,7 +3306,7 @@ hsm door frame 150: /opening -> /open (OPENED)
 hsm door frame 330: /open -> /closed (after)
 ```
 
-The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update` or `stop`. After `stop()` the new path reads `(stopped)`. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the current path, 40 units above the target's world position.
+The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update`, `stop` or `reload`. After `stop()` the new path reads `(stopped)`. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the current path, 40 units above the target's world position.
 
 In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect` registers nothing and `draw` does nothing, so the calls can stay in shipped code.
 
