@@ -16,6 +16,7 @@ function toPosix(p: string): string {
 // loader code leaks into the client bundle as an externalized stub (and warns on
 // every build).
 const ISLAND_SEEDS = [
+  "islands/hsm-demos.tsx",
   "islands/search.tsx",
   "islands/search-results.tsx",
   "islands/symbol-tooltip.tsx",
@@ -28,6 +29,7 @@ const NON_VACUOUS = [
   "components/ui/tooltip.tsx",
   "lib/api-surface.ts",
   "lib/guide.ts",
+  "lib/hsm-demos/view.ts",
   "lib/search-index.ts",
   "lib/symbol-index.ts",
 ];

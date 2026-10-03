@@ -16,6 +16,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@defold-typescript/hsm": "workspace:*",
     "@defold-typescript/types": "workspace:*",
     "@fontsource-variable/spline-sans-mono": "^5.3.0",
     "@fontsource/barlow": "^5.3.0",
