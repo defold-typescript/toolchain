@@ -30,6 +30,7 @@ const TYPE_PATHS: Record<string, string[]> = {
   ],
   "@defold-typescript/types/timers": [path.join(REPO_ROOT, "packages/types/src/timers.d.ts")],
   "@defold-typescript/types/hsm": [path.join(REPO_ROOT, "packages/types/hsm/index.d.ts")],
+  "@defold-typescript/types/hsm/async": [path.join(REPO_ROOT, "packages/types/hsm/async.d.ts")],
   "@defold-typescript/types/hsm/debug": [path.join(REPO_ROOT, "packages/types/hsm/debug.d.ts")],
   "@defold-typescript/types/hsm/defold": [path.join(REPO_ROOT, "packages/types/hsm/defold.d.ts")],
 };

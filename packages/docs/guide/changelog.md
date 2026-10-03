@@ -13,20 +13,22 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`hsm` migration](./state-machines.md#the-message-bridge)**: pass `sender` to `toEvent`, add `onTransition` to hand-built instances.
+> - **[`hsm` migration](./state-machines.md#the-message-bridge)**: pass `sender` to `toEvent`, add `onTransition` to hand-built instances, brace value-returning `invoke` bodies.
+> - **[`hsm` sequences](./state-machines.md#scripted-sequences)** wait inside a state and stop when it is left.
 > - **[`hsm` hot reload](./state-machines.md#hot-reload)** reaches running machines.
 > - **[`hsm` inspector](./state-machines.md#debug-a-machine)** logs each move.
 > - **[`hsm` timers](./state-machines.md#update-and-after)** fire on time.
-> - **[`hsm` cost](./state-machines.md#performance)** is measured.
 
 ### Breaking
 
 - **`hsm` message events carry the sender:** `messageEvents(...).toEvent` takes the `on_message` `sender` as a required third argument, and every `MessageEvent` has an `event.sender` that guards and actions can reply to. Pass `sender` to each `toEvent` call and add it to any `MessageEvent` you build by hand; see [The message bridge](./state-machines.md#the-message-bridge).
 - **`hsm` instances gain `onTransition`:** `MachineInstance` has a required `onTransition` member, so add or forward it on any object you build as a `MachineInstance` (a test mock, a proxy). Where a parameter typed `MachineInstance<Ctx, E>` receives an instance with more event types, widen its `E` to the machine's full event union; see [Debug a machine](./state-machines.md#debug-a-machine).
+- **`hsm` `invoke` may return a cleanup:** an `invoke` written as an expression body that returns anything but a function, such as `(_ctx, settle) => timer.delay(...)`, no longer compiles. Wrap the body in braces; see [Engine callbacks](./state-machines.md#engine-callbacks-invoke-and-settle).
 
 ### Improved
 
-- **`hsm` machines are easier to debug, reload and budget:**
+- **`hsm` machines are easier to script, debug, reload and budget:**
+  - **Scripted sequences** — an `invoke` may return a cleanup the machine runs on every way out of the state, and `sequence(async (ctx, signal) => ...)` from `@defold-typescript/types/hsm/async` builds one whose `await signal.wait(seconds)` never resumes after the state is left. See [Scripted sequences](./state-machines.md#scripted-sequences).
   - **Debug inspector** — `onTransition(listener)` on a machine instance calls the listener after each move with the old and new state path, the cause and the event. `inspect(instance, label)` from `@defold-typescript/types/hsm/debug` uses it to log each move and draw the active path over a game object, in debug builds only; see [Debug a machine](./state-machines.md#debug-a-machine).
   - **Hot reload** — a definition made with `defineMachine<Ctx, E>("key")` reaches running instances on their next `send` or `update` after a reload, with no `on_reload`: kept states keep their context and timers, and a removed state falls back to its surviving parent's `initial`, reported to `onTransition` with the cause `"reload"`. See [Hot reload](./state-machines.md#hot-reload).
   - **Performance** — 200 objects each running a three-level machine cost about 0.05 ms per frame in the stock engine, and `update` and `send` build no tables. [Performance](./state-machines.md#performance) records the numbers and shows how to hoist constant events off a hot path.

@@ -268,7 +268,7 @@ end
 local registered = {}
 local function createMachine(definition)
     local function start(ctx)
-        local growSlots, rebind, onTransition, report, enterState, exitTo, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, depth, initialChild, configs, onIndex, transitions, afterDelays, afterTargets, active, elapsed, fired, scratch, entryId, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, listeners, instance
+        local growSlots, rebind, onTransition, report, enterState, runCleanup, exitTo, enterDown, transition, runActions, processEvent, clearQueue, stopNow, endStep, send, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, depth, initialChild, configs, onIndex, transitions, afterDelays, afterTargets, active, elapsed, fired, scratch, entryId, cleanup, entryCount, queue, queueHead, queueTail, leafDepth, running, busy, stopRequested, listeners, instance
         function growSlots()
             do
                 local i = #active
@@ -278,6 +278,7 @@ local function createMachine(definition)
                     fired[i + 1] = 0
                     scratch[i + 1] = NO_STATE
                     entryId[i + 1] = 0
+                    cleanup[i + 1] = nil
                     i = i + 1
                 end
             end
@@ -313,13 +314,14 @@ local function createMachine(definition)
                 end
             end
             do
-                local level = survivor + 1
-                while level <= oldLeafDepth do
+                local level = oldLeafDepth
+                while level > survivor do
                     active[level + 1] = NO_STATE
                     elapsed[level + 1] = 0
                     fired[level + 1] = 0
                     entryId[level + 1] = 0
-                    level = level + 1
+                    runCleanup(level)
+                    level = level - 1
                 end
             end
             leafDepth = survivor
@@ -361,7 +363,7 @@ local function createMachine(definition)
             local invoke = config.invoke
             if invoke ~= nil then
                 local settled = false
-                invoke(
+                local result = invoke(
                     ctx,
                     function(event)
                         if settled or not running or stopRequested or entryId[level + 1] ~= id then
@@ -372,18 +374,30 @@ local function createMachine(definition)
                     end,
                     instance
                 )
+                if type(result) == "function" then
+                    cleanup[level + 1] = result
+                end
+            end
+        end
+        function runCleanup(level)
+            local run = cleanup[level + 1]
+            if run ~= nil then
+                cleanup[level + 1] = nil
+                run()
             end
         end
         function exitTo(level)
             while leafDepth > level do
-                local state = active[leafDepth + 1]
-                active[leafDepth + 1] = NO_STATE
-                entryId[leafDepth + 1] = 0
+                local exited = leafDepth
+                local state = active[exited + 1]
+                active[exited + 1] = NO_STATE
+                entryId[exited + 1] = 0
                 leafDepth = leafDepth - 1
                 local hook = configs[state + 1].exit
                 if hook ~= nil then
                     hook(ctx, instance)
                 end
+                runCleanup(exited)
             end
         end
         function enterDown(from, target)
@@ -437,12 +451,12 @@ local function createMachine(definition)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue93
+                        local __continue96
                         repeat
                             local state = active[level + 1]
                             local listIndex = onIndex[state + 1][event.type]
                             if type(listIndex) ~= "number" then
-                                __continue93 = true
+                                __continue96 = true
                                 break
                             end
                             local list = transitions[listIndex + 1]
@@ -464,9 +478,9 @@ local function createMachine(definition)
                                     i = i + 1
                                 end
                             end
-                            __continue93 = true
+                            __continue96 = true
                         until true
-                        if not __continue93 then
+                        if not __continue96 then
                             break
                         end
                     end
@@ -527,12 +541,12 @@ local function createMachine(definition)
                 local level = leafDepth
                 while level >= 0 do
                     do
-                        local __continue111
+                        local __continue114
                         repeat
                             local state = active[level + 1]
                             local hook = configs[state + 1].update
                             if hook == nil then
-                                __continue111 = true
+                                __continue114 = true
                                 break
                             end
                             local target = hook(ctx, dt, instance)
@@ -550,9 +564,9 @@ local function createMachine(definition)
                                 )
                                 return true
                             end
-                            __continue111 = true
+                            __continue114 = true
                         until true
-                        if not __continue111 then
+                        if not __continue114 then
                             break
                         end
                     end
@@ -644,6 +658,7 @@ local function createMachine(definition)
         fired = {}
         scratch = {}
         entryId = {}
+        cleanup = {}
         growSlots()
         entryCount = 0
         queue = {}
