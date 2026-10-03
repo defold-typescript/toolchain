@@ -19,25 +19,13 @@ local function lookupPath(compiled, path)
     return ____temp_0
 end
 local function resolveTarget(compiled, source, target)
-    local path
-    if string.sub(target, 1, 1) == "#" then
-        path = string.sub(target, 2)
-    else
-        local base = source == ROOT and ROOT or compiled.parent[source + 1]
-        local ____temp_1
-        if base == ROOT then
-            ____temp_1 = target
-        else
-            ____temp_1 = (compiled.paths[base + 1] .. ".") .. target
-        end
-        path = ____temp_1
+    local sourcePath = describePath(compiled.paths[source + 1])
+    if string.sub(target, 1, 1) ~= "/" then
+        error(((("hsm: state \\"" .. sourcePath) .. "\\" targets \\"") .. target) .. "\\", which is not a full path starting with \\"/\\"", 0)
     end
-    local index = lookupPath(compiled, path)
+    local index = lookupPath(compiled, target)
     if index == nil then
-        error(
-            ((("hsm: state \\"" .. describePath(compiled.paths[source + 1])) .. "\\" targets unknown state \\"") .. target) .. "\\"",
-            0
-        )
+        error(((("hsm: state \\"" .. sourcePath) .. "\\" targets unknown state \\"") .. target) .. "\\"", 0)
     end
     return index
 end
@@ -59,16 +47,13 @@ local function registerState(compiled, config, parentIndex, path)
         return
     end
     for name in pairs(children) do
-        local ____registerState_5 = registerState
-        local ____compiled_3 = compiled
-        local ____children_name_4 = children[name]
-        local ____temp_2
-        if path == "" then
-            ____temp_2 = name
-        else
-            ____temp_2 = (path .. ".") .. name
+        if name == "" or (string.find(name, "/", nil, true) or 0) - 1 ~= -1 then
+            error(
+                ((("hsm: state \\"" .. describePath(path)) .. "\\" has a child named \\"") .. name) .. "\\"; state names must be non-empty and contain no \\"/\\"",
+                0
+            )
         end
-        ____registerState_5(____compiled_3, ____children_name_4, index, ____temp_2)
+        registerState(compiled, children[name], index, (path .. "/") .. name)
     end
 end
 local function hasChildren(config)
@@ -100,15 +85,7 @@ local function compileInitial(compiled, index)
             0
         )
     end
-    local ____lookupPath_8 = lookupPath
-    local ____compiled_7 = compiled
-    local ____temp_6
-    if path == "" then
-        ____temp_6 = initial
-    else
-        ____temp_6 = (path .. ".") .. initial
-    end
-    local child = ____lookupPath_8(____compiled_7, ____temp_6)
+    local child = lookupPath(compiled, initial)
     if child == nil or compiled.parent[child + 1] ~= index then
         error(
             ((("hsm: state \\"" .. describePath(path)) .. "\\" has initial \\"") .. initial) .. "\\", which is not one of its children",
@@ -176,8 +153,8 @@ local function compileOn(compiled, index)
                     end
                 end
                 ____table[____type] = #compiled.transitions
-                local ____compiled_transitions_9 = compiled.transitions
-                ____compiled_transitions_9[#____compiled_transitions_9 + 1] = list
+                local ____compiled_transitions_1 = compiled.transitions
+                ____compiled_transitions_1[#____compiled_transitions_1 + 1] = list
                 __continue30 = true
             until true
             if not __continue30 then
@@ -427,7 +404,7 @@ local function createMachine(config)
             busy = true
             clearQueue()
             exitTo(NO_STATE)
-            instance.path = ""
+            instance.path = nil
             busy = false
         end
         function endStep()
@@ -581,7 +558,7 @@ local function createMachine(config)
         stopRequested = false
         instance = {
             ctx = ctx,
-            path = "",
+            path = nil,
             matches = matches,
             send = send,
             update = update,

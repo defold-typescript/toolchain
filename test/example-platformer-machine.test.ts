@@ -7,7 +7,7 @@ interface Body {
 }
 
 interface Motion {
-  readonly path: string;
+  readonly path: string | undefined;
   readonly matches: (path: string) => boolean;
   readonly send: (event: { type: "JUMP" } | { type: "JUMP_RELEASED" }) => void;
   readonly update: (dt: number) => void;
@@ -74,7 +74,7 @@ function startGrounded(x: number) {
 describe("platformer player machine", () => {
   test("starts falling and plays fall", () => {
     const { motion } = startAirborne();
-    expect(motion.matches("airborne.falling")).toBe(true);
+    expect(motion.matches("/airborne/falling")).toBe(true);
     expect(played).toEqual(["fall"]);
   });
 
@@ -83,7 +83,7 @@ describe("platformer player machine", () => {
     played = [];
     ctx.ground_contact = true;
     motion.update(1 / 60);
-    expect(motion.path).toBe("grounded.idle");
+    expect(motion.path).toBe("/grounded/idle");
     expect(played).toEqual(["idle"]);
   });
 
@@ -93,28 +93,28 @@ describe("platformer player machine", () => {
     ctx.ground_contact = true;
     ctx.velocity.x = 300;
     motion.update(1 / 60);
-    expect(motion.path).toBe("grounded.walk");
+    expect(motion.path).toBe("/grounded/walk");
     expect(played).toEqual(["walk"]);
   });
 
   test("grounded idle and walk follow velocity.x", () => {
     const { ctx, motion } = startGrounded(0);
-    expect(motion.path).toBe("grounded.idle");
+    expect(motion.path).toBe("/grounded/idle");
     ctx.velocity.x = -120;
     motion.update(1 / 60);
-    expect(motion.path).toBe("grounded.walk");
+    expect(motion.path).toBe("/grounded/walk");
     ctx.velocity.x = 0;
     motion.update(1 / 60);
-    expect(motion.path).toBe("grounded.idle");
+    expect(motion.path).toBe("/grounded/idle");
     expect(played).toEqual(["walk", "idle"]);
   });
 
   test("walking off a ledge reaches airborne.falling, not the sibling leaf", () => {
     const { ctx, motion } = startGrounded(300);
-    expect(motion.path).toBe("grounded.walk");
+    expect(motion.path).toBe("/grounded/walk");
     ctx.ground_contact = false;
     motion.update(1 / 60);
-    expect(motion.path).toBe("airborne.falling");
+    expect(motion.path).toBe("/airborne/falling");
     expect(played).toEqual(["fall"]);
   });
 
@@ -123,19 +123,19 @@ describe("platformer player machine", () => {
     fromIdle.ctx.ground_contact = false;
     fromIdle.ctx.velocity.x = 300;
     fromIdle.motion.update(1 / 60);
-    expect(fromIdle.motion.path).toBe("airborne.falling");
+    expect(fromIdle.motion.path).toBe("/airborne/falling");
 
     const fromWalk = startGrounded(300);
     fromWalk.ctx.ground_contact = false;
     fromWalk.ctx.velocity.x = 0;
     fromWalk.motion.update(1 / 60);
-    expect(fromWalk.motion.path).toBe("airborne.falling");
+    expect(fromWalk.motion.path).toBe("/airborne/falling");
   });
 
   test("JUMP from grounded takes off into airborne.rising", () => {
     const { ctx, motion } = startGrounded(0);
     motion.send({ type: "JUMP" });
-    expect(motion.path).toBe("airborne.rising");
+    expect(motion.path).toBe("/airborne/rising");
     expect(ctx.velocity.y).toBe(1200);
     expect(ctx.ground_contact).toBe(false);
     expect(played).toEqual(["jump"]);
@@ -146,7 +146,7 @@ describe("platformer player machine", () => {
     ctx.velocity.y = -50;
     played = [];
     motion.send({ type: "JUMP" });
-    expect(motion.path).toBe("airborne.falling");
+    expect(motion.path).toBe("/airborne/falling");
     expect(ctx.velocity.y).toBe(-50);
     expect(played).toEqual([]);
   });
@@ -155,13 +155,13 @@ describe("platformer player machine", () => {
     const { ctx, motion } = startGrounded(0);
     motion.send({ type: "JUMP" });
     motion.send({ type: "JUMP_RELEASED" });
-    expect(motion.path).toBe("airborne.rising");
+    expect(motion.path).toBe("/airborne/rising");
     expect(ctx.velocity.y).toBe(600);
 
     const falling = startAirborne();
     falling.ctx.velocity.y = -80;
     falling.motion.send({ type: "JUMP_RELEASED" });
-    expect(falling.motion.path).toBe("airborne.falling");
+    expect(falling.motion.path).toBe("/airborne/falling");
     expect(falling.ctx.velocity.y).toBe(-80);
   });
 
@@ -171,10 +171,10 @@ describe("platformer player machine", () => {
     played = [];
     ctx.velocity.y = 10;
     motion.update(1 / 60);
-    expect(motion.path).toBe("airborne.rising");
+    expect(motion.path).toBe("/airborne/rising");
     ctx.velocity.y = 0;
     motion.update(1 / 60);
-    expect(motion.path).toBe("airborne.falling");
+    expect(motion.path).toBe("/airborne/falling");
     expect(played).toEqual(["fall"]);
   });
 });

@@ -11,6 +11,7 @@ import {
   afterChip,
   afterDelays,
   type DemoRun,
+  describePath,
   press,
   restart,
   ruleChip,
@@ -125,7 +126,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     const box = el("div", config.states ? "hsm-state hsm-compound" : "hsm-state");
     boxes.set(path, box);
     const title = el("div", "hsm-state-name", name);
-    if (parent.initial === name) title.append(" ", span("hsm-init", "starts here"));
+    if (parent.initial === path) title.append(" ", span("hsm-init", "starts here"));
     box.append(title);
 
     const rules = el("ul", "hsm-rules");
@@ -165,7 +166,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     if (config.states) {
       const kids = el("div", "hsm-level hsm-kids");
       for (const [childName, child] of Object.entries(config.states)) {
-        kids.append(renderState(childName, child, `${path}.${childName}`, config));
+        kids.append(renderState(childName, child, `${path}/${childName}`, config));
       }
       box.append(kids);
     }
@@ -175,7 +176,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   const root = demo.config as State;
   const level = el("div", "hsm-level");
   for (const [name, child] of Object.entries(root.states ?? {})) {
-    level.append(renderState(name, child, name, root));
+    level.append(renderState(name, child, `/${name}`, root));
   }
   const diagram = el("div", "hsm-diagram");
   const legend = el("div", "hsm-legend");
@@ -288,7 +289,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   function refresh() {
     for (const [path, box] of boxes) box.classList.toggle("hsm-on", run.matches(path));
     readout.replaceChildren(
-      readoutLine("path", JSON.stringify(run.path)),
+      readoutLine("path", describePath(run.path)),
       ...demo.readout(run).map(([key, value]) => readoutLine(key, value)),
     );
     if (visual && demo.visual) visual.replaceChildren(renderVisual(demo.visual(run)));

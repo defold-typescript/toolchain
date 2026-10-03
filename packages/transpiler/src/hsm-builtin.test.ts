@@ -8,10 +8,10 @@ const MACHINE = [
   'type DoorEvent = { type: "OPEN" } | { type: "CLOSE" };',
   "",
   "export const door = defineMachine<{}, DoorEvent>()({",
-  '  initial: "closed",',
+  '  initial: "/closed",',
   "  states: {",
-  '    closed: { on: { OPEN: "open" } },',
-  '    open: { on: { CLOSE: "closed" } },',
+  '    closed: { on: { OPEN: "/open" } },',
+  '    open: { on: { CLOSE: "/closed" } },',
   "  },",
   "});",
   "",
@@ -69,7 +69,7 @@ describe("hsm as a built-in import", () => {
     const source = [
       'import type { StatePath } from "@defold-typescript/types/hsm";',
       "",
-      'export const path: StatePath<{ states: { idle: {} } }> = "idle";',
+      'export const path: StatePath<{ states: { idle: {} } }> = "/idle";',
       "",
     ].join("\n");
     const result = transpileProject({ files: { "paths.ts": source } });
@@ -83,8 +83,8 @@ describe("hsm as a built-in import", () => {
       'import { defineMachine } from "@defold-typescript/types/hsm";',
       "",
       'const broken = defineMachine<{}, { type: "GO" }>()({',
-      '  initial: "idle",',
-      '  states: { idle: { on: { GO: "nowhere" } } },',
+      '  initial: "/idle",',
+      '  states: { idle: { on: { GO: "/nowhere" } } },',
       "});",
       "broken.start({});",
       "",

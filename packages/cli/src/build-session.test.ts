@@ -163,8 +163,8 @@ describe("createBuildSession", () => {
       [
         'import { defineMachine } from "@defold-typescript/types/hsm";',
         'export const door = defineMachine<{}, { type: "GO" }>()({',
-        '  initial: "idle",',
-        `  states: { idle: { on: { GO: "${target}" } }, done: {}, gone: {} },`,
+        '  initial: "/idle",',
+        `  states: { idle: { on: { GO: "/${target}" } }, done: {}, gone: {} },`,
         "});",
         "",
       ].join("\n");
