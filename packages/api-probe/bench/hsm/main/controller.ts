@@ -52,8 +52,14 @@ export default defineScript({
         benchStats.sendKb = 0;
         benchStats.updateAllocs = 0;
         benchStats.sendAllocs = 0;
-        benchStats.sends = 0;
+        benchStats.allocUpdates = 0;
+        benchStats.allocSends = 0;
+        benchStats.timedUpdates = 0;
         benchStats.timedSends = 0;
+        benchStats.allocUpdateTransitions = 0;
+        benchStats.allocSendTransitions = 0;
+        benchStats.timedUpdateTransitions = 0;
+        benchStats.timedSendTransitions = 0;
         benchStats.timedHeapProbes = 0;
         benchStats.phase = "alloc";
       }
@@ -87,13 +93,19 @@ export default defineScript({
     report("enemies", ENEMIES);
     report("avgMs", (total / self.measured) * 1000);
     report("maxMs", self.maxSeconds * 1000);
+    report("allocUpdates", benchStats.allocUpdates);
+    report("allocSends", benchStats.allocSends);
+    report("timedUpdates", benchStats.timedUpdates);
     report("timedSends", benchStats.timedSends);
+    report("allocUpdateTransitions", benchStats.allocUpdateTransitions);
+    report("allocSendTransitions", benchStats.allocSendTransitions);
+    report("timedUpdateTransitions", benchStats.timedUpdateTransitions);
+    report("timedSendTransitions", benchStats.timedSendTransitions);
     report("timedHeapProbes", benchStats.timedHeapProbes);
     report("updateKb", benchStats.updateKb);
     report("sendKb", benchStats.sendKb);
     report("updateAllocs", benchStats.updateAllocs);
     report("sendAllocs", benchStats.sendAllocs);
-    report("sends", benchStats.sends);
     report("fps", self.fpsMeter.fps());
     report("memKb", self.memMeter.mem());
     report("engine", sys.get_engine_info().version);

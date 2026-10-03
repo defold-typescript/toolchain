@@ -21,7 +21,14 @@ describe("hsm engine benchmark", () => {
     expect(report.frames).toBe(300);
     for (const value of [
       report.allocFrames,
+      report.allocUpdates,
+      report.allocSends,
+      report.timedUpdates,
       report.timedSends,
+      report.allocUpdateTransitions,
+      report.allocSendTransitions,
+      report.timedUpdateTransitions,
+      report.timedSendTransitions,
       report.timedHeapProbes,
       report.avgMs,
       report.maxMs,
@@ -29,7 +36,6 @@ describe("hsm engine benchmark", () => {
       report.sendKb,
       report.updateAllocs,
       report.sendAllocs,
-      report.sends,
       report.fps,
       report.memKb,
     ]) {
@@ -37,17 +43,29 @@ describe("hsm engine benchmark", () => {
     }
   });
 
+  test("measures every update and send in both passes", () => {
+    expect(report.allocUpdates).toBe(60_000);
+    expect(report.allocSends).toBe(3_000);
+    expect(report.timedUpdates).toBe(60_000);
+    expect(report.timedSends).toBe(3_000);
+  });
+
+  test("every measured call kind moves some machine in both passes", () => {
+    expect(report.allocUpdateTransitions).toBeGreaterThan(0);
+    expect(report.allocSendTransitions).toBeGreaterThan(0);
+    expect(report.timedUpdateTransitions).toBeGreaterThan(0);
+    expect(report.timedSendTransitions).toBeGreaterThan(0);
+  });
+
   test("takes no heap samples while timing", () => {
     expect(report.timedHeapProbes).toBe(0);
   });
 
   test(`spends under ${BUDGET_MS} ms per frame in hsm calls on average`, () => {
-    expect(report.timedSends).toBeGreaterThan(0);
     expect(report.avgMs).toBeLessThan(BUDGET_MS);
   });
 
   test(`allocates in at most ${ALLOCATING_CALLS_LIMIT} update or send calls`, () => {
-    expect(report.sends).toBeGreaterThan(0);
     expect(report.updateAllocs + report.sendAllocs).toBeLessThanOrEqual(ALLOCATING_CALLS_LIMIT);
   });
 });
