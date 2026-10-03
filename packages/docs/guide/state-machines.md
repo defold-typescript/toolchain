@@ -365,7 +365,7 @@ A module-level instance (`const door = doorMachine.start(...)` at the top of a s
 
 ## Hot reload
 
-Give `defineMachine` a key, and a running game picks up an edited definition:
+Hot reload lets you edit a machine while the game runs and see the change without restarting. To use it, give `defineMachine` a key, a name for this definition:
 
 ```ts title="enemy-machine.ts"
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -385,11 +385,62 @@ export const enemyMachine = defineMachine<EnemyCtx, EnemyEvent>("enemy")({
 });
 ```
 
-When [`watch --hot-reload`](./watch.md#hot-reload) or [`reload`](./reload.md) pushes a changed module, Defold re-runs its code, but every script keeps the object its first `require` returned. Under a key, the re-run `defineMachine` call swaps the new states into that same machine instead of building a new one, so the instances already on `self` follow the edit. A definition-only edit needs no `on_reload`.
+### Why the key is needed
 
-Each live instance rebinds on its next `send` or `update`; until then `path` reads the old value. The rebind keeps `ctx`, and every active state whose path the new definition still has stays active, keeps its `after` timers running and runs no hook. From then on the new definition's transitions, guards and hooks apply. When the active leaf is gone, or now has child states, the instance enters the `initial` chain of the deepest state that survived, running those `enter` hooks, and reports the move to `onTransition` listeners with the cause `"reload"`. Removed states run no `exit` hook, because their config is gone. A redefinition that throws leaves the old definition live.
+When [`watch --hot-reload`](./watch.md#hot-reload) or [`reload`](./reload.md) pushes your edit, Defold runs the changed file again but throws away what that run returns. Every script that already imported the file keeps the first copy. Without a key, the edited `defineMachine` call builds a new machine that no script holds, and the enemies already running keep the old states until you restart.
 
-Keys must be unique across the project: two definitions under one key replace each other. Without a key, each `defineMachine` call builds a separate machine, and a reload never reaches live instances.
+With a key, `defineMachine` first looks the key up in a table kept inside the `hsm` library, which a reload never replaces. It finds the machine it built the first time and puts the new states into that same object. Every script still holds that object, so every running instance sees the edit.
+
+### What happens after a reload
+
+1. You save `enemy-machine.ts`, and the edit is pushed to the game.
+2. The file runs again, and `defineMachine("enemy")` puts the new states into the existing machine. If the new config has a mistake, it throws and the old states stay in use.
+3. The running instances do not change yet: `path` still reads the old state.
+4. On its next `send` or `update`, each instance sees the new definition and switches to it. Because `update` runs every frame, that is the next frame.
+
+The script needs no `on_reload` for this.
+
+### What each instance keeps
+
+An instance always keeps its `ctx`. What happens to its current state depends on the edit:
+
+| After the edit, the current state… | The instance… |
+| --- | --- |
+| still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The edited transitions, guards and hooks apply from now on. |
+| still exists, but now has child states | enters its `initial` child (and that child's `initial`, and so on), running their `enter` hooks. |
+| was removed | moves to the closest parent state that still exists and enters that parent's `initial` chain, running those `enter` hooks. The removed states run no `exit` hook, because their code is gone. |
+
+States are matched by path, so renaming `chase` to `hunt` counts as removing `/chase`. When the current state changes, `onTransition` listeners get the move with the cause `"reload"`, and the [debug inspector](#debug-a-machine) prints it.
+
+### Many objects, one machine
+
+The key names the definition, not an object. If 20 enemies run a script that starts `enemyMachine` in `init`, there are 20 instances of one machine. A reload changes the machine once, and each of the 20 instances switches on its own next `update`. An enemy in `/patrol` and an enemy in `/chase` each follow the table above for their own state.
+
+Different machines need different keys. If doors also used `"enemy"`, each reload of one file would replace the other machine's states.
+
+### Define the machine once, at the top of a file
+
+Call a keyed `defineMachine` at the top level of a module, as in the example above, so it runs once each time the file loads. Inside `init` it runs once per object:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+export default defineScript({
+  init() {
+    // Wrong: runs for every enemy, and each run replaces the "enemy" definition.
+    const machine = defineMachine<{ speed: number }, { type: "SPOTTED" }>("enemy")({
+      initial: "/patrol",
+      states: { patrol: {} },
+    });
+    return { ai: machine.start({ speed: 120 }) };
+  },
+});
+```
+
+Here each new enemy redefines `"enemy"`: the config is compiled again, every enemy already alive switches to it, and if the config's hooks or guards use values from that `init`, the newest enemy's values replace everyone's.
+
+Without a key, `defineMachine` builds a separate machine on every call, and a reload does not reach running instances.
 
 ## Performance
 
