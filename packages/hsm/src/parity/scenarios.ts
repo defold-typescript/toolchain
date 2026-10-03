@@ -696,6 +696,72 @@ function parallelRegions(): string[] {
   return log;
 }
 
+// The trace crosses the WASM bridge as ASCII, so each non-ASCII path is logged by alias.
+const UNICODE_PATH_ALIASES: Record<string, string> = {
+  "/r/\u{E000}/idle": "/r/U+E000/idle",
+  "/r/\u{E000}/done": "/r/U+E000/done",
+  "/r/\u{10000}/idle": "/r/U+10000/idle",
+  "/r/\u{10000}/done": "/r/U+10000/done",
+};
+
+function aliased(path: string | undefined): string {
+  if (path === undefined) {
+    return "(stopped)";
+  }
+  const alias = UNICODE_PATH_ALIASES[path];
+  return alias === undefined ? "?" : alias;
+}
+
+function aliasedLeaves(leaves: readonly string[]): string {
+  const aliases: string[] = [];
+  for (const leaf of leaves) {
+    aliases.push(aliased(leaf));
+  }
+  return shownLeaves(aliases);
+}
+
+function unicodeRegionOrder(): string[] {
+  const log: string[] = [];
+  const ctx = newCtx(log);
+  const m = defineMachine<Ctx, Ev>()({
+    initial: "/r",
+    states: {
+      r: {
+        ...logged("r"),
+        type: "parallel",
+        states: {
+          "\u{10000}": {
+            ...logged("U+10000"),
+            initial: "/r/\u{10000}/idle",
+            states: {
+              idle: { ...logged("U+10000.idle"), on: { GO: "/r/\u{10000}/done" } },
+              done: logged("U+10000.done"),
+            },
+          },
+          "\u{E000}": {
+            ...logged("U+E000"),
+            initial: "/r/\u{E000}/idle",
+            states: {
+              idle: { ...logged("U+E000.idle"), on: { GO: "/r/\u{E000}/done" } },
+              done: logged("U+E000.done"),
+            },
+          },
+        },
+      },
+    },
+  }).start(ctx);
+  log.push(`path=${aliased(m.path)} leaves=${aliasedLeaves(m.leaves)}`);
+  m.onTransition((from, to, cause, event) => {
+    log.push(
+      `${aliased(from)} -> ${aliased(to)} ${cause} ${event === undefined ? "-" : event.type}`,
+    );
+  });
+  m.send({ type: "GO" });
+  log.push(`path=${aliased(m.path)} leaves=${aliasedLeaves(m.leaves)}`);
+  m.stop();
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -713,6 +779,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "shallow history", run: () => shallowHistory() },
   { name: "always transitions", run: () => alwaysTransitions() },
   { name: "parallel regions", run: () => parallelRegions() },
+  { name: "unicode region order", run: () => unicodeRegionOrder() },
 ];
 
 export function runScenario(name: string): string {
