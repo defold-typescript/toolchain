@@ -66,6 +66,7 @@ export type InvokeStart<Ctx, E extends EventObject> = (
 /** @noSelf */
 export interface StateConfig<Ctx, E extends EventObject> {
   readonly initial?: string;
+  readonly history?: "shallow";
   readonly states?: { readonly [name: string]: StateConfig<Ctx, E> };
   readonly on?: OnConfig<Ctx, E>;
   readonly after?: { readonly [seconds: number]: string };
@@ -116,6 +117,7 @@ type PathCheck<S, Self extends string, All extends string, Ev extends string> = 
   readonly initial?: S extends { readonly states: infer Children }
     ? `${Self}/${keyof Children & string}`
     : never;
+  readonly history?: unknown;
   readonly states?: S extends { readonly states: infer Children }
     ? {
         readonly [K in keyof Children]: PathCheck<Children[K], `${Self}/${K & string}`, All, Ev>;
@@ -159,6 +161,7 @@ interface Compiled<Ctx, E extends EventObject> {
   readonly parent: number[];
   readonly depth: number[];
   readonly initialChild: number[];
+  readonly history: boolean[];
   readonly onIndex: { [type: string]: number }[];
   readonly transitions: Transition<Ctx, E>[][];
   readonly afterDelays: number[][];
@@ -214,6 +217,7 @@ function registerState<Ctx, E extends EventObject>(
   compiled.parent[index] = parentIndex;
   compiled.depth[index] = depth;
   compiled.initialChild[index] = NO_STATE;
+  compiled.history[index] = config.history === "shallow";
   compiled.pathIndex[path] = index;
   const children = config.states;
   if (children === undefined) {
@@ -248,6 +252,9 @@ function compileInitial<Ctx, E extends EventObject>(
   if (!hasChildren(config)) {
     if (initial !== undefined) {
       throw `hsm: state "${describePath(path)}" has initial "${initial}" but no child states`;
+    }
+    if (compiled.history[index] === true) {
+      throw `hsm: state "${describePath(path)}" has history but no child states`;
     }
     return;
   }
@@ -378,6 +385,7 @@ function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Com
     parent: [],
     depth: [],
     initialChild: [],
+    history: [],
     onIndex: [],
     transitions: [],
     afterDelays: [],
@@ -444,6 +452,7 @@ function createMachine<Ctx, E extends EventObject>(
     let parent = compiled.parent;
     let depth = compiled.depth;
     let initialChild = compiled.initialChild;
+    let history = compiled.history;
     let configs = compiled.configs;
     let onIndex = compiled.onIndex;
     let transitions = compiled.transitions;
@@ -455,6 +464,8 @@ function createMachine<Ctx, E extends EventObject>(
     const scratch: number[] = [];
     const entryId: number[] = [];
     const cleanup: ((() => void) | undefined)[] = [];
+    // Keyed by path, not index, so a remembered child outlives a rebind's recompilation.
+    const remembered: { [parentPath: string]: string } = {};
     growSlots();
     let entryCount = 0;
     const queue: (E | undefined)[] = [];
@@ -499,6 +510,7 @@ function createMachine<Ctx, E extends EventObject>(
       parent = compiled.parent;
       depth = compiled.depth;
       initialChild = compiled.initialChild;
+      history = compiled.history;
       configs = compiled.configs;
       onIndex = compiled.onIndex;
       transitions = compiled.transitions;
@@ -592,12 +604,29 @@ function createMachine<Ctx, E extends EventObject>(
         active[exited] = NO_STATE;
         entryId[exited] = 0;
         leafDepth--;
+        const owner = parent[state] as number;
+        if (owner !== NO_STATE && history[owner] === true) {
+          remembered[paths[owner] as string] = paths[state] as string;
+        }
         const hook = (configs[state] as StateConfig<Ctx, E>).exit;
         if (hook !== undefined) {
           hook(ctx, instance);
         }
         runCleanup(exited);
       }
+    }
+
+    function defaultChild(state: number): number {
+      if (history[state] === true) {
+        const path = remembered[paths[state] as string];
+        if (path !== undefined) {
+          const child = lookupPath(compiled, path);
+          if (child !== undefined && parent[child] === state) {
+            return child;
+          }
+        }
+      }
+      return initialChild[state] as number;
     }
 
     function enterDown(from: number, target: number): void {
@@ -613,10 +642,10 @@ function createMachine<Ctx, E extends EventObject>(
         enterState(scratch[count] as number);
         scratch[count] = NO_STATE;
       }
-      state = target;
-      while (initialChild[state] !== NO_STATE) {
-        state = initialChild[state] as number;
+      state = defaultChild(target);
+      while (state !== NO_STATE) {
         enterState(state);
+        state = defaultChild(state);
       }
       instance.path = paths[active[leafDepth] as number] as string;
     }

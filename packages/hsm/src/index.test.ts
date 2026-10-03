@@ -1544,3 +1544,192 @@ describe("hot reload", () => {
     expect(pathOf(m)).toBe("/a");
   });
 });
+
+describe("shallow history", () => {
+  type PlayEv =
+    | { type: "JUMP" }
+    | { type: "FALL" }
+    | { type: "LAND" }
+    | { type: "PAUSE" }
+    | { type: "RESUME" }
+    | { type: "MENU" }
+    | { type: "BACK" }
+    | { type: "RESTART" };
+
+  function platformer() {
+    return {
+      initial: "/playing",
+      states: {
+        playing: {
+          ...logged("playing"),
+          history: "shallow",
+          initial: "/playing/ground",
+          on: { PAUSE: "/paused" },
+          states: {
+            ground: { ...logged("ground"), on: { JUMP: "/playing/air" } },
+            air: {
+              ...logged("air"),
+              initial: "/playing/air/rise",
+              states: {
+                rise: { ...logged("rise"), on: { FALL: "/playing/air/fall" } },
+                fall: logged("fall"),
+              },
+            },
+          },
+        },
+        paused: { ...logged("paused"), on: { RESUME: "/playing", LAND: "/playing/ground" } },
+      },
+    } as const;
+  }
+
+  test("a history state resumes its last active child", () => {
+    const ctx = newCtx();
+    const m = defineMachine<Ctx, PlayEv>()(platformer()).start(ctx);
+    expect(m.path).toBe("/playing/ground");
+    m.send({ type: "JUMP" });
+    expect(m.path).toBe("/playing/air/rise");
+    m.send({ type: "PAUSE" });
+    expect(m.path).toBe("/paused");
+    ctx.log.length = 0;
+    m.send({ type: "RESUME" });
+    expect(m.path).toBe("/playing/air/rise");
+    expect(ctx.log).toEqual(["exit paused", "enter playing", "enter air", "enter rise"]);
+  });
+
+  test("history is shallow", () => {
+    const m = defineMachine<Ctx, PlayEv>()(platformer()).start(newCtx());
+    m.send({ type: "JUMP" });
+    m.send({ type: "FALL" });
+    expect(m.path).toBe("/playing/air/fall");
+    m.send({ type: "PAUSE" });
+    m.send({ type: "RESUME" });
+    expect(m.path).toBe("/playing/air/rise");
+  });
+
+  test("a target naming a descendant bypasses history", () => {
+    const m = defineMachine<Ctx, PlayEv>()(platformer()).start(newCtx());
+    m.send({ type: "JUMP" });
+    m.send({ type: "PAUSE" });
+    m.send({ type: "LAND" });
+    expect(m.path).toBe("/playing/ground");
+  });
+
+  test("the first entry uses initial", () => {
+    const def = defineMachine<Ctx, PlayEv>()(platformer());
+    const first = def.start(newCtx());
+    expect(first.path).toBe("/playing/ground");
+    first.send({ type: "JUMP" });
+    first.send({ type: "PAUSE" });
+    const second = def.start(newCtx());
+    expect(second.path).toBe("/playing/ground");
+    first.send({ type: "RESUME" });
+    expect(first.path).toBe("/playing/air/rise");
+  });
+
+  test("entry through an ancestor's initial chain resumes", () => {
+    const ctx = newCtx();
+    const m = defineMachine<Ctx, PlayEv>()({
+      initial: "/game",
+      states: {
+        game: {
+          initial: "/game/playing",
+          on: { MENU: "/menu" },
+          states: {
+            playing: {
+              ...logged("playing"),
+              history: "shallow",
+              initial: "/game/playing/ground",
+              on: { RESTART: { target: "/game/playing", reenter: true } },
+              states: {
+                ground: { ...logged("ground"), on: { JUMP: "/game/playing/air" } },
+                air: logged("air"),
+              },
+            },
+          },
+        },
+        menu: { on: { BACK: "/game" } },
+      },
+    }).start(ctx);
+    m.send({ type: "JUMP" });
+    m.send({ type: "MENU" });
+    expect(m.path).toBe("/menu");
+    m.send({ type: "BACK" });
+    expect(m.path).toBe("/game/playing/air");
+    ctx.log.length = 0;
+    m.send({ type: "RESTART" });
+    expect(m.path).toBe("/game/playing/air");
+    expect(ctx.log).toEqual(["exit air", "exit playing", "enter playing", "enter air"]);
+  });
+
+  test("history on a state without children throws", () => {
+    expect(
+      thrownMessage(() =>
+        defineMachine<Ctx, PlayEv>()({
+          initial: "/leaf",
+          states: { leaf: { history: "shallow" } },
+        }),
+      ),
+    ).toBe('hsm: state "/leaf" has history but no child states');
+  });
+
+  test("a remembered child survives a reload by path", () => {
+    const key = "history-reload";
+    const m = defineMachine<Ctx, PlayEv>(key)(platformer()).start(newCtx());
+    m.send({ type: "JUMP" });
+    m.send({ type: "PAUSE" });
+    defineMachine<Ctx, PlayEv>(key)({
+      initial: "/playing",
+      states: {
+        playing: {
+          history: "shallow",
+          initial: "/playing/ground",
+          on: { PAUSE: "/paused" },
+          states: {
+            ground: {},
+            crouch: {},
+            air: { initial: "/playing/air/rise", states: { rise: {}, fall: {} } },
+          },
+        },
+        paused: { on: { RESUME: "/playing" } },
+      },
+    });
+    m.send({ type: "RESUME" });
+    expect(m.path).toBe("/playing/air/rise");
+    m.send({ type: "PAUSE" });
+    defineMachine<Ctx, PlayEv>(key)({
+      initial: "/playing",
+      states: {
+        playing: {
+          history: "shallow",
+          initial: "/playing/ground",
+          on: { PAUSE: "/paused" },
+          states: { ground: {} },
+        },
+        paused: { on: { RESUME: "/playing" } },
+      },
+    });
+    m.send({ type: "RESUME" });
+    expect(m.path).toBe("/playing/ground");
+  });
+
+  test("a history config keeps typed paths and accepts only shallow", () => {
+    const m = defineMachine<Ctx, PlayEv>()(platformer()).start(newCtx());
+    const pathTyped: Equal<typeof m.path, StatePath<ReturnType<typeof platformer>> | undefined> =
+      true;
+    expect(pathTyped).toBe(true);
+    // @ts-expect-error a misspelled path is not one of the machine's states
+    const misspelled: typeof m.path = "/playing/aier";
+    expect(misspelled as string).toBe("/playing/aier");
+    defineMachine<Ctx, PlayEv>()({
+      initial: "/a",
+      states: {
+        a: {
+          // @ts-expect-error only shallow history is supported
+          history: "deep",
+          initial: "/a/b",
+          states: { b: {} },
+        },
+      },
+    });
+  });
+});
