@@ -106,6 +106,7 @@ describe("createHsmViewApp", () => {
     expect(body.states).toEqual(index.states);
     expect(body.onKeys).toEqual(index.onKeys);
     expect(body.rules).toEqual(index.rules);
+    expect(body.ruleOnKeys).toEqual(index.ruleOnKeys);
   });
 
   test("drives the session through every control route", async () => {
