@@ -211,6 +211,11 @@ function childName(hsmPath: string): string {
   return hsmPath.slice(hsmPath.lastIndexOf("/") + 1);
 }
 
+// `toPrecision(15)` drops the multiply's binary noise, which XState would keep in the event type.
+function millisecondsKey(seconds: number): string {
+  return String(Number((seconds * 1000).toPrecision(15)));
+}
+
 function convertTransition(
   reader: StaticReader,
   node: ts.Expression,
@@ -295,7 +300,7 @@ function convertState(reader: StaticReader, node: ts.Expression, hsmPath: string
           if (seconds === "" || !(delay >= 0)) {
             reader.fail(target, `${at} after`);
           }
-          after[`${Math.round(delay * 1000)}`] = targetId(reader.string(target, `${at} after`));
+          after[millisecondsKey(delay)] = targetId(reader.string(target, `${at} after`));
         }
         out.after = after;
         break;
