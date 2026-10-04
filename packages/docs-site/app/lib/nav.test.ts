@@ -412,6 +412,7 @@ describe("buildNav", () => {
       "/wall",
       "/resolve",
       "/scene-types",
+      "/hsm-view",
     ]);
     expect(byLabel("Toolchain & workflow")?.children?.map((c) => c.route)).toEqual([
       "/transpile-diagnostics",
