@@ -111,6 +111,82 @@ describe("bob-command spawn runs under plain node", () => {
   );
 });
 
+const LAMP = `import { defineMachine } from "@defold-typescript/types/hsm";
+export const lamp = defineMachine("lamp")({
+  initial: "/off",
+  states: {
+    off: { on: { TOGGLE: "/on" } },
+    on: { on: { TOGGLE: "/off" } },
+  },
+});
+`;
+
+async function firstLine(stream: ReadableStream<Uint8Array>): Promise<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let text = "";
+  try {
+    while (!text.includes("\n")) {
+      const { value, done } = await reader.read();
+      if (done) {
+        break;
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  return text.split("\n")[0] ?? "";
+}
+
+// Under node the viewer needs the bundled `hono` server, the `typescript` loader and the
+// built client, none of which the in-process server tests touch.
+describe("published bin serves hsm-view under plain node", () => {
+  build(PKG_DIR);
+
+  test(
+    "node dist/bin.js hsm-view serves the built page and the file index",
+    async () => {
+      const cwd = tmp("hsm-view");
+      const file = path.join(cwd, "lamp.ts");
+      writeFileSync(file, LAMP);
+      const child = Bun.spawn(["node", BIN, "hsm-view", file], {
+        cwd,
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+      try {
+        const line = await firstLine(child.stdout);
+        const url = /http:\/\/127\.0\.0\.1:\d+\/?/.exec(line)?.[0];
+        if (url === undefined) {
+          throw new Error(`no URL in "${line}":\n${await new Response(child.stderr).text()}`);
+        }
+        const base = url.endsWith("/") ? url : `${url}/`;
+
+        const page = await fetch(base);
+        expect(page.status).toBe(200);
+        const built = readFileSync(
+          path.join(PKG_DIR, "dist", "hsm-view-client", "main.js"),
+          "utf8",
+        );
+        expect(await page.text()).toContain(built.slice(0, 200));
+
+        const index = (await (await fetch(`${base}api/index`)).json()) as {
+          machines: string[];
+          files: { path: string }[];
+        };
+        expect(index.machines).toEqual(["lamp"]);
+        expect(index.files.map((entry) => entry.path)).toEqual(["lamp.ts"]);
+      } finally {
+        child.kill();
+        await child.exited;
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    SPAWN_TEST_TIMEOUT_MS,
+  );
+});
+
 describe("release smoke harness is discoverable", () => {
   test("scripts/release-smoke.ts expects the TypeScript script artifact", () => {
     const script = readFileSync(path.join(REPO_ROOT, "scripts", "release-smoke.ts"), "utf8");

@@ -207,6 +207,13 @@ const COMMANDS: readonly HelpCommand[] = [
       },
     ],
   },
+  {
+    name: "hsm-view",
+    summary:
+      "Open a state-machine file in a local browser viewer: see its states, send events, step time and read the log.",
+    usage: "bunx @defold-typescript/cli hsm-view <file> [name]",
+    flags: [],
+  },
 ];
 
 const GLOBAL_FLAGS: readonly HelpFlag[] = [
