@@ -531,6 +531,21 @@ function dispatchCommand(
     })();
   }
 
+  if (command === "hsm-view") {
+    // A viewer over one source file, not a project command: no target resolution.
+    return (async () => {
+      const { runHsmView } = await import("./hsm-view");
+      return runHsmView({
+        cwd: process.cwd(),
+        file: rest[0],
+        ...(rest[1] !== undefined ? { name: rest[1] } : {}),
+        json,
+        io,
+        writeError,
+      });
+    })();
+  }
+
   // One read of package.json feeds both the pin and its diagnostics, so every
   // target-resolving command reports a bad namespace key from the same place.
   // A JSON run folds these into its `warnings` payload instead (see below).

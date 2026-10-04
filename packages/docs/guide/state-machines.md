@@ -916,6 +916,8 @@ Collection proxies need no adapter: `proxy_loaded`, `proxy_ready`, `proxy_error`
 
 ## Debug a machine
 
+To run a machine away from the game, with its source on screen and its active states highlighted, open its file with [`hsm-view`](./hsm-view.md).
+
 `inspect(instance, label)` from `@defold-typescript/types/hsm/debug` logs every move a machine makes and draws its current path over a game object. Call it once after `start`, keep the inspector it returns on `self`, and call its `draw` from `update`:
 
 ```ts title="door-debug.ts"

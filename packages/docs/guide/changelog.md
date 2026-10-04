@@ -13,10 +13,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
+> - **[`hsm-view`](./hsm-view.md)** runs a state-machine file in your browser, with its active states highlighted in the source and live reload on save.
 > - **[`hsm` migration](./state-machines.md#the-message-bridge)**: pass `sender` to `toEvent`, add `onTransition` and `leaves` to hand-built instances, and brace value-returning `invoke` bodies.
-> - **[`hsm` state flow](./state-machines.md#scripted-sequences)** gains cancellable sequences, [shallow history](./state-machines.md#resume-with-history), [`always`](./state-machines.md#move-on-at-once-with-always) transitions and [`parallel`](./state-machines.md#run-regions-side-by-side-with-parallel) regions.
+> - **[`hsm` state flow](./state-machines.md#scripted-sequences)** gains cancellable sequences, [shallow history](./state-machines.md#resume-with-history), [`always`](./state-machines.md#move-on-at-once-with-always) transitions, [`parallel`](./state-machines.md#run-regions-side-by-side-with-parallel) regions and [Monarch events](./state-machines.md#monarch-screen-transitions).
 > - **[`hsm` hot reload](./state-machines.md#hot-reload)** reaches running machines, an [inspector](./state-machines.md#debug-a-machine) logs each move, and [timers](./state-machines.md#update-and-after) fire on time.
-> - **[`hsm` Monarch events](./state-machines.md#monarch-screen-transitions)** turn screen transitions into typed events.
 
 ### Breaking
 
@@ -26,6 +26,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
+- **`hsm-view` runs a state machine in your browser:** `bunx @defold-typescript/cli hsm-view <file> [name]` serves a local page that runs the machine from source, tints its active states in the code, and lets you send events, play or step time, edit its ctx and read a log, reloading live on every save; see [hsm-view](./hsm-view.md).
 - **`hsm` machines are easier to script, resume, branch, split into regions, drive from Monarch, debug, reload and budget:**
   - **Scripted sequences** — an `invoke` may return a cleanup the machine runs on every way out of the state, and `sequence(async (ctx, signal) => ...)` from `@defold-typescript/types/hsm/async` builds one whose `await signal.wait(seconds)` never resumes after the state is left. Any other `await` in a sequence can resume after the state is left, so check `signal.aborted` after it; see [Scripted sequences](./state-machines.md#scripted-sequences).
   - **Shallow history** — `history: "shallow"` on a compound state enters the child that was active when the state was last left instead of its `initial`, per instance and across a hot reload; a target inside the state still lands where it names. See [Resume with history](./state-machines.md#resume-with-history).

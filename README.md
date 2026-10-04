@@ -77,6 +77,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [wall](https://defold-typescript.github.io/toolchain/wall) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
 - [resolve](https://defold-typescript.github.io/toolchain/resolve) — generate ambient TypeScript namespaces from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
 - [scene-types](https://defold-typescript.github.io/toolchain/scene-types) — generate the scene-address declaration from your `.collection`/`.go` files so game-object paths and component ids complete in the editor; how `build` and `watch` keep it current, how `init` and `upgrade` wire it into your program, and why it can never reject an address.
+- [hsm-view](https://defold-typescript.github.io/toolchain/hsm-view) — open a state-machine file in a local browser viewer that runs it from source: active states highlighted in the code, events, Play and Step, an editable ctx, a log, and live reload on every save.
 
 ### Toolchain & workflow
 
