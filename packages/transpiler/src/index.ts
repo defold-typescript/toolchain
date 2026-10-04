@@ -27,6 +27,7 @@ export {
   hsmModules,
   hsmRequireName,
   hsmSourceFiles,
+  requireHsmSourceDir,
   resolveHsmSourceDir,
 } from "./hsm-builtin";
 export { buildInputActionIndex } from "./input-action-index";
