@@ -12,7 +12,6 @@ export type CliCommand =
   | "wall"
   | "resolve"
   | "scene-types"
-  | "hsm-export"
   | "run"
   | "reload"
   | "upgrade"
@@ -133,8 +132,6 @@ export interface RenderResultInput {
     readonly issues?: readonly CompileIssue[];
     readonly targetUrl?: string;
   };
-  // `hsm-export` only: the XState machine config the verb prints.
-  readonly machine?: { readonly [key: string]: unknown };
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -254,9 +251,8 @@ export function renderResult(input: RenderResultInput): string {
     "editorCompile" in input
       ? { ...withEditorIssues, editorCompile: input.editorCompile }
       : withEditorIssues;
-  const withEditorRun =
+  const payload =
     "editorRun" in input ? { ...withEditorCompile, editorRun: input.editorRun } : withEditorCompile;
-  const payload = "machine" in input ? { ...withEditorRun, machine: input.machine } : withEditorRun;
   return `${JSON.stringify(payload)}\n`;
 }
 

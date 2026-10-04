@@ -43,8 +43,5 @@
     "@defold-typescript/transpiler": "workspace:*",
     "@defold-typescript/types": "workspace:*",
     "@inquirer/prompts": "^7.0.0"
-  },
-  "devDependencies": {
-    "xstate": "5.33.2"
   }
 }
