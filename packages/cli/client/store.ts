@@ -177,7 +177,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
   const frames = options.frames ?? animationFrames;
   let seq = 0;
   let loop: PlayLoop | undefined;
-  let inFlight: Promise<void> | undefined;
+  let inFlight: Promise<boolean> | undefined;
 
   return createStore<ViewerState>()((set, get) => {
     const scrollTo = (file: number, line: number): ScrollTarget => ({ file, line, seq: ++seq });
@@ -220,10 +220,15 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
       const tick = async (time: number) => {
         current.frame = undefined;
         // Only a loop's first tick can find a request in flight: a paused loop's update.
+        let failed = false;
         while (inFlight !== undefined) {
-          await inFlight;
+          failed = !(await inFlight);
         }
         if (current.cancelled) {
+          return;
+        }
+        if (failed) {
+          get().setPlaying(false);
           return;
         }
         const elapsed =
@@ -232,7 +237,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
             : Math.min((time - current.last) / 1000, MAX_FRAME_SECONDS);
         current.last = time;
         const { update, speed } = get();
-        const request = update(elapsed * speed);
+        const request = update(elapsed * speed).then(() => get().error === undefined);
         inFlight = request;
         await request;
         if (inFlight === request) {
