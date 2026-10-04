@@ -459,7 +459,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|hsm-export|bob|run> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -472,7 +472,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|hsm-export|bob|run> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -886,6 +886,78 @@ describe("dispatch", () => {
       expect(line.startsWith("defold-typescript scene-types: warning: ")).toBe(true);
     }
     expect(lines.some((line) => line.includes(UNRESOLVED_DEPENDENCY_URL))).toBe(true);
+  });
+
+  describe("hsm-export", () => {
+    const MACHINES = `import { defineMachine } from "@defold-typescript/types/hsm";
+export const lamp = defineMachine<object, { type: "TOGGLE" }>()({
+  initial: "/off",
+  states: { off: { on: { TOGGLE: "/on" } }, on: { on: { TOGGLE: "/off" } } },
+});
+export const door = defineMachine<object, { type: "OPEN" }>()({
+  initial: "/shut",
+  states: { shut: { on: { OPEN: "/open" } }, open: {} },
+});
+`;
+    let fixture: string;
+
+    beforeEach(() => {
+      fixture = path.join(mkdtempSync(path.join(os.tmpdir(), "hsm-export-")), "machines.ts");
+      writeFileSync(fixture, MACHINES);
+    });
+
+    afterEach(() => {
+      rmSync(path.dirname(fixture), { recursive: true, force: true });
+    });
+
+    test("prints the named machine as XState JSON and exits 0", async () => {
+      const { io, out, err } = captureStreams();
+
+      const code = await dispatch(["hsm-export", fixture, "lamp"], io);
+
+      expect(code).toBe(0);
+      expect(err()).toBe("");
+      expect(JSON.parse(out())).toMatchObject({
+        id: "lamp",
+        initial: "off",
+        states: { on: { id: "/on", on: { TOGGLE: "#/off" } } },
+      });
+    });
+
+    test("--json wraps the machine in the result envelope", async () => {
+      const { io, out } = captureStreams();
+
+      const code = await dispatch(["hsm-export", fixture, "door", "--json"], io);
+
+      expect(code).toBe(0);
+      expect(JSON.parse(out())).toMatchObject({
+        command: "hsm-export",
+        ok: true,
+        machine: { id: "door", initial: "shut" },
+      });
+    });
+
+    test("a missing file exits 1 with the message on stderr", async () => {
+      const { io, out, err } = captureStreams();
+
+      const code = await dispatch(["hsm-export", `${fixture}.missing`], io);
+
+      expect(code).toBe(1);
+      expect(out()).toBe("");
+      expect(err()).toContain(`cannot read ${fixture}.missing`);
+    });
+
+    test("a static-read error exits 1 with the message on stderr", async () => {
+      const { io, out, err } = captureStreams();
+
+      writeFileSync(fixture, MACHINES.replace('initial: "/off"', "initial: pick()"));
+
+      const code = await dispatch(["hsm-export", fixture, "lamp"], io);
+
+      expect(code).toBe(1);
+      expect(out()).toBe("");
+      expect(err()).toContain(`${fixture}:3:12: hsm-export cannot read / initial statically`);
+    });
   });
 
   test("a ref-doc-surface build keeps the same order", async () => {
@@ -4537,7 +4609,7 @@ describe("dispatch bob", () => {
 
     expect(code).toBe(1);
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|hsm-export|bob|run> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -5806,7 +5878,7 @@ describe("dispatch init --template", () => {
 
 describe("dispatch upgrade", () => {
   const USAGE =
-    "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+    "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|hsm-export|bob|run> [path]\n" +
     "Run `defold-typescript --help` for per-command usage and flags.\n";
 
   function upgradeHarness(opts?: {
