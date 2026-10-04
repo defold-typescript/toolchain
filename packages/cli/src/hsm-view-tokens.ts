@@ -149,6 +149,15 @@ function kindOf(tokens: readonly Token[], index: number): TokenKind {
   return "keyword";
 }
 
+/** The offset in `text` where each line from `tokenizeLines(text)` starts. */
+export function lineStarts(text: string): number[] {
+  const starts = [0];
+  for (const match of text.matchAll(new RegExp(LINE_BREAK, "g"))) {
+    starts.push(match.index + match[0].length);
+  }
+  return starts;
+}
+
 /** Splits `text` into lines of colored runs; joining a line's runs gives that line exactly. */
 export function tokenizeLines(text: string): Line[] {
   const tokens = scanTokens(text);

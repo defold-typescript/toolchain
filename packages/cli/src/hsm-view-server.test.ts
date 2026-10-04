@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { requireHsmSourceDir } from "@defold-typescript/transpiler";
 import { createHsmViewApp, type HsmViewIndex, serveHsmView } from "./hsm-view-server";
 import { createSession, type HsmViewSession } from "./hsm-view-session";
-import { tokenizeLines } from "./hsm-view-tokens";
+import { lineStarts, tokenizeLines } from "./hsm-view-tokens";
 
 const hsmSourceDir = requireHsmSourceDir();
 const client = { js: "/*js*/", css: "/*css*/" };
@@ -87,8 +87,8 @@ describe("createHsmViewApp", () => {
     expect(body.machines).toEqual(["lamp"]);
     expect(body.picked).toBe("lamp");
     expect(body.files).toEqual([
-      { path: "main.ts", lines: tokenizeLines(LAMP) },
-      { path: "shared/names.ts", lines: tokenizeLines(NAMES) },
+      { path: "main.ts", lines: tokenizeLines(LAMP), starts: lineStarts(LAMP) },
+      { path: "shared/names.ts", lines: tokenizeLines(NAMES), starts: lineStarts(NAMES) },
     ]);
     expect(body.states).toEqual(index.states);
     expect(body.onKeys).toEqual(index.onKeys);

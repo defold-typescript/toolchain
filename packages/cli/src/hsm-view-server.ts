@@ -7,7 +7,7 @@ import { streamSSE } from "hono/streaming";
 import type { MachineIndex } from "./hsm-view-index";
 import { type ClientAssets, renderPage } from "./hsm-view-page";
 import type { HsmViewSession, Snapshot } from "./hsm-view-session";
-import { type Line, tokenizeLines } from "./hsm-view-tokens";
+import { type Line, lineStarts, tokenizeLines } from "./hsm-view-tokens";
 
 export type { ClientAssets } from "./hsm-view-page";
 
@@ -26,11 +26,18 @@ export interface HsmViewServer {
   close(): Promise<void>;
 }
 
+export interface HsmViewFile {
+  readonly path: string;
+  readonly lines: readonly Line[];
+  /** Where each line starts in the file text, so a span's offsets map to a line and column. */
+  readonly starts: readonly number[];
+}
+
 export interface HsmViewIndex extends MachineIndex {
   readonly machines: readonly string[];
   readonly picked: string | undefined;
   /** Each loaded file, its path relative to the entry file's folder. */
-  readonly files: readonly { readonly path: string; readonly lines: readonly Line[] }[];
+  readonly files: readonly HsmViewFile[];
 }
 
 export interface ReloadMessage {
@@ -128,16 +135,19 @@ function reloadMessage(snapshot: Snapshot): ReloadMessage {
 
 function buildApp(options: HsmViewAppOptions, hub: Hub): Hono {
   const { session, client } = options;
-  const coloredLines = new Map<string, { readonly text: string; readonly lines: Line[] }>();
+  const coloredLines = new Map<
+    string,
+    { readonly text: string; readonly lines: Line[]; readonly starts: number[] }
+  >();
 
-  const linesOf = (file: string, text: string): Line[] => {
+  const linesOf = (file: string, text: string): { lines: Line[]; starts: number[] } => {
     const cached = coloredLines.get(file);
     if (cached?.text === text) {
-      return cached.lines;
+      return cached;
     }
-    const lines = tokenizeLines(text);
-    coloredLines.set(file, { text, lines });
-    return lines;
+    const colored = { text, lines: tokenizeLines(text), starts: lineStarts(text) };
+    coloredLines.set(file, colored);
+    return colored;
   };
 
   const entry = session.index().files[0];
@@ -166,10 +176,10 @@ function buildApp(options: HsmViewAppOptions, hub: Hub): Hono {
       ...index,
       machines,
       picked,
-      files: files.map((file) => ({
-        path: toPosix(path.relative(dir, file.path)),
-        lines: linesOf(file.path, file.text),
-      })),
+      files: files.map((file) => {
+        const { lines, starts } = linesOf(file.path, file.text);
+        return { path: toPosix(path.relative(dir, file.path)), lines, starts };
+      }),
     };
     return c.json(body);
   });
