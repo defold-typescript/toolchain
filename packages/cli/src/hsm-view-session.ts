@@ -206,7 +206,10 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   let haltedError: string | undefined;
   let callError: string | undefined;
   let startCtx: unknown = {};
-  let pendingAfter: { readonly path: string; readonly id: string } | undefined;
+  let tickOrder: string[] = [];
+  let exiting: string[] = [];
+  const dueAfter = new Map<string, string>();
+  const exitedEarlier = new Set<string>();
   const elapsed = new Map<string, number>();
   const afterProgress = new Map<string, number>();
 
@@ -215,7 +218,10 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     fired = [];
     entries = [];
     callError = undefined;
-    pendingAfter = undefined;
+    tickOrder = [];
+    exiting = [];
+    dueAfter.clear();
+    exitedEarlier.clear();
   };
 
   const recordError = (message: string, halt: boolean): void => {
@@ -307,6 +313,11 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
           afterProgress.set(path, 0);
           enter?.(ctx, machine);
         };
+        const exit = state.exit;
+        wrapped.exit = (ctx: unknown, machine: RuntimeInstance) => {
+          exiting.push(path);
+          exit?.(ctx, machine);
+        };
       }
       return wrapped as StateConfig;
     };
@@ -382,12 +393,31 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     };
   };
 
+  // The runtime reports `from` as the transition domain's first leaf, which for a target
+  // leaving a parallel state is the first region's leaf, so fall back to the tick order.
+  const afterRuleFor = (
+    from: string,
+  ): { readonly path: string; readonly id: string } | undefined => {
+    const due = (path: string): boolean => dueAfter.has(path) && !exitedEarlier.has(path);
+    const path = [...ancestors(from).reverse(), ""].find(due) ?? tickOrder.find(due);
+    const id = path === undefined ? undefined : dueAfter.get(path);
+    return path === undefined || id === undefined ? undefined : { path, id };
+  };
+
   const attach = (next: RuntimeInstance): void => {
     next.onTransition((from, to, cause, event) => {
-      if (cause === "after" && pendingAfter !== undefined) {
-        fired.push(pendingAfter.id);
-        afterProgress.set(pendingAfter.path, (afterProgress.get(pendingAfter.path) ?? 0) + 1);
+      const rule = cause === "after" ? afterRuleFor(from) : undefined;
+      if (rule !== undefined) {
+        fired.push(rule.id);
+        dueAfter.delete(rule.path);
+        if (!exiting.includes(rule.path)) {
+          afterProgress.set(rule.path, (afterProgress.get(rule.path) ?? 0) + 1);
+        }
       }
+      for (const path of exiting) {
+        exitedEarlier.add(path);
+      }
+      exiting = [];
       entries.push({
         kind: "transition",
         t,
@@ -422,10 +452,10 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     return snapshot();
   };
 
-  const dueAfter = (dt: number): { readonly path: string; readonly id: string } | undefined => {
+  const tickAfter = (dt: number): void => {
     const config = currentConfig();
     if (config === undefined || instance === undefined) {
-      return undefined;
+      return;
     }
     const order: string[] = [];
     const visit = (state: StateConfig, path: string): void => {
@@ -456,10 +486,10 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       const delay = delays[index];
       const id = delay === undefined ? undefined : ids[path]?.after[delay]?.[0];
       if (id !== undefined && Number(delay) <= (elapsed.get(path) ?? 0)) {
-        return { path, id };
+        dueAfter.set(path, id);
       }
     }
-    return undefined;
+    tickOrder = order;
   };
 
   return {
@@ -501,9 +531,8 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
           throw new Error("machine has not started");
         }
         t += dt;
-        pendingAfter = dueAfter(dt);
+        tickAfter(dt);
         current.update(dt);
-        pendingAfter = undefined;
       });
     },
     editCtx(path, value) {
@@ -560,10 +589,6 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     },
     reload() {
       begin();
-      if (haltedError !== undefined) {
-        callError = haltedError;
-        return snapshot();
-      }
       const before = pickedMachine();
       try {
         loaded.reload();
@@ -574,7 +599,9 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         if (current === undefined) {
           throw new Error("reload found no machine");
         }
-        if (before?.key === undefined || current.key === undefined) {
+        if (haltedError !== undefined) {
+          entries.push({ kind: "reload", t });
+        } else if (before?.key === undefined || current.key === undefined) {
           instance = undefined;
           elapsed.clear();
           afterProgress.clear();

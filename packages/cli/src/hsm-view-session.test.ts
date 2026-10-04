@@ -124,6 +124,77 @@ describe("createSession", () => {
     expect(moved.fired).toEqual(["/idle|on|GO|0", "/a|always|0", "/b|always|0"]);
   });
 
+  test("names the after rule each parallel region fires in one update", () => {
+    const regions = session(
+      machine(`{
+  initial: "/p",
+  states: {
+    p: {
+      type: "parallel",
+      states: {
+        x: { initial: "/p/x/a", states: { a: { after: { 1: "/p/x/b" } }, b: {} } },
+        y: { initial: "/p/y/c", states: { c: { after: { 1: "/p/y/d" } }, d: {} } },
+      },
+    },
+  },
+}`),
+    );
+    regions.start({});
+    expect(regions.update(1)).toMatchObject({
+      leaves: ["/p/x/b", "/p/y/d"],
+      fired: ["/p/x/a|after|1|0", "/p/y/c|after|1|0"],
+    });
+
+    const leaving = session(
+      machine(`{
+  initial: "/p",
+  states: {
+    p: {
+      type: "parallel",
+      states: {
+        x: { initial: "/p/x/a", states: { a: {} } },
+        y: { initial: "/p/y/c", states: { c: { after: { 1: "/over" } } } },
+      },
+    },
+    over: {},
+  },
+}`),
+    );
+    leaving.start({});
+    expect(leaving.update(1)).toMatchObject({ path: "/over", fired: ["/p/y/c|after|1|0"] });
+
+    const moved = session(
+      machine(`{
+  initial: "/p",
+  states: {
+    p: {
+      type: "parallel",
+      states: {
+        x: { initial: "/p/x/a", states: { a: { update: () => "/p/x/b", after: { 1: "/p/x/b" } }, b: {} } },
+        y: { initial: "/p/y/c", states: { c: { after: { 1: "/over" } } } },
+      },
+    },
+    over: {},
+  },
+}`),
+    );
+    moved.start({});
+    expect(moved.update(1)).toMatchObject({
+      path: "/over",
+      fired: ["/p/x/a|update", "/p/y/c|after|1|0"],
+    });
+
+    const looping = session(
+      machine(`{
+  initial: "/p",
+  states: { p: { initial: "/p/a", states: { a: { after: { 1: "/p" } } } } },
+}`),
+    );
+    looping.start({});
+    expect(looping.update(1)).toMatchObject({ entered: ["/p", "/p/a"], fired: ["/p/a|after|1|0"] });
+    expect(looping.update(1)).toMatchObject({ entered: ["/p", "/p/a"], fired: ["/p/a|after|1|0"] });
+  });
+
   test("captures engine calls for one snapshot and records unhandled events", () => {
     const view = session(
       machine(`{
@@ -199,6 +270,29 @@ describe("createSession", () => {
     const restarted = view.start({});
     expect(restarted).toMatchObject({ running: true, path: "/safe" });
     expect(restarted.error).toBeUndefined();
+  });
+
+  test("loads a reload while halted and runs it on the next start", () => {
+    const source = (action: string) =>
+      machine(`{
+  initial: "/safe",
+  states: { safe: { on: { BREAK: { target: "/broken", actions: () => { ${action} } } } }, broken: {} },
+}`);
+    const fixed = source("");
+    const file = write(source(`throw new Error("boom");`));
+    const view = createSession({ file, hsmSourceDir });
+    view.start({});
+    expect(view.send({ type: "BREAK" }).error).toBe("boom");
+    writeFileSync(file, fixed);
+    const reloaded = view.reload();
+    expect(reloaded).toMatchObject({ running: false, error: "boom" });
+    expect(kinds(reloaded)).toContain("reload");
+    expect(view.send({ type: "BREAK" }).error).toBe("boom");
+    view.start({});
+    const ran = view.send({ type: "BREAK" });
+    expect(ran.path).toBe("/broken");
+    expect(ran.error).toBeUndefined();
+    expect(view.index().files[0]?.text).toBe(fixed);
   });
 
   test("reloads keyed machines in place, restarts unkeyed machines and survives a failed reload", () => {
