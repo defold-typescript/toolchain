@@ -219,6 +219,13 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
       // Each frame waits for the previous update's answer, so requests never pile up.
       const tick = async (time: number) => {
         current.frame = undefined;
+        // Only a loop's first tick can find a request in flight: a paused loop's update.
+        while (inFlight !== undefined) {
+          await inFlight;
+        }
+        if (current.cancelled) {
+          return;
+        }
         const elapsed =
           current.last === undefined
             ? 0
@@ -370,7 +377,9 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
       },
       start: async () => {
         get().setPlaying(false);
-        await inFlight;
+        while (inFlight !== undefined) {
+          await inFlight;
+        }
         await call(() => api.post("start", { ctx: parseJson(get().startCtx, "the start ctx") }));
       },
       send: (type) =>
