@@ -195,6 +195,70 @@ describe("createSession", () => {
     expect(looping.update(1)).toMatchObject({ entered: ["/p", "/p/a"], fired: ["/p/a|after|1|0"] });
   });
 
+  test("skips the due timers on a moved region's ancestor chain when naming a later region's after rule", () => {
+    const updated = session(
+      machine(`{
+  initial: "/p",
+  states: {
+    p: {
+      type: "parallel",
+      states: {
+        x: { initial: "/p/x/a", after: { 1: "/p/x/b" }, states: { a: { update: () => "/p/x/b" }, b: {} } },
+        y: { initial: "/p/y/c", states: { c: { after: { 1: "/over" } } } },
+      },
+    },
+    over: {},
+  },
+}`),
+    );
+    updated.start({});
+    const afterUpdate = updated.update(1);
+    expect(afterUpdate.path).toBe("/over");
+    expect(afterUpdate.fired).toEqual(["/p/x/a|update", "/p/y/c|after|1|0"]);
+
+    const timed = session(
+      machine(`{
+  initial: "/p",
+  states: {
+    p: {
+      type: "parallel",
+      states: {
+        x: { initial: "/p/x/a", after: { 1: "/p/x/b" }, states: { a: { after: { 1: "/p/x/b" } }, b: {} } },
+        y: { initial: "/p/y/c", states: { c: { after: { 1: "/over" } } } },
+      },
+    },
+    over: {},
+  },
+}`),
+    );
+    timed.start({});
+    const afterTimer = timed.update(1);
+    expect(afterTimer.path).toBe("/over");
+    expect(afterTimer.fired).toEqual(["/p/x/a|after|1|0", "/p/y/c|after|1|0"]);
+
+    const parallelTimer = session(
+      machine(`{
+  initial: "/p",
+  states: {
+    p: {
+      type: "parallel",
+      after: { 1: "/over" },
+      states: {
+        x: { initial: "/p/x/a", states: { a: { update: () => "/p/x/b" }, b: {} } },
+        y: { initial: "/p/y/c", states: { c: { after: { 1: "/done" } } } },
+      },
+    },
+    over: {},
+    done: {},
+  },
+}`),
+    );
+    parallelTimer.start({});
+    const afterParallel = parallelTimer.update(1);
+    expect(afterParallel.path).toBe("/done");
+    expect(afterParallel.fired).toEqual(["/p/x/a|update", "/p/y/c|after|1|0"]);
+  });
+
   test("captures engine calls for one snapshot and records unhandled events", () => {
     const view = session(
       machine(`{
