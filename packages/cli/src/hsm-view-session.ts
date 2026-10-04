@@ -210,6 +210,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   let exiting: string[] = [];
   const dueAfter = new Map<string, string>();
   const exitedEarlier = new Set<string>();
+  const passedOver = new Set<string>();
   const elapsed = new Map<string, number>();
   const afterProgress = new Map<string, number>();
 
@@ -222,6 +223,15 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     exiting = [];
     dueAfter.clear();
     exitedEarlier.clear();
+    passedOver.clear();
+  };
+
+  const passOver = (path: string): void => {
+    passedOver.add(path);
+    for (const ancestor of ancestors(path)) {
+      passedOver.add(ancestor);
+    }
+    passedOver.add("");
   };
 
   const recordError = (message: string, halt: boolean): void => {
@@ -299,8 +309,11 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         wrapped.update = (ctx: unknown, dt: number, machine: RuntimeInstance) => {
           const target = update(ctx, dt, machine);
           const id = ids[path]?.update;
-          if (typeof target === "string" && id !== undefined) {
-            fired.push(id);
+          if (typeof target === "string") {
+            if (id !== undefined) {
+              fired.push(id);
+            }
+            passOver(path);
           }
           return target;
         };
@@ -395,10 +408,13 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
 
   // The runtime reports `from` as the transition domain's first leaf, which for a target
   // leaving a parallel state is the first region's leaf, so fall back to the tick order.
+  // A mover's ancestor chain is skipped because the runtime's walk returns before reaching
+  // those timers.
   const afterRuleFor = (
     from: string,
   ): { readonly path: string; readonly id: string } | undefined => {
-    const due = (path: string): boolean => dueAfter.has(path) && !exitedEarlier.has(path);
+    const due = (path: string): boolean =>
+      dueAfter.has(path) && !exitedEarlier.has(path) && !passedOver.has(path);
     const path = [...ancestors(from).reverse(), ""].find(due) ?? tickOrder.find(due);
     const id = path === undefined ? undefined : dueAfter.get(path);
     return path === undefined || id === undefined ? undefined : { path, id };
@@ -410,6 +426,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       if (rule !== undefined) {
         fired.push(rule.id);
         dueAfter.delete(rule.path);
+        passOver(rule.path);
         if (!exiting.includes(rule.path)) {
           afterProgress.set(rule.path, (afterProgress.get(rule.path) ?? 0) + 1);
         }
