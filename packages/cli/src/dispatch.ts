@@ -531,40 +531,6 @@ function dispatchCommand(
     })();
   }
 
-  // Reads one source file and never touches a project, so it skips the target resolution below.
-  if (command === "hsm-export") {
-    return (async (): Promise<number> => {
-      try {
-        const [file, name] = rest;
-        if (file === undefined) {
-          throw new Error(
-            "defold-typescript hsm-export: a source file is required, as in: defold-typescript hsm-export src/player-machine.ts",
-          );
-        }
-        const { runHsmExport } = await import("./hsm-export");
-        const machine = runHsmExport({
-          cwd: process.cwd(),
-          file,
-          ...(name !== undefined ? { name } : {}),
-        });
-        io.stdout.write(
-          json
-            ? renderResult({ command: "hsm-export", machine })
-            : `${JSON.stringify(machine, null, 2)}\n`,
-        );
-        return 0;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        if (json) {
-          io.stdout.write(renderResult({ command: "hsm-export", error: message }));
-        } else {
-          writeError(message);
-        }
-        return 1;
-      }
-    })();
-  }
-
   // One read of package.json feeds both the pin and its diagnostics, so every
   // target-resolving command reports a bad namespace key from the same place.
   // A JSON run folds these into its `warnings` payload instead (see below).
