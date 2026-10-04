@@ -72,6 +72,20 @@ interface TimerBar {
   readonly path: string;
   readonly delay: number;
   readonly bar: HTMLSpanElement;
+  width: string;
+}
+
+interface ReadoutLine {
+  readonly key: string;
+  readonly value: HTMLSpanElement;
+}
+
+function setClass(node: HTMLElement, value: string) {
+  if (node.className !== value) node.className = value;
+}
+
+function setLabel(node: HTMLElement, value: string) {
+  if (node.getAttribute("aria-label") !== value) node.setAttribute("aria-label", value);
 }
 
 interface Mounted {
@@ -156,7 +170,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
       ]);
       const bar = span("hsm-bar", "");
       chip.append(bar);
-      bars.push({ path, delay, bar });
+      bars.push({ path, delay, bar, width: "" });
     }
     if (rules.childElementCount > 0) box.append(rules);
 
@@ -254,52 +268,80 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   frame.append(head, body);
   host.replaceChildren(frame);
 
-  function renderVisual(spec: DemoVisual): HTMLElement {
+  let figure: HTMLElement | undefined;
+  let pane: HTMLElement | undefined;
+  let paneOpacity = "";
+
+  function patchVisual(target: HTMLElement, spec: DemoVisual) {
+    if (figure === undefined) {
+      figure = el("div");
+      figure.setAttribute("role", "img");
+      if (spec.kind === "door") {
+        pane = el("div", "hsm-door");
+        figure.append(pane);
+      }
+      target.append(figure);
+    }
     switch (spec.kind) {
-      case "bulb": {
-        const bulb = el("div", spec.glow === "off" ? "hsm-bulb" : `hsm-bulb hsm-${spec.glow}`);
-        bulb.setAttribute("role", "img");
-        bulb.setAttribute("aria-label", `lamp ${spec.glow}`);
-        return bulb;
-      }
-      case "sprite": {
-        const sprite = el("div", spec.shown ? "hsm-sprite" : "hsm-sprite hsm-hidden");
-        sprite.setAttribute("role", "img");
-        sprite.setAttribute("aria-label", spec.shown ? "sprite shown" : "sprite hidden");
-        return sprite;
-      }
+      case "bulb":
+        setClass(figure, spec.glow === "off" ? "hsm-bulb" : `hsm-bulb hsm-${spec.glow}`);
+        setLabel(figure, `lamp ${spec.glow}`);
+        return;
+      case "sprite":
+        setClass(figure, spec.shown ? "hsm-sprite" : "hsm-sprite hsm-hidden");
+        setLabel(figure, spec.shown ? "sprite shown" : "sprite hidden");
+        return;
       case "door": {
-        const doorFrame = el("div", "hsm-doorframe");
-        const door = el("div", "hsm-door");
-        door.style.opacity = spec.opacity.toFixed(2);
-        doorFrame.setAttribute("role", "img");
-        doorFrame.setAttribute("aria-label", `door, ${Math.round(spec.opacity * 100)}% visible`);
-        doorFrame.append(door);
-        return doorFrame;
+        setClass(figure, "hsm-doorframe");
+        setLabel(figure, `door, ${Math.round(spec.opacity * 100)}% visible`);
+        const opacity = spec.opacity.toFixed(2);
+        if (pane && opacity !== paneOpacity) {
+          pane.style.opacity = opacity;
+          paneOpacity = opacity;
+        }
+        return;
       }
     }
   }
 
-  function readoutLine(key: string, value: string): HTMLDivElement {
-    const line = el("div");
-    line.append(span("hsm-k", key), " ", span("hsm-v", value));
-    return line;
+  let lines: ReadoutLine[] = [];
+
+  function updateReadout() {
+    const entries = [["path", describePath(run.path)] as const, ...demo.readout(run)];
+    const sameKeys =
+      entries.length === lines.length && entries.every(([key], i) => lines[i]?.key === key);
+    if (!sameKeys) {
+      lines = entries.map(([key, value]) => ({ key, value: span("hsm-v", value) }));
+      readout.replaceChildren(
+        ...lines.map(({ key, value }) => {
+          const line = el("div");
+          line.append(span("hsm-k", key), " ", value);
+          return line;
+        }),
+      );
+      return;
+    }
+    entries.forEach(([, value], i) => {
+      const line = lines[i];
+      if (line && line.value.textContent !== value) line.value.textContent = value;
+    });
   }
 
   function refresh() {
     for (const [path, box] of boxes) box.classList.toggle("hsm-on", run.matches(path));
-    readout.replaceChildren(
-      readoutLine("path", describePath(run.path)),
-      ...demo.readout(run).map(([key, value]) => readoutLine(key, value)),
-    );
-    if (visual && demo.visual) visual.replaceChildren(renderVisual(demo.visual(run)));
+    updateReadout();
+    if (visual && demo.visual) patchVisual(visual, demo.visual(run));
     updateBars();
     dirty = false;
   }
 
   function updateBars() {
-    for (const { path, delay, bar } of bars) {
-      bar.style.width = `${Math.min(100, (run.clock(path) / delay) * 100)}%`;
+    for (const timer of bars) {
+      const width = `${Math.min(100, (run.clock(timer.path) / timer.delay) * 100)}%`;
+      if (width !== timer.width) {
+        timer.bar.style.width = width;
+        timer.width = width;
+      }
     }
   }
 
@@ -322,24 +364,34 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
 
 /** Mounts every placeholder that names a known demo; returns a function that stops them all. */
 export function mountDemos(hosts: Iterable<HTMLElement>): () => void {
-  const mounted: Mounted[] = [];
+  const mounted = new Map<Element, { readonly demo: Mounted; visible: boolean }>();
   for (const host of hosts) {
     const id = host.dataset.hsmDemo;
     if (id !== undefined && Object.hasOwn(DEMOS, id)) {
-      mounted.push(mountDemo(host, DEMOS[id as DemoId]));
+      mounted.set(host, { demo: mountDemo(host, DEMOS[id as DemoId]), visible: false });
     }
   }
+  // Only demos on screen advance: the reader cannot see the others, and their
+  // per-frame writes make WebKit pull the page back mid-scroll.
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      const item = mounted.get(entry.target);
+      if (item) item.visible = entry.isIntersecting;
+    }
+  });
+  for (const host of mounted.keys()) observer.observe(host);
   let last: number | undefined;
   let handle = 0;
   const beat = (now: number) => {
     const dt = last === undefined ? 0 : Math.min((now - last) / 1000, MAX_FRAME_SECONDS);
     last = now;
-    for (const demo of mounted) demo.frame(dt);
+    for (const { demo, visible } of mounted.values()) if (visible) demo.frame(dt);
     handle = requestAnimationFrame(beat);
   };
   handle = requestAnimationFrame(beat);
   return () => {
+    observer.disconnect();
     cancelAnimationFrame(handle);
-    for (const demo of mounted) demo.dispose();
+    for (const { demo } of mounted.values()) demo.dispose();
   };
 }
