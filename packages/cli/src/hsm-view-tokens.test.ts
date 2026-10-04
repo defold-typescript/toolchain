@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { type Line, tokenizeLines } from "./hsm-view-tokens";
+import { type Line, lineStarts, tokenizeLines } from "./hsm-view-tokens";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const PLATFORMER_MACHINE = path.join(
@@ -89,5 +89,21 @@ describe("tokenizeLines", () => {
     expect(kindOf(lines[5] as Line, "done`")).toBe("string");
     expect(kindOf(lines[4] as Line, "name")).toBe("identifier");
     expect(kindOf(lines[4] as Line, "deep")).toBe("identifier");
+  });
+});
+
+describe("lineStarts", () => {
+  test("gives each tokenized line's offset in the text, whatever its line break", () => {
+    const text = "const a = 1;\r\n/* two\rlines */\n\nlet b = `x\r\ny`;\n";
+    const lines = tokenizeLines(text);
+    const starts = lineStarts(text);
+
+    expect(starts).toHaveLength(lines.length);
+    lines.forEach((line, index) => {
+      const lineText = line.map((run) => run.text).join("");
+      const start = starts[index] as number;
+      expect(text.slice(start, start + lineText.length)).toBe(lineText);
+    });
+    expect(starts).toEqual([0, 14, 21, 30, 31, 43, 47]);
   });
 });

@@ -1,0 +1,66 @@
+@import "tailwindcss" source(".");
+
+:root {
+  color-scheme: light dark;
+  --page: #ffffff;
+  --ink: #1f2328;
+  --muted: #6e7781;
+  --rule: #d0d7de;
+  --tint: rgb(255 214 10 / 0.35);
+  --glow: rgb(255 170 0 / 0.75);
+  --syntax-keyword: #cf222e;
+  --syntax-identifier: #1f2328;
+  --syntax-string: #0a3069;
+  --syntax-number: #0550ae;
+  --syntax-regex: #116329;
+  --syntax-comment: #6e7781;
+  --syntax-punctuation: #57606a;
+  --syntax-text: #1f2328;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #0d1117;
+    --ink: #e6edf3;
+    --muted: #8b949e;
+    --rule: #30363d;
+    --tint: rgb(187 128 9 / 0.35);
+    --glow: rgb(255 196 0 / 0.6);
+    --syntax-keyword: #ff7b72;
+    --syntax-identifier: #e6edf3;
+    --syntax-string: #a5d6ff;
+    --syntax-number: #79c0ff;
+    --syntax-regex: #7ee787;
+    --syntax-comment: #8b949e;
+    --syntax-punctuation: #b1bac4;
+    --syntax-text: #e6edf3;
+  }
+}
+
+@theme inline {
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --color-page: var(--page);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-tint: var(--tint);
+  --color-glow: var(--glow);
+  --color-syntax-keyword: var(--syntax-keyword);
+  --color-syntax-identifier: var(--syntax-identifier);
+  --color-syntax-string: var(--syntax-string);
+  --color-syntax-number: var(--syntax-number);
+  --color-syntax-regex: var(--syntax-regex);
+  --color-syntax-comment: var(--syntax-comment);
+  --color-syntax-punctuation: var(--syntax-punctuation);
+  --color-syntax-text: var(--syntax-text);
+  --animate-glow: glow 1.2s ease-out forwards;
+}
+
+@keyframes glow {
+  from {
+    background-color: var(--glow);
+  }
+  to {
+    background-color: transparent;
+  }
+}
