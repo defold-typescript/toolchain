@@ -170,13 +170,6 @@ const COMMANDS: readonly HelpCommand[] = [
     flags: [],
   },
   {
-    name: "hsm-export",
-    summary:
-      "Print a state machine definition as XState JSON for the Stately visualizer, read from the source without running it.",
-    usage: "bunx @defold-typescript/cli hsm-export <file> [name]",
-    flags: [],
-  },
-  {
     name: "bob",
     summary:
       "Run Defold's headless bob.jar resolve/build/bundle commands, status for a dry-run report, or run to download-target + debug build + launch.",

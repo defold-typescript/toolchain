@@ -952,48 +952,6 @@ In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect`
 
 `inspect` is built on `onTransition(listener)`, which every instance has. The listener receives the old leaf path, the new one (`undefined` after `stop()`), the cause and the event (`undefined` unless the cause is `event`), after the move's `enter` hooks have run. Use it to feed your own tools.
 
-## Export a diagram
-
-`hsm-export` prints a machine as XState v5 JSON. Paste it into the Stately visualizer to see the machine as a diagram:
-
-```sh
-bunx @defold-typescript/cli hsm-export src/player-machine.ts
-```
-
-The second argument names the machine when the file defines more than one. A machine's name is its `defineMachine` key, else the `const` it is assigned to. With `--json`, the output is `{ "command": "hsm-export", "ok": true, "machine": { ... } }`.
-
-The start of the output for the platformer's player:
-
-```json
-{
-  "id": "playerMachine",
-  "initial": "airborne",
-  "states": {
-    "grounded": {
-      "id": "/grounded",
-      "initial": "idle",
-      "meta": { "update": "/grounded update" },
-      "on": {
-        "JUMP": {
-          "target": "#/airborne/rising",
-          "actions": ["/grounded on JUMP action"]
-        }
-      }
-    }
-  }
-}
-```
-
-How the config maps to XState:
-
-- **Paths become ids.** Each state's `id` is its path, and every target is `#` plus that path, so a name with a `.` in it stays unambiguous. The root's `id` is the machine name.
-- **`after` is in milliseconds.** `after: { 1.5: "/idle" }` becomes `after: { "1500": "#/idle" }`, and fractions of a millisecond are kept: `0.0011` becomes `"1.1"`. Two delays that XState would read as the same millisecond value stop the export with the file, line and column.
-- **`history: "shallow"` becomes a history child.** The exporter adds a `$history` child and points `initial` at it, so every default entry resumes the remembered child, as in hsm.
-- **Functions become names.** XState never runs them, so each one is a placeholder string. A function written as a name or a property access (`enter: onEnter`, `guard: guards.ready`) keeps that text. An inline function is named after where it sits: the state path, then `enter`, `exit`, `update`, `invoke`, `always guard`, `on <event> guard` or `on <event> action`. The root's path is `/`. An entry of a transition, `always` or `actions` array adds its index, counted from 0: `/on/dim on UP guard 0`, `/a on GO action 1 0`.
-- **`enter` and `exit` become `entry` and `exit`. `invoke` becomes `invoke: { src }`.** `update` has no XState equivalent, so it goes in `meta: { update }`.
-
-The exporter reads the source file and never runs it, so Defold calls in your hooks and the `@defold-typescript/types/hsm` import are never evaluated. That limits what it can read. A value (a target path, `initial`, `history`, `type`) or a whole object (`states`, `on`, `after`, a state config) can be written in the config itself or be a `const` in the same file whose value is written out. Keys (state names, event names, `after` delays) must be written in place, because naming a `const` there takes a computed key (`[IDLE]: {}`), which stops the export. A spread, a function call, a computed key or a name it cannot follow stops the export with the file, line and column: `src/game.ts:12:5: hsm-export cannot read /playing states statically`. Hooks, guards and actions can be any expression, since only their names are exported.
-
 ## Migrate a script
 
 The [platformer example](https://github.com/defold-typescript/toolchain/tree/main/docs/examples/platformer) moved its player onto one machine. Before, the player's state lived in flags that every frame re-read to pick an animation, and the jump checked a flag of its own:
