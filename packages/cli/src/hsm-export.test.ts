@@ -50,6 +50,19 @@ export const lamp = defineMachine<Ctx, LampEvent>()({
 });
 `;
 
+const SPLIT = `import { defineMachine } from "@defold-typescript/types/hsm";
+
+export const split = defineMachine<Ctx, Ev>()({
+  initial: "/a",
+  states: {
+    a: { after: { 0.0011: "/b", 0.0014: "/c", 0.0041: "/d" } },
+    b: {},
+    c: {},
+    d: {},
+  },
+});
+`;
+
 type Snapshot = ReturnType<typeof getInitialSnapshot>;
 
 function lampMachine(guards: { bright: boolean; ready: boolean; fixed: boolean }) {
@@ -136,6 +149,14 @@ describe("exportMachine round-trips through xstate", () => {
       on: "dim",
     });
   });
+
+  test("fractional millisecond delays each fire their own transition", () => {
+    const machine = createMachine(exportMachine(SPLIT, "split.ts") as never);
+    const at = (type: string) => getNextSnapshot(machine, getInitialSnapshot(machine), { type });
+    expect(at("xstate.after.1.4./a").value).toBe("c");
+    expect(at("xstate.after.1.1./a").value).toBe("b");
+    expect(at("xstate.after.4.1./a").value).toBe("d");
+  });
 });
 
 describe("exportMachine output", () => {
@@ -156,6 +177,13 @@ describe("exportMachine output", () => {
       TOGGLE: "#/off",
       PULSE: { target: "#/on", reenter: true },
     });
+  });
+
+  test("after keeps fractions of a millisecond", () => {
+    const json = exportMachine(SPLIT, "split.ts") as {
+      states: Record<string, { after?: Record<string, string> }>;
+    };
+    expect(json.states.a?.after).toEqual({ "1.1": "#/b", "1.4": "#/c", "4.1": "#/d" });
   });
 
   test("states keep their written order", () => {

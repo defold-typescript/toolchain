@@ -987,12 +987,12 @@ The start of the output for the platformer's player:
 How the config maps to XState:
 
 - **Paths become ids.** Each state's `id` is its path, and every target is `#` plus that path, so a name with a `.` in it stays unambiguous. The root's `id` is the machine name.
-- **`after` is in milliseconds.** `after: { 1.5: "/idle" }` becomes `after: { "1500": "#/idle" }`.
+- **`after` is in milliseconds.** `after: { 1.5: "/idle" }` becomes `after: { "1500": "#/idle" }`, and fractions of a millisecond are kept: `0.0011` becomes `"1.1"`.
 - **`history: "shallow"` becomes a history child.** The exporter adds a `$history` child and points `initial` at it, so every default entry resumes the remembered child, as in hsm.
 - **Functions become names.** XState never runs them, so each one is a placeholder string. A function written as a name or a property access (`enter: onEnter`, `guard: guards.ready`) keeps that text. An inline function is named after where it sits: the state path, then `enter`, `exit`, `update`, `invoke`, `always guard`, `on <event> guard` or `on <event> action`. The root's path is `/`. An entry of a transition, `always` or `actions` array adds its index, counted from 0: `/on/dim on UP guard 0`, `/a on GO action 1 0`.
 - **`enter` and `exit` become `entry` and `exit`. `invoke` becomes `invoke: { src }`.** `update` has no XState equivalent, so it goes in `meta: { update }`.
 
-The exporter reads the source file and never runs it, so Defold calls in your hooks and the `@defold-typescript/types/hsm` import are never evaluated. That limits what it can read. Paths, state names, event names and `after` delays must be written in the config itself, or as a `const` in the same file whose value is written out. A spread, a function call, a computed key or a name it cannot follow stops the export with the file, line and column: `src/game.ts:12:5: hsm-export cannot read /playing states statically`. Hooks, guards and actions can be any expression, since only their names are exported.
+The exporter reads the source file and never runs it, so Defold calls in your hooks and the `@defold-typescript/types/hsm` import are never evaluated. That limits what it can read. A value (a target path, `initial`, `history`, `type`) or a whole object (`states`, `on`, `after`, a state config) can be written in the config itself or be a `const` in the same file whose value is written out. Keys (state names, event names, `after` delays) must be written in place, because naming a `const` there takes a computed key (`[IDLE]: {}`), which stops the export. A spread, a function call, a computed key or a name it cannot follow stops the export with the file, line and column: `src/game.ts:12:5: hsm-export cannot read /playing states statically`. Hooks, guards and actions can be any expression, since only their names are exported.
 
 ## Migrate a script
 
