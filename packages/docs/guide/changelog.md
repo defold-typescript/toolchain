@@ -13,9 +13,8 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`hsm` migration](./state-machines.md#the-message-bridge)**: pass `sender` to `toEvent`, add `onTransition` and `leaves` to hand-built instances, brace value-returning `invoke` bodies.
-> - **[`hsm` sequences](./state-machines.md#scripted-sequences)** wait inside a state and stop when it is left.
-> - **[`hsm` states](./state-machines.md#resume-with-history)** resume their last child, [`always`](./state-machines.md#move-on-at-once-with-always) moves on at once, and [`parallel`](./state-machines.md#run-regions-side-by-side-with-parallel) runs regions side by side.
+> - **[`hsm` migration](./state-machines.md#the-message-bridge)**: pass `sender` to `toEvent`, add `onTransition` and `leaves` to hand-built instances, and brace value-returning `invoke` bodies.
+> - **[`hsm` state flow](./state-machines.md#scripted-sequences)** gains cancellable sequences, [shallow history](./state-machines.md#resume-with-history), [`always`](./state-machines.md#move-on-at-once-with-always) transitions and [`parallel`](./state-machines.md#run-regions-side-by-side-with-parallel) regions.
 > - **[`hsm` hot reload](./state-machines.md#hot-reload)** reaches running machines, an [inspector](./state-machines.md#debug-a-machine) logs each move, and [timers](./state-machines.md#update-and-after) fire on time.
 > - **[`hsm` Monarch events](./state-machines.md#monarch-screen-transitions)** turn screen transitions into typed events.
 
