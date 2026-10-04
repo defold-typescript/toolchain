@@ -12,10 +12,17 @@ export interface IndexedSpan extends SourceSpan {
   readonly file: number;
 }
 
+export interface OnKeyRef {
+  readonly statePath: string;
+  readonly event: string;
+}
+
 export interface MachineIndex {
   readonly states: Readonly<Record<string, IndexedSpan>>;
   readonly onKeys: Readonly<Record<string, Readonly<Record<string, IndexedSpan>>>>;
   readonly rules: Readonly<Record<string, IndexedSpan>>;
+  /** The `on` key each `on` rule id belongs to, so no reader splits the id. */
+  readonly ruleOnKeys: Readonly<Record<string, OnKeyRef>>;
 }
 
 export interface StateRuleIds {
@@ -70,6 +77,7 @@ export function machineIndex(config: unknown, files: readonly LoadedFile[]): Mac
   const states: Record<string, IndexedSpan> = {};
   const onKeys: Record<string, Record<string, IndexedSpan>> = {};
   const rules: Record<string, IndexedSpan> = {};
+  const ruleOnKeys: Record<string, OnKeyRef> = {};
   const fileIndexes = new Map(files.map((file, index) => [file.path, index]));
   const ids = ruleIds(config);
 
@@ -107,6 +115,7 @@ export function machineIndex(config: unknown, files: readonly LoadedFile[]): Mac
           if (id === undefined) {
             continue;
           }
+          ruleOnKeys[id] = { statePath, event };
           const span = entries.length === 1 ? eventSpan : keySpan(entries, String(index), entry);
           if (span !== undefined) {
             rules[id] = span;
@@ -170,5 +179,5 @@ export function machineIndex(config: unknown, files: readonly LoadedFile[]): Mac
   if (typeof config === "object" && config !== null) {
     visit(config as StateConfig, "");
   }
-  return { states, onKeys, rules };
+  return { states, onKeys, rules, ruleOnKeys };
 }
