@@ -46,13 +46,15 @@ class StaticReader {
     }
   }
 
-  fail(node: ts.Node, slot: string): never {
+  locate(node: ts.Node): string {
     const { line, character } = this.sourceFile.getLineAndCharacterOfPosition(
       node.getStart(this.sourceFile),
     );
-    throw new Error(
-      `${this.fileName}:${line + 1}:${character + 1}: hsm-export cannot read ${slot} statically`,
-    );
+    return `${this.fileName}:${line + 1}:${character + 1}`;
+  }
+
+  fail(node: ts.Node, slot: string): never {
+    throw new Error(`${this.locate(node)}: hsm-export cannot read ${slot} statically`);
   }
 
   // Strips wrappers that leave the value unchanged and follows identifiers to a same-file const.
@@ -211,9 +213,15 @@ function childName(hsmPath: string): string {
   return hsmPath.slice(hsmPath.lastIndexOf("/") + 1);
 }
 
-// `toPrecision(15)` drops the multiply's binary noise, which XState would keep in the event type.
+// Shifting the decimal point as text lets `Number` round the exact millisecond value once, with no
+// multiply noise, so the key always equals the `String(+key)` XState puts in its event type.
 function millisecondsKey(seconds: number): string {
-  return String(Number((seconds * 1000).toPrecision(15)));
+  if (!Number.isFinite(seconds)) {
+    return String(seconds);
+  }
+  const [mantissa = "", exponent = "0"] = String(seconds).split("e");
+  const [whole = "", fraction = ""] = mantissa.split(".");
+  return String(Number(`${whole}${fraction}e${Number(exponent) + 3 - fraction.length}`));
 }
 
 function convertTransition(
@@ -295,12 +303,21 @@ function convertState(reader: StaticReader, node: ts.Expression, hsmPath: string
       }
       case "after": {
         const after: XStateJson = {};
+        const firstDelay = new Map<string, string>();
         for (const [seconds, target] of reader.object(field, `${at} after`)) {
           const delay = Number(seconds);
           if (seconds === "" || !(delay >= 0)) {
             reader.fail(target, `${at} after`);
           }
-          after[millisecondsKey(delay)] = targetId(reader.string(target, `${at} after`));
+          const key = millisecondsKey(delay);
+          const earlier = firstDelay.get(key);
+          if (earlier !== undefined) {
+            throw new Error(
+              `${reader.locate(target)}: hsm-export cannot tell ${at} after delays ${earlier} and ${seconds} apart in XState`,
+            );
+          }
+          firstDelay.set(key, seconds);
+          after[key] = targetId(reader.string(target, `${at} after`));
         }
         out.after = after;
         break;

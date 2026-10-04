@@ -63,6 +63,18 @@ export const split = defineMachine<Ctx, Ev>()({
 });
 `;
 
+const WIDE = `import { defineMachine } from "@defold-typescript/types/hsm";
+
+export const wide = defineMachine<Ctx, Ev>()({
+  initial: "/a",
+  states: {
+    a: { after: { 1000000000000: "/b", 1000000000000.001: "/c" } },
+    b: {},
+    c: {},
+  },
+});
+`;
+
 type Snapshot = ReturnType<typeof getInitialSnapshot>;
 
 function lampMachine(guards: { bright: boolean; ready: boolean; fixed: boolean }) {
@@ -157,6 +169,13 @@ describe("exportMachine round-trips through xstate", () => {
     expect(at("xstate.after.1.1./a").value).toBe("b");
     expect(at("xstate.after.4.1./a").value).toBe("d");
   });
+
+  test("delays past fifteen significant digits each fire their own transition", () => {
+    const machine = createMachine(exportMachine(WIDE, "wide.ts") as never);
+    const at = (type: string) => getNextSnapshot(machine, getInitialSnapshot(machine), { type });
+    expect(at("xstate.after.1000000000000000./a").value).toBe("b");
+    expect(at("xstate.after.1000000000000001./a").value).toBe("c");
+  });
 });
 
 describe("exportMachine output", () => {
@@ -184,6 +203,27 @@ describe("exportMachine output", () => {
       states: Record<string, { after?: Record<string, string> }>;
     };
     expect(json.states.a?.after).toEqual({ "1.1": "#/b", "1.4": "#/c", "4.1": "#/d" });
+  });
+
+  test("after keeps every digit of a wide delay", () => {
+    const json = exportMachine(WIDE, "wide.ts") as {
+      states: Record<string, { after?: Record<string, string> }>;
+    };
+    expect(json.states.a?.after).toEqual({
+      "1000000000000000": "#/b",
+      "1000000000000001": "#/c",
+    });
+  });
+
+  test("after reads a delay written with an exponent", () => {
+    const source = SPLIT.replace(
+      `{ 0.0011: "/b", 0.0014: "/c", 0.0041: "/d" }`,
+      `{ 0.0000001: "/b" }`,
+    );
+    const json = exportMachine(source, "tiny.ts") as {
+      states: Record<string, { after?: Record<string, string> }>;
+    };
+    expect(json.states.a?.after).toEqual({ "0.0001": "#/b" });
   });
 
   test("states keep their written order", () => {
@@ -285,6 +325,15 @@ describe("exportMachine static-read limits", () => {
     const source = wrap(body);
     expect(() => exportMachine(source, "bad.ts")).toThrow(
       `bad.ts:${locate(source, token)}: hsm-export cannot read ${slot} statically`,
+    );
+  });
+
+  test("two delays XState reads as one millisecond value throw a located error", () => {
+    const source = wrap(
+      `  initial: "/a",\n  states: { a: { after: { 1.5000000000000009: "/b", 1.500000000000001: "/c" } }, b: {}, c: {} },`,
+    );
+    expect(() => exportMachine(source, "bad.ts")).toThrow(
+      `bad.ts:${locate(source, '"/c"')}: hsm-export cannot tell /a after delays 1.5000000000000009 and 1.500000000000001 apart in XState`,
     );
   });
 });
