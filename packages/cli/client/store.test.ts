@@ -223,6 +223,12 @@ function holds() {
       pending = { route, promise };
       return release;
     },
+    /** Makes the next request on `route` throw `message` before it reaches the server. */
+    fail(route: string, message: string): void {
+      const promise = Promise.reject(new Error(message));
+      promise.catch(() => {});
+      pending = { route, promise };
+    },
   };
 }
 
@@ -261,6 +267,34 @@ describe("play loop", () => {
     await frames.frame(100);
     await frames.frame(150);
     expect(routes(viewer)).toHaveLength(3);
+  });
+
+  test("Start after Pause and Play waits for the paused loop's update", async () => {
+    const viewer = await play("main.ts");
+    viewer.store.getState().setPlaying(true);
+    await frames.frame(0);
+    const release = held.next("/api/update");
+    await frames.frame(50);
+    viewer.store.getState().setPlaying(false);
+    viewer.store.getState().setPlaying(true);
+    await frames.frame(100);
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update"]);
+
+    const started = viewer.store.getState().start();
+    await settle();
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update"]);
+    expect(viewer.store.getState().playing).toBe(false);
+
+    release();
+    await started;
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update", "/api/start"]);
+    expect(viewer.session.snapshot().t).toBe(0);
+    expect(viewer.store.getState().snapshot?.t).toBe(0);
+
+    await frames.frame(150);
+    await frames.frame(200);
+    expect(routes(viewer)).toHaveLength(3);
+    expect(frames.queued()).toBe(0);
   });
 
   test("caps a frame's time and scales it by the speed", async () => {
@@ -305,5 +339,22 @@ describe("play loop", () => {
     await frames.frame(1000);
     expect(viewer.requests).toHaveLength(sent);
     expect(frames.queued()).toBe(0);
+  });
+
+  test("stops when an update request fails", async () => {
+    const viewer = await play("main.ts");
+    viewer.store.getState().setPlaying(true);
+    await frames.frame(0);
+    held.fail("/api/update", "offline");
+    await frames.frame(50);
+    const state = viewer.store.getState();
+    expect(state.error).toBe("offline");
+    expect(state.snapshot?.running).toBe(true);
+    expect(state.snapshot?.error).toBeUndefined();
+    expect(state.playing).toBe(false);
+    expect(frames.queued()).toBe(0);
+
+    await frames.frame(100);
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update"]);
   });
 });
