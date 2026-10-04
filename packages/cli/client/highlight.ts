@@ -31,8 +31,6 @@ export interface ClickableKey {
   readonly span: IndexedSpan;
 }
 
-const ON_RULE = /^(.*)\|on\|(.*)\|\d+$/;
-
 /** Every span the index places, by id. */
 export function indexSpans(index: MachineIndex): Map<SpanId, IndexedSpan> {
   const spans = new Map<SpanId, IndexedSpan>();
@@ -62,9 +60,9 @@ export function applySnapshot(
   const bumped: SpanId[] = snapshot.entered.map(stateSpanId);
   for (const ruleId of snapshot.fired) {
     bumped.push(ruleSpanId(ruleId));
-    const on = ON_RULE.exec(ruleId);
-    if (on !== null) {
-      bumped.push(onKeySpanId(on[1] as string, on[2] as string));
+    const onKey = index.ruleOnKeys[ruleId];
+    if (onKey !== undefined) {
+      bumped.push(onKeySpanId(onKey.statePath, onKey.event));
     }
   }
   const stamps: Record<SpanId, number> = { ...previous.stamps };

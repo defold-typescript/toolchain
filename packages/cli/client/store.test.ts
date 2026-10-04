@@ -32,7 +32,7 @@ export const hero = defineMachine("hero")({
         ...landing,
       },
     },
-    air: { on: { LAND: "/ground/landing" } },
+    air: { on: { LAND: "/ground/landing", "A|on|B": "/ground" } },
   },
 });
 `.replaceAll("\n", "\r\n");
@@ -156,7 +156,17 @@ describe("viewer store", () => {
     receive(session.send({ type: "JUMP" }));
     expect(store.getState().clickable.map(({ statePath, event }) => [statePath, event])).toEqual([
       ["/air", "LAND"],
+      ["/air", "A|on|B"],
     ]);
+  });
+
+  test("lights the exact on key of a fired rule whose event contains |on|", () => {
+    receive(session.start({ fuel: 0 }));
+    receive(session.send({ type: "JUMP" }));
+    receive(session.send({ type: "A|on|B" }));
+    expect(stamp(ruleSpanId("/air|on|A|on|B|0"))).toBe(1);
+    expect(stamp(onKeySpanId("/air", "A|on|B"))).toBe(1);
+    expect(tinted()).toEqual([stateSpanId("/ground"), stateSpanId("/ground/idle")]);
   });
 });
 
