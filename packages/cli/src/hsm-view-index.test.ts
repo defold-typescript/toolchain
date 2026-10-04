@@ -70,6 +70,7 @@ describe("machineIndex", () => {
       `import { defineMachine } from "@defold-typescript/types/hsm";
 export const m = defineMachine()({
   initial: "/a",
+  on: { "A|on|B": "/b" },
   states: {
     a: {
       on: { GO: [{ target: "/b", guard: () => false }, { target: "/b" }], BACK: "/b" },
@@ -93,6 +94,11 @@ export const m = defineMachine()({
     expect(spanText(loaded.files, index.rules["/a|always|0"])).toContain("guard");
     expect(spanText(loaded.files, index.rules["/a|always|1"])).toBe('{ target: "/b" }');
     expect(spanText(loaded.files, index.rules["/a|update"])).toBe("update");
+    expect(index.ruleOnKeys["|on|A|on|B|0"]).toEqual({ statePath: "", event: "A|on|B" });
+    expect(index.ruleOnKeys["/a|on|GO|1"]).toEqual({ statePath: "/a", event: "GO" });
+    expect(index.ruleOnKeys).not.toHaveProperty(["/a|after|0.5|0"]);
+    expect(index.ruleOnKeys).not.toHaveProperty(["/a|always|0"]);
+    expect(index.ruleOnKeys).not.toHaveProperty(["/a|update"]);
   });
 
   test("uses imported and spread source locations and omits states with no key location", () => {
