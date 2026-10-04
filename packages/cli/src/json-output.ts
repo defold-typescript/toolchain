@@ -15,7 +15,8 @@ export type CliCommand =
   | "run"
   | "reload"
   | "upgrade"
-  | "set-target";
+  | "set-target"
+  | "hsm-view";
 
 export interface ResolvedExtensionReportJson {
   readonly url: string;
@@ -103,6 +104,9 @@ export interface RenderResultInput {
   readonly from?: string;
   readonly to?: string;
   readonly handedOff?: boolean;
+  // `hsm-view` only: the machine the viewer opened on and the page it serves.
+  readonly machine?: string;
+  readonly url?: string;
   readonly outcome?: string;
   readonly consoleErrors?: readonly string[];
   readonly consoleErrorLocations?: readonly {
@@ -227,8 +231,10 @@ export function renderResult(input: RenderResultInput): string {
   const withFrom = "from" in input ? { ...withLaunch, from: input.from } : withLaunch;
   const withTo = "to" in input ? { ...withFrom, to: input.to } : withFrom;
   const withHandedOff = "handedOff" in input ? { ...withTo, handedOff: input.handedOff } : withTo;
-  const withOutcome =
-    "outcome" in input ? { ...withHandedOff, outcome: input.outcome } : withHandedOff;
+  const withMachine =
+    "machine" in input ? { ...withHandedOff, machine: input.machine } : withHandedOff;
+  const withUrl = "url" in input ? { ...withMachine, url: input.url } : withMachine;
+  const withOutcome = "outcome" in input ? { ...withUrl, outcome: input.outcome } : withUrl;
   const withConsoleErrors =
     "consoleErrors" in input ? { ...withOutcome, consoleErrors: input.consoleErrors } : withOutcome;
   const withConsoleLocations =

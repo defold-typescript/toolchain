@@ -459,7 +459,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -472,7 +472,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -4537,7 +4537,7 @@ describe("dispatch bob", () => {
 
     expect(code).toBe(1);
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -5806,7 +5806,7 @@ describe("dispatch init --template", () => {
 
 describe("dispatch upgrade", () => {
   const USAGE =
-    "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run> [path]\n" +
+    "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view> [path]\n" +
     "Run `defold-typescript --help` for per-command usage and flags.\n";
 
   function upgradeHarness(opts?: {
@@ -8591,5 +8591,115 @@ describe("dispatch error lines", () => {
     expect(err()).toBe(
       "defold-typescript set-target: error: pass a version|stable|beta|alpha token, or --detected, and an optional path.\n",
     );
+  });
+});
+
+describe("hsm-view", () => {
+  const LAMP = `import { defineMachine } from "@defold-typescript/types/hsm";
+export const lamp = defineMachine("lamp")({
+  initial: "/off",
+  states: {
+    off: { on: { TOGGLE: "/on" } },
+    on: { on: { TOGGLE: "/off" } },
+  },
+});
+`;
+
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "dispatch-hsm-view-"));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function writeMachine(name: string, text: string): string {
+    const file = path.join(dir, name);
+    writeFileSync(file, text);
+    return file;
+  }
+
+  function jsonError(out: string): unknown {
+    const lines = out.trim().split("\n");
+    expect(lines).toHaveLength(1);
+    const parsed = JSON.parse(lines[0] ?? "") as { command: string; ok: boolean; error: string };
+    expect(parsed.command).toBe("hsm-view");
+    expect(parsed.ok).toBe(false);
+    return parsed.error;
+  }
+
+  test("a missing file exits 1 and names it", async () => {
+    const missing = path.join(dir, "absent.ts");
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["hsm-view", missing], io);
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toContain(missing);
+  });
+
+  test("a missing file argument exits 1 with the usage", async () => {
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["hsm-view"], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("hsm-view <file> [name]");
+  });
+
+  test("a file defining no machine exits 1", async () => {
+    const file = writeMachine("empty.ts", "export const value = 1;\n");
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["hsm-view", file], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain(`${file} defines no machine`);
+  });
+
+  test("an unknown name exits 1 and lists the machine names", async () => {
+    const file = writeMachine("lamp.ts", LAMP);
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["hsm-view", file, "fan"], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain('no machine named "fan"');
+    expect(err()).toContain("lamp");
+  });
+
+  test("a load error exits 1 with its message", async () => {
+    const file = writeMachine("broken.ts", 'throw new Error("boom at load");\n');
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["hsm-view", file], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("boom at load");
+  });
+
+  test("with --json, each error prints one hsm-view line", async () => {
+    const missing = path.join(dir, "absent.ts");
+    const empty = writeMachine("empty.ts", "export const value = 1;\n");
+    const lamp = writeMachine("lamp.ts", LAMP);
+    const broken = writeMachine("broken.ts", 'throw new Error("boom at load");\n');
+    const cases: [readonly string[], string][] = [
+      [[missing], missing],
+      [[empty], "defines no machine"],
+      [[lamp, "fan"], "lamp"],
+      [[broken], "boom at load"],
+    ];
+    for (const [args, expected] of cases) {
+      const { io, out, err } = captureStreams();
+
+      const code = await dispatch(["hsm-view", ...args, "--json"], io);
+
+      expect(code).toBe(1);
+      expect(err()).toBe("");
+      expect(jsonError(out())).toContain(expected);
+    }
   });
 });
