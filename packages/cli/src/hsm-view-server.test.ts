@@ -273,4 +273,41 @@ describe("serveHsmView", () => {
     expect(reload.data).toMatchObject({ ok: false, error: expect.stringContaining("extra.ts") });
     await events.cancel();
   });
+
+  test("recovers when a deleted import comes back", async () => {
+    server = await serveHsmView({ session: lampSession(), client, port: 0 });
+    const events = await openEvents(server.url);
+
+    rmSync(path.join(dir, "shared/names.ts"));
+    expect((await events.next("reload")).data).toMatchObject({ ok: false });
+
+    write("shared/names.ts", NAMES);
+    expect((await events.next("reload")).data).toMatchObject({ ok: true });
+
+    write("shared/names.ts", "export const OFF = ;\n");
+    const reload = await events.next("reload");
+    expect(reload.data).toMatchObject({ ok: false, error: expect.stringContaining("names.ts") });
+    await events.cancel();
+  });
+
+  test("recovers when the deleted file's folder comes back", async () => {
+    server = await serveHsmView({ session: lampSession(), client, port: 0 });
+    const events = await openEvents(server.url);
+
+    // Once a session has loaded, Bun's watcher on a file reports no event when its whole
+    // folder is removed, so saving the entry file is what brings the loss to the server.
+    rmSync(path.join(dir, "shared"), { recursive: true });
+    write("main.ts", LAMP);
+    expect((await events.next("reload")).data).toMatchObject({ ok: false });
+
+    write("shared/names.ts", NAMES);
+    const deadline = Date.now() + 2000;
+    let recovered = false;
+    while (!recovered) {
+      const reload = await events.next("reload", Math.max(1, deadline - Date.now()));
+      recovered = (reload.data as { ok: boolean }).ok;
+    }
+    expect(recovered).toBe(true);
+    await events.cancel();
+  });
 });
