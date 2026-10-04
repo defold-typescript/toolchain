@@ -99,10 +99,31 @@ export interface ViewerState {
 
 export type ViewerStore = StoreApi<ViewerState>;
 
+/** Schedules Play's frames; the browser's is `requestAnimationFrame`. */
+export interface FrameScheduler {
+  request(callback: (time: number) => void): number;
+  cancel(id: number): void;
+}
+
 export interface ViewerStoreOptions {
   readonly api?: ViewerApi;
   readonly now?: () => number;
+  readonly frames?: FrameScheduler;
 }
+
+/** Play never advances a frame by more than this, so a hidden tab does not leap ahead. */
+const MAX_FRAME_SECONDS = 0.1;
+
+interface PlayLoop {
+  cancelled: boolean;
+  frame: number | undefined;
+  last: number | undefined;
+}
+
+const animationFrames: FrameScheduler = {
+  request: (callback) => requestAnimationFrame(callback),
+  cancel: (id) => cancelAnimationFrame(id),
+};
 
 class InputError extends Error {}
 
@@ -153,7 +174,10 @@ function firstKeyLine(
 export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore {
   const api = options.api ?? httpApi();
   const now = options.now ?? (() => performance.now());
+  const frames = options.frames ?? animationFrames;
   let seq = 0;
+  let loop: PlayLoop | undefined;
+  let inFlight: Promise<void> | undefined;
 
   return createStore<ViewerState>()((set, get) => {
     const scrollTo = (file: number, line: number): ScrollTarget => ({ file, line, seq: ++seq });
@@ -173,6 +197,51 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
       } catch (thrown) {
         set({ error: thrown instanceof Error ? thrown.message : String(thrown) });
       }
+    };
+
+    const stopLoop = (): void => {
+      if (loop === undefined) {
+        return;
+      }
+      loop.cancelled = true;
+      if (loop.frame !== undefined) {
+        frames.cancel(loop.frame);
+      }
+      loop = undefined;
+    };
+
+    const startLoop = (): void => {
+      if (loop !== undefined) {
+        return;
+      }
+      const current: PlayLoop = { cancelled: false, frame: undefined, last: undefined };
+      loop = current;
+      // Each frame waits for the previous update's answer, so requests never pile up.
+      const tick = async (time: number) => {
+        current.frame = undefined;
+        const elapsed =
+          current.last === undefined
+            ? 0
+            : Math.min((time - current.last) / 1000, MAX_FRAME_SECONDS);
+        current.last = time;
+        const { update, speed } = get();
+        const request = update(elapsed * speed);
+        inFlight = request;
+        await request;
+        if (inFlight === request) {
+          inFlight = undefined;
+        }
+        if (current.cancelled) {
+          return;
+        }
+        const { snapshot, error } = get();
+        if (snapshot?.running !== true || snapshot.error !== undefined || error !== undefined) {
+          get().setPlaying(false);
+          return;
+        }
+        current.frame = frames.request(tick);
+      };
+      current.frame = frames.request(tick);
     };
 
     return {
@@ -280,7 +349,15 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
       setPayload: (payload) => set({ payload }),
       setDt: (dt) => set({ dt }),
       setSpeed: (speed) => set({ speed }),
-      setPlaying: (playing) => set({ playing }),
+      setPlaying: (playing) => {
+        if (playing) {
+          set({ playing });
+          startLoop();
+        } else {
+          stopLoop();
+          set({ playing });
+        }
+      },
       setDisconnected: (disconnected) => set({ disconnected }),
       load: async () => {
         try {
@@ -291,8 +368,11 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
           set({ error: thrown instanceof Error ? thrown.message : String(thrown) });
         }
       },
-      start: () =>
-        call(() => api.post("start", { ctx: parseJson(get().startCtx, "the start ctx") })),
+      start: async () => {
+        get().setPlaying(false);
+        await inFlight;
+        await call(() => api.post("start", { ctx: parseJson(get().startCtx, "the start ctx") }));
+      },
       send: (type) =>
         call(() => api.post("send", { event: { ...parsePayload(get().payload), type } })),
       update: (dt) => call(() => api.post("update", { dt })),
