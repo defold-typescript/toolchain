@@ -1,9 +1,22 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  statSync,
+  watch,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { requireHsmSourceDir } from "@defold-typescript/transpiler";
-import { createHsmViewApp, type HsmViewIndex, serveHsmView } from "./hsm-view-server";
+import {
+  createHsmViewApp,
+  type HsmViewIndex,
+  serveHsmView,
+  type WatchPath,
+} from "./hsm-view-server";
 import { createSession, type HsmViewSession } from "./hsm-view-session";
 import { lineStarts, tokenizeLines } from "./hsm-view-tokens";
 
@@ -298,6 +311,41 @@ describe("serveHsmView", () => {
     // folder is removed, so saving the entry file is what brings the loss to the server.
     rmSync(path.join(dir, "shared"), { recursive: true });
     write("main.ts", LAMP);
+    expect((await events.next("reload")).data).toMatchObject({ ok: false });
+
+    write("shared/names.ts", NAMES);
+    const deadline = Date.now() + 2000;
+    let recovered = false;
+    while (!recovered) {
+      const reload = await events.next("reload", Math.max(1, deadline - Date.now()));
+      recovered = (reload.data as { ok: boolean }).ok;
+    }
+    expect(recovered).toBe(true);
+    await events.cancel();
+  });
+
+  test("reloads when the missing file's folder appears before its watcher opens", async () => {
+    let armed = false;
+    // Only the fallback watchers open folders, so the first folder watched once armed is the
+    // nearest folder chosen for the missing import; creating `shared/` before it opens means
+    // that watcher never sees it.
+    const watchPath: WatchPath = (target, listener) => {
+      if (armed && existsSync(target) && statSync(target).isDirectory()) {
+        armed = false;
+        mkdirSync(path.join(dir, "shared"));
+        // A folder watcher on macOS still reports a change made a few milliseconds before it
+        // opened; waiting past that window makes the missed event as real as on Linux.
+        Bun.sleepSync(250);
+      }
+      return watch(target, listener);
+    };
+    server = await serveHsmView({ session: lampSession(), client, port: 0, watchPath });
+    const events = await openEvents(server.url);
+
+    rmSync(path.join(dir, "shared"), { recursive: true });
+    armed = true;
+    write("main.ts", LAMP);
+    expect((await events.next("reload")).data).toMatchObject({ ok: false });
     expect((await events.next("reload")).data).toMatchObject({ ok: false });
 
     write("shared/names.ts", NAMES);

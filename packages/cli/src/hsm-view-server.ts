@@ -17,8 +17,15 @@ export interface HsmViewAppOptions {
   readonly title?: string;
 }
 
+export type WatchPath = (
+  target: string,
+  listener: (event: string, name: string | null) => void,
+) => FSWatcher;
+
 export interface ServeHsmViewOptions extends HsmViewAppOptions {
   readonly port: number;
+  /** Opens every file and folder watcher; tests wrap it to force an ordering against the disk. */
+  readonly watchPath?: WatchPath;
 }
 
 export interface HsmViewServer {
@@ -257,6 +264,7 @@ export function createHsmViewApp(options: HsmViewAppOptions): Hono {
 /** Serves the viewer on `127.0.0.1` and reloads the session whenever a loaded file changes. */
 export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServer> {
   const { session } = options;
+  const watchPath: WatchPath = options.watchPath ?? ((target, listener) => watch(target, listener));
   const hub = createHub();
   const app = buildApp(options, hub);
   const watchers: FSWatcher[] = [];
@@ -293,7 +301,7 @@ export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServe
     const missing: string[] = [];
     for (const file of session.index().files) {
       try {
-        watchers.push(watch(file.path, scheduleReload));
+        watchers.push(watchPath(file.path, scheduleReload));
       } catch {
         // A file removed since the last load is watched through its nearest existing folder
         // until it comes back.
@@ -307,8 +315,10 @@ export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServe
 
   function watchMissing(missing: readonly string[]): void {
     const waiting = new Map<string, Set<string>>();
+    const routes = new Map<string, ReturnType<typeof nearestFolder>>();
     for (const file of missing) {
       const found = nearestFolder(file);
+      routes.set(file, found);
       if (found !== undefined) {
         const names = waiting.get(found.dir) ?? new Set<string>();
         names.add(found.entry);
@@ -318,18 +328,27 @@ export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServe
     for (const [dir, names] of waiting) {
       try {
         watchers.push(
-          watch(dir, (_event, name) => {
+          watchPath(dir, (_event, name) => {
             if (name === null || names.has(name)) {
               scheduleReload();
             }
           }),
         );
       } catch {
-        // The folder was removed after the walk, which leaves nothing to watch for these files.
+        // The folder was removed after the walk; the route check below sees the change and
+        // reloads, which watches the folder above it instead.
       }
     }
-    // A file recreated before its folder watcher opened sent no event to anyone.
-    if (missing.some((file) => existsSync(file))) {
+    // A file recreated, or a folder on its way created or removed, before its folder watcher
+    // opened sent no event to anyone.
+    const moved = [...routes].some(([file, route]) => {
+      if (existsSync(file)) {
+        return true;
+      }
+      const now = nearestFolder(file);
+      return now?.dir !== route?.dir || now?.entry !== route?.entry;
+    });
+    if (moved) {
       scheduleReload();
     }
   }
