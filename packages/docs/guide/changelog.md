@@ -40,6 +40,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **`hsm` `after` timers on a parent no longer fire late:** when an `update` hook transitioned one of its children, the parent missed that call's `dt`, so its timer fired one tick late per such transition. Every active state now counts the `dt` of every `update` call, as the [State machines](./state-machines.md#update-and-after) guide describes; a timer due on the same tick a hook transitions still waits for the next call.
+- **The State machines tutorial no longer jumps in Safari:** the live diagrams on [State machines, one click at a time](./state-machines-tutorial.md) pulled the page back while you scrolled, pinning it short of the bottom. They now redraw only what changed, and a diagram scrolled out of view pauses until you scroll back to it.
 
 ## v0.43.0
 
