@@ -224,11 +224,14 @@ function holds() {
       pending = undefined;
       return promise;
     },
-    /** Keeps the next request on `route` off the server until the returned release is called. */
-    next(route: string): () => void {
-      let release = () => {};
-      const promise = new Promise<void>((resolve) => {
-        release = resolve;
+    /**
+     * Keeps the next request on `route` off the server until the returned release is called.
+     * Releasing with a `failure` makes that request throw it before it reaches the server.
+     */
+    next(route: string): (failure?: string) => void {
+      let release: (failure?: string) => void = () => {};
+      const promise = new Promise<void>((resolve, reject) => {
+        release = (failure) => (failure === undefined ? resolve() : reject(new Error(failure)));
       });
       pending = { route, promise };
       return release;
@@ -305,6 +308,49 @@ describe("play loop", () => {
     await frames.frame(200);
     expect(routes(viewer)).toHaveLength(3);
     expect(frames.queued()).toBe(0);
+  });
+
+  test("stops after Pause and Play when the paused loop's update fails", async () => {
+    const viewer = await play("main.ts");
+    viewer.store.getState().setPlaying(true);
+    await frames.frame(0);
+    const release = held.next("/api/update");
+    await frames.frame(50);
+    viewer.store.getState().setPlaying(false);
+    viewer.store.getState().setPlaying(true);
+    await frames.frame(100);
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update"]);
+
+    release("offline");
+    await settle();
+    const state = viewer.store.getState();
+    expect(state.error).toBe("offline");
+    expect(state.playing).toBe(false);
+    expect(frames.queued()).toBe(0);
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update"]);
+
+    await frames.frame(150);
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update"]);
+  });
+
+  test("keeps playing after Pause and Play when the paused loop's update succeeds", async () => {
+    const viewer = await play("main.ts");
+    viewer.store.getState().setPlaying(true);
+    await frames.frame(0);
+    const release = held.next("/api/update");
+    await frames.frame(50);
+    viewer.store.getState().setPlaying(false);
+    viewer.store.getState().setPlaying(true);
+    await frames.frame(100);
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update"]);
+
+    release();
+    await settle();
+    const state = viewer.store.getState();
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update", "/api/update"]);
+    expect(state.error).toBeUndefined();
+    expect(state.playing).toBe(true);
+    expect(frames.queued()).toBe(1);
   });
 
   test("caps a frame's time and scales it by the speed", async () => {
