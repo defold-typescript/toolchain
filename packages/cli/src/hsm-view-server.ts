@@ -1,4 +1,4 @@
-import { type FSWatcher, watch } from "node:fs";
+import { existsSync, type FSWatcher, watch } from "node:fs";
 import type { Server } from "node:http";
 import * as path from "node:path";
 import { serve } from "@hono/node-server";
@@ -124,6 +124,21 @@ const isEvent = (value: unknown): value is { type: string } =>
 
 function toPosix(rel: string): string {
   return rel.split(path.sep).join("/");
+}
+
+/** The closest existing folder above a missing file, and the entry in it on the way to the file. */
+function nearestFolder(missing: string): { dir: string; entry: string } | undefined {
+  let entry = path.basename(missing);
+  let dir = path.dirname(missing);
+  while (!existsSync(dir)) {
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      return undefined;
+    }
+    entry = path.basename(dir);
+    dir = parent;
+  }
+  return { dir, entry };
 }
 
 function reloadMessage(snapshot: Snapshot): ReloadMessage {
@@ -275,12 +290,47 @@ export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServe
   // so every reload watches the whole file set afresh.
   function watchFiles(): void {
     unwatch();
+    const missing: string[] = [];
     for (const file of session.index().files) {
       try {
         watchers.push(watch(file.path, scheduleReload));
       } catch {
-        // A file removed since the last load has nothing to watch until an import brings it back.
+        // A file removed since the last load is watched through its nearest existing folder
+        // until it comes back.
+        if (!existsSync(file.path)) {
+          missing.push(file.path);
+        }
       }
+    }
+    watchMissing(missing);
+  }
+
+  function watchMissing(missing: readonly string[]): void {
+    const waiting = new Map<string, Set<string>>();
+    for (const file of missing) {
+      const found = nearestFolder(file);
+      if (found !== undefined) {
+        const names = waiting.get(found.dir) ?? new Set<string>();
+        names.add(found.entry);
+        waiting.set(found.dir, names);
+      }
+    }
+    for (const [dir, names] of waiting) {
+      try {
+        watchers.push(
+          watch(dir, (_event, name) => {
+            if (name === null || names.has(name)) {
+              scheduleReload();
+            }
+          }),
+        );
+      } catch {
+        // The folder was removed after the walk, which leaves nothing to watch for these files.
+      }
+    }
+    // A file recreated before its folder watcher opened sent no event to anyone.
+    if (missing.some((file) => existsSync(file))) {
+      scheduleReload();
     }
   }
 
