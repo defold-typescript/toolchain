@@ -8,42 +8,6 @@ import { LogPane } from "./log-pane";
 import { Handle, SavedGroup } from "./panels";
 import { createViewerStore, useViewer, type ViewerStore } from "./store";
 
-/** Play never advances a frame by more than this, so a hidden tab does not leap ahead. */
-const MAX_FRAME_SECONDS = 0.1;
-
-function usePlayLoop(store: ViewerStore): void {
-  const playing = useViewer(store, (state) => state.playing);
-  useEffect(() => {
-    if (!playing) {
-      return;
-    }
-    let cancelled = false;
-    let frame = 0;
-    let last: number | undefined;
-    // Each frame waits for the previous update's answer, so requests never pile up.
-    const tick = async (time: number) => {
-      const elapsed = last === undefined ? 0 : Math.min((time - last) / 1000, MAX_FRAME_SECONDS);
-      last = time;
-      const { update, speed } = store.getState();
-      await update(elapsed * speed);
-      const { snapshot, error } = store.getState();
-      if (cancelled) {
-        return;
-      }
-      if (snapshot?.running !== true || snapshot.error !== undefined || error !== undefined) {
-        store.getState().setPlaying(false);
-        return;
-      }
-      frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(frame);
-    };
-  }, [playing, store]);
-}
-
 function useServerEvents(store: ViewerStore): void {
   useEffect(() => {
     const { load, reloaded, setDisconnected, setPlaying } = store.getState();
@@ -90,7 +54,6 @@ function Banner({ store }: { store: ViewerStore }) {
 
 export function App() {
   const [store] = useState(createViewerStore);
-  usePlayLoop(store);
   useServerEvents(store);
 
   return (
