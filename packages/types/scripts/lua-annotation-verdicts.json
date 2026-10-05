@@ -5,7 +5,8 @@
     "declared": "string|table"
   },
   "editor:http.server.route:optional-as-required:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "the declaration states the omitted middle arguments as overloads (`route(path, handler)`, `pack(output_path, entries)`), so every overload passes an argument at slot 2; the annotation spells the same omission as an optional slot 2",
     "annotated": "optional",
     "declared": "required"
   },
@@ -20,7 +21,8 @@
     "declared": "function|string"
   },
   "editor:zip.pack:optional-as-required:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "the declaration states the omitted middle arguments as overloads (`route(path, handler)`, `pack(output_path, entries)`), so every overload passes an argument at slot 2; the annotation spells the same omission as an optional slot 2",
     "annotated": "optional",
     "declared": "required"
   },
@@ -35,7 +37,8 @@
     "declared": "string|table"
   },
   "runtime:b2d.body.create_fixture:arity": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "engine binding takes 2..2: Body_CreateFixture (script_box2d_body_v2.cpp) passes slot 2 to CheckFixtureDef, which runs luaL_checktype(L, 2, LUA_TTABLE), so the annotation's `(body, shape, density)` overload raises",
     "annotated": "2..3",
     "declared": "2..2"
   },
@@ -67,7 +70,8 @@
     "declared": "absent"
   },
   "runtime:b2d.fixture.set_density:arity": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "engine binding takes 3..4: Fixture_SetDensity / Fixture_SetShape (script_box2d_fixture_v2.cpp) read `update_mass` only when lua_gettop(L) >= 4; the declaration's optional slot is OPTIONAL_SLOT_CORRECTIONS `b2d.fixture.set_density:param:update_mass`",
     "annotated": "4..4",
     "declared": "3..4"
   },
@@ -78,7 +82,8 @@
     "declared": "optional"
   },
   "runtime:b2d.fixture.set_shape:arity": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "engine binding takes 3..4: Fixture_SetDensity / Fixture_SetShape (script_box2d_fixture_v2.cpp) read `update_mass` only when lua_gettop(L) >= 4; the declaration's optional slot is OPTIONAL_SLOT_CORRECTIONS `b2d.fixture.set_shape:param:update_mass`",
     "annotated": "4..4",
     "declared": "3..4"
   },
@@ -464,7 +469,8 @@
     "declared": "hash|string|url"
   },
   "runtime:collectionproxy.set_collection:arity": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "engine binding takes 2..2: GetComponentFromLua resolves a nil url to the calling script component, which fails the collection proxy type check, and slot 2 is read with lua_isnil, which an omitted argument fails, so nil is passed explicitly",
     "annotated": "0..2",
     "declared": "2..2"
   },
@@ -753,7 +759,8 @@
     "declared": "declared"
   },
   "runtime:html5.set_interaction_listener:arity": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "engine binding takes 1..1: luaL_checkany(L, 1) raises on an omitted argument; nil is passed explicitly to remove the listener",
     "annotated": "0..1",
     "declared": "1..1"
   },
@@ -815,11 +822,6 @@
     "annotated": "hash|number|string",
     "declared": "hash|number|string|userdata"
   },
-  "runtime:render.get_render_target_height:optional-as-required:2": {
-    "verdict": "open",
-    "annotated": "optional",
-    "declared": "required"
-  },
   "runtime:render.get_render_target_height:too-loose:1": {
     "verdict": "open",
     "annotated": "hash|number|string",
@@ -829,11 +831,6 @@
     "verdict": "open",
     "annotated": "hash|number|string",
     "declared": "hash|string|userdata"
-  },
-  "runtime:render.get_render_target_width:optional-as-required:2": {
-    "verdict": "open",
-    "annotated": "optional",
-    "declared": "required"
   },
   "runtime:render.get_render_target_width:too-loose:1": {
     "verdict": "open",
@@ -904,7 +901,8 @@
     "declared": "hash"
   },
   "runtime:resource.create_sound_data:arity": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "engine binding takes 2..2: CreateSoundData runs luaL_checktype(L, 2, LUA_TTABLE)",
     "annotated": "1..2",
     "declared": "2..2"
   },
@@ -915,7 +913,8 @@
     "declared": "required"
   },
   "runtime:resource.create_texture_async:arity": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "engine binding takes 4..4: CreateCallback runs luaL_checktype(L, 4, LUA_TFUNCTION) despite the binding's 'callback is optional' comment, so slot 4 cannot be omitted and slot 3 (`buffer`, read only when not nil) must be passed positionally",
     "annotated": "2..4",
     "declared": "4..4"
   },
@@ -1004,7 +1003,8 @@
     "declared": "table"
   },
   "runtime:socket.newtry:arity": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "the declaration's optional finalizer is OPTIONAL_SLOT_CORRECTIONS `socket.newtry:param:finalizer`, backed by socket.protect's example `local try = socket.newtry()`; LuaSocket's global_newtry substitutes a no-op finalizer for nil",
     "annotated": "1..1",
     "declared": "0..1"
   },
@@ -1061,7 +1061,8 @@
     "declared": "hash"
   },
   "runtime:sound.set_gain:arity": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "engine binding takes 2..2: Sound_SetGain / Sound_SetPan (script_sound.cpp) read slot 2 with luaL_checknumber",
     "annotated": "1..2",
     "declared": "2..2"
   },
@@ -1072,7 +1073,8 @@
     "declared": "required"
   },
   "runtime:sound.set_pan:arity": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "engine binding takes 2..2: Sound_SetGain / Sound_SetPan (script_sound.cpp) read slot 2 with luaL_checknumber",
     "annotated": "1..2",
     "declared": "2..2"
   },
@@ -1117,7 +1119,8 @@
     "declared": "optional"
   },
   "runtime:window.set_listener:arity": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "engine binding takes 1..1: luaL_checkany(L, 1) raises on an omitted argument; nil is passed explicitly to remove the listener",
     "annotated": "0..1",
     "declared": "1..1"
   }
