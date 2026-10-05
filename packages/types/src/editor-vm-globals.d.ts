@@ -156,7 +156,7 @@ declare global {
      *
      * @param output_path - output zip file path, resolved against project root if relative
      * @param opts - compression options
-     * @param entries - entries to compress, either a relative path or a list of entries
+     * @param entries - list of files and folders to compress
      * @example
      * ```ts
      * // Archive a file and a folder:
