@@ -127,15 +127,20 @@ function resolveType(text: string, ctx: ResolveContext, out: Resolution): void {
   if (ctx.seen.has(type)) return;
   ctx.seen.add(type);
   // An enum alias lists its constants as `` `gui.PIVOT_CENTER` ``, each declared
-  // as a `---@field` of its namespace's `defold_api.<ns>` class.
+  // as a `---@field` of its namespace's `defold_api.<ns>` class. A constant
+  // typed `|nil` may be absent at runtime, and passing an absent constant
+  // passes nil, which the enum's slot does not accept.
   const constant = /^`(.+)\.([A-Za-z_][A-Za-z0-9_]*)`$/.exec(type);
   if (constant) {
     const [, namespace, member] = constant;
     const field = ctx.model.classes
       .get(`${ctx.surface}:defold_api.${namespace}`)
       ?.fields.find((candidate) => candidate.name === member);
-    if (field) for (const fieldType of field.types) resolveType(fieldType, ctx, out);
-    else out.unmapped.push(type);
+    if (field) {
+      for (const fieldType of field.types) {
+        if (fieldType !== "nil") resolveType(fieldType, ctx, out);
+      }
+    } else out.unmapped.push(type);
     return;
   }
   const key = `${ctx.surface}:${type}`;
