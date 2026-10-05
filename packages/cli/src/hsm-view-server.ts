@@ -308,6 +308,16 @@ export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServe
     pending = setTimeout(reloadNow, RELOAD_DEBOUNCE_MS);
   };
 
+  // Windows reports a removed folder as an `EPERM` error on each watcher inside it, and an
+  // unhandled watcher error ends the process; the reload watches what is left instead.
+  const track = (watcher: FSWatcher): void => {
+    watcher.on("error", () => {
+      watcher.close();
+      scheduleReload();
+    });
+    watchers.push(watcher);
+  };
+
   // Editors that save by replacing the file leave the old watcher on a dead inode,
   // so every reload watches the whole file set afresh.
   function watchFiles(): void {
@@ -315,7 +325,7 @@ export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServe
     const missing: string[] = [];
     for (const file of session.index().files) {
       try {
-        watchers.push(watchPath(file.path, scheduleReload));
+        track(watchPath(file.path, scheduleReload));
       } catch {
         // A file removed since the last load is watched through its nearest existing folder
         // until it comes back.
@@ -341,7 +351,7 @@ export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServe
     }
     for (const [dir, names] of waiting) {
       try {
-        watchers.push(
+        track(
           watchPath(dir, (_event, name) => {
             if (name === null || names.has(name)) {
               scheduleReload();
