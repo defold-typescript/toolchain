@@ -34,6 +34,17 @@ export interface StateRuleIds {
 
 export type MachineRuleIds = Readonly<Record<string, StateRuleIds>>;
 
+export type RuleKey =
+  | [kind: "on", event: string, index: number]
+  | [kind: "after", delay: string]
+  | [kind: "always", index: number]
+  | [kind: "update"];
+
+/** The JSON text of a tuple, so no state path or event type can make two rules share an id. */
+export function ruleId(statePath: string, ...key: RuleKey): string {
+  return JSON.stringify([statePath, ...key]);
+}
+
 function childPath(parent: string, name: string): string {
   return `${parent}/${name}`;
 }
@@ -47,21 +58,21 @@ export function ruleIds(config: unknown): MachineRuleIds {
   const visit = (state: StateConfig, statePath: string): void => {
     const on: Record<string, readonly string[]> = {};
     for (const [event, spec] of Object.entries(state.on ?? {})) {
-      on[event] = list(spec).map((_, index) => `${statePath}|on|${event}|${index}`);
+      on[event] = list(spec).map((_, index) => ruleId(statePath, "on", event, index));
     }
     const after: Record<string, readonly string[]> = {};
     for (const delay of Object.keys(state.after ?? {})) {
-      after[delay] = [`${statePath}|after|${delay}|0`];
+      after[delay] = [ruleId(statePath, "after", delay)];
     }
     const always =
       state.always === undefined
         ? []
-        : list(state.always).map((_, index) => `${statePath}|always|${index}`);
+        : list(state.always).map((_, index) => ruleId(statePath, "always", index));
     ids[statePath] = {
       on,
       after,
       always,
-      update: state.update === undefined ? undefined : `${statePath}|update`,
+      update: state.update === undefined ? undefined : ruleId(statePath, "update"),
     };
     for (const [name, child] of Object.entries(state.states ?? {})) {
       visit(child, childPath(statePath, name));
