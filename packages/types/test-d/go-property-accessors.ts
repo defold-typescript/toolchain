@@ -29,8 +29,9 @@ const _labelText: string = go.get<label.properties>()(url, "text");
 void _labelText;
 go.set<label.properties>()(url, "text", "Hello");
 
-// @ts-expect-error wrong value type for a known property
-go.set(url, "position", "not a vector");
+// @ts-expect-error wrong value type for a known property; a string is a text
+// property value the untyped fallback takes, so the wrong value is a plain table
+go.set(url, "position", { x: 1, y: 2 });
 
 // @ts-expect-error position is Vector3, not assignable to Quaternion
 const _wrong: Quaternion = go.get(url, "position");

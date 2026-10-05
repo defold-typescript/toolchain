@@ -28,6 +28,14 @@
               "name": "set_mass_data",
               "param": "data",
               "type": "b2MassData"
+            },
+            {
+              "name": "get_transform",
+              "returns": "b2Transform"
+            },
+            {
+              "name": "get_mass_data",
+              "returns": "b2MassData"
             }
           ]
         },
@@ -411,6 +419,14 @@
               "name": "set_mass_data",
               "param": "data",
               "type": "b2MassData"
+            },
+            {
+              "name": "get_transform",
+              "returns": "b2Transform"
+            },
+            {
+              "name": "get_mass_data",
+              "returns": "b2MassData"
             }
           ]
         },
@@ -763,6 +779,14 @@
               "name": "set_mass_data",
               "param": "data",
               "type": "b2MassData"
+            },
+            {
+              "name": "get_transform",
+              "returns": "b2Transform"
+            },
+            {
+              "name": "get_mass_data",
+              "returns": "b2MassData"
             }
           ]
         },
