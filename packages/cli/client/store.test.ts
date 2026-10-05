@@ -480,3 +480,134 @@ describe("play loop", () => {
     expect(routes(viewer)).toEqual(["/api/update", "/api/update"]);
   });
 });
+
+const PAIR = `import { defineMachine } from "@defold-typescript/types/hsm";
+export const guard = defineMachine("guard")({
+  initial: "/patrol",
+  states: {
+    patrol: {
+      initial: "/patrol/walk",
+      on: { SEE: "/chase" },
+      states: { walk: {}, look: {} },
+    },
+    chase: { on: { LOST: "/patrol" } },
+  },
+});
+export const dog = defineMachine("dog")({
+  initial: "/sit",
+  states: { sit: { on: { GO: "/run" } }, run: {} },
+});
+`;
+
+describe("live attach", () => {
+  const enemy = { label: "enemy", leaves: ["/patrol/walk"], stopped: false };
+  const enemy2 = { label: "enemy#2", leaves: ["/chase"], stopped: false };
+
+  const attached = async (): Promise<TestViewer> => {
+    writeFileSync(path.join(dir, "pair.ts"), PAIR);
+    const viewer = await startViewer(path.join(dir, "pair.ts"), "{}");
+    await viewer.store.getState().receiveLive({ instances: [enemy, enemy2] });
+    viewer.store.getState().attach("enemy#2");
+    return viewer;
+  };
+
+  const tintedIn = (viewer: TestViewer): string[] =>
+    [...viewer.store.getState().highlight.tinted].sort();
+
+  test("lists the reported instances and tints the picked one's leaves", async () => {
+    const viewer = await attached();
+    const { live } = viewer.store.getState();
+    expect(live.instances.map((instance) => instance.label)).toEqual(["enemy", "enemy#2"]);
+    expect(live.attached).toBe("enemy#2");
+    expect(tintedIn(viewer)).toEqual([stateSpanId("/chase")]);
+    expect(viewer.store.getState().snapshot?.picked).toBe("guard");
+    expect(viewer.store.getState().clickable).toEqual([]);
+  });
+
+  test("follows later messages and keeps the simulation from posting or repainting", async () => {
+    const viewer = await attached();
+    await viewer.store.getState().receiveLive({
+      instances: [enemy, { ...enemy2, leaves: ["/patrol/look"] }],
+      move: { label: "enemy#2", from: "/chase", to: "/patrol/look", reason: "LOST" },
+    });
+    expect(tintedIn(viewer)).toEqual([stateSpanId("/patrol"), stateSpanId("/patrol/look")]);
+    const last = viewer.store.getState().log.lines.at(-1)?.entry;
+    expect(last).toMatchObject({
+      kind: "transition",
+      from: "/chase",
+      to: "/patrol/look",
+      cause: "event",
+      event: { type: "LOST" },
+    });
+
+    await viewer.store.getState().receiveLive({
+      instances: [
+        { ...enemy, leaves: ["/chase"] },
+        { ...enemy2, leaves: ["/patrol/look"] },
+      ],
+      move: { label: "enemy", from: "/patrol/walk", to: "/chase", reason: "SEE" },
+    });
+    expect(tintedIn(viewer)).toEqual([stateSpanId("/patrol"), stateSpanId("/patrol/look")]);
+    expect(viewer.store.getState().log.lines.at(-1)?.entry).toBe(last as never);
+
+    const state = viewer.store.getState();
+    state.setPlaying(true);
+    await state.step();
+    await state.start();
+    await state.send("SEE");
+    await state.edit(["x"], 1);
+    expect(viewer.requests).toEqual([]);
+    expect(viewer.store.getState().playing).toBe(false);
+
+    state.receive(viewer.session.send({ type: "SEE" }));
+    expect(tintedIn(viewer)).toEqual([stateSpanId("/patrol"), stateSpanId("/patrol/look")]);
+  });
+
+  test("names a leaf the picked machine lacks in the banner and keeps the known ones tinted", async () => {
+    const viewer = await attached();
+    await viewer.store.getState().receiveLive({
+      instances: [enemy, { ...enemy2, leaves: ["/flee", "/chase"] }],
+    });
+    const { banner } = viewer.store.getState().live;
+    expect(banner).toContain("/flee");
+    expect(banner).toContain("guard");
+    expect(tintedIn(viewer)).toEqual([stateSpanId("/chase")]);
+
+    await viewer.store.getState().receiveLive({ instances: [enemy, enemy2] });
+    expect(viewer.store.getState().live.banner).toBeUndefined();
+  });
+
+  test("detach restores the simulation's current state and controls", async () => {
+    const viewer = await attached();
+    viewer.session.send({ type: "SEE" });
+    viewer.session.send({ type: "LOST" });
+    await viewer.store.getState().detach();
+    const state = viewer.store.getState();
+    expect(state.live.attached).toBeUndefined();
+    expect(tintedIn(viewer)).toEqual([stateSpanId("/patrol"), stateSpanId("/patrol/walk")]);
+    expect(state.clickable.length).toBeGreaterThan(0);
+
+    await state.send("SEE");
+    expect(viewer.requests.map((request) => request.route)).toEqual(["/api/send"]);
+    expect(tintedIn(viewer)).toEqual([stateSpanId("/chase")]);
+  });
+
+  test("picking another machine while attached detaches first", async () => {
+    const viewer = await attached();
+    await viewer.store.getState().pick("dog");
+    const state = viewer.store.getState();
+    expect(state.live.attached).toBeUndefined();
+    expect(state.snapshot?.picked).toBe("dog");
+    expect(viewer.requests.map((request) => request.route)).toEqual(["/api/pick"]);
+  });
+
+  test("detaches with a log line when the attached label is no longer reported", async () => {
+    const viewer = await attached();
+    await viewer.store.getState().receiveLive({ instances: [enemy] });
+    const state = viewer.store.getState();
+    expect(state.live.attached).toBeUndefined();
+    expect(state.live.instances.map((instance) => instance.label)).toEqual(["enemy"]);
+    expect(JSON.stringify(state.log.lines.at(-1)?.entry)).toContain("enemy#2");
+    expect(tintedIn(viewer)).toEqual([stateSpanId("/patrol"), stateSpanId("/patrol/walk")]);
+  });
+});

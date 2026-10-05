@@ -3,7 +3,7 @@ toc-title: hsm-view
 ---
 # hsm-view
 
-`hsm-view` opens a [state machine](./state-machines.md) file in your browser and runs it there, `when` checks, `run` code and context included. You see the source exactly as you wrote it, with the active states tinted, and you drive the machine by sending events and stepping time. No game and no Defold editor are involved.
+`hsm-view` opens a [state machine](./state-machines.md) file in your browser and runs it there, `when` checks, `run` code and context included. You see the source exactly as you wrote it, with the active states tinted, and you drive the machine by sending events and stepping time. No game and no Defold editor are needed, though the page can also [attach to a running game](#attach-to-a-running-game).
 
 ```sh
 bunx @defold-typescript/cli hsm-view src/player-machine.ts
@@ -66,6 +66,18 @@ Editing any loaded file reloads the page without restarting the command. The fil
 - An **unkeyed** machine restarts from its `initial` with the last starting ctx, and the log says why.
 
 A reload that fails, such as a syntax error, shows its error in a banner. The page keeps the last source and machine that loaded until a reload succeeds. When the command stops, the page shows "disconnected".
+
+## Attach to a running game
+
+The page can follow a running game instead of the simulation, tinting the states of one machine instance as the game moves it:
+
+1. Run `hsm-view` from your Defold project folder, the one the editor has open. It reads the editor's console, so only a game launched from that editor (Project > Build) is seen. An editor opened or a game launched after the page is fine.
+2. In the game, call [`inspect(instance, label)`](./state-machines.md#debug-a-machine) on each instance you want to follow. Each label shows up in the bar's live dropdown; a repeated label is listed with its ordinal (`enemy#2`), as the game draws it, and a stopped instance is marked `(stopped)`.
+3. Pick the machine the instance runs in the machine dropdown, then pick its label in the live dropdown. The page does not guess which machine a label belongs to.
+
+While attached, the active states are tinted from the leaves the game reports, each entry glows, and each move is logged with its event or cause. Start, the event buttons, Play and Step are off, and the ctx panel reads "ctx is not sent by the game". Choosing `live: off` or another machine detaches and shows the simulation where it was. When the game restarts, the list empties and an attached page detaches with a log line.
+
+A banner names any reported state the picked machine does not define: either a different machine is picked, or the game runs source other than the files on disk. The states it does define stay tinted. A release build reports nothing, as `inspect` does nothing there.
 
 ## Errors
 
