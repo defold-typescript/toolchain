@@ -1496,8 +1496,26 @@ describe("retired keys", () => {
           // @ts-expect-error invoke is renamed to task
           states: { a: { enter: () => {}, invoke: () => {} } },
         }),
+      () =>
+        define({
+          initial: "/a",
+          // @ts-expect-error guard on an always entry is renamed to when
+          states: { a: { always: { to: "/b", guard: () => false } }, b: {} },
+        }),
+      () =>
+        define({
+          initial: "/a",
+          // @ts-expect-error target on an always entry is renamed to to
+          states: { a: { always: { to: "/b", target: "/b" } }, b: {} },
+        }),
+      () =>
+        define({
+          initial: "/a",
+          // @ts-expect-error guard in an always list is renamed to when
+          states: { a: { always: [{ to: "/b" }, { to: "/b", guard: () => false }] }, b: {} },
+        }),
     ];
-    expect(retired.length).toBe(5);
+    expect(retired.length).toBe(8);
   });
 });
 
