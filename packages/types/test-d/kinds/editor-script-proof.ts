@@ -116,6 +116,10 @@ http.server.route("/json", "POST", "json", (request) => void request);
 http.server.route("/files/{*file}");
 // @ts-expect-error the handler is the last argument, never the method
 http.server.route("/files/{*file}", (request) => void request, "json");
+// A table `openapi` is told apart from a string `method` by type, so it may sit
+// at slot 2 or 3.
+http.server.route("/api", { summary: "x" }, (request) => void request);
+http.server.route("/api", "POST", { summary: "x" }, (request) => void request);
 void _response;
 void _serverUrl;
 void _serverPort;
@@ -140,6 +144,8 @@ zip.pack("build.zip", { method: zip.METHOD.STORED }, ["build", "resources"]);
 zip.pack("build.zip", [{ 1: "assets", method: zip.METHOD.STORED }, "build/wasm-web"]);
 // @ts-expect-error an archive with no entries is not an archive
 zip.pack("build.zip");
+// @ts-expect-error entries are a list
+zip.pack("build.zip", "game.project");
 
 // `unpack`'s second slot is a target path, an options table or a paths table;
 // the two table forms are told apart by shape.

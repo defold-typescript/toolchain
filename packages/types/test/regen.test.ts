@@ -493,6 +493,42 @@ describe("manifest overload skips", () => {
       }),
     ).toThrow(/demo\.attach.*shape.*b2MassData/);
   });
+
+  const returning = (type: string) => ({
+    type: "FUNCTION",
+    name: "demo.get_transform",
+    brief: "",
+    description: "",
+    parameters: [{ name: "body", doc: "", types: ["b2Body"] }],
+    returnvalues: [{ name: "transform", doc: "", types: [type] }],
+  });
+  const returnsDoc = {
+    info: { namespace: "demo", brief: "d", description: "d" },
+    elements: [returning("table"), returning("b2Transform")],
+  };
+
+  test("a returns rule drops only the overload returning that upstream type", () => {
+    const { contents, dropped } = generateModuleDeclaration({
+      namespace: "demo",
+      outFile: "demo.d.ts",
+      doc: returnsDoc,
+      skipOverloads: [{ name: "get_transform", returns: "b2Transform" }],
+    });
+    expect(dropped).toEqual([]);
+    expect(contents).toMatch(/function get_transform\(body: Opaque<"b2Body">\): /);
+    expect(contents).not.toContain('Opaque<"b2Transform">');
+  });
+
+  test("a returns rule matching no overload throws naming it", () => {
+    expect(() =>
+      generateModuleDeclaration({
+        namespace: "demo",
+        outFile: "demo.d.ts",
+        doc: returnsDoc,
+        skipOverloads: [{ name: "get_transform", returns: "b2MassData" }],
+      }),
+    ).toThrow(/demo\.get_transform.*b2MassData/);
+  });
 });
 
 describe("editor namespace emit", () => {

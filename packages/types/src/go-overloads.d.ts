@@ -38,6 +38,7 @@ declare global {
      * - key hash or string name of internal property
      * - keys array of hashes or strings identifying internal component resources (e.g. a particle fx emitter, see examples below)
      * @returns the value of the specified property
+     * A `string` value is a text property, which needs Defold 1.13.2 or later.
      * @example
      * ```ts
      * const position = go.get("#sprite", "position");
@@ -60,13 +61,14 @@ declare global {
       url: SceneAddress | Hash | Url,
       property: string | Hash,
       options?: GoPropertyOptions,
-    ): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion;
+    ): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion;
     /**
      * sets a named property of the specified game object or component, or a material constant
      *
      * @param url - url of the game object or component having the property
      * @param property - id of the property to set
      * @param value - the value to set, or an array of vector4 to set a material property array
+     * A `string` value is a text property, which needs Defold 1.13.2 or later.
      * @param options - optional options table
      * - index integer **⚠️ 1-based index into an array property; passed to Defold unchanged.**
      * - key hash or string name of internal property
@@ -95,7 +97,7 @@ declare global {
     function set(
       url: SceneAddress | Hash | Url,
       property: string | Hash,
-      value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[],
+      value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[],
       options?: GoPropertyOptions,
     ): void;
     /**
