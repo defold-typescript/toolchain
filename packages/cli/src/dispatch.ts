@@ -37,6 +37,7 @@ import {
 } from "./engine-launch";
 import type { DownloadExtensionArchive, ReadExtensionZip } from "./extension-archive";
 import { COMMAND_NAMES, renderHelp, renderHelpJson } from "./help";
+import type { HsmViewServer, ServeHsmViewOptions } from "./hsm-view-server";
 import { runInit } from "./init";
 import { runInitAgents } from "./init-agents";
 import { installHint } from "./install-reminder";
@@ -147,6 +148,12 @@ export interface DispatchInternals {
   // The environment the color policy reads (`NO_COLOR`, `TERM`). Tests pass a
   // fixed one so the host shell's variables never decide an assertion.
   readonly env?: Readonly<Record<string, string | undefined>>;
+  // `hsm-view` seams: `serve` stands in for the network listen so a bind failure
+  // and the started lifecycle run offline, and `stopped` replaces the SIGINT wait.
+  readonly hsmView?: {
+    readonly serve?: (options: ServeHsmViewOptions) => Promise<HsmViewServer>;
+    readonly stopped?: Promise<void>;
+  };
 }
 
 // Derived from the help registry so a verb can never ship with a usage line
@@ -542,6 +549,10 @@ function dispatchCommand(
         json,
         io,
         writeError,
+        ...(internals?.hsmView?.serve !== undefined ? { serve: internals.hsmView.serve } : {}),
+        ...(internals?.hsmView?.stopped !== undefined
+          ? { stopped: internals.hsmView.stopped }
+          : {}),
       });
     })();
   }

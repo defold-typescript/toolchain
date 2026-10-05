@@ -163,22 +163,8 @@ export function readTarEntry(tar: Uint8Array, name: string): string | null {
   return null;
 }
 
-function packedManifest(worktree: string, pkg: string, dest: string): unknown {
-  const pkgDir = path.join(worktree, "packages", pkg);
-  const pack = run(["bun", "pm", "pack", "--destination", dest], { cwd: pkgDir });
-  if (pack.code !== 0) {
-    throw new Error(`pack failed for ${pkg}:\n${pack.output}`);
-  }
-  const tgz = pack.output
-    .split("\n")
-    .map((l) => l.trim())
-    .find((l) => l.endsWith(".tgz"));
-  if (!tgz) {
-    throw new Error(`could not locate packed tarball for ${pkg}:\n${pack.output}`);
-  }
-  const tarballPath = path.isAbsolute(tgz) ? tgz : path.join(pkgDir, tgz);
-  const tar = Bun.gunzipSync(new Uint8Array(readFileSync(tarballPath)));
-  const manifest = readTarEntry(tar, "package/package.json");
+function packedManifest(worktree: string, pkg: (typeof PACKAGES)[number], dest: string): unknown {
+  const manifest = readTarEntry(packPackage(pkg, dest, worktree), "package/package.json");
   if (manifest === null) {
     throw new Error(`could not read manifest from ${pkg} tarball: package/package.json not found`);
   }
@@ -197,22 +183,25 @@ function packedManifest(worktree: string, pkg: string, dest: string): unknown {
 // even load. Everything below runs against a real `bun pm pack` output with no
 // repo tree behind it, which is the only place that failure is visible.
 
-export const TYPES_PACKAGE = "types";
 const TARBALL_PREFIX = "package/";
 
-// `bun pm pack` the types package and return the gunzipped tar bytes.
-export function packTypes(dest: string, repoRoot: string = REPO_ROOT): Uint8Array {
-  const pkgDir = path.join(repoRoot, "packages", TYPES_PACKAGE);
+// `bun pm pack` one published package and return the gunzipped tar bytes.
+export function packPackage(
+  pkg: (typeof PACKAGES)[number],
+  dest: string,
+  repoRoot: string = REPO_ROOT,
+): Uint8Array {
+  const pkgDir = path.join(repoRoot, "packages", pkg);
   const pack = run(["bun", "pm", "pack", "--destination", dest], { cwd: pkgDir });
   if (pack.code !== 0) {
-    throw new Error(`pack failed for ${TYPES_PACKAGE}:\n${pack.output}`);
+    throw new Error(`pack failed for ${pkg}:\n${pack.output}`);
   }
   const tgz = pack.output
     .split("\n")
     .map((l) => l.trim())
     .find((l) => l.endsWith(".tgz"));
   if (!tgz) {
-    throw new Error(`could not locate packed tarball for ${TYPES_PACKAGE}:\n${pack.output}`);
+    throw new Error(`could not locate packed tarball for ${pkg}:\n${pack.output}`);
   }
   const tarballPath = path.isAbsolute(tgz) ? tgz : path.join(pkgDir, tgz);
   return Bun.gunzipSync(new Uint8Array(readFileSync(tarballPath)));
@@ -302,6 +291,31 @@ export function unpackagedLoadTimeInputs(tar: Uint8Array): string[] {
   return missing;
 }
 
+const SCANNED_LOADERS: Readonly<Record<string, "ts" | "js">> = {
+  ".ts": "ts",
+  ".js": "js",
+  ".mjs": "js",
+};
+
+// Package names one packed entry value-imports. A built `dist/bin.js` keeps its
+// externals as bare imports and starts with a shebang, which `scanImports`
+// rejects, so the first `#!` line is blanked before scanning.
+export function entryBareDependencies(entry: string, source: string): string[] {
+  if (entry.endsWith(".d.ts")) return [];
+  const loader = SCANNED_LOADERS[path.posix.extname(entry)];
+  if (loader === undefined) return [];
+  const body = source.startsWith("#!") ? source.replace(/^#![^\n]*/, "") : source;
+  const names: string[] = [];
+  for (const imported of new Bun.Transpiler({ loader }).scanImports(body)) {
+    if (imported.kind !== "import-statement") continue;
+    const spec = imported.path;
+    if (spec.startsWith("./") || spec.startsWith("../") || spec.startsWith("node:")) continue;
+    const parts = spec.split("/");
+    names.push(spec.startsWith("@") ? parts.slice(0, 2).join("/") : (parts[0] as string));
+  }
+  return names;
+}
+
 // Bare specifiers the packed executable graph loads, mapped to the package name
 // a consumer's installer would have to provide.
 export function packedBareDependencies(tar: Uint8Array): Set<string> {
@@ -310,11 +324,8 @@ export function packedBareDependencies(tar: Uint8Array): Set<string> {
   for (const entry of iterateTarEntries(tar)) {
     if (!entry.name.startsWith(TARBALL_PREFIX)) continue;
     const rel = entry.name.slice(TARBALL_PREFIX.length);
-    if (!rel.endsWith(".ts") || rel.endsWith(".d.ts")) continue;
-    for (const spec of allLoadTimeSpecifiers(decoder.decode(entry.data))) {
-      if (spec.startsWith("./") || spec.startsWith("../") || spec.startsWith("node:")) continue;
-      const parts = spec.split("/");
-      bare.add(spec.startsWith("@") ? parts.slice(0, 2).join("/") : (parts[0] as string));
+    for (const name of entryBareDependencies(rel, decoder.decode(entry.data))) {
+      bare.add(name);
     }
   }
   return bare;
@@ -542,7 +553,7 @@ export async function packedInstallProof(): Promise<Array<ProofVerdict & { check
   const dest = mkdtempSync(path.join(os.tmpdir(), "pack-proof-types-"));
   const install = mkdtempSync(path.join(os.tmpdir(), "pack-proof-install-"));
   try {
-    const tar = packTypes(dest);
+    const tar = packPackage("types", dest);
     extractPackage(tar, install);
     linkDependencies(install);
     const missingInputs = unpackagedLoadTimeInputs(tar);

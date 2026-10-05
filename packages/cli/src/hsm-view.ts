@@ -3,7 +3,7 @@ import * as path from "node:path";
 import { requireHsmSourceDir } from "@defold-typescript/transpiler";
 import { loadClientAssets } from "./hsm-view-client-assets";
 import type { ClientAssets } from "./hsm-view-page";
-import { serveHsmView } from "./hsm-view-server";
+import { type HsmViewServer, type ServeHsmViewOptions, serveHsmView } from "./hsm-view-server";
 import { createSession } from "./hsm-view-session";
 import { renderResult } from "./json-output";
 
@@ -19,6 +19,7 @@ export interface RunHsmViewOptions {
   /** Settles when the viewer should shut down; by default on SIGINT or SIGTERM. */
   readonly stopped?: Promise<void>;
   readonly client?: () => ClientAssets;
+  readonly serve?: (options: ServeHsmViewOptions) => Promise<HsmViewServer>;
 }
 
 function messageOf(thrown: unknown): string {
@@ -81,12 +82,17 @@ export async function runHsmView(options: RunHsmViewOptions): Promise<number> {
   }
   const machine = options.name ?? first;
 
-  const server = await serveHsmView({
-    session,
-    client,
-    port: 0,
-    title: path.basename(file),
-  });
+  let server: HsmViewServer;
+  try {
+    server = await (options.serve ?? serveHsmView)({
+      session,
+      client,
+      port: 0,
+      title: path.basename(file),
+    });
+  } catch (thrown) {
+    return fail(`could not start the viewer: ${messageOf(thrown)}`);
+  }
   if (json) {
     io.stdout.write(renderResult({ command: "hsm-view", machine, url: server.url }));
   } else {

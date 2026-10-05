@@ -28,6 +28,7 @@ import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { dispatch } from "./dispatch";
 import { EDITOR_PORT_FILE, EDITOR_TOKEN_FILE, type EditorTransport } from "./editor-attach";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
+import type { HsmViewServer, ServeHsmViewOptions } from "./hsm-view-server";
 import { EDITOR_ROOT_ENV } from "./installed-editor-version";
 import { MATERIALIZED_ROOT, surfaceDirName } from "./materialize";
 import {
@@ -8701,5 +8702,99 @@ export const lamp = defineMachine("lamp")({
       expect(err()).toBe("");
       expect(jsonError(out())).toContain(expected);
     }
+  });
+
+  const BIND_FAILURE = "listen EACCES: permission denied 127.0.0.1";
+
+  function refusingServe(): () => Promise<never> {
+    return () => Promise.reject(new Error(BIND_FAILURE));
+  }
+
+  test("a server that cannot start exits 1 with one line and no stack", async () => {
+    const lamp = writeMachine("lamp.ts", LAMP);
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["hsm-view", lamp], io, {
+      hsmView: { serve: refusingServe() },
+    });
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toBe(
+      `defold-typescript hsm-view: error: could not start the viewer: ${BIND_FAILURE}\n`,
+    );
+  });
+
+  test("with --json, a server that cannot start prints one hsm-view line", async () => {
+    const lamp = writeMachine("lamp.ts", LAMP);
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["hsm-view", lamp, "--json"], io, {
+      hsmView: { serve: refusingServe() },
+    });
+
+    expect(code).toBe(1);
+    expect(err()).toBe("");
+    expect(jsonError(out())).toContain("could not start the viewer");
+  });
+
+  function startingServe(): {
+    readonly serve: (options: ServeHsmViewOptions) => Promise<HsmViewServer>;
+    readonly calls: ServeHsmViewOptions[];
+    readonly closed: () => number;
+  } {
+    const calls: ServeHsmViewOptions[] = [];
+    let closes = 0;
+    return {
+      calls,
+      closed: () => closes,
+      serve: async (options) => {
+        calls.push(options);
+        return {
+          url: "http://127.0.0.1:4321",
+          close: async () => {
+            closes += 1;
+          },
+        };
+      },
+    };
+  }
+
+  test("a started server prints its URL, then closes once when stopped", async () => {
+    const lamp = writeMachine("lamp.ts", LAMP);
+    const server = startingServe();
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["hsm-view", lamp], io, {
+      hsmView: { serve: server.serve, stopped: Promise.resolve() },
+    });
+
+    expect(code).toBe(0);
+    expect(err()).toBe("");
+    expect(out()).toBe(`hsm-view: ${lamp} at http://127.0.0.1:4321 (Ctrl+C stops)\n`);
+    expect(server.closed()).toBe(1);
+    expect(server.calls).toHaveLength(1);
+    expect(server.calls[0]?.port).toBe(0);
+    expect(server.calls[0]?.title).toBe("lamp.ts");
+  });
+
+  test("with --json, a started server prints one hsm-view line with its URL", async () => {
+    const lamp = writeMachine("lamp.ts", LAMP);
+    const server = startingServe();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["hsm-view", lamp, "--json"], io, {
+      hsmView: { serve: server.serve, stopped: Promise.resolve() },
+    });
+
+    expect(code).toBe(0);
+    const lines = out().trim().split("\n");
+    expect(lines).toHaveLength(1);
+    expect(JSON.parse(lines[0] ?? "")).toMatchObject({
+      command: "hsm-view",
+      machine: "lamp",
+      url: "http://127.0.0.1:4321",
+    });
+    expect(server.closed()).toBe(1);
   });
 });
