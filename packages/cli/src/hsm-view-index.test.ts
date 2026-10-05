@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { requireHsmSourceDir } from "@defold-typescript/transpiler";
-import { machineIndex } from "./hsm-view-index";
+import { machineIndex, ruleId, ruleIds } from "./hsm-view-index";
 import { loadMachines, type SourceSpan } from "./hsm-view-load";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
@@ -87,18 +87,61 @@ export const m = defineMachine()({
     const index = machineIndex(loaded.machines[0]?.config, loaded.files);
 
     expect(spanText(loaded.files, index.onKeys["/a"]?.GO)).toBe("GO");
-    expect(index.rules["/a|on|BACK|0"]).toEqual(index.onKeys["/a"]?.BACK);
-    expect(spanText(loaded.files, index.rules["/a|on|GO|0"])).toContain('target: "/b"');
-    expect(spanText(loaded.files, index.rules["/a|on|GO|1"])).toBe('{ target: "/b" }');
-    expect(spanText(loaded.files, index.rules["/a|after|0.5|0"])).toBe("0.5");
-    expect(spanText(loaded.files, index.rules["/a|always|0"])).toContain("guard");
-    expect(spanText(loaded.files, index.rules["/a|always|1"])).toBe('{ target: "/b" }');
-    expect(spanText(loaded.files, index.rules["/a|update"])).toBe("update");
-    expect(index.ruleOnKeys["|on|A|on|B|0"]).toEqual({ statePath: "", event: "A|on|B" });
-    expect(index.ruleOnKeys["/a|on|GO|1"]).toEqual({ statePath: "/a", event: "GO" });
-    expect(index.ruleOnKeys).not.toHaveProperty(["/a|after|0.5|0"]);
-    expect(index.ruleOnKeys).not.toHaveProperty(["/a|always|0"]);
-    expect(index.ruleOnKeys).not.toHaveProperty(["/a|update"]);
+    expect(index.rules[ruleId("/a", "on", "BACK", 0)]).toEqual(index.onKeys["/a"]?.BACK);
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "on", "GO", 0)])).toContain(
+      'target: "/b"',
+    );
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "on", "GO", 1)])).toBe(
+      '{ target: "/b" }',
+    );
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "after", "0.5")])).toBe("0.5");
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "always", 0)])).toContain("guard");
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "always", 1)])).toBe('{ target: "/b" }');
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "update")])).toBe("update");
+    expect(index.ruleOnKeys[ruleId("", "on", "A|on|B", 0)]).toEqual({
+      statePath: "",
+      event: "A|on|B",
+    });
+    expect(index.ruleOnKeys[ruleId("/a", "on", "GO", 1)]).toEqual({ statePath: "/a", event: "GO" });
+    expect(index.ruleOnKeys).not.toHaveProperty([ruleId("/a", "after", "0.5")]);
+    expect(index.ruleOnKeys).not.toHaveProperty([ruleId("/a", "always", 0)]);
+    expect(index.ruleOnKeys).not.toHaveProperty([ruleId("/a", "update")]);
+  });
+
+  test("gives rules of colliding state names and event types distinct ids", () => {
+    const entry = write(
+      "main.ts",
+      `import { defineMachine } from "@defold-typescript/types/hsm";
+export const m = defineMachine()({
+  initial: "/a",
+  states: {
+    a: { on: { "b|on|c": "/a|on|b", "on|b|c": "/a|on|b" } },
+    "a|on|b": { on: { c: "/a" } },
+  },
+});
+`,
+    );
+    const loaded = load(entry);
+    const config = loaded.machines[0]?.config;
+    const index = machineIndex(config, loaded.files);
+    const first = ruleId("/a", "on", "b|on|c", 0);
+    const second = ruleId("/a|on|b", "on", "c", 0);
+
+    expect(first).not.toBe(second);
+    expect(index.ruleOnKeys[first]).toEqual({ statePath: "/a", event: "b|on|c" });
+    expect(index.ruleOnKeys[second]).toEqual({ statePath: "/a|on|b", event: "c" });
+    expect(index.rules[first]).toEqual(index.onKeys["/a"]?.["b|on|c"]);
+    expect(index.rules[second]).toEqual(index.onKeys["/a|on|b"]?.c);
+    expect(index.rules[first]).not.toEqual(index.rules[second]);
+
+    const ids = Object.values(ruleIds(config)).flatMap((state) => [
+      ...Object.values(state.on).flat(),
+      ...Object.values(state.after).flat(),
+      ...state.always,
+      ...(state.update === undefined ? [] : [state.update]),
+    ]);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.length).toBe(Object.keys(index.ruleOnKeys).length);
   });
 
   test("uses imported and spread source locations and omits states with no key location", () => {

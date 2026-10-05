@@ -11,6 +11,7 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import { requireHsmSourceDir } from "@defold-typescript/transpiler";
+import { ruleId } from "./hsm-view-index";
 import {
   createHsmViewApp,
   type HsmViewIndex,
@@ -123,7 +124,7 @@ describe("createHsmViewApp", () => {
     });
     expect(await json("/api/send", { event: { type: "TOGGLE" } })).toMatchObject({
       path: "/on",
-      fired: ["/off|on|TOGGLE|0"],
+      fired: [ruleId("/off", "on", "TOGGLE", 0)],
     });
     expect(await json("/api/update", { dt: 0.5 })).toMatchObject({ t: 0.5, path: "/on" });
     expect(await json("/api/edit", { path: ["n"], value: 2 })).toMatchObject({

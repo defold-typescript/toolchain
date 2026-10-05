@@ -7,7 +7,8 @@ export type SpanId = string;
 
 export const stateSpanId = (statePath: string): SpanId => `state:${statePath}`;
 export const ruleSpanId = (ruleId: string): SpanId => `rule:${ruleId}`;
-export const onKeySpanId = (statePath: string, event: string): SpanId => `on:${statePath}|${event}`;
+export const onKeySpanId = (statePath: string, event: string): SpanId =>
+  `on:${JSON.stringify([statePath, event])}`;
 
 export interface Highlight {
   readonly tinted: ReadonlySet<SpanId>;
