@@ -104,31 +104,31 @@ describe("stampVersion", () => {
   });
 });
 
-describe("readTarEntry", () => {
-  function buildTar(entries: Array<{ name: string; content: string }>): Uint8Array {
-    const enc = new TextEncoder();
-    const blocks: Uint8Array[] = [];
-    for (const { name, content } of entries) {
-      const header = new Uint8Array(512);
-      header.set(enc.encode(name), 0);
-      const bytes = enc.encode(content);
-      header.set(enc.encode(bytes.length.toString(8).padStart(11, "0")), 124);
-      blocks.push(header);
-      const padded = new Uint8Array(Math.ceil(bytes.length / 512) * 512);
-      padded.set(bytes, 0);
-      blocks.push(padded);
-    }
-    blocks.push(new Uint8Array(1024)); // two trailing zero blocks
-    const total = blocks.reduce((n, b) => n + b.length, 0);
-    const out = new Uint8Array(total);
-    let off = 0;
-    for (const b of blocks) {
-      out.set(b, off);
-      off += b.length;
-    }
-    return out;
+function buildTar(entries: Array<{ name: string; content: string }>): Uint8Array {
+  const enc = new TextEncoder();
+  const blocks: Uint8Array[] = [];
+  for (const { name, content } of entries) {
+    const header = new Uint8Array(512);
+    header.set(enc.encode(name), 0);
+    const bytes = enc.encode(content);
+    header.set(enc.encode(bytes.length.toString(8).padStart(11, "0")), 124);
+    blocks.push(header);
+    const padded = new Uint8Array(Math.ceil(bytes.length / 512) * 512);
+    padded.set(bytes, 0);
+    blocks.push(padded);
   }
+  blocks.push(new Uint8Array(1024)); // two trailing zero blocks
+  const total = blocks.reduce((n, b) => n + b.length, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const b of blocks) {
+    out.set(b, off);
+    off += b.length;
+  }
+  return out;
+}
 
+describe("readTarEntry", () => {
   test("returns the exact text of a named entry", () => {
     const tar = buildTar([{ name: "package/package.json", content: '{"version":"9.9.9"}' }]);
     expect(readTarEntry(tar, "package/package.json")).toBe('{"version":"9.9.9"}');
@@ -311,6 +311,44 @@ describe("entryBareDependencies", () => {
 
   test("skips a declaration file", () => {
     expect(entryBareDependencies("dist/index.d.ts", 'import ts from "typescript";\n')).toEqual([]);
+  });
+
+  test("reads literal bare require() calls out of a CommonJS entry", () => {
+    const source = [
+      "#!/usr/bin/env node",
+      'const leftPad = require("left-pad");',
+      'const sub = require("@scope/pkg/sub");',
+      'const fs = require("node:fs");',
+      'module.exports = require("./index.js");',
+      'require("../shared.cjs");',
+    ].join("\n");
+    expect(entryBareDependencies("dist/index.cjs", source)).toEqual(["left-pad", "@scope/pkg"]);
+  });
+});
+
+describe("undeclaredPackedDependencies", () => {
+  const entry = {
+    name: "package/dist/index.cjs",
+    content: 'module.exports = require("left-pad"); require("./index.js");',
+  };
+
+  test("reports a package a CommonJS entry requires without the manifest declaring it", () => {
+    const tar = buildTar([
+      { name: "package/package.json", content: '{ "name": "@x/plugin" }' },
+      entry,
+    ]);
+    expect(undeclaredPackedDependencies(tar)).toEqual(["left-pad"]);
+  });
+
+  test("accepts the same require once the manifest declares it", () => {
+    const tar = buildTar([
+      {
+        name: "package/package.json",
+        content: '{ "name": "@x/plugin", "dependencies": { "left-pad": "1.0.0" } }',
+      },
+      entry,
+    ]);
+    expect(undeclaredPackedDependencies(tar)).toEqual([]);
   });
 });
 
