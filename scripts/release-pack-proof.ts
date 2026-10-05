@@ -27,6 +27,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from "node:fs";
+import { isBuiltin } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
 
@@ -301,7 +302,8 @@ const SCANNED_LOADERS: Readonly<Record<string, "ts" | "js">> = {
 // Package names one packed entry value-imports; a `.cjs` entry also counts its
 // literal `require()` calls. A built `dist/bin.js` keeps its externals as bare
 // imports and starts with a shebang, which `scanImports` rejects, so the first
-// `#!` line is blanked before scanning.
+// `#!` line is blanked before scanning. Node built-ins, with or without `node:`,
+// are not package dependencies.
 export function entryBareDependencies(entry: string, source: string): string[] {
   if (entry.endsWith(".d.ts")) return [];
   const ext = path.posix.extname(entry);
@@ -314,7 +316,8 @@ export function entryBareDependencies(entry: string, source: string): string[] {
       imported.kind === "import-statement" || (ext === ".cjs" && imported.kind === "require-call");
     if (!counted) continue;
     const spec = imported.path;
-    if (spec.startsWith("./") || spec.startsWith("../") || spec.startsWith("node:")) continue;
+    if (spec.startsWith("./") || spec.startsWith("../")) continue;
+    if (spec.startsWith("node:") || isBuiltin(spec)) continue;
     const parts = spec.split("/");
     names.push(spec.startsWith("@") ? parts.slice(0, 2).join("/") : (parts[0] as string));
   }
