@@ -5,7 +5,7 @@ import type { Line, TokenKind } from "../src/hsm-view-tokens";
 import { Glow } from "./glow";
 import { type ClickableKey, type LineSpan, onKeySpanId, type SpanId } from "./highlight";
 import type { SearchMatch } from "./search";
-import { type ScrollTarget, useViewer, type ViewerStore } from "./store";
+import { dimGlowKey, type ScrollTarget, useViewer, type ViewerStore } from "./store";
 
 /** Every code row is one fixed-height line, so the lists never measure. */
 export const LINE_HEIGHT = 20;
@@ -82,6 +82,7 @@ export interface CodeData {
   readonly lineSpans: readonly (readonly (readonly LineSpan[])[])[];
   readonly tinted: ReadonlySet<SpanId>;
   readonly stamps: Readonly<Record<SpanId, number>>;
+  readonly dimStamps: Readonly<Record<SpanId, number>>;
   readonly glowSince: Readonly<Record<string, number>>;
   readonly clickable: ReadonlyMap<SpanId, ClickableKey>;
   /** Search marks by `file:line`, empty while the search box is closed. */
@@ -130,6 +131,7 @@ export function useCodeData(store: ViewerStore): CodeData {
     lineSpans,
     tinted: highlight.tinted,
     stamps: highlight.stamps,
+    dimStamps: highlight.dimStamps,
     glowSince,
     clickable,
     marks,
@@ -156,6 +158,15 @@ function SegmentView({ segment, data }: { segment: Segment; data: CodeData }) {
     >
       {segment.ids.map((id) => (
         <Glow key={id} stamp={data.stamps[id] ?? 0} since={data.glowSince[id]} now={data.now} />
+      ))}
+      {segment.ids.map((id) => (
+        <Glow
+          key={dimGlowKey(id)}
+          stamp={data.dimStamps[id] ?? 0}
+          since={data.glowSince[dimGlowKey(id)]}
+          now={data.now}
+          dim
+        />
       ))}
       {segment.text}
     </span>
