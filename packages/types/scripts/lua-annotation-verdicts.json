@@ -534,12 +534,14 @@
     "declared": "boolean|hash|string|table|url"
   },
   "runtime:go.final:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
     "annotated": "absent",
     "declared": "declared"
   },
   "runtime:go.fixed_update:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
     "annotated": "absent",
     "declared": "declared"
   },
@@ -550,27 +552,32 @@
     "declared": "boolean|hash|number|quat|string|url|vector3|vector4"
   },
   "runtime:go.init:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
     "annotated": "absent",
     "declared": "declared"
   },
   "runtime:go.late_update:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
     "annotated": "absent",
     "declared": "declared"
   },
   "runtime:go.on_input:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
     "annotated": "absent",
     "declared": "declared"
   },
   "runtime:go.on_message:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
     "annotated": "absent",
     "declared": "declared"
   },
   "runtime:go.on_reload:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
     "annotated": "absent",
     "declared": "declared"
   },
@@ -593,7 +600,8 @@
     "declared": "boolean|hash|number|quat|string|table|url|vector3|vector4"
   },
   "runtime:go.update:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
     "annotated": "absent",
     "declared": "declared"
   },
@@ -634,7 +642,8 @@
     "declared": "hash|string"
   },
   "runtime:gui.final:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
     "annotated": "absent",
     "declared": "declared"
   },
@@ -645,7 +654,8 @@
     "declared": "hash|string"
   },
   "runtime:gui.init:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
     "annotated": "absent",
     "declared": "declared"
   },
@@ -674,17 +684,20 @@
     "declared": "optional"
   },
   "runtime:gui.on_input:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
     "annotated": "absent",
     "declared": "declared"
   },
   "runtime:gui.on_message:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
     "annotated": "absent",
     "declared": "declared"
   },
   "runtime:gui.on_reload:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
     "annotated": "absent",
     "declared": "declared"
   },
@@ -743,7 +756,8 @@
     "declared": "hash|string"
   },
   "runtime:gui.update:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
     "annotated": "absent",
     "declared": "declared"
   },
@@ -1120,12 +1134,14 @@
     "declared": "optional"
   },
   "runtime:sys.set_render_enable:missing-declaration": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "script_engine.cpp registers {\"set_render_enabled\", EngineSys_SetRenderEnabled}; the ref-doc and annotation name the unregistered set_render_enable, which FUNCTION_NAME_CORRECTIONS (api-doc.ts) renames in the declaration",
     "annotated": "annotated",
     "declared": "absent"
   },
   "runtime:sys.set_render_enabled:missing-annotation": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "script_engine.cpp registers {\"set_render_enabled\", EngineSys_SetRenderEnabled}; the ref-doc and annotation name the unregistered set_render_enable, which FUNCTION_NAME_CORRECTIONS (api-doc.ts) renames in the declaration",
     "annotated": "absent",
     "declared": "declared"
   },
