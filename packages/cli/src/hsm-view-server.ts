@@ -5,6 +5,7 @@ import { serve } from "@hono/node-server";
 import { type Context, Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import type { MachineIndex } from "./hsm-view-index";
+import { createLiveRegistry, type LiveMessage } from "./hsm-view-live";
 import { type ClientAssets, renderPage } from "./hsm-view-page";
 import type { HsmViewSession, Snapshot } from "./hsm-view-session";
 import { type Line, lineStarts, tokenizeLines } from "./hsm-view-tokens";
@@ -26,6 +27,8 @@ export interface ServeHsmViewOptions extends HsmViewAppOptions {
   readonly port: number;
   /** Opens every file and folder watcher; tests wrap it to force an ordering against the disk. */
   readonly watchPath?: WatchPath;
+  /** Yields the running editor's console lines until `signal` aborts; without it the live list stays empty. */
+  readonly follow?: (signal: AbortSignal) => AsyncIterable<string>;
 }
 
 export interface HsmViewServer {
@@ -58,11 +61,15 @@ const RELOAD_DEBOUNCE_MS = 100;
 
 class BadRequest extends Error {}
 
-type Listener = (message: ReloadMessage) => void;
+type HubMessage =
+  | { readonly event: "reload"; readonly data: ReloadMessage }
+  | { readonly event: "live"; readonly data: LiveMessage };
+
+type Listener = (message: HubMessage) => void;
 
 interface Hub {
   subscribe(listener: Listener): () => void;
-  broadcast(message: ReloadMessage): void;
+  broadcast(message: HubMessage): void;
   onClose(callback: () => void): () => void;
   close(): void;
 }
@@ -155,7 +162,7 @@ function reloadMessage(snapshot: Snapshot): ReloadMessage {
     : { ok: false, error: failure.message, snapshot };
 }
 
-function buildApp(options: HsmViewAppOptions, hub: Hub): Hono {
+function buildApp(options: HsmViewAppOptions, hub: Hub, live: () => LiveMessage): Hono {
   const { session, client } = options;
   const coloredLines = new Map<
     string,
@@ -208,6 +215,8 @@ function buildApp(options: HsmViewAppOptions, hub: Hub): Hono {
 
   app.get("/api/snapshot", (c) => c.json(session.snapshot()));
 
+  app.get("/api/live", (c) => c.json(live()));
+
   app.post("/api/start", async (c) => {
     const body = await jsonBody(c);
     return c.json(session.start(field(body, "ctx", isPresent)));
@@ -238,7 +247,7 @@ function buildApp(options: HsmViewAppOptions, hub: Hub): Hono {
   app.get("/api/events", (c) =>
     streamSSE(c, async (stream) => {
       const unsubscribe = hub.subscribe((message) => {
-        void stream.writeSSE({ event: "reload", data: JSON.stringify(message) });
+        void stream.writeSSE({ event: message.event, data: JSON.stringify(message.data) });
       });
       let release: () => void = () => {};
       const done = new Promise<void>((resolve) => {
@@ -258,15 +267,20 @@ function buildApp(options: HsmViewAppOptions, hub: Hub): Hono {
 
 /** The viewer's routes; `GET /api/events` stays open but only `serveHsmView` pushes reloads. */
 export function createHsmViewApp(options: HsmViewAppOptions): Hono {
-  return buildApp(options, createHub());
+  return buildApp(options, createHub(), createLiveRegistry().current);
 }
 
-/** Serves the viewer on `127.0.0.1` and reloads the session whenever a loaded file changes. */
+/**
+ * Serves the viewer on `127.0.0.1`, reloads the session whenever a loaded file changes, and
+ * pushes the instances `follow`'s console lines describe.
+ */
 export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServer> {
-  const { session } = options;
+  const { session, follow } = options;
   const watchPath: WatchPath = options.watchPath ?? ((target, listener) => watch(target, listener));
   const hub = createHub();
-  const app = buildApp(options, hub);
+  const registry = createLiveRegistry();
+  const following = new AbortController();
+  const app = buildApp(options, hub, registry.current);
   const watchers: FSWatcher[] = [];
   let pending: ReturnType<typeof setTimeout> | undefined;
   let closed = false;
@@ -284,7 +298,7 @@ export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServe
     }
     const message = reloadMessage(session.reload());
     watchFiles();
-    hub.broadcast(message);
+    hub.broadcast({ event: "reload", data: message });
   };
 
   const scheduleReload = (): void => {
@@ -353,9 +367,29 @@ export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServe
     }
   }
 
+  async function followConsole(): Promise<void> {
+    if (follow === undefined) {
+      return;
+    }
+    try {
+      for await (const line of follow(following.signal)) {
+        if (following.signal.aborted) {
+          return;
+        }
+        const message = registry.feed(line);
+        if (message !== undefined) {
+          hub.broadcast({ event: "live", data: message });
+        }
+      }
+    } catch {
+      // A console that fails mid-read leaves the last known list; the viewer keeps serving.
+    }
+  }
+
   return new Promise((resolve, reject) => {
     const server = serve({ fetch: app.fetch, port: options.port, hostname: HOST }, (info) => {
       watchFiles();
+      void followConsole();
       resolve({
         url: `http://${HOST}:${info.port}`,
         close: () =>
@@ -365,6 +399,7 @@ export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServe
               clearTimeout(pending);
             }
             unwatch();
+            following.abort();
             hub.close();
             const http = server as Server;
             http.close(() => done());

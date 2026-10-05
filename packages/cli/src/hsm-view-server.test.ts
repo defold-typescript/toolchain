@@ -166,6 +166,11 @@ describe("createHsmViewApp", () => {
 
     expect((await app.request("/api/nope")).status).toBe(404);
   });
+
+  test("serves an empty live list when nothing follows the editor console", async () => {
+    const app = createHsmViewApp({ session: lampSession(), client });
+    expect(await (await app.request("/api/live")).json()).toEqual({ instances: [] });
+  });
 });
 
 interface SseEvent {
@@ -359,5 +364,62 @@ describe("serveHsmView", () => {
     }
     expect(recovered).toBe(true);
     await events.cancel();
+  });
+
+  test("pushes and serves the instances the console's inspect lines describe", async () => {
+    let feed: () => void = () => {};
+    const fed = new Promise<void>((resolve) => {
+      feed = resolve;
+    });
+    async function* follow(): AsyncGenerator<string> {
+      await fed;
+      yield "DEBUG:SCRIPT: hsm door frame 0: inspecting [/closed]";
+      yield "DEBUG:SCRIPT: hsm door frame 3: /closed -> /open (OPEN) [/open]";
+    }
+    server = await serveHsmView({ session: lampSession(), client, port: 0, follow });
+    const events = await openEvents(server.url);
+    feed();
+
+    expect((await events.next("live")).data).toEqual({
+      instances: [{ label: "door", leaves: ["/closed"], stopped: false }],
+    });
+    expect((await events.next("live")).data).toEqual({
+      instances: [{ label: "door", leaves: ["/open"], stopped: false }],
+      move: { label: "door", from: "/closed", to: "/open", reason: "OPEN" },
+    });
+    expect(await (await fetch(`${server.url}/api/live`)).json()).toEqual({
+      instances: [{ label: "door", leaves: ["/open"], stopped: false }],
+    });
+    await events.cancel();
+  });
+
+  test("serves an empty list and the simulation as before when no editor answers", async () => {
+    async function* follow(): AsyncGenerator<string> {}
+    server = await serveHsmView({ session: lampSession(), client, port: 0, follow });
+    expect(await (await fetch(`${server.url}/api/live`)).json()).toEqual({ instances: [] });
+    const started = await fetch(`${server.url}/api/start`, post({ ctx: {} }));
+    expect(await started.json()).toMatchObject({ running: true, path: "/off" });
+  });
+
+  test("closing the server aborts the console follow", async () => {
+    let followed: AbortSignal | undefined;
+    let finish: () => void = () => {};
+    const finished = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    async function* follow(signal: AbortSignal): AsyncGenerator<string> {
+      followed = signal;
+      try {
+        await new Promise<void>((resolve) => signal.addEventListener("abort", () => resolve()));
+      } finally {
+        finish();
+      }
+    }
+    server = await serveHsmView({ session: lampSession(), client, port: 0, follow });
+    expect(followed?.aborted).toBe(false);
+    await server.close();
+    server = undefined;
+    expect(followed?.aborted).toBe(true);
+    await finished;
   });
 });
