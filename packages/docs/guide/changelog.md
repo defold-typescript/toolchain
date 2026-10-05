@@ -15,7 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **[`hsm` names read as sentences](./state-machines.md#coming-from-xstate)**: rules go `to` a state `when` a check passes and `run` code, and a state's `task` replaces `invoke`.
 > - **[Self-targets restart](./state-machines.md#events-and-transitions)**: a `to` naming the rule's own state exits and re-enters it, replacing `reenter`.
-> - **[`hsm-view`](./hsm-view.md)** runs a state-machine file in your browser, with live reload on save.
+> - **[`hsm-view`](./hsm-view.md)** runs a state-machine file in your browser, with live reload on save, and [follows a running game](./hsm-view.md#attach-to-a-running-game).
 > - **[`hsm` state flow](./state-machines.md#scripted-sequences)** gains cancellable sequences, [restore on entry](./state-machines.md#resume-with-history), [`always`](./state-machines.md#move-on-at-once-with-always), [`parallel`](./state-machines.md#run-regions-side-by-side-with-parallel) regions and [Monarch events](./state-machines.md#monarch-screen-transitions).
 > - **[`hsm` hot reload](./state-machines.md#hot-reload)** reaches running machines, and an [inspector](./state-machines.md#debug-a-machine) logs each move.
 
@@ -28,7 +28,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **`hsm-view` runs a state machine in your browser:** `bunx @defold-typescript/cli hsm-view <file> [name]` serves a local page that runs the machine from source, tints its active states in the code, glows each rule that fires and, more dimly, each `on` entry whose `when` turned the event away, and lets you send events, play or step time, edit its ctx and read a log, reloading live on every save; see [hsm-view](./hsm-view.md).
+- **`hsm-view` runs a state machine in your browser:** `bunx @defold-typescript/cli hsm-view <file> [name]` serves a local page that runs the machine from source, tints its active states in the code, glows each rule that fires and, more dimly, each `on` entry whose `when` turned the event away, and lets you send events, play or step time, edit its ctx and read a log, reloading live on every save; see [hsm-view](./hsm-view.md). It can also attach to a game launched from the editor and tint the states of an `inspect`ed instance as the game moves it; see [Attach to a running game](./hsm-view.md#attach-to-a-running-game).
 - **`hsm` machines are easier to script, resume, branch, split into regions, drive from Monarch, debug, reload and budget:**
   - **Scripted sequences** — a `task` may return a cleanup the machine runs on every way out of the state, and `sequence(async (ctx, signal) => ...)` from `@defold-typescript/types/hsm/async` builds one whose `await signal.wait(seconds)` never resumes after the state is left. Any other `await` in a sequence can resume after the state is left, so check `signal.aborted` after it; see [Scripted sequences](./state-machines.md#scripted-sequences).
   - **Restore on entry** — `restoreDepth` on a compound state enters the children that were active when it was last left instead of `initial`, that many levels down or every level with `"all"`, and a parallel state does not count as a level. The memory is per instance and survives a hot reload, while a target inside the state still lands where it names; see [Resume with history](./state-machines.md#resume-with-history).

@@ -141,7 +141,11 @@ function CtxNode(props: NodeProps) {
 export function CtxTree({ store }: { store: ViewerStore }) {
   const ctx = useViewer(store, (state) => state.snapshot?.ctx);
   const running = useViewer(store, (state) => state.snapshot?.running ?? false);
+  const attached = useViewer(store, (state) => state.live.attached !== undefined);
 
+  if (attached) {
+    return <p className="p-2 text-muted">ctx is not sent by the game.</p>;
+  }
   if (!running) {
     return <p className="p-2 text-muted">Not running. Start the machine from the bar.</p>;
   }

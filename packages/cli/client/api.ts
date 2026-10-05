@@ -1,3 +1,4 @@
+import type { LiveMessage } from "../src/hsm-view-live";
 import type { HsmViewIndex } from "../src/hsm-view-server";
 import type { Snapshot } from "../src/hsm-view-session";
 
@@ -8,6 +9,7 @@ export type PostRoute = "start" | "send" | "update" | "edit" | "pick";
 export interface ViewerApi {
   index(): Promise<HsmViewIndex>;
   snapshot(): Promise<Snapshot>;
+  live(): Promise<LiveMessage>;
   post(route: PostRoute, body: Record<string, unknown>): Promise<Snapshot>;
 }
 
@@ -24,6 +26,7 @@ export function httpApi(fetchRoute: Fetch = (url, init) => fetch(url, init)): Vi
   return {
     index: async () => json<HsmViewIndex>(await fetchRoute("/api/index")),
     snapshot: async () => json<Snapshot>(await fetchRoute("/api/snapshot")),
+    live: async () => json<LiveMessage>(await fetchRoute("/api/live")),
     post: async (route, body) =>
       json<Snapshot>(
         await fetchRoute(`/api/${route}`, {
