@@ -3899,21 +3899,6 @@ Two rules carry over to any migration:
 - **Give the machine an object, not `self`.** `init`'s return value is copied onto the engine-owned `self`, so a context built from loose fields in `init` would keep stale copies of them. The player's `init` builds one `body` object, starts the machine on it and returns `{ body, motion }`; every hook then reads and writes `self.body`, the same object the machine sees.
 - **A state is as fresh as its last update.** `grounded` reflects the contacts seen by the last `fixed_update`, while the old check read `ground_contact` after the physics step that followed it. So the player can now jump on the one physics step after walking off a ledge, a single step of leniency the example accepts.
 
-#### Coming from XState
-
-The model is close to XState's, with shorter names:
-
-| XState                         | `hsm`                                               |
-| ------------------------------ | --------------------------------------------------- |
-| `entry`                        | `enter`                                             |
-| `invoke`                       | `task`                                              |
-| `guard`                        | `when`                                              |
-| `actions`                      | `run`                                               |
-| `target`                       | `to`, always a full path such as `/alive/chase`     |
-| `reenter: true`                | a `to` naming the state the rule is on              |
-
-Actions are plain functions that change `ctx` directly; there is no `assign`.
-
 #### Reference
 
 ##### `StateConfig`
