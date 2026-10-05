@@ -61,40 +61,87 @@ function startDoor() {
 }
 
 describe("inspect", () => {
-  test("logs each transition with the label, the frame and the event", () => {
+  test("logs the start state at the call, then each transition with its frame, event and leaves", () => {
     const door = startDoor();
     inspect(door, "door");
     door.send({ type: "OPEN" });
-    expect(printed).toEqual(["hsm door frame 0: /closed -> /open (OPEN)"]);
+    expect(printed).toEqual([
+      "hsm door frame 0: inspecting [/closed]",
+      "hsm door frame 0: /closed -> /open (OPEN) [/open]",
+    ]);
   });
 
-  test("counts draw calls as frames and logs a cause when there is no event", () => {
+  test("counts draw calls as frames, logs a cause when there is no event, and empty leaves once stopped", () => {
     const door = startDoor();
-    const inspector = inspect(door, "door");
+    const inspector = inspect(door, "gate");
     door.send({ type: "OPEN" });
-    inspector.draw("/door");
-    inspector.draw("/door");
+    inspector.draw("/gate");
+    inspector.draw("/gate");
     door.update(1.5);
     door.stop();
     expect(printed).toEqual([
-      "hsm door frame 0: /closed -> /open (OPEN)",
-      "hsm door frame 2: /open -> /closed (after)",
-      "hsm door frame 2: /closed -> (stopped) (stop)",
+      "hsm gate frame 0: inspecting [/closed]",
+      "hsm gate frame 0: /closed -> /open (OPEN) [/open]",
+      "hsm gate frame 2: /open -> /closed (after) [/closed]",
+      "hsm gate frame 2: /closed -> (stopped) (stop) []",
+    ]);
+  });
+
+  test("a region move of a parallel machine lists every active leaf", () => {
+    const hero = defineMachine<object, { type: "WALK" }>()({
+      initial: "/alive",
+      states: {
+        alive: {
+          type: "parallel",
+          states: {
+            move: {
+              initial: "/alive/move/idle",
+              states: { idle: { on: { WALK: "/alive/move/walk" } }, walk: {} },
+            },
+            weapon: { initial: "/alive/weapon/ready", states: { ready: {} } },
+          },
+        },
+      },
+    }).start({});
+    inspect(hero, "hero");
+    hero.send({ type: "WALK" });
+    expect(printed).toEqual([
+      "hsm hero frame 0: inspecting [/alive/move/idle, /alive/weapon/ready]",
+      "hsm hero frame 0: /alive/move/idle -> /alive/move/walk (WALK) [/alive/move/walk, /alive/weapon/ready]",
+    ]);
+  });
+
+  test("a repeated label gets an ordinal on both the log and the drawn text", () => {
+    const inspectors = [startDoor(), startDoor(), startDoor()].map((door) =>
+      inspect(door, "enemy"),
+    );
+    for (const inspector of inspectors) {
+      inspector.draw("/enemy");
+    }
+    expect(printed).toEqual([
+      "hsm enemy frame 0: inspecting [/closed]",
+      "hsm enemy#2 frame 0: inspecting [/closed]",
+      "hsm enemy#3 frame 0: inspecting [/closed]",
+    ]);
+    expect(posted.map((args) => (args[2] as { text: string }).text)).toEqual([
+      "enemy /closed",
+      "enemy#2 /closed",
+      "enemy#3 /closed",
     ]);
   });
 
   test("draw posts the label and active path above the target to the render script", () => {
     const door = startDoor();
-    const inspector = inspect(door, "door");
+    const inspector = inspect(door, "hatch");
     door.send({ type: "OPEN" });
-    inspector.draw("/door");
-    expect(positionTargets).toEqual(["/door"]);
+    inspector.draw("/hatch");
+    expect(positionTargets).toEqual(["/hatch"]);
     expect(posted).toEqual([
       [
         "@render:",
         "draw_debug_text",
         {
-          text: "door /open",
+          text: "hatch /open",
           position: { x: 10, y: 60, z: 0 },
           color: { x: 1, y: 1, z: 1, w: 1 },
         },
@@ -128,9 +175,9 @@ describe("inspect", () => {
   test("does nothing in a release build", () => {
     isDebug = false;
     const door = startDoor();
-    const inspector = inspect(door, "door");
+    const inspector = inspect(door, "vault");
     door.send({ type: "OPEN" });
-    inspector.draw("/door");
+    inspector.draw("/vault");
     expect(printed).toEqual([]);
     expect(posted).toEqual([]);
     expect(positionTargets).toEqual([]);

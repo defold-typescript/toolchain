@@ -1,6 +1,7 @@
 import { existsSync, statSync } from "node:fs";
 import * as path from "node:path";
 import { requireHsmSourceDir } from "@defold-typescript/transpiler";
+import { consoleLines, openConsoleStream, resolveEditor } from "./editor-attach";
 import { loadClientAssets } from "./hsm-view-client-assets";
 import type { ClientAssets } from "./hsm-view-page";
 import { type HsmViewServer, type ServeHsmViewOptions, serveHsmView } from "./hsm-view-server";
@@ -8,6 +9,8 @@ import { createSession } from "./hsm-view-session";
 import { renderResult } from "./json-output";
 
 export const HSM_VIEW_USAGE = "defold-typescript hsm-view <file> [name]";
+
+const EDITOR_RETRY_MS = 2000;
 
 export interface RunHsmViewOptions {
   readonly cwd: string;
@@ -36,6 +39,37 @@ function untilSignal(): Promise<void> {
     process.on("SIGINT", stop);
     process.on("SIGTERM", stop);
   });
+}
+
+function pause(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+    const done = (): void => {
+      clearTimeout(timer);
+      signal.removeEventListener("abort", done);
+      resolve();
+    };
+    const timer = setTimeout(done, ms);
+    signal.addEventListener("abort", done);
+  });
+}
+
+/**
+ * Every line of the editor console from its first, so an attach made mid-run still learns each
+ * instance's last state. A missing editor or a closed stream is retried, never an error.
+ */
+async function* followEditorConsole(cwd: string, signal: AbortSignal): AsyncGenerator<string> {
+  while (!signal.aborted) {
+    const endpoint = await resolveEditor(cwd, undefined, signal);
+    const chunks = endpoint === null ? null : await openConsoleStream(endpoint, undefined, signal);
+    if (chunks !== null) {
+      yield* consoleLines(chunks, 0);
+    }
+    await pause(EDITOR_RETRY_MS, signal);
+  }
 }
 
 /** Serves the viewer for `file` until stopped; every reason it cannot start is one exit 1. */
@@ -89,6 +123,7 @@ export async function runHsmView(options: RunHsmViewOptions): Promise<number> {
       client,
       port: 0,
       title: path.basename(file),
+      follow: (signal) => followEditorConsole(options.cwd, signal),
     });
   } catch (thrown) {
     return fail(`could not start the viewer: ${messageOf(thrown)}`);
