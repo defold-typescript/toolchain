@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { createLiveRegistry, parseInspectLine } from "../../cli/src/hsm-view-live";
 import { inspect } from "./debug";
 import { defineMachine } from "./index";
 
@@ -128,6 +129,75 @@ describe("inspect", () => {
       "enemy#2 /closed",
       "enemy#3 /closed",
     ]);
+  });
+
+  test("a repeated label takes an ordinal no earlier inspect call printed", () => {
+    const inspectors = ["grunt#2", "grunt", "grunt"].map((label) => inspect(startDoor(), label));
+    for (const inspector of inspectors) {
+      inspector.draw("/grunt");
+    }
+    const labelOf = (line: string) => line.slice("hsm ".length, line.indexOf(" frame "));
+    expect(printed.map(labelOf)).toEqual(["grunt#2", "grunt", "grunt#3"]);
+    const texts = posted.map((args) => (args[2] as { text: string }).text);
+    texts.forEach((text, i) => {
+      expect(text.startsWith(`${labelOf(printed[i] as string)} `)).toBe(true);
+    });
+
+    inspect(startDoor(), "grunt#2");
+    const fourth = labelOf(printed[3] as string);
+    expect(printed.slice(0, 3).map(labelOf)).not.toContain(fourth);
+
+    const registry = createLiveRegistry();
+    for (const line of printed) {
+      registry.feed(line);
+    }
+    expect(registry.current().instances.map((instance) => instance.label)).toEqual(
+      printed.map(labelOf),
+    );
+  });
+
+  test("every printed line reads back the label, leaves and move whatever the names hold", () => {
+    const boss = defineMachine<object, { type: "HIT (crit), now" }>()({
+      initial: "/boss",
+      states: {
+        boss: {
+          type: "parallel",
+          states: {
+            one: {
+              initial: "/boss/one/left, right",
+              states: {
+                "left, right": { on: { "HIT (crit), now": "/boss/one/a]b" } },
+                "a]b": {},
+              },
+            },
+            two: { initial: "/boss/two/x -> y", states: { "x -> y": {} } },
+            three: { initial: "/boss/three/(p)", states: { "(p)": {} } },
+            four: { initial: "/boss/four/q frame 1: r", states: { "q frame 1: r": {} } },
+            five: { initial: "/boss/five/back\\slash", states: { "back\\slash": {} } },
+            six: { initial: "/boss/six/line\nbreak", states: { "line\nbreak": {} } },
+          },
+        },
+      },
+    }).start({});
+    const label = "boss frame 2: [x]";
+    const leaves = [[...boss.leaves]];
+    const moves: { from: string; to: string | undefined; reason: string }[] = [];
+    inspect(boss, label);
+    boss.onMove((from, to, cause, event) => {
+      moves.push({ from, to, reason: event === undefined ? cause : event.type });
+      leaves.push([...boss.leaves]);
+    });
+    boss.send({ type: "HIT (crit), now" });
+    boss.stop();
+
+    expect(printed).toHaveLength(3);
+    const parsed = printed.map(parseInspectLine);
+    expect(parsed[0]).toEqual({ label, leaves: leaves[0] as string[] });
+    expect(parsed.slice(1)).toEqual(
+      moves.map((move, i) => ({ label, leaves: leaves[i + 1] as string[], move })),
+    );
+    expect(parsed[2]?.move?.to).toBeUndefined();
+    expect(parsed[2]?.leaves).toEqual([]);
   });
 
   test("draw posts the label and active path above the target to the render script", () => {

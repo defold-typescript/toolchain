@@ -43,6 +43,21 @@ describe("parseInspectLine", () => {
     });
   });
 
+  test("reads escaped delimiters inside a field as part of it", () => {
+    expect(parseInspectLine("DEBUG:SCRIPT: hsm door frame 0: inspecting [/a\\]b\\, c]")).toEqual({
+      label: "door",
+      leaves: ["/a]b, c"],
+    });
+  });
+
+  test("rejects a dangling backslash or an unescaped bracket inside the list", () => {
+    expect(
+      parseInspectLine("DEBUG:SCRIPT: hsm door frame 0: inspecting [/closed\\]"),
+    ).toBeUndefined();
+    expect(parseInspectLine("DEBUG:SCRIPT: hsm door frame 0: inspecting [/a]b]")).toBeUndefined();
+    expect(parseInspectLine("DEBUG:SCRIPT: hsm door frame 0: inspecting [/a\\qb]")).toBeUndefined();
+  });
+
   test("ignores lines that are not inspect output", () => {
     expect(parseInspectLine("DEBUG:SCRIPT: hello")).toBeUndefined();
     expect(parseInspectLine("ERROR:SCRIPT: main/door.lua:3: attempt to index nil")).toBeUndefined();

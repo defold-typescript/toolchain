@@ -1268,42 +1268,82 @@ local SILENT = {draw = function()
 end}
 local TEXT_OFFSET_Y = 40
 local labelUses = {}
+local issuedLabels = {}
 local function uniqueLabel(label)
-    local uses = (labelUses[label] or 0) + 1
-    labelUses[label] = uses
-    local ____temp_0
-    if uses == 1 then
-        ____temp_0 = label
-    else
-        ____temp_0 = (label .. "#") .. tostring(uses)
+    local ordinal = labelUses[label] or 1
+    local issued = label
+    while issuedLabels[issued] == true do
+        ordinal = ordinal + 1
+        issued = (label .. "#") .. tostring(ordinal)
     end
-    return ____temp_0
+    labelUses[label] = ordinal
+    issuedLabels[issued] = true
+    return issued
+end
+local FIELD_ESCAPES = {
+    ["\\\\"] = "\\\\\\\\",
+    ["["] = "\\\\[",
+    ["]"] = "\\\\]",
+    ["("] = "\\\\(",
+    [")"] = "\\\\)",
+    [","] = "\\\\,",
+    [">"] = "\\\\>",
+    [":"] = "\\\\:",
+    ["\\n"] = "\\\\n",
+    ["\\r"] = "\\\\r"
+}
+local UTF16_UNITS = #"" == 1
+local function charAt(text, index)
+    local chars = text
+    local ____UTF16_UNITS_0
+    if UTF16_UNITS then
+        ____UTF16_UNITS_0 = chars:charAt(index)
+    else
+        ____UTF16_UNITS_0 = chars:sub(index + 1, index + 1)
+    end
+    return ____UTF16_UNITS_0
+end
+local function escapeField(text)
+    local escaped = ""
+    do
+        local i = 0
+        while i < #text do
+            local char = charAt(text, i)
+            escaped = escaped .. (FIELD_ESCAPES[char] or char)
+            i = i + 1
+        end
+    end
+    return escaped
+end
+local function raw(text)
+    return text
 end
 local function shown(path)
-    return path == nil and "(stopped)" or path
+    return path == nil and "(stopped)" or escapeField(path)
 end
-local function shownList(leaves)
+local function shownList(leaves, show)
     if #leaves == 0 then
         return ""
     end
-    local text = leaves[1]
+    local text = show(leaves[1])
     do
         local i = 1
         while i < #leaves do
-            text = (text .. ", ") .. leaves[i + 1]
+            text = (text .. ", ") .. show(leaves[i + 1])
             i = i + 1
         end
     end
     return text
 end
 local function shownLeaves(leaves)
-    return #leaves == 0 and "(stopped)" or shownList(leaves)
+    return #leaves == 0 and "(stopped)" or shownList(leaves, raw)
 end
 function ____exports.inspect(instance, label)
     if not sys.get_engine_info().is_debug then
         return SILENT
     end
     local shownLabel = uniqueLabel(label)
+    local loggedLabel = escapeField(shownLabel)
     local frame = 0
     instance.onMove(function(from, to, cause, event)
         local ____temp_1
@@ -1313,9 +1353,9 @@ function ____exports.inspect(instance, label)
             ____temp_1 = event.type
         end
         local reason = ____temp_1
-        print(((((((((((("hsm " .. shownLabel) .. " frame ") .. tostring(frame)) .. ": ") .. from) .. " -> ") .. shown(to)) .. " (") .. reason) .. ") [") .. shownList(instance.leaves)) .. "]")
+        print(((((((((((("hsm " .. loggedLabel) .. " frame ") .. tostring(frame)) .. ": ") .. escapeField(from)) .. " -> ") .. shown(to)) .. " (") .. escapeField(reason)) .. ") [") .. shownList(instance.leaves, escapeField)) .. "]")
     end)
-    print(((((("hsm " .. shownLabel) .. " frame ") .. tostring(frame)) .. ": inspecting [") .. shownList(instance.leaves)) .. "]")
+    print(((((("hsm " .. loggedLabel) .. " frame ") .. tostring(frame)) .. ": inspecting [") .. shownList(instance.leaves, escapeField)) .. "]")
     return {draw = function(target)
         frame = frame + 1
         local p = go.get_world_position(target)
