@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { requireHsmSourceDir } from "@defold-typescript/transpiler";
+import { ruleId } from "../src/hsm-view-index";
 import { createHsmViewApp, type HsmViewIndex } from "../src/hsm-view-server";
 import { createSession, type HsmViewSession, type Snapshot } from "../src/hsm-view-session";
 import { onKeySpanId, ruleSpanId, stateSpanId } from "./highlight";
@@ -108,19 +109,19 @@ describe("viewer store", () => {
     receive(session.start({ fuel: 0 }));
     receive(session.send({ type: "JUMP" }));
     expect(stamp(stateSpanId("/air"))).toBe(1);
-    expect(stamp(ruleSpanId("/ground|on|JUMP|1"))).toBe(1);
+    expect(stamp(ruleSpanId(ruleId("/ground", "on", "JUMP", 1)))).toBe(1);
     expect(stamp(onKeySpanId("/ground", "JUMP"))).toBe(1);
-    expect(stamp(ruleSpanId("/ground|on|JUMP|0"))).toBe(0);
+    expect(stamp(ruleSpanId(ruleId("/ground", "on", "JUMP", 0)))).toBe(0);
 
     receive(session.send({ type: "LAND" }));
     expect(stamp(stateSpanId("/ground/landing"))).toBe(1);
-    expect(stamp(ruleSpanId("/ground/landing|always|0"))).toBe(1);
-    expect(stamp(ruleSpanId("/air|on|LAND|0"))).toBe(1);
+    expect(stamp(ruleSpanId(ruleId("/ground/landing", "always", 0)))).toBe(1);
+    expect(stamp(ruleSpanId(ruleId("/air", "on", "LAND", 0)))).toBe(1);
     expect(tinted()).toEqual([stateSpanId("/ground"), stateSpanId("/ground/idle")]);
 
     receive(session.send({ type: "JUMP" }));
     expect(stamp(stateSpanId("/air"))).toBe(2);
-    expect(stamp(ruleSpanId("/ground|on|JUMP|1"))).toBe(2);
+    expect(stamp(ruleSpanId(ruleId("/ground", "on", "JUMP", 1)))).toBe(2);
   });
 
   test("lights each file with a tinted or freshly stamped span, and unlights it after", () => {
@@ -136,7 +137,7 @@ describe("viewer store", () => {
   });
 
   test("cuts a span that crosses line breaks into one range per line", () => {
-    expect(pieces(0, ruleSpanId("/ground|on|JUMP|1"))).toEqual([
+    expect(pieces(0, ruleSpanId(ruleId("/ground", "on", "JUMP", 1)))).toEqual([
       "{",
       '            target: "/air",',
       "          }",
@@ -164,9 +165,51 @@ describe("viewer store", () => {
     receive(session.start({ fuel: 0 }));
     receive(session.send({ type: "JUMP" }));
     receive(session.send({ type: "A|on|B" }));
-    expect(stamp(ruleSpanId("/air|on|A|on|B|0"))).toBe(1);
+    expect(stamp(ruleSpanId(ruleId("/air", "on", "A|on|B", 0)))).toBe(1);
     expect(stamp(onKeySpanId("/air", "A|on|B"))).toBe(1);
     expect(tinted()).toEqual([stateSpanId("/ground"), stateSpanId("/ground/idle")]);
+  });
+});
+
+const COLLIDING = `import { defineMachine } from "@defold-typescript/types/hsm";
+export const colliding = defineMachine("colliding")({
+  initial: "/a",
+  states: {
+    a: { on: { "b|on|c": "/a|on|b", "on|b|c": "/a|on|b" } },
+    "a|on|b": { on: { c: "/a" } },
+  },
+});
+`;
+
+describe("colliding state names and event types", () => {
+  beforeEach(async () => {
+    writeFileSync(path.join(dir, "colliding.ts"), COLLIDING);
+    session = createSession({ file: path.join(dir, "colliding.ts"), hsmSourceDir });
+    const app = createHsmViewApp({ session, client: { js: "", css: "" } });
+    store = createViewerStore();
+    store.getState().setIndex((await (await app.request("/api/index")).json()) as HsmViewIndex);
+  });
+
+  test("lights only the fired rule and its own on key", () => {
+    const first = ruleSpanId(ruleId("/a", "on", "b|on|c", 0));
+    const second = ruleSpanId(ruleId("/a|on|b", "on", "c", 0));
+    receive(session.start({}));
+
+    receive(session.send({ type: "b|on|c" }));
+    expect(stamp(first)).toBe(1);
+    expect(stamp(onKeySpanId("/a", "b|on|c"))).toBe(1);
+    expect(stamp(second)).toBe(0);
+    expect(stamp(onKeySpanId("/a|on|b", "c"))).toBe(0);
+
+    receive(session.send({ type: "c" }));
+    expect(stamp(second)).toBe(1);
+    expect(stamp(onKeySpanId("/a|on|b", "c"))).toBe(1);
+    expect(stamp(first)).toBe(1);
+    expect(stamp(onKeySpanId("/a", "b|on|c"))).toBe(1);
+
+    receive(session.send({ type: "on|b|c" }));
+    expect(stamp(onKeySpanId("/a", "on|b|c"))).toBe(1);
+    expect(stamp(onKeySpanId("/a|on|b", "c"))).toBe(1);
   });
 });
 
