@@ -12,30 +12,78 @@ const SILENT: MachineInspector = {
 const TEXT_OFFSET_Y = 40;
 
 const labelUses: Record<string, number> = {};
+const issuedLabels: Record<string, boolean> = {};
 
 function uniqueLabel(label: string): string {
-  const uses = (labelUses[label] ?? 0) + 1;
-  labelUses[label] = uses;
-  return uses === 1 ? label : `${label}#${uses}`;
+  let ordinal = labelUses[label] ?? 1;
+  let issued = label;
+  while (issuedLabels[issued] === true) {
+    ordinal++;
+    issued = `${label}#${ordinal}`;
+  }
+  labelUses[label] = ordinal;
+  issuedLabels[issued] = true;
+  return issued;
+}
+
+const FIELD_ESCAPES: Record<string, string> = {
+  "\\": "\\\\",
+  "[": "\\[",
+  "]": "\\]",
+  "(": "\\(",
+  ")": "\\)",
+  ",": "\\,",
+  ">": "\\>",
+  ":": "\\:",
+  "\n": "\\n",
+  "\r": "\\r",
+};
+
+// A structural cast keeps each read a plain method call: native in JavaScript, string.sub in Lua.
+interface StringChars {
+  charAt(index: number): string;
+  sub(first: number, last: number): string;
+}
+
+// JavaScript strings hold UTF-16 code units; Lua strings hold UTF-8 bytes. Every escaped
+// character is ASCII, and ASCII never occurs inside a UTF-8 sequence, so both walks agree.
+const UTF16_UNITS = "\u{E000}".length === 1;
+
+function charAt(text: string, index: number): string {
+  const chars = text as unknown as StringChars;
+  return UTF16_UNITS ? chars.charAt(index) : chars.sub(index + 1, index + 1);
+}
+
+function escapeField(text: string): string {
+  let escaped = "";
+  for (let i = 0; i < text.length; i++) {
+    const char = charAt(text, i);
+    escaped = `${escaped}${FIELD_ESCAPES[char] ?? char}`;
+  }
+  return escaped;
+}
+
+function raw(text: string): string {
+  return text;
 }
 
 function shown(path: string | undefined): string {
-  return path === undefined ? "(stopped)" : path;
+  return path === undefined ? "(stopped)" : escapeField(path);
 }
 
-function shownList(leaves: readonly string[]): string {
+function shownList(leaves: readonly string[], show: (leaf: string) => string): string {
   if (leaves.length === 0) {
     return "";
   }
-  let text = leaves[0] as string;
+  let text = show(leaves[0] as string);
   for (let i = 1; i < leaves.length; i++) {
-    text = `${text}, ${leaves[i] as string}`;
+    text = `${text}, ${show(leaves[i] as string)}`;
   }
   return text;
 }
 
 function shownLeaves(leaves: readonly string[]): string {
-  return leaves.length === 0 ? "(stopped)" : shownList(leaves);
+  return leaves.length === 0 ? "(stopped)" : shownList(leaves, raw);
 }
 
 export function inspect<Ctx, E extends EventObject, P extends string>(
@@ -46,14 +94,17 @@ export function inspect<Ctx, E extends EventObject, P extends string>(
     return SILENT;
   }
   const shownLabel = uniqueLabel(label);
+  const loggedLabel = escapeField(shownLabel);
   let frame = 0;
   instance.onMove((from, to, cause, event) => {
     const reason = event === undefined ? cause : event.type;
     print(
-      `hsm ${shownLabel} frame ${frame}: ${from} -> ${shown(to)} (${reason}) [${shownList(instance.leaves)}]`,
+      `hsm ${loggedLabel} frame ${frame}: ${escapeField(from)} -> ${shown(to)} (${escapeField(reason)}) [${shownList(instance.leaves, escapeField)}]`,
     );
   });
-  print(`hsm ${shownLabel} frame ${frame}: inspecting [${shownList(instance.leaves)}]`);
+  print(
+    `hsm ${loggedLabel} frame ${frame}: inspecting [${shownList(instance.leaves, escapeField)}]`,
+  );
   return {
     draw: (target) => {
       frame++;
