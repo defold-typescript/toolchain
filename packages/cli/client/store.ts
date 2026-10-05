@@ -1,5 +1,6 @@
 import { useStore } from "zustand";
 import { createStore, type StoreApi } from "zustand/vanilla";
+import type { LiveInstance, LiveMessage, LiveMove } from "../src/hsm-view-live";
 import type { HsmViewIndex, ReloadMessage } from "../src/hsm-view-server";
 import type { Snapshot } from "../src/hsm-view-session";
 import { httpApi, type ViewerApi } from "./api";
@@ -15,6 +16,7 @@ import {
   type SpanId,
   spansByLine,
 } from "./highlight";
+import { liveSnapshot } from "./live";
 import { appendEntries, emptyLog, type Log, type LogKind } from "./log";
 import { emptySearch, type SearchState, search, step } from "./search";
 
@@ -35,6 +37,14 @@ export type GlowKey = string;
 export const dimGlowKey = (id: SpanId): GlowKey => `dim:${id}`;
 export const ctxGlowKey = (key: string): GlowKey => `ctx:${key}`;
 export const fileGlowKey = (file: number): GlowKey => `file:${file}`;
+
+export interface LiveState {
+  readonly instances: readonly LiveInstance[];
+  /** The label whose reported state the page shows in place of the simulation's. */
+  readonly attached: string | undefined;
+  /** Names the reported leaves the picked machine does not define. */
+  readonly banner: string | undefined;
+}
 
 export interface ViewerState {
   readonly index: HsmViewIndex | undefined;
@@ -67,11 +77,18 @@ export interface ViewerState {
   readonly error: string | undefined;
   readonly reloadError: string | undefined;
   readonly disconnected: boolean;
+  readonly live: LiveState;
   readonly now: () => number;
   /** Takes a new index; the snapshot that follows it, as on a reload, redraws the highlights. */
   setIndex(index: HsmViewIndex): void;
-  /** Applies a snapshot a route returned; its entries are the ones that call added. */
+  /** Applies a snapshot a route returned; its entries are the ones that call added. Ignored while attached. */
   receive(snapshot: Snapshot): void;
+  /** Takes the instances the game reports; an attached label it no longer lists detaches. */
+  receiveLive(message: LiveMessage): Promise<void>;
+  /** Shows `label`'s reported state in place of the simulation's, which posts nothing until detached. */
+  attach(label: string): void;
+  /** Returns to the simulation, as the server holds it now. */
+  detach(): Promise<void>;
   toggleKind(kind: LogKind): void;
   setQuery(query: string): void;
   stepMatch(delta: 1 | -1): void;
@@ -179,6 +196,8 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
   let seq = 0;
   let loop: PlayLoop | undefined;
   let inFlight: Promise<boolean> | undefined;
+  let attachedAt = 0;
+  let simulated: Snapshot | undefined;
 
   return createStore<ViewerState>()((set, get) => {
     const scrollTo = (file: number, line: number): ScrollTarget => ({ file, line, seq: ++seq });
@@ -191,6 +210,9 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
     };
 
     const call = async (request: () => Promise<Snapshot>): Promise<void> => {
+      if (get().live.attached !== undefined) {
+        return;
+      }
       try {
         const snapshot = await request();
         set({ error: undefined });
@@ -257,6 +279,74 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
       current.frame = frames.request(tick);
     };
 
+    const paint = (snapshot: Snapshot, live: boolean): void =>
+      set((state) => {
+        const time = now();
+        const glowSince: Record<GlowKey, number> = { ...state.glowSince };
+        const ctxStamps: Record<string, number> = { ...state.ctxStamps };
+        for (const key of changedLeaves(state.snapshot?.ctx, snapshot.ctx)) {
+          ctxStamps[key] = (ctxStamps[key] ?? 0) + 1;
+          glowSince[ctxGlowKey(key)] = time;
+        }
+        if (state.index === undefined) {
+          return {
+            snapshot,
+            log: appendEntries(state.log, snapshot.entries),
+            ctxStamps,
+            glowSince,
+          };
+        }
+        const highlight = applySnapshot(state.highlight, state.index, snapshot);
+        for (const [id, stamp] of Object.entries(highlight.stamps)) {
+          if (stamp !== state.highlight.stamps[id]) {
+            glowSince[id] = time;
+          }
+        }
+        for (const [id, stamp] of Object.entries(highlight.dimStamps)) {
+          if (stamp !== state.highlight.dimStamps[id]) {
+            glowSince[dimGlowKey(id)] = time;
+          }
+        }
+        const fileStamps: Record<number, number> = { ...state.fileStamps };
+        for (const file of highlight.litFiles) {
+          if (!state.highlight.litFiles.has(file)) {
+            fileStamps[file] = (fileStamps[file] ?? 0) + 1;
+            glowSince[fileGlowKey(file)] = time;
+          }
+        }
+        return {
+          snapshot,
+          log: appendEntries(state.log, snapshot.entries),
+          highlight,
+          clickable: live ? [] : clickableKeys(state.index, snapshot),
+          ctxStamps,
+          fileStamps,
+          glowSince,
+        };
+      });
+
+    const showLive = (instance: LiveInstance, move?: LiveMove, fresh = false): void => {
+      const { index, snapshot } = get();
+      if (index === undefined) {
+        return;
+      }
+      const frame = liveSnapshot(index, fresh ? undefined : snapshot, instance, {
+        t: (now() - attachedAt) / 1000,
+        ...(move === undefined ? {} : { move }),
+      });
+      const picked = simulated?.picked;
+      set((state) => ({
+        live: {
+          ...state.live,
+          banner:
+            frame.unknown.length === 0
+              ? undefined
+              : `the game reports ${frame.unknown.join(", ")}, which ${picked ?? "the picked machine"} does not define; it may run other source`,
+        },
+      }));
+      paint({ ...frame.snapshot, machines: simulated?.machines ?? [], picked }, true);
+    };
+
     return {
       index: undefined,
       lineSpans: [],
@@ -282,6 +372,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
       error: undefined,
       reloadError: undefined,
       disconnected: false,
+      live: { instances: [], attached: undefined, banner: undefined },
       now,
       setIndex: (index) =>
         set((state) => ({
@@ -290,51 +381,61 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
           search: search(index.files, state.search.query),
           openFile: state.openFile < index.files.length ? state.openFile : 0,
         })),
-      receive: (snapshot) =>
-        set((state) => {
-          const time = now();
-          const glowSince: Record<GlowKey, number> = { ...state.glowSince };
-          const ctxStamps: Record<string, number> = { ...state.ctxStamps };
-          for (const key of changedLeaves(state.snapshot?.ctx, snapshot.ctx)) {
-            ctxStamps[key] = (ctxStamps[key] ?? 0) + 1;
-            glowSince[ctxGlowKey(key)] = time;
-          }
-          if (state.index === undefined) {
-            return {
-              snapshot,
-              log: appendEntries(state.log, snapshot.entries),
-              ctxStamps,
-              glowSince,
-            };
-          }
-          const highlight = applySnapshot(state.highlight, state.index, snapshot);
-          for (const [id, stamp] of Object.entries(highlight.stamps)) {
-            if (stamp !== state.highlight.stamps[id]) {
-              glowSince[id] = time;
-            }
-          }
-          for (const [id, stamp] of Object.entries(highlight.dimStamps)) {
-            if (stamp !== state.highlight.dimStamps[id]) {
-              glowSince[dimGlowKey(id)] = time;
-            }
-          }
-          const fileStamps: Record<number, number> = { ...state.fileStamps };
-          for (const file of highlight.litFiles) {
-            if (!state.highlight.litFiles.has(file)) {
-              fileStamps[file] = (fileStamps[file] ?? 0) + 1;
-              glowSince[fileGlowKey(file)] = time;
-            }
-          }
-          return {
-            snapshot,
-            log: appendEntries(state.log, snapshot.entries),
-            highlight,
-            clickable: clickableKeys(state.index, snapshot),
-            ctxStamps,
-            fileStamps,
-            glowSince,
-          };
-        }),
+      receive: (snapshot) => {
+        if (get().live.attached === undefined) {
+          paint(snapshot, false);
+        }
+      },
+      receiveLive: async (message) => {
+        set((state) => ({ live: { ...state.live, instances: message.instances } }));
+        const { attached } = get().live;
+        if (attached === undefined) {
+          return;
+        }
+        const instance = message.instances.find((candidate) => candidate.label === attached);
+        if (instance === undefined) {
+          set((state) => ({
+            log: appendEntries(state.log, [
+              {
+                kind: "error",
+                t: state.snapshot?.t ?? 0,
+                message: `detached: the game no longer reports ${attached}; it may have restarted`,
+              },
+            ]),
+          }));
+          await get().detach();
+          return;
+        }
+        showLive(instance, message.move?.label === attached ? message.move : undefined);
+      },
+      attach: (label) => {
+        const instance = get().live.instances.find((candidate) => candidate.label === label);
+        if (instance === undefined || get().index === undefined) {
+          return;
+        }
+        get().setPlaying(false);
+        if (get().live.attached === undefined) {
+          simulated = get().snapshot;
+        }
+        attachedAt = now();
+        set((state) => ({ live: { ...state.live, attached: label } }));
+        showLive(instance, undefined, true);
+      },
+      detach: async () => {
+        if (get().live.attached === undefined) {
+          return;
+        }
+        simulated = undefined;
+        set((state) => ({ live: { ...state.live, attached: undefined, banner: undefined } }));
+        // Only the tint comes back: the glows and log lines of the last call already showed.
+        await call(async () => ({
+          ...(await api.snapshot()),
+          entered: [],
+          fired: [],
+          rejected: [],
+          entries: [],
+        }));
+      },
       toggleKind: (kind) =>
         set((state) => {
           const hidden = new Set(state.hidden);
@@ -368,6 +469,9 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
       setDt: (dt) => set({ dt }),
       setSpeed: (speed) => set({ speed }),
       setPlaying: (playing) => {
+        if (playing && get().live.attached !== undefined) {
+          return;
+        }
         if (playing) {
           set({ playing });
           startLoop();
@@ -382,6 +486,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
           get().setIndex(await api.index());
           set({ error: undefined });
           get().receive(await api.snapshot());
+          await get().receiveLive(await api.live());
         } catch (thrown) {
           set({ error: thrown instanceof Error ? thrown.message : String(thrown) });
         }
@@ -405,16 +510,30 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
           return api.post("update", { dt });
         }),
       edit: (path, value) => call(() => api.post("edit", { path, value })),
-      pick: (name) =>
-        call(async () => {
+      pick: async (name) => {
+        await get().detach();
+        await call(async () => {
           const snapshot = await api.post("pick", { name });
           get().setIndex(await api.index());
           return snapshot;
-        }),
+        });
+      },
       reloaded: async (message) => {
         if (!message.ok) {
           set({ reloadError: message.error ?? "the reload failed" });
           get().receive(message.snapshot);
+          return;
+        }
+        const { attached, instances } = get().live;
+        const instance = instances.find((candidate) => candidate.label === attached);
+        if (instance !== undefined) {
+          try {
+            get().setIndex(await api.index());
+            set({ error: undefined, reloadError: undefined });
+            showLive(instance);
+          } catch (thrown) {
+            set({ error: thrown instanceof Error ? thrown.message : String(thrown) });
+          }
           return;
         }
         await call(async () => {
