@@ -37,7 +37,7 @@ function scripted(ctx: Ctx, delays: Delay[]): void {
     states: {
       run: {
         ...logged("run"),
-        invoke: sequence(async (c, signal) => {
+        task: sequence(async (c, signal) => {
           c.signal = signal;
           c.log.push("wait");
           await signal.wait(1);
@@ -65,7 +65,7 @@ function failing(ctx: Ctx, delays: Delay[]): void {
     initial: "/fail",
     states: {
       fail: {
-        invoke: sequence<Ctx, Ev>(async (_c, signal) => {
+        task: sequence<Ctx, Ev>(async (_c, signal) => {
           await signal.wait(1);
           throw "boom";
         }),

@@ -37,7 +37,7 @@ const SEQUENCE = [
   '  initial: "/opening",',
   "  states: {",
   "    opening: {",
-  "      invoke: sequence((_ctx, signal) => signal.wait(0.5)),",
+  "      task: sequence((_ctx, signal) => signal.wait(0.5)),",
   '      on: { OPENED: "/open" },',
   "    },",
   "    open: {},",

@@ -2756,7 +2756,7 @@ A component's `props` is an untyped table. Upstream documents every builder as t
 
 ### State machines
 
-`hsm` is a small typed Hierarchical State Machine library that ships with the toolchain. It drives whole-game flow (boot, menu, playing, paused) and per-object behavior (a door, an enemy, a UI widget) through one model: an XState-shaped config of `initial`, `states`, `on`, `after` and `guard`, ticked from `update(dt)` with timers on game time. Events, their payloads and the machine's context are all checked at compile time, and the library compiles to plain Lua with no `lualib_bundle`; only the opt-in [scripted sequences](#scripted-sequences) module needs it.
+`hsm` is a small typed Hierarchical State Machine library that ships with the toolchain. It drives whole-game flow (boot, menu, playing, paused) and per-object behavior (a door, an enemy, a UI widget) through one model: a config of `initial`, `states`, `on`, `after` and `always`, where each rule goes `to` a state `when` a check passes and may `run` code on the way, ticked from `update(dt)` with timers on game time. Events, their payloads and the machine's context are all checked at compile time, and the library compiles to plain Lua with no `lualib_bundle`; only the opt-in [scripted sequences](#scripted-sequences) module needs it.
 
 It replaces the `if (self.state === ...)` branches that otherwise spread across `update` and `on_message`.
 
@@ -2830,7 +2830,7 @@ A state name must be non-empty and must not contain `/`. Any other character is 
 `on` maps an event's `type` to a transition. A transition is one of three things:
 
 - a target state, as a string;
-- an object of `target`, `guard`, `actions` and `reenter`, each optional;
+- an object of `to`, `when` and `run`, each optional;
 - a non-empty list of those objects, tried in order.
 
 ```ts
@@ -2854,9 +2854,9 @@ export const enemy = defineMachine<EnemyCtx, EnemyEvent>()({
       initial: "/alive/patrol",
       on: {
         HIT: [
-          { target: "/dead", guard: (ctx, event) => ctx.health <= event.damage },
+          { to: "/dead", when: (ctx, event) => ctx.health <= event.damage },
           {
-            actions: (ctx, event) => {
+            run: (ctx, event) => {
               ctx.health -= event.damage;
             },
           },
@@ -2867,7 +2867,7 @@ export const enemy = defineMachine<EnemyCtx, EnemyEvent>()({
         chase: {
           on: {
             LOSE_PLAYER: "/alive/patrol",
-            SEE_PLAYER: { target: "/alive/chase", reenter: true },
+            SEE_PLAYER: "/alive/chase",
             FALL: "/dead",
           },
         },
@@ -2876,8 +2876,8 @@ export const enemy = defineMachine<EnemyCtx, EnemyEvent>()({
     dead: {
       on: {
         RESPAWN: {
-          target: "/alive",
-          actions: (ctx) => {
+          to: "/alive",
+          run: (ctx) => {
             ctx.health = 3;
           },
         },
@@ -2892,28 +2892,28 @@ m.send({ type: "HIT", damage: 1 }); // handled by /alive: health 2, still /alive
 m.send({ type: "FALL" }); // exits /alive/chase and /alive, enters /dead
 ```
 
-**Which transition runs.** An event starts at the deepest active state. If that state has no `on` entry for the event's `type`, or every guard in its entry fails, the event moves up to the parent, and so on to the root. The first transition with no guard, or whose guard returns `true`, runs, and the event goes no further. An event that no active state handles is dropped. Above, `HIT` sent in `/alive/chase` finds nothing on `chase` and reaches `alive`, where the first entry moves to `/dead` if the hit is fatal and the second takes the damage otherwise.
+**Which transition runs.** An event starts at the deepest active state. If that state has no `on` entry for the event's `type`, or every `when` in its entry fails, the event moves up to the parent, and so on to the root. The first transition with no `when`, or whose `when` returns `true`, runs, and the event goes no further. An event that no active state handles is dropped. Above, `HIT` sent in `/alive/chase` finds nothing on `chase` and reaches `alive`, where the first entry moves to `/dead` if the hit is fatal and the second takes the damage otherwise.
 
-**Targetless transitions.** A transition with no `target` runs its actions and nothing else: no state exits or enters. The damage branch of `HIT` is one.
+**Transitions with no `to`.** A transition with no `to` runs its `run` and nothing else: no state exits or enters. The damage branch of `HIT` is one.
 
 **Where a target points.** Every target is a full path from the root, wherever it is declared: `/dead` from `/alive/chase`, `/alive/chase` from its sibling `/alive/patrol`, and `/alive/patrol` from `/alive` for its own child. There are no relative targets: `./patrol`, `../patrol` and a bare name such as `patrol` are not paths, and `defineMachine` throws on them, naming the state that declares them.
 
-**What runs, in what order.** A transition exits states from the deepest active state up, runs its actions, then enters states down to the target and on through each `initial` child. Only the states below the nearest one that contains both the source and the target exit and re-enter; that state stays active. With `/alive/chase` active, a fatal `HIT` handled by `alive` runs:
+**What runs, in what order.** A transition exits states from the deepest active state up, runs its `run`, then enters states down to the target and on through each `initial` child. Only the states below the nearest one that contains both the source and the target exit and re-enter; that state stays active. With `/alive/chase` active, a fatal `HIT` handled by `alive` runs:
 
 1. `exit` of `/alive/chase`
 2. `exit` of `/alive`
-3. the transition's actions
+3. the transition's `run`
 4. `enter` of `/dead`
 
-Targeting the source itself or one of its descendants keeps the source active and re-enters only below it: from `/alive`, a target of `/alive/patrol` exits the current child and enters `patrol`, while `alive` stays. `reenter: true` also exits and re-enters the source, which restarts its `after` timers and its `invoke`, as `SEE_PLAYER` in `chase` does above. Targeting an ancestor of the source exits and re-enters that ancestor.
+A `to` below the state the rule is on keeps that state active and re-enters only below it: from `/alive`, a `to` of `/alive/patrol` exits the current child and enters `patrol`, while `alive` stays. A `to` naming the state the rule is on exits and re-enters it, which restarts its `after` timers and its `task`, as `SEE_PLAYER` in `chase` does above; the same holds for an `after` timer, an `always` entry or an `update` hook that names its own state, so `after: { 1: "/blink" }` on `blink` repeats every second. To restart only a state's children, name the child to start in: `/alive/patrol` from `/alive`. A rule that should run code and leave every state alone has no `to`. Targeting an ancestor of the source exits and re-enters that ancestor.
 
-Guards receive `(ctx, event)` and actions `(ctx, event, m)`, where `event` is narrowed to the variant the `on` key names: the `HIT` guard reads `event.damage` with no cast. `actions` is one function or a list run in order.
+`when` receives `(ctx, event)` and `run` `(ctx, event, machine)`, where `event` is narrowed to the variant the `on` key names: the `HIT` `when` reads `event.damage` with no cast. `run` is one function or a list run in order. Keep `when` free of side effects: it is also called when the move does not happen, for each candidate in a list and on every `always` recheck.
 
 #### `update` and `after`
 
 `m.update(dt)` advances the machine by one tick. Every active state adds that `dt` to its own clock on every call, whether or not a hook transitions, and starts from zero each time it is entered, so a machine whose `update` is not called is frozen in time. The tick then runs in two phases.
 
-First the `update` hooks run, from the deepest active state up, each with `(ctx, dt, m)`. A hook returns a target to transition or `undefined` to pass. The first hook to return a target wins: the remaining hooks do not run, and the target is a full path, like an `on` target. A hook transition has no actions.
+First the `update` hooks run, from the deepest active state up, each with `(ctx, dt, machine)`. A hook returns a path to move to or `undefined` to pass. The first hook to return a path wins: the remaining hooks do not run, and the path is a full path, like an `on` target. A hook move has no `run`.
 
 Then, only if no hook transitioned, the `after` timers run. `after` maps a delay in seconds, measured on the state's clock, to a target path. A state's timers fire in delay order. One `update` call fires at most one timer, checked from the deepest state up; another timer that is due waits for the next call.
 
@@ -3031,7 +3031,7 @@ Pausing in mid-air and sending `RESUME` lands on `/playing/air/rise`, running th
 - **The count sets how deep the restore goes.** With `restoreDepth: 1`, leaving from `/playing/air/fall` brings back `air`, and `air` is entered through its own `initial`, so the jump resumes at `/playing/air/rise`. With `restoreDepth: 2` it also brings back `fall`, and `"all"` brings back every level below the state. In statechart terms, `1` is shallow history and `"all"` is deep history.
 - **Inner levels restore only through the flagged state.** The count applies when `playing` itself is entered. A move that targets `/playing/air` enters `air` through its `initial`, unless `air` has a `restoreDepth` of its own.
 - **A parallel state is not a level.** The count passes through a parallel state to every region, so `restoreDepth: 2` on the parent of a parallel state brings back each region's last child.
-- **A target inside the state wins.** `RESTART` names `/playing/ground`, so it lands there whatever `playing` remembers. Every other entry uses the memory: a target of `/playing` itself, a parent's `initial` chain that passes through `playing`, and a `reenter` transition on `playing`.
+- **A target inside the state wins.** `RESTART` names `/playing/ground`, so it lands there whatever `playing` remembers. Every other entry uses the memory: a target of `/playing` itself, including one on `playing`'s own rules, and a parent's `initial` chain that passes through `playing`.
 - **The first entry uses `initial`.** Each instance keeps its own memory, so a new instance starts at `/playing/ground` even while another one is paused in the air.
 
 `restoreDepth` throws when the machine is defined if it is not a whole number from 1 or `"all"`, if it is larger than the number of levels below the state, or if the state has no child states. Each of these is also a compile error.
@@ -3057,7 +3057,7 @@ export const hero = defineMachine<Hero, HeroEvent>()({
       enter: (ctx) => {
         ctx.health -= 1;
       },
-      always: [{ target: "/dead", guard: (ctx) => ctx.health <= 0 }, { target: "/fine" }],
+      always: [{ to: "/dead", when: (ctx) => ctx.health <= 0 }, { to: "/fine" }],
     },
     dead: {},
   },
@@ -3066,12 +3066,12 @@ export const hero = defineMachine<Hero, HeroEvent>()({
 
 `HIT` runs `hurt`'s `enter`, then moves on to `/dead` or back to `/fine` in the same `send`. The rules:
 
-- **Checked after every move.** That is `start`, an event, an `after` timer, a path returned from an `update` hook, a hot reload, and another `always` move. The active states are checked deepest first, the way events bubble, after the `enter` hooks and before the next queued event. The first candidate whose `guard` is missing or passes is taken, with the cause `always`.
-- **Not checked on ticks or targetless transitions.** A guard reading `ctx` that an action or an `update` hook changed waits for the next move. To watch a condition every frame, return a target from an `update` hook instead.
-- **No event and no actions.** A candidate is a `target` and an optional `guard(ctx)`. Put side effects in the target's `enter`.
+- **Checked after every move.** That is `start`, an event, an `after` timer, a path returned from an `update` hook, a hot reload, and another `always` move. The active states are checked deepest first, the way events bubble, after the `enter` hooks and before the next queued event. The first candidate whose `when` is missing or passes is taken, with the cause `always`.
+- **Not checked on ticks or transitions with no `to`.** A `when` reading `ctx` that a `run` or an `update` hook changed waits for the next move. To watch a condition every frame, return a target from an `update` hook instead.
+- **No event and no `run`.** A candidate is a `to` and an optional `when(ctx)`. Put side effects in the target's `enter`.
 - **Loops throw.** At most 10 `always` moves follow one move. The 11th throws `hsm: state "<path>" took 10 always transitions in a row; check for an always loop`, drops the queued events and leaves the instance usable in the state it reached.
 
-An unknown target, or a candidate without a `target`, throws when the machine is defined.
+An unknown target, or a candidate without a `to`, throws when the machine is defined.
 
 #### Run regions side by side with `parallel`
 
@@ -3117,7 +3117,7 @@ m.path; // "/alive/move/run", the first of them
 
 Entering `/alive` enters `move` and its `initial` chain, then `weapon` and its chain. A target inside one region, such as `/alive/weapon/cooldown`, enters that region through the target and every other region through its `initial`. Leaving `/alive` exits the last region first, each one deepest state first, then `/alive` itself. The rules:
 
-- **Each region moves on its own.** An event is offered to every region in order, and each takes at most its first enabled transition, from its active leaf up to the region's root. `START_FIRE` above moves both regions in one `send`, and each move is reported to `onTransition` with that region's old and new leaf.
+- **Each region moves on its own.** An event is offered to every region in order, and each takes at most its first enabled transition, from its active leaf up to the region's root. `START_FIRE` above moves both regions in one `send`, and each move is reported to `onMove` with that region's old and new leaf.
 - **The parallel state waits for its regions.** An event reaches `/alive`'s own `on`, and bubbles above it, only when no region took it. A region transition that leaves or re-enters `/alive` ends the offer, so later regions do not see that event.
 - **Ticks and `always` run per region.** In `update(dt)`, each region runs its `update` hooks deepest first, then its first due `after` timer if no hook moved it, so `weapon`'s cooldown can end in the same frame that `move` changes. The parallel state's own hooks and timers run only when no region moved. `always` is checked in the same order, one move at a time, with the same limit of 10.
 - **A target in another region re-enters the parallel state.** A transition from `/alive/move/idle` to `/alive/weapon/cooldown` exits all of `/alive` and enters it again. A region's transitions to its own states leave the other regions alone.
@@ -3127,9 +3127,9 @@ Entering `/alive` enters `move` and its `initial` chain, then `weapon` and its c
 
 A parallel state with `initial`, `restoreDepth` or no child states throws when the machine is defined, naming its path; `initial` is also a compile error. The root config cannot be parallel: put the regions in a child state, as `/alive` does above.
 
-#### Run to completion, `invoke` and `stop`
+#### Run to completion, `task` and `stop`
 
-A machine handles one event at a time, to completion. A `send` from inside a hook, guard, action or `invoke` does not run at once: it queues the event, which runs after the current transition, every `enter` and `exit` included, has finished. Queued events run in order before the outer `send`, `update` or `start` call returns, so `start` hands back a machine that has already handled whatever its `enter` hooks sent.
+A machine handles one event at a time, to completion. A `send` from inside a hook, `when`, `run` or `task` does not run at once: it queues the event, which runs after the current transition, every `enter` and `exit` included, has finished. Queued events run in order before the outer `send`, `update` or `start` call returns, so `start` hands back a machine that has already handled whatever its `enter` hooks sent.
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -3144,16 +3144,16 @@ export const level = defineMachine<LevelCtx, LevelEvent>()({
   initial: "/loading",
   states: {
     loading: {
-      enter: (ctx, m) => {
+      enter: (ctx, machine) => {
         if (ctx.cached) {
-          m.send({ type: "LOADED" });
+          machine.send({ type: "LOADED" });
         }
       },
       on: { LOADED: "/playing" },
     },
     playing: { on: { QUIT: "/done" } },
     done: {
-      enter: (_ctx, m) => m.stop(),
+      enter: (_ctx, machine) => machine.stop(),
     },
   },
 });
@@ -3166,11 +3166,11 @@ m.path; // undefined: done stopped the machine
 
 `stop()` exits every active state, deepest first and the root last, and sets `path` to `undefined`. Called inside a step, as `done` does above, it lets that step finish, then drops any queued events instead of running them. After `stop`, `send` and `update` do nothing.
 
-##### Engine callbacks: `invoke` and `settle`
+##### Engine callbacks: `task` and `finish`
 
-An engine callback that finishes later (an animation, a proxy load, an HTTP response) belongs in a state's `invoke`. It runs after the state's `enter` hook on every entry and receives a one-shot `settle(event)`; pass it whichever typed event means success or failure. If the state was left, re-entered, or the machine was stopped before the callback fires, that `settle` is ignored, so a late callback never moves a machine that has moved on. The door's `opening` state [below](#define-a-machine-in-a-plain-module) settles when its fade ends.
+An engine callback that finishes later (an animation, a proxy load, an HTTP response) belongs in a state's `task`. It runs after the state's `enter` hook on every entry, lives as long as that entry, and receives a one-shot `finish(event)`; pass it whichever typed event means success or failure. If the state was left, re-entered, or the machine was stopped before the callback fires, that `finish` is ignored, so a late callback never moves a machine that has moved on. The door's `opening` state [below](#define-a-machine-in-a-plain-module) finishes when its fade ends.
 
-An `invoke` may return a cleanup function. The machine calls it once when that entry ends: after the state's `exit` hook, on `stop()`, before a re-entry starts the next `invoke`, and when a [hot reload](#hot-reload) removes the state.
+A `task` may return a cleanup function. The machine calls it once when that entry ends: after the state's `exit` hook, on `stop()`, before a re-entry starts the next `task`, and when a [hot reload](#hot-reload) removes the state.
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -3181,7 +3181,7 @@ export const blink = defineMachine<{ readonly sprite: Url }, BlinkEvent>()({
   initial: "/blinking",
   states: {
     blinking: {
-      invoke: (ctx) => {
+      task: (ctx) => {
         const handle = timer.delay(0.2, true, () => {
           msg.post(ctx.sprite, "disable");
         });
@@ -3198,11 +3198,11 @@ export const blink = defineMachine<{ readonly sprite: Url }, BlinkEvent>()({
 
 ##### Cleanup runs on exit, never after an `await`
 
-Release what a state holds (cancel an animation, a timer, a pending request) in its `exit` hook, as the door's `opening` does, or in the cleanup its `invoke` returns. Both run on every way out of the state, including `stop()`. Never put cleanup after an `await` in an `invoke` or a hook: by the time the awaited work resumes, the state may already be gone, and code that runs then cleans up after a state that no longer exists, or never runs at all.
+Release what a state holds (cancel an animation, a timer, a pending request) in its `exit` hook, as the door's `opening` does, or in the cleanup its `task` returns. Both run on every way out of the state, including `stop()`. Never put cleanup after an `await` in a `task` or a hook: by the time the awaited work resumes, the state may already be gone, and code that runs then cleans up after a state that no longer exists, or never runs at all.
 
 ##### Scripted sequences
 
-`sequence` from `@defold-typescript/types/hsm/async` turns an `async` function into an `invoke`. It receives the context and a `signal`: `await signal.wait(seconds)` pauses for that long in engine time, and the event the function returns is sent to the machine. `signal.aborted` turns `true` once the state is left.
+`sequence` from `@defold-typescript/types/hsm/async` turns an `async` function into a `task`. It receives the context and a `signal`: `await signal.wait(seconds)` pauses for that long in engine time, and the event the function returns is sent to the machine. `signal.aborted` turns `true` once the state is left.
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -3218,7 +3218,7 @@ export const intro = defineMachine<IntroCtx, IntroEvent>()({
   initial: "/playing",
   states: {
     playing: {
-      invoke: sequence(async (ctx, signal) => {
+      task: sequence(async (ctx, signal) => {
         msg.post(ctx.title, "enable");
         await signal.wait(2);
         msg.post(ctx.title, "disable");
@@ -3252,7 +3252,7 @@ export const scores = defineMachine<BoardCtx, BoardEvent>()({
   initial: "/loading",
   states: {
     loading: {
-      invoke: sequence(async (ctx, signal) => {
+      task: sequence(async (ctx, signal) => {
         const loaded = await loadScores();
         if (signal.aborted) return;
         msg.post(ctx.board, "enable");
@@ -3268,7 +3268,7 @@ export const scores = defineMachine<BoardCtx, BoardEvent>()({
 
 ##### Watchdog
 
-`invoke` and `sequence` take no timeout option. Put the deadline on the state instead: an `after` entry leaves the state when nothing settled in time, and leaving it ignores the late `settle` and runs the cleanup.
+`task` and `sequence` take no timeout option. Put the deadline on the state instead: an `after` entry leaves the state when nothing finished in time, and leaving it ignores the late `finish` and runs the cleanup.
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -3279,9 +3279,9 @@ export const fetcher = defineMachine<{ readonly url: string }, FetchEvent>()({
   initial: "/loading",
   states: {
     loading: {
-      invoke: (ctx, settle) => {
+      task: (ctx, finish) => {
         http.request(ctx.url, "GET", (_self, _id, response) => {
-          settle(response.status === 200 ? { type: "LOADED" } : { type: "FAILED" });
+          finish(response.status === 200 ? { type: "LOADED" } : { type: "FAILED" });
         });
       },
       after: { 5: "/failed" },
@@ -3313,13 +3313,13 @@ export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
   states: {
     closed: {
       on: {
-        trigger_response: { target: "/opening", guard: (_ctx, event) => event.enter },
+        trigger_response: { to: "/opening", when: (_ctx, event) => event.enter },
       },
     },
     opening: {
-      invoke: (ctx, settle) => {
+      task: (ctx, finish) => {
         go.animate(ctx.sprite, "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 0.5, 0, () => {
-          settle({ type: "OPENED" });
+          finish({ type: "OPENED" });
         });
       },
       exit: (ctx) => {
@@ -3340,7 +3340,7 @@ export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
 export const doorEvents = messageEvents(["trigger_response"]);
 ```
 
-The guard reads `event.enter` because a `trigger_response` payload has one; the [message bridge](#the-message-bridge) turns that engine message into the event.
+The `when` reads `event.enter` because a `trigger_response` payload has one; the [message bridge](#the-message-bridge) turns that engine message into the event.
 
 #### One instance per object, on `self`
 
@@ -3416,13 +3416,13 @@ An instance always keeps its `ctx`. What happens to its current state depends on
 
 | After the edit, the current state… | The instance… |
 | --- | --- |
-| still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The edited transitions, guards and hooks apply from now on. |
+| still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The edited transitions, `when` checks and hooks apply from now on. |
 | still exists, but now has child states | enters its `initial` child (and that child's `initial`, and so on), running their `enter` hooks. |
-| was removed | moves to the closest parent state that still exists and enters that parent's `initial` chain, running those `enter` hooks. The removed states run no `exit` hook, because their code is gone, but a cleanup their `invoke` returned still runs, deepest state first. |
+| was removed | moves to the closest parent state that still exists and enters that parent's `initial` chain, running those `enter` hooks. The removed states run no `exit` hook, because their code is gone, but a cleanup their `task` returned still runs, deepest state first. |
 | is a [parallel](#run-regions-side-by-side-with-parallel) state that gained a region | keeps its other regions as they are and enters only the new one. |
 | was a parallel state and is now compound | keeps its first region in name order and drops the others like removed states. |
 
-States are matched by path, so renaming `chase` to `hunt` counts as removing `/chase`. A state with [`restoreDepth`](#resume-with-history) keeps its remembered children the same way: if the edit removed a remembered child, the next entry uses `initial` at that level. When the current state changes, `onTransition` listeners get the move with the cause `"reload"`, and the [debug inspector](#debug-a-machine) prints it.
+States are matched by path, so renaming `chase` to `hunt` counts as removing `/chase`. A state with [`restoreDepth`](#resume-with-history) keeps its remembered children the same way: if the edit removed a remembered child, the next entry uses `initial` at that level. When the current state changes, `onMove` listeners get the move with the cause `"reload"`, and the [debug inspector](#debug-a-machine) prints it.
 
 ##### Many objects, one machine
 
@@ -3450,7 +3450,7 @@ export default defineScript({
 });
 ```
 
-Here each new enemy redefines `"enemy"`: the config is compiled again, every enemy already alive switches to it, and if the config's hooks or guards use values from that `init`, the newest enemy's values replace everyone's.
+Here each new enemy redefines `"enemy"`: the config is compiled again, every enemy already alive switches to it, and if the config's hooks or `when` checks use values from that `init`, the newest enemy's values replace everyone's.
 
 Without a key, `defineMachine` builds a separate machine on every call, and a reload does not reach running instances.
 
@@ -3494,9 +3494,9 @@ m.send({ type: "LOSE" }); // a new table on every call
 
 **`defineMachine` takes two calls.** `defineMachine<Ctx, E>()` fixes the context and event types (and takes an optional [hot reload](#hot-reload) key), and the second call takes the config. TypeScript cannot infer some type arguments of one call while you write the others, and the config has to be inferred: its literal shape is where the state paths come from.
 
-**Events are `EventObject`s.** `E` is a union of objects that each have a string `type`, plus any payload fields. `on` accepts only those `type` values as keys, and each guard and action sees the variant its key names.
+**Events are `EventObject`s.** `E` is a union of objects that each have a string `type`, plus any payload fields. `on` accepts only those `type` values as keys, and each `when` and `run` sees the variant its key names.
 
-**`start` returns a `MachineInstance<Ctx, E, P>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, guards and actions are typed before the paths are known, so the `m` they receive is a `MachineInstance<Ctx, E>` whose `path` and `matches()` use plain `string`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`.
+**`start` returns a `MachineInstance<Ctx, E, P>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, `when` and `run` are typed before the paths are known, so the `machine` they receive is a `MachineInstance<Ctx, E>` whose `path` and `matches()` use plain `string`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`.
 
 **`StatePath<C>` lists a config's paths,** each with its leading `/`. Paths are spelled out four levels deep; below that, any string under a fourth-level path is accepted.
 
@@ -3550,7 +3550,7 @@ broken.start({ steps: 0 });
 
 Defold delivers messages as a hashed `message_id`, a payload table and the sender's URL. `messageEvents(ids)` turns the ones you list into typed events `{ type: id, ...payload, sender }`, reusing the payload types already declared through `BuiltinMessages` and `CustomMessages`, so a payload is declared once. `MessageEvent<K>` is that event's type, for the machine's event union, and carries `sender: Url`. Its `toEvent(message_id, message, sender)` takes the `on_message` parameters of both `defineScript` and `defineGuiScript` and returns `undefined` for any id you did not list. A payload field named `type` or `sender` never overrides the event's own. Build the mapper once at module scope: it hashes the ids when it is created.
 
-A guard or action reads `event.sender` to answer whoever sent the message:
+A `when` or `run` reads `event.sender` to answer whoever sent the message:
 
 ```ts title="lift-machine.ts"
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -3569,8 +3569,7 @@ export const liftMachine = defineMachine<{ floor: number }, MessageEvent<"call_l
     waiting: {
       on: {
         call_lift: {
-          target: "/waiting",
-          actions: (ctx, event) => {
+          run: (ctx, event) => {
             ctx.floor = event.floor;
             msg.post(event.sender, "lift_arrived", { floor: ctx.floor });
           },
@@ -3622,8 +3621,8 @@ const flowMachine = defineMachine<{ screen: Hash | undefined; best: number }, Fl
     loading: {
       on: {
         monarch_screen_transition_in_finished: {
-          target: "/playing",
-          actions: (ctx, event) => {
+          to: "/playing",
+          run: (ctx, event) => {
             ctx.screen = event.screen;
           },
         },
@@ -3633,8 +3632,8 @@ const flowMachine = defineMachine<{ screen: Hash | undefined; best: number }, Fl
     playing: {
       on: {
         game_over: {
-          target: "/loading",
-          actions: (ctx, event) => {
+          to: "/loading",
+          run: (ctx, event) => {
             ctx.best = math.max(ctx.best, event.score);
           },
         },
@@ -3707,7 +3706,7 @@ The frame number counts `draw` calls, so it tracks `update` when you draw every 
 
 In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect` registers nothing and `draw` does nothing, so the calls can stay in shipped code.
 
-`inspect` is built on `onTransition(listener)`, which every instance has. The listener receives the old leaf path, the new one (`undefined` after `stop()`), the cause and the event (`undefined` unless the cause is `event`), after the move's `enter` hooks have run. Use it to feed your own tools.
+`inspect` is built on `onMove(listener)`, which every instance has. The listener receives the old leaf path, the new one (`undefined` after `stop()`), the cause and the event (`undefined` unless the cause is `event`), after the move's `enter` hooks have run. It is not called for the first entry at `start` or for a transition with no `to`. Each call adds a listener and returns a function that removes it. Use it to feed your own tools.
 
 #### Migrate a script
 
@@ -3763,7 +3762,7 @@ function jump(self: PlayerSelf): void {
 }
 ```
 
-After, those branches are states. Each state plays its animation once in `enter`, and `JUMP` is handled only in `grounded`, so the guard is the state itself:
+After, those branches are states. Each state plays its animation once in `enter`, and `JUMP` is handled only in `grounded`, so the state itself is the check:
 
 ```ts title="player-machine.ts"
 import type { Vector3 } from "@defold-typescript/types";
@@ -3791,8 +3790,8 @@ export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
       on: {
         // Only allow jump from ground (extend with a counter for double-jumps).
         JUMP: {
-          target: "/airborne/rising",
-          actions: (ctx) => {
+          to: "/airborne/rising",
+          run: (ctx) => {
             ctx.velocity.y = jump_takeoff_speed;
             ctx.ground_contact = false;
           },
@@ -3825,7 +3824,7 @@ export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
           on: {
             // Cut the jump short if we are still going up.
             JUMP_RELEASED: {
-              actions: (ctx) => {
+              run: (ctx) => {
                 ctx.velocity.y = ctx.velocity.y * 0.5;
               },
             },
@@ -3897,7 +3896,22 @@ export default defineScript({
 Two rules carry over to any migration:
 
 - **Give the machine an object, not `self`.** `init`'s return value is copied onto the engine-owned `self`, so a context built from loose fields in `init` would keep stale copies of them. The player's `init` builds one `body` object, starts the machine on it and returns `{ body, motion }`; every hook then reads and writes `self.body`, the same object the machine sees.
-- **A state is as fresh as its last update.** `grounded` reflects the contacts seen by the last `fixed_update`, while the old guard read `ground_contact` after the physics step that followed it. So the player can now jump on the one physics step after walking off a ledge, a single step of leniency the example accepts.
+- **A state is as fresh as its last update.** `grounded` reflects the contacts seen by the last `fixed_update`, while the old check read `ground_contact` after the physics step that followed it. So the player can now jump on the one physics step after walking off a ledge, a single step of leniency the example accepts.
+
+#### Coming from XState
+
+The model is close to XState's, with shorter names:
+
+| XState                         | `hsm`                                               |
+| ------------------------------ | --------------------------------------------------- |
+| `entry`                        | `enter`                                             |
+| `invoke`                       | `task`                                              |
+| `guard`                        | `when`                                              |
+| `actions`                      | `run`                                               |
+| `target`                       | `to`, always a full path such as `/alive/chase`     |
+| `reenter: true`                | a `to` naming the state the rule is on              |
+
+Actions are plain functions that change `ctx` directly; there is no `assign`.
 
 #### Reference
 
@@ -3913,11 +3927,12 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `states`  | `{ [name: string]: StateConfig }`           | Child states, by name. A name is non-empty and contains no `/`.                               |
 | `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`, each target a full path; see [Events and transitions](#events-and-transitions). |
 | `after`   | `{ [seconds: number]: string }`             | Full-path targets taken after this long in the state, in game time; see [`update` and `after`](#update-and-after). |
-| `always`  | `target \| config \| config[]`               | Full-path targets taken right after any move that leaves this state active; the first whose `guard(ctx)` is missing or passes wins. See [Move on at once with `always`](#move-on-at-once-with-always). |
-| `enter`   | `(ctx, m) => void`                          | Runs each time the state is entered.                                                          |
-| `exit`    | `(ctx, m) => void`                          | Runs each time the state is left, including on `stop()`.                                      |
-| `update`  | `(ctx, dt, m) => string \| undefined`       | Runs on every `update(dt)` while active; a returned full path transitions.                    |
-| `invoke`  | `(ctx, settle, m) => (() => void) \| void`  | Runs after `enter`; `settle(event)` sends one event if the state is still the one entered. A returned function runs once when that entry ends. |
+| `always`  | `target \| config \| config[]`               | Full-path targets taken right after any move that leaves this state active; the first whose `when(ctx)` is missing or passes wins. See [Move on at once with `always`](#move-on-at-once-with-always). |
+| `enter`   | `(ctx, machine) => void`                    | Runs each time the state is entered.                                                          |
+| `exit`    | `(ctx, machine) => void`                    | Runs each time the state is left, including on `stop()`.                                      |
+| `update`  | `(ctx, dt, machine) => string \| undefined` | Runs on every `update(dt)` while active; a returned full path transitions.                    |
+| `task`    | `(ctx, finish, machine) => (() => void) \| void` | Runs after `enter`; `finish(event)` sends one event if the state is still the one entered. A returned function runs once when that entry ends. |
+| `invoke`  | `never`                                     | Renamed to `task`; setting it fails to compile.                                               |
 
 ##### `MachineInstance`
 
@@ -3930,7 +3945,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `send`    | `(event: E) => void`    | Handles `event`, or queues it when called during a step.                           |
 | `update`  | `(dt: number) => void`  | Runs the `update` hooks, then the `after` timers if no hook transitioned.          |
 | `stop`    | `() => void`            | Exits every active state; later `send` and `update` calls do nothing.              |
-| `onTransition` | `(listener: (from, to, cause, event) => void) => void` | Calls `listener` after each move with the old and new leaf, the cause and the event; inside a parallel state, the leaves are those of the region that moved. `to` is `undefined` on `stop()`. |
+| `onMove` | `(listener: (from, to, cause, event) => void) => () => void` | Calls `listener` after each move with the old and new leaf, the cause and the event; inside a parallel state, the leaves are those of the region that moved. `to` is `undefined` on `stop()`. Returns a function that removes the listener. |
 
 ### Init
 
@@ -5999,7 +6014,7 @@ the envelope carries the reason and no `written` field:
 
 ### hsm-view
 
-`hsm-view` opens a [state machine](./state-machines.md) file in your browser and runs it there, guards, actions and context included. You see the source exactly as you wrote it, with the active states tinted, and you drive the machine by sending events and stepping time. No game and no Defold editor are involved.
+`hsm-view` opens a [state machine](./state-machines.md) file in your browser and runs it there, `when` checks, `run` code and context included. You see the source exactly as you wrote it, with the active states tinted, and you drive the machine by sending events and stepping time. No game and no Defold editor are involved.
 
 ```sh
 bunx @defold-typescript/cli hsm-view src/player-machine.ts

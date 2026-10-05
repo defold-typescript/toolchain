@@ -1,4 +1,4 @@
-import type { EventObject, InvokeStart } from "./index";
+import type { EventObject, TaskStart } from "./index";
 
 /** @noSelf */
 export interface SequenceSignal {
@@ -30,13 +30,13 @@ function rethrow(reason: unknown): void {
   });
 }
 
-// The sequence plugs into the state's invoke, so its cleanup cancels the pending
+// The sequence plugs into the state's task, so its cleanup cancels the pending
 // waits on every way out of the state; a wait left pending is never resolved.
 export function sequence<Ctx, E extends EventObject>(
   // biome-ignore lint/suspicious/noConfusingVoidType: `void` lets a sequence end without returning an event.
   run: (ctx: Ctx, signal: SequenceSignal) => Promise<NoInfer<E> | void>,
-): InvokeStart<Ctx, E> {
-  return (ctx, settle) => {
+): TaskStart<Ctx, E> {
+  return (ctx, finish) => {
     const handles: number[] = [];
     const signal: Signal = {
       aborted: false,
@@ -58,7 +58,7 @@ export function sequence<Ctx, E extends EventObject>(
     run(ctx, signal).then(
       (event) => {
         if (event !== undefined) {
-          settle(event);
+          finish(event);
         }
       },
       (reason) => rethrow(reason),

@@ -169,7 +169,7 @@ describe("hsm tutorial demos", () => {
     expect(d.ctx.visible).toBe(true);
   });
 
-  test("door: without cleanup the fade outlives opening and its late settle is ignored", () => {
+  test("door: without cleanup the fade outlives opening and its late finish is ignored", () => {
     const d = drive("door");
     d.press("Toggle cancel in exit");
     expect(d.ctx.cleanup).toBe(false);
@@ -182,7 +182,7 @@ describe("hsm tutorial demos", () => {
     expect(d.run.path).toBe("/closed");
     expect(d.ctx.tint).toBe(0);
     expect(d.since(mark, "drop")).toEqual([
-      "late settle(OPENED) ignored: /opening was already left",
+      "late finish(OPENED) ignored: /opening was already left",
     ]);
   });
 

@@ -2,13 +2,13 @@ export interface EventObject {
   readonly type: string;
 }
 
-export type TransitionCause = "event" | "after" | "update" | "stop" | "reload" | "always";
+export type MoveCause = "event" | "after" | "update" | "stop" | "reload" | "always";
 
 /** @noSelf */
-export type TransitionListener<E extends EventObject, P extends string = string> = (
+export type MoveListener<E extends EventObject, P extends string = string> = (
   from: P,
   to: P | undefined,
-  cause: TransitionCause,
+  cause: MoveCause,
   event: E | undefined,
 ) => void;
 
@@ -21,33 +21,61 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
   readonly send: (event: E) => void;
   readonly update: (dt: number) => void;
   readonly stop: () => void;
-  readonly onTransition: (listener: TransitionListener<E, P>) => void;
+  /**
+   * Adds a listener called after each move completes, with the leaf left, the leaf entered and
+   * the cause. It is not called for the first entry at `start` or for a move with no `to`; a
+   * parallel machine calls it once per moved region. Each call adds a listener, and the returned
+   * function removes that one.
+   */
+  readonly onMove: (listener: MoveListener<E, P>) => () => void;
 }
 
-export type TransitionAction<Ctx, E extends EventObject, V extends E = E> = (
+export type MoveAction<Ctx, E extends EventObject, V extends E = E> = (
   ctx: Ctx,
   event: V,
-  m: MachineInstance<Ctx, E>,
+  machine: MachineInstance<Ctx, E>,
 ) => void;
 
 /** @noSelf */
 export interface TransitionConfig<Ctx, E extends EventObject, V extends E = E> {
-  readonly target?: string;
-  readonly guard?: (ctx: Ctx, event: V) => boolean;
-  readonly actions?: TransitionAction<Ctx, E, V> | readonly TransitionAction<Ctx, E, V>[];
-  readonly reenter?: boolean;
+  /**
+   * The full path of the state to move to. A `to` naming the state the rule is on exits and
+   * re-enters it, restarting its timers and `task`; a `to` below it keeps it active.
+   */
+  readonly to?: string;
+  /**
+   * The rule is taken only when this returns `true`. It must have no side effects: it is also
+   * checked when the move does not happen, in guarded lists and on every `always` recheck.
+   */
+  readonly when?: (ctx: Ctx, event: V) => boolean;
+  /**
+   * Runs during the move. The event is accepted when its key matches and `when` passes; then
+   * `exit` runs on each state left, deepest first; then `run`; then `enter` on each state
+   * entered, outermost first. Shared ancestors neither exit nor enter. A rule with no `to` runs
+   * only `run`.
+   */
+  readonly run?: MoveAction<Ctx, E, V> | readonly MoveAction<Ctx, E, V>[];
+  /** Renamed to `to`. */
+  readonly target?: never;
+  /** Renamed to `when`. */
+  readonly guard?: never;
+  /** Renamed to `run`. */
+  readonly actions?: never;
+  /** Removed: a `to` naming the state the rule is on restarts it. */
+  readonly reenter?: never;
 }
 
 export type TransitionSpec<Ctx, E extends EventObject, V extends E = E> =
   | string
   | TransitionConfig<Ctx, E, V>
-  // Lua cannot tell [] from {}, so an empty list would compile to a targetless transition.
+  // Lua cannot tell [] from {}, so an empty list would compile to a transition with no to.
   | readonly [TransitionConfig<Ctx, E, V>, ...TransitionConfig<Ctx, E, V>[]];
 
 /** @noSelf */
 export interface AlwaysConfig<Ctx> {
-  readonly target: string;
-  readonly guard?: (ctx: Ctx) => boolean;
+  readonly to: string;
+  /** Checked on every recheck, so it must have no side effects. */
+  readonly when?: (ctx: Ctx) => boolean;
 }
 
 export type AlwaysSpec<Ctx> =
@@ -59,20 +87,32 @@ export type OnConfig<Ctx, E extends EventObject> = {
   readonly [K in E["type"]]?: TransitionSpec<Ctx, E, Extract<E, { type: K }>>;
 };
 
-export type StateHook<Ctx, E extends EventObject> = (ctx: Ctx, m: MachineInstance<Ctx, E>) => void;
+/**
+ * Runs on every way in (`enter`) or out (`exit`) of the state: a move, `start` and `stop`. A hot
+ * reload enters the states it adds, but drops a removed state without its `exit`. It gets no
+ * event; event data reaches `enter` through `ctx`, set in `run`.
+ */
+export type StateHook<Ctx, E extends EventObject> = (
+  ctx: Ctx,
+  machine: MachineInstance<Ctx, E>,
+) => void;
 
 export type UpdateHook<Ctx, E extends EventObject> = (
   ctx: Ctx,
   dt: number,
-  m: MachineInstance<Ctx, E>,
+  machine: MachineInstance<Ctx, E>,
 ) => string | undefined;
 
-/** @noSelf */
-export type InvokeStart<Ctx, E extends EventObject> = (
+/**
+ * Starts work that lives as long as the state. `finish` sends one event and is ignored after the
+ * first call or once the state is left. The returned cleanup runs on every way out.
+ * @noSelf
+ */
+export type TaskStart<Ctx, E extends EventObject> = (
   ctx: Ctx,
-  settle: (event: E) => void,
-  m: MachineInstance<Ctx, E>,
-  // biome-ignore lint/suspicious/noConfusingVoidType: `void` keeps an expression-body invoke returning a void call (`=> go.animate(...)`) valid.
+  finish: (event: E) => void,
+  machine: MachineInstance<Ctx, E>,
+  // biome-ignore lint/suspicious/noConfusingVoidType: `void` keeps an expression-body task returning a void call (`=> go.animate(...)`) valid.
 ) => (() => void) | void;
 
 /** @noSelf */
@@ -87,7 +127,10 @@ export interface StateConfig<Ctx, E extends EventObject> {
   readonly enter?: StateHook<Ctx, E>;
   readonly exit?: StateHook<Ctx, E>;
   readonly update?: UpdateHook<Ctx, E>;
-  readonly invoke?: InvokeStart<Ctx, E>;
+  /** Started on each entry; see `TaskStart`. */
+  readonly task?: TaskStart<Ctx, E>;
+  /** Renamed to `task`. */
+  readonly invoke?: never;
 }
 
 export interface MachineConfig<Ctx, E extends EventObject> extends StateConfig<Ctx, E> {
@@ -141,10 +184,9 @@ type RestoreCount<S, D extends number> = S extends { readonly states: infer Chil
   : never;
 
 interface TransitionCheck<T> {
-  readonly target?: T;
-  readonly guard?: unknown;
-  readonly actions?: unknown;
-  readonly reenter?: unknown;
+  readonly to?: T;
+  readonly when?: unknown;
+  readonly run?: unknown;
 }
 
 type SpecCheck<T> = T | TransitionCheck<T> | readonly TransitionCheck<T>[];
@@ -178,11 +220,11 @@ type PathCheck<S, Self extends string, All extends string, Ev extends string> = 
   readonly enter?: unknown;
   readonly exit?: unknown;
   readonly update?: unknown;
-  readonly invoke?: unknown;
+  readonly task?: unknown;
 };
 
 export interface MachineConfigError {
-  readonly "hsm: an initial or target names an unknown state path, or an on key an unknown event": never;
+  readonly "hsm: an initial or a to names an unknown state path, or an on key an unknown event": never;
 }
 
 export type DefinedMachine<Ctx, E extends EventObject, C> =
@@ -194,9 +236,8 @@ type Guard<Ctx, E extends EventObject> = (ctx: Ctx, event: E) => boolean;
 
 interface Transition<Ctx, E extends EventObject> {
   readonly target: number;
-  readonly guard: Guard<Ctx, E> | undefined;
-  readonly actions: readonly TransitionAction<Ctx, E>[];
-  readonly reenter: boolean;
+  readonly when: Guard<Ctx, E> | undefined;
+  readonly run: readonly MoveAction<Ctx, E>[];
 }
 
 interface Compiled<Ctx, E extends EventObject> {
@@ -448,25 +489,23 @@ function compileTransition<Ctx, E extends EventObject>(
   if (typeof spec === "string") {
     return {
       target: resolveTarget(compiled, source, spec),
-      guard: undefined,
-      actions: [],
-      reenter: false,
+      when: undefined,
+      run: [],
     };
   }
-  const actions: TransitionAction<Ctx, E>[] = [];
-  const declared = spec.actions;
+  const run: MoveAction<Ctx, E>[] = [];
+  const declared = spec.run;
   if (typeof declared === "function") {
-    actions.push(declared);
+    run.push(declared);
   } else if (declared !== undefined) {
     for (let i = 0; i < declared.length; i++) {
-      actions.push(declared[i] as TransitionAction<Ctx, E>);
+      run.push(declared[i] as MoveAction<Ctx, E>);
     }
   }
   return {
-    target: spec.target === undefined ? NO_STATE : resolveTarget(compiled, source, spec.target),
-    guard: spec.guard,
-    actions,
-    reenter: spec.reenter === true,
+    target: spec.to === undefined ? NO_STATE : resolveTarget(compiled, source, spec.to),
+    when: spec.when,
+    run,
   };
 }
 
@@ -517,8 +556,8 @@ function compileAlways<Ctx, E extends EventObject>(
       : (spec as readonly AlwaysConfig<Ctx>[]);
   for (let i = 0; i < candidates.length; i++) {
     const candidate = candidates[i] as string | AlwaysConfig<Ctx>;
-    if (typeof candidate !== "string" && candidate.target === undefined) {
-      throw `hsm: state "${describePath(compiled.paths[index] as string)}" has an always transition with no target`;
+    if (typeof candidate !== "string" && candidate.to === undefined) {
+      throw `hsm: state "${describePath(compiled.paths[index] as string)}" has an always transition with no "to"`;
     }
     list.push(compileTransition(compiled, index, candidate as string | TransitionConfig<Ctx, E>));
   }
@@ -619,10 +658,9 @@ function transitionDomain<Ctx, E extends EventObject>(
   compiled: Compiled<Ctx, E>,
   source: number,
   target: number,
-  reenter: boolean,
 ): number {
   let domain = source;
-  if (source !== ROOT && (reenter || !isAncestorOrSelf(compiled, source, target))) {
+  if (source !== ROOT && (target === source || !isAncestorOrSelf(compiled, source, target))) {
     domain = compiled.parent[source] as number;
     while (domain !== ROOT && (domain === target || !isAncestorOrSelf(compiled, domain, target))) {
       domain = compiled.parent[domain] as number;
@@ -685,7 +723,7 @@ function createMachine<Ctx, E extends EventObject>(
     let busy = false;
     let stopRequested = false;
     let moved = false;
-    const listeners: TransitionListener<E>[] = [];
+    let listeners: MoveListener<E>[] = [];
 
     const instance = {
       ctx,
@@ -695,7 +733,7 @@ function createMachine<Ctx, E extends EventObject>(
       send,
       update,
       stop,
-      onTransition,
+      onMove,
     };
 
     function clearSlot(state: number): void {
@@ -803,18 +841,44 @@ function createMachine<Ctx, E extends EventObject>(
       settleAlways();
     }
 
-    function onTransition(listener: TransitionListener<E>): void {
-      listeners.push(listener);
+    // Copy-on-write: a report walks the list it started with, so a listener removed mid-report
+    // never makes it skip another.
+    function onMove(listener: MoveListener<E>): () => void {
+      const added: MoveListener<E>[] = [];
+      for (let i = 0; i < listeners.length; i++) {
+        added.push(listeners[i] as MoveListener<E>);
+      }
+      added.push(listener);
+      listeners = added;
+      let removed = false;
+      return () => {
+        if (removed) {
+          return;
+        }
+        removed = true;
+        const kept: MoveListener<E>[] = [];
+        let skipped = false;
+        for (let i = 0; i < listeners.length; i++) {
+          const current = listeners[i] as MoveListener<E>;
+          if (current !== listener || skipped) {
+            kept.push(current);
+          } else {
+            skipped = true;
+          }
+        }
+        listeners = kept;
+      };
     }
 
     function report(
       from: string,
       to: string | undefined,
-      cause: TransitionCause,
+      cause: MoveCause,
       event: E | undefined,
     ): void {
-      for (let i = 0; i < listeners.length; i++) {
-        (listeners[i] as TransitionListener<E>)(from, to, cause, event);
+      const current = listeners;
+      for (let i = 0; i < current.length; i++) {
+        (current[i] as MoveListener<E>)(from, to, cause, event);
       }
     }
 
@@ -860,17 +924,17 @@ function createMachine<Ctx, E extends EventObject>(
       if (hook !== undefined) {
         hook(ctx, instance);
       }
-      const invoke = config.invoke;
-      if (invoke !== undefined) {
-        // A path, not an index, so a settle held across a rebind still finds its entry.
+      const task = config.task;
+      if (task !== undefined) {
+        // A path, not an index, so a finish held across a rebind still finds its entry.
         const path = paths[state] as string;
-        let settled = false;
-        const result = invoke(
+        let finished = false;
+        const result = task(
           ctx,
           (event: E) => {
             const current = lookupPath(compiled, path);
             if (
-              settled ||
+              finished ||
               !running ||
               stopRequested ||
               current === undefined ||
@@ -878,7 +942,7 @@ function createMachine<Ctx, E extends EventObject>(
             ) {
               return;
             }
-            settled = true;
+            finished = true;
             send(event);
           },
           instance,
@@ -1022,22 +1086,21 @@ function createMachine<Ctx, E extends EventObject>(
     function transition(
       source: number,
       target: number,
-      reenter: boolean,
-      actions: readonly TransitionAction<Ctx, E>[] | undefined,
+      run: readonly MoveAction<Ctx, E>[] | undefined,
       event: E | undefined,
-      cause: TransitionCause,
+      cause: MoveCause,
     ): void {
       if (target === NO_STATE) {
-        runActions(actions, event);
+        runActions(run, event);
         return;
       }
-      const domain = transitionDomain(compiled, source, target, reenter);
+      const domain = transitionDomain(compiled, source, target);
       const from = firstLeaf(domain);
       const child = activeChild[domain] as number;
       if (child !== NO_STATE) {
         exitSubtree(child);
       }
-      runActions(actions, event);
+      runActions(run, event);
       if (target === domain) {
         enterDefaults(domain, 0);
       } else {
@@ -1074,14 +1137,14 @@ function createMachine<Ctx, E extends EventObject>(
       const list = always[state] as Transition<Ctx, E>[];
       for (let i = 0; i < list.length; i++) {
         const candidate = list[i] as Transition<Ctx, E>;
-        const guard = candidate.guard as ((ctx: Ctx) => boolean) | undefined;
-        if (guard === undefined || guard(ctx)) {
+        const when = candidate.when as ((ctx: Ctx) => boolean) | undefined;
+        if (when === undefined || when(ctx)) {
           if (overLimit) {
             clearQueue();
             busy = false;
             throw `hsm: state "${describePath(paths[state] as string)}" took ${ALWAYS_LIMIT} always transitions in a row; check for an always loop`;
           }
-          transition(state, candidate.target, false, undefined, undefined, "always");
+          transition(state, candidate.target, undefined, undefined, "always");
           return true;
         }
       }
@@ -1089,14 +1152,14 @@ function createMachine<Ctx, E extends EventObject>(
     }
 
     function runActions(
-      actions: readonly TransitionAction<Ctx, E>[] | undefined,
+      run: readonly MoveAction<Ctx, E>[] | undefined,
       event: E | undefined,
     ): void {
-      if (actions === undefined || event === undefined) {
+      if (run === undefined || event === undefined) {
         return;
       }
-      for (let i = 0; i < actions.length; i++) {
-        (actions[i] as TransitionAction<Ctx, E>)(ctx, event, instance);
+      for (let i = 0; i < run.length; i++) {
+        (run[i] as MoveAction<Ctx, E>)(ctx, event, instance);
       }
     }
 
@@ -1108,8 +1171,8 @@ function createMachine<Ctx, E extends EventObject>(
       const list = transitions[listIndex] as Transition<Ctx, E>[];
       for (let i = 0; i < list.length; i++) {
         const candidate = list[i] as Transition<Ctx, E>;
-        if (candidate.guard === undefined || candidate.guard(ctx, event)) {
-          transition(state, candidate.target, candidate.reenter, candidate.actions, event, "event");
+        if (candidate.when === undefined || candidate.when(ctx, event)) {
+          transition(state, candidate.target, candidate.run, event, "event");
           return true;
         }
       }
@@ -1247,14 +1310,7 @@ function createMachine<Ctx, E extends EventObject>(
         return true;
       }
       if (typeof target === "string") {
-        transition(
-          state,
-          resolveTarget(compiled, state, target),
-          false,
-          undefined,
-          undefined,
-          "update",
-        );
+        transition(state, resolveTarget(compiled, state, target), undefined, undefined, "update");
         return true;
       }
       return false;
@@ -1272,7 +1328,6 @@ function createMachine<Ctx, E extends EventObject>(
         transition(
           state,
           (afterTargets[state] as number[])[next] as number,
-          false,
           undefined,
           undefined,
           "after",
