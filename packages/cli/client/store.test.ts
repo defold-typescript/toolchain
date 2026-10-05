@@ -601,6 +601,35 @@ describe("live attach", () => {
     expect(viewer.requests.map((request) => request.route)).toEqual(["/api/pick"]);
   });
 
+  test("names the machine a reload fell back to while attached", async () => {
+    const viewer = await attached();
+    writeFileSync(
+      path.join(dir, "pair.ts"),
+      PAIR.replace(
+        'export const guard = defineMachine("guard")',
+        'export const warden = defineMachine("warden")',
+      ),
+    );
+    await viewer.store.getState().reloaded({ ok: true, snapshot: viewer.session.reload() });
+    const state = viewer.store.getState();
+    expect(state.index?.picked).toBe("warden");
+    expect(state.snapshot?.picked).toBe(state.index?.picked);
+    expect(state.index?.machines).toEqual(["warden", "dog"]);
+    expect(state.snapshot?.machines).toEqual(state.index?.machines);
+    expect(state.live.attached).toBe("enemy#2");
+    expect(tintedIn(viewer)).toEqual([stateSpanId("/chase")]);
+    expect(state.clickable).toEqual([]);
+
+    await state.receiveLive({ instances: [enemy, { ...enemy2, leaves: ["/flee", "/chase"] }] });
+    const { banner } = viewer.store.getState().live;
+    expect(banner).toContain("warden");
+    expect(banner).not.toContain("guard");
+
+    await viewer.store.getState().detach();
+    expect(viewer.store.getState().snapshot?.picked).toBe("warden");
+    expect(viewer.store.getState().clickable.length).toBeGreaterThan(0);
+  });
+
   test("detaches with a log line when the attached label is no longer reported", async () => {
     const viewer = await attached();
     await viewer.store.getState().receiveLive({ instances: [enemy] });

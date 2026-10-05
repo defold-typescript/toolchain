@@ -197,7 +197,6 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
   let loop: PlayLoop | undefined;
   let inFlight: Promise<boolean> | undefined;
   let attachedAt = 0;
-  let simulated: Snapshot | undefined;
 
   return createStore<ViewerState>()((set, get) => {
     const scrollTo = (file: number, line: number): ScrollTarget => ({ file, line, seq: ++seq });
@@ -334,7 +333,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         t: (now() - attachedAt) / 1000,
         ...(move === undefined ? {} : { move }),
       });
-      const picked = simulated?.picked;
+      const { picked } = index;
       set((state) => ({
         live: {
           ...state.live,
@@ -344,7 +343,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
               : `the game reports ${frame.unknown.join(", ")}, which ${picked ?? "the picked machine"} does not define; it may run other source`,
         },
       }));
-      paint({ ...frame.snapshot, machines: simulated?.machines ?? [], picked }, true);
+      paint({ ...frame.snapshot, machines: index.machines, picked }, true);
     };
 
     return {
@@ -414,9 +413,6 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
           return;
         }
         get().setPlaying(false);
-        if (get().live.attached === undefined) {
-          simulated = get().snapshot;
-        }
         attachedAt = now();
         set((state) => ({ live: { ...state.live, attached: label } }));
         showLive(instance, undefined, true);
@@ -425,7 +421,6 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         if (get().live.attached === undefined) {
           return;
         }
-        simulated = undefined;
         set((state) => ({ live: { ...state.live, attached: undefined, banner: undefined } }));
         // Only the tint comes back: the glows and log lines of the last call already showed.
         await call(async () => ({

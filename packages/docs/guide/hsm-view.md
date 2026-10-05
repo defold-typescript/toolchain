@@ -65,6 +65,8 @@ Editing any loaded file reloads the page without restarting the command. The fil
 - A **keyed** machine (`defineMachine("player")`) moves to the new config and keeps its state path and ctx, as [hot reload](./state-machines.md#hot-reload) does in a game.
 - An **unkeyed** machine restarts from its `initial` with the last starting ctx, and the log says why.
 
+A reload that removes or renames the picked machine picks the first machine the files define. A page [attached to a running game](#attach-to-a-running-game) keeps following its instance against that machine.
+
 A reload that fails, such as a syntax error, shows its error in a banner. The page keeps the last source and machine that loaded until a reload succeeds. When the command stops, the page shows "disconnected".
 
 ## Attach to a running game
