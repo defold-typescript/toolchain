@@ -79,7 +79,7 @@ export type InvokeStart<Ctx, E extends EventObject> = (
 export interface StateConfig<Ctx, E extends EventObject> {
   readonly type?: "parallel";
   readonly initial?: string;
-  readonly history?: "shallow";
+  readonly restoreDepth?: number | "all";
   readonly states?: { readonly [name: string]: StateConfig<Ctx, E> };
   readonly on?: OnConfig<Ctx, E>;
   readonly after?: { readonly [seconds: number]: string };
@@ -116,6 +116,30 @@ type PathsBelow<S, D extends number> = S extends { readonly states: infer Childr
 
 export type StatePath<C> = `/${PathsBelow<C, 4>}`;
 
+type NextCount = [never, 2, 3, 4, 5, 6];
+
+type RestoreCountBelow<Children, D extends number> = {
+  [K in keyof Children]: RestoreCount<Children[K], D>;
+}[keyof Children];
+
+// The counts a state's subtree can hold: a compound state is one level plus its deepest child,
+// a parallel state adds no level of its own, and a leaf holds none.
+type RestoreCount<S, D extends number> = S extends { readonly states: infer Children }
+  ? [D] extends [never]
+    ? number
+    : S extends { readonly type: "parallel" }
+      ? RestoreCountBelow<Children, PathDepth[D]>
+      :
+          | 1
+          | (RestoreCountBelow<Children, PathDepth[D]> extends infer N
+              ? N extends number
+                ? number extends N
+                  ? number
+                  : NextCount[N]
+                : never
+              : never)
+  : never;
+
 interface TransitionCheck<T> {
   readonly target?: T;
   readonly guard?: unknown;
@@ -134,7 +158,11 @@ type PathCheck<S, Self extends string, All extends string, Ev extends string> = 
     : S extends { readonly states: infer Children }
       ? `${Self}/${keyof Children & string}`
       : never;
-  readonly history?: unknown;
+  readonly restoreDepth?: S extends { readonly type: "parallel" }
+    ? never
+    : S extends { readonly states: object }
+      ? RestoreCount<S, 4> | "all"
+      : never;
   readonly states?: S extends { readonly states: infer Children }
     ? {
         readonly [K in keyof Children]: PathCheck<Children[K], `${Self}/${K & string}`, All, Ev>;
@@ -180,7 +208,9 @@ interface Compiled<Ctx, E extends EventObject> {
   readonly children: number[][];
   readonly parallel: boolean[];
   readonly initialChild: number[];
-  readonly history: boolean[];
+  readonly restoreDepth: number[];
+  readonly levels: number[];
+  readonly records: boolean[];
   readonly onIndex: { [type: string]: number }[];
   readonly transitions: Transition<Ctx, E>[][];
   readonly afterDelays: number[][];
@@ -277,12 +307,15 @@ function registerState<Ctx, E extends EventObject>(
   compiled.children[index] = [];
   compiled.parallel[index] = config.type === "parallel";
   compiled.initialChild[index] = NO_STATE;
-  compiled.history[index] = config.history === "shallow";
+  compiled.restoreDepth[index] = 0;
+  compiled.levels[index] = 0;
+  compiled.records[index] = false;
   compiled.pathIndex[path] = index;
   const children = config.states;
   if (children === undefined) {
     return;
   }
+  let deepest = 0;
   for (const name in children) {
     if (name === "" || name.indexOf("/") !== -1) {
       throw `hsm: state "${describePath(path)}" has a child named "${name}"; state names must be non-empty and contain no "/"`;
@@ -302,7 +335,15 @@ function registerState<Ctx, E extends EventObject>(
       slot--;
     }
     siblings[slot] = child;
+    const childLevels = compiled.levels[child] as number;
+    if (childLevels > deepest) {
+      deepest = childLevels;
+    }
   }
+  if (compiled.parallel[index] !== true) {
+    deepest++;
+  }
+  compiled.levels[index] = deepest;
 }
 
 function hasChildren<Ctx, E extends EventObject>(config: StateConfig<Ctx, E>): boolean {
@@ -330,8 +371,8 @@ function compileInitial<Ctx, E extends EventObject>(
     if (initial !== undefined) {
       throw `hsm: parallel state "${path}" has initial "${initial}"; every child is entered`;
     }
-    if (compiled.history[index] === true) {
-      throw `hsm: parallel state "${path}" has history; only a compound state resumes a child`;
+    if (config.restoreDepth !== undefined) {
+      throw `hsm: parallel state "${path}" has restoreDepth; only a compound state resumes a child`;
     }
     if (!hasChildren(config)) {
       throw `hsm: parallel state "${path}" has no child states`;
@@ -342,11 +383,12 @@ function compileInitial<Ctx, E extends EventObject>(
     if (initial !== undefined) {
       throw `hsm: state "${describePath(path)}" has initial "${initial}" but no child states`;
     }
-    if (compiled.history[index] === true) {
-      throw `hsm: state "${describePath(path)}" has history but no child states`;
+    if (config.restoreDepth !== undefined) {
+      throw `hsm: state "${describePath(path)}" has restoreDepth but no child states`;
     }
     return;
   }
+  compileRestoreDepth(compiled, index);
   if (initial === undefined) {
     throw `hsm: compound state "${describePath(path)}" has no initial`;
   }
@@ -355,6 +397,47 @@ function compileInitial<Ctx, E extends EventObject>(
     throw `hsm: state "${describePath(path)}" has initial "${initial}", which is not one of its children`;
   }
   compiled.initialChild[index] = child;
+}
+
+function compileRestoreDepth<Ctx, E extends EventObject>(
+  compiled: Compiled<Ctx, E>,
+  index: number,
+): void {
+  const depth = (compiled.configs[index] as StateConfig<Ctx, E>).restoreDepth;
+  if (depth === undefined) {
+    return;
+  }
+  const path = describePath(compiled.paths[index] as string);
+  const levels = compiled.levels[index] as number;
+  if (depth === "all") {
+    compiled.restoreDepth[index] = levels;
+    return;
+  }
+  if (typeof depth !== "number" || Math.floor(depth) !== depth || depth < 1) {
+    throw `hsm: state "${path}" has restoreDepth ${depth}; use a whole number from 1, or "all"`;
+  }
+  if (depth > levels) {
+    throw `hsm: state "${path}" has restoreDepth ${depth}, but only ${levels} ${levels === 1 ? "level" : "levels"} of child states below it`;
+  }
+  compiled.restoreDepth[index] = depth;
+}
+
+// A state records its last child only while some restoreDepth above or on it reaches its level.
+function compileRecords<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>): void {
+  const reach: number[] = [];
+  for (let index = 0; index < compiled.count; index++) {
+    const owner = compiled.parent[index] as number;
+    let inherited = 0;
+    if (owner !== NO_STATE) {
+      inherited = reach[owner] as number;
+      if (compiled.parallel[owner] !== true) {
+        inherited--;
+      }
+    }
+    const current = Math.max(compiled.restoreDepth[index] as number, inherited);
+    reach[index] = current;
+    compiled.records[index] = current > 0 && compiled.parallel[index] !== true;
+  }
 }
 
 function compileTransition<Ctx, E extends EventObject>(
@@ -498,7 +581,9 @@ function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Com
     children: [],
     parallel: [],
     initialChild: [],
-    history: [],
+    restoreDepth: [],
+    levels: [],
+    records: [],
     onIndex: [],
     transitions: [],
     afterDelays: [],
@@ -513,6 +598,7 @@ function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Com
     compileAfter(compiled, index);
     compileAlways(compiled, index);
   }
+  compileRecords(compiled);
   return compiled;
 }
 
@@ -572,7 +658,8 @@ function createMachine<Ctx, E extends EventObject>(
     let children = compiled.children;
     let parallel = compiled.parallel;
     let initialChild = compiled.initialChild;
-    let history = compiled.history;
+    let restoreDepth = compiled.restoreDepth;
+    let records = compiled.records;
     let configs = compiled.configs;
     let onIndex = compiled.onIndex;
     let transitions = compiled.transitions;
@@ -667,7 +754,8 @@ function createMachine<Ctx, E extends EventObject>(
       children = compiled.children;
       parallel = compiled.parallel;
       initialChild = compiled.initialChild;
-      history = compiled.history;
+      restoreDepth = compiled.restoreDepth;
+      records = compiled.records;
       configs = compiled.configs;
       onIndex = compiled.onIndex;
       transitions = compiled.transitions;
@@ -817,7 +905,7 @@ function createMachine<Ctx, E extends EventObject>(
       const owner = parent[state] as number;
       if (owner !== NO_STATE) {
         activeChild[owner] = NO_STATE;
-        if (history[owner] === true) {
+        if (records[owner] === true) {
           remembered[paths[owner] as string] = paths[state] as string;
         }
       }
@@ -832,8 +920,8 @@ function createMachine<Ctx, E extends EventObject>(
       }
     }
 
-    function defaultChild(state: number): number {
-      if (history[state] === true) {
+    function defaultChild(state: number, restore: boolean): number {
+      if (restore) {
         const path = remembered[paths[state] as string];
         if (path !== undefined) {
           const child = lookupPath(compiled, path);
@@ -845,19 +933,22 @@ function createMachine<Ctx, E extends EventObject>(
       return initialChild[state] as number;
     }
 
-    function enterDefaults(state: number): void {
+    // budget counts the levels still restored from an ancestor's restoreDepth; a parallel
+    // state passes it to every region without spending a level.
+    function enterDefaults(state: number, budget: number): void {
       if (parallel[state] === true) {
         const list = children[state] as number[];
         for (let i = 0; i < list.length; i++) {
           enterState(list[i] as number);
-          enterDefaults(list[i] as number);
+          enterDefaults(list[i] as number, budget);
         }
         return;
       }
-      const child = defaultChild(state);
+      const remaining = Math.max(restoreDepth[state] as number, budget);
+      const child = defaultChild(state, remaining > 0);
       if (child !== NO_STATE) {
         enterState(child);
-        enterDefaults(child);
+        enterDefaults(child, remaining - 1);
       }
     }
 
@@ -872,7 +963,7 @@ function createMachine<Ctx, E extends EventObject>(
     function enterToward(state: number, target: number): void {
       enterState(state);
       if (state === target) {
-        enterDefaults(state);
+        enterDefaults(state, 0);
         return;
       }
       const next = childToward(state, target);
@@ -887,7 +978,7 @@ function createMachine<Ctx, E extends EventObject>(
           enterToward(region, target);
         } else {
           enterState(region);
-          enterDefaults(region);
+          enterDefaults(region, 0);
         }
       }
     }
@@ -901,7 +992,7 @@ function createMachine<Ctx, E extends EventObject>(
             enterMissing(region);
           } else {
             enterState(region);
-            enterDefaults(region);
+            enterDefaults(region, 0);
           }
         }
         return;
@@ -911,7 +1002,7 @@ function createMachine<Ctx, E extends EventObject>(
         enterMissing(child);
         return;
       }
-      enterDefaults(state);
+      enterDefaults(state, 0);
     }
 
     function firstLeaf(state: number): string {
@@ -948,7 +1039,7 @@ function createMachine<Ctx, E extends EventObject>(
       }
       runActions(actions, event);
       if (target === domain) {
-        enterDefaults(domain);
+        enterDefaults(domain, 0);
       } else {
         enterToward(childToward(domain, target), target);
       }
@@ -1228,7 +1319,7 @@ function createMachine<Ctx, E extends EventObject>(
 
     busy = true;
     enterState(ROOT);
-    enterDefaults(ROOT);
+    enterDefaults(ROOT, 0);
     refreshLeaves();
     settleAlways();
     endStep();

@@ -44,7 +44,7 @@ export type InvokeStart<Ctx, E extends EventObject> = (ctx: Ctx, settle: (event:
 export interface StateConfig<Ctx, E extends EventObject> {
     readonly type?: "parallel";
     readonly initial?: string;
-    readonly history?: "shallow";
+    readonly restoreDepth?: number | "all";
     readonly states?: {
         readonly [name: string]: StateConfig<Ctx, E>;
     };
@@ -77,6 +77,15 @@ type PathsBelow<S, D extends number> = S extends {
     } ? string : never : PathsBelow<Children[K], PathDepth[D]>}`;
 }[keyof Children & string] : never;
 export type StatePath<C> = `/${PathsBelow<C, 4>}`;
+type NextCount = [never, 2, 3, 4, 5, 6];
+type RestoreCountBelow<Children, D extends number> = {
+    [K in keyof Children]: RestoreCount<Children[K], D>;
+}[keyof Children];
+type RestoreCount<S, D extends number> = S extends {
+    readonly states: infer Children;
+} ? [D] extends [never] ? number : S extends {
+    readonly type: "parallel";
+} ? RestoreCountBelow<Children, PathDepth[D]> : 1 | (RestoreCountBelow<Children, PathDepth[D]> extends infer N ? N extends number ? number extends N ? number : NextCount[N] : never : never) : never;
 interface TransitionCheck<T> {
     readonly target?: T;
     readonly guard?: unknown;
@@ -91,7 +100,11 @@ type PathCheck<S, Self extends string, All extends string, Ev extends string> = 
     } ? never : S extends {
         readonly states: infer Children;
     } ? `${Self}/${keyof Children & string}` : never;
-    readonly history?: unknown;
+    readonly restoreDepth?: S extends {
+        readonly type: "parallel";
+    } ? never : S extends {
+        readonly states: object;
+    } ? RestoreCount<S, 4> | "all" : never;
     readonly states?: S extends {
         readonly states: infer Children;
     } ? {

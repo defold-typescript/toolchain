@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { defineMachine, type MachineInstance, type StatePath, type TransitionCause } from "./index";
+import {
+  defineMachine,
+  type MachineConfig,
+  type MachineInstance,
+  type StatePath,
+  type TransitionCause,
+} from "./index";
 
 interface Ctx {
   log: string[];
@@ -1545,7 +1551,7 @@ describe("hot reload", () => {
   });
 });
 
-describe("shallow history", () => {
+describe("restoreDepth", () => {
   type PlayEv =
     | { type: "JUMP" }
     | { type: "FALL" }
@@ -1556,13 +1562,13 @@ describe("shallow history", () => {
     | { type: "BACK" }
     | { type: "RESTART" };
 
-  function platformer() {
+  function platformer(restoreDepth: 1 | 2 | "all" = 1) {
     return {
       initial: "/playing",
       states: {
         playing: {
           ...logged("playing"),
-          history: "shallow",
+          restoreDepth,
           initial: "/playing/ground",
           on: { PAUSE: "/paused" },
           states: {
@@ -1570,6 +1576,7 @@ describe("shallow history", () => {
             air: {
               ...logged("air"),
               initial: "/playing/air/rise",
+              on: { LAND: "/playing/ground" },
               states: {
                 rise: { ...logged("rise"), on: { FALL: "/playing/air/fall" } },
                 fall: logged("fall"),
@@ -1578,6 +1585,38 @@ describe("shallow history", () => {
           },
         },
         paused: { ...logged("paused"), on: { RESUME: "/playing", LAND: "/playing/ground" } },
+      },
+    } as const;
+  }
+
+  type GameEv = { type: "RUN" } | { type: "FIRE" } | { type: "MENU" } | { type: "BACK" };
+
+  function arena(restoreDepth: 1 | 2) {
+    return {
+      initial: "/game",
+      states: {
+        game: {
+          restoreDepth,
+          initial: "/game/alive",
+          on: { MENU: "/menu" },
+          states: {
+            alive: {
+              type: "parallel",
+              states: {
+                move: {
+                  initial: "/game/alive/move/walk",
+                  states: { walk: { on: { RUN: "/game/alive/move/run" } }, run: {} },
+                },
+                weapon: {
+                  initial: "/game/alive/weapon/idle",
+                  states: { idle: { on: { FIRE: "/game/alive/weapon/fire" } }, fire: {} },
+                },
+              },
+            },
+            over: {},
+          },
+        },
+        menu: { on: { BACK: "/game" } },
       },
     } as const;
   }
@@ -1596,7 +1635,7 @@ describe("shallow history", () => {
     expect(ctx.log).toEqual(["exit paused", "enter playing", "enter air", "enter rise"]);
   });
 
-  test("history is shallow", () => {
+  test("restoreDepth 1 stops at the child", () => {
     const m = defineMachine<Ctx, PlayEv>()(platformer()).start(newCtx());
     m.send({ type: "JUMP" });
     m.send({ type: "FALL" });
@@ -1606,7 +1645,7 @@ describe("shallow history", () => {
     expect(m.path).toBe("/playing/air/rise");
   });
 
-  test("a target naming a descendant bypasses history", () => {
+  test("a target naming a descendant bypasses restoreDepth", () => {
     const m = defineMachine<Ctx, PlayEv>()(platformer()).start(newCtx());
     m.send({ type: "JUMP" });
     m.send({ type: "PAUSE" });
@@ -1626,6 +1665,99 @@ describe("shallow history", () => {
     expect(first.path).toBe("/playing/air/rise");
   });
 
+  test("restoreDepth 2 resumes the grandchild", () => {
+    const ctx = newCtx();
+    const m = defineMachine<Ctx, PlayEv>()(platformer(2)).start(ctx);
+    m.send({ type: "JUMP" });
+    m.send({ type: "FALL" });
+    m.send({ type: "PAUSE" });
+    ctx.log.length = 0;
+    m.send({ type: "RESUME" });
+    expect(m.path).toBe("/playing/air/fall");
+    expect(ctx.log).toEqual(["exit paused", "enter playing", "enter air", "enter fall"]);
+  });
+
+  test('"all" restores every level', () => {
+    const m = defineMachine<Ctx, PlayEv>()(platformer("all")).start(newCtx());
+    m.send({ type: "JUMP" });
+    m.send({ type: "FALL" });
+    m.send({ type: "PAUSE" });
+    m.send({ type: "RESUME" });
+    expect(m.path).toBe("/playing/air/fall");
+  });
+
+  test("inner levels restore only through the flagged state", () => {
+    const m = defineMachine<Ctx, PlayEv>()(platformer(2)).start(newCtx());
+    m.send({ type: "JUMP" });
+    m.send({ type: "FALL" });
+    m.send({ type: "LAND" });
+    expect(m.path).toBe("/playing/ground");
+    m.send({ type: "JUMP" });
+    expect(m.path).toBe("/playing/air/rise");
+  });
+
+  test("a parallel state is not a level", () => {
+    const leavesAfterReentry = (restoreDepth: 1 | 2) => {
+      const m = defineMachine<Ctx, GameEv>()(arena(restoreDepth)).start(newCtx());
+      m.send({ type: "RUN" });
+      m.send({ type: "FIRE" });
+      expect(m.leaves).toEqual(["/game/alive/move/run", "/game/alive/weapon/fire"]);
+      m.send({ type: "MENU" });
+      expect(m.path).toBe("/menu");
+      m.send({ type: "BACK" });
+      return [...m.leaves];
+    };
+    expect(leavesAfterReentry(2)).toEqual(["/game/alive/move/run", "/game/alive/weapon/fire"]);
+    expect(leavesAfterReentry(1)).toEqual(["/game/alive/move/walk", "/game/alive/weapon/idle"]);
+  });
+
+  function twoLevels(restoreDepth: number): MachineConfig<Ctx, PlayEv> {
+    return {
+      initial: "/playing",
+      states: {
+        playing: {
+          restoreDepth,
+          initial: "/playing/ground",
+          states: {
+            ground: {},
+            air: { initial: "/playing/air/rise", states: { rise: {}, fall: {} } },
+          },
+        },
+      },
+    };
+  }
+
+  const notACount = (depth: number) =>
+    `hsm: state "/playing" has restoreDepth ${depth}; use a whole number from 1, or "all"`;
+
+  const invalidRestoreDepths: [string, MachineConfig<Ctx, PlayEv>, string][] = [
+    ["0", twoLevels(0), notACount(0)],
+    ["-1", twoLevels(-1), notACount(-1)],
+    ["1.5", twoLevels(1.5), notACount(1.5)],
+    [
+      "3",
+      twoLevels(3),
+      'hsm: state "/playing" has restoreDepth 3, but only 2 levels of child states below it',
+    ],
+    [
+      "on a leaf",
+      { initial: "/leaf", states: { leaf: { restoreDepth: 1 } } },
+      'hsm: state "/leaf" has restoreDepth but no child states',
+    ],
+    [
+      "on a parallel state",
+      {
+        initial: "/alive",
+        states: { alive: { type: "parallel", restoreDepth: 1, states: { move: {} } } },
+      },
+      'hsm: parallel state "/alive" has restoreDepth; only a compound state resumes a child',
+    ],
+  ];
+
+  test.each(invalidRestoreDepths)("invalid restoreDepth throws: %s", (_label, config, message) => {
+    expect(thrownMessage(() => defineMachine<Ctx, PlayEv>()(config))).toBe(message);
+  });
+
   test("entry through an ancestor's initial chain resumes", () => {
     const ctx = newCtx();
     const m = defineMachine<Ctx, PlayEv>()({
@@ -1637,7 +1769,7 @@ describe("shallow history", () => {
           states: {
             playing: {
               ...logged("playing"),
-              history: "shallow",
+              restoreDepth: 1,
               initial: "/game/playing/ground",
               on: { RESTART: { target: "/game/playing", reenter: true } },
               states: {
@@ -1661,19 +1793,8 @@ describe("shallow history", () => {
     expect(ctx.log).toEqual(["exit air", "exit playing", "enter playing", "enter air"]);
   });
 
-  test("history on a state without children throws", () => {
-    expect(
-      thrownMessage(() =>
-        defineMachine<Ctx, PlayEv>()({
-          initial: "/leaf",
-          states: { leaf: { history: "shallow" } },
-        }),
-      ),
-    ).toBe('hsm: state "/leaf" has history but no child states');
-  });
-
   test("a remembered child survives a reload by path", () => {
-    const key = "history-reload";
+    const key = "restore-depth-reload";
     const m = defineMachine<Ctx, PlayEv>(key)(platformer()).start(newCtx());
     m.send({ type: "JUMP" });
     m.send({ type: "PAUSE" });
@@ -1681,7 +1802,7 @@ describe("shallow history", () => {
       initial: "/playing",
       states: {
         playing: {
-          history: "shallow",
+          restoreDepth: 1,
           initial: "/playing/ground",
           on: { PAUSE: "/paused" },
           states: {
@@ -1700,7 +1821,7 @@ describe("shallow history", () => {
       initial: "/playing",
       states: {
         playing: {
-          history: "shallow",
+          restoreDepth: 1,
           initial: "/playing/ground",
           on: { PAUSE: "/paused" },
           states: { ground: {} },
@@ -1712,25 +1833,57 @@ describe("shallow history", () => {
     expect(m.path).toBe("/playing/ground");
   });
 
-  test("a history config keeps typed paths and accepts only shallow", () => {
-    const m = defineMachine<Ctx, PlayEv>()(platformer()).start(newCtx());
+  test("restoreDepth keeps typed paths and rejects counts the tree cannot hold", () => {
+    const m = defineMachine<Ctx, PlayEv>()(platformer(2)).start(newCtx());
     const pathTyped: Equal<typeof m.path, StatePath<ReturnType<typeof platformer>> | undefined> =
       true;
     expect(pathTyped).toBe(true);
     // @ts-expect-error a misspelled path is not one of the machine's states
     const misspelled: typeof m.path = "/playing/aier";
     expect(misspelled as string).toBe("/playing/aier");
-    defineMachine<Ctx, PlayEv>()({
-      initial: "/a",
-      states: {
-        a: {
-          // @ts-expect-error only shallow history is supported
-          history: "deep",
-          initial: "/a/b",
-          states: { b: {} },
+    expect(defineMachine<Ctx, PlayEv>()(platformer("all")).start(newCtx()).path).toBe(
+      "/playing/ground",
+    );
+    expect(defineMachine<Ctx, GameEv>()(arena(2)).start(newCtx()).leaves).toHaveLength(2);
+
+    const onPlaying = <const D extends number>(restoreDepth: D) =>
+      defineMachine<Ctx, PlayEv>()({
+        initial: "/playing",
+        states: {
+          playing: {
+            restoreDepth,
+            initial: "/playing/ground",
+            states: {
+              ground: {},
+              air: { initial: "/playing/air/rise", states: { rise: {}, fall: {} } },
+            },
+          },
         },
-      },
-    });
+      });
+    const onLeaf = () =>
+      defineMachine<Ctx, PlayEv>()({ initial: "/leaf", states: { leaf: { restoreDepth: 1 } } });
+    const onParallel = () =>
+      defineMachine<Ctx, PlayEv>()({
+        initial: "/alive",
+        states: {
+          alive: {
+            type: "parallel",
+            restoreDepth: 1,
+            states: { move: { initial: "/alive/move/walk", states: { walk: {} } } },
+          },
+        },
+      });
+
+    // @ts-expect-error a restore count starts at 1
+    expect(thrownMessage(() => onPlaying(0).start(newCtx()))).toContain("restoreDepth 0");
+    // @ts-expect-error a restore count is a whole number
+    expect(thrownMessage(() => onPlaying(1.5).start(newCtx()))).toContain("restoreDepth 1.5");
+    // @ts-expect-error /playing holds only two levels of child states
+    expect(thrownMessage(() => onPlaying(3).start(newCtx()))).toContain("restoreDepth 3");
+    // @ts-expect-error a leaf has no child to restore
+    expect(thrownMessage(() => onLeaf().start(newCtx()))).toContain('"/leaf"');
+    // @ts-expect-error a parallel state enters every child
+    expect(thrownMessage(() => onParallel().start(newCtx()))).toContain('"/alive"');
   });
 });
 
@@ -2175,7 +2328,7 @@ describe("parallel regions", () => {
     expect(t.leaves).toEqual(["/alive/move/run", "/alive/weapon/ready"]);
   });
 
-  test("always and history inside a region", () => {
+  test("always and restoreDepth inside a region", () => {
     const ctx = newCtx();
     const m = startPlayer(ctx);
     m.send({ type: "JAM" });
@@ -2193,7 +2346,7 @@ describe("parallel regions", () => {
           ...config.states.alive,
           states: {
             ...config.states.alive.states,
-            move: { ...config.states.alive.states.move, history: "shallow" },
+            move: { ...config.states.alive.states.move, restoreDepth: 1 },
           },
         },
       },
@@ -2286,14 +2439,6 @@ describe("parallel regions", () => {
         }),
       ),
     ).toBe('hsm: parallel state "/alive" has no child states');
-    expect(
-      thrownMessage(() =>
-        defineMachine<Ctx, PlayerEv>()({
-          initial: "/alive",
-          states: { alive: { type: "parallel", history: "shallow", states: { move: {} } } },
-        }),
-      ),
-    ).toBe('hsm: parallel state "/alive" has history; only a compound state resumes a child');
     expect(
       thrownMessage(() =>
         defineMachine<Ctx, PlayerEv>()({
