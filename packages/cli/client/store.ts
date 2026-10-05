@@ -29,9 +29,10 @@ export interface ScrollTarget {
   readonly seq: number;
 }
 
-/** What names a glow: a span id, `ctx:<path key>`, or `file:<index>`. */
+/** What names a glow: a span id, `dim:<span id>`, `ctx:<path key>`, or `file:<index>`. */
 export type GlowKey = string;
 
+export const dimGlowKey = (id: SpanId): GlowKey => `dim:${id}`;
 export const ctxGlowKey = (key: string): GlowKey => `ctx:${key}`;
 export const fileGlowKey = (file: number): GlowKey => `file:${file}`;
 
@@ -310,6 +311,11 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
           for (const [id, stamp] of Object.entries(highlight.stamps)) {
             if (stamp !== state.highlight.stamps[id]) {
               glowSince[id] = time;
+            }
+          }
+          for (const [id, stamp] of Object.entries(highlight.dimStamps)) {
+            if (stamp !== state.highlight.dimStamps[id]) {
+              glowSince[dimGlowKey(id)] = time;
             }
           }
           const fileStamps: Record<number, number> = { ...state.fileStamps };

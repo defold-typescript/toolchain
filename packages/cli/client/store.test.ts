@@ -7,7 +7,7 @@ import { ruleId } from "../src/hsm-view-index";
 import { createHsmViewApp, type HsmViewIndex } from "../src/hsm-view-server";
 import { createSession, type HsmViewSession, type Snapshot } from "../src/hsm-view-session";
 import { onKeySpanId, ruleSpanId, stateSpanId } from "./highlight";
-import { createViewerStore, type FrameScheduler, type ViewerStore } from "./store";
+import { createViewerStore, dimGlowKey, type FrameScheduler, type ViewerStore } from "./store";
 import { startViewer, type TestViewer } from "./test-viewer";
 
 const hsmSourceDir = requireHsmSourceDir();
@@ -122,6 +122,29 @@ describe("viewer store", () => {
     receive(session.send({ type: "JUMP" }));
     expect(stamp(stateSpanId("/air"))).toBe(2);
     expect(stamp(ruleSpanId(ruleId("/ground", "on", "JUMP", 1)))).toBe(2);
+  });
+
+  test("glows the rules whose when rejected the event dimmer, apart from fired rules", () => {
+    const rejected = ruleSpanId(ruleId("/ground", "on", "JUMP", 0));
+    const dimStamp = (id: string): number => store.getState().highlight.dimStamps[id] ?? 0;
+    receive(session.start({ fuel: 0 }));
+    receive(session.send({ type: "JUMP" }));
+    expect(dimStamp(rejected)).toBe(1);
+    expect(stamp(rejected)).toBe(0);
+    expect(dimStamp(onKeySpanId("/ground", "JUMP"))).toBe(0);
+    expect(store.getState().glowSince[dimGlowKey(rejected)]).toBeNumber();
+    expect(store.getState().glowSince[rejected]).toBeUndefined();
+
+    receive(session.send({ type: "LAND" }));
+    expect(dimStamp(rejected)).toBe(1);
+    receive(session.send({ type: "JUMP" }));
+    expect(dimStamp(rejected)).toBe(2);
+
+    receive(session.send({ type: "LAND" }));
+    receive(session.editCtx(["fuel"], 100));
+    receive(session.send({ type: "JUMP" }));
+    expect(stamp(rejected)).toBe(1);
+    expect(dimStamp(rejected)).toBe(2);
   });
 
   test("lights each file with a tinted or freshly stamped span, and unlights it after", () => {
