@@ -3,12 +3,38 @@
 exports[`hsm core Lua output matches the reviewed Lua snapshot 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
+local describePath, compileRestoreDepth
+function describePath(path)
+    return path == "" and "(root)" or path
+end
+function compileRestoreDepth(compiled, index)
+    local depth = compiled.configs[index + 1].restoreDepth
+    if depth == nil then
+        return
+    end
+    local path = describePath(compiled.paths[index + 1])
+    local levels = compiled.levels[index + 1]
+    if depth == "all" then
+        compiled.restoreDepth[index + 1] = levels
+        return
+    end
+    if type(depth) ~= "number" or math.floor(depth) ~= depth or depth < 1 then
+        error(
+            ((("hsm: state \\"" .. path) .. "\\" has restoreDepth ") .. tostring(depth)) .. "; use a whole number from 1, or \\"all\\"",
+            0
+        )
+    end
+    if depth > levels then
+        error(
+            ((((((("hsm: state \\"" .. path) .. "\\" has restoreDepth ") .. tostring(depth)) .. ", but only ") .. tostring(levels)) .. " ") .. (levels == 1 and "level" or "levels")) .. " of child states below it",
+            0
+        )
+    end
+    compiled.restoreDepth[index + 1] = depth
+end
 local ROOT = 0
 local NO_STATE = -1
 local ALWAYS_LIMIT = 10
-local function describePath(path)
-    return path == "" and "(root)" or path
-end
 local function lookupPath(compiled, path)
     local index = compiled.pathIndex[path]
     local ____temp_0
@@ -71,12 +97,15 @@ local function registerState(compiled, config, parentIndex, path)
     compiled.children[index + 1] = {}
     compiled.parallel[index + 1] = config.type == "parallel"
     compiled.initialChild[index + 1] = NO_STATE
-    compiled.history[index + 1] = config.history == "shallow"
+    compiled.restoreDepth[index + 1] = 0
+    compiled.levels[index + 1] = 0
+    compiled.records[index + 1] = false
     compiled.pathIndex[path] = index
     local children = config.states
     if children == nil then
         return
     end
+    local deepest = 0
     for name in pairs(children) do
         if name == "" or (string.find(name, "/", nil, true) or 0) - 1 ~= -1 then
             error(
@@ -94,7 +123,15 @@ local function registerState(compiled, config, parentIndex, path)
             slot = slot - 1
         end
         siblings[slot + 1] = child
+        local childLevels = compiled.levels[child + 1]
+        if childLevels > deepest then
+            deepest = childLevels
+        end
     end
+    if compiled.parallel[index + 1] ~= true then
+        deepest = deepest + 1
+    end
+    compiled.levels[index + 1] = deepest
 end
 local function hasChildren(config)
     local children = config.states
@@ -120,8 +157,8 @@ local function compileInitial(compiled, index)
         if initial ~= nil then
             error(((("hsm: parallel state \\"" .. path) .. "\\" has initial \\"") .. initial) .. "\\"; every child is entered", 0)
         end
-        if compiled.history[index + 1] == true then
-            error(("hsm: parallel state \\"" .. path) .. "\\" has history; only a compound state resumes a child", 0)
+        if config.restoreDepth ~= nil then
+            error(("hsm: parallel state \\"" .. path) .. "\\" has restoreDepth; only a compound state resumes a child", 0)
         end
         if not hasChildren(config) then
             error(("hsm: parallel state \\"" .. path) .. "\\" has no child states", 0)
@@ -135,14 +172,15 @@ local function compileInitial(compiled, index)
                 0
             )
         end
-        if compiled.history[index + 1] == true then
+        if config.restoreDepth ~= nil then
             error(
-                ("hsm: state \\"" .. describePath(path)) .. "\\" has history but no child states",
+                ("hsm: state \\"" .. describePath(path)) .. "\\" has restoreDepth but no child states",
                 0
             )
         end
         return
     end
+    compileRestoreDepth(compiled, index)
     if initial == nil then
         error(
             ("hsm: compound state \\"" .. describePath(path)) .. "\\" has no initial",
@@ -157,6 +195,26 @@ local function compileInitial(compiled, index)
         )
     end
     compiled.initialChild[index + 1] = child
+end
+local function compileRecords(compiled)
+    local reach = {}
+    do
+        local index = 0
+        while index < compiled.count do
+            local owner = compiled.parent[index + 1]
+            local inherited = 0
+            if owner ~= NO_STATE then
+                inherited = reach[owner + 1]
+                if compiled.parallel[owner + 1] ~= true then
+                    inherited = inherited - 1
+                end
+            end
+            local current = math.max(compiled.restoreDepth[index + 1], inherited)
+            reach[index + 1] = current
+            compiled.records[index + 1] = current > 0 and compiled.parallel[index + 1] ~= true
+            index = index + 1
+        end
+    end
 end
 local function compileTransition(compiled, source, spec)
     if type(spec) == "string" then
@@ -196,11 +254,11 @@ local function compileOn(compiled, index)
     end
     for ____type in pairs(on) do
         do
-            local __continue45
+            local __continue57
             repeat
                 local spec = on[____type]
                 if spec == nil then
-                    __continue45 = true
+                    __continue57 = true
                     break
                 end
                 local list = {}
@@ -219,9 +277,9 @@ local function compileOn(compiled, index)
                 ____table[____type] = #compiled.transitions
                 local ____compiled_transitions_1 = compiled.transitions
                 ____compiled_transitions_1[#____compiled_transitions_1 + 1] = list
-                __continue45 = true
+                __continue57 = true
             until true
-            if not __continue45 then
+            if not __continue57 then
                 break
             end
         end
@@ -311,7 +369,9 @@ local function compile(config)
         children = {},
         parallel = {},
         initialChild = {},
-        history = {},
+        restoreDepth = {},
+        levels = {},
+        records = {},
         onIndex = {},
         transitions = {},
         afterDelays = {},
@@ -330,6 +390,7 @@ local function compile(config)
             index = index + 1
         end
     end
+    compileRecords(compiled)
     return compiled
 end
 local function isAncestorOrSelf(compiled, ancestor, state)
@@ -356,7 +417,7 @@ end
 local registered = {}
 local function createMachine(definition)
     local function start(ctx)
-        local clearSlot, growSlots, collectActive, rebind, onTransition, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, history, configs, onIndex, transitions, afterDelays, afterTargets, always, activeChild, isActive, elapsed, fired, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, instance
+        local clearSlot, growSlots, collectActive, rebind, onTransition, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterTargets, always, activeChild, isActive, elapsed, fired, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, instance
         function clearSlot(state)
             activeChild[state + 1] = NO_STATE
             isActive[state + 1] = false
@@ -420,7 +481,8 @@ local function createMachine(definition)
             children = compiled.children
             parallel = compiled.parallel
             initialChild = compiled.initialChild
-            history = compiled.history
+            restoreDepth = compiled.restoreDepth
+            records = compiled.records
             configs = compiled.configs
             onIndex = compiled.onIndex
             transitions = compiled.transitions
@@ -433,13 +495,13 @@ local function createMachine(definition)
                 local i = 0
                 while i < #order do
                     do
-                        local __continue91
+                        local __continue103
                         repeat
                             local state = lookupPath(compiled, keptPaths[i + 1])
                             local owner = state == nil and NO_STATE or parent[state + 1]
                             if state == nil or owner ~= NO_STATE and (isActive[owner + 1] ~= true or parallel[owner + 1] ~= true and activeChild[owner + 1] ~= NO_STATE) then
                                 dropped[#dropped + 1] = i
-                                __continue91 = true
+                                __continue103 = true
                                 break
                             end
                             isActive[state + 1] = true
@@ -450,9 +512,9 @@ local function createMachine(definition)
                             fired[state + 1] = keptFired[i + 1]
                             entryId[state + 1] = keptEntryId[i + 1]
                             cleanup[state + 1] = keptCleanup[i + 1]
-                            __continue91 = true
+                            __continue103 = true
                         until true
-                        if not __continue91 then
+                        if not __continue103 then
                             break
                         end
                     end
@@ -583,7 +645,7 @@ local function createMachine(definition)
             local owner = parent[state + 1]
             if owner ~= NO_STATE then
                 activeChild[owner + 1] = NO_STATE
-                if history[owner + 1] == true then
+                if records[owner + 1] == true then
                     remembered[paths[owner + 1]] = paths[state + 1]
                 end
             end
@@ -597,8 +659,8 @@ local function createMachine(definition)
                 run()
             end
         end
-        function defaultChild(state)
-            if history[state + 1] == true then
+        function defaultChild(state, restore)
+            if restore then
                 local path = remembered[paths[state + 1]]
                 if path ~= nil then
                     local child = lookupPath(compiled, path)
@@ -609,23 +671,24 @@ local function createMachine(definition)
             end
             return initialChild[state + 1]
         end
-        function enterDefaults(state)
+        function enterDefaults(state, budget)
             if parallel[state + 1] == true then
                 local list = children[state + 1]
                 do
                     local i = 0
                     while i < #list do
                         enterState(list[i + 1])
-                        enterDefaults(list[i + 1])
+                        enterDefaults(list[i + 1], budget)
                         i = i + 1
                     end
                 end
                 return
             end
-            local child = defaultChild(state)
+            local remaining = math.max(restoreDepth[state + 1], budget)
+            local child = defaultChild(state, remaining > 0)
             if child ~= NO_STATE then
                 enterState(child)
-                enterDefaults(child)
+                enterDefaults(child, remaining - 1)
             end
         end
         function childToward(state, target)
@@ -638,7 +701,7 @@ local function createMachine(definition)
         function enterToward(state, target)
             enterState(state)
             if state == target then
-                enterDefaults(state)
+                enterDefaults(state, 0)
                 return
             end
             local next = childToward(state, target)
@@ -655,7 +718,7 @@ local function createMachine(definition)
                         enterToward(region, target)
                     else
                         enterState(region)
-                        enterDefaults(region)
+                        enterDefaults(region, 0)
                     end
                     i = i + 1
                 end
@@ -672,7 +735,7 @@ local function createMachine(definition)
                             enterMissing(region)
                         else
                             enterState(region)
-                            enterDefaults(region)
+                            enterDefaults(region, 0)
                         end
                         i = i + 1
                     end
@@ -684,7 +747,7 @@ local function createMachine(definition)
                 enterMissing(child)
                 return
             end
-            enterDefaults(state)
+            enterDefaults(state, 0)
         end
         function firstLeaf(state)
             local leaf = state
@@ -715,7 +778,7 @@ local function createMachine(definition)
             end
             runActions(actions, event)
             if target == domain then
-                enterDefaults(domain)
+                enterDefaults(domain, 0)
             else
                 enterToward(
                     childToward(domain, target),
@@ -1034,7 +1097,8 @@ local function createMachine(definition)
         children = compiled.children
         parallel = compiled.parallel
         initialChild = compiled.initialChild
-        history = compiled.history
+        restoreDepth = compiled.restoreDepth
+        records = compiled.records
         configs = compiled.configs
         onIndex = compiled.onIndex
         transitions = compiled.transitions
@@ -1072,7 +1136,7 @@ local function createMachine(definition)
         }
         busy = true
         enterState(ROOT)
-        enterDefaults(ROOT)
+        enterDefaults(ROOT, 0)
         refreshLeaves()
         settleAlways()
         endStep()

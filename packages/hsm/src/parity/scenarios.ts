@@ -543,14 +543,13 @@ function hotReload(): string[] {
   return log;
 }
 
-function shallowHistory(): string[] {
-  const log: string[] = [];
-  const def = defineMachine<Ctx, Ev>()({
+function platformer(restoreDepth: 1 | 2) {
+  return defineMachine<Ctx, Ev>()({
     initial: "/playing",
     states: {
       playing: {
         ...logged("playing"),
-        history: "shallow",
+        restoreDepth,
         initial: "/playing/ground",
         on: { BACK: "/paused" },
         states: {
@@ -568,6 +567,41 @@ function shallowHistory(): string[] {
       paused: { ...logged("paused"), on: { AGAIN: "/playing", HIT: "/playing/ground" } },
     },
   });
+}
+
+function arena(restoreDepth: 1 | 2) {
+  return defineMachine<Ctx, Ev>()({
+    initial: "/game",
+    states: {
+      game: {
+        restoreDepth,
+        initial: "/game/alive",
+        on: { BACK: "/menu" },
+        states: {
+          alive: {
+            type: "parallel",
+            states: {
+              move: {
+                initial: "/game/alive/move/walk",
+                states: { walk: { on: { GO: "/game/alive/move/run" } }, run: {} },
+              },
+              weapon: {
+                initial: "/game/alive/weapon/idle",
+                states: { idle: { on: { UP: "/game/alive/weapon/fire" } }, fire: {} },
+              },
+            },
+          },
+          over: {},
+        },
+      },
+      menu: { on: { AGAIN: "/game" } },
+    },
+  });
+}
+
+function restoreDepth(): string[] {
+  const log: string[] = [];
+  const def = platformer(1);
   const m = def.start(newCtx(log));
   log.push(`path=${shown(m.path)}`);
   m.send({ type: "GO" });
@@ -581,6 +615,20 @@ function shallowHistory(): string[] {
   m.send({ type: "BACK" });
   m.send({ type: "HIT" });
   log.push(`path=${shown(m.path)}`);
+  const deep = platformer(2).start(newCtx(log));
+  deep.send({ type: "GO" });
+  deep.send({ type: "UP" });
+  deep.send({ type: "BACK" });
+  deep.send({ type: "AGAIN" });
+  log.push(`deep=${shown(deep.path)}`);
+  for (const depth of [2, 1] as const) {
+    const game = arena(depth).start(newCtx(log));
+    game.send({ type: "GO" });
+    game.send({ type: "UP" });
+    game.send({ type: "BACK" });
+    game.send({ type: "AGAIN" });
+    log.push(`leaves ${depth}=${game.leaves.join(",")}`);
+  }
   return log;
 }
 
@@ -776,7 +824,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "definition errors", run: () => definitionErrors() },
   { name: "onTransition reports every cause", run: () => onTransitionReports() },
   { name: "hot reload", run: () => hotReload() },
-  { name: "shallow history", run: () => shallowHistory() },
+  { name: "restore depth", run: () => restoreDepth() },
   { name: "always transitions", run: () => alwaysTransitions() },
   { name: "parallel regions", run: () => parallelRegions() },
   { name: "unicode region order", run: () => unicodeRegionOrder() },
