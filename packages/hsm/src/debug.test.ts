@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { consoleLines } from "../../cli/src/editor-attach";
 import { createLiveRegistry, parseInspectLine } from "../../cli/src/hsm-view-live";
 import { inspect } from "./debug";
 import { defineMachine } from "./index";
@@ -192,6 +193,62 @@ describe("inspect", () => {
 
     expect(printed).toHaveLength(3);
     const parsed = printed.map(parseInspectLine);
+    expect(parsed[0]).toEqual({ label, leaves: leaves[0] as string[] });
+    expect(parsed.slice(1)).toEqual(
+      moves.map((move, i) => ({ label, leaves: leaves[i + 1] as string[], move })),
+    );
+    expect(parsed[2]?.move?.to).toBeUndefined();
+    expect(parsed[2]?.leaves).toEqual([]);
+  });
+
+  test("line breaks in every field keep each printed line one console line that reads back", async () => {
+    const split = defineMachine<object, { type: "HIT\r\nnow" }>()({
+      initial: "/split",
+      states: {
+        split: {
+          type: "parallel",
+          states: {
+            lf: {
+              initial: "/split/lf/line\nfeed",
+              states: {
+                "line\nfeed": { on: { "HIT\r\nnow": "/split/lf/next\rleaf" } },
+                "next\rleaf": {},
+              },
+            },
+            cr: { initial: "/split/cr/carriage\rreturn", states: { "carriage\rreturn": {} } },
+            crlf: { initial: "/split/crlf/both\r\nends", states: { "both\r\nends": {} } },
+          },
+        },
+      },
+    }).start({});
+    const label = "split\nlabel\rhere";
+    const leaves = [[...split.leaves]];
+    const moves: { from: string; to: string | undefined; reason: string }[] = [];
+    inspect(split, label);
+    split.onMove((from, to, cause, event) => {
+      moves.push({ from, to, reason: event === undefined ? cause : event.type });
+      leaves.push([...split.leaves]);
+    });
+    split.send({ type: "HIT\r\nnow" });
+    split.stop();
+
+    expect(printed).toHaveLength(3);
+    for (const line of printed) {
+      expect(line).not.toContain("\n");
+      expect(line).not.toContain("\r");
+      expect(line).toContain("\\n");
+      expect(line).toContain("\\r");
+    }
+
+    async function* oneChunk() {
+      yield printed.join("\n");
+    }
+    const lines: string[] = [];
+    for await (const line of consoleLines(oneChunk(), 0)) {
+      lines.push(line);
+    }
+    expect(lines).toHaveLength(3);
+    const parsed = lines.map(parseInspectLine);
     expect(parsed[0]).toEqual({ label, leaves: leaves[0] as string[] });
     expect(parsed.slice(1)).toEqual(
       moves.map((move, i) => ({ label, leaves: leaves[i + 1] as string[], move })),
