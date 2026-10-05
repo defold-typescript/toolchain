@@ -1241,34 +1241,6 @@ function ____exports.messageEvents(ids)
         return nil
     end}
 end
-function ____exports.monarchEvents(ids)
-    local hashes = {
-        ids.SCREEN_TRANSITION_IN_STARTED,
-        ids.SCREEN_TRANSITION_IN_FINISHED,
-        ids.SCREEN_TRANSITION_OUT_STARTED,
-        ids.SCREEN_TRANSITION_OUT_FINISHED,
-        ids.SCREEN_TRANSITION_FAILED
-    }
-    local types = {
-        "monarch_screen_transition_in_started",
-        "monarch_screen_transition_in_finished",
-        "monarch_screen_transition_out_started",
-        "monarch_screen_transition_out_finished",
-        "monarch_screen_transition_failed"
-    }
-    return {toEvent = function(message_id, message, sender)
-        do
-            local i = 0
-            while i < #hashes do
-                if hashes[i + 1] == message_id then
-                    return copyEvent(types[i + 1], message, sender)
-                end
-                i = i + 1
-            end
-        end
-        return nil
-    end}
-end
 return ____exports
 "
 `;
