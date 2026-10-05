@@ -3544,8 +3544,6 @@ broken.start({ steps: 0 });
 
 **`MessageEvent<K>` and `messageEvents`** turn Defold messages into machine events; see the next section.
 
-**`MonarchEvent` and `monarchEvents`** turn Monarch screen transitions into machine events; see [Monarch screen transitions](#monarch-screen-transitions).
-
 ##### The message bridge
 
 Defold delivers messages as a hashed `message_id`, a payload table and the sender's URL. `messageEvents(ids)` turns the ones you list into typed events `{ type: id, ...payload, sender }`, reusing the payload types already declared through `BuiltinMessages` and `CustomMessages`, so a payload is declared once. `MessageEvent<K>` is that event's type, for the machine's event union, and carries `sender: Url`. Its `toEvent(message_id, message, sender)` takes the `on_message` parameters of both `defineScript` and `defineGuiScript` and returns `undefined` for any id you did not list. A payload field named `type` or `sender` never overrides the event's own. Build the mapper once at module scope: it hashes the ids when it is created.
@@ -3586,34 +3584,38 @@ A machine sees only its `ctx` and its events, never `self`, so script data a hoo
 
 A script that already dispatches with `onMessage` (see [Messages](./messages.md)) has narrowed payloads in hand and can `send` them directly, with no mapper. An event built by hand for a `MessageEvent` union includes `sender`, which the `onMessage` handler receives.
 
-##### Monarch screen transitions
+##### Events from an addon
 
-[Monarch](/api/monarch.monarch) tells every script registered with `monarch.add_listener` when a screen starts or finishes showing or hiding, and when it fails to show. `monarchEvents(monarch)` turns those five messages into a `MonarchEvent`, whose `type` is the string each id hashes from:
+An addon that sends messages to your script needs no adapter. Declare its messages once in `CustomMessages`, then list the ones the machine handles in `messageEvents`. This works when the addon builds each id as `hash("<name>")` for the name you declare, so check the addon's source for how it makes its ids.
+
+[Monarch](/api/monarch.monarch) is an example. It tells every script registered with `monarch.add_listener` when a screen starts or finishes showing or hiding, and when it fails to show. Its `SCREEN_TRANSITION_*` constants are `hash("monarch_screen_transition_in_started")` and so on, so the five messages are declared by those names:
 
 - `monarch_screen_transition_in_started` and `monarch_screen_transition_in_finished` carry `screen` and `previous_screen`, which is `undefined` when the stack was empty.
 - `monarch_screen_transition_out_started` and `monarch_screen_transition_out_finished` carry `screen` and `next_screen`, which is `undefined` on a `back` past the first screen.
 - `monarch_screen_transition_failed` carries `screen`.
 
-Every event also carries `sender`. Pass the Monarch module itself: `monarchEvents` reads its `SCREEN_TRANSITION_*` ids, so `hsm` never loads Monarch and works in projects without it. Register the script in `init`, remove it in `final`, and try the Monarch mapper before `messageEvents` in `on_message`:
+Register the script in `init` and remove it in `final`. One mapper covers Monarch's messages and your own:
 
 ```ts title="flow.ts"
 import { defineScript } from "@defold-typescript/types";
 import { defineMachine } from "@defold-typescript/types/hsm";
-import {
-  type MessageEvent,
-  type MonarchEvent,
-  messageEvents,
-  monarchEvents,
-} from "@defold-typescript/types/hsm/defold";
+import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/defold";
 import * as monarch from "monarch.monarch";
 
 declare global {
   interface CustomMessages {
+    monarch_screen_transition_in_started: { screen: Hash; previous_screen?: Hash };
+    monarch_screen_transition_in_finished: { screen: Hash; previous_screen?: Hash };
+    monarch_screen_transition_out_started: { screen: Hash; next_screen?: Hash };
+    monarch_screen_transition_out_finished: { screen: Hash; next_screen?: Hash };
+    monarch_screen_transition_failed: { screen: Hash };
     game_over: { score: number };
   }
 }
 
-type FlowEvent = MonarchEvent | MessageEvent<"game_over">;
+type FlowEvent = MessageEvent<
+  "monarch_screen_transition_in_finished" | "monarch_screen_transition_failed" | "game_over"
+>;
 
 const flowMachine = defineMachine<{ screen: Hash | undefined; best: number }, FlowEvent>()({
   initial: "/loading",
@@ -3643,8 +3645,11 @@ const flowMachine = defineMachine<{ screen: Hash | undefined; best: number }, Fl
   },
 });
 
-const screenEvents = monarchEvents(monarch);
-const gameEvents = messageEvents(["game_over"]);
+const flowEvents = messageEvents([
+  "monarch_screen_transition_in_finished",
+  "monarch_screen_transition_failed",
+  "game_over",
+]);
 
 export default defineScript({
   init() {
@@ -3652,9 +3657,7 @@ export default defineScript({
     return { flow: flowMachine.start({ screen: undefined, best: 0 }) };
   },
   on_message(self, message_id, message, sender) {
-    const event =
-      screenEvents.toEvent(message_id, message, sender) ??
-      gameEvents.toEvent(message_id, message, sender);
+    const event = flowEvents.toEvent(message_id, message, sender);
     if (event !== undefined) {
       self.flow.send(event);
     }
