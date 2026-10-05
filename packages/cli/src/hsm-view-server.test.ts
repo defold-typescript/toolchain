@@ -393,6 +393,35 @@ describe("serveHsmView", () => {
     await events.cancel();
   });
 
+  test("keeps every instance when one of several moves", async () => {
+    let feed: () => void = () => {};
+    const fed = new Promise<void>((resolve) => {
+      feed = resolve;
+    });
+    async function* follow(): AsyncGenerator<string> {
+      await fed;
+      yield "DEBUG:SCRIPT: hsm door frame 0: inspecting [/closed]";
+      yield "DEBUG:SCRIPT: hsm lamp frame 0: inspecting [/off]";
+      yield "DEBUG:SCRIPT: hsm door frame 3: /closed -> /open (OPEN) [/open]";
+    }
+    server = await serveHsmView({ session: lampSession(), client, port: 0, follow });
+    const events = await openEvents(server.url);
+    feed();
+
+    const both = [
+      { label: "door", leaves: ["/open"], stopped: false },
+      { label: "lamp", leaves: ["/off"], stopped: false },
+    ];
+    await events.next("live");
+    await events.next("live");
+    expect((await events.next("live")).data).toEqual({
+      instances: both,
+      move: { label: "door", from: "/closed", to: "/open", reason: "OPEN" },
+    });
+    expect(await (await fetch(`${server.url}/api/live`)).json()).toEqual({ instances: both });
+    await events.cancel();
+  });
+
   test("serves an empty list and the simulation as before when no editor answers", async () => {
     async function* follow(): AsyncGenerator<string> {}
     server = await serveHsmView({ session: lampSession(), client, port: 0, follow });
