@@ -62,17 +62,17 @@ const EXPECTED: Record<string, string[]> = {
   "guards and bubbling": [
     "enter p",
     "enter p.c",
-    "guard 1",
-    "guard 2",
+    "when 1",
+    "when 2",
     "exit p.c",
     "enter p.d",
     "path=/p/d",
     "second instance",
     "enter p",
     "enter p.c",
-    "guard 1",
-    "guard 2",
-    "guard 3",
+    "when 1",
+    "when 2",
+    "when 3",
     "exit p.c",
     "exit p",
     "enter z",
@@ -96,8 +96,8 @@ const EXPECTED: Record<string, string[]> = {
     "exit p.c1",
     "exit p",
     "enter p",
-    "enter p.c2",
-    "path=/p/c2",
+    "enter p.c1",
+    "path=/p/c1",
   ],
   "queued sends": [
     "enter a",
@@ -157,16 +157,16 @@ const EXPECTED: Record<string, string[]> = {
     "path=(stopped)",
     "matches(/a)=false",
   ],
-  invoke: [
-    "invoke loading",
-    "invoke loading",
+  task: [
+    "task loading",
+    "task loading",
     "path=/loading",
     "ping",
     "path=/loading",
     "path=/idle",
-    "invoke loading",
+    "task loading",
     "path=/idle",
-    "invoke loading",
+    "task loading",
     "path=(stopped)",
   ],
   "names and update targets": [
@@ -195,9 +195,11 @@ const EXPECTED: Record<string, string[]> = {
     'error: hsm: state "/a" has an after delay "" that is not a non-negative number',
     'error: hsm: state "/a" has an after delay "-1" that is not a non-negative number',
   ],
-  "onTransition reports every cause": [
+  "onMove reports every cause": [
     "/idle -> /move/walk event GO",
+    "second /idle -> /move/walk",
     "/move/walk -> /move/run after -",
+    "second /move/walk -> /move/run",
     "/move/run -> /rest update -",
     "/rest -> (stopped) stop -",
   ],
@@ -462,7 +464,7 @@ describe("hsm behavior in Bun and in Lua 5.1", () => {
     expect(Object.keys(EXPECTED).sort()).toEqual(scenarios.map((s) => s.name).sort());
   });
 
-  test("a sequence resumes, settles, and never resumes into a state it left", () => {
+  test("a sequence resumes, finishes, and never resumes into a state it left", () => {
     const entry = JSON.stringify(moduleName(ASYNC_SCENARIO_FILE));
     expect(
       runLuaEntry(`return require(${entry}).runAsyncScenario()`, "the async scenario"),

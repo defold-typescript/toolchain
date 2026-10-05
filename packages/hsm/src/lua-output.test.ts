@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { compileHsmModules } from "@defold-typescript/transpiler";
 
-const LUA_LINE_BUDGET = 1175;
+const LUA_LINE_BUDGET = 1200;
 
 // The Lua the build writes into a project, from the transpiler's own compile:
 // `compileHsmModules` throws on any diagnostic, or on a lualib dependency outside

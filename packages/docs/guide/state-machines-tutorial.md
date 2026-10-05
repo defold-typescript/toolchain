@@ -141,7 +141,7 @@ Watch the log when you press `TOGGLE` in `/on/dim`: `dim` has no rule for it, so
 
 ### Remembering bright or dim
 
-In the lamp above, press `DIM`, then `TOGGLE` it off and on again. It comes back bright, because entering `on` always starts at its `initial`. To come back the way you left it, the lamp has to remember. Statecharts call this a *history state*, and `hsm` has one built in as [`restoreDepth`](./state-machines.md#resume-with-history). Here you keep that memory in your data instead, which shows how a guard picks a target:
+In the lamp above, press `DIM`, then `TOGGLE` it off and on again. It comes back bright, because entering `on` always starts at its `initial`. To come back the way you left it, the lamp has to remember. Statecharts call this a *history state*, and `hsm` has one built in as [`restoreDepth`](./state-machines.md#resume-with-history). Here you keep that memory in your data instead, which shows how a `when` check picks where to go:
 
 <div data-hsm-demo="remembering-lamp"></div>
 
@@ -163,9 +163,9 @@ export const lamp = defineMachine<LampCtx, LampEvent>()({
         // try each option from top to bottom
         TOGGLE: [
           // was it dim? go straight back to dim
-          { target: "/on/dim", guard: (ctx) => ctx.dimmed },
+          { to: "/on/dim", when: (ctx) => ctx.dimmed },
           // otherwise, bright
-          { target: "/on/bright" },
+          { to: "/on/bright" },
         ],
       },
     },
@@ -197,15 +197,15 @@ const m = lamp.start({ switches: 0, dimmed: false });
 ```
 
 - `bright` and `dim` write down which one is active in their `enter` hooks. Those run however the lamp gets there, so `ctx.dimmed` is always right.
-- `TOGGLE` in `off` is now a list of options. The first has a **guard**, a yes/no question: if the lamp was dim, go straight to `/on/dim`. Otherwise the next option goes to `/on/bright`. [Part 5](#5-conditions-and-side-effects) covers guards properly.
+- `TOGGLE` in `off` is now a list of options. The first has a **`when`**, a yes/no question: if the lamp was dim, go straight to `/on/dim`. Otherwise the next option goes to `/on/bright`. [Part 5](#5-conditions-and-side-effects) covers `when` properly.
 - Going straight to `/on/dim` still enters `on` first, so `switches` still counts.
 
 ## 5. Conditions and side effects
 
 A robot buddy that bumps into things should stop to rest when its energy runs out, and otherwise just lose some energy. Two tools handle "it depends":
 
-- A **guard** is a yes/no question. If it says no, that rule is skipped.
-- **Actions** are code that runs when a rule is used, such as changing your data.
+- **`when`** is a yes/no question. If it says no, that rule is skipped.
+- **`run`** is code that runs when a rule is used, such as changing your data.
 
 Bump the buddy a few times. Then recharge it, start a follow, and press `FALL`.
 
@@ -233,9 +233,9 @@ export const buddy = defineMachine<BuddyCtx, BuddyEvent>()({
       on: {
         // a list: try each option from top to bottom
         BUMP: [
-          { target: "/resting", guard: (ctx, event) => ctx.energy <= event.cost },
+          { to: "/resting", when: (ctx, event) => ctx.energy <= event.cost },
           {
-            actions: (ctx, event) => {
+            run: (ctx, event) => {
               ctx.energy -= event.cost;
             },
           },
@@ -246,7 +246,7 @@ export const buddy = defineMachine<BuddyCtx, BuddyEvent>()({
         follow: {
           on: {
             LOSE_PLAYER: "/alive/wander",
-            SEE_PLAYER: { target: "/alive/follow", reenter: true }, // restart the follow
+            SEE_PLAYER: "/alive/follow", // its own state: restart the follow
             FALL: "/resting", // a full path reaches any state
           },
         },
@@ -255,8 +255,8 @@ export const buddy = defineMachine<BuddyCtx, BuddyEvent>()({
     resting: {
       on: {
         RECHARGE: {
-          target: "/alive",
-          actions: (ctx) => {
+          to: "/alive",
+          run: (ctx) => {
             ctx.energy = 3;
           },
         },
@@ -266,12 +266,12 @@ export const buddy = defineMachine<BuddyCtx, BuddyEvent>()({
 });
 ```
 
-Read the `BUMP` list like an if/else. If this bump uses up the last of the energy, go to `resting`. Otherwise lose some energy. The second option has no `target`, so the buddy stays exactly where it is: nothing exits or enters, only the action runs. Events can carry data, like `cost`, which guards and actions read as `event.cost`.
+Read the `BUMP` list like an if/else. If this bump uses up the last of the energy, go to `resting`. Otherwise lose some energy. The second option has no `to`, so the buddy stays exactly where it is: nothing exits or enters, only `run` runs. Events can carry data, like `cost`, which `when` and `run` read as `event.cost`.
 
 | Write a rule as | Example | Use it when |
 | --- | --- | --- |
 | A state path | `LOSE_PLAYER: "/alive/wander"` | You only need to move. Most rules. |
-| An object | `{ target, guard, actions }` | You need a condition or some code. Every field is optional. |
+| An object | `{ to, when, run }` | You need a condition or some code. Every field is optional. |
 | A list of objects | `[ {...}, {...} ]` | You need if / else-if choices. |
 
 ## 6. enter, exit, and the order of things
@@ -279,10 +279,10 @@ Read the `BUMP` list like an if/else. If this bump uses up the last of the energ
 Each state can have an `enter` hook that runs when you arrive and an `exit` hook that runs when you leave. Every transition does three steps, which you can see in the buddy's log after a big bump:
 
 1. **Exit** the old states, innermost first (`/alive/follow`, then `/alive`).
-2. Run the rule's **actions**.
+2. Run the rule's **`run`**.
 3. **Enter** the new states, outermost first, continuing into each initial child.
 
-A state you're not really leaving stays put. Going from `/alive/follow` to `/alive/wander` never exits `/alive`. Press `SEE_PLAYER` twice while following to see `reenter: true`: it forces `follow` to exit and enter again, which restarts its timers.
+A state you're not really leaving stays put. Going from `/alive/follow` to `/alive/wander` never exits `/alive`. A rule that names its own state is the exception: it leaves and comes back. Press `SEE_PLAYER` twice while following: the rule on `follow` names `/alive/follow`, so `follow` exits and enters again, which restarts its timers. To restart only the children of a state, name the child to start in instead, and to stay put while running code, leave `to` out.
 
 ### Pointing at the right state
 
@@ -383,9 +383,9 @@ export const sparkle = defineMachine<SparkleCtx, SparkleEvent>()({
 
 ## 8. Waiting for things to finish
 
-Some work takes a while: an animation, loading a level, a web request. Start it in the state's `invoke`. It receives a `settle` function; call it with an event when the work is done.
+Some work takes a while: an animation, loading a level, a web request. Start it in the state's `task`. It receives a `finish` function; call it with an event when the work is done.
 
-Walk into the door's trigger, and press `CLOSE` halfway through the fade. Then turn off "cancel in exit" and do it again. The fade keeps running on a door that's already closed, so the door ends up invisible while the machine says `closed`. That's the bug cleanup in `exit` prevents. Notice too that the late `settle` is ignored, because `opening` was already left.
+Walk into the door's trigger, and press `CLOSE` halfway through the fade. Then turn off "cancel in exit" and do it again. The fade keeps running on a door that's already closed, so the door ends up invisible while the machine says `closed`. That's the bug cleanup in `exit` prevents. Notice too that the late `finish` is ignored, because `opening` was already left.
 
 <div data-hsm-demo="door"></div>
 
@@ -406,12 +406,12 @@ export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
   states: {
     closed: {
       enter: (ctx) => go.set(ctx.sprite, "tint.w", 1),
-      on: { trigger_response: { target: "/opening", guard: (_ctx, event) => event.enter } },
+      on: { trigger_response: { to: "/opening", when: (_ctx, event) => event.enter } },
     },
     opening: {
-      invoke: (ctx, settle) => {
+      task: (ctx, finish) => {
         go.animate(ctx.sprite, "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 0.5, 0, () => {
-          settle({ type: "OPENED" });
+          finish({ type: "OPENED" });
         });
       },
       exit: (ctx) => go.cancel_animations(ctx.sprite, "tint.w"), // cleanup!
@@ -432,7 +432,7 @@ export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
 
 ## 9. One thing at a time
 
-You may call `m.send()` from inside a hook or action, but it won't run right away. The event waits in a queue until the current transition, every enter and exit included, has finished. All queued events run before the outer `send`, `update` or `start` call returns.
+You may call `m.send()` from inside a hook or `run`, but it won't run right away. The event waits in a queue until the current transition, every enter and exit included, has finished. All queued events run before the outer `send`, `update` or `start` call returns.
 
 Start the level with a cached save and watch the log: `loading` sends `LOADED` from its enter hook, the event is queued, and it's handled before `start()` returns. Then press `QUIT`: `done` calls `m.stop()`, which exits every state and leaves `path` as `undefined`. After that, events do nothing.
 
@@ -483,12 +483,12 @@ export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
   states: {
     closed: {
       enter: (ctx) => go.set(ctx.sprite, "tint.w", 1),
-      on: { trigger_response: { target: "/opening", guard: (_ctx, event) => event.enter } },
+      on: { trigger_response: { to: "/opening", when: (_ctx, event) => event.enter } },
     },
     opening: {
-      invoke: (ctx, settle) => {
+      task: (ctx, finish) => {
         go.animate(ctx.sprite, "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 0.5, 0, () => {
-          settle({ type: "OPENED" });
+          finish({ type: "OPENED" });
         });
       },
       exit: (ctx) => go.cancel_animations(ctx.sprite, "tint.w"),
@@ -547,7 +547,7 @@ export default defineScript({
 2. **List what can happen.** Presses, bumps, messages, timeouts. Each is an event or an `after`.
 3. **Draw the arrows.** For each state, which events move it, and where?
 4. **Look for groups.** States that share arrows can live inside a parent.
-5. **Add conditions last.** Guards and actions handle the "it depends" cases.
+5. **Add conditions last.** `when` and `run` handle the "it depends" cases.
 6. **Plan cleanup.** Whatever a state starts, its `exit` should stop.
 
 ### Common beginner mistakes

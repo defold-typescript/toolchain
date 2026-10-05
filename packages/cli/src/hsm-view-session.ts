@@ -17,14 +17,14 @@ interface RuntimeInstance {
   readonly matches: (path: string) => boolean;
   readonly send: (event: EventObject) => void;
   readonly update: (dt: number) => void;
-  readonly onTransition: (
+  readonly onMove: (
     listener: (
       from: string,
       to: string | undefined,
       cause: string,
       event: EventObject | undefined,
     ) => void,
-  ) => void;
+  ) => () => void;
 }
 
 interface RuntimeMachine {
@@ -32,10 +32,9 @@ interface RuntimeMachine {
 }
 
 interface RuleConfig {
-  readonly target?: string;
-  readonly guard?: (ctx: unknown, event?: EventObject) => boolean;
-  readonly actions?: RuleAction | readonly RuleAction[];
-  readonly reenter?: boolean;
+  readonly to?: string;
+  readonly when?: (ctx: unknown, event?: EventObject) => boolean;
+  readonly run?: RuleAction | readonly RuleAction[];
 }
 
 type RuleAction = (ctx: unknown, event: EventObject, machine: RuntimeInstance) => void;
@@ -50,7 +49,7 @@ interface StateConfig {
   readonly enter?: (ctx: unknown, machine: RuntimeInstance) => void;
   readonly exit?: (ctx: unknown, machine: RuntimeInstance) => void;
   readonly update?: (ctx: unknown, dt: number, machine: RuntimeInstance) => string | undefined;
-  readonly invoke?: unknown;
+  readonly task?: unknown;
 }
 
 export type SnapshotEntry =
@@ -185,11 +184,11 @@ function messageOf(thrown: unknown): string {
   return thrown instanceof Error ? thrown.message : String(thrown);
 }
 
-function actionsOf(actions: RuleConfig["actions"]): readonly RuleAction[] {
-  if (actions === undefined) {
+function runOf(run: RuleConfig["run"]): readonly RuleAction[] {
+  if (run === undefined) {
     return [];
   }
-  return typeof actions === "function" ? [actions] : actions;
+  return typeof run === "function" ? [run] : run;
 }
 
 function isPrimitive(value: unknown): boolean {
@@ -267,9 +266,9 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
               }
             };
             if (typeof rule === "string") {
-              return { target: rule, actions: [note] };
+              return { to: rule, run: [note] };
             }
-            return { ...rule, actions: [note, ...actionsOf(rule.actions)] };
+            return { ...rule, run: [note, ...runOf(rule.run)] };
           });
           on[event] = Array.isArray(spec) ? rules : rules[0];
         }
@@ -281,8 +280,8 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
           const id = ids[path]?.always[index];
           if (typeof rule === "string") {
             return {
-              target: rule,
-              guard: () => {
+              to: rule,
+              when: () => {
                 if (id !== undefined) {
                   fired.push(id);
                 }
@@ -290,11 +289,11 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
               },
             };
           }
-          const guard = rule.guard;
+          const when = rule.when;
           return {
             ...rule,
-            guard: (ctx: unknown) => {
-              const accepted = guard === undefined || guard(ctx);
+            when: (ctx: unknown) => {
+              const accepted = when === undefined || when(ctx);
               if (accepted && id !== undefined) {
                 fired.push(id);
               }
@@ -421,7 +420,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   };
 
   const attach = (next: RuntimeInstance): void => {
-    next.onTransition((from, to, cause, event) => {
+    next.onMove((from, to, cause, event) => {
       const rule = cause === "after" ? afterRuleFor(from) : undefined;
       if (rule !== undefined) {
         fired.push(rule.id);

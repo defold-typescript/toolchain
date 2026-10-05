@@ -73,9 +73,9 @@ export const m = defineMachine()({
   on: { "A|on|B": "/b" },
   states: {
     a: {
-      on: { GO: [{ target: "/b", guard: () => false }, { target: "/b" }], BACK: "/b" },
+      on: { GO: [{ to: "/b", when: () => false }, { to: "/b" }], BACK: "/b" },
       after: { 0.5: "/b" },
-      always: [{ target: "/b", guard: () => false }, { target: "/b" }],
+      always: [{ to: "/b", when: () => false }, { to: "/b" }],
       update: () => undefined,
     },
     b: {},
@@ -88,15 +88,11 @@ export const m = defineMachine()({
 
     expect(spanText(loaded.files, index.onKeys["/a"]?.GO)).toBe("GO");
     expect(index.rules[ruleId("/a", "on", "BACK", 0)]).toEqual(index.onKeys["/a"]?.BACK);
-    expect(spanText(loaded.files, index.rules[ruleId("/a", "on", "GO", 0)])).toContain(
-      'target: "/b"',
-    );
-    expect(spanText(loaded.files, index.rules[ruleId("/a", "on", "GO", 1)])).toBe(
-      '{ target: "/b" }',
-    );
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "on", "GO", 0)])).toContain('to: "/b"');
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "on", "GO", 1)])).toBe('{ to: "/b" }');
     expect(spanText(loaded.files, index.rules[ruleId("/a", "after", "0.5")])).toBe("0.5");
-    expect(spanText(loaded.files, index.rules[ruleId("/a", "always", 0)])).toContain("guard");
-    expect(spanText(loaded.files, index.rules[ruleId("/a", "always", 1)])).toBe('{ target: "/b" }');
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "always", 0)])).toContain("when");
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "always", 1)])).toBe('{ to: "/b" }');
     expect(spanText(loaded.files, index.rules[ruleId("/a", "update")])).toBe("update");
     expect(index.ruleOnKeys[ruleId("", "on", "A|on|B", 0)]).toEqual({
       statePath: "",

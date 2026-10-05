@@ -232,29 +232,27 @@ local function compileTransition(compiled, source, spec)
     if type(spec) == "string" then
         return {
             target = resolveTarget(compiled, source, spec),
-            guard = nil,
-            actions = {},
-            reenter = false
+            when = nil,
+            run = {}
         }
     end
-    local actions = {}
-    local declared = spec.actions
+    local run = {}
+    local declared = spec.run
     if type(declared) == "function" then
-        actions[#actions + 1] = declared
+        run[#run + 1] = declared
     elseif declared ~= nil then
         do
             local i = 0
             while i < #declared do
-                actions[#actions + 1] = declared[i + 1]
+                run[#run + 1] = declared[i + 1]
                 i = i + 1
             end
         end
     end
     return {
-        target = spec.target == nil and NO_STATE or resolveTarget(compiled, source, spec.target),
-        guard = spec.guard,
-        actions = actions,
-        reenter = spec.reenter == true
+        target = spec.to == nil and NO_STATE or resolveTarget(compiled, source, spec.to),
+        when = spec.when,
+        run = run
     }
 end
 local function compileOn(compiled, index)
@@ -315,9 +313,9 @@ local function compileAlways(compiled, index)
         local i = 0
         while i < #candidates do
             local candidate = candidates[i + 1]
-            if type(candidate) ~= "string" and candidate.target == nil then
+            if type(candidate) ~= "string" and candidate.to == nil then
                 error(
-                    ("hsm: state \\"" .. describePath(compiled.paths[index + 1])) .. "\\" has an always transition with no target",
+                    ("hsm: state \\"" .. describePath(compiled.paths[index + 1])) .. "\\" has an always transition with no \\"to\\"",
                     0
                 )
             end
@@ -413,9 +411,9 @@ local function isAncestorOrSelf(compiled, ancestor, state)
     end
     return current == ancestor
 end
-local function transitionDomain(compiled, source, target, reenter)
+local function transitionDomain(compiled, source, target)
     local domain = source
-    if source ~= ROOT and (reenter or not isAncestorOrSelf(compiled, source, target)) then
+    if source ~= ROOT and (target == source or not isAncestorOrSelf(compiled, source, target)) then
         domain = compiled.parent[source + 1]
         while domain ~= ROOT and (domain == target or not isAncestorOrSelf(compiled, domain, target)) do
             domain = compiled.parent[domain + 1]
@@ -429,7 +427,7 @@ end
 local registered = {}
 local function createMachine(definition)
     local function start(ctx)
-        local clearSlot, growSlots, collectActive, rebind, onTransition, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterTargets, always, activeChild, isActive, elapsed, fired, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, instance
+        local clearSlot, growSlots, collectActive, rebind, onMove, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterTargets, always, activeChild, isActive, elapsed, fired, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, instance
         function clearSlot(state)
             activeChild[state + 1] = NO_STATE
             isActive[state + 1] = false
@@ -554,14 +552,46 @@ local function createMachine(definition)
             end
             settleAlways()
         end
-        function onTransition(listener)
-            listeners[#listeners + 1] = listener
-        end
-        function report(from, to, cause, event)
+        function onMove(listener)
+            local added = {}
             do
                 local i = 0
                 while i < #listeners do
-                    listeners[i + 1](from, to, cause, event)
+                    added[#added + 1] = listeners[i + 1]
+                    i = i + 1
+                end
+            end
+            added[#added + 1] = listener
+            listeners = added
+            local removed = false
+            return function()
+                if removed then
+                    return
+                end
+                removed = true
+                local kept = {}
+                local skipped = false
+                do
+                    local i = 0
+                    while i < #listeners do
+                        local current = listeners[i + 1]
+                        if current ~= listener or skipped then
+                            kept[#kept + 1] = current
+                        else
+                            skipped = true
+                        end
+                        i = i + 1
+                    end
+                end
+                listeners = kept
+            end
+        end
+        function report(from, to, cause, event)
+            local current = listeners
+            do
+                local i = 0
+                while i < #current do
+                    current[i + 1](from, to, cause, event)
                     i = i + 1
                 end
             end
@@ -616,18 +646,18 @@ local function createMachine(definition)
             if hook ~= nil then
                 hook(ctx, instance)
             end
-            local invoke = config.invoke
-            if invoke ~= nil then
+            local task = config.task
+            if task ~= nil then
                 local path = paths[state + 1]
-                local settled = false
-                local result = invoke(
+                local finished = false
+                local result = task(
                     ctx,
                     function(event)
                         local current = lookupPath(compiled, path)
-                        if settled or not running or stopRequested or current == nil or entryId[current + 1] ~= id then
+                        if finished or not running or stopRequested or current == nil or entryId[current + 1] ~= id then
                             return
                         end
-                        settled = true
+                        finished = true
                         send(event)
                     end,
                     instance
@@ -777,18 +807,18 @@ local function createMachine(definition)
                 leaf = child
             end
         end
-        function transition(source, target, reenter, actions, event, cause)
+        function transition(source, target, run, event, cause)
             if target == NO_STATE then
-                runActions(actions, event)
+                runActions(run, event)
                 return
             end
-            local domain = transitionDomain(compiled, source, target, reenter)
+            local domain = transitionDomain(compiled, source, target)
             local from = firstLeaf(domain)
             local child = activeChild[domain + 1]
             if child ~= NO_STATE then
                 exitSubtree(child)
             end
-            runActions(actions, event)
+            runActions(run, event)
             if target == domain then
                 enterDefaults(domain, 0)
             else
@@ -841,8 +871,8 @@ local function createMachine(definition)
                 local i = 0
                 while i < #list do
                     local candidate = list[i + 1]
-                    local guard = candidate.guard
-                    if guard == nil or guard(ctx) then
+                    local when = candidate.when
+                    if when == nil or when(ctx) then
                         if overLimit then
                             clearQueue()
                             busy = false
@@ -854,7 +884,6 @@ local function createMachine(definition)
                         transition(
                             state,
                             candidate.target,
-                            false,
                             nil,
                             nil,
                             "always"
@@ -866,14 +895,14 @@ local function createMachine(definition)
             end
             return false
         end
-        function runActions(actions, event)
-            if actions == nil or event == nil then
+        function runActions(run, event)
+            if run == nil or event == nil then
                 return
             end
             do
                 local i = 0
-                while i < #actions do
-                    actions[i + 1](ctx, event, instance)
+                while i < #run do
+                    run[i + 1](ctx, event, instance)
                     i = i + 1
                 end
             end
@@ -888,12 +917,11 @@ local function createMachine(definition)
                 local i = 0
                 while i < #list do
                     local candidate = list[i + 1]
-                    if candidate.guard == nil or candidate.guard(ctx, event) then
+                    if candidate.when == nil or candidate.when(ctx, event) then
                         transition(
                             state,
                             candidate.target,
-                            candidate.reenter,
-                            candidate.actions,
+                            candidate.run,
                             event,
                             "event"
                         )
@@ -1040,7 +1068,6 @@ local function createMachine(definition)
                 transition(
                     state,
                     resolveTarget(compiled, state, target),
-                    false,
                     nil,
                     nil,
                     "update"
@@ -1061,7 +1088,6 @@ local function createMachine(definition)
                 transition(
                     state,
                     afterTargets[state + 1][next + 1],
-                    false,
                     nil,
                     nil,
                     "after"
@@ -1144,7 +1170,7 @@ local function createMachine(definition)
             send = send,
             update = update,
             stop = stop,
-            onTransition = onTransition
+            onMove = onMove
         }
         busy = true
         enterState(ROOT)
