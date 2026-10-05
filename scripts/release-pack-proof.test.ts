@@ -4,12 +4,13 @@ import * as os from "node:os";
 import * as path from "node:path";
 import {
   checkCoordinatedDeps,
+  entryBareDependencies,
   extractPackage,
   linkDependencies,
   loadTimeSpecifiers,
   PACKAGES,
   packedTranslations,
-  packTypes,
+  packPackage,
   readTarEntry,
   refDocMaterialize,
   stampVersion,
@@ -231,7 +232,7 @@ describe("pack-proof covers the coordinated release set", () => {
 describe("packed types install", () => {
   const dest = mkdtempSync(path.join(os.tmpdir(), "pack-proof-test-tgz-"));
   const install = mkdtempSync(path.join(os.tmpdir(), "pack-proof-test-install-"));
-  const tar = packTypes(dest);
+  const tar = packPackage("types", dest);
   extractPackage(tar, install);
   linkDependencies(install);
 
@@ -286,5 +287,43 @@ describe("loadTimeSpecifiers", () => {
       ),
     );
     expect(specs).toEqual([]);
+  });
+});
+
+describe("entryBareDependencies", () => {
+  test("reads a value import out of a built entry that starts with a shebang", () => {
+    const source = [
+      "#!/usr/bin/env node",
+      'import ts from "typescript";',
+      'import { serve } from "@hono/node-server/serve";',
+      'import { readFileSync } from "node:fs";',
+      'import { run } from "./run.js";',
+    ].join("\n");
+    expect(entryBareDependencies("dist/bin.js", source)).toEqual([
+      "typescript",
+      "@hono/node-server",
+    ]);
+  });
+
+  test("drops a type-only import from a TypeScript entry", () => {
+    expect(entryBareDependencies("src/load.ts", 'import type ts from "typescript";\n')).toEqual([]);
+  });
+
+  test("skips a declaration file", () => {
+    expect(entryBareDependencies("dist/index.d.ts", 'import ts from "typescript";\n')).toEqual([]);
+  });
+});
+
+// Workspace hoisting resolves any package from the root `node_modules`, so only
+// the tarball's own manifest can show what a strict installer would leave out.
+describe("every published tarball declares the packages it loads", () => {
+  const dest = mkdtempSync(path.join(os.tmpdir(), "pack-proof-test-declared-"));
+
+  afterAll(() => {
+    rmSync(dest, { recursive: true, force: true });
+  });
+
+  test.each([...PACKAGES])("%s", (name) => {
+    expect(undeclaredPackedDependencies(packPackage(name, dest))).toEqual([]);
   });
 });

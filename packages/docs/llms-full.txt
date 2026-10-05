@@ -6063,7 +6063,7 @@ A reload that fails, such as a syntax error, shows its error in a banner. The pa
 
 #### Errors
 
-Every reason the viewer cannot start exits 1 with one message: a missing file, a file that defines no machine, an unknown `[name]` (the message lists the machine names), or a throw while loading.
+Every reason the viewer cannot start exits 1 with one message: a missing file, a file that defines no machine, an unknown `[name]` (the message lists the machine names), a throw while loading, or a local server that cannot start listening.
 
 A throw inside a hook while the machine runs halts it. The page shows the message, and only Start continues. Editing a file while halted still loads it, so the restart runs the edited source.
 
