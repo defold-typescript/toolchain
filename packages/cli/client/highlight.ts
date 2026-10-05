@@ -14,10 +14,17 @@ export interface Highlight {
   readonly tinted: ReadonlySet<SpanId>;
   /** How many times each span has started its glow; a view keys the glow element on it. */
   readonly stamps: Readonly<Record<SpanId, number>>;
+  /** How many times each rule span has started its dim glow, from a `when` that rejected the event. */
+  readonly dimStamps: Readonly<Record<SpanId, number>>;
   readonly litFiles: ReadonlySet<number>;
 }
 
-export const emptyHighlight: Highlight = { tinted: new Set(), stamps: {}, litFiles: new Set() };
+export const emptyHighlight: Highlight = {
+  tinted: new Set(),
+  stamps: {},
+  dimStamps: {},
+  litFiles: new Set(),
+};
 
 /** A span's part on one line, in columns of that line's text. */
 export interface LineSpan {
@@ -49,7 +56,10 @@ export function indexSpans(index: MachineIndex): Map<SpanId, IndexedSpan> {
   return spans;
 }
 
-/** What one snapshot shows: its active states tinted, and a glow restarted on each entry and fired rule. */
+/**
+ * What one snapshot shows: its active states tinted, a glow restarted on each entry and fired
+ * rule, and a dim glow on each rule whose `when` rejected the event.
+ */
 export function applySnapshot(
   previous: Highlight,
   index: MachineIndex,
@@ -78,7 +88,14 @@ export function applySnapshot(
   for (const id of tinted) {
     litFiles.add((spans.get(id) as IndexedSpan).file);
   }
-  return { tinted, stamps, litFiles };
+  const dimStamps: Record<SpanId, number> = { ...previous.dimStamps };
+  for (const ruleId of snapshot.rejected) {
+    const id = ruleSpanId(ruleId);
+    if (spans.has(id)) {
+      dimStamps[id] = (dimStamps[id] ?? 0) + 1;
+    }
+  }
+  return { tinted, stamps, dimStamps, litFiles };
 }
 
 /** Cuts each span into one range per line it covers, in that line's columns. */

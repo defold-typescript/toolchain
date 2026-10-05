@@ -72,4 +72,45 @@ describe("CodeView", () => {
     const offLine = container.querySelector(`[data-line="${lineOf("off")}"]`);
     expect(offLine?.textContent).toContain("TOGGLE");
   });
+
+  test("glows a rule whose when rejected the event dimmer than the rule that fired", async () => {
+    const guarded = `import { defineMachine } from "@defold-typescript/types/hsm";
+export const lamp = defineMachine("lamp")({
+  initial: "/off",
+  states: {
+    off: {
+      on: {
+        TOGGLE: [
+          { to: "/on", when: () => false },
+          { to: "/on" },
+        ],
+      },
+    },
+    on: {},
+  },
+});
+`;
+    const file = path.join(dir, "guarded.ts");
+    writeFileSync(file, guarded);
+    const lines = guarded.split("\n");
+    const rejectedLine = String(lines.findIndex((line) => line.includes("when: () => false")));
+    const firedLine = String(lines.findIndex((line) => line.trim() === '{ to: "/on" },'));
+    const guardedViewer = await startViewer(file, "{}");
+    const { container } = render(<CodeView store={guardedViewer.store} file={0} />);
+
+    act(() =>
+      guardedViewer.store
+        .getState()
+        .receive(
+          JSON.parse(JSON.stringify(guardedViewer.session.send({ type: "TOGGLE" }))) as Snapshot,
+        ),
+    );
+
+    const overlays = (line: string, className: string): number =>
+      container.querySelectorAll(`[data-line="${line}"] .${className}`).length;
+    expect(overlays(rejectedLine, "animate-glow-dim")).toBeGreaterThan(0);
+    expect(overlays(rejectedLine, "animate-glow")).toBe(0);
+    expect(overlays(firedLine, "animate-glow")).toBeGreaterThan(0);
+    expect(overlays(firedLine, "animate-glow-dim")).toBe(0);
+  });
 });

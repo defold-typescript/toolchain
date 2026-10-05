@@ -84,6 +84,7 @@ export interface Snapshot {
   readonly leaves: readonly string[];
   readonly entered: readonly string[];
   readonly fired: readonly string[];
+  readonly rejected: readonly string[];
   readonly accepts: readonly string[];
   readonly ctx: unknown;
   readonly entries: readonly SnapshotEntry[];
@@ -198,6 +199,7 @@ function isPrimitive(value: unknown): boolean {
 export function createSession(options: CreateSessionOptions): HsmViewSession {
   let entered: string[] = [];
   let fired: string[] = [];
+  let rejected: string[] = [];
   let entries: SnapshotEntry[] = [];
   let t = 0;
   let picked: string | undefined;
@@ -216,6 +218,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   const begin = (): void => {
     entered = [];
     fired = [];
+    rejected = [];
     entries = [];
     callError = undefined;
     tickOrder = [];
@@ -268,7 +271,21 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
             if (typeof rule === "string") {
               return { to: rule, run: [note] };
             }
-            return { ...rule, run: [note, ...runOf(rule.run)] };
+            const when = rule.when;
+            if (when === undefined) {
+              return { ...rule, run: [note, ...runOf(rule.run)] };
+            }
+            return {
+              ...rule,
+              when: (ctx: unknown, event?: EventObject) => {
+                const accepted = when(ctx, event);
+                if (!accepted && id !== undefined) {
+                  rejected.push(id);
+                }
+                return accepted;
+              },
+              run: [note, ...runOf(rule.run)],
+            };
           });
           on[event] = Array.isArray(spec) ? rules : rules[0];
         }
@@ -398,6 +415,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       leaves: [...(instance?.leaves ?? [])],
       entered: [...entered],
       fired: [...fired],
+      rejected: [...rejected],
       accepts: acceptedEvents(),
       ctx: shownValue(instance?.ctx),
       entries: [...entries],
