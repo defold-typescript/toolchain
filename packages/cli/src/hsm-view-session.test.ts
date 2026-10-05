@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { requireHsmSourceDir } from "@defold-typescript/transpiler";
+import { ruleId } from "./hsm-view-index";
 import { createSession, type Snapshot } from "./hsm-view-session";
 
 const hsmSourceDir = requireHsmSourceDir();
@@ -61,7 +62,7 @@ describe("createSession", () => {
     const toggled = view.send({ type: "TOGGLE" });
     expect(toggled.path).toBe("/on");
     expect(toggled.entered).toEqual(["/on"]);
-    expect(toggled.fired).toEqual(["/off|on|TOGGLE|0"]);
+    expect(toggled.fired).toEqual([ruleId("/off", "on", "TOGGLE", 0)]);
     expect(toggled.entries).toContainEqual(
       expect.objectContaining({
         kind: "transition",
@@ -91,9 +92,9 @@ describe("createSession", () => {
     );
 
     expect(view.start({}).accepts).toEqual(["GO", "NEXT", "RESET"]);
-    expect(view.send({ type: "GO" }).fired).toEqual(["/world/left/a|on|GO|1"]);
+    expect(view.send({ type: "GO" }).fired).toEqual([ruleId("/world/left/a", "on", "GO", 1)]);
     const reset = view.send({ type: "RESET" });
-    expect(reset.fired).toEqual(["/world|on|RESET|0"]);
+    expect(reset.fired).toEqual([ruleId("/world", "on", "RESET", 0)]);
     expect(reset.accepts).toEqual(["GO", "NEXT", "RESET"]);
   });
 
@@ -106,9 +107,9 @@ describe("createSession", () => {
     );
     timers.start({});
     const after = timers.update(0.5);
-    expect(after).toMatchObject({ path: "/b", t: 0.5, fired: ["/a|after|0.5|0"] });
+    expect(after).toMatchObject({ path: "/b", t: 0.5, fired: [ruleId("/a", "after", "0.5")] });
     const update = timers.update(0.25);
-    expect(update).toMatchObject({ path: "/c", t: 0.75, fired: ["/b|update"] });
+    expect(update).toMatchObject({ path: "/c", t: 0.75, fired: [ruleId("/b", "update")] });
 
     const always = session(
       machine(`{
@@ -121,7 +122,11 @@ describe("createSession", () => {
     expect(moved.path).toBe("/c");
     expect(moved.active).toEqual(["/c"]);
     expect(moved.entered).toEqual(["/a", "/b", "/c"]);
-    expect(moved.fired).toEqual(["/idle|on|GO|0", "/a|always|0", "/b|always|0"]);
+    expect(moved.fired).toEqual([
+      ruleId("/idle", "on", "GO", 0),
+      ruleId("/a", "always", 0),
+      ruleId("/b", "always", 0),
+    ]);
   });
 
   test("names the after rule each parallel region fires in one update", () => {
@@ -142,7 +147,7 @@ describe("createSession", () => {
     regions.start({});
     expect(regions.update(1)).toMatchObject({
       leaves: ["/p/x/b", "/p/y/d"],
-      fired: ["/p/x/a|after|1|0", "/p/y/c|after|1|0"],
+      fired: [ruleId("/p/x/a", "after", "1"), ruleId("/p/y/c", "after", "1")],
     });
 
     const leaving = session(
@@ -161,7 +166,10 @@ describe("createSession", () => {
 }`),
     );
     leaving.start({});
-    expect(leaving.update(1)).toMatchObject({ path: "/over", fired: ["/p/y/c|after|1|0"] });
+    expect(leaving.update(1)).toMatchObject({
+      path: "/over",
+      fired: [ruleId("/p/y/c", "after", "1")],
+    });
 
     const moved = session(
       machine(`{
@@ -181,7 +189,7 @@ describe("createSession", () => {
     moved.start({});
     expect(moved.update(1)).toMatchObject({
       path: "/over",
-      fired: ["/p/x/a|update", "/p/y/c|after|1|0"],
+      fired: [ruleId("/p/x/a", "update"), ruleId("/p/y/c", "after", "1")],
     });
 
     const looping = session(
@@ -191,8 +199,14 @@ describe("createSession", () => {
 }`),
     );
     looping.start({});
-    expect(looping.update(1)).toMatchObject({ entered: ["/p", "/p/a"], fired: ["/p/a|after|1|0"] });
-    expect(looping.update(1)).toMatchObject({ entered: ["/p", "/p/a"], fired: ["/p/a|after|1|0"] });
+    expect(looping.update(1)).toMatchObject({
+      entered: ["/p", "/p/a"],
+      fired: [ruleId("/p/a", "after", "1")],
+    });
+    expect(looping.update(1)).toMatchObject({
+      entered: ["/p", "/p/a"],
+      fired: [ruleId("/p/a", "after", "1")],
+    });
   });
 
   test("skips the due timers on a moved region's ancestor chain when naming a later region's after rule", () => {
@@ -214,7 +228,7 @@ describe("createSession", () => {
     updated.start({});
     const afterUpdate = updated.update(1);
     expect(afterUpdate.path).toBe("/over");
-    expect(afterUpdate.fired).toEqual(["/p/x/a|update", "/p/y/c|after|1|0"]);
+    expect(afterUpdate.fired).toEqual([ruleId("/p/x/a", "update"), ruleId("/p/y/c", "after", "1")]);
 
     const timed = session(
       machine(`{
@@ -234,7 +248,10 @@ describe("createSession", () => {
     timed.start({});
     const afterTimer = timed.update(1);
     expect(afterTimer.path).toBe("/over");
-    expect(afterTimer.fired).toEqual(["/p/x/a|after|1|0", "/p/y/c|after|1|0"]);
+    expect(afterTimer.fired).toEqual([
+      ruleId("/p/x/a", "after", "1"),
+      ruleId("/p/y/c", "after", "1"),
+    ]);
 
     const parallelTimer = session(
       machine(`{
@@ -256,7 +273,10 @@ describe("createSession", () => {
     parallelTimer.start({});
     const afterParallel = parallelTimer.update(1);
     expect(afterParallel.path).toBe("/done");
-    expect(afterParallel.fired).toEqual(["/p/x/a|update", "/p/y/c|after|1|0"]);
+    expect(afterParallel.fired).toEqual([
+      ruleId("/p/x/a", "update"),
+      ruleId("/p/y/c", "after", "1"),
+    ]);
   });
 
   test("captures engine calls for one snapshot and records unhandled events", () => {
