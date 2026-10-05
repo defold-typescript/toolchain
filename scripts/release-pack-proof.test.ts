@@ -324,6 +324,23 @@ describe("entryBareDependencies", () => {
     ].join("\n");
     expect(entryBareDependencies("dist/index.cjs", source)).toEqual(["left-pad", "@scope/pkg"]);
   });
+
+  test("drops Node built-ins required without the node: prefix", () => {
+    const source = [
+      'const fs = require("fs");',
+      'const fsp = require("fs/promises");',
+      'const path = require("path");',
+      'const cp = require("child_process");',
+      'const leftPad = require("left-pad");',
+      'const sub = require("@scope/pkg/sub");',
+    ].join("\n");
+    expect(entryBareDependencies("dist/index.cjs", source)).toEqual(["left-pad", "@scope/pkg"]);
+  });
+
+  test("drops Node built-ins imported without the node: prefix", () => {
+    const source = 'import { readFileSync } from "fs";\nimport ts from "typescript";\n';
+    expect(entryBareDependencies("dist/bin.js", source)).toEqual(["typescript"]);
+  });
 });
 
 describe("undeclaredPackedDependencies", () => {
@@ -347,6 +364,31 @@ describe("undeclaredPackedDependencies", () => {
         content: '{ "name": "@x/plugin", "dependencies": { "left-pad": "1.0.0" } }',
       },
       entry,
+    ]);
+    expect(undeclaredPackedDependencies(tar)).toEqual([]);
+  });
+
+  const builtinEntry = {
+    name: "package/dist/index.cjs",
+    content:
+      'const fs = require("fs"); const fsp = require("fs/promises"); module.exports = require("left-pad");',
+  };
+
+  test("reports only the real package when an entry also requires unprefixed built-ins", () => {
+    const tar = buildTar([
+      { name: "package/package.json", content: '{ "name": "@x/plugin" }' },
+      builtinEntry,
+    ]);
+    expect(undeclaredPackedDependencies(tar)).toEqual(["left-pad"]);
+  });
+
+  test("accepts unprefixed built-ins once the real package is declared", () => {
+    const tar = buildTar([
+      {
+        name: "package/package.json",
+        content: '{ "name": "@x/plugin", "dependencies": { "left-pad": "1.0.0" } }',
+      },
+      builtinEntry,
     ]);
     expect(undeclaredPackedDependencies(tar)).toEqual([]);
   });
