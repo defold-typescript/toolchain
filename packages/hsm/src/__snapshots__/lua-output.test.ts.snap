@@ -1267,12 +1267,24 @@ local ____exports = {}
 local SILENT = {draw = function()
 end}
 local TEXT_OFFSET_Y = 40
+local labelUses = {}
+local function uniqueLabel(label)
+    local uses = (labelUses[label] or 0) + 1
+    labelUses[label] = uses
+    local ____temp_0
+    if uses == 1 then
+        ____temp_0 = label
+    else
+        ____temp_0 = (label .. "#") .. tostring(uses)
+    end
+    return ____temp_0
+end
 local function shown(path)
     return path == nil and "(stopped)" or path
 end
-local function shownLeaves(leaves)
+local function shownList(leaves)
     if #leaves == 0 then
-        return "(stopped)"
+        return ""
     end
     local text = leaves[1]
     do
@@ -1284,21 +1296,26 @@ local function shownLeaves(leaves)
     end
     return text
 end
+local function shownLeaves(leaves)
+    return #leaves == 0 and "(stopped)" or shownList(leaves)
+end
 function ____exports.inspect(instance, label)
     if not sys.get_engine_info().is_debug then
         return SILENT
     end
+    local shownLabel = uniqueLabel(label)
     local frame = 0
     instance.onMove(function(from, to, cause, event)
-        local ____temp_0
+        local ____temp_1
         if event == nil then
-            ____temp_0 = cause
+            ____temp_1 = cause
         else
-            ____temp_0 = event.type
+            ____temp_1 = event.type
         end
-        local reason = ____temp_0
-        print(((((((((("hsm " .. label) .. " frame ") .. tostring(frame)) .. ": ") .. from) .. " -> ") .. shown(to)) .. " (") .. reason) .. ")")
+        local reason = ____temp_1
+        print(((((((((((("hsm " .. shownLabel) .. " frame ") .. tostring(frame)) .. ": ") .. from) .. " -> ") .. shown(to)) .. " (") .. reason) .. ") [") .. shownList(instance.leaves)) .. "]")
     end)
+    print(((((("hsm " .. shownLabel) .. " frame ") .. tostring(frame)) .. ": inspecting [") .. shownList(instance.leaves)) .. "]")
     return {draw = function(target)
         frame = frame + 1
         local p = go.get_world_position(target)
@@ -1306,7 +1323,7 @@ function ____exports.inspect(instance, label)
             "@render:",
             "draw_debug_text",
             {
-                text = (label .. " ") .. shownLeaves(instance.leaves),
+                text = (shownLabel .. " ") .. shownLeaves(instance.leaves),
                 position = vmath.vector3(p.x, p.y + TEXT_OFFSET_Y, p.z),
                 color = vmath.vector4(1, 1, 1, 1)
             }
