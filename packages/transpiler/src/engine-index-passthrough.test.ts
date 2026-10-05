@@ -147,11 +147,26 @@ function compileMain(text: string): { flat: string; diagnostics: string[] } {
 
 // The argument list the first call to `luaCallee` emits, split on commas.
 function emittedArgs(flat: string, luaCallee: string): string[] {
-  const open = flat.indexOf(`${luaCallee}(`) + luaCallee.length + 1;
-  return flat
-    .slice(open, flat.indexOf(")", open))
-    .trim()
-    .split(/\s*,\s*/);
+  return emittedCalls(flat, luaCallee)[0] ?? [];
+}
+
+// The argument list of every call to `luaCallee`, in emit order, each split on commas.
+function emittedCalls(flat: string, luaCallee: string): string[][] {
+  const calls: string[][] = [];
+  for (
+    let at = flat.indexOf(`${luaCallee}(`);
+    at !== -1;
+    at = flat.indexOf(`${luaCallee}(`, at + 1)
+  ) {
+    const open = at + luaCallee.length + 1;
+    calls.push(
+      flat
+        .slice(open, flat.indexOf(")", open))
+        .trim()
+        .split(/\s*,\s*/),
+    );
+  }
+  return calls;
 }
 
 // A bare script hook (`on_input`) is called by the engine, so its params arrive
@@ -202,29 +217,32 @@ describe("every classified scalar index argument", () => {
         expect({ key, declared: signature !== undefined }).toEqual({ key, declared: true });
         if (signature === undefined) continue;
         const position = signature.parameters.indexOf(slot);
-        for (const value of ["0", "1", "i"]) {
-          const { declarations, call, luaCallee } = callOf(
+        const values = ["0", "1", "i"];
+        // One program per slot holds all three calls, which keeps the compile count, the
+        // test's whole cost, inside the timeout on Windows runners.
+        const calls = values.map((value) =>
+          callOf(
             base,
             signature,
             signature.parameters.map((p) => (p === slot ? value : "anything")),
-          );
-          const { flat, diagnostics } = compileMain(
-            [
-              "declare const anything: never;",
-              "declare const i: number;",
-              ...declarations,
-              `${call};`,
-              "export {};",
-              "",
-            ].join("\n"),
-          );
-          expect({
-            key,
-            value,
-            diagnostics,
-            emitted: emittedArgs(flat, luaCallee)[position],
-          }).toEqual({ key, value, diagnostics: [], emitted: value });
-        }
+          ),
+        );
+        const { declarations, luaCallee } = calls[0] ?? callOf(base, signature, []);
+        const { flat, diagnostics } = compileMain(
+          [
+            "declare const anything: never;",
+            "declare const i: number;",
+            ...declarations,
+            ...calls.map(({ call }) => `${call};`),
+            "export {};",
+            "",
+          ].join("\n"),
+        );
+        expect({
+          key,
+          diagnostics,
+          emitted: emittedCalls(flat, luaCallee).map((args) => args[position]),
+        }).toEqual({ key, diagnostics: [], emitted: values });
       }
     },
     { timeout: 30_000 },

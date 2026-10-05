@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
   existsSync,
+  type FSWatcher,
   mkdirSync,
   mkdtempSync,
   rmSync,
@@ -363,6 +364,25 @@ describe("serveHsmView", () => {
       recovered = (reload.data as { ok: boolean }).ok;
     }
     expect(recovered).toBe(true);
+    await events.cancel();
+  });
+
+  test("reloads instead of crashing when a watcher reports an error", async () => {
+    const opened: FSWatcher[] = [];
+    const watchPath: WatchPath = (target, listener) => {
+      const watcher = watch(target, listener);
+      opened.push(watcher);
+      return watcher;
+    };
+    server = await serveHsmView({ session: lampSession(), client, port: 0, watchPath });
+    const events = await openEvents(server.url);
+
+    // Windows sends `EPERM` to each watcher inside a folder that is removed.
+    const error = Object.assign(new Error("EPERM: operation not permitted, watch"), {
+      code: "EPERM",
+    });
+    opened[0]?.emit("error", error);
+    expect((await events.next("reload")).data).toMatchObject({ ok: true });
     await events.cancel();
   });
 
