@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Panel } from "react-resizable-panels";
+import type { LiveMessage } from "../src/hsm-view-live";
 import type { ReloadMessage } from "../src/hsm-view-server";
 import { Bar } from "./bar";
 import { CtxTree } from "./ctx-tree";
@@ -10,11 +11,14 @@ import { createViewerStore, useViewer, type ViewerStore } from "./store";
 
 function useServerEvents(store: ViewerStore): void {
   useEffect(() => {
-    const { load, reloaded, setDisconnected, setPlaying } = store.getState();
+    const { load, receiveLive, reloaded, setDisconnected, setPlaying } = store.getState();
     void load();
     const source = new EventSource("/api/events");
     source.addEventListener("reload", (event) => {
       void reloaded(JSON.parse(event.data) as ReloadMessage);
+    });
+    source.addEventListener("live", (event) => {
+      void receiveLive(JSON.parse(event.data) as LiveMessage);
     });
     source.addEventListener("error", () => {
       source.close();
@@ -30,7 +34,9 @@ function Banner({ store }: { store: ViewerStore }) {
   const reloadError = useViewer(store, (state) => state.reloadError);
   const halted = useViewer(store, (state) => state.snapshot?.error);
   const error = useViewer(store, (state) => state.error);
+  const liveBanner = useViewer(store, (state) => state.live.banner);
   const messages = [
+    liveBanner,
     disconnected ? "disconnected - run hsm-view again" : undefined,
     reloadError === undefined
       ? undefined

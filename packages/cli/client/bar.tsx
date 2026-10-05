@@ -30,6 +30,9 @@ export function Bar({ store }: { store: ViewerStore }) {
   const dt = useViewer(store, (state) => state.dt);
   const speed = useViewer(store, (state) => state.speed);
   const playing = useViewer(store, (state) => state.playing);
+  const instances = useViewer(store, (state) => state.live.instances);
+  const attached = useViewer(store, (state) => state.live.attached);
+  const simulating = attached === undefined;
   const actions = store.getState();
 
   return (
@@ -56,9 +59,37 @@ export function Bar({ store }: { store: ViewerStore }) {
           value={startCtx}
           onChange={(event) => actions.setStartCtx(event.target.value)}
         />
-        <button type="button" className={BUTTON} onClick={() => void actions.start()}>
+        <button
+          type="button"
+          className={BUTTON}
+          disabled={!simulating}
+          onClick={() => void actions.start()}
+        >
           Start
         </button>
+      </Group>
+      <Group label="live">
+        <select
+          aria-label="live instance"
+          title="an inspected instance of the game running from the editor"
+          className={FIELD}
+          value={attached ?? ""}
+          onChange={(event) => {
+            const label = event.target.value;
+            if (label === "") {
+              void actions.detach();
+            } else {
+              actions.attach(label);
+            }
+          }}
+        >
+          <option value="">live: off</option>
+          {instances.map((instance) => (
+            <option key={instance.label} value={instance.label}>
+              {instance.stopped ? `${instance.label} (stopped)` : instance.label}
+            </option>
+          ))}
+        </select>
       </Group>
       <Group label="events">
         {(accepts ?? []).map((type) => (
@@ -66,6 +97,7 @@ export function Bar({ store }: { store: ViewerStore }) {
             key={type}
             type="button"
             className={BUTTON}
+            disabled={!simulating}
             onClick={() => void actions.send(type)}
           >
             {type}
@@ -83,7 +115,7 @@ export function Bar({ store }: { store: ViewerStore }) {
         <button
           type="button"
           className={BUTTON}
-          disabled={!running}
+          disabled={!running || !simulating}
           onClick={() => actions.setPlaying(!playing)}
         >
           {playing ? "Pause" : "Play"}
@@ -91,7 +123,7 @@ export function Bar({ store }: { store: ViewerStore }) {
         <button
           type="button"
           className={BUTTON}
-          disabled={!running || playing}
+          disabled={!running || playing || !simulating}
           onClick={() => void actions.step()}
         >
           Step
