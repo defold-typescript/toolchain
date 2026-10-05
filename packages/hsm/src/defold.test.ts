@@ -46,8 +46,8 @@ function waveMachine() {
       idle: {
         on: {
           spawn_wave: {
-            target: "/spawning",
-            actions: (ctx, event) => {
+            to: "/spawning",
+            run: (ctx, event) => {
               const count: number = event.count;
               ctx.waves.push(count);
             },
@@ -92,8 +92,8 @@ describe("messageEvents", () => {
         idle: {
           on: {
             spawn_wave: {
-              target: "/spawning",
-              actions: (_ctx, event) => {
+              to: "/spawning",
+              run: (_ctx, event) => {
                 const from: Url = event.sender;
                 senders.push(from);
               },
@@ -237,7 +237,7 @@ describe("monarchEvents", () => {
     }
   });
 
-  test("the mapped events drive a flow machine whose actions read the screen as a Hash", () => {
+  test("the mapped events drive a flow machine whose run reads the screen as a Hash", () => {
     interface Flow {
       shown: Hash[];
       failed: Hash[];
@@ -248,15 +248,15 @@ describe("monarchEvents", () => {
         loading: {
           on: {
             monarch_screen_transition_in_finished: {
-              target: "/ready",
-              actions: (ctx, event) => {
+              to: "/ready",
+              run: (ctx, event) => {
                 const screen: Hash = event.screen;
                 ctx.shown.push(screen);
               },
             },
             monarch_screen_transition_failed: {
-              target: "/broken",
-              actions: (ctx, event) => {
+              to: "/broken",
+              run: (ctx, event) => {
                 const screen: Hash = event.screen;
                 ctx.failed.push(screen);
               },

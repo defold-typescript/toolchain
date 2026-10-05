@@ -16,11 +16,11 @@ type Ev =
 interface Ctx {
   log: string[];
   flag: boolean;
-  settles: ((event: Ev) => void)[];
+  finishes: ((event: Ev) => void)[];
 }
 
 function newCtx(log: string[], flag = false): Ctx {
-  return { log, flag, settles: [] };
+  return { log, flag, finishes: [] };
 }
 
 function logged(name: string) {
@@ -34,13 +34,13 @@ function logged(name: string) {
   };
 }
 
-function settleHeld(ctx: Ctx, index: number, event: Ev): void {
-  const settle = ctx.settles[index];
-  if (settle === undefined) {
-    ctx.log.push(`no settle ${index}`);
+function finishHeld(ctx: Ctx, index: number, event: Ev): void {
+  const finish = ctx.finishes[index];
+  if (finish === undefined) {
+    ctx.log.push(`no finish ${index}`);
     return;
   }
-  settle(event);
+  finish(event);
 }
 
 // Lua cannot concatenate nil, so a stopped machine's path is written as a fixed token.
@@ -114,25 +114,25 @@ function guardsAndBubbling(): string[] {
             on: {
               HIT: [
                 {
-                  guard: (ctx) => {
-                    ctx.log.push("guard 1");
+                  when: (ctx) => {
+                    ctx.log.push("when 1");
                     return false;
                   },
-                  target: "/p/c",
+                  to: "/p/c",
                 },
                 {
-                  guard: (ctx) => {
-                    ctx.log.push("guard 2");
+                  when: (ctx) => {
+                    ctx.log.push("when 2");
                     return ctx.flag;
                   },
-                  target: "/p/d",
+                  to: "/p/d",
                 },
                 {
-                  guard: (ctx) => {
-                    ctx.log.push("guard 3");
+                  when: (ctx) => {
+                    ctx.log.push("when 3");
                     return false;
                   },
-                  target: "/p/c",
+                  to: "/p/c",
                 },
               ],
             },
@@ -166,7 +166,7 @@ function targetlessAndReentry(): string[] {
         ...logged("s"),
         on: {
           PING: {
-            actions: (ctx) => {
+            run: (ctx) => {
               ctx.log.push("ping");
             },
           },
@@ -180,7 +180,7 @@ function targetlessAndReentry(): string[] {
   m.send({ type: "HIT" });
   log.push(`path=${shown(m.path)}`);
 
-  const build = (reenter: boolean) =>
+  const build = (to: "/p" | "/p/c2") =>
     defineMachine<Ctx, Ev>()({
       initial: "/p",
       states: {
@@ -188,16 +188,16 @@ function targetlessAndReentry(): string[] {
           ...logged("p"),
           initial: "/p/c1",
           states: { c1: logged("p.c1"), c2: logged("p.c2") },
-          on: { TO2: { target: "/p/c2", reenter } },
+          on: { TO2: { to } },
         },
       },
     });
-  const keep = build(false).start(newCtx(log));
+  const keep = build("/p/c2").start(newCtx(log));
   keep.send({ type: "TO2" });
   log.push(`path=${shown(keep.path)}`);
-  const reentered = build(true).start(newCtx(log));
-  reentered.send({ type: "TO2" });
-  log.push(`path=${shown(reentered.path)}`);
+  const restarted = build("/p").start(newCtx(log));
+  restarted.send({ type: "TO2" });
+  log.push(`path=${shown(restarted.path)}`);
   return log;
 }
 
@@ -207,7 +207,7 @@ function queuedSends(): string[] {
     initial: "/a",
     on: {
       STEP: {
-        actions: (ctx, event) => {
+        run: (ctx, event) => {
           ctx.log.push(`step ${event.n}`);
         },
       },
@@ -334,7 +334,7 @@ function stop(): string[] {
     initial: "/a",
     on: {
       PING: {
-        actions: (ctx) => {
+        run: (ctx) => {
           ctx.log.push("ping");
         },
       },
@@ -366,24 +366,24 @@ function stop(): string[] {
   return log;
 }
 
-function invoke(): string[] {
+function task(): string[] {
   const log: string[] = [];
   const def = defineMachine<Ctx, Ev>()({
     initial: "/loading",
     states: {
       loading: {
-        invoke: (ctx, settle) => {
-          ctx.log.push("invoke loading");
-          ctx.settles.push(settle);
+        task: (ctx, finish) => {
+          ctx.log.push("task loading");
+          ctx.finishes.push(finish);
         },
         on: {
           PING: {
-            actions: (ctx) => {
+            run: (ctx) => {
               ctx.log.push("ping");
             },
           },
           LOADED: "/ready",
-          AGAIN: { target: "/loading", reenter: true },
+          AGAIN: "/loading",
           UP: "/idle",
         },
       },
@@ -394,21 +394,21 @@ function invoke(): string[] {
   const ctx = newCtx(log);
   const m = def.start(ctx);
   m.send({ type: "AGAIN" });
-  settleHeld(ctx, 0, { type: "LOADED" });
+  finishHeld(ctx, 0, { type: "LOADED" });
   log.push(`path=${shown(m.path)}`);
-  settleHeld(ctx, 1, { type: "PING" });
-  settleHeld(ctx, 1, { type: "PING" });
-  settleHeld(ctx, 1, { type: "LOADED" });
+  finishHeld(ctx, 1, { type: "PING" });
+  finishHeld(ctx, 1, { type: "PING" });
+  finishHeld(ctx, 1, { type: "LOADED" });
   log.push(`path=${shown(m.path)}`);
   m.send({ type: "UP" });
   log.push(`path=${shown(m.path)}`);
   m.send({ type: "BACK" });
   m.send({ type: "UP" });
-  settleHeld(ctx, 2, { type: "LOADED" });
+  finishHeld(ctx, 2, { type: "LOADED" });
   log.push(`path=${shown(m.path)}`);
   m.send({ type: "BACK" });
   m.stop();
-  settleHeld(ctx, 3, { type: "LOADED" });
+  finishHeld(ctx, 3, { type: "LOADED" });
   log.push(`path=${shown(m.path)}`);
   return log;
 }
@@ -478,7 +478,7 @@ function definitionErrors(): string[] {
   return log;
 }
 
-function onTransitionReports(): string[] {
+function onMoveReports(): string[] {
   const log: string[] = [];
   const def = defineMachine<Ctx, Ev>()({
     initial: "/idle",
@@ -496,11 +496,15 @@ function onTransitionReports(): string[] {
   });
   const ctx = newCtx(log);
   const m = def.start(ctx);
-  m.onTransition((from, to, cause, event) => {
+  m.onMove((from, to, cause, event) => {
     log.push(`${shown(from)} -> ${shown(to)} ${cause} ${event === undefined ? "-" : event.type}`);
+  });
+  const removeSecond = m.onMove((from, to) => {
+    log.push(`second ${shown(from)} -> ${shown(to)}`);
   });
   m.send({ type: "GO" });
   m.update(0.5);
+  removeSecond();
   ctx.flag = true;
   m.update(0.1);
   m.stop();
@@ -517,7 +521,7 @@ function hotReload(): string[] {
     },
   });
   const m = first.start(newCtx(log));
-  m.onTransition((from, to, cause, event) => {
+  m.onMove((from, to, cause, event) => {
     log.push(`${shown(from)} -> ${shown(to)} ${cause} ${event === undefined ? "-" : event.type}`);
   });
   const second = defineMachine<Ctx, Ev>("parity hot reload")({
@@ -643,7 +647,7 @@ function alwaysTransitions(): string[] {
       idle: { ...logged("idle"), on: { GO: "/route", HIT: "/r1", UP: "/a" } },
       route: {
         ...logged("route"),
-        always: [{ target: "/x", guard: (ctx) => ctx.flag }, { target: "/y" }],
+        always: [{ to: "/x", when: (ctx) => ctx.flag }, { to: "/y" }],
       },
       x: logged("x"),
       y: logged("y"),
@@ -662,7 +666,7 @@ function alwaysTransitions(): string[] {
     },
   }).start(ctx);
   log.push(`path=${shown(m.path)}`);
-  m.onTransition((from, to, cause, event) => {
+  m.onMove((from, to, cause, event) => {
     log.push(`${shown(from)} -> ${shown(to)} ${cause} ${event === undefined ? "-" : event.type}`);
   });
   m.send({ type: "GO" });
@@ -727,7 +731,7 @@ function parallelRegions(): string[] {
     },
   }).start(ctx);
   log.push(`leaves=${shownLeaves(m.leaves)}`);
-  m.onTransition((from, to, cause, event) => {
+  m.onMove((from, to, cause, event) => {
     log.push(`${shown(from)} -> ${shown(to)} ${cause} ${event === undefined ? "-" : event.type}`);
   });
   m.send({ type: "GO" });
@@ -799,7 +803,7 @@ function unicodeRegionOrder(): string[] {
     },
   }).start(ctx);
   log.push(`path=${aliased(m.path)} leaves=${aliasedLeaves(m.leaves)}`);
-  m.onTransition((from, to, cause, event) => {
+  m.onMove((from, to, cause, event) => {
     log.push(
       `${aliased(from)} -> ${aliased(to)} ${cause} ${event === undefined ? "-" : event.type}`,
     );
@@ -819,10 +823,10 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "update and after", run: () => updateAndAfter() },
   { name: "hook tick timers", run: () => hookTickTimers() },
   { name: "stop", run: () => stop() },
-  { name: "invoke", run: () => invoke() },
+  { name: "task", run: () => task() },
   { name: "names and update targets", run: () => namesAndUpdateTargets() },
   { name: "definition errors", run: () => definitionErrors() },
-  { name: "onTransition reports every cause", run: () => onTransitionReports() },
+  { name: "onMove reports every cause", run: () => onMoveReports() },
   { name: "hot reload", run: () => hotReload() },
   { name: "restore depth", run: () => restoreDepth() },
   { name: "always transitions", run: () => alwaysTransitions() },

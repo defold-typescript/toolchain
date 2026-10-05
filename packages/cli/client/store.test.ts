@@ -22,9 +22,9 @@ export const hero = defineMachine("hero")({
       initial: "/ground/idle",
       on: {
         JUMP: [
-          { target: "/air", guard: (ctx: { fuel: number }) => ctx.fuel > 99 },
+          { to: "/air", when: (ctx: { fuel: number }) => ctx.fuel > 99 },
           {
-            target: "/air",
+            to: "/air",
           },
         ],
       },
@@ -139,7 +139,7 @@ describe("viewer store", () => {
   test("cuts a span that crosses line breaks into one range per line", () => {
     expect(pieces(0, ruleSpanId(ruleId("/ground", "on", "JUMP", 1)))).toEqual([
       "{",
-      '            target: "/air",',
+      '            to: "/air",',
       "          }",
     ]);
     expect(pieces(0, stateSpanId("/ground/idle"))).toEqual(["idle"]);

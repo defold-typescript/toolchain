@@ -3,7 +3,7 @@ toc-title: hsm-view
 ---
 # hsm-view
 
-`hsm-view` opens a [state machine](./state-machines.md) file in your browser and runs it there, guards, actions and context included. You see the source exactly as you wrote it, with the active states tinted, and you drive the machine by sending events and stepping time. No game and no Defold editor are involved.
+`hsm-view` opens a [state machine](./state-machines.md) file in your browser and runs it there, `when` checks, `run` code and context included. You see the source exactly as you wrote it, with the active states tinted, and you drive the machine by sending events and stepping time. No game and no Defold editor are involved.
 
 ```sh
 bunx @defold-typescript/cli hsm-view src/player-machine.ts

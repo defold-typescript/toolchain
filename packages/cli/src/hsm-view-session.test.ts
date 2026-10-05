@@ -83,7 +83,7 @@ describe("createSession", () => {
       type: "parallel",
       on: { RESET: "/world" },
       states: {
-        left: { initial: "/world/left/a", states: { a: { on: { GO: [{ target: "/world/left/b", guard: () => false }, { target: "/world/left/b" }] } }, b: {} } },
+        left: { initial: "/world/left/a", states: { a: { on: { GO: [{ to: "/world/left/b", when: () => false }, { to: "/world/left/b" }] } }, b: {} } },
         right: { initial: "/world/right/x", states: { x: { on: { NEXT: "/world/right/y" } }, y: {} } },
       },
     },
@@ -283,7 +283,7 @@ describe("createSession", () => {
     const view = session(
       machine(`{
   initial: "/idle",
-  states: { idle: { on: { PLAY: { actions: () => sprite.play_flipbook("#sprite", "walk") } } } },
+  states: { idle: { on: { PLAY: { run: () => sprite.play_flipbook("#sprite", "walk") } } } },
 }`),
     );
     view.start({});
@@ -342,7 +342,7 @@ describe("createSession", () => {
     const view = session(
       machine(`{
   initial: "/safe",
-  states: { safe: { on: { BREAK: { target: "/broken", actions: () => { throw new Error("boom"); } } } }, broken: {} },
+  states: { safe: { on: { BREAK: { to: "/broken", run: () => { throw new Error("boom"); } } } }, broken: {} },
 }`),
     );
     view.start({});
@@ -360,7 +360,7 @@ describe("createSession", () => {
     const source = (action: string) =>
       machine(`{
   initial: "/safe",
-  states: { safe: { on: { BREAK: { target: "/broken", actions: () => { ${action} } } } }, broken: {} },
+  states: { safe: { on: { BREAK: { to: "/broken", run: () => { ${action} } } } }, broken: {} },
 }`);
     const fixed = source("");
     const file = write(source(`throw new Error("boom");`));

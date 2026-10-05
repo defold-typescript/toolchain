@@ -60,7 +60,7 @@ function waitThenDone() {
     initial: "/run",
     states: {
       run: {
-        invoke: sequence(async (ctx, signal) => {
+        task: sequence(async (ctx, signal) => {
           ctx.signal = signal;
           ctx.log.push("start");
           await signal.wait(1);
@@ -136,7 +136,7 @@ describe("sequence", () => {
       states: {
         run: {
           // @ts-expect-error NOPE is not one of the machine's events
-          invoke: sequence(async () => ({ type: "NOPE" })),
+          task: sequence(async () => ({ type: "NOPE" })),
         },
       },
     });
@@ -148,7 +148,7 @@ describe("sequence", () => {
       initial: "/run",
       states: {
         run: {
-          invoke: sequence<Ctx, Ev>(async (_ctx, signal) => {
+          task: sequence<Ctx, Ev>(async (_ctx, signal) => {
             await signal.wait(1);
             throw failure;
           }),

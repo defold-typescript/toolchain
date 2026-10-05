@@ -56,7 +56,7 @@ function span(className: string, text: string): HTMLSpanElement {
 }
 
 function hookList(config: State): string | undefined {
-  const hooks = (["enter", "exit", "invoke"] as const).filter((key) => config[key] !== undefined);
+  const hooks = (["enter", "exit", "task"] as const).filter((key) => config[key] !== undefined);
   if (hooks.length === 0) return undefined;
   const last = hooks[hooks.length - 1] as string;
   const named = hooks.length === 1 ? last : `${hooks.slice(0, -1).join(", ")} and ${last}`;
@@ -148,8 +148,8 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     for (const [type, spec] of Object.entries(config.on ?? {})) {
       ruleList(spec).forEach((rule, i) => {
         const id = ruleChip(path, type, i);
-        const parts: (string | Node)[] = [span("hsm-ev", type), ` → ${rule.target ?? "stay here"}`];
-        if (rule.reenter) parts.push(" ", span("hsm-why", "(restart)"));
+        const parts: (string | Node)[] = [span("hsm-ev", type), ` → ${rule.to ?? "stay here"}`];
+        if (rule.to === path) parts.push(" ", span("hsm-why", "(restart)"));
         const why = note(id);
         if (why) parts.push(" ", span("hsm-why", why));
         addChip(rules, id, parts);

@@ -15,9 +15,9 @@ export const enemyMachine = defineMachine<EnemyCtx, EnemyEvent>()({
       initial: "/alive/patrol",
       on: {
         HIT: [
-          { target: "/dead", guard: (ctx) => ctx.hits >= 2 },
+          { to: "/dead", when: (ctx) => ctx.hits >= 2 },
           {
-            actions: (ctx) => {
+            run: (ctx) => {
               ctx.hits += 1;
             },
           },

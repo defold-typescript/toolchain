@@ -4,8 +4,8 @@ import {
   type Machine,
   type MachineConfig,
   type MachineInstance,
+  type MoveAction,
   type StateConfig,
-  type TransitionAction,
   type TransitionConfig,
 } from "@defold-typescript/hsm";
 import type { Demo, DemoButton, DemoCtx, DemoView } from "./demos";
@@ -19,13 +19,13 @@ import type { Demo, DemoButton, DemoCtx, DemoView } from "./demos";
  * Three lines have no hook to come from and are derived for display: the
  * bubbling line (from the config and the path before `send`), "nobody handles"
  * (a sent event no rule fired for), and the timer line (an `update` that moved
- * the machine while no `update` hook returned a target).
+ * the machine while no `update` hook returned a path).
  */
 
 export type TraceKind =
   | "event"
   | "bubble"
-  | "guard"
+  | "when"
   | "action"
   | "exit"
   | "enter"
@@ -66,7 +66,7 @@ export function afterChip(path: string, delay: number): string {
 }
 
 export function ruleList(spec: unknown): readonly Rule[] {
-  if (typeof spec === "string") return [{ target: spec }];
+  if (typeof spec === "string") return [{ to: spec }];
   if (Array.isArray(spec)) return spec as Rule[];
   return [spec as Rule];
 }
@@ -190,7 +190,7 @@ function proxyOf(s: Session, m: Instance): Instance {
       if (s.depth > 0) emit(s, "note", "stop() requested; finishing this step first");
       m.stop();
     },
-    onTransition: (listener) => m.onTransition(listener),
+    onMove: (listener) => m.onMove(listener),
   };
   return s.proxy;
 }
@@ -222,29 +222,29 @@ function noteTimer(s: Session): void {
 function wrapRule(s: Session, rule: Rule, path: string, type: string, index: number): Rule {
   const chip = ruleChip(path, type, index);
   const note = s.demo.notes?.[chip];
-  const declared = rule.actions;
-  const actions: readonly TransitionAction<DemoCtx, EventObject>[] =
+  const declared = rule.run;
+  const run: readonly MoveAction<DemoCtx, EventObject>[] =
     declared === undefined ? [] : typeof declared === "function" ? [declared] : declared;
   const wrapped: Mutable<Rule> = { ...rule };
-  const guard = rule.guard;
-  if (guard !== undefined) {
-    wrapped.guard = (ctx, event) => {
-      const passed = guard(ctx, event);
-      if (!passed) emit(s, "guard", `${describe(path)}: guard "${note ?? "check"}" said no`);
+  const when = rule.when;
+  if (when !== undefined) {
+    wrapped.when = (ctx, event) => {
+      const passed = when(ctx, event);
+      if (!passed) emit(s, "when", `${describe(path)}: when "${note ?? "check"}" said no`);
       return passed;
     };
   }
-  wrapped.actions = [
+  wrapped.run = [
     (_ctx, event) => {
       s.handled.add(event);
       fire(s, chip);
-      if (rule.target === undefined) {
-        emit(s, "note", `${describe(path)}: rule has no target, so nothing exits or enters`);
+      if (rule.to === undefined) {
+        emit(s, "note", `${describe(path)}: rule has no to, so nothing exits or enters`);
       }
-      if (actions.length > 0) emit(s, "action", `actions: ${note ?? "run code"}`);
+      if (run.length > 0) emit(s, "action", `run: ${note ?? "run code"}`);
     },
-    ...actions.map(
-      (action): TransitionAction<DemoCtx, EventObject> =>
+    ...run.map(
+      (action): MoveAction<DemoCtx, EventObject> =>
         (ctx, event, m) =>
           action(ctx, event, proxyOf(s, m)),
     ),
@@ -312,26 +312,26 @@ function wrapState(s: Session, config: State, path: string): State {
     exit?.(ctx, proxyOf(s, m));
   };
 
-  const invoke = config.invoke;
-  if (invoke !== undefined) {
-    wrapped.invoke = (ctx, settle, m) => {
+  const task = config.task;
+  if (task !== undefined) {
+    wrapped.task = (ctx, finish, m) => {
       const entry = s.entries.get(path);
       const proxy = proxyOf(s, m);
-      emit(s, "note", `${path}: invoke started`);
-      invoke(
+      emit(s, "note", `${path}: task started`);
+      return task(
         ctx,
         (event) => {
           if (s.entries.get(path) !== entry || !proxy.matches(path)) {
-            emit(s, "drop", `late settle(${event.type}) ignored: ${path} was already left`);
-            settle(event);
+            emit(s, "drop", `late finish(${event.type}) ignored: ${path} was already left`);
+            finish(event);
             return;
           }
-          emit(s, "note", `${path}: settle(${event.type})`);
+          emit(s, "note", `${path}: finish(${event.type})`);
           if (s.depth > 0) {
-            settle(event);
+            finish(event);
             return;
           }
-          fromOutside(s, event, () => settle(event));
+          fromOutside(s, event, () => finish(event));
         },
         proxy,
       );

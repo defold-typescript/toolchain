@@ -124,9 +124,9 @@ const rememberingLamp = demo<MemoryLampCtx, LampEvent>({
         on: {
           TOGGLE: [
             // was it dim? go straight back to dim
-            { target: "/on/dim", guard: (ctx) => ctx.dimmed },
+            { to: "/on/dim", when: (ctx) => ctx.dimmed },
             // otherwise, bright
-            { target: "/on/bright" },
+            { to: "/on/bright" },
           ],
         },
       },
@@ -190,9 +190,9 @@ const buddy = demo<BuddyCtx, BuddyEvent>({
         initial: "/alive/wander",
         on: {
           BUMP: [
-            { target: "/resting", guard: (ctx, event) => ctx.energy <= event.cost },
+            { to: "/resting", when: (ctx, event) => ctx.energy <= event.cost },
             {
-              actions: (ctx, event) => {
+              run: (ctx, event) => {
                 ctx.energy -= event.cost;
               },
             },
@@ -203,7 +203,7 @@ const buddy = demo<BuddyCtx, BuddyEvent>({
           follow: {
             on: {
               LOSE_PLAYER: "/alive/wander",
-              SEE_PLAYER: { target: "/alive/follow", reenter: true },
+              SEE_PLAYER: "/alive/follow",
               FALL: "/resting",
             },
           },
@@ -212,8 +212,8 @@ const buddy = demo<BuddyCtx, BuddyEvent>({
       resting: {
         on: {
           RECHARGE: {
-            target: "/alive",
-            actions: (ctx) => {
+            to: "/alive",
+            run: (ctx) => {
               ctx.energy = 3;
             },
           },
@@ -357,11 +357,11 @@ const door = demo<DoorCtx, DoorEvent>({
         enter: (ctx) => {
           ctx.tint = 1;
         },
-        on: { trigger_response: { target: "/opening", guard: (_ctx, event) => event.enter } },
+        on: { trigger_response: { to: "/opening", when: (_ctx, event) => event.enter } },
       },
       opening: {
-        invoke: (ctx, settle) => {
-          ctx.fade = { t: 0, duration: 0.5, done: () => settle({ type: "OPENED" }) };
+        task: (ctx, finish) => {
+          ctx.fade = { t: 0, duration: 0.5, done: () => finish({ type: "OPENED" }) };
         },
         exit: (ctx) => {
           if (ctx.cleanup) ctx.fade = undefined;

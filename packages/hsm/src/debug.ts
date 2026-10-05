@@ -34,7 +34,7 @@ export function inspect<Ctx, E extends EventObject, P extends string>(
     return SILENT;
   }
   let frame = 0;
-  instance.onTransition((from, to, cause, event) => {
+  instance.onMove((from, to, cause, event) => {
     const reason = event === undefined ? cause : event.type;
     print(`hsm ${label} frame ${frame}: ${from} -> ${shown(to)} (${reason})`);
   });

@@ -3,8 +3,8 @@ import {
   defineMachine,
   type MachineConfig,
   type MachineInstance,
+  type MoveCause,
   type StatePath,
-  type TransitionCause,
 } from "./index";
 
 interface Ctx {
@@ -248,7 +248,7 @@ describe("defineMachine and start", () => {
 });
 
 describe("events", () => {
-  test("a transition exits leaf-first, runs actions, then enters top-down to a leaf", () => {
+  test("a transition exits leaf-first, runs run, then enters top-down to a leaf", () => {
     const def = defineMachine<Ctx, Ev>()({
       initial: "/a",
       states: {
@@ -258,8 +258,8 @@ describe("events", () => {
           states: { a1: logged("a1") },
           on: {
             GO: {
-              target: "/b",
-              actions: (ctx) => {
+              to: "/b",
+              run: (ctx) => {
                 ctx.log.push("action");
               },
             },
@@ -276,12 +276,12 @@ describe("events", () => {
     expect(m.path).toBe("/b/b1");
   });
 
-  test("the first passing guard wins", () => {
+  test("the first candidate whose when passes wins", () => {
     const def = defineMachine<Ctx, Ev>()({
       initial: "/idle",
       states: {
         idle: {
-          on: { HIT: [{ guard: (ctx) => ctx.flag === true, target: "/x" }, { target: "/y" }] },
+          on: { HIT: [{ when: (ctx) => ctx.flag === true, to: "/x" }, { to: "/y" }] },
         },
         x: {},
         y: {},
@@ -295,7 +295,7 @@ describe("events", () => {
     expect(failing.path).toBe("/y");
   });
 
-  test("guards after the first passing candidate are never evaluated", () => {
+  test("when checks after the first passing candidate are never evaluated", () => {
     const def = defineMachine<Ctx, Ev>()({
       initial: "/idle",
       states: {
@@ -303,18 +303,18 @@ describe("events", () => {
           on: {
             HIT: [
               {
-                guard: (ctx) => {
-                  ctx.log.push("guard 1");
+                when: (ctx) => {
+                  ctx.log.push("when 1");
                   return true;
                 },
-                target: "/x",
+                to: "/x",
               },
               {
-                guard: (ctx) => {
-                  ctx.log.push("guard 2");
+                when: (ctx) => {
+                  ctx.log.push("when 2");
                   return true;
                 },
-                target: "/y",
+                to: "/y",
               },
             ],
           },
@@ -326,7 +326,7 @@ describe("events", () => {
     const ctx = newCtx();
     const m = def.start(ctx);
     m.send({ type: "HIT" });
-    expect(ctx.log).toEqual(["guard 1"]);
+    expect(ctx.log).toEqual(["when 1"]);
     expect(m.path).toBe("/x");
   });
 
@@ -336,7 +336,7 @@ describe("events", () => {
       states: {
         p: {
           initial: "/p/c",
-          states: { c: { on: { HIT: { guard: () => false, target: "/p/c" } } } },
+          states: { c: { on: { HIT: { when: () => false, to: "/p/c" } } } },
           on: { HIT: "/z" },
         },
         z: {},
@@ -359,7 +359,7 @@ describe("events", () => {
     expect(ctx.log).toEqual(["enter a"]);
   });
 
-  test("a targetless transition runs its actions with no exit or enter", () => {
+  test("a transition with no to runs its run with no exit or enter", () => {
     const def = defineMachine<Ctx, Ev>()({
       initial: "/a",
       states: {
@@ -367,7 +367,7 @@ describe("events", () => {
           ...logged("a"),
           on: {
             PING: {
-              actions: (ctx) => {
+              run: (ctx) => {
                 ctx.log.push("ping");
               },
             },
@@ -383,7 +383,7 @@ describe("events", () => {
     expect(m.path).toBe("/a");
   });
 
-  test("transition lists must be non-empty, while {} stays a targetless handler", () => {
+  test("transition lists must be non-empty, while {} stays a handler with no to", () => {
     defineMachine<Ctx, Ev>()({
       initial: "/idle",
       states: {
@@ -391,8 +391,8 @@ describe("events", () => {
           on: {
             // @ts-expect-error an empty transition list would consume HIT
             HIT: [],
-            GO: [{ target: "/x" }],
-            STEP: [{ guard: (_ctx, event) => event.n > 0, target: "/x" }, { target: "/idle" }],
+            GO: [{ to: "/x" }],
+            STEP: [{ when: (_ctx, event) => event.n > 0, to: "/x" }, { to: "/idle" }],
           },
         },
         x: {},
@@ -430,33 +430,79 @@ describe("events", () => {
     expect(ctx.log).toEqual(["exit stunned", "enter stunned"]);
   });
 
-  test("a state targeting its own child keeps itself active unless reenter is set", () => {
-    const build = (reenter: boolean) =>
-      defineMachine<Ctx, Ev>()({
-        initial: "/p",
-        states: {
-          p: {
-            ...logged("p"),
-            initial: "/p/c1",
-            states: { c1: logged("c1"), c2: logged("c2") },
-            on: { TO2: { target: "/p/c2", reenter } },
-          },
+  test("a state targeting its own child keeps itself active", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/p",
+      states: {
+        p: {
+          ...logged("p"),
+          initial: "/p/c1",
+          states: { c1: logged("c1"), c2: logged("c2") },
+          on: { TO2: { to: "/p/c2" } },
         },
-      });
+      },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    ctx.log.length = 0;
+    m.send({ type: "TO2" });
+    expect(ctx.log).toEqual(["exit c1", "enter c2"]);
+    expect(m.path).toBe("/p/c2");
+  });
 
-    const keepCtx = newCtx();
-    const keep = build(false).start(keepCtx);
-    keepCtx.log.length = 0;
-    keep.send({ type: "TO2" });
-    expect(keepCtx.log).toEqual(["exit c1", "enter c2"]);
-    expect(keep.path).toBe("/p/c2");
+  test("a target naming the owning state restarts it", () => {
+    const def = defineMachine<Ctx, { type: "AGAIN" }>()({
+      initial: "/loading",
+      states: {
+        loading: { ...logged("loading"), after: { 2: "/ready" }, on: { AGAIN: "/loading" } },
+        ready: logged("ready"),
+      },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    m.update(1.5);
+    ctx.log.length = 0;
+    m.send({ type: "AGAIN" });
+    expect(ctx.log).toEqual(["exit loading", "enter loading"]);
+    m.update(1.5);
+    expect(m.path).toBe("/loading");
+  });
 
-    const reenterCtx = newCtx();
-    const reentered = build(true).start(reenterCtx);
-    reenterCtx.log.length = 0;
-    reentered.send({ type: "TO2" });
-    expect(reenterCtx.log).toEqual(["exit c1", "exit p", "enter p", "enter c2"]);
-    expect(reentered.path).toBe("/p/c2");
+  test("a target below the owning state keeps it", () => {
+    const def = defineMachine<Ctx, { type: "RESET" } | { type: "JUMP" }>()({
+      initial: "/playing",
+      states: {
+        playing: {
+          ...logged("playing"),
+          initial: "/playing/ground",
+          states: {
+            ground: { ...logged("ground"), on: { JUMP: "/playing/air" } },
+            air: logged("air"),
+          },
+          on: { RESET: "/playing/ground" },
+        },
+      },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    m.send({ type: "JUMP" });
+    ctx.log.length = 0;
+    m.send({ type: "RESET" });
+    expect(ctx.log).toEqual(["exit air", "enter ground"]);
+    expect(m.path).toBe("/playing/ground");
+  });
+
+  test("a self-targeting after repeats", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/blink",
+      states: { blink: { ...logged("blink"), after: { 1: "/blink" } } },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    ctx.log.length = 0;
+    m.update(1);
+    m.update(1);
+    expect(ctx.log).toEqual(["exit blink", "enter blink", "exit blink", "enter blink"]);
   });
 
   test("sends from a hook queue until the step's last enter and run in send order", () => {
@@ -464,7 +510,7 @@ describe("events", () => {
       initial: "/a",
       on: {
         STEP: {
-          actions: (ctx, event) => {
+          run: (ctx, event) => {
             ctx.log.push(`step ${event.n}`);
           },
         },
@@ -497,13 +543,13 @@ describe("events", () => {
         alive: {
           on: {
             HIT: {
-              actions: (ctx, event) => {
+              run: (ctx, event) => {
                 ctx.hp -= event.damage;
               },
             },
             HEAL: {
-              guard: (_ctx, event) => event.amount > 0,
-              actions: (ctx, event) => {
+              when: (_ctx, event) => event.amount > 0,
+              run: (ctx, event) => {
                 ctx.hp += event.amount;
               },
             },
@@ -517,7 +563,7 @@ describe("events", () => {
         alive: {
           on: {
             HIT: {
-              actions: (ctx, event) => {
+              run: (ctx, event) => {
                 ctx.hp -= event.damage;
               },
             },
@@ -709,7 +755,7 @@ describe("update, after and stop", () => {
       initial: "/a",
       on: {
         PING: {
-          actions: (ctx) => {
+          run: (ctx) => {
             ctx.log.push("ping");
           },
         },
@@ -739,7 +785,7 @@ describe("update, after and stop", () => {
   });
 });
 
-describe("invoke", () => {
+describe("task", () => {
   type LoadEv =
     | { type: "LOADED" }
     | { type: "PING" }
@@ -750,29 +796,29 @@ describe("invoke", () => {
 
   interface LoadCtx {
     log: string[];
-    settles: ((event: LoadEv) => void)[];
+    finishes: ((event: LoadEv) => void)[];
   }
 
   function loadCtx(): LoadCtx {
-    return { log: [], settles: [] };
+    return { log: [], finishes: [] };
   }
 
-  function holdSettle(name: string) {
-    return (ctx: LoadCtx, settle: (event: LoadEv) => void) => {
-      ctx.log.push(`invoke ${name}`);
-      ctx.settles.push(settle);
+  function holdFinish(name: string) {
+    return (ctx: LoadCtx, finish: (event: LoadEv) => void) => {
+      ctx.log.push(`task ${name}`);
+      ctx.finishes.push(finish);
     };
   }
 
-  function settleAt(ctx: LoadCtx, index: number): (event: LoadEv) => void {
-    const settle = ctx.settles[index];
-    if (settle === undefined) {
-      throw new Error(`no settle at ${index}`);
+  function finishAt(ctx: LoadCtx, index: number): (event: LoadEv) => void {
+    const finish = ctx.finishes[index];
+    if (finish === undefined) {
+      throw new Error(`no finish at ${index}`);
     }
-    return settle;
+    return finish;
   }
 
-  test("settle moves the machine through the entered state's on, after its enter hook", () => {
+  test("finish moves the machine through the entered state's on, after its enter hook", () => {
     const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "/loading",
       states: {
@@ -780,7 +826,7 @@ describe("invoke", () => {
           enter: (ctx) => {
             ctx.log.push("enter loading");
           },
-          invoke: holdSettle("loading"),
+          task: holdFinish("loading"),
           on: { LOADED: "/ready" },
         },
         ready: {},
@@ -788,23 +834,23 @@ describe("invoke", () => {
     });
     const ctx = loadCtx();
     const m = def.start(ctx);
-    expect(ctx.log).toEqual(["enter loading", "invoke loading"]);
+    expect(ctx.log).toEqual(["enter loading", "task loading"]);
     expect(m.path).toBe("/loading");
-    settleAt(ctx, 0)({ type: "LOADED" });
+    finishAt(ctx, 0)({ type: "LOADED" });
     expect(m.path).toBe("/ready");
-    expect(ctx.settles.length).toBe(1);
+    expect(ctx.finishes.length).toBe(1);
   });
 
-  test("settle is one-shot, and a later entry's settle replaces the earlier one", () => {
+  test("finish is one-shot, and a later entry's finish replaces the earlier one", () => {
     const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "/loading",
       states: {
         loading: {
-          invoke: holdSettle("loading"),
+          task: holdFinish("loading"),
           on: {
             LOADED: "/ready",
             PING: {
-              actions: (ctx) => {
+              run: (ctx) => {
                 ctx.log.push("ping");
               },
             },
@@ -816,22 +862,22 @@ describe("invoke", () => {
     const ctx = loadCtx();
     const m = def.start(ctx);
     ctx.log.length = 0;
-    settleAt(ctx, 0)({ type: "PING" });
-    settleAt(ctx, 0)({ type: "PING" });
+    finishAt(ctx, 0)({ type: "PING" });
+    finishAt(ctx, 0)({ type: "PING" });
     expect(ctx.log).toEqual(["ping"]);
-    settleAt(ctx, 0)({ type: "LOADED" });
+    finishAt(ctx, 0)({ type: "LOADED" });
     expect(m.path).toBe("/loading");
 
     m.send({ type: "LOADED" });
     m.send({ type: "RELOAD" });
     expect(m.path).toBe("/loading");
-    settleAt(ctx, 0)({ type: "LOADED" });
+    finishAt(ctx, 0)({ type: "LOADED" });
     expect(m.path).toBe("/loading");
-    settleAt(ctx, 1)({ type: "LOADED" });
+    finishAt(ctx, 1)({ type: "LOADED" });
     expect(m.path).toBe("/ready");
   });
 
-  test("a settle held from an exited entry is ignored, whether the level empties or a sibling fills it", () => {
+  test("a finish held from an exited entry is ignored, whether the level empties or a sibling fills it", () => {
     const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "/deep",
       states: {
@@ -839,7 +885,7 @@ describe("invoke", () => {
           initial: "/deep/loading",
           states: {
             loading: {
-              invoke: holdSettle("loading"),
+              task: holdFinish("loading"),
               on: { UP: "/shallow", SIDE: "/deep/other" },
             },
             other: { on: { LOADED: "/done" } },
@@ -853,26 +899,26 @@ describe("invoke", () => {
     const m = def.start(ctx);
     m.send({ type: "UP" });
     expect(m.path).toBe("/shallow");
-    settleAt(ctx, 0)({ type: "LOADED" });
+    finishAt(ctx, 0)({ type: "LOADED" });
     expect(m.path).toBe("/shallow");
 
     m.send({ type: "AGAIN" });
     expect(m.path).toBe("/deep/loading");
     m.send({ type: "SIDE" });
     expect(m.path).toBe("/deep/other");
-    settleAt(ctx, 1)({ type: "LOADED" });
+    finishAt(ctx, 1)({ type: "LOADED" });
     expect(m.path).toBe("/deep/other");
   });
 
-  test("settle called inside invoke queues until the entry step completes", () => {
+  test("finish called inside task queues until the entry step completes", () => {
     const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "/loading",
       states: {
         loading: {
           ...logged("loading"),
-          invoke: (ctx, settle) => {
-            settle({ type: "LOADED" });
-            ctx.log.push("after settle");
+          task: (ctx, finish) => {
+            finish({ type: "LOADED" });
+            ctx.log.push("after finish");
           },
           initial: "/loading/inner",
           states: { inner: logged("inner") },
@@ -885,7 +931,7 @@ describe("invoke", () => {
     const m = def.start(ctx);
     expect(ctx.log).toEqual([
       "enter loading",
-      "after settle",
+      "after finish",
       "enter inner",
       "exit inner",
       "exit loading",
@@ -894,13 +940,13 @@ describe("invoke", () => {
     expect(m.path).toBe("/ready");
   });
 
-  test("a settle held across stop runs nothing", () => {
+  test("a finish held across stop runs nothing", () => {
     const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "/loading",
       states: {
         loading: {
           ...logged("loading"),
-          invoke: holdSettle("loading"),
+          task: holdFinish("loading"),
           on: { LOADED: "/ready" },
         },
         ready: logged("ready"),
@@ -910,18 +956,18 @@ describe("invoke", () => {
     const m = def.start(ctx);
     m.stop();
     ctx.log.length = 0;
-    settleAt(ctx, 0)({ type: "LOADED" });
+    finishAt(ctx, 0)({ type: "LOADED" });
     expect(ctx.log).toEqual([]);
     expect(m.path).toBeUndefined();
   });
 
-  test("a reentering self-transition starts invoke again and drops the earlier settle", () => {
+  test("a self-transition starts task again and drops the earlier finish", () => {
     const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "/loading",
       states: {
         loading: {
-          invoke: holdSettle("loading"),
-          on: { LOADED: "/ready", AGAIN: { target: "/loading", reenter: true } },
+          task: holdFinish("loading"),
+          on: { LOADED: "/ready", AGAIN: "/loading" },
         },
         ready: {},
       },
@@ -929,10 +975,10 @@ describe("invoke", () => {
     const ctx = loadCtx();
     const m = def.start(ctx);
     m.send({ type: "AGAIN" });
-    expect(ctx.log).toEqual(["invoke loading", "invoke loading"]);
-    settleAt(ctx, 0)({ type: "LOADED" });
+    expect(ctx.log).toEqual(["task loading", "task loading"]);
+    finishAt(ctx, 0)({ type: "LOADED" });
     expect(m.path).toBe("/loading");
-    settleAt(ctx, 1)({ type: "LOADED" });
+    finishAt(ctx, 1)({ type: "LOADED" });
     expect(m.path).toBe("/ready");
   });
 
@@ -941,7 +987,7 @@ describe("invoke", () => {
     return (ctx: LoadCtx) => {
       entries++;
       const entry = entries;
-      ctx.log.push(`invoke ${name} ${entry}`);
+      ctx.log.push(`task ${name} ${entry}`);
       return () => {
         ctx.log.push(`cleanup ${name} ${entry}`);
       };
@@ -954,7 +1000,7 @@ describe("invoke", () => {
       states: {
         loading: {
           ...logged("loading"),
-          invoke: withCleanup("loading"),
+          task: withCleanup("loading"),
           on: { LOADED: "/ready" },
         },
         ready: { ...logged("ready"), on: { RELOAD: "/loading" } },
@@ -966,7 +1012,7 @@ describe("invoke", () => {
     m.send({ type: "PING" });
     expect(ctx.log).toEqual([
       "enter loading",
-      "invoke loading 1",
+      "task loading 1",
       "exit loading",
       "cleanup loading 1",
       "enter ready",
@@ -979,9 +1025,9 @@ describe("invoke", () => {
       states: {
         outer: {
           ...logged("outer"),
-          invoke: withCleanup("outer"),
+          task: withCleanup("outer"),
           initial: "/outer/loading",
-          states: { loading: { ...logged("loading"), invoke: withCleanup("loading") } },
+          states: { loading: { ...logged("loading"), task: withCleanup("loading") } },
         },
       },
     });
@@ -993,29 +1039,29 @@ describe("invoke", () => {
     expect(ctx.log).toEqual(["exit loading", "cleanup loading 1", "exit outer", "cleanup outer 1"]);
   });
 
-  test("re-entering a state runs the old entry's cleanup before the new entry's invoke", () => {
+  test("re-entering a state runs the old entry's cleanup before the new entry's task", () => {
     const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "/loading",
       states: {
         loading: {
-          invoke: withCleanup("loading"),
-          on: { AGAIN: { target: "/loading", reenter: true } },
+          task: withCleanup("loading"),
+          on: { AGAIN: "/loading" },
         },
       },
     });
     const ctx = loadCtx();
     def.start(ctx).send({ type: "AGAIN" });
-    expect(ctx.log).toEqual(["invoke loading 1", "cleanup loading 1", "invoke loading 2"]);
+    expect(ctx.log).toEqual(["task loading 1", "cleanup loading 1", "task loading 2"]);
   });
 
-  test("an invoke that returns nothing leaves the state as before", () => {
+  test("a task that returns nothing leaves the state as before", () => {
     const def = defineMachine<LoadCtx, LoadEv>()({
       initial: "/loading",
       states: {
         loading: {
           ...logged("loading"),
-          invoke: (ctx) => {
-            ctx.log.push("invoke loading");
+          task: (ctx) => {
+            ctx.log.push("task loading");
           },
           on: { LOADED: "/ready" },
         },
@@ -1028,7 +1074,7 @@ describe("invoke", () => {
     m.stop();
     expect(ctx.log).toEqual([
       "enter loading",
-      "invoke loading",
+      "task loading",
       "exit loading",
       "enter ready",
       "exit ready",
@@ -1044,9 +1090,9 @@ describe("typed paths", () => {
         initial: "/grounded/idle",
         on: {
           GO: {
-            target: "/airborne/rising",
-            guard: (ctx) => ctx.flag !== true,
-            actions: (ctx) => {
+            to: "/airborne/rising",
+            when: (ctx) => ctx.flag !== true,
+            run: (ctx) => {
               ctx.log.push("jump");
             },
           },
@@ -1151,7 +1197,7 @@ describe("typed paths", () => {
         states: {
           a: {
             on: {
-              STEP: [{ guard: (_ctx, event) => event.n > 0, target: "/b" }, { target: "/ghost" }],
+              STEP: [{ when: (_ctx, event) => event.n > 0, to: "/b" }, { to: "/ghost" }],
             },
           },
           b: {},
@@ -1191,12 +1237,12 @@ describe("typed paths", () => {
   });
 });
 
-describe("onTransition", () => {
+describe("onMove", () => {
   type Report = [string, string | undefined, string, string | undefined];
 
   function record<P extends string>(m: MachineInstance<Ctx, Ev, P>): Report[] {
     const reports: Report[] = [];
-    m.onTransition((from, to, cause, event) => {
+    m.onMove((from, to, cause, event) => {
       reports.push([from, to, cause, event?.type]);
     });
     return reports;
@@ -1251,14 +1297,14 @@ describe("onTransition", () => {
     expect(reports).toEqual([["/run", "/rest", "update", undefined]]);
   });
 
-  test("an invoke settle reports the event cause with the settled event", () => {
-    const settles: ((event: Ev) => void)[] = [];
+  test("a task finish reports the event cause with the finished event", () => {
+    const finishes: ((event: Ev) => void)[] = [];
     const def = defineMachine<Ctx, Ev>()({
       initial: "/loading",
       states: {
         loading: {
-          invoke: (_ctx, settle) => {
-            settles.push(settle);
+          task: (_ctx, finish) => {
+            finishes.push(finish);
           },
           on: { PING: "/ready" },
         },
@@ -1267,22 +1313,22 @@ describe("onTransition", () => {
     });
     const m = def.start(newCtx());
     const reports = record(m);
-    const settle = settles[0];
-    if (settle === undefined) {
-      throw new Error("invoke did not run");
+    const finish = finishes[0];
+    if (finish === undefined) {
+      throw new Error("task did not run");
     }
-    settle({ type: "PING" });
+    finish({ type: "PING" });
     expect(reports).toEqual([["/loading", "/ready", "event", "PING"]]);
   });
 
-  test("a targetless transition and an unhandled event report nothing", () => {
+  test("a transition with no to and an unhandled event report nothing", () => {
     const def = defineMachine<Ctx, Ev>()({
       initial: "/a",
       states: {
         a: {
           on: {
             HIT: {
-              actions: (ctx) => {
+              run: (ctx) => {
                 ctx.log.push("hit");
               },
             },
@@ -1363,13 +1409,95 @@ describe("onTransition", () => {
     });
     const m = def.start(newCtx());
     let compared = false;
-    m.onTransition((from, to) => {
+    m.onMove((from, to) => {
       const sameTo: Equal<typeof to, "/a" | "/b" | undefined> = true;
       // @ts-expect-error "/nope" is not one of the machine's state paths
       compared = sameTo && from === "/nope";
     });
     m.send({ type: "GO" });
     expect(compared).toBe(false);
+  });
+
+  test("onMove returns a function that removes the listener", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: { a: { on: { GO: "/b" } }, b: { on: { BACK: "/a" } } },
+    });
+    const m = def.start(newCtx());
+    const seen: string[] = [];
+    const removeA = m.onMove((_from, to) => {
+      seen.push(`A ${to}`);
+    });
+    m.onMove((_from, to) => {
+      seen.push(`B ${to}`);
+    });
+    removeA();
+    m.send({ type: "GO" });
+    expect(seen).toEqual(["B /b"]);
+    removeA();
+    m.send({ type: "BACK" });
+    expect(seen).toEqual(["B /b", "B /a"]);
+  });
+
+  test("a listener removed during a report still lets the others run", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: { a: { on: { GO: "/b" } }, b: { on: { BACK: "/a" } } },
+    });
+    const m = def.start(newCtx());
+    const seen: string[] = [];
+    const removeA = m.onMove((_from, to) => {
+      seen.push(`A ${to}`);
+      removeA();
+    });
+    m.onMove((_from, to) => {
+      seen.push(`B ${to}`);
+    });
+    m.send({ type: "GO" });
+    expect(seen).toEqual(["A /b", "B /b"]);
+    m.send({ type: "BACK" });
+    expect(seen).toEqual(["A /b", "B /b", "B /a"]);
+  });
+});
+
+describe("retired keys", () => {
+  test("retired keys fail to compile", () => {
+    // Type-checked but never called: the runtime ignores these keys. Each config also carries a
+    // live key, so a dropped tombstone cannot hide behind TypeScript's weak-type check.
+    const define = defineMachine<Ctx, Ev>();
+    const retired = [
+      () =>
+        define({
+          initial: "/a",
+          // @ts-expect-error target is renamed to to
+          states: { a: { on: { GO: { target: "/b", run: () => {} } } }, b: {} },
+        }),
+      () =>
+        define({
+          initial: "/a",
+          // @ts-expect-error guard is renamed to when
+          states: { a: { on: { GO: { to: "/b", guard: () => true } } }, b: {} },
+        }),
+      () =>
+        define({
+          initial: "/a",
+          // @ts-expect-error actions is renamed to run
+          states: { a: { on: { GO: { to: "/b", actions: () => {} } } }, b: {} },
+        }),
+      () =>
+        define({
+          initial: "/a",
+          // @ts-expect-error reenter is removed; a to naming the owning state restarts it
+          states: { a: { on: { GO: { to: "/a", reenter: true } } } },
+        }),
+      () =>
+        define({
+          initial: "/a",
+          // @ts-expect-error invoke is renamed to task
+          states: { a: { enter: () => {}, invoke: () => {} } },
+        }),
+    ];
+    expect(retired.length).toBe(5);
   });
 });
 
@@ -1378,7 +1506,7 @@ describe("hot reload", () => {
 
   function record<P extends string>(m: MachineInstance<Ctx, Ev, P>): Report[] {
     const reports: Report[] = [];
-    m.onTransition((from, to, cause, event) => {
+    m.onMove((from, to, cause, event) => {
       reports.push([from, to, cause, event?.type]);
     });
     return reports;
@@ -1480,8 +1608,8 @@ describe("hot reload", () => {
   });
 
   test("a rebind runs the cleanups of the states it drops, leaf first, and keeps the rest", () => {
-    const invokeLogging = (name: string) => (ctx: Ctx) => {
-      ctx.log.push(`invoke ${name}`);
+    const taskLogging = (name: string) => (ctx: Ctx) => {
+      ctx.log.push(`task ${name}`);
       return () => {
         ctx.log.push(`cleanup ${name}`);
       };
@@ -1490,13 +1618,13 @@ describe("hot reload", () => {
       initial: "/a",
       states: {
         a: {
-          invoke: invokeLogging("a"),
+          task: taskLogging("a"),
           initial: "/a/b",
           states: {
             b: {
-              invoke: invokeLogging("a.b"),
+              task: taskLogging("a.b"),
               initial: "/a/b/c",
-              states: { c: { invoke: invokeLogging("a.b.c") } },
+              states: { c: { task: taskLogging("a.b.c") } },
             },
           },
         },
@@ -1509,15 +1637,15 @@ describe("hot reload", () => {
       initial: "/a",
       states: {
         a: {
-          invoke: invokeLogging("a"),
+          task: taskLogging("a"),
           initial: "/a/d",
-          states: { d: { invoke: invokeLogging("a.d") } },
+          states: { d: { task: taskLogging("a.d") } },
         },
       },
     });
     m.update(0);
     expect(pathOf(m)).toBe("/a/d");
-    expect(ctx.log).toEqual(["cleanup a.b.c", "cleanup a.b", "invoke a.d"]);
+    expect(ctx.log).toEqual(["cleanup a.b.c", "cleanup a.b", "task a.d"]);
     ctx.log.length = 0;
     m.stop();
     expect(ctx.log).toEqual(["cleanup a.d", "cleanup a"]);
@@ -1771,7 +1899,7 @@ describe("restoreDepth", () => {
               ...logged("playing"),
               restoreDepth: 1,
               initial: "/game/playing/ground",
-              on: { RESTART: { target: "/game/playing", reenter: true } },
+              on: { RESTART: "/game/playing" },
               states: {
                 ground: { ...logged("ground"), on: { JUMP: "/game/playing/air" } },
                 air: logged("air"),
@@ -1892,7 +2020,7 @@ describe("always", () => {
 
   function record<P extends string>(m: MachineInstance<Ctx, Ev, P>): Report[] {
     const reports: Report[] = [];
-    m.onTransition((from, to, cause, event) => {
+    m.onMove((from, to, cause, event) => {
       reports.push([from, to, cause, event?.type]);
     });
     return reports;
@@ -1911,7 +2039,7 @@ describe("always", () => {
         idle: { on: { GO: "/route" } },
         route: {
           ...logged("route"),
-          always: [{ target: "/a", guard: (ctx) => ctx.flag === true }, { target: "/b" }],
+          always: [{ to: "/a", when: (ctx) => ctx.flag === true }, { to: "/b" }],
         },
         a: logged("a"),
         b: logged("b"),
@@ -1927,18 +2055,18 @@ describe("always", () => {
     ]);
   });
 
-  test("a failing guard stays put until the next move", () => {
+  test("a failing when stays put until the next move", () => {
     const ctx = newCtx();
     const m = defineMachine<Ctx, Ev>()({
       initial: "/idle",
       states: {
         idle: { on: { GO: "/route" } },
         route: {
-          always: { target: "/a", guard: (ctx) => ctx.flag === true },
+          always: { to: "/a", when: (ctx) => ctx.flag === true },
           on: {
-            GO: { target: "/route", reenter: true },
+            GO: "/route",
             PING: {
-              actions: (ctx) => {
+              run: (ctx) => {
                 ctx.log.push("ping");
               },
             },
@@ -2048,8 +2176,8 @@ describe("always", () => {
         initial: "/route",
         states: {
           route: {
-            // @ts-expect-error an always transition must name a target
-            always: { guard: () => true },
+            // @ts-expect-error an always transition must name a to
+            always: { when: () => true },
           },
         },
       });
@@ -2059,18 +2187,18 @@ describe("always", () => {
       'hsm: state "/route" targets unknown state "/nope"',
     );
     expect(thrownMessage(noTarget)).toBe(
-      'hsm: state "/route" has an always transition with no target',
+      'hsm: state "/route" has an always transition with no "to"',
     );
   });
 
-  test("an always guard reads ctx as Ctx and the cause is typed", () => {
+  test("an always when reads ctx as Ctx and the cause is typed", () => {
     defineMachine<Ctx, Ev>()({
       initial: "/a",
       states: {
         a: {
           always: {
-            target: "/b",
-            guard: (ctx) => {
+            to: "/b",
+            when: (ctx) => {
               const typed: Equal<typeof ctx, Ctx> = true;
               return typed && ctx.flag === true;
             },
@@ -2079,7 +2207,7 @@ describe("always", () => {
         b: {},
       },
     });
-    const cause: TransitionCause = "always";
+    const cause: MoveCause = "always";
     expect(cause).toBe("always");
   });
 });
@@ -2098,7 +2226,7 @@ describe("parallel regions", () => {
 
   function record<P extends string>(m: MachineInstance<Ctx, PlayerEv, P>): Report[] {
     const reports: Report[] = [];
-    m.onTransition((from, to, cause, event) => {
+    m.onMove((from, to, cause, event) => {
       reports.push([from, to, cause, event?.type]);
     });
     return reports;
@@ -2141,7 +2269,7 @@ describe("parallel regions", () => {
                 },
                 cooldown: { ...logged("cooldown"), after: { 0.5: "/alive/weapon/ready" } },
                 jammed: {
-                  always: { target: "/alive/weapon/ready", guard: (ctx: Ctx) => ctx.flag === true },
+                  always: { to: "/alive/weapon/ready", when: (ctx: Ctx) => ctx.flag === true },
                 },
               },
             },
@@ -2357,7 +2485,7 @@ describe("parallel regions", () => {
     expect(remembering.leaves).toEqual(["/alive/move/run", "/alive/weapon/ready"]);
   });
 
-  test("onTransition reports the moved region", () => {
+  test("onMove reports the moved region", () => {
     const m = startPlayer();
     const reports = record(m);
     m.send({ type: "START_FIRE" });

@@ -2,9 +2,9 @@
 export interface EventObject {
     readonly type: string;
 }
-export type TransitionCause = "event" | "after" | "update" | "stop" | "reload" | "always";
+export type MoveCause = "event" | "after" | "update" | "stop" | "reload" | "always";
 /** @noSelf */
-export type TransitionListener<E extends EventObject, P extends string = string> = (from: P, to: P | undefined, cause: TransitionCause, event: E | undefined) => void;
+export type MoveListener<E extends EventObject, P extends string = string> = (from: P, to: P | undefined, cause: MoveCause, event: E | undefined) => void;
 /** @noSelf */
 export interface MachineInstance<Ctx, E extends EventObject, P extends string = string> {
     readonly ctx: Ctx;
@@ -14,21 +14,49 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
     readonly send: (event: E) => void;
     readonly update: (dt: number) => void;
     readonly stop: () => void;
-    readonly onTransition: (listener: TransitionListener<E, P>) => void;
+    /**
+     * Adds a listener called after each move completes, with the leaf left, the leaf entered and
+     * the cause. It is not called for the first entry at `start` or for a move with no `to`; a
+     * parallel machine calls it once per moved region. Each call adds a listener, and the returned
+     * function removes that one.
+     */
+    readonly onMove: (listener: MoveListener<E, P>) => () => void;
 }
-export type TransitionAction<Ctx, E extends EventObject, V extends E = E> = (ctx: Ctx, event: V, m: MachineInstance<Ctx, E>) => void;
+export type MoveAction<Ctx, E extends EventObject, V extends E = E> = (ctx: Ctx, event: V, machine: MachineInstance<Ctx, E>) => void;
 /** @noSelf */
 export interface TransitionConfig<Ctx, E extends EventObject, V extends E = E> {
-    readonly target?: string;
-    readonly guard?: (ctx: Ctx, event: V) => boolean;
-    readonly actions?: TransitionAction<Ctx, E, V> | readonly TransitionAction<Ctx, E, V>[];
-    readonly reenter?: boolean;
+    /**
+     * The full path of the state to move to. A `to` naming the state the rule is on exits and
+     * re-enters it, restarting its timers and `task`; a `to` below it keeps it active.
+     */
+    readonly to?: string;
+    /**
+     * The rule is taken only when this returns `true`. It must have no side effects: it is also
+     * checked when the move does not happen, in guarded lists and on every `always` recheck.
+     */
+    readonly when?: (ctx: Ctx, event: V) => boolean;
+    /**
+     * Runs during the move. The event is accepted when its key matches and `when` passes; then
+     * `exit` runs on each state left, deepest first; then `run`; then `enter` on each state
+     * entered, outermost first. Shared ancestors neither exit nor enter. A rule with no `to` runs
+     * only `run`.
+     */
+    readonly run?: MoveAction<Ctx, E, V> | readonly MoveAction<Ctx, E, V>[];
+    /** Renamed to `to`. */
+    readonly target?: never;
+    /** Renamed to `when`. */
+    readonly guard?: never;
+    /** Renamed to `run`. */
+    readonly actions?: never;
+    /** Removed: a `to` naming the state the rule is on restarts it. */
+    readonly reenter?: never;
 }
 export type TransitionSpec<Ctx, E extends EventObject, V extends E = E> = string | TransitionConfig<Ctx, E, V> | readonly [TransitionConfig<Ctx, E, V>, ...TransitionConfig<Ctx, E, V>[]];
 /** @noSelf */
 export interface AlwaysConfig<Ctx> {
-    readonly target: string;
-    readonly guard?: (ctx: Ctx) => boolean;
+    readonly to: string;
+    /** Checked on every recheck, so it must have no side effects. */
+    readonly when?: (ctx: Ctx) => boolean;
 }
 export type AlwaysSpec<Ctx> = string | AlwaysConfig<Ctx> | readonly [AlwaysConfig<Ctx>, ...AlwaysConfig<Ctx>[]];
 export type OnConfig<Ctx, E extends EventObject> = {
@@ -36,10 +64,19 @@ export type OnConfig<Ctx, E extends EventObject> = {
         type: K;
     }>>;
 };
-export type StateHook<Ctx, E extends EventObject> = (ctx: Ctx, m: MachineInstance<Ctx, E>) => void;
-export type UpdateHook<Ctx, E extends EventObject> = (ctx: Ctx, dt: number, m: MachineInstance<Ctx, E>) => string | undefined;
-/** @noSelf */
-export type InvokeStart<Ctx, E extends EventObject> = (ctx: Ctx, settle: (event: E) => void, m: MachineInstance<Ctx, E>) => (() => void) | void;
+/**
+ * Runs on every way in (`enter`) or out (`exit`) of the state: a move, `start` and `stop`. A hot
+ * reload enters the states it adds, but drops a removed state without its `exit`. It gets no
+ * event; event data reaches `enter` through `ctx`, set in `run`.
+ */
+export type StateHook<Ctx, E extends EventObject> = (ctx: Ctx, machine: MachineInstance<Ctx, E>) => void;
+export type UpdateHook<Ctx, E extends EventObject> = (ctx: Ctx, dt: number, machine: MachineInstance<Ctx, E>) => string | undefined;
+/**
+ * Starts work that lives as long as the state. `finish` sends one event and is ignored after the
+ * first call or once the state is left. The returned cleanup runs on every way out.
+ * @noSelf
+ */
+export type TaskStart<Ctx, E extends EventObject> = (ctx: Ctx, finish: (event: E) => void, machine: MachineInstance<Ctx, E>) => (() => void) | void;
 /** @noSelf */
 export interface StateConfig<Ctx, E extends EventObject> {
     readonly type?: "parallel";
@@ -56,7 +93,10 @@ export interface StateConfig<Ctx, E extends EventObject> {
     readonly enter?: StateHook<Ctx, E>;
     readonly exit?: StateHook<Ctx, E>;
     readonly update?: UpdateHook<Ctx, E>;
-    readonly invoke?: InvokeStart<Ctx, E>;
+    /** Started on each entry; see `TaskStart`. */
+    readonly task?: TaskStart<Ctx, E>;
+    /** Renamed to `task`. */
+    readonly invoke?: never;
 }
 export interface MachineConfig<Ctx, E extends EventObject> extends StateConfig<Ctx, E> {
     readonly initial: string;
@@ -87,10 +127,9 @@ type RestoreCount<S, D extends number> = S extends {
     readonly type: "parallel";
 } ? RestoreCountBelow<Children, PathDepth[D]> : 1 | (RestoreCountBelow<Children, PathDepth[D]> extends infer N ? N extends number ? number extends N ? number : NextCount[N] : never : never) : never;
 interface TransitionCheck<T> {
-    readonly target?: T;
-    readonly guard?: unknown;
-    readonly actions?: unknown;
-    readonly reenter?: unknown;
+    readonly to?: T;
+    readonly when?: unknown;
+    readonly run?: unknown;
 }
 type SpecCheck<T> = T | TransitionCheck<T> | readonly TransitionCheck<T>[];
 type PathCheck<S, Self extends string, All extends string, Ev extends string> = {
@@ -126,10 +165,10 @@ type PathCheck<S, Self extends string, All extends string, Ev extends string> = 
     readonly enter?: unknown;
     readonly exit?: unknown;
     readonly update?: unknown;
-    readonly invoke?: unknown;
+    readonly task?: unknown;
 };
 export interface MachineConfigError {
-    readonly "hsm: an initial or target names an unknown state path, or an on key an unknown event": never;
+    readonly "hsm: an initial or a to names an unknown state path, or an on key an unknown event": never;
 }
 export type DefinedMachine<Ctx, E extends EventObject, C> = C extends PathCheck<C, "", StatePath<C>, E["type"]> ? Machine<Ctx, E, StatePath<C>> : MachineConfigError;
 export declare function defineMachine<Ctx, E extends EventObject>(key?: string): <const C extends MachineConfig<Ctx, E>>(config: C) => DefinedMachine<Ctx, E, C>;
