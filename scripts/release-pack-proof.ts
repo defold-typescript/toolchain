@@ -295,19 +295,24 @@ const SCANNED_LOADERS: Readonly<Record<string, "ts" | "js">> = {
   ".ts": "ts",
   ".js": "js",
   ".mjs": "js",
+  ".cjs": "js",
 };
 
-// Package names one packed entry value-imports. A built `dist/bin.js` keeps its
-// externals as bare imports and starts with a shebang, which `scanImports`
-// rejects, so the first `#!` line is blanked before scanning.
+// Package names one packed entry value-imports; a `.cjs` entry also counts its
+// literal `require()` calls. A built `dist/bin.js` keeps its externals as bare
+// imports and starts with a shebang, which `scanImports` rejects, so the first
+// `#!` line is blanked before scanning.
 export function entryBareDependencies(entry: string, source: string): string[] {
   if (entry.endsWith(".d.ts")) return [];
-  const loader = SCANNED_LOADERS[path.posix.extname(entry)];
+  const ext = path.posix.extname(entry);
+  const loader = SCANNED_LOADERS[ext];
   if (loader === undefined) return [];
   const body = source.startsWith("#!") ? source.replace(/^#![^\n]*/, "") : source;
   const names: string[] = [];
   for (const imported of new Bun.Transpiler({ loader }).scanImports(body)) {
-    if (imported.kind !== "import-statement") continue;
+    const counted =
+      imported.kind === "import-statement" || (ext === ".cjs" && imported.kind === "require-call");
+    if (!counted) continue;
     const spec = imported.path;
     if (spec.startsWith("./") || spec.startsWith("../") || spec.startsWith("node:")) continue;
     const parts = spec.split("/");
