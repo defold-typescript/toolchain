@@ -14,9 +14,9 @@
 export type ZipEntry = string | readonly string[] | Record<string | number, unknown>;
 
 /**
- * What `zip.pack` compresses: a single relative path, or a list of entries.
+ * What `zip.pack` compresses: a list of entries.
  */
-export type ZipEntries = string | readonly ZipEntry[];
+export type ZipEntries = readonly ZipEntry[];
 
 /**
  * Archive-wide compression options for `zip.pack`.

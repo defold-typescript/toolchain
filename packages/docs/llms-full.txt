@@ -10892,7 +10892,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_local_point(body: Opaque<"b2Body">, world_point: Vector3): Vector3;
 - function get_local_vector(body: Opaque<"b2Body">, world_vector: Vector3): Vector3;
 - function get_mass(body: Opaque<"b2Body">): number;
-- function get_mass_data(body: Opaque<"b2Body">): Opaque<"b2MassData">; [since 1.13.0]
 - function get_mass_data(body: Opaque<"b2Body">): b2d.mass_data; [since 1.13.0]
 - function get_name(body: Opaque<"b2Body">): string; [1.13.0–1.13.1] [signature transition]
 - function get_name(body: Opaque<"b2Body">): string | undefined; [since 1.13.2] [signature transition]
@@ -10902,7 +10901,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_rotational_inertia(body: Opaque<"b2Body">): number;
 - function get_shapes(body: Opaque<"b2Body">): b2d.shape_info[]; [since 1.13.0]
 - function get_sleep_threshold(body: Opaque<"b2Body">): number; [since 1.13.0]
-- function get_transform(body: Opaque<"b2Body">): Opaque<"b2Transform">; [since 1.13.0]
 - function get_transform(body: Opaque<"b2Body">): b2d.transform; [since 1.13.0]
 - function get_type(body: Opaque<"b2Body">): (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" });
 - b2d.body.get_user_data(body: Opaque<"b2Body">): Hash
@@ -11626,7 +11624,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
 - go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K] [through 1.13.1] [signature transition]
 - go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]
-- go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion
+- go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion
 - function get_id(path?: string): Hash;
 - function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;
 - function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;
@@ -11648,7 +11646,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.property(name: string, value: string): ScriptProperty<string>
 - go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void [through 1.13.1] [signature transition]
 - go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
-- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void
+- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void
 - function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
 - function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
 - function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;

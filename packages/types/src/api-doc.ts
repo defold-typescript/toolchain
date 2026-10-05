@@ -268,13 +268,16 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
 }
 
 // Withholds one overload of a documented function — the one whose `param` has
-// exactly the upstream type `type` — while its same-named siblings still emit.
+// exactly the upstream type `type`, or whose return value has exactly the
+// upstream type `returns` — while its same-named siblings still emit.
 // `name` is the local name, like a `skipFunctions` rule.
-export interface SkipOverloadRule {
-  readonly name: string;
-  readonly param: string;
-  readonly type: string;
-}
+export type SkipOverloadRule = { readonly name: string } & (
+  | { readonly param: string; readonly type: string }
+  | { readonly returns: string }
+);
+
+const hasExactType = (slot: ApiParameter, type: string): boolean =>
+  slot.types.length === 1 && slot.types[0] === type;
 
 export function withholdOverloads(
   module: ApiModule,
@@ -283,15 +286,16 @@ export function withholdOverloads(
   let functions = module.functions;
   for (const rule of rules) {
     const fqn = `${module.namespace}.${rule.name}`;
-    const kept = functions.filter(
-      (fn) =>
-        fn.name !== fqn ||
-        !fn.parameters.some(
-          (p) => p.name === rule.param && p.types.length === 1 && p.types[0] === rule.type,
-        ),
-    );
+    const matches =
+      "returns" in rule
+        ? (fn: ApiFunction) => fn.returnValues.some((r) => hasExactType(r, rule.returns))
+        : (fn: ApiFunction) =>
+            fn.parameters.some((p) => p.name === rule.param && hasExactType(p, rule.type));
+    const kept = functions.filter((fn) => fn.name !== fqn || !matches(fn));
     if (kept.length === functions.length) {
-      throw new Error(`skipOverloads: ${fqn} has no overload whose ${rule.param} is ${rule.type}`);
+      const selector =
+        "returns" in rule ? `return value is ${rule.returns}` : `${rule.param} is ${rule.type}`;
+      throw new Error(`skipOverloads: ${fqn} has no overload whose ${selector}`);
     }
     functions = kept;
   }

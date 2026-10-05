@@ -159,15 +159,6 @@
         "namespace": "b2d.body",
         "kind": "FUNCTION",
         "name": "b2d.body.get_mass_data",
-        "signature": "[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2MassData\\\">\"],\"isOptional\":false}]"
-      },
-      "availableIn": ["1.13.2", "1.13.1", "1.13.0"]
-    },
-    {
-      "identity": {
-        "namespace": "b2d.body",
-        "kind": "FUNCTION",
-        "name": "b2d.body.get_mass_data",
         "signature": "[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
       "availableIn": ["1.13.2", "1.13.1", "1.13.0"]
@@ -223,15 +214,6 @@
         "kind": "FUNCTION",
         "name": "b2d.body.get_sleep_threshold",
         "signature": "[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
-      },
-      "availableIn": ["1.13.2", "1.13.1", "1.13.0"]
-    },
-    {
-      "identity": {
-        "namespace": "b2d.body",
-        "kind": "FUNCTION",
-        "name": "b2d.body.get_transform",
-        "signature": "[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2Transform\\\">\"],\"isOptional\":false}]"
       },
       "availableIn": ["1.13.2", "1.13.1", "1.13.0"]
     },

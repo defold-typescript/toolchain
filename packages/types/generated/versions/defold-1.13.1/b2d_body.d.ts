@@ -340,13 +340,6 @@ declare global {
      */
     function get_mass_data(body: Opaque<"b2Body">): { mass: number; center: Vector3; inertia: number };
     /**
-     * Get the mass data of the body.
-     *
-     * @param body - body
-     * @returns a struct containing the mass, inertia and center of the body.
-     */
-    function get_mass_data(body: Opaque<"b2Body">): Opaque<"b2MassData">;
-    /**
      * Get the body name.
      *
      * @param body - body
@@ -395,13 +388,6 @@ declare global {
      * @returns table with `position` and `angle` in radians.
      */
     function get_transform(body: Opaque<"b2Body">): { position: Vector3; angle: number };
-    /**
-     * Get the body transform for the body's origin.
-     *
-     * @param body - body
-     * @returns the world position of the body's origin.
-     */
-    function get_transform(body: Opaque<"b2Body">): Opaque<"b2Transform">;
     /**
      * Get the type of this body.
      *

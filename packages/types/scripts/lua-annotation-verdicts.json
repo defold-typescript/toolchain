@@ -1,6 +1,7 @@
 {
   "editor:editor.execute:too-loose:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "the trailing options table folds into the rest union because TypeScript allows no parameter after a rest one; with no shell arguments, `editor.execute(cmd, { out = ... })` puts the options table at slot 2, which the annotation's `...:string` loses",
     "annotated": "string",
     "declared": "string|table"
   },
@@ -10,31 +11,11 @@
     "annotated": "optional",
     "declared": "required"
   },
-  "editor:http.server.route:too-narrow:2": {
-    "verdict": "open",
-    "annotated": "function|string|table",
-    "declared": "function|string"
-  },
-  "editor:http.server.route:too-narrow:3": {
-    "verdict": "open",
-    "annotated": "function|string|table",
-    "declared": "function|string"
-  },
   "editor:zip.pack:optional-as-required:2": {
     "verdict": "accepted",
     "reason": "the declaration states the omitted middle arguments as overloads (`route(path, handler)`, `pack(output_path, entries)`), so every overload passes an argument at slot 2; the annotation spells the same omission as an optional slot 2",
     "annotated": "optional",
     "declared": "required"
-  },
-  "editor:zip.pack:too-loose:2": {
-    "verdict": "open",
-    "annotated": "table",
-    "declared": "string|table"
-  },
-  "editor:zip.pack:too-loose:3": {
-    "verdict": "open",
-    "annotated": "table",
-    "declared": "string|table"
   },
   "runtime:b2d.body.create_fixture:arity": {
     "verdict": "accepted",
@@ -43,19 +24,10 @@
     "declared": "2..2"
   },
   "runtime:b2d.body.create_fixture:too-narrow:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "engine binding takes 2..2: Body_CreateFixture (script_box2d_body_v2.cpp) passes slot 2 to CheckFixtureDef, which runs luaL_checktype(L, 2, LUA_TTABLE), so the annotation's `(body, shape, density)` overload raises",
     "annotated": "table|userdata",
     "declared": "table"
-  },
-  "runtime:b2d.body.get_mass_data:too-loose:return1": {
-    "verdict": "open",
-    "annotated": "table",
-    "declared": "table|userdata"
-  },
-  "runtime:b2d.body.get_transform:too-loose:return1": {
-    "verdict": "open",
-    "annotated": "table",
-    "declared": "table|userdata"
   },
   "runtime:b2d.body.get_user_data:missing-declaration": {
     "verdict": "accepted",
@@ -124,7 +96,8 @@
     "declared": "2..3"
   },
   "runtime:b2d.shape.enable_contact_events:too-loose:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "positional merge of the (body, shape_index, ...) overload: CheckShape and GetShapeValueIndex in script_box2d_shape_v3.cpp shift every value argument one slot right when slot 1 is a body; each overload alone matches the annotation",
     "annotated": "boolean",
     "declared": "boolean|number"
   },
@@ -135,7 +108,8 @@
     "declared": "2..3"
   },
   "runtime:b2d.shape.enable_hit_events:too-loose:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "positional merge of the (body, shape_index, ...) overload: CheckShape and GetShapeValueIndex in script_box2d_shape_v3.cpp shift every value argument one slot right when slot 1 is a body; each overload alone matches the annotation",
     "annotated": "boolean",
     "declared": "boolean|number"
   },
@@ -146,7 +120,8 @@
     "declared": "2..3"
   },
   "runtime:b2d.shape.enable_pre_solve_events:too-loose:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "positional merge of the (body, shape_index, ...) overload: CheckShape and GetShapeValueIndex in script_box2d_shape_v3.cpp shift every value argument one slot right when slot 1 is a body; each overload alone matches the annotation",
     "annotated": "boolean",
     "declared": "boolean|number"
   },
@@ -157,7 +132,8 @@
     "declared": "2..3"
   },
   "runtime:b2d.shape.enable_sensor_events:too-loose:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "positional merge of the (body, shape_index, ...) overload: CheckShape and GetShapeValueIndex in script_box2d_shape_v3.cpp shift every value argument one slot right when slot 1 is a body; each overload alone matches the annotation",
     "annotated": "boolean",
     "declared": "boolean|number"
   },
@@ -174,7 +150,8 @@
     "declared": "2..3"
   },
   "runtime:b2d.shape.get_closest_point:too-loose:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "positional merge of the (body, shape_index, ...) overload: CheckShape and GetShapeValueIndex in script_box2d_shape_v3.cpp shift every value argument one slot right when slot 1 is a body; each overload alone matches the annotation",
     "annotated": "vector3",
     "declared": "number|vector3"
   },
@@ -239,12 +216,14 @@
     "declared": "3..5"
   },
   "runtime:b2d.shape.ray_cast:too-loose:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "positional merge of the (body, shape_index, ...) overload: CheckShape and GetShapeValueIndex in script_box2d_shape_v3.cpp shift every value argument one slot right when slot 1 is a body; each overload alone matches the annotation",
     "annotated": "vector3",
     "declared": "number|vector3"
   },
   "runtime:b2d.shape.ray_cast:too-loose:4": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "positional merge of the (body, shape_index, ...) overload: CheckShape and GetShapeValueIndex in script_box2d_shape_v3.cpp shift every value argument one slot right when slot 1 is a body; each overload alone matches the annotation",
     "annotated": "number",
     "declared": "number|vector3"
   },
@@ -267,12 +246,14 @@
     "declared": "optional"
   },
   "runtime:b2d.shape.set_shape:too-loose:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "positional merge of the (body, shape_index, ...) overload: CheckShape and GetShapeValueIndex in script_box2d_shape_v3.cpp shift every value argument one slot right when slot 1 is a body; each overload alone matches the annotation",
     "annotated": "table",
     "declared": "number|table"
   },
   "runtime:b2d.shape.set_shape:too-loose:3": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "positional merge of the (body, shape_index, ...) overload: CheckShape and GetShapeValueIndex in script_box2d_shape_v3.cpp shift every value argument one slot right when slot 1 is a body; each overload alone matches the annotation",
     "annotated": "boolean",
     "declared": "boolean|table"
   },
@@ -563,9 +544,10 @@
     "declared": "declared"
   },
   "runtime:go.get:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "the only undeclared kind is userdata, the annotation's build-time resource_data marker; at runtime the property holds the hashed resource path (script_resource.cpp), which the declaration types as Hash",
     "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
-    "declared": "boolean|hash|number|quat|url|vector3|vector4"
+    "declared": "boolean|hash|number|quat|string|url|vector3|vector4"
   },
   "runtime:go.init:missing-annotation": {
     "verdict": "open",
@@ -593,19 +575,22 @@
     "declared": "declared"
   },
   "runtime:go.property:too-narrow:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "the only undeclared kind is userdata, the annotation's build-time resource_data marker; at runtime the property holds the hashed resource path (script_resource.cpp), which the declaration types as Hash",
     "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
     "declared": "boolean|hash|number|quat|string|url|vector3|vector4"
   },
   "runtime:go.set:too-loose:3": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "Script_Set (gameobject_script.cpp) iterates a table at slot 3 with lua_istable and LuaToVar per element, so the declared Vector4[] array value is real",
     "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
-    "declared": "boolean|hash|number|quat|table|url|vector3|vector4"
+    "declared": "boolean|hash|number|quat|string|table|url|vector3|vector4"
   },
   "runtime:go.set:too-narrow:3": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "the only undeclared kind is userdata, the annotation's build-time resource_data marker; at runtime the property holds the hashed resource path (script_resource.cpp), which the declaration types as Hash",
     "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
-    "declared": "boolean|hash|number|quat|table|url|vector3|vector4"
+    "declared": "boolean|hash|number|quat|string|table|url|vector3|vector4"
   },
   "runtime:go.update:missing-annotation": {
     "verdict": "open",
@@ -637,12 +622,14 @@
     "declared": "optional"
   },
   "runtime:gui.animate:too-narrow:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "gui_script.cpp reads the property with CheckHashOrString(L, 2), which raises on a number; SETPROP pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
     "annotated": "hash|number|string",
     "declared": "hash|string"
   },
   "runtime:gui.cancel_animations:too-narrow:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "gui_script.cpp reads the property with CheckHashOrString(L, 2), which raises on a number; SETPROP pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
     "annotated": "hash|number|string",
     "declared": "hash|string"
   },
@@ -652,7 +639,8 @@
     "declared": "declared"
   },
   "runtime:gui.get:too-narrow:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "gui_script.cpp reads the property with CheckHashOrString(L, 2), which raises on a number; SETPROP pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
     "annotated": "hash|number|string",
     "declared": "hash|string"
   },
@@ -749,7 +737,8 @@
     "declared": "hash|matrix4|number|quat|vector3|vector4"
   },
   "runtime:gui.set:too-narrow:2": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "gui_script.cpp reads the property with CheckHashOrString(L, 2), which raises on a number; SETPROP pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
     "annotated": "hash|number|string",
     "declared": "hash|string"
   },
