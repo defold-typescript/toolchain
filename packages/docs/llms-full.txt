@@ -3694,15 +3694,16 @@ export default defineScript({
 });
 ```
 
-Each move prints one line to the console:
+`inspect` prints one line when it is called, then one line for each move:
 
 ```text
-hsm door frame 120: /closed -> /opening (trigger_response)
-hsm door frame 150: /opening -> /open (OPENED)
-hsm door frame 330: /open -> /closed (after)
+hsm door frame 0: inspecting [/closed]
+hsm door frame 120: /closed -> /opening (trigger_response) [/opening]
+hsm door frame 150: /opening -> /open (OPENED) [/open]
+hsm door frame 330: /open -> /closed (after) [/closed]
 ```
 
-The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update`, `always`, `stop` or `reload`. After `stop()` the new path reads `(stopped)`. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the active leaves joined by `, `, 40 units above the target's world position.
+The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update`, `always`, `stop` or `reload`. The brackets list every active leaf after the move, joined by `, `, so a parallel machine's line names each region's leaf. After `stop()` the new path reads `(stopped)` and the brackets are empty. A label already used by another `inspect` call gets an ordinal, `enemy#2`, `enemy#3`, in both the console lines and the drawn text. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the active leaves joined by `, `, 40 units above the target's world position.
 
 In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect` registers nothing and `draw` does nothing, so the calls can stay in shipped code.
 
