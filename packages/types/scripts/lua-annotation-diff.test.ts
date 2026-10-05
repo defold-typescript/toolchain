@@ -75,6 +75,13 @@ describe("annotationKinds over the default target's annotations", () => {
     ]);
   });
 
+  test("an enum whose constants may be absent keeps nil out of its kinds", () => {
+    expect(annotationKinds(model, "runtime", ["graphics.BUFFER_TYPE"])).toEqual({
+      kinds: ["number"],
+      unmapped: [],
+    });
+  });
+
   test("a generic resolves to its constraint", () => {
     expect(annotationKinds(model, "runtime", ["T"], generics("runtime:vmath.clamp")).kinds).toEqual(
       ["number", "vector3", "vector4"],
