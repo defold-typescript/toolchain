@@ -57,6 +57,10 @@ export interface AlwaysConfig<Ctx> {
     readonly to: string;
     /** Checked on every recheck, so it must have no side effects. */
     readonly when?: (ctx: Ctx) => boolean;
+    /** Renamed to `to`. */
+    readonly target?: never;
+    /** Renamed to `when`. */
+    readonly guard?: never;
 }
 export type AlwaysSpec<Ctx> = string | AlwaysConfig<Ctx> | readonly [AlwaysConfig<Ctx>, ...AlwaysConfig<Ctx>[]];
 export type OnConfig<Ctx, E extends EventObject> = {
