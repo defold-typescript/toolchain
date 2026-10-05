@@ -54,7 +54,8 @@ declare global {
        * `handler`, so each documented call shape is its own overload. An optional
        * is supplied only when every earlier optional is: `method` and `as` are
        * both strings, so a form that skipped `method` alone would be
-       * indistinguishable from one that supplied it.
+       * indistinguishable from one that supplied it. A table `openapi` is
+       * distinguishable by type, so it may follow `path` or `method` directly.
        *
        * @param path - HTTP URI path, starts with `/`; may include path patterns (`{name}` for a single segment and `{*name}` for the rest of the request path) that will be extracted from the path and provided to the handler as a part of the request
        * @param method - HTTP request method, default `"GET"`
@@ -78,6 +79,17 @@ declare global {
        */
       function route(path: string, handler: HttpRouteHandler): unknown;
       function route(path: string, method: string, handler: HttpRouteHandler): unknown;
+      function route(
+        path: string,
+        openapi: Record<string | number, unknown>,
+        handler: HttpRouteHandler,
+      ): unknown;
+      function route(
+        path: string,
+        method: string,
+        openapi: Record<string | number, unknown>,
+        handler: HttpRouteHandler,
+      ): unknown;
       function route(path: string, method: string, as: string, handler: HttpRouteHandler): unknown;
       function route(
         path: string,
