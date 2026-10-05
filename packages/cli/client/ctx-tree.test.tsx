@@ -13,7 +13,7 @@ export const hero = defineMachine("hero")({
   states: {
     alive: {
       on: {
-        HIT: { actions: (ctx: Ctx) => { ctx.lives -= 1; } },
+        HIT: { run: (ctx: Ctx) => { ctx.lives -= 1; } },
       },
     },
   },

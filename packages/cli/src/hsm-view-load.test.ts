@@ -180,7 +180,7 @@ const extra = {
 export const m = defineMachine()({
   initial: "/grounded",
   states: {
-    grounded: { on: { GO: { target: "/idle", actions: [() => {}, () => {}] } } },
+    grounded: { on: { GO: { to: "/idle", run: [() => {}, () => {}] } } },
     airborne,
     ...extra,
   },
@@ -195,7 +195,7 @@ export const m = defineMachine()({
     const loaded = load(entry);
     const text = loaded.files[0]?.text ?? "";
     const config = loaded.machines[0]?.config as {
-      states: Record<string, { on?: { GO: { actions: unknown[] } } }>;
+      states: Record<string, { on?: { GO: { run: unknown[] } } }>;
     };
 
     const states = locationOf(config.states);
@@ -207,7 +207,7 @@ export const m = defineMachine()({
     expect(slice(text, states)?.startsWith("{")).toBe(true);
     expect(slice(text, states)?.endsWith("}")).toBe(true);
 
-    const hooks = locationOf(config.states.grounded?.on?.GO.actions);
+    const hooks = locationOf(config.states.grounded?.on?.GO.run);
     expect(slice(text, hooks)).toBe("[() => {}, () => {}]");
     expect(slice(text, hooks?.keys["1"])).toBe("() => {}");
 

@@ -29,8 +29,8 @@ export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
       on: {
         // Only allow jump from ground (extend with a counter for double-jumps).
         JUMP: {
-          target: "/airborne/rising",
-          actions: (ctx) => {
+          to: "/airborne/rising",
+          run: (ctx) => {
             ctx.velocity.y = jump_takeoff_speed;
             ctx.ground_contact = false;
           },
@@ -63,7 +63,7 @@ export const playerMachine = defineMachine<PlayerCtx, PlayerEvent>()({
           on: {
             // Cut the jump short if we are still going up.
             JUMP_RELEASED: {
-              actions: (ctx) => {
+              run: (ctx) => {
                 ctx.velocity.y = ctx.velocity.y * 0.5;
               },
             },
