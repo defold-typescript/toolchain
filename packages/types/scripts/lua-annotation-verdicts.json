@@ -801,12 +801,14 @@
     "declared": "hash|string"
   },
   "runtime:render.delete_render_target:too-loose:1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "RenderScript_RenderTarget (render_script.cpp) pushes the render target as a number asset handle, and CheckRenderTarget / RenderScript_DeleteRenderTarget read it with lua_isnumber; the declaration keeps the Opaque<\"render_target\"> brand so a render target is never passed where a plain number or another handle is expected",
     "annotated": "number",
     "declared": "userdata"
   },
   "runtime:render.delete_render_target:too-narrow:1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "RenderScript_RenderTarget (render_script.cpp) pushes the render target as a number asset handle, and CheckRenderTarget / RenderScript_DeleteRenderTarget read it with lua_isnumber; the declaration keeps the Opaque<\"render_target\"> brand so a render target is never passed where a plain number or another handle is expected",
     "annotated": "number",
     "declared": "userdata"
   },
@@ -823,32 +825,38 @@
     "declared": "hash|number|string|userdata"
   },
   "runtime:render.get_render_target_height:too-loose:1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "RenderScript_RenderTarget (render_script.cpp) pushes the render target as a number asset handle, and CheckRenderTarget / RenderScript_DeleteRenderTarget read it with lua_isnumber; the declaration keeps the Opaque<\"render_target\"> brand so a render target is never passed where a plain number or another handle is expected",
     "annotated": "hash|number|string",
     "declared": "hash|string|userdata"
   },
   "runtime:render.get_render_target_height:too-narrow:1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "RenderScript_RenderTarget (render_script.cpp) pushes the render target as a number asset handle, and CheckRenderTarget / RenderScript_DeleteRenderTarget read it with lua_isnumber; the declaration keeps the Opaque<\"render_target\"> brand so a render target is never passed where a plain number or another handle is expected",
     "annotated": "hash|number|string",
     "declared": "hash|string|userdata"
   },
   "runtime:render.get_render_target_width:too-loose:1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "RenderScript_RenderTarget (render_script.cpp) pushes the render target as a number asset handle, and CheckRenderTarget / RenderScript_DeleteRenderTarget read it with lua_isnumber; the declaration keeps the Opaque<\"render_target\"> brand so a render target is never passed where a plain number or another handle is expected",
     "annotated": "hash|number|string",
     "declared": "hash|string|userdata"
   },
   "runtime:render.get_render_target_width:too-narrow:1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "RenderScript_RenderTarget (render_script.cpp) pushes the render target as a number asset handle, and CheckRenderTarget / RenderScript_DeleteRenderTarget read it with lua_isnumber; the declaration keeps the Opaque<\"render_target\"> brand so a render target is never passed where a plain number or another handle is expected",
     "annotated": "hash|number|string",
     "declared": "hash|string|userdata"
   },
   "runtime:render.render_target:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "RenderScript_RenderTarget (render_script.cpp) pushes the render target as a number asset handle, and CheckRenderTarget / RenderScript_DeleteRenderTarget read it with lua_isnumber; the declaration keeps the Opaque<\"render_target\"> brand so a render target is never passed where a plain number or another handle is expected",
     "annotated": "number",
     "declared": "userdata"
   },
   "runtime:render.render_target:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "RenderScript_RenderTarget (render_script.cpp) pushes the render target as a number asset handle, and CheckRenderTarget / RenderScript_DeleteRenderTarget read it with lua_isnumber; the declaration keeps the Opaque<\"render_target\"> brand so a render target is never passed where a plain number or another handle is expected",
     "annotated": "number",
     "declared": "userdata"
   },
@@ -859,12 +867,14 @@
     "declared": "hash|number|string|url"
   },
   "runtime:render.set_render_target_size:too-loose:1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "RenderScript_RenderTarget (render_script.cpp) pushes the render target as a number asset handle, and CheckRenderTarget / RenderScript_DeleteRenderTarget read it with lua_isnumber; the declaration keeps the Opaque<\"render_target\"> brand so a render target is never passed where a plain number or another handle is expected",
     "annotated": "hash|number|string",
     "declared": "hash|string|userdata"
   },
   "runtime:render.set_render_target_size:too-narrow:1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "RenderScript_RenderTarget (render_script.cpp) pushes the render target as a number asset handle, and CheckRenderTarget / RenderScript_DeleteRenderTarget read it with lua_isnumber; the declaration keeps the Opaque<\"render_target\"> brand so a render target is never passed where a plain number or another handle is expected",
     "annotated": "hash|number|string",
     "declared": "hash|string|userdata"
   },
@@ -881,22 +891,26 @@
     "declared": "hash|string|userdata"
   },
   "runtime:resource.atlas:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:resource.atlas:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:resource.buffer:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:resource.buffer:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
@@ -925,12 +939,14 @@
     "declared": "required"
   },
   "runtime:resource.font:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:resource.font:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
@@ -953,52 +969,62 @@
     "declared": "hash|number|string|userdata"
   },
   "runtime:resource.material:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:resource.material:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:resource.render_target:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:resource.render_target:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:resource.texture:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:resource.texture:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:resource.tile_source:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:resource.tile_source:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "valid only as go.property's default value: script_resource.cpp documents a resource reference that resolves to the hashed path of the run-time resource, and no vendored binding registers the constructor (engine-binding verdict missing-binding), so the declaration types the path hash the property reads back; the annotation types the build-time resource_data marker",
     "annotated": "userdata",
     "declared": "hash"
   },
   "runtime:socket.connect:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "LuaSocket returns each handle as a userdata with a class metatable; the declaration models it as the method-bearing socket receiver interface (core-types maps socket_master, socket_client and the rest to it) so its colon methods type-check, and the kind gate reads an interface as table",
     "annotated": "userdata",
     "declared": "table"
   },
   "runtime:socket.connect:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "LuaSocket returns each handle as a userdata with a class metatable; the declaration models it as the method-bearing socket receiver interface (core-types maps socket_master, socket_client and the rest to it) so its colon methods type-check, and the kind gate reads an interface as table",
     "annotated": "userdata",
     "declared": "table"
   },
@@ -1015,42 +1041,50 @@
     "declared": "optional"
   },
   "runtime:socket.tcp:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "LuaSocket returns each handle as a userdata with a class metatable; the declaration models it as the method-bearing socket receiver interface (core-types maps socket_master, socket_client and the rest to it) so its colon methods type-check, and the kind gate reads an interface as table",
     "annotated": "userdata",
     "declared": "table"
   },
   "runtime:socket.tcp:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "LuaSocket returns each handle as a userdata with a class metatable; the declaration models it as the method-bearing socket receiver interface (core-types maps socket_master, socket_client and the rest to it) so its colon methods type-check, and the kind gate reads an interface as table",
     "annotated": "userdata",
     "declared": "table"
   },
   "runtime:socket.tcp6:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "LuaSocket returns each handle as a userdata with a class metatable; the declaration models it as the method-bearing socket receiver interface (core-types maps socket_master, socket_client and the rest to it) so its colon methods type-check, and the kind gate reads an interface as table",
     "annotated": "userdata",
     "declared": "table"
   },
   "runtime:socket.tcp6:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "LuaSocket returns each handle as a userdata with a class metatable; the declaration models it as the method-bearing socket receiver interface (core-types maps socket_master, socket_client and the rest to it) so its colon methods type-check, and the kind gate reads an interface as table",
     "annotated": "userdata",
     "declared": "table"
   },
   "runtime:socket.udp:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "LuaSocket returns each handle as a userdata with a class metatable; the declaration models it as the method-bearing socket receiver interface (core-types maps socket_master, socket_client and the rest to it) so its colon methods type-check, and the kind gate reads an interface as table",
     "annotated": "userdata",
     "declared": "table"
   },
   "runtime:socket.udp:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "LuaSocket returns each handle as a userdata with a class metatable; the declaration models it as the method-bearing socket receiver interface (core-types maps socket_master, socket_client and the rest to it) so its colon methods type-check, and the kind gate reads an interface as table",
     "annotated": "userdata",
     "declared": "table"
   },
   "runtime:socket.udp6:too-loose:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "LuaSocket returns each handle as a userdata with a class metatable; the declaration models it as the method-bearing socket receiver interface (core-types maps socket_master, socket_client and the rest to it) so its colon methods type-check, and the kind gate reads an interface as table",
     "annotated": "userdata",
     "declared": "table"
   },
   "runtime:socket.udp6:too-narrow:return1": {
-    "verdict": "open",
+    "verdict": "accepted",
+    "reason": "LuaSocket returns each handle as a userdata with a class metatable; the declaration models it as the method-bearing socket receiver interface (core-types maps socket_master, socket_client and the rest to it) so its colon methods type-check, and the kind gate reads an interface as table",
     "annotated": "userdata",
     "declared": "table"
   },
