@@ -100,10 +100,10 @@
     "parity": "bun scripts/authored-parity.ts && bun scripts/native-parity.ts"
   },
   "dependencies": {
-    "@defold-typescript/types": "workspace:*"
+    "@defold-typescript/types": "workspace:*",
+    "typescript": "6.0.2"
   },
   "devDependencies": {
-    "@typescript-to-lua/language-extensions": "1.19.0",
-    "typescript": "6.0.2"
+    "@typescript-to-lua/language-extensions": "1.19.0"
   }
 }

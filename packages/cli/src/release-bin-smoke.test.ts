@@ -29,7 +29,7 @@ function tmp(label: string): string {
   return mkdtempSync(path.join(os.tmpdir(), `defold-typescript-release-smoke-${label}-`));
 }
 
-describe("published bin scaffolds from dist", () => {
+describe("built bin scaffolds from dist", () => {
   build(PKG_DIR);
 
   test(
@@ -139,9 +139,9 @@ async function firstLine(stream: ReadableStream<Uint8Array>): Promise<string> {
   return text.split("\n")[0] ?? "";
 }
 
-// Under node the viewer needs the bundled `hono` server, the `typescript` loader and the
-// built client, none of which the in-process server tests touch.
-describe("published bin serves hsm-view under plain node", () => {
+// The spawn resolves externals from the repo's root `node_modules`, so declared
+// dependencies are proven by the packed check, not here.
+describe("built bin serves hsm-view under plain node", () => {
   build(PKG_DIR);
 
   test(
@@ -181,6 +181,37 @@ describe("published bin serves hsm-view under plain node", () => {
         child.kill();
         await child.exited;
         rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    SPAWN_TEST_TIMEOUT_MS,
+  );
+});
+
+// Loaded by path: the root scripts sit outside this package's tsconfig.
+interface PackProof {
+  packPackage(pkg: "cli", dest: string): Uint8Array;
+  packedEntryNames(tar: Uint8Array): Set<string>;
+  undeclaredPackedDependencies(tar: Uint8Array): string[];
+}
+
+// The built `dist` keeps every bare import external, and a Node user's installer
+// provides only what the packed manifest declares.
+describe("packed CLI declares what its built dist loads", () => {
+  build(PKG_DIR);
+
+  test(
+    "the tarball ships dist/bin.js and every bare package it loads is declared",
+    async () => {
+      const dest = tmp("pack");
+      try {
+        const { packedEntryNames, packPackage, undeclaredPackedDependencies } = (await import(
+          path.join(REPO_ROOT, "scripts", "release-pack-proof.ts")
+        )) as PackProof;
+        const tar = packPackage("cli", dest);
+        expect(packedEntryNames(tar).has("dist/bin.js")).toBe(true);
+        expect(undeclaredPackedDependencies(tar)).toEqual([]);
+      } finally {
+        rmSync(dest, { recursive: true, force: true });
       }
     },
     SPAWN_TEST_TIMEOUT_MS,
