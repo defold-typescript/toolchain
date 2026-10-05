@@ -29,7 +29,7 @@ One machine runs at a time. Picking another in the dropdown starts it fresh, and
 The page shows each loaded file whole, as it is on disk, with line numbers and syntax colors. Nothing is inserted into the code:
 
 - **Highlights.** Each key under `states` is tinted while that state is active. Each entry into a state starts a short glow that fades out, so a state the machine passes through within one step glows without staying tinted.
-- **Fired rules.** A step that moves the machine glows the rule that did it, in the state that took it: the `on` key and the array entry that fired, the `after` delay key, the `always` entry, or the `update` hook. An event no rule takes marks nothing and is logged as taken by no rule.
+- **Fired rules.** A step that moves the machine glows the rule that did it, in the state that took it: the `on` key and the array entry that fired, the `after` delay key, the `always` entry, or the `update` hook. An `on` entry whose `when` turned the event away glows more dimly for the same time, even when no rule takes the event; such an event is logged as taken by no rule.
 - **Several files.** A machine spread over several files shows every project file the load runs: the entry file, then each file it imports, in first-import order. The name of each file where something is happening is lit.
 - **Two layouts.** A toggle switches between a file list beside one file's source, and all files stacked in one scrolling page. The dividers keep their sizes across page reloads.
 - **Search.** Ctrl+F (Cmd+F on macOS) opens the page's own search, which steps through matches across every loaded file.

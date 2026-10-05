@@ -92,10 +92,82 @@ describe("createSession", () => {
     );
 
     expect(view.start({}).accepts).toEqual(["GO", "NEXT", "RESET"]);
-    expect(view.send({ type: "GO" }).fired).toEqual([ruleId("/world/left/a", "on", "GO", 1)]);
+    const go = view.send({ type: "GO" });
+    expect(go.fired).toEqual([ruleId("/world/left/a", "on", "GO", 1)]);
+    expect(go.rejected).toEqual([ruleId("/world/left/a", "on", "GO", 0)]);
     const reset = view.send({ type: "RESET" });
     expect(reset.fired).toEqual([ruleId("/world", "on", "RESET", 0)]);
     expect(reset.accepts).toEqual(["GO", "NEXT", "RESET"]);
+  });
+
+  test("lists the on rules whose when rejected the event", () => {
+    const bubbled = session(
+      machine(`{
+  initial: "/p",
+  states: {
+    p: {
+      initial: "/p/c",
+      on: { GO: [{ to: "/q" }] },
+      states: { c: { on: { GO: [{ to: "/q", when: () => false }, { to: "/q", when: () => false }] } } },
+    },
+    q: {},
+  },
+}`),
+    );
+    bubbled.start({});
+    const sent = bubbled.send({ type: "GO" });
+    expect(sent.rejected).toEqual([ruleId("/p/c", "on", "GO", 0), ruleId("/p/c", "on", "GO", 1)]);
+    expect(sent.fired).toEqual([ruleId("/p", "on", "GO", 0)]);
+
+    const plain = session(
+      machine(`{
+  initial: "/a",
+  states: { a: { on: { GO: "/b" } }, b: { on: { GO: [{ to: "/a" }] } } },
+}`),
+    );
+    plain.start({});
+    expect(plain.send({ type: "GO" }).rejected).toEqual([]);
+    expect(plain.send({ type: "GO" }).rejected).toEqual([]);
+
+    const stopped = session(
+      machine(`{
+  initial: "/a",
+  states: { a: { on: { GO: [{ to: "/b" }, { to: "/b", when: () => false }] } }, b: {} },
+}`),
+    );
+    stopped.start({});
+    const taken = stopped.send({ type: "GO" });
+    expect(taken.fired).toEqual([ruleId("/a", "on", "GO", 0)]);
+    expect(taken.rejected).toEqual([]);
+
+    const refused = session(
+      machine(`{
+  initial: "/a",
+  states: { a: { on: { GO: [{ to: "/b", when: () => false }, { to: "/b", when: () => 0 as unknown as boolean }] } }, b: {} },
+}`),
+    );
+    refused.start({});
+    const none = refused.send({ type: "GO" });
+    expect(none.rejected).toEqual([ruleId("/a", "on", "GO", 0), ruleId("/a", "on", "GO", 1)]);
+    expect(none.fired).toEqual([]);
+    expect(kinds(none)).toContain("unhandled");
+    expect(refused.send({ type: "OTHER" }).rejected).toEqual([]);
+    expect(refused.update(0.1).rejected).toEqual([]);
+
+    const reading = session(
+      machine(`{
+  initial: "/a",
+  states: { a: { on: { GO: [{ to: "/b", when: (_ctx, event) => (event as { n: number }).n > 1 }] } }, b: {} },
+}`),
+    );
+    reading.start({});
+    const low = reading.send({ type: "GO", n: 0 });
+    expect(low.rejected).toEqual([ruleId("/a", "on", "GO", 0)]);
+    expect(low.path).toBe("/a");
+    const high = reading.send({ type: "GO", n: 2 });
+    expect(high.rejected).toEqual([]);
+    expect(high.fired).toEqual([ruleId("/a", "on", "GO", 0)]);
+    expect(high.path).toBe("/b");
   });
 
   test("reports after, update and pass-through always rules at the advanced time", () => {
