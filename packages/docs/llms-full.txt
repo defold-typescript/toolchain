@@ -2991,7 +2991,7 @@ Each `shown` and `hidden` entry restarts that child's own tenth-of-a-second time
 
 #### Resume with history
 
-Set `history: "shallow"` on a compound state to make it remember which child was active when it was last left. Every later entry goes back to that child instead of `initial`:
+Set `restoreDepth` on a compound state to make it remember which child was active when it was last left. Every later entry goes back to that child instead of `initial`, and the count says how many levels down to go back:
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -3007,7 +3007,7 @@ export const game = defineMachine<object, PlayEvent>()({
   initial: "/playing",
   states: {
     playing: {
-      history: "shallow",
+      restoreDepth: 1,
       initial: "/playing/ground",
       on: { PAUSE: "/paused" },
       states: {
@@ -3028,11 +3028,13 @@ export const game = defineMachine<object, PlayEvent>()({
 
 Pausing in mid-air and sending `RESUME` lands on `/playing/air/rise`, running the `enter` hooks of `playing`, `air` and `rise`. The rules:
 
-- **Only the direct child is remembered.** Leaving from `/playing/air/fall` remembers `air`, and `air` is entered through its own `initial`, so the jump resumes at `/playing/air/rise`. Put `history` on `air` too to remember `fall`.
+- **The count sets how deep the restore goes.** With `restoreDepth: 1`, leaving from `/playing/air/fall` brings back `air`, and `air` is entered through its own `initial`, so the jump resumes at `/playing/air/rise`. With `restoreDepth: 2` it also brings back `fall`, and `"all"` brings back every level below the state. In statechart terms, `1` is shallow history and `"all"` is deep history.
+- **Inner levels restore only through the flagged state.** The count applies when `playing` itself is entered. A move that targets `/playing/air` enters `air` through its `initial`, unless `air` has a `restoreDepth` of its own.
+- **A parallel state is not a level.** The count passes through a parallel state to every region, so `restoreDepth: 2` on the parent of a parallel state brings back each region's last child.
 - **A target inside the state wins.** `RESTART` names `/playing/ground`, so it lands there whatever `playing` remembers. Every other entry uses the memory: a target of `/playing` itself, a parent's `initial` chain that passes through `playing`, and a `reenter` transition on `playing`.
 - **The first entry uses `initial`.** Each instance keeps its own memory, so a new instance starts at `/playing/ground` even while another one is paused in the air.
 
-`history` on a state without children throws when the machine is defined.
+`restoreDepth` throws when the machine is defined if it is not a whole number from 1 or `"all"`, if it is larger than the number of levels below the state, or if the state has no child states. Each of these is also a compile error.
 
 #### Move on at once with `always`
 
@@ -3121,9 +3123,9 @@ Entering `/alive` enters `move` and its `initial` chain, then `weapon` and its c
 - **A target in another region re-enters the parallel state.** A transition from `/alive/move/idle` to `/alive/weapon/cooldown` exits all of `/alive` and enters it again. A region's transitions to its own states leave the other regions alone.
 - **Regions run in name order.** Neither Lua nor JavaScript keeps the written order of a table's keys, so regions are ordered by child name: `move` before `weapon`, whatever order the config lists them in. Names compare by Unicode code point, so the order is the same in Bun and in Defold, accented and emoji names included. Name regions to match the order you want.
 
-`path` stays one leaf, so code written for a machine without regions keeps working: it is the first region's leaf. `leaves` lists every active leaf in region order, and `matches` is true for every active state in every region. A region root can carry `history: "shallow"`, and resumes its last child when the parallel state is entered again.
+`path` stays one leaf, so code written for a machine without regions keeps working: it is the first region's leaf. `leaves` lists every active leaf in region order, and `matches` is true for every active state in every region. A region root can carry `restoreDepth`, and resumes its last child when the parallel state is entered again.
 
-A parallel state with `initial`, `history` or no child states throws when the machine is defined, naming its path; `initial` is also a compile error. The root config cannot be parallel: put the regions in a child state, as `/alive` does above.
+A parallel state with `initial`, `restoreDepth` or no child states throws when the machine is defined, naming its path; `initial` is also a compile error. The root config cannot be parallel: put the regions in a child state, as `/alive` does above.
 
 #### Run to completion, `invoke` and `stop`
 
@@ -3420,7 +3422,7 @@ An instance always keeps its `ctx`. What happens to its current state depends on
 | is a [parallel](#run-regions-side-by-side-with-parallel) state that gained a region | keeps its other regions as they are and enters only the new one. |
 | was a parallel state and is now compound | keeps its first region in name order and drops the others like removed states. |
 
-States are matched by path, so renaming `chase` to `hunt` counts as removing `/chase`. A state with [history](#resume-with-history) keeps its remembered child the same way: if the edit removed that child, the next entry uses `initial`. When the current state changes, `onTransition` listeners get the move with the cause `"reload"`, and the [debug inspector](#debug-a-machine) prints it.
+States are matched by path, so renaming `chase` to `hunt` counts as removing `/chase`. A state with [`restoreDepth`](#resume-with-history) keeps its remembered children the same way: if the edit removed a remembered child, the next entry uses `initial` at that level. When the current state changes, `onTransition` listeners get the move with the cause `"reload"`, and the [debug inspector](#debug-a-machine) prints it.
 
 ##### Many objects, one machine
 
@@ -3907,7 +3909,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | --------- | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `type`    | `"parallel"`                                | Keep every child active at once, each as a region; see [Run regions side by side with `parallel`](#run-regions-side-by-side-with-parallel). Not allowed on the root. |
 | `initial` | `string`                                    | The full path of the child entered with this state (`/on/bright` inside `on`). Required when `states` is set, unless the state is parallel. |
-| `history` | `"shallow"`                                 | Enter the child that was active when this state was last left, instead of `initial`; see [Resume with history](#resume-with-history). |
+| `restoreDepth` | `number \| "all"`                       | Enter the children that were active when this state was last left, this many levels down, instead of `initial`; see [Resume with history](#resume-with-history). |
 | `states`  | `{ [name: string]: StateConfig }`           | Child states, by name. A name is non-empty and contains no `/`.                               |
 | `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`, each target a full path; see [Events and transitions](#events-and-transitions). |
 | `after`   | `{ [seconds: number]: string }`             | Full-path targets taken after this long in the state, in game time; see [`update` and `after`](#update-and-after). |

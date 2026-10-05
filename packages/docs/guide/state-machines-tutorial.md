@@ -141,7 +141,7 @@ Watch the log when you press `TOGGLE` in `/on/dim`: `dim` has no rule for it, so
 
 ### Remembering bright or dim
 
-In the lamp above, press `DIM`, then `TOGGLE` it off and on again. It comes back bright, because entering `on` always starts at its `initial`. To come back the way you left it, the lamp has to remember. Statecharts call this a *history state*. `hsm` has no built-in history, so you keep that memory in your data:
+In the lamp above, press `DIM`, then `TOGGLE` it off and on again. It comes back bright, because entering `on` always starts at its `initial`. To come back the way you left it, the lamp has to remember. Statecharts call this a *history state*, and `hsm` has one built in as [`restoreDepth`](./state-machines.md#resume-with-history). Here you keep that memory in your data instead, which shows how a guard picks a target:
 
 <div data-hsm-demo="remembering-lamp"></div>
 
