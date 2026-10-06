@@ -140,7 +140,7 @@ describe("hsm as a built-in import", () => {
     expect(result.lua["paths.ts"]).not.toContain("defold_typescript_hsm");
   });
 
-  test("an unknown target is a diagnostic on the user file, at the line that uses it", () => {
+  test("an unknown target is a diagnostic on the user file, at the line that declares it", () => {
     const source = [
       'import { defineMachine } from "@defold-typescript/types/hsm";',
       "",
@@ -153,7 +153,7 @@ describe("hsm as a built-in import", () => {
     ].join("\n");
     const result = transpileProject({ files: { "broken.ts": source } });
     expect(result.diagnostics.map(({ file, line }) => ({ file, line }))).toEqual([
-      { file: "broken.ts", line: 7 },
+      { file: "broken.ts", line: 5 },
     ]);
   });
 

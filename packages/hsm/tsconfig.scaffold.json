@@ -1,0 +1,9 @@
+{
+  // User projects do not set exactOptionalPropertyTypes, and the config types infer
+  // differently without it, so the type-level tests are checked this way too.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "exactOptionalPropertyTypes": false,
+    "noUncheckedIndexedAccess": false
+  }
+}

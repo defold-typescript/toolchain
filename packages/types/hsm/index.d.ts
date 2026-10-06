@@ -23,13 +23,18 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
     readonly onMove: (listener: MoveListener<E, P>) => () => void;
 }
 export type MoveAction<Ctx, E extends EventObject, V extends E = E> = (ctx: Ctx, event: V, machine: MachineInstance<Ctx, E>) => void;
+interface RuleList<Rule> {
+    readonly 0: Rule;
+    readonly [index: number]: Rule;
+    readonly length: number;
+}
 /** @noSelf */
-export interface TransitionConfig<Ctx, E extends EventObject, V extends E = E> {
+export interface TransitionConfig<Ctx, E extends EventObject, V extends E = E, To extends string = string> {
     /**
      * The full path of the state to move to. A `to` naming the state the rule is on exits and
      * re-enters it, restarting its timers and `task`; a `to` below it keeps it active.
      */
-    readonly to?: string;
+    readonly to?: To;
     /**
      * The rule is taken only when this returns `true`. It must have no side effects: it is also
      * checked when the move does not happen, in guarded lists and on every `always` recheck.
@@ -51,10 +56,10 @@ export interface TransitionConfig<Ctx, E extends EventObject, V extends E = E> {
     /** Removed: a `to` naming the state the rule is on restarts it. */
     readonly reenter?: never;
 }
-export type TransitionSpec<Ctx, E extends EventObject, V extends E = E> = string | TransitionConfig<Ctx, E, V> | readonly [TransitionConfig<Ctx, E, V>, ...TransitionConfig<Ctx, E, V>[]];
+export type TransitionSpec<Ctx, E extends EventObject, V extends E = E, To extends string = string> = To | TransitionConfig<Ctx, E, V, To> | RuleList<TransitionConfig<Ctx, E, V, To>>;
 /** @noSelf */
-export interface AlwaysConfig<Ctx> {
-    readonly to: string;
+export interface AlwaysConfig<Ctx, To extends string = string> {
+    readonly to: To;
     /** Checked on every recheck, so it must have no side effects. */
     readonly when?: (ctx: Ctx) => boolean;
     /** Renamed to `to`. */
@@ -62,11 +67,11 @@ export interface AlwaysConfig<Ctx> {
     /** Renamed to `when`. */
     readonly guard?: never;
 }
-export type AlwaysSpec<Ctx> = string | AlwaysConfig<Ctx> | readonly [AlwaysConfig<Ctx>, ...AlwaysConfig<Ctx>[]];
-export type OnConfig<Ctx, E extends EventObject> = {
+export type AlwaysSpec<Ctx, To extends string = string> = To | AlwaysConfig<Ctx, To> | RuleList<AlwaysConfig<Ctx, To>>;
+export type OnConfig<Ctx, E extends EventObject, To extends string = string> = {
     readonly [K in E["type"]]?: TransitionSpec<Ctx, E, Extract<E, {
         type: K;
-    }>>;
+    }>, To>;
 };
 /**
  * Runs on every way in (`enter`) or out (`exit`) of the state: a move, `start` and `stop`. A hot
@@ -74,7 +79,7 @@ export type OnConfig<Ctx, E extends EventObject> = {
  * event; event data reaches `enter` through `ctx`, set in `run`.
  */
 export type StateHook<Ctx, E extends EventObject> = (ctx: Ctx, machine: MachineInstance<Ctx, E>) => void;
-export type UpdateHook<Ctx, E extends EventObject> = (ctx: Ctx, dt: number, machine: MachineInstance<Ctx, E>) => string | undefined;
+export type UpdateHook<Ctx, E extends EventObject, To extends string = string> = (ctx: Ctx, dt: number, machine: MachineInstance<Ctx, E>) => To | undefined;
 /**
  * Starts work that lives as long as the state. `finish` sends one event and is ignored after the
  * first call or once the state is left. The returned cleanup runs on every way out.
@@ -82,98 +87,72 @@ export type UpdateHook<Ctx, E extends EventObject> = (ctx: Ctx, dt: number, mach
  */
 export type TaskStart<Ctx, E extends EventObject> = (ctx: Ctx, finish: (event: E) => void, machine: MachineInstance<Ctx, E>) => (() => void) | void;
 /** @noSelf */
-export interface StateConfig<Ctx, E extends EventObject> {
-    readonly type?: "parallel";
-    readonly initial?: string;
-    readonly restoreDepth?: number | "all";
+export interface Machine<Ctx, E extends EventObject, P extends string = string> {
+    readonly start: (ctx: Ctx) => MachineInstance<Ctx, E, P>;
+}
+type PathDepth = [never, 0, 1, 2, 3];
+type NextCount = [never, 2, 3, 4, 5, 6];
+type TreePathsBelow<T, D extends number> = {
+    [K in keyof T & string]: K | `${K}/${D extends 1 ? keyof T[K] extends never ? never : string : TreePathsBelow<T[K], PathDepth[D]>}`;
+}[keyof T & string];
+type TreePath<T> = `/${TreePathsBelow<T, 4>}`;
+type SlotPathsBelow<T, D extends number> = unknown extends T ? string : {
+    [K in keyof T & string]: K | `${K}/${D extends 1 ? string : SlotPathsBelow<T[K], PathDepth[D]>}`;
+}[keyof T & string];
+type SlotPath<T> = `/${SlotPathsBelow<T, 4>}`;
+type TreeOf<C> = C extends {
+    readonly states: infer Children;
+} ? {
+    readonly [K in keyof Children]: TreeOf<Children[K]>;
+} : unknown;
+export type StatePath<C> = TreePath<TreeOf<C>>;
+type TreeDepth<T, D extends number> = unknown extends T ? number : [D] extends [never] ? number : 1 | ({
+    [K in keyof T]: unknown extends T[K] ? never : TreeDepth<T[K], PathDepth[D]>;
+}[keyof T] extends infer N ? N extends number ? number extends N ? number : NextCount[N] : never : never);
+type AnyChild<Ctx, E extends EventObject, T, To extends string> = unknown extends T ? {
+    readonly [name: string]: StateNode<Ctx, E, unknown, string, To>;
+} : unknown;
+/** @noSelf */
+interface StateBase<Ctx, E extends EventObject, T, Self extends string, To extends string> {
     readonly states?: {
-        readonly [name: string]: StateConfig<Ctx, E>;
-    };
-    readonly on?: OnConfig<Ctx, E>;
-    readonly after?: {
-        readonly [seconds: number]: string;
-    };
-    readonly always?: AlwaysSpec<Ctx>;
+        readonly [K in keyof T]: StateNode<Ctx, E, T[K], `${Self}/${K & string}`, To>;
+    } & NoInfer<AnyChild<Ctx, E, T, To>>;
+    readonly on?: NoInfer<OnConfig<Ctx, E, To>>;
+    readonly after?: NoInfer<{
+        readonly [seconds: number]: To;
+    }>;
+    readonly always?: AlwaysSpec<Ctx, To>;
     readonly enter?: StateHook<Ctx, E>;
     readonly exit?: StateHook<Ctx, E>;
-    readonly update?: UpdateHook<Ctx, E>;
+    readonly update?: NoInfer<UpdateHook<Ctx, E, To>>;
     /** Started on each entry; see `TaskStart`. */
     readonly task?: TaskStart<Ctx, E>;
     /** Renamed to `task`. */
     readonly invoke?: never;
 }
-export interface MachineConfig<Ctx, E extends EventObject> extends StateConfig<Ctx, E> {
+/** @noSelf */
+interface CompoundState<Ctx, E extends EventObject, T, Self extends string, To extends string> extends StateBase<Ctx, E, T, Self, To> {
+    readonly type?: never;
+    readonly initial?: NoInfer<unknown extends T ? string : `${Self}/${keyof T & string}`>;
+    readonly restoreDepth?: NoInfer<TreeDepth<T, 4> | "all">;
+}
+/** @noSelf */
+interface ParallelState<Ctx, E extends EventObject, T, Self extends string, To extends string> extends StateBase<Ctx, E, T, Self, To> {
+    readonly type: "parallel";
+    readonly initial?: never;
+    readonly restoreDepth?: never;
+}
+type StateNode<Ctx, E extends EventObject, T, Self extends string, To extends string> = CompoundState<Ctx, E, T, Self, To> | ParallelState<Ctx, E, T, Self, To>;
+type RootState<Ctx, E extends EventObject, T> = CompoundState<Ctx, E, T, "", NoInfer<SlotPath<T>>> & {
+    readonly initial: string;
+    readonly states: object;
+};
+export type StateConfig<Ctx, E extends EventObject> = StateNode<Ctx, E, unknown, string, string>;
+export type MachineConfig<Ctx, E extends EventObject> = CompoundState<Ctx, E, unknown, string, string> & {
     readonly initial: string;
     readonly states: {
         readonly [name: string]: StateConfig<Ctx, E>;
     };
-}
-/** @noSelf */
-export interface Machine<Ctx, E extends EventObject, P extends string = string> {
-    readonly start: (ctx: Ctx) => MachineInstance<Ctx, E, P>;
-}
-type PathDepth = [never, 0, 1, 2, 3];
-type PathsBelow<S, D extends number> = S extends {
-    readonly states: infer Children;
-} ? {
-    [K in keyof Children & string]: K | `${K}/${D extends 1 ? Children[K] extends {
-        readonly states: object;
-    } ? string : never : PathsBelow<Children[K], PathDepth[D]>}`;
-}[keyof Children & string] : never;
-export type StatePath<C> = `/${PathsBelow<C, 4>}`;
-type NextCount = [never, 2, 3, 4, 5, 6];
-type RestoreCountBelow<Children, D extends number> = {
-    [K in keyof Children]: RestoreCount<Children[K], D>;
-}[keyof Children];
-type RestoreCount<S, D extends number> = S extends {
-    readonly states: infer Children;
-} ? [D] extends [never] ? number : S extends {
-    readonly type: "parallel";
-} ? RestoreCountBelow<Children, PathDepth[D]> : 1 | (RestoreCountBelow<Children, PathDepth[D]> extends infer N ? N extends number ? number extends N ? number : NextCount[N] : never : never) : never;
-interface TransitionCheck<T> {
-    readonly to?: T;
-    readonly when?: unknown;
-    readonly run?: unknown;
-}
-type SpecCheck<T> = T | TransitionCheck<T> | readonly TransitionCheck<T>[];
-type PathCheck<S, Self extends string, All extends string, Ev extends string> = {
-    readonly type?: unknown;
-    readonly initial?: S extends {
-        readonly type: "parallel";
-    } ? never : S extends {
-        readonly states: infer Children;
-    } ? `${Self}/${keyof Children & string}` : never;
-    readonly restoreDepth?: S extends {
-        readonly type: "parallel";
-    } ? never : S extends {
-        readonly states: object;
-    } ? RestoreCount<S, 4> | "all" : never;
-    readonly states?: S extends {
-        readonly states: infer Children;
-    } ? {
-        readonly [K in keyof Children]: PathCheck<Children[K], `${Self}/${K & string}`, All, Ev>;
-    } : unknown;
-    readonly on?: S extends {
-        readonly on: infer On;
-    } ? {
-        readonly [K in keyof On]: K extends Ev ? SpecCheck<All> : never;
-    } : unknown;
-    readonly after?: S extends {
-        readonly after: infer After;
-    } ? {
-        readonly [K in keyof After]: All;
-    } : unknown;
-    readonly always?: S extends {
-        readonly always: unknown;
-    } ? SpecCheck<All> : unknown;
-    readonly enter?: unknown;
-    readonly exit?: unknown;
-    readonly update?: unknown;
-    readonly task?: unknown;
 };
-export interface MachineConfigError {
-    readonly "hsm: an initial or a to names an unknown state path, or an on key an unknown event": never;
-}
-export type DefinedMachine<Ctx, E extends EventObject, C> = C extends PathCheck<C, "", StatePath<C>, E["type"]> ? Machine<Ctx, E, StatePath<C>> : MachineConfigError;
-export declare function defineMachine<Ctx, E extends EventObject>(key?: string): <const C extends MachineConfig<Ctx, E>>(config: C) => DefinedMachine<Ctx, E, C>;
+export declare function defineMachine<Ctx, E extends EventObject>(key?: string): <T>(config: RootState<Ctx, E, T>) => Machine<Ctx, E, TreePath<T>>;
 export {};
