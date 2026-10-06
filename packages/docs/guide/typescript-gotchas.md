@@ -119,16 +119,17 @@ render.set_render_target(undefined);     // TS error — undefined is not a rend
 
 ## Callback parameters type-check as functions, not `unknown`
 
-**Symptom.** Engine APIs that take a callback (`timer.delay`, `msg`-style message handlers, `http.request`, factory/particlefx completion callbacks, …) now expect a function of a specific arity. Passing a non-function, or a function with the wrong number of parameters, is a type error:
+**Symptom.** Engine APIs that take a callback (`timer.delay`, `http.request`, `sound.play`, factory and particlefx completion callbacks, …) expect a function, and hand it typed arguments. Passing a non-function, or annotating a parameter with a type the slot does not hand over, is a type error:
 
 ```ts
-timer.delay(0.5, false, () => print("tick"));                       // too few params — TS error
-timer.delay(0.5, false, (self, handle, time_elapsed) => { });       // OK — three params
+timer.delay(0.5, false, "tick");                                  // not a function — TS error
+timer.delay(0.5, false, (self, handle: string) => {});            // handle is a number — TS error
+timer.delay(0.5, false, (self, handle) => timer.cancel(handle));  // OK — handle is inferred as number
 ```
 
-**Why.** Defold's ref-doc names a callback parameter by its whole Lua signature string, e.g. `function(self, handle, time_elapsed)`. The generated typings recover each into an arity-preserving function type with the documented parameter names: `(self: unknown, handle: unknown, time_elapsed: unknown) => void`. The parameter names survive for hover documentation, but their types are `unknown` — the ref-doc carries no inner types — so you must narrow each argument yourself before using it. The return is `void`: the engine ignores any value a callback returns, and a `void` return position still accepts a callback that happens to return something.
+**Why.** Defold's ref-doc names a callback parameter by its whole Lua signature string, e.g. `function(self, handle, time_elapsed)`. The generated typings recover each into a function type with the documented parameter names, and give every parameter the ref-doc describes its documented type: `(self: unknown, handle: number, time_elapsed: number) => void`. `self` stays `unknown`, because the engine passes whatever script instance registered the callback. The return is `void`: the engine ignores any value a callback returns, and a `void` return position still accepts a callback that happens to return something.
 
-**Typed alternative.** Match the documented arity and read the parameter names off hover to know what each slot is. Cast or narrow the `unknown` params at the point of use (`const url = result as Url`), exactly as you would any other `unknown`.
+**Typed alternative.** Pass the callback inline and leave its parameters unannotated, so each one takes the declared type. A callback declared on its own needs annotations: name the declared type (`handle: number`, `message: sound.play_completion`) rather than `unknown`. Keep `self: unknown` there and narrow it once at the top (`const state = self as { counter: number }`). A callback slot the ref-doc describes without parameter types still hands `unknown` values; narrow those at the point of use, as you would any other `unknown`. Typings for an older [pinned Defold target](./pinning-defold-target.md) leave more of these parameters `unknown`.
 
 ## Some slots are `unknown` on purpose — the `any` wildcard
 

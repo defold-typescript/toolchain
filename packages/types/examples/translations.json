@@ -790,7 +790,7 @@
   "gui.play_particlefx": [
     {
       "sourceHash": "19a26b6e14ad0997",
-      "ts": "// How to play a particle fx when a gui node is created.\n// The callback receives the gui node, the hash of the id\n// of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_.\nfunction emitter_state_change(self: unknown, node: unknown, emitter: unknown, state: unknown) {\n  if (emitter === hash(\"exhaust\") && state === particlefx.EMITTER_STATE_POSTSPAWN) {\n    // exhaust is done spawning particles...\n  }\n}\n\nexport default defineGuiScript({\n  init(self) {\n    gui.play_particlefx(gui.get_node(\"particlefx\"), emitter_state_change);\n  },\n});"
+      "ts": "// How to play a particle fx when a gui node is created.\n// The callback receives the gui node, the hash of the id\n// of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_.\nexport default defineGuiScript({\n  init(self) {\n    gui.play_particlefx(gui.get_node(\"particlefx\"), (self, node, emitter, state) => {\n      if (emitter === hash(\"exhaust\") && state === particlefx.EMITTER_STATE_POSTSPAWN) {\n        // exhaust is done spawning particles...\n      }\n    });\n  },\n});"
     }
   ],
   "gui.reset_material": [
@@ -1138,7 +1138,7 @@
   "particlefx.play": [
     {
       "sourceHash": "01a21997b47ac4fc",
-      "ts": "// How to play a particle fx when a game object is created.\n// The callback receives the hash of the path to the particlefx, the hash of the id\n// of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_.\nfunction emitter_state_change(self: unknown, id: unknown, emitter: unknown, state: unknown) {\n  if (emitter === hash(\"exhaust\") && state === particlefx.EMITTER_STATE_POSTSPAWN) {\n    // exhaust is done spawning particles...\n  }\n}\n\nexport default defineScript({\n  init(self) {\n    particlefx.play(\"#particlefx\", emitter_state_change);\n  },\n});"
+      "ts": "// How to play a particle fx when a game object is created.\n// The callback receives the hash of the path to the particlefx, the hash of the id\n// of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_.\nexport default defineScript({\n  init(self) {\n    particlefx.play(\"#particlefx\", (self, id, emitter, state) => {\n      if (emitter === hash(\"exhaust\") && state === particlefx.EMITTER_STATE_POSTSPAWN) {\n        // exhaust is done spawning particles...\n      }\n    });\n  },\n});"
     }
   ],
   "particlefx.reset_constant": [
@@ -2203,7 +2203,7 @@
   "sys.set_error_handler": [
     {
       "sourceHash": "7346508f30f50bc9",
-      "ts": "// Install error handler that just prints the errors\nfunction my_error_handler(source: unknown, message: unknown, traceback: unknown) {\n  print(source); //> lua\n  print(message); //> main/my.script:10: attempt to perform arithmetic on a string value\n  print(traceback); //> stack traceback:\n  //>         main/test.script:10: in function 'boom'\n  //>         main/test.script:15: in function <main/my.script:13>\n}\n\nfunction boom() {\n  return 10 + \"string\";\n}\n\nexport default defineScript({\n  init() {\n    sys.set_error_handler(my_error_handler);\n    boom();\n  },\n});"
+      "ts": "function boom() {\n  return 10 + \"string\";\n}\n\nexport default defineScript({\n  init() {\n    // Install error handler that just prints the errors\n    sys.set_error_handler((source, message, traceback) => {\n      print(source); //> lua\n      print(message); //> main/my.script:10: attempt to perform arithmetic on a string value\n      print(traceback); //> stack traceback:\n      //>         main/test.script:10: in function 'boom'\n      //>         main/test.script:15: in function <main/my.script:13>\n    });\n    boom();\n  },\n});"
     }
   ],
   "sys.set_render_enabled": [
@@ -2609,11 +2609,11 @@
   "window.set_listener": [
     {
       "sourceHash": "5075cb14faa9510b",
-      "ts": "function window_callback(self: unknown, event: unknown, data: Record<string | number, unknown>) {\n  if (event === window.WINDOW_EVENT_FOCUS_LOST) {\n    print(\"window.WINDOW_EVENT_FOCUS_LOST\");\n  } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {\n    print(\"window.WINDOW_EVENT_FOCUS_GAINED\");\n  } else if (event === window.WINDOW_EVENT_ICONFIED) {\n    print(\"window.WINDOW_EVENT_ICONFIED\");\n  } else if (event === window.WINDOW_EVENT_DEICONIFIED) {\n    print(\"window.WINDOW_EVENT_DEICONIFIED\");\n  } else if (event === window.WINDOW_EVENT_RESIZED) {\n    print(\"Window resized: \", data.width, data.height);\n  }\n}\n\nexport default defineScript({\n  init() {\n    window.set_listener(window_callback);\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    window.set_listener((self, event, data) => {\n      if (event === window.WINDOW_EVENT_FOCUS_LOST) {\n        print(\"window.WINDOW_EVENT_FOCUS_LOST\");\n      } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {\n        print(\"window.WINDOW_EVENT_FOCUS_GAINED\");\n      } else if (event === window.WINDOW_EVENT_ICONFIED) {\n        print(\"window.WINDOW_EVENT_ICONFIED\");\n      } else if (event === window.WINDOW_EVENT_DEICONIFIED) {\n        print(\"window.WINDOW_EVENT_DEICONIFIED\");\n      } else if (event === window.WINDOW_EVENT_RESIZED) {\n        print(\"Window resized: \", data.width, data.height);\n      }\n    });\n  },\n});"
     },
     {
       "sourceHash": "c4168599cd777bb9",
-      "ts": "function window_callback(self: unknown, event: unknown, data: Record<string | number, unknown>) {\n  if (event === window.WINDOW_EVENT_FOCUS_LOST) {\n    print(\"window.WINDOW_EVENT_FOCUS_LOST\");\n  } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {\n    print(\"window.WINDOW_EVENT_FOCUS_GAINED\");\n  } else if (event === window.WINDOW_EVENT_ICONIFIED) {\n    print(\"window.WINDOW_EVENT_ICONIFIED\");\n  } else if (event === window.WINDOW_EVENT_DEICONIFIED) {\n    print(\"window.WINDOW_EVENT_DEICONIFIED\");\n  } else if (event === window.WINDOW_EVENT_RESIZED) {\n    print(\"Window resized: \", data.width, data.height);\n  }\n}\n\nexport default defineScript({\n  init() {\n    window.set_listener(window_callback);\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    window.set_listener((self, event, data) => {\n      if (event === window.WINDOW_EVENT_FOCUS_LOST) {\n        print(\"window.WINDOW_EVENT_FOCUS_LOST\");\n      } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {\n        print(\"window.WINDOW_EVENT_FOCUS_GAINED\");\n      } else if (event === window.WINDOW_EVENT_ICONIFIED) {\n        print(\"window.WINDOW_EVENT_ICONIFIED\");\n      } else if (event === window.WINDOW_EVENT_DEICONIFIED) {\n        print(\"window.WINDOW_EVENT_DEICONIFIED\");\n      } else if (event === window.WINDOW_EVENT_RESIZED) {\n        print(\"Window resized: \", data.width, data.height);\n      }\n    });\n  },\n});"
     }
   ],
   "zlib.deflate": [

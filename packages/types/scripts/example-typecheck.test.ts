@@ -9,6 +9,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import type { LooseTypeFinding } from "./example-loose-types";
 import { loadTranslations } from "./example-store-io";
 import {
   type ExampleSurface,
@@ -33,6 +34,7 @@ import {
   propertyArgumentOffenders,
   readPins,
   runGate,
+  sharedLooseFindings,
   sortDiagnostics,
   undeclaredStateOffenders,
   unknownValueOffenders,
@@ -41,7 +43,7 @@ import {
 const surfaces = await exampleSurfaces();
 const store = loadTranslations();
 const pins = readPins();
-const { computed, timings, entries } = runGate(store, surfaces);
+const { computed, timings, entries, loose } = runGate(store, surfaces);
 
 const found = surfaces.find((surface) => surface.id === "defold-1.13.1/kinds/script");
 if (!found) throw new Error("the default script-kind surface is missing");
@@ -86,6 +88,19 @@ function diagnosticsFor(
 ): ExampleDiagnostic[] {
   const unit = exampleUnit(surface, "fixture.probe", "0000000000000000", body);
   return compileSurface(surface, [unit]).units.get(unit.identity) ?? [];
+}
+
+const DEFAULT_SCRIPT_ENTRY = resolve(import.meta.dir, "../generated/kinds/script.d.ts");
+const foundCurrent = surfaces.find((surface) => resolve(surface.entry) === DEFAULT_SCRIPT_ENTRY);
+if (!foundCurrent) throw new Error("the pinned target's script-kind surface is missing");
+const currentScriptSurface = foundCurrent;
+
+function looseFor(
+  body: string,
+  surface: ExampleSurface = currentScriptSurface,
+): LooseTypeFinding[] {
+  const unit = exampleUnit(surface, "fixture.probe", "0000000000000000", body);
+  return compileSurface(surface, [unit]).loose.get(unit.identity) ?? [];
 }
 
 describe("the gate against the committed pins", () => {
@@ -475,6 +490,105 @@ describe("the unknown-value class", () => {
             offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
           }\n` +
           "Type the declaration upstream documents, or narrow the value in the example body; never re-pin to absorb it.",
+      );
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe("the loose-type class", () => {
+  test("a named callback's parameters are held to the declared callback type", () => {
+    expect(
+      looseFor(
+        "function cb(self: unknown, handle: unknown, time_elapsed: unknown) {}\ntimer.delay(1, false, cb);",
+      ),
+    ).toEqual([
+      { kind: "loose-parameter", text: "handle", declared: "number" },
+      { kind: "loose-parameter", text: "time_elapsed", declared: "number" },
+    ]);
+  });
+
+  test("an inline callback's parameters are held to the declared callback type", () => {
+    expect(looseFor("timer.delay(1, false, (self: unknown, handle: unknown) => {});")).toEqual([
+      { kind: "loose-parameter", text: "handle", declared: "number" },
+    ]);
+    expect(looseFor("timer.delay(1, false, function (self: any, handle: any) {});")).toEqual([
+      { kind: "loose-parameter", text: "handle", declared: "number" },
+    ]);
+  });
+
+  test("a callback using the declared types reports nothing", () => {
+    expect(
+      looseFor(
+        "function cb(self: unknown, handle: number, time_elapsed: number) {}\ntimer.delay(1, false, cb);",
+      ),
+    ).toEqual([]);
+    expect(looseFor("timer.delay(1, false, (self, handle) => {});")).toEqual([]);
+  });
+
+  test("an assertion restating the operand's type is reported", () => {
+    expect(looseFor("const n = 1;\nconst m = n as number;")).toEqual([
+      { kind: "redundant-assertion", text: "n as number", declared: "1" },
+    ]);
+    expect(looseFor("const v = vmath.vector3();\nconst x = v!.x;")).toEqual([
+      { kind: "redundant-assertion", text: "v!", declared: "Vector3" },
+    ]);
+  });
+
+  test("an assertion that changes the type reports nothing", () => {
+    expect(looseFor('const s = "a" as const;')).toEqual([]);
+    expect(looseFor("declare const u: unknown;\nconst s = u as string;")).toEqual([]);
+    expect(
+      looseFor("declare const maybe: number | undefined;\nconst s = maybe!.toFixed();"),
+    ).toEqual([]);
+    expect(looseFor("const o = { x: 1 } as { x: number; y?: number };")).toEqual([]);
+  });
+
+  const NAMED_LOOSE_CALLBACK =
+    "function cb(self: unknown, handle: unknown) {\n  timer.cancel(handle as number);\n}\ntimer.delay(1, false, cb);";
+
+  function sharedFor(body: string): LooseTypeFinding[] {
+    const fqn = "fixture.probe";
+    const hash = "0000000000000000";
+    const probed = [currentScriptSurface, scriptSurface];
+    const units = new Map(
+      probed.map((surface) => [surface.id, [exampleUnit(surface, fqn, hash, body)]]),
+    );
+    const result = runGate({}, probed, units);
+    expect([...result.loose.keys()]).toEqual(
+      probed.map((surface) => pinIdentity(surface.id, fqn, hash)),
+    );
+    return sharedLooseFindings(result.loose).get(`${fqn}:${hash}`) ?? [];
+  }
+
+  test("an annotation an older surface's looser declaration still needs is not the body's to fix", () => {
+    expect(looseFor(NAMED_LOOSE_CALLBACK)).toEqual([
+      { kind: "loose-parameter", text: "handle", declared: "number" },
+    ]);
+    expect(looseFor(NAMED_LOOSE_CALLBACK, scriptSurface)).toEqual([]);
+    expect(sharedFor(NAMED_LOOSE_CALLBACK)).toEqual([]);
+  });
+
+  test("a finding every owning surface reports stays", () => {
+    expect(sharedFor("const n = 1;\nconst m = n as number;")).toEqual([
+      { kind: "redundant-assertion", text: "n as number", declared: "1" },
+    ]);
+  });
+
+  test("no stored translation carries a loose type", () => {
+    const offenders: string[] = [];
+    for (const [identity, findings] of sharedLooseFindings(loose)) {
+      for (const finding of findings) {
+        offenders.push(
+          `  ${identity} — ${finding.kind}: \`${finding.text}\` (declared \`${finding.declared}\`)`,
+        );
+      }
+    }
+    if (offenders.length > 0) {
+      throw new Error(
+        "an authored translation is typed wider than its declaration, or asserts a type the value already has:\n" +
+          `${offenders.join("\n")}\n` +
+          "Annotate the declared type or pass the callback inline, and drop the assertion.",
       );
     }
     expect(offenders).toEqual([]);
