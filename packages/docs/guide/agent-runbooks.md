@@ -1458,7 +1458,7 @@ version bump.
 
 Neither `bump:defold --check` nor `release-readiness` looks upstream — both gate
 the evidence for a bump *already made*. The trigger comes from the
-`Defold upstream release check` workflow, which runs weekly and can be dispatched by
+`Defold upstream release check` workflow, which runs daily and can be dispatched by
 hand:
 
 ```sh

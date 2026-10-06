@@ -14,8 +14,8 @@ name: Library upstream pin check
 
 on:
   schedule:
-    # Weekly, Monday 07:00 UTC — an hour after the engine check, so the two jobs
-    # do not contend for the same API rate-limit window.
+    # Weekly, Monday 07:00 UTC — eleven hours ahead of the daily engine check,
+    # so the two jobs do not contend for the same API rate-limit window.
     - cron: "0 7 * * 1"
   workflow_dispatch: {}
 
