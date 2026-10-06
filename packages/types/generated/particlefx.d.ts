@@ -46,15 +46,13 @@ declare global {
      * // How to play a particle fx when a game object is created.
      * // The callback receives the hash of the path to the particlefx, the hash of the id
      * // of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_.
-     * function emitter_state_change(self: unknown, id: unknown, emitter: unknown, state: unknown) {
-     *   if (emitter === hash("exhaust") && state === particlefx.EMITTER_STATE_POSTSPAWN) {
-     *     // exhaust is done spawning particles...
-     *   }
-     * }
-     *
      * export default defineScript({
      *   init(self) {
-     *     particlefx.play("#particlefx", emitter_state_change);
+     *     particlefx.play("#particlefx", (self, id, emitter, state) => {
+     *       if (emitter === hash("exhaust") && state === particlefx.EMITTER_STATE_POSTSPAWN) {
+     *         // exhaust is done spawning particles...
+     *       }
+     *     });
      *   },
      * });
      * ```

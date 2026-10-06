@@ -127,23 +127,21 @@ declare global {
      * - number `height`: The height of a resize event. nil otherwise.
      * @example
      * ```ts
-     * function window_callback(self: unknown, event: unknown, data: Record<string | number, unknown>) {
-     *   if (event === window.WINDOW_EVENT_FOCUS_LOST) {
-     *     print("window.WINDOW_EVENT_FOCUS_LOST");
-     *   } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {
-     *     print("window.WINDOW_EVENT_FOCUS_GAINED");
-     *   } else if (event === window.WINDOW_EVENT_ICONFIED) {
-     *     print("window.WINDOW_EVENT_ICONFIED");
-     *   } else if (event === window.WINDOW_EVENT_DEICONIFIED) {
-     *     print("window.WINDOW_EVENT_DEICONIFIED");
-     *   } else if (event === window.WINDOW_EVENT_RESIZED) {
-     *     print("Window resized: ", data.width, data.height);
-     *   }
-     * }
-     *
      * export default defineScript({
      *   init() {
-     *     window.set_listener(window_callback);
+     *     window.set_listener((self, event, data) => {
+     *       if (event === window.WINDOW_EVENT_FOCUS_LOST) {
+     *         print("window.WINDOW_EVENT_FOCUS_LOST");
+     *       } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {
+     *         print("window.WINDOW_EVENT_FOCUS_GAINED");
+     *       } else if (event === window.WINDOW_EVENT_ICONFIED) {
+     *         print("window.WINDOW_EVENT_ICONFIED");
+     *       } else if (event === window.WINDOW_EVENT_DEICONIFIED) {
+     *         print("window.WINDOW_EVENT_DEICONIFIED");
+     *       } else if (event === window.WINDOW_EVENT_RESIZED) {
+     *         print("Window resized: ", data.width, data.height);
+     *       }
+     *     });
      *   },
      * });
      * ```
