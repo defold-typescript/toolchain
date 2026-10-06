@@ -119,7 +119,14 @@ describe("defineMachine and start", () => {
         states: {
           attack: {
             initial: "/attack/recover",
-            states: { recover: { on: { GO: "/nope" } } },
+            states: {
+              recover: {
+                on: {
+                  // @ts-expect-error GO targets a state the machine does not have
+                  GO: "/nope",
+                },
+              },
+            },
           },
         },
       }),
@@ -132,7 +139,18 @@ describe("defineMachine and start", () => {
       defineMachine<Ctx, Ev>()({
         initial: "/alive",
         states: {
-          alive: { initial: "/alive/idle", states: { idle: { on: { GO: target } }, patrol: {} } },
+          alive: {
+            initial: "/alive/idle",
+            states: {
+              idle: {
+                on: {
+                  // @ts-expect-error a plain string is not one of the machine's paths
+                  GO: target,
+                },
+              },
+              patrol: {},
+            },
+          },
         },
       });
     expect(thrownMessage(withTarget("patrol"))).toBe(notAFullPath("/alive/idle", "patrol"));
@@ -142,21 +160,45 @@ describe("defineMachine and start", () => {
     const after = thrownMessage(() =>
       defineMachine<Ctx, Ev>()({
         initial: "/idle",
-        states: { idle: { after: { 1: "patrol" } }, patrol: {} },
+        states: {
+          idle: {
+            after: {
+              // @ts-expect-error the timer names a state without the leading slash
+              1: "patrol",
+            },
+          },
+          patrol: {},
+        },
       }),
     );
     expect(after).toBe(notAFullPath("/idle", "patrol"));
 
     const m = defineMachine<Ctx, Ev>()({
       initial: "/idle",
-      states: { idle: { update: () => "patrol" }, patrol: {} },
+      states: {
+        idle: {
+          // @ts-expect-error update names a state without the leading slash
+          update: () => "patrol",
+        },
+        patrol: {},
+      },
     }).start(newCtx());
     expect(thrownMessage(() => m.update(0.1))).toBe(notAFullPath("/idle", "patrol"));
   });
 
   test("a slash alone names no state", () => {
     const message = thrownMessage(() =>
-      defineMachine<Ctx, Ev>()({ initial: "/idle", states: { idle: { on: { GO: "/" } } } }),
+      defineMachine<Ctx, Ev>()({
+        initial: "/idle",
+        states: {
+          idle: {
+            on: {
+              // @ts-expect-error a slash alone is not one of the machine's paths
+              GO: "/",
+            },
+          },
+        },
+      }),
     );
     expect(message).toBe('hsm: state "/idle" targets unknown state "/"');
   });
@@ -179,6 +221,7 @@ describe("defineMachine and start", () => {
         initial: "/on",
         states: {
           on: {
+            // @ts-expect-error a plain string is not one of the machine's paths
             initial,
             states: { dim: { initial: "/on/dim/low", states: { low: {} } } },
           },
@@ -567,13 +610,12 @@ describe("events", () => {
                 ctx.hp -= event.damage;
               },
             },
+            // @ts-expect-error BOGUS is not a Combat event type
             BOGUS: "/alive",
           },
         },
       },
     });
-    // @ts-expect-error BOGUS is not a Combat event type; with a callback in the config the
-    // error lands on start rather than on the key
     bogus.start({ hp: 10 });
     const m = def.start({ hp: 10 });
     m.send({ type: "HIT", damage: 3 });
@@ -1188,52 +1230,450 @@ describe("typed paths", () => {
     expect(m.matches("/b/q/r/x")).toBe(false);
   });
 
-  test("an unknown on, guarded-list, after or initial target fails to compile at start", () => {
+  test("an unknown on, guarded-list, after or initial target is an error on its own property", () => {
     const unknownOn = () =>
-      defineMachine<Ctx, Ev>()({ initial: "/a", states: { a: { on: { GO: "/nope" } } } });
+      defineMachine<Ctx, Ev>()({
+        initial: "/a",
+        states: {
+          a: {
+            on: {
+              // @ts-expect-error GO targets a state the machine does not have
+              GO: "/nope",
+            },
+          },
+        },
+      });
     const unknownInList = () =>
       defineMachine<Ctx, Ev>()({
         initial: "/a",
         states: {
           a: {
             on: {
-              STEP: [{ when: (_ctx, event) => event.n > 0, to: "/b" }, { to: "/ghost" }],
+              STEP: [
+                { when: (_ctx, event) => event.n > 0, to: "/b" },
+                {
+                  // @ts-expect-error the fallback transition targets a state the machine does not have
+                  to: "/ghost",
+                },
+              ],
+            },
+          },
+          b: {},
+        },
+      });
+    const unknownInObject = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "/a",
+        states: {
+          a: {
+            on: {
+              STEP: {
+                when: (_ctx, event) => event.n > 0,
+                // @ts-expect-error the guarded transition targets a state the machine does not have
+                to: "/ghost",
+              },
             },
           },
           b: {},
         },
       });
     const unknownAfter = () =>
-      defineMachine<Ctx, Ev>()({ initial: "/a", states: { a: { after: { 1: "/gone" } } } });
+      defineMachine<Ctx, Ev>()({
+        initial: "/a",
+        states: {
+          a: {
+            after: {
+              // @ts-expect-error the timer targets a state the machine does not have
+              1: "/gone",
+            },
+          },
+        },
+      });
     const unknownInitial = () =>
       defineMachine<Ctx, Ev>()({
         initial: "/a",
-        states: { a: { initial: "/a/missing", states: { leaf: {} } } },
+        states: {
+          a: {
+            // @ts-expect-error initial names no child of a
+            initial: "/a/missing",
+            states: { leaf: {} },
+          },
+        },
+      });
+    const unknownRootInitial = () =>
+      defineMachine<Ctx, Ev>()({
+        // @ts-expect-error initial names no child of the root
+        initial: "/missing",
+        states: { a: {} },
+      });
+    const unknownUpdate = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "/a",
+        states: {
+          a: {
+            // @ts-expect-error update returns a state the machine does not have
+            update: () => "/lost",
+          },
+        },
       });
 
-    // @ts-expect-error GO targets a state the machine does not have
-    expect(thrownMessage(() => unknownOn().start(newCtx()))).toContain("/nope");
-    // @ts-expect-error the fallback transition targets a state the machine does not have
-    expect(thrownMessage(() => unknownInList().start(newCtx()))).toContain("/ghost");
-    // @ts-expect-error the timer targets a state the machine does not have
-    expect(thrownMessage(() => unknownAfter().start(newCtx()))).toContain("/gone");
-    // @ts-expect-error initial names no child of a
-    expect(thrownMessage(() => unknownInitial().start(newCtx()))).toContain("/a/missing");
+    expect(thrownMessage(unknownOn)).toContain("/nope");
+    expect(thrownMessage(unknownInList)).toContain("/ghost");
+    expect(thrownMessage(unknownInObject)).toContain("/ghost");
+    expect(thrownMessage(unknownAfter)).toContain("/gone");
+    expect(thrownMessage(unknownInitial)).toContain("/a/missing");
+    expect(thrownMessage(unknownRootInitial)).toContain("/missing");
+    expect(thrownMessage(() => unknownUpdate().start(newCtx()).update(0))).toContain("/lost");
   });
 
-  test("a bare target or a bare initial fails to compile at start", () => {
+  test("a bare target or a bare initial is an error on its own property", () => {
     const bareTarget = () =>
-      defineMachine<Ctx, Ev>()({ initial: "/a", states: { a: { on: { GO: "b" } }, b: {} } });
+      defineMachine<Ctx, Ev>()({
+        initial: "/a",
+        states: {
+          a: {
+            on: {
+              // @ts-expect-error GO names a state without the leading slash
+              GO: "b",
+            },
+          },
+          b: {},
+        },
+      });
     const bareInitial = () =>
       defineMachine<Ctx, Ev>()({
         initial: "/a",
-        states: { a: { initial: "leaf", states: { leaf: {} } } },
+        states: {
+          a: {
+            // @ts-expect-error initial names its child without the leading slash
+            initial: "leaf",
+            states: { leaf: {} },
+          },
+        },
       });
 
-    // @ts-expect-error GO names a state without the leading slash
-    expect(thrownMessage(() => bareTarget().start(newCtx()))).toBe(notAFullPath("/a", "b"));
-    // @ts-expect-error initial names its child without the leading slash
-    expect(thrownMessage(() => bareInitial().start(newCtx()))).toContain('initial "leaf"');
+    expect(thrownMessage(bareTarget)).toBe(notAFullPath("/a", "b"));
+    expect(thrownMessage(bareInitial)).toContain('initial "leaf"');
+  });
+
+  test("a path below a leaf compiles and is left to the definition-time check", () => {
+    const belowLeaf = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "/a",
+        states: { a: { on: { GO: "/a/below" } } },
+      });
+
+    expect(thrownMessage(belowLeaf)).toBe('hsm: state "/a" targets unknown state "/a/below"');
+  });
+});
+
+describe("tree-inferred config", () => {
+  test("a nested level of hook-only states compiles and keeps exact paths", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/menu",
+      states: {
+        menu: {
+          on: {
+            GO: "/play/run",
+            STEP: { to: "/play/run", when: (_ctx, event) => event.n > 0 },
+          },
+          after: { 2: "/play/run" },
+        },
+        play: {
+          initial: "/play/idle",
+          states: {
+            idle: {
+              enter: (ctx, machine) => {
+                ctx.log.push(`idle ${machine.matches("/play")}`);
+              },
+              update: (_ctx, dt) => (dt > 1 ? "/play/run" : undefined),
+            },
+            run: { update: () => undefined },
+          },
+        },
+      },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    const exact: Equal<typeof m.path, "/menu" | "/play" | "/play/idle" | "/play/run" | undefined> =
+      true;
+    expect(exact).toBe(true);
+    m.send({ type: "STEP", n: 1 });
+    expect(m.path).toBe("/play/run");
+    expect(ctx.log).toEqual([]);
+  });
+
+  test("a root level of hook-only states compiles and keeps exact paths", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: {
+          enter: (ctx) => {
+            ctx.log.push("a");
+          },
+        },
+        b: {
+          update: (ctx, dt) => {
+            ctx.log.push(`b ${dt}`);
+          },
+        },
+        c: {
+          exit: (ctx) => {
+            ctx.log.push("c");
+          },
+        },
+      },
+    });
+    const m = def.start(newCtx());
+    const exact: Equal<typeof m.path, "/a" | "/b" | "/c" | undefined> = true;
+    expect(exact).toBe(true);
+    expect(m.path).toBe("/a");
+  });
+
+  test("a parallel state with hook-only regions compiles and keeps exact paths", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/p",
+      states: {
+        p: {
+          type: "parallel",
+          on: { GO: "/p/l" },
+          states: {
+            l: {
+              enter: (ctx) => {
+                ctx.log.push("l");
+              },
+            },
+            r: {
+              update: (ctx) => {
+                ctx.log.push("r");
+              },
+            },
+          },
+        },
+      },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    const exact: Equal<typeof m.path, "/p" | "/p/l" | "/p/r" | undefined> = true;
+    expect(exact).toBe(true);
+    expect(m.path).toBe("/p/l");
+    m.send({ type: "GO" });
+    expect(ctx.log).toEqual(["l", "l"]);
+  });
+
+  test("a hook-only fifth level compiles and the fourth level is still checked", () => {
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: {
+          initial: "/a/b",
+          states: {
+            b: {
+              initial: "/a/b/c",
+              states: {
+                c: {
+                  initial: "/a/b/c/d",
+                  states: {
+                    d: {
+                      initial: "/a/b/c/d/e",
+                      states: {
+                        e: {
+                          enter: (ctx) => {
+                            ctx.log.push("e");
+                          },
+                        },
+                        f: { update: () => undefined },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    const m = def.start(newCtx());
+    type Deep = "/a" | "/a/b" | "/a/b/c" | "/a/b/c/d" | `/a/b/c/d/${string}`;
+    const exact: Equal<typeof m.path, Deep | undefined> = true;
+    expect(exact).toBe(true);
+    expect(m.path).toBe("/a/b/c/d/e");
+    // @ts-expect-error the fourth level is still checked
+    expect(m.matches("/a/b/c/x")).toBe(false);
+  });
+
+  test("a bad target beside a hook-only level is the only error in the config", () => {
+    const beside = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "/menu",
+        states: {
+          menu: {
+            on: {
+              // @ts-expect-error GO targets a state the machine does not have
+              GO: "/nowhere",
+            },
+          },
+          play: {
+            initial: "/play/idle",
+            states: {
+              idle: {
+                enter: (ctx) => {
+                  ctx.log.push("idle");
+                },
+                update: (_ctx, dt) => (dt > 1 ? "/play/run" : undefined),
+              },
+              run: { update: () => undefined },
+            },
+          },
+        },
+      });
+
+    expect(thrownMessage(beside)).toBe('hsm: state "/menu" targets unknown state "/nowhere"');
+  });
+
+  test("a typo that involves only a hook-only level is an error on its own property", () => {
+    const intoIt = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "/menu",
+        states: {
+          menu: {
+            on: {
+              // @ts-expect-error GO misspells /play/run
+              GO: "/play/rnu",
+            },
+          },
+          play: {
+            initial: "/play/idle",
+            states: {
+              idle: {
+                enter: (ctx) => {
+                  ctx.log.push("idle");
+                },
+              },
+              run: { update: () => undefined },
+            },
+          },
+        },
+      });
+    const itsInitial = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "/play",
+        states: {
+          play: {
+            // @ts-expect-error initial misspells /play/idle
+            initial: "/play/idel",
+            states: {
+              idle: {
+                enter: (ctx) => {
+                  ctx.log.push("idle");
+                },
+              },
+              run: { update: () => undefined },
+            },
+          },
+        },
+      });
+    const insideIt = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "/play",
+        states: {
+          play: {
+            initial: "/play/idle",
+            states: {
+              idle: {
+                enter: (ctx) => {
+                  ctx.log.push("idle");
+                },
+                // @ts-expect-error update misspells /play/run
+                update: (_ctx, dt) => (dt > 1 ? "/play/rnu" : undefined),
+              },
+              run: { update: () => undefined },
+            },
+          },
+        },
+      });
+
+    expect(thrownMessage(intoIt)).toBe('hsm: state "/menu" targets unknown state "/play/rnu"');
+    expect(thrownMessage(itsInitial)).toContain('initial "/play/idel"');
+    expect(thrownMessage(() => insideIt().start(newCtx()).update(2))).toBe(
+      'hsm: state "/play/idle" targets unknown state "/play/rnu"',
+    );
+  });
+
+  test("update takes a path or undefined in each body shape, and rejects a plain string", () => {
+    const land = (ctx: Ctx) => (ctx.flag ? "/a" : undefined);
+    const def = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: { update: (_ctx, dt) => (dt > 1 ? "/b" : undefined) },
+        b: {
+          update: (ctx) => {
+            if (ctx.flag) {
+              return "/c";
+            }
+            return undefined;
+          },
+        },
+        c: { update: land },
+        d: { update: land },
+      },
+    });
+    const ctx = newCtx();
+    const m = def.start(ctx);
+    m.update(2);
+    expect(m.path).toBe("/b");
+    ctx.flag = true;
+    m.update(0);
+    expect(m.path).toBe("/c");
+    m.update(0);
+    expect(m.path).toBe("/a");
+
+    const plainString = defineMachine<{ next: string }, Ev>()({
+      initial: "/a",
+      states: {
+        a: {
+          // @ts-expect-error a plain string is not one of the machine's paths
+          update: (ctx) => ctx.next,
+        },
+        b: {},
+      },
+    });
+    const followed = plainString.start({ next: "/b" });
+    followed.update(0);
+    expect(followed.path).toBe("/b");
+
+    const single = () => "/b" as const;
+    const widened = () => "/b";
+    const outside = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: { update: single },
+        b: {
+          // @ts-expect-error a hook declared outside the config widens its one path to string
+          update: widened,
+        },
+      },
+    }).start(newCtx());
+    outside.update(0);
+    expect(outside.path).toBe("/b");
+  });
+
+  test("MachineConfig keeps plain string paths", () => {
+    const next: string = "/b";
+    const loose: MachineConfig<Ctx, Ev> = {
+      initial: next,
+      states: {
+        a: {
+          initial: next,
+          on: { GO: next, BACK: { to: next }, HIT: [{ to: next }] },
+          after: { 1: next },
+          always: next,
+          update: () => next,
+        },
+        b: {},
+      },
+    };
+    expect(loose.initial).toBe("/b");
   });
 });
 
@@ -1894,13 +2334,17 @@ describe("restoreDepth", () => {
       "on a parallel state",
       {
         initial: "/alive",
-        states: { alive: { type: "parallel", restoreDepth: 1, states: { move: {} } } },
+        states: {
+          // @ts-expect-error a parallel state enters every child, so it takes no restoreDepth
+          alive: { type: "parallel", restoreDepth: 1, states: { move: {} } },
+        },
       },
       'hsm: parallel state "/alive" has restoreDepth; only a compound state resumes a child',
     ],
   ];
 
   test.each(invalidRestoreDepths)("invalid restoreDepth throws: %s", (_label, config, message) => {
+    // @ts-expect-error a MachineConfig holds plain strings, which the checked parameter rejects
     expect(thrownMessage(() => defineMachine<Ctx, PlayEv>()(config))).toBe(message);
   });
 
@@ -1992,12 +2436,43 @@ describe("restoreDepth", () => {
     );
     expect(defineMachine<Ctx, GameEv>()(arena(2)).start(newCtx()).leaves).toHaveLength(2);
 
-    const onPlaying = <const D extends number>(restoreDepth: D) =>
+    const belowOne = () =>
       defineMachine<Ctx, PlayEv>()({
         initial: "/playing",
         states: {
           playing: {
-            restoreDepth,
+            // @ts-expect-error a restore count starts at 1
+            restoreDepth: 0,
+            initial: "/playing/ground",
+            states: {
+              ground: {},
+              air: { initial: "/playing/air/rise", states: { rise: {}, fall: {} } },
+            },
+          },
+        },
+      });
+    const fractional = () =>
+      defineMachine<Ctx, PlayEv>()({
+        initial: "/playing",
+        states: {
+          playing: {
+            // @ts-expect-error a restore count is a whole number
+            restoreDepth: 1.5,
+            initial: "/playing/ground",
+            states: {
+              ground: {},
+              air: { initial: "/playing/air/rise", states: { rise: {}, fall: {} } },
+            },
+          },
+        },
+      });
+    const tooDeep = () =>
+      defineMachine<Ctx, PlayEv>()({
+        initial: "/playing",
+        states: {
+          playing: {
+            // @ts-expect-error /playing holds only two levels of child states
+            restoreDepth: 3,
             initial: "/playing/ground",
             states: {
               ground: {},
@@ -2014,22 +2489,18 @@ describe("restoreDepth", () => {
         states: {
           alive: {
             type: "parallel",
+            // @ts-expect-error a parallel state enters every child
             restoreDepth: 1,
             states: { move: { initial: "/alive/move/walk", states: { walk: {} } } },
           },
         },
       });
 
-    // @ts-expect-error a restore count starts at 1
-    expect(thrownMessage(() => onPlaying(0).start(newCtx()))).toContain("restoreDepth 0");
-    // @ts-expect-error a restore count is a whole number
-    expect(thrownMessage(() => onPlaying(1.5).start(newCtx()))).toContain("restoreDepth 1.5");
-    // @ts-expect-error /playing holds only two levels of child states
-    expect(thrownMessage(() => onPlaying(3).start(newCtx()))).toContain("restoreDepth 3");
-    // @ts-expect-error a leaf has no child to restore
-    expect(thrownMessage(() => onLeaf().start(newCtx()))).toContain('"/leaf"');
-    // @ts-expect-error a parallel state enters every child
-    expect(thrownMessage(() => onParallel().start(newCtx()))).toContain('"/alive"');
+    expect(thrownMessage(belowOne)).toContain("restoreDepth 0");
+    expect(thrownMessage(fractional)).toContain("restoreDepth 1.5");
+    expect(thrownMessage(tooDeep)).toContain("restoreDepth 3");
+    expect(thrownMessage(onLeaf)).toContain('"/leaf"');
+    expect(thrownMessage(onParallel)).toContain('"/alive"');
   });
 });
 
@@ -2187,7 +2658,12 @@ describe("always", () => {
     const unknownAlways = () =>
       defineMachine<Ctx, Ev>()({
         initial: "/route",
-        states: { route: { always: "/nope" } },
+        states: {
+          route: {
+            // @ts-expect-error the always transition targets a state the machine does not have
+            always: "/nope",
+          },
+        },
       });
     const noTarget = () =>
       defineMachine<Ctx, Ev>()({
@@ -2200,10 +2676,7 @@ describe("always", () => {
         },
       });
 
-    // @ts-expect-error the always transition targets a state the machine does not have
-    expect(thrownMessage(() => unknownAlways().start(newCtx()))).toBe(
-      'hsm: state "/route" targets unknown state "/nope"',
-    );
+    expect(thrownMessage(unknownAlways)).toBe('hsm: state "/route" targets unknown state "/nope"');
     expect(thrownMessage(noTarget)).toBe(
       'hsm: state "/route" has an always transition with no "to"',
     );
@@ -2572,7 +3045,12 @@ describe("parallel regions", () => {
         defineMachine<Ctx, PlayerEv>()({
           initial: "/alive",
           states: {
-            alive: { type: "parallel", initial: "/alive/move", states: { move: {}, weapon: {} } },
+            alive: {
+              type: "parallel",
+              // @ts-expect-error a parallel state enters every child, so it takes no initial
+              initial: "/alive/move",
+              states: { move: {}, weapon: {} },
+            },
           },
         }),
       ),
@@ -2588,6 +3066,7 @@ describe("parallel regions", () => {
     expect(
       thrownMessage(() =>
         defineMachine<Ctx, PlayerEv>()({
+          // @ts-expect-error the root is a compound state; regions go in a child state
           type: "parallel",
           initial: "/move",
           states: { move: {}, weapon: {} },
@@ -2609,10 +3088,14 @@ describe("parallel regions", () => {
       defineMachine<Ctx, PlayerEv>()({
         initial: "/alive",
         states: {
-          alive: { type: "parallel", initial: "/alive/move", states: { move: {}, weapon: {} } },
+          alive: {
+            type: "parallel",
+            // @ts-expect-error a parallel state enters every child, so it takes no initial
+            initial: "/alive/move",
+            states: { move: {}, weapon: {} },
+          },
         },
       });
-    // @ts-expect-error a parallel state enters every child, so it takes no initial
-    expect(thrownMessage(() => withInitial().start(newCtx()))).toContain("every child is entered");
+    expect(thrownMessage(withInitial)).toContain("every child is entered");
   });
 });
