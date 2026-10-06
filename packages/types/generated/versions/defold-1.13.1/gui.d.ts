@@ -1597,15 +1597,13 @@ declare global {
      * // How to play a particle fx when a gui node is created.
      * // The callback receives the gui node, the hash of the id
      * // of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_.
-     * function emitter_state_change(self: unknown, node: unknown, emitter: unknown, state: unknown) {
-     *   if (emitter === hash("exhaust") && state === particlefx.EMITTER_STATE_POSTSPAWN) {
-     *     // exhaust is done spawning particles...
-     *   }
-     * }
-     *
      * export default defineGuiScript({
      *   init(self) {
-     *     gui.play_particlefx(gui.get_node("particlefx"), emitter_state_change);
+     *     gui.play_particlefx(gui.get_node("particlefx"), (self, node, emitter, state) => {
+     *       if (emitter === hash("exhaust") && state === particlefx.EMITTER_STATE_POSTSPAWN) {
+     *         // exhaust is done spawning particles...
+     *       }
+     *     });
      *   },
      * });
      * ```

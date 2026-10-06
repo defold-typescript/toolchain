@@ -670,22 +670,20 @@ declare global {
      * string The stack traceback.
      * @example
      * ```ts
-     * // Install error handler that just prints the errors
-     * function my_error_handler(source: unknown, message: unknown, traceback: unknown) {
-     *   print(source); //> lua
-     *   print(message); //> main/my.script:10: attempt to perform arithmetic on a string value
-     *   print(traceback); //> stack traceback:
-     *   //>         main/test.script:10: in function 'boom'
-     *   //>         main/test.script:15: in function <main/my.script:13>
-     * }
-     *
      * function boom() {
      *   return 10 + "string";
      * }
      *
      * export default defineScript({
      *   init() {
-     *     sys.set_error_handler(my_error_handler);
+     *     // Install error handler that just prints the errors
+     *     sys.set_error_handler((source, message, traceback) => {
+     *       print(source); //> lua
+     *       print(message); //> main/my.script:10: attempt to perform arithmetic on a string value
+     *       print(traceback); //> stack traceback:
+     *       //>         main/test.script:10: in function 'boom'
+     *       //>         main/test.script:15: in function <main/my.script:13>
+     *     });
      *     boom();
      *   },
      * });

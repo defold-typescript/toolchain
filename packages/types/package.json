@@ -85,6 +85,7 @@
     "!scripts/lua-types-signature-index.ts",
     "!scripts/fidelity-audit.ts",
     "!scripts/augmentation-namespaces.ts",
+    "!scripts/example-loose-types.ts",
     "!scripts/example-pins.ts",
     "!scripts/example-semantics.ts",
     "!scripts/example-surfaces.ts",
