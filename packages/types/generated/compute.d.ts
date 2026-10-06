@@ -47,7 +47,23 @@ declare global {
      * @param constants - Constant options keyed by constant name. Partial updates are supported.
      * @example
      * ```ts
-     * compute.set_constants("/my_compute.computec", { tint: { value: vmath.vector4(1, 0, 0, 1) } });
+     * // Set a shader constant in a compute program
+     * export default defineScript({
+     *   init() {
+     *     return { my_view_proj: vmath.matrix4() };
+     *   },
+     *
+     *   update(self) {
+     *     // update the 'tint' constant
+     *     compute.set_constants("/my_compute.computec", {
+     *       tint: { value: vmath.vector4(1, 0, 0, 1) },
+     *     });
+     *     // change the type of the 'view_proj' constant to CONSTANT_TYPE_USER_MATRIX4 so the renderer can set our custom data
+     *     compute.set_constants("/my_compute.computec", {
+     *       view_proj: { value: self.my_view_proj, type: material.CONSTANT_TYPE_USER_MATRIX4 },
+     *     });
+     *   },
+     * });
      * ```
      */
     function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.constant_options> | Record<string, material.constant_options>): void;
@@ -70,7 +86,18 @@ declare global {
      * @param textures - A table keyed by sampler name with texture resources as values.
      * @example
      * ```ts
-     * compute.set_textures("/my_compute.computec", { my_texture: resource.texture() });
+     * // Set a texture in a compute program from a resource
+     * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_texture: resource.texture() },
+     *
+     *   init(self) {
+     *     compute.set_textures("/my_compute.computec", {
+     *       my_texture: self.my_texture,
+     *     });
+     *   },
+     * });
      * ```
      */
     function set_textures(path: Hash | string, textures: LuaMap<string | Hash, string | Hash> | Record<string, string | Hash>): void;

@@ -98,7 +98,7 @@ function luaNames(lua: string, known: ReadonlySet<string>): ReadonlySet<string> 
  * The Lua with every comment and string blanked. One left-to-right scan, because
  * each form hides the others' delimiters: `"--"` is a string, `-- "` a comment.
  */
-function stripLuaCommentsAndStrings(lua: string): string {
+export function stripLuaCommentsAndStrings(lua: string): string {
   let out = "";
   let at = 0;
   while (at < lua.length) {
