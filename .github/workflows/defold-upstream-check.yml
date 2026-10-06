@@ -13,9 +13,10 @@ name: Defold upstream release check
 
 on:
   schedule:
-    # Weekly, Monday 06:00 UTC. Defold cuts stable releases roughly monthly, so
-    # polling harder only spends Actions minutes to learn the same thing.
-    - cron: "0 6 * * 1"
+    # Daily, 18:17 UTC. Stable releases publish between 08:00 and 17:00 UTC, so
+    # an evening poll files the issue the day a release lands. The minute is off
+    # the hour because GitHub delays schedules queued at :00 under load.
+    - cron: "17 18 * * *"
   workflow_dispatch: {}
 
 permissions:
