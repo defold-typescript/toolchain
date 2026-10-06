@@ -3035,7 +3035,7 @@ Pausing in mid-air and sending `RESUME` lands on `/playing/air/rise`, running th
 - **A target inside the state wins.** `RESTART` names `/playing/ground`, so it lands there whatever `playing` remembers. Every other entry uses the memory: a target of `/playing` itself, including one on `playing`'s own rules, and a parent's `initial` chain that passes through `playing`.
 - **The first entry uses `initial`.** Each instance keeps its own memory, so a new instance starts at `/playing/ground` even while another one is paused in the air.
 
-`restoreDepth` throws when the machine is defined if it is not a whole number from 1 or `"all"`, if it is larger than the number of levels below the state, or if the state has no child states. Each of these is also a compile error.
+`restoreDepth` throws when the machine is defined if it is not a whole number from 1 or `"all"`, if it is larger than the number of levels below the state, or if the state has no child states. Two of these are also compile errors: a count that is not a whole number from 1, and a count larger than the levels of child states written below the state. The compile check counts a parallel state as a level and follows the tree five levels down, so three mistakes compile and are caught only by the throw: `restoreDepth` on a state with no child states, a count that is too large only because a parallel state below it is not a level, and a wrong count on a state with more than five levels of child states below it.
 
 #### Move on at once with `always`
 
