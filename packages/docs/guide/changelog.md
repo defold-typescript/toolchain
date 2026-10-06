@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.44.1
+
+> Summary:
+>
+> - **[`hsm-view`](./hsm-view.md)** shows its page again.
+
+### Fixed
+
+- **`hsm-view` opens to a blank page:** the browser page failed as soon as it loaded, with `T is not a function` in the browser console, so no machine, source or controls appeared. The page now loads and shows the machine picker, your source and the controls.
+
 ## v0.44.0
 
 > Summary:

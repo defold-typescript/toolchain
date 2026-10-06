@@ -34,7 +34,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && bun build src/index.ts src/bin.ts --target=node --format=esm --packages=external --outdir=dist && tsc -p tsconfig.build.json --emitDeclarationOnly && bun run build:hsm-view-client",
-    "build:hsm-view-client": "bun build client/main.tsx --target=browser --minify --define process.env.NODE_ENV='\"production\"' --outdir dist/hsm-view-client && tailwindcss -i client/styles.css -o dist/hsm-view-client/styles.css --minify",
+    "build:hsm-view-client": "bun build client/main.tsx --target=browser --production --outdir dist/hsm-view-client && tailwindcss -i client/styles.css -o dist/hsm-view-client/styles.css --minify",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p client",
     "test": "bun test"
   },
