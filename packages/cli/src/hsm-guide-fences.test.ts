@@ -236,18 +236,30 @@ describe("hsm guide fence gate", () => {
   );
 });
 
-/** Member names of an interface the hsm `index.ts` declares. */
-function interfaceMembers(source: string, name: string): string[] {
-  const file = ts.createSourceFile("index.ts", source, ts.ScriptTarget.ES2022);
-  for (const statement of file.statements) {
-    if (ts.isInterfaceDeclaration(statement) && statement.name.text === name) {
-      return statement.members.map((member) => {
-        expect(member.name, `${name} member name`).toBeDefined();
-        return (member.name as ts.PropertyName).getText(file);
-      });
+/**
+ * Member names of a type the hsm `index.ts` exports. A union lists the members of every
+ * variant, so `StateConfig` covers the compound and the parallel state.
+ */
+function exportedTypeMembers(program: ts.Program, name: string): string[] {
+  const checker = program.getTypeChecker();
+  const file = program.getSourceFile(HSM_INDEX_SOURCE);
+  const moduleSymbol = file === undefined ? undefined : checker.getSymbolAtLocation(file);
+  const symbol =
+    moduleSymbol === undefined
+      ? undefined
+      : checker.getExportsOfModule(moduleSymbol).find((entry) => entry.name === name);
+  if (symbol === undefined) {
+    throw new Error(`packages/hsm/src/index.ts exports no type ${name}`);
+  }
+  const declared = checker.getDeclaredTypeOfSymbol(symbol);
+  const variants = declared.isUnion() ? declared.types : [declared];
+  const names = new Set<string>();
+  for (const variant of variants) {
+    for (const member of checker.getPropertiesOfType(variant)) {
+      names.add(member.name);
     }
   }
-  throw new Error(`packages/hsm/src/index.ts declares no interface ${name}`);
+  return [...names];
 }
 
 /** The first-cell inline-code names of the table rows under `### <heading>` inside `## Reference`. */
@@ -269,9 +281,14 @@ function referenceRows(page: string, heading: string): string[] {
 const reference = readFileSync(path.join(GUIDE_DIR, REFERENCE_PAGE), "utf8");
 
 describe("state machines guide reference", () => {
+  const program = ts.createProgram([HSM_INDEX_SOURCE], {
+    noEmit: true,
+    strict: true,
+    target: ts.ScriptTarget.ES2022,
+  });
   for (const name of ["StateConfig", "MachineInstance"]) {
     test(`the ${name} table lists every member and nothing else`, () => {
-      const members = interfaceMembers(readFileSync(HSM_INDEX_SOURCE, "utf8"), name);
+      const members = exportedTypeMembers(program, name);
       expect(members.length).toBeGreaterThan(0);
       expect(referenceRows(reference, name).sort()).toEqual([...members].sort());
     });

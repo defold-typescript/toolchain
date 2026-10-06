@@ -9,15 +9,21 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.44.2
+## v0.45.0
 
 > Summary:
 >
+> - **[`hsm` path errors](./state-machines.md#types)** land on the mistyped property, with editor suggestions.
+> - **Breaking: [`hsm` `update` hooks](./state-machines.md#types)** return a machine path, not a plain `string`.
 > - **[Reference examples](/api/material)** make every call their Lua sample makes.
-> - **[Callback examples](./typescript-gotchas.md)** use declared types.
+
+### Breaking
+
+- **`hsm` `update` hooks return a machine path:** an `update` hook that returns a plain `string` no longer compiles. Return one of the machine's full paths or `undefined`, and add `as const` to a hook declared outside the config (`() => "/grounded" as const`). The `MachineConfigError` and `DefinedMachine` types are removed, because `defineMachine` returns a `Machine` for every config that compiles; see [Types](./state-machines.md#types).
 
 ### Improved
 
+- **`hsm` reports a bad path where it is written:** a mistyped `initial`, `to`, `after`, `always` or `update` path, or an `on` key that names no event, is a compile error on that property instead of on the later `start` call. The editor suggests the machine's paths and event types as you type; see [Types](./state-machines.md#types).
 - **Examples show their whole Lua sample with the declared types:** the API-reference and hover examples for the [material](/api/material) functions, `compute.set_constants`, `compute.set_textures`, `b2d.fixture.set_shape` and `b2d.shape.set_shape` make every call their Lua sample makes, script properties and comments included. The callback examples for `gui.play_particlefx`, `particlefx.play`, `sys.set_error_handler` and `window.set_listener` pass their callback inline, so each parameter takes its declared type instead of an `unknown` annotation, as the [callback gotcha](./typescript-gotchas.md#callback-parameters-type-check-as-functions-not-unknown) describes.
 
 ### Fixed

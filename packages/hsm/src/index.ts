@@ -36,13 +36,27 @@ export type MoveAction<Ctx, E extends EventObject, V extends E = E> = (
   machine: MachineInstance<Ctx, E>,
 ) => void;
 
+// A list with a first entry: Lua cannot tell [] from {}, so an empty list would compile to a
+// transition with no to. It is an object type, not a tuple, because TypeScript reports a bad
+// `to` in the object form on that `to` only when the spec union holds no array type.
+interface RuleList<Rule> {
+  readonly 0: Rule;
+  readonly [index: number]: Rule;
+  readonly length: number;
+}
+
 /** @noSelf */
-export interface TransitionConfig<Ctx, E extends EventObject, V extends E = E> {
+export interface TransitionConfig<
+  Ctx,
+  E extends EventObject,
+  V extends E = E,
+  To extends string = string,
+> {
   /**
    * The full path of the state to move to. A `to` naming the state the rule is on exits and
    * re-enters it, restarting its timers and `task`; a `to` below it keeps it active.
    */
-  readonly to?: string;
+  readonly to?: To;
   /**
    * The rule is taken only when this returns `true`. It must have no side effects: it is also
    * checked when the move does not happen, in guarded lists and on every `always` recheck.
@@ -65,15 +79,16 @@ export interface TransitionConfig<Ctx, E extends EventObject, V extends E = E> {
   readonly reenter?: never;
 }
 
-export type TransitionSpec<Ctx, E extends EventObject, V extends E = E> =
-  | string
-  | TransitionConfig<Ctx, E, V>
-  // Lua cannot tell [] from {}, so an empty list would compile to a transition with no to.
-  | readonly [TransitionConfig<Ctx, E, V>, ...TransitionConfig<Ctx, E, V>[]];
+export type TransitionSpec<
+  Ctx,
+  E extends EventObject,
+  V extends E = E,
+  To extends string = string,
+> = To | TransitionConfig<Ctx, E, V, To> | RuleList<TransitionConfig<Ctx, E, V, To>>;
 
 /** @noSelf */
-export interface AlwaysConfig<Ctx> {
-  readonly to: string;
+export interface AlwaysConfig<Ctx, To extends string = string> {
+  readonly to: To;
   /** Checked on every recheck, so it must have no side effects. */
   readonly when?: (ctx: Ctx) => boolean;
   /** Renamed to `to`. */
@@ -82,13 +97,13 @@ export interface AlwaysConfig<Ctx> {
   readonly guard?: never;
 }
 
-export type AlwaysSpec<Ctx> =
-  | string
-  | AlwaysConfig<Ctx>
-  | readonly [AlwaysConfig<Ctx>, ...AlwaysConfig<Ctx>[]];
+export type AlwaysSpec<Ctx, To extends string = string> =
+  | To
+  | AlwaysConfig<Ctx, To>
+  | RuleList<AlwaysConfig<Ctx, To>>;
 
-export type OnConfig<Ctx, E extends EventObject> = {
-  readonly [K in E["type"]]?: TransitionSpec<Ctx, E, Extract<E, { type: K }>>;
+export type OnConfig<Ctx, E extends EventObject, To extends string = string> = {
+  readonly [K in E["type"]]?: TransitionSpec<Ctx, E, Extract<E, { type: K }>, To>;
 };
 
 /**
@@ -101,11 +116,11 @@ export type StateHook<Ctx, E extends EventObject> = (
   machine: MachineInstance<Ctx, E>,
 ) => void;
 
-export type UpdateHook<Ctx, E extends EventObject> = (
+export type UpdateHook<Ctx, E extends EventObject, To extends string = string> = (
   ctx: Ctx,
   dt: number,
   machine: MachineInstance<Ctx, E>,
-) => string | undefined;
+) => To | undefined;
 
 /**
  * Starts work that lives as long as the state. `finish` sends one event and is ignored after the
@@ -120,121 +135,135 @@ export type TaskStart<Ctx, E extends EventObject> = (
 ) => (() => void) | void;
 
 /** @noSelf */
-export interface StateConfig<Ctx, E extends EventObject> {
-  readonly type?: "parallel";
-  readonly initial?: string;
-  readonly restoreDepth?: number | "all";
-  readonly states?: { readonly [name: string]: StateConfig<Ctx, E> };
-  readonly on?: OnConfig<Ctx, E>;
-  readonly after?: { readonly [seconds: number]: string };
-  readonly always?: AlwaysSpec<Ctx>;
-  readonly enter?: StateHook<Ctx, E>;
-  readonly exit?: StateHook<Ctx, E>;
-  readonly update?: UpdateHook<Ctx, E>;
-  /** Started on each entry; see `TaskStart`. */
-  readonly task?: TaskStart<Ctx, E>;
-  /** Renamed to `task`. */
-  readonly invoke?: never;
-}
-
-export interface MachineConfig<Ctx, E extends EventObject> extends StateConfig<Ctx, E> {
-  readonly initial: string;
-  readonly states: { readonly [name: string]: StateConfig<Ctx, E> };
-}
-
-/** @noSelf */
 export interface Machine<Ctx, E extends EventObject, P extends string = string> {
   readonly start: (ctx: Ctx) => MachineInstance<Ctx, E, P>;
 }
 
 type PathDepth = [never, 0, 1, 2, 3];
 
-type PathsBelow<S, D extends number> = S extends { readonly states: infer Children }
-  ? {
-      [K in keyof Children & string]:
-        | K
-        | `${K}/${D extends 1
-            ? Children[K] extends { readonly states: object }
-              ? string
-              : never
-            : PathsBelow<Children[K], PathDepth[D]>}`;
-    }[keyof Children & string]
-  : never;
-
-export type StatePath<C> = `/${PathsBelow<C, 4>}`;
-
 type NextCount = [never, 2, 3, 4, 5, 6];
 
-type RestoreCountBelow<Children, D extends number> = {
-  [K in keyof Children]: RestoreCount<Children[K], D>;
-}[keyof Children];
+// The paths a started machine can be in. A node with no children is `unknown`.
+type TreePathsBelow<T, D extends number> = {
+  [K in keyof T & string]:
+    | K
+    | `${K}/${D extends 1
+        ? keyof T[K] extends never
+          ? never
+          : string
+        : TreePathsBelow<T[K], PathDepth[D]>}`;
+}[keyof T & string];
 
-// The counts a state's subtree can hold: a compound state is one level plus its deepest child,
-// a parallel state adds no level of its own, and a leaf holds none.
-type RestoreCount<S, D extends number> = S extends { readonly states: infer Children }
-  ? [D] extends [never]
+type TreePath<T> = `/${TreePathsBelow<T, 4>}`;
+
+// The paths a config slot accepts. TypeScript checks a config once before it types the
+// callbacks, and a level whose states hold only callbacks has no inferred children in that
+// check, so a node with no inferred children accepts any path below it.
+type SlotPathsBelow<T, D extends number> = unknown extends T
+  ? string
+  : {
+      [K in keyof T & string]:
+        | K
+        | `${K}/${D extends 1 ? string : SlotPathsBelow<T[K], PathDepth[D]>}`;
+    }[keyof T & string];
+
+type SlotPath<T> = `/${SlotPathsBelow<T, 4>}`;
+
+type TreeOf<C> = C extends { readonly states: infer Children }
+  ? { readonly [K in keyof Children]: TreeOf<Children[K]> }
+  : unknown;
+
+export type StatePath<C> = TreePath<TreeOf<C>>;
+
+// The levels of child states below a node. It counts tree levels, so above a parallel state
+// it is an upper bound on the counts restoreDepth takes.
+type TreeDepth<T, D extends number> = unknown extends T
+  ? number
+  : [D] extends [never]
     ? number
-    : S extends { readonly type: "parallel" }
-      ? RestoreCountBelow<Children, PathDepth[D]>
-      :
-          | 1
-          | (RestoreCountBelow<Children, PathDepth[D]> extends infer N
-              ? N extends number
-                ? number extends N
-                  ? number
-                  : NextCount[N]
-                : never
-              : never)
-  : never;
+    :
+        | 1
+        | ({
+            [K in keyof T]: unknown extends T[K] ? never : TreeDepth<T[K], PathDepth[D]>;
+          }[keyof T] extends infer N
+            ? N extends number
+              ? number extends N
+                ? number
+                : NextCount[N]
+              : never
+            : never);
 
-interface TransitionCheck<T> {
-  readonly to?: T;
-  readonly when?: unknown;
-  readonly run?: unknown;
+type AnyChild<Ctx, E extends EventObject, T, To extends string> = unknown extends T
+  ? { readonly [name: string]: StateNode<Ctx, E, unknown, string, To> }
+  : unknown;
+
+// `states` is the only slot that infers the tree; every other slot that mentions it is wrapped
+// in NoInfer. `on`, `after` and `update` are wrapped whole so inference never reads them:
+// without exactOptionalPropertyTypes, reading `on` asks for the paths while the tree is still
+// being inferred, and a valid config fails as circular. `always` is wrapped only through `To`:
+// NoInfer over a union that holds object types hides its string members from completion.
+// No callback parameter mentions the tree: one that did would make TypeScript settle the tree
+// at the first such callback, before the states beside it are read.
+/** @noSelf */
+interface StateBase<Ctx, E extends EventObject, T, Self extends string, To extends string> {
+  readonly states?: {
+    readonly [K in keyof T]: StateNode<Ctx, E, T[K], `${Self}/${K & string}`, To>;
+  } & NoInfer<AnyChild<Ctx, E, T, To>>;
+  readonly on?: NoInfer<OnConfig<Ctx, E, To>>;
+  readonly after?: NoInfer<{ readonly [seconds: number]: To }>;
+  readonly always?: AlwaysSpec<Ctx, To>;
+  readonly enter?: StateHook<Ctx, E>;
+  readonly exit?: StateHook<Ctx, E>;
+  readonly update?: NoInfer<UpdateHook<Ctx, E, To>>;
+  /** Started on each entry; see `TaskStart`. */
+  readonly task?: TaskStart<Ctx, E>;
+  /** Renamed to `task`. */
+  readonly invoke?: never;
 }
 
-type SpecCheck<T> = T | TransitionCheck<T> | readonly TransitionCheck<T>[];
+/** @noSelf */
+interface CompoundState<Ctx, E extends EventObject, T, Self extends string, To extends string>
+  extends StateBase<Ctx, E, T, Self, To> {
+  readonly type?: never;
+  readonly initial?: NoInfer<unknown extends T ? string : `${Self}/${keyof T & string}`>;
+  readonly restoreDepth?: NoInfer<TreeDepth<T, 4> | "all">;
+}
 
-// Hooks are listed as unknown so a hooks-only leaf still shares a property with this
-// all-optional type; without them TypeScript rejects it as a weak-type mismatch.
-type PathCheck<S, Self extends string, All extends string, Ev extends string> = {
-  readonly type?: unknown;
-  readonly initial?: S extends { readonly type: "parallel" }
-    ? never
-    : S extends { readonly states: infer Children }
-      ? `${Self}/${keyof Children & string}`
-      : never;
-  readonly restoreDepth?: S extends { readonly type: "parallel" }
-    ? never
-    : S extends { readonly states: object }
-      ? RestoreCount<S, 4> | "all"
-      : never;
-  readonly states?: S extends { readonly states: infer Children }
-    ? {
-        readonly [K in keyof Children]: PathCheck<Children[K], `${Self}/${K & string}`, All, Ev>;
-      }
-    : unknown;
-  readonly on?: S extends { readonly on: infer On }
-    ? { readonly [K in keyof On]: K extends Ev ? SpecCheck<All> : never }
-    : unknown;
-  readonly after?: S extends { readonly after: infer After }
-    ? { readonly [K in keyof After]: All }
-    : unknown;
-  readonly always?: S extends { readonly always: unknown } ? SpecCheck<All> : unknown;
-  readonly enter?: unknown;
-  readonly exit?: unknown;
-  readonly update?: unknown;
-  readonly task?: unknown;
+/** @noSelf */
+interface ParallelState<Ctx, E extends EventObject, T, Self extends string, To extends string>
+  extends StateBase<Ctx, E, T, Self, To> {
+  readonly type: "parallel";
+  readonly initial?: never;
+  readonly restoreDepth?: never;
+}
+
+type StateNode<Ctx, E extends EventObject, T, Self extends string, To extends string> =
+  | CompoundState<Ctx, E, T, Self, To>
+  | ParallelState<Ctx, E, T, Self, To>;
+
+type RootState<Ctx, E extends EventObject, T> = CompoundState<
+  Ctx,
+  E,
+  T,
+  "",
+  NoInfer<SlotPath<T>>
+> & {
+  readonly initial: string;
+  readonly states: object;
 };
 
-export interface MachineConfigError {
-  readonly "hsm: an initial or a to names an unknown state path, or an on key an unknown event": never;
-}
+export type StateConfig<Ctx, E extends EventObject> = StateNode<Ctx, E, unknown, string, string>;
 
-export type DefinedMachine<Ctx, E extends EventObject, C> =
-  C extends PathCheck<C, "", StatePath<C>, E["type"]>
-    ? Machine<Ctx, E, StatePath<C>>
-    : MachineConfigError;
+export type MachineConfig<Ctx, E extends EventObject> = CompoundState<
+  Ctx,
+  E,
+  unknown,
+  string,
+  string
+> & {
+  readonly initial: string;
+  readonly states: { readonly [name: string]: StateConfig<Ctx, E> };
+};
 
 type Guard<Ctx, E extends EventObject> = (ctx: Ctx, event: E) => boolean;
 
@@ -550,7 +579,12 @@ function compileAlways<Ctx, E extends EventObject>(
 ): void {
   const list: Transition<Ctx, E>[] = [];
   compiled.always[index] = list;
-  const spec = (compiled.configs[index] as StateConfig<Ctx, E>).always;
+  // Read as an array type: the transpiler shifts an index to Lua's base 1 only on an array.
+  const spec = (compiled.configs[index] as StateConfig<Ctx, E>).always as
+    | string
+    | AlwaysConfig<Ctx>
+    | readonly AlwaysConfig<Ctx>[]
+    | undefined;
   if (spec === undefined) {
     return;
   }
@@ -1413,6 +1447,6 @@ function define<Ctx, E extends EventObject>(
 // A key makes a later definition under it (a hot-reloaded module re-running) rebind live instances.
 export function defineMachine<Ctx, E extends EventObject>(
   key?: string,
-): <const C extends MachineConfig<Ctx, E>>(config: C) => DefinedMachine<Ctx, E, C> {
+): <T>(config: RootState<Ctx, E, T>) => Machine<Ctx, E, TreePath<T>> {
   return ((config: MachineConfig<Ctx, E>) => define(key, config)) as never;
 }

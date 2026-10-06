@@ -419,7 +419,11 @@ function namesAndUpdateTargets(): string[] {
     initial: "/v1.2",
     states: {
       "v1.2": { ...logged("v1.2"), on: { GO: "/#x" } },
-      "#x": { ...logged("#x"), update: () => "patrol" },
+      "#x": {
+        ...logged("#x"),
+        // @ts-expect-error update names a state without the leading slash
+        update: () => "patrol",
+      },
     },
   }).start(newCtx(log));
   log.push(`path=${shown(m.path)}`);
@@ -437,7 +441,17 @@ function definitionErrors(): string[] {
     define({
       initial: "/attack",
       states: {
-        attack: { initial: "/attack/recover", states: { recover: { on: { GO: "/nope" } } } },
+        attack: {
+          initial: "/attack/recover",
+          states: {
+            recover: {
+              on: {
+                // @ts-expect-error GO targets a state the machine does not have
+                GO: "/nope",
+              },
+            },
+          },
+        },
       },
     }),
   );
@@ -451,16 +465,47 @@ function definitionErrors(): string[] {
   );
   for (const initial of ["/outer/ghost", "leaf", "/leaf"]) {
     recordError(log, () =>
-      define({ initial: "/outer", states: { outer: { initial, states: { leaf: {} } } } }),
+      define({
+        initial: "/outer",
+        states: {
+          outer: {
+            // @ts-expect-error a plain string is not one of the machine's paths
+            initial,
+            states: { leaf: {} },
+          },
+        },
+      }),
     );
   }
   for (const target of ["patrol", "./patrol", "../patrol", "/"]) {
     recordError(log, () =>
-      define({ initial: "/idle", states: { idle: { on: { GO: target } }, patrol: {} } }),
+      define({
+        initial: "/idle",
+        states: {
+          idle: {
+            on: {
+              // @ts-expect-error a plain string is not one of the machine's paths
+              GO: target,
+            },
+          },
+          patrol: {},
+        },
+      }),
     );
   }
   recordError(log, () =>
-    define({ initial: "/idle", states: { idle: { after: { 1: "patrol" } }, patrol: {} } }),
+    define({
+      initial: "/idle",
+      states: {
+        idle: {
+          after: {
+            // @ts-expect-error the timer names a state without the leading slash
+            1: "patrol",
+          },
+        },
+        patrol: {},
+      },
+    }),
   );
   recordError(log, () => define({ initial: "/a", states: { a: {}, "": {} } }));
   recordError(log, () =>

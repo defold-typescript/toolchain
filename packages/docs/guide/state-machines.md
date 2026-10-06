@@ -771,23 +771,31 @@ const over: GamePath = "/playing/over";
 const bare: GamePath = "playing";
 ```
 
-**A bad config is a `MachineConfigError`.** When an `initial` or a target is not one of the machine's full paths (a bare name such as `"idle"` included), or an `on` key names no event, `defineMachine` returns `MachineConfigError` instead of a machine. It has no `start`, so the mistake fails to compile wherever the machine is started, and the error's text names what to look for:
+**A bad path is an error where it is written.** An `initial`, a target (`on`, `to`, `after`, `always`) and the path an `update` hook returns accept only the machine's full paths, and an `on` key accepts only an event type. A typo, a bare name such as `"idle"` included, fails to compile on that property, and the editor suggests the paths and event types as you type:
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
 
 type GoEvent = { type: "GO" };
 
-const broken = defineMachine<{ steps: number }, GoEvent>()({
+defineMachine<{ steps: number }, GoEvent>()({
   initial: "/idle",
   states: {
-    idle: { on: { GO: "/nowhere" } },
+    idle: {
+      on: {
+        // @ts-expect-error -- "/nowhere" is not one of the machine's paths
+        GO: "/nowhere",
+      },
+    },
   },
 });
-
-// @ts-expect-error -- Property 'start' does not exist on type 'MachineConfigError'.
-broken.start({ steps: 0 });
 ```
+
+Three cases fall outside that check:
+
+- **Below a leaf.** A path below a state with no children, such as `"/idle/deeper"`, compiles, and so do `initial` and `restoreDepth` on a leaf. Each one throws when the machine is defined.
+- **A hook declared outside the config.** An `update` hook returns one of the machine's paths or `undefined`; a plain `string` does not compile. TypeScript widens a function's single returned path to `string`, so a hook written outside the config needs `as const`: `const land = () => "/grounded" as const`.
+- **A level of hooks only.** When every state at one `states` level holds nothing but hooks, that level is still checked, but the editor does not suggest its children while you type.
 
 **`MessageEvent<K>` and `messageEvents`** turn Defold messages into machine events; see the next section.
 
@@ -1166,7 +1174,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `always`  | `target \| config \| config[]`               | Full-path targets taken right after any move that leaves this state active; the first whose `when(ctx)` is missing or passes wins. See [Move on at once with `always`](#move-on-at-once-with-always). |
 | `enter`   | `(ctx, machine) => void`                    | Runs each time the state is entered.                                                          |
 | `exit`    | `(ctx, machine) => void`                    | Runs each time the state is left, including on `stop()`.                                      |
-| `update`  | `(ctx, dt, machine) => string \| undefined` | Runs on every `update(dt)` while active; a returned full path transitions.                    |
+| `update`  | `(ctx, dt, machine) => target \| undefined` | Runs on every `update(dt)` while active; a returned target, one of the machine's full paths, transitions. |
 | `task`    | `(ctx, finish, machine) => (() => void) \| void` | Runs after `enter`; `finish(event)` sends one event if the state is still the one entered. A returned function runs once when that entry ends. |
 | `invoke`  | `never`                                     | Renamed to `task`; setting it fails to compile.                                               |
 
