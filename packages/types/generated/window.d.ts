@@ -142,23 +142,21 @@ declare global {
      * @param callback - A callback which receives info about window events. Pass an empty function or `nil` if you no longer wish to receive callbacks.
      * @example
      * ```ts
-     * function window_callback(self: unknown, event: unknown, data: Record<string | number, unknown>) {
-     *   if (event === window.WINDOW_EVENT_FOCUS_LOST) {
-     *     print("window.WINDOW_EVENT_FOCUS_LOST");
-     *   } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {
-     *     print("window.WINDOW_EVENT_FOCUS_GAINED");
-     *   } else if (event === window.WINDOW_EVENT_ICONIFIED) {
-     *     print("window.WINDOW_EVENT_ICONIFIED");
-     *   } else if (event === window.WINDOW_EVENT_DEICONIFIED) {
-     *     print("window.WINDOW_EVENT_DEICONIFIED");
-     *   } else if (event === window.WINDOW_EVENT_RESIZED) {
-     *     print("Window resized: ", data.width, data.height);
-     *   }
-     * }
-     *
      * export default defineScript({
      *   init() {
-     *     window.set_listener(window_callback);
+     *     window.set_listener((self, event, data) => {
+     *       if (event === window.WINDOW_EVENT_FOCUS_LOST) {
+     *         print("window.WINDOW_EVENT_FOCUS_LOST");
+     *       } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {
+     *         print("window.WINDOW_EVENT_FOCUS_GAINED");
+     *       } else if (event === window.WINDOW_EVENT_ICONIFIED) {
+     *         print("window.WINDOW_EVENT_ICONIFIED");
+     *       } else if (event === window.WINDOW_EVENT_DEICONIFIED) {
+     *         print("window.WINDOW_EVENT_DEICONIFIED");
+     *       } else if (event === window.WINDOW_EVENT_RESIZED) {
+     *         print("Window resized: ", data.width, data.height);
+     *       }
+     *     });
      *   },
      * });
      * ```

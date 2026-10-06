@@ -17,6 +17,7 @@ import { writeFileSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import ts from "typescript";
 import type { TranslationStore } from "../src/example-store";
+import { type LooseTypeFinding, looseTypeFindings } from "./example-loose-types";
 import { type ExampleDiagnostic, PINS_PATH, type PinFile } from "./example-pins";
 import { boundOwnership, type ExampleSurface, exampleIdentity } from "./example-surfaces";
 
@@ -417,6 +418,12 @@ export interface SurfaceCompilation {
    * the error is reported against the entry, which is not a unit.
    */
   readonly entry: readonly ExampleDiagnostic[];
+  /**
+   * Unit identity -> the loose annotations and redundant assertions its body
+   * carries. These compile clean, so `units` cannot say so. A unit that does
+   * not parse has no types to read and reports none.
+   */
+  readonly loose: Map<string, LooseTypeFinding[]>;
 }
 
 /**
@@ -442,6 +449,8 @@ export function compileSurface(
   });
 
   const out = new Map<string, ExampleDiagnostic[]>();
+  const loose = new Map<string, LooseTypeFinding[]>();
+  const checker = program.getTypeChecker();
   for (const unit of units) {
     const source = program.getSourceFile(unit.fileName);
     if (!source) throw new Error(`unit not in program: ${unit.fileName}`);
@@ -450,6 +459,7 @@ export function compileSurface(
     // asking for them is what drags the whole-program short-circuit back in.
     const semantic = syntactic.length > 0 ? [] : program.getSemanticDiagnostics(source);
     out.set(unit.identity, sortDiagnostics([...syntactic, ...semantic].map(normalizeDiagnostic)));
+    loose.set(unit.identity, syntactic.length > 0 ? [] : looseTypeFindings(checker, source));
   }
 
   const entrySource = program.getSourceFile(surface.entry);
@@ -460,7 +470,7 @@ export function compileSurface(
       .filter((diagnostic) => ENTRY_RESOLUTION_CODES.has(diagnostic.code))
       .map(normalizeDiagnostic),
   );
-  return { units: out, entry };
+  return { units: out, entry, loose };
 }
 
 export interface SurfaceTiming {
@@ -475,6 +485,8 @@ export interface GateResult {
   readonly timings: readonly SurfaceTiming[];
   /** Surface id -> that surface's entry resolution diagnostics, one key per compiled surface. */
   readonly entries: Map<string, readonly ExampleDiagnostic[]>;
+  /** Every `<surface>:<fqn>:<sourceHash>` pair -> its loose-type findings; the target is none, so nothing pins them. */
+  readonly loose: Map<string, LooseTypeFinding[]>;
 }
 
 /** Compile every owned translation on every surface that ships it. */
@@ -501,6 +513,7 @@ export function runGate(
   const computed = new Map<string, ExampleDiagnostic[]>();
   const timings: SurfaceTiming[] = [];
   const entries = new Map<string, readonly ExampleDiagnostic[]>();
+  const loose = new Map<string, LooseTypeFinding[]>();
   for (const surface of surfaces) {
     const units = [...(bySurface.get(surface.id) ?? []), ...(extraUnits.get(surface.id) ?? [])];
     if (units.length === 0) continue;
@@ -509,6 +522,9 @@ export function runGate(
     for (const [identity, diagnostics] of compilation.units) {
       computed.set(identity, diagnostics);
     }
+    for (const [identity, findings] of compilation.loose) {
+      loose.set(identity, findings);
+    }
     entries.set(surface.id, compilation.entry);
     timings.push({
       surfaceId: surface.id,
@@ -516,7 +532,35 @@ export function runGate(
       ms: Math.round(performance.now() - started),
     });
   }
-  return { computed, timings, entries };
+  return { computed, timings, entries, loose };
+}
+
+/**
+ * The findings that hold on every surface compiling a translation, keyed by
+ * `<fqn>:<sourceHash>`. One body ships to every target whose docs carry its
+ * Lua, so a parameter an older target still declares `unknown` has to stay
+ * annotated `unknown` and cast at the point of use: the body cannot follow the
+ * newer declaration without failing to compile on the older one. Only a
+ * finding no owning surface needs is the translation's to fix.
+ */
+export function sharedLooseFindings(
+  loose: ReadonlyMap<string, readonly LooseTypeFinding[]>,
+): Map<string, LooseTypeFinding[]> {
+  const bySurface = new Map<string, (readonly LooseTypeFinding[])[]>();
+  for (const [identity, findings] of loose) {
+    const translation = identity.slice(identity.indexOf(":") + 1);
+    const list = bySurface.get(translation) ?? [];
+    list.push(findings);
+    bySurface.set(translation, list);
+  }
+  const key = (finding: LooseTypeFinding) => `${finding.kind}\0${finding.text}`;
+  const shared = new Map<string, LooseTypeFinding[]>();
+  for (const [translation, [first = [], ...rest]] of bySurface) {
+    const elsewhere = rest.map((findings) => new Set(findings.map(key)));
+    const everywhere = first.filter((finding) => elsewhere.every((keys) => keys.has(key(finding))));
+    if (everywhere.length > 0) shared.set(translation, everywhere);
+  }
+  return shared;
 }
 
 /** Only the identities that produced diagnostics — what the pin file records. */

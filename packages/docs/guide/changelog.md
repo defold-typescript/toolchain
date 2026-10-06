@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.44.2
+
+> Summary:
+>
+> - **[Callback examples](./typescript-gotchas.md)** use declared types.
+
+### Improved
+
+- **Callback examples use the declared parameter types:** the API-reference and hover examples for `gui.play_particlefx`, `particlefx.play`, `sys.set_error_handler` and `window.set_listener` pass their callback inline, so each parameter takes the type its declaration gives it instead of an `unknown` annotation. The [callback gotcha](./typescript-gotchas.md#callback-parameters-type-check-as-functions-not-unknown) describes the typed parameters too.
+
 ## v0.44.1
 
 > Summary:
