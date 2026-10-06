@@ -13,11 +13,16 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
+> - **[Reference examples](/api/material)** make every call their Lua sample makes.
 > - **[Callback examples](./typescript-gotchas.md)** use declared types.
 
 ### Improved
 
-- **Callback examples use the declared parameter types:** the API-reference and hover examples for `gui.play_particlefx`, `particlefx.play`, `sys.set_error_handler` and `window.set_listener` pass their callback inline, so each parameter takes the type its declaration gives it instead of an `unknown` annotation. The [callback gotcha](./typescript-gotchas.md#callback-parameters-type-check-as-functions-not-unknown) describes the typed parameters too.
+- **Examples show their whole Lua sample with the declared types:** the API-reference and hover examples for the [material](/api/material) functions, `compute.set_constants`, `compute.set_textures`, `b2d.fixture.set_shape` and `b2d.shape.set_shape` make every call their Lua sample makes, script properties and comments included. The callback examples for `gui.play_particlefx`, `particlefx.play`, `sys.set_error_handler` and `window.set_listener` pass their callback inline, so each parameter takes its declared type instead of an `unknown` annotation, as the [callback gotcha](./typescript-gotchas.md#callback-parameters-type-check-as-functions-not-unknown) describes.
+
+### Fixed
+
+- **`model.get_blend_weights` example sets the wrong weights:** the example wrote the second and third weights where its Lua sample writes the first two; it now writes `w[0]` and `w[1]`.
 
 ## v0.44.1
 

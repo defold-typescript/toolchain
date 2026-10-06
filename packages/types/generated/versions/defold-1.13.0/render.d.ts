@@ -70,11 +70,16 @@ declare global {
      * @example
      * Then use the constant buffer when drawing a predicate:
      * ```ts
-     * function draw_tinted(self: { my_pred: Opaque<"render_predicate"> }) {
-     *   const constants = render.constant_buffer();
-     *   constants.tint = vmath.vector4(1, 1, 1, 1);
-     *   render.draw(self.my_pred, { constants });
-     * }
+     * export default defineRenderScript({
+     *   init() {
+     *     return { my_pred: render.predicate([hash("my_tag")]) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     const constants = render.constant_buffer();
+     *     render.draw(self.my_pred, { constants });
+     *   },
+     * });
      * ```
      * @example
      * The constant buffer also supports array values by specifying constants in a table:
@@ -449,13 +454,13 @@ declare global {
      * ```
      * @example
      * ```ts
-     * // Or enable a render target by resource id:
      * export default defineRenderScript({
      *   init() {
      *     return { my_pred: render.predicate([hash("my_tag")]) };
      *   },
      *
      *   update(self, dt) {
+     *     // enable render target by resource id
      *     render.set_render_target("my_rt_resource");
      *     render.draw(self.my_pred);
      *     render.set_render_target(render.RENDER_TARGET_DEFAULT);
@@ -469,7 +474,6 @@ declare global {
      * ```
      * @example
      * ```ts
-     * // Or bind a texture handle directly:
      * export default defineRenderScript({
      *   init() {
      *     return { my_texture_handle: resource.get_texture_info("/main/my_texture.texturec").handle };
@@ -512,15 +516,10 @@ declare global {
      * ```ts
      * export default defineRenderScript({
      *   init() {
-     *     // render target buffer parameters
      *     const color_params = {
      *       format: graphics.TEXTURE_FORMAT_RGBA,
      *       width: render.get_window_width(),
      *       height: render.get_window_height(),
-     *       min_filter: graphics.TEXTURE_FILTER_LINEAR,
-     *       mag_filter: graphics.TEXTURE_FILTER_LINEAR,
-     *       u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
-     *       v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
      *     };
      *     return {
      *       target_right: render.render_target("right", {
@@ -554,15 +553,10 @@ declare global {
      * ```ts
      * export default defineRenderScript({
      *   init() {
-     *     // render target buffer parameters
      *     const color_params = {
      *       format: graphics.TEXTURE_FORMAT_RGBA,
      *       width: render.get_window_width(),
      *       height: render.get_window_height(),
-     *       min_filter: graphics.TEXTURE_FILTER_LINEAR,
-     *       mag_filter: graphics.TEXTURE_FILTER_LINEAR,
-     *       u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
-     *       v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
      *     };
      *     return {
      *       target_right: render.render_target("right", {
@@ -1003,13 +997,13 @@ declare global {
      * ```
      * @example
      * ```ts
-     * // Or set the render target by a render target resource identifier:
      * export default defineRenderScript({
      *   init() {
      *     return { my_pred: render.predicate([hash("my_tag")]) };
      *   },
      *
      *   update(self, dt) {
+     *     // set render target by a render target resource identifier
      *     render.set_render_target("my_rt_resource");
      *
      *     // draw a predicate to the render target

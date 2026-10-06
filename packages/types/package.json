@@ -87,6 +87,7 @@
     "!scripts/augmentation-namespaces.ts",
     "!scripts/example-loose-types.ts",
     "!scripts/example-pins.ts",
+    "!scripts/example-scope-parity.ts",
     "!scripts/example-semantics.ts",
     "!scripts/example-surfaces.ts",
     "!scripts/example-typecheck.ts",

@@ -1,0 +1,30 @@
+{
+  "editor.ui.use_memo": [
+    {
+      "sourceHash": "dac97ede337c4f69",
+      "calls": ["editor.ui.text_button"],
+      "reason": "The editor declares no `editor.ui.text_button`; a button with a `text` prop is `editor.ui.button`."
+    }
+  ],
+  "editor.ui.use_state": [
+    {
+      "sourceHash": "3065b49232e1a2de",
+      "calls": ["editor.ui.text_button"],
+      "reason": "The editor declares no `editor.ui.text_button`; a button with a `text` prop is `editor.ui.button`."
+    }
+  ],
+  "material.set_vertex_attributes": [
+    {
+      "sourceHash": "a78800caef15ee12",
+      "calls": ["vmath.vec4"],
+      "reason": "The engine registers no `vmath.vec4`; the four-component constructor is `vmath.vector4`."
+    }
+  ],
+  "render.render_target": [
+    {
+      "sourceHash": "e39f13af5d65d01d",
+      "calls": ["render.enable_render_target"],
+      "reason": "No target declares `render.enable_render_target`; the render target is bound with `render.set_render_target`."
+    }
+  ]
+}

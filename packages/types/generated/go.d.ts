@@ -316,7 +316,7 @@ declare global {
      * // Delete the script's own game object.
      * go.delete();
      * // Delete a game object with the id "my_game_object".
-     * const id = go.get_id("my_game_object");
+     * const id = go.get_id("my_game_object"); // retrieve the id of the game object to be deleted
      * go.delete(id);
      * // Delete a list of game objects.
      * const ids = [hash("/my_object_1"), hash("/my_object_2"), hash("/my_object_3")];
@@ -328,7 +328,7 @@ declare global {
      * // Delete the script's own game object and its children.
      * go.delete(true);
      * // Delete a game object with the id "my_game_object" and its children.
-     * const id = go.get_id("my_game_object");
+     * const id = go.get_id("my_game_object"); // retrieve the id of the game object to be deleted
      * go.delete(id, true);
      * // Delete a list of game objects and their children.
      * const ids = [hash("/my_object_1"), hash("/my_object_2"), hash("/my_object_3")];
