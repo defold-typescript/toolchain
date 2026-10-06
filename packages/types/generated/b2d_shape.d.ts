@@ -377,10 +377,31 @@ declare global {
      * ```ts
      * const body = b2d.get_body("#collisionobject");
      * if (body !== undefined) {
+     *   // Move a circle shape relative to the body origin.
      *   const circle = b2d.shape.get_shape(body, 1);
      *   const radius = "radius" in circle ? circle.radius : undefined;
      *   b2d.shape.set_shape(body, 1, { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: radius ?? 16, center: vmath.vector3(24, 0, 0) }, true);
-     *   b2d.shape.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_SEGMENT, v1: vmath.vector3(-32, 0, 0), v2: vmath.vector3(32, 0, 0) });
+     *
+     *   // Replace a segment shape's local endpoints.
+     *   b2d.shape.set_shape(body, 2, {
+     *     type: b2d.shape.SHAPE_TYPE_SEGMENT,
+     *     v1: vmath.vector3(-32, 0, 0),
+     *     v2: vmath.vector3(32, 0, 0),
+     *   });
+     *
+     *   // Update a box shape using the polygon box convenience format.
+     *   b2d.shape.set_shape(
+     *     body,
+     *     3,
+     *     {
+     *       type: b2d.shape.SHAPE_TYPE_BOX,
+     *       hx: 16,
+     *       hy: 8,
+     *       center: vmath.vector3(0, 20, 0),
+     *       angle: math.rad(30),
+     *     },
+     *     true,
+     *   );
      * }
      * ```
      */

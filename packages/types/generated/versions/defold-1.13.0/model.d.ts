@@ -33,10 +33,14 @@ declare global {
      * @returns array of weight values, or empty table if the model has no morph targets
      * @example
      * ```ts
-     * const weights = model.get_blend_weights("#model");
-     * weights[1] = 0.75;
-     * weights[2] = 0.25;
-     * model.set_blend_weights("#model", weights);
+     * const w = model.get_blend_weights("#model");
+     * w.forEach((weight, i) => {
+     *   print(i + 1, weight);
+     * });
+     * // change the data in the table and then set the weights again
+     * w[0] = 0.75;
+     * w[1] = 0.25;
+     * model.set_blend_weights("#model", w);
      * ```
      */
     function get_blend_weights(url: string | Hash | Url): number[];
@@ -197,8 +201,10 @@ declare global {
      * @param weights - array of weight values (1-based indices). Omit or pass `nil` to clear the override and return morphs to animation only
      * @example
      * ```ts
+     * // set the weights for the first 4 morph targets
      * model.set_blend_weights("#model", [0, 1, 0.5, 0]);
-     * model.set_blend_weights("#model");
+     * // clear the override, animation will continue if the weights are driven by an animation
+     * model.set_blend_weights("#model"); // clear script override
      * ```
      */
     function set_blend_weights(url: string | Hash | Url, weights?: number[]): void;

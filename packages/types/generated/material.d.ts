@@ -310,7 +310,16 @@ declare global {
      * @returns Shader constant information.
      * @example
      * ```ts
-     * const constants = material.get_constants(resource.material("/my_material.materialc"));
+     * // Get the shader constants from a material specified as a resource property
+     * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_material: resource.material() },
+     *
+     *   init(self) {
+     *     const constants = material.get_constants(self.my_material);
+     *   },
+     * });
      * ```
      */
     function get_constants(path: Hash | string): material.constant_info[];
@@ -322,7 +331,16 @@ declare global {
      * @returns texture sampler information
      * @example
      * ```ts
-     * const samplers = material.get_samplers(resource.material("/my_material.materialc"));
+     * // Get the texture samplers from a material specified as a resource property
+     * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_material: resource.material() },
+     *
+     *   init(self) {
+     *     const samplers = material.get_samplers(self.my_material);
+     *   },
+     * });
      * ```
      */
     function get_samplers(path: Hash | string): material.sampler_info[];
@@ -333,7 +351,16 @@ declare global {
      * @returns material texture information
      * @example
      * ```ts
-     * const textures = material.get_textures(resource.material("/my_material.materialc"));
+     * // Get the textures from a material specified as a resource property
+     * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_material: resource.material() },
+     *
+     *   init(self) {
+     *     const textures = material.get_textures(self.my_material);
+     *   },
+     * });
      * ```
      */
     function get_textures(path: Hash | string): material.texture_info[];
@@ -345,7 +372,16 @@ declare global {
      * @returns vertex attribute information
      * @example
      * ```ts
-     * const vertex_attributes = material.get_vertex_attributes(resource.material("/my_material.materialc"));
+     * // Get the vertex attributes from a material specified as a resource property
+     * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_material: resource.material() },
+     *
+     *   init(self) {
+     *     const vertex_attributes = material.get_vertex_attributes(self.my_material);
+     *   },
+     * });
      * ```
      */
     function get_vertex_attributes(path: Hash | string): material.vertex_attribute_info[];
@@ -356,7 +392,27 @@ declare global {
      * @param constants - Shader constant updates keyed by constant name. Partial updates are supported.
      * @example
      * ```ts
-     * material.set_constants(resource.material("/my_material.materialc"), { tint: { value: vmath.vector4(1, 0, 0, 1) } });
+     * // Set a shader constant in a material specified as a resource property
+     * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_material: resource.material() },
+     *
+     *   init() {
+     *     return { my_view_proj: vmath.matrix4() };
+     *   },
+     *
+     *   update(self) {
+     *     // update the 'tint' constant
+     *     material.set_constants(self.my_material, {
+     *       tint: { value: vmath.vector4(1, 0, 0, 1) },
+     *     });
+     *     // change the type of the 'view_proj' constant to CONSTANT_TYPE_USER_MATRIX4 so the renderer can set our custom data
+     *     material.set_constants(self.my_material, {
+     *       view_proj: { value: self.my_view_proj, type: material.CONSTANT_TYPE_USER_MATRIX4 },
+     *     });
+     *   },
+     * });
      * ```
      */
     function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.constant_options> | Record<string, material.constant_options>): void;
@@ -368,7 +424,18 @@ declare global {
      * @param samplers - Sampler updates keyed by sampler name. Partial updates are supported.
      * @example
      * ```ts
-     * material.set_samplers(resource.material("/my_material.materialc"), { texture_sampler: { u_wrap: graphics.TEXTURE_WRAP_REPEAT, v_wrap: graphics.TEXTURE_WRAP_MIRRORED_REPEAT } });
+     * // Configures a sampler in a material specified as a resource property
+     * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_material: resource.material() },
+     *
+     *   init(self) {
+     *     material.set_samplers(self.my_material, {
+     *       texture_sampler: { u_wrap: graphics.TEXTURE_WRAP_REPEAT, v_wrap: graphics.TEXTURE_WRAP_MIRRORED_REPEAT },
+     *     });
+     *   },
+     * });
      * ```
      */
     function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.sampler_options> | Record<string, material.sampler_options>): void;
@@ -379,7 +446,18 @@ declare global {
      * @param textures - A table keyed by sampler name with texture resources as values.
      * @example
      * ```ts
-     * material.set_textures(resource.material("/my_material.materialc"), { my_texture: resource.texture() });
+     * // Set a texture in a material from a resource
+     * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registrations from this field, and only this field types them onto `self`.
+     *   properties: { my_material: resource.material(), my_texture: resource.texture() },
+     *
+     *   init(self) {
+     *     material.set_textures(self.my_material, {
+     *       my_texture: self.my_texture,
+     *     });
+     *   },
+     * });
      * ```
      */
     function set_textures(path: Hash | string, textures: LuaMap<string | Hash, string | Hash> | Record<string, string | Hash>): void;
@@ -390,7 +468,19 @@ declare global {
      * @param attributes - Vertex attributes keyed by name, or an array with explicit `name` fields. Partial updates are supported.
      * @example
      * ```ts
-     * material.set_vertex_attributes(resource.material("/my_material.materialc"), { tint_attribute: { value: vmath.vector4(1, 0, 0, 1), semantic_type: graphics.SEMANTIC_TYPE_COLOR } });
+     * // Configures a vertex attribute in a material specified as a resource property
+     * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_material: resource.material() },
+     *
+     *   init(self) {
+     *     material.set_vertex_attributes(self.my_material, {
+     *       tint_attribute: { value: vmath.vector4(1, 0, 0, 1), semantic_type: graphics.SEMANTIC_TYPE_COLOR },
+     *       weights: { value: vmath.vector4(0, 1, 0, 0), semantic_type: graphics.SEMANTIC_TYPE_NONE },
+     *     });
+     *   },
+     * });
      * ```
      */
     function set_vertex_attributes(path: Hash | string, attributes: LuaMap<string | Hash, material.vertex_attribute_options> | Record<string, material.vertex_attribute_options> | material.named_vertex_attribute_options[]): void;
