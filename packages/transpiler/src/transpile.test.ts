@@ -14,6 +14,26 @@ describe("transpile", () => {
     `);
   });
 
+  test("keeps a doc comment above an exported function", () => {
+    const source = [
+      "/** Clamps a value. */",
+      "export function clamp(value: number): number {",
+      "  return value < 0 ? 0 : value;",
+      "}",
+      "",
+    ].join("\n");
+    expect(transpile(source).lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      --- Clamps a value.
+      function ____exports.clamp(value)
+          return value < 0 and 0 or value
+      end
+      return ____exports
+      "
+    `);
+  });
+
   test("snapshots a representative module with function and control flow", () => {
     const source = [
       "export function clamp(value: number, min: number, max: number): number {",
