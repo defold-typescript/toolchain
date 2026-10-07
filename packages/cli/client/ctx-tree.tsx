@@ -1,3 +1,4 @@
+import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { type CtxPath, ctxKey, isPrimitive, type Primitive } from "./ctx";
 import { Glow } from "./glow";
@@ -104,7 +105,11 @@ function Branch({ store, path, value, depth }: NodeProps & { value: object }) {
           className="w-3 cursor-pointer text-muted-foreground"
           onClick={() => toggle(key)}
         >
-          {expanded ? "▾" : "▸"}
+          {expanded ? (
+            <CaretDownIcon className="size-3" aria-hidden="true" />
+          ) : (
+            <CaretRightIcon className="size-3" aria-hidden="true" />
+          )}
         </button>
         <span className="text-muted-foreground">{path.at(-1)}:</span>
         <span data-ctx-value className="text-muted-foreground">

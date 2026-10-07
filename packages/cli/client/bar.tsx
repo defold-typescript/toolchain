@@ -1,3 +1,4 @@
+import { PauseIcon, PlayIcon, PowerIcon, SkipForwardIcon } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,7 @@ export function Bar({ store }: { store: ViewerStore }) {
           onChange={(event) => actions.setStartCtx(event.target.value)}
         />
         <Button type="button" size="sm" disabled={!simulating} onClick={() => void actions.start()}>
+          <PowerIcon aria-hidden="true" />
           Start
         </Button>
       </Group>
@@ -116,6 +118,7 @@ export function Bar({ store }: { store: ViewerStore }) {
           disabled={!running || !simulating}
           onClick={() => actions.setPlaying(!playing)}
         >
+          {playing ? <PauseIcon aria-hidden="true" /> : <PlayIcon aria-hidden="true" />}
           {playing ? "Pause" : "Play"}
         </Button>
         <Button
@@ -125,6 +128,7 @@ export function Bar({ store }: { store: ViewerStore }) {
           disabled={!running || playing || !simulating}
           onClick={() => void actions.step()}
         >
+          <SkipForwardIcon aria-hidden="true" />
           Step
         </Button>
         <Input
