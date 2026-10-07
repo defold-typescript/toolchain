@@ -519,6 +519,38 @@ header.topbar-critical .logo-mark {
   margin: 0;
   max-width: none;
 }
+/* Mirrors app/styles.css: a hand-written HTML table whose last column holds
+   fenced code. The unlayered `.prose table` and `.code-block--badged` rules
+   above beat any layered override, so the fixed columns live here. */
+.prose .code-table > table {
+  table-layout: fixed;
+  width: 100%;
+  min-width: 53rem;
+}
+.prose .code-table th:nth-child(1) {
+  width: 17%;
+}
+.prose .code-table th:nth-child(2) {
+  width: 24%;
+}
+.prose .code-table td {
+  vertical-align: top;
+}
+.prose .code-table td > :first-child {
+  margin-top: 0;
+}
+.prose .code-table td > :last-child {
+  margin-bottom: 0;
+}
+.prose .code-table .code-block {
+  margin: 0 0 8px;
+}
+.prose .code-table .code-block--badged {
+  padding-top: 0;
+}
+.prose .code-table .code-block--badged > .code-badge {
+  display: none;
+}
 .prose .api-overview {
   margin: 1.2em 0;
 }
