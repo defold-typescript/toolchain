@@ -3377,6 +3377,43 @@ Here `self` takes its type from what `init` returns. For a named `Self` type, a 
 
 A module-level instance (`const door = doorMachine.start(...)` at the top of a script file) is shared by every object that runs the script; see [Where script state lives](./script-state.md).
 
+##### Restart a machine
+
+A stopped instance does not start again. To restart, stop the instance and start a new one from the same definition, then store it where the old one was:
+
+```ts title="door-restart.ts"
+import { defineScript } from "@defold-typescript/types";
+import { doorMachine } from "./door-machine";
+
+function startDoor() {
+  return doorMachine.start({ sprite: msg.url("#sprite"), opens: 0 });
+}
+
+export default defineScript({
+  init() {
+    return { door: startDoor() };
+  },
+  update(self, dt) {
+    self.door.update(dt);
+  },
+  on_reload(self) {
+    self.door.stop();
+    self.door = startDoor();
+  },
+  final(self) {
+    self.door.stop();
+  },
+});
+```
+
+`stop()` runs the `exit` hooks of the old instance, and `start` enters `initial` with the context it is given: a new object for a clean start, or the old instance's `ctx` to keep its fields.
+
+- **Restart from a script callback, not from a hook.** Inside a hook, `stop()` waits for the step to end, so a `start` on the next line runs the new instance's `enter` hooks before the old instance's `exit` hooks.
+- **Listeners stay with the old instance.** Call `onMove` and [`inspect`](#debug-a-machine) again on the new one.
+- **`on_reload` suits a restart.** A reload does not run `init` again, so restarting there is how a changed starting context reaches a running object; see [Restart on a hot reload](#restart-on-a-hot-reload).
+
+To restart one state and keep the instance, name the state as its own target; see [Events and transitions](#events-and-transitions).
+
 #### Hot reload
 
 Hot reload lets you edit a machine while the game runs and see the change without restarting. To use it, give `defineMachine` a key, a name for this definition:
@@ -3433,6 +3470,21 @@ States are matched by path, so renaming `chase` to `hunt` counts as removing `/c
 The key names the definition, not an object. If 20 enemies run a script that starts `enemyMachine` in `init`, there are 20 instances of one machine. A reload changes the machine once, and each of the 20 instances switches on its own next `update`. An enemy in `/patrol` and an enemy in `/chase` each follow the table above for their own state.
 
 Different machines need different keys. If doors also used `"enemy"`, each reload of one file would replace the other machine's states.
+
+##### Restart on a hot reload
+
+A reload keeps each instance in its current state when that state still exists, so an edited `enter` hook waits for the next entry and the instance keeps the `ctx` it started with. To start over instead, [restart the machine](#restart-a-machine) in the script's `on_reload`. The two work side by side, and which one runs depends on the file you edit:
+
+| You edit | What runs | The instance… |
+| --- | --- | --- |
+| the machine's module, defined with a key | the switch [described above](#what-happens-after-a-reload), on the next `send` or `update` | stays in its state with its `ctx`, under the new rules. |
+| the machine's module, defined without a key | nothing | keeps the old states, and so does an instance a later restart starts. |
+| the script file, with a restart in `on_reload` | `stop()`, then `start` | is replaced by a new one at `initial`, with the context the script builds. |
+
+- **A restart starts the newest definition.** With a key, `start` uses the states the definition holds when it is called. If an edit replaces them later, the new instance switches like any other.
+- **Editing only the machine's module restarts nothing.** Defold calls `on_reload` only on a script whose own file was reloaded. An edited `enter` hook runs the next time its state is entered.
+- **Every object that runs the script restarts.** `on_reload` runs once per object, so 20 enemies all go back to `initial`.
+- **Build the starting context in the script file.** A reloaded script still gets the first copy of every module it imports, so a context factory exported from the machine's module stays the old one.
 
 ##### Define the machine once, at the top of a file
 
@@ -4099,6 +4151,22 @@ enter: (_ctx, machine) => machine.stop()
 </td></tr>
 <tr><td>
 
+Restart a machine
+
+</td><td>
+
+Stop the instance and start a new one from a script callback; see [Restart a machine](#restart-a-machine)
+
+</td><td>
+
+```ts excerpt
+self.guard.stop();
+self.guard = startGuard();
+```
+
+</td></tr>
+<tr><td>
+
 Take a Defold message as an event
 
 </td><td>
@@ -4139,6 +4207,24 @@ Pass a [key](#hot-reload) to the first call
 
 ```ts excerpt
 defineMachine<GuardCtx, GuardEvent>("guard")
+```
+
+</td></tr>
+<tr><td>
+
+Start over when the script is hot reloaded
+
+</td><td>
+
+Restart the machine in `on_reload`; see [Restart on a hot reload](#restart-on-a-hot-reload)
+
+</td><td>
+
+```ts excerpt
+on_reload(self) {
+  self.guard.stop();
+  self.guard = startGuard();
+}
 ```
 
 </td></tr>

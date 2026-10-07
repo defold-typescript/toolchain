@@ -139,6 +139,32 @@ export default defineScript({
 });
 ```
 
+```ts title="guard-restart.ts"
+import { defineScript } from "@defold-typescript/types";
+import { guardMachine } from "./guard-machine";
+
+function startGuard() {
+  const sprite = msg.url("#sprite");
+  return guardMachine.start({ sprite, health: 3 });
+}
+
+export default defineScript({
+  init() {
+    return { guard: startGuard() };
+  },
+  update(self, dt) {
+    self.guard.update(dt);
+  },
+  on_reload(self) {
+    self.guard.stop();
+    self.guard = startGuard();
+  },
+  final(self) {
+    self.guard.stop();
+  },
+});
+```
+
 ```ts title="guard-named-self.ts"
 import { defineScript } from "@defold-typescript/types";
 import { guardMachine } from "./guard-machine";
