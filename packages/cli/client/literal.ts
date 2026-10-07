@@ -15,7 +15,12 @@ export function parseLiteral(text: string): unknown {
   let at = 0;
 
   const fail = (message: string): never => {
-    throw new SyntaxError(`${message} at column ${at + 1}`);
+    if (!text.includes("\n")) {
+      throw new SyntaxError(`${message} at column ${at + 1}`);
+    }
+    const before = text.slice(0, at);
+    const line = before.split("\n").length;
+    throw new SyntaxError(`${message} at line ${line}, column ${at - before.lastIndexOf("\n")}`);
   };
 
   const skip = (): void => {

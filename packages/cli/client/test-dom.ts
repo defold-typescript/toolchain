@@ -49,11 +49,17 @@ export function registerDom(): void {
 
 export async function unregisterDom(): Promise<void> {
   if (GlobalRegistrator.isRegistered) {
+    // Radix hands focus back from a timer once a dialog unmounts, and that timer needs the window.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     await GlobalRegistrator.unregister();
   }
 }
 
 // React DOM picks its input event handling when it loads, and Bun evaluates a CommonJS import
 // before the importing module's body, so React DOM is loaded only once a document exists.
+// Radix picks its layout effect the same way and takes a no-op without a document, which leaves
+// a portal unmounted, so a test file imports this module ahead of the component it renders.
 registerDom();
-export const { act, cleanup, fireEvent, render, waitFor } = await import("@testing-library/react");
+export const { act, cleanup, fireEvent, render, waitFor, within } = await import(
+  "@testing-library/react"
+);
