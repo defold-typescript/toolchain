@@ -16,6 +16,7 @@ import {
   type SpanId,
   spansByLine,
 } from "./highlight";
+import { parseLiteral } from "./literal";
 import { liveSnapshot } from "./live";
 import { appendEntries, emptyLog, type Log, type LogKind } from "./log";
 import { emptySearch, type SearchState, search, step } from "./search";
@@ -155,21 +156,21 @@ function lineSpansOf(index: HsmViewIndex): LineSpan[][][] {
   );
 }
 
-function parseJson(text: string, what: string): unknown {
+function parseField(text: string, what: string): unknown {
   if (text.trim() === "") {
     return {};
   }
   try {
-    return JSON.parse(text);
+    return parseLiteral(text);
   } catch (thrown) {
-    throw new InputError(`${what} is not JSON: ${(thrown as Error).message}`);
+    throw new InputError(`${what} cannot be read: ${(thrown as Error).message}`);
   }
 }
 
 function parsePayload(text: string): Record<string, unknown> {
-  const payload = parseJson(text, "the payload");
+  const payload = parseField(text, "the payload");
   if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
-    throw new InputError("the payload must be a JSON object");
+    throw new InputError("the payload must be an object");
   }
   return payload as Record<string, unknown>;
 }
@@ -491,7 +492,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         while (inFlight !== undefined) {
           await inFlight;
         }
-        await call(() => api.post("start", { ctx: parseJson(get().startCtx, "the start ctx") }));
+        await call(() => api.post("start", { ctx: parseField(get().startCtx, "the start ctx") }));
       },
       send: (type) =>
         call(() => api.post("send", { event: { ...parsePayload(get().payload), type } })),
