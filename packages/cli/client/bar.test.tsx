@@ -83,6 +83,16 @@ describe("Bar", () => {
     );
   });
 
+  test("draws one icon in Start, Play and Step, and hides every icon from the names", () => {
+    const view = render(<Bar store={viewer.store} />);
+
+    for (const name of ["Start", "Play", "Step"]) {
+      expect(view.getByRole("button", { name }).querySelectorAll("svg").length).toBe(1);
+    }
+    const icons = [...view.container.querySelectorAll("svg")];
+    expect(icons.map((icon) => icon.getAttribute("aria-hidden"))).toEqual(icons.map(() => "true"));
+  });
+
   test("switches to the stacked layout and keeps it when Stacked is clicked again", () => {
     const view = render(<Bar store={viewer.store} />);
     const stacked = (): HTMLElement => view.getByRole("radio", { name: "Stacked" });
