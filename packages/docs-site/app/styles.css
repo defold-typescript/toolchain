@@ -921,6 +921,50 @@
     max-width: none;
   }
 
+  /* A hand-written HTML table whose last column holds fenced code (the State
+     machines cheat sheet). Fixed columns keep a long code line from widening
+     the table and squeezing the text columns: the block scrolls inside its own
+     cell instead. The page writes the `.table-scroll` wrapper itself, because
+     only a Markdown table gets one at render time. */
+  .prose .code-table > table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 53rem;
+  }
+
+  .prose .code-table th:nth-child(1) {
+    width: 17%;
+  }
+
+  .prose .code-table th:nth-child(2) {
+    width: 24%;
+  }
+
+  .prose .code-table td {
+    vertical-align: top;
+  }
+
+  .prose .code-table td > :first-child {
+    margin-top: 0;
+  }
+
+  .prose .code-table td > :last-child {
+    margin-bottom: 0;
+  }
+
+  .prose .code-table .code-block {
+    margin: 0 0 8px;
+  }
+
+  /* Every snippet in the table is TypeScript, so the badge says nothing. */
+  .prose .code-table .code-block--badged {
+    padding-top: 0;
+  }
+
+  .prose .code-table .code-block--badged > .code-badge {
+    display: none;
+  }
+
   .prose .api-overview {
     margin: 1.2em 0;
   }
