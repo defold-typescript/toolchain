@@ -4,6 +4,9 @@
  * declarations `@defold-typescript/types/hsm` ships, at the strictness `init`
  * scaffolds, and transpile through the build. A fence that has to show a
  * compile error does so with `// @ts-expect-error`, which this gate then proves.
+ * A fence that cannot compile alone, a config key or a method shown by itself,
+ * is a `ts excerpt` fence: it must quote the excerpt source, whose fences
+ * compile under the same checks.
  * The manual's reference tables are held to the `StateConfig` and
  * `MachineInstance` interfaces of the hsm source.
  */
@@ -18,6 +21,8 @@ const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const GUIDE_DIR = path.join(REPO_ROOT, "packages", "docs", "guide");
 const REFERENCE_PAGE = "state-machines.md";
 const FENCED_PAGES = [REFERENCE_PAGE, "state-machines-tutorial.md"];
+const EXCERPT_SOURCE = path.join(REPO_ROOT, "packages/cli/test/fixtures/hsm-guide-excerpts.md");
+const FENCED_FILES = [...FENCED_PAGES.map((page) => path.join(GUIDE_DIR, page)), EXCERPT_SOURCE];
 const SCAFFOLD_TSCONFIG = path.join(import.meta.dir, "scaffold-tsconfig.json");
 const HSM_INDEX_SOURCE = path.join(REPO_ROOT, "packages", "hsm", "src", "index.ts");
 
@@ -60,10 +65,31 @@ function fenceTitle(info: string): string | undefined {
   return title.length > 0 ? title : undefined;
 }
 
+const TS_FENCE = /^```ts(?=[\s{]|$)([^\n]*)\n([\s\S]*?)^```/gm;
+
+// The info string's second token, as the docs site reads `original`: Shiki and
+// the language badge take only the first, so the fence still renders as `ts`.
+function isExcerptFence(info: string): boolean {
+  return info.trim().split(/\s+/)[0] === "excerpt";
+}
+
+function collapseWhitespace(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/** The `ts excerpt` fences of `guide` that `source` does not hold, whitespace aside. */
+function unquotedExcerpts(guide: string, source: string): string[] {
+  return [...guide.matchAll(TS_FENCE)]
+    .filter((m) => isExcerptFence(m[1] as string))
+    .map((m) => collapseWhitespace(m[2] as string))
+    .filter((excerpt) => excerpt.length === 0 || !source.includes(excerpt));
+}
+
 function guideFences(guide: string): Fence[] {
   const fences: Fence[] = [];
   let index = 0;
-  for (const m of guide.matchAll(/^```ts(?=[\s{]|$)([^\n]*)\n([\s\S]*?)^```/gm)) {
+  for (const m of guide.matchAll(TS_FENCE)) {
+    if (isExcerptFence(m[1] as string)) continue;
     const title = fenceTitle(m[1] as string);
     const body = m[2] as string;
     if (title === undefined) {
@@ -158,8 +184,9 @@ function typeCheck(project: FenceProject): Map<string, string[]> {
   return byFile;
 }
 
-for (const page of FENCED_PAGES) {
-  const guide = readFileSync(path.join(GUIDE_DIR, page), "utf8");
+for (const file of FENCED_FILES) {
+  const page = path.basename(file);
+  const guide = readFileSync(file, "utf8");
 
   let pageProject: FenceProject | undefined;
   const pageFenceProject = (): FenceProject => {
@@ -234,6 +261,26 @@ describe("hsm guide fence gate", () => {
     },
     SLOW,
   );
+});
+
+describe("hsm guide excerpts", () => {
+  const source = collapseWhitespace(
+    guideFences(readFileSync(EXCERPT_SOURCE, "utf8"))
+      .map((fence) => fence.body)
+      .join("\n"),
+  );
+
+  for (const page of FENCED_PAGES) {
+    test(`every ts excerpt fence on ${page} quotes the excerpt source`, () => {
+      const guide = readFileSync(path.join(GUIDE_DIR, page), "utf8");
+      expect(unquotedExcerpts(guide, source)).toEqual([]);
+    });
+  }
+
+  test("the gate can fail: an excerpt the source does not hold is reported", () => {
+    const guide = '```ts excerpt\nafter: { 5: "/nowhere" }\n```\n';
+    expect(unquotedExcerpts(guide, source)).toEqual(['after: { 5: "/nowhere" }']);
+  });
 });
 
 /**

@@ -7,7 +7,7 @@ toc-title: State machines
 
 It replaces the `if (self.state === ...)` branches that otherwise spread across `update` and `on_message`.
 
-This page covers the model first (states, transitions, timers and the order things run in), then how to use a machine from a script, its types, a worked migration, and a reference table. Every sample on it compiles against the declarations the import resolves to.
+This page covers the model first (states, transitions, timers and the order things run in), then how to use a machine from a script, its types, a worked migration, a [cheat sheet](#cheat-sheet) of snippets to copy, and a reference table. Every sample on it compiles against the declarations the import resolves to.
 
 ## Import it
 
@@ -618,6 +618,8 @@ export default defineScript({
 
 `self.door.matches("/open")`, `self.door.path` and `self.door.ctx` read the current state from any callback. Stopping in `final` runs the `exit` hooks of whatever is active, so `opening` cancels its animation even when the object is deleted mid-fade.
 
+Here `self` takes its type from what `init` returns. For a named `Self` type, a `properties` block, or a machine that starts later, see [Type `self`](#type-self) in the cheat sheet.
+
 A module-level instance (`const door = doorMachine.start(...)` at the top of a script file) is shared by every object that runs the script; see [Where script state lives](./script-state.md).
 
 ## Hot reload
@@ -743,7 +745,7 @@ m.send({ type: "LOSE" }); // a new table on every call
 
 **Events are `EventObject`s.** `E` is a union of objects that each have a string `type`, plus any payload fields. `on` accepts only those `type` values as keys, and each `when` and `run` sees the variant its key names.
 
-**`start` returns a `MachineInstance<Ctx, E, P>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, `when` and `run` are typed before the paths are known, so the `machine` they receive is a `MachineInstance<Ctx, E>` whose `path` and `matches()` use plain `string`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`.
+**`start` returns a `MachineInstance<Ctx, E, P>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, `when` and `run` are typed before the paths are known, so the `machine` they receive is a `MachineInstance<Ctx, E>` whose `path` and `matches()` use plain `string`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`. The context, event and path types come from the machine the same way; see [Read types off the machine](#read-types-off-the-machine).
 
 **`StatePath<C>` lists a config's paths,** each with its leading `/`. Paths are spelled out four levels deep; below that, any string under a fourth-level path is accepted.
 
@@ -1156,6 +1158,488 @@ Two rules carry over to any migration:
 
 - **Give the machine an object, not `self`.** `init`'s return value is copied onto the engine-owned `self`, so a context built from loose fields in `init` would keep stale copies of them. The player's `init` builds one `body` object, starts the machine on it and returns `{ body, motion }`; every hook then reads and writes `self.body`, the same object the machine sees.
 - **A state is as fresh as its last update.** `grounded` reflects the contacts seen by the last `fixed_update`, while the old check read `ground_contact` after the physics step that followed it. So the player can now jump on the one physics step after walking off a ledge, a single step of leniency the example accepts.
+
+## Cheat sheet
+
+Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies.
+
+### Configure a state
+
+<div class="table-scroll code-table">
+<table>
+<thead>
+<tr><th>I want to</th><th>Solution</th><th>Snippet</th></tr>
+</thead>
+<tbody>
+<tr><td>
+
+Move to a state when an event arrives
+
+</td><td>
+
+Name the target under [`on`](#events-and-transitions)
+
+</td><td>
+
+```ts excerpt
+on: { PAUSE: "/paused" }
+```
+
+</td></tr>
+<tr><td>
+
+Move only when a check passes
+
+</td><td>
+
+A rule with `to` and `when`; in a list of rules, the first that passes wins
+
+</td><td>
+
+```ts excerpt
+on: {
+  HIT: {
+    to: "/dying",
+    when: (ctx, event) =>
+      ctx.health <= event.damage,
+  },
+}
+```
+
+</td></tr>
+<tr><td>
+
+React to an event and stay in the state
+
+</td><td>
+
+A rule with `run` and no `to`
+
+</td><td>
+
+```ts excerpt
+on: {
+  HIT: {
+    run: (ctx, event) => {
+      ctx.health -= event.damage;
+    },
+  },
+}
+```
+
+</td></tr>
+<tr><td>
+
+Move after a delay
+
+</td><td>
+
+[`after`](#update-and-after), keyed by seconds on the state's clock
+
+</td><td>
+
+```ts excerpt
+after: { 5: "/alive/patrol" }
+```
+
+</td></tr>
+<tr><td>
+
+Decide where to go as soon as a state is entered
+
+</td><td>
+
+[`always`](#move-on-at-once-with-always): the first rule whose `when` passes wins
+
+</td><td>
+
+```ts excerpt
+always: [
+  { to: "/gone", when: (ctx) => ctx.health <= 0 },
+  { to: "/alive" },
+]
+```
+
+</td></tr>
+<tr><td>
+
+Check something every frame
+
+</td><td>
+
+[`update`](#update-and-after): return a path to move there, `undefined` to stay
+
+</td><td>
+
+```ts excerpt
+update: (ctx) =>
+  ctx.health < 2 ? "/alive/patrol" : undefined
+```
+
+</td></tr>
+<tr><td>
+
+Come back to the child that was active
+
+</td><td>
+
+[`restoreDepth`](#resume-with-history) on the parent state
+
+</td><td>
+
+```ts excerpt
+restoreDepth: 1
+```
+
+</td></tr>
+<tr><td>
+
+Wait for an engine callback
+
+</td><td>
+
+[`task`](#engine-callbacks-task-and-finish): call `finish` with an event when the work ends
+
+</td><td>
+
+```ts excerpt
+task: (_ctx, finish) => {
+  sound.play("#death", {}, () => {
+    finish({ type: "DEAD" });
+  });
+}
+```
+
+</td></tr>
+<tr><td>
+
+Clean up on every way out of a state
+
+</td><td>
+
+`exit`, which also runs on `stop()`
+
+</td><td>
+
+```ts excerpt
+exit: (ctx) =>
+  go.cancel_animations(ctx.sprite, "tint.w")
+```
+
+</td></tr>
+<tr><td>
+
+Stop the machine from one of its states
+
+</td><td>
+
+`machine.stop()` in a hook; see [Run to completion, `task` and `stop`](#run-to-completion-task-and-stop)
+
+</td><td>
+
+```ts excerpt
+enter: (_ctx, machine) => machine.stop()
+```
+
+</td></tr>
+<tr><td>
+
+Take a Defold message as an event
+
+</td><td>
+
+List it in [`messageEvents`](#the-message-bridge), then send what `toEvent` returns from `on_message`, unless it is `undefined`
+
+</td><td>
+
+```ts excerpt
+export const guardEvents = messageEvents([
+  "trigger_response",
+]);
+```
+
+```ts excerpt
+on_message(self, message_id, message, sender) {
+  const event = guardEvents.toEvent(
+    message_id,
+    message,
+    sender,
+  );
+  if (event !== undefined) {
+    self.guard.send(event);
+  }
+}
+```
+
+</td></tr>
+<tr><td>
+
+Keep running instances through a hot reload
+
+</td><td>
+
+Pass a [key](#hot-reload) to the first call
+
+</td><td>
+
+```ts excerpt
+defineMachine<GuardCtx, GuardEvent>("guard")
+```
+
+</td></tr>
+</tbody>
+</table>
+</div>
+
+### Read types off the machine
+
+Every type comes from the exported machine, so nothing is declared twice; see [Types](#types). `import type` is enough for these.
+
+<div class="table-scroll code-table">
+<table>
+<thead>
+<tr><th>I want to</th><th>Solution</th><th>Snippet</th></tr>
+</thead>
+<tbody>
+<tr><td>
+
+Name the type of a running instance
+
+</td><td>
+
+`ReturnType` of the machine's `start`
+
+</td><td>
+
+```ts excerpt
+type Guard = ReturnType<
+  typeof guardMachine.start
+>;
+```
+
+</td></tr>
+<tr><td>
+
+Name the context type
+
+</td><td>
+
+Index the instance type
+
+</td><td>
+
+```ts excerpt
+type GuardCtx = Guard["ctx"];
+```
+
+</td></tr>
+<tr><td>
+
+Name every event the machine takes
+
+</td><td>
+
+The parameter of `send`
+
+</td><td>
+
+```ts excerpt
+type GuardEvent = Parameters<Guard["send"]>[0];
+```
+
+</td></tr>
+<tr><td>
+
+Name every state path
+
+</td><td>
+
+`path`, without its `undefined`
+
+</td><td>
+
+```ts excerpt
+type GuardPath = NonNullable<Guard["path"]>;
+```
+
+</td></tr>
+<tr><td>
+
+Name the event a message mapper builds
+
+</td><td>
+
+What `toEvent` returns, without its `undefined`
+
+</td><td>
+
+```ts excerpt
+type GuardMessage = NonNullable<
+  ReturnType<typeof guardEvents.toEvent>
+>;
+```
+
+</td></tr>
+<tr><td>
+
+Pass an instance to a function
+
+</td><td>
+
+Use the instance type as the parameter type
+
+</td><td>
+
+```ts excerpt
+function isAlive(guard: Guard): boolean {
+  return guard.matches("/alive");
+}
+```
+
+</td></tr>
+<tr><td>
+
+Write a function for any machine with this context and these events
+
+</td><td>
+
+Add a type parameter for the paths: without it, `MachineInstance` takes `string` paths, which a started instance does not fit
+
+</td><td>
+
+```ts excerpt
+function hurt<P extends string>(
+  guard: MachineInstance<GuardCtx, GuardEvent, P>,
+): void {
+  guard.send({ type: "HIT", damage: 1 });
+}
+```
+
+</td></tr>
+</tbody>
+</table>
+</div>
+
+### Type `self`
+
+<div class="table-scroll code-table">
+<table>
+<thead>
+<tr><th>I want to</th><th>Solution</th><th>Snippet</th></tr>
+</thead>
+<tbody>
+<tr><td>
+
+Get a typed `self.guard` with no annotation
+
+</td><td>
+
+Return the instance from `init`; see [One instance per object, on `self`](#one-instance-per-object-on-self)
+
+</td><td>
+
+```ts excerpt
+init() {
+  const sprite = msg.url("#sprite");
+  const ctx = { sprite, health: 3 };
+  return { guard: guardMachine.start(ctx) };
+}
+```
+
+</td></tr>
+<tr><td>
+
+Pass `self` to a function
+
+</td><td>
+
+Name a `Self` type whose field comes from the definition, then call `defineScript<Self>`; `defineGuiScript` takes it the same way
+
+</td><td>
+
+```ts excerpt
+type Self = {
+  guard: ReturnType<typeof guardMachine.start>;
+};
+
+function tick(self: Self, dt: number): void {
+  self.guard.update(dt);
+}
+```
+
+</td></tr>
+<tr><td>
+
+Name `self` beside a `properties` block
+
+</td><td>
+
+Annotate what `init` returns: `defineScript<Self>` would read `Self` as the properties. See [Three ways to type `self`](./script-lifecycle.md#three-ways-to-type-self)
+
+</td><td>
+
+```ts excerpt
+init(self): Self {
+  const sprite = msg.url("#sprite");
+  const ctx = { sprite, health: self.health };
+  return { guard: guardMachine.start(ctx) };
+}
+```
+
+</td></tr>
+<tr><td>
+
+Start the machine after `init`
+
+</td><td>
+
+Make the field optional and check it before each use
+
+</td><td>
+
+```ts excerpt
+type Self = {
+  guard?: ReturnType<typeof guardMachine.start>;
+};
+```
+
+```ts excerpt
+if (self.guard !== undefined) {
+  self.guard.update(dt);
+}
+```
+
+</td></tr>
+<tr><td>
+
+Build the machine in `init`, from a property
+
+</td><td>
+
+Build it in a function with no hot reload key, call that from `init`, and read the instance type through the function
+
+</td><td>
+
+```ts excerpt
+function buildGuardMachine(patrolFor: number) {
+  return defineMachine<Ctx, HitEvent>()({
+    initial: "/patrol",
+    states: {
+      patrol: { after: { [patrolFor]: "/rest" } },
+      rest: { on: { HIT: "/patrol" } },
+    },
+  });
+}
+
+type Guard = ReturnType<
+  ReturnType<typeof buildGuardMachine>["start"]
+>;
+```
+
+</td></tr>
+</tbody>
+</table>
+</div>
 
 ## Reference
 
