@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { type FieldName, fieldError } from "./fields";
+import { JsonDialog } from "./json-dialog";
 import { LayoutToggle } from "./layouts";
 import { SearchBox } from "./search-box";
 import { SPEEDS, useViewer, type ViewerStore } from "./store";
@@ -92,6 +93,18 @@ export function Bar({ store }: { store: ViewerStore }) {
             ))}
           </NativeSelect>
           {input("startCtx", { "aria-label": "start ctx", className: "h-8 w-40 px-2" })}
+          <JsonDialog
+            field="startCtx"
+            title="Start ctx"
+            confirmLabel="Start"
+            disabled={!simulating}
+            read={() => form.getFieldValue("startCtx")}
+            onConfirm={(text) => {
+              form.setFieldValue("startCtx", text);
+              actions.setStartCtx(text);
+              void actions.start();
+            }}
+          />
           <Button
             type="button"
             size="sm"
@@ -144,6 +157,16 @@ export function Bar({ store }: { store: ViewerStore }) {
             title: "the event's other fields, as an object literal or JSON",
             className: "h-8 w-36 px-2",
           })}
+          <JsonDialog
+            field="payload"
+            title="Payload"
+            confirmLabel="Apply"
+            read={() => form.getFieldValue("payload")}
+            onConfirm={(text) => {
+              form.setFieldValue("payload", text);
+              actions.setPayload(text);
+            }}
+          />
         </Group>
         <Group label="time">
           <Button

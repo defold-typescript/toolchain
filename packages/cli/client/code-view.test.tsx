@@ -2,6 +2,8 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } fr
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+// A document must exist before a component loads Radix; see test-dom.ts.
+import "./test-dom";
 import type { Snapshot } from "../src/hsm-view-session";
 import { CodeView } from "./code-view";
 import { act, cleanup, fireEvent, registerDom, render, unregisterDom, waitFor } from "./test-dom";
