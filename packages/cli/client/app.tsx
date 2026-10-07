@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Panel } from "react-resizable-panels";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import type { LiveMessage } from "../src/hsm-view-live";
 import type { ReloadMessage } from "../src/hsm-view-server";
 import { Bar } from "./bar";
@@ -7,7 +9,7 @@ import { CtxTree } from "./ctx-tree";
 import { CodeArea } from "./layouts";
 import { LogPane } from "./log-pane";
 import { Handle, SavedGroup } from "./panels";
-import { createViewerStore, useViewer, type ViewerStore } from "./store";
+import { createViewerStore, DISCONNECTED, useViewer, type ViewerStore } from "./store";
 
 function useServerEvents(store: ViewerStore): void {
   useEffect(() => {
@@ -33,16 +35,14 @@ function Banner({ store }: { store: ViewerStore }) {
   const disconnected = useViewer(store, (state) => state.disconnected);
   const reloadError = useViewer(store, (state) => state.reloadError);
   const halted = useViewer(store, (state) => state.snapshot?.error);
-  const error = useViewer(store, (state) => state.error);
   const liveBanner = useViewer(store, (state) => state.live.banner);
   const messages = [
     liveBanner,
-    disconnected ? "disconnected - run hsm-view again" : undefined,
+    disconnected ? DISCONNECTED : undefined,
     reloadError === undefined
       ? undefined
       : `reload failed, showing the last good load: ${reloadError}`,
     halted === undefined ? undefined : `halted: ${halted} - Start to run again`,
-    error,
   ].filter((message): message is string => message !== undefined);
   if (messages.length === 0) {
     return null;
@@ -59,7 +59,7 @@ function Banner({ store }: { store: ViewerStore }) {
 }
 
 export function App() {
-  const [store] = useState(createViewerStore);
+  const [store] = useState(() => createViewerStore({ notify: (message) => toast.error(message) }));
   useServerEvents(store);
 
   return (
@@ -85,6 +85,7 @@ export function App() {
           </Panel>
         </SavedGroup>
       </div>
+      <Toaster />
     </main>
   );
 }
