@@ -327,6 +327,7 @@ export function collectOutputs(
 function transpileVirtual(
   files: Readonly<Record<string, string>>,
   companionEmit: ReturnType<typeof createCompanionEmitPlugin>,
+  overrides: Pick<tstl.CompilerOptions, "removeComments"> = {},
 ): tstl.TranspileVirtualProjectResult {
   return tstl.transpileVirtualProject(
     { ...AMBIENT_FILES, ...files },
@@ -354,6 +355,7 @@ function transpileVirtual(
         { plugin: typeApplicationErasurePlugin },
         { plugin: companionEmit.plugin },
       ],
+      ...overrides,
     },
   );
 }
@@ -398,7 +400,9 @@ export function compileHsmModules(): Readonly<Record<string, string>> {
     nameByKey.set(key, name);
     files[key] = readFileSync(path.join(sourceDir, `${name}.ts`), "utf8");
   }
-  const result = transpileVirtual(files, createCompanionEmitPlugin());
+  // The source's doc comments are for the editor, which reads the declarations; the Lua a
+  // project gets carries none of them.
+  const result = transpileVirtual(files, createCompanionEmitPlugin(), { removeComments: true });
 
   const problems = result.diagnostics.map(
     (d) => `${d.file?.fileName ?? "(project)"}: ${flattenDiagnosticMessage(d.messageText)}`,
