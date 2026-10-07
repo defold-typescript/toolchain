@@ -5,6 +5,7 @@ import type { HsmViewIndex, ReloadMessage } from "../src/hsm-view-server";
 import type { Snapshot } from "../src/hsm-view-session";
 import { httpApi, type ViewerApi } from "./api";
 import { type CtxPath, changedLeaves, type Primitive } from "./ctx";
+import { readDt, readPayload, readStartCtx } from "./fields";
 import {
   applySnapshot,
   type ClickableKey,
@@ -16,7 +17,6 @@ import {
   type SpanId,
   spansByLine,
 } from "./highlight";
-import { parseLiteral } from "./literal";
 import { liveSnapshot } from "./live";
 import { appendEntries, emptyLog, type Log, type LogKind } from "./log";
 import { emptySearch, type SearchState, search, step } from "./search";
@@ -144,8 +144,6 @@ const animationFrames: FrameScheduler = {
   cancel: (id) => cancelAnimationFrame(id),
 };
 
-class InputError extends Error {}
-
 function lineSpansOf(index: HsmViewIndex): LineSpan[][][] {
   const spans = [...indexSpans(index)];
   return index.files.map((file, fileIndex) =>
@@ -154,25 +152,6 @@ function lineSpansOf(index: HsmViewIndex): LineSpan[][][] {
       spans.filter(([, span]) => span.file === fileIndex),
     ),
   );
-}
-
-function parseField(text: string, what: string): unknown {
-  if (text.trim() === "") {
-    return {};
-  }
-  try {
-    return parseLiteral(text);
-  } catch (thrown) {
-    throw new InputError(`${what} cannot be read: ${(thrown as Error).message}`);
-  }
-}
-
-function parsePayload(text: string): Record<string, unknown> {
-  const payload = parseField(text, "the payload");
-  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
-    throw new InputError("the payload must be an object");
-  }
-  return payload as Record<string, unknown>;
 }
 
 function firstKeyLine(
@@ -492,19 +471,12 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         while (inFlight !== undefined) {
           await inFlight;
         }
-        await call(() => api.post("start", { ctx: parseField(get().startCtx, "the start ctx") }));
+        await call(() => api.post("start", { ctx: readStartCtx(get().startCtx) }));
       },
       send: (type) =>
-        call(() => api.post("send", { event: { ...parsePayload(get().payload), type } })),
+        call(() => api.post("send", { event: { ...readPayload(get().payload), type } })),
       update: (dt) => call(() => api.post("update", { dt })),
-      step: () =>
-        call(() => {
-          const dt = Number(get().dt);
-          if (get().dt.trim() === "" || !Number.isFinite(dt)) {
-            throw new InputError("dt must be a number");
-          }
-          return api.post("update", { dt });
-        }),
+      step: () => call(() => api.post("update", { dt: readDt(get().dt) })),
       edit: (path, value) => call(() => api.post("edit", { path, value })),
       pick: async (name) => {
         await get().detach();
