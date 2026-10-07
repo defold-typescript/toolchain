@@ -13,12 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`hsm`](./state-machines.md#cheat-sheet)** has a cheat sheet and hover docs; [`hsm-view`](./hsm-view.md) reads object literals and takes the docs site's colors.
+> - **[`hsm`](./state-machines.md#cheat-sheet)** gains a cheat sheet and hover docs; [`hsm-view`](./hsm-view.md) reads object literals and takes the docs site's colors and control styles.
 
 ### Improved
 
 - **`hsm` documents itself in the editor:** every config key, every `MachineInstance` member and every export of the four `hsm` modules shows what it does on hover and beside each completion; see [Reference](./state-machines.md#reference).
-- **`hsm-view` takes the docs site's colors:** the page, its text and its borders use the docs site's palette in light and dark; see [Read the code](./hsm-view.md#read-the-code).
+- **`hsm-view` takes the docs site's look:** the page uses the docs site's palette in light and dark, and its buttons, fields, dropdowns, layout toggle and log checkboxes show hover, focus and disabled states on a muted bar; see [Run the machine](./hsm-view.md#run-the-machine).
 - **`hsm-view` fields read object literals:** the starting context and the event payload take a TypeScript object literal such as `{ enter: true, from: 'pad' }` as well as JSON, so a bare key, a single-quoted string and a trailing comma are all read. A field that cannot be read shows an error naming the column of the mistake; see [Run the machine](./hsm-view.md#run-the-machine).
 - **The State machines guide has a cheat sheet:** three tables pair a task with its solution and a snippet to copy, covering each common state config part, the instance, context, event and path types read off the machine with `typeof` and `ReturnType`, and five ways to type `self`; see [Cheat sheet](./state-machines.md#cheat-sheet).
 

@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { LayoutToggle } from "./layouts";
 import { SearchBox } from "./search-box";
 import { SPEEDS, useViewer, type ViewerStore } from "./store";
-
-const BUTTON =
-  "cursor-pointer border border-border px-2 disabled:cursor-default disabled:opacity-50";
-const FIELD = "border border-border bg-background px-1";
 
 function Group({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -37,11 +36,11 @@ export function Bar({ store }: { store: ViewerStore }) {
   const actions = store.getState();
 
   return (
-    <header className="flex flex-wrap items-center gap-x-4 gap-y-1 border-border border-b px-2 py-1">
+    <header className="flex flex-wrap items-center gap-x-4 gap-y-1 border-border border-b bg-muted px-2 py-1">
       <Group label="machine">
-        <select
+        <NativeSelect
           aria-label="machine"
-          className={FIELD}
+          size="sm"
           value={picked ?? ""}
           onChange={(event) => {
             actions.setPlaying(false);
@@ -49,31 +48,26 @@ export function Bar({ store }: { store: ViewerStore }) {
           }}
         >
           {(machines ?? []).map((name) => (
-            <option key={name} value={name}>
+            <NativeSelectOption key={name} value={name}>
               {name}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
-        <input
+        </NativeSelect>
+        <Input
           aria-label="start ctx"
-          className={`${FIELD} w-40`}
+          className="h-8 w-40 px-2"
           value={startCtx}
           onChange={(event) => actions.setStartCtx(event.target.value)}
         />
-        <button
-          type="button"
-          className={BUTTON}
-          disabled={!simulating}
-          onClick={() => void actions.start()}
-        >
+        <Button type="button" size="sm" disabled={!simulating} onClick={() => void actions.start()}>
           Start
-        </button>
+        </Button>
       </Group>
       <Group label="live">
-        <select
+        <NativeSelect
           aria-label="live instance"
           title="an inspected instance of the game running from the editor"
-          className={FIELD}
+          size="sm"
           value={attached ?? ""}
           onChange={(event) => {
             const label = event.target.value;
@@ -84,70 +78,73 @@ export function Bar({ store }: { store: ViewerStore }) {
             }
           }}
         >
-          <option value="">live: off</option>
+          <NativeSelectOption value="">live: off</NativeSelectOption>
           {instances.map((instance) => (
-            <option key={instance.label} value={instance.label}>
+            <NativeSelectOption key={instance.label} value={instance.label}>
               {instance.stopped ? `${instance.label} (stopped)` : instance.label}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
+        </NativeSelect>
       </Group>
       <Group label="events">
         {(accepts ?? []).map((type) => (
-          <button
+          <Button
             key={type}
             type="button"
-            className={BUTTON}
+            variant="outline"
+            size="sm"
             disabled={!simulating}
             onClick={() => void actions.send(type)}
           >
             {type}
-          </button>
+          </Button>
         ))}
-        <input
+        <Input
           aria-label="payload"
           placeholder="payload {a: 1}"
           title="the event's other fields, as an object literal or JSON"
-          className={`${FIELD} w-32`}
+          className="h-8 w-36 px-2"
           value={payload}
           onChange={(event) => actions.setPayload(event.target.value)}
         />
       </Group>
       <Group label="time">
-        <button
+        <Button
           type="button"
-          className={BUTTON}
+          variant="secondary"
+          size="sm"
           disabled={!running || !simulating}
           onClick={() => actions.setPlaying(!playing)}
         >
           {playing ? "Pause" : "Play"}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className={BUTTON}
+          variant="secondary"
+          size="sm"
           disabled={!running || playing || !simulating}
           onClick={() => void actions.step()}
         >
           Step
-        </button>
-        <input
+        </Button>
+        <Input
           aria-label="dt"
-          className={`${FIELD} w-14`}
+          className="h-8 w-14 px-2"
           value={dt}
           onChange={(event) => actions.setDt(event.target.value)}
         />
-        <select
+        <NativeSelect
           aria-label="speed"
-          className={FIELD}
+          size="sm"
           value={speed}
           onChange={(event) => actions.setSpeed(Number(event.target.value))}
         >
           {SPEEDS.map((option) => (
-            <option key={option} value={option}>
+            <NativeSelectOption key={option} value={option}>
               {speedLabel(option)}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
+        </NativeSelect>
         <span className="tabular-nums">t={t.toFixed(2)}</span>
       </Group>
       <span className="min-w-0 truncate text-muted-foreground" title="active leaves">
