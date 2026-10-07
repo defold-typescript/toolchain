@@ -48,7 +48,7 @@ function Banner({ store }: { store: ViewerStore }) {
     return null;
   }
   return (
-    <div role="alert" className="border-rule border-b px-2 py-1 text-syntax-keyword">
+    <div role="alert" className="border-border border-b px-2 py-1 text-destructive">
       {messages.map((message) => (
         <p key={message} className="whitespace-pre-wrap">
           {message}
@@ -63,7 +63,7 @@ export function App() {
   useServerEvents(store);
 
   return (
-    <main className="flex h-screen flex-col bg-page font-mono text-ink text-sm leading-5">
+    <main className="flex h-screen flex-col bg-background font-mono text-foreground text-sm leading-5">
       <Bar store={store} />
       <Banner store={store} />
       <div className="min-h-0 flex-1">

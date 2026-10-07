@@ -141,8 +141,8 @@ export function useCodeData(store: ViewerStore): CodeData {
 }
 
 const MARK_CLASS: Readonly<Record<MatchMark, string>> = {
-  match: "outline outline-1 outline-muted",
-  current: "outline outline-2 outline-ink",
+  match: "outline outline-1 outline-muted-foreground",
+  current: "outline outline-2 outline-foreground",
 };
 
 function SegmentView({ segment, data }: { segment: Segment; data: CodeData }) {
@@ -195,7 +195,9 @@ export function CodeLine({ data, file, line }: { data: CodeData; file: number; l
 
   return (
     <div data-line={line} className="flex whitespace-pre" style={{ height: LINE_HEIGHT }}>
-      <span className="w-12 shrink-0 select-none pr-4 text-right text-muted">{line + 1}</span>
+      <span className="w-12 shrink-0 select-none pr-4 text-right text-muted-foreground">
+        {line + 1}
+      </span>
       <span>
         {groups.map((group, groupIndex) => {
           const pieces = group.segments.map((segment, segmentIndex) => (
