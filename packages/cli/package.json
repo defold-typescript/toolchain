@@ -56,9 +56,14 @@
     "@testing-library/react": "^16.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.52.0",
+    "radix-ui": "^1.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-resizable-panels": "^4.14.2",
+    "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3",
     "zustand": "^5.0.15"
   }

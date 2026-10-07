@@ -1,5 +1,6 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useMemo, useRef } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { SnapshotEntry } from "../src/hsm-view-session";
 import { LINE_HEIGHT } from "./code-view";
 import { type LogKind, visibleLines } from "./log";
@@ -67,11 +68,19 @@ export function LogPane({ store }: { store: ViewerStore }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-border border-b px-2">
+      <div className="flex items-center gap-3 border-border border-b bg-muted px-2">
         <span className="text-muted-foreground">log</span>
         {KINDS.map(({ kind, label }) => (
-          <label key={kind} className="flex cursor-pointer items-center gap-1">
-            <input type="checkbox" checked={!hidden.has(kind)} onChange={() => toggleKind(kind)} />
+          <label
+            key={kind}
+            htmlFor={`log-kind-${kind}`}
+            className="flex cursor-pointer items-center gap-1"
+          >
+            <Checkbox
+              id={`log-kind-${kind}`}
+              checked={!hidden.has(kind)}
+              onCheckedChange={() => toggleKind(kind)}
+            />
             {label}
           </label>
         ))}

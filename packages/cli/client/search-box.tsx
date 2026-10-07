@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Input } from "@/components/ui/input";
 import { useViewer, type ViewerStore } from "./store";
 
 /**
@@ -37,12 +38,12 @@ export function SearchBox({ store }: { store: ViewerStore }) {
   const count = search.matches.length;
   return (
     <div className="flex items-center gap-1">
-      <input
+      <Input
         ref={inputRef}
         type="search"
         aria-label="search the code"
         placeholder="search"
-        className="w-40 border border-border bg-background px-1"
+        className="h-8 w-40"
         value={search.query}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={(event) => {
