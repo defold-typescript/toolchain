@@ -69,20 +69,28 @@ interface DeclaredSignature {
   readonly parameters: readonly string[];
 }
 
-// Each declared signature of `base` (`b2d.shape.get_body`, `client:send`).
-function declaredSignatures(base: string): DeclaredSignature[] {
-  const [owner, method] = base.includes(":") ? base.split(":") : [undefined, undefined];
-  const namespace = base.slice(0, base.lastIndexOf("."));
-  const name = base.slice(base.lastIndexOf(".") + 1);
-  const found: DeclaredSignature[] = [];
-  const files = [
+// Parsed once for the whole file: a lookup per classified slot that re-read and re-parsed
+// every declaration file took the scalar test past its timeout on Windows runners.
+let parsedDeclarations: ts.SourceFile[] | undefined;
+
+function declarationSources(): ts.SourceFile[] {
+  parsedDeclarations ??= [
     ...[GENERATED_ROOT, AUTHORED_ROOT].flatMap((root) =>
       readdirSync(root)
         .filter((entry) => entry.endsWith(".d.ts"))
         .map((entry) => readFileSync(path.join(root, entry), "utf8")),
     ),
     ...Object.values(EDITOR_DECLARATIONS),
-  ];
+  ].map((text) => ts.createSourceFile("d.ts", text, ts.ScriptTarget.Latest, true));
+  return parsedDeclarations;
+}
+
+// Each declared signature of `base` (`b2d.shape.get_body`, `client:send`).
+function declaredSignatures(base: string): DeclaredSignature[] {
+  const [owner, method] = base.includes(":") ? base.split(":") : [undefined, undefined];
+  const namespace = base.slice(0, base.lastIndexOf("."));
+  const name = base.slice(base.lastIndexOf(".") + 1);
+  const found: DeclaredSignature[] = [];
   const visit = (node: ts.Node, path: string): void => {
     if (ts.isModuleDeclaration(node)) {
       const next =
@@ -114,8 +122,7 @@ function declaredSignatures(base: string): DeclaredSignature[] {
     }
     ts.forEachChild(node, (child) => visit(child, path));
   };
-  for (const text of files)
-    visit(ts.createSourceFile("d.ts", text, ts.ScriptTarget.Latest, true), "");
+  for (const source of declarationSources()) visit(source, "");
   return found;
 }
 

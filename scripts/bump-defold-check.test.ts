@@ -286,22 +286,26 @@ describe("runBumpCheck — drift root split makes staling the sole cause", () =>
 });
 
 describe("bump:defold --check command — stale artifact exit code", () => {
-  test("a fresh-correct check root exits 0; staling its llms.txt flips the command to exit 1", () => {
+  test("a fresh-correct check root exits 0; staling its llms.txt flips the command to exit 1", async () => {
     const freshRoot = freshCorrectRoot();
     const staleRoot = freshCorrectRoot({ llmsTxt: "STALE llms corpus\n" });
+    const check = async (root: string): Promise<{ exitCode: number; stdout: string }> => {
+      const proc = Bun.spawn(["bun", "scripts/bump-defold.ts", "--check"], {
+        cwd: REPO_ROOT,
+        env: { ...process.env, BUMP_DEFOLD_CHECK_ROOT: root },
+        stdout: "pipe",
+        stderr: "ignore",
+      });
+      const [stdout, exitCode] = await Promise.all([new Response(proc.stdout).text(), proc.exited]);
+      return { exitCode, stdout };
+    };
     try {
-      const okProc = Bun.spawnSync(["bun", "scripts/bump-defold.ts", "--check"], {
-        cwd: REPO_ROOT,
-        env: { ...process.env, BUMP_DEFOLD_CHECK_ROOT: freshRoot },
-      });
-      expect(okProc.exitCode).toBe(0);
-
-      const staleProc = Bun.spawnSync(["bun", "scripts/bump-defold.ts", "--check"], {
-        cwd: REPO_ROOT,
-        env: { ...process.env, BUMP_DEFOLD_CHECK_ROOT: staleRoot },
-      });
-      expect(staleProc.exitCode).toBe(1);
-      expect(staleProc.stdout.toString()).toMatch(/llms\.txt/);
+      // The check only reads, and each run has its own drift root, so the two run side by
+      // side: one after the other they reached the timeout on a slow Windows runner.
+      const [ok, stale] = await Promise.all([check(freshRoot), check(staleRoot)]);
+      expect(ok.exitCode).toBe(0);
+      expect(stale.exitCode).toBe(1);
+      expect(stale.stdout).toMatch(/llms\.txt/);
     } finally {
       rmSync(freshRoot, { recursive: true, force: true });
       rmSync(staleRoot, { recursive: true, force: true });
