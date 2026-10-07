@@ -105,7 +105,8 @@ export function Bar({ store }: { store: ViewerStore }) {
         ))}
         <input
           aria-label="payload"
-          placeholder="payload JSON"
+          placeholder="payload {a: 1}"
+          title="the event's other fields, as an object literal or JSON"
           className={`${FIELD} w-32`}
           value={payload}
           onChange={(event) => actions.setPayload(event.target.value)}

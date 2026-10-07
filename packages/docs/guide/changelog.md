@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.45.1
+
+> Summary:
+>
+> - **[`hsm-view`](./hsm-view.md)** fields read object literals.
+
+### Improved
+
+- **`hsm-view` fields read object literals:** the starting context and the event payload take a TypeScript object literal such as `{ enter: true, from: 'pad' }` as well as JSON, so a bare key, a single-quoted string and a trailing comma are all read. A field that cannot be read shows an error naming the column of the mistake; see [Run the machine](./hsm-view.md#run-the-machine).
+
 ## v0.45.0
 
 > Summary:

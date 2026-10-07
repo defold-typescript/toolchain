@@ -192,6 +192,31 @@ describe("viewer store", () => {
     expect(stamp(onKeySpanId("/air", "A|on|B"))).toBe(1);
     expect(tinted()).toEqual([stateSpanId("/ground"), stateSpanId("/ground/idle")]);
   });
+
+  test("takes the start ctx and the payload written as object literals", async () => {
+    const viewer = await startViewer(path.join(dir, "main.ts"), "{ fuel: 100 }");
+    expect(viewer.store.getState().snapshot?.ctx).toEqual({ fuel: 100 });
+
+    viewer.store.getState().setPayload("{enter: true, from: 'pad',}");
+    await viewer.store.getState().send("JUMP");
+
+    expect(viewer.store.getState().error).toBeUndefined();
+    expect(viewer.requests).toEqual([
+      { route: "/api/send", body: { event: { enter: true, from: "pad", type: "JUMP" } } },
+    ]);
+  });
+
+  test("names the field whose text cannot be read", async () => {
+    const viewer = await startViewer(path.join(dir, "main.ts"), "{ fuel: 0 }");
+
+    viewer.store.getState().setPayload("{enter: }");
+    await viewer.store.getState().send("JUMP");
+
+    expect(viewer.store.getState().error).toBe(
+      "the payload cannot be read: expected a value at column 9",
+    );
+    expect(viewer.requests).toEqual([]);
+  });
 });
 
 const COLLIDING = `import { defineMachine } from "@defold-typescript/types/hsm";
