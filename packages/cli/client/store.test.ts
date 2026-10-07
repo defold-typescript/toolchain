@@ -217,6 +217,21 @@ describe("viewer store", () => {
     );
     expect(viewer.requests).toEqual([]);
   });
+
+  test("refuses a dt and a start ctx that cannot be read, and posts nothing", async () => {
+    const viewer = await startViewer(path.join(dir, "main.ts"), "{ fuel: 0 }");
+
+    viewer.store.getState().setDt("abc");
+    await viewer.store.getState().step();
+    expect(viewer.store.getState().error).toBe("dt must be a number");
+
+    viewer.store.getState().setStartCtx("{ fuel: }");
+    await viewer.store.getState().start();
+    expect(viewer.store.getState().error).toBe(
+      "the start ctx cannot be read: expected a value at column 9",
+    );
+    expect(viewer.requests).toEqual([]);
+  });
 });
 
 const COLLIDING = `import { defineMachine } from "@defold-typescript/types/hsm";
