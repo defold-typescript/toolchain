@@ -6545,7 +6545,7 @@ A ctx panel beside the code shows the running instance's ctx as an expandable tr
 
 #### Read the log
 
-The log docks at the bottom with its newest line last. Each line shows its machine time. A line identical to the one above merges into it, and a count badge shows the repeats. One toggle per kind (transitions, events, engine calls, `print`) hides that kind; errors and reloads always show. The log follows the newest line unless you scroll up, and following resumes when you scroll back to the bottom. It keeps the newest 500 lines.
+The log docks at the bottom with its newest line last. Each line shows its machine time. A line identical to the one above merges into it, and a count badge shows the repeats. One toggle per kind (transitions, events, engine calls, `print`) hides that kind; errors and reloads always show. Every failed action adds an error line: a field a button could not read, a request the command refused, or a lost connection. The log follows the newest line unless you scroll up, and following resumes when you scroll back to the bottom. It keeps the newest 500 lines.
 
 #### What runs and what is stubbed
 
@@ -6582,6 +6582,8 @@ A banner names any reported state the picked machine does not define: either a d
 Every reason the viewer cannot start exits 1 with one message: a missing file, a file that defines no machine, an unknown `[name]` (the message lists the machine names), a throw while loading, or a local server that cannot start listening.
 
 A throw inside a hook while the machine runs halts it. The page shows the message, and only Start continues. Editing a file while halted still loads it, so the restart runs the edited source.
+
+A failed action that belongs to no field also shows in a popup that closes by itself. The banner under the bar shows what still holds: a lost connection, a failed reload, a halted machine, or a live instance in a state the picked machine does not define.
 
 #### JSON output
 

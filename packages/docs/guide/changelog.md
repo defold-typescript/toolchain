@@ -13,15 +13,16 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`hsm`](./state-machines.md#cheat-sheet)** gains a cheat sheet and hover docs; [`hsm-view`](./hsm-view.md) takes the docs site's look, shows icons on its controls, reads object literals, marks a field it cannot read and opens it in a dialog.
+> - **[`hsm`](./state-machines.md#cheat-sheet)** gains a cheat sheet and hover docs; [`hsm-view`](./hsm-view.md) takes the docs site's look, shows icons on its controls, reads object literals, marks a field it cannot read, opens it in a dialog and logs every failed action.
 
 ### Improved
 
 - **`hsm` documents itself in the editor:** every config key, every `MachineInstance` member and every export of the four `hsm` modules shows what it does on hover and beside each completion; see [Reference](./state-machines.md#reference).
-- **`hsm-view` has a new look, icons on its controls, and fields that check what you type and open in a dialog;** see [Run the machine](./hsm-view.md#run-the-machine):
+- **`hsm-view` has a new look, icons on its controls, fields that check what you type and open in a dialog, and a log line for every failed action;** see [Run the machine](./hsm-view.md#run-the-machine):
   - **Look** — the page uses the docs site's palette in light and dark, and its buttons, fields, dropdowns, layout toggle and log checkboxes show hover, focus and disabled states on a muted bar.
   - **Icons** — `Start`, `Play`, `Pause`, `Step` and the layout toggle's `List` and `Stacked` each draw an icon before the label, and the ctx tree's expand and collapse arrows are icons.
   - **Fields** — the starting context and the event payload take a TypeScript object literal such as `{ enter: true, from: 'pad' }` as well as JSON, and a field that cannot be read is outlined in red while you type, with a message that names where the mistake is. A button beside each field opens its text in a dialog with a multi-line editor, where `Start` or `Apply` writes it back.
+  - **Errors** — every failed action adds an error line to the log, and one that belongs to no field also shows in a popup that closes by itself. The banner under the bar shows what still holds, such as a lost connection or a halted machine; see [Errors](./hsm-view.md#errors).
 - **The State machines guide has a cheat sheet:** three tables pair a task with its solution and a snippet to copy, covering each common state config part, the instance, context, event and path types read off the machine with `typeof` and `ReturnType`, and five ways to type `self`; see [Cheat sheet](./state-machines.md#cheat-sheet).
 
 ## v0.45.0

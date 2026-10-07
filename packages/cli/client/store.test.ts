@@ -7,7 +7,13 @@ import { ruleId } from "../src/hsm-view-index";
 import { createHsmViewApp, type HsmViewIndex } from "../src/hsm-view-server";
 import { createSession, type HsmViewSession, type Snapshot } from "../src/hsm-view-session";
 import { onKeySpanId, ruleSpanId, stateSpanId } from "./highlight";
-import { createViewerStore, dimGlowKey, type FrameScheduler, type ViewerStore } from "./store";
+import {
+  createViewerStore,
+  DISCONNECTED,
+  dimGlowKey,
+  type FrameScheduler,
+  type ViewerStore,
+} from "./store";
 import { startViewer, type TestViewer } from "./test-viewer";
 
 const hsmSourceDir = requireHsmSourceDir();
@@ -539,6 +545,14 @@ export const dog = defineMachine("dog")({
 });
 `;
 
+function errorLines(viewer: TestViewer): { message: string; count: number }[] {
+  return viewer.store
+    .getState()
+    .log.lines.flatMap((line) =>
+      line.entry.kind === "error" ? [{ message: line.entry.message, count: line.count }] : [],
+    );
+}
+
 describe("live attach", () => {
   const enemy = { label: "enemy", leaves: ["/patrol/walk"], stopped: false };
   const enemy2 = { label: "enemy#2", leaves: ["/chase"], stopped: false };
@@ -612,6 +626,12 @@ describe("live attach", () => {
     expect(banner).toContain("/flee");
     expect(banner).toContain("guard");
     expect(tintedIn(viewer)).toEqual([stateSpanId("/chase")]);
+    expect(errorLines(viewer)).toEqual([{ message: banner as string, count: 1 }]);
+
+    await viewer.store.getState().receiveLive({
+      instances: [enemy, { ...enemy2, leaves: ["/flee", "/chase"] }],
+    });
+    expect(errorLines(viewer)).toEqual([{ message: banner as string, count: 1 }]);
 
     await viewer.store.getState().receiveLive({ instances: [enemy, enemy2] });
     expect(viewer.store.getState().live.banner).toBeUndefined();
@@ -678,5 +698,92 @@ describe("live attach", () => {
     expect(state.live.instances.map((instance) => instance.label)).toEqual(["enemy"]);
     expect(JSON.stringify(state.log.lines.at(-1)?.entry)).toContain("enemy#2");
     expect(tintedIn(viewer)).toEqual([stateSpanId("/patrol"), stateSpanId("/patrol/walk")]);
+  });
+});
+
+describe("failed actions", () => {
+  let held: ReturnType<typeof holds>;
+  let notified: string[];
+
+  beforeEach(() => {
+    held = holds();
+    notified = [];
+  });
+
+  const view = (file: string) =>
+    startViewer(path.join(dir, file), "{}", {
+      hold: held.hold,
+      notify: (message) => {
+        notified.push(message);
+      },
+    });
+
+  const lastLine = (viewer: TestViewer) => viewer.store.getState().log.lines.at(-1);
+
+  test("logs a failed request at the snapshot's time and notifies", async () => {
+    const viewer = await view("main.ts");
+    await viewer.store.getState().update(0.5);
+    const { t } = viewer.session.snapshot();
+    expect(t).toBeGreaterThan(0);
+
+    held.fail("/api/send", "offline");
+    await viewer.store.getState().send("JUMP");
+    expect(lastLine(viewer)).toMatchObject({
+      entry: { kind: "error", t, message: "offline" },
+      count: 1,
+    });
+    expect(notified).toEqual(["offline"]);
+  });
+
+  test("logs a field that cannot be read and does not notify", async () => {
+    const viewer = await view("main.ts");
+    viewer.store.getState().setPayload("{enter: }");
+    await viewer.store.getState().send("JUMP");
+    expect(lastLine(viewer)).toMatchObject({
+      entry: {
+        kind: "error",
+        message: "the payload cannot be read: expected a value at column 9",
+      },
+      count: 1,
+    });
+    expect(notified).toEqual([]);
+  });
+
+  test("logs a failed load and notifies", async () => {
+    const viewer = await view("main.ts");
+    held.fail("/api/index", "no server");
+    await viewer.store.getState().load();
+    expect(lastLine(viewer)).toMatchObject({
+      entry: { kind: "error", message: "no server" },
+      count: 1,
+    });
+    expect(notified).toEqual(["no server"]);
+  });
+
+  test("logs a reload that fails while attached and notifies", async () => {
+    writeFileSync(path.join(dir, "pair.ts"), PAIR);
+    const viewer = await view("pair.ts");
+    await viewer.store.getState().receiveLive({
+      instances: [{ label: "enemy", leaves: ["/chase"], stopped: false }],
+    });
+    viewer.store.getState().attach("enemy");
+
+    held.fail("/api/index", "no server");
+    await viewer.store.getState().reloaded({ ok: true, snapshot: viewer.session.snapshot() });
+    expect(lastLine(viewer)).toMatchObject({
+      entry: { kind: "error", message: "no server" },
+      count: 1,
+    });
+    expect(notified).toEqual(["no server"]);
+  });
+
+  test("logs a lost connection once and does not notify", async () => {
+    const viewer = await view("main.ts");
+    viewer.store.getState().setDisconnected(true);
+    expect(errorLines(viewer)).toEqual([{ message: DISCONNECTED, count: 1 }]);
+
+    viewer.store.getState().setDisconnected(true);
+    expect(errorLines(viewer)).toEqual([{ message: DISCONNECTED, count: 1 }]);
+    expect(notified).toEqual([]);
   });
 });
