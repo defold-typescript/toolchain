@@ -5,7 +5,7 @@ import type { HsmViewIndex, ReloadMessage } from "../src/hsm-view-server";
 import type { Snapshot } from "../src/hsm-view-session";
 import { httpApi, type ViewerApi } from "./api";
 import { type CtxPath, changedLeaves, type Primitive } from "./ctx";
-import { readDt, readPayload, readStartCtx } from "./fields";
+import { InputError, readDt, readPayload, readStartCtx } from "./fields";
 import {
   applySnapshot,
   type ClickableKey,
@@ -24,6 +24,8 @@ import { emptySearch, type SearchState, search, step } from "./search";
 export type Layout = "list" | "stacked";
 
 export const SPEEDS = [1, 0.5, 0.25, 0.1] as const;
+
+export const DISCONNECTED = "disconnected - run hsm-view again";
 
 /** A line a code view should bring into sight; `seq` repeats a scroll to the same line. */
 export interface ScrollTarget {
@@ -128,6 +130,8 @@ export interface ViewerStoreOptions {
   readonly api?: ViewerApi;
   readonly now?: () => number;
   readonly frames?: FrameScheduler;
+  /** Called with a failure no bar field shows; the page raises a popup. */
+  readonly notify?: (message: string) => void;
 }
 
 /** Play never advances a frame by more than this, so a hidden tab does not leap ahead. */
@@ -188,6 +192,20 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         : { search: state, openFile: match.file, scrollTarget: scrollTo(match.file, match.line) };
     };
 
+    const logError = (message: string): void =>
+      set((state) => ({
+        log: appendEntries(state.log, [{ kind: "error", t: state.snapshot?.t ?? 0, message }]),
+      }));
+
+    const fail = (thrown: unknown): void => {
+      const message = thrown instanceof Error ? thrown.message : String(thrown);
+      set({ error: message });
+      logError(message);
+      if (!(thrown instanceof InputError)) {
+        options.notify?.(message);
+      }
+    };
+
     const call = async (request: () => Promise<Snapshot>): Promise<void> => {
       if (get().live.attached !== undefined) {
         return;
@@ -197,7 +215,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         set({ error: undefined });
         get().receive(snapshot);
       } catch (thrown) {
-        set({ error: thrown instanceof Error ? thrown.message : String(thrown) });
+        fail(thrown);
       }
     };
 
@@ -314,16 +332,16 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         ...(move === undefined ? {} : { move }),
       });
       const { picked } = index;
-      set((state) => ({
-        live: {
-          ...state.live,
-          banner:
-            frame.unknown.length === 0
-              ? undefined
-              : `the game reports ${frame.unknown.join(", ")}, which ${picked ?? "the picked machine"} does not define; it may run other source`,
-        },
-      }));
+      const banner =
+        frame.unknown.length === 0
+          ? undefined
+          : `the game reports ${frame.unknown.join(", ")}, which ${picked ?? "the picked machine"} does not define; it may run other source`;
+      const raised = banner === get().live.banner ? undefined : banner;
+      set((state) => ({ live: { ...state.live, banner } }));
       paint({ ...frame.snapshot, machines: index.machines, picked }, true);
+      if (raised !== undefined) {
+        logError(raised);
+      }
     };
 
     return {
@@ -373,15 +391,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         }
         const instance = message.instances.find((candidate) => candidate.label === attached);
         if (instance === undefined) {
-          set((state) => ({
-            log: appendEntries(state.log, [
-              {
-                kind: "error",
-                t: state.snapshot?.t ?? 0,
-                message: `detached: the game no longer reports ${attached}; it may have restarted`,
-              },
-            ]),
-          }));
+          logError(`detached: the game no longer reports ${attached}; it may have restarted`);
           await get().detach();
           return;
         }
@@ -455,7 +465,12 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
           set({ playing });
         }
       },
-      setDisconnected: (disconnected) => set({ disconnected }),
+      setDisconnected: (disconnected) => {
+        if (disconnected && !get().disconnected) {
+          logError(DISCONNECTED);
+        }
+        set({ disconnected });
+      },
       load: async () => {
         try {
           get().setIndex(await api.index());
@@ -463,7 +478,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
           get().receive(await api.snapshot());
           await get().receiveLive(await api.live());
         } catch (thrown) {
-          set({ error: thrown instanceof Error ? thrown.message : String(thrown) });
+          fail(thrown);
         }
       },
       start: async () => {
@@ -500,7 +515,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
             set({ error: undefined, reloadError: undefined });
             showLive(instance);
           } catch (thrown) {
-            set({ error: thrown instanceof Error ? thrown.message : String(thrown) });
+            fail(thrown);
           }
           return;
         }

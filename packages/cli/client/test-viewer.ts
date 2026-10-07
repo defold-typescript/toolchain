@@ -20,6 +20,7 @@ export interface TestViewerOptions {
   readonly frames?: FrameScheduler;
   /** Called with each route before it reaches the server; a returned promise keeps it off until it settles. */
   readonly hold?: (route: string) => Promise<void> | undefined;
+  readonly notify?: (message: string) => void;
 }
 
 /** A store wired to the real routes of a session on `file`, loaded and started with `ctx`. */
@@ -40,6 +41,7 @@ export async function startViewer(
       return app.request(url, init);
     }),
     ...(options.frames === undefined ? {} : { frames: options.frames }),
+    ...(options.notify === undefined ? {} : { notify: options.notify }),
   });
   await store.getState().load();
   store.getState().setStartCtx(ctx);
