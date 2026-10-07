@@ -1,6 +1,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useMemo, useRef } from "react";
 import { Panel } from "react-resizable-panels";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { CodeLine, CodeView, LINE_HEIGHT, useCodeData, useScrollTarget } from "./code-view";
 import { Glow } from "./glow";
 import { Handle, SavedGroup } from "./panels";
@@ -119,20 +120,24 @@ export function LayoutToggle({ store }: { store: ViewerStore }) {
   const layout = useViewer(store, (state) => state.layout);
   const setLayout = useViewer(store, (state) => state.setLayout);
   return (
-    <div role="radiogroup" aria-label="layout" className="flex">
+    <ToggleGroup
+      type="single"
+      variant="outline"
+      size="sm"
+      aria-label="layout"
+      value={layout}
+      onValueChange={(value) => {
+        // Radix sends "" when the active item is clicked again.
+        if (value === "list" || value === "stacked") {
+          setLayout(value);
+        }
+      }}
+    >
       {(["list", "stacked"] as const).map((option) => (
-        // biome-ignore lint/a11y/useSemanticElements: a pair of toggle buttons reads better than radios here
-        <button
-          key={option}
-          type="button"
-          role="radio"
-          aria-checked={layout === option}
-          className={`cursor-pointer border border-border px-2 ${layout === option ? "bg-tint" : ""}`}
-          onClick={() => setLayout(option)}
-        >
+        <ToggleGroupItem key={option} value={option}>
           {LAYOUT_LABEL[option]}
-        </button>
+        </ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }
