@@ -3,8 +3,9 @@ import { LayoutToggle } from "./layouts";
 import { SearchBox } from "./search-box";
 import { SPEEDS, useViewer, type ViewerStore } from "./store";
 
-const BUTTON = "cursor-pointer border border-rule px-2 disabled:cursor-default disabled:opacity-50";
-const FIELD = "border border-rule bg-page px-1";
+const BUTTON =
+  "cursor-pointer border border-border px-2 disabled:cursor-default disabled:opacity-50";
+const FIELD = "border border-border bg-background px-1";
 
 function Group({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -36,7 +37,7 @@ export function Bar({ store }: { store: ViewerStore }) {
   const actions = store.getState();
 
   return (
-    <header className="flex flex-wrap items-center gap-x-4 gap-y-1 border-rule border-b px-2 py-1">
+    <header className="flex flex-wrap items-center gap-x-4 gap-y-1 border-border border-b px-2 py-1">
       <Group label="machine">
         <select
           aria-label="machine"
@@ -149,7 +150,7 @@ export function Bar({ store }: { store: ViewerStore }) {
         </select>
         <span className="tabular-nums">t={t.toFixed(2)}</span>
       </Group>
-      <span className="min-w-0 truncate text-muted" title="active leaves">
+      <span className="min-w-0 truncate text-muted-foreground" title="active leaves">
         {(leaves ?? []).join(", ")}
       </span>
       <div className="ml-auto flex items-center gap-2">

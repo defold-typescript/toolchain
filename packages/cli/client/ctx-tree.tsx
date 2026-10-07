@@ -47,7 +47,7 @@ function Leaf({ store, path, value, depth }: NodeProps & { value: Primitive }) {
       style={rowStyle(depth)}
     >
       <Glow stamp={stamp} since={since} now={now()} />
-      <span className="text-muted">{path.at(-1)}:</span>
+      <span className="text-muted-foreground">{path.at(-1)}:</span>
       {draft === undefined ? (
         <button
           type="button"
@@ -67,7 +67,7 @@ function Leaf({ store, path, value, depth }: NodeProps & { value: Primitive }) {
           autoFocus
           data-ctx-value
           aria-invalid={invalid}
-          className={`min-w-0 flex-1 bg-page px-1 outline outline-1 ${invalid ? "outline-syntax-keyword" : "outline-rule"}`}
+          className={`min-w-0 flex-1 bg-background px-1 outline outline-1 ${invalid ? "outline-destructive" : "outline-border"}`}
           value={draft}
           onChange={(event) => {
             setDraft(event.target.value);
@@ -101,13 +101,13 @@ function Branch({ store, path, value, depth }: NodeProps & { value: object }) {
           type="button"
           aria-expanded={expanded}
           aria-label={expanded ? "collapse" : "expand"}
-          className="w-3 cursor-pointer text-muted"
+          className="w-3 cursor-pointer text-muted-foreground"
           onClick={() => toggle(key)}
         >
           {expanded ? "▾" : "▸"}
         </button>
-        <span className="text-muted">{path.at(-1)}:</span>
-        <span data-ctx-value className="text-muted">
+        <span className="text-muted-foreground">{path.at(-1)}:</span>
+        <span data-ctx-value className="text-muted-foreground">
           {summary}
         </span>
       </div>
@@ -144,10 +144,12 @@ export function CtxTree({ store }: { store: ViewerStore }) {
   const attached = useViewer(store, (state) => state.live.attached !== undefined);
 
   if (attached) {
-    return <p className="p-2 text-muted">ctx is not sent by the game.</p>;
+    return <p className="p-2 text-muted-foreground">ctx is not sent by the game.</p>;
   }
   if (!running) {
-    return <p className="p-2 text-muted">Not running. Start the machine from the bar.</p>;
+    return (
+      <p className="p-2 text-muted-foreground">Not running. Start the machine from the bar.</p>
+    );
   }
   return (
     <div className="h-full overflow-auto p-2">
