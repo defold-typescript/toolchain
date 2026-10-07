@@ -2,10 +2,20 @@
 
 :root {
   color-scheme: light dark;
-  --page: #ffffff;
-  --ink: #1f2328;
-  --muted: #6e7781;
-  --rule: #d0d7de;
+  --background: #ffffff;
+  --foreground: #1c1c1f;
+  --muted: #f7f7f8;
+  --muted-foreground: #5b5b62;
+  --border: #e6e6e9;
+  --input: #d0d0d5;
+  --primary: #1f6feb;
+  --primary-foreground: #ffffff;
+  --secondary: #e6e6e9;
+  --secondary-foreground: #1c1c1f;
+  --accent: rgb(31 111 235 / 0.08);
+  --accent-foreground: #1c1c1f;
+  --destructive: #cf222e;
+  --ring: #1f6feb;
   --tint: rgb(255 214 10 / 0.35);
   --glow: rgb(255 170 0 / 0.75);
   --glow-dim: rgb(255 170 0 / 0.25);
@@ -21,10 +31,20 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --page: #0d1117;
-    --ink: #e6edf3;
-    --muted: #8b949e;
-    --rule: #30363d;
+    --background: #0e0e10;
+    --foreground: #ececef;
+    --muted: #161618;
+    --muted-foreground: #a4a4ad;
+    --border: #2a2a2e;
+    --input: #3a3a40;
+    --primary: #79a8ff;
+    --primary-foreground: #0e0e10;
+    --secondary: #2a2a2e;
+    --secondary-foreground: #ececef;
+    --accent: rgb(121 168 255 / 0.12);
+    --accent-foreground: #ececef;
+    --destructive: #f85149;
+    --ring: #79a8ff;
     --tint: rgb(187 128 9 / 0.35);
     --glow: rgb(255 196 0 / 0.6);
     --glow-dim: rgb(255 196 0 / 0.2);
@@ -41,10 +61,20 @@
 
 @theme inline {
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --color-page: var(--page);
-  --color-ink: var(--ink);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --color-muted: var(--muted);
-  --color-rule: var(--rule);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-ring: var(--ring);
   --color-tint: var(--tint);
   --color-glow: var(--glow);
   --color-glow-dim: var(--glow-dim);
@@ -58,6 +88,15 @@
   --color-syntax-text: var(--syntax-text);
   --animate-glow: glow 1.2s ease-out forwards;
   --animate-glow-dim: glow-dim 1.2s ease-out forwards;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 @keyframes glow {
