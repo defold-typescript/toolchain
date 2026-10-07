@@ -28,7 +28,7 @@ export function SavedGroup({
 export function Handle({ orientation }: { orientation: "horizontal" | "vertical" }) {
   return (
     <Separator
-      className={`bg-rule hover:bg-muted ${orientation === "horizontal" ? "w-1" : "h-1"}`}
+      className={`bg-border hover:bg-primary ${orientation === "horizontal" ? "w-1" : "h-1"}`}
     />
   );
 }

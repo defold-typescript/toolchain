@@ -42,7 +42,7 @@ export function SearchBox({ store }: { store: ViewerStore }) {
         type="search"
         aria-label="search the code"
         placeholder="search"
-        className="w-40 border border-rule bg-page px-1"
+        className="w-40 border border-border bg-background px-1"
         value={search.query}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={(event) => {
@@ -54,7 +54,7 @@ export function SearchBox({ store }: { store: ViewerStore }) {
           }
         }}
       />
-      <span className="text-muted">
+      <span className="text-muted-foreground">
         {count === 0 ? "0/0" : `${(search.current ?? 0) + 1}/${count}`}
       </span>
     </div>

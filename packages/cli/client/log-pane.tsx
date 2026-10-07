@@ -38,10 +38,10 @@ function describe(entry: SnapshotEntry): string {
 }
 
 const KIND_CLASS: Partial<Record<SnapshotEntry["kind"], string>> = {
-  error: "text-syntax-keyword",
+  error: "text-destructive",
   reload: "text-syntax-number",
-  unhandled: "text-muted",
-  engine: "text-muted",
+  unhandled: "text-muted-foreground",
+  engine: "text-muted-foreground",
 };
 
 /** The log docked under the code, newest last, following the newest line unless scrolled up. */
@@ -67,8 +67,8 @@ export function LogPane({ store }: { store: ViewerStore }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-rule border-b px-2">
-        <span className="text-muted">log</span>
+      <div className="flex items-center gap-3 border-border border-b px-2">
+        <span className="text-muted-foreground">log</span>
         {KINDS.map(({ kind, label }) => (
           <label key={kind} className="flex cursor-pointer items-center gap-1">
             <input type="checkbox" checked={!hidden.has(kind)} onChange={() => toggleKind(kind)} />
@@ -104,7 +104,7 @@ export function LogPane({ store }: { store: ViewerStore }) {
                     <span className="rounded bg-tint px-1 tabular-nums">{line.count}</span>
                   )}
                 </span>
-                <span className="w-16 shrink-0 text-right text-muted tabular-nums">
+                <span className="w-16 shrink-0 text-right text-muted-foreground tabular-nums">
                   {line.entry.t.toFixed(2)}
                 </span>
                 <span className="truncate">{text}</span>

@@ -92,7 +92,7 @@ export function StackedLayout({ store }: { store: ViewerStore }) {
             >
               {row.line === undefined ? (
                 <div
-                  className="sticky left-0 border-rule border-b bg-page px-2"
+                  className="sticky left-0 border-border border-b bg-background px-2"
                   style={{ height: LINE_HEIGHT }}
                 >
                   <FileName store={store} file={row.file} path={data.files[row.file]?.path ?? ""} />
@@ -127,7 +127,7 @@ export function LayoutToggle({ store }: { store: ViewerStore }) {
           type="button"
           role="radio"
           aria-checked={layout === option}
-          className={`cursor-pointer border border-rule px-2 ${layout === option ? "bg-tint" : ""}`}
+          className={`cursor-pointer border border-border px-2 ${layout === option ? "bg-tint" : ""}`}
           onClick={() => setLayout(option)}
         >
           {LAYOUT_LABEL[option]}
