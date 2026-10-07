@@ -43,6 +43,19 @@ function control<T extends HTMLElement>(container: HTMLElement, selector: string
   return found;
 }
 
+function field(container: HTMLElement, label: string): HTMLInputElement {
+  return control<HTMLInputElement>(container, `input[aria-label="${label}"]`);
+}
+
+/** The text of the element `input` names as its description. */
+function described(input: HTMLInputElement): string | undefined {
+  const id = input.getAttribute("aria-describedby");
+  if (id === null) {
+    return undefined;
+  }
+  return input.ownerDocument.getElementById(id)?.textContent ?? undefined;
+}
+
 describe("Bar", () => {
   test("picks the machine chosen in the dropdown, which follows the store", async () => {
     const { container } = render(<Bar store={viewer.store} />);
@@ -81,6 +94,88 @@ describe("Bar", () => {
     await waitFor(() =>
       expect(viewer.requests).toEqual([{ route: "/api/send", body: { event: { type: "SEE" } } }]),
     );
+  });
+
+  test("marks a field that cannot be read and names its message, until the text reads", () => {
+    const view = render(<Bar store={viewer.store} />);
+    const startCtx = field(view.container, "start ctx");
+    expect(startCtx.getAttribute("aria-invalid")).toBe("false");
+
+    fireEvent.change(startCtx, { target: { value: "{enter: }" } });
+    expect(startCtx.getAttribute("aria-invalid")).toBe("true");
+    expect(described(startCtx)).toBe("the start ctx cannot be read: expected a value at column 9");
+
+    fireEvent.change(startCtx, { target: { value: "{}" } });
+    expect(startCtx.getAttribute("aria-invalid")).toBe("false");
+    expect(startCtx.getAttribute("aria-describedby")).toBeNull();
+    expect(view.queryByRole("alert")).toBeNull();
+  });
+
+  test("reads each field with its own reader, and shows every message at once", () => {
+    const view = render(<Bar store={viewer.store} />);
+    const payload = field(view.container, "payload");
+    const dt = field(view.container, "dt");
+
+    fireEvent.change(payload, { target: { value: "[1]" } });
+    fireEvent.change(dt, { target: { value: "abc" } });
+
+    expect(payload.getAttribute("aria-invalid")).toBe("true");
+    expect(described(payload)).toBe("the payload must be an object");
+    expect(dt.getAttribute("aria-invalid")).toBe("true");
+    expect(described(dt)).toBe("dt must be a number");
+    expect(Array.from(view.getByRole("alert").children, (line) => line.textContent)).toEqual([
+      "the payload must be an object",
+      "dt must be a number",
+    ]);
+  });
+
+  test("sends the payload typed into the field with the event", async () => {
+    const view = render(<Bar store={viewer.store} />);
+
+    fireEvent.change(field(view.container, "payload"), { target: { value: "{enter: true}" } });
+    fireEvent.click(view.getByRole("button", { name: "SEE" }));
+
+    await waitFor(() =>
+      expect(viewer.requests).toEqual([
+        { route: "/api/send", body: { event: { enter: true, type: "SEE" } } },
+      ]),
+    );
+  });
+
+  test("starts with the ctx typed into the field", async () => {
+    const view = render(<Bar store={viewer.store} />);
+
+    fireEvent.change(field(view.container, "start ctx"), { target: { value: "{ fuel: 2 }" } });
+    fireEvent.click(view.getByRole("button", { name: "Start" }));
+
+    await waitFor(() =>
+      expect(viewer.requests).toEqual([{ route: "/api/start", body: { ctx: { fuel: 2 } } }]),
+    );
+  });
+
+  test("shows the start ctx the store holds when the bar mounts", async () => {
+    const started = await startViewer(path.join(dir, "pair.ts"), "{ fuel: 1 }");
+
+    const view = render(<Bar store={started.store} />);
+
+    expect(field(view.container, "start ctx").value).toBe("{ fuel: 1 }");
+  });
+
+  test("marks a field the bar mounts over text that cannot be read, until the text reads", () => {
+    viewer.store.getState().setPayload("[1]");
+    const view = render(<Bar store={viewer.store} />);
+    const payload = field(view.container, "payload");
+    expect(payload.getAttribute("aria-invalid")).toBe("true");
+    expect(described(payload)).toBe("the payload must be an object");
+
+    fireEvent.change(payload, { target: { value: "{enter: }" } });
+    expect(Array.from(view.getByRole("alert").children, (line) => line.textContent)).toEqual([
+      "the payload cannot be read: expected a value at column 9",
+    ]);
+
+    fireEvent.change(payload, { target: { value: "{}" } });
+    expect(payload.getAttribute("aria-invalid")).toBe("false");
+    expect(view.queryByRole("alert")).toBeNull();
   });
 
   test("draws one icon in Start, Play and Step, and hides every icon from the names", () => {
