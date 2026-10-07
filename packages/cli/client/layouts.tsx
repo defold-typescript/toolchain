@@ -1,3 +1,4 @@
+import { type Icon, RowsIcon, SidebarSimpleIcon } from "@phosphor-icons/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useMemo, useRef } from "react";
 import { Panel } from "react-resizable-panels";
@@ -115,6 +116,7 @@ export function CodeArea({ store }: { store: ViewerStore }) {
 }
 
 const LAYOUT_LABEL: Readonly<Record<Layout, string>> = { list: "List", stacked: "Stacked" };
+const LAYOUT_ICON: Readonly<Record<Layout, Icon>> = { list: SidebarSimpleIcon, stacked: RowsIcon };
 
 export function LayoutToggle({ store }: { store: ViewerStore }) {
   const layout = useViewer(store, (state) => state.layout);
@@ -133,11 +135,15 @@ export function LayoutToggle({ store }: { store: ViewerStore }) {
         }
       }}
     >
-      {(["list", "stacked"] as const).map((option) => (
-        <ToggleGroupItem key={option} value={option}>
-          {LAYOUT_LABEL[option]}
-        </ToggleGroupItem>
-      ))}
+      {(["list", "stacked"] as const).map((option) => {
+        const OptionIcon = LAYOUT_ICON[option];
+        return (
+          <ToggleGroupItem key={option} value={option}>
+            <OptionIcon aria-hidden="true" />
+            {LAYOUT_LABEL[option]}
+          </ToggleGroupItem>
+        );
+      })}
     </ToggleGroup>
   );
 }

@@ -39,6 +39,7 @@
       },
       "devDependencies": {
         "@happy-dom/global-registrator": "^20.14.5",
+        "@phosphor-icons/react": "^2.1.10",
         "@tailwindcss/cli": "^4.3.3",
         "@tanstack/react-virtual": "^3.14.13",
         "@testing-library/dom": "^10.4.2",
@@ -47,7 +48,6 @@
         "@types/react-dom": "^19.3.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
-        "lucide-react": "^1.52.0",
         "radix-ui": "^1.7.0",
         "react": "^19.3.0",
         "react-dom": "^19.3.0",
@@ -320,6 +320,8 @@
     "@parcel/watcher-win32-x64": ["@parcel/watcher-win32-x64@2.5.1", "", { "os": "win32", "cpu": "x64" }, "sha512-9lHBdJITeNR++EvSQVUcaZoWupyHfXe1jZvGZ06O/5MflPcuPLtEphScIBL+AiCWBO46tDSHzWyD0uDmmZqsgA=="],
 
     "@phosphor-icons/core": ["@phosphor-icons/core@2.1.1", "", {}, "sha512-v4ARvrip4qBCImOE5rmPUylOEK4iiED9ZyKjcvzuezqMaiRASCHKcRIuvvxL/twvLpkfnEODCOJp5dM4eZilxQ=="],
+
+    "@phosphor-icons/react": ["@phosphor-icons/react@2.1.10", "", { "peerDependencies": { "react": ">= 16.8", "react-dom": ">= 16.8" } }, "sha512-vt8Tvq8GLjheAZZYa+YG/pW7HDbov8El/MANW8pOAz4eGxrwhnbfrQZq0Cp4q8zBEu8NIhHdnr+r8thnfRSNYA=="],
 
     "@playwright/test": ["@playwright/test@1.62.1", "", { "dependencies": { "playwright": "1.62.1" }, "bin": { "playwright": "cli.js" } }, "sha512-DTcUc8qii+cpHvtOwggMtBRMjKZHXYWdw8syRYu2vtzuq4Wxphqq4NfCs5Zt44L6mA8rfDfj+PHnxFc/FeK6mQ=="],
 
@@ -796,8 +798,6 @@
     "lua-types": ["lua-types@2.14.1", "", {}, "sha512-+EbnTjF+Bbfp5xmpfT0O9AZgC5J6Oq6jRnZei3HLb0pbWuCRHmdnIVRPIgEpUncWvHq21DHB2qTHhA4xGceHHg=="],
 
     "lua-wasm-bindings": ["lua-wasm-bindings@0.5.3", "", { "dependencies": { "@types/semver": "^7.3.9", "semver": "^7.3.7" } }, "sha512-GnGSkZmYA2VzkNV/xkwOSoxwNsqEk/EcX6uvRLKQw0pCAxCauTymRO2KmJUIrG/psV3cloaS4Cjsr39iCRkrpQ=="],
-
-    "lucide-react": ["lucide-react@1.52.0", "", { "peerDependencies": { "@types/react": "*", "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" }, "optionalPeers": ["@types/react"] }, "sha512-TUgPtl5ZI9WgxOcbu4ckaC5B3l1qxPQrCMgb6OfUB9owx/OvSJfcf93SMgUWAxRw5/1XDfh9uI5F5iNGXCcGDQ=="],
 
     "lz-string": ["lz-string@1.5.0", "", { "bin": { "lz-string": "bin/bin.js" } }, "sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ=="],
 
