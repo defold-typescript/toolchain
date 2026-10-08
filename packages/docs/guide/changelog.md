@@ -14,6 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[`hsm`](./state-machines.md#cheat-sheet)** gains a cheat sheet and hover docs; [`hsm-view`](./hsm-view.md) takes the docs site's look, shows icons on its controls, reads object literals, marks a field it cannot read, opens it in a dialog and logs every failed action.
+> - **[A script that exports an `hsm` machine](./script-state.md#exporting-a-value-from-a-script-itself)** loads in the game.
 
 ### Improved
 
@@ -24,6 +25,10 @@ What changed in each published `defold-typescript` toolchain release.
   - **Fields** — the starting context and the event payload take a TypeScript object literal such as `{ enter: true, from: 'pad' }` as well as JSON, and a field that cannot be read is outlined in red while you type, with a message that names where the mistake is. A button beside each field opens its text in a dialog with a multi-line editor, where `Start` or `Apply` writes it back.
   - **Errors** — every failed action adds an error line to the log, and one that belongs to no field also shows in a popup that closes by itself. The banner under the bar shows what still holds, such as a lost connection or a halted machine; see [Errors](./hsm-view.md#errors).
 - **The State machines guide has a cheat sheet:** three tables pair a task with its solution and a snippet to copy, covering each common state config part, the instance, context, event and path types read off the machine with `typeof` and `ReturnType`, and five ways to type `self`; see [Cheat sheet](./state-machines.md#cheat-sheet). New sections show how to [restart a machine](./state-machines.md#restart-a-machine) and how a restart [works with hot reload](./state-machines.md#restart-on-a-hot-reload).
+
+### Fixed
+
+- **A script that exports an `hsm` machine no longer stops the game:** the Lua module written beside a script for its exports required the `hsm` or timers module by a path Defold cannot load, so the game failed with `could not be found`, or with an `InvalidPathException` on Windows. It now requires the module the way the script does; see [Exporting a value from a script itself](./script-state.md#exporting-a-value-from-a-script-itself).
 
 ## v0.45.0
 

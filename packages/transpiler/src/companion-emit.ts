@@ -291,6 +291,27 @@ function resolvedRequirePaths(
 }
 
 /**
+ * The prefix a lowering puts on the require of a runtime module with no source in
+ * the program (`hsm`, the timers), which TSTL's resolver strips from the script.
+ */
+const NO_RESOLUTION_MARKER = "@NoResolution:";
+
+/**
+ * How the companion spells the require the Lua AST spells `argument`: a project
+ * source by its resolved path, and a marked runtime module without the marker.
+ * Left on, the marker is a path Defold cannot load and Windows cannot even name.
+ */
+function companionRequirePath(argument: string, paths: ReadonlyMap<string, string>): string {
+  const resolved = paths.get(argument);
+  if (resolved !== undefined) {
+    return resolved;
+  }
+  return argument.startsWith(NO_RESOLUTION_MARKER)
+    ? argument.slice(NO_RESOLUTION_MARKER.length)
+    : argument;
+}
+
+/**
  * Rewrites every `require` a moved statement carries, at whatever depth — a
  * re-export's is nested in the `do … end` block TSTL emits for it.
  *
@@ -313,10 +334,7 @@ function resolveMovedRequires(
       if (argument === undefined || !isStringLiteral(argument)) {
         return;
       }
-      const resolved = paths.get(argument.value);
-      if (resolved !== undefined) {
-        argument.value = resolved;
-      }
+      argument.value = companionRequirePath(argument.value, paths);
     });
   }
 }
@@ -339,8 +357,8 @@ function withResolvedRequire(statement: Statement, paths: ReadonlyMap<string, st
   if (argument === undefined || !isStringLiteral(argument)) {
     return statement;
   }
-  const resolved = paths.get(argument.value);
-  if (resolved === undefined) {
+  const resolved = companionRequirePath(argument.value, paths);
+  if (resolved === argument.value) {
     return statement;
   }
   return createVariableDeclarationStatement(
