@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { COMPANION_INTERNAL_FIELD } from "./companion-closure";
 import { findEmittedRequires } from "./emitted-requires";
+import { scanEmittedRequires } from "./lua-require-scan";
 import { createTranspileSession } from "./session";
 import type { TranspileProjectResult } from "./transpile";
 
@@ -437,6 +438,49 @@ describe("companion emit — only genuinely free names pull a declaration across
 
     expect(definitionCount(script, "warm")).toBe(1);
     expect(script).toContain("____exports.seed");
+  });
+});
+
+describe("companion emit — a runtime module the toolchain ships is required by its flat name", () => {
+  const SCRIPT_TAIL = ["", "defineScript({", "  init() {", '    print("hi");', "  },", "});"];
+
+  const requiresOf = (lua: string): string[] => scanEmittedRequires(lua).map(({ path }) => path);
+
+  test("an hsm import the closure depends on", () => {
+    const result = emit({
+      "game/enemies/slime.ts": lines(
+        FACTORY_IMPORT,
+        'import { defineMachine } from "@defold-typescript/types/hsm";',
+        "",
+        'export const slime = defineMachine<object, { type: "SEE" }>()({',
+        '  initial: "/idle",',
+        '  states: { idle: { on: { SEE: "/attack" } }, attack: {} },',
+        "});",
+        ...SCRIPT_TAIL,
+      ),
+    });
+    const script = chunkFor(result, "game/enemies/slime.ts");
+    const companion = companionFor(result, "game/enemies/slime.ts");
+
+    expect(requiresOf(companion)).toContain("defold_typescript_hsm.index");
+    expect(findEmittedRequires(companion)).toEqual([]);
+    expect(findEmittedRequires(script)).toEqual(["game.enemies.slime"]);
+  });
+
+  test("a timers import the closure depends on", () => {
+    const result = emit({
+      "game/enemies/slime.ts": lines(
+        FACTORY_IMPORT,
+        'import { wait } from "@defold-typescript/types/timers";',
+        "",
+        "export const pause = () => wait(1);",
+        ...SCRIPT_TAIL,
+      ),
+    });
+    const companion = companionFor(result, "game/enemies/slime.ts");
+
+    expect(requiresOf(companion)).toContain("defold_typescript_timers");
+    expect(findEmittedRequires(companion)).toEqual([]);
   });
 });
 
