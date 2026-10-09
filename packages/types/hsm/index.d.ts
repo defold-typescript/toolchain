@@ -296,16 +296,22 @@ export type MachineConfig<Ctx, E extends EventObject> = CompoundState<Ctx, E, un
         readonly [name: string]: StateConfig<Ctx, E>;
     };
 };
+type WithPrivate<Ctx, Priv> = [Priv] extends [never] ? Ctx : Ctx & Priv;
 /**
  * Defines a machine in two calls: `defineMachine<Ctx, E>()` fixes the context and event types and
  * takes an optional hot-reload key, and the second call takes the config. The config is checked
  * when that call runs, and a mistake throws, naming the state path. With a key, a later
  * definition under it puts its states into the machine already built, so every running instance
  * sees the edit; without one, each call builds a separate machine.
+ *
+ * The root config may hold `privateCtx`, for a machine that keeps fields of its own, such as a
+ * counter, a heat level or a list it builds up. Every hook, `when`, `run`, `task` and `update`
+ * then sees those fields beside `Ctx`, while `start` takes only `Ctx` and the instance it returns
+ * shows only `Ctx` in its `ctx`. A machine without fields of its own leaves `privateCtx` out.
  */
-export declare function defineMachine<Ctx, E extends EventObject>(key?: string): <T>(config: RootState<Ctx, E, T>) => Machine<Ctx, E, TreePath<T>>;
+export declare function defineMachine<Ctx, E extends EventObject>(key?: string): <T, Priv extends object = never>(config: RootState<WithPrivate<Ctx, Priv>, E, T> & PrivateCtxConfig<Ctx, Priv>) => Machine<Ctx, E, TreePath<T>>;
 /**
- * The key a `definePrivateMachine` config adds to the root, beside `initial` and `states`.
+ * The optional key a `defineMachine` root config takes beside `initial` and `states`.
  * @noSelf
  */
 export interface PrivateCtxConfig<Ctx, Priv> {
@@ -323,92 +329,84 @@ export interface PrivateCtxConfig<Ctx, Priv> {
      *
      * The fields are hidden from callers by type only. At run time `ctx` is one table, and hooks,
      * `hsm-view` and a debugger see every field.
+     *
+     * There are two ways to type the fields.
+     *
+     * @example
+     * **Inferred.** For a few fields, write them inline and let TypeScript infer their types. Add
+     * `as` where the inferred type is wrong: an empty array is `never[]` until it reads
+     * `[] as Hash[]`, and a field holding one of several strings is any `string` until it reads
+     * `"cool" as "cool" | "hot"`.
+     *
+     * ```ts
+     * type TurretEvent = { type: "SPOTTED" } | { type: "LOST" };
+     *
+     * export const turret = defineMachine<{ readonly fireRate: number }, TurretEvent>("turret")({
+     *   privateCtx: () => ({ heat: 0, targets: [] as Hash[] }),
+     *   initial: "/idle",
+     *   states: {
+     *     idle: { on: { SPOTTED: "/firing" } },
+     *     firing: {
+     *       enter: (ctx) => {
+     *         ctx.heat += 1 / ctx.fireRate;
+     *       },
+     *       on: { LOST: "/idle" },
+     *     },
+     *   },
+     * });
+     *
+     * const gun = turret.start({ fireRate: 2 }); // gun.ctx shows fireRate only
+     * ```
+     *
+     * @example
+     * **A named type.** For more fields, or when a helper outside the config needs the whole
+     * context, declare the fields as an interface and make it the factory's return type. The
+     * fields need no `as`, a misspelled or unknown field is a compile error, and the whole context
+     * is `TurretOptions & TurretPrivate`. `satisfies TurretPrivate` does not do this: it checks the
+     * object but keeps its narrow types, so an empty array stays `never[]`.
+     *
+     * ```ts
+     * interface TurretOptions {
+     *   readonly fireRate: number;
+     * }
+     *
+     * interface TurretPrivate {
+     *   heat: number;
+     *   mode: "cool" | "hot";
+     * }
+     *
+     * type TurretEvent = { type: "SPOTTED" } | { type: "LOST" };
+     *
+     * const overheated = (ctx: TurretOptions & TurretPrivate) => ctx.heat > ctx.fireRate;
+     *
+     * export const turret = defineMachine<TurretOptions, TurretEvent>("turret")({
+     *   privateCtx: (): TurretPrivate => ({ heat: 0, mode: "cool" }),
+     *   initial: "/idle",
+     *   states: {
+     *     idle: { on: { SPOTTED: "/firing" } },
+     *     firing: {
+     *       enter: (ctx) => {
+     *         ctx.heat += 1 / ctx.fireRate;
+     *       },
+     *       always: { to: "/cooling", when: overheated },
+     *       on: { LOST: "/idle" },
+     *     },
+     *     cooling: {
+     *       enter: (ctx) => {
+     *         ctx.mode = "hot";
+     *       },
+     *       exit: (ctx) => {
+     *         ctx.heat = 0;
+     *         ctx.mode = "cool";
+     *       },
+     *       after: { 2: "/idle" },
+     *     },
+     *   },
+     * });
+     * ```
      */
-    readonly privateCtx: () => Priv & {
+    readonly privateCtx?: () => Priv & {
         readonly [K in keyof Ctx & keyof Priv]: never;
     };
 }
-/**
- * Like `defineMachine`, for a machine that keeps fields of its own, such as a counter, a heat
- * level or a list it builds up. The config's `privateCtx` returns those fields. Every hook,
- * `when`, `run`, `task` and `update` sees them beside `Ctx`, while `start` takes only `Ctx` and
- * the instance it returns shows only `Ctx` in its `ctx`. A machine without fields of its own
- * uses `defineMachine`.
- *
- * There are two ways to type the fields.
- *
- * @example
- * **Inferred.** For a few fields, write them inline and let TypeScript infer their types. Add
- * `as` where the inferred type is wrong: an empty array is `never[]` until it reads
- * `[] as Hash[]`, and a field holding one of several strings is any `string` until it reads
- * `"cool" as "cool" | "hot"`.
- *
- * ```ts
- * type TurretEvent = { type: "SPOTTED" } | { type: "LOST" };
- *
- * export const turret = definePrivateMachine<{ readonly fireRate: number }, TurretEvent>("turret")({
- *   privateCtx: () => ({ heat: 0, targets: [] as Hash[] }),
- *   initial: "/idle",
- *   states: {
- *     idle: { on: { SPOTTED: "/firing" } },
- *     firing: {
- *       enter: (ctx) => {
- *         ctx.heat += 1 / ctx.fireRate;
- *       },
- *       on: { LOST: "/idle" },
- *     },
- *   },
- * });
- *
- * const gun = turret.start({ fireRate: 2 }); // gun.ctx shows fireRate only
- * ```
- *
- * @example
- * **A named type.** For more fields, or when a helper outside the config needs the whole
- * context, declare the fields as an interface and make it the factory's return type. The fields
- * need no `as`, a misspelled or unknown field is a compile error, and the whole context is
- * `TurretOptions & TurretPrivate`. `satisfies TurretPrivate` does not do this: it checks the
- * object but keeps its narrow types, so an empty array stays `never[]`.
- *
- * ```ts
- * interface TurretOptions {
- *   readonly fireRate: number;
- * }
- *
- * interface TurretPrivate {
- *   heat: number;
- *   mode: "cool" | "hot";
- * }
- *
- * type TurretEvent = { type: "SPOTTED" } | { type: "LOST" };
- *
- * const overheated = (ctx: TurretOptions & TurretPrivate) => ctx.heat > ctx.fireRate;
- *
- * export const turret = definePrivateMachine<TurretOptions, TurretEvent>("turret")({
- *   privateCtx: (): TurretPrivate => ({ heat: 0, mode: "cool" }),
- *   initial: "/idle",
- *   states: {
- *     idle: { on: { SPOTTED: "/firing" } },
- *     firing: {
- *       enter: (ctx) => {
- *         ctx.heat += 1 / ctx.fireRate;
- *       },
- *       always: { to: "/cooling", when: overheated },
- *       on: { LOST: "/idle" },
- *     },
- *     cooling: {
- *       enter: (ctx) => {
- *         ctx.mode = "hot";
- *       },
- *       exit: (ctx) => {
- *         ctx.heat = 0;
- *         ctx.mode = "cool";
- *       },
- *       after: { 2: "/idle" },
- *     },
- *   },
- * });
- * ```
- */
-export declare const definePrivateMachine: <Ctx, E extends EventObject>(key?: string) => <T, Priv extends object>(config: RootState<Ctx & Priv, E, T> & PrivateCtxConfig<Ctx, Priv>) => Machine<Ctx, E, TreePath<T>>;
 export {};

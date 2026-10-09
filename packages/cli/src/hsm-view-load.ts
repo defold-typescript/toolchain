@@ -302,8 +302,7 @@ function isFile(file: string): boolean {
 
 /**
  * Runs `file` and the project files it imports with Defold globals stubbed, recording every
- * `defineMachine` and `definePrivateMachine` call. The hsm modules run once per load, so `reload`
- * rebinds keyed machines.
+ * `defineMachine` call. The hsm modules run once per load, so `reload` rebinds keyed machines.
  */
 export function loadMachines(file: string, options: LoadMachinesOptions): MachineLoad {
   const entry = path.resolve(file);
@@ -377,8 +376,8 @@ export function loadMachines(file: string, options: LoadMachinesOptions): Machin
         return machine;
       };
     };
-    // hsm exports the one definer under a second name, `definePrivateMachine`; a call through a
-    // name left unwrapped would reach hsm unrecorded.
+    // Every export that holds the definer is replaced; a call through a name left unwrapped
+    // would reach hsm unrecorded.
     for (const name of Object.keys(record.exports)) {
       if (record.exports[name] === define) {
         record.exports[name] = recording;
