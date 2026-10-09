@@ -135,6 +135,21 @@ export interface AlwaysConfig<Ctx, To extends string = string> {
  */
 export type AlwaysSpec<Ctx, To extends string = string> = To | AlwaysConfig<Ctx, To> | RuleList<AlwaysConfig<Ctx, To>>;
 /**
+ * One entry of the list form of `after`: a `delay` and the `to` its timer leads to.
+ * @noSelf
+ */
+export interface AfterConfig<Ctx, To extends string = string> {
+    /**
+     * The delay in seconds of game time: a number, or a function of the context that returns one.
+     * A function is read once each time the state is entered, after its `enter` hook, and again on
+     * a hot reload, so the delay is fixed for that stay. A result that is not a non-negative number
+     * throws, naming the state.
+     */
+    readonly delay: number | ((ctx: Ctx) => number);
+    /** The full path of the state to move to when the delay has passed. */
+    readonly to: To;
+}
+/**
  * A state's rules by event `type`. Only the machine's event types are keys, and each rule's
  * `when` and `run` see the event variant its key names.
  */
@@ -212,13 +227,17 @@ interface StateBase<Ctx, E extends EventObject, T, Self extends string, To exten
      */
     readonly on?: NoInfer<OnConfig<Ctx, E, To>>;
     /**
-     * Targets by delay in seconds of game time. The delay is counted by `update(dt)` while the
-     * state is active, from zero on each entry. One `update` call fires at most one timer, and
-     * none when an `update` hook moved the machine.
+     * Timers, in one of two forms: targets by delay in seconds of game time, such as
+     * `{ 2: "/idle" }`, or a list of `AfterConfig` entries, such as
+     * `[{ delay: (ctx) => ctx.patrolFor, to: "/rest" }]`, whose `delay` is a number or a function
+     * of the context. A delay function is read once each time the state is entered, after its
+     * `enter` hook, and again on a hot reload. The delay is counted by `update(dt)` while the state
+     * is active, from zero on each entry. One `update` call fires at most one timer, and none when
+     * an `update` hook moved the machine.
      */
     readonly after?: NoInfer<{
         readonly [seconds: number]: To;
-    }>;
+    } | readonly AfterConfig<Ctx, To>[]>;
     /**
      * Targets taken right after any move that leaves this state active; the first whose `when` is
      * missing or passes wins. It is checked after a move only: not after a rule with no `to`, and

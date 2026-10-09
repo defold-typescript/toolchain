@@ -169,6 +169,22 @@ export type AlwaysSpec<Ctx, To extends string = string> =
   | RuleList<AlwaysConfig<Ctx, To>>;
 
 /**
+ * One entry of the list form of `after`: a `delay` and the `to` its timer leads to.
+ * @noSelf
+ */
+export interface AfterConfig<Ctx, To extends string = string> {
+  /**
+   * The delay in seconds of game time: a number, or a function of the context that returns one.
+   * A function is read once each time the state is entered, after its `enter` hook, and again on
+   * a hot reload, so the delay is fixed for that stay. A result that is not a non-negative number
+   * throws, naming the state.
+   */
+  readonly delay: number | ((ctx: Ctx) => number);
+  /** The full path of the state to move to when the delay has passed. */
+  readonly to: To;
+}
+
+/**
  * A state's rules by event `type`. Only the machine's event types are keys, and each rule's
  * `when` and `run` see the event variant its key names.
  */
@@ -304,11 +320,15 @@ interface StateBase<Ctx, E extends EventObject, T, Self extends string, To exten
    */
   readonly on?: NoInfer<OnConfig<Ctx, E, To>>;
   /**
-   * Targets by delay in seconds of game time. The delay is counted by `update(dt)` while the
-   * state is active, from zero on each entry. One `update` call fires at most one timer, and
-   * none when an `update` hook moved the machine.
+   * Timers, in one of two forms: targets by delay in seconds of game time, such as
+   * `{ 2: "/idle" }`, or a list of `AfterConfig` entries, such as
+   * `[{ delay: (ctx) => ctx.patrolFor, to: "/rest" }]`, whose `delay` is a number or a function
+   * of the context. A delay function is read once each time the state is entered, after its
+   * `enter` hook, and again on a hot reload. The delay is counted by `update(dt)` while the state
+   * is active, from zero on each entry. One `update` call fires at most one timer, and none when
+   * an `update` hook moved the machine.
    */
-  readonly after?: NoInfer<{ readonly [seconds: number]: To }>;
+  readonly after?: NoInfer<{ readonly [seconds: number]: To } | readonly AfterConfig<Ctx, To>[]>;
   /**
    * Targets taken right after any move that leaves this state active; the first whose `when` is
    * missing or passes wins. It is checked after a move only: not after a rule with no `to`, and
@@ -415,6 +435,8 @@ interface Transition<Ctx, E extends EventObject> {
   readonly run: readonly MoveAction<Ctx, E>[];
 }
 
+type Delay<Ctx> = number | ((ctx: Ctx) => number);
+
 interface Compiled<Ctx, E extends EventObject> {
   count: number;
   readonly configs: StateConfig<Ctx, E>[];
@@ -431,6 +453,10 @@ interface Compiled<Ctx, E extends EventObject> {
   readonly transitions: Transition<Ctx, E>[][];
   readonly afterDelays: number[][];
   readonly afterTargets: number[][];
+  // Set only for a state whose after list holds a delay function: its entries in list order,
+  // for each instance to sort once the function is read.
+  readonly afterListDelays: (Delay<Ctx>[] | undefined)[];
+  readonly afterListTargets: (number[] | undefined)[];
   readonly always: Transition<Ctx, E>[][];
   readonly pathIndex: { [path: string]: number };
 }
@@ -763,6 +789,25 @@ function parseDelay(key: string | number): number {
   return delay;
 }
 
+// NaN fails the comparison, so it is rejected with the negative numbers.
+function checkDelay(path: string, delay: unknown, written: unknown): void {
+  if (typeof delay !== "number" || !(delay >= 0)) {
+    throw `hsm: state "${describePath(path)}" has an after delay "${written}" that is not a non-negative number`;
+  }
+}
+
+// Keeps the delays ascending; timers with one delay stay in the order they were added.
+function insertTimer(delays: number[], targets: number[], delay: number, target: number): void {
+  let slot = delays.length;
+  while (slot > 0 && (delays[slot - 1] as number) > delay) {
+    delays[slot] = delays[slot - 1] as number;
+    targets[slot] = targets[slot - 1] as number;
+    slot--;
+  }
+  delays[slot] = delay;
+  targets[slot] = target;
+}
+
 function compileAfter<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, index: number): void {
   const delays: number[] = [];
   const targets: number[] = [];
@@ -773,20 +818,39 @@ function compileAfter<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, in
     return;
   }
   const path = compiled.paths[index] as string;
-  for (const key in after) {
-    const delay = parseDelay(key);
-    if (!(delay >= 0)) {
-      throw `hsm: state "${describePath(path)}" has an after delay "${key}" that is not a non-negative number`;
+  // Read as an array type: the transpiler shifts an index to Lua's base 1 only on an array.
+  const list = after as readonly AfterConfig<Ctx>[];
+  if (typeof list[0] !== "object") {
+    const byDelay = after as { readonly [seconds: number]: string };
+    for (const key in byDelay) {
+      const delay = parseDelay(key);
+      checkDelay(path, delay, key);
+      const target = resolveTarget(compiled, index, byDelay[key as unknown as number] as string);
+      insertTimer(delays, targets, delay, target);
     }
-    const target = resolveTarget(compiled, index, after[key as unknown as number] as string);
-    let slot = delays.length;
-    while (slot > 0 && (delays[slot - 1] as number) > delay) {
-      delays[slot] = delays[slot - 1] as number;
-      targets[slot] = targets[slot - 1] as number;
-      slot--;
+    return;
+  }
+  const listDelays: Delay<Ctx>[] = [];
+  const listTargets: number[] = [];
+  let perInstance = false;
+  for (let i = 0; i < list.length; i++) {
+    const entry = list[i] as AfterConfig<Ctx>;
+    const delay = entry.delay;
+    if (typeof delay === "function") {
+      perInstance = true;
+    } else {
+      checkDelay(path, delay, delay);
     }
-    delays[slot] = delay;
-    targets[slot] = target;
+    listDelays[i] = delay;
+    listTargets[i] = resolveTarget(compiled, index, entry.to);
+  }
+  if (perInstance) {
+    compiled.afterListDelays[index] = listDelays;
+    compiled.afterListTargets[index] = listTargets;
+    return;
+  }
+  for (let i = 0; i < listDelays.length; i++) {
+    insertTimer(delays, targets, listDelays[i] as number, listTargets[i] as number);
   }
 }
 
@@ -807,6 +871,8 @@ function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Com
     transitions: [],
     afterDelays: [],
     afterTargets: [],
+    afterListDelays: [],
+    afterListTargets: [],
     always: [],
     pathIndex: {},
   };
@@ -900,11 +966,16 @@ function createMachine<Ctx, E extends EventObject>(
     let transitions = compiled.transitions;
     let afterDelays = compiled.afterDelays;
     let afterTargets = compiled.afterTargets;
+    let afterListDelays = compiled.afterListDelays;
+    let afterListTargets = compiled.afterListTargets;
     let always = compiled.always;
     const activeChild: number[] = [];
     const isActive: boolean[] = [];
     const elapsed: number[] = [];
     const fired: number[] = [];
+    // The sorted timers of a state whose after list holds a delay function, read on each entry.
+    const ownDelays: (number[] | undefined)[] = [];
+    const ownTargets: (number[] | undefined)[] = [];
     const entryId: number[] = [];
     const cleanup: ((() => void) | undefined)[] = [];
     // Keyed by path, not index, so a remembered child outlives a rebind's recompilation.
@@ -938,8 +1009,30 @@ function createMachine<Ctx, E extends EventObject>(
       isActive[state] = false;
       elapsed[state] = 0;
       fired[state] = 0;
+      ownDelays[state] = undefined;
+      ownTargets[state] = undefined;
       entryId[state] = 0;
       cleanup[state] = undefined;
+    }
+
+    function readDelays(state: number): void {
+      const list = afterListDelays[state];
+      if (list === undefined) {
+        return;
+      }
+      const listTargets = afterListTargets[state] as number[];
+      const delays: number[] = [];
+      const targets: number[] = [];
+      for (let i = 0; i < list.length; i++) {
+        let delay = list[i] as Delay<Ctx>;
+        if (typeof delay === "function") {
+          delay = delay(ctx);
+          checkDelay(paths[state] as string, delay, delay);
+        }
+        insertTimer(delays, targets, delay, listTargets[i] as number);
+      }
+      ownDelays[state] = delays;
+      ownTargets[state] = targets;
     }
 
     function growSlots(): void {
@@ -996,6 +1089,8 @@ function createMachine<Ctx, E extends EventObject>(
       transitions = compiled.transitions;
       afterDelays = compiled.afterDelays;
       afterTargets = compiled.afterTargets;
+      afterListDelays = compiled.afterListDelays;
+      afterListTargets = compiled.afterListTargets;
       always = compiled.always;
       fillPrivate(ctx as never, configs[ROOT], true);
       growSlots();
@@ -1020,6 +1115,7 @@ function createMachine<Ctx, E extends EventObject>(
         fired[state] = keptFired[i] as number;
         entryId[state] = keptEntryId[i] as number;
         cleanup[state] = keptCleanup[i];
+        readDelays(state);
       }
       for (let i = dropped.length - 1; i >= 0; i--) {
         const run = keptCleanup[dropped[i] as number];
@@ -1122,6 +1218,7 @@ function createMachine<Ctx, E extends EventObject>(
       if (hook !== undefined) {
         hook(ctx, instance);
       }
+      readDelays(state);
       const task = config.task;
       if (task !== undefined) {
         // A path, not an index, so a finish held across a rebind still finds its entry.
@@ -1519,17 +1616,12 @@ function createMachine<Ctx, E extends EventObject>(
       if (child !== NO_STATE && fireTimers(child)) {
         return true;
       }
-      const delays = afterDelays[state] as number[];
+      const delays = ownDelays[state] || (afterDelays[state] as number[]);
       const next = fired[state] as number;
       if (next < delays.length && (delays[next] as number) <= (elapsed[state] as number)) {
         fired[state] = next + 1;
-        transition(
-          state,
-          (afterTargets[state] as number[])[next] as number,
-          undefined,
-          undefined,
-          "after",
-        );
+        const targets = ownTargets[state] || (afterTargets[state] as number[]);
+        transition(state, targets[next] as number, undefined, undefined, "after");
         return true;
       }
       return false;
