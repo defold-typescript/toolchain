@@ -106,6 +106,21 @@ declare module 'bridge.bridge' {
        */
       function show_rewarded(placement: string): void;
     }
+    namespace analytics {
+      /**
+       * Send a game event. The event name and the data are entirely up to the game — they are never matched against the SDK's own event names.
+       *
+       * @param event_name - The event name.
+       */
+      function send(event_name: string): void;
+      /**
+       * Send a game event. The event name and the data are entirely up to the game — they are never matched against the SDK's own event names.
+       *
+       * @param event_name - The event name.
+       * @param data - Optional event payload (may be omitted).
+       */
+      function send(event_name: string, data: Record<string | number, unknown>): void;
+    }
     namespace cross_promo {
       /**
        * Get the cross-promo games list. Resolves to an empty array when unsupported. Each game has the shape { id, name, url, icon_url, cover_url, payload }.
@@ -301,9 +316,21 @@ declare module 'bridge.bridge' {
        * Send a custom message with an arbitrary id to the platform.
        *
        * @param id - The custom message id.
+       */
+      function send_custom_message(id: string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      /**
+       * Send a custom message with an arbitrary id to the platform.
+       *
+       * @param id - The custom message id.
        * @param options - Optional message-specific options (may be omitted).
        */
       function send_custom_message(id: string, options: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      /**
+       * Send predefined messages to the platform to trigger specific actions or events, such as signaling that the game is ready.
+       *
+       * @param message - One of message types: `game_ready` `in_game_loading_started`
+       */
+      function send_message(message: string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
       /**
        * Send predefined messages to the platform to trigger specific actions or events, such as signaling that the game is ready.
        *
@@ -388,20 +415,20 @@ declare module 'bridge.bridge' {
       /**
        * Use this to let players create posts about their achievements or updates directly from the game.
        *
-       * @param options - A table with the content, or the id of a social.posts entry declared in playgama-bridge-config.json.
+       * @param id - The id of a social.posts entry declared in playgama-bridge-config.json.
        * @param on_success - function(_)
        * @param on_failure - function(_)
        */
-      function create_post(options: Record<string | number, unknown> | string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      function create_post(id: string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
       /**
        * Use this to let players create posts about their achievements or updates directly from the game.
        *
-       * @param options - A table with the content, or the id of a social.posts entry declared in playgama-bridge-config.json.
-       * @param payload - Optional. The game's own string for this one post - a level, a seed, a challenge - handed back as bridge.platform.payload() when someone opens it. May be omitted, the callbacks then follow options.
+       * @param id - The id of a social.posts entry declared in playgama-bridge-config.json.
+       * @param payload - Optional. The game's own string for this one post - a level, a seed, a challenge - handed back as bridge.platform.payload() when someone opens it. May be omitted, the callbacks then follow id.
        * @param on_success - function(_)
        * @param on_failure - function(_)
        */
-      function create_post(options: Record<string | number, unknown> | string, payload: string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      function create_post(id: string, payload: string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
       /**
        * Everything the player has coming from posts right now - the reward for the post the game was opened from and what the author earned from the players who came through their posts. Resolves to an empty array when there is nothing, so grant what you get and stay quiet otherwise. Each reward has the shape { id, amount, type }, where type is "visit" or "author".
        *
@@ -412,11 +439,11 @@ declare module 'bridge.bridge' {
       /**
        * Allow players to invite their friends to play the game, helping to grow your player base organically.
        *
-       * @param options - A table with the content, or the id of a social.invites entry declared in playgama-bridge-config.json.
+       * @param id - The id of a social.invites entry declared in playgama-bridge-config.json.
        * @param on_success - function(_)
        * @param on_failure - function(_)
        */
-      function invite_friends(options: Record<string | number, unknown> | string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      function invite_friends(id: string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
       /**
        * Check if the add to favorites functionality is supported on the platform.
        */
@@ -450,12 +477,12 @@ declare module 'bridge.bridge' {
        */
       function is_share_supported(): boolean;
       /**
-       * Use this to allow players to share game content or achievements on social media platforms.
+       * Invite players to join your community. The data is taken from social.joinCommunity in playgama-bridge-config.json.
        *
        * @param on_success - function(_)
        * @param on_failure - function(_)
        */
-      function join_community(options: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      function join_community(on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
       /**
        * Encourage players to rate your game, providing valuable feedback and improving visibility.
        *
@@ -466,11 +493,11 @@ declare module 'bridge.bridge' {
       /**
        * Use this to allow players to share game content or achievements on social media platforms.
        *
-       * @param options - A table with the content, or the id of a social.shares entry declared in playgama-bridge-config.json.
+       * @param id - The id of a social.shares entry declared in playgama-bridge-config.json.
        * @param on_success - function(_)
        * @param on_failure - function(_)
        */
-      function share(options: Record<string | number, unknown> | string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      function share(id: string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
     }
     namespace storage {
       /**

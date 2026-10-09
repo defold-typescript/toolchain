@@ -13,15 +13,22 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
+> - **[bridge](/api/bridge) moves to `v2.3.0`:** its social calls take a config entry id and reject a table.
 > - **[`hsm` gets private fields](./state-machines.md#private-fields-with-defineprivatemachine)**, and [`build`](./build.md) reports type errors it crashed on.
+
+### Breaking
+
+- **[bridge](/api/bridge) social calls take a config entry id:** the library moves to `v2.3.0`, where `bridge.social.share`, `bridge.social.invite_friends` and `bridge.social.create_post` take the id of an entry in `playgama-bridge-config.json` and reject a table, and `bridge.social.join_community` takes only its two callbacks. Replace a table argument with the entry's id, and drop the `options` argument of `bridge.social.join_community`.
 
 ### Improved
 
 - **`hsm` machines keep private fields:** `definePrivateMachine` takes a `privateCtx` function on the root config, and its fields reach every hook beside the context while `start` and the instance's `ctx` show the context alone; see [Private fields with `definePrivateMachine`](./state-machines.md#private-fields-with-defineprivatemachine). [`hsm-view`](./hsm-view.md#run-the-machine) lists such a machine and shows the fields in its ctx panel.
+- **[bridge](/api/bridge) sends game events:** `bridge.analytics.send` takes an event name and an optional `data` table.
 
 ### Fixed
 
 - **`build` stops with `undefined is not an object` instead of a type error:** some type errors on an object that holds an engine value such as `msg.url`, `hash` or `vmath.vector3`, like an unknown field passed beside it, ended the build with `error: undefined is not an object (evaluating 'path.includes')` and no file or line. The build now reports the error with its file, line and message.
+- **A [bridge](/api/bridge) platform message needed an `options` table:** `bridge.platform.send_message` and `bridge.platform.send_custom_message` failed to compile without `options`, which the library lets you leave out. Both compile with the callbacks straight after the first argument.
 
 ## v0.46.0
 

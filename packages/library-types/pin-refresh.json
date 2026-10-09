@@ -177,22 +177,18 @@
     {
       "lane": "script-api",
       "moduleId": "bridge.bridge",
-      "fromRef": "v2.1.0",
-      "toRef": "v2.2.0",
-      "addedMembers": [
-        "bridge.platform.data",
-        "bridge.platform.launch_source",
-        "bridge.social.get_post_reward",
-        "bridge.social.is_post_reward_supported"
-      ],
+      "fromRef": "v2.2.0",
+      "toRef": "v2.3.0",
+      "addedMembers": ["bridge.analytics.send"],
       "removedMembers": [],
       "changedMembers": [
         "bridge.social.create_post",
         "bridge.social.invite_friends",
+        "bridge.social.join_community",
         "bridge.social.share"
       ],
       "staged": false,
-      "notes": "One minor (v2.1.0 -> v2.2.0): 85 members -> 89, none withdrawn. Added: platform.launch_source (\"notification\" or \"post\", nil when unknown) and platform.data (the launch parameters table), plus the post-reward pair social.is_post_reward_supported and social.get_post_reward. Changed: share, invite_friends and create_post type options as the YAML list [table, string], so options also accepts the id of a config entry; parseScriptApi read only a string type and would have emitted these three slots as unknown, so it now reads a list as one token per entry and the fidelity pass counts a token-less slot as an unknown fallback. create_post also gains an interior payload: string that upstream's prose says may be omitted with the callbacks shifting left; emitted positionally it would reject every existing create_post(options, on_success, on_failure) call, so script-api-targets.json declares it under omittableSlots and the declaration carries both arities as overloads. Consumer impact: additive -- every call that compiled against v2.1.0 still compiles. The scriptApi path bridge/api/bridge.script_api is unchanged at v2.2.0. Fidelity coverage stays 1 (0 unknown, 85 -> 89 members, 144 -> 154 type tokens, undocumentedMembers 0), so fidelity-floor.json is unchanged; the omittable-slot overload is applied to the emit only, so it is not counted twice. staged=false: a single minor. What this guard can witness is directional: a removedMembers name still emitted, or an addedMembers name not emitted at all. changedMembers and these notes are unchecked prose -- the committed guard reads addedMembers and removedMembers only."
+      "notes": "One minor (v2.2.0 -> v2.3.0): 89 members -> 90, none withdrawn. Added: the analytics namespace with analytics.send(event_name, data), which sends one of the game's own events. Changed: share, invite_friends and create_post take id: string as their first slot where v2.2.0 typed options as [table, string], and join_community loses its options slot and takes only the two callbacks; the bindings agree (bridge_social.cpp routes share and inviteFriends through makeCallbackWithString, createPost through makeCallbackWithStringAndOptionalString, and joinCommunity through makeCallback). Consumer impact: breaking -- a table passed as the first argument of share, invite_friends or create_post stops compiling, and so does an options argument to join_community; a call that already passed a config entry id still compiles. Four slots that upstream marks omittable in prose only are declared under omittableSlots in script-api-targets.json, so each declaration carries both arities as overloads: create_post's interior payload (kept from v2.2.0, its evidence now ending \"the callbacks then follow id\"), analytics.send's trailing data, and the options slot of platform.send_message and platform.send_custom_message. The bindings corroborate the last three: bridge_analytics.cpp bridge::analytics::send and bridge_platform.cpp sendMessage / sendCustomMessage read the table only when lua_istable(L, 2), and the two platform calls read their callbacks from index 2 otherwise. send_message and send_custom_message are not changedMembers: upstream did not move them at v2.3.0, and only the emitted declaration gains the shorter overload. The scriptApi path bridge/api/bridge.script_api is unchanged at v2.3.0. Fidelity coverage stays 1 (0 unknown, 89 -> 90 members, 154 -> 152 type tokens, undocumentedMembers 0), so fidelity-floor.json is unchanged; the omittable-slot overloads are applied to the emit only, so they are not counted twice. staged=false: a single minor. What this guard can witness is directional: a removedMembers name still emitted, or an addedMembers name not emitted at all. changedMembers and these notes are unchecked prose -- the committed guard reads addedMembers and removedMembers only."
     }
   ],
   "deliberatelyUnmoved": [
