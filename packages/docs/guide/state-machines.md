@@ -829,31 +829,31 @@ export const turret = definePrivateMachine<TurretOptions, TurretEvent>("turret")
 });
 ```
 
-`satisfies TurretPrivate` does not do the same job. It checks the object but keeps its narrow types, so an empty array stays `never[]` and nothing can be pushed to it:
-
-```ts title="turret-satisfies.ts"
-import { definePrivateMachine } from "@defold-typescript/types/hsm";
-
-interface TurretPrivate {
-  heat: number;
-  targets: Hash[];
-}
-
-export const turret = definePrivateMachine<{ readonly fireRate: number }, { type: "SPOTTED" }>()({
-  privateCtx: () => ({ heat: 0, targets: [] }) satisfies TurretPrivate,
-  initial: "/idle",
-  states: {
-    idle: {
-      enter: (ctx) => {
-        // @ts-expect-error -- `targets` is `never[]`: `satisfies` checked it and kept the narrow type
-        ctx.targets.push(hash("crate"));
-      },
-    },
-  },
-});
-```
-
-The fix is the return type annotation of the named form: `privateCtx: (): TurretPrivate => ({ heat: 0, targets: [] })`.
+> [!WARNING] `satisfies TurretPrivate` does not do the same job. It checks the object but keeps its narrow types, so an empty array stays `never[]` and nothing can be pushed to it:
+>
+> ```ts title="turret-satisfies.ts"
+> import { definePrivateMachine } from "@defold-typescript/types/hsm";
+>
+> interface TurretPrivate {
+>   heat: number;
+>   targets: Hash[];
+> }
+>
+> export const turret = definePrivateMachine<{ readonly fireRate: number }, { type: "SPOTTED" }>()({
+>   privateCtx: () => ({ heat: 0, targets: [] }) satisfies TurretPrivate,
+>   initial: "/idle",
+>   states: {
+>     idle: {
+>       enter: (ctx) => {
+>         // @ts-expect-error -- `targets` is `never[]`: `satisfies` checked it and kept the narrow type
+>         ctx.targets.push(hash("crate"));
+>       },
+>     },
+>   },
+> });
+> ```
+>
+> The fix is the return type annotation of the named form: `privateCtx: (): TurretPrivate => ({ heat: 0, targets: [] })`.
 
 `privateCtx` follows these rules:
 

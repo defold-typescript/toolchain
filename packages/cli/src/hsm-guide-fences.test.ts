@@ -65,7 +65,21 @@ function fenceTitle(info: string): string | undefined {
   return title.length > 0 ? title : undefined;
 }
 
-const TS_FENCE = /^```ts(?=[\s{]|$)([^\n]*)\n([\s\S]*?)^```/gm;
+// A fence inside a callout (`> [!WARNING]`) carries the blockquote prefix on every line, and its
+// closing line must carry the prefix its opening line has.
+const TS_FENCE = /^(> ?)?```ts(?=[\s{]|$)([^\n]*)\n([\s\S]*?)^\1```/gm;
+
+interface TsFence {
+  readonly info: string;
+  readonly body: string;
+}
+
+function tsFences(text: string): TsFence[] {
+  return [...text.matchAll(TS_FENCE)].map((m) => ({
+    info: m[2] as string,
+    body: m[1] === undefined ? (m[3] as string) : (m[3] as string).replace(/^> ?/gm, ""),
+  }));
+}
 
 // The info string's second token, as the docs site reads `original`: Shiki and
 // the language badge take only the first, so the fence still renders as `ts`.
@@ -79,19 +93,18 @@ function collapseWhitespace(text: string): string {
 
 /** The `ts excerpt` fences of `guide` that `source` does not hold, whitespace aside. */
 function unquotedExcerpts(guide: string, source: string): string[] {
-  return [...guide.matchAll(TS_FENCE)]
-    .filter((m) => isExcerptFence(m[1] as string))
-    .map((m) => collapseWhitespace(m[2] as string))
+  return tsFences(guide)
+    .filter((fence) => isExcerptFence(fence.info))
+    .map((fence) => collapseWhitespace(fence.body))
     .filter((excerpt) => excerpt.length === 0 || !source.includes(excerpt));
 }
 
 function guideFences(guide: string): Fence[] {
   const fences: Fence[] = [];
   let index = 0;
-  for (const m of guide.matchAll(TS_FENCE)) {
-    if (isExcerptFence(m[1] as string)) continue;
-    const title = fenceTitle(m[1] as string);
-    const body = m[2] as string;
+  for (const { info, body } of tsFences(guide)) {
+    if (isExcerptFence(info)) continue;
+    const title = fenceTitle(info);
     if (title === undefined) {
       fences.push({ label: `ts fence #${index}`, rel: `guide-fence-${index}.ts`, body });
     } else {
@@ -261,6 +274,30 @@ describe("hsm guide fence gate", () => {
     },
     SLOW,
   );
+});
+
+describe("hsm guide fences in a callout", () => {
+  test("a fence inside a callout is read without its blockquote prefix", () => {
+    const guide = [
+      "> [!WARNING] A callout with a fence.",
+      ">",
+      '> ```ts title="probe.ts"',
+      "> type Later = Promise<",
+      ">   number",
+      "> >;",
+      ">",
+      "> export type { Later };",
+      "> ```",
+      "",
+    ].join("\n");
+    expect(guideFences(guide)).toEqual([
+      {
+        label: "probe.ts",
+        rel: "probe.ts",
+        body: "type Later = Promise<\n  number\n>;\n\nexport type { Later };\n",
+      },
+    ]);
+  });
 });
 
 describe("hsm guide excerpts", () => {
