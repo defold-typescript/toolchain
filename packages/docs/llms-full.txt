@@ -3610,11 +3610,41 @@ export const turret = defineMachine<TurretOptions, TurretEvent>("turret")({
 >
 > The fix is the return type annotation of the named form: `privateCtx: (): TurretPrivate => ({ heat: 0, targets: [] })`.
 
+The factory receives the object passed to `start`, so a private field can start from a field of `Ctx`. Give `ctx` its type.
+
+```ts title="turret-start-heat.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+interface TurretOptions {
+  readonly fireRate: number;
+  readonly startHeat: number;
+}
+
+type TurretEvent = { type: "SPOTTED" } | { type: "LOST" };
+
+export const turret = defineMachine<TurretOptions, TurretEvent>("turret")({
+  privateCtx: (ctx: TurretOptions) => ({ heat: ctx.startHeat }),
+  initial: "/idle",
+  states: {
+    idle: { on: { SPOTTED: "/firing" } },
+    firing: {
+      enter: (ctx) => {
+        ctx.heat += 1 / ctx.fireRate;
+      },
+      on: { LOST: "/idle" },
+    },
+  },
+});
+
+const gun = turret.start({ fireRate: 2, startHeat: 5 }); // gun.ctx shows fireRate and startHeat only
+```
+
 `privateCtx` follows these rules:
 
 - **It runs once per `start`, before the root's `enter` hook.** The fields are there when the first hook runs.
 - **Every instance gets fresh fields of its own.** A value written straight into the config would be one array or table shared by every instance.
-- **It takes no arguments.** To set a private field from a field of `Ctx`, do it in the root's `enter` hook.
+- **It receives the object passed to `start`,** typed `Ctx`. On a restart and on a hot reload that object is the instance's `ctx`.
+- **A factory that reads `ctx` gives it a type.** Write `(ctx: TurretOptions) => ...`, not `(ctx) => ...`: without the type, TypeScript can type a hook or a `sequence` task before it knows the private fields, and that hook reports the field as missing.
 - **The fields are added to the object passed to `start`,** which stays the instance's `ctx`.
 - **A restart builds them fresh.** `start(old.ctx)` keeps the public fields and builds the private ones again; see [Restart a machine](#restart-a-machine).
 - **A hot reload adds fields and keeps values.** A reload under the machine's key adds the fields a new `privateCtx` introduces and leaves every field that already holds a value alone; see [What each instance keeps](#what-each-instance-keeps).
@@ -4653,9 +4683,9 @@ Every field is optional on a state; the root config requires `initial` and `stat
 
 The optional key the root config takes; see [Private fields with `privateCtx`](#private-fields-with-privatectx).
 
-| Field        | Type         | Meaning                                                                                       |
-| ------------ | ------------ | --------------------------------------------------------------------------------------------- |
-| `privateCtx` | `() => Priv` | Builds the fields only the machine uses. Runs once per `start`, before the root's `enter` hook, so every instance gets fresh fields of its own. |
+| Field        | Type                 | Meaning                                                                                       |
+| ------------ | -------------------- | --------------------------------------------------------------------------------------------- |
+| `privateCtx` | `(ctx: Ctx) => Priv` | Builds the fields only the machine uses from the object passed to `start`. Runs once per `start`, before the root's `enter` hook, so every instance gets fresh fields of its own. |
 
 ##### `MachineInstance`
 
