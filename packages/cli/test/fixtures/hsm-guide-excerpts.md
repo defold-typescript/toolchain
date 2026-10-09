@@ -248,34 +248,41 @@ export default defineScript<Self>({
 });
 ```
 
-```ts title="guard-built-in-init.ts"
+```ts title="guard-delay-from-property.ts"
 import { defineScript } from "@defold-typescript/types";
 import { defineMachine } from "@defold-typescript/types/hsm";
 
-type Ctx = { health: number };
+type Ctx = { health: number; readonly patrolFor: number };
 type HitEvent = { type: "HIT" };
 
-// No hot reload key: every call builds a separate machine, one per object.
-function buildGuardMachine(patrolFor: number) {
-  return defineMachine<Ctx, HitEvent>()({
-    initial: "/patrol",
-    states: {
-      patrol: { after: { [patrolFor]: "/rest" } },
-      rest: { on: { HIT: "/patrol" } },
+// One keyed machine for every guard: each instance reads its own delay.
+const guardMachine = defineMachine<Ctx, HitEvent>("guard")({
+  initial: "/patrol",
+  states: {
+    patrol: {
+      after: [
+        { delay: (ctx) => ctx.patrolFor, to: "/rest" },
+      ],
     },
-  });
-}
+    rest: { on: { HIT: "/patrol" } },
+  },
+});
 
-type Guard = ReturnType<
-  ReturnType<typeof buildGuardMachine>["start"]
->;
+type Self = {
+  guard: ReturnType<typeof guardMachine.start>;
+};
 
 export default defineScript({
   properties: {
     patrol_for: 3,
   },
-  init(self): { guard: Guard } {
-    return { guard: buildGuardMachine(self.patrol_for).start({ health: 3 }) };
+  init(self): Self {
+    return {
+      guard: guardMachine.start({
+        health: 3,
+        patrolFor: self.patrol_for,
+      }),
+    };
   },
   update(self, dt) {
     self.guard.update(dt);

@@ -17,6 +17,7 @@ interface Slots {
   readonly onTarget: string;
   readonly to: string;
   readonly after: string;
+  readonly afterListTo: string;
   readonly always: string;
   readonly initial: string;
   readonly onEntry: string;
@@ -27,6 +28,7 @@ const VALID: Slots = {
   onTarget: '"/play"',
   to: '"/play/run"',
   after: '"/play"',
+  afterListTo: '"/menu"',
   always: '{ to: "/play", when: (ctx) => ctx.count > 99 }',
   initial: '"/play/idle"',
   onEntry: 'BACK: "/menu"',
@@ -55,6 +57,7 @@ const machine = defineMachine<Ctx, Ev>()({${firstKey}
       always: ${slots.always},
     },
     play: {
+      after: [{ delay: (ctx) => ctx.count, to: ${slots.afterListTo} }],
       initial: ${slots.initial},
       states: {
         ${PLAY_CHILDREN[0]}: {
@@ -142,6 +145,10 @@ describe("hsm path completion", () => {
 
   test("an after target offers the machine's paths", () => {
     expect(offered("after", `"${CURSOR}"`)).toEqual(sorted(ALL_PATHS));
+  });
+
+  test("to in an after list entry, beside a delay function, offers the machine's paths", () => {
+    expect(offered("afterListTo", `"${CURSOR}"`)).toEqual(sorted(ALL_PATHS));
   });
 
   test("an always target offers the machine's paths", () => {

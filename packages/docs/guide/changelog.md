@@ -14,6 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[`definePrivateMachine`](./state-machines.md#private-fields-with-privatectx)** is removed; use `defineMachine`.
+> - **[`after` delays](./state-machines.md#update-and-after)** can read the context.
 
 ### Breaking
 
@@ -22,6 +23,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **`privateCtx` takes the starting context:** the factory receives the object passed to `start`, so a private field can start from a field of `Ctx`, as in `privateCtx: (ctx: TurretOptions) => ({ heat: ctx.startHeat })`; see [Private fields with `privateCtx`](./state-machines.md#private-fields-with-privatectx). Give `ctx` its type there; a factory with no parameter compiles unchanged.
+- **An `after` delay can read the context:** `after` also takes a list such as `after: [{ delay: (ctx) => ctx.patrolFor, to: "/rest" }]`, whose delay is read once each time the state is entered, so one keyed machine serves instances with different delays; see [`update` and `after`](./state-machines.md#update-and-after).
 
 ## v0.47.0
 
