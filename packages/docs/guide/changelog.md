@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.49.0
+
+> Summary:
+>
+> - **[`when`](./state-machines.md)** reads the machine.
+
+### Improved
+
+- **A `when` can read the machine:** a rule's `when` receives the running machine as its last argument, read-only, so a rule can depend on the active states, as in `when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing")`; see [Read another region in a `when`](./state-machines.md#read-another-region-in-a-when).
+
 ## v0.48.0
 
 > Summary:

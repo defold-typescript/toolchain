@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import type { Demo, DemoCtx } from "./demos";
-import { afterChip, startDemo, step, type TraceEntry } from "./instrument";
+import { afterChip, send, startDemo, step, type TraceEntry } from "./instrument";
 
 function tick(ctx: DemoCtx): void {
   ctx.tick = (ctx.tick as number) + 1;
 }
 
-// Neither spec is on the tutorial page, and every DEMOS entry must be placed there,
-// so both stay local to this file.
+// None of these specs is on the tutorial page, and every DEMOS entry must be placed there,
+// so they stay local to this file.
 const airborne: Demo = {
   title: "Airborne",
   subtitle: "A parent timer over a child update hook.",
@@ -45,6 +45,45 @@ const spin: Demo = {
   buttons: [],
   readout: () => [],
   tick,
+};
+
+const knight: Demo = {
+  title: "Knight",
+  subtitle: "A jump allowed only while standing.",
+  config: {
+    initial: "/alive",
+    states: {
+      alive: {
+        type: "parallel",
+        states: {
+          move: {
+            initial: "/alive/move/idle",
+            states: {
+              idle: {
+                on: {
+                  JUMP: {
+                    to: "/alive/move/jump",
+                    when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing"),
+                  },
+                },
+              },
+              jump: {},
+            },
+          },
+          posture: {
+            initial: "/alive/posture/standing",
+            states: {
+              standing: { on: { CROUCH: "/alive/posture/crouching" } },
+              crouching: {},
+            },
+          },
+        },
+      },
+    },
+  },
+  ctx: () => ({}),
+  buttons: [],
+  readout: () => [],
 };
 
 function start(spec: Demo) {
@@ -86,5 +125,18 @@ describe("step clocks across an update-hook move", () => {
       clocks.push(run.clock("/spin"));
     }
     expect(clocks).toEqual([0.25, 0, 0.25]);
+  });
+});
+
+describe("a guard reads the machine", () => {
+  test("a wrapped when is handed the machine and reads another region", () => {
+    const crouched = start(knight).run;
+    send(crouched, { type: "CROUCH" });
+    send(crouched, { type: "JUMP" });
+    expect(crouched.matches("/alive/move/idle")).toBe(true);
+
+    const standing = start(knight).run;
+    send(standing, { type: "JUMP" });
+    expect(standing.matches("/alive/move/jump")).toBe(true);
   });
 });
