@@ -328,6 +328,24 @@ local function parseDelay(key)
     end
     return delay
 end
+local function checkDelay(path, delay, written)
+    if type(delay) ~= "number" or not (delay >= 0) then
+        error(
+            ((("hsm: state \\"" .. describePath(path)) .. "\\" has an after delay \\"") .. tostring(written)) .. "\\" that is not a non-negative number",
+            0
+        )
+    end
+end
+local function insertTimer(delays, targets, delay, target)
+    local slot = #delays
+    while slot > 0 and delays[slot] > delay do
+        delays[slot + 1] = delays[slot]
+        targets[slot + 1] = targets[slot]
+        slot = slot - 1
+    end
+    delays[slot + 1] = delay
+    targets[slot + 1] = target
+end
 local function compileAfter(compiled, index)
     local delays = {}
     local targets = {}
@@ -338,23 +356,46 @@ local function compileAfter(compiled, index)
         return
     end
     local path = compiled.paths[index + 1]
-    for key in pairs(after) do
-        local delay = parseDelay(key)
-        if not (delay >= 0) then
-            error(
-                ((("hsm: state \\"" .. describePath(path)) .. "\\" has an after delay \\"") .. key) .. "\\" that is not a non-negative number",
-                0
-            )
+    local list = after
+    if type(list[1]) ~= "table" then
+        local byDelay = after
+        for key in pairs(byDelay) do
+            local delay = parseDelay(key)
+            checkDelay(path, delay, key)
+            local target = resolveTarget(compiled, index, byDelay[key])
+            insertTimer(delays, targets, delay, target)
         end
-        local target = resolveTarget(compiled, index, after[key])
-        local slot = #delays
-        while slot > 0 and delays[slot] > delay do
-            delays[slot + 1] = delays[slot]
-            targets[slot + 1] = targets[slot]
-            slot = slot - 1
+        return
+    end
+    local listDelays = {}
+    local listTargets = {}
+    local perInstance = false
+    do
+        local i = 0
+        while i < #list do
+            local entry = list[i + 1]
+            local delay = entry.delay
+            if type(delay) == "function" then
+                perInstance = true
+            else
+                checkDelay(path, delay, delay)
+            end
+            listDelays[i + 1] = delay
+            listTargets[i + 1] = resolveTarget(compiled, index, entry.to)
+            i = i + 1
         end
-        delays[slot + 1] = delay
-        targets[slot + 1] = target
+    end
+    if perInstance then
+        compiled.afterListDelays[index + 1] = listDelays
+        compiled.afterListTargets[index + 1] = listTargets
+        return
+    end
+    do
+        local i = 0
+        while i < #listDelays do
+            insertTimer(delays, targets, listDelays[i + 1], listTargets[i + 1])
+            i = i + 1
+        end
     end
 end
 local function compile(config)
@@ -374,6 +415,8 @@ local function compile(config)
         transitions = {},
         afterDelays = {},
         afterTargets = {},
+        afterListDelays = {},
+        afterListTargets = {},
         always = {},
         pathIndex = {}
     }
@@ -424,14 +467,39 @@ local function fillPrivate(target, root, onlyMissing)
 end
 local function createMachine(definition)
     local function start(ctx)
-        local clearSlot, growSlots, collectActive, rebind, onMove, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterTargets, always, activeChild, isActive, elapsed, fired, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, instance
+        local clearSlot, readDelays, growSlots, collectActive, rebind, onMove, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterTargets, afterListDelays, afterListTargets, always, activeChild, isActive, elapsed, fired, ownDelays, ownTargets, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, instance
         function clearSlot(state)
             activeChild[state + 1] = NO_STATE
             isActive[state + 1] = false
             elapsed[state + 1] = 0
             fired[state + 1] = 0
+            ownDelays[state + 1] = nil
+            ownTargets[state + 1] = nil
             entryId[state + 1] = 0
             cleanup[state + 1] = nil
+        end
+        function readDelays(state)
+            local list = afterListDelays[state + 1]
+            if list == nil then
+                return
+            end
+            local listTargets = afterListTargets[state + 1]
+            local delays = {}
+            local targets = {}
+            do
+                local i = 0
+                while i < #list do
+                    local delay = list[i + 1]
+                    if type(delay) == "function" then
+                        delay = delay(ctx)
+                        checkDelay(paths[state + 1], delay, delay)
+                    end
+                    insertTimer(delays, targets, delay, listTargets[i + 1])
+                    i = i + 1
+                end
+            end
+            ownDelays[state + 1] = delays
+            ownTargets[state + 1] = targets
         end
         function growSlots()
             while slotCount < compiled.count do
@@ -495,6 +563,8 @@ local function createMachine(definition)
             transitions = compiled.transitions
             afterDelays = compiled.afterDelays
             afterTargets = compiled.afterTargets
+            afterListDelays = compiled.afterListDelays
+            afterListTargets = compiled.afterListTargets
             always = compiled.always
             fillPrivate(ctx, configs[ROOT + 1], true)
             growSlots()
@@ -503,13 +573,13 @@ local function createMachine(definition)
                 local i = 0
                 while i < #order do
                     do
-                        local __continue107
+                        local __continue122
                         repeat
                             local state = lookupPath(compiled, keptPaths[i + 1])
                             local owner = state == nil and NO_STATE or parent[state + 1]
                             if state == nil or owner ~= NO_STATE and (isActive[owner + 1] ~= true or parallel[owner + 1] ~= true and activeChild[owner + 1] ~= NO_STATE) then
                                 dropped[#dropped + 1] = i
-                                __continue107 = true
+                                __continue122 = true
                                 break
                             end
                             isActive[state + 1] = true
@@ -520,9 +590,10 @@ local function createMachine(definition)
                             fired[state + 1] = keptFired[i + 1]
                             entryId[state + 1] = keptEntryId[i + 1]
                             cleanup[state + 1] = keptCleanup[i + 1]
-                            __continue107 = true
+                            readDelays(state)
+                            __continue122 = true
                         until true
-                        if not __continue107 then
+                        if not __continue122 then
                             break
                         end
                     end
@@ -644,6 +715,7 @@ local function createMachine(definition)
             if hook ~= nil then
                 hook(ctx, instance)
             end
+            readDelays(state)
             local task = config.task
             if task ~= nil then
                 local path = paths[state + 1]
@@ -1079,13 +1151,14 @@ local function createMachine(definition)
             if child ~= NO_STATE and fireTimers(child) then
                 return true
             end
-            local delays = afterDelays[state + 1]
+            local delays = ownDelays[state + 1] or afterDelays[state + 1]
             local next = fired[state + 1]
             if next < #delays and delays[next + 1] <= elapsed[state + 1] then
                 fired[state + 1] = next + 1
+                local targets = ownTargets[state + 1] or afterTargets[state + 1]
                 transition(
                     state,
-                    afterTargets[state + 1][next + 1],
+                    targets[next + 1],
                     nil,
                     nil,
                     "after"
@@ -1140,11 +1213,15 @@ local function createMachine(definition)
         transitions = compiled.transitions
         afterDelays = compiled.afterDelays
         afterTargets = compiled.afterTargets
+        afterListDelays = compiled.afterListDelays
+        afterListTargets = compiled.afterListTargets
         always = compiled.always
         activeChild = {}
         isActive = {}
         elapsed = {}
         fired = {}
+        ownDelays = {}
+        ownTargets = {}
         entryId = {}
         cleanup = {}
         remembered = {}

@@ -394,6 +394,27 @@ const EXPECTED: Record<string, string[]> = {
     "restarted hits=0 flag=true",
     "reloaded armor=7 hits=1 count=11",
   ],
+  "after delay from ctx": [
+    "enter a",
+    "exit a",
+    "enter x",
+    "fast=/x",
+    "enter a",
+    "slow=/a",
+    "exit a",
+    "enter b",
+    "exit b",
+    "enter a",
+    "exit a",
+    "enter x",
+    "slow=/x",
+    "enter a",
+    "exit a",
+    "enter x",
+    "kept=/x",
+    'error: hsm: state "/a" has an after delay "-1" that is not a non-negative number',
+    'error: hsm: state "/a" has an after delay "-1" that is not a non-negative number',
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
