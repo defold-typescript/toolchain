@@ -413,6 +413,15 @@ local function transitionDomain(compiled, source, target)
     return domain
 end
 local registered = {}
+local function fillPrivate(target, root, onlyMissing)
+    local factory = root.privateCtx
+    local fields = factory and factory() or ({})
+    for name in pairs(fields) do
+        if not onlyMissing or target[name] == nil then
+            target[name] = fields[name]
+        end
+    end
+end
 local function createMachine(definition)
     local function start(ctx)
         local clearSlot, growSlots, collectActive, rebind, onMove, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterTargets, always, activeChild, isActive, elapsed, fired, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, instance
@@ -487,19 +496,20 @@ local function createMachine(definition)
             afterDelays = compiled.afterDelays
             afterTargets = compiled.afterTargets
             always = compiled.always
+            fillPrivate(ctx, configs[ROOT + 1], true)
             growSlots()
             local dropped = {}
             do
                 local i = 0
                 while i < #order do
                     do
-                        local __continue103
+                        local __continue107
                         repeat
                             local state = lookupPath(compiled, keptPaths[i + 1])
                             local owner = state == nil and NO_STATE or parent[state + 1]
                             if state == nil or owner ~= NO_STATE and (isActive[owner + 1] ~= true or parallel[owner + 1] ~= true and activeChild[owner + 1] ~= NO_STATE) then
                                 dropped[#dropped + 1] = i
-                                __continue103 = true
+                                __continue107 = true
                                 break
                             end
                             isActive[state + 1] = true
@@ -510,9 +520,9 @@ local function createMachine(definition)
                             fired[state + 1] = keptFired[i + 1]
                             entryId[state + 1] = keptEntryId[i + 1]
                             cleanup[state + 1] = keptCleanup[i + 1]
-                            __continue103 = true
+                            __continue107 = true
                         until true
-                        if not __continue103 then
+                        if not __continue107 then
                             break
                         end
                     end
@@ -605,13 +615,13 @@ local function createMachine(definition)
             return count + 1
         end
         function refreshLeaves()
-            local ____temp_3
+            local ____temp_5
             if isActive[ROOT + 1] == true then
-                ____temp_3 = collectLeaves(ROOT, 0)
+                ____temp_5 = collectLeaves(ROOT, 0)
             else
-                ____temp_3 = 0
+                ____temp_5 = 0
             end
-            local count = ____temp_3
+            local count = ____temp_5
             while #leaves > count do
                 table.remove(leaves)
             end
@@ -782,13 +792,13 @@ local function createMachine(definition)
         function firstLeaf(state)
             local leaf = state
             while true do
-                local ____temp_4
+                local ____temp_6
                 if parallel[leaf + 1] == true then
-                    ____temp_4 = children[leaf + 1][1]
+                    ____temp_6 = children[leaf + 1][1]
                 else
-                    ____temp_4 = activeChild[leaf + 1]
+                    ____temp_6 = activeChild[leaf + 1]
                 end
-                local child = ____temp_4
+                local child = ____temp_6
                 if child == NO_STATE then
                     return paths[leaf + 1]
                 end
@@ -1161,6 +1171,7 @@ local function createMachine(definition)
             onMove = onMove
         }
         busy = true
+        fillPrivate(ctx, configs[ROOT + 1], false)
         enterState(ROOT)
         enterDefaults(ROOT, 0)
         refreshLeaves()
@@ -1190,6 +1201,7 @@ end
 function ____exports.defineMachine(key)
     return function(config) return define(key, config) end
 end
+____exports.definePrivateMachine = ____exports.defineMachine
 return ____exports
 "
 `;

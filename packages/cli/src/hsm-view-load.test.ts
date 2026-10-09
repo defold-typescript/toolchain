@@ -30,6 +30,7 @@ interface StateLike {
 
 interface Instance {
   readonly path: string | undefined;
+  readonly ctx: unknown;
   readonly send: (event: { type: string }) => void;
 }
 
@@ -83,6 +84,19 @@ function leafOf(config: StateLike): string | undefined {
   }
   return leaf;
 }
+
+const PRIVATE_MACHINES = `import { definePrivateMachine } from "@defold-typescript/types/hsm";
+export const turret = definePrivateMachine("turret")({
+  privateCtx: () => ({ heat: 0 }),
+  initial: "/a",
+  states: { a: {} },
+});
+export const lamp = definePrivateMachine()({
+  privateCtx: () => ({ heat: 0 }),
+  initial: "/a",
+  states: { a: {} },
+});
+`;
 
 function thrown(run: () => unknown): unknown {
   try {
@@ -139,6 +153,22 @@ defineMachine()({ initial: "/a", states: { a: {} } });
       { name: "gate", key: "gate" },
       { name: "machine-1", key: undefined },
     ]);
+  });
+
+  test("lists a machine built with definePrivateMachine", () => {
+    const loaded = load(write("main.ts", PRIVATE_MACHINES));
+    expect(loaded.machines.map(({ name, key }) => ({ name, key }))).toEqual([
+      { name: "turret", key: "turret" },
+      { name: "lamp", key: undefined },
+    ]);
+  });
+
+  test("starts a recorded private machine with the fields its privateCtx builds", () => {
+    const [turret] = load(write("main.ts", PRIVATE_MACHINES)).machines;
+    if (turret === undefined) {
+      throw new Error("no machine loaded");
+    }
+    expect(start(turret, { rate: 2 }).ctx).toEqual({ rate: 2, heat: 0 });
   });
 
   test("lists the entry file, then each imported project file in first-import order", () => {
