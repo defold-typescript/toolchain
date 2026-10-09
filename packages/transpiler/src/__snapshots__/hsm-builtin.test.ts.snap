@@ -427,7 +427,7 @@ end
 local registered = {}
 local function fillPrivate(target, root, onlyMissing)
     local factory = root.privateCtx
-    local fields = factory and factory() or ({})
+    local fields = factory and factory(target) or ({})
     for name in pairs(fields) do
         if not onlyMissing or target[name] == nil then
             target[name] = fields[name]
