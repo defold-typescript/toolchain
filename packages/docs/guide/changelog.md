@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** must add `can`.
-> - **[State machines](./state-machines.md)** gain `can` and a `when` that reads the machine.
+> - **[State machines](./state-machines.md)** gain `can`, a `when` that reads the machine and an [animation recipe](./state-machines.md#animation-states-with-one-shots).
 
 ### Breaking
 
@@ -24,6 +24,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **A `when` can read the machine:** a rule's `when` receives the running machine as its last argument, read-only, so a rule can depend on the active states, as in `when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing")`; see [Read another region in a `when`](./state-machines.md#read-another-region-in-a-when).
 - **Ask whether an event would be taken:** `can(event)` on a machine instance returns whether a rule of an active state would take the event, without moving the machine or running a hook; see [Ask whether an event would be taken](./state-machines.md#ask-whether-an-event-would-be-taken).
+- **A recipe for animation states:** the State machines guide builds one knight machine with looping animations, one-shots that finish before the next state, in-between animations between postures and a jump kept until it can play; see [Animation states with one-shots](./state-machines.md#animation-states-with-one-shots).
 
 ## v0.48.0
 
