@@ -91,6 +91,10 @@ function isAlive(guard: Guard): boolean {
   return guard.matches("/alive");
 }
 
+export function canPause(guard: Guard): boolean {
+  return guard.can({ type: "PAUSE" });
+}
+
 function hurt<P extends string>(
   guard: MachineInstance<GuardCtx, GuardEvent, P>,
 ): void {
