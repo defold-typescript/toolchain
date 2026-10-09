@@ -9,12 +9,22 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.48.0
+
+> Summary:
+>
+> - **[`definePrivateMachine`](./state-machines.md#private-fields-with-privatectx)** is removed; use `defineMachine`.
+
+### Breaking
+
+- **`definePrivateMachine` is removed:** `defineMachine` takes the optional `privateCtx` key on its root config, so one function defines every `hsm` machine; see [Private fields with `privateCtx`](./state-machines.md#private-fields-with-privatectx). Rename each `definePrivateMachine` import and call to `defineMachine`; the config stays as written.
+
 ## v0.47.0
 
 > Summary:
 >
 > - **[bridge](/api/bridge) moves to `v2.3.0`:** its social calls take a config entry id and reject a table.
-> - **[`hsm` gets private fields](./state-machines.md#private-fields-with-defineprivatemachine)**, and [`build`](./build.md) reports type errors it crashed on.
+> - **[`hsm` gets private fields](./state-machines.md#private-fields-with-privatectx)**, and [`build`](./build.md) reports type errors it crashed on.
 
 ### Breaking
 
@@ -22,7 +32,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **`hsm` machines keep private fields:** `definePrivateMachine` takes a `privateCtx` function on the root config, and its fields reach every hook beside the context while `start` and the instance's `ctx` show the context alone; see [Private fields with `definePrivateMachine`](./state-machines.md#private-fields-with-defineprivatemachine). [`hsm-view`](./hsm-view.md#run-the-machine) lists such a machine and shows the fields in its ctx panel.
+- **`hsm` machines keep private fields:** `definePrivateMachine` takes a `privateCtx` function on the root config, and its fields reach every hook beside the context while `start` and the instance's `ctx` show the context alone; see [Private fields with `definePrivateMachine`](./state-machines.md#private-fields-with-privatectx). [`hsm-view`](./hsm-view.md#run-the-machine) lists such a machine and shows the fields in its ctx panel.
 - **[bridge](/api/bridge) sends game events:** `bridge.analytics.send` takes an event name and an optional `data` table.
 
 ### Fixed

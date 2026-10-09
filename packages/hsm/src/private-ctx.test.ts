@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { definePrivateMachine } from "./index";
+import { sequence } from "./async";
+import { defineMachine } from "./index";
 
 interface Options {
   readonly name: string;
@@ -13,8 +14,11 @@ interface Internals {
 
 type Ev = { type: "HIT" };
 
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
 const make = (key?: string) =>
-  definePrivateMachine<Options, Ev>(key)({
+  defineMachine<Options, Ev>(key)({
     privateCtx: (): Internals => ({ hits: [], count: 0 }),
     enter: (ctx) => {
       ctx.count = ctx.start ?? 0;
@@ -39,7 +43,7 @@ const make = (key?: string) =>
 // The instance hides the private fields from its type, so tests read them through this.
 const internals = (ctx: Options): Internals => ctx as unknown as Internals;
 
-describe("definePrivateMachine at run time", () => {
+describe("privateCtx at run time", () => {
   test("every start builds its own private fields before the root's enter hook", () => {
     const m = make();
     const a = m.start({ name: "a" });
@@ -77,7 +81,7 @@ describe("definePrivateMachine at run time", () => {
   test("a hot reload adds the fields a new factory introduces and keeps the values already there", () => {
     const a = make("private-reload").start({ name: "a" });
     a.send({ type: "HIT" });
-    definePrivateMachine<Options, Ev>("private-reload")({
+    defineMachine<Options, Ev>("private-reload")({
       privateCtx: (): Internals & { armor: number } => ({ hits: [], count: 0, armor: 5 }),
       initial: "/idle",
       states: { idle: {} },
@@ -90,9 +94,9 @@ describe("definePrivateMachine at run time", () => {
   });
 });
 
-describe("definePrivateMachine types", () => {
+describe("privateCtx types", () => {
   test("inferred fields: hooks see them, and `as` sets the types inference gets wrong", () => {
-    const m = definePrivateMachine<Options, Ev>()({
+    const m = defineMachine<Options, Ev>()({
       privateCtx: () => ({ count: 0, hits: [] as number[], mode: "cool" as "cool" | "hot" }),
       initial: "/idle",
       states: {
@@ -111,20 +115,20 @@ describe("definePrivateMachine types", () => {
   });
 
   test("a named type: the factory's return type types the fields and checks them", () => {
-    definePrivateMachine<Options, Ev>()({
+    defineMachine<Options, Ev>()({
       // @ts-expect-error a field the named type does not declare
       privateCtx: (): Internals => ({ hits: [], count: 0, armor: 5 }),
       initial: "/idle",
       states: { idle: {} },
     });
-    definePrivateMachine<Options, Ev>()({
+    defineMachine<Options, Ev>()({
       // @ts-expect-error count is a number
       privateCtx: (): Internals => ({ hits: [], count: "0" }),
       initial: "/idle",
       states: { idle: {} },
     });
     const helper = (ctx: Options & Internals): boolean => ctx.hits.length > 0;
-    const m = definePrivateMachine<Options, Ev>()({
+    const m = defineMachine<Options, Ev>()({
       privateCtx: (): Internals => ({ hits: [], count: 0 }),
       initial: "/idle",
       states: { idle: { always: { to: "/full", when: helper } }, full: {} },
@@ -143,11 +147,99 @@ describe("definePrivateMachine types", () => {
   });
 
   test("a private field may not share a name with a field of Ctx", () => {
-    definePrivateMachine<Options, Ev>()({
+    defineMachine<Options, Ev>()({
       // @ts-expect-error name is already a field of Options
       privateCtx: () => ({ name: "again" }),
       initial: "/idle",
       states: { idle: {} },
     });
+  });
+
+  test("without privateCtx a hook's ctx is exactly Ctx", () => {
+    const seen: unknown[] = [];
+    const m = defineMachine<Options, Ev>()({
+      enter: (ctx) => {
+        const exact: Equal<typeof ctx, Options> = true;
+        seen.push(exact);
+        // @ts-expect-error count is not a field of Options
+        seen.push(ctx.count);
+      },
+      initial: "/idle",
+      states: { idle: {} },
+    });
+    m.start({ name: "a" });
+    expect(seen).toEqual([true, undefined]);
+  });
+
+  test("a sequence task reads the private fields with no annotation on ctx", () => {
+    defineMachine<Options, Ev>()({
+      privateCtx: () => ({ count: 0 }),
+      initial: "/idle",
+      states: {
+        idle: {
+          task: sequence(async (ctx, signal) => {
+            ctx.count += ctx.name.length;
+            await signal.wait(1);
+          }),
+        },
+      },
+    });
+  });
+
+  test("privateCtx written after states still types the hooks and stays out of the instance", () => {
+    const m = defineMachine<Options, Ev>()({
+      initial: "/idle",
+      states: {
+        idle: {
+          enter: (ctx) => {
+            ctx.count += 1;
+          },
+        },
+      },
+      privateCtx: () => ({ count: 0 }),
+    });
+    const a = m.start({ name: "a" });
+    const exact: Equal<typeof a.ctx, Options> = true;
+    expect(exact).toBe(true);
+    expect(internals(a.ctx).count).toBe(1);
+  });
+
+  test("without privateCtx annotated guards leave the unannotated bodies typed as Ctx", () => {
+    const long = (ctx: Options): boolean => ctx.name.length > 3;
+    const named = (ctx: { readonly name: string }): boolean => ctx.name !== "";
+    const seen: string[] = [];
+    defineMachine<Options, Ev>()({
+      initial: "/idle",
+      states: {
+        idle: {
+          always: [
+            { to: "/idle", when: long },
+            { to: "/idle", when: named },
+          ],
+          task: sequence(async (ctx, signal) => {
+            seen.push(ctx.name);
+            await signal.wait(1);
+          }),
+          enter: (ctx) => {
+            seen.push(ctx.name);
+          },
+        },
+      },
+    });
+  });
+
+  test("a target that is not a path is reported on its own line beside privateCtx", () => {
+    expect(() =>
+      defineMachine<Options, Ev>()({
+        privateCtx: () => ({ count: 0 }),
+        initial: "/idle",
+        states: {
+          idle: {
+            // @ts-expect-error "/nope" is not a path of this machine
+            on: { HIT: "/nope" },
+          },
+        },
+      }),
+    ).toThrow();
   });
 });

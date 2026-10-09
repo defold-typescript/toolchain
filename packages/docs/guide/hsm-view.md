@@ -20,7 +20,7 @@ Open the URL in a browser. The command runs until you press Ctrl+C. The page is 
 
 ## Pick a machine
 
-The page has a machine dropdown that lists every machine the loaded files define, even when there is only one. The optional `[name]` picks which one opens first; without it, the first machine in file order opens. A machine is named by its `defineMachine` or `definePrivateMachine` key, else by the name it is exported under.
+The page has a machine dropdown that lists every machine the loaded files define, even when there is only one. The optional `[name]` picks which one opens first; without it, the first machine in file order opens. A machine is named by its `defineMachine` key, else by the name it is exported under.
 
 One machine runs at a time. Picking another in the dropdown starts it fresh, and only its states are highlighted.
 
@@ -40,7 +40,7 @@ Light and dark follow your system setting.
 
 Time starts paused. The bar at the top holds the controls:
 
-- **Start** takes a starting context and starts the machine. For a machine with [private fields](./state-machines.md#private-fields-with-defineprivatemachine), the starting context holds the context fields alone: the machine builds its private fields, and the ctx panel shows both.
+- **Start** takes a starting context and starts the machine. For a machine with [private fields](./state-machines.md#private-fields-with-privatectx), the starting context holds the context fields alone: the machine builds its private fields, and the ctx panel shows both.
 - **Events.** One button per event the active states accept, with a payload field for the event's other fields. An `on` key in an active state is also clickable in the code and sends that event with the bar's payload.
 - **Field syntax.** The starting context and the payload are written as a TypeScript object literal or as JSON, so `{ enter: true, from: 'pad' }` and `{ "enter": true, "from": "pad" }` read the same. Every value must be a literal: a number, string, boolean, `null`, array or object. A field that cannot be read is outlined in red while you type, and a row under the bar shows its message, which names the column of a syntax mistake.
 - **Dialog.** The button beside each of the two fields opens its text in a dialog with a multi-line editor. An error under the editor names the line and column of a syntax mistake. `Start` or `Apply` (or Ctrl+Enter, Cmd+Enter on macOS) writes the text back to the field, and `Start` also starts the machine. Cancel or Escape discards the text.

@@ -3510,20 +3510,20 @@ Here each new enemy redefines `"enemy"`: the config is compiled again, every ene
 
 Without a key, `defineMachine` builds a separate machine on every call, and a reload does not reach running instances.
 
-#### Private fields with `definePrivateMachine`
+#### Private fields with `privateCtx`
 
-Some of a machine's data belongs to the machine alone: a counter, a heat level, a list it builds up. `definePrivateMachine` is `defineMachine` for a machine that keeps such fields. Its root config takes one more key, `privateCtx`, a function that returns them. Every hook, `when`, `run`, `task` and `update` sees the fields beside `Ctx`, while `start` takes `Ctx` alone and the instance it returns shows `Ctx` alone in its `ctx`. A machine without fields of its own uses `defineMachine`.
+Some of a machine's data belongs to the machine alone: a counter, a heat level, a list it builds up. The root config of `defineMachine` takes one optional key for such fields: `privateCtx`, a function that returns them. Every hook, `when`, `run`, `task` and `update` sees the fields beside `Ctx`, while `start` takes `Ctx` alone and the instance it returns shows `Ctx` alone in its `ctx`. A machine without fields of its own leaves `privateCtx` out.
 
 There are two ways to type the fields.
 
 **Inferred.** For a few fields, write them inline and let TypeScript infer their types. Add `as` where the inferred type is wrong: an empty array is `never[]` until it reads `[] as Hash[]`, and a field holding one of several strings is any `string` until it reads `"cool" as "cool" | "hot"`.
 
 ```ts title="turret-inferred.ts"
-import { definePrivateMachine } from "@defold-typescript/types/hsm";
+import { defineMachine } from "@defold-typescript/types/hsm";
 
 type TurretEvent = { type: "SPOTTED" } | { type: "LOST" };
 
-export const turret = definePrivateMachine<{ readonly fireRate: number }, TurretEvent>("turret")({
+export const turret = defineMachine<{ readonly fireRate: number }, TurretEvent>("turret")({
   privateCtx: () => ({ heat: 0, targets: [] as Hash[] }),
   initial: "/idle",
   states: {
@@ -3543,7 +3543,7 @@ const gun = turret.start({ fireRate: 2 }); // gun.ctx shows fireRate only
 **A named type.** For more fields, or when a helper outside the config needs the whole context, declare the fields as an interface and make it the factory's return type. The fields need no `as`, a misspelled or unknown field is a compile error, and the whole context is `TurretOptions & TurretPrivate`.
 
 ```ts title="turret-named.ts"
-import { definePrivateMachine } from "@defold-typescript/types/hsm";
+import { defineMachine } from "@defold-typescript/types/hsm";
 
 interface TurretOptions {
   readonly fireRate: number;
@@ -3558,7 +3558,7 @@ type TurretEvent = { type: "SPOTTED" } | { type: "LOST" };
 
 const overheated = (ctx: TurretOptions & TurretPrivate) => ctx.heat > ctx.fireRate;
 
-export const turret = definePrivateMachine<TurretOptions, TurretEvent>("turret")({
+export const turret = defineMachine<TurretOptions, TurretEvent>("turret")({
   privateCtx: (): TurretPrivate => ({ heat: 0, mode: "cool" }),
   initial: "/idle",
   states: {
@@ -3587,14 +3587,14 @@ export const turret = definePrivateMachine<TurretOptions, TurretEvent>("turret")
 > [!WARNING] `satisfies TurretPrivate` does not do the same job. It checks the object but keeps its narrow types, so an empty array stays `never[]` and nothing can be pushed to it:
 >
 > ```ts title="turret-satisfies.ts"
-> import { definePrivateMachine } from "@defold-typescript/types/hsm";
+> import { defineMachine } from "@defold-typescript/types/hsm";
 >
 > interface TurretPrivate {
 >   heat: number;
 >   targets: Hash[];
 > }
 >
-> export const turret = definePrivateMachine<{ readonly fireRate: number }, { type: "SPOTTED" }>()({
+> export const turret = defineMachine<{ readonly fireRate: number }, { type: "SPOTTED" }>()({
 >   privateCtx: () => ({ heat: 0, targets: [] }) satisfies TurretPrivate,
 >   initial: "/idle",
 >   states: {
@@ -3659,7 +3659,7 @@ m.send({ type: "LOSE" }); // a new table on every call
 
 #### Types
 
-**`defineMachine` takes two calls.** `defineMachine<Ctx, E>()` fixes the context and event types (and takes an optional [hot reload](#hot-reload) key), and the second call takes the config. TypeScript cannot infer some type arguments of one call while you write the others, and the config has to be inferred: its literal shape is where the state paths come from. [`definePrivateMachine`](#private-fields-with-defineprivatemachine) takes the same two calls.
+**`defineMachine` takes two calls.** `defineMachine<Ctx, E>()` fixes the context and event types (and takes an optional [hot reload](#hot-reload) key), and the second call takes the config. TypeScript cannot infer some type arguments of one call while you write the others, and the config has to be inferred: its literal shape is where the state paths come from.
 
 **Events are `EventObject`s.** `E` is a union of objects that each have a string `type`, plus any payload fields. `on` accepts only those `type` values as keys, and each `when` and `run` sees the variant its key names.
 
@@ -4345,7 +4345,7 @@ Keep fields only the machine uses
 
 </td><td>
 
-`privateCtx` on the root of a [`definePrivateMachine`](#private-fields-with-defineprivatemachine) config
+[`privateCtx`](#private-fields-with-privatectx) on the root config
 
 </td><td>
 
@@ -4363,7 +4363,7 @@ privateCtx: (): GuardPrivate => ({
 
 ##### Read types off the machine
 
-Every type comes from the exported machine, so nothing is declared twice; see [Types](#types). `import type` is enough for these. The one type the machine does not give back is that of its [private fields](#private-fields-with-defineprivatemachine), which is declared once, beside the machine.
+Every type comes from the exported machine, so nothing is declared twice; see [Types](#types). `import type` is enough for these. The one type the machine does not give back is that of its [private fields](#private-fields-with-privatectx), which is declared once, beside the machine.
 
 <div class="table-scroll code-table">
 <table>
@@ -4651,7 +4651,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 
 ##### `PrivateCtxConfig`
 
-The one key a [`definePrivateMachine`](#private-fields-with-defineprivatemachine) config adds to the root.
+The optional key the root config takes; see [Private fields with `privateCtx`](#private-fields-with-privatectx).
 
 | Field        | Type         | Meaning                                                                                       |
 | ------------ | ------------ | --------------------------------------------------------------------------------------------- |
@@ -6754,7 +6754,7 @@ Open the URL in a browser. The command runs until you press Ctrl+C. The page is 
 
 #### Pick a machine
 
-The page has a machine dropdown that lists every machine the loaded files define, even when there is only one. The optional `[name]` picks which one opens first; without it, the first machine in file order opens. A machine is named by its `defineMachine` or `definePrivateMachine` key, else by the name it is exported under.
+The page has a machine dropdown that lists every machine the loaded files define, even when there is only one. The optional `[name]` picks which one opens first; without it, the first machine in file order opens. A machine is named by its `defineMachine` key, else by the name it is exported under.
 
 One machine runs at a time. Picking another in the dropdown starts it fresh, and only its states are highlighted.
 
@@ -6774,7 +6774,7 @@ Light and dark follow your system setting.
 
 Time starts paused. The bar at the top holds the controls:
 
-- **Start** takes a starting context and starts the machine. For a machine with [private fields](./state-machines.md#private-fields-with-defineprivatemachine), the starting context holds the context fields alone: the machine builds its private fields, and the ctx panel shows both.
+- **Start** takes a starting context and starts the machine. For a machine with [private fields](./state-machines.md#private-fields-with-privatectx), the starting context holds the context fields alone: the machine builds its private fields, and the ctx panel shows both.
 - **Events.** One button per event the active states accept, with a payload field for the event's other fields. An `on` key in an active state is also clickable in the code and sends that event with the bar's payload.
 - **Field syntax.** The starting context and the payload are written as a TypeScript object literal or as JSON, so `{ enter: true, from: 'pad' }` and `{ "enter": true, "from": "pad" }` read the same. Every value must be a literal: a number, string, boolean, `null`, array or object. A field that cannot be read is outlined in red while you type, and a row under the bar shows its message, which names the column of a syntax mistake.
 - **Dialog.** The button beside each of the two fields opens its text in a dialog with a multi-line editor. An error under the editor names the line and column of a syntax mistake. `Start` or `Apply` (or Ctrl+Enter, Cmd+Enter on macOS) writes the text back to the field, and `Start` also starts the machine. Cancel or Escape discards the text.
