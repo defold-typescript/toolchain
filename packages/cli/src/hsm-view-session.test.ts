@@ -191,6 +191,51 @@ describe("createSession", () => {
     expect(high.path).toBe("/b");
   });
 
+  test("hands a guard the machine", () => {
+    const view = session(
+      machine(`{
+  initial: "/alive",
+  states: {
+    alive: {
+      type: "parallel",
+      states: {
+        move: {
+          initial: "/alive/move/idle",
+          states: {
+            idle: {
+              on: {
+                GO: [{ to: "/alive/move/jump", when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing") }],
+                PING: "/alive/move/jump",
+              },
+            },
+            jump: { on: { BACK: "/alive/move/idle" } },
+          },
+        },
+        posture: {
+          initial: "/alive/posture/standing",
+          states: {
+            standing: { on: { HIT: "/alive/posture/crouching" } },
+            crouching: {
+              always: [{ to: "/alive/posture/standing", when: (_ctx, machine) => machine.matches("/alive/move/jump") }],
+            },
+          },
+        },
+      },
+    },
+  },
+}`),
+    );
+    view.start({});
+    view.send({ type: "HIT" });
+    const dropped = view.send({ type: "GO" });
+    expect(dropped.rejected).toEqual([ruleId("/alive/move/idle", "on", "GO", 0)]);
+    expect(dropped.leaves).toEqual(["/alive/move/idle", "/alive/posture/crouching"]);
+    expect(kinds(dropped)).not.toContain("error");
+    const pinged = view.send({ type: "PING" });
+    expect(pinged.fired).toContain(ruleId("/alive/posture/crouching", "always", 0));
+    expect(pinged.leaves).toEqual(["/alive/move/jump", "/alive/posture/standing"]);
+  });
+
   test("reports after, update and pass-through always rules at the advanced time", () => {
     const timers = session(
       machine(`{

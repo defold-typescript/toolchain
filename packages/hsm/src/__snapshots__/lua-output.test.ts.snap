@@ -942,7 +942,7 @@ local function createMachine(definition)
                 while i < #list do
                     local candidate = list[i + 1]
                     local when = candidate.when
-                    if when == nil or when(ctx) then
+                    if when == nil or when(ctx, instance) then
                         if overLimit then
                             clearQueue()
                             busy = false
@@ -987,7 +987,7 @@ local function createMachine(definition)
                 local i = 0
                 while i < #list do
                     local candidate = list[i + 1]
-                    if candidate.when == nil or candidate.when(ctx, event) then
+                    if candidate.when == nil or candidate.when(ctx, event, instance) then
                         transition(
                             state,
                             candidate.target,

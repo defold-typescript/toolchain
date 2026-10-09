@@ -415,6 +415,23 @@ const EXPECTED: Record<string, string[]> = {
     'error: hsm: state "/a" has an after delay "-1" that is not a non-negative number',
     'error: hsm: state "/a" has an after delay "-1" that is not a non-negative number',
   ],
+  "guard reads the machine": [
+    "enter idle",
+    "enter standing",
+    "leaves=/alive/move/idle, /alive/posture/standing",
+    "exit idle",
+    "enter jump",
+    "exit jump",
+    "enter idle",
+    "exit standing",
+    "enter crouching",
+    "leaves=/alive/move/idle, /alive/posture/crouching",
+    "exit idle",
+    "enter jump",
+    "exit crouching",
+    "enter standing",
+    "leaves=/alive/move/jump, /alive/posture/standing",
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
