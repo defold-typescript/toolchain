@@ -2909,7 +2909,7 @@ m.send({ type: "FALL" }); // exits /alive/chase and /alive, enters /dead
 
 A `to` below the state the rule is on keeps that state active and re-enters only below it: from `/alive`, a `to` of `/alive/patrol` exits the current child and enters `patrol`, while `alive` stays. A `to` naming the state the rule is on exits and re-enters it, which restarts its `after` timers and its `task`, as `SEE_PLAYER` in `chase` does above; the same holds for an `after` timer, an `always` entry or an `update` hook that names its own state, so `after: { 1: "/blink" }` on `blink` repeats every second. To restart only a state's children, name the child to start in: `/alive/patrol` from `/alive`. A rule that should run code and leave every state alone has no `to`. Targeting an ancestor of the source exits and re-enters that ancestor.
 
-`when` receives `(ctx, event)` and `run` `(ctx, event, machine)`, where `event` is narrowed to the variant the `on` key names: the `HIT` `when` reads `event.damage` with no cast. `run` is one function or a list run in order. Keep `when` free of side effects: it is also called when the move does not happen, for each candidate in a list and on every `always` recheck.
+`when` and `run` both receive `(ctx, event, machine)`, where `event` is narrowed to the variant the `on` key names: the `HIT` `when` reads `event.damage` with no cast. The `machine` a `when` receives is a read-only view of the running machine, with `path`, `leaves` and `matches` and nothing that changes it; see [Read another region in a `when`](#read-another-region-in-a-when). `run` is one function or a list run in order. Keep `when` free of side effects: it is also called when the move does not happen, for each candidate in a list and on every `always` recheck.
 
 #### `update` and `after`
 
@@ -3104,7 +3104,7 @@ export const hero = defineMachine<Hero, HeroEvent>()({
 
 - **Checked after every move.** That is `start`, an event, an `after` timer, a path returned from an `update` hook, a hot reload, and another `always` move. The active states are checked deepest first, the way events bubble, after the `enter` hooks and before the next queued event. The first candidate whose `when` is missing or passes is taken, with the cause `always`.
 - **Not checked on ticks or transitions with no `to`.** A `when` reading `ctx` that a `run` or an `update` hook changed waits for the next move. To watch a condition every frame, return a target from an `update` hook instead.
-- **No event and no `run`.** A candidate is a `to` and an optional `when(ctx)`. Put side effects in the target's `enter`.
+- **No event and no `run`.** A candidate is a `to` and an optional `when(ctx, machine)`. Put side effects in the target's `enter`.
 - **Loops throw.** At most 10 `always` moves follow one move. The 11th throws `hsm: state "<path>" took 10 always transitions in a row; check for an always loop`, drops the queued events and leaves the instance usable in the state it reached.
 
 An unknown target, or a candidate without a `to`, throws when the machine is defined.
@@ -3162,6 +3162,58 @@ Entering `/alive` enters `move` and its `initial` chain, then `weapon` and its c
 `path` stays one leaf, so code written for a machine without regions keeps working: it is the first region's leaf. `leaves` lists every active leaf in region order, and `matches` is true for every active state in every region. A region root can carry `restoreDepth`, and resumes its last child when the parallel state is entered again.
 
 A parallel state with `initial`, `restoreDepth` or no child states throws when the machine is defined, naming its path; `initial` is also a compile error. The root config cannot be parallel: put the regions in a child state, as `/alive` does above.
+
+##### Read another region in a `when`
+
+A `when` receives the running machine as its last argument, so a rule in one region can depend on the state of another. This knight jumps only while standing:
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+type KnightEvent = { type: "JUMP" } | { type: "LAND" } | { type: "CROUCH" } | { type: "STAND" };
+
+export const knight = defineMachine<object, KnightEvent>()({
+  initial: "/alive",
+  states: {
+    alive: {
+      type: "parallel",
+      states: {
+        move: {
+          initial: "/alive/move/idle",
+          states: {
+            idle: {
+              on: {
+                JUMP: {
+                  to: "/alive/move/jump",
+                  when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing"),
+                },
+              },
+            },
+            jump: { on: { LAND: "/alive/move/idle" } },
+          },
+        },
+        posture: {
+          initial: "/alive/posture/standing",
+          states: {
+            standing: { on: { CROUCH: "/alive/posture/crouching" } },
+            crouching: { on: { STAND: "/alive/posture/standing" } },
+          },
+        },
+      },
+    },
+  },
+});
+
+const m = knight.start({});
+m.send({ type: "CROUCH" });
+m.send({ type: "JUMP" }); // dropped: the check sees /alive/posture/crouching
+m.leaves; // ["/alive/move/idle", "/alive/posture/crouching"]
+```
+
+The rules:
+
+- **The view is read-only.** `machine` has `path`, `leaves` and `matches`. It has no `send`, `stop` or `ctx`: the context is the first argument of the `when`.
+- **A `when` sees the regions that already moved.** Regions take an event in name order, so a `when` in `posture` sees where `move` went for that event, and a `when` in `move` sees `posture` as it was.
 
 #### Run to completion, `task` and `stop`
 
@@ -3727,7 +3779,7 @@ m.send({ type: "LOSE" }); // a new table on every call
 
 **Events are `EventObject`s.** `E` is a union of objects that each have a string `type`, plus any payload fields. `on` accepts only those `type` values as keys, and each `when` and `run` sees the variant its key names.
 
-**`start` returns a `MachineInstance<Ctx, E, P>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, `when` and `run` are typed before the paths are known, so the `machine` they receive is a `MachineInstance<Ctx, E>` whose `path` and `matches()` use plain `string`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`. The context, event and path types come from the machine the same way; see [Read types off the machine](#read-types-off-the-machine).
+**`start` returns a `MachineInstance<Ctx, E, P>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, `when` and `run` are typed before the paths are known, so the `machine` they receive uses plain `string` for `path` and `matches()`: a hook, a `run` and a `task` receive a `MachineInstance<Ctx, E>`, and a `when` receives a `MachineView`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`. The context, event and path types come from the machine the same way; see [Read types off the machine](#read-types-off-the-machine).
 
 **`StatePath<C>` lists a config's paths,** each with its leading `/`. Paths are spelled out four levels deep; below that, any string under a fourth-level path is accepted.
 
@@ -4709,7 +4761,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `states`  | `{ [name: string]: StateConfig }`           | Child states, by name. A name is non-empty and contains no `/`.                               |
 | `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`, each target a full path; see [Events and transitions](#events-and-transitions). |
 | `after`   | `{ [seconds: number]: target } \| { delay, to }[]` | Full-path targets taken after this long in the state, in game time. In the list form `delay` is a number or `(ctx) => number`, read once per entry of the state; see [`update` and `after`](#update-and-after). |
-| `always`  | `target \| config \| config[]`               | Full-path targets taken right after any move that leaves this state active; the first whose `when(ctx)` is missing or passes wins. See [Move on at once with `always`](#move-on-at-once-with-always). |
+| `always`  | `target \| config \| config[]`               | Full-path targets taken right after any move that leaves this state active; the first whose `when(ctx, machine)` is missing or passes wins. See [Move on at once with `always`](#move-on-at-once-with-always). |
 | `enter`   | `(ctx, machine) => void`                    | Runs each time the state is entered.                                                          |
 | `exit`    | `(ctx, machine) => void`                    | Runs each time the state is left, including on `stop()`.                                      |
 | `update`  | `(ctx, dt, machine) => target \| undefined` | Runs on every `update(dt)` while active; a returned target, one of the machine's full paths, transitions. |
