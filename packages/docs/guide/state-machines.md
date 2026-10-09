@@ -708,6 +708,47 @@ Here `self` takes its type from what `init` returns. For a named `Self` type, a 
 
 A module-level instance (`const door = doorMachine.start(...)` at the top of a script file) is shared by every object that runs the script; see [Where script state lives](./script-state.md).
 
+### Ask whether an event would be taken
+
+`can(event)` answers whether a rule of some active state would take the event if it were sent now. Use it for a button that should look disabled, or in a script that picks between two events:
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+type LampEvent = { type: "TOGGLE" } | { type: "DIM" };
+
+export const lamp = defineMachine<object, LampEvent>()({
+  initial: "/off",
+  states: {
+    off: { on: { TOGGLE: "/on" } },
+    on: {
+      initial: "/on/bright",
+      on: { TOGGLE: "/off" },
+      states: {
+        bright: { on: { DIM: "/on/dim" } },
+        dim: { on: { DIM: "/on/bright" } },
+      },
+    },
+  },
+});
+
+const DIM = { type: "DIM" } as const;
+
+const m = lamp.start({});
+m.can(DIM); // false: nothing active in /off handles DIM
+m.send({ type: "TOGGLE" });
+m.can(DIM); // true, and the lamp is still in /on/bright
+```
+
+The rules:
+
+- **It checks `when`.** A rule counts when its `when` is missing or passes.
+- **A rule with no `to` counts.** `can` asks whether a rule would take the event, not whether the state would change.
+- **Nothing runs.** No hook, `run` or `onMove` listener is called, and the event is not queued.
+- **A stopped machine answers `false`.**
+- **Inside a hook it answers for the states active at that moment.** A state's `enter` hook already counts that state.
+- **A `when` cannot call it.** The view a `when` receives has no `can`.
+
 ### Restart a machine
 
 A stopped instance does not start again. To restart, stop the instance and start a new one from the same definition, then store it where the old one was:
@@ -777,7 +818,7 @@ With a key, `defineMachine` first looks the key up in a table kept inside the `h
 
 1. You save `enemy-machine.ts`, and the edit is pushed to the game.
 2. The file runs again, and `defineMachine("enemy")` puts the new states into the existing machine. If the new config has a mistake, it throws and the old states stay in use.
-3. The running instances do not change yet: `path` still reads the old state.
+3. The running instances do not change yet: `path` still reads the old state, and `can` still answers from the old rules.
 4. On its next `send` or `update`, each instance sees the new definition and switches to it. Because `update` runs every frame, that is the next frame.
 
 The script needs no `on_reload` for this.
@@ -1639,6 +1680,21 @@ self.guard = startGuard();
 </td></tr>
 <tr><td>
 
+Know whether an event would do anything
+
+</td><td>
+
+`can` on the instance, which moves nothing; see [Ask whether an event would be taken](#ask-whether-an-event-would-be-taken)
+
+</td><td>
+
+```ts excerpt
+guard.can({ type: "PAUSE" })
+```
+
+</td></tr>
+<tr><td>
+
 Take a Defold message as an event
 
 </td><td>
@@ -2029,6 +2085,7 @@ The optional key the root config takes; see [Private fields with `privateCtx`](#
 | `path`    | `P \| undefined`        | The deepest active state's full path (the first region's leaf in a parallel state), or `undefined` once stopped. |
 | `leaves`  | `readonly P[]`          | Every active leaf's full path, in region order; one path without parallel states, empty once stopped. The same array, updated in place. |
 | `matches` | `(path: P) => boolean`  | Whether the state at the full path `path` is active, ancestors included.           |
+| `can`     | `(event: E) => boolean` | Whether a rule of an active state would take `event` if it were sent at that moment. Moves nothing and runs no hook. |
 | `send`    | `(event: E) => void`    | Handles `event`, or queues it when called during a step.                           |
 | `update`  | `(dt: number) => void`  | Runs the `update` hooks, then the `after` timers if no hook transitioned.          |
 | `stop`    | `() => void`            | Exits every active state; later `send` and `update` calls do nothing.              |

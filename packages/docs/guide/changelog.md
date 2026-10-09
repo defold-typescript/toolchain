@@ -13,11 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`when`](./state-machines.md)** reads the machine.
+> - **[State machines](./state-machines.md):** `can` asks if an event would be taken; a `when` reads the machine.
 
 ### Improved
 
 - **A `when` can read the machine:** a rule's `when` receives the running machine as its last argument, read-only, so a rule can depend on the active states, as in `when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing")`; see [Read another region in a `when`](./state-machines.md#read-another-region-in-a-when).
+- **Ask whether an event would be taken:** `can(event)` on a machine instance returns whether a rule of an active state would take the event, without moving the machine or running a hook; see [Ask whether an event would be taken](./state-machines.md#ask-whether-an-event-would-be-taken).
 
 ## v0.48.0
 

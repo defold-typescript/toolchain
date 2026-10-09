@@ -432,6 +432,22 @@ const EXPECTED: Record<string, string[]> = {
     "enter standing",
     "leaves=/alive/move/jump, /alive/posture/standing",
   ],
+  "can asks without moving": [
+    "enter a",
+    "GO=true",
+    "BACK=false",
+    "NOPE=false",
+    "STEP1=false",
+    "STEP2=true",
+    "PING=true",
+    "path=/a",
+    "exit a",
+    "enter b",
+    "GO=false",
+    "BACK=true",
+    "exit b",
+    "BACK=false",
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
