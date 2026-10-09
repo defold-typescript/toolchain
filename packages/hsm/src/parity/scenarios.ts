@@ -915,6 +915,63 @@ function privateCtx(): string[] {
   return log;
 }
 
+function afterDelayFromCtx(): string[] {
+  const log: string[] = [];
+  const defineTimed = () =>
+    defineMachine<Ctx, Ev>("parity after delay")({
+      initial: "/a",
+      states: {
+        a: {
+          ...logged("a"),
+          after: [
+            { delay: (ctx: Ctx) => (ctx.flag ? 0.5 : 2), to: "/x" },
+            { delay: 1, to: "/y" },
+          ],
+          on: { GO: "/b" },
+        },
+        b: { ...logged("b"), on: { BACK: "/a" } },
+        x: logged("x"),
+        y: logged("y"),
+      },
+    });
+  const timed = defineTimed();
+  const fast = timed.start(newCtx(log, true));
+  fast.update(0.5);
+  log.push(`fast=${shown(fast.path)}`);
+
+  const slowCtx = newCtx(log);
+  const slow = timed.start(slowCtx);
+  slowCtx.flag = true;
+  slow.update(0.75);
+  log.push(`slow=${shown(slow.path)}`);
+  slow.send({ type: "GO" });
+  slow.send({ type: "BACK" });
+  slow.update(0.5);
+  log.push(`slow=${shown(slow.path)}`);
+
+  const keptCtx = newCtx(log);
+  const kept = timed.start(keptCtx);
+  kept.update(0.75);
+  keptCtx.flag = true;
+  defineTimed();
+  kept.update(0.25);
+  log.push(`kept=${shown(kept.path)}`);
+
+  recordError(log, () =>
+    defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: { a: { after: [{ delay: () => -1, to: "/a" }] } },
+    }).start(newCtx(log)),
+  );
+  recordError(log, () =>
+    defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: { a: { after: [{ delay: -1, to: "/a" }] } },
+    }),
+  );
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -934,6 +991,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "parallel regions", run: () => parallelRegions() },
   { name: "unicode region order", run: () => unicodeRegionOrder() },
   { name: "private ctx", run: () => privateCtx() },
+  { name: "after delay from ctx", run: () => afterDelayFromCtx() },
 ];
 
 export function runScenario(name: string): string {

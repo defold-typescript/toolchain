@@ -2991,6 +2991,40 @@ export const blink = defineMachine<BlinkCtx, BlinkEvent>()({
 
 Each `shown` and `hidden` entry restarts that child's own tenth-of-a-second timer, while `invulnerable` counts its two seconds straight through.
 
+##### A delay that reads the context
+
+`after` also takes a list. Each entry holds a `delay`, which is a number or a function of the context that returns one, and a `to`:
+
+```ts title="patrol-delay.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+interface GuardCtx {
+  readonly patrolFor: number;
+}
+
+type GuardEvent = { type: "HIT" };
+
+export const guardMachine = defineMachine<GuardCtx, GuardEvent>("guard")({
+  initial: "/patrol",
+  states: {
+    patrol: { after: [{ delay: (ctx) => ctx.patrolFor, to: "/rest" }] },
+    rest: { on: { HIT: "/patrol" } },
+  },
+});
+
+const quick = guardMachine.start({ patrolFor: 2 }); // rests after 2 seconds
+const slow = guardMachine.start({ patrolFor: 5 }); // rests after 5 seconds
+```
+
+One keyed machine serves both guards, and each instance waits for its own delay.
+
+- The function is read once each time the state is entered, after the state's `enter` hook, so the hook can set what the delay reads.
+- The delay is fixed for that stay. A change to the context takes effect on the next entry.
+- A [hot reload](#hot-reload) reads the function again, and the state's clock keeps its time.
+- Timers fire in delay order, and entries with one delay fire in list order.
+- A delay that is not a non-negative number throws, naming the state.
+- A delay that must change while the state is active belongs in an `update` hook that counts the time and returns the path.
+
 #### Resume with history
 
 Set `restoreDepth` on a compound state to make it remember which child was active when it was last left. Every later entry goes back to that child instead of `initial`, and the count says how many levels down to go back:
@@ -3457,7 +3491,7 @@ An instance always keeps its `ctx`. What happens to its current state depends on
 
 | After the edit, the current state… | The instance… |
 | --- | --- |
-| still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The edited transitions, `when` checks and hooks apply from now on. |
+| still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The edited transitions, `when` checks and hooks apply from now on, and the delay functions of the state's timers are read again. |
 | still exists, but now has child states | enters its `initial` child (and that child's `initial`, and so on), running their `enter` hooks. |
 | was removed | moves to the closest parent state that still exists and enters that parent's `initial` chain, running those `enter` hooks. The removed states run no `exit` hook, because their code is gone, but a cleanup their `task` returned still runs, deepest state first. |
 | is a [parallel](#run-regions-side-by-side-with-parallel) state that gained a region | keeps its other regions as they are and enters only the new one. |
@@ -4629,28 +4663,31 @@ if (self.guard !== undefined) {
 </td></tr>
 <tr><td>
 
-Build the machine in `init`, from a property
+Set a timer's delay from a property
 
 </td><td>
 
-Build it in a function with no hot reload key, call that from `init`, and read the instance type through the function
+Pass the property to `start` and read it in a list-form `delay`; see [A delay that reads the context](#a-delay-that-reads-the-context). The machine keeps its hot reload key, and the instance type is `ReturnType<typeof guardMachine.start>`
 
 </td><td>
 
 ```ts excerpt
-function buildGuardMachine(patrolFor: number) {
-  return defineMachine<Ctx, HitEvent>()({
-    initial: "/patrol",
-    states: {
-      patrol: { after: { [patrolFor]: "/rest" } },
-      rest: { on: { HIT: "/patrol" } },
-    },
-  });
-}
+patrol: {
+  after: [
+    { delay: (ctx) => ctx.patrolFor, to: "/rest" },
+  ],
+},
+```
 
-type Guard = ReturnType<
-  ReturnType<typeof buildGuardMachine>["start"]
->;
+```ts excerpt
+init(self): Self {
+  return {
+    guard: guardMachine.start({
+      health: 3,
+      patrolFor: self.patrol_for,
+    }),
+  };
+},
 ```
 
 </td></tr>
@@ -4671,7 +4708,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `restoreDepth` | `number \| "all"`                       | Enter the children that were active when this state was last left, this many levels down, instead of `initial`; see [Resume with history](#resume-with-history). |
 | `states`  | `{ [name: string]: StateConfig }`           | Child states, by name. A name is non-empty and contains no `/`.                               |
 | `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`, each target a full path; see [Events and transitions](#events-and-transitions). |
-| `after`   | `{ [seconds: number]: string }`             | Full-path targets taken after this long in the state, in game time; see [`update` and `after`](#update-and-after). |
+| `after`   | `{ [seconds: number]: target } \| { delay, to }[]` | Full-path targets taken after this long in the state, in game time. In the list form `delay` is a number or `(ctx) => number`, read once per entry of the state; see [`update` and `after`](#update-and-after). |
 | `always`  | `target \| config \| config[]`               | Full-path targets taken right after any move that leaves this state active; the first whose `when(ctx)` is missing or passes wins. See [Move on at once with `always`](#move-on-at-once-with-always). |
 | `enter`   | `(ctx, machine) => void`                    | Runs each time the state is entered.                                                          |
 | `exit`    | `(ctx, machine) => void`                    | Runs each time the state is left, including on `stop()`.                                      |
