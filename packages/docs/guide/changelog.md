@@ -9,11 +9,15 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.46.1
+## v0.47.0
 
 > Summary:
 >
-> - **[`build`](./build.md)** reports type errors it crashed on.
+> - **[`hsm` gets private fields](./state-machines.md#private-fields-with-defineprivatemachine)**, and [`build`](./build.md) reports type errors it crashed on.
+
+### Improved
+
+- **`hsm` machines keep private fields:** `definePrivateMachine` takes a `privateCtx` function on the root config, and its fields reach every hook beside the context while `start` and the instance's `ctx` show the context alone; see [Private fields with `definePrivateMachine`](./state-machines.md#private-fields-with-defineprivatemachine). [`hsm-view`](./hsm-view.md#run-the-machine) lists such a machine and shows the fields in its ctx panel.
 
 ### Fixed
 

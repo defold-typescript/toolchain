@@ -37,6 +37,27 @@ export const machine = ${call}(${body});
 `;
 }
 
+function privateTurret(key: string, fields: string): string {
+  return `import { definePrivateMachine } from "@defold-typescript/types/hsm";
+export const turret = definePrivateMachine(${JSON.stringify(key)})({
+  privateCtx: () => ({ ${fields} }),
+  initial: "/idle",
+  states: {
+    idle: {
+      on: {
+        FIRE: {
+          run: (ctx) => {
+            ctx.heat += 1;
+            ctx.shots.push(ctx.heat);
+          },
+        },
+      },
+    },
+  },
+});
+`;
+}
+
 function kinds(snapshot: Snapshot): string[] {
   return snapshot.entries.map((entry) => entry.kind);
 }
@@ -488,6 +509,31 @@ describe("createSession", () => {
     expect(failed.error).toContain(unkeyedFile);
     expect(failed.running).toBe(true);
     expect(unkeyed.snapshot().path).toBe("/b");
+  });
+
+  test("starts a private machine from its public fields and shows every field", () => {
+    const key = `private-${++sequence}`;
+    const view = session(privateTurret(key, "heat: 0, shots: []"));
+
+    const started = view.start({ rate: 2 });
+    expect(started.machines).toEqual([key]);
+    expect(started.ctx).toEqual({ rate: 2, heat: 0, shots: [] });
+
+    const fired = view.send({ type: "FIRE" });
+    expect(fired.ctx).toEqual({ rate: 2, heat: 1, shots: [1] });
+    expect(fired.fired).toEqual([ruleId("/idle", "on", "FIRE", 0)]);
+  });
+
+  test("reloads a keyed private machine with the fields a new factory adds and the values it has", () => {
+    const key = `private-${++sequence}`;
+    const file = write(privateTurret(key, "heat: 0, shots: []"));
+    const view = createSession({ file, hsmSourceDir });
+    view.start({ rate: 2 });
+    view.send({ type: "FIRE" });
+
+    writeFileSync(file, privateTurret(key, "heat: 0, shots: [], armor: 5"));
+    expect(kinds(view.reload())).toContain("reload");
+    expect(view.update(0).ctx).toEqual({ rate: 2, heat: 1, shots: [1], armor: 5 });
   });
 
   test("switches machines fresh and exposes the picked machine's source index", () => {

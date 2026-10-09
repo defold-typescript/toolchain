@@ -541,6 +541,31 @@ export default defineScript({
 
 `messageEvents` converts the Defold messages you list into typed events and returns `undefined` for any other message, which is why the script checks before sending. Build it once, at the top of a module.
 
+**Step 3.** The script in step 2 passes `opens: 0`, a number only the machine uses. `definePrivateMachine` lets the machine build it. The context keeps what the script hands in:
+
+```ts excerpt
+export interface DoorCtx {
+  readonly sprite: Url;
+}
+```
+
+The machine builds the rest in `privateCtx`, at the top of its config:
+
+```ts excerpt
+export const doorMachine = definePrivateMachine<DoorCtx, DoorEvent>()({
+  // the machine's own data, built fresh for every door
+  privateCtx: () => ({ opens: 0 }),
+  initial: "/closed",
+```
+
+The hooks still read `ctx.opens`. `start` takes the sprite alone, and `self.door.ctx` shows the sprite alone:
+
+```ts excerpt
+return { door: doorMachine.start({ sprite: msg.url("#sprite") }) };
+```
+
+> [!NOTE] **Hidden, not locked.** The field is hidden by type only: at run time it sits on the same `ctx` as the sprite. A machine with no data of its own keeps `defineMachine`. [Private fields with `definePrivateMachine`](./state-machines.md#private-fields-with-defineprivatemachine) has the rules.
+
 ## 11. Designing your own
 
 1. **List the modes.** What can this thing be doing? Each one is a state.
@@ -549,6 +574,7 @@ export default defineScript({
 4. **Look for groups.** States that share arrows can live inside a parent.
 5. **Add conditions last.** `when` and `run` handle the "it depends" cases.
 6. **Plan cleanup.** Whatever a state starts, its `exit` should stop.
+7. **Split the data.** What a script hands in goes in the context. What only the machine uses goes in `privateCtx`.
 
 ### Common beginner mistakes
 
