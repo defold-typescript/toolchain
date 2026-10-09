@@ -58,6 +58,12 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
   /** The context passed to `start`. */
   readonly ctx: Ctx;
   /**
+   * Whether a rule of an active state would take `event` if it were sent at that moment. A rule
+   * with no `to` counts. No hook, `run` or listener runs and nothing is queued, and once the
+   * machine is stopped the answer is `false`.
+   */
+  readonly can: (event: E) => boolean;
+  /**
    * Handles `event`, or queues it when called during a step. An event no active state handles is
    * dropped, and once the machine is stopped the call does nothing.
    */
@@ -1013,6 +1019,7 @@ function createMachine<Ctx, E extends EventObject>(
       path: undefined as string | undefined,
       leaves,
       matches,
+      can,
       send,
       update,
       stop,
@@ -1513,6 +1520,42 @@ function createMachine<Ctx, E extends EventObject>(
         return true;
       }
       return takeEvent(state, event);
+    }
+
+    // offerEvent's walk with no transition: the first region that would take the event ends
+    // the question, and one that would not leaves the state the next region's guards read.
+    // A hook can ask while a parallel state is half entered or half left, so a region answers
+    // only once it is active.
+    function wouldTake(state: number, event: E): boolean {
+      if (parallel[state] === true) {
+        const list = children[state] as number[];
+        for (let i = 0; i < list.length; i++) {
+          const region = list[i] as number;
+          if (isActive[region] === true && wouldTake(region, event)) {
+            return true;
+          }
+        }
+      }
+      const child = activeChild[state] as number;
+      if (child !== NO_STATE && wouldTake(child, event)) {
+        return true;
+      }
+      const listIndex = (onIndex[state] as { [type: string]: number })[event.type];
+      if (typeof listIndex !== "number") {
+        return false;
+      }
+      const list = transitions[listIndex] as Transition<Ctx, E>[];
+      for (let i = 0; i < list.length; i++) {
+        const when = (list[i] as Transition<Ctx, E>).when;
+        if (when === undefined || when(ctx, event, instance)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function can(event: E): boolean {
+      return running && !stopRequested && wouldTake(ROOT, event);
     }
 
     function clearQueue(): void {
