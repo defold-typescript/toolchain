@@ -2,7 +2,7 @@
   "targets": [
     {
       "repo": "https://github.com/Playgama/bridge-defold",
-      "ref": "v2.2.0",
+      "ref": "v2.3.0",
       "license": "MIT",
       "scriptApi": "bridge/api/bridge.script_api",
       "moduleId": "bridge.bridge",
@@ -14,7 +14,22 @@
         {
           "element": "bridge.social.create_post",
           "slot": "payload",
-          "evidence": "Optional. The game's own string for this one post [...] May be omitted, the callbacks then follow options."
+          "evidence": "Optional. The game's own string for this one post [...] May be omitted, the callbacks then follow id."
+        },
+        {
+          "element": "bridge.analytics.send",
+          "slot": "data",
+          "evidence": "Optional event payload (may be omitted)."
+        },
+        {
+          "element": "bridge.platform.send_message",
+          "slot": "options",
+          "evidence": "Optional message-specific options (may be omitted)."
+        },
+        {
+          "element": "bridge.platform.send_custom_message",
+          "slot": "options",
+          "evidence": "Optional message-specific options (may be omitted)."
         }
       ]
     }
