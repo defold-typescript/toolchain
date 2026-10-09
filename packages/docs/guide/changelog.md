@@ -13,7 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[State machines](./state-machines.md):** `can` asks if an event would be taken; a `when` reads the machine.
+> - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** must add `can`.
+> - **[State machines](./state-machines.md)** gain `can` and a `when` that reads the machine.
+
+### Breaking
+
+- **`MachineInstance` requires `can`:** an object you build yourself and type as `MachineInstance`, such as a test double or a wrapper around a real instance, fails to compile until it has `can`. Add `can: (event) => inner.can(event)` to a wrapper, or a function that returns a boolean to a test double; an instance returned by `start` needs no change; see [`MachineInstance`](./state-machines.md#machineinstance).
 
 ### Improved
 
