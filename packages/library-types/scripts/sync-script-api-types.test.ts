@@ -50,7 +50,7 @@ describe("readScriptApiTargets", () => {
     expect(bridge).toBeDefined();
     expect(bridge?.namespace).toBe("bridge");
     expect(bridge?.repo).toBe("https://github.com/Playgama/bridge-defold");
-    expect(bridge?.ref).toBe("v2.2.0");
+    expect(bridge?.ref).toBe("v2.3.0");
     expect(bridge?.scriptApi).toBe("bridge/api/bridge.script_api");
     expect(bridge?.generated).toBe("generated/bridge.d.ts");
     expect(bridge?.apiDoc).toBe("api-doc/bridge.json");
@@ -235,14 +235,14 @@ describe("script_api fidelity", () => {
     }
   });
 
-  // A pipe-separated or list-valued `.script_api` `type:` parses into its tokens,
-  // so bridge's `string | nil` returns and `[table, string]` options count one
-  // resolved token per alternative rather than one unmapped union or none at all.
+  // A pipe-separated `.script_api` `type:` parses into its tokens, so bridge's
+  // `string | nil` returns count one resolved token per alternative rather than
+  // one unmapped union or none at all.
   test("bridge fidelity reflects the real emitter: coverage 1, no unmapped tokens", async () => {
     const report = await buildScriptApiFidelity(PACKAGE_ROOT, BRIDGE);
     expect(report.namespace).toBe("bridge");
-    expect(report.totalMembers).toBe(89);
-    expect(report.totalTypeTokens).toBe(154);
+    expect(report.totalMembers).toBe(90);
+    expect(report.totalTypeTokens).toBe(152);
     expect(report.unknownFallbacks).toBe(0);
     expect(report.unknownTokens).toEqual([]);
     expect(report.undocumentedMembers).toBe(0);

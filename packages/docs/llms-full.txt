@@ -10391,7 +10391,7 @@ bun scripts/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<.
 bun scripts/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
 ```
 
-The first migrated target is **`Playgama/bridge-defold`** (pinned `v2.2.0`),
+The first migrated target is **`Playgama/bridge-defold`** (pinned `v2.3.0`),
 maintained entirely from its `.script_api` — its former ts-defold binding is
 gone. Three things are specific to a script_api target and worth knowing:
 
@@ -10410,13 +10410,15 @@ gone. Three things are specific to a script_api target and worth knowing:
   that check, so bridge's `string | nil` returns resolve to `string | undefined`
   and bridge lands at `coverage` `1`. A slot left with no token at all counts as
   one unknown fallback, listed as `(untyped)`, so it cannot pass as covered.
-- **An omittable interior parameter is declared, not inferred.** The
-  `.script_api` format cannot say that a middle parameter may be left out with
-  the later ones shifting left. A target lists such a slot under
-  `omittableSlots` (`element`, `slot`, and the upstream `evidence` that allows
-  it), and the emitted declaration carries two overloads, with and without it.
-  The api-doc page and the fidelity report stay as upstream wrote them. A slot
-  the fixture no longer has fails the emit, so the entry cannot go stale.
+- **A parameter upstream calls omittable in prose only is declared, not
+  inferred.** The `.script_api` format cannot say that a middle parameter may be
+  left out with the later ones shifting left, and upstream sometimes describes a
+  trailing parameter as optional without marking it `optional: true`. A target
+  lists either kind of slot under `omittableSlots` (`element`, `slot`, and the
+  upstream `evidence` that allows it), and the emitted declaration carries two
+  overloads, with and without it. The api-doc page and the fidelity report stay
+  as upstream wrote them. A slot the fixture no longer has fails the emit, so the
+  entry cannot go stale.
 
 ### Authoring forked library types
 

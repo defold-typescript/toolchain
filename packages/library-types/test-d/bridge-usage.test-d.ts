@@ -24,16 +24,33 @@ const _payload: string | undefined = bridge.platform.payload();
 const _required: string = bridge.platform.payload();
 
 // `create_post`'s interior `payload` is omittable upstream, with the callbacks
-// shifting left, so both arities compile; a positional-only emit rejects the first.
-bridge.social.create_post({}, cb, cb);
-bridge.social.create_post({}, "seed", cb, cb);
+// then following the id, so both arities compile; a positional-only emit rejects
+// the first.
+bridge.social.create_post("post-entry", cb, cb);
+bridge.social.create_post("post-entry", "seed", cb, cb);
 
-// A `.script_api` list type (`[table, string]`) reaches the declaration as a union:
-// a config entry id is accepted, and a number is not, so the slot is not `unknown`.
+// The social calls take the id of a config entry in their first slot: a string is
+// accepted, and a table or a number is not, so the slot is not `unknown`.
 bridge.social.share("share-entry", cb, cb);
 bridge.social.invite_friends("invite-entry", cb, cb);
-// @ts-expect-error options is a table or a config entry id
+// @ts-expect-error id is a config entry id, not a table
+bridge.social.share({}, cb, cb);
+// @ts-expect-error id is a config entry id
 bridge.social.share(42, cb, cb);
+
+bridge.social.join_community(cb, cb);
+// @ts-expect-error no options slot precedes the callbacks
+bridge.social.join_community({}, cb, cb);
+
+// A slot upstream marks omittable in prose only compiles with and without it,
+// whether it trails (`analytics.send`'s `data`) or sits ahead of the callbacks
+// (the `platform` `options`).
+bridge.analytics.send("level_start");
+bridge.analytics.send("level_start", { level: 3 });
+bridge.platform.send_message("game_ready", cb, cb);
+bridge.platform.send_message("game_ready", {}, cb, cb);
+bridge.platform.send_custom_message("id", cb, cb);
+bridge.platform.send_custom_message("id", {}, cb, cb);
 
 const _source: string | undefined = bridge.platform.launch_source();
 const _rewardSupported: boolean = bridge.social.is_post_reward_supported();
