@@ -341,6 +341,13 @@ function transpileVirtual(
       // Don't cross-check the seeded ambient .d.ts surface against itself; we only
       // care about diagnostics on user files (mirrors the editor's skipLibCheck).
       skipLibCheck: true,
+      // TypeScript turns this on under its default `bundler` resolution. With it on,
+      // an error that has to name a module-declared type the file does not import
+      // (`Url`, `Hash`, `Vector3`) throws inside the checker, which builds a module
+      // specifier from an undefined base path and the virtual host's empty current
+      // directory. The virtual host reads every `package.json` as empty, so no `#`
+      // import resolves with the option on or off.
+      resolvePackageJsonImports: false,
       // Defold scripts are not OO: free helper functions never receive a context,
       // so suppress TSTL's implicit `self` parameter and the `_G` call-site filler.
       noImplicitSelf: true,

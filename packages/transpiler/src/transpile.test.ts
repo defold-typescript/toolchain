@@ -221,6 +221,15 @@ describe("transpileProject", () => {
     expect(utilDiag?.column).toBe(source.indexOf("bad") + 1);
   });
 
+  test("reports a type error that names an engine type the file does not import", () => {
+    const source = 'const o: { a: number } = { a: 1, target: msg.url("#x") };\nexport {};\n';
+    const result = transpileProject({ files: { "src/bad.ts": source } });
+
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]).toMatchObject({ file: "src/bad.ts", line: 1, column: 34 });
+    expect(result.diagnostics[0]?.message).toContain("'target' does not exist in type");
+  });
+
   test("ambient vmath resolves from a non-main entry path", () => {
     const result = transpileProject({
       files: {
