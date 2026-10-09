@@ -479,7 +479,7 @@ local function fillPrivate(target, root, onlyMissing)
 end
 local function createMachine(definition)
     local function start(ctx)
-        local clearSlot, readDelays, growSlots, collectActive, rebind, onMove, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterTargets, afterListDelays, afterListTargets, always, activeChild, isActive, elapsed, fired, ownDelays, ownTargets, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, instance
+        local clearSlot, readDelays, growSlots, collectActive, rebind, onMove, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, wouldTake, can, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterTargets, afterListDelays, afterListTargets, always, activeChild, isActive, elapsed, fired, ownDelays, ownTargets, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, instance
         function clearSlot(state)
             activeChild[state + 1] = NO_STATE
             isActive[state + 1] = false
@@ -1041,6 +1041,44 @@ local function createMachine(definition)
             end
             return takeEvent(state, event)
         end
+        function wouldTake(state, event)
+            if parallel[state + 1] == true then
+                local list = children[state + 1]
+                do
+                    local i = 0
+                    while i < #list do
+                        local region = list[i + 1]
+                        if isActive[region + 1] == true and wouldTake(region, event) then
+                            return true
+                        end
+                        i = i + 1
+                    end
+                end
+            end
+            local child = activeChild[state + 1]
+            if child ~= NO_STATE and wouldTake(child, event) then
+                return true
+            end
+            local listIndex = onIndex[state + 1][event.type]
+            if type(listIndex) ~= "number" then
+                return false
+            end
+            local list = transitions[listIndex + 1]
+            do
+                local i = 0
+                while i < #list do
+                    local when = list[i + 1].when
+                    if when == nil or when(ctx, event, instance) then
+                        return true
+                    end
+                    i = i + 1
+                end
+            end
+            return false
+        end
+        function can(event)
+            return running and not stopRequested and wouldTake(ROOT, event)
+        end
         function clearQueue()
             while queueHead < queueTail do
                 queue[queueHead + 1] = nil
@@ -1254,6 +1292,7 @@ local function createMachine(definition)
             path = nil,
             leaves = leaves,
             matches = matches,
+            can = can,
             send = send,
             update = update,
             stop = stop,

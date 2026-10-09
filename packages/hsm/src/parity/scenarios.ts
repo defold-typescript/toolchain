@@ -1024,6 +1024,41 @@ function guardView(): string[] {
   return log;
 }
 
+function canQuery(): string[] {
+  const log: string[] = [];
+  const m = defineMachine<Ctx, Ev>()({
+    initial: "/a",
+    states: {
+      a: {
+        ...logged("a"),
+        on: {
+          GO: "/b",
+          STEP: { to: "/b", when: (_ctx, event) => event.n > 1 },
+          PING: {
+            run: (ctx) => {
+              ctx.log.push("ping");
+            },
+          },
+        },
+      },
+      b: { ...logged("b"), on: { BACK: "/a" } },
+    },
+  }).start(newCtx(log));
+  log.push(`GO=${m.can({ type: "GO" })}`);
+  log.push(`BACK=${m.can({ type: "BACK" })}`);
+  log.push(`NOPE=${m.can({ type: "NOPE" })}`);
+  log.push(`STEP1=${m.can({ type: "STEP", n: 1 })}`);
+  log.push(`STEP2=${m.can({ type: "STEP", n: 2 })}`);
+  log.push(`PING=${m.can({ type: "PING" })}`);
+  log.push(`path=${shown(m.path)}`);
+  m.send({ type: "GO" });
+  log.push(`GO=${m.can({ type: "GO" })}`);
+  log.push(`BACK=${m.can({ type: "BACK" })}`);
+  m.stop();
+  log.push(`BACK=${m.can({ type: "BACK" })}`);
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -1045,6 +1080,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "private ctx", run: () => privateCtx() },
   { name: "after delay from ctx", run: () => afterDelayFromCtx() },
   { name: "guard reads the machine", run: () => guardView() },
+  { name: "can asks without moving", run: () => canQuery() },
 ];
 
 export function runScenario(name: string): string {
