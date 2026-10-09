@@ -386,13 +386,13 @@ const EXPECTED: Record<string, string[]> = {
     "/r/U+E000/done -> (stopped) stop -",
   ],
   "private ctx": [
+    "enter root count=10",
     "enter root count=0",
-    "enter root count=0",
-    "first hits=2 count=2",
+    "first hits=2 count=12",
     "second hits=0 count=0",
-    "enter root count=0",
+    "enter root count=10",
     "restarted hits=0 flag=true",
-    "reloaded armor=5 hits=1 count=1",
+    "reloaded armor=7 hits=1 count=11",
   ],
 };
 

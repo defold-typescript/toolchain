@@ -40,6 +40,27 @@ const make = (key?: string) =>
     },
   });
 
+const makeSeeded = (entered: number[], key?: string) =>
+  defineMachine<Options, Ev>(key)({
+    privateCtx: (ctx: Options): Internals => ({ hits: [], count: ctx.start ?? 0 }),
+    enter: (ctx) => {
+      entered.push(ctx.count);
+    },
+    initial: "/idle",
+    states: {
+      idle: {
+        on: {
+          HIT: {
+            run: (ctx) => {
+              ctx.count += 1;
+              ctx.hits.push(ctx.count);
+            },
+          },
+        },
+      },
+    },
+  });
+
 // The instance hides the private fields from its type, so tests read them through this.
 const internals = (ctx: Options): Internals => ctx as unknown as Internals;
 
@@ -91,6 +112,58 @@ describe("privateCtx at run time", () => {
     expect(after.hits).toEqual([0]);
     expect(after.count).toBe(1);
     expect(after.armor).toBe(5);
+  });
+
+  test("the factory sets a private field from the starting context before the root's enter hook", () => {
+    const entered: number[] = [];
+    makeSeeded(entered).start({ name: "a", start: 10 });
+    expect(entered).toEqual([10]);
+  });
+
+  test("the factory receives the object passed to start, not a copy", () => {
+    const received: Options[] = [];
+    const m = defineMachine<Options, Ev>()({
+      privateCtx: (ctx: Options) => {
+        received.push(ctx);
+        return { count: 0 };
+      },
+      initial: "/idle",
+      states: { idle: {} },
+    });
+    const options = { name: "a" };
+    m.start(options);
+    expect(received).toHaveLength(1);
+    expect(received[0]).toBe(options);
+  });
+
+  test("restarting with the old ctx runs the factory again on that object", () => {
+    const m = makeSeeded([]);
+    const first = m.start({ name: "a", start: 10 });
+    first.send({ type: "HIT" });
+    first.send({ type: "HIT" });
+    first.stop();
+    const second = m.start(first.ctx);
+    expect(internals(second.ctx).count).toBe(10);
+    expect(internals(second.ctx).hits).toEqual([]);
+  });
+
+  test("a hot reload hands the new factory the instance's ctx", () => {
+    const a = makeSeeded([], "private-reload-seeded").start({ name: "a", start: 10 });
+    a.send({ type: "HIT" });
+    defineMachine<Options, Ev>("private-reload-seeded")({
+      privateCtx: (ctx: Options): Internals & { armor: number } => ({
+        hits: [],
+        count: 0,
+        armor: (ctx.start ?? 0) + 1,
+      }),
+      initial: "/idle",
+      states: { idle: {} },
+    });
+    a.update(0);
+    const after = a.ctx as unknown as Internals & { armor: number };
+    expect(after.armor).toBe(11);
+    expect(after.count).toBe(11);
+    expect(after.hits).toEqual([11]);
   });
 });
 
@@ -202,6 +275,112 @@ describe("privateCtx types", () => {
     const exact: Equal<typeof a.ctx, Options> = true;
     expect(exact).toBe(true);
     expect(internals(a.ctx).count).toBe(1);
+  });
+
+  test("an unannotated factory parameter is exactly Ctx", () => {
+    const seen: unknown[] = [];
+    const m = defineMachine<Options, Ev>()({
+      privateCtx: (ctx) => {
+        const exact: Equal<typeof ctx, Options> = true;
+        seen.push(exact);
+        // @ts-expect-error count is not a field of Options
+        seen.push(ctx.count);
+        return { count: 0 };
+      },
+      initial: "/idle",
+      states: { idle: {} },
+    });
+    m.start({ name: "a" });
+    expect(seen).toEqual([true, undefined]);
+  });
+
+  test("an annotated factory as the first key types a sequence task with no annotation on ctx", () => {
+    defineMachine<Options, Ev>()({
+      privateCtx: (ctx: Options) => ({ count: ctx.name.length }),
+      initial: "/idle",
+      states: {
+        idle: {
+          task: sequence(async (ctx, signal) => {
+            ctx.count += ctx.name.length;
+            await signal.wait(1);
+          }),
+        },
+      },
+    });
+  });
+
+  test("an annotated factory types a hook that sits only on a nested state", () => {
+    const seen: boolean[] = [];
+    const m = defineMachine<Options, Ev>()({
+      privateCtx: (ctx: Options) => ({ count: ctx.start ?? 0, hits: [] as number[] }),
+      initial: "/idle",
+      states: {
+        idle: {
+          enter: (ctx) => {
+            const exact: Equal<typeof ctx, Options & { count: number; hits: number[] }> = true;
+            seen.push(exact);
+          },
+        },
+      },
+    });
+    m.start({ name: "a" });
+    expect(seen).toEqual([true]);
+  });
+
+  test("an annotated factory written after states types the hooks and checks its named type", () => {
+    const m = defineMachine<Options, Ev>()({
+      initial: "/idle",
+      states: {
+        idle: {
+          enter: (ctx) => {
+            ctx.hits.push(ctx.count);
+          },
+        },
+      },
+      privateCtx: (ctx: Options): Internals => ({ hits: [], count: ctx.start ?? 0 }),
+    });
+    const a = m.start({ name: "a" });
+    const exact: Equal<typeof a.ctx, Options> = true;
+    expect(exact).toBe(true);
+    expect(internals(a.ctx).hits).toEqual([0]);
+    defineMachine<Options, Ev>()({
+      initial: "/idle",
+      states: { idle: {} },
+      // @ts-expect-error a field the named type does not declare
+      privateCtx: (ctx: Options): Internals => ({ hits: [], count: ctx.start ?? 0, armor: 5 }),
+    });
+  });
+
+  test("a private field of an annotated factory may not share a name with a field of Ctx", () => {
+    defineMachine<Options, Ev>()({
+      // @ts-expect-error name is already a field of Options
+      privateCtx: (ctx: Options) => ({ name: ctx.name }),
+      initial: "/idle",
+      states: { idle: {} },
+    });
+  });
+
+  test("the factory may not ask for a field Ctx does not have", () => {
+    defineMachine<Options, Ev>()({
+      // @ts-expect-error Options has no field named missing
+      privateCtx: (ctx: { readonly missing: number }) => ({ count: ctx.missing }),
+      initial: "/idle",
+      states: { idle: {} },
+    });
+  });
+
+  test("the factory may ask for only the fields of Ctx it reads", () => {
+    defineMachine<{ readonly fireRate: number; readonly startHeat: number }, Ev>()({
+      privateCtx: (ctx: { readonly startHeat: number }) => ({ heat: ctx.startHeat }),
+      initial: "/idle",
+      states: {
+        idle: {
+          enter: (ctx) => {
+            ctx.heat += 1 / ctx.fireRate;
+          },
+        },
+      },
+    });
   });
 
   test("without privateCtx annotated guards leave the unannotated bodies typed as Ctx", () => {

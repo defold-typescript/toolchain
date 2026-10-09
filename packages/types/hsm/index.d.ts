@@ -318,8 +318,11 @@ export interface PrivateCtxConfig<Ctx, Priv> {
     /**
      * Builds the fields only the machine uses. It runs once per `start`, before the root's `enter`
      * hook, so every instance gets fresh fields of its own; a value written straight into the
-     * config would be one array or table shared by every instance. It takes no arguments: to set
-     * a private field from a field of `Ctx`, do it in the root's `enter` hook.
+     * config would be one array or table shared by every instance. It receives the object passed
+     * to `start`, typed `Ctx`, so a private field can start from a field of `Ctx`:
+     * `privateCtx: (ctx: TurretOptions) => ({ heat: ctx.startHeat })`. Give `ctx` its type; without
+     * one TypeScript can type a hook before it knows the private fields, and that hook reports the
+     * field as missing.
      *
      * The fields are added to the object passed to `start`, which stays the instance's `ctx`, so
      * restarting with `start(old.ctx)` keeps the public fields and builds the private ones fresh.
@@ -405,7 +408,7 @@ export interface PrivateCtxConfig<Ctx, Priv> {
      * });
      * ```
      */
-    readonly privateCtx?: () => Priv & {
+    readonly privateCtx?: (ctx: Ctx) => Priv & {
         readonly [K in keyof Ctx & keyof Priv]: never;
     };
 }
