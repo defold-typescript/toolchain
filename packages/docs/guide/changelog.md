@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.46.1
+
+> Summary:
+>
+> - **[`build`](./build.md)** reports type errors it crashed on.
+
+### Fixed
+
+- **`build` stops with `undefined is not an object` instead of a type error:** some type errors on an object that holds an engine value such as `msg.url`, `hash` or `vmath.vector3`, like an unknown field passed beside it, ended the build with `error: undefined is not an object (evaluating 'path.includes')` and no file or line. The build now reports the error with its file, line and message.
+
 ## v0.46.0
 
 > Summary:

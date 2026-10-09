@@ -115,4 +115,13 @@ describe("createTranspileSession", () => {
     expect(sessionResult.lualib).toBe(projectResult.lualib);
     expect(sessionResult.lualib ?? "").toContain("__TS__ObjectKeys");
   });
+
+  test("reports a type error that names an engine type the file does not import", () => {
+    const source = 'const o: { a: number } = { a: 1, target: msg.url("#x") };\nexport {};\n';
+    const result = createTranspileSession().update({ "src/bad.ts": source });
+
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]).toMatchObject({ file: "src/bad.ts", line: 1, column: 34 });
+    expect(result.diagnostics[0]?.message).toContain("'target' does not exist in type");
+  });
 });
