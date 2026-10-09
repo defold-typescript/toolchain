@@ -38,8 +38,8 @@ export const machine = ${call}(${body});
 }
 
 function privateTurret(key: string, fields: string): string {
-  return `import { definePrivateMachine } from "@defold-typescript/types/hsm";
-export const turret = definePrivateMachine(${JSON.stringify(key)})({
+  return `import { defineMachine } from "@defold-typescript/types/hsm";
+export const turret = defineMachine(${JSON.stringify(key)})({
   privateCtx: () => ({ ${fields} }),
   initial: "/idle",
   states: {

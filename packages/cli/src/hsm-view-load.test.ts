@@ -85,13 +85,13 @@ function leafOf(config: StateLike): string | undefined {
   return leaf;
 }
 
-const PRIVATE_MACHINES = `import { definePrivateMachine } from "@defold-typescript/types/hsm";
-export const turret = definePrivateMachine("turret")({
+const PRIVATE_MACHINES = `import { defineMachine } from "@defold-typescript/types/hsm";
+export const turret = defineMachine("turret")({
   privateCtx: () => ({ heat: 0 }),
   initial: "/a",
   states: { a: {} },
 });
-export const lamp = definePrivateMachine()({
+export const lamp = defineMachine()({
   privateCtx: () => ({ heat: 0 }),
   initial: "/a",
   states: { a: {} },
@@ -155,7 +155,7 @@ defineMachine()({ initial: "/a", states: { a: {} } });
     ]);
   });
 
-  test("lists a machine built with definePrivateMachine", () => {
+  test("lists a machine whose config has privateCtx", () => {
     const loaded = load(write("main.ts", PRIVATE_MACHINES));
     expect(loaded.machines.map(({ name, key }) => ({ name, key }))).toEqual([
       { name: "turret", key: "turret" },

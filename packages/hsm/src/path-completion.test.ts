@@ -33,7 +33,8 @@ const VALID: Slots = {
   matches: '"/menu"',
 };
 
-function fixture(slots: Slots): string {
+function fixture(slots: Slots, rootLine?: string): string {
+  const firstKey = rootLine === undefined ? "" : `\n  ${rootLine}`;
   return `import { defineMachine } from "./index";
 
 interface Ctx {
@@ -42,7 +43,7 @@ interface Ctx {
 
 type Ev = ${EVENTS.map((type) => `{ type: "${type}" }`).join(" | ")};
 
-const machine = defineMachine<Ctx, Ev>()({
+const machine = defineMachine<Ctx, Ev>()({${firstKey}
   initial: "/menu",
   states: {
     menu: {
@@ -104,8 +105,8 @@ const host: ts.LanguageServiceHost = {
 };
 const service = ts.createLanguageService(host, ts.createDocumentRegistry());
 
-function offered(slot: keyof Slots, withCursor: string): string[] {
-  const marked = fixture({ ...VALID, [slot]: withCursor });
+function offered(slot: keyof Slots, withCursor: string, rootLine?: string): string[] {
+  const marked = fixture({ ...VALID, [slot]: withCursor }, rootLine);
   const position = marked.indexOf(CURSOR);
   source = marked.replace(CURSOR, "");
   version++;
@@ -127,6 +128,12 @@ describe("hsm path completion", () => {
 
   test("a string target under on offers the machine's paths", () => {
     expect(offered("onTarget", `"${CURSOR}"`)).toEqual(sorted(ALL_PATHS));
+  });
+
+  test("a string target under on offers the machine's paths beside privateCtx", () => {
+    expect(offered("onTarget", `"${CURSOR}"`, "privateCtx: () => ({ extra: 0 }),")).toEqual(
+      sorted(ALL_PATHS),
+    );
   });
 
   test("to in the object form, beside a when callback, offers the machine's paths", () => {

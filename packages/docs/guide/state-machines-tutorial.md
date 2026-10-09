@@ -541,7 +541,7 @@ export default defineScript({
 
 `messageEvents` converts the Defold messages you list into typed events and returns `undefined` for any other message, which is why the script checks before sending. Build it once, at the top of a module.
 
-**Step 3.** The script in step 2 passes `opens: 0`, a number only the machine uses. `definePrivateMachine` lets the machine build it. The context keeps what the script hands in:
+**Step 3.** The script in step 2 passes `opens: 0`, a number only the machine uses. The `privateCtx` key lets the machine build it. The context keeps what the script hands in:
 
 ```ts excerpt
 export interface DoorCtx {
@@ -552,7 +552,7 @@ export interface DoorCtx {
 The machine builds the rest in `privateCtx`, at the top of its config:
 
 ```ts excerpt
-export const doorMachine = definePrivateMachine<DoorCtx, DoorEvent>()({
+export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
   // the machine's own data, built fresh for every door
   privateCtx: () => ({ opens: 0 }),
   initial: "/closed",
@@ -564,7 +564,7 @@ The hooks still read `ctx.opens`. `start` takes the sprite alone, and `self.door
 return { door: doorMachine.start({ sprite: msg.url("#sprite") }) };
 ```
 
-> [!NOTE] **Hidden, not locked.** The field is hidden by type only: at run time it sits on the same `ctx` as the sprite. A machine with no data of its own keeps `defineMachine`. [Private fields with `definePrivateMachine`](./state-machines.md#private-fields-with-defineprivatemachine) has the rules.
+> [!NOTE] **Hidden, not locked.** The field is hidden by type only: at run time it sits on the same `ctx` as the sprite. A machine with no data of its own leaves `privateCtx` out. [Private fields with `privateCtx`](./state-machines.md#private-fields-with-privatectx) has the rules.
 
 ## 11. Designing your own
 

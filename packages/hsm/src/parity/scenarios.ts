@@ -1,4 +1,4 @@
-import { defineMachine, definePrivateMachine } from "../index";
+import { defineMachine } from "../index";
 
 type Ev =
   | { type: "GO" }
@@ -875,7 +875,7 @@ function privateOf(ctx: Ctx): PrivateFields {
 
 function privateCtx(): string[] {
   const log: string[] = [];
-  const machine = definePrivateMachine<Ctx, Ev>("parity private ctx")({
+  const machine = defineMachine<Ctx, Ev>("parity private ctx")({
     privateCtx: (): PrivateFields => ({ count: 0, hits: [] }),
     enter: (ctx) => {
       ctx.log.push(`enter root count=${ctx.count}`);
@@ -904,7 +904,7 @@ function privateCtx(): string[] {
   const again = machine.start(first.ctx);
   log.push(`restarted hits=${privateOf(again.ctx).hits.length} flag=${again.ctx.flag}`);
   again.send({ type: "HIT" });
-  definePrivateMachine<Ctx, Ev>("parity private ctx")({
+  defineMachine<Ctx, Ev>("parity private ctx")({
     privateCtx: (): ReloadedFields => ({ count: 0, hits: [], armor: 5 }),
     initial: "/idle",
     states: { idle: {} },
