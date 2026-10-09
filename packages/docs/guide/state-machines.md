@@ -755,6 +755,117 @@ Here each new enemy redefines `"enemy"`: the config is compiled again, every ene
 
 Without a key, `defineMachine` builds a separate machine on every call, and a reload does not reach running instances.
 
+## Private fields with `definePrivateMachine`
+
+Some of a machine's data belongs to the machine alone: a counter, a heat level, a list it builds up. `definePrivateMachine` is `defineMachine` for a machine that keeps such fields. Its root config takes one more key, `privateCtx`, a function that returns them. Every hook, `when`, `run`, `task` and `update` sees the fields beside `Ctx`, while `start` takes `Ctx` alone and the instance it returns shows `Ctx` alone in its `ctx`. A machine without fields of its own uses `defineMachine`.
+
+There are two ways to type the fields.
+
+**Inferred.** For a few fields, write them inline and let TypeScript infer their types. Add `as` where the inferred type is wrong: an empty array is `never[]` until it reads `[] as Hash[]`, and a field holding one of several strings is any `string` until it reads `"cool" as "cool" | "hot"`.
+
+```ts title="turret-inferred.ts"
+import { definePrivateMachine } from "@defold-typescript/types/hsm";
+
+type TurretEvent = { type: "SPOTTED" } | { type: "LOST" };
+
+export const turret = definePrivateMachine<{ readonly fireRate: number }, TurretEvent>("turret")({
+  privateCtx: () => ({ heat: 0, targets: [] as Hash[] }),
+  initial: "/idle",
+  states: {
+    idle: { on: { SPOTTED: "/firing" } },
+    firing: {
+      enter: (ctx) => {
+        ctx.heat += 1 / ctx.fireRate;
+      },
+      on: { LOST: "/idle" },
+    },
+  },
+});
+
+const gun = turret.start({ fireRate: 2 }); // gun.ctx shows fireRate only
+```
+
+**A named type.** For more fields, or when a helper outside the config needs the whole context, declare the fields as an interface and make it the factory's return type. The fields need no `as`, a misspelled or unknown field is a compile error, and the whole context is `TurretOptions & TurretPrivate`.
+
+```ts title="turret-named.ts"
+import { definePrivateMachine } from "@defold-typescript/types/hsm";
+
+interface TurretOptions {
+  readonly fireRate: number;
+}
+
+interface TurretPrivate {
+  heat: number;
+  mode: "cool" | "hot";
+}
+
+type TurretEvent = { type: "SPOTTED" } | { type: "LOST" };
+
+const overheated = (ctx: TurretOptions & TurretPrivate) => ctx.heat > ctx.fireRate;
+
+export const turret = definePrivateMachine<TurretOptions, TurretEvent>("turret")({
+  privateCtx: (): TurretPrivate => ({ heat: 0, mode: "cool" }),
+  initial: "/idle",
+  states: {
+    idle: { on: { SPOTTED: "/firing" } },
+    firing: {
+      enter: (ctx) => {
+        ctx.heat += 1 / ctx.fireRate;
+      },
+      always: { to: "/cooling", when: overheated },
+      on: { LOST: "/idle" },
+    },
+    cooling: {
+      enter: (ctx) => {
+        ctx.mode = "hot";
+      },
+      exit: (ctx) => {
+        ctx.heat = 0;
+        ctx.mode = "cool";
+      },
+      after: { 2: "/idle" },
+    },
+  },
+});
+```
+
+`satisfies TurretPrivate` does not do the same job. It checks the object but keeps its narrow types, so an empty array stays `never[]` and nothing can be pushed to it:
+
+```ts title="turret-satisfies.ts"
+import { definePrivateMachine } from "@defold-typescript/types/hsm";
+
+interface TurretPrivate {
+  heat: number;
+  targets: Hash[];
+}
+
+export const turret = definePrivateMachine<{ readonly fireRate: number }, { type: "SPOTTED" }>()({
+  privateCtx: () => ({ heat: 0, targets: [] }) satisfies TurretPrivate,
+  initial: "/idle",
+  states: {
+    idle: {
+      enter: (ctx) => {
+        // @ts-expect-error -- `targets` is `never[]`: `satisfies` checked it and kept the narrow type
+        ctx.targets.push(hash("crate"));
+      },
+    },
+  },
+});
+```
+
+The fix is the return type annotation of the named form: `privateCtx: (): TurretPrivate => ({ heat: 0, targets: [] })`.
+
+`privateCtx` follows these rules:
+
+- **It runs once per `start`, before the root's `enter` hook.** The fields are there when the first hook runs.
+- **Every instance gets fresh fields of its own.** A value written straight into the config would be one array or table shared by every instance.
+- **It takes no arguments.** To set a private field from a field of `Ctx`, do it in the root's `enter` hook.
+- **The fields are added to the object passed to `start`,** which stays the instance's `ctx`.
+- **A restart builds them fresh.** `start(old.ctx)` keeps the public fields and builds the private ones again; see [Restart a machine](#restart-a-machine).
+- **A hot reload adds fields and keeps values.** A reload under the machine's key adds the fields a new `privateCtx` introduces and leaves every field that already holds a value alone; see [What each instance keeps](#what-each-instance-keeps).
+- **A private field may not share a name with a field of `Ctx`.** Such a config fails to compile.
+- **The fields are hidden by type only.** At run time `ctx` is one table, and hooks, [`hsm-view`](./hsm-view.md) and a debugger see every field.
+
 ## Performance
 
 The budget is 200 game objects, each running its own instance of one three-level machine, for under 0.5 ms of `update` and `send` per frame in the stock engine, with neither call building a table. A bench in the repository measures it: every enemy ticks its machine each frame through `after` timers and an `update` hook, and sends one event every 20 frames. It runs 300 frames that sample the heap around each call, then 300 frames that time each call, so neither measurement includes the other's probes.
@@ -793,7 +904,7 @@ m.send({ type: "LOSE" }); // a new table on every call
 
 ## Types
 
-**`defineMachine` takes two calls.** `defineMachine<Ctx, E>()` fixes the context and event types (and takes an optional [hot reload](#hot-reload) key), and the second call takes the config. TypeScript cannot infer some type arguments of one call while you write the others, and the config has to be inferred: its literal shape is where the state paths come from.
+**`defineMachine` takes two calls.** `defineMachine<Ctx, E>()` fixes the context and event types (and takes an optional [hot reload](#hot-reload) key), and the second call takes the config. TypeScript cannot infer some type arguments of one call while you write the others, and the config has to be inferred: its literal shape is where the state paths come from. [`definePrivateMachine`](#private-fields-with-defineprivatemachine) takes the same two calls.
 
 **Events are `EventObject`s.** `E` is a union of objects that each have a string `type`, plus any payload fields. `on` accepts only those `type` values as keys, and each `when` and `run` sees the variant its key names.
 
@@ -1213,7 +1324,7 @@ Two rules carry over to any migration:
 
 ## Cheat sheet
 
-Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies.
+Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies. The two snippets on private fields come from a second guard, one that counts its hits itself.
 
 ### Configure a state
 
@@ -1473,13 +1584,31 @@ on_reload(self) {
 ```
 
 </td></tr>
+<tr><td>
+
+Keep fields only the machine uses
+
+</td><td>
+
+`privateCtx` on the root of a [`definePrivateMachine`](#private-fields-with-defineprivatemachine) config
+
+</td><td>
+
+```ts excerpt
+privateCtx: (): GuardPrivate => ({
+  hits: 0,
+  seen: [],
+}),
+```
+
+</td></tr>
 </tbody>
 </table>
 </div>
 
 ### Read types off the machine
 
-Every type comes from the exported machine, so nothing is declared twice; see [Types](#types). `import type` is enough for these.
+Every type comes from the exported machine, so nothing is declared twice; see [Types](#types). `import type` is enough for these. The one type the machine does not give back is that of its [private fields](#private-fields-with-defineprivatemachine), which is declared once, beside the machine.
 
 <div class="table-scroll code-table">
 <table>
@@ -1516,6 +1645,23 @@ Index the instance type
 
 ```ts excerpt
 type GuardCtx = Guard["ctx"];
+```
+
+</td></tr>
+<tr><td>
+
+Name the whole context a private machine's hooks see
+
+</td><td>
+
+Intersect the context type with the private fields' type; `ctx` on the instance names the public part alone
+
+</td><td>
+
+```ts excerpt
+const beaten = (
+  ctx: GuardOptions & GuardPrivate,
+) => ctx.hits >= ctx.health;
 ```
 
 </td></tr>
@@ -1748,11 +1894,19 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `task`    | `(ctx, finish, machine) => (() => void) \| void` | Runs after `enter`; `finish(event)` sends one event if the state is still the one entered. A returned function runs once when that entry ends. |
 | `invoke`  | `never`                                     | Renamed to `task`; setting it fails to compile.                                               |
 
+### `PrivateCtxConfig`
+
+The one key a [`definePrivateMachine`](#private-fields-with-defineprivatemachine) config adds to the root.
+
+| Field        | Type         | Meaning                                                                                       |
+| ------------ | ------------ | --------------------------------------------------------------------------------------------- |
+| `privateCtx` | `() => Priv` | Builds the fields only the machine uses. Runs once per `start`, before the root's `enter` hook, so every instance gets fresh fields of its own. |
+
 ### `MachineInstance`
 
 | Member    | Type                    | Meaning                                                                            |
 | --------- | ----------------------- | ---------------------------------------------------------------------------------- |
-| `ctx`     | `Ctx`                   | The context passed to `start`.                                                     |
+| `ctx`     | `Ctx`                   | The context passed to `start`. A private machine's fields are on the same table and absent from its type. |
 | `path`    | `P \| undefined`        | The deepest active state's full path (the first region's leaf in a parallel state), or `undefined` once stopped. |
 | `leaves`  | `readonly P[]`          | Every active leaf's full path, in region order; one path without parallel states, empty once stopped. The same array, updated in place. |
 | `matches` | `(path: P) => boolean`  | Whether the state at the full path `path` is active, ancestors included.           |

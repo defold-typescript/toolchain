@@ -385,6 +385,15 @@ const EXPECTED: Record<string, string[]> = {
     "exit r",
     "/r/U+E000/done -> (stopped) stop -",
   ],
+  "private ctx": [
+    "enter root count=0",
+    "enter root count=0",
+    "first hits=2 count=2",
+    "second hits=0 count=0",
+    "enter root count=0",
+    "restarted hits=0 flag=true",
+    "reloaded armor=5 hits=1 count=1",
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");

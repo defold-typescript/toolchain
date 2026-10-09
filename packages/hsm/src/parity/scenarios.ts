@@ -1,4 +1,4 @@
-import { defineMachine } from "../index";
+import { defineMachine, definePrivateMachine } from "../index";
 
 type Ev =
   | { type: "GO" }
@@ -859,6 +859,62 @@ function unicodeRegionOrder(): string[] {
   return log;
 }
 
+interface PrivateFields {
+  count: number;
+  hits: number[];
+}
+
+interface ReloadedFields extends PrivateFields {
+  armor: number;
+}
+
+// An instance's type hides the private fields, so the scenario reads them through this.
+function privateOf(ctx: Ctx): PrivateFields {
+  return ctx as unknown as PrivateFields;
+}
+
+function privateCtx(): string[] {
+  const log: string[] = [];
+  const machine = definePrivateMachine<Ctx, Ev>("parity private ctx")({
+    privateCtx: (): PrivateFields => ({ count: 0, hits: [] }),
+    enter: (ctx) => {
+      ctx.log.push(`enter root count=${ctx.count}`);
+    },
+    initial: "/idle",
+    states: {
+      idle: {
+        on: {
+          HIT: {
+            run: (ctx) => {
+              ctx.count += 1;
+              ctx.hits.push(ctx.count);
+            },
+          },
+        },
+      },
+    },
+  });
+  const first = machine.start(newCtx(log, true));
+  const second = machine.start(newCtx(log));
+  first.send({ type: "HIT" });
+  first.send({ type: "HIT" });
+  log.push(`first hits=${privateOf(first.ctx).hits.length} count=${privateOf(first.ctx).count}`);
+  log.push(`second hits=${privateOf(second.ctx).hits.length} count=${privateOf(second.ctx).count}`);
+  first.stop();
+  const again = machine.start(first.ctx);
+  log.push(`restarted hits=${privateOf(again.ctx).hits.length} flag=${again.ctx.flag}`);
+  again.send({ type: "HIT" });
+  definePrivateMachine<Ctx, Ev>("parity private ctx")({
+    privateCtx: (): ReloadedFields => ({ count: 0, hits: [], armor: 5 }),
+    initial: "/idle",
+    states: { idle: {} },
+  });
+  again.update(0);
+  const reloaded = again.ctx as unknown as ReloadedFields;
+  log.push(`reloaded armor=${reloaded.armor} hits=${reloaded.hits.length} count=${reloaded.count}`);
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -877,6 +933,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "always transitions", run: () => alwaysTransitions() },
   { name: "parallel regions", run: () => parallelRegions() },
   { name: "unicode region order", run: () => unicodeRegionOrder() },
+  { name: "private ctx", run: () => privateCtx() },
 ];
 
 export function runScenario(name: string): string {

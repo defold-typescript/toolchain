@@ -1,6 +1,6 @@
 # State machines guide excerpts
 
-The code the cheat sheet in `packages/docs/guide/state-machines.md` quotes. `packages/cli/src/hsm-guide-fences.test.ts` compiles every fence here and holds each `ts excerpt` fence on the guide pages to this text, whitespace aside.
+The code the cheat sheet in `packages/docs/guide/state-machines.md` and the tutorial in `packages/docs/guide/state-machines-tutorial.md` quote. `packages/cli/src/hsm-guide-fences.test.ts` compiles every fence here and holds each `ts excerpt` fence on the guide pages to this text, whitespace aside.
 
 ```ts title="guard-machine.ts"
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -282,6 +282,123 @@ export default defineScript({
   },
   final(self) {
     self.guard.stop();
+  },
+});
+```
+
+```ts title="guard-private.ts"
+import { definePrivateMachine } from "@defold-typescript/types/hsm";
+
+interface GuardOptions {
+  readonly sprite: Url;
+  readonly health: number;
+}
+
+interface GuardPrivate {
+  hits: number;
+  seen: Hash[];
+}
+
+type HitEvent = { type: "HIT"; damage: number };
+
+const beaten = (
+  ctx: GuardOptions & GuardPrivate,
+) => ctx.hits >= ctx.health;
+
+export const privateGuard = definePrivateMachine<GuardOptions, HitEvent>("private-guard")({
+  privateCtx: (): GuardPrivate => ({
+    hits: 0,
+    seen: [],
+  }),
+  initial: "/alive",
+  states: {
+    alive: {
+      on: {
+        HIT: [
+          { to: "/gone", when: beaten },
+          {
+            run: (ctx, event) => {
+              ctx.hits += event.damage;
+            },
+          },
+        ],
+      },
+    },
+    gone: {},
+  },
+});
+
+const guard = privateGuard.start({ sprite: msg.url("#sprite"), health: 3 });
+// @ts-expect-error -- `hits` is private: the instance's `ctx` shows `GuardOptions` only
+export const hits: number = guard.ctx.hits;
+```
+
+```ts title="door-private-machine.ts"
+import { definePrivateMachine } from "@defold-typescript/types/hsm";
+import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/defold";
+
+export interface DoorCtx {
+  readonly sprite: Url;
+}
+
+export type DoorEvent = MessageEvent<"trigger_response"> | { type: "OPENED" } | { type: "CLOSE" };
+
+// the door from part 8
+export const doorMachine = definePrivateMachine<DoorCtx, DoorEvent>()({
+  // the machine's own data, built fresh for every door
+  privateCtx: () => ({ opens: 0 }),
+  initial: "/closed",
+  states: {
+    closed: {
+      enter: (ctx) => go.set(ctx.sprite, "tint.w", 1),
+      on: { trigger_response: { to: "/opening", when: (_ctx, event) => event.enter } },
+    },
+    opening: {
+      task: (ctx, finish) => {
+        go.animate(ctx.sprite, "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 0.5, 0, () => {
+          finish({ type: "OPENED" });
+        });
+      },
+      exit: (ctx) => go.cancel_animations(ctx.sprite, "tint.w"),
+      on: { OPENED: "/open", CLOSE: "/closed" },
+    },
+    open: {
+      enter: (ctx) => {
+        ctx.opens += 1;
+      },
+      after: { 3: "/closed" },
+      on: { CLOSE: "/closed" },
+    },
+  },
+});
+
+// turns Defold's "trigger_response" message into a machine event
+export const doorEvents = messageEvents(["trigger_response"]);
+```
+
+```ts title="door-private.ts"
+import { defineScript } from "@defold-typescript/types";
+import { doorEvents, doorMachine } from "./door-private-machine";
+
+export default defineScript({
+  // one machine for THIS door
+  init() {
+    return { door: doorMachine.start({ sprite: msg.url("#sprite") }) };
+  },
+  // the heartbeat
+  update(self, dt) {
+    self.door.update(dt);
+  },
+  // Defold message -> event
+  on_message(self, message_id, message, sender) {
+    const event = doorEvents.toEvent(message_id, message, sender);
+    if (event !== undefined) {
+      self.door.send(event);
+    }
+  },
+  // object deleted: run the exit hooks
+  final(self) {
+    self.door.stop();
   },
 });
 ```

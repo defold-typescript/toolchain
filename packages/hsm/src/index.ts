@@ -865,6 +865,22 @@ interface Registered<Ctx, E extends EventObject> {
 
 const registered: { [key: string]: Registered<unknown, EventObject> } = {};
 
+// Adds the fields the root's privateCtx returns to ctx. With onlyMissing, a field ctx already
+// has keeps its value: a hot reload adds new private fields and leaves the old ones alone.
+function fillPrivate(
+  target: { [name: string]: unknown },
+  root: unknown,
+  onlyMissing: boolean,
+): void {
+  const factory = (root as Partial<PrivateCtxConfig<unknown, object>>).privateCtx;
+  const fields = (factory?.() || {}) as { [name: string]: unknown };
+  for (const name in fields) {
+    if (!onlyMissing || target[name] === undefined) {
+      target[name] = fields[name];
+    }
+  }
+}
+
 function createMachine<Ctx, E extends EventObject>(
   definition: Definition<Ctx, E>,
 ): Machine<Ctx, E> {
@@ -980,6 +996,7 @@ function createMachine<Ctx, E extends EventObject>(
       afterDelays = compiled.afterDelays;
       afterTargets = compiled.afterTargets;
       always = compiled.always;
+      fillPrivate(ctx as never, configs[ROOT], true);
       growSlots();
       const dropped: number[] = [];
       for (let i = 0; i < order.length; i++) {
@@ -1553,6 +1570,7 @@ function createMachine<Ctx, E extends EventObject>(
     }
 
     busy = true;
+    fillPrivate(ctx as never, configs[ROOT], false);
     enterState(ROOT);
     enterDefaults(ROOT, 0);
     refreshLeaves();
@@ -1599,3 +1617,114 @@ export function defineMachine<Ctx, E extends EventObject>(
 ): <T>(config: RootState<Ctx, E, T>) => Machine<Ctx, E, TreePath<T>> {
   return ((config: MachineConfig<Ctx, E>) => define(key, config)) as never;
 }
+
+/**
+ * The key a `definePrivateMachine` config adds to the root, beside `initial` and `states`.
+ * @noSelf
+ */
+export interface PrivateCtxConfig<Ctx, Priv> {
+  /**
+   * Builds the fields only the machine uses. It runs once per `start`, before the root's `enter`
+   * hook, so every instance gets fresh fields of its own; a value written straight into the
+   * config would be one array or table shared by every instance. It takes no arguments: to set
+   * a private field from a field of `Ctx`, do it in the root's `enter` hook.
+   *
+   * The fields are added to the object passed to `start`, which stays the instance's `ctx`, so
+   * restarting with `start(old.ctx)` keeps the public fields and builds the private ones fresh.
+   * A hot reload under the machine's key adds the fields a new factory introduces and leaves
+   * every field that already holds a value alone. A private field may not share a name with a
+   * field of `Ctx`.
+   *
+   * The fields are hidden from callers by type only. At run time `ctx` is one table, and hooks,
+   * `hsm-view` and a debugger see every field.
+   */
+  readonly privateCtx: () => Priv & { readonly [K in keyof Ctx & keyof Priv]: never };
+}
+
+/**
+ * Like `defineMachine`, for a machine that keeps fields of its own, such as a counter, a heat
+ * level or a list it builds up. The config's `privateCtx` returns those fields. Every hook,
+ * `when`, `run`, `task` and `update` sees them beside `Ctx`, while `start` takes only `Ctx` and
+ * the instance it returns shows only `Ctx` in its `ctx`. A machine without fields of its own
+ * uses `defineMachine`.
+ *
+ * There are two ways to type the fields.
+ *
+ * @example
+ * **Inferred.** For a few fields, write them inline and let TypeScript infer their types. Add
+ * `as` where the inferred type is wrong: an empty array is `never[]` until it reads
+ * `[] as Hash[]`, and a field holding one of several strings is any `string` until it reads
+ * `"cool" as "cool" | "hot"`.
+ *
+ * ```ts
+ * type TurretEvent = { type: "SPOTTED" } | { type: "LOST" };
+ *
+ * export const turret = definePrivateMachine<{ readonly fireRate: number }, TurretEvent>("turret")({
+ *   privateCtx: () => ({ heat: 0, targets: [] as Hash[] }),
+ *   initial: "/idle",
+ *   states: {
+ *     idle: { on: { SPOTTED: "/firing" } },
+ *     firing: {
+ *       enter: (ctx) => {
+ *         ctx.heat += 1 / ctx.fireRate;
+ *       },
+ *       on: { LOST: "/idle" },
+ *     },
+ *   },
+ * });
+ *
+ * const gun = turret.start({ fireRate: 2 }); // gun.ctx shows fireRate only
+ * ```
+ *
+ * @example
+ * **A named type.** For more fields, or when a helper outside the config needs the whole
+ * context, declare the fields as an interface and make it the factory's return type. The fields
+ * need no `as`, a misspelled or unknown field is a compile error, and the whole context is
+ * `TurretOptions & TurretPrivate`. `satisfies TurretPrivate` does not do this: it checks the
+ * object but keeps its narrow types, so an empty array stays `never[]`.
+ *
+ * ```ts
+ * interface TurretOptions {
+ *   readonly fireRate: number;
+ * }
+ *
+ * interface TurretPrivate {
+ *   heat: number;
+ *   mode: "cool" | "hot";
+ * }
+ *
+ * type TurretEvent = { type: "SPOTTED" } | { type: "LOST" };
+ *
+ * const overheated = (ctx: TurretOptions & TurretPrivate) => ctx.heat > ctx.fireRate;
+ *
+ * export const turret = definePrivateMachine<TurretOptions, TurretEvent>("turret")({
+ *   privateCtx: (): TurretPrivate => ({ heat: 0, mode: "cool" }),
+ *   initial: "/idle",
+ *   states: {
+ *     idle: { on: { SPOTTED: "/firing" } },
+ *     firing: {
+ *       enter: (ctx) => {
+ *         ctx.heat += 1 / ctx.fireRate;
+ *       },
+ *       always: { to: "/cooling", when: overheated },
+ *       on: { LOST: "/idle" },
+ *     },
+ *     cooling: {
+ *       enter: (ctx) => {
+ *         ctx.mode = "hot";
+ *       },
+ *       exit: (ctx) => {
+ *         ctx.heat = 0;
+ *         ctx.mode = "cool";
+ *       },
+ *       after: { 2: "/idle" },
+ *     },
+ *   },
+ * });
+ * ```
+ */
+export const definePrivateMachine: <Ctx, E extends EventObject>(
+  key?: string,
+) => <T, Priv extends object>(
+  config: RootState<Ctx & Priv, E, T> & PrivateCtxConfig<Ctx, Priv>,
+) => Machine<Ctx, E, TreePath<T>> = defineMachine as never;
