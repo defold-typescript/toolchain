@@ -1213,7 +1213,6 @@ end
 function ____exports.defineMachine(key)
     return function(config) return define(key, config) end
 end
-____exports.definePrivateMachine = ____exports.defineMachine
 return ____exports
 "
 `;

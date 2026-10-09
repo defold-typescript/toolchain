@@ -287,7 +287,7 @@ export default defineScript({
 ```
 
 ```ts title="guard-private.ts"
-import { definePrivateMachine } from "@defold-typescript/types/hsm";
+import { defineMachine } from "@defold-typescript/types/hsm";
 
 interface GuardOptions {
   readonly sprite: Url;
@@ -305,7 +305,7 @@ const beaten = (
   ctx: GuardOptions & GuardPrivate,
 ) => ctx.hits >= ctx.health;
 
-export const privateGuard = definePrivateMachine<GuardOptions, HitEvent>("private-guard")({
+export const privateGuard = defineMachine<GuardOptions, HitEvent>("private-guard")({
   privateCtx: (): GuardPrivate => ({
     hits: 0,
     seen: [],
@@ -334,7 +334,7 @@ export const hits: number = guard.ctx.hits;
 ```
 
 ```ts title="door-private-machine.ts"
-import { definePrivateMachine } from "@defold-typescript/types/hsm";
+import { defineMachine } from "@defold-typescript/types/hsm";
 import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/defold";
 
 export interface DoorCtx {
@@ -344,7 +344,7 @@ export interface DoorCtx {
 export type DoorEvent = MessageEvent<"trigger_response"> | { type: "OPENED" } | { type: "CLOSE" };
 
 // the door from part 8
-export const doorMachine = definePrivateMachine<DoorCtx, DoorEvent>()({
+export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
   // the machine's own data, built fresh for every door
   privateCtx: () => ({ opens: 0 }),
   initial: "/closed",
