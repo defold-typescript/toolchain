@@ -2762,7 +2762,7 @@ A component's `props` is an untyped table. Upstream documents every builder as t
 
 It replaces the `if (self.state === ...)` branches that otherwise spread across `update` and `on_message`.
 
-This page covers the model first (states, transitions, timers and the order things run in), then how to use a machine from a script, its types, a worked migration, a [cheat sheet](#cheat-sheet) of snippets to copy, and a reference table. Every sample on it compiles against the declarations the import resolves to.
+This page covers the model first (states, transitions, timers and the order things run in), then how to use a machine from a script, its types, a [recipe for animation states](#animation-states-with-one-shots), a worked migration, a [cheat sheet](#cheat-sheet) of snippets to copy, and a reference table. Every sample on it compiles against the declarations the import resolves to.
 
 #### Import it
 
@@ -4043,6 +4043,182 @@ The frame number counts `draw` calls, so it tracks `update` when you draw every 
 In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect` registers nothing and `draw` does nothing, so the calls can stay in shipped code.
 
 `inspect` is built on `onMove(listener)`, which every instance has. The listener receives the old leaf path, the new one (`undefined` after `stop()`), the cause and the event (`undefined` unless the cause is `event`), after the move's `enter` hooks have run. It is not called for the first entry at `start` or for a transition with no `to`. Each call adds a listener and returns a function that removes it. Use it to feed your own tools.
+
+#### Animation states with one-shots
+
+A character has three kinds of animation. A looping one, such as idle or run, can be left at any time. A one-shot, such as a jump, must finish before the next animation starts. An in-between one, such as crouching down or standing up, plays on the way from one posture to the other and must not be skipped.
+
+Defold's [Finite State Machines](https://defold.com/examples/animation/animation_states/) example drives a knight this way with a flat table of legal transitions: when the requested animation is not next to the current one, a path search finds the route through the table. Here the tree does that job. The only rules that leave one posture lead to its in-between state, so that animation cannot be skipped:
+
+```ts title="knight-machine.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+export interface KnightCtx {
+  run: boolean;
+  crouch: boolean;
+  jump: boolean;
+}
+
+export type KnightEvent = { type: "INTENT" } | { type: "JUMP" } | { type: "DONE" };
+
+const DONE = { type: "DONE" } as const;
+
+const loop = (animation: string) => () => sprite.play_flipbook("#sprite", animation);
+
+const once =
+  (animation: string) => (_ctx: KnightCtx, finish: (event: KnightEvent) => void) => {
+    sprite.play_flipbook("#sprite", animation, () => finish(DONE));
+  };
+
+const wantJump = {
+  run: (ctx: KnightCtx) => {
+    ctx.jump = true;
+  },
+};
+
+const noJump = (ctx: KnightCtx) => {
+  ctx.jump = false;
+};
+
+export const knightMachine = defineMachine<KnightCtx, KnightEvent>()({
+  initial: "/standing",
+  states: {
+    standing: {
+      initial: "/standing/pick",
+      on: { JUMP: wantJump },
+      states: {
+        pick: {
+          always: [
+            { to: "/to_crouch", when: (ctx) => ctx.crouch },
+            { to: "/standing/jump", when: (ctx) => ctx.jump },
+            { to: "/standing/free/run", when: (ctx) => ctx.run },
+            { to: "/standing/free/idle" },
+          ],
+        },
+        free: {
+          initial: "/standing/free/idle",
+          on: { JUMP: "/standing/jump" },
+          states: {
+            idle: {
+              enter: loop("idle"),
+              on: {
+                INTENT: [
+                  { to: "/to_crouch", when: (ctx) => ctx.crouch },
+                  { to: "/standing/free/run", when: (ctx) => ctx.run },
+                ],
+              },
+            },
+            run: {
+              enter: loop("run"),
+              on: {
+                INTENT: [
+                  { to: "/to_crouch", when: (ctx) => ctx.crouch },
+                  { to: "/standing/free/idle", when: (ctx) => !ctx.run },
+                ],
+              },
+            },
+          },
+        },
+        jump: {
+          enter: noJump,
+          task: once("jump"),
+          on: { DONE: "/standing/pick" },
+        },
+      },
+    },
+    to_crouch: {
+      enter: noJump,
+      task: once("to_crouch"),
+      on: { DONE: "/crouching" },
+    },
+    crouching: {
+      initial: "/crouching/pick",
+      states: {
+        pick: {
+          always: [
+            { to: "/to_standing", when: (ctx) => !ctx.crouch },
+            { to: "/crouching/run", when: (ctx) => ctx.run },
+            { to: "/crouching/idle" },
+          ],
+        },
+        idle: {
+          enter: loop("crouch_idle"),
+          on: {
+            INTENT: [
+              { to: "/to_standing", when: (ctx) => !ctx.crouch },
+              { to: "/crouching/run", when: (ctx) => ctx.run },
+            ],
+          },
+        },
+        run: {
+          enter: loop("crouch_walk"),
+          on: {
+            INTENT: [
+              { to: "/to_standing", when: (ctx) => !ctx.crouch },
+              { to: "/crouching/idle", when: (ctx) => !ctx.run },
+            ],
+          },
+        },
+      },
+    },
+    to_standing: {
+      task: once("from_crouch"),
+      on: { DONE: "/standing", JUMP: wantJump },
+    },
+  },
+});
+```
+
+The script writes what the player wants into the context and the machine decides when to act on it:
+
+```ts title="knight.ts"
+import { defineScript } from "@defold-typescript/types";
+import { knightMachine } from "./knight-machine";
+
+const input_right = hash("right");
+const input_crouch = hash("crouch");
+const input_jump = hash("jump");
+
+const INTENT = { type: "INTENT" } as const;
+const JUMP = { type: "JUMP" } as const;
+
+export default defineScript({
+  init() {
+    msg.post(".", "acquire_input_focus");
+    return { knight: knightMachine.start({ run: false, crouch: false, jump: false }) };
+  },
+
+  on_input(self, action_id, action) {
+    const knight = self.knight;
+    if (action.pressed || action.released) {
+      if (action_id === input_right) {
+        knight.ctx.run = !action.released;
+      } else if (action_id === input_crouch) {
+        knight.ctx.crouch = !action.released;
+      }
+    }
+    knight.send(INTENT);
+    if (action_id === input_jump && action.pressed) {
+      knight.send(JUMP);
+    }
+  },
+
+  final(self) {
+    self.knight.stop();
+  },
+});
+```
+
+The rules:
+
+- **A looping state plays on `enter`.** It can be left at any time, so it needs no `task`.
+- **A one-shot is a [`task`](#engine-callbacks-task-and-finish).** `once` plays the flipbook and calls `finish` from its completion callback; the state has no `INTENT` rule, so a new request waits in the context. A callback that fires after the state was left is ignored. Set the flipbook's playback to Once Forward in the atlas: a looping flipbook never completes, so its callback never runs.
+- **An in-between state is the only way across.** No rule leads from a standing state to a crouching one, so `to_crouch` always plays, whatever was asked for.
+- **`pick` settles on the latest request.** Each one-shot ends in a `pick` state, whose [`always`](#move-on-at-once-with-always) rules read the context and choose, in order: the other posture, a waiting jump, run, idle.
+- **A trigger during a one-shot is kept.** `JUMP` on `standing` and on `to_standing` has a `run` and no `to`: it sets `ctx.jump` and the state stays. `free` takes `JUMP` first, so a jump from a looping state starts at once, and `crouching` has no `JUMP` rule, so the knight cannot jump while crouched. `jump` and `to_crouch` clear `ctx.jump` on `enter`, so a kept jump plays once and crouching down drops it.
+- **An unchanged request restarts nothing.** When no rule's `when` passes, the event is dropped and the flipbook keeps playing, so the script can send `INTENT` on every input.
+
+The example computes a route each time a request arrives. This machine writes each route down as a state, so a new posture adds its in-between state and the rules that lead to it.
 
 #### Migrate a script
 
