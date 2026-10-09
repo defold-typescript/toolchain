@@ -19,6 +19,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **`definePrivateMachine` is removed:** `defineMachine` takes the optional `privateCtx` key on its root config, so one function defines every `hsm` machine; see [Private fields with `privateCtx`](./state-machines.md#private-fields-with-privatectx). Rename each `definePrivateMachine` import and call to `defineMachine`; the config stays as written.
 
+### Improved
+
+- **`privateCtx` takes the starting context:** the factory receives the object passed to `start`, so a private field can start from a field of `Ctx`, as in `privateCtx: (ctx: TurretOptions) => ({ heat: ctx.startHeat })`; see [Private fields with `privateCtx`](./state-machines.md#private-fields-with-privatectx). Give `ctx` its type there; a factory with no parameter compiles unchanged.
+
 ## v0.47.0
 
 > Summary:
