@@ -33,7 +33,11 @@ interface RuntimeMachine {
 
 interface RuleConfig {
   readonly to?: string;
-  readonly when?: (ctx: unknown, event?: EventObject) => boolean;
+  readonly when?: (
+    ctx: unknown,
+    eventOrMachine?: EventObject | RuntimeInstance,
+    machine?: RuntimeInstance,
+  ) => boolean;
   readonly run?: RuleAction | readonly RuleAction[];
 }
 
@@ -277,8 +281,8 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
             }
             return {
               ...rule,
-              when: (ctx: unknown, event?: EventObject) => {
-                const accepted = when(ctx, event);
+              when: (ctx: unknown, event?: EventObject, machine?: RuntimeInstance) => {
+                const accepted = when(ctx, event, machine);
                 if (!accepted && id !== undefined) {
                   rejected.push(id);
                 }
@@ -309,8 +313,8 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
           const when = rule.when;
           return {
             ...rule,
-            when: (ctx: unknown) => {
-              const accepted = when === undefined || when(ctx);
+            when: (ctx: unknown, machine?: RuntimeInstance) => {
+              const accepted = when === undefined || when(ctx, machine);
               if (accepted && id !== undefined) {
                 fired.push(id);
               }

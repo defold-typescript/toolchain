@@ -228,8 +228,8 @@ function wrapRule(s: Session, rule: Rule, path: string, type: string, index: num
   const wrapped: Mutable<Rule> = { ...rule };
   const when = rule.when;
   if (when !== undefined) {
-    wrapped.when = (ctx, event) => {
-      const passed = when(ctx, event);
+    wrapped.when = (ctx, event, machine) => {
+      const passed = when(ctx, event, machine);
       if (!passed) emit(s, "when", `${describe(path)}: when "${note ?? "check"}" said no`);
       return passed;
     };

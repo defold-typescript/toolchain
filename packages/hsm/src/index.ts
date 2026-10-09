@@ -28,13 +28,12 @@ export type MoveListener<E extends EventObject, P extends string = string> = (
 ) => void;
 
 /**
- * One running machine, returned by `start`. `P` is the union of the machine's state paths; the
- * `machine` a hook, a `run` or a `task` receives uses plain `string` paths instead.
+ * What a `when` sees of the running machine: which states are active, and nothing that changes
+ * it. `P` is the union of the machine's state paths; the `machine` a `when` receives uses plain
+ * `string` paths instead.
  * @noSelf
  */
-export interface MachineInstance<Ctx, E extends EventObject, P extends string = string> {
-  /** The context passed to `start`. */
-  readonly ctx: Ctx;
+export interface MachineView<P extends string = string> {
   /**
    * The full path of the deepest active state, or `undefined` once stopped. In a parallel state
    * it is the first region's leaf.
@@ -47,6 +46,17 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
   readonly leaves: readonly P[];
   /** Whether the state at the full path `path` is active. Ancestors of the current state count. */
   readonly matches: (path: P) => boolean;
+}
+
+/**
+ * One running machine, returned by `start`. `P` is the union of the machine's state paths; the
+ * `machine` a hook, a `run` or a `task` receives uses plain `string` paths instead.
+ * @noSelf
+ */
+export interface MachineInstance<Ctx, E extends EventObject, P extends string = string>
+  extends MachineView<P> {
+  /** The context passed to `start`. */
+  readonly ctx: Ctx;
   /**
    * Handles `event`, or queues it when called during a step. An event no active state handles is
    * dropped, and once the machine is stopped the call does nothing.
@@ -110,8 +120,10 @@ export interface TransitionConfig<
   /**
    * The rule is taken only when this returns `true`. It must have no side effects: it is also
    * checked when the move does not happen, in guarded lists and on every `always` recheck.
+   * `machine` reads the active states; inside a parallel state it shows the regions that already
+   * took the event.
    */
-  readonly when?: (ctx: Ctx, event: V) => boolean;
+  readonly when?: (ctx: Ctx, event: V, machine: MachineView) => boolean;
   /**
    * Runs during the move. The event is accepted when its key matches and `when` passes; then
    * `exit` runs on each state left, deepest first; then `run`; then `enter` on each state
@@ -151,8 +163,11 @@ export interface AlwaysConfig<Ctx, To extends string = string> {
    * is defined.
    */
   readonly to: To;
-  /** Checked on every recheck, so it must have no side effects. */
-  readonly when?: (ctx: Ctx) => boolean;
+  /**
+   * Checked on every recheck, so it must have no side effects. `machine` reads the active
+   * states; inside a parallel state it shows the regions that already moved.
+   */
+  readonly when?: (ctx: Ctx, machine: MachineView) => boolean;
   /** Renamed to `to`. */
   readonly target?: never;
   /** Renamed to `when`. */
@@ -427,7 +442,7 @@ export type MachineConfig<Ctx, E extends EventObject> = CompoundState<
   readonly states: { readonly [name: string]: StateConfig<Ctx, E> };
 };
 
-type Guard<Ctx, E extends EventObject> = (ctx: Ctx, event: E) => boolean;
+type Guard<Ctx, E extends EventObject> = (ctx: Ctx, event: E, machine: MachineView) => boolean;
 
 interface Transition<Ctx, E extends EventObject> {
   readonly target: number;
@@ -1432,8 +1447,8 @@ function createMachine<Ctx, E extends EventObject>(
       const list = always[state] as Transition<Ctx, E>[];
       for (let i = 0; i < list.length; i++) {
         const candidate = list[i] as Transition<Ctx, E>;
-        const when = candidate.when as ((ctx: Ctx) => boolean) | undefined;
-        if (when === undefined || when(ctx)) {
+        const when = candidate.when as ((ctx: Ctx, machine: MachineView) => boolean) | undefined;
+        if (when === undefined || when(ctx, instance)) {
           if (overLimit) {
             clearQueue();
             busy = false;
@@ -1466,7 +1481,7 @@ function createMachine<Ctx, E extends EventObject>(
       const list = transitions[listIndex] as Transition<Ctx, E>[];
       for (let i = 0; i < list.length; i++) {
         const candidate = list[i] as Transition<Ctx, E>;
-        if (candidate.when === undefined || candidate.when(ctx, event)) {
+        if (candidate.when === undefined || candidate.when(ctx, event, instance)) {
           transition(state, candidate.target, candidate.run, event, "event");
           return true;
         }

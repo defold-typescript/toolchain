@@ -972,6 +972,58 @@ function afterDelayFromCtx(): string[] {
   return log;
 }
 
+function guardView(): string[] {
+  const log: string[] = [];
+  const m = defineMachine<Ctx, Ev>()({
+    initial: "/alive",
+    states: {
+      alive: {
+        type: "parallel",
+        states: {
+          move: {
+            initial: "/alive/move/idle",
+            states: {
+              idle: {
+                ...logged("idle"),
+                on: {
+                  GO: {
+                    to: "/alive/move/jump",
+                    when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing"),
+                  },
+                  PING: "/alive/move/jump",
+                },
+              },
+              jump: { ...logged("jump"), on: { BACK: "/alive/move/idle" } },
+            },
+          },
+          posture: {
+            initial: "/alive/posture/standing",
+            states: {
+              standing: { ...logged("standing"), on: { HIT: "/alive/posture/crouching" } },
+              crouching: {
+                ...logged("crouching"),
+                always: {
+                  to: "/alive/posture/standing",
+                  when: (_ctx, machine) => machine.matches("/alive/move/jump"),
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  }).start(newCtx(log));
+  log.push(`leaves=${shownLeaves(m.leaves)}`);
+  m.send({ type: "GO" });
+  m.send({ type: "BACK" });
+  m.send({ type: "HIT" });
+  m.send({ type: "GO" });
+  log.push(`leaves=${shownLeaves(m.leaves)}`);
+  m.send({ type: "PING" });
+  log.push(`leaves=${shownLeaves(m.leaves)}`);
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -992,6 +1044,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "unicode region order", run: () => unicodeRegionOrder() },
   { name: "private ctx", run: () => privateCtx() },
   { name: "after delay from ctx", run: () => afterDelayFromCtx() },
+  { name: "guard reads the machine", run: () => guardView() },
 ];
 
 export function runScenario(name: string): string {
