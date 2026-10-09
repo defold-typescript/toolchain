@@ -461,8 +461,8 @@ export function step(run: DemoRun, dt: number): void {
   } finally {
     s.updating = false;
   }
-  // The library adds dt to every active state's timer only when no update hook moved it.
-  if (s.updateMoved) return;
+  // The library adds dt to every active state's clock before the hooks run, hook move
+  // or not; a state entered during this update starts from zero.
   for (const path of before) {
     if (!s.entered.has(path)) s.clocks.set(path, (s.clocks.get(path) ?? 0) + dt);
   }
