@@ -31,16 +31,18 @@ export interface ScriptApiTarget {
   // SPDX-style license id, surfaced by the docs-site provenance block. Optional
   // in the config; defaults to "".
   license?: string;
-  // Interior slots upstream documents as omittable, emitted as a second overload.
+  // Slots upstream documents as omittable in prose only, emitted as a second overload.
   omittableSlots?: OmittableSlot[];
 }
 
 /**
- * An interior parameter upstream's prose says may be left out, with the later
- * arguments shifting left into its place. The `.script_api` format has no way to
- * say so (a trailing `optional: true` cannot express the shift), so the emitted
- * declaration carries one overload with the slot and one without. `element` is
- * the parsed element name; `evidence` quotes the upstream text that allows it.
+ * A parameter upstream's prose says may be left out while the `.script_api` does
+ * not mark it optional. An interior one has the later arguments shift left into
+ * its place, which the format has no way to say (a trailing `optional: true`
+ * cannot express the shift); a trailing one is simply left unmarked. Either way
+ * the emitted declaration carries one overload with the slot and one without.
+ * `element` is the parsed element name; `evidence` quotes the upstream text that
+ * allows it.
  */
 export interface OmittableSlot {
   element: string;
