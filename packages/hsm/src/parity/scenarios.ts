@@ -1369,6 +1369,68 @@ function unhandledHooks(): string[] {
   return log;
 }
 
+function stateTags(): string[] {
+  const log: string[] = [];
+  type Tag = "safe" | "spawned" | "none";
+  const define = (shielded: boolean) =>
+    defineMachine<Ctx, Ev, Tag>("parity tags")({
+      initial: "/alive",
+      tags: ["spawned"],
+      states: {
+        alive: {
+          type: "parallel",
+          on: {
+            HIT: { to: "/dead", when: (_ctx, _event, machine) => !machine.hasTag("safe") },
+          },
+          states: {
+            body: {
+              initial: "/alive/body/walk",
+              states: {
+                walk: { on: { GO: "/alive/body/roll" } },
+                roll: {
+                  tags: ["safe"],
+                  initial: "/alive/body/roll/start",
+                  states: { start: {} },
+                  on: { BACK: "/alive/body/walk" },
+                },
+              },
+            },
+            shield: {
+              initial: "/alive/shield/down",
+              states: {
+                down: { on: { UP: "/alive/shield/up" } },
+                up: { tags: shielded ? ["safe"] : [] },
+              },
+            },
+          },
+        },
+        dead: {},
+      },
+    });
+  const m = define(true).start(newCtx(log));
+  const show = (label: string) => {
+    log.push(`${label} safe=${m.hasTag("safe")} spawned=${m.hasTag("spawned")}`);
+  };
+  show("start");
+  m.send({ type: "GO" });
+  show("GO");
+  m.send({ type: "UP" });
+  m.send({ type: "BACK" });
+  show("BACK");
+  m.send({ type: "HIT" });
+  log.push(`path=${shown(m.path)}`);
+  define(false);
+  show("pending");
+  m.update(0);
+  show("reload");
+  log.push(`none=${m.hasTag("none")}`);
+  m.send({ type: "HIT" });
+  log.push(`path=${shown(m.path)}`);
+  m.stop();
+  show("stop");
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -1397,6 +1459,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "every timers", run: () => everyTimers() },
   { name: "wait group", run: () => waitGroups() },
   { name: "unhandled hooks run before the listener", run: () => unhandledHooks() },
+  { name: "tags follow the active states", run: () => stateTags() },
 ];
 
 export function runScenario(name: string): string {
