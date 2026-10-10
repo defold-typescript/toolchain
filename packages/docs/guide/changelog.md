@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** must add `can` and `onUnhandled`.
-> - **[State machines](./state-machines.md)** gain [rules on timers](./state-machines.md#rules-on-a-timer), `can`, `onUnhandled`, a `when` that reads the machine and an [animation recipe](./state-machines.md#animation-states-with-one-shots).
+> - **[State machines](./state-machines.md)** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), take [rules on timers](./state-machines.md#rules-on-a-timer) and gain `can`, `onUnhandled` and an [animation recipe](./state-machines.md#animation-states-with-one-shots).
 > - **A [hot reload](./state-machines.md#what-each-instance-keeps)** keeps each timer's fired mark.
 
 ### Breaking
@@ -23,7 +23,8 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **[State machines](./state-machines.md) take rules on timers and answer more about a running machine, and the guide gains a recipe:**
+- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers and answer more about a running machine, and the guide gains a recipe:**
+  - **`every`** — a state runs code each time a delay passes while it is active, such as damage every half second or a rate of fire read from the context; a long frame runs it once, and a run is not a move; see [Repeat while a state is active](./state-machines.md#repeat-while-a-state-is-active).
   - **Rules on timers and `always`** — an `after` timer takes `to`, `when` and `run`, so a state can run code at a set time without leaving and a timer can wait for a condition once its delay has passed, and an `always` rule takes `run`; see [Rules on a timer](./state-machines.md#rules-on-a-timer).
   - **A `when` reads the machine** — a rule's `when` receives the running machine as its last argument, read-only, so a rule can depend on the active states, as in `when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing")`; see [Read another region in a `when`](./state-machines.md#read-another-region-in-a-when).
   - **`can(event)`** — returns whether a rule of an active state would take the event, without moving the machine or running a hook; see [Ask whether an event would be taken](./state-machines.md#ask-whether-an-event-would-be-taken).
