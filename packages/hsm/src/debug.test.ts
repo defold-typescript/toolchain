@@ -154,6 +154,35 @@ describe("inspect", () => {
     ]);
   });
 
+  test("an unhandled event named after an Object member gets one line until the next move", () => {
+    type OddEv = { type: "__proto__" } | { type: "GO" };
+    const odd = defineMachine<object, OddEv>()({
+      initial: "/a",
+      states: { a: { on: { GO: "/b" } }, b: {} },
+    }).start({});
+    // A machine that declares this event rejects every `on` map with no rule for it: TypeScript
+    // reads the `constructor` member each object has as that rule.
+    const constructorEvent = { type: "constructor" } as unknown as OddEv;
+    inspect(odd, "odd");
+    odd.send({ type: "__proto__" });
+    odd.send({ type: "__proto__" });
+    odd.send(constructorEvent);
+    odd.send(constructorEvent);
+    odd.send({ type: "GO" });
+    odd.send({ type: "__proto__" });
+    odd.send({ type: "__proto__" });
+    odd.send(constructorEvent);
+    odd.send(constructorEvent);
+    expect(printed).toEqual([
+      "hsm odd frame 0: inspecting [/a]",
+      "hsm odd frame 0: unhandled (__proto__) [/a]",
+      "hsm odd frame 0: unhandled (constructor) [/a]",
+      "hsm odd frame 0: /a -> /b (GO) [/b]",
+      "hsm odd frame 0: unhandled (__proto__) [/b]",
+      "hsm odd frame 0: unhandled (constructor) [/b]",
+    ]);
+  });
+
   test("a region move of a parallel machine lists every active leaf", () => {
     const hero = defineMachine<object, { type: "WALK" }>()({
       initial: "/alive",
@@ -220,6 +249,19 @@ describe("inspect", () => {
     expect(registry.current().instances.map((instance) => instance.label)).toEqual(
       printed.map(labelOf),
     );
+  });
+
+  test("a repeated label named after an Object member gets the next ordinal", () => {
+    for (const label of ["__proto__", "__proto__", "__proto__", "constructor", "constructor"]) {
+      inspect(startDoor(), label);
+    }
+    expect(printed).toEqual([
+      "hsm __proto__ frame 0: inspecting [/closed]",
+      "hsm __proto__#2 frame 0: inspecting [/closed]",
+      "hsm __proto__#3 frame 0: inspecting [/closed]",
+      "hsm constructor frame 0: inspecting [/closed]",
+      "hsm constructor#2 frame 0: inspecting [/closed]",
+    ]);
   });
 
   test("every printed line reads back the label, leaves and move whatever the names hold", () => {
