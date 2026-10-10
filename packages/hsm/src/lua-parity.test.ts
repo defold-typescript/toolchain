@@ -505,6 +505,17 @@ const EXPECTED: Record<string, string[]> = {
     "y",
     'error: hsm: state "/a" has an every delay "0" that is not a positive number',
   ],
+  "wait group": [
+    "empty done",
+    "a reported",
+    "first",
+    "second",
+    "b reported",
+    "late",
+    "path=/loading",
+    "enter ready",
+    "path=/ready",
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
