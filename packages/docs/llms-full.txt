@@ -2909,7 +2909,7 @@ m.send({ type: "FALL" }); // exits /alive/chase and /alive, enters /dead
 
 A `to` below the state the rule is on keeps that state active and re-enters only below it: from `/alive`, a `to` of `/alive/patrol` exits the current child and enters `patrol`, while `alive` stays. A `to` naming the state the rule is on exits and re-enters it, which restarts its `after` timers and its `task`, as `SEE_PLAYER` in `chase` does above; the same holds for an `after` timer, an `always` entry or an `update` hook that names its own state, so `after: { 1: "/blink" }` on `blink` repeats every second. To restart only a state's children, name the child to start in: `/alive/patrol` from `/alive`. A rule that should run code and leave every state alone has no `to`. Targeting an ancestor of the source exits and re-enters that ancestor.
 
-`when` and `run` both receive `(ctx, event, machine)`, where `event` is narrowed to the variant the `on` key names: the `HIT` `when` reads `event.damage` with no cast. The `machine` a `when` receives is a read-only view of the running machine, with `path`, `leaves` and `matches` and nothing that changes it; see [Read another region in a `when`](#read-another-region-in-a-when). `run` is one function or a list run in order. Keep `when` free of side effects: it is also called when the move does not happen, for each candidate in a list and on every `always` recheck.
+`when` and `run` both receive `(ctx, event, machine)`, where `event` is narrowed to the variant the `on` key names: the `HIT` `when` reads `event.damage` with no cast. The `machine` a `when` receives is a read-only view of the running machine, with `path`, `leaves`, `matches` and `hasTag` and nothing that changes it; see [Read another region in a `when`](#read-another-region-in-a-when). `run` is one function or a list run in order. Keep `when` free of side effects: it is also called when the move does not happen, for each candidate in a list and on every `always` recheck.
 
 ##### React to an unhandled event
 
@@ -3373,8 +3373,86 @@ m.leaves; // ["/alive/move/idle", "/alive/posture/crouching"]
 
 The rules:
 
-- **The view is read-only.** `machine` has `path`, `leaves` and `matches`. It has no `send`, `stop` or `ctx`: the context is the first argument of the `when`.
+- **The view is read-only.** `machine` has `path`, `leaves`, `matches` and `hasTag`. It has no `send`, `stop` or `ctx`: the context is the first argument of the `when`.
 - **A `when` sees the regions that already moved.** Regions take an event in name order, so a `when` in `posture` sees where `move` went for that event, and a `when` in `move` sees `posture` as it was.
+
+A `when` that asks about a group of states, in one region or across several, reads a tag; see [Name a group of states with tags](#name-a-group-of-states-with-tags).
+
+#### Name a group of states with tags
+
+A state has one parent, so a group of states that crosses branches of the tree has no path of its own. A tag names such a group. Every state in which this knight takes no damage carries `invulnerable`:
+
+```ts title="knight-tags.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+interface KnightCtx {
+  health: number;
+}
+
+type KnightEvent =
+  | { type: "ROLL" }
+  | { type: "LAND" }
+  | { type: "RAISE" }
+  | { type: "LOWER" }
+  | { type: "HIT"; damage: number };
+
+type KnightTag = "invulnerable";
+
+export const knight = defineMachine<KnightCtx, KnightEvent, KnightTag>()({
+  initial: "/alive",
+  states: {
+    alive: {
+      type: "parallel",
+      on: {
+        HIT: {
+          when: (_ctx, _event, machine) => !machine.hasTag("invulnerable"),
+          run: (ctx, event) => {
+            ctx.health -= event.damage;
+          },
+        },
+      },
+      states: {
+        body: {
+          initial: "/alive/body/walk",
+          states: {
+            walk: { on: { ROLL: "/alive/body/roll" } },
+            roll: {
+              tags: ["invulnerable"],
+              initial: "/alive/body/roll/start",
+              states: { start: {} },
+              on: { LAND: "/alive/body/walk" },
+            },
+          },
+        },
+        shield: {
+          initial: "/alive/shield/down",
+          states: {
+            down: { on: { RAISE: "/alive/shield/up" } },
+            up: { tags: ["invulnerable"], on: { LOWER: "/alive/shield/down" } },
+          },
+        },
+      },
+    },
+  },
+});
+
+const m = knight.start({ health: 3 });
+m.send({ type: "ROLL" });
+m.send({ type: "RAISE" });
+m.send({ type: "LAND" });
+m.hasTag("invulnerable"); // true: the shield is still up
+m.send({ type: "HIT", damage: 1 }); // dropped
+```
+
+A hit lands only while neither the roll nor the raised shield is active.
+
+The rules:
+
+- **A tag holds while any state that carries it is active.** A parent's tag holds while any of its children is active, and a tag in any region of a parallel state counts. Landing from a roll with the shield up leaves the knight invulnerable, which a flag set in `enter` and cleared in `exit` gets wrong.
+- **Tag names are the third type argument of `defineMachine`.** A `tags` entry and a `hasTag` argument accept only those names: in the config, on the instance, and on the `machine` a hook, `run`, `task`, `update` or `when` receives. Without the third argument neither compiles.
+- **`hasTag` only reads.** It answers `false` for a name no state carries and once the machine is stopped. It builds no table, so an `update` hook can call it every frame.
+- **Tags are part of the definition.** Every instance has them, and a hot reload replaces them.
+- **A tag names a group and nothing else.** It carries no rule, hook or timer: behavior the states share goes on a parent state. One branch of the tree is asked with `matches`.
 
 #### Run to completion, `task` and `stop`
 
@@ -4020,7 +4098,9 @@ m.send({ type: "LOSE" }); // a new table on every call
 
 **Events are `EventObject`s.** `E` is a union of objects that each have a string `type`, plus any payload fields. `on` accepts only those `type` values as keys, and each `when` and `run` sees the variant its key names.
 
-**`start` returns a `MachineInstance<Ctx, E, P>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, `when` and `run` are typed before the paths are known, so the `machine` they receive uses plain `string` for `path` and `matches()`: a hook, a `run` and a `task` receive a `MachineInstance<Ctx, E>`, and a `when` receives a `MachineView`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`. The context, event and path types come from the machine the same way; see [Read types off the machine](#read-types-off-the-machine).
+**Tags are the third type argument.** `defineMachine<Ctx, E, Tag>()` takes a union of tag names, such as `"invulnerable" | "busy"`, and a state's `tags` and every `hasTag` call accept only those. A machine defined with two type arguments has no tags: a `tags` entry and a `hasTag` call both fail to compile. See [Name a group of states with tags](#name-a-group-of-states-with-tags).
+
+**`start` returns a `MachineInstance<Ctx, E, P, Tag>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, `when` and `run` are typed before the paths are known, so the `machine` they receive uses plain `string` for `path` and `matches()`: a hook, a `run` and a `task` receive a `MachineInstance<Ctx, E, string, Tag>`, and a `when` receives a `MachineView<string, Tag>`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`. The context, event and path types come from the machine the same way; see [Read types off the machine](#read-types-off-the-machine).
 
 **`StatePath<C>` lists a config's paths,** each with its leading `/`. Paths are spelled out four levels deep; below that, any string under a fourth-level path is accepted.
 
@@ -4615,7 +4695,7 @@ Two rules carry over to any migration:
 
 #### Cheat sheet
 
-Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies. The two snippets on private fields come from a second guard, one that counts its hits itself, and the snippets on timer rules and on `every` from a third, one that shouts and scans while on alert.
+Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies. The two snippets on private fields come from a second guard, one that counts its hits itself, the snippets on timer rules and on `every` from a third, one that shouts and scans while on alert, and the snippet on tags from a fourth, one that answers the radio only while alert.
 
 ##### Configure a state
 
@@ -4658,6 +4738,22 @@ on: {
       ctx.health <= event.damage,
   },
 }
+```
+
+</td></tr>
+<tr><td>
+
+Ask whether any of several states is active
+
+</td><td>
+
+`tags` on those states and `hasTag` in a `when`; see [Name a group of states with tags](#name-a-group-of-states-with-tags)
+
+</td><td>
+
+```ts excerpt
+when: (_ctx, _event, machine) =>
+  machine.hasTag("alert"),
 ```
 
 </td></tr>
@@ -5258,6 +5354,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `initial` | `string`                                    | The full path of the child entered with this state (`/on/bright` inside `on`). Required when `states` is set, unless the state is parallel. |
 | `restoreDepth` | `number \| "all"`                       | Enter the children that were active when this state was last left, this many levels down, instead of `initial`; see [Resume with history](#resume-with-history). |
 | `states`  | `{ [name: string]: StateConfig }`           | Child states, by name. A name is non-empty and contains no `/`.                               |
+| `tags`    | `readonly Tag[]`                            | Names that hold while the state is active, read with `hasTag`; see [Name a group of states with tags](#name-a-group-of-states-with-tags). |
 | `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`, each target a full path; see [Events and transitions](#events-and-transitions). |
 | `after`   | `{ [seconds: number]: target \| rule } \| { delay, to, when, run }[]` | Full-path targets taken after this long in the state, in game time, or rules with a `to`, a `when` and a `run`; see [Rules on a timer](#rules-on-a-timer). In the list form `delay` is a number or `(ctx) => number`, read once per entry of the state; see [`update` and `after`](#update-and-after). |
 | `every`   | `{ [seconds: number]: run \| run[] } \| { delay, run }[]` | Code run each time this many seconds pass on the state's clock while the state is active, without a move; see [Repeat while a state is active](#repeat-while-a-state-is-active). |
@@ -5285,6 +5382,7 @@ The optional key the root config takes; see [Private fields with `privateCtx`](#
 | `path`    | `P \| undefined`        | The deepest active state's full path (the first region's leaf in a parallel state), or `undefined` once stopped. |
 | `leaves`  | `readonly P[]`          | Every active leaf's full path, in region order; one path without parallel states, empty once stopped. The same array, updated in place. |
 | `matches` | `(path: P) => boolean`  | Whether the state at the full path `path` is active, ancestors included.           |
+| `hasTag`  | `(tag: Tag) => boolean` | Whether an active state carries `tag`, parents and every region included.          |
 | `can`     | `(event: E) => boolean` | Whether a rule of an active state would take `event` if it were sent at that moment. Moves nothing and runs no hook. |
 | `send`    | `(event: E) => void`    | Handles `event`, or queues it when called during a step.                           |
 | `update`  | `(dt: number) => void`  | Runs the `update` hooks, then, in every region no hook moved, each state's `every` entries and its `after` timers. |

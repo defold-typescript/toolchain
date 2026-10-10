@@ -236,6 +236,35 @@ describe("createSession", () => {
     expect(pinged.leaves).toEqual(["/alive/move/jump", "/alive/posture/standing"]);
   });
 
+  test("hands a guard hasTag", () => {
+    const view = session(
+      machine(`{
+  initial: "/alive",
+  states: {
+    alive: {
+      initial: "/alive/walk",
+      on: {
+        HIT: [{ to: "/hurt", when: (_ctx, _event, machine) => !machine.hasTag("invulnerable") }],
+      },
+      states: {
+        walk: { on: { ROLL: "/alive/roll" } },
+        roll: { tags: ["invulnerable"], on: { LAND: "/alive/walk" } },
+      },
+    },
+    hurt: {},
+  },
+}`),
+    );
+    view.start({});
+    view.send({ type: "ROLL" });
+    const dropped = view.send({ type: "HIT" });
+    expect(dropped.rejected).toEqual([ruleId("/alive", "on", "HIT", 0)]);
+    expect(dropped.leaves).toEqual(["/alive/roll"]);
+    expect(kinds(dropped)).not.toContain("error");
+    view.send({ type: "LAND" });
+    expect(view.send({ type: "HIT" }).leaves).toEqual(["/hurt"]);
+  });
+
   test("reports after, update and pass-through always rules at the advanced time", () => {
     const timers = session(
       machine(`{

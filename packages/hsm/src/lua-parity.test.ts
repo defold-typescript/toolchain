@@ -530,6 +530,17 @@ const EXPECTED: Record<string, string[]> = {
     "listener NOPE at /dead",
     "path=(stopped)",
   ],
+  "tags follow the active states": [
+    "start safe=false spawned=true",
+    "GO safe=true spawned=true",
+    "BACK safe=true spawned=true",
+    "path=/alive/body/walk",
+    "pending safe=true spawned=true",
+    "reload safe=false spawned=true",
+    "none=false",
+    "path=/dead",
+    "stop safe=false spawned=false",
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");

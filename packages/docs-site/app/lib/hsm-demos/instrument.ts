@@ -48,9 +48,10 @@ export interface TraceFire {
 export type TraceEntry = TraceLine | TraceFire;
 export type Trace = (entry: TraceEntry) => void;
 
-type Instance = MachineInstance<DemoCtx, EventObject>;
-type State = StateConfig<DemoCtx, EventObject>;
-type Rule = TransitionConfig<DemoCtx, EventObject>;
+type Instance = MachineInstance<DemoCtx, EventObject, string, string>;
+type State = StateConfig<DemoCtx, EventObject, string>;
+type Rule = TransitionConfig<DemoCtx, EventObject, EventObject, string, string>;
+type Action = MoveAction<DemoCtx, EventObject, EventObject, string>;
 type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 
 export function ruleChip(path: string, type: string, index: number): string {
@@ -176,6 +177,7 @@ function proxyOf(s: Session, m: Instance): Instance {
       return m.leaves;
     },
     matches: (path) => m.matches(path),
+    hasTag: (tag) => m.hasTag(tag),
     can: (event) => m.can(event),
     send: (event) => {
       if (s.depth === 0) {
@@ -225,7 +227,7 @@ function wrapRule(s: Session, rule: Rule, path: string, type: string, index: num
   const chip = ruleChip(path, type, index);
   const note = s.demo.notes?.[chip];
   const declared = rule.run;
-  const run: readonly MoveAction<DemoCtx, EventObject>[] =
+  const run: readonly Action[] =
     declared === undefined ? [] : typeof declared === "function" ? [declared] : declared;
   const wrapped: Mutable<Rule> = { ...rule };
   const when = rule.when;
@@ -246,7 +248,7 @@ function wrapRule(s: Session, rule: Rule, path: string, type: string, index: num
       if (run.length > 0) emit(s, "action", `run: ${note ?? "run code"}`);
     },
     ...run.map(
-      (action): MoveAction<DemoCtx, EventObject> =>
+      (action): Action =>
         (ctx, event, m) =>
           action(ctx, event, proxyOf(s, m)),
     ),
@@ -389,9 +391,9 @@ function sendFromOutside(s: Session, event: EventObject): void {
 }
 
 // The demo configs are typed per spec; at this point every demo is the erased `Demo`.
-const define = defineMachine<DemoCtx, EventObject>() as unknown as (
-  config: MachineConfig<DemoCtx, EventObject>,
-) => Machine<DemoCtx, EventObject>;
+const define = defineMachine<DemoCtx, EventObject, string>() as unknown as (
+  config: MachineConfig<DemoCtx, EventObject, string>,
+) => Machine<DemoCtx, EventObject, string, string>;
 
 export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCtx>): DemoRun {
   const s: Session = {
@@ -415,7 +417,9 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     dueTimer: undefined,
     timerNoted: false,
   };
-  const machine = define(wrapState(s, demo.config, "") as MachineConfig<DemoCtx, EventObject>);
+  const machine = define(
+    wrapState(s, demo.config, "") as MachineConfig<DemoCtx, EventObject, string>,
+  );
   if (ctxOverride !== undefined) emit(s, "note", `start(${JSON.stringify(ctxOverride)})`);
   s.starting = true;
   fromOutside(s, undefined, () => {
