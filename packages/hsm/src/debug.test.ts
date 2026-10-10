@@ -62,6 +62,33 @@ function startDoor() {
   }).start({});
 }
 
+type BossEv = { type: "HIT (crit), now" } | { type: "MISS (x), now: [y] -> z\n" };
+
+function startBoss() {
+  return defineMachine<object, BossEv>()({
+    initial: "/boss",
+    states: {
+      boss: {
+        type: "parallel",
+        states: {
+          one: {
+            initial: "/boss/one/left, right",
+            states: {
+              "left, right": { on: { "HIT (crit), now": "/boss/one/a]b" } },
+              "a]b": {},
+            },
+          },
+          two: { initial: "/boss/two/x -> y", states: { "x -> y": {} } },
+          three: { initial: "/boss/three/(p)", states: { "(p)": {} } },
+          four: { initial: "/boss/four/q frame 1: r", states: { "q frame 1: r": {} } },
+          five: { initial: "/boss/five/back\\slash", states: { "back\\slash": {} } },
+          six: { initial: "/boss/six/line\nbreak", states: { "line\nbreak": {} } },
+        },
+      },
+    },
+  }).start({});
+}
+
 describe("inspect", () => {
   test("logs the start state at the call, then each transition with its frame, event and leaves", () => {
     const door = startDoor();
@@ -86,6 +113,44 @@ describe("inspect", () => {
       "hsm gate frame 0: /closed -> /open (OPEN) [/open]",
       "hsm gate frame 2: /open -> /closed (after) [/closed]",
       "hsm gate frame 2: /closed -> (stopped) (stop) []",
+    ]);
+  });
+
+  test("logs an unhandled event with its frame and leaves, once per type until the next move", () => {
+    const door = startDoor();
+    const inspector = inspect(door, "latch");
+    door.send({ type: "CLOSE" });
+    door.send({ type: "CLOSE" });
+    inspector.draw("/latch");
+    door.send({ type: "OPEN" });
+    door.send({ type: "OPEN" });
+    door.send({ type: "OPEN" });
+    door.send({ type: "CLOSE" });
+    door.send({ type: "CLOSE" });
+    expect(printed).toEqual([
+      "hsm latch frame 0: inspecting [/closed]",
+      "hsm latch frame 0: unhandled (CLOSE) [/closed]",
+      "hsm latch frame 1: /closed -> /open (OPEN) [/open]",
+      "hsm latch frame 1: unhandled (OPEN) [/open]",
+      "hsm latch frame 1: /open -> /closed (CLOSE) [/closed]",
+      "hsm latch frame 1: unhandled (CLOSE) [/closed]",
+    ]);
+  });
+
+  test("each unhandled event type gets its own line", () => {
+    const still = defineMachine<object, { type: "A" } | { type: "B" }>()({
+      initial: "/still",
+      states: { still: {} },
+    }).start({});
+    inspect(still, "still");
+    still.send({ type: "A" });
+    still.send({ type: "B" });
+    still.send({ type: "A" });
+    still.send({ type: "B" });
+    expect(printed).toEqual([
+      "hsm still frame 0: inspecting [/still]",
+      "hsm still frame 0: unhandled (A) [/still]",
+      "hsm still frame 0: unhandled (B) [/still]",
     ]);
   });
 
@@ -158,28 +223,7 @@ describe("inspect", () => {
   });
 
   test("every printed line reads back the label, leaves and move whatever the names hold", () => {
-    const boss = defineMachine<object, { type: "HIT (crit), now" }>()({
-      initial: "/boss",
-      states: {
-        boss: {
-          type: "parallel",
-          states: {
-            one: {
-              initial: "/boss/one/left, right",
-              states: {
-                "left, right": { on: { "HIT (crit), now": "/boss/one/a]b" } },
-                "a]b": {},
-              },
-            },
-            two: { initial: "/boss/two/x -> y", states: { "x -> y": {} } },
-            three: { initial: "/boss/three/(p)", states: { "(p)": {} } },
-            four: { initial: "/boss/four/q frame 1: r", states: { "q frame 1: r": {} } },
-            five: { initial: "/boss/five/back\\slash", states: { "back\\slash": {} } },
-            six: { initial: "/boss/six/line\nbreak", states: { "line\nbreak": {} } },
-          },
-        },
-      },
-    }).start({});
+    const boss = startBoss();
     const label = "boss frame 2: [x]";
     const leaves = [[...boss.leaves]];
     const moves: { from: string; to: string | undefined; reason: string }[] = [];
@@ -199,6 +243,27 @@ describe("inspect", () => {
     );
     expect(parsed[2]?.move?.to).toBeUndefined();
     expect(parsed[2]?.leaves).toEqual([]);
+  });
+
+  test("an unhandled line reads back as the label and leaves with no move, whatever the type holds", () => {
+    const boss = startBoss();
+    const label = "boss frame 3: [y]";
+    const leaves = [...boss.leaves];
+    inspect(boss, label);
+    boss.send({ type: "MISS (x), now: [y] -> z\n" });
+
+    expect(printed).toHaveLength(2);
+    const line = printed[1] as string;
+    expect(line).not.toContain("\n");
+    expect(parseInspectLine(line)).toStrictEqual({ label, leaves });
+
+    const registry = createLiveRegistry();
+    registry.feed(printed[0] as string);
+    expect(registry.feed(line)).toBeUndefined();
+
+    const fresh = createLiveRegistry();
+    fresh.feed(line);
+    expect(fresh.current()).toEqual({ instances: [{ label, leaves, stopped: false }] });
   });
 
   test("line breaks in every field keep each printed line one console line that reads back", async () => {
@@ -303,6 +368,7 @@ describe("inspect", () => {
     isDebug = false;
     const door = startDoor();
     const inspector = inspect(door, "vault");
+    door.send({ type: "CLOSE" });
     door.send({ type: "OPEN" });
     inspector.draw("/vault");
     expect(printed).toEqual([]);
