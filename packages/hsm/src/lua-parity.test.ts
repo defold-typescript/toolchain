@@ -516,6 +516,20 @@ const EXPECTED: Record<string, string[]> = {
     "enter ready",
     "path=/ready",
   ],
+  "unhandled hooks run before the listener": [
+    "idle NOPE",
+    "ready NOPE",
+    "alive NOPE",
+    "root NOPE",
+    "listener NOPE at /alive/move/idle",
+    "took GO",
+    "path=/dead",
+    "root NOPE",
+    "listener NOPE at /dead",
+    "reloaded NOPE",
+    "listener NOPE at /dead",
+    "path=(stopped)",
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");

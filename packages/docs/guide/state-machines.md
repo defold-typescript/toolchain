@@ -139,7 +139,7 @@ m.send({ type: "HIT", damage: 1 }); // handled by /alive: health 2, still /alive
 m.send({ type: "FALL" }); // exits /alive/chase and /alive, enters /dead
 ```
 
-**Which transition runs.** An event starts at the deepest active state. If that state has no `on` entry for the event's `type`, or every `when` in its entry fails, the event moves up to the parent, and so on to the root. The first transition with no `when`, or whose `when` returns `true`, runs, and the event goes no further. An event that no active state handles is unhandled: the machine drops it, and an [`onUnhandled` listener](#listen-for-unhandled-events) can report it. Above, `HIT` sent in `/alive/chase` finds nothing on `chase` and reaches `alive`, where the first entry moves to `/dead` if the hit is fatal and the second takes the damage otherwise.
+**Which transition runs.** An event starts at the deepest active state. If that state has no `on` entry for the event's `type`, or every `when` in its entry fails, the event moves up to the parent, and so on to the root. The first transition with no `when`, or whose `when` returns `true`, runs, and the event goes no further. An event that no active state handles is unhandled: the machine drops it, a state's [`unhandled` hook](#react-to-an-unhandled-event) can react to it, and an [`onUnhandled` listener](#listen-for-unhandled-events) can report it. Above, `HIT` sent in `/alive/chase` finds nothing on `chase` and reaches `alive`, where the first entry moves to `/dead` if the hit is fatal and the second takes the damage otherwise.
 
 **Transitions with no `to`.** A transition with no `to` runs its `run` and nothing else: no state exits or enters. The damage branch of `HIT` is one.
 
@@ -155,6 +155,70 @@ m.send({ type: "FALL" }); // exits /alive/chase and /alive, enters /dead
 A `to` below the state the rule is on keeps that state active and re-enters only below it: from `/alive`, a `to` of `/alive/patrol` exits the current child and enters `patrol`, while `alive` stays. A `to` naming the state the rule is on exits and re-enters it, which restarts its `after` timers and its `task`, as `SEE_PLAYER` in `chase` does above; the same holds for an `after` timer, an `always` entry or an `update` hook that names its own state, so `after: { 1: "/blink" }` on `blink` repeats every second. To restart only a state's children, name the child to start in: `/alive/patrol` from `/alive`. A rule that should run code and leave every state alone has no `to`. Targeting an ancestor of the source exits and re-enters that ancestor.
 
 `when` and `run` both receive `(ctx, event, machine)`, where `event` is narrowed to the variant the `on` key names: the `HIT` `when` reads `event.damage` with no cast. The `machine` a `when` receives is a read-only view of the running machine, with `path`, `leaves` and `matches` and nothing that changes it; see [Read another region in a `when`](#read-another-region-in-a-when). `run` is one function or a list run in order. Keep `when` free of side effects: it is also called when the move does not happen, for each candidate in a list and on every `always` recheck.
+
+### React to an unhandled event
+
+A reaction that is part of the machine's behavior, such as answering the sender of a message the machine did not take, goes on a state as `unhandled`:
+
+```ts title="busy-lift.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+import type { MessageEvent } from "@defold-typescript/types/hsm/defold";
+
+declare global {
+  interface CustomMessages {
+    board_lift: { floor: number };
+    lift_busy: { floor: number };
+  }
+}
+
+interface LiftCtx {
+  floor: number;
+  refused: number;
+}
+
+type LiftEvent = MessageEvent<"board_lift"> | { type: "RESET" };
+
+export const busyLift = defineMachine<LiftCtx, LiftEvent>()({
+  initial: "/waiting",
+  on: { RESET: "/waiting" },
+  // in every state: tell the caller where the lift is going
+  unhandled: (ctx, event) => {
+    if (event.type === "board_lift") {
+      msg.post(event.sender, "lift_busy", { floor: ctx.floor });
+    }
+  },
+  states: {
+    waiting: {
+      on: {
+        board_lift: {
+          to: "/moving",
+          run: (ctx, event) => {
+            ctx.floor = event.floor;
+          },
+        },
+      },
+    },
+    moving: {
+      // in this state only: count the calls it did not take
+      unhandled: (ctx) => {
+        ctx.refused += 1;
+      },
+      after: { 2: "/waiting" },
+    },
+  },
+});
+```
+
+In `/moving` a `board_lift` message finds no rule, so `moving` counts it and then the root answers the caller.
+
+The rules:
+
+- **It runs for the events an [`onUnhandled` listener](#listen-for-unhandled-events) hears, and no others.** An event a parent state takes runs no hook, on any state.
+- **Every active state that has the hook runs it, deepest first.** The regions of a parallel state run in name order and the parallel state after them, which is the order `update` hooks run in. The `onUnhandled` listeners run after the hooks.
+- **`event` is the machine's whole event union.** A hook checks `event.type` before it reads a payload field. `machine` is the instance a `run` receives.
+- **The hook moves nothing.** It returns nothing, no state exits or enters, and `can` answers as before. A `send` from it queues, and a `stop()` ends the step once every hook and listener has run for the event.
+- **The hook is part of the definition.** Every instance has it and a hot reload replaces it. A listener is attached to one instance by its script, which suits logging and tools.
+- **A state that should ignore an event takes it with an empty rule.** With `PAUSE: {}` on the state, neither a parent's rule nor any `unhandled` hook runs.
 
 ## `update` and `after`
 
@@ -843,14 +907,14 @@ The rules:
 
 - **It checks `when`.** A rule counts when its `when` is missing or passes.
 - **A rule with no `to` counts.** `can` asks whether a rule would take the event, not whether the state would change.
-- **Nothing runs.** No hook, `run`, `onMove` listener or `onUnhandled` listener is called, and the event is not queued.
+- **Nothing runs.** No hook, `unhandled` included, and no `run`, `onMove` listener or `onUnhandled` listener is called, and the event is not queued.
 - **A stopped machine answers `false`.**
 - **Inside a hook it answers for the states active at that moment.** A state's `enter` hook already counts that state.
 - **A `when` cannot call it.** The view a `when` receives has no `can`.
 
 ### Listen for unhandled events
 
-An event that no rule of an active state takes is dropped without a trace. `onUnhandled(listener)` calls the listener with each one:
+An event that no rule of an active state takes is dropped. A reaction the machine owns goes on a state as `unhandled`; see [React to an unhandled event](#react-to-an-unhandled-event). To hear each dropped event from outside the machine, for logging or a tool, `onUnhandled(listener)` calls the listener with it:
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -881,7 +945,7 @@ The rules:
 - **It reports the events [`can`](#ask-whether-an-event-would-be-taken) answers `false` for.** An event whose every `when` fails is one of them.
 - **An empty rule marks an event as expected.** `KNOCK: {}` takes the event and does nothing, so it is not reported.
 - **A `send` from a hook, a `run` or a `finish` counts.** The listener hears every event the machine processes, not only the ones a script sends.
-- **The listener runs inside the step.** `path` and `leaves` show the states the event found, and a `send` from the listener queues.
+- **The listener runs inside the step.** It runs after the states' `unhandled` hooks. `path` and `leaves` show the states the event found, and a `send` from the listener queues.
 - **A stopped machine reports nothing.** A `send` after `stop()`, an event still queued when `stop()` ends the step, and a late `finish` are not reported.
 - **Each call adds a listener.** The returned function removes it.
 
@@ -2085,6 +2149,25 @@ on_message(self, message_id, message, sender) {
 </td></tr>
 <tr><td>
 
+React to an event no state took
+
+</td><td>
+
+[`unhandled`](#react-to-an-unhandled-event) on a state or the root, where `event` is the whole event union
+
+</td><td>
+
+```ts excerpt
+unhandled: (_ctx, event) => {
+  if (event.type === "trigger_response") {
+    msg.post(event.sender, "guard_paused");
+  }
+},
+```
+
+</td></tr>
+<tr><td>
+
 Keep running instances through a hot reload
 
 </td><td>
@@ -2428,6 +2511,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `exit`    | `(ctx, machine) => void`                    | Runs each time the state is left, including on `stop()`.                                      |
 | `update`  | `(ctx, dt, machine) => target \| undefined` | Runs on every `update(dt)` while active; a returned target, one of the machine's full paths, transitions. |
 | `task`    | `(ctx, finish, machine) => (() => void) \| void` | Runs after `enter`; `finish(event)` sends one event if the state is still the one entered. A returned function runs once when that entry ends. |
+| `unhandled` | `(ctx, event, machine) => void`           | Runs when the machine drops an event while the state is active; see [React to an unhandled event](#react-to-an-unhandled-event). |
 | `invoke`  | `never`                                     | Renamed to `task`; setting it fails to compile.                                               |
 
 ### `PrivateCtxConfig`

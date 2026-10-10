@@ -1307,6 +1307,68 @@ function waitGroups(): string[] {
   return log;
 }
 
+function unhandledHooks(): string[] {
+  const log: string[] = [];
+  const hook = (name: string) => (ctx: Ctx, event: Ev) => {
+    ctx.log.push(`${name} ${event.type}`);
+  };
+  const define = (label: string) =>
+    defineMachine<Ctx, Ev>("parity unhandled hook")({
+      initial: "/alive",
+      unhandled: hook(label),
+      states: {
+        alive: {
+          type: "parallel",
+          unhandled: hook("alive"),
+          on: { HIT: "/dead" },
+          states: {
+            weapon: {
+              initial: "/alive/weapon/ready",
+              states: {
+                ready: {
+                  unhandled: hook("ready"),
+                  on: {
+                    GO: {
+                      run: (ctx) => {
+                        ctx.log.push("took GO");
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            move: {
+              initial: "/alive/move/idle",
+              states: {
+                idle: {
+                  unhandled: (ctx, event, machine) => {
+                    ctx.log.push(`idle ${event.type}`);
+                    machine.send({ type: "GO" });
+                  },
+                },
+              },
+            },
+          },
+        },
+        dead: { on: { BACK: "/alive" } },
+      },
+    });
+  const m = define("root").start(newCtx(log));
+  m.onUnhandled((event) => {
+    log.push(`listener ${event.type} at ${shown(m.path)}`);
+  });
+  m.send({ type: "NOPE" });
+  m.send({ type: "HIT" });
+  log.push(`path=${shown(m.path)}`);
+  m.send({ type: "NOPE" });
+  define("reloaded");
+  m.send({ type: "NOPE" });
+  m.stop();
+  m.send({ type: "NOPE" });
+  log.push(`path=${shown(m.path)}`);
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -1334,6 +1396,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "timer reload", run: () => timerReload() },
   { name: "every timers", run: () => everyTimers() },
   { name: "wait group", run: () => waitGroups() },
+  { name: "unhandled hooks run before the listener", run: () => unhandledHooks() },
 ];
 
 export function runScenario(name: string): string {
