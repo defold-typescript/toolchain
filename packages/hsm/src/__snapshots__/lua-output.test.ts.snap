@@ -594,7 +594,7 @@ local function withoutListener(list, listener)
 end
 local function createMachine(definition)
     local function start(ctx)
-        local clearSlot, readDelays, growSlots, sizeFired, collectActive, rebind, onMove, onUnhandled, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, wouldTake, can, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterRules, afterListDelays, afterListRules, everyDelays, everyRuns, always, activeChild, isActive, elapsed, fired, ownDelays, ownRules, ownEvery, nextRuns, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, unhandledListeners, instance
+        local clearSlot, readDelays, growSlots, sizeFired, collectActive, rebind, onMove, onUnhandled, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, wouldTake, can, clearQueue, stopNow, fireUnhandledHooks, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterRules, afterListDelays, afterListRules, everyDelays, everyRuns, always, activeChild, isActive, elapsed, fired, ownDelays, ownRules, ownEvery, nextRuns, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, unhandledListeners, instance
         function clearSlot(state)
             activeChild[state + 1] = NO_STATE
             isActive[state + 1] = false
@@ -1315,13 +1315,34 @@ local function createMachine(definition)
                 report(from, nil, "stop", nil)
             end
         end
+        function fireUnhandledHooks(state, event)
+            if parallel[state + 1] == true then
+                local list = children[state + 1]
+                do
+                    local i = 0
+                    while i < #list do
+                        fireUnhandledHooks(list[i + 1], event)
+                        i = i + 1
+                    end
+                end
+            end
+            local child = activeChild[state + 1]
+            if child ~= NO_STATE then
+                fireUnhandledHooks(child, event)
+            end
+            local hook = configs[state + 1].unhandled
+            if hook ~= nil then
+                hook(ctx, event, instance)
+            end
+        end
         function endStep()
             while not stopRequested and queueHead < queueTail do
                 local event = queue[queueHead + 1]
                 queue[queueHead + 1] = nil
                 queueHead = queueHead + 1
                 moved = false
-                if not offerEvent(ROOT, event) and #unhandledListeners > 0 then
+                if not offerEvent(ROOT, event) then
+                    fireUnhandledHooks(ROOT, event)
                     local current = unhandledListeners
                     do
                         local i = 0
