@@ -2683,7 +2683,7 @@ describe("always", () => {
     );
   });
 
-  test("an always when reads ctx as Ctx and the cause is typed", () => {
+  test("an always when reads ctx as a read-only Ctx and the cause is typed", () => {
     defineMachine<Ctx, Ev>()({
       initial: "/a",
       states: {
@@ -2691,7 +2691,7 @@ describe("always", () => {
           always: {
             to: "/b",
             when: (ctx) => {
-              const typed: Equal<typeof ctx, Ctx> = true;
+              const typed: Equal<typeof ctx, Readonly<Ctx>> = true;
               return typed && ctx.flag === true;
             },
           },

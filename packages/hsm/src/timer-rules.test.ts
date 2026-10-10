@@ -452,7 +452,7 @@ describe("timer rule types", () => {
             1: {
               to: "/b",
               when: (ctx, machine) => {
-                const ctxExact: Equal<typeof ctx, Ctx> = true;
+                const ctxExact: Equal<typeof ctx, Readonly<Ctx>> = true;
                 const viewExact: Equal<typeof machine, MachineView> = true;
                 const hidden: unknown[] = [];
                 // @ts-expect-error a when reads the machine and cannot send to it
@@ -474,7 +474,7 @@ describe("timer rule types", () => {
               delay: (ctx) => ctx.wait,
               to: "/c",
               when: (ctx, machine) => {
-                const ctxExact: Equal<typeof ctx, Ctx> = true;
+                const ctxExact: Equal<typeof ctx, Readonly<Ctx>> = true;
                 const viewExact: Equal<typeof machine, MachineView> = true;
                 const hidden: unknown[] = [];
                 // @ts-expect-error a when reads the machine and cannot send to it

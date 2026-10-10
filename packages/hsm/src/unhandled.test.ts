@@ -365,7 +365,7 @@ describe("onUnhandled types", () => {
     const m = lone().start(newCtx());
     const checks: boolean[] = [];
     const remove = m.onUnhandled((event) => {
-      const exactEvent: Equal<typeof event, Ev> = true;
+      const exactEvent: Equal<typeof event, Readonly<Ev>> = true;
       checks.push(exactEvent);
     });
     const exactRemover: Equal<typeof remove, () => void> = true;
@@ -607,7 +607,7 @@ describe("unhandled hook types", () => {
       initial: "/a",
       unhandled: (ctx, event, machine) => {
         const exactCtx: Equal<typeof ctx, Ctx> = true;
-        const exactEvent: Equal<typeof event, Ev> = true;
+        const exactEvent: Equal<typeof event, Readonly<Ev>> = true;
         const exactMachine: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
         checks.push(exactCtx, exactEvent, exactMachine);
       },
@@ -616,7 +616,7 @@ describe("unhandled hook types", () => {
           initial: "/a/b",
           unhandled: (ctx, event, machine) => {
             const exactCtx: Equal<typeof ctx, Ctx> = true;
-            const exactEvent: Equal<typeof event, Ev> = true;
+            const exactEvent: Equal<typeof event, Readonly<Ev>> = true;
             const exactMachine: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
             checks.push(exactCtx, exactEvent, exactMachine);
           },
@@ -624,7 +624,7 @@ describe("unhandled hook types", () => {
             b: {
               unhandled: (ctx, event, machine) => {
                 const exactCtx: Equal<typeof ctx, Ctx> = true;
-                const exactEvent: Equal<typeof event, Ev> = true;
+                const exactEvent: Equal<typeof event, Readonly<Ev>> = true;
                 const exactMachine: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
                 checks.push(exactCtx, exactEvent, exactMachine);
               },

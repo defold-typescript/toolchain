@@ -189,7 +189,7 @@ describe("after delays at run time", () => {
 });
 
 describe("after delay types", () => {
-  test("an unannotated delay parameter is exactly Ctx", () => {
+  test("an unannotated delay parameter is exactly a read-only Ctx", () => {
     const seen: boolean[] = [];
     defineMachine<Ctx, Ev>()({
       initial: "/patrol",
@@ -198,7 +198,7 @@ describe("after delay types", () => {
           after: [
             {
               delay: (ctx) => {
-                const exact: Equal<typeof ctx, Ctx> = true;
+                const exact: Equal<typeof ctx, Readonly<Ctx>> = true;
                 seen.push(exact);
                 return ctx.wait;
               },
