@@ -86,6 +86,37 @@ const knight: Demo = {
   readout: () => [],
 };
 
+const roller: Demo = {
+  title: "Roller",
+  subtitle: "A hit that lands only outside the tagged state.",
+  config: {
+    initial: "/walk",
+    on: {
+      HIT: {
+        to: "/hurt",
+        when: (_ctx, _event, machine) => !machine.hasTag("invulnerable"),
+      },
+    },
+    states: {
+      walk: { on: { ROLL: "/roll" } },
+      roll: {
+        tags: ["invulnerable"],
+        on: {
+          CHECK: {
+            run: (ctx, _event, machine) => {
+              ctx.safe = machine.hasTag("invulnerable");
+            },
+          },
+        },
+      },
+      hurt: {},
+    },
+  },
+  ctx: () => ({ safe: false }),
+  buttons: [],
+  readout: () => [],
+};
+
 function start(spec: Demo) {
   const trace: TraceEntry[] = [];
   const run = startDemo(spec, (entry) => trace.push(entry));
@@ -138,5 +169,20 @@ describe("a guard reads the machine", () => {
     const standing = start(knight).run;
     send(standing, { type: "JUMP" });
     expect(standing.matches("/alive/move/jump")).toBe(true);
+  });
+});
+
+describe("a tagged demo", () => {
+  test("a wrapped when and a wrapped run read a tag", () => {
+    const rolling = start(roller).run;
+    send(rolling, { type: "ROLL" });
+    send(rolling, { type: "CHECK" });
+    expect(rolling.ctx.safe).toBe(true);
+    send(rolling, { type: "HIT" });
+    expect(rolling.matches("/roll")).toBe(true);
+
+    const walking = start(roller).run;
+    send(walking, { type: "HIT" });
+    expect(walking.matches("/hurt")).toBe(true);
   });
 });

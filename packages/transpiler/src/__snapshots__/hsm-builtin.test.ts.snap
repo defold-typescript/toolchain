@@ -113,6 +113,22 @@ local function registerState(compiled, config, parentIndex, path)
     compiled.levels[index + 1] = 0
     compiled.records[index + 1] = false
     compiled.pathIndex[path] = index
+    local tags = config.tags
+    if tags ~= nil then
+        do
+            local i = 0
+            while i < #tags do
+                local tag = tags[i + 1]
+                local carriers = compiled.tagStates[tag]
+                if type(carriers) ~= "table" then
+                    carriers = {}
+                    compiled.tagStates[tag] = carriers
+                end
+                carriers[#carriers + 1] = index
+                i = i + 1
+            end
+        end
+    end
     local children = config.states
     if children == nil then
         return
@@ -267,11 +283,11 @@ local function compileOn(compiled, index)
     end
     for ____type in pairs(on) do
         do
-            local __continue58
+            local __continue62
             repeat
                 local spec = on[____type]
                 if spec == nil then
-                    __continue58 = true
+                    __continue62 = true
                     break
                 end
                 local list = {}
@@ -290,9 +306,9 @@ local function compileOn(compiled, index)
                 ____table[____type] = #compiled.transitions
                 local ____compiled_transitions_1 = compiled.transitions
                 ____compiled_transitions_1[#____compiled_transitions_1 + 1] = list
-                __continue58 = true
+                __continue62 = true
             until true
-            if not __continue58 then
+            if not __continue62 then
                 break
             end
         end
@@ -527,7 +543,8 @@ local function compile(config)
         everyDelays = {},
         everyRuns = {},
         always = {},
-        pathIndex = {}
+        pathIndex = {},
+        tagStates = {}
     }
     registerState(compiled, config, NO_STATE, "")
     do
@@ -606,7 +623,7 @@ local function withoutListener(list, listener)
 end
 local function createMachine(definition)
     local function start(ctx)
-        local clearSlot, readDelays, growSlots, sizeFired, collectActive, rebind, onMove, onUnhandled, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, wouldTake, can, clearQueue, stopNow, fireUnhandledHooks, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterRules, afterListDelays, afterListRules, everyDelays, everyRuns, always, activeChild, isActive, elapsed, fired, ownDelays, ownRules, ownEvery, nextRuns, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, unhandledListeners, instance
+        local clearSlot, readDelays, growSlots, sizeFired, collectActive, rebind, onMove, onUnhandled, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, wouldTake, can, clearQueue, stopNow, fireUnhandledHooks, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, hasTag, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterRules, afterListDelays, afterListRules, everyDelays, everyRuns, always, activeChild, isActive, elapsed, fired, ownDelays, ownRules, ownEvery, nextRuns, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, unhandledListeners, instance
         function clearSlot(state)
             activeChild[state + 1] = NO_STATE
             isActive[state + 1] = false
@@ -783,13 +800,13 @@ local function createMachine(definition)
                 local i = 0
                 while i < #order do
                     do
-                        local __continue165
+                        local __continue169
                         repeat
                             local state = lookupPath(compiled, keptPaths[i + 1])
                             local owner = state == nil and NO_STATE or parent[state + 1]
                             if state == nil or owner ~= NO_STATE and (isActive[owner + 1] ~= true or parallel[owner + 1] ~= true and activeChild[owner + 1] ~= NO_STATE) then
                                 dropped[#dropped + 1] = i
-                                __continue165 = true
+                                __continue169 = true
                                 break
                             end
                             isActive[state + 1] = true
@@ -824,9 +841,9 @@ local function createMachine(definition)
                                     end
                                 end
                             end
-                            __continue165 = true
+                            __continue169 = true
                         until true
-                        if not __continue165 then
+                        if not __continue169 then
                             break
                         end
                     end
@@ -1553,6 +1570,22 @@ local function createMachine(definition)
             local state = lookupPath(compiled, path)
             return state ~= nil and state ~= ROOT and isActive[state + 1] == true
         end
+        function hasTag(tag)
+            local carriers = compiled.tagStates[tag]
+            if type(carriers) ~= "table" then
+                return false
+            end
+            do
+                local i = 0
+                while i < #carriers do
+                    if isActive[carriers[i + 1] + 1] == true then
+                        return true
+                    end
+                    i = i + 1
+                end
+            end
+            return false
+        end
         compiled = definition.compiled
         generation = definition.generation
         paths = compiled.paths
@@ -1602,6 +1635,7 @@ local function createMachine(definition)
             path = nil,
             leaves = leaves,
             matches = matches,
+            hasTag = hasTag,
             can = can,
             send = send,
             update = update,

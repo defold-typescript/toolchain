@@ -29,7 +29,7 @@ export interface DemoView<Ctx> {
 export interface DemoSpec<Ctx, E extends EventObject> {
   readonly title: string;
   readonly subtitle: string;
-  readonly config: MachineConfig<Ctx, E>;
+  readonly config: MachineConfig<Ctx, E, string>;
   readonly ctx: () => Ctx;
   readonly buttonsLabel?: string;
   readonly buttons: readonly DemoButton<Ctx, E>[];
