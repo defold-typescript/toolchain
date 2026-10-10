@@ -7,7 +7,7 @@
  * A fence that cannot compile alone, a config key or a method shown by itself,
  * is a `ts excerpt` fence: it must quote the excerpt source, whose fences
  * compile under the same checks.
- * The manual's reference tables are held to the `StateConfig`,
+ * The manual's reference tables are held to the `StateConfig`, `Machine`,
  * `MachineInstance` and `WaitGroup` interfaces of the hsm source.
  */
 import { afterAll, describe, expect, test } from "bun:test";
@@ -370,7 +370,7 @@ describe("state machines guide reference", () => {
     strict: true,
     target: ts.ScriptTarget.ES2022,
   });
-  for (const name of ["StateConfig", "MachineInstance", "WaitGroup"]) {
+  for (const name of ["StateConfig", "Machine", "MachineInstance", "WaitGroup"]) {
     test(`the ${name} table lists every member and nothing else`, () => {
       const members = exportedTypeMembers(program, name);
       expect(members.length).toBeGreaterThan(0);
