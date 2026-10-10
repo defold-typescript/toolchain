@@ -2917,7 +2917,7 @@ A `to` below the state the rule is on keeps that state active and re-enters only
 
 First the `update` hooks run, from the deepest active state up, each with `(ctx, dt, machine)`. A hook returns a path to move to or `undefined` to pass. The first hook to return a path wins: the remaining hooks do not run, and the path is a full path, like an `on` target. A hook move has no `run`.
 
-Then, only if no hook transitioned, the `after` timers run. `after` maps a delay in seconds, measured on the state's clock, to a target path. A state's timers fire in delay order. One `update` call fires at most one timer, checked from the deepest state up; another timer that is due waits for the next call.
+Then, only if no hook transitioned, the `after` timers run. `after` maps a delay in seconds, measured on the state's clock, to a target path or to a [rule](#rules-on-a-timer). A state's timers are tried in delay order, deepest state first. The first timer that moves ends the timers of its region for that call, and another timer that is due waits for the next call.
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -3025,6 +3025,55 @@ One keyed machine serves both guards, and each instance waits for its own delay.
 - A delay that is not a non-negative number throws, naming the state.
 - A delay that must change while the state is active belongs in an `update` hook that counts the time and returns the path.
 
+##### Rules on a timer
+
+A timer also takes a rule in place of a target path: an object with a `to`, a `when` and a `run`.
+
+```ts title="timer-rules.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+interface HeroCtx {
+  grounded: boolean;
+  timeouts: number;
+}
+
+type HeroEvent = { type: "CHARGE" } | { type: "RELEASE" } | { type: "JUMP" };
+
+export const hero = defineMachine<HeroCtx, HeroEvent>()({
+  initial: "/idle",
+  states: {
+    idle: { on: { CHARGE: "/charging", JUMP: "/landing" } },
+    charging: {
+      after: {
+        // Code at a set time, without leaving the state.
+        1: { run: () => sound.play("#beep") },
+        // Code that belongs to one move.
+        3: {
+          to: "/idle",
+          run: (ctx) => {
+            ctx.timeouts += 1;
+          },
+        },
+      },
+      on: { RELEASE: "/idle" },
+    },
+    landing: {
+      // A minimum time, and then a condition.
+      after: { 0.3: { to: "/idle", when: (ctx) => ctx.grounded } },
+    },
+  },
+});
+```
+
+The beep plays one second into `charging`, and the hero keeps charging. Two seconds later the second timer moves to `/idle` and counts the timeout on the way. `landing` lasts at least 0.3 seconds, then ends on the first tick that finds the hero on the ground.
+
+- A rule takes `to`, `when(ctx, machine)` and `run(ctx, machine)`, each optional. An entry of the list form takes them beside `delay`.
+- A rule with neither a `to` nor a `run` throws when the machine is defined.
+- A timer fires at most once per stay.
+- A due timer whose `when` fails is tried again on every `update` call until it passes or the state is left. The timers after it are still tried.
+- A timer with no `to` is not a move: no `update` hook is skipped, `always` is not rechecked, `onMove` is not called, and the call goes on to the next due timer.
+- The `run` of a rule with a `to` runs between the `exit` and `enter` hooks, as under `on`.
+
 #### Resume with history
 
 Set `restoreDepth` on a compound state to make it remember which child was active when it was last left. Every later entry goes back to that child instead of `initial`, and the count says how many levels down to go back:
@@ -3104,7 +3153,7 @@ export const hero = defineMachine<Hero, HeroEvent>()({
 
 - **Checked after every move.** That is `start`, an event, an `after` timer, a path returned from an `update` hook, a hot reload, and another `always` move. The active states are checked deepest first, the way events bubble, after the `enter` hooks and before the next queued event. The first candidate whose `when` is missing or passes is taken, with the cause `always`.
 - **Not checked on ticks or transitions with no `to`.** A `when` reading `ctx` that a `run` or an `update` hook changed waits for the next move. To watch a condition every frame, return a target from an `update` hook instead.
-- **No event and no `run`.** A candidate is a `to` and an optional `when(ctx, machine)`. Put side effects in the target's `enter`.
+- **No event.** A candidate is a `to`, an optional `when(ctx, machine)` and an optional `run(ctx, machine)`, which runs between the `exit` and `enter` hooks of the move.
 - **Loops throw.** At most 10 `always` moves follow one move. The 11th throws `hsm: state "<path>" took 10 always transitions in a row; check for an always loop`, drops the queued events and leaves the instance usable in the state it reached.
 
 An unknown target, or a candidate without a `to`, throws when the machine is defined.
@@ -3155,7 +3204,7 @@ Entering `/alive` enters `move` and its `initial` chain, then `weapon` and its c
 
 - **Each region moves on its own.** An event is offered to every region in order, and each takes at most its first enabled transition, from its active leaf up to the region's root. `START_FIRE` above moves both regions in one `send`, and each move is reported to `onMove` with that region's old and new leaf.
 - **The parallel state waits for its regions.** An event reaches `/alive`'s own `on`, and bubbles above it, only when no region took it. A region transition that leaves or re-enters `/alive` ends the offer, so later regions do not see that event.
-- **Ticks and `always` run per region.** In `update(dt)`, each region runs its `update` hooks deepest first, then its first due `after` timer if no hook moved it, so `weapon`'s cooldown can end in the same frame that `move` changes. The parallel state's own hooks and timers run only when no region moved. `always` is checked in the same order, one move at a time, with the same limit of 10.
+- **Ticks and `always` run per region.** In `update(dt)`, each region runs its `update` hooks deepest first, then its due `after` timers if no hook moved it, so `weapon`'s cooldown can end in the same frame that `move` changes. The parallel state's own hooks and timers run only when no region moved. `always` is checked in the same order, one move at a time, with the same limit of 10.
 - **A target in another region re-enters the parallel state.** A transition from `/alive/move/idle` to `/alive/weapon/cooldown` exits all of `/alive` and enters it again. A region's transitions to its own states leave the other regions alone.
 - **Regions run in name order.** Neither Lua nor JavaScript keeps the written order of a table's keys, so regions are ordered by child name: `move` before `weapon`, whatever order the config lists them in. Names compare by Unicode code point, so the order is the same in Bun and in Defold, accented and emoji names included. Name regions to match the order you want.
 
@@ -3621,7 +3670,7 @@ An instance always keeps its `ctx`. What happens to its current state depends on
 
 | After the edit, the current state… | The instance… |
 | --- | --- |
-| still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The edited transitions, `when` checks and hooks apply from now on, and the delay functions of the state's timers are read again. |
+| still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The state also keeps which of its timers fired, by position in delay order. The edited transitions, `when` checks and hooks apply from now on, and the delay functions of the state's timers are read again. |
 | still exists, but now has child states | enters its `initial` child (and that child's `initial`, and so on), running their `enter` hooks. |
 | was removed | moves to the closest parent state that still exists and enters that parent's `initial` chain, running those `enter` hooks. The removed states run no `exit` hook, because their code is gone, but a cleanup their `task` returned still runs, deepest state first. |
 | is a [parallel](#run-regions-side-by-side-with-parallel) state that gained a region | keeps its other regions as they are and enters only the new one. |
@@ -4452,7 +4501,7 @@ Two rules carry over to any migration:
 
 #### Cheat sheet
 
-Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies. The two snippets on private fields come from a second guard, one that counts its hits itself.
+Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies. The two snippets on private fields come from a second guard, one that counts its hits itself, and the snippet on timer rules from a third, one that shouts while on alert.
 
 ##### Configure a state
 
@@ -4531,6 +4580,30 @@ Move after a delay
 
 ```ts excerpt
 after: { 5: "/alive/patrol" }
+```
+
+</td></tr>
+<tr><td>
+
+Run code at a set time without leaving the state
+
+</td><td>
+
+A [rule in `after`](#rules-on-a-timer) with a `run` and no `to`; a `when` makes a timer wait for a condition
+
+</td><td>
+
+```ts excerpt
+after: {
+  2: {
+    run: (ctx) =>
+      msg.post(ctx.sprite, "shout"),
+  },
+  5: {
+    to: "/patrol",
+    when: (ctx) => ctx.calm,
+  },
+}
 ```
 
 </td></tr>
@@ -5032,8 +5105,8 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `restoreDepth` | `number \| "all"`                       | Enter the children that were active when this state was last left, this many levels down, instead of `initial`; see [Resume with history](#resume-with-history). |
 | `states`  | `{ [name: string]: StateConfig }`           | Child states, by name. A name is non-empty and contains no `/`.                               |
 | `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`, each target a full path; see [Events and transitions](#events-and-transitions). |
-| `after`   | `{ [seconds: number]: target } \| { delay, to }[]` | Full-path targets taken after this long in the state, in game time. In the list form `delay` is a number or `(ctx) => number`, read once per entry of the state; see [`update` and `after`](#update-and-after). |
-| `always`  | `target \| config \| config[]`               | Full-path targets taken right after any move that leaves this state active; the first whose `when(ctx, machine)` is missing or passes wins. See [Move on at once with `always`](#move-on-at-once-with-always). |
+| `after`   | `{ [seconds: number]: target \| rule } \| { delay, to, when, run }[]` | Full-path targets taken after this long in the state, in game time, or rules with a `to`, a `when` and a `run`; see [Rules on a timer](#rules-on-a-timer). In the list form `delay` is a number or `(ctx) => number`, read once per entry of the state; see [`update` and `after`](#update-and-after). |
+| `always`  | `target \| config \| config[]`               | Full-path targets taken right after any move that leaves this state active; the first whose `when(ctx, machine)` is missing or passes wins, and its `run(ctx, machine)` runs during the move. See [Move on at once with `always`](#move-on-at-once-with-always). |
 | `enter`   | `(ctx, machine) => void`                    | Runs each time the state is entered.                                                          |
 | `exit`    | `(ctx, machine) => void`                    | Runs each time the state is left, including on `stop()`.                                      |
 | `update`  | `(ctx, dt, machine) => target \| undefined` | Runs on every `update(dt)` while active; a returned target, one of the machine's full paths, transitions. |

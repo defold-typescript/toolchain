@@ -147,12 +147,20 @@ describe("hsm path completion", () => {
     expect(offered("after", `"${CURSOR}"`)).toEqual(sorted(ALL_PATHS));
   });
 
+  test("to in an after rule, beside a run, offers the machine's paths", () => {
+    expect(offered("after", `{ to: "${CURSOR}", run: () => {} }`)).toEqual(sorted(ALL_PATHS));
+  });
+
   test("to in an after list entry, beside a delay function, offers the machine's paths", () => {
     expect(offered("afterListTo", `"${CURSOR}"`)).toEqual(sorted(ALL_PATHS));
   });
 
   test("an always target offers the machine's paths", () => {
     expect(offered("always", `"${CURSOR}"`)).toEqual(sorted(ALL_PATHS));
+  });
+
+  test("to in an always rule, beside a run, offers the machine's paths", () => {
+    expect(offered("always", `{ to: "${CURSOR}", run: () => {} }`)).toEqual(sorted(ALL_PATHS));
   });
 
   test("a nested initial offers only that state's children", () => {
