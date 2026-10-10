@@ -21,6 +21,7 @@ export interface LiveMessage {
 export interface InspectLine {
   readonly label: string;
   readonly leaves: readonly string[];
+  /** Absent for the inspecting line and for an unhandled line. */
   readonly move?: Omit<LiveMove, "label">;
 }
 
@@ -34,6 +35,7 @@ const LEVEL_PREFIX = /^[A-Z]+:SCRIPT: /;
 const DIGITS = /^\d+$/;
 const ENGINE_START = /^INFO:ENGINE: Defold Engine\b/;
 const STOPPED = "(stopped)";
+const UNHANDLED_OPEN = "unhandled (";
 const UNESCAPED = new Map([
   ["\\", "\\"],
   ["[", "["],
@@ -146,6 +148,17 @@ function parseMove(
   };
 }
 
+function isUnhandled(glyphs: readonly Glyph[], from: number, to: number): boolean {
+  const typeStart = from + UNHANDLED_OPEN.length;
+  return (
+    typeStart < to &&
+    isToken(glyphs, from, UNHANDLED_OPEN) &&
+    isToken(glyphs, to - 1, ")") &&
+    findToken(glyphs, "(", typeStart, to - 1) < 0 &&
+    findToken(glyphs, ")", typeStart, to - 1) < 0
+  );
+}
+
 /** One line `inspect` printed, read back from the editor console; anything else is `undefined`. */
 export function parseInspectLine(line: string): InspectLine | undefined {
   const glyphs = decode(line.replace(/\r$/, "").replace(LEVEL_PREFIX, ""));
@@ -166,6 +179,9 @@ export function parseInspectLine(line: string): InspectLine | undefined {
   const leaves = splitFields(glyphs, open + 2, close);
   const middle = colon + 2;
   if (open - middle === "inspecting".length && isToken(glyphs, middle, "inspecting")) {
+    return { label, leaves };
+  }
+  if (isUnhandled(glyphs, middle, open)) {
     return { label, leaves };
   }
   const move = parseMove(glyphs, middle, open);
