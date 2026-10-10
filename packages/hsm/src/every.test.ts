@@ -378,7 +378,7 @@ describe("every types", () => {
               every: [
                 {
                   delay: (ctx) => {
-                    const ctxExact: Equal<typeof ctx, Ctx> = true;
+                    const ctxExact: Equal<typeof ctx, Readonly<Ctx>> = true;
                     seen.push(ctxExact);
                     return ctx.rate;
                   },

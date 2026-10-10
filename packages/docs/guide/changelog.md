@@ -14,14 +14,15 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** needs `can`, `onUnhandled` and `hasTag` to compile.
+> - **[Read-only callback arguments](./state-machines.md#types):** a `when` that assigns to a field of `ctx`, or a callback that assigns to a field of its event, fails to compile.
 > - **State machines** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), put [rules on timers](./state-machines.md#rules-on-a-timer), group states with [tags](./state-machines.md#name-a-group-of-states-with-tags), wait for several engine calls with [`waitGroup()`](./state-machines.md#waitgroup) and react to any event no state took with one [`unhandled`](./state-machines.md#react-to-an-unhandled-event) hook.
 > - **A saved game** resumes where it stopped: [`start` takes saved state paths](./state-machines.md#start-at-saved-paths).
 > - **[`hsm-view`](./hsm-view.md#read-the-code)** glows `every` runs and dims held timers.
-> - **A [hot reload](./state-machines.md#what-each-instance-keeps)** keeps each timer's fired mark.
 
 ### Breaking
 
 - **`MachineInstance` requires `can`, `onUnhandled` and `hasTag`:** an object you build yourself and type as `MachineInstance`, such as a test double or a wrapper around a real instance, fails to compile until it has all three. In a wrapper, add `can: (event) => inner.can(event)`, `onUnhandled: (listener) => inner.onUnhandled(listener)` and `hasTag: (tag) => inner.hasTag(tag)`; an instance returned by `start` needs no change; see [`MachineInstance`](./state-machines.md#machineinstance).
+- **A `when` reads `ctx`, and every callback reads its event:** an assignment to a field of `ctx` in a `when` under `on` or `always` or in the `delay` function of an `after` list, or to a field of the event in a `when`, a `run` or an `onMove` listener, fails to compile. Move the write into `run`, copy a value out of the event before changing it, and type the parameter of a helper that takes a context class with a private member as `Readonly<...>` of the class; see [Types](./state-machines.md#types).
 
 ### Improved
 

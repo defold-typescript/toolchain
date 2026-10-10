@@ -17,21 +17,23 @@ export type MoveCause = "event" | "after" | "update" | "stop" | "reload" | "alwa
 /**
  * A listener given to `onMove`. It gets the leaf left, the leaf entered (`undefined` after
  * `stop()`), the cause, and the event, which is `undefined` unless the cause is `event`. It runs
- * after the move's `enter` hooks.
+ * after the move's `enter` hooks. The event is read-only: the listener cannot assign to its
+ * fields.
  * @noSelf
  */
 export type MoveListener<E extends EventObject, P extends string = string> = (
   from: P,
   to: P | undefined,
   cause: MoveCause,
-  event: E | undefined,
+  event: Readonly<E> | undefined,
 ) => void;
 
 /**
- * A listener given to `onUnhandled`. It gets the event no rule of an active state took.
+ * A listener given to `onUnhandled`. It gets the event no rule of an active state took. The
+ * event is read-only: the listener cannot assign to its fields.
  * @noSelf
  */
-export type UnhandledListener<E extends EventObject> = (event: E) => void;
+export type UnhandledListener<E extends EventObject> = (event: Readonly<E>) => void;
 
 /**
  * What a `when` sees of the running machine: which states are active, and nothing that changes
@@ -116,11 +118,12 @@ export interface MachineInstance<
 
 /**
  * A function a rule's `run` calls during the move, after the `exit` hooks and before the `enter`
- * hooks. Its `event` is the variant the `on` key names.
+ * hooks. Its `event` is the variant the `on` key names, and is read-only: a `run` changes `ctx`
+ * and cannot assign to a field of the event.
  */
 export type MoveAction<Ctx, E extends EventObject, V extends E = E, Tag extends string = never> = (
   ctx: Ctx,
-  event: V,
+  event: Readonly<V>,
   machine: MachineInstance<Ctx, E, string, Tag>,
 ) => void;
 
@@ -169,10 +172,15 @@ export interface TransitionConfig<
   /**
    * The rule is taken only when this returns `true`. It must have no side effects: it is also
    * checked when the move does not happen, in guarded lists and on every `always` recheck.
+   * `ctx` and `event` are read-only here, one level deep: a write belongs in `run`.
    * `machine` reads the active states; inside a parallel state it shows the regions that already
    * took the event.
    */
-  readonly when?: (ctx: Ctx, event: V, machine: MachineView<string, Tag>) => boolean;
+  readonly when?: (
+    ctx: Readonly<Ctx>,
+    event: Readonly<V>,
+    machine: MachineView<string, Tag>,
+  ) => boolean;
   /**
    * Runs during the move. The event is accepted when its key matches and `when` passes; then
    * `exit` runs on each state left, deepest first; then `run`; then `enter` on each state
@@ -219,10 +227,11 @@ export interface AlwaysConfig<
    */
   readonly to: To;
   /**
-   * Checked on every recheck, so it must have no side effects. `machine` reads the active
-   * states; inside a parallel state it shows the regions that already moved.
+   * Checked on every recheck, so it must have no side effects. `ctx` is read-only here, one
+   * level deep: a write belongs in `run`. `machine` reads the active states; inside a parallel
+   * state it shows the regions that already moved.
    */
-  readonly when?: (ctx: Ctx, machine: MachineView<string, Tag>) => boolean;
+  readonly when?: (ctx: Readonly<Ctx>, machine: MachineView<string, Tag>) => boolean;
   /** Runs between the `exit` and `enter` hooks of the move, only when the rule is taken. */
   readonly run?: RuleRun<Ctx, E, Tag>;
   /** Renamed to `to`. */
@@ -266,9 +275,10 @@ export interface AfterRule<
   /**
    * The timer fires only when this returns `true`. It is first checked once the delay has
    * passed, then on every `update` call until it passes or the state is left, so it must have no
-   * side effects. `machine` reads the active states.
+   * side effects. `ctx` is read-only here, one level deep: a write belongs in `run`. `machine`
+   * reads the active states.
    */
-  readonly when?: (ctx: Ctx, machine: MachineView<string, Tag>) => boolean;
+  readonly when?: (ctx: Readonly<Ctx>, machine: MachineView<string, Tag>) => boolean;
   /**
    * Runs when the timer fires: between the `exit` and `enter` hooks of the move, or on its own
    * for a rule with no `to`.
@@ -289,10 +299,11 @@ export interface AfterConfig<
   /**
    * The delay in seconds of game time: a number, or a function of the context that returns one.
    * A function is read once each time the state is entered, after its `enter` hook, and again on
-   * a hot reload, so the delay is fixed for that stay. A result that is not a non-negative number
-   * throws, naming the state.
+   * a hot reload, so the delay is fixed for that stay. The function only reads the context: it
+   * cannot assign to a field of `ctx`. A result that is not a non-negative number throws, naming
+   * the state.
    */
-  readonly delay: number | ((ctx: Ctx) => number);
+  readonly delay: number | ((ctx: Readonly<Ctx>) => number);
 }
 
 /**
@@ -303,10 +314,11 @@ export interface EveryConfig<Ctx, E extends EventObject, Tag extends string = ne
   /**
    * The seconds of game time between two runs: a number, or a function of the context that
    * returns one. A function is read once each time the state is entered, after its `enter` hook,
-   * and again on a hot reload, so the delay is fixed for that stay. A result that is not a
-   * positive number throws, naming the state.
+   * and again on a hot reload, so the delay is fixed for that stay. The function only reads the
+   * context: it cannot assign to a field of `ctx`. A result that is not a positive number
+   * throws, naming the state.
    */
-  readonly delay: number | ((ctx: Ctx) => number);
+  readonly delay: number | ((ctx: Readonly<Ctx>) => number);
   /** Runs each time the delay passes: one function, or a list run in order. */
   readonly run: RunAction<Ctx, E, Tag> | readonly RunAction<Ctx, E, Tag>[];
   /** Not taken here: an `after` timer leaves the state. */
@@ -355,13 +367,13 @@ export type UpdateHook<
 /**
  * Runs when the machine drops an event while the state is active: for the events `onUnhandled`
  * reports, and no others. Every active state that has the hook runs it, deepest first, in the
- * order `update` hooks run. `event` is the machine's whole event union. The hook moves nothing:
- * a `send` from it queues, and a `stop()` ends the step once every hook and listener has run for
- * the event.
+ * order `update` hooks run. `event` is the machine's whole event union, and is read-only: the
+ * hook cannot assign to its fields. The hook moves nothing: a `send` from it queues, and a
+ * `stop()` ends the step once every hook and listener has run for the event.
  */
 export type UnhandledHook<Ctx, E extends EventObject, Tag extends string = never> = (
   ctx: Ctx,
-  event: E,
+  event: Readonly<E>,
   machine: MachineInstance<Ctx, E, string, Tag>,
 ) => void;
 

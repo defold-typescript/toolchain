@@ -2909,7 +2909,41 @@ m.send({ type: "FALL" }); // exits /alive/chase and /alive, enters /dead
 
 A `to` below the state the rule is on keeps that state active and re-enters only below it: from `/alive`, a `to` of `/alive/patrol` exits the current child and enters `patrol`, while `alive` stays. A `to` naming the state the rule is on exits and re-enters it, which restarts its `after` timers and its `task`, as `SEE_PLAYER` in `chase` does above; the same holds for an `after` timer, an `always` entry or an `update` hook that names its own state, so `after: { 1: "/blink" }` on `blink` repeats every second. To restart only a state's children, name the child to start in: `/alive/patrol` from `/alive`. A rule that should run code and leave every state alone has no `to`. Targeting an ancestor of the source exits and re-enters that ancestor.
 
-`when` and `run` both receive `(ctx, event, machine)`, where `event` is narrowed to the variant the `on` key names: the `HIT` `when` reads `event.damage` with no cast. The `machine` a `when` receives is a read-only view of the running machine, with `path`, `leaves`, `matches` and `hasTag` and nothing that changes it; see [Read another region in a `when`](#read-another-region-in-a-when). `run` is one function or a list run in order. Keep `when` free of side effects: it is also called when the move does not happen, for each candidate in a list and on every `always` recheck.
+`when` and `run` both receive `(ctx, event, machine)`, where `event` is narrowed to the variant the `on` key names: the `HIT` `when` reads `event.damage` with no cast. The `machine` a `when` receives is a read-only view of the running machine, with `path`, `leaves`, `matches` and `hasTag` and nothing that changes it; see [Read another region in a `when`](#read-another-region-in-a-when). `run` is one function or a list run in order. Keep `when` free of side effects: it is also called when the move does not happen, for each candidate in a list and on every `always` recheck. The types hold part of that rule: a `when` written in the config cannot assign to a field of `ctx` or of `event`, and a `run` cannot assign to a field of its event.
+
+```ts title="when-reads.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+interface EnemyCtx {
+  health: number;
+}
+
+type EnemyEvent = { type: "HIT"; damage: number };
+
+export const enemy = defineMachine<EnemyCtx, EnemyEvent>()({
+  initial: "/alive",
+  states: {
+    alive: {
+      on: {
+        HIT: {
+          to: "/dead",
+          when: (ctx, event) => {
+            // @ts-expect-error -- a `when` cannot assign to a field of `ctx`
+            ctx.health -= event.damage;
+            return ctx.health <= event.damage;
+          },
+          run: (ctx, event) => {
+            ctx.health -= event.damage;
+          },
+        },
+      },
+    },
+    dead: {},
+  },
+});
+```
+
+The write belongs in `run`, which is called only when the move happens.
 
 ##### React to an unhandled event
 
@@ -4184,6 +4218,8 @@ m.send({ type: "LOSE" }); // a new table on every call
 **`defineMachine` takes two calls.** `defineMachine<Ctx, E>()` fixes the context and event types (and takes an optional [hot reload](#hot-reload) key), and the second call takes the config. TypeScript cannot infer some type arguments of one call while you write the others, and the config has to be inferred: its literal shape is where the state paths come from.
 
 **Events are `EventObject`s.** `E` is a union of objects that each have a string `type`, plus any payload fields. `on` accepts only those `type` values as keys, and each `when` and `run` sees the variant its key names.
+
+**A `when` reads its arguments.** `ctx` is `Readonly<Ctx>` in every `when`, under `on`, `always` and `after`, and in a `delay` function of `after` and `every`: an assignment to one of its fields fails to compile. The event is read-only in a `when`, a `run`, the `unhandled` hook and the `onMove` and `onUnhandled` listeners, so an event kept in a constant is the same on every `send`. The check is one level deep: a list or table held in a field can still be changed. A helper declared outside the config with ordinary parameter types still fits, and its own writes are not checked. The one exception is a helper typed with a context class that has a private or protected member: its parameter takes `Readonly<...>` of the class, as in `(ctx: Readonly<Tank>) => ctx.hp > 0`.
 
 **Tags are the third type argument.** `defineMachine<Ctx, E, Tag>()` takes a union of tag names, such as `"invulnerable" | "busy"`, and a state's `tags` and every `hasTag` call accept only those. A machine defined with two type arguments has no tags: a `tags` entry and a `hasTag` call both fail to compile. See [Name a group of states with tags](#name-a-group-of-states-with-tags).
 
