@@ -488,6 +488,7 @@ const EXPECTED: Record<string, string[]> = {
     "beep",
     'error: hsm: state "/a" has an after timer with no "to" and no "run"',
   ],
+  "timer reload": ["first", "second", "reloaded", "third", "end"],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
