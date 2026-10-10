@@ -827,9 +827,7 @@ function registerState<Ctx, E extends EventObject>(
     for (let i = 0; i < tags.length; i++) {
       const tag = tags[i] as string;
       let carriers = compiled.tagStates[tag];
-      // A type test, not a test for undefined: in JavaScript a tag named like a member every
-      // object inherits, such as "constructor", reads that member.
-      if (typeof carriers !== "object") {
+      if (carriers === undefined) {
         carriers = [];
         compiled.tagStates[tag] = carriers;
       }
@@ -1264,7 +1262,10 @@ function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Com
     everyRuns: [],
     always: [],
     pathIndex: {},
-    tagStates: {},
+    // A JavaScript object inherits members such as `__proto__` and `constructor`, and a tag can
+    // be named like one. This literal has no prototype, so every string is an own key. In Lua
+    // the nil field leaves a plain table.
+    tagStates: { __proto__: null } as unknown as { [tag: string]: number[] },
   };
   registerState(compiled, config, NO_STATE, "");
   for (let index = 0; index < compiled.count; index++) {
@@ -2269,7 +2270,7 @@ function createMachine<Ctx, E extends EventObject>(
 
     function hasTag(tag: string): boolean {
       const carriers = compiled.tagStates[tag];
-      if (typeof carriers !== "object") {
+      if (carriers === undefined) {
         return false;
       }
       for (let i = 0; i < carriers.length; i++) {
