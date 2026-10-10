@@ -1184,6 +1184,38 @@ function timerRules(): string[] {
   return log;
 }
 
+function timerReload(): string[] {
+  const log: string[] = [];
+  const ctx = newCtx(log);
+  const say = (text: string) => (ctx: Ctx) => {
+    ctx.log.push(text);
+  };
+  const define = (extra: boolean) =>
+    defineMachine<Ctx, Ev>("parity timer reload")({
+      initial: "/a",
+      states: {
+        a: {
+          after: [
+            { delay: (ctx) => (ctx.flag ? 3 : 1), run: say("first") },
+            { delay: (ctx) => (ctx.flag ? 1 : 3), run: say("second") },
+            ...(extra ? [{ delay: 0, run: say("third") }] : []),
+          ],
+        },
+      },
+    });
+  const m = define(false).start(ctx);
+  m.update(1);
+  ctx.flag = true;
+  define(false);
+  m.update(0);
+  log.push("reloaded");
+  m.update(2);
+  define(true);
+  m.update(0);
+  log.push("end");
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -1208,6 +1240,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "can asks without moving", run: () => canQuery() },
   { name: "unhandled events reach the listener", run: () => unhandledEvents() },
   { name: "timer rules", run: () => timerRules() },
+  { name: "timer reload", run: () => timerReload() },
 ];
 
 export function runScenario(name: string): string {

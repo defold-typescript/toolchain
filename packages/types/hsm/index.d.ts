@@ -66,9 +66,10 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
      */
     readonly send: (event: E) => void;
     /**
-     * Advances the machine by `dt` seconds: runs the `update` hooks, then the `after` timers if no
-     * hook moved it. A machine whose `update` is not called is frozen in time, and once the machine
-     * is stopped the call does nothing.
+     * Advances the machine by `dt` seconds: runs the `update` hooks, then the `after` timers of
+     * every region no hook moved. A machine with no parallel state is one region. A machine whose
+     * `update` is not called is frozen in time, and once the machine is stopped the call does
+     * nothing.
      */
     readonly update: (dt: number) => void;
     /**
@@ -227,7 +228,9 @@ export type StateHook<Ctx, E extends EventObject> = (ctx: Ctx, machine: MachineI
 /**
  * Runs on every `update(dt)` while the state is active, deepest state first. It returns a full
  * path to move there, or `undefined` to pass. The first hook to return a path wins: the hooks
- * above it and the `after` timers do not run on that call, and the move has no `run`.
+ * above it and the `after` timers of its region do not run on that call, and the move has no
+ * `run`. Under a parallel state the other regions still run their hooks and timers, unless the
+ * move left the parallel state or entered it again.
  */
 export type UpdateHook<Ctx, E extends EventObject, To extends string = string> = (ctx: Ctx, dt: number, machine: MachineInstance<Ctx, E>) => To | undefined;
 /**
@@ -294,8 +297,10 @@ interface StateBase<Ctx, E extends EventObject, T, Self extends string, To exten
      * `enter` hook, and again on a hot reload. The delay is counted by `update(dt)` while the state
      * is active, from zero on each entry, and a timer fires at most once per stay. An `update`
      * call tries the due timers in delay order: one whose `when` fails stays pending, one with no
-     * `to` runs its `run` and the call goes on, and the first that moves ends the timers of that
-     * call. None is tried when an `update` hook moved the machine.
+     * `to` runs its `run` and the call goes on, and the first that moves ends the timers of its
+     * region for that call. None is tried in a region an `update` hook moved on that call. Under a
+     * parallel state each region follows both rules on its own, and the parallel state's own
+     * timers are tried only when no region moved.
      */
     readonly after?: NoInfer<{
         readonly [seconds: number]: To | AfterRule<Ctx, To, E> | AfterRule<Ctx, To>;

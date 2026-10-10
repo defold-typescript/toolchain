@@ -324,6 +324,90 @@ describe("timer rules at run time", () => {
     m.update(1);
     expect(m.path).toBe("/b");
   });
+
+  test("a hot reload keeps each mark on its list entry when the delays change order", () => {
+    const define = () =>
+      defineMachine<Ctx, Ev>("timer marks swap")({
+        initial: "/a",
+        states: {
+          a: {
+            after: [
+              { delay: (ctx) => ctx.wait, run: note("first") },
+              { delay: (ctx) => 4 - ctx.wait, run: note("second") },
+            ],
+          },
+        },
+      });
+    const ctx = newCtx();
+    const m = define().start(ctx);
+    m.update(1);
+    expect(ctx.log).toEqual(["first"]);
+    ctx.wait = 3;
+    define();
+    m.update(0);
+    expect(ctx.log).toEqual(["first", "second"]);
+    m.update(2);
+    expect(ctx.log).toEqual(["first", "second"]);
+    expect(m.path).toBe("/a");
+  });
+
+  test("a hot reload that adds a list entry starts it unfired and keeps the other marks", () => {
+    const define = (extra: boolean) =>
+      defineMachine<Ctx, Ev>("timer marks grow")({
+        initial: "/a",
+        states: {
+          a: {
+            after: [
+              { delay: (ctx) => ctx.wait, run: note("first") },
+              { delay: (ctx) => 4 - ctx.wait, run: note("second") },
+              ...(extra ? [{ delay: 0, run: note("third") }] : []),
+            ],
+          },
+        },
+      });
+    const ctx = newCtx();
+    const m = define(false).start(ctx);
+    m.update(1);
+    ctx.wait = 3;
+    define(true);
+    m.update(0);
+    expect(ctx.log).toEqual(["first", "third", "second"]);
+    define(false);
+    m.update(2);
+    expect(ctx.log).toEqual(["first", "third", "second"]);
+    define(true);
+    m.update(0);
+    expect(ctx.log).toEqual(["first", "third", "second", "third"]);
+  });
+
+  test("a hot reload that changes the form of after keeps the marks by position in delay order", () => {
+    const define = (list: boolean) =>
+      defineMachine<Ctx, Ev>("timer marks form")({
+        initial: "/a",
+        states: {
+          a: {
+            after: list
+              ? [
+                  { delay: (ctx) => ctx.wait, run: note("first") },
+                  { delay: 3, run: note("second") },
+                ]
+              : { 1: { run: note("first") }, 3: { run: note("second") } },
+          },
+        },
+      });
+    const ctx = newCtx();
+    const m = define(true).start(ctx);
+    m.update(1);
+    expect(ctx.log).toEqual(["first"]);
+    define(false);
+    m.update(1);
+    expect(ctx.log).toEqual(["first"]);
+    define(true);
+    m.update(1);
+    expect(ctx.log).toEqual(["first", "second"]);
+    m.update(1);
+    expect(ctx.log).toEqual(["first", "second"]);
+  });
 });
 
 describe("timer rules at define time", () => {
