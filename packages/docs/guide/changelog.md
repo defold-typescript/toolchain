@@ -13,10 +13,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** must add `can`, `onUnhandled` and `hasTag`.
-> - **[State machines](./state-machines.md)** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), take [rules on timers](./state-machines.md#rules-on-a-timer), name groups of states with [tags](./state-machines.md#name-a-group-of-states-with-tags), react to dropped events with [`unhandled`](./state-machines.md#react-to-an-unhandled-event) and gain `can` and `onUnhandled`.
-> - **A saved game** resumes where it was: [`start` takes saved state paths](./state-machines.md#start-at-saved-paths).
-> - **[`waitGroup()`](./state-machines.md#waitgroup)** lets a `task` wait for several engine calls.
+> - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** needs `can`, `onUnhandled` and `hasTag` to compile.
+> - **[State machines](./state-machines.md)** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), put [rules on timers](./state-machines.md#rules-on-a-timer), group states with [tags](./state-machines.md#name-a-group-of-states-with-tags) and react to any event no state took with one [`unhandled`](./state-machines.md#react-to-an-unhandled-event) hook.
+> - **A saved game** resumes where it stopped: [`start` takes saved state paths](./state-machines.md#start-at-saved-paths).
+> - **[`waitGroup()`](./state-machines.md#waitgroup)** makes a `task` wait for several engine calls.
 > - **A [hot reload](./state-machines.md#what-each-instance-keeps)** keeps each timer's fired mark.
 
 ### Breaking
@@ -32,7 +32,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **A `when` reads the machine** — a rule's `when` receives the running machine as its last argument, read-only, so a rule can depend on the active states through `matches` and `hasTag`, as in `when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing")`; see [Read another region in a `when`](./state-machines.md#read-another-region-in-a-when).
   - **Tags** — a state lists `tags`, and `hasTag` on the instance and on the `machine` every callback receives answers whether any active state carries one, such as every state in which the player takes no damage; the names are the third type argument of `defineMachine`; see [Name a group of states with tags](./state-machines.md#name-a-group-of-states-with-tags).
   - **`can(event)`** — returns whether a rule of an active state would take the event, without moving the machine or running a hook; see [Ask whether an event would be taken](./state-machines.md#ask-whether-an-event-would-be-taken).
-  - **`unhandled` hook** — a state, or the root, runs code when the machine drops an event while that state is active, such as answering the sender of a message it did not take; it is part of the definition, so every instance has it; see [React to an unhandled event](./state-machines.md#react-to-an-unhandled-event).
+  - **`unhandled` hook** — one hook on a state, or on the root, reacts to every event no state took, such as refusing any request by name; the event stays unhandled, so `can` still answers `false` for it; see [React to an unhandled event](./state-machines.md#react-to-an-unhandled-event).
   - **`onUnhandled(listener)`** — calls the listener with each event no active state took, and `inspect` prints an `unhandled` line for it; see [Listen for unhandled events](./state-machines.md#listen-for-unhandled-events).
   - **Start position** — `start(ctx, at)` takes a list of state paths, such as a saved copy of `leaves`, and enters those states through an ordinary entry; a path the machine lacks falls back to its closest parent, so a save made before an edit still loads; see [Start at saved paths](./state-machines.md#start-at-saved-paths).
   - **Animation recipe** — the guide builds one knight machine with looping animations, one-shots that finish before the next state, in-between animations between postures and a jump kept until it can play; see [Animation states with one-shots](./state-machines.md#animation-states-with-one-shots).

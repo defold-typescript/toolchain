@@ -56,11 +56,7 @@ export const guardMachine = defineMachine<GuardCtx, GuardEvent>("guard")({
     },
     paused: {
       on: { RESUME: "/alive" },
-      unhandled: (_ctx, event) => {
-        if (event.type === "trigger_response") {
-          msg.post(event.sender, "guard_paused");
-        }
-      },
+      unhandled: () => sound.play("#blocked"),
     },
     dying: {
       task: (_ctx, finish) => {
