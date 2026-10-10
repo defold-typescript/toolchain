@@ -1394,8 +1394,11 @@ local ____exports = {}
 local SILENT = {draw = function()
 end}
 local TEXT_OFFSET_Y = 40
-local labelUses = {}
-local issuedLabels = {}
+local function record()
+    return {__proto__ = nil}
+end
+local labelUses = record()
+local issuedLabels = record()
 local function uniqueLabel(label)
     local ordinal = labelUses[label] or 1
     local issued = label
@@ -1473,7 +1476,7 @@ function ____exports.inspect(instance, label)
     local loggedLabel = escapeField(shownLabel)
     local frame = 0
     local moves = 0
-    local unhandledAt = {}
+    local unhandledAt = record()
     instance.onMove(function(from, to, cause, event)
         moves = moves + 1
         local ____temp_1
