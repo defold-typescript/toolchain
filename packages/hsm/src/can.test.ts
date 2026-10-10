@@ -265,8 +265,12 @@ describe("can at run time", () => {
 
 describe("can agrees with send", () => {
   test("can answers true exactly when the send that follows takes a rule", () => {
+    let hooked = 0;
     const m = defineMachine<Ctx, Ev>()({
       initial: "/alive",
+      unhandled: () => {
+        hooked++;
+      },
       states: {
         alive: {
           type: "parallel",
@@ -335,6 +339,7 @@ describe("can agrees with send", () => {
       m.send(event);
       expect([event, m.ctx.taken > before]).toEqual([event, expected]);
       expect([event, unhandled - reported]).toEqual([event, expected ? 0 : 1]);
+      expect([event, hooked]).toEqual([event, unhandled]);
       for (const leaf of m.leaves) {
         visited.add(leaf);
       }

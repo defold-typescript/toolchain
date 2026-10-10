@@ -71,8 +71,8 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
   readonly can: (event: E) => boolean;
   /**
    * Handles `event`, or queues it when called during a step. An event no active state handles is
-   * dropped and reported to the `onUnhandled` listeners, and once the machine is stopped the call
-   * does nothing.
+   * dropped: it runs the active states' `unhandled` hooks and is then reported to the
+   * `onUnhandled` listeners. Once the machine is stopped the call does nothing.
    */
   readonly send: (event: E) => void;
   /**
@@ -96,8 +96,9 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
   readonly onMove: (listener: MoveListener<E, P>) => () => void;
   /**
    * Adds a listener called with each event the machine processes that no rule of an active state
-   * takes. It runs inside the step, before the next queued event. A rule with no `to` takes its
-   * event. Each call adds a listener, and the returned function removes that one.
+   * takes. It runs inside the step, after the active states' `unhandled` hooks and before the
+   * next queued event. A rule with no `to` takes its event. Each call adds a listener, and the
+   * returned function removes that one.
    */
   readonly onUnhandled: (listener: UnhandledListener<E>) => () => void;
 }
@@ -314,6 +315,19 @@ export type UpdateHook<Ctx, E extends EventObject, To extends string = string> =
 ) => To | undefined;
 
 /**
+ * Runs when the machine drops an event while the state is active: for the events `onUnhandled`
+ * reports, and no others. Every active state that has the hook runs it, deepest first, in the
+ * order `update` hooks run. `event` is the machine's whole event union. The hook moves nothing:
+ * a `send` from it queues, and a `stop()` ends the step once every hook and listener has run for
+ * the event.
+ */
+export type UnhandledHook<Ctx, E extends EventObject> = (
+  ctx: Ctx,
+  event: E,
+  machine: MachineInstance<Ctx, E>,
+) => void;
+
+/**
  * Starts work that lives as long as the state. `finish` sends one event and is ignored after the
  * first call or once the state is left. The returned cleanup runs on every way out. A task that
  * starts several callbacks counts them with `waitGroup`.
@@ -503,6 +517,8 @@ interface StateBase<Ctx, E extends EventObject, T, Self extends string, To exten
   readonly update?: NoInfer<UpdateHook<Ctx, E, To>>;
   /** Started on each entry; see `TaskStart`. */
   readonly task?: TaskStart<Ctx, E>;
+  /** Runs when the machine drops an event while the state is active; see `UnhandledHook`. */
+  readonly unhandled?: UnhandledHook<Ctx, E>;
   /** Renamed to `task`. */
   readonly invoke?: never;
 }
@@ -1934,13 +1950,33 @@ function createMachine<Ctx, E extends EventObject>(
       }
     }
 
+    // No hook can move the machine, so the active states are the same from the first call to
+    // the last, and the walk checks neither stopRequested nor entryId.
+    function fireUnhandledHooks(state: number, event: E): void {
+      if (parallel[state] === true) {
+        const list = children[state] as number[];
+        for (let i = 0; i < list.length; i++) {
+          fireUnhandledHooks(list[i] as number, event);
+        }
+      }
+      const child = activeChild[state] as number;
+      if (child !== NO_STATE) {
+        fireUnhandledHooks(child, event);
+      }
+      const hook = (configs[state] as StateConfig<Ctx, E>).unhandled;
+      if (hook !== undefined) {
+        hook(ctx, event, instance);
+      }
+    }
+
     function endStep(): void {
       while (!stopRequested && queueHead < queueTail) {
         const event = queue[queueHead] as E;
         queue[queueHead] = undefined;
         queueHead++;
         moved = false;
-        if (!offerEvent(ROOT, event) && unhandledListeners.length > 0) {
+        if (!offerEvent(ROOT, event)) {
+          fireUnhandledHooks(ROOT, event);
           const current = unhandledListeners;
           for (let i = 0; i < current.length; i++) {
             (current[i] as UnhandledListener<E>)(event);
