@@ -1371,7 +1371,7 @@ function unhandledHooks(): string[] {
 
 function stateTags(): string[] {
   const log: string[] = [];
-  type Tag = "safe" | "spawned" | "none";
+  type Tag = "safe" | "spawned" | "none" | "__proto__";
   const define = (shielded: boolean) =>
     defineMachine<Ctx, Ev, Tag>("parity tags")({
       initial: "/alive",
@@ -1404,7 +1404,7 @@ function stateTags(): string[] {
             },
           },
         },
-        dead: {},
+        dead: { tags: ["__proto__"] },
       },
     });
   const m = define(true).start(newCtx(log));
@@ -1424,10 +1424,13 @@ function stateTags(): string[] {
   m.update(0);
   show("reload");
   log.push(`none=${m.hasTag("none")}`);
+  log.push(`__proto__=${m.hasTag("__proto__")}`);
   m.send({ type: "HIT" });
   log.push(`path=${shown(m.path)}`);
+  log.push(`__proto__=${m.hasTag("__proto__")}`);
   m.stop();
   show("stop");
+  log.push(`__proto__=${m.hasTag("__proto__")}`);
   return log;
 }
 

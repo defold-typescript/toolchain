@@ -108,7 +108,7 @@ local function registerState(compiled, config, parentIndex, path)
             while i < #tags do
                 local tag = tags[i + 1]
                 local carriers = compiled.tagStates[tag]
-                if type(carriers) ~= "table" then
+                if carriers == nil then
                     carriers = {}
                     compiled.tagStates[tag] = carriers
                 end
@@ -532,7 +532,7 @@ local function compile(config)
         everyRuns = {},
         always = {},
         pathIndex = {},
-        tagStates = {}
+        tagStates = {__proto__ = nil}
     }
     registerState(compiled, config, NO_STATE, "")
     do
@@ -1560,7 +1560,7 @@ local function createMachine(definition)
         end
         function hasTag(tag)
             local carriers = compiled.tagStates[tag]
-            if type(carriers) ~= "table" then
+            if carriers == nil then
                 return false
             end
             do
