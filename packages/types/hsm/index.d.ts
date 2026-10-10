@@ -303,11 +303,14 @@ export interface WaitGroup {
  */
 export interface Machine<Ctx, E extends EventObject, P extends string = string, Tag extends string = never> {
     /**
-     * Creates an instance with `ctx` as its context and enters the root's `initial` chain. Each
-     * call returns a separate instance, which has already handled the events its `enter` hooks
-     * sent.
+     * Creates an instance with `ctx` as its context. Without `at` it enters the root's `initial`
+     * chain. With `at`, a list of full state paths such as a copy of `leaves`, it enters toward
+     * each path: a level or region no path names goes through `initial`, a path the machine lacks
+     * falls back to its closest parent, and of two paths that cannot be active together the first
+     * wins. Timer progress and `restoreDepth` memory are not part of the list. Each call returns a
+     * separate instance, which has already handled the events its `enter` hooks sent.
      */
-    readonly start: (ctx: Ctx) => MachineInstance<Ctx, E, P, Tag>;
+    readonly start: (ctx: Ctx, at?: readonly P[]) => MachineInstance<Ctx, E, P, Tag>;
 }
 type PathDepth = [never, 0, 1, 2, 3];
 type NextCount = [never, 2, 3, 4, 5, 6];

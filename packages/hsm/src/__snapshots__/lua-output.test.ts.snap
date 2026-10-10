@@ -64,6 +64,29 @@ local function unitAt(text, index)
     end
     return units:byte(index + 1)
 end
+local SLASH = 47
+local function closestState(compiled, path)
+    local text = path
+    while true do
+        local state = lookupPath(compiled, text)
+        if state ~= nil then
+            return state
+        end
+        local cut = #text - 1
+        while cut > 0 and unitAt(text, cut) ~= SLASH do
+            cut = cut - 1
+        end
+        if cut <= 0 then
+            return ROOT
+        end
+        local units = text
+        if UTF16_UNITS then
+            text = units:substring(0, cut)
+        else
+            text = units:sub(1, cut)
+        end
+    end
+end
 local function codePointRank(unit)
     if unit >= 55296 and unit < 57344 then
         return unit + 8192
@@ -271,11 +294,11 @@ local function compileOn(compiled, index)
     end
     for ____type in pairs(on) do
         do
-            local __continue62
+            local __continue69
             repeat
                 local spec = on[____type]
                 if spec == nil then
-                    __continue62 = true
+                    __continue69 = true
                     break
                 end
                 local list = {}
@@ -294,9 +317,9 @@ local function compileOn(compiled, index)
                 ____table[____type] = #compiled.transitions
                 local ____compiled_transitions_1 = compiled.transitions
                 ____compiled_transitions_1[#____compiled_transitions_1 + 1] = list
-                __continue62 = true
+                __continue69 = true
             until true
-            if not __continue62 then
+            if not __continue69 then
                 break
             end
         end
@@ -570,6 +593,44 @@ local function transitionDomain(compiled, source, target)
     end
     return domain
 end
+local function startChildren(compiled, at)
+    local parent = compiled.parent
+    local chosen = {}
+    do
+        local state = 0
+        while state < compiled.count do
+            chosen[state + 1] = NO_STATE
+            state = state + 1
+        end
+    end
+    do
+        local i = 0
+        while i < #at do
+            local target = closestState(compiled, at[i + 1])
+            local free = true
+            do
+                local state = target
+                while free and state ~= ROOT do
+                    local claimed = chosen[parent[state + 1] + 1]
+                    free = claimed == NO_STATE or claimed == state
+                    state = parent[state + 1]
+                end
+            end
+            do
+                local state = target
+                while free and state ~= ROOT do
+                    local owner = parent[state + 1]
+                    if compiled.parallel[owner + 1] ~= true then
+                        chosen[owner + 1] = state
+                    end
+                    state = parent[state + 1]
+                end
+            end
+            i = i + 1
+        end
+    end
+    return chosen
+end
 local registered = {}
 local function fillPrivate(target, root, onlyMissing)
     local factory = root.privateCtx
@@ -610,7 +671,7 @@ local function withoutListener(list, listener)
     return kept
 end
 local function createMachine(definition)
-    local function start(ctx)
+    local function start(ctx, at)
         local clearSlot, readDelays, growSlots, sizeFired, collectActive, rebind, onMove, onUnhandled, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, wouldTake, can, clearQueue, stopNow, fireUnhandledHooks, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, hasTag, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterRules, afterListDelays, afterListRules, everyDelays, everyRuns, always, activeChild, isActive, elapsed, fired, ownDelays, ownRules, ownEvery, nextRuns, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, unhandledListeners, instance
         function clearSlot(state)
             activeChild[state + 1] = NO_STATE
@@ -788,13 +849,13 @@ local function createMachine(definition)
                 local i = 0
                 while i < #order do
                     do
-                        local __continue169
+                        local __continue186
                         repeat
                             local state = lookupPath(compiled, keptPaths[i + 1])
                             local owner = state == nil and NO_STATE or parent[state + 1]
                             if state == nil or owner ~= NO_STATE and (isActive[owner + 1] ~= true or parallel[owner + 1] ~= true and activeChild[owner + 1] ~= NO_STATE) then
                                 dropped[#dropped + 1] = i
-                                __continue169 = true
+                                __continue186 = true
                                 break
                             end
                             isActive[state + 1] = true
@@ -829,9 +890,9 @@ local function createMachine(definition)
                                     end
                                 end
                             end
-                            __continue169 = true
+                            __continue186 = true
                         until true
-                        if not __continue169 then
+                        if not __continue186 then
                             break
                         end
                     end
@@ -1631,10 +1692,39 @@ local function createMachine(definition)
             onMove = onMove,
             onUnhandled = onUnhandled
         }
+        local function enterAt(state, chosen)
+            if parallel[state + 1] == true then
+                local list = children[state + 1]
+                do
+                    local i = 0
+                    while i < #list do
+                        enterState(list[i + 1])
+                        enterAt(list[i + 1], chosen)
+                        i = i + 1
+                    end
+                end
+                return
+            end
+            local child = chosen[state + 1]
+            if child == NO_STATE then
+                enterDefaults(state, 0)
+                return
+            end
+            enterState(child)
+            enterAt(child, chosen)
+        end
+        local chosen
+        if at ~= nil then
+            chosen = startChildren(compiled, at)
+        end
         busy = true
         fillPrivate(ctx, configs[ROOT + 1], false)
         enterState(ROOT)
-        enterDefaults(ROOT, 0)
+        if chosen == nil then
+            enterDefaults(ROOT, 0)
+        else
+            enterAt(ROOT, chosen)
+        end
         refreshLeaves()
         settleAlways()
         endStep()

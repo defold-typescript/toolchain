@@ -2,13 +2,14 @@
  * The State machines guide's animation recipe is a whole machine, so this runs the
  * `knight-machine.ts` fence as the page prints it, over the hsm source, and plays the
  * part of the engine: it records each flipbook and fires the completion callbacks.
+ * The save and load recipes are whole machines too, and run the same way.
  */
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { requireHsmSourceDir } from "@defold-typescript/transpiler";
-import { loadMachines } from "./hsm-view-load";
+import { loadMachines, type MachineEngine } from "./hsm-view-load";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const GUIDE_PAGE = path.join(REPO_ROOT, "packages", "docs", "guide", "state-machines.md");
@@ -24,6 +25,35 @@ function titledFence(page: string, title: string): string {
     }
   }
   throw new Error(`state-machines.md has no ts fence titled ${title}`);
+}
+
+interface LoadedFence {
+  readonly machine: unknown;
+  readonly engine: MachineEngine;
+}
+
+const dirs: string[] = [];
+const loadedFences = new Map<string, LoadedFence>();
+
+/** The machine named `name` of the fence titled `title`, with its engine; a fence loads once. */
+function fenceMachine(title: string, name: string): LoadedFence {
+  const cached = loadedFences.get(title);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const body = titledFence(readFileSync(GUIDE_PAGE, "utf8"), title);
+  const dir = mkdtempSync(path.join(os.tmpdir(), "hsm-guide-recipe-"));
+  dirs.push(dir);
+  const file = path.join(dir, title);
+  writeFileSync(file, body);
+  const loaded = loadMachines(file, { hsmSourceDir: requireHsmSourceDir() });
+  const machine = loaded.machines.find((entry) => entry.name === name);
+  if (machine === undefined) {
+    throw new Error(`${title} defines no machine named ${name}`);
+  }
+  const fence = { machine: machine.machine, engine: loaded.engine };
+  loadedFences.set(title, fence);
+  return fence;
 }
 
 interface KnightCtx {
@@ -44,7 +74,6 @@ interface Startable {
 
 const JUMP = { type: "JUMP" };
 
-let dir: string | undefined;
 let recipe: Startable | undefined;
 let played: unknown[] = [];
 let pending: (() => void) | undefined;
@@ -54,16 +83,8 @@ function knightMachine(): Startable {
   if (recipe !== undefined) {
     return recipe;
   }
-  const body = titledFence(readFileSync(GUIDE_PAGE, "utf8"), RECIPE_FENCE);
-  dir = mkdtempSync(path.join(os.tmpdir(), "hsm-guide-recipe-"));
-  const file = path.join(dir, RECIPE_FENCE);
-  writeFileSync(file, body);
-  const loaded = loadMachines(file, { hsmSourceDir: requireHsmSourceDir() });
-  const machine = loaded.machines.find((entry) => entry.name === RECIPE_MACHINE);
-  if (machine === undefined) {
-    throw new Error(`${RECIPE_FENCE} defines no machine named ${RECIPE_MACHINE}`);
-  }
-  loaded.engine.setSink((entry) => {
+  const fence = fenceMachine(RECIPE_FENCE, RECIPE_MACHINE);
+  fence.engine.setSink((entry) => {
     if (entry.kind !== "engine" || entry.api !== "sprite.play_flipbook") {
       return;
     }
@@ -73,7 +94,7 @@ function knightMachine(): Startable {
       pending = callback as () => void;
     }
   });
-  recipe = machine.machine as Startable;
+  recipe = fence.machine as Startable;
   return recipe;
 }
 
@@ -101,7 +122,7 @@ beforeEach(() => {
 });
 
 afterAll(() => {
-  if (dir !== undefined) {
+  for (const dir of dirs) {
     rmSync(dir, { recursive: true, force: true });
   }
 });
@@ -230,5 +251,62 @@ describe("the knight recipe", () => {
     finish();
     expect(knight.path).toBe("/standing/free/run");
     expect(played).toEqual(["idle", "to_crouch", "from_crouch", "run"]);
+  });
+});
+
+interface Chest {
+  readonly path: string | undefined;
+  readonly leaves: readonly string[];
+  readonly send: (event: { type: string }) => void;
+  readonly stop: () => void;
+}
+
+interface ChestMachine<Ctx> {
+  readonly start: (ctx: Ctx, at?: readonly string[]) => Chest;
+}
+
+const SPRITE = "#sprite";
+
+describe("the save and load recipes", () => {
+  const routed = () =>
+    fenceMachine("chest-routed.ts", "routedChestMachine").machine as ChestMachine<{
+      opened: boolean;
+    }>;
+  const positioned = () => fenceMachine("chest-machine.ts", "chestMachine");
+  const chestMachine = () => positioned().machine as ChestMachine<{ sprite: string }>;
+
+  test("the routed chest starts in the state its saved flag tells", () => {
+    expect(routed().start({ opened: true }).path).toBe("/open");
+    expect(routed().start({ opened: false }).path).toBe("/closed");
+  });
+
+  test("the chest started with no list is at its initial", () => {
+    expect(chestMachine().start({ sprite: SPRITE }).path).toBe("/locked");
+  });
+
+  test("a chest started with a copy of saved leaves is in the states it was saved in", () => {
+    const first = chestMachine().start({ sprite: SPRITE });
+    first.send({ type: "UNLOCK" });
+    first.send({ type: "OPEN" });
+    const saved = [...first.leaves];
+    first.stop();
+    expect(saved).toEqual(["/open"]);
+    expect([...chestMachine().start({ sprite: SPRITE }, saved).leaves]).toEqual(saved);
+  });
+
+  test("a chest started at the open state plays the animation of its enter hook", () => {
+    const machine = chestMachine();
+    const sprites: unknown[] = [];
+    positioned().engine.setSink((entry) => {
+      if (entry.kind === "engine" && entry.api === "sprite.play_flipbook") {
+        sprites.push(entry.args[0]);
+      }
+    });
+    try {
+      machine.start({ sprite: SPRITE }, ["/open"]);
+    } finally {
+      positioned().engine.setSink(undefined);
+    }
+    expect(sprites).toEqual([SPRITE]);
   });
 });

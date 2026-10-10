@@ -1434,6 +1434,50 @@ function stateTags(): string[] {
   return log;
 }
 
+function startPosition(): string[] {
+  const log: string[] = [];
+  const machine = defineMachine<Ctx, Ev>()({
+    initial: "/menu",
+    states: {
+      menu: logged("menu"),
+      play: {
+        ...logged("play"),
+        type: "parallel",
+        states: {
+          move: {
+            ...logged("move"),
+            initial: "/play/move/idle",
+            states: { idle: logged("idle"), run: logged("run") },
+          },
+          weapon: {
+            ...logged("weapon"),
+            initial: "/play/weapon/ready",
+            states: {
+              ready: logged("ready"),
+              cooldown: { ...logged("cooldown"), after: { 0.5: "/play/weapon/ready" } },
+            },
+          },
+        },
+      },
+    },
+  });
+  const a = machine.start(newCtx(log), ["/play/weapon/cooldown", "/play/move/run"]);
+  log.push(`leaves=${shownLeaves(a.leaves)}`);
+  a.update(0.3);
+  log.push(`leaves=${shownLeaves(a.leaves)}`);
+  a.update(0.3);
+  log.push(`leaves=${shownLeaves(a.leaves)}`);
+  a.stop();
+  const b = machine.start(newCtx(log), [
+    "/play/move/\u{10000}/deep",
+    "/menu",
+    "/play/weapon/cooldown",
+  ] as never);
+  log.push(`leaves=${shownLeaves(b.leaves)}`);
+  b.stop();
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -1463,6 +1507,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "wait group", run: () => waitGroups() },
   { name: "unhandled hooks run before the listener", run: () => unhandledHooks() },
   { name: "tags follow the active states", run: () => stateTags() },
+  { name: "start at saved paths", run: () => startPosition() },
 ];
 
 export function runScenario(name: string): string {

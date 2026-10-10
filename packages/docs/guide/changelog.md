@@ -15,6 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** must add `can`, `onUnhandled` and `hasTag`.
 > - **[State machines](./state-machines.md)** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), take [rules on timers](./state-machines.md#rules-on-a-timer), name groups of states with [tags](./state-machines.md#name-a-group-of-states-with-tags), react to dropped events with [`unhandled`](./state-machines.md#react-to-an-unhandled-event) and gain `can` and `onUnhandled`.
+> - **A saved game** resumes where it was: [`start` takes saved state paths](./state-machines.md#start-at-saved-paths).
 > - **[`waitGroup()`](./state-machines.md#waitgroup)** lets a `task` wait for several engine calls.
 > - **A [hot reload](./state-machines.md#what-each-instance-keeps)** keeps each timer's fired mark.
 
@@ -24,7 +25,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took and answer more about a running machine, and the guide gains a recipe:**
+- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took, resume a saved game and answer more about a running machine, and the guide gains a recipe:**
   - **`every`** — a state runs code each time a delay passes while it is active, such as damage every half second or a rate of fire read from the context; a long frame runs it once, and a run is not a move; see [Repeat while a state is active](./state-machines.md#repeat-while-a-state-is-active).
   - **Rules on timers and `always`** — an `after` timer takes `to`, `when` and `run`, so a state can run code at a set time without leaving and a timer can wait for a condition once its delay has passed, and an `always` rule takes `run`; see [Rules on a timer](./state-machines.md#rules-on-a-timer).
   - **`waitGroup()`** — a `task` that starts several engine calls waits for all of them: each `add()` returns the callback to pass, as in `http.request(url, "GET", group.add())`, and `wait` runs its callback once every one has reported; see [`WaitGroup`](./state-machines.md#waitgroup).
@@ -33,6 +34,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`can(event)`** — returns whether a rule of an active state would take the event, without moving the machine or running a hook; see [Ask whether an event would be taken](./state-machines.md#ask-whether-an-event-would-be-taken).
   - **`unhandled` hook** — a state, or the root, runs code when the machine drops an event while that state is active, such as answering the sender of a message it did not take; it is part of the definition, so every instance has it; see [React to an unhandled event](./state-machines.md#react-to-an-unhandled-event).
   - **`onUnhandled(listener)`** — calls the listener with each event no active state took, and `inspect` prints an `unhandled` line for it; see [Listen for unhandled events](./state-machines.md#listen-for-unhandled-events).
+  - **Start position** — `start(ctx, at)` takes a list of state paths, such as a saved copy of `leaves`, and enters those states through an ordinary entry; a path the machine lacks falls back to its closest parent, so a save made before an edit still loads; see [Start at saved paths](./state-machines.md#start-at-saved-paths).
   - **Animation recipe** — the guide builds one knight machine with looping animations, one-shots that finish before the next state, in-between animations between postures and a jump kept until it can play; see [Animation states with one-shots](./state-machines.md#animation-states-with-one-shots).
 
 ### Fixed
