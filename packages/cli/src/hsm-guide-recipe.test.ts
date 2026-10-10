@@ -2,9 +2,10 @@
  * The State machines guide's animation recipe is a whole machine, so this runs the
  * `knight-machine.ts` fence as the page prints it, over the hsm source, and plays the
  * part of the engine: it records each flipbook and fires the completion callbacks.
- * The save and load recipes are whole machines too, and run the same way.
+ * The save and load recipes and the door requests recipe are whole machines too, and
+ * run the same way.
  */
-import { afterAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -308,5 +309,74 @@ describe("the save and load recipes", () => {
       positioned().engine.setSink(undefined);
     }
     expect(sprites).toEqual([SPRITE]);
+  });
+});
+
+interface DoorRequest {
+  readonly type: string;
+  readonly sender: string;
+}
+
+interface Door {
+  readonly path: string | undefined;
+  readonly can: (event: DoorRequest) => boolean;
+  readonly send: (event: DoorRequest) => void;
+}
+
+interface DoorMachine {
+  readonly start: (ctx: { sprite: string }) => Door;
+}
+
+const CALLER = "main:/player#script";
+const OTHER = "main:/guard#script";
+
+describe("the door requests recipe", () => {
+  const fence = () => fenceMachine("door-requests.ts", "doorMachine");
+  let calls: unknown[] = [];
+  let door: Door;
+
+  beforeEach(() => {
+    calls = [];
+    fence().engine.setSink((entry) => {
+      if (entry.kind === "engine") {
+        calls.push([entry.api, entry.args]);
+      }
+    });
+    door = (fence().machine as DoorMachine).start({ sprite: SPRITE });
+  });
+
+  afterEach(() => {
+    fence().engine.setSink(undefined);
+  });
+
+  test("a request no state took is refused by name and stays unhandled", () => {
+    const request = { type: "close_door", sender: CALLER };
+    expect(door.can(request)).toBe(false);
+    door.send(request);
+    expect(door.path).toBe("/closed");
+    expect(calls).toEqual([["msg.post", [CALLER, "door_refused", { request: "close_door" }]]]);
+  });
+
+  test("a locked door rattles before the refusal and still takes nothing", () => {
+    door.send({ type: "lock_door", sender: CALLER });
+    expect(door.path).toBe("/locked");
+    expect(calls).toEqual([]);
+    const request = { type: "open_door", sender: OTHER };
+    expect(door.can(request)).toBe(false);
+    door.send(request);
+    expect(door.path).toBe("/locked");
+    expect(door.can(request)).toBe(false);
+    expect(calls).toEqual([
+      ["sprite.play_flipbook", [SPRITE, "rattle"]],
+      ["msg.post", [OTHER, "door_refused", { request: "open_door" }]],
+    ]);
+  });
+
+  test("the requests the door takes run no hook", () => {
+    door.send({ type: "lock_door", sender: CALLER });
+    door.send({ type: "unlock_door", sender: CALLER });
+    door.send({ type: "open_door", sender: CALLER });
+    expect(door.path).toBe("/open");
+    expect(calls).toEqual([]);
   });
 });
