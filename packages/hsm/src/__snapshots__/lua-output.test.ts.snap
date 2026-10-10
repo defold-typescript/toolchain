@@ -336,39 +336,55 @@ local function checkDelay(path, delay, written)
         )
     end
 end
-local function insertTimer(delays, targets, delay, target)
+local function insertTimer(delays, rules, delay, rule)
     local slot = #delays
     while slot > 0 and delays[slot] > delay do
         delays[slot + 1] = delays[slot]
-        targets[slot + 1] = targets[slot]
+        rules[slot + 1] = rules[slot]
         slot = slot - 1
     end
     delays[slot + 1] = delay
-    targets[slot + 1] = target
+    rules[slot + 1] = rule
+end
+local function compileTimer(compiled, index, spec)
+    local rule = compileTransition(compiled, index, spec)
+    if rule.target == NO_STATE and #rule.run == 0 then
+        error(
+            ("hsm: state \\"" .. describePath(compiled.paths[index + 1])) .. "\\" has an after timer with no \\"to\\" and no \\"run\\"",
+            0
+        )
+    end
+    return rule
 end
 local function compileAfter(compiled, index)
     local delays = {}
-    local targets = {}
+    local rules = {}
     compiled.afterDelays[index + 1] = delays
-    compiled.afterTargets[index + 1] = targets
+    compiled.afterRules[index + 1] = rules
     local after = compiled.configs[index + 1].after
     if after == nil then
         return
     end
     local path = compiled.paths[index + 1]
     local list = after
-    if type(list[1]) ~= "table" then
+    local first = list[1]
+    if type(first) ~= "table" or first.delay == nil then
         local byDelay = after
         for key in pairs(byDelay) do
             local delay = parseDelay(key)
             checkDelay(path, delay, key)
-            local target = resolveTarget(compiled, index, byDelay[key])
-            insertTimer(delays, targets, delay, target)
+            local spec = byDelay[key]
+            insertTimer(
+                delays,
+                rules,
+                delay,
+                compileTimer(compiled, index, spec)
+            )
         end
         return
     end
     local listDelays = {}
-    local listTargets = {}
+    local listRules = {}
     local perInstance = false
     do
         local i = 0
@@ -381,19 +397,19 @@ local function compileAfter(compiled, index)
                 checkDelay(path, delay, delay)
             end
             listDelays[i + 1] = delay
-            listTargets[i + 1] = resolveTarget(compiled, index, entry.to)
+            listRules[i + 1] = compileTimer(compiled, index, entry)
             i = i + 1
         end
     end
     if perInstance then
         compiled.afterListDelays[index + 1] = listDelays
-        compiled.afterListTargets[index + 1] = listTargets
+        compiled.afterListRules[index + 1] = listRules
         return
     end
     do
         local i = 0
         while i < #listDelays do
-            insertTimer(delays, targets, listDelays[i + 1], listTargets[i + 1])
+            insertTimer(delays, rules, listDelays[i + 1], listRules[i + 1])
             i = i + 1
         end
     end
@@ -414,9 +430,9 @@ local function compile(config)
         onIndex = {},
         transitions = {},
         afterDelays = {},
-        afterTargets = {},
+        afterRules = {},
         afterListDelays = {},
-        afterListTargets = {},
+        afterListRules = {},
         always = {},
         pathIndex = {}
     }
@@ -496,14 +512,14 @@ local function withoutListener(list, listener)
 end
 local function createMachine(definition)
     local function start(ctx)
-        local clearSlot, readDelays, growSlots, collectActive, rebind, onMove, onUnhandled, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, wouldTake, can, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterTargets, afterListDelays, afterListTargets, always, activeChild, isActive, elapsed, fired, ownDelays, ownTargets, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, unhandledListeners, instance
+        local clearSlot, readDelays, growSlots, sizeFired, collectActive, rebind, onMove, onUnhandled, report, collectLeaves, refreshLeaves, enterState, exitSubtree, defaultChild, enterDefaults, childToward, enterToward, enterMissing, firstLeaf, transition, settleAlways, takeAlways, runActions, takeEvent, offerEvent, wouldTake, can, clearQueue, stopNow, endStep, send, addElapsed, tickRegion, fireUpdateHooks, fireTimers, update, stop, matches, compiled, generation, paths, parent, children, parallel, initialChild, restoreDepth, records, configs, onIndex, transitions, afterDelays, afterRules, afterListDelays, afterListRules, always, activeChild, isActive, elapsed, fired, ownDelays, ownRules, entryId, cleanup, remembered, slotCount, leaves, entryCount, queue, queueHead, queueTail, running, busy, stopRequested, moved, listeners, unhandledListeners, instance
         function clearSlot(state)
             activeChild[state + 1] = NO_STATE
             isActive[state + 1] = false
             elapsed[state + 1] = 0
-            fired[state + 1] = 0
+            fired[state + 1] = nil
             ownDelays[state + 1] = nil
-            ownTargets[state + 1] = nil
+            ownRules[state + 1] = nil
             entryId[state + 1] = 0
             cleanup[state + 1] = nil
         end
@@ -512,9 +528,9 @@ local function createMachine(definition)
             if list == nil then
                 return
             end
-            local listTargets = afterListTargets[state + 1]
+            local listRules = afterListRules[state + 1]
             local delays = {}
-            local targets = {}
+            local rules = {}
             do
                 local i = 0
                 while i < #list do
@@ -523,17 +539,44 @@ local function createMachine(definition)
                         delay = delay(ctx)
                         checkDelay(paths[state + 1], delay, delay)
                     end
-                    insertTimer(delays, targets, delay, listTargets[i + 1])
+                    insertTimer(delays, rules, delay, listRules[i + 1])
                     i = i + 1
                 end
             end
             ownDelays[state + 1] = delays
-            ownTargets[state + 1] = targets
+            ownRules[state + 1] = rules
         end
         function growSlots()
             while slotCount < compiled.count do
                 clearSlot(slotCount)
                 slotCount = slotCount + 1
+            end
+        end
+        function sizeFired()
+            do
+                local state = 0
+                while state < compiled.count do
+                    local list = afterListDelays[state + 1]
+                    local ____temp_5
+                    if list == nil then
+                        ____temp_5 = #afterDelays[state + 1]
+                    else
+                        ____temp_5 = #list
+                    end
+                    local count = ____temp_5
+                    if count > 0 then
+                        local flags = {}
+                        do
+                            local i = 0
+                            while i < count do
+                                flags[i + 1] = false
+                                i = i + 1
+                            end
+                        end
+                        fired[state + 1] = flags
+                    end
+                    state = state + 1
+                end
             end
         end
         function collectActive(state, order)
@@ -591,24 +634,25 @@ local function createMachine(definition)
             onIndex = compiled.onIndex
             transitions = compiled.transitions
             afterDelays = compiled.afterDelays
-            afterTargets = compiled.afterTargets
+            afterRules = compiled.afterRules
             afterListDelays = compiled.afterListDelays
-            afterListTargets = compiled.afterListTargets
+            afterListRules = compiled.afterListRules
             always = compiled.always
             fillPrivate(ctx, configs[ROOT + 1], true)
             growSlots()
+            sizeFired()
             local dropped = {}
             do
                 local i = 0
                 while i < #order do
                     do
-                        local __continue130
+                        local __continue138
                         repeat
                             local state = lookupPath(compiled, keptPaths[i + 1])
                             local owner = state == nil and NO_STATE or parent[state + 1]
                             if state == nil or owner ~= NO_STATE and (isActive[owner + 1] ~= true or parallel[owner + 1] ~= true and activeChild[owner + 1] ~= NO_STATE) then
                                 dropped[#dropped + 1] = i
-                                __continue130 = true
+                                __continue138 = true
                                 break
                             end
                             isActive[state + 1] = true
@@ -616,13 +660,23 @@ local function createMachine(definition)
                                 activeChild[owner + 1] = state
                             end
                             elapsed[state + 1] = keptElapsed[i + 1]
-                            fired[state + 1] = keptFired[i + 1]
+                            local before = keptFired[i + 1]
+                            local flags = fired[state + 1]
+                            if before ~= nil and flags ~= nil then
+                                do
+                                    local timer = 0
+                                    while timer < #before and timer < #flags do
+                                        flags[timer + 1] = before[timer + 1]
+                                        timer = timer + 1
+                                    end
+                                end
+                            end
                             entryId[state + 1] = keptEntryId[i + 1]
                             cleanup[state + 1] = keptCleanup[i + 1]
                             readDelays(state)
-                            __continue130 = true
+                            __continue138 = true
                         until true
-                        if not __continue130 then
+                        if not __continue138 then
                             break
                         end
                     end
@@ -703,13 +757,13 @@ local function createMachine(definition)
             return count + 1
         end
         function refreshLeaves()
-            local ____temp_5
+            local ____temp_6
             if isActive[ROOT + 1] == true then
-                ____temp_5 = collectLeaves(ROOT, 0)
+                ____temp_6 = collectLeaves(ROOT, 0)
             else
-                ____temp_5 = 0
+                ____temp_6 = 0
             end
-            local count = ____temp_5
+            local count = ____temp_6
             while #leaves > count do
                 table.remove(leaves)
             end
@@ -723,7 +777,16 @@ local function createMachine(definition)
             isActive[state + 1] = true
             activeChild[state + 1] = NO_STATE
             elapsed[state + 1] = 0
-            fired[state + 1] = 0
+            local flags = fired[state + 1]
+            if flags ~= nil then
+                do
+                    local i = 0
+                    while i < #flags do
+                        flags[i + 1] = false
+                        i = i + 1
+                    end
+                end
+            end
             entryCount = entryCount + 1
             local id = entryCount
             entryId[state + 1] = id
@@ -881,13 +944,13 @@ local function createMachine(definition)
         function firstLeaf(state)
             local leaf = state
             while true do
-                local ____temp_6
+                local ____temp_7
                 if parallel[leaf + 1] == true then
-                    ____temp_6 = children[leaf + 1][1]
+                    ____temp_7 = children[leaf + 1][1]
                 else
-                    ____temp_6 = activeChild[leaf + 1]
+                    ____temp_7 = activeChild[leaf + 1]
                 end
-                local child = ____temp_6
+                local child = ____temp_7
                 if child == NO_STATE then
                     return paths[leaf + 1]
                 end
@@ -971,7 +1034,7 @@ local function createMachine(definition)
                         transition(
                             state,
                             candidate.target,
-                            nil,
+                            candidate.run,
                             nil,
                             "always"
                         )
@@ -983,7 +1046,17 @@ local function createMachine(definition)
             return false
         end
         function runActions(run, event)
-            if run == nil or event == nil then
+            if run == nil then
+                return
+            end
+            if event == nil then
+                do
+                    local i = 0
+                    while i < #run do
+                        run[i + 1](ctx, instance)
+                        i = i + 1
+                    end
+                end
                 return
             end
             do
@@ -1215,19 +1288,39 @@ local function createMachine(definition)
             if child ~= NO_STATE and fireTimers(child) then
                 return true
             end
+            local flags = fired[state + 1]
+            if flags == nil then
+                return false
+            end
             local delays = ownDelays[state + 1] or afterDelays[state + 1]
-            local next = fired[state + 1]
-            if next < #delays and delays[next + 1] <= elapsed[state + 1] then
-                fired[state + 1] = next + 1
-                local targets = ownTargets[state + 1] or afterTargets[state + 1]
-                transition(
-                    state,
-                    targets[next + 1],
-                    nil,
-                    nil,
-                    "after"
-                )
-                return true
+            local rules = ownRules[state + 1] or afterRules[state + 1]
+            local due = elapsed[state + 1]
+            do
+                local i = 0
+                while i < #delays and delays[i + 1] <= due do
+                    if flags[i + 1] ~= true then
+                        local rule = rules[i + 1]
+                        local when = rule.when
+                        if when == nil or when(ctx, instance) then
+                            flags[i + 1] = true
+                            if rule.target ~= NO_STATE then
+                                transition(
+                                    state,
+                                    rule.target,
+                                    rule.run,
+                                    nil,
+                                    "after"
+                                )
+                                return true
+                            end
+                            runActions(rule.run, nil)
+                            if stopRequested then
+                                return true
+                            end
+                        end
+                    end
+                    i = i + 1
+                end
             end
             return false
         end
@@ -1276,21 +1369,22 @@ local function createMachine(definition)
         onIndex = compiled.onIndex
         transitions = compiled.transitions
         afterDelays = compiled.afterDelays
-        afterTargets = compiled.afterTargets
+        afterRules = compiled.afterRules
         afterListDelays = compiled.afterListDelays
-        afterListTargets = compiled.afterListTargets
+        afterListRules = compiled.afterListRules
         always = compiled.always
         activeChild = {}
         isActive = {}
         elapsed = {}
         fired = {}
         ownDelays = {}
-        ownTargets = {}
+        ownRules = {}
         entryId = {}
         cleanup = {}
         remembered = {}
         slotCount = 0
         growSlots()
+        sizeFired()
         leaves = {}
         entryCount = 0
         queue = {}

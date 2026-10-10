@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  type AlwaysConfig,
   defineMachine,
   type MachineConfig,
   type MachineInstance,
@@ -2700,6 +2701,156 @@ describe("always", () => {
     });
     const cause: MoveCause = "always";
     expect(cause).toBe("always");
+  });
+
+  test("an always run runs between the exit and enter hooks of its move", () => {
+    const ctx = newCtx();
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: { ...logged("a"), on: { GO: "/b" } },
+        b: {
+          ...logged("b"),
+          always: {
+            to: "/c",
+            run: (ctx) => {
+              ctx.log.push("run");
+            },
+          },
+        },
+        c: logged("c"),
+      },
+    }).start(ctx);
+    const reports = record(m);
+    m.send({ type: "GO" });
+    expect(ctx.log).toEqual(["enter a", "exit a", "enter b", "exit b", "run", "enter c"]);
+    expect(reports).toEqual([
+      ["/a", "/b", "event", "GO"],
+      ["/b", "/c", "always", undefined],
+    ]);
+  });
+
+  test("only the always rule taken runs, and a run list runs in order", () => {
+    const ctx = newCtx();
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: { on: { GO: "/b" } },
+        b: {
+          ...logged("b"),
+          always: [
+            {
+              to: "/x",
+              when: (ctx) => ctx.flag === true,
+              run: (ctx) => {
+                ctx.log.push("skipped");
+              },
+            },
+            {
+              to: "/y",
+              run: [
+                (ctx) => {
+                  ctx.log.push("one");
+                },
+                (ctx) => {
+                  ctx.log.push("two");
+                },
+              ],
+            },
+          ],
+        },
+        x: logged("x"),
+        y: logged("y"),
+      },
+    }).start(ctx);
+    m.send({ type: "GO" });
+    expect(ctx.log).toEqual(["enter b", "exit b", "one", "two", "enter y"]);
+  });
+
+  test("an always run receives the instance", () => {
+    let seen: unknown;
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: { on: { GO: "/b" } },
+        b: {
+          always: {
+            to: "/c",
+            run: (_ctx, machine) => {
+              seen = machine;
+            },
+          },
+        },
+        c: {},
+      },
+    }).start(newCtx());
+    m.send({ type: "GO" });
+    expect(seen).toBe(m);
+  });
+
+  test("an event an always run sends is handled once the move is done", () => {
+    const ctx = newCtx();
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: { on: { GO: "/b" } },
+        b: {
+          always: {
+            to: "/c",
+            run: (_ctx, machine) => {
+              machine.send({ type: "PING" });
+            },
+          },
+        },
+        c: { ...logged("c"), on: { PING: "/d" } },
+        d: {},
+      },
+    }).start(ctx);
+    m.send({ type: "GO" });
+    expect(m.path).toBe("/d");
+    expect(ctx.log).toEqual(["enter c", "exit c"]);
+  });
+
+  test("an always run is typed, needs a to, and a rule typed without the event type has none", () => {
+    const rule: AlwaysConfig<Ctx, "/c"> = { to: "/c" };
+    const withRun: AlwaysConfig<Ctx, "/c"> = {
+      to: "/c",
+      // @ts-expect-error a rule typed without the machine's event type has no run
+      run: () => {},
+    };
+    expect(withRun.to).toBe("/c");
+    const seen: boolean[] = [];
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: {
+          always: {
+            to: "/b",
+            run: (ctx, machine) => {
+              const ctxExact: Equal<typeof ctx, Ctx> = true;
+              const machineExact: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+              seen.push(ctxExact, machineExact);
+            },
+          },
+        },
+        b: { always: rule },
+        c: {},
+      },
+    }).start(newCtx());
+    expect(seen).toEqual([true, true]);
+    expect(m.path).toBe("/c");
+    const noTarget = () =>
+      defineMachine<Ctx, Ev>()({
+        initial: "/a",
+        states: {
+          a: { on: { GO: "/b" } },
+          b: {
+            // @ts-expect-error an always rule must name a to
+            always: { run: () => {} },
+          },
+        },
+      });
+    expect(thrownMessage(noTarget)).toBe('hsm: state "/b" has an always transition with no "to"');
   });
 });
 

@@ -341,7 +341,7 @@ Compare this with the flags in part 1. Every state and every way between them is
 - Each state's timer starts at zero every time it's entered.
 - Timers count the `dt` you pass in. If you stop calling `update`, time stands still. Pause the demo to see it.
 - `update` functions get the first chance each frame. Timers only fire if none of them moved, so landing on the exact frame coyote time ends counts as landing.
-- One `update` call fires at most one timer.
+- At most one timer moves the machine in one `update` call.
 
 ### A parent's timer keeps running
 
