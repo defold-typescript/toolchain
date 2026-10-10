@@ -254,10 +254,32 @@ export type StateHook<Ctx, E extends EventObject> = (ctx: Ctx, machine: MachineI
 export type UpdateHook<Ctx, E extends EventObject, To extends string = string> = (ctx: Ctx, dt: number, machine: MachineInstance<Ctx, E>) => To | undefined;
 /**
  * Starts work that lives as long as the state. `finish` sends one event and is ignored after the
- * first call or once the state is left. The returned cleanup runs on every way out.
+ * first call or once the state is left. The returned cleanup runs on every way out. A task that
+ * starts several callbacks counts them with `waitGroup`.
  * @noSelf
  */
 export type TaskStart<Ctx, E extends EventObject> = (ctx: Ctx, finish: (event: E) => void, machine: MachineInstance<Ctx, E>) => (() => void) | void;
+/**
+ * Counts several pieces of engine work a state starts and waits for, returned by `waitGroup()`.
+ * It knows nothing about a machine: built inside a `task`, it is new for each entry of the
+ * state.
+ * @noSelf
+ */
+export interface WaitGroup {
+    /**
+     * Records one pending piece of work and returns the function that reports it finished. That
+     * function counts once, and a later call does nothing. It ignores its arguments, so an engine
+     * function takes it as its callback, as in `http.request(url, "GET", group.add())`.
+     */
+    readonly add: () => () => void;
+    /**
+     * Calls `callback` once when no added work is pending: at once when none is pending at the
+     * call, and otherwise inside the report that finishes the last pending piece. Each call
+     * registers one callback, and several run in the order registered. A `wait` made before the
+     * first `add` runs at once, so it goes after them.
+     */
+    readonly wait: (callback: () => void) => void;
+}
 /**
  * A machine definition, returned by the second `defineMachine` call. Its `start` creates the
  * instances that run.
@@ -433,6 +455,34 @@ type WithPrivate<Ctx, Priv> = [Priv] extends [never] ? Ctx : Ctx & Priv;
  * shows only `Ctx` in its `ctx`. A machine without fields of its own leaves `privateCtx` out.
  */
 export declare function defineMachine<Ctx, E extends EventObject>(key?: string): <T, Priv extends object = never>(config: RootState<WithPrivate<Ctx, Priv>, E, T> & PrivateCtxConfig<Ctx, Priv>) => Machine<Ctx, E, TreePath<T>>;
+/**
+ * Makes a group that counts the engine work a `task` started and tells when all of it has
+ * finished. Each `add()` returns the callback to pass to one engine call, and `wait` runs its
+ * callback once every one of them has reported.
+ *
+ * @example
+ * ```ts
+ * loading: {
+ *   task: (ctx, finish) => {
+ *     const group = waitGroup();
+ *     http.request(ctx.url, "GET", group.add());
+ *     go.animate(
+ *       ctx.curtain,
+ *       "tint.w",
+ *       go.PLAYBACK_ONCE_FORWARD,
+ *       0,
+ *       go.EASING_LINEAR,
+ *       0.5,
+ *       0,
+ *       group.add(),
+ *     );
+ *     group.wait(() => finish({ type: "READY" }));
+ *   },
+ *   on: { READY: "/playing" },
+ * },
+ * ```
+ */
+export declare function waitGroup(): WaitGroup;
 /**
  * The optional key a `defineMachine` root config takes beside `initial` and `states`.
  * @noSelf

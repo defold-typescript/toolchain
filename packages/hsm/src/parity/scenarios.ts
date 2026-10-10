@@ -1,4 +1,4 @@
-import { defineMachine, type UnhandledListener } from "../index";
+import { defineMachine, type UnhandledListener, waitGroup } from "../index";
 
 type Ev =
   | { type: "GO" }
@@ -1253,6 +1253,60 @@ function everyTimers(): string[] {
   return log;
 }
 
+function waitGroups(): string[] {
+  const log: string[] = [];
+  const say = (text: string) => () => {
+    log.push(text);
+  };
+
+  const empty = waitGroup();
+  empty.wait(say("empty done"));
+
+  const group = waitGroup();
+  const a = group.add();
+  const b: (self: unknown, id: number) => void = group.add();
+  group.wait(say("first"));
+  group.wait(say("second"));
+  a();
+  a();
+  log.push("a reported");
+  b(undefined, 7);
+  log.push("b reported");
+  group.wait(say("late"));
+
+  const reports: (() => void)[] = [];
+  const report = (index: number) => {
+    const reported = reports[index];
+    if (reported !== undefined) {
+      reported();
+    }
+  };
+  const def = defineMachine<Ctx, Ev>()({
+    initial: "/loading",
+    states: {
+      loading: {
+        task: (_ctx, finish) => {
+          const g = waitGroup();
+          reports.push(g.add());
+          reports.push(g.add());
+          g.wait(() => finish({ type: "LOADED" }));
+        },
+        on: { LOADED: "/ready", AGAIN: "/loading" },
+      },
+      ready: logged("ready"),
+    },
+  });
+  const m = def.start(newCtx(log));
+  report(0);
+  m.send({ type: "AGAIN" });
+  report(1);
+  log.push(`path=${shown(m.path)}`);
+  report(2);
+  report(3);
+  log.push(`path=${shown(m.path)}`);
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -1279,6 +1333,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "timer rules", run: () => timerRules() },
   { name: "timer reload", run: () => timerReload() },
   { name: "every timers", run: () => everyTimers() },
+  { name: "wait group", run: () => waitGroups() },
 ];
 
 export function runScenario(name: string): string {
