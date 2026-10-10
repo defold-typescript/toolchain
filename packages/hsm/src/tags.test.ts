@@ -143,17 +143,29 @@ describe("tags at run time", () => {
   });
 
   test("a tag may share its name with a member every JavaScript object inherits", () => {
-    const m = defineMachine<Ctx, Ev, "constructor" | "toString">()({
+    const inherited = Object.getOwnPropertyNames(Object.prototype);
+    expect(inherited).toContain("__proto__");
+    expect(inherited).toContain("constructor");
+    for (const name of inherited) {
+      const others = inherited.filter((tag) => tag !== name);
+      const m = defineMachine<Ctx, Ev, string>()({
+        initial: "/a",
+        states: {
+          a: { tags: [name], on: { GO: "/b" } },
+          b: { tags: others },
+        },
+      }).start({ hits: 0 });
+      expect(inherited.filter((tag) => m.hasTag(tag))).toEqual([name]);
+      m.send({ type: "GO" });
+      expect(inherited.filter((tag) => m.hasTag(tag))).toEqual(others);
+    }
+    const plain = defineMachine<Ctx, Ev, string>()({
       initial: "/a",
       states: {
-        a: { tags: ["constructor"], on: { GO: "/b" } },
-        b: {},
+        a: { tags: ["plain"] },
       },
     }).start({ hits: 0 });
-    expect(m.hasTag("constructor")).toBe(true);
-    expect(m.hasTag("toString")).toBe(false);
-    m.send({ type: "GO" });
-    expect(m.hasTag("constructor")).toBe(false);
+    expect(inherited.filter((tag) => plain.hasTag(tag))).toEqual([]);
   });
 });
 

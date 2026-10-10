@@ -538,8 +538,11 @@ const EXPECTED: Record<string, string[]> = {
     "pending safe=true spawned=true",
     "reload safe=false spawned=true",
     "none=false",
+    "__proto__=false",
     "path=/dead",
+    "__proto__=true",
     "stop safe=false spawned=false",
+    "__proto__=false",
   ],
 };
 
