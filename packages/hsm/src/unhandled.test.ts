@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { defineMachine } from "./index";
+import { defineMachine, type MachineInstance } from "./index";
 
 interface Ctx {
   health: number;
@@ -34,6 +34,10 @@ const logged = (name: string) => ({
     ctx.log.push(`exit ${name}`);
   },
 });
+
+const hook = (name: string) => (ctx: Ctx, event: Ev) => {
+  ctx.log.push(`${name} ${event.type}`);
+};
 
 const loader = () =>
   defineMachine<Ctx, Ev>()({
@@ -391,5 +395,326 @@ describe("onUnhandled types", () => {
     }).start(newCtx());
     m.send({ type: "GO" });
     expect(m.path).toBe("/b");
+  });
+});
+
+describe("unhandled hook at run time", () => {
+  test("the hook gets ctx, the dropped event and the instance, and can runs no hook", () => {
+    const calls: unknown[][] = [];
+    const ctx = newCtx();
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/off",
+      unhandled: (...args) => {
+        calls.push(args);
+      },
+      states: { off: { on: { TOGGLE: "/on" } }, on: {} },
+    }).start(ctx);
+    const DIM: Ev = { type: "DIM" };
+    expect(m.can(DIM)).toBe(false);
+    expect(calls).toEqual([]);
+    m.send(DIM);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toHaveLength(3);
+    expect(calls[0]?.[0]).toBe(ctx);
+    expect(calls[0]?.[1]).toBe(DIM);
+    expect(calls[0]?.[2]).toBe(m);
+    m.send({ type: "TOGGLE" });
+    expect(calls).toHaveLength(1);
+    expect(m.path).toBe("/on");
+  });
+
+  test("a failed guard and a missing rule run the hooks of the active states, deepest first", () => {
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/alive",
+      unhandled: hook("root"),
+      states: {
+        alive: {
+          unhandled: hook("alive"),
+          initial: "/alive/patrol",
+          on: { HIT: { to: "/dead", when: (ctx, event) => ctx.health <= event.damage } },
+          states: {
+            patrol: { unhandled: hook("patrol"), on: { PING: {} } },
+          },
+        },
+        dead: { unhandled: hook("dead") },
+      },
+    }).start(newCtx());
+    m.send({ type: "PING" });
+    expect(m.ctx.log).toEqual([]);
+    m.send({ type: "HIT", damage: 1 });
+    expect(m.ctx.log).toEqual(["patrol HIT", "alive HIT", "root HIT"]);
+    m.send({ type: "HIT", damage: 3 });
+    expect(m.ctx.log).toHaveLength(3);
+    expect(m.path).toBe("/dead");
+    m.send({ type: "NOPE" });
+    expect(m.ctx.log).toEqual(["patrol HIT", "alive HIT", "root HIT", "dead NOPE", "root NOPE"]);
+  });
+
+  test("the regions of a parallel state run their hooks in name order, then the parallel state", () => {
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/alive",
+      unhandled: hook("root"),
+      states: {
+        alive: {
+          type: "parallel",
+          unhandled: hook("alive"),
+          states: {
+            posture: {
+              unhandled: hook("posture"),
+              initial: "/alive/posture/standing",
+              states: { standing: { unhandled: hook("standing"), on: { CROUCH: {} } } },
+            },
+            move: {
+              unhandled: hook("move"),
+              initial: "/alive/move/idle",
+              states: { idle: { unhandled: hook("idle") } },
+            },
+          },
+        },
+      },
+    }).start(newCtx());
+    const order = [
+      "idle NOPE",
+      "move NOPE",
+      "standing NOPE",
+      "posture NOPE",
+      "alive NOPE",
+      "root NOPE",
+    ];
+    m.send({ type: "NOPE" });
+    expect(m.ctx.log).toEqual(order);
+    m.send({ type: "CROUCH" });
+    expect(m.ctx.log).toEqual(order);
+  });
+
+  test("the hook runs inside the step, before the listeners and the next queued event, and its send queues", () => {
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      states: {
+        a: { ...logged("a"), on: { GO: "/b" } },
+        b: {
+          enter: (ctx, machine) => {
+            ctx.log.push("enter b");
+            machine.send({ type: "NOPE" });
+            machine.send({ type: "NEXT" });
+          },
+          exit: (ctx) => {
+            ctx.log.push("exit b");
+          },
+          on: { NEXT: "/c" },
+          unhandled: (ctx, event, machine) => {
+            ctx.log.push(`hook ${event.type} at ${machine.path}`);
+            machine.send({ type: "LATE" });
+          },
+        },
+        c: {
+          ...logged("c"),
+          on: {
+            LATE: {
+              run: (ctx) => {
+                ctx.log.push("late");
+              },
+            },
+          },
+        },
+      },
+    }).start(newCtx());
+    m.onUnhandled((event) => {
+      m.ctx.log.push(`listener ${event.type}`);
+    });
+    m.send({ type: "GO" });
+    expect(m.ctx.log).toEqual([
+      "enter a",
+      "exit a",
+      "enter b",
+      "hook NOPE at /b",
+      "listener NOPE",
+      "exit b",
+      "enter c",
+      "late",
+    ]);
+  });
+
+  test("a stop from a hook lets every hook and listener run for the event, then drops the queue", () => {
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      unhandled: hook("root"),
+      states: {
+        a: {
+          ...logged("a"),
+          on: {
+            GO: {
+              run: (_ctx, _event, machine) => {
+                machine.send({ type: "NOPE" });
+                machine.send({ type: "PING" });
+              },
+            },
+          },
+          unhandled: (ctx, event, machine) => {
+            ctx.log.push(`a ${event.type}`);
+            machine.stop();
+          },
+        },
+      },
+    }).start(newCtx());
+    m.onUnhandled((event) => {
+      m.ctx.log.push(`listener ${event.type}`);
+    });
+    m.send({ type: "GO" });
+    const stopped = ["enter a", "a NOPE", "root NOPE", "listener NOPE", "exit a"];
+    expect(m.ctx.log).toEqual(stopped);
+    expect(m.path).toBeUndefined();
+    m.send({ type: "NOPE" });
+    expect(m.ctx.log).toEqual(stopped);
+  });
+
+  test("a hot reload replaces the hook, and one that drops it leaves none", () => {
+    const m = defineMachine<Ctx, Ev>("unhandled hook reload")({
+      initial: "/a",
+      states: {
+        a: {
+          unhandled: (ctx) => {
+            ctx.log.push("old");
+          },
+        },
+      },
+    }).start(newCtx());
+    m.send({ type: "NOPE" });
+    defineMachine<Ctx, Ev>("unhandled hook reload")({
+      initial: "/a",
+      states: {
+        a: {
+          unhandled: (ctx) => {
+            ctx.log.push("new");
+          },
+        },
+      },
+    });
+    m.send({ type: "NOPE" });
+    defineMachine<Ctx, Ev>("unhandled hook reload")({
+      initial: "/a",
+      states: { a: {} },
+    });
+    m.send({ type: "NOPE" });
+    expect(m.ctx.log).toEqual(["old", "new"]);
+  });
+});
+
+describe("unhandled hook types", () => {
+  test("an unannotated hook sees ctx, the event union and the instance, on the root and at every depth", () => {
+    const checks: boolean[] = [];
+    const m = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      unhandled: (ctx, event, machine) => {
+        const exactCtx: Equal<typeof ctx, Ctx> = true;
+        const exactEvent: Equal<typeof event, Ev> = true;
+        const exactMachine: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+        checks.push(exactCtx, exactEvent, exactMachine);
+      },
+      states: {
+        a: {
+          initial: "/a/b",
+          unhandled: (ctx, event, machine) => {
+            const exactCtx: Equal<typeof ctx, Ctx> = true;
+            const exactEvent: Equal<typeof event, Ev> = true;
+            const exactMachine: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+            checks.push(exactCtx, exactEvent, exactMachine);
+          },
+          states: {
+            b: {
+              unhandled: (ctx, event, machine) => {
+                const exactCtx: Equal<typeof ctx, Ctx> = true;
+                const exactEvent: Equal<typeof event, Ev> = true;
+                const exactMachine: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+                checks.push(exactCtx, exactEvent, exactMachine);
+              },
+            },
+          },
+        },
+      },
+    }).start(newCtx());
+    m.send({ type: "NOPE" });
+    expect(checks).toEqual([true, true, true, true, true, true, true, true, true]);
+  });
+
+  test("a hook reads the private fields with no annotation, with privateCtx before states and after", () => {
+    const first = defineMachine<Ctx, Ev>()({
+      privateCtx: () => ({ ignored: 0 }),
+      initial: "/a",
+      unhandled: (ctx) => {
+        ctx.ignored += 1;
+      },
+      states: {
+        a: {
+          initial: "/a/b",
+          unhandled: (ctx) => {
+            ctx.ignored += 1;
+          },
+          states: {
+            b: {
+              unhandled: (ctx) => {
+                ctx.ignored += 1;
+              },
+            },
+          },
+        },
+      },
+    }).start(newCtx());
+    first.send({ type: "NOPE" });
+    expect(first.ctx).toMatchObject({ ignored: 3 });
+    const after = defineMachine<Ctx, Ev>()({
+      initial: "/a",
+      unhandled: (ctx) => {
+        ctx.ignored += 1;
+      },
+      states: {
+        a: {
+          initial: "/a/b",
+          unhandled: (ctx) => {
+            ctx.ignored += 1;
+          },
+          states: {
+            b: {
+              unhandled: (ctx) => {
+                ctx.ignored += 1;
+              },
+            },
+          },
+        },
+      },
+      privateCtx: () => ({ ignored: 0 }),
+    }).start(newCtx());
+    after.send({ type: "NOPE" });
+    after.send({ type: "NOPE" });
+    expect(after.ctx).toMatchObject({ ignored: 6 });
+  });
+
+  test("a path and a hook typed for one event variant are compile errors", () => {
+    const onlyHit = (ctx: Ctx, event: Extract<Ev, { type: "HIT" }>): void => {
+      ctx.health -= event.damage;
+    };
+    // Never called: the definitions hold what the types reject, and only the compiler reads them.
+    const rejected = () => {
+      defineMachine<Ctx, Ev>()({
+        initial: "/a",
+        states: {
+          a: {
+            // @ts-expect-error the hook is a function; a path belongs on a rule
+            unhandled: "/b",
+          },
+          b: {},
+        },
+      });
+      defineMachine<Ctx, Ev>()({
+        initial: "/a",
+        states: {
+          a: {
+            // @ts-expect-error the hook gets every event, not HIT alone
+            unhandled: onlyHit,
+          },
+        },
+      });
+    };
+    expect(rejected).toBeFunction();
   });
 });
