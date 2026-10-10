@@ -1,4 +1,4 @@
-import { afterEntries, type MachineIndex, machineIndex, ruleIds } from "./hsm-view-index";
+import { type MachineIndex, machineIndex, ruleIds, timerEntries } from "./hsm-view-index";
 import {
   type EngineEntry as LoadedEngineEntry,
   type LoadedMachine,
@@ -49,6 +49,7 @@ interface StateConfig {
   readonly states?: Readonly<Record<string, StateConfig>>;
   readonly on?: Readonly<Record<string, string | RuleConfig | readonly RuleConfig[]>>;
   readonly after?: unknown;
+  readonly every?: unknown;
   readonly always?: string | RuleConfig | readonly RuleConfig[];
   readonly enter?: (ctx: unknown, machine: RuntimeInstance) => void;
   readonly exit?: (ctx: unknown, machine: RuntimeInstance) => void;
@@ -275,7 +276,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         }
         wrapped.on = on;
       }
-      const timers = afterEntries(state.after).map((entry, index) => {
+      const timers = timerEntries(state.after).map((entry, index) => {
         const id = ids[path]?.after[index];
         const note: RuleAction = () => {
           if (id !== undefined) {
@@ -295,13 +296,57 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         if (rule.to === undefined && run.length === 0) {
           return entry;
         }
-        return { key: entry.key, spec: { ...rule, run: [note, ...run] } };
+        const when = rule.when;
+        if (when === undefined) {
+          return { key: entry.key, spec: { ...rule, run: [note, ...run] } };
+        }
+        return {
+          key: entry.key,
+          spec: {
+            ...rule,
+            // The runtime calls a timer's `when` only once its delay has passed, so a `false`
+            // here is a timer that is due and held back.
+            when: (...args: Parameters<typeof when>) => {
+              const accepted = when(...args);
+              if (!accepted && id !== undefined) {
+                rejected.push(id);
+              }
+              return accepted;
+            },
+            run: [note, ...run],
+          },
+        };
       });
       if (timers.length > 0) {
         wrapped.after =
           typeof timers[0]?.key === "number"
             ? timers.map((timer) => timer.spec)
             : Object.fromEntries(timers.map((timer) => [timer.key, timer.spec]));
+      }
+      const repeats = timerEntries(state.every).map((entry, index) => {
+        const id = ids[path]?.every[index];
+        const note: RuleAction = () => {
+          if (id !== undefined) {
+            fired.push(id);
+          }
+        };
+        const spec = entry.spec;
+        const listed = typeof entry.key === "number";
+        const declared = listed
+          ? (spec as { readonly run?: unknown } | null | undefined)?.run
+          : spec;
+        // Left as written so the runtime still rejects an entry with no `run`.
+        if (typeof declared !== "function" && !(Array.isArray(declared) && declared.length > 0)) {
+          return entry;
+        }
+        const run = [note, ...runOf(declared as RuleConfig["run"])];
+        return { key: entry.key, spec: listed ? { ...(spec as object), run } : run };
+      });
+      if (repeats.length > 0) {
+        wrapped.every =
+          typeof repeats[0]?.key === "number"
+            ? repeats.map((repeat) => repeat.spec)
+            : Object.fromEntries(repeats.map((repeat) => [repeat.key, repeat.spec]));
       }
       if (state.always !== undefined) {
         const source = Array.isArray(state.always) ? state.always : [state.always];
