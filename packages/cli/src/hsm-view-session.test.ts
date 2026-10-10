@@ -417,6 +417,107 @@ describe("createSession", () => {
     ]);
   });
 
+  test("names the after list entry that fired", () => {
+    const ordered = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: { after: [{ delay: 2, to: "/b" }, { delay: 1, to: "/c" }] },
+    b: {},
+    c: {},
+  },
+}`),
+    );
+    ordered.start({});
+    expect(ordered.update(1)).toMatchObject({ path: "/c", fired: [ruleId("/a", "after", 1)] });
+
+    const computed = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: {
+      after: [
+        {
+          delay: (ctx) => {
+            ctx.reads += 1;
+            return ctx.wait;
+          },
+          to: "/b",
+        },
+      ],
+    },
+    b: {},
+  },
+}`),
+    );
+    computed.start({ wait: 0.5, reads: 0 });
+    expect(computed.update(0.25)).toMatchObject({ path: "/a", fired: [] });
+    expect(computed.update(0.25)).toMatchObject({
+      path: "/b",
+      fired: [ruleId("/a", "after", 0)],
+      ctx: { reads: 1 },
+    });
+
+    const ran = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: {
+      after: {
+        1: {
+          to: "/b",
+          run: (ctx) => {
+            ctx.ran = true;
+          },
+        },
+      },
+    },
+    b: {},
+  },
+}`),
+    );
+    ran.start({ ran: false });
+    expect(ran.update(1)).toMatchObject({
+      path: "/b",
+      fired: [ruleId("/a", "after", "1")],
+      ctx: { ran: true },
+    });
+
+    const staying = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: {
+      after: [
+        {
+          delay: 1,
+          run: (ctx) => {
+            ctx.n += 1;
+          },
+        },
+      ],
+    },
+  },
+}`),
+    );
+    staying.start({ n: 0 });
+    const stayed = staying.update(1);
+    expect(stayed).toMatchObject({
+      path: "/a",
+      fired: [ruleId("/a", "after", 0)],
+      ctx: { n: 1 },
+    });
+    expect(kinds(stayed)).not.toContain("transition");
+
+    const empty = 'has an after timer with no "to" and no "run"';
+    expect(() =>
+      session(machine(`{ initial: "/a", states: { a: { after: [{ delay: 1 }] } } }`)),
+    ).toThrow(empty);
+    expect(() =>
+      session(machine(`{ initial: "/a", states: { a: { after: { 1: {} } } } }`)),
+    ).toThrow(empty);
+  });
+
   test("captures engine calls for one snapshot and records unhandled events", () => {
     const view = session(
       machine(`{

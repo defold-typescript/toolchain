@@ -104,6 +104,41 @@ export const m = defineMachine()({
     expect(index.ruleOnKeys).not.toHaveProperty([ruleId("/a", "update")]);
   });
 
+  test("maps each after list entry to its own rule id and source", () => {
+    const entry = write(
+      "main.ts",
+      `import { defineMachine } from "@defold-typescript/types/hsm";
+export const m = defineMachine()({
+  initial: "/a",
+  states: {
+    a: { after: [{ delay: 2, to: "/b" }, { delay: (ctx) => ctx.wait, to: "/c" }] },
+    b: { after: { 0: { to: "/c" }, 1.5: "/a" } },
+    c: {},
+  },
+});
+`,
+    );
+    const loaded = load(entry);
+    const config = loaded.machines[0]?.config;
+    const index = machineIndex(config, loaded.files);
+
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "after", 0)])).toBe(
+      '{ delay: 2, to: "/b" }',
+    );
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "after", 1)])).toBe(
+      '{ delay: (ctx) => ctx.wait, to: "/c" }',
+    );
+    expect(index.rules).not.toHaveProperty([ruleId("/a", "after", "0")]);
+    expect(index.rules).not.toHaveProperty([ruleId("/a", "after", "1")]);
+    expect(spanText(loaded.files, index.rules[ruleId("/b", "after", "0")])).toBe("0");
+    expect(spanText(loaded.files, index.rules[ruleId("/b", "after", "1.5")])).toBe("1.5");
+    expect(index.rules).not.toHaveProperty([ruleId("/b", "after", 0)]);
+    expect(ruleIds(config)["/a"]?.after).toEqual([
+      ruleId("/a", "after", 0),
+      ruleId("/a", "after", 1),
+    ]);
+  });
+
   test("gives rules of colliding state names and event types distinct ids", () => {
     const entry = write(
       "main.ts",
@@ -132,7 +167,7 @@ export const m = defineMachine()({
 
     const ids = Object.values(ruleIds(config)).flatMap((state) => [
       ...Object.values(state.on).flat(),
-      ...Object.values(state.after).flat(),
+      ...state.after,
       ...state.always,
       ...(state.update === undefined ? [] : [state.update]),
     ]);
