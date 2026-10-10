@@ -412,11 +412,14 @@ export interface Machine<
   Tag extends string = never,
 > {
   /**
-   * Creates an instance with `ctx` as its context and enters the root's `initial` chain. Each
-   * call returns a separate instance, which has already handled the events its `enter` hooks
-   * sent.
+   * Creates an instance with `ctx` as its context. Without `at` it enters the root's `initial`
+   * chain. With `at`, a list of full state paths such as a copy of `leaves`, it enters toward
+   * each path: a level or region no path names goes through `initial`, a path the machine lacks
+   * falls back to its closest parent, and of two paths that cannot be active together the first
+   * wins. Timer progress and `restoreDepth` memory are not part of the list. Each call returns a
+   * separate instance, which has already handled the events its `enter` hooks sent.
    */
-  readonly start: (ctx: Ctx) => MachineInstance<Ctx, E, P, Tag>;
+  readonly start: (ctx: Ctx, at?: readonly P[]) => MachineInstance<Ctx, E, P, Tag>;
 }
 
 type PathDepth = [never, 0, 1, 2, 3];
@@ -762,10 +765,13 @@ function resolveTarget<Ctx, E extends EventObject>(
   return index;
 }
 
-// A structural cast keeps each read a plain method call: native in JavaScript, string.byte in Lua.
+// A structural cast keeps each read a plain method call: native in JavaScript, string.byte and
+// string.sub in Lua.
 interface StringUnits {
   charCodeAt(index: number): number;
   byte(index: number): number;
+  substring(start: number, end: number): string;
+  sub(first: number, last: number): string;
 }
 
 // JavaScript strings hold UTF-16 code units; Lua strings hold UTF-8 bytes.
@@ -777,6 +783,36 @@ function unitAt(text: string, index: number): number {
     return units.charCodeAt(index);
   }
   return units.byte(index + 1);
+}
+
+const SLASH = 47;
+
+// The state at path, or at its closest parent that exists: the path loses its last name until
+// a state has it, and the root stands in when none does.
+function closestState<Ctx, E extends EventObject>(
+  compiled: Compiled<Ctx, E>,
+  path: string,
+): number {
+  let text = path;
+  while (true) {
+    const state = lookupPath(compiled, text);
+    if (state !== undefined) {
+      return state;
+    }
+    let cut = text.length - 1;
+    while (cut > 0 && unitAt(text, cut) !== SLASH) {
+      cut--;
+    }
+    if (cut <= 0) {
+      return ROOT;
+    }
+    const units = text as unknown as StringUnits;
+    if (UTF16_UNITS) {
+      text = units.substring(0, cut);
+    } else {
+      text = units.sub(1, cut);
+    }
+  }
 }
 
 // Moves surrogates above the rest of the BMP, so UTF-16 units compare in code-point order.
@@ -1311,6 +1347,38 @@ function transitionDomain<Ctx, E extends EventObject>(
   return domain;
 }
 
+// Reads a start position: by state, the child a compound state enters, or NO_STATE where no
+// path names one. Each path, in list order, claims the child of every compound state above the
+// state it names. A path that needs a child an earlier path claimed differently is dropped
+// whole, before it claims anything, so the first in the list wins and a dropped path leaves
+// nothing behind. Every state has an entry, so neither runtime reads a list with holes.
+function startChildren<Ctx, E extends EventObject>(
+  compiled: Compiled<Ctx, E>,
+  at: readonly string[],
+): number[] {
+  const parent = compiled.parent;
+  const chosen: number[] = [];
+  for (let state = 0; state < compiled.count; state++) {
+    chosen[state] = NO_STATE;
+  }
+  for (let i = 0; i < at.length; i++) {
+    const target = closestState(compiled, at[i] as string);
+    let free = true;
+    for (let state = target; free && state !== ROOT; state = parent[state] as number) {
+      const claimed = chosen[parent[state] as number] as number;
+      free = claimed === NO_STATE || claimed === state;
+    }
+    for (let state = target; free && state !== ROOT; state = parent[state] as number) {
+      const owner = parent[state] as number;
+      // Every region of a parallel state is entered, so it holds no choice.
+      if (compiled.parallel[owner] !== true) {
+        chosen[owner] = state;
+      }
+    }
+  }
+  return chosen;
+}
+
 interface Definition<Ctx, E extends EventObject> {
   compiled: Compiled<Ctx, E>;
   generation: number;
@@ -1368,7 +1436,7 @@ function withoutListener<L>(list: readonly L[], listener: L): L[] {
 function createMachine<Ctx, E extends EventObject>(
   definition: Definition<Ctx, E>,
 ): Machine<Ctx, E> {
-  function start(ctx: Ctx): MachineInstance<Ctx, E> {
+  function start(ctx: Ctx, at?: readonly string[]): MachineInstance<Ctx, E> {
     let compiled = definition.compiled;
     let generation = definition.generation;
     let paths = compiled.paths;
@@ -1843,6 +1911,26 @@ function createMachine<Ctx, E extends EventObject>(
       }
     }
 
+    // For a state already entered, at a start with a list of paths: chosen is what
+    // startChildren read from the list.
+    function enterAt(state: number, chosen: number[]): void {
+      if (parallel[state] === true) {
+        const list = children[state] as number[];
+        for (let i = 0; i < list.length; i++) {
+          enterState(list[i] as number);
+          enterAt(list[i] as number, chosen);
+        }
+        return;
+      }
+      const child = chosen[state] as number;
+      if (child === NO_STATE) {
+        enterDefaults(state, 0);
+        return;
+      }
+      enterState(child);
+      enterAt(child, chosen);
+    }
+
     function enterMissing(state: number): void {
       if (parallel[state] === true) {
         const list = children[state] as number[];
@@ -2281,10 +2369,19 @@ function createMachine<Ctx, E extends EventObject>(
       return false;
     }
 
+    // The whole list is read before any hook runs, so a hook that changes it changes nothing.
+    let chosen: number[] | undefined;
+    if (at !== undefined) {
+      chosen = startChildren(compiled, at);
+    }
     busy = true;
     fillPrivate(ctx as never, configs[ROOT], false);
     enterState(ROOT);
-    enterDefaults(ROOT, 0);
+    if (chosen === undefined) {
+      enterDefaults(ROOT, 0);
+    } else {
+      enterAt(ROOT, chosen);
+    }
     refreshLeaves();
     settleAlways();
     endStep();

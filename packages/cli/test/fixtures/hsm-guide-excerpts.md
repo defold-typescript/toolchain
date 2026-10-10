@@ -176,6 +176,33 @@ export default defineScript({
 });
 ```
 
+```ts title="guard-saved.ts"
+import { defineScript } from "@defold-typescript/types";
+import { guardMachine } from "./guard-machine";
+
+type Guard = ReturnType<
+  typeof guardMachine.start
+>;
+
+interface GuardSave {
+  at?: NonNullable<Guard["path"]>[];
+}
+
+const SAVE_FILE = sys.get_save_file("my_game", "guard");
+
+export default defineScript({
+  init() {
+    const save = sys.load(SAVE_FILE) as GuardSave;
+    const ctx = { sprite: msg.url("#sprite"), health: 3 };
+    return { guard: guardMachine.start(ctx, save.at) };
+  },
+  final(self) {
+    sys.save(SAVE_FILE, { at: self.guard.leaves });
+    self.guard.stop();
+  },
+});
+```
+
 ```ts title="guard-named-self.ts"
 import { defineScript } from "@defold-typescript/types";
 import { guardMachine } from "./guard-machine";
