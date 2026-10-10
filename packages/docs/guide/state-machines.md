@@ -158,67 +158,55 @@ A `to` below the state the rule is on keeps that state active and re-enters only
 
 ### React to an unhandled event
 
-A reaction that is part of the machine's behavior, such as answering the sender of a message the machine did not take, goes on a state as `unhandled`:
+A reaction of the machine to any event it did not take, such as refusing a request by name, goes on a state as `unhandled`:
 
-```ts title="busy-lift.ts"
+```ts title="door-requests.ts"
 import { defineMachine } from "@defold-typescript/types/hsm";
 import type { MessageEvent } from "@defold-typescript/types/hsm/defold";
 
 declare global {
   interface CustomMessages {
-    board_lift: { floor: number };
-    lift_busy: { floor: number };
+    open_door: {};
+    close_door: {};
+    lock_door: {};
+    unlock_door: {};
+    door_refused: { request: string };
   }
 }
 
-interface LiftCtx {
-  floor: number;
-  refused: number;
+interface DoorCtx {
+  readonly sprite: Url;
 }
 
-type LiftEvent = MessageEvent<"board_lift"> | { type: "RESET" };
+type DoorEvent = MessageEvent<"open_door" | "close_door" | "lock_door" | "unlock_door">;
 
-export const busyLift = defineMachine<LiftCtx, LiftEvent>()({
-  initial: "/waiting",
-  on: { RESET: "/waiting" },
-  // in every state: tell the caller where the lift is going
-  unhandled: (ctx, event) => {
-    if (event.type === "board_lift") {
-      msg.post(event.sender, "lift_busy", { floor: ctx.floor });
-    }
-  },
+export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
+  initial: "/closed",
+  // in every state: refuse, by name, whatever request the door did not take
+  unhandled: (_ctx, event) => msg.post(event.sender, "door_refused", { request: event.type }),
   states: {
-    waiting: {
-      on: {
-        board_lift: {
-          to: "/moving",
-          run: (ctx, event) => {
-            ctx.floor = event.floor;
-          },
-        },
-      },
-    },
-    moving: {
-      // in this state only: count the calls it did not take
-      unhandled: (ctx) => {
-        ctx.refused += 1;
-      },
-      after: { 2: "/waiting" },
+    closed: { on: { open_door: "/open", lock_door: "/locked" } },
+    open: { on: { close_door: "/closed" } },
+    locked: {
+      // in this state only: any request but the unlock rattles the handle
+      unhandled: (ctx) => sprite.play_flipbook(ctx.sprite, "rattle"),
+      on: { unlock_door: "/closed" },
     },
   },
 });
 ```
 
-In `/moving` a `board_lift` message finds no rule, so `moving` counts it and then the root answers the caller.
+A locked door that is asked to open rattles its handle and then tells the sender the request was refused; `closed` and `open` only refuse. Four rules and two hooks cover all twelve pairs of state and request. No rule took the request, so [`can`](#ask-whether-an-event-would-be-taken) still answers `false` for it: a script that shows an "Open" prompt while `can` answers `true` shows none at a locked door.
 
 The rules:
 
 - **It runs for the events an [`onUnhandled` listener](#listen-for-unhandled-events) hears, and no others.** An event a parent state takes runs no hook, on any state.
 - **Every active state that has the hook runs it, deepest first.** The regions of a parallel state run in name order and the parallel state after them, which is the order `update` hooks run in. The `onUnhandled` listeners run after the hooks.
-- **`event` is the machine's whole event union.** A hook checks `event.type` before it reads a payload field. `machine` is the instance a `run` receives.
+- **`event` is the machine's whole event union.** A hook checks `event.type` before it reads a payload field. A field every variant has, such as `sender` on a machine that takes only messages, needs no check. `machine` is the instance a `run` receives.
 - **The hook moves nothing.** It returns nothing, no state exits or enters, and `can` answers as before. A `send` from it queues, and a `stop()` ends the step once every hook and listener has run for the event.
 - **The hook is part of the definition.** Every instance has it and a hot reload replaces it. A listener is attached to one instance by its script, which suits logging and tools.
 - **A state that should ignore an event takes it with an empty rule.** With `PAUSE: {}` on the state, neither a parent's rule nor any `unhandled` hook runs.
+- **For one named event, write a rule.** A rule with no `to`, such as `HIT: { run }`, takes the event with its payload narrowed, and `can` answers `true` for it. The hook is for every event type at once and leaves the event unhandled.
 
 ## `update` and `after`
 
@@ -2359,20 +2347,16 @@ on_message(self, message_id, message, sender) {
 </td></tr>
 <tr><td>
 
-React to an event no state took
+React to any event no state took
 
 </td><td>
 
-[`unhandled`](#react-to-an-unhandled-event) on a state or the root, where `event` is the whole event union
+[`unhandled`](#react-to-an-unhandled-event) on a state or the root: one hook for every event type, and the event stays unhandled. One named event is a rule with no `to`; see the row [React to an event and stay in the state](#configure-a-state)
 
 </td><td>
 
 ```ts excerpt
-unhandled: (_ctx, event) => {
-  if (event.type === "trigger_response") {
-    msg.post(event.sender, "guard_paused");
-  }
-},
+unhandled: () => sound.play("#blocked"),
 ```
 
 </td></tr>
