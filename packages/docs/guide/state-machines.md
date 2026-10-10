@@ -915,7 +915,7 @@ An instance always keeps its `ctx`. What happens to its current state depends on
 
 | After the edit, the current state… | The instance… |
 | --- | --- |
-| still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The state also keeps which of its timers fired, by position in delay order. The edited transitions, `when` checks and hooks apply from now on, and the delay functions of the state's timers are read again. |
+| still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The state also keeps which of its timers fired: by entry for a list that holds a delay function, so each mark stays on its own timer when the delays read differently after the reload, and by position in delay order for every other form. The edited transitions, `when` checks and hooks apply from now on, and the delay functions of the state's timers are read again. |
 | still exists, but now has child states | enters its `initial` child (and that child's `initial`, and so on), running their `enter` hooks. |
 | was removed | moves to the closest parent state that still exists and enters that parent's `initial` chain, running those `enter` hooks. The removed states run no `exit` hook, because their code is gone, but a cleanup their `task` returned still runs, deepest state first. |
 | is a [parallel](#run-regions-side-by-side-with-parallel) state that gained a region | keeps its other regions as they are and enters only the new one. |
@@ -2376,7 +2376,7 @@ The optional key the root config takes; see [Private fields with `privateCtx`](#
 | `matches` | `(path: P) => boolean`  | Whether the state at the full path `path` is active, ancestors included.           |
 | `can`     | `(event: E) => boolean` | Whether a rule of an active state would take `event` if it were sent at that moment. Moves nothing and runs no hook. |
 | `send`    | `(event: E) => void`    | Handles `event`, or queues it when called during a step.                           |
-| `update`  | `(dt: number) => void`  | Runs the `update` hooks, then the `after` timers if no hook transitioned.          |
+| `update`  | `(dt: number) => void`  | Runs the `update` hooks, then the `after` timers of every region no hook moved.   |
 | `stop`    | `() => void`            | Exits every active state; later `send` and `update` calls do nothing.              |
 | `onMove` | `(listener: (from, to, cause, event) => void) => () => void` | Calls `listener` after each move with the old and new leaf, the cause and the event; inside a parallel state, the leaves are those of the region that moved. `to` is `undefined` on `stop()`. Returns a function that removes the listener. |
 | `onUnhandled` | `(listener: (event: E) => void) => () => void` | Calls `listener` with each event the machine processes that no rule of an active state takes. Returns a function that removes the listener. |
