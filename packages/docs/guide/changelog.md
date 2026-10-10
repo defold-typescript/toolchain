@@ -13,22 +13,23 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** must add `can` and `onUnhandled`.
-> - **[State machines](./state-machines.md)** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), take [rules on timers](./state-machines.md#rules-on-a-timer), react to dropped events with [`unhandled`](./state-machines.md#react-to-an-unhandled-event) and gain `can` and `onUnhandled`.
+> - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** must add `can`, `onUnhandled` and `hasTag`.
+> - **[State machines](./state-machines.md)** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), take [rules on timers](./state-machines.md#rules-on-a-timer), name groups of states with [tags](./state-machines.md#name-a-group-of-states-with-tags), react to dropped events with [`unhandled`](./state-machines.md#react-to-an-unhandled-event) and gain `can` and `onUnhandled`.
 > - **[`waitGroup()`](./state-machines.md#waitgroup)** lets a `task` wait for several engine calls.
 > - **A [hot reload](./state-machines.md#what-each-instance-keeps)** keeps each timer's fired mark.
 
 ### Breaking
 
-- **`MachineInstance` requires `can` and `onUnhandled`:** an object you build yourself and type as `MachineInstance`, such as a test double or a wrapper around a real instance, fails to compile until it has both. In a wrapper, add `can: (event) => inner.can(event)` and `onUnhandled: (listener) => inner.onUnhandled(listener)`; an instance returned by `start` needs no change; see [`MachineInstance`](./state-machines.md#machineinstance).
+- **`MachineInstance` requires `can`, `onUnhandled` and `hasTag`:** an object you build yourself and type as `MachineInstance`, such as a test double or a wrapper around a real instance, fails to compile until it has all three. In a wrapper, add `can: (event) => inner.can(event)`, `onUnhandled: (listener) => inner.onUnhandled(listener)` and `hasTag: (tag) => inner.hasTag(tag)`; an instance returned by `start` needs no change; see [`MachineInstance`](./state-machines.md#machineinstance).
 
 ### Improved
 
-- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, wait for several engine calls, react to the events no state took and answer more about a running machine, and the guide gains a recipe:**
+- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took and answer more about a running machine, and the guide gains a recipe:**
   - **`every`** — a state runs code each time a delay passes while it is active, such as damage every half second or a rate of fire read from the context; a long frame runs it once, and a run is not a move; see [Repeat while a state is active](./state-machines.md#repeat-while-a-state-is-active).
   - **Rules on timers and `always`** — an `after` timer takes `to`, `when` and `run`, so a state can run code at a set time without leaving and a timer can wait for a condition once its delay has passed, and an `always` rule takes `run`; see [Rules on a timer](./state-machines.md#rules-on-a-timer).
   - **`waitGroup()`** — a `task` that starts several engine calls waits for all of them: each `add()` returns the callback to pass, as in `http.request(url, "GET", group.add())`, and `wait` runs its callback once every one has reported; see [`WaitGroup`](./state-machines.md#waitgroup).
-  - **A `when` reads the machine** — a rule's `when` receives the running machine as its last argument, read-only, so a rule can depend on the active states, as in `when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing")`; see [Read another region in a `when`](./state-machines.md#read-another-region-in-a-when).
+  - **A `when` reads the machine** — a rule's `when` receives the running machine as its last argument, read-only, so a rule can depend on the active states through `matches` and `hasTag`, as in `when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing")`; see [Read another region in a `when`](./state-machines.md#read-another-region-in-a-when).
+  - **Tags** — a state lists `tags`, and `hasTag` on the instance and on the `machine` every callback receives answers whether any active state carries one, such as every state in which the player takes no damage; the names are the third type argument of `defineMachine`; see [Name a group of states with tags](./state-machines.md#name-a-group-of-states-with-tags).
   - **`can(event)`** — returns whether a rule of an active state would take the event, without moving the machine or running a hook; see [Ask whether an event would be taken](./state-machines.md#ask-whether-an-event-would-be-taken).
   - **`unhandled` hook** — a state, or the root, runs code when the machine drops an event while that state is active, such as answering the sender of a message it did not take; it is part of the definition, so every instance has it; see [React to an unhandled event](./state-machines.md#react-to-an-unhandled-event).
   - **`onUnhandled(listener)`** — calls the listener with each event no active state took, and `inspect` prints an `unhandled` line for it; see [Listen for unhandled events](./state-machines.md#listen-for-unhandled-events).

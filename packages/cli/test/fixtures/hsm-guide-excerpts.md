@@ -342,6 +342,42 @@ export const timedGuard = defineMachine<GuardCtx, GuardEvent>()({
 });
 ```
 
+```ts title="guard-tags.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+interface GuardCtx {
+  readonly squad: Url;
+}
+
+type GuardEvent =
+  | { type: "SPOT" }
+  | { type: "REACH" }
+  | { type: "LOSE" }
+  | { type: "RADIO" };
+
+export const taggedGuard = defineMachine<GuardCtx, GuardEvent, "alert">()({
+  initial: "/patrol",
+  on: {
+    RADIO: {
+      when: (_ctx, _event, machine) =>
+        machine.hasTag("alert"),
+      run: (ctx) => msg.post(ctx.squad, "backup"),
+    },
+  },
+  states: {
+    patrol: { on: { SPOT: "/chase" } },
+    chase: {
+      tags: ["alert"],
+      on: { REACH: "/attack", LOSE: "/patrol" },
+    },
+    attack: {
+      tags: ["alert"],
+      on: { LOSE: "/patrol" },
+    },
+  },
+});
+```
+
 ```ts title="guard-private.ts"
 import { defineMachine } from "@defold-typescript/types/hsm";
 
