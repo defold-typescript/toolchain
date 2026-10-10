@@ -547,6 +547,176 @@ describe("createSession", () => {
     ).toThrow(empty);
   });
 
+  test("names the every entry that ran", () => {
+    const record = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: {
+      every: {
+        0.5: (ctx) => {
+          ctx.n += 1;
+        },
+      },
+    },
+  },
+}`),
+    );
+    record.start({ n: 0 });
+    expect(record.update(0.25)).toMatchObject({ path: "/a", fired: [] });
+    const repeated = record.update(0.25);
+    expect(repeated).toMatchObject({
+      path: "/a",
+      fired: [ruleId("/a", "every", "0.5")],
+      ctx: { n: 1 },
+    });
+    expect(kinds(repeated)).not.toContain("transition");
+
+    const listed = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: {
+      every: [
+        {
+          delay: 1,
+          run: [
+            (ctx) => {
+              ctx.a += 1;
+            },
+            (ctx) => {
+              ctx.b += 1;
+            },
+          ],
+        },
+        {
+          delay: (ctx) => ctx.rate,
+          run: (ctx) => {
+            ctx.c += 1;
+          },
+        },
+      ],
+    },
+  },
+}`),
+    );
+    listed.start({ a: 0, b: 0, c: 0, rate: 0.5 });
+    expect(listed.update(0.5)).toMatchObject({ fired: [ruleId("/a", "every", 1)] });
+    expect(listed.update(0.5)).toMatchObject({
+      fired: [ruleId("/a", "every", 0), ruleId("/a", "every", 1)],
+      ctx: { a: 1, b: 1, c: 2 },
+    });
+
+    const timed = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: {
+      every: {
+        1: (ctx) => {
+          ctx.n += 1;
+        },
+      },
+      after: { 1: "/b" },
+    },
+    b: {},
+  },
+}`),
+    );
+    timed.start({ n: 0 });
+    expect(timed.update(1)).toMatchObject({
+      path: "/b",
+      fired: [ruleId("/a", "every", "1"), ruleId("/a", "after", "1")],
+    });
+
+    const empty = 'has an every entry with no "run"';
+    expect(() =>
+      session(machine(`{ initial: "/a", states: { a: { every: [{ delay: 1 }] } } }`)),
+    ).toThrow(empty);
+    expect(() =>
+      session(machine(`{ initial: "/a", states: { a: { every: { 1: [] } } } }`)),
+    ).toThrow(empty);
+  });
+
+  test("lists the after timer its when holds back", () => {
+    const moving = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: { after: { 1: { to: "/b", when: (ctx) => ctx.open } } },
+    b: {},
+  },
+}`),
+    );
+    moving.start({ open: false });
+    expect(moving.update(0.5)).toMatchObject({ fired: [], rejected: [] });
+    const held = { path: "/a", fired: [], rejected: [ruleId("/a", "after", "1")] };
+    expect(moving.update(0.5)).toMatchObject(held);
+    expect(moving.update(0.1)).toMatchObject(held);
+    moving.editCtx(["open"], true);
+    expect(moving.update(0.1)).toMatchObject({
+      path: "/b",
+      fired: [ruleId("/a", "after", "1")],
+      rejected: [],
+    });
+
+    const staying = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: {
+      after: [
+        {
+          delay: 1,
+          when: (ctx) => ctx.open,
+          run: (ctx) => {
+            ctx.n += 1;
+          },
+        },
+      ],
+    },
+  },
+}`),
+    );
+    staying.start({ open: false, n: 0 });
+    expect(staying.update(1)).toMatchObject({
+      rejected: [ruleId("/a", "after", 0)],
+      ctx: { n: 0 },
+    });
+    staying.editCtx(["open"], true);
+    const ran = staying.update(0.1);
+    expect(ran).toMatchObject({
+      fired: [ruleId("/a", "after", 0)],
+      rejected: [],
+      ctx: { n: 1 },
+    });
+    expect(kinds(ran)).not.toContain("transition");
+  });
+
+  test("runs the run of an always rule", () => {
+    const moved = session(
+      machine(`{
+  initial: "/idle",
+  states: {
+    idle: { on: { GO: "/a" } },
+    a: {
+      always: {
+        to: "/b",
+        run: (ctx) => {
+          ctx.ran = true;
+        },
+      },
+    },
+    b: {},
+  },
+}`),
+    );
+    moved.start({ ran: false });
+    const settled = moved.send({ type: "GO" });
+    expect(settled).toMatchObject({ path: "/b", ctx: { ran: true } });
+    expect(settled.fired).toContain(ruleId("/a", "always", 0));
+  });
+
   test("captures engine calls for one snapshot and records unhandled events", () => {
     const view = session(
       machine(`{
