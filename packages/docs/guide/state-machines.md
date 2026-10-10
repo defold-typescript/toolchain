@@ -162,7 +162,7 @@ A `to` below the state the rule is on keeps that state active and re-enters only
 
 First the `update` hooks run, from the deepest active state up, each with `(ctx, dt, machine)`. A hook returns a path to move to or `undefined` to pass. The first hook to return a path wins: the remaining hooks do not run, and the path is a full path, like an `on` target. A hook move has no `run`.
 
-Then, only if no hook transitioned, the `after` timers run. `after` maps a delay in seconds, measured on the state's clock, to a target path or to a [rule](#rules-on-a-timer). A state's timers are tried in delay order, deepest state first. The first timer that moves ends the timers of its region for that call, and another timer that is due waits for the next call.
+Then, only if no hook transitioned, each active state runs its [`every` entries](#repeat-while-a-state-is-active) and then tries its `after` timers, deepest state first. `after` maps a delay in seconds, measured on the state's clock, to a target path or to a [rule](#rules-on-a-timer). A state's timers are tried in delay order. The first timer that moves ends the timers of its region for that call, and another timer that is due waits for the next call.
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -318,6 +318,54 @@ The beep plays one second into `charging`, and the hero keeps charging. Two seco
 - A due timer whose `when` fails is tried again on every `update` call until it passes or the state is left. The timers after it are still tried.
 - A timer with no `to` is not a move: no `update` hook is skipped, `always` is not rechecked, `onMove` is not called, and the call goes on to the next due timer.
 - The `run` of a rule with a `to` runs between the `exit` and `enter` hooks, as under `on`.
+
+### Repeat while a state is active
+
+`every` runs code each time a delay passes while the state is active, such as damage every half second, a spawn or a rate of fire.
+
+```ts title="every-fire.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+interface TurretCtx {
+  readonly muzzle: Url;
+  readonly fireEvery: number;
+  heat: number;
+}
+
+type TurretEvent = { type: "SPOT" } | { type: "LOSE" };
+
+export const turret = defineMachine<TurretCtx, TurretEvent>()({
+  initial: "/idle",
+  states: {
+    idle: { on: { SPOT: "/firing" } },
+    firing: {
+      // A rate of fire read from the context.
+      every: [{ delay: (ctx) => ctx.fireEvery, run: (ctx) => msg.post(ctx.muzzle, "fire") }],
+      on: { LOSE: "/cooling" },
+    },
+    cooling: {
+      // A fixed delay, beside a timer that leaves the state.
+      every: {
+        0.5: (ctx) => {
+          ctx.heat -= 1;
+        },
+      },
+      after: { 3: "/idle" },
+    },
+  },
+});
+```
+
+`firing` posts `fire` to the muzzle every `fireEvery` seconds for as long as the turret stays in it. `cooling` lowers `heat` every half second until its timer moves to `/idle`.
+
+- `every` takes a record of seconds to `run`, or a list of `{ delay, run }` whose `delay` is a number or a function of the context, read as an [`after` delay](#a-delay-that-reads-the-context) is.
+- `run` is one function or a list run in order, called with `(ctx, machine)`.
+- An entry first runs one delay after the state is entered, then each time another delay has passed on the state's clock, which keeps counting while the state's children change and stands still while `update` is not called.
+- An entry runs at most once per `update` call. A long frame runs it once, and its later runs stay on multiples of the delay.
+- A run is not a move: no `update` hook is skipped, `always` is not rechecked and `onMove` is not called.
+- A state's entries run before its `after` timers, deepest state first, list entries in list order and a record's shortest delay first. On a call in which an `update` hook or a timer of a deeper state moved, they wait for the next call.
+- A delay that is not a positive number throws, naming the state.
+- An entry takes no `to` and no `when`: an `after` timer leaves the state, and a `run` tests a condition itself. An effect that depends on the frame time belongs in an `update` hook.
 
 ## Resume with history
 
@@ -915,7 +963,7 @@ An instance always keeps its `ctx`. What happens to its current state depends on
 
 | After the edit, the current state… | The instance… |
 | --- | --- |
-| still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The state also keeps which of its timers fired: by entry for a list that holds a delay function, so each mark stays on its own timer when the delays read differently after the reload, and by position in delay order for every other form. The edited transitions, `when` checks and hooks apply from now on, and the delay functions of the state's timers are read again. |
+| still exists | stays in it, keeps its `after` timers counting, and runs no `enter` or `exit` hook. The state also keeps which of its timers fired: by entry for a list that holds a delay function, so each mark stays on its own timer when the delays read differently after the reload, and by position in delay order for every other form. The edited transitions, `when` checks and hooks apply from now on, and the delay functions of the state's timers and `every` entries are read again. The state keeps its clock, and each [`every` entry](#repeat-while-a-state-is-active) next runs at the first multiple of its delay above that clock. |
 | still exists, but now has child states | enters its `initial` child (and that child's `initial`, and so on), running their `enter` hooks. |
 | was removed | moves to the closest parent state that still exists and enters that parent's `initial` chain, running those `enter` hooks. The removed states run no `exit` hook, because their code is gone, but a cleanup their `task` returned still runs, deepest state first. |
 | is a [parallel](#run-regions-side-by-side-with-parallel) state that gained a region | keeps its other regions as they are and enters only the new one. |
@@ -1746,7 +1794,7 @@ Two rules carry over to any migration:
 
 ## Cheat sheet
 
-Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies. The two snippets on private fields come from a second guard, one that counts its hits itself, and the snippet on timer rules from a third, one that shouts while on alert.
+Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies. The two snippets on private fields come from a second guard, one that counts its hits itself, and the snippets on timer rules and on `every` from a third, one that shouts and scans while on alert.
 
 ### Configure a state
 
@@ -1849,6 +1897,27 @@ after: {
     when: (ctx) => ctx.calm,
   },
 }
+```
+
+</td></tr>
+<tr><td>
+
+Repeat an action while a state is active
+
+</td><td>
+
+[`every`](#repeat-while-a-state-is-active), keyed by seconds on the state's clock; the list form reads the delay from the context
+
+</td><td>
+
+```ts excerpt
+every: [
+  {
+    delay: (ctx) => ctx.scanEvery,
+    run: (ctx) =>
+      msg.post(ctx.sprite, "scan"),
+  },
+]
 ```
 
 </td></tr>
@@ -2351,6 +2420,7 @@ Every field is optional on a state; the root config requires `initial` and `stat
 | `states`  | `{ [name: string]: StateConfig }`           | Child states, by name. A name is non-empty and contains no `/`.                               |
 | `on`      | `{ [type]: target \| config \| config[] }`  | Transitions by event `type`, each target a full path; see [Events and transitions](#events-and-transitions). |
 | `after`   | `{ [seconds: number]: target \| rule } \| { delay, to, when, run }[]` | Full-path targets taken after this long in the state, in game time, or rules with a `to`, a `when` and a `run`; see [Rules on a timer](#rules-on-a-timer). In the list form `delay` is a number or `(ctx) => number`, read once per entry of the state; see [`update` and `after`](#update-and-after). |
+| `every`   | `{ [seconds: number]: run \| run[] } \| { delay, run }[]` | Code run each time this many seconds pass on the state's clock while the state is active, without a move; see [Repeat while a state is active](#repeat-while-a-state-is-active). |
 | `always`  | `target \| config \| config[]`               | Full-path targets taken right after any move that leaves this state active; the first whose `when(ctx, machine)` is missing or passes wins, and its `run(ctx, machine)` runs during the move. See [Move on at once with `always`](#move-on-at-once-with-always). |
 | `enter`   | `(ctx, machine) => void`                    | Runs each time the state is entered.                                                          |
 | `exit`    | `(ctx, machine) => void`                    | Runs each time the state is left, including on `stop()`.                                      |
@@ -2376,7 +2446,7 @@ The optional key the root config takes; see [Private fields with `privateCtx`](#
 | `matches` | `(path: P) => boolean`  | Whether the state at the full path `path` is active, ancestors included.           |
 | `can`     | `(event: E) => boolean` | Whether a rule of an active state would take `event` if it were sent at that moment. Moves nothing and runs no hook. |
 | `send`    | `(event: E) => void`    | Handles `event`, or queues it when called during a step.                           |
-| `update`  | `(dt: number) => void`  | Runs the `update` hooks, then the `after` timers of every region no hook moved.   |
+| `update`  | `(dt: number) => void`  | Runs the `update` hooks, then, in every region no hook moved, each state's `every` entries and its `after` timers. |
 | `stop`    | `() => void`            | Exits every active state; later `send` and `update` calls do nothing.              |
 | `onMove` | `(listener: (from, to, cause, event) => void) => () => void` | Calls `listener` after each move with the old and new leaf, the cause and the event; inside a parallel state, the leaves are those of the region that moved. `to` is `undefined` on `stop()`. Returns a function that removes the listener. |
 | `onUnhandled` | `(listener: (event: E) => void) => () => void` | Calls `listener` with each event the machine processes that no rule of an active state takes. Returns a function that removes the listener. |
