@@ -3381,6 +3381,8 @@ export const blink = defineMachine<{ readonly sprite: Url }, BlinkEvent>()({
 });
 ```
 
+A state that starts several pieces of engine work and moves on when all of them have finished counts them with a [`WaitGroup`](#waitgroup).
+
 ##### Cleanup runs on exit, never after an `await`
 
 Release what a state holds (cancel an animation, a timer, a pending request) in its `exit` hook, as the door's `opening` does, or in the cleanup its `task` returns. Both run on every way out of the state, including `stop()`. Never put cleanup after an `await` in a `task` or a hook: by the time the awaited work resumes, the state may already be gone, and code that runs then cleans up after a state that no longer exists, or never runs at all.
@@ -5205,6 +5207,44 @@ The optional key the root config takes; see [Private fields with `privateCtx`](#
 | `stop`    | `() => void`            | Exits every active state; later `send` and `update` calls do nothing.              |
 | `onMove` | `(listener: (from, to, cause, event) => void) => () => void` | Calls `listener` after each move with the old and new leaf, the cause and the event; inside a parallel state, the leaves are those of the region that moved. `to` is `undefined` on `stop()`. Returns a function that removes the listener. |
 | `onUnhandled` | `(listener: (event: E) => void) => () => void` | Calls `listener` with each event the machine processes that no rule of an active state takes. Returns a function that removes the listener. |
+
+##### `WaitGroup`
+
+`waitGroup()` returns a group that counts the engine work a `task` started and tells when all of it has finished.
+
+```ts title="wait-group.ts"
+import { defineMachine, waitGroup } from "@defold-typescript/types/hsm";
+
+interface LevelCtx {
+  readonly url: string;
+  readonly curtain: Url;
+}
+
+type LevelEvent = { type: "READY" };
+
+export const level = defineMachine<LevelCtx, LevelEvent>()({
+  initial: "/loading",
+  states: {
+    loading: {
+      task: (ctx, finish) => {
+        const group = waitGroup();
+        http.request(ctx.url, "GET", group.add());
+        go.animate(ctx.curtain, "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 0.5, 0, group.add());
+        group.wait(() => finish({ type: "READY" }));
+      },
+      on: { READY: "/playing" },
+    },
+    playing: {},
+  },
+});
+```
+
+| Member | Type                             | Meaning                                                                            |
+| ------ | -------------------------------- | ---------------------------------------------------------------------------------- |
+| `add`  | `() => () => void`               | Records one pending piece of work and returns the function that reports it finished. That function counts once and ignores its arguments. |
+| `wait` | `(callback: () => void) => void` | Calls `callback` once when nothing added is pending: at once when nothing is pending at the call, and otherwise inside the report that finishes the last piece. |
+
+A group knows nothing about a machine. Built inside a `task`, it is new for each entry of the state. A report that arrives after the state was left ends in a `finish` that is ignored, and a piece that never reports is a case for the [watchdog](#watchdog).
 
 ### Init
 

@@ -1607,6 +1607,37 @@ end
 function ____exports.defineMachine(key)
     return function(config) return define(key, config) end
 end
+function ____exports.waitGroup()
+    local pending = 0
+    local waiting = {}
+    return {
+        add = function()
+            pending = pending + 1
+            local reported = false
+            return function()
+                if reported then
+                    return
+                end
+                reported = true
+                pending = pending - 1
+                if pending == 0 and #waiting > 0 then
+                    local ready = waiting
+                    waiting = {}
+                    for ____, callback in ipairs(ready) do
+                        callback()
+                    end
+                end
+            end
+        end,
+        wait = function(callback)
+            if pending == 0 then
+                callback()
+            else
+                waiting[#waiting + 1] = callback
+            end
+        end
+    }
+end
 return ____exports
 "
 `;
