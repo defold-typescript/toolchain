@@ -1216,6 +1216,43 @@ function timerReload(): string[] {
   return log;
 }
 
+function everyTimers(): string[] {
+  const log: string[] = [];
+  const ctx = newCtx(log);
+  const say = (text: string) => (ctx: Ctx) => {
+    ctx.log.push(text);
+  };
+  const define = () =>
+    defineMachine<Ctx, Ev>("parity every")({
+      initial: "/a",
+      states: {
+        a: { ...logged("a"), every: { 1: say("one"), 0.5: say("half") }, on: { GO: "/b" } },
+        b: {
+          ...logged("b"),
+          every: [{ delay: (ctx) => (ctx.flag ? 0.5 : 2), run: [say("x"), say("y")] }],
+        },
+      },
+    });
+  const m = define().start(ctx);
+  m.onMove((from, to, cause, event) => {
+    log.push(`${shown(from)} -> ${shown(to)} ${cause} ${event === undefined ? "-" : event.type}`);
+  });
+  m.update(0.5);
+  log.push(`path=${shown(m.path)}`);
+  m.update(0.5);
+  m.update(2.5);
+  m.send({ type: "GO" });
+  m.update(1);
+  log.push(`path=${shown(m.path)}`);
+  ctx.flag = true;
+  define();
+  m.update(0.5);
+  recordError(log, () =>
+    defineMachine<Ctx, Ev>()({ initial: "/a", states: { a: { every: { 0: say("never") } } } }),
+  );
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -1241,6 +1278,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "unhandled events reach the listener", run: () => unhandledEvents() },
   { name: "timer rules", run: () => timerRules() },
   { name: "timer reload", run: () => timerReload() },
+  { name: "every timers", run: () => everyTimers() },
 ];
 
 export function runScenario(name: string): string {

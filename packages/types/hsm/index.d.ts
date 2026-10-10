@@ -66,10 +66,10 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
      */
     readonly send: (event: E) => void;
     /**
-     * Advances the machine by `dt` seconds: runs the `update` hooks, then the `after` timers of
-     * every region no hook moved. A machine with no parallel state is one region. A machine whose
-     * `update` is not called is frozen in time, and once the machine is stopped the call does
-     * nothing.
+     * Advances the machine by `dt` seconds: runs the `update` hooks, then, in every region no hook
+     * moved, each state's `every` entries and after them its `after` timers. A machine with no
+     * parallel state is one region. A machine whose `update` is not called is frozen in time, and
+     * once the machine is stopped the call does nothing.
      */
     readonly update: (dt: number) => void;
     /**
@@ -97,7 +97,7 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
  */
 export type MoveAction<Ctx, E extends EventObject, V extends E = E> = (ctx: Ctx, event: V, machine: MachineInstance<Ctx, E>) => void;
 /**
- * A function a rule's `run` calls where there is no event: under `after` and `always`.
+ * A function a `run` calls where there is no event: under `after`, `always` and `every`.
  */
 export type RunAction<Ctx, E extends EventObject> = (ctx: Ctx, machine: MachineInstance<Ctx, E>) => void;
 type RuleRun<Ctx, E extends EventObject> = [E] extends [never] ? never : RunAction<Ctx, E> | readonly RunAction<Ctx, E>[];
@@ -211,6 +211,25 @@ export interface AfterConfig<Ctx, To extends string = string, E extends EventObj
     readonly delay: number | ((ctx: Ctx) => number);
 }
 /**
+ * One entry of the list form of `every`: a `delay` and the `run` it repeats.
+ * @noSelf
+ */
+export interface EveryConfig<Ctx, E extends EventObject> {
+    /**
+     * The seconds of game time between two runs: a number, or a function of the context that
+     * returns one. A function is read once each time the state is entered, after its `enter` hook,
+     * and again on a hot reload, so the delay is fixed for that stay. A result that is not a
+     * positive number throws, naming the state.
+     */
+    readonly delay: number | ((ctx: Ctx) => number);
+    /** Runs each time the delay passes: one function, or a list run in order. */
+    readonly run: RunAction<Ctx, E> | readonly RunAction<Ctx, E>[];
+    /** Not taken here: an `after` timer leaves the state. */
+    readonly to?: never;
+    /** Not taken here: a `run` tests a condition itself. */
+    readonly when?: never;
+}
+/**
  * A state's rules by event `type`. Only the machine's event types are keys, and each rule's
  * `when` and `run` see the event variant its key names.
  */
@@ -300,11 +319,29 @@ interface StateBase<Ctx, E extends EventObject, T, Self extends string, To exten
      * `to` runs its `run` and the call goes on, and the first that moves ends the timers of its
      * region for that call. None is tried in a region an `update` hook moved on that call. Under a
      * parallel state each region follows both rules on its own, and the parallel state's own
-     * timers are tried only when no region moved.
+     * timers are tried only when no region moved. A state's `every` entries run before its timers.
      */
     readonly after?: NoInfer<{
         readonly [seconds: number]: To | AfterRule<Ctx, To, E> | AfterRule<Ctx, To>;
     } | readonly (AfterConfig<Ctx, To, E> | AfterConfig<Ctx, To>)[]>;
+    /**
+     * Code that repeats while the state is active, in one of two forms: a `run` by delay in
+     * seconds of game time, such as `{ 0.5: (ctx) => burn(ctx) }`, or a list of `EveryConfig`
+     * entries, such as `[{ delay: (ctx) => ctx.fireEvery, run: fire }]`, whose `delay` is a number
+     * or a function of the context, read as an `after` delay is. A `run` is one function or a list
+     * run in order. An entry first runs one delay after the state is entered, then each time
+     * another delay has passed on the state's clock, which `update(dt)` advances while the state
+     * is active, from zero on each entry. It runs at most once per `update` call: a call that
+     * covers several delays runs it once, and its later runs stay on multiples of the delay. A run
+     * is not a move: no `update` hook is skipped, `always` is not rechecked and `onMove` is not
+     * called. A state's entries run where its `after` timers are tried and before them, a list in
+     * list order and the other form shortest delay first; on a call in which an `update` hook or a
+     * timer of a deeper state moved, they wait for the next call. A delay that is not a positive
+     * number throws, naming the state.
+     */
+    readonly every?: NoInfer<{
+        readonly [seconds: number]: RunAction<Ctx, E> | readonly RunAction<Ctx, E>[];
+    } | readonly EveryConfig<Ctx, E>[]>;
     /**
      * Rules taken right after any move that leaves this state active; the first whose `when` is
      * missing or passes wins, and its `run` runs during the move. It is checked after a move only:
