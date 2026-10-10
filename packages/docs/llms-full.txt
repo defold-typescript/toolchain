@@ -3811,7 +3811,7 @@ export default defineScript({
 });
 ```
 
-`stop()` runs the `exit` hooks of the old instance, and `start` enters `initial` with the context it is given: a new object for a clean start, or the old instance's `ctx` to keep its fields.
+`stop()` runs the `exit` hooks of the old instance, and `start` enters `initial` with the context it is given: a new object for a clean start, or the old instance's `ctx` to keep its fields. A list of state paths as the second argument of `start` enters those states instead of `initial`; see [Start at saved paths](#start-at-saved-paths).
 
 - **Restart from a script callback, not from a hook.** Inside a hook, `stop()` waits for the step to end, so a `start` on the next line runs the new instance's `enter` hooks before the old instance's `exit` hooks.
 - **Listeners stay with the old instance.** Call `onMove`, `onUnhandled` and [`inspect`](#debug-a-machine) again on the new one.
@@ -3914,6 +3914,105 @@ export default defineScript({
 Here each new enemy redefines `"enemy"`: the config is compiled again, every enemy already alive switches to it, and if the config's hooks or `when` checks use values from that `init`, the newest enemy's values replace everyone's.
 
 Without a key, `defineMachine` builds a separate machine on every call, and a reload does not reach running instances.
+
+#### Save and load
+
+A saved game resumes each object in the state it was in: an opened chest stays open. There are two ways to do it, and the choice depends on where the fact lives: in data the game already saves, or only in the machine's current state.
+
+##### Route from saved data
+
+When the saved data tells the state, start the machine as usual and let an [`always`](#move-on-at-once-with-always) list on its first state pick where to go:
+
+```ts title="chest-routed.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+export interface RoutedChestCtx {
+  opened: boolean;
+}
+
+export type RoutedChestEvent = { type: "OPEN" };
+
+export const routedChestMachine = defineMachine<RoutedChestCtx, RoutedChestEvent>()({
+  initial: "/restore",
+  states: {
+    restore: {
+      always: [{ to: "/open", when: (ctx) => ctx.opened }, { to: "/closed" }],
+    },
+    closed: { on: { OPEN: "/open" } },
+    open: {
+      enter: (ctx) => {
+        ctx.opened = true;
+      },
+    },
+  },
+});
+```
+
+This suits a state the saved data already tells, such as a flag or a count. The game saves `opened` with the rest of its data and passes it back in the context.
+
+##### Start at saved paths
+
+When the state itself is the fact, save the active paths and start the machine at them. `start` takes a list of state paths as its second argument:
+
+```ts title="chest-machine.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+export interface ChestCtx {
+  readonly sprite: Url;
+}
+
+export type ChestEvent = { type: "UNLOCK" } | { type: "OPEN" };
+
+export const chestMachine = defineMachine<ChestCtx, ChestEvent>()({
+  initial: "/locked",
+  states: {
+    locked: { on: { UNLOCK: "/closed" } },
+    closed: { on: { OPEN: "/open" } },
+    open: {
+      enter: (ctx) => {
+        sprite.play_flipbook(ctx.sprite, "open");
+      },
+    },
+  },
+});
+```
+
+The script loads the list in `init` and saves `leaves` in `final`:
+
+```ts title="chest.ts"
+import { defineScript } from "@defold-typescript/types";
+import { chestMachine } from "./chest-machine";
+
+type Chest = ReturnType<typeof chestMachine.start>;
+
+interface ChestSave {
+  at?: NonNullable<Chest["path"]>[];
+}
+
+const SAVE_FILE = sys.get_save_file("my_game", "chest");
+
+export default defineScript({
+  init() {
+    const save = sys.load(SAVE_FILE) as ChestSave;
+    return { chest: chestMachine.start({ sprite: msg.url("#sprite") }, save.at) };
+  },
+  final(self) {
+    sys.save(SAVE_FILE, { at: self.chest.leaves });
+    self.chest.stop();
+  },
+});
+```
+
+This suits an object whose state is its data, such as a door, a chest or a switch. `sys.load` returns an empty table when there is no save yet, so `save.at` is `undefined` and the chest starts at `initial`.
+
+The rules:
+
+- **The entry is an ordinary one.** `privateCtx` runs, `enter` hooks run outermost first, tasks start, delay functions are read, `always` rules are checked, and queued events run before `start` returns. The opened chest plays its animation because its `enter` runs.
+- **A path may name a state with children.** Below it the entry goes through `initial`. A level or region no path names does too.
+- **A path the machine lacks falls back to its closest parent that exists,** as a hot reload treats a removed state; see [What each instance keeps](#what-each-instance-keeps). A save made before an edit still loads.
+- **Of two paths that cannot be active together, the first in the list wins.**
+- **Only the active states are part of a start position.** Every clock starts at zero, no state remembers a child for `restoreDepth`, and a `task` starts again. The context is the game's own table to save.
+- **`leaves` is the same array on every read, updated in place.** `sys.save` writes it at the call, and a table kept for later takes a copy, `[...self.chest.leaves]`.
 
 #### Private fields with `privateCtx`
 
@@ -4100,7 +4199,7 @@ m.send({ type: "LOSE" }); // a new table on every call
 
 **Tags are the third type argument.** `defineMachine<Ctx, E, Tag>()` takes a union of tag names, such as `"invulnerable" | "busy"`, and a state's `tags` and every `hasTag` call accept only those. A machine defined with two type arguments has no tags: a `tags` entry and a `hasTag` call both fail to compile. See [Name a group of states with tags](#name-a-group-of-states-with-tags).
 
-**`start` returns a `MachineInstance<Ctx, E, P, Tag>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, `when` and `run` are typed before the paths are known, so the `machine` they receive uses plain `string` for `path` and `matches()`: a hook, a `run` and a `task` receive a `MachineInstance<Ctx, E, string, Tag>`, and a `when` receives a `MachineView<string, Tag>`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`. The context, event and path types come from the machine the same way; see [Read types off the machine](#read-types-off-the-machine).
+**`start` returns a `MachineInstance<Ctx, E, P, Tag>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, `when` and `run` are typed before the paths are known, so the `machine` they receive uses plain `string` for `path` and `matches()`: a hook, a `run` and a `task` receive a `MachineInstance<Ctx, E, string, Tag>`, and a `when` receives a `MachineView<string, Tag>`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`. The context, event and path types come from the machine the same way; see [Read types off the machine](#read-types-off-the-machine). The optional second argument of `start` is `readonly P[]`, so a copy of `leaves` fits, and a list loaded as `string[]` takes a cast where it is loaded; see [Start at saved paths](#start-at-saved-paths).
 
 **`StatePath<C>` lists a config's paths,** each with its leading `/`. Paths are spelled out four levels deep; below that, any string under a fourth-level path is accepted.
 
@@ -4955,6 +5054,21 @@ self.guard = startGuard();
 </td></tr>
 <tr><td>
 
+Resume a saved game in the state it was in
+
+</td><td>
+
+Pass the saved `leaves` as the second argument of `start`; see [Start at saved paths](#start-at-saved-paths)
+
+</td><td>
+
+```ts excerpt
+guardMachine.start(ctx, save.at)
+```
+
+</td></tr>
+<tr><td>
+
 Know whether an event would do anything
 
 </td><td>
@@ -5373,6 +5487,14 @@ The optional key the root config takes; see [Private fields with `privateCtx`](#
 | Field        | Type                 | Meaning                                                                                       |
 | ------------ | -------------------- | --------------------------------------------------------------------------------------------- |
 | `privateCtx` | `(ctx: Ctx) => Priv` | Builds the fields only the machine uses from the object passed to `start`. Runs once per `start`, before the root's `enter` hook, so every instance gets fresh fields of its own. |
+
+##### `Machine`
+
+What the second `defineMachine` call returns.
+
+| Member  | Type                                                               | Meaning                                                                            |
+| ------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `start` | `(ctx: Ctx, at?: readonly P[]) => MachineInstance<Ctx, E, P, Tag>` | Creates an instance and enters `initial`, or the states the paths of `at` name; see [Start at saved paths](#start-at-saved-paths). |
 
 ##### `MachineInstance`
 
