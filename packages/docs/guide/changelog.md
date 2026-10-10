@@ -15,6 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** must add `can` and `onUnhandled`.
 > - **[State machines](./state-machines.md)** gain [rules on timers](./state-machines.md#rules-on-a-timer), `can`, `onUnhandled`, a `when` that reads the machine and an [animation recipe](./state-machines.md#animation-states-with-one-shots).
+> - **A [hot reload](./state-machines.md#what-each-instance-keeps)** keeps each timer's fired mark.
 
 ### Breaking
 
@@ -28,6 +29,10 @@ What changed in each published `defold-typescript` toolchain release.
   - **`can(event)`** — returns whether a rule of an active state would take the event, without moving the machine or running a hook; see [Ask whether an event would be taken](./state-machines.md#ask-whether-an-event-would-be-taken).
   - **`onUnhandled(listener)`** — calls the listener with each event no active state took, and `inspect` prints an `unhandled` line for it; see [Listen for unhandled events](./state-machines.md#listen-for-unhandled-events).
   - **Animation recipe** — the guide builds one knight machine with looping animations, one-shots that finish before the next state, in-between animations between postures and a jump kept until it can play; see [Animation states with one-shots](./state-machines.md#animation-states-with-one-shots).
+
+### Fixed
+
+- **Timer marks across a hot reload** — in a state whose `after` list reads a delay from the context, each timer keeps its own fired mark when a hot reload reorders the delays. A timer that had fired could fire again, and one that had not could be skipped; see [What each instance keeps](./state-machines.md#what-each-instance-keeps).
 
 ## v0.48.0
 
