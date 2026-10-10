@@ -3,7 +3,7 @@ import { type LoadedFile, locationOf, type SourceSpan } from "./hsm-view-load";
 interface StateConfig {
   readonly states?: Readonly<Record<string, StateConfig>>;
   readonly on?: Readonly<Record<string, unknown>>;
-  readonly after?: Readonly<Record<string, unknown>>;
+  readonly after?: unknown;
   readonly always?: unknown;
   readonly update?: unknown;
 }
@@ -27,7 +27,7 @@ export interface MachineIndex {
 
 export interface StateRuleIds {
   readonly on: Readonly<Record<string, readonly string[]>>;
-  readonly after: Readonly<Record<string, readonly string[]>>;
+  readonly after: readonly string[];
   readonly always: readonly string[];
   readonly update: string | undefined;
 }
@@ -36,7 +36,7 @@ export type MachineRuleIds = Readonly<Record<string, StateRuleIds>>;
 
 export type RuleKey =
   | [kind: "on", event: string, index: number]
-  | [kind: "after", delay: string]
+  | [kind: "after", key: string | number]
   | [kind: "always", index: number]
   | [kind: "update"];
 
@@ -53,6 +53,31 @@ function list(spec: unknown): readonly unknown[] {
   return Array.isArray(spec) ? spec : [spec];
 }
 
+export interface AfterEntry {
+  /** A record timer's delay key, or a list entry's position. */
+  readonly key: string | number;
+  readonly spec: unknown;
+}
+
+/** The timers of an `after`, read as the runtime reads it: a list when its first entry has a `delay`. */
+export function afterEntries(after: unknown): readonly AfterEntry[] {
+  if (typeof after !== "object" || after === null) {
+    return [];
+  }
+  if (Array.isArray(after)) {
+    const first: unknown = after[0];
+    if (
+      typeof first === "object" &&
+      first !== null &&
+      (first as { readonly delay?: unknown }).delay !== undefined
+    ) {
+      return after.map((spec, key) => ({ key, spec }));
+    }
+  }
+  const record = after as Readonly<Record<string, unknown>>;
+  return Object.keys(record).map((key) => ({ key, spec: record[key] }));
+}
+
 export function ruleIds(config: unknown): MachineRuleIds {
   const ids: Record<string, StateRuleIds> = {};
   const visit = (state: StateConfig, statePath: string): void => {
@@ -60,10 +85,7 @@ export function ruleIds(config: unknown): MachineRuleIds {
     for (const [event, spec] of Object.entries(state.on ?? {})) {
       on[event] = list(spec).map((_, index) => ruleId(statePath, "on", event, index));
     }
-    const after: Record<string, readonly string[]> = {};
-    for (const delay of Object.keys(state.after ?? {})) {
-      after[delay] = [ruleId(statePath, "after", delay)];
-    }
+    const after = afterEntries(state.after).map((entry) => ruleId(statePath, "after", entry.key));
     const always =
       state.always === undefined
         ? []
@@ -138,14 +160,11 @@ export function machineIndex(config: unknown, files: readonly LoadedFile[]): Mac
       }
     }
 
-    const after = state.after;
-    if (after !== undefined) {
-      for (const [delay, target] of Object.entries(after)) {
-        const id = ids[statePath]?.after[delay]?.[0];
-        const span = keySpan(after, delay, target);
-        if (id !== undefined && span !== undefined) {
-          rules[id] = span;
-        }
+    for (const [index, entry] of afterEntries(state.after).entries()) {
+      const id = ids[statePath]?.after[index];
+      const span = keySpan(state.after, String(entry.key), entry.spec);
+      if (id !== undefined && span !== undefined) {
+        rules[id] = span;
       }
     }
 

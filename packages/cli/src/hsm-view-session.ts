@@ -1,4 +1,4 @@
-import { type MachineIndex, machineIndex, ruleIds } from "./hsm-view-index";
+import { afterEntries, type MachineIndex, machineIndex, ruleIds } from "./hsm-view-index";
 import {
   type EngineEntry as LoadedEngineEntry,
   type LoadedMachine,
@@ -48,7 +48,7 @@ interface StateConfig {
   readonly initial?: string;
   readonly states?: Readonly<Record<string, StateConfig>>;
   readonly on?: Readonly<Record<string, string | RuleConfig | readonly RuleConfig[]>>;
-  readonly after?: Readonly<Record<string, string>>;
+  readonly after?: unknown;
   readonly always?: string | RuleConfig | readonly RuleConfig[];
   readonly enter?: (ctx: unknown, machine: RuntimeInstance) => void;
   readonly exit?: (ctx: unknown, machine: RuntimeInstance) => void;
@@ -211,13 +211,6 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   let haltedError: string | undefined;
   let callError: string | undefined;
   let startCtx: unknown = {};
-  let tickOrder: string[] = [];
-  let exiting: string[] = [];
-  const dueAfter = new Map<string, string>();
-  const exitedEarlier = new Set<string>();
-  const passedOver = new Set<string>();
-  const elapsed = new Map<string, number>();
-  const afterProgress = new Map<string, number>();
 
   const begin = (): void => {
     entered = [];
@@ -225,19 +218,6 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     rejected = [];
     entries = [];
     callError = undefined;
-    tickOrder = [];
-    exiting = [];
-    dueAfter.clear();
-    exitedEarlier.clear();
-    passedOver.clear();
-  };
-
-  const passOver = (path: string): void => {
-    passedOver.add(path);
-    for (const ancestor of ancestors(path)) {
-      passedOver.add(ancestor);
-    }
-    passedOver.add("");
   };
 
   const recordError = (message: string, halt: boolean): void => {
@@ -295,6 +275,34 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         }
         wrapped.on = on;
       }
+      const timers = afterEntries(state.after).map((entry, index) => {
+        const id = ids[path]?.after[index];
+        const note: RuleAction = () => {
+          if (id !== undefined) {
+            fired.push(id);
+          }
+        };
+        const spec = entry.spec;
+        if (typeof spec === "string") {
+          return { key: entry.key, spec: { to: spec, run: [note] } };
+        }
+        if (typeof spec !== "object" || spec === null) {
+          return entry;
+        }
+        const rule = spec as RuleConfig;
+        const run = runOf(rule.run);
+        // Left as written so the runtime still rejects a timer with no `to` and no `run`.
+        if (rule.to === undefined && run.length === 0) {
+          return entry;
+        }
+        return { key: entry.key, spec: { ...rule, run: [note, ...run] } };
+      });
+      if (timers.length > 0) {
+        wrapped.after =
+          typeof timers[0]?.key === "number"
+            ? timers.map((timer) => timer.spec)
+            : Object.fromEntries(timers.map((timer) => [timer.key, timer.spec]));
+      }
       if (state.always !== undefined) {
         const source = Array.isArray(state.always) ? state.always : [state.always];
         const rules = source.map((rule, index) => {
@@ -329,11 +337,8 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         wrapped.update = (ctx: unknown, dt: number, machine: RuntimeInstance) => {
           const target = update(ctx, dt, machine);
           const id = ids[path]?.update;
-          if (typeof target === "string") {
-            if (id !== undefined) {
-              fired.push(id);
-            }
-            passOver(path);
+          if (typeof target === "string" && id !== undefined) {
+            fired.push(id);
           }
           return target;
         };
@@ -342,14 +347,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       if (path !== "") {
         wrapped.enter = (ctx: unknown, machine: RuntimeInstance) => {
           entered.push(path);
-          elapsed.set(path, 0);
-          afterProgress.set(path, 0);
           enter?.(ctx, machine);
-        };
-        const exit = state.exit;
-        wrapped.exit = (ctx: unknown, machine: RuntimeInstance) => {
-          exiting.push(path);
-          exit?.(ctx, machine);
         };
       }
       return wrapped as StateConfig;
@@ -428,34 +426,10 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   };
 
   // The runtime reports `from` as the transition domain's first leaf, which for a target
-  // leaving a parallel state is the first region's leaf, so fall back to the tick order.
-  // A mover's ancestor chain is skipped because the runtime's walk returns before reaching
-  // those timers.
-  const afterRuleFor = (
-    from: string,
-  ): { readonly path: string; readonly id: string } | undefined => {
-    const due = (path: string): boolean =>
-      dueAfter.has(path) && !exitedEarlier.has(path) && !passedOver.has(path);
-    const path = [...ancestors(from).reverse(), ""].find(due) ?? tickOrder.find(due);
-    const id = path === undefined ? undefined : dueAfter.get(path);
-    return path === undefined || id === undefined ? undefined : { path, id };
-  };
-
+  // leaving a parallel state is the first region's leaf, so a move does not name the timer
+  // behind it. Each timer's own `run` names it instead, and the move is only logged.
   const attach = (next: RuntimeInstance): void => {
     next.onMove((from, to, cause, event) => {
-      const rule = cause === "after" ? afterRuleFor(from) : undefined;
-      if (rule !== undefined) {
-        fired.push(rule.id);
-        dueAfter.delete(rule.path);
-        passOver(rule.path);
-        if (!exiting.includes(rule.path)) {
-          afterProgress.set(rule.path, (afterProgress.get(rule.path) ?? 0) + 1);
-        }
-      }
-      for (const path of exiting) {
-        exitedEarlier.add(path);
-      }
-      exiting = [];
       entries.push({
         kind: "transition",
         t,
@@ -490,54 +464,12 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     return snapshot();
   };
 
-  const tickAfter = (dt: number): void => {
-    const config = currentConfig();
-    if (config === undefined || instance === undefined) {
-      return;
-    }
-    const order: string[] = [];
-    const visit = (state: StateConfig, path: string): void => {
-      const activeChildren = Object.entries(state.states ?? {}).filter(([name]) =>
-        instance?.matches(childPath(path, name)),
-      );
-      if (state.type === "parallel") {
-        for (const [name, child] of activeChildren) {
-          visit(child, childPath(path, name));
-        }
-      } else {
-        const active = activeChildren[0];
-        if (active !== undefined) {
-          visit(active[1], childPath(path, active[0]));
-        }
-      }
-      order.push(path);
-    };
-    visit(config, "");
-    for (const path of order) {
-      elapsed.set(path, (elapsed.get(path) ?? 0) + dt);
-    }
-    const ids = ruleIds(config);
-    for (const path of order) {
-      const state = stateAt(config, path);
-      const delays = Object.keys(state?.after ?? {}).sort((a, b) => Number(a) - Number(b));
-      const index = afterProgress.get(path) ?? 0;
-      const delay = delays[index];
-      const id = delay === undefined ? undefined : ids[path]?.after[delay]?.[0];
-      if (id !== undefined && Number(delay) <= (elapsed.get(path) ?? 0)) {
-        dueAfter.set(path, id);
-      }
-    }
-    tickOrder = order;
-  };
-
   return {
     start(ctx) {
       begin();
       haltedError = undefined;
       t = 0;
       instance = undefined;
-      elapsed.clear();
-      afterProgress.clear();
       startCtx = cloneValue(ctx);
       try {
         startPicked(ctx);
@@ -569,7 +501,6 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
           throw new Error("machine has not started");
         }
         t += dt;
-        tickAfter(dt);
         current.update(dt);
       });
     },
@@ -620,8 +551,6 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         }
         picked = name;
         instance = undefined;
-        elapsed.clear();
-        afterProgress.clear();
         startPicked(cloneValue(startCtx));
       });
     },
@@ -641,8 +570,6 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
           entries.push({ kind: "reload", t });
         } else if (before?.key === undefined || current.key === undefined) {
           instance = undefined;
-          elapsed.clear();
-          afterProgress.clear();
           entries.push({ kind: "reload", t, reason: "unkeyed machine restarted" });
           startPicked(cloneValue(startCtx));
         } else {

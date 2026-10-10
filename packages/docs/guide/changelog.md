@@ -34,6 +34,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **Timer marks across a hot reload** — in a state whose `after` list reads a delay from the context, each timer keeps its own fired mark when a hot reload reorders the delays. A timer that had fired could fire again, and one that had not could be skipped; see [What each instance keeps](./state-machines.md#what-each-instance-keeps).
+- **`hsm-view` on an `after` list** — playing a machine whose `after` is a list glows the entry that fired. The first entry glowed whichever one fired; see [Read the code](./hsm-view.md#read-the-code).
 
 ## v0.48.0
 
