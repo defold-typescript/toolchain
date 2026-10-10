@@ -302,6 +302,7 @@ import { defineMachine } from "@defold-typescript/types/hsm";
 
 interface GuardCtx {
   readonly sprite: Url;
+  readonly scanEvery: number;
   calm: boolean;
 }
 
@@ -322,6 +323,13 @@ export const timedGuard = defineMachine<GuardCtx, GuardEvent>()({
           when: (ctx) => ctx.calm,
         },
       },
+      every: [
+        {
+          delay: (ctx) => ctx.scanEvery,
+          run: (ctx) =>
+            msg.post(ctx.sprite, "scan"),
+        },
+      ],
     },
   },
 });

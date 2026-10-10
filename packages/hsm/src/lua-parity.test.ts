@@ -489,6 +489,22 @@ const EXPECTED: Record<string, string[]> = {
     'error: hsm: state "/a" has an after timer with no "to" and no "run"',
   ],
   "timer reload": ["first", "second", "reloaded", "third", "end"],
+  "every timers": [
+    "enter a",
+    "half",
+    "path=/a",
+    "half",
+    "one",
+    "half",
+    "one",
+    "exit a",
+    "enter b",
+    "/a -> /b event GO",
+    "path=/b",
+    "x",
+    "y",
+    'error: hsm: state "/a" has an every delay "0" that is not a positive number',
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");

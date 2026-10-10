@@ -76,10 +76,10 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
    */
   readonly send: (event: E) => void;
   /**
-   * Advances the machine by `dt` seconds: runs the `update` hooks, then the `after` timers of
-   * every region no hook moved. A machine with no parallel state is one region. A machine whose
-   * `update` is not called is frozen in time, and once the machine is stopped the call does
-   * nothing.
+   * Advances the machine by `dt` seconds: runs the `update` hooks, then, in every region no hook
+   * moved, each state's `every` entries and after them its `after` timers. A machine with no
+   * parallel state is one region. A machine whose `update` is not called is frozen in time, and
+   * once the machine is stopped the call does nothing.
    */
   readonly update: (dt: number) => void;
   /**
@@ -113,7 +113,7 @@ export type MoveAction<Ctx, E extends EventObject, V extends E = E> = (
 ) => void;
 
 /**
- * A function a rule's `run` calls where there is no event: under `after` and `always`.
+ * A function a `run` calls where there is no event: under `after`, `always` and `every`.
  */
 export type RunAction<Ctx, E extends EventObject> = (
   ctx: Ctx,
@@ -263,6 +263,26 @@ export interface AfterConfig<Ctx, To extends string = string, E extends EventObj
 }
 
 /**
+ * One entry of the list form of `every`: a `delay` and the `run` it repeats.
+ * @noSelf
+ */
+export interface EveryConfig<Ctx, E extends EventObject> {
+  /**
+   * The seconds of game time between two runs: a number, or a function of the context that
+   * returns one. A function is read once each time the state is entered, after its `enter` hook,
+   * and again on a hot reload, so the delay is fixed for that stay. A result that is not a
+   * positive number throws, naming the state.
+   */
+  readonly delay: number | ((ctx: Ctx) => number);
+  /** Runs each time the delay passes: one function, or a list run in order. */
+  readonly run: RunAction<Ctx, E> | readonly RunAction<Ctx, E>[];
+  /** Not taken here: an `after` timer leaves the state. */
+  readonly to?: never;
+  /** Not taken here: a `run` tests a condition itself. */
+  readonly when?: never;
+}
+
+/**
  * A state's rules by event `type`. Only the machine's event types are keys, and each rule's
  * `when` and `run` see the event variant its key names.
  */
@@ -386,6 +406,8 @@ type AnyChild<Ctx, E extends EventObject, T, To extends string> = unknown extend
 // without exactOptionalPropertyTypes, reading `on` asks for the paths while the tree is still
 // being inferred, and a valid config fails as circular. `always` is wrapped only through `To`:
 // NoInfer over a union that holds object types hides its string members from completion.
+// `every` mentions no path and is wrapped whole all the same: where inference reads it, an
+// unannotated callback in it, such as `delay: (ctx) => ctx.rate`, gets no parameter types.
 // No callback parameter mentions the tree: one that did would make TypeScript settle the tree
 // at the first such callback, before the states beside it are read.
 /** @noSelf */
@@ -410,11 +432,30 @@ interface StateBase<Ctx, E extends EventObject, T, Self extends string, To exten
    * `to` runs its `run` and the call goes on, and the first that moves ends the timers of its
    * region for that call. None is tried in a region an `update` hook moved on that call. Under a
    * parallel state each region follows both rules on its own, and the parallel state's own
-   * timers are tried only when no region moved.
+   * timers are tried only when no region moved. A state's `every` entries run before its timers.
    */
   readonly after?: NoInfer<
     | { readonly [seconds: number]: To | AfterRule<Ctx, To, E> | AfterRule<Ctx, To> }
     | readonly (AfterConfig<Ctx, To, E> | AfterConfig<Ctx, To>)[]
+  >;
+  /**
+   * Code that repeats while the state is active, in one of two forms: a `run` by delay in
+   * seconds of game time, such as `{ 0.5: (ctx) => burn(ctx) }`, or a list of `EveryConfig`
+   * entries, such as `[{ delay: (ctx) => ctx.fireEvery, run: fire }]`, whose `delay` is a number
+   * or a function of the context, read as an `after` delay is. A `run` is one function or a list
+   * run in order. An entry first runs one delay after the state is entered, then each time
+   * another delay has passed on the state's clock, which `update(dt)` advances while the state
+   * is active, from zero on each entry. It runs at most once per `update` call: a call that
+   * covers several delays runs it once, and its later runs stay on multiples of the delay. A run
+   * is not a move: no `update` hook is skipped, `always` is not rechecked and `onMove` is not
+   * called. A state's entries run where its `after` timers are tried and before them, a list in
+   * list order and the other form shortest delay first; on a call in which an `update` hook or a
+   * timer of a deeper state moved, they wait for the next call. A delay that is not a positive
+   * number throws, naming the state.
+   */
+  readonly every?: NoInfer<
+    | { readonly [seconds: number]: RunAction<Ctx, E> | readonly RunAction<Ctx, E>[] }
+    | readonly EveryConfig<Ctx, E>[]
   >;
   /**
    * Rules taken right after any move that leaves this state active; the first whose `when` is
@@ -544,6 +585,9 @@ interface Compiled<Ctx, E extends EventObject> {
   // for each instance to sort once the function is read.
   readonly afterListDelays: (Delay<Ctx>[] | undefined)[];
   readonly afterListRules: (Transition<Ctx, E>[] | undefined)[];
+  // A state's every entries: the record form in delay order, a list in list order.
+  readonly everyDelays: Delay<Ctx>[][];
+  readonly everyRuns: RunAction<Ctx, E>[][][];
   readonly always: Transition<Ctx, E>[][];
   readonly pathIndex: { [path: string]: number };
 }
@@ -769,6 +813,20 @@ function compileRecords<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>):
   }
 }
 
+// A run is one function or a list of them; either way it compiles to a list.
+function collectRun<Action>(declared: Action | readonly Action[] | undefined): Action[] {
+  const run: Action[] = [];
+  if (typeof declared === "function") {
+    run.push(declared);
+  } else if (declared !== undefined) {
+    const list = declared as readonly Action[];
+    for (let i = 0; i < list.length; i++) {
+      run.push(list[i] as Action);
+    }
+  }
+  return run;
+}
+
 function compileTransition<Ctx, E extends EventObject>(
   compiled: Compiled<Ctx, E>,
   source: number,
@@ -781,19 +839,10 @@ function compileTransition<Ctx, E extends EventObject>(
       run: [],
     };
   }
-  const run: MoveAction<Ctx, E>[] = [];
-  const declared = spec.run;
-  if (typeof declared === "function") {
-    run.push(declared);
-  } else if (declared !== undefined) {
-    for (let i = 0; i < declared.length; i++) {
-      run.push(declared[i] as MoveAction<Ctx, E>);
-    }
-  }
   return {
     target: spec.to === undefined ? NO_STATE : resolveTarget(compiled, source, spec.to),
     when: spec.when,
-    run,
+    run: collectRun<MoveAction<Ctx, E>>(spec.run),
   };
 }
 
@@ -883,21 +932,17 @@ function checkDelay(path: string, delay: unknown, written: unknown): void {
   }
 }
 
-// Keeps the delays ascending; timers with one delay stay in the order they were added.
-function insertTimer<Ctx, E extends EventObject>(
-  delays: number[],
-  rules: Transition<Ctx, E>[],
-  delay: number,
-  rule: Transition<Ctx, E>,
-): void {
+// Keeps the delays ascending; timers with one delay stay in the order they were added. Each
+// delay carries one item: a timer's rule, or the run of an every entry.
+function insertTimer<Item>(delays: number[], items: Item[], delay: number, item: Item): void {
   let slot = delays.length;
   while (slot > 0 && (delays[slot - 1] as number) > delay) {
     delays[slot] = delays[slot - 1] as number;
-    rules[slot] = rules[slot - 1] as Transition<Ctx, E>;
+    items[slot] = items[slot - 1] as Item;
     slot--;
   }
   delays[slot] = delay;
-  rules[slot] = rule;
+  items[slot] = item;
 }
 
 // For each entry of an after list, the position of its rule among the sorted timers.
@@ -977,6 +1022,73 @@ function compileAfter<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, in
   }
 }
 
+// NaN fails the comparison, so it is rejected with zero and the negative numbers.
+function checkEveryDelay(path: string, delay: unknown, written: unknown): void {
+  if (typeof delay !== "number" || !(delay > 0)) {
+    throw `hsm: state "${describePath(path)}" has an every delay "${written}" that is not a positive number`;
+  }
+}
+
+// The first multiple of delay above clock. Rounding can leave the product at or below the
+// clock, and one more delay lifts it past.
+function nextRun(clock: number, delay: number): number {
+  const at = (Math.floor(clock / delay) + 1) * delay;
+  if (at > clock) {
+    return at;
+  }
+  return at + delay;
+}
+
+function compileEveryRun<Ctx, E extends EventObject>(
+  path: string,
+  declared: RunAction<Ctx, E> | readonly RunAction<Ctx, E>[] | undefined,
+): RunAction<Ctx, E>[] {
+  const run = collectRun<RunAction<Ctx, E>>(declared);
+  if (run.length === 0) {
+    throw `hsm: state "${describePath(path)}" has an every entry with no "run"`;
+  }
+  return run;
+}
+
+function compileEvery<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, index: number): void {
+  const delays: Delay<Ctx>[] = [];
+  const runs: RunAction<Ctx, E>[][] = [];
+  compiled.everyDelays[index] = delays;
+  compiled.everyRuns[index] = runs;
+  const every = (compiled.configs[index] as StateConfig<Ctx, E>).every;
+  if (every === undefined) {
+    return;
+  }
+  const path = compiled.paths[index] as string;
+  // Read as an array type: the transpiler shifts an index to Lua's base 1 only on an array.
+  const list = every as readonly EveryConfig<Ctx, E>[];
+  const first = list[0];
+  // A run list under the delay 0, or under 1 in Lua where the read is shifted, is an object
+  // too, so the list form is the one whose first entry has a delay.
+  if (typeof first !== "object" || first.delay === undefined) {
+    const byDelay = every as {
+      readonly [seconds: number]: RunAction<Ctx, E> | readonly RunAction<Ctx, E>[];
+    };
+    // Lua's pairs walks number keys in no fixed order, so the entries are sorted by delay.
+    for (const key in byDelay) {
+      const delay = parseDelay(key);
+      checkEveryDelay(path, delay, key);
+      const run = compileEveryRun(path, byDelay[key as unknown as number]);
+      insertTimer(delays as number[], runs, delay, run);
+    }
+    return;
+  }
+  for (let i = 0; i < list.length; i++) {
+    const entry = list[i] as EveryConfig<Ctx, E>;
+    const delay = entry.delay;
+    if (typeof delay !== "function") {
+      checkEveryDelay(path, delay, delay);
+    }
+    delays[i] = delay;
+    runs[i] = compileEveryRun(path, entry.run);
+  }
+}
+
 function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Compiled<Ctx, E> {
   const compiled: Compiled<Ctx, E> = {
     count: 0,
@@ -996,6 +1108,8 @@ function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Com
     afterRules: [],
     afterListDelays: [],
     afterListRules: [],
+    everyDelays: [],
+    everyRuns: [],
     always: [],
     pathIndex: {},
   };
@@ -1004,6 +1118,7 @@ function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Com
     compileInitial(compiled, index);
     compileOn(compiled, index);
     compileAfter(compiled, index);
+    compileEvery(compiled, index);
     compileAlways(compiled, index);
   }
   compileRecords(compiled);
@@ -1116,6 +1231,8 @@ function createMachine<Ctx, E extends EventObject>(
     let afterRules = compiled.afterRules;
     let afterListDelays = compiled.afterListDelays;
     let afterListRules = compiled.afterListRules;
+    let everyDelays = compiled.everyDelays;
+    let everyRuns = compiled.everyRuns;
     let always = compiled.always;
     const activeChild: number[] = [];
     const isActive: boolean[] = [];
@@ -1125,6 +1242,10 @@ function createMachine<Ctx, E extends EventObject>(
     // The sorted timers of a state whose after list holds a delay function, read on each entry.
     const ownDelays: (number[] | undefined)[] = [];
     const ownRules: (Transition<Ctx, E>[] | undefined)[] = [];
+    // For a state with every entries, by entry: the delay it counts in this stay, and the value
+    // of the state's clock at its next run.
+    const ownEvery: (number[] | undefined)[] = [];
+    const nextRuns: (number[] | undefined)[] = [];
     const entryId: number[] = [];
     const cleanup: ((() => void) | undefined)[] = [];
     // Keyed by path, not index, so a remembered child outlives a rebind's recompilation.
@@ -1164,11 +1285,28 @@ function createMachine<Ctx, E extends EventObject>(
       fired[state] = undefined;
       ownDelays[state] = undefined;
       ownRules[state] = undefined;
+      ownEvery[state] = undefined;
+      nextRuns[state] = undefined;
       entryId[state] = 0;
       cleanup[state] = undefined;
     }
 
     function readDelays(state: number): void {
+      const own = ownEvery[state];
+      if (own !== undefined) {
+        const declared = everyDelays[state] as Delay<Ctx>[];
+        const runAt = nextRuns[state] as number[];
+        const clock = elapsed[state] as number;
+        for (let i = 0; i < own.length; i++) {
+          let delay = declared[i] as Delay<Ctx>;
+          if (typeof delay === "function") {
+            delay = delay(ctx);
+            checkEveryDelay(paths[state] as string, delay, delay);
+          }
+          own[i] = delay;
+          runAt[i] = nextRun(clock, delay);
+        }
+      }
       const list = afterListDelays[state];
       if (list === undefined) {
         return;
@@ -1195,8 +1333,8 @@ function createMachine<Ctx, E extends EventObject>(
       }
     }
 
-    // The flag lists are built here, once per compiled definition: an entry and an update only
-    // write them in place.
+    // The flag lists and the two lists of a state's every entries are built here, once per
+    // compiled definition: an entry and an update only write them in place.
     function sizeFired(): void {
       for (let state = 0; state < compiled.count; state++) {
         const list = afterListDelays[state];
@@ -1207,6 +1345,17 @@ function createMachine<Ctx, E extends EventObject>(
             flags[i] = false;
           }
           fired[state] = flags;
+        }
+        const entries = (everyDelays[state] as Delay<Ctx>[]).length;
+        if (entries > 0) {
+          const own: number[] = [];
+          const runAt: number[] = [];
+          for (let i = 0; i < entries; i++) {
+            own[i] = 0;
+            runAt[i] = 0;
+          }
+          ownEvery[state] = own;
+          nextRuns[state] = runAt;
         }
       }
     }
@@ -1265,6 +1414,8 @@ function createMachine<Ctx, E extends EventObject>(
       afterRules = compiled.afterRules;
       afterListDelays = compiled.afterListDelays;
       afterListRules = compiled.afterListRules;
+      everyDelays = compiled.everyDelays;
+      everyRuns = compiled.everyRuns;
       always = compiled.always;
       fillPrivate(ctx as never, configs[ROOT], true);
       growSlots();
@@ -1289,6 +1440,8 @@ function createMachine<Ctx, E extends EventObject>(
         elapsed[state] = keptElapsed[i] as number;
         entryId[state] = keptEntryId[i] as number;
         cleanup[state] = keptCleanup[i];
+        // After the clock is restored: an every entry next runs at the first multiple of its
+        // delay above it.
         readDelays(state);
         // By list entry where the old and the new definition both read a delay per instance,
         // else by position in delay order: a timer the new definition lacks is dropped, and a
@@ -1856,6 +2009,26 @@ function createMachine<Ctx, E extends EventObject>(
       const child = activeChild[state] as number;
       if (child !== NO_STATE && fireTimers(child)) {
         return true;
+      }
+      const runAt = nextRuns[state];
+      if (runAt !== undefined) {
+        const own = ownEvery[state] as number[];
+        const runs = everyRuns[state] as RunAction<Ctx, E>[][];
+        const clock = elapsed[state] as number;
+        for (let i = 0; i < runAt.length; i++) {
+          if ((runAt[i] as number) <= clock) {
+            // Set before the run and from the clock, not from the last run: a call that covers
+            // several delays runs the entry once and leaves no drift.
+            runAt[i] = nextRun(clock, own[i] as number);
+            const run = runs[i] as RunAction<Ctx, E>[];
+            for (let action = 0; action < run.length; action++) {
+              (run[action] as RunAction<Ctx, E>)(ctx, instance);
+            }
+            if (stopRequested) {
+              return true;
+            }
+          }
+        }
       }
       const flags = fired[state];
       if (flags === undefined) {
