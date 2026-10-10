@@ -19,8 +19,15 @@ const SILENT: MachineInspector = {
 
 const TEXT_OFFSET_Y = 40;
 
-const labelUses: Record<string, number> = {};
-const issuedLabels: Record<string, boolean> = {};
+// A JavaScript object inherits members such as `__proto__` and `constructor`, and a caller's
+// string can name one. This literal has no prototype, so every string is an own key. In Lua the
+// nil field leaves a plain table.
+function record<V>(): Record<string, V> {
+  return { __proto__: null } as unknown as Record<string, V>;
+}
+
+const labelUses = record<number>();
+const issuedLabels = record<boolean>();
 
 function uniqueLabel(label: string): string {
   let ordinal = labelUses[label] ?? 1;
@@ -113,7 +120,7 @@ export function inspect<Ctx, E extends EventObject, P extends string>(
   const loggedLabel = escapeField(shownLabel);
   let frame = 0;
   let moves = 0;
-  const unhandledAt: Record<string, number> = {};
+  const unhandledAt = record<number>();
   instance.onMove((from, to, cause, event) => {
     moves++;
     const reason = event === undefined ? cause : event.type;
