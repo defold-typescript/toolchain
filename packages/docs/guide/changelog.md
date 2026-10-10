@@ -13,18 +13,20 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** must add `can`.
-> - **[State machines](./state-machines.md)** gain `can`, a `when` that reads the machine and an [animation recipe](./state-machines.md#animation-states-with-one-shots).
+> - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** must add `can` and `onUnhandled`.
+> - **[State machines](./state-machines.md)** gain `can`, `onUnhandled`, a `when` that reads the machine and an [animation recipe](./state-machines.md#animation-states-with-one-shots).
 
 ### Breaking
 
-- **`MachineInstance` requires `can`:** an object you build yourself and type as `MachineInstance`, such as a test double or a wrapper around a real instance, fails to compile until it has `can`. Add `can: (event) => inner.can(event)` to a wrapper, or a function that returns a boolean to a test double; an instance returned by `start` needs no change; see [`MachineInstance`](./state-machines.md#machineinstance).
+- **`MachineInstance` requires `can` and `onUnhandled`:** an object you build yourself and type as `MachineInstance`, such as a test double or a wrapper around a real instance, fails to compile until it has both. In a wrapper, add `can: (event) => inner.can(event)` and `onUnhandled: (listener) => inner.onUnhandled(listener)`; an instance returned by `start` needs no change; see [`MachineInstance`](./state-machines.md#machineinstance).
 
 ### Improved
 
-- **A `when` can read the machine:** a rule's `when` receives the running machine as its last argument, read-only, so a rule can depend on the active states, as in `when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing")`; see [Read another region in a `when`](./state-machines.md#read-another-region-in-a-when).
-- **Ask whether an event would be taken:** `can(event)` on a machine instance returns whether a rule of an active state would take the event, without moving the machine or running a hook; see [Ask whether an event would be taken](./state-machines.md#ask-whether-an-event-would-be-taken).
-- **A recipe for animation states:** the State machines guide builds one knight machine with looping animations, one-shots that finish before the next state, in-between animations between postures and a jump kept until it can play; see [Animation states with one-shots](./state-machines.md#animation-states-with-one-shots).
+- **[State machines](./state-machines.md) answer more about a running machine, and the guide gains a recipe:**
+  - **A `when` reads the machine** — a rule's `when` receives the running machine as its last argument, read-only, so a rule can depend on the active states, as in `when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing")`; see [Read another region in a `when`](./state-machines.md#read-another-region-in-a-when).
+  - **`can(event)`** — returns whether a rule of an active state would take the event, without moving the machine or running a hook; see [Ask whether an event would be taken](./state-machines.md#ask-whether-an-event-would-be-taken).
+  - **`onUnhandled(listener)`** — calls the listener with each event no active state took, and `inspect` prints an `unhandled` line for it; see [Listen for unhandled events](./state-machines.md#listen-for-unhandled-events).
+  - **Animation recipe** — the guide builds one knight machine with looping animations, one-shots that finish before the next state, in-between animations between postures and a jump kept until it can play; see [Animation states with one-shots](./state-machines.md#animation-states-with-one-shots).
 
 ## v0.48.0
 

@@ -2781,7 +2781,7 @@ The library Lua ships with no source map. An error or a debugger frame inside th
 
 A machine is a tree of states. The config you pass to `defineMachine` is the root: it names its child `states` and the `initial` one to enter. A state with children of its own is a compound state and also needs an `initial`; a state without children is a leaf. Entering a compound state always continues into its `initial` child, so the active states form one chain from the root down to a leaf.
 
-This tree is the *h* in `hsm`: it is a **hierarchical** state machine, in the statechart style David Harel introduced in 1987. A flat state machine has one level, so behavior shared by several states is repeated in each of them. Here a parent holds what its children share: a transition on the parent applies in every child that does not handle that event itself, because an unhandled event moves up to the parent, and `matches()` on the parent is true whichever child is active.
+This tree is the *h* in `hsm`: it is a **hierarchical** state machine, in the statechart style David Harel introduced in 1987. A flat state machine has one level, so behavior shared by several states is repeated in each of them. Here a parent holds what its children share: a transition on the parent applies in every child that does not handle that event itself, because an event the child does not handle moves up to the parent, and `matches()` on the parent is true whichever child is active.
 
 ```ts
 import { defineMachine } from "@defold-typescript/types/hsm";
@@ -2894,7 +2894,7 @@ m.send({ type: "HIT", damage: 1 }); // handled by /alive: health 2, still /alive
 m.send({ type: "FALL" }); // exits /alive/chase and /alive, enters /dead
 ```
 
-**Which transition runs.** An event starts at the deepest active state. If that state has no `on` entry for the event's `type`, or every `when` in its entry fails, the event moves up to the parent, and so on to the root. The first transition with no `when`, or whose `when` returns `true`, runs, and the event goes no further. An event that no active state handles is dropped. Above, `HIT` sent in `/alive/chase` finds nothing on `chase` and reaches `alive`, where the first entry moves to `/dead` if the hit is fatal and the second takes the damage otherwise.
+**Which transition runs.** An event starts at the deepest active state. If that state has no `on` entry for the event's `type`, or every `when` in its entry fails, the event moves up to the parent, and so on to the root. The first transition with no `when`, or whose `when` returns `true`, runs, and the event goes no further. An event that no active state handles is unhandled: the machine drops it, and an [`onUnhandled` listener](#listen-for-unhandled-events) can report it. Above, `HIT` sent in `/alive/chase` finds nothing on `chase` and reaches `alive`, where the first entry moves to `/dead` if the hit is fatal and the second takes the damage otherwise.
 
 **Transitions with no `to`.** A transition with no `to` runs its `run` and nothing else: no state exits or enters. The damage branch of `HIT` is one.
 
@@ -3499,10 +3499,47 @@ The rules:
 
 - **It checks `when`.** A rule counts when its `when` is missing or passes.
 - **A rule with no `to` counts.** `can` asks whether a rule would take the event, not whether the state would change.
-- **Nothing runs.** No hook, `run` or `onMove` listener is called, and the event is not queued.
+- **Nothing runs.** No hook, `run`, `onMove` listener or `onUnhandled` listener is called, and the event is not queued.
 - **A stopped machine answers `false`.**
 - **Inside a hook it answers for the states active at that moment.** A state's `enter` hook already counts that state.
 - **A `when` cannot call it.** The view a `when` receives has no `can`.
+
+##### Listen for unhandled events
+
+An event that no rule of an active state takes is dropped without a trace. `onUnhandled(listener)` calls the listener with each one:
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+type DoorEvent = { type: "OPEN" } | { type: "CLOSE" } | { type: "KNOCK" };
+
+export const door = defineMachine<object, DoorEvent>()({
+  initial: "/closed",
+  states: {
+    closed: { on: { OPEN: "/open", KNOCK: {} } },
+    open: { on: { CLOSE: "/closed" } },
+  },
+});
+
+const m = door.start({});
+const off = m.onUnhandled((event) => {
+  print(`door ignored ${event.type} in ${m.path}`);
+});
+
+m.send({ type: "CLOSE" }); // prints: door ignored CLOSE in /closed
+m.send({ type: "KNOCK" }); // nothing: the empty rule takes KNOCK
+m.send({ type: "OPEN" }); // nothing: the door opens
+off(); // stop listening
+```
+
+The rules:
+
+- **It reports the events [`can`](#ask-whether-an-event-would-be-taken) answers `false` for.** An event whose every `when` fails is one of them.
+- **An empty rule marks an event as expected.** `KNOCK: {}` takes the event and does nothing, so it is not reported.
+- **A `send` from a hook, a `run` or a `finish` counts.** The listener hears every event the machine processes, not only the ones a script sends.
+- **The listener runs inside the step.** `path` and `leaves` show the states the event found, and a `send` from the listener queues.
+- **A stopped machine reports nothing.** A `send` after `stop()`, an event still queued when `stop()` ends the step, and a late `finish` are not reported.
+- **Each call adds a listener.** The returned function removes it.
 
 ##### Restart a machine
 
@@ -3536,7 +3573,7 @@ export default defineScript({
 `stop()` runs the `exit` hooks of the old instance, and `start` enters `initial` with the context it is given: a new object for a clean start, or the old instance's `ctx` to keep its fields.
 
 - **Restart from a script callback, not from a hook.** Inside a hook, `stop()` waits for the step to end, so a `start` on the next line runs the new instance's `enter` hooks before the old instance's `exit` hooks.
-- **Listeners stay with the old instance.** Call `onMove` and [`inspect`](#debug-a-machine) again on the new one.
+- **Listeners stay with the old instance.** Call `onMove`, `onUnhandled` and [`inspect`](#debug-a-machine) again on the new one.
 - **`on_reload` suits a restart.** A reload does not run `init` again, so restarting there is how a changed starting context reaches a running object; see [Restart on a hot reload](#restart-on-a-hot-reload).
 
 To restart one state and keep the instance, name the state as its own target; see [Events and transitions](#events-and-transitions).
@@ -4029,20 +4066,23 @@ export default defineScript({
 });
 ```
 
-`inspect` prints one line when it is called, then one line for each move:
+`inspect` prints one line when it is called, then one line for each move and one for an event no active state took:
 
 ```text
 hsm door frame 0: inspecting [/closed]
 hsm door frame 120: /closed -> /opening (trigger_response) [/opening]
 hsm door frame 150: /opening -> /open (OPENED) [/open]
+hsm door frame 200: unhandled (trigger_response) [/open]
 hsm door frame 330: /open -> /closed (after) [/closed]
 ```
+
+An `unhandled` line carries the event's `type` and the active leaves. It prints once per type until the machine's next move, so an event sent every frame does not flood the console.
 
 The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update`, `always`, `stop` or `reload`. The brackets list every active leaf after the move, joined by `, `, so a parallel machine's line names each region's leaf. After `stop()` the new path reads `(stopped)` and the brackets are empty. A label already used by another `inspect` call gets the next ordinal no other call has used, `enemy#2`, `enemy#3`, in both the console lines and the drawn text. In a console line, a backslash escapes each `\`, `[`, `]`, `(`, `)`, `,`, `>` and `:` inside the label, a path or the event's `type`, and a line break reads `\n` (a carriage return `\r`), so every line splits back into the same parts; the drawn text shows the names as they are. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the active leaves joined by `, `, 40 units above the target's world position.
 
 In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect` registers nothing and `draw` does nothing, so the calls can stay in shipped code.
 
-`inspect` is built on `onMove(listener)`, which every instance has. The listener receives the old leaf path, the new one (`undefined` after `stop()`), the cause and the event (`undefined` unless the cause is `event`), after the move's `enter` hooks have run. It is not called for the first entry at `start` or for a transition with no `to`. Each call adds a listener and returns a function that removes it. Use it to feed your own tools.
+`inspect` is built on `onMove(listener)` and [`onUnhandled(listener)`](#listen-for-unhandled-events), which every instance has. The `onMove` listener receives the old leaf path, the new one (`undefined` after `stop()`), the cause and the event (`undefined` unless the cause is `event`), after the move's `enter` hooks have run. It is not called for the first entry at `start` or for a transition with no `to`. Each call adds a listener and returns a function that removes it. Use it to feed your own tools.
 
 #### Animation states with one-shots
 
@@ -5021,6 +5061,7 @@ The optional key the root config takes; see [Private fields with `privateCtx`](#
 | `update`  | `(dt: number) => void`  | Runs the `update` hooks, then the `after` timers if no hook transitioned.          |
 | `stop`    | `() => void`            | Exits every active state; later `send` and `update` calls do nothing.              |
 | `onMove` | `(listener: (from, to, cause, event) => void) => () => void` | Calls `listener` after each move with the old and new leaf, the cause and the event; inside a parallel state, the leaves are those of the region that moved. `to` is `undefined` on `stop()`. Returns a function that removes the listener. |
+| `onUnhandled` | `(listener: (event: E) => void) => () => void` | Calls `listener` with each event the machine processes that no rule of an active state takes. Returns a function that removes the listener. |
 
 ### Init
 

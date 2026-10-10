@@ -192,6 +192,7 @@ function proxyOf(s: Session, m: Instance): Instance {
       m.stop();
     },
     onMove: (listener) => m.onMove(listener),
+    onUnhandled: (listener) => m.onUnhandled(listener),
   };
   return s.proxy;
 }

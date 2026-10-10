@@ -21,6 +21,11 @@ export type MoveCause = "event" | "after" | "update" | "stop" | "reload" | "alwa
  */
 export type MoveListener<E extends EventObject, P extends string = string> = (from: P, to: P | undefined, cause: MoveCause, event: E | undefined) => void;
 /**
+ * A listener given to `onUnhandled`. It gets the event no rule of an active state took.
+ * @noSelf
+ */
+export type UnhandledListener<E extends EventObject> = (event: E) => void;
+/**
  * What a `when` sees of the running machine: which states are active, and nothing that changes
  * it. `P` is the union of the machine's state paths; the `machine` a `when` receives uses plain
  * `string` paths instead.
@@ -56,7 +61,8 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
     readonly can: (event: E) => boolean;
     /**
      * Handles `event`, or queues it when called during a step. An event no active state handles is
-     * dropped, and once the machine is stopped the call does nothing.
+     * dropped and reported to the `onUnhandled` listeners, and once the machine is stopped the call
+     * does nothing.
      */
     readonly send: (event: E) => void;
     /**
@@ -77,6 +83,12 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
      * function removes that one.
      */
     readonly onMove: (listener: MoveListener<E, P>) => () => void;
+    /**
+     * Adds a listener called with each event the machine processes that no rule of an active state
+     * takes. It runs inside the step, before the next queued event. A rule with no `to` takes its
+     * event. Each call adds a listener, and the returned function removes that one.
+     */
+    readonly onUnhandled: (listener: UnhandledListener<E>) => () => void;
 }
 /**
  * A function a rule's `run` calls during the move, after the `exit` hooks and before the `enter`

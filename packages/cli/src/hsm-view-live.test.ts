@@ -58,6 +58,13 @@ describe("parseInspectLine", () => {
     expect(parseInspectLine("DEBUG:SCRIPT: hsm door frame 0: inspecting [/a\\qb]")).toBeUndefined();
   });
 
+  test("rejects an unhandled line that is not the shape inspect prints", () => {
+    expect(parseInspectLine("hsm door frame 3: unhandled (CLOSE [/closed]")).toBeUndefined();
+    expect(parseInspectLine("hsm door frame 3: unhandled CLOSE) [/closed]")).toBeUndefined();
+    expect(parseInspectLine("hsm door frame 3: unhandled [/closed]")).toBeUndefined();
+    expect(parseInspectLine("hsm door frame 3: unhandled (A) (B) [/closed]")).toBeUndefined();
+  });
+
   test("ignores lines that are not inspect output", () => {
     expect(parseInspectLine("DEBUG:SCRIPT: hello")).toBeUndefined();
     expect(parseInspectLine("ERROR:SCRIPT: main/door.lua:3: attempt to index nil")).toBeUndefined();

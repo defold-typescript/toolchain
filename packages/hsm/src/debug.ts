@@ -96,9 +96,11 @@ function shownLeaves(leaves: readonly string[]): string {
 
 /**
  * Prints one line when it is called, then one line for each move `instance` makes, each starting
- * with `hsm` and the label. Call it once after `start`. A label another `inspect` call already
- * used gets an ordinal, such as `enemy#2`. In a release build it registers nothing and returns an
- * inspector whose `draw` does nothing, so the calls can stay in shipped code.
+ * with `hsm` and the label. An event no active state takes prints an `unhandled` line with its
+ * `type` and the active leaves, once per type until the next move. Call it once after `start`. A
+ * label another `inspect` call already used gets an ordinal, such as `enemy#2`. In a release
+ * build it registers nothing and returns an inspector whose `draw` does nothing, so the calls can
+ * stay in shipped code.
  */
 export function inspect<Ctx, E extends EventObject, P extends string>(
   instance: MachineInstance<Ctx, E, P>,
@@ -110,10 +112,22 @@ export function inspect<Ctx, E extends EventObject, P extends string>(
   const shownLabel = uniqueLabel(label);
   const loggedLabel = escapeField(shownLabel);
   let frame = 0;
+  let moves = 0;
+  const unhandledAt: Record<string, number> = {};
   instance.onMove((from, to, cause, event) => {
+    moves++;
     const reason = event === undefined ? cause : event.type;
     print(
       `hsm ${loggedLabel} frame ${frame}: ${escapeField(from)} -> ${shown(to)} (${escapeField(reason)}) [${shownList(instance.leaves, escapeField)}]`,
+    );
+  });
+  instance.onUnhandled((event) => {
+    if (unhandledAt[event.type] === moves) {
+      return;
+    }
+    unhandledAt[event.type] = moves;
+    print(
+      `hsm ${loggedLabel} frame ${frame}: unhandled (${escapeField(event.type)}) [${shownList(instance.leaves, escapeField)}]`,
     );
   });
   print(
