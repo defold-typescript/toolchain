@@ -111,6 +111,22 @@ export type MoveAction<Ctx, E extends EventObject, V extends E = E> = (
   machine: MachineInstance<Ctx, E>,
 ) => void;
 
+/**
+ * A function a rule's `run` calls where there is no event: under `after` and `always`.
+ */
+export type RunAction<Ctx, E extends EventObject> = (
+  ctx: Ctx,
+  machine: MachineInstance<Ctx, E>,
+) => void;
+
+// A rule typed without the machine's event type has no run. The default cannot be EventObject:
+// MachineInstance is invariant in E, so such a rule would not fit a machine with narrower events.
+// That makes the rule types invariant in E too, and TypeScript does not compare two instances of
+// one type by structure, so each slot lists the rule typed without E beside the one typed with it.
+type RuleRun<Ctx, E extends EventObject> = [E] extends [never]
+  ? never
+  : RunAction<Ctx, E> | readonly RunAction<Ctx, E>[];
+
 // A list with a first entry: Lua cannot tell [] from {}, so an empty list would compile to a
 // transition with no to. It is an object type, not a tuple, because TypeScript reports a bad
 // `to` in the object form on that `to` only when the spec union holds no array type.
@@ -172,11 +188,11 @@ export type TransitionSpec<
 > = To | TransitionConfig<Ctx, E, V, To> | RuleList<TransitionConfig<Ctx, E, V, To>>;
 
 /**
- * The object form of an `always` rule: a `to` and an optional `when`. It gets no event and has
- * no `run`; side effects belong in the target's `enter`.
+ * The object form of an `always` rule: a `to`, an optional `when` and an optional `run`. It gets
+ * no event. `E` is the machine's event type; a rule typed without it has no `run`.
  * @noSelf
  */
-export interface AlwaysConfig<Ctx, To extends string = string> {
+export interface AlwaysConfig<Ctx, To extends string = string, E extends EventObject = never> {
   /**
    * The full path of the state to move to. An `always` rule without one throws when the machine
    * is defined.
@@ -187,6 +203,8 @@ export interface AlwaysConfig<Ctx, To extends string = string> {
    * states; inside a parallel state it shows the regions that already moved.
    */
   readonly when?: (ctx: Ctx, machine: MachineView) => boolean;
+  /** Runs between the `exit` and `enter` hooks of the move, only when the rule is taken. */
+  readonly run?: RuleRun<Ctx, E>;
   /** Renamed to `to`. */
   readonly target?: never;
   /** Renamed to `when`. */
@@ -197,16 +215,43 @@ export interface AlwaysConfig<Ctx, To extends string = string> {
  * What `always` takes: a target path, an `AlwaysConfig`, or a non-empty list of them. The first
  * whose `when` is missing or passes is taken.
  */
-export type AlwaysSpec<Ctx, To extends string = string> =
+export type AlwaysSpec<Ctx, To extends string = string, E extends EventObject = never> =
   | To
+  | AlwaysConfig<Ctx, To, E>
   | AlwaysConfig<Ctx, To>
-  | RuleList<AlwaysConfig<Ctx, To>>;
+  | RuleList<AlwaysConfig<Ctx, To, E> | AlwaysConfig<Ctx, To>>;
 
 /**
- * One entry of the list form of `after`: a `delay` and the `to` its timer leads to.
+ * The object form of a rule on an `after` timer: a `to`, a `when` and a `run`, each optional. A
+ * rule with neither a `to` nor a `run` throws when the machine is defined. `E` is the machine's
+ * event type; a rule typed without it has no `run`.
  * @noSelf
  */
-export interface AfterConfig<Ctx, To extends string = string> {
+export interface AfterRule<Ctx, To extends string = string, E extends EventObject = never> {
+  /**
+   * The full path of the state to move to when the timer fires. A rule without one runs its
+   * `run` and nothing else: no state exits or enters, and it is not a move.
+   */
+  readonly to?: To;
+  /**
+   * The timer fires only when this returns `true`. It is first checked once the delay has
+   * passed, then on every `update` call until it passes or the state is left, so it must have no
+   * side effects. `machine` reads the active states.
+   */
+  readonly when?: (ctx: Ctx, machine: MachineView) => boolean;
+  /**
+   * Runs when the timer fires: between the `exit` and `enter` hooks of the move, or on its own
+   * for a rule with no `to`.
+   */
+  readonly run?: RuleRun<Ctx, E>;
+}
+
+/**
+ * One entry of the list form of `after`: a `delay` beside the fields of an `AfterRule`.
+ * @noSelf
+ */
+export interface AfterConfig<Ctx, To extends string = string, E extends EventObject = never>
+  extends AfterRule<Ctx, To, E> {
   /**
    * The delay in seconds of game time: a number, or a function of the context that returns one.
    * A function is read once each time the state is entered, after its `enter` hook, and again on
@@ -214,8 +259,6 @@ export interface AfterConfig<Ctx, To extends string = string> {
    * throws, naming the state.
    */
   readonly delay: number | ((ctx: Ctx) => number);
-  /** The full path of the state to move to when the delay has passed. */
-  readonly to: To;
 }
 
 /**
@@ -354,21 +397,26 @@ interface StateBase<Ctx, E extends EventObject, T, Self extends string, To exten
    */
   readonly on?: NoInfer<OnConfig<Ctx, E, To>>;
   /**
-   * Timers, in one of two forms: targets by delay in seconds of game time, such as
-   * `{ 2: "/idle" }`, or a list of `AfterConfig` entries, such as
+   * Timers, in one of two forms: targets or `AfterRule` objects by delay in seconds of game
+   * time, such as `{ 2: "/idle" }`, or a list of `AfterConfig` entries, such as
    * `[{ delay: (ctx) => ctx.patrolFor, to: "/rest" }]`, whose `delay` is a number or a function
    * of the context. A delay function is read once each time the state is entered, after its
    * `enter` hook, and again on a hot reload. The delay is counted by `update(dt)` while the state
-   * is active, from zero on each entry. One `update` call fires at most one timer, and none when
-   * an `update` hook moved the machine.
+   * is active, from zero on each entry, and a timer fires at most once per stay. An `update`
+   * call tries the due timers in delay order: one whose `when` fails stays pending, one with no
+   * `to` runs its `run` and the call goes on, and the first that moves ends the timers of that
+   * call. None is tried when an `update` hook moved the machine.
    */
-  readonly after?: NoInfer<{ readonly [seconds: number]: To } | readonly AfterConfig<Ctx, To>[]>;
+  readonly after?: NoInfer<
+    | { readonly [seconds: number]: To | AfterRule<Ctx, To, E> | AfterRule<Ctx, To> }
+    | readonly (AfterConfig<Ctx, To, E> | AfterConfig<Ctx, To>)[]
+  >;
   /**
-   * Targets taken right after any move that leaves this state active; the first whose `when` is
-   * missing or passes wins. It is checked after a move only: not after a rule with no `to`, and
-   * not on an `update` call that moves nothing.
+   * Rules taken right after any move that leaves this state active; the first whose `when` is
+   * missing or passes wins, and its `run` runs during the move. It is checked after a move only:
+   * not after a rule with no `to`, and not on an `update` call that moves nothing.
    */
-  readonly always?: AlwaysSpec<Ctx, To>;
+  readonly always?: AlwaysSpec<Ctx, To, E>;
   /**
    * Runs each time the state is entered, outermost state first: on a move, at `start`, and when
    * a hot reload adds the state. It gets no event.
@@ -486,11 +534,11 @@ interface Compiled<Ctx, E extends EventObject> {
   readonly onIndex: { [type: string]: number }[];
   readonly transitions: Transition<Ctx, E>[][];
   readonly afterDelays: number[][];
-  readonly afterTargets: number[][];
+  readonly afterRules: Transition<Ctx, E>[][];
   // Set only for a state whose after list holds a delay function: its entries in list order,
   // for each instance to sort once the function is read.
   readonly afterListDelays: (Delay<Ctx>[] | undefined)[];
-  readonly afterListTargets: (number[] | undefined)[];
+  readonly afterListRules: (Transition<Ctx, E>[] | undefined)[];
   readonly always: Transition<Ctx, E>[][];
   readonly pathIndex: { [path: string]: number };
 }
@@ -784,18 +832,18 @@ function compileAlways<Ctx, E extends EventObject>(
   // Read as an array type: the transpiler shifts an index to Lua's base 1 only on an array.
   const spec = (compiled.configs[index] as StateConfig<Ctx, E>).always as
     | string
-    | AlwaysConfig<Ctx>
-    | readonly AlwaysConfig<Ctx>[]
+    | AlwaysConfig<Ctx, string, E>
+    | readonly AlwaysConfig<Ctx, string, E>[]
     | undefined;
   if (spec === undefined) {
     return;
   }
-  const candidates: readonly (string | AlwaysConfig<Ctx>)[] =
-    typeof spec === "string" || (spec as readonly AlwaysConfig<Ctx>[])[0] === undefined
-      ? [spec as string | AlwaysConfig<Ctx>]
-      : (spec as readonly AlwaysConfig<Ctx>[]);
+  const candidates: readonly (string | AlwaysConfig<Ctx, string, E>)[] =
+    typeof spec === "string" || (spec as readonly AlwaysConfig<Ctx, string, E>[])[0] === undefined
+      ? [spec as string | AlwaysConfig<Ctx, string, E>]
+      : (spec as readonly AlwaysConfig<Ctx, string, E>[]);
   for (let i = 0; i < candidates.length; i++) {
-    const candidate = candidates[i] as string | AlwaysConfig<Ctx>;
+    const candidate = candidates[i] as string | AlwaysConfig<Ctx, string, E>;
     if (typeof candidate !== "string" && candidate.to === undefined) {
       throw `hsm: state "${describePath(compiled.paths[index] as string)}" has an always transition with no "to"`;
     }
@@ -831,44 +879,64 @@ function checkDelay(path: string, delay: unknown, written: unknown): void {
 }
 
 // Keeps the delays ascending; timers with one delay stay in the order they were added.
-function insertTimer(delays: number[], targets: number[], delay: number, target: number): void {
+function insertTimer<Ctx, E extends EventObject>(
+  delays: number[],
+  rules: Transition<Ctx, E>[],
+  delay: number,
+  rule: Transition<Ctx, E>,
+): void {
   let slot = delays.length;
   while (slot > 0 && (delays[slot - 1] as number) > delay) {
     delays[slot] = delays[slot - 1] as number;
-    targets[slot] = targets[slot - 1] as number;
+    rules[slot] = rules[slot - 1] as Transition<Ctx, E>;
     slot--;
   }
   delays[slot] = delay;
-  targets[slot] = target;
+  rules[slot] = rule;
+}
+
+function compileTimer<Ctx, E extends EventObject>(
+  compiled: Compiled<Ctx, E>,
+  index: number,
+  spec: string | AfterRule<Ctx, string, E>,
+): Transition<Ctx, E> {
+  const rule = compileTransition(compiled, index, spec as string | TransitionConfig<Ctx, E>);
+  if (rule.target === NO_STATE && rule.run.length === 0) {
+    throw `hsm: state "${describePath(compiled.paths[index] as string)}" has an after timer with no "to" and no "run"`;
+  }
+  return rule;
 }
 
 function compileAfter<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, index: number): void {
   const delays: number[] = [];
-  const targets: number[] = [];
+  const rules: Transition<Ctx, E>[] = [];
   compiled.afterDelays[index] = delays;
-  compiled.afterTargets[index] = targets;
+  compiled.afterRules[index] = rules;
   const after = (compiled.configs[index] as StateConfig<Ctx, E>).after;
   if (after === undefined) {
     return;
   }
   const path = compiled.paths[index] as string;
   // Read as an array type: the transpiler shifts an index to Lua's base 1 only on an array.
-  const list = after as readonly AfterConfig<Ctx>[];
-  if (typeof list[0] !== "object") {
-    const byDelay = after as { readonly [seconds: number]: string };
+  const list = after as readonly AfterConfig<Ctx, string, E>[];
+  const first = list[0];
+  // A rule object under the delay 0, or under 1 in Lua where the read is shifted, is an object
+  // too, so the list form is the one whose first entry has a delay.
+  if (typeof first !== "object" || first.delay === undefined) {
+    const byDelay = after as { readonly [seconds: number]: string | AfterRule<Ctx, string, E> };
     for (const key in byDelay) {
       const delay = parseDelay(key);
       checkDelay(path, delay, key);
-      const target = resolveTarget(compiled, index, byDelay[key as unknown as number] as string);
-      insertTimer(delays, targets, delay, target);
+      const spec = byDelay[key as unknown as number] as string | AfterRule<Ctx, string, E>;
+      insertTimer(delays, rules, delay, compileTimer(compiled, index, spec));
     }
     return;
   }
   const listDelays: Delay<Ctx>[] = [];
-  const listTargets: number[] = [];
+  const listRules: Transition<Ctx, E>[] = [];
   let perInstance = false;
   for (let i = 0; i < list.length; i++) {
-    const entry = list[i] as AfterConfig<Ctx>;
+    const entry = list[i] as AfterConfig<Ctx, string, E>;
     const delay = entry.delay;
     if (typeof delay === "function") {
       perInstance = true;
@@ -876,15 +944,15 @@ function compileAfter<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, in
       checkDelay(path, delay, delay);
     }
     listDelays[i] = delay;
-    listTargets[i] = resolveTarget(compiled, index, entry.to);
+    listRules[i] = compileTimer(compiled, index, entry);
   }
   if (perInstance) {
     compiled.afterListDelays[index] = listDelays;
-    compiled.afterListTargets[index] = listTargets;
+    compiled.afterListRules[index] = listRules;
     return;
   }
   for (let i = 0; i < listDelays.length; i++) {
-    insertTimer(delays, targets, listDelays[i] as number, listTargets[i] as number);
+    insertTimer(delays, rules, listDelays[i] as number, listRules[i] as Transition<Ctx, E>);
   }
 }
 
@@ -904,9 +972,9 @@ function compile<Ctx, E extends EventObject>(config: MachineConfig<Ctx, E>): Com
     onIndex: [],
     transitions: [],
     afterDelays: [],
-    afterTargets: [],
+    afterRules: [],
     afterListDelays: [],
-    afterListTargets: [],
+    afterListRules: [],
     always: [],
     pathIndex: {},
   };
@@ -1024,23 +1092,25 @@ function createMachine<Ctx, E extends EventObject>(
     let onIndex = compiled.onIndex;
     let transitions = compiled.transitions;
     let afterDelays = compiled.afterDelays;
-    let afterTargets = compiled.afterTargets;
+    let afterRules = compiled.afterRules;
     let afterListDelays = compiled.afterListDelays;
-    let afterListTargets = compiled.afterListTargets;
+    let afterListRules = compiled.afterListRules;
     let always = compiled.always;
     const activeChild: number[] = [];
     const isActive: boolean[] = [];
     const elapsed: number[] = [];
-    const fired: number[] = [];
+    // For a state with timers, which of them fired during this stay, by position in delay order.
+    const fired: (boolean[] | undefined)[] = [];
     // The sorted timers of a state whose after list holds a delay function, read on each entry.
     const ownDelays: (number[] | undefined)[] = [];
-    const ownTargets: (number[] | undefined)[] = [];
+    const ownRules: (Transition<Ctx, E>[] | undefined)[] = [];
     const entryId: number[] = [];
     const cleanup: ((() => void) | undefined)[] = [];
     // Keyed by path, not index, so a remembered child outlives a rebind's recompilation.
     const remembered: { [parentPath: string]: string } = {};
     let slotCount = 0;
     growSlots();
+    sizeFired();
     const leaves: string[] = [];
     let entryCount = 0;
     const queue: (E | undefined)[] = [];
@@ -1070,9 +1140,9 @@ function createMachine<Ctx, E extends EventObject>(
       activeChild[state] = NO_STATE;
       isActive[state] = false;
       elapsed[state] = 0;
-      fired[state] = 0;
+      fired[state] = undefined;
       ownDelays[state] = undefined;
-      ownTargets[state] = undefined;
+      ownRules[state] = undefined;
       entryId[state] = 0;
       cleanup[state] = undefined;
     }
@@ -1082,25 +1152,41 @@ function createMachine<Ctx, E extends EventObject>(
       if (list === undefined) {
         return;
       }
-      const listTargets = afterListTargets[state] as number[];
+      const listRules = afterListRules[state] as Transition<Ctx, E>[];
       const delays: number[] = [];
-      const targets: number[] = [];
+      const rules: Transition<Ctx, E>[] = [];
       for (let i = 0; i < list.length; i++) {
         let delay = list[i] as Delay<Ctx>;
         if (typeof delay === "function") {
           delay = delay(ctx);
           checkDelay(paths[state] as string, delay, delay);
         }
-        insertTimer(delays, targets, delay, listTargets[i] as number);
+        insertTimer(delays, rules, delay, listRules[i] as Transition<Ctx, E>);
       }
       ownDelays[state] = delays;
-      ownTargets[state] = targets;
+      ownRules[state] = rules;
     }
 
     function growSlots(): void {
       while (slotCount < compiled.count) {
         clearSlot(slotCount);
         slotCount++;
+      }
+    }
+
+    // The flag lists are built here, once per compiled definition: an entry and an update only
+    // write them in place.
+    function sizeFired(): void {
+      for (let state = 0; state < compiled.count; state++) {
+        const list = afterListDelays[state];
+        const count = list === undefined ? (afterDelays[state] as number[]).length : list.length;
+        if (count > 0) {
+          const flags: boolean[] = [];
+          for (let i = 0; i < count; i++) {
+            flags[i] = false;
+          }
+          fired[state] = flags;
+        }
       }
     }
 
@@ -1123,14 +1209,14 @@ function createMachine<Ctx, E extends EventObject>(
       collectActive(ROOT, order);
       const keptPaths: string[] = [];
       const keptElapsed: number[] = [];
-      const keptFired: number[] = [];
+      const keptFired: (boolean[] | undefined)[] = [];
       const keptEntryId: number[] = [];
       const keptCleanup: ((() => void) | undefined)[] = [];
       for (let i = 0; i < order.length; i++) {
         const state = order[i] as number;
         keptPaths[i] = paths[state] as string;
         keptElapsed[i] = elapsed[state] as number;
-        keptFired[i] = fired[state] as number;
+        keptFired[i] = fired[state];
         keptEntryId[i] = entryId[state] as number;
         keptCleanup[i] = cleanup[state];
       }
@@ -1150,12 +1236,13 @@ function createMachine<Ctx, E extends EventObject>(
       onIndex = compiled.onIndex;
       transitions = compiled.transitions;
       afterDelays = compiled.afterDelays;
-      afterTargets = compiled.afterTargets;
+      afterRules = compiled.afterRules;
       afterListDelays = compiled.afterListDelays;
-      afterListTargets = compiled.afterListTargets;
+      afterListRules = compiled.afterListRules;
       always = compiled.always;
       fillPrivate(ctx as never, configs[ROOT], true);
       growSlots();
+      sizeFired();
       const dropped: number[] = [];
       for (let i = 0; i < order.length; i++) {
         const state = lookupPath(compiled, keptPaths[i] as string);
@@ -1174,7 +1261,14 @@ function createMachine<Ctx, E extends EventObject>(
           activeChild[owner] = state;
         }
         elapsed[state] = keptElapsed[i] as number;
-        fired[state] = keptFired[i] as number;
+        // By position: a timer the new definition lacks is dropped, and a new one starts unfired.
+        const before = keptFired[i];
+        const flags = fired[state];
+        if (before !== undefined && flags !== undefined) {
+          for (let timer = 0; timer < before.length && timer < flags.length; timer++) {
+            flags[timer] = before[timer] as boolean;
+          }
+        }
         entryId[state] = keptEntryId[i] as number;
         cleanup[state] = keptCleanup[i];
         readDelays(state);
@@ -1266,7 +1360,12 @@ function createMachine<Ctx, E extends EventObject>(
       isActive[state] = true;
       activeChild[state] = NO_STATE;
       elapsed[state] = 0;
-      fired[state] = 0;
+      const flags = fired[state];
+      if (flags !== undefined) {
+        for (let i = 0; i < flags.length; i++) {
+          flags[i] = false;
+        }
+      }
       entryCount++;
       const id = entryCount;
       entryId[state] = id;
@@ -1496,7 +1595,7 @@ function createMachine<Ctx, E extends EventObject>(
             busy = false;
             throw `hsm: state "${describePath(paths[state] as string)}" took ${ALWAYS_LIMIT} always transitions in a row; check for an always loop`;
           }
-          transition(state, candidate.target, undefined, undefined, "always");
+          transition(state, candidate.target, candidate.run, undefined, "always");
           return true;
         }
       }
@@ -1507,7 +1606,14 @@ function createMachine<Ctx, E extends EventObject>(
       run: readonly MoveAction<Ctx, E>[] | undefined,
       event: E | undefined,
     ): void {
-      if (run === undefined || event === undefined) {
+      if (run === undefined) {
+        return;
+      }
+      if (event === undefined) {
+        // Only a rule outside `on` runs with no event, and its entries are RunActions.
+        for (let i = 0; i < run.length; i++) {
+          (run[i] as unknown as RunAction<Ctx, E>)(ctx, instance);
+        }
         return;
       }
       for (let i = 0; i < run.length; i++) {
@@ -1714,13 +1820,30 @@ function createMachine<Ctx, E extends EventObject>(
       if (child !== NO_STATE && fireTimers(child)) {
         return true;
       }
+      const flags = fired[state];
+      if (flags === undefined) {
+        return false;
+      }
       const delays = ownDelays[state] || (afterDelays[state] as number[]);
-      const next = fired[state] as number;
-      if (next < delays.length && (delays[next] as number) <= (elapsed[state] as number)) {
-        fired[state] = next + 1;
-        const targets = ownTargets[state] || (afterTargets[state] as number[]);
-        transition(state, targets[next] as number, undefined, undefined, "after");
-        return true;
+      const rules = ownRules[state] || (afterRules[state] as Transition<Ctx, E>[]);
+      const due = elapsed[state] as number;
+      for (let i = 0; i < delays.length && (delays[i] as number) <= due; i++) {
+        if (flags[i] !== true) {
+          const rule = rules[i] as Transition<Ctx, E>;
+          const when = rule.when as ((ctx: Ctx, machine: MachineView) => boolean) | undefined;
+          if (when === undefined || when(ctx, instance)) {
+            // Set before the move: a `to` naming this state re-enters it, which clears the flags.
+            flags[i] = true;
+            if (rule.target !== NO_STATE) {
+              transition(state, rule.target, rule.run, undefined, "after");
+              return true;
+            }
+            runActions(rule.run, undefined);
+            if (stopRequested) {
+              return true;
+            }
+          }
+        }
       }
       return false;
     }

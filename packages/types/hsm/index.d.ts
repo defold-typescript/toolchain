@@ -95,6 +95,11 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
  * hooks. Its `event` is the variant the `on` key names.
  */
 export type MoveAction<Ctx, E extends EventObject, V extends E = E> = (ctx: Ctx, event: V, machine: MachineInstance<Ctx, E>) => void;
+/**
+ * A function a rule's `run` calls where there is no event: under `after` and `always`.
+ */
+export type RunAction<Ctx, E extends EventObject> = (ctx: Ctx, machine: MachineInstance<Ctx, E>) => void;
+type RuleRun<Ctx, E extends EventObject> = [E] extends [never] ? never : RunAction<Ctx, E> | readonly RunAction<Ctx, E>[];
 interface RuleList<Rule> {
     readonly 0: Rule;
     readonly [index: number]: Rule;
@@ -140,11 +145,11 @@ export interface TransitionConfig<Ctx, E extends EventObject, V extends E = E, T
  */
 export type TransitionSpec<Ctx, E extends EventObject, V extends E = E, To extends string = string> = To | TransitionConfig<Ctx, E, V, To> | RuleList<TransitionConfig<Ctx, E, V, To>>;
 /**
- * The object form of an `always` rule: a `to` and an optional `when`. It gets no event and has
- * no `run`; side effects belong in the target's `enter`.
+ * The object form of an `always` rule: a `to`, an optional `when` and an optional `run`. It gets
+ * no event. `E` is the machine's event type; a rule typed without it has no `run`.
  * @noSelf
  */
-export interface AlwaysConfig<Ctx, To extends string = string> {
+export interface AlwaysConfig<Ctx, To extends string = string, E extends EventObject = never> {
     /**
      * The full path of the state to move to. An `always` rule without one throws when the machine
      * is defined.
@@ -155,6 +160,8 @@ export interface AlwaysConfig<Ctx, To extends string = string> {
      * states; inside a parallel state it shows the regions that already moved.
      */
     readonly when?: (ctx: Ctx, machine: MachineView) => boolean;
+    /** Runs between the `exit` and `enter` hooks of the move, only when the rule is taken. */
+    readonly run?: RuleRun<Ctx, E>;
     /** Renamed to `to`. */
     readonly target?: never;
     /** Renamed to `when`. */
@@ -164,12 +171,36 @@ export interface AlwaysConfig<Ctx, To extends string = string> {
  * What `always` takes: a target path, an `AlwaysConfig`, or a non-empty list of them. The first
  * whose `when` is missing or passes is taken.
  */
-export type AlwaysSpec<Ctx, To extends string = string> = To | AlwaysConfig<Ctx, To> | RuleList<AlwaysConfig<Ctx, To>>;
+export type AlwaysSpec<Ctx, To extends string = string, E extends EventObject = never> = To | AlwaysConfig<Ctx, To, E> | AlwaysConfig<Ctx, To> | RuleList<AlwaysConfig<Ctx, To, E> | AlwaysConfig<Ctx, To>>;
 /**
- * One entry of the list form of `after`: a `delay` and the `to` its timer leads to.
+ * The object form of a rule on an `after` timer: a `to`, a `when` and a `run`, each optional. A
+ * rule with neither a `to` nor a `run` throws when the machine is defined. `E` is the machine's
+ * event type; a rule typed without it has no `run`.
  * @noSelf
  */
-export interface AfterConfig<Ctx, To extends string = string> {
+export interface AfterRule<Ctx, To extends string = string, E extends EventObject = never> {
+    /**
+     * The full path of the state to move to when the timer fires. A rule without one runs its
+     * `run` and nothing else: no state exits or enters, and it is not a move.
+     */
+    readonly to?: To;
+    /**
+     * The timer fires only when this returns `true`. It is first checked once the delay has
+     * passed, then on every `update` call until it passes or the state is left, so it must have no
+     * side effects. `machine` reads the active states.
+     */
+    readonly when?: (ctx: Ctx, machine: MachineView) => boolean;
+    /**
+     * Runs when the timer fires: between the `exit` and `enter` hooks of the move, or on its own
+     * for a rule with no `to`.
+     */
+    readonly run?: RuleRun<Ctx, E>;
+}
+/**
+ * One entry of the list form of `after`: a `delay` beside the fields of an `AfterRule`.
+ * @noSelf
+ */
+export interface AfterConfig<Ctx, To extends string = string, E extends EventObject = never> extends AfterRule<Ctx, To, E> {
     /**
      * The delay in seconds of game time: a number, or a function of the context that returns one.
      * A function is read once each time the state is entered, after its `enter` hook, and again on
@@ -177,8 +208,6 @@ export interface AfterConfig<Ctx, To extends string = string> {
      * throws, naming the state.
      */
     readonly delay: number | ((ctx: Ctx) => number);
-    /** The full path of the state to move to when the delay has passed. */
-    readonly to: To;
 }
 /**
  * A state's rules by event `type`. Only the machine's event types are keys, and each rule's
@@ -258,23 +287,25 @@ interface StateBase<Ctx, E extends EventObject, T, Self extends string, To exten
      */
     readonly on?: NoInfer<OnConfig<Ctx, E, To>>;
     /**
-     * Timers, in one of two forms: targets by delay in seconds of game time, such as
-     * `{ 2: "/idle" }`, or a list of `AfterConfig` entries, such as
+     * Timers, in one of two forms: targets or `AfterRule` objects by delay in seconds of game
+     * time, such as `{ 2: "/idle" }`, or a list of `AfterConfig` entries, such as
      * `[{ delay: (ctx) => ctx.patrolFor, to: "/rest" }]`, whose `delay` is a number or a function
      * of the context. A delay function is read once each time the state is entered, after its
      * `enter` hook, and again on a hot reload. The delay is counted by `update(dt)` while the state
-     * is active, from zero on each entry. One `update` call fires at most one timer, and none when
-     * an `update` hook moved the machine.
+     * is active, from zero on each entry, and a timer fires at most once per stay. An `update`
+     * call tries the due timers in delay order: one whose `when` fails stays pending, one with no
+     * `to` runs its `run` and the call goes on, and the first that moves ends the timers of that
+     * call. None is tried when an `update` hook moved the machine.
      */
     readonly after?: NoInfer<{
-        readonly [seconds: number]: To;
-    } | readonly AfterConfig<Ctx, To>[]>;
+        readonly [seconds: number]: To | AfterRule<Ctx, To, E> | AfterRule<Ctx, To>;
+    } | readonly (AfterConfig<Ctx, To, E> | AfterConfig<Ctx, To>)[]>;
     /**
-     * Targets taken right after any move that leaves this state active; the first whose `when` is
-     * missing or passes wins. It is checked after a move only: not after a rule with no `to`, and
-     * not on an `update` call that moves nothing.
+     * Rules taken right after any move that leaves this state active; the first whose `when` is
+     * missing or passes wins, and its `run` runs during the move. It is checked after a move only:
+     * not after a rule with no `to`, and not on an `update` call that moves nothing.
      */
-    readonly always?: AlwaysSpec<Ctx, To>;
+    readonly always?: AlwaysSpec<Ctx, To, E>;
     /**
      * Runs each time the state is entered, outermost state first: on a move, at `start`, and when
      * a hot reload adds the state. It gets no event.

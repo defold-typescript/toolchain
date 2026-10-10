@@ -297,6 +297,36 @@ export default defineScript({
 });
 ```
 
+```ts title="guard-timer-rules.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+interface GuardCtx {
+  readonly sprite: Url;
+  calm: boolean;
+}
+
+type GuardEvent = { type: "SPOT" };
+
+export const timedGuard = defineMachine<GuardCtx, GuardEvent>()({
+  initial: "/patrol",
+  states: {
+    patrol: { on: { SPOT: "/alert" } },
+    alert: {
+      after: {
+        2: {
+          run: (ctx) =>
+            msg.post(ctx.sprite, "shout"),
+        },
+        5: {
+          to: "/patrol",
+          when: (ctx) => ctx.calm,
+        },
+      },
+    },
+  },
+});
+```
+
 ```ts title="guard-private.ts"
 import { defineMachine } from "@defold-typescript/types/hsm";
 

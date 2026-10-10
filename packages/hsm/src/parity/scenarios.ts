@@ -1108,6 +1108,82 @@ function unhandledEvents(): string[] {
   return log;
 }
 
+function timerRules(): string[] {
+  const log: string[] = [];
+  const ctx = newCtx(log);
+  const define = () =>
+    defineMachine<Ctx, Ev>("parity timer rules")({
+      initial: "/a",
+      states: {
+        a: {
+          ...logged("a"),
+          after: {
+            1: {
+              run: (ctx) => {
+                ctx.log.push("beep");
+              },
+            },
+            2: {
+              to: "/b",
+              when: (ctx) => ctx.flag,
+              run: (ctx) => {
+                ctx.log.push("leave a");
+              },
+            },
+          },
+        },
+        b: {
+          ...logged("b"),
+          always: {
+            to: "/c",
+            run: [
+              (ctx) => {
+                ctx.log.push("one");
+              },
+              (ctx) => {
+                ctx.log.push("two");
+              },
+            ],
+          },
+        },
+        c: {
+          ...logged("c"),
+          after: [
+            {
+              delay: 0.5,
+              run: (ctx, m) => {
+                ctx.log.push("ping");
+                m.send({ type: "BACK" });
+              },
+            },
+          ],
+          on: { BACK: "/a" },
+        },
+      },
+    });
+  const m = define().start(ctx);
+  m.onMove((from, to, cause, event) => {
+    log.push(`${shown(from)} -> ${shown(to)} ${cause} ${event === undefined ? "-" : event.type}`);
+  });
+  m.update(1);
+  log.push(`path=${shown(m.path)}`);
+  m.update(1);
+  log.push(`path=${shown(m.path)}`);
+  define();
+  m.update(0.5);
+  log.push(`path=${shown(m.path)}`);
+  ctx.flag = true;
+  m.update(0);
+  log.push(`path=${shown(m.path)}`);
+  m.update(0.5);
+  log.push(`path=${shown(m.path)}`);
+  m.update(1);
+  recordError(log, () =>
+    defineMachine<Ctx, Ev>()({ initial: "/a", states: { a: { after: { 1: {} } } } }),
+  );
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -1131,6 +1207,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "guard reads the machine", run: () => guardView() },
   { name: "can asks without moving", run: () => canQuery() },
   { name: "unhandled events reach the listener", run: () => unhandledEvents() },
+  { name: "timer rules", run: () => timerRules() },
 ];
 
 export function runScenario(name: string): string {
