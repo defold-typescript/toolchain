@@ -1,4 +1,4 @@
-import { defineMachine } from "../index";
+import { defineMachine, type UnhandledListener } from "../index";
 
 type Ev =
   | { type: "GO" }
@@ -1059,6 +1059,55 @@ function canQuery(): string[] {
   return log;
 }
 
+function unhandledEvents(): string[] {
+  const log: string[] = [];
+  const m = defineMachine<Ctx, Ev>()({
+    initial: "/a",
+    states: {
+      a: {
+        ...logged("a"),
+        on: {
+          GO: "/b",
+          STEP: { to: "/b", when: (_ctx, event) => event.n > 1 },
+          PING: {},
+        },
+      },
+      b: {
+        enter: (ctx, machine) => {
+          ctx.log.push("enter b");
+          if (ctx.flag) {
+            ctx.flag = false;
+            machine.send({ type: "HIT" });
+            machine.send({ type: "BACK" });
+          }
+        },
+        exit: (ctx) => {
+          ctx.log.push("exit b");
+        },
+        on: { BACK: "/a" },
+      },
+    },
+  }).start(newCtx(log, true));
+  const listener: UnhandledListener<Ev> = (event) => {
+    log.push(`unhandled ${event.type} at ${shown(m.path)}`);
+  };
+  const remove = m.onUnhandled(listener);
+  m.send({ type: "NOPE" });
+  m.send({ type: "STEP", n: 1 });
+  m.send({ type: "PING" });
+  m.send({ type: "STEP", n: 2 });
+  m.send({ type: "GO" });
+  m.send({ type: "GO" });
+  remove();
+  m.send({ type: "GO" });
+  log.push("off");
+  m.onUnhandled(listener);
+  m.stop();
+  m.send({ type: "GO" });
+  log.push(`path=${shown(m.path)}`);
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -1081,6 +1130,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "after delay from ctx", run: () => afterDelayFromCtx() },
   { name: "guard reads the machine", run: () => guardView() },
   { name: "can asks without moving", run: () => canQuery() },
+  { name: "unhandled events reach the listener", run: () => unhandledEvents() },
 ];
 
 export function runScenario(name: string): string {

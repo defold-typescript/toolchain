@@ -28,6 +28,12 @@ export type MoveListener<E extends EventObject, P extends string = string> = (
 ) => void;
 
 /**
+ * A listener given to `onUnhandled`. It gets the event no rule of an active state took.
+ * @noSelf
+ */
+export type UnhandledListener<E extends EventObject> = (event: E) => void;
+
+/**
  * What a `when` sees of the running machine: which states are active, and nothing that changes
  * it. `P` is the union of the machine's state paths; the `machine` a `when` receives uses plain
  * `string` paths instead.
@@ -65,7 +71,8 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
   readonly can: (event: E) => boolean;
   /**
    * Handles `event`, or queues it when called during a step. An event no active state handles is
-   * dropped, and once the machine is stopped the call does nothing.
+   * dropped and reported to the `onUnhandled` listeners, and once the machine is stopped the call
+   * does nothing.
    */
   readonly send: (event: E) => void;
   /**
@@ -86,6 +93,12 @@ export interface MachineInstance<Ctx, E extends EventObject, P extends string = 
    * function removes that one.
    */
   readonly onMove: (listener: MoveListener<E, P>) => () => void;
+  /**
+   * Adds a listener called with each event the machine processes that no rule of an active state
+   * takes. It runs inside the step, before the next queued event. A rule with no `to` takes its
+   * event. Each call adds a listener, and the returned function removes that one.
+   */
+  readonly onUnhandled: (listener: UnhandledListener<E>) => () => void;
 }
 
 /**
@@ -969,6 +982,31 @@ function fillPrivate(
   }
 }
 
+// Copy-on-write: a report walks the list it started with, so a listener removed mid-report
+// never makes it skip another.
+function withListener<L>(list: readonly L[], listener: L): L[] {
+  const added: L[] = [];
+  for (let i = 0; i < list.length; i++) {
+    added.push(list[i] as L);
+  }
+  added.push(listener);
+  return added;
+}
+
+function withoutListener<L>(list: readonly L[], listener: L): L[] {
+  const kept: L[] = [];
+  let skipped = false;
+  for (let i = 0; i < list.length; i++) {
+    const current = list[i] as L;
+    if (current !== listener || skipped) {
+      kept.push(current);
+    } else {
+      skipped = true;
+    }
+  }
+  return kept;
+}
+
 function createMachine<Ctx, E extends EventObject>(
   definition: Definition<Ctx, E>,
 ): Machine<Ctx, E> {
@@ -1013,6 +1051,7 @@ function createMachine<Ctx, E extends EventObject>(
     let stopRequested = false;
     let moved = false;
     let listeners: MoveListener<E>[] = [];
+    let unhandledListeners: UnhandledListener<E>[] = [];
 
     const instance = {
       ctx,
@@ -1024,6 +1063,7 @@ function createMachine<Ctx, E extends EventObject>(
       update,
       stop,
       onMove,
+      onUnhandled,
     };
 
     function clearSlot(state: number): void {
@@ -1157,32 +1197,27 @@ function createMachine<Ctx, E extends EventObject>(
       settleAlways();
     }
 
-    // Copy-on-write: a report walks the list it started with, so a listener removed mid-report
-    // never makes it skip another.
     function onMove(listener: MoveListener<E>): () => void {
-      const added: MoveListener<E>[] = [];
-      for (let i = 0; i < listeners.length; i++) {
-        added.push(listeners[i] as MoveListener<E>);
-      }
-      added.push(listener);
-      listeners = added;
+      listeners = withListener(listeners, listener);
       let removed = false;
       return () => {
         if (removed) {
           return;
         }
         removed = true;
-        const kept: MoveListener<E>[] = [];
-        let skipped = false;
-        for (let i = 0; i < listeners.length; i++) {
-          const current = listeners[i] as MoveListener<E>;
-          if (current !== listener || skipped) {
-            kept.push(current);
-          } else {
-            skipped = true;
-          }
+        listeners = withoutListener(listeners, listener);
+      };
+    }
+
+    function onUnhandled(listener: UnhandledListener<E>): () => void {
+      unhandledListeners = withListener(unhandledListeners, listener);
+      let removed = false;
+      return () => {
+        if (removed) {
+          return;
         }
-        listeners = kept;
+        removed = true;
+        unhandledListeners = withoutListener(unhandledListeners, listener);
       };
     }
 
@@ -1586,7 +1621,12 @@ function createMachine<Ctx, E extends EventObject>(
         queue[queueHead] = undefined;
         queueHead++;
         moved = false;
-        offerEvent(ROOT, event);
+        if (!offerEvent(ROOT, event) && unhandledListeners.length > 0) {
+          const current = unhandledListeners;
+          for (let i = 0; i < current.length; i++) {
+            (current[i] as UnhandledListener<E>)(event);
+          }
+        }
         if (moved) {
           settleAlways();
         }

@@ -14,8 +14,10 @@ export interface MachineInspector {
 }
 /**
  * Prints one line when it is called, then one line for each move `instance` makes, each starting
- * with `hsm` and the label. Call it once after `start`. A label another `inspect` call already
- * used gets an ordinal, such as `enemy#2`. In a release build it registers nothing and returns an
- * inspector whose `draw` does nothing, so the calls can stay in shipped code.
+ * with `hsm` and the label. An event no active state takes prints an `unhandled` line with its
+ * `type` and the active leaves, once per type until the next move. Call it once after `start`. A
+ * label another `inspect` call already used gets an ordinal, such as `enemy#2`. In a release
+ * build it registers nothing and returns an inspector whose `draw` does nothing, so the calls can
+ * stay in shipped code.
  */
 export declare function inspect<Ctx, E extends EventObject, P extends string>(instance: MachineInstance<Ctx, E, P>, label: string): MachineInspector;

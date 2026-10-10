@@ -448,6 +448,22 @@ const EXPECTED: Record<string, string[]> = {
     "exit b",
     "BACK=false",
   ],
+  "unhandled events reach the listener": [
+    "enter a",
+    "unhandled NOPE at /a",
+    "unhandled STEP at /a",
+    "exit a",
+    "enter b",
+    "unhandled HIT at /b",
+    "exit b",
+    "enter a",
+    "exit a",
+    "enter b",
+    "unhandled GO at /b",
+    "off",
+    "exit b",
+    "path=(stopped)",
+  ],
 };
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");

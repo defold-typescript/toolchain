@@ -323,12 +323,18 @@ describe("can agrees with send", () => {
       { type: "HIT", damage: 1 },
       { type: "HIT", damage: 9 },
     ];
+    let unhandled = 0;
+    m.onUnhandled(() => {
+      unhandled++;
+    });
     const visited = new Set<string>(m.leaves);
     for (const event of events) {
       const before = m.ctx.taken;
+      const reported = unhandled;
       const expected = m.can(event);
       m.send(event);
       expect([event, m.ctx.taken > before]).toEqual([event, expected]);
+      expect([event, unhandled - reported]).toEqual([event, expected ? 0 : 1]);
       for (const leaf of m.leaves) {
         visited.add(leaf);
       }
