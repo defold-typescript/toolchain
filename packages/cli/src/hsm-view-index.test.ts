@@ -139,6 +139,51 @@ export const m = defineMachine()({
     ]);
   });
 
+  test("maps each every entry to its own rule id and source", () => {
+    const entry = write(
+      "main.ts",
+      `import { defineMachine } from "@defold-typescript/types/hsm";
+export const m = defineMachine()({
+  initial: "/a",
+  states: {
+    a: {
+      every: { 0.5: (ctx) => { ctx.n += 1; }, 2: [(ctx) => { ctx.n += 2; }] },
+      after: { 2: "/b" },
+    },
+    b: {
+      every: [
+        { delay: 1, run: (ctx) => { ctx.n += 1; } },
+        { delay: (ctx) => ctx.rate, run: (ctx) => { ctx.n += 1; } },
+      ],
+    },
+  },
+});
+`,
+    );
+    const loaded = load(entry);
+    const config = loaded.machines[0]?.config;
+    const index = machineIndex(config, loaded.files);
+
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "every", "0.5")])).toBe("0.5");
+    expect(spanText(loaded.files, index.rules[ruleId("/a", "every", "2")])).toBe("2");
+    expect(index.rules[ruleId("/a", "every", "2")]).not.toEqual(
+      index.rules[ruleId("/a", "after", "2")],
+    );
+    expect(spanText(loaded.files, index.rules[ruleId("/b", "every", 0)])).toBe(
+      "{ delay: 1, run: (ctx) => { ctx.n += 1; } }",
+    );
+    expect(spanText(loaded.files, index.rules[ruleId("/b", "every", 1)])).toContain("ctx.rate");
+    expect(index.rules).not.toHaveProperty([ruleId("/b", "every", "0")]);
+    expect(index.ruleOnKeys).not.toHaveProperty([ruleId("/a", "every", "0.5")]);
+    expect(index.ruleOnKeys).not.toHaveProperty([ruleId("/a", "every", "2")]);
+    expect(index.ruleOnKeys).not.toHaveProperty([ruleId("/b", "every", 0)]);
+    expect(index.ruleOnKeys).not.toHaveProperty([ruleId("/b", "every", 1)]);
+    expect(ruleIds(config)["/b"]?.every).toEqual([
+      ruleId("/b", "every", 0),
+      ruleId("/b", "every", 1),
+    ]);
+  });
+
   test("gives rules of colliding state names and event types distinct ids", () => {
     const entry = write(
       "main.ts",
@@ -168,6 +213,7 @@ export const m = defineMachine()({
     const ids = Object.values(ruleIds(config)).flatMap((state) => [
       ...Object.values(state.on).flat(),
       ...state.after,
+      ...state.every,
       ...state.always,
       ...(state.update === undefined ? [] : [state.update]),
     ]);

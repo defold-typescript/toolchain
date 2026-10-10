@@ -14,9 +14,9 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** needs `can`, `onUnhandled` and `hasTag` to compile.
-> - **[State machines](./state-machines.md)** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), put [rules on timers](./state-machines.md#rules-on-a-timer), group states with [tags](./state-machines.md#name-a-group-of-states-with-tags) and react to any event no state took with one [`unhandled`](./state-machines.md#react-to-an-unhandled-event) hook.
+> - **State machines** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), put [rules on timers](./state-machines.md#rules-on-a-timer), group states with [tags](./state-machines.md#name-a-group-of-states-with-tags), wait for several engine calls with [`waitGroup()`](./state-machines.md#waitgroup) and react to any event no state took with one [`unhandled`](./state-machines.md#react-to-an-unhandled-event) hook.
 > - **A saved game** resumes where it stopped: [`start` takes saved state paths](./state-machines.md#start-at-saved-paths).
-> - **[`waitGroup()`](./state-machines.md#waitgroup)** makes a `task` wait for several engine calls.
+> - **[`hsm-view`](./hsm-view.md#read-the-code)** glows `every` runs and dims held timers.
 > - **A [hot reload](./state-machines.md#what-each-instance-keeps)** keeps each timer's fired mark.
 
 ### Breaking
@@ -26,8 +26,8 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took, resume a saved game and answer more about a running machine, and the guide gains a recipe:**
-  - **`every`** — a state runs code each time a delay passes while it is active, such as damage every half second or a rate of fire read from the context; a long frame runs it once, and a run is not a move; see [Repeat while a state is active](./state-machines.md#repeat-while-a-state-is-active).
-  - **Rules on timers and `always`** — an `after` timer takes `to`, `when` and `run`, so a state can run code at a set time without leaving and a timer can wait for a condition once its delay has passed, and an `always` rule takes `run`; see [Rules on a timer](./state-machines.md#rules-on-a-timer).
+  - **`every`** — a state runs code each time a delay passes while it is active, such as damage every half second or a rate of fire read from the context; a long frame runs it once, and a run is not a move; see [Repeat while a state is active](./state-machines.md#repeat-while-a-state-is-active). [`hsm-view`](./hsm-view.md#read-the-code) glows the entry that ran.
+  - **Rules on timers and `always`** — an `after` timer takes `to`, `when` and `run`, so a state can run code at a set time without leaving and a timer can wait for a condition once its delay has passed, and an `always` rule takes `run`; see [Rules on a timer](./state-machines.md#rules-on-a-timer). [`hsm-view`](./hsm-view.md#read-the-code) glows the timer that fired and dims one its `when` holds back.
   - **`waitGroup()`** — a `task` that starts several engine calls waits for all of them: each `add()` returns the callback to pass, as in `http.request(url, "GET", group.add())`, and `wait` runs its callback once every one has reported; see [`WaitGroup`](./state-machines.md#waitgroup).
   - **A `when` reads the machine** — a rule's `when` receives the running machine as its last argument, read-only, so a rule can depend on the active states through `matches` and `hasTag`, as in `when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing")`; see [Read another region in a `when`](./state-machines.md#read-another-region-in-a-when).
   - **Tags** — a state lists `tags`, and `hasTag` on the instance and on the `machine` every callback receives answers whether any active state carries one, such as every state in which the player takes no damage; the names are the third type argument of `defineMachine`; see [Name a group of states with tags](./state-machines.md#name-a-group-of-states-with-tags).
