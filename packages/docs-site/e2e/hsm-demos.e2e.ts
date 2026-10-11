@@ -1,25 +1,25 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 // The state machines tutorial replaces each `[data-hsm-demo]` placeholder with a
-// live diagram running the real hsm library. Pressing the lamp's TOGGLE lights
-// its `on` box and narrates the step in the log, naming each state by its full path.
+// live diagram running the real hsm library. Pressing the first buddy's POKE lights
+// its `awake` box and narrates the step in the log, naming each state by its full path.
 
-test("the lamp demo toggles on and logs the transition", async ({ page }) => {
+test("the first buddy demo wakes up and logs the transition", async ({ page }) => {
   await page.goto("/state-machines-tutorial");
-  const demo = page.locator('[data-hsm-demo="lamp"] .hsm-demo');
+  const demo = page.locator('[data-hsm-demo="buddy-first"] .hsm-demo');
   await expect(demo).toBeVisible();
 
-  const onBox = demo.locator(".hsm-state", {
-    has: page.locator(".hsm-state-name", { hasText: /^on$/ }),
+  const awakeBox = demo.locator(".hsm-state", {
+    has: page.locator(".hsm-state-name", { hasText: /^awake$/ }),
   });
   const log = demo.locator(".hsm-log li");
-  await expect(onBox).not.toHaveClass(/hsm-on/);
+  await expect(awakeBox).not.toHaveClass(/hsm-on/);
   const before = await log.count();
 
-  await demo.getByRole("button", { name: "TOGGLE" }).click();
-  await expect(onBox).toHaveClass(/hsm-on/);
+  await demo.getByRole("button", { name: "POKE" }).click();
+  await expect(awakeBox).toHaveClass(/hsm-on/);
   await expect(log).toHaveCount(before + 3);
-  await expect(log.last()).toHaveText("enter /on");
+  await expect(log.last()).toHaveText("enter /awake");
 });
 
 // The timed demos share one animation-frame heartbeat. Rewriting DOM nodes on
@@ -64,17 +64,18 @@ function mutationsOver(host: Locator, ms: number): Promise<number> {
 
 test("an idle timed demo writes nothing between frames", async ({ page }) => {
   await page.goto("/state-machines-tutorial");
-  for (const id of ["feet", "sparkle", "door"]) {
+  for (const id of ["buddy-time", "buddy-waking"]) {
     const host = page.locator(`[data-hsm-demo="${id}"]`);
     await host.scrollIntoViewIfNeeded();
     await expect(host.locator(".hsm-demo")).toBeVisible();
     expect(await mutationsOver(host, 1000), `${id} mutations while idle`).toBe(0);
   }
 
-  const feet = page.locator('[data-hsm-demo="feet"] .hsm-demo');
-  await feet.scrollIntoViewIfNeeded();
-  await feet.getByRole("button", { name: "Walk off a ledge" }).click();
-  await expect(stateBox(page, feet, "falling")).toHaveClass(/hsm-on/, { timeout: 2000 });
+  // The 1 s fade runs at half speed, so the heartbeat takes two seconds to wake the buddy.
+  const waking = page.locator('[data-hsm-demo="buddy-waking"] .hsm-demo');
+  await waking.scrollIntoViewIfNeeded();
+  await waking.getByRole("button", { name: "POKE" }).click();
+  await expect(stateBox(page, waking, "awake")).toHaveClass(/hsm-on/, { timeout: 4000 });
 });
 
 // Only demos the reader can see advance, so a running demo scrolled out of view
@@ -85,9 +86,10 @@ test("an off-screen demo pauses", async ({ page }) => {
   await page.evaluate(() => {
     document.documentElement.style.scrollBehavior = "auto";
   });
-  const host = page.locator('[data-hsm-demo="sparkle"]');
+  const host = page.locator('[data-hsm-demo="buddy-time"]');
   await host.scrollIntoViewIfNeeded();
-  await host.getByRole("button", { name: "STAR", exact: true }).click();
+  // An awake buddy's 30 s timer bar moves on every frame.
+  await host.getByRole("button", { name: "POKE", exact: true }).click();
 
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(host).not.toBeInViewport();

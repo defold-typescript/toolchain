@@ -8,572 +8,1018 @@ A hands-on introduction to the `hsm` (Hierarchical State Machine) library for De
 
 When you want the full rules, [State machines](./state-machines.md) has them all.
 
-<div data-hsm-demo="lamp"></div>
+Here is a small robot buddy. Go on, poke it.
 
-That's a state machine. The lamp is always in exactly one **state**: `off` or `on`. Pressing `TOGGLE` sends an **event**, and a **transition** rule moves it to the other state. The glowing box is the state it's in right now, and the log shows each step as it happens.
+<div data-hsm-demo="buddy-first"></div>
+
+What did you just do? You pressed `POKE`, and the buddy woke up. Press it again, and it goes back to sleep.
+
+That's a state machine. The buddy is always in exactly one **state**: `asleep` or `awake`. Pressing `POKE` sends an **event**, and a **transition** rule moves the buddy to the other state. The glowing box is the state it's in right now, and the log shows each step as it happens.
+
+This page grows that buddy one idea at a time. By the end it wanders, follows you, gets tired and wakes up slowly, and it is still one machine in one file.
 
 ## 1. Why bother?
 
-Here's a common first attempt at a player's jump, using true/false flags:
+Couldn't you build the buddy from a few true/false flags? Let's try, with the two things it will learn later already in: following you, and resting when it's tired.
 
 ```ts
-let isJumping = false;
-let isFalling = false;
-let onGround = true;
+let isAwake = false;
+let isFollowing = false;
+let isResting = false;
 
-export function updateJump(pressedJump: boolean, jumpTimer: number): void {
-  if (pressedJump && onGround && !isJumping) {
-    isJumping = true;
+export function poke(): void {
+  isAwake = !isAwake;
+}
+
+export function seePlayer(): void {
+  if (isAwake) {
+    isFollowing = true;
   }
-  if (isJumping && jumpTimer > 0.4) {
-    isJumping = false;
-    isFalling = true;
-  }
-  if (onGround) {
-    isFalling = false;
-  }
-  // ...and ten more "if" lines as the game grows
+}
+
+export function runOutOfEnergy(): void {
+  isAwake = false;
+  isResting = true;
 }
 ```
 
-Three flags can be combined eight ways, and most of them make no sense. What does jumping *and* falling *and* on the ground mean? Nothing stops your code from getting there by accident, and those bugs are hard to find.
+It looks fine. Now walk up to the buddy so it follows you, and poke it to sleep. `isAwake` turns false. What about `isFollowing`?
 
-A state machine fixes this with one rule: **the thing is always in exactly one state.** The player is grounded, or jumping, or falling, never two at once. You write down which events move it from one state to another, and nothing else can.
+It is still true. Your buddy is asleep and following you at the same time.
+
+Three flags can be set eight different ways. How many of them make sense? **Only four:** asleep, wandering, following and resting. The other four are bugs waiting for the right order of button presses, and nothing in the code stops you from getting there.
+
+A state machine fixes this with one rule: **the thing is always in exactly one state.** The buddy is asleep or it is awake, never both. You write down which events move it from one state to another, and nothing else can.
+
+### Try it
+
+1. The buddy runs out of energy while it follows you. Which flags are true afterward?
+2. You add a fourth flag, `isWaking`. How many ways can four flags be set?
+
+> [!MORE] Answer
+> 1. `isFollowing` and `isResting`: a buddy that rests and follows at once. `runOutOfEnergy` forgot one flag, and nothing warned you.
+> 2. Sixteen. Every new flag doubles the count, and almost all of the new ones make no sense.
 
 ## 2. Four words to learn
 
-| Word | Meaning | In the lamp |
+Before any code, you need four words. You met three of them at the top of the page.
+
+| Word | Meaning | In the buddy |
 | --- | --- | --- |
-| State | A mode the thing can be in. Exactly one is active. | `off`, `on` |
-| Event | Something that happens. You send it to the machine. | the switch: `TOGGLE` |
-| Transition | A rule: in this state, when this event happens, go to that state. | off + TOGGLE goes to on |
-| Context (`ctx`) | Your own data that the machine carries and can change. | how many times it was switched on |
+| State | A mode the thing can be in. Exactly one is active. | `asleep`, `awake` |
+| Event | Something that happens. You send it to the machine. | a poke: `POKE` |
+| Transition | A rule: in this state, when this event happens, go to that state. | asleep + POKE goes to awake |
+| Context (`ctx`) | Your own data that the machine carries and can change. | how many times it has woken up |
+
+The fourth one is new. Where is it in the diagram? Scroll up and look under the button: `ctx.wakes` is the buddy's context, one number that goes up each time it wakes.
 
 > [!NOTE] **Draw it first.** Before writing code, sketch your states as boxes and your events as arrows on paper. If the drawing is clear, the code will be easy.
 
+### Try it
+
+1. A platform waits at the bottom, rides up when you step on it, and rides back down three seconds later. Name its states and its events.
+
+> [!MORE] Answer
+> 1. States: `waiting` and `raised`. Events: you step on it, and three seconds pass. Time running out counts as something that happens. [Lesson 8](#8-time-and-every-frame-checks) shows how a machine keeps time.
+
 ## 3. Your first machine
 
-Here's the lamp from the top of the page, in code:
+You have poked the buddy, and you have the words for what you saw. So what does it look like in code?
 
-```ts
-import { defineMachine } from "@defold-typescript/types/hsm";
+Make a file named `buddy-machine.ts`:
 
-// 1. Your data (the "context")
-interface LampCtx {
-  switches: number;
-}
-
-// 2. Every event the lamp understands
-type LampEvent = { type: "TOGGLE" };
-
-// 3. The machine itself
-export const lamp = defineMachine<LampCtx, LampEvent>()({
-  initial: "/off", // which state to start in
-  states: {
-    off: {
-      on: { TOGGLE: "/on" }, // in "/off", TOGGLE means: go to "/on"
-    },
-    on: {
-      // runs every time we enter "on"
-      enter: (ctx) => {
-        ctx.switches += 1;
-      },
-      on: { TOGGLE: "/off" },
-    },
-  },
-});
-
-const m = lamp.start({ switches: 0 }); // a running lamp, with starting data
-m.path; // "/off"
-m.send({ type: "TOGGLE" }); // press the switch
-m.path; // "/on"
-```
-
-Wherever you point at a state, you write its **path**: a `/`, then its name, like `"/off"`. It works like a file path, which matters once states live inside other states.
-
-Don't trip over the two meanings of "on". The *state* is named `on`, and inside every state the *key* `on:` means "on this event, do this." A rule that points at the state always writes it as a path, `"/on"`, so the slash tells you which one you're reading.
-
-That's the whole loop: **define** the machine once, **start** it to get a running copy, **send** events, and read `path` to see where it is.
-
-> [!NOTE] **Why two sets of parentheses?** In `defineMachine<LampCtx, LampEvent>()({ ... })` the first call is where you name your data and event types. The second takes your states, and TypeScript works out the state names from it. It's a TypeScript limitation, so always write it this way.
-
-## 4. States inside states
-
-Now the lamp can be bright or dim while it's on. Instead of writing "TOGGLE goes to off" twice, put `bright` and `dim` *inside* `on`, like files in a folder. Try `DIM` a few times, then `TOGGLE`:
-
-<div data-hsm-demo="nested-lamp"></div>
-
-```ts
-import { defineMachine } from "@defold-typescript/types/hsm";
-
-interface LampCtx {
-  switches: number;
-}
-
-type LampEvent = { type: "TOGGLE" } | { type: "DIM" };
-
-export const lamp = defineMachine<LampCtx, LampEvent>()({
-  initial: "/off",
-  states: {
-    off: { on: { TOGGLE: "/on" } },
-    on: {
-      initial: "/on/bright", // a state with children must say where to start
-      enter: (ctx) => {
-        ctx.switches += 1;
-      },
-      on: { TOGGLE: "/off" }, // written once, works in bright AND dim
-      states: {
-        bright: { on: { DIM: "/on/dim" } },
-        dim: { on: { DIM: "/on/bright" } },
-      },
-    },
-  },
-});
-```
-
-- When the lamp is in `bright` it's also in `on`. Both glow. The rule from part 1 becomes: **one active state at each level**.
-- A state with children must have an `initial`. Entering `on` always continues into `bright`; the log marks it as the initial child.
-- A child's path continues its parent's, like a file in a folder: `"/on/dim"`. `m.path` is the path of the innermost active state, and `m.matches("/on")` asks "is on active at all?" and is true in both children.
-
-Watch the log when you press `TOGGLE` in `/on/dim`: `dim` has no rule for it, so the event **climbs up** to its parent `on`, which does. An event no state handles is simply ignored. Try `DIM` while the lamp is off.
-
-> [!NOTE] **What the "h" in `hsm` means.** It stands for *hierarchical*: states can sit inside other states, forming a tree, like folders. A plain state machine is flat, so every state that shares a rule has to repeat it. In a hierarchical one the parent holds the shared rule once, and its children get it for free. That is why `TOGGLE` is written only on `on`.
-
-### Remembering bright or dim
-
-In the lamp above, press `DIM`, then `TOGGLE` it off and on again. It comes back bright, because entering `on` always starts at its `initial`. To come back the way you left it, the lamp has to remember. Statecharts call this a *history state*, and `hsm` has one built in as [`restoreDepth`](./state-machines.md#resume-with-history). Here you keep that memory in your data instead, which shows how a `when` check picks where to go:
-
-<div data-hsm-demo="remembering-lamp"></div>
-
-```ts
-import { defineMachine } from "@defold-typescript/types/hsm";
-
-interface LampCtx {
-  switches: number;
-  dimmed: boolean; // was the lamp dim when it was last on?
-}
-
-type LampEvent = { type: "TOGGLE" } | { type: "DIM" };
-
-export const lamp = defineMachine<LampCtx, LampEvent>()({
-  initial: "/off",
-  states: {
-    off: {
-      on: {
-        // try each option from top to bottom
-        TOGGLE: [
-          // was it dim? go straight back to dim
-          { to: "/on/dim", when: (ctx) => ctx.dimmed },
-          // otherwise, bright
-          { to: "/on/bright" },
-        ],
-      },
-    },
-    on: {
-      initial: "/on/bright",
-      enter: (ctx) => {
-        ctx.switches += 1;
-      },
-      on: { TOGGLE: "/off" },
-      states: {
-        bright: {
-          enter: (ctx) => {
-            ctx.dimmed = false; // write down where we are
-          },
-          on: { DIM: "/on/dim" },
-        },
-        dim: {
-          enter: (ctx) => {
-            ctx.dimmed = true;
-          },
-          on: { DIM: "/on/bright" },
-        },
-      },
-    },
-  },
-});
-
-const m = lamp.start({ switches: 0, dimmed: false });
-```
-
-- `bright` and `dim` write down which one is active in their `enter` hooks. Those run however the lamp gets there, so `ctx.dimmed` is always right.
-- `TOGGLE` in `off` is now a list of options. The first has a **`when`**, a yes/no question: if the lamp was dim, go straight to `/on/dim`. Otherwise the next option goes to `/on/bright`. [Part 5](#5-conditions-and-side-effects) covers `when` properly.
-- Going straight to `/on/dim` still enters `on` first, so `switches` still counts.
-
-## 5. Conditions and side effects
-
-A robot buddy that bumps into things should stop to rest when its energy runs out, and otherwise just lose some energy. Two tools handle "it depends":
-
-- **`when`** is a yes/no question. If it says no, that rule is skipped.
-- **`run`** is code that runs when a rule is used, such as changing your data.
-
-Bump the buddy a few times. Then recharge it, start a follow, and press `FALL`.
-
-<div data-hsm-demo="buddy"></div>
-
-```ts
+```ts step title="buddy-machine.ts"
 import { defineMachine } from "@defold-typescript/types/hsm";
 
 interface BuddyCtx {
-  energy: number;
+  wakes: number;
+}
+
+type BuddyEvent = { type: "POKE" };
+
+export const buddyMachine = defineMachine<BuddyCtx, BuddyEvent>()({
+  initial: "/asleep",
+  states: {
+    asleep: {
+      on: { POKE: "/awake" },
+    },
+    awake: {
+      enter: (ctx) => {
+        ctx.wakes += 1;
+      },
+      on: { POKE: "/asleep" },
+    },
+  },
+});
+
+const buddy = buddyMachine.start({ wakes: 0 });
+buddy.send({ type: "POKE" });
+print(buddy.path);
+```
+
+All four words are in there:
+
+- **`interface BuddyCtx`** is the context: the data the buddy carries.
+- **`type BuddyEvent`** lists every event the buddy understands. There is one so far.
+- **`states`** holds one block per state, and **`initial`** says which one to start in.
+- **`on: { POKE: "/awake" }`** is a transition. Read it as "on a `POKE`, go to `/awake`".
+- **`enter`** is a function the machine calls each time the buddy arrives in `awake`. Here it counts the wake-ups.
+
+Wherever you point at a state, you write its **path**: a `/`, then its name, like `"/awake"`. It works like a file path, and the next lesson shows why that matters.
+
+### Using the machine
+
+The last three lines put the buddy to work, and they are the whole loop:
+
+- **`buddyMachine.start({ wakes: 0 })`** makes a running buddy and hands it its starting data.
+- **`buddy.send({ type: "POKE" })`** sends it an event.
+- **`buddy.path`** is the state it's in now. Here it prints `/awake`.
+
+You **define** the machine once, **start** it to get a running copy, **send** events, and read `path` to see where it is. That's all there is to it.
+
+> [!NOTE] **Why two sets of parentheses?** In `defineMachine<BuddyCtx, BuddyEvent>()({ ... })` the first call is where you name your data and event types. The second takes your states, and TypeScript works out the state names from it. It's a TypeScript limitation, so always write it this way.
+
+### Try it
+
+1. Poke the buddy in the diagram at the top five times. What does `ctx.wakes` show, and why isn't it five?
+2. Add a second `buddy.send({ type: "POKE" })` above the `print` line. What does it print now?
+
+> [!MORE] Answer
+> 1. Three. `enter` runs when the buddy arrives in `awake`, and only the first, third and fifth pokes take it there.
+> 2. `/asleep`. The second poke uses the rule on `awake`, which goes back to `/asleep`.
+
+## 4. States inside states
+
+The buddy can sleep and wake. An awake buddy should do something, though: **wander** around, and **follow** you when it sees you.
+
+Is following a third state, next to `asleep` and `awake`? You could write it that way. But a poke should put the buddy to sleep whether it wanders or follows, and you'd have to write that rule twice.
+
+Here's the trick: put `wander` and `follow` *inside* `awake`, like files in a folder.
+
+<div data-hsm-demo="buddy-nested"></div>
+
+Wake the buddy, then press `SEE_PLAYER`. How many boxes glow now?
+
+Two: `follow`, and `awake` around it. Now add them to your file. This is the first change to it, so here is how to read one:
+
+- A line on **green** is new. Add it.
+- A line on **red** goes away.
+- Every other line is already in your file and shows you the place. A `// ...` line stands for the lines left out.
+
+```ts step title="buddy-machine.ts"
+type BuddyEvent = { type: "POKE" }; // [!code --]
+type BuddyEvent = // [!code ++]
+  | { type: "POKE" } // [!code ++]
+  | { type: "SEE_PLAYER" } // [!code ++]
+  | { type: "LOSE_PLAYER" }; // [!code ++]
+// ...
+    awake: {
+      initial: "/awake/wander", // [!code ++]
+      enter: (ctx) => {
+        ctx.wakes += 1;
+      },
+      on: { POKE: "/asleep" },
+      states: { // [!code ++]
+        wander: { // [!code ++]
+          on: { SEE_PLAYER: "/awake/follow" }, // [!code ++]
+        }, // [!code ++]
+        follow: { // [!code ++]
+          on: { LOSE_PLAYER: "/awake/wander" }, // [!code ++]
+        }, // [!code ++]
+      }, // [!code ++]
+    },
+// ...
+buddy.send({ type: "POKE" });
+print(buddy.path);
+print(buddy.matches("/awake")); // [!code ++]
+```
+
+- **`states: { ... }`** inside `awake` holds its children. A child's path continues its parent's, like a file in a folder: `"/awake/follow"`.
+- **`initial: "/awake/wander"`**: a state with children must say which one to start in. Entering `awake` always continues into `wander`.
+- **`on: { POKE: "/asleep" }`** didn't move. It's written once, on `awake`, and it works in both children.
+- **`buddy.matches("/awake")`** asks "is `awake` active at all?" It is true in both children, while `buddy.path` is the innermost state: `"/awake/wander"`.
+
+When the buddy is in `follow` it is also in `awake`. Both glow. So the rule from [lesson 1](#1-why-bother) grows up a little: **one active state at each level**.
+
+### Who handles the poke?
+
+Put the buddy in `follow` and press `POKE`, with an eye on the log. `follow` has no rule for `POKE`. What happens to the event?
+
+It **climbs up** to the parent. `awake` does have a rule, so the buddy goes to sleep. An event that no state handles is simply ignored.
+
+> [!NOTE] **What the "h" in `hsm` means.** It stands for *hierarchical*: states can sit inside other states, forming a tree, like folders. A plain state machine is flat, so every state that shares a rule has to repeat it. In a hierarchical one the parent holds the shared rule once, and its children get it for free.
+
+### Try it
+
+1. Press `SEE_PLAYER` while the buddy is asleep. What does the log say?
+2. Follow, poke the buddy to sleep, and poke it awake again. Is it wandering or following?
+
+> [!MORE] Answer
+> 1. Nobody handles it, so it is ignored. `asleep` has no rule for `SEE_PLAYER` and no parent to ask.
+> 2. Wandering. Entering `awake` always starts at its `initial`, whatever the buddy was doing before.
+
+## 5. Conditions and side effects
+
+Now the buddy wanders and follows. A robot that bumps into things should lose a little energy with each bump, and stop to rest when it runs out.
+
+That's new. One event, a bump, now has **two** possible outcomes. How does the machine pick one?
+
+Two tools handle "it depends":
+
+- **`when`** is a yes/no question. If the answer is no, that rule is skipped.
+- **`run`** is code that runs when a rule is used, such as changing your data.
+
+<div data-hsm-demo="buddy-energy"></div>
+
+Wake the buddy and give it a small bump. Which rule lights up, and what happens to `ctx.energy`?
+
+First the buddy needs a battery, and two new events:
+
+```ts step title="buddy-machine.ts"
+interface BuddyCtx {
+  wakes: number;
+  energy: number; // [!code ++]
 }
 
 type BuddyEvent =
-  | { type: "BUMP"; cost: number }
+  | { type: "POKE" }
+  | { type: "BUMP"; cost: number } // [!code ++]
+  | { type: "RECHARGE" } // [!code ++]
   | { type: "SEE_PLAYER" }
-  | { type: "LOSE_PLAYER" }
-  | { type: "FALL" }
-  | { type: "RECHARGE" };
+  | { type: "LOSE_PLAYER" };
+// ...
+const buddy = buddyMachine.start({ wakes: 0 }); // [!code --]
+const buddy = buddyMachine.start({ wakes: 0, energy: 3 }); // [!code ++]
+buddy.send({ type: "POKE" });
+```
 
-export const buddy = defineMachine<BuddyCtx, BuddyEvent>()({
-  initial: "/alive",
-  states: {
-    alive: {
-      initial: "/alive/wander",
-      on: {
-        // a list: try each option from top to bottom
-        BUMP: [
-          { to: "/resting", when: (ctx, event) => ctx.energy <= event.cost },
-          {
-            run: (ctx, event) => {
-              ctx.energy -= event.cost;
-            },
-          },
-        ],
+- **`energy: number`** joins the context, and `start` hands every buddy a full battery of 3.
+- **`{ type: "BUMP"; cost: number }`**: an event can carry data. A bump says how much energy it costs.
+
+Then the rules:
+
+```ts step title="buddy-machine.ts"
+    awake: {
+      initial: "/awake/wander",
+      enter: (ctx) => {
+        ctx.wakes += 1;
       },
+      on: { POKE: "/asleep" }, // [!code --]
+      on: { // [!code ++]
+        POKE: "/asleep", // [!code ++]
+        BUMP: [ // [!code ++]
+          { // [!code ++]
+            to: "/resting", // [!code ++]
+            when: (ctx, event) => ctx.energy <= event.cost, // [!code ++]
+            run: (ctx) => { // [!code ++]
+              ctx.energy = 0; // [!code ++]
+            }, // [!code ++]
+          }, // [!code ++]
+          { // [!code ++]
+            run: (ctx, event) => { // [!code ++]
+              ctx.energy -= event.cost; // [!code ++]
+            }, // [!code ++]
+          }, // [!code ++]
+        ], // [!code ++]
+      }, // [!code ++]
       states: {
-        wander: { on: { SEE_PLAYER: "/alive/follow" } },
-        follow: {
-          on: {
-            LOSE_PLAYER: "/alive/wander",
-            SEE_PLAYER: "/alive/follow", // its own state: restart the follow
-            FALL: "/resting", // a full path reaches any state
-          },
-        },
+        // ...
       },
     },
-    resting: {
-      on: {
-        RECHARGE: {
-          to: "/alive",
-          run: (ctx) => {
-            ctx.energy = 3;
-          },
-        },
-      },
-    },
+    resting: { // [!code ++]
+      on: { // [!code ++]
+        RECHARGE: { // [!code ++]
+          to: "/awake", // [!code ++]
+          run: (ctx) => { // [!code ++]
+            ctx.energy = 3; // [!code ++]
+          }, // [!code ++]
+        }, // [!code ++]
+      }, // [!code ++]
+    }, // [!code ++]
   },
 });
 ```
 
-Read the `BUMP` list like an if/else. If this bump uses up the last of the energy, go to `resting`. Otherwise lose some energy. The second option has no `to`, so the buddy stays exactly where it is: nothing exits or enters, only `run` runs. Events can carry data, like `cost`, which `when` and `run` read as `event.cost`.
+- **`BUMP: [ ... ]`** is a list of rules. The machine tries them from top to bottom and uses the first one that passes, like an if/else.
+- **`when: (ctx, event) => ctx.energy <= event.cost`** asks: does this bump use up the energy that's left? If so, the buddy goes to `/resting` and `run` empties the battery.
+- **The second rule has no `when`**, so it always passes. It has no `to` either, so the buddy stays exactly where it is: nothing exits or enters, and only `run` runs.
+- **`resting`** is a new state next to `asleep` and `awake`. `RECHARGE` fills the battery and wakes the buddy.
+
+A rule can be written three ways, and you have now seen all of them:
 
 | Write a rule as | Example | Use it when |
 | --- | --- | --- |
-| A state path | `LOSE_PLAYER: "/alive/wander"` | You only need to move. Most rules. |
+| A state path | `POKE: "/asleep"` | You only need to move. Most rules. |
 | An object | `{ to, when, run }` | You need a condition or some code. Every field is optional. |
 | A list of objects | `[ {...}, {...} ]` | You need if / else-if choices. |
 
+### Try it
+
+1. Give an awake buddy two small bumps, then a big one. Where is it, and what is `ctx.energy`?
+2. Bump the buddy while it's asleep. Does it lose energy?
+3. The buddy is in `follow` when the big bump lands. Which state handles it?
+
+> [!MORE] Answer
+> 1. In `/resting`, with 0. After two small bumps the battery holds 1, a bump of cost 3 uses up what's left, and the first rule's `when` says yes.
+> 2. No. `BUMP` is written on `awake`, and a sleeping buddy isn't in `awake`, so the event is ignored.
+> 3. `awake`. `follow` has no rule for `BUMP`, so the event climbs to its parent, just like the poke in [lesson 4](#4-states-inside-states).
+
 ## 6. enter, exit, and the order of things
 
-Each state can have an `enter` hook that runs when you arrive and an `exit` hook that runs when you leave. Every transition does three steps, which you can see in the buddy's log after a big bump:
+The buddy rests when it's tired, but nobody can see that. Let's give it a **light** that is on while it's awake.
 
-1. **Exit** the old states, innermost first (`/alive/follow`, then `/alive`).
+You know the hook that turns it on: `enter` runs when the buddy arrives in `awake`. But where do you turn it off? The buddy can leave `awake` by falling asleep or by getting tired, and a third way may come along tomorrow.
+
+One hook covers them all: **`exit`** runs when the buddy leaves the state, wherever it goes next.
+
+```ts step title="buddy-machine.ts"
+interface BuddyCtx {
+  light: Url; // [!code ++]
+  wakes: number;
+  energy: number;
+}
+// ...
+    awake: {
+      initial: "/awake/wander",
+      enter: (ctx) => {
+        ctx.wakes += 1;
+        msg.post(ctx.light, "enable"); // [!code ++]
+      },
+      exit: (ctx) => msg.post(ctx.light, "disable"), // [!code ++]
+      on: {
+        // ...
+        follow: {
+          on: { LOSE_PLAYER: "/awake/wander" }, // [!code --]
+          on: { LOSE_PLAYER: "/awake/wander", SEE_PLAYER: "/awake/follow" }, // [!code ++]
+        },
+// ...
+const buddy = buddyMachine.start({ wakes: 0, energy: 3 }); // [!code --]
+const buddy = buddyMachine.start({ light: msg.url("#light"), wakes: 0, energy: 3 }); // [!code ++]
+buddy.send({ type: "POKE" });
+```
+
+- **`light: Url`** is the address of the buddy's light, a sprite on its game object, and `msg.url("#light")` builds that address. It only means something inside a running game, so don't run the file just yet. The next lesson moves the `start` line to where it belongs.
+- **`msg.post(ctx.light, "enable")`** shows the light on the way into `awake`, and the **`exit`** hook hides it on the way out.
+- **`SEE_PLAYER: "/awake/follow"`** is a rule on `follow` that names `follow` itself. More about that one in a moment.
+
+### The order of a transition
+
+Every transition does three steps, always in this order:
+
+1. **Exit** the old states, innermost first.
 2. Run the rule's **`run`**.
 3. **Enter** the new states, outermost first, continuing into each initial child.
 
-A state you're not really leaving stays put. Going from `/alive/follow` to `/alive/wander` never exits `/alive`. A rule that names its own state is the exception: it leaves and comes back. Press `SEE_PLAYER` twice while following: the rule on `follow` names `/alive/follow`, so `follow` exits and enters again, which restarts its timers. To restart only the children of a state, name the child to start in instead, and to stay put while running code, leave `to` out.
+You can watch all three in the [lesson 5](#5-conditions-and-side-effects) diagram. Tire the buddy out, press `RECHARGE` and read the log: `resting` exits, the rule's `run` fills the battery, then `awake` is entered, then `wander`.
+
+### Leaving and coming back
+
+A state you're not really leaving stays put. Going from `/awake/follow` to `/awake/wander` never exits `awake`, so the light stays on and `wakes` isn't counted again.
+
+What about the new rule, the one where `follow` points at `follow`? That is the exception: a rule that names its own state **leaves it and comes back**. `follow` exits and enters again, and `awake` around it never notices.
+
+Why would you want that? Because entering a state starts it fresh. In [lesson 8](#8-time-and-every-frame-checks) `follow` gets a timer, and seeing you again will start it over.
 
 ### Pointing at the right state
 
-Every target is the full path from the top, wherever the rule is written. A rule inside `/alive/follow` points at its sibling the same way a rule anywhere else would.
+Every target is the full path from the top, wherever the rule is written. A rule inside `/awake/follow` points at its sibling the same way a rule anywhere else would.
 
-| From `/alive/follow`, write | Means | Goes to |
+| From `/awake/follow`, write | Means | Goes to |
 | --- | --- | --- |
-| `"/alive/wander"` | A full path | `/alive/wander` |
+| `"/awake/wander"` | A full path | `/awake/wander` |
 | `"/resting"` | A full path | `/resting` |
 | `"wander"`, `"./wander"` or `"../resting"` | Not a path: no leading `/` | Nothing: the machine refuses to start |
 
 There are no shortcuts relative to the current state. A missing `/` or a misspelled path is usually caught by TypeScript as a compile error, before your game ever runs.
 
-## 7. Time and every-frame checks
+### Try it
 
-Games run frame by frame, so the machine needs a heartbeat: call `m.update(dt)` every frame. That unlocks two things.
+1. The buddy is in `/awake/follow` and takes a bump that uses up its energy. What runs, and in what order?
+2. The buddy follows you and sees you again. Does the light blink? Does `wakes` go up?
 
-- `update` runs a function every frame. Return a state path to move there, or `undefined` to stay.
-- `after` is a timer: "after this many seconds in this state, go there."
+> [!MORE] Answer
+> 1. `follow` exits first (it has no hook). Then `awake` exits, and its hook hides the light. Then the rule's `run` empties the battery. Last, `resting` is entered.
+> 2. No, and no. Only `follow` exits and enters. `awake` was never left, so neither of its hooks runs.
 
-Here's the jump from part 1, done properly. The `coyote` state is a platformer trick: for a tenth of a second after walking off a ledge, jumping still works. The demo runs in slow motion so you can see the timer bars fill. Walk off a ledge and do nothing, then try again and jump in time.
+## 7. Putting it in a Defold game
 
-<div data-hsm-demo="feet"></div>
+So far the buddy has lived at the bottom of its own file, started by a few lines that run once. A game has game objects, though, and maybe five buddies in one level.
 
-```ts
-import { defineMachine } from "@defold-typescript/types/hsm";
+So where does the machine go, and who starts it?
 
-interface FeetCtx {
-  on_ground: boolean;
-}
+**Step 1.** `buddy-machine.ts` describes the machine and starts nothing. Take the lines at the bottom out:
 
-type FeetEvent = { type: "JUMP" };
-
-const land = (ctx: FeetCtx) => (ctx.on_ground ? "/grounded" : undefined);
-
-export const feet = defineMachine<FeetCtx, FeetEvent>()({
-  initial: "/grounded",
-  states: {
-    grounded: {
-      update: (ctx) => (ctx.on_ground ? undefined : "/coyote"),
-      on: { JUMP: "/jumping" },
+```ts step title="buddy-machine.ts"
     },
-    coyote: {
-      update: land, // ground came back? land
-      after: { 0.1: "/falling" }, // otherwise fall after 0.1 s
-      on: { JUMP: "/jumping" }, // jumping still allowed here
-    },
-    jumping: { after: { 0.4: "/falling" } },
-    falling: { update: land },
+  },
+});
+
+const buddy = buddyMachine.start({ light: msg.url("#light"), wakes: 0, energy: 3 }); // [!code --]
+buddy.send({ type: "POKE" }); // [!code --]
+print(buddy.path); // [!code --]
+print(buddy.matches("/awake")); // [!code --]
+```
+
+What is left is a plain module. It compiles to `.lua`, and any script can import it.
+
+**Step 2.** Make a script for the buddy's game object, next to that file:
+
+```ts step title="buddy.ts"
+import { defineScript } from "@defold-typescript/types";
+import { buddyMachine } from "./buddy-machine";
+
+const TOUCH = hash("touch");
+
+export default defineScript({
+  init() {
+    msg.post(".", "acquire_input_focus");
+    msg.post("#light", "disable");
+    return {
+      buddy: buddyMachine.start({ light: msg.url("#light"), wakes: 0, energy: 3 }),
+    };
+  },
+  on_input(self, action_id, action) {
+    if (action_id === TOUCH && action.pressed) {
+      self.buddy.send({ type: "POKE" });
+    }
+  },
+  final(self) {
+    self.buddy.stop();
   },
 });
 ```
 
-Compare this with the flags in part 1. Every state and every way between them is visible, and the player can never be jumping and falling at once.
+- **`init`** runs once for every game object that uses the script. It starts a machine for **this** buddy and keeps it on `self`.
+- **`msg.post("#light", "disable")`**: the buddy starts asleep, so its light starts hidden.
+- **`on_input`** turns a click or a tap into a `POKE`. Posting `acquire_input_focus` asks Defold to send input here at all.
+- **`final`** runs when the object is deleted. `stop()` exits every active state, so their `exit` hooks get to tidy up. [Lesson 11](#11-one-thing-at-a-time) comes back to it.
 
-- Each state's timer starts at zero every time it's entered.
-- Timers count the `dt` you pass in. If you stop calling `update`, time stands still. Pause the demo to see it.
-- `update` functions get the first chance each frame. Timers only fire if none of them moved, so landing on the exact frame coyote time ends counts as landing.
+Nothing in the game sends the other events yet. That's fine for now: the diagrams do the sending, and [lesson 10](#10-messages-from-defold) lets Defold report when the player comes near.
+
+> [!WARNING] **Create machines in init.** A machine started at the top of a script file is shared by every object that runs the script, so all your buddies would wake up together.
+
+> [!MORE] The whole file so far
+>
+> ```ts step title="buddy-machine.ts"
+> import { defineMachine } from "@defold-typescript/types/hsm";
+>
+> interface BuddyCtx {
+>   light: Url;
+>   wakes: number;
+>   energy: number;
+> }
+>
+> type BuddyEvent =
+>   | { type: "POKE" }
+>   | { type: "BUMP"; cost: number }
+>   | { type: "RECHARGE" }
+>   | { type: "SEE_PLAYER" }
+>   | { type: "LOSE_PLAYER" };
+>
+> export const buddyMachine = defineMachine<BuddyCtx, BuddyEvent>()({
+>   initial: "/asleep",
+>   states: {
+>     asleep: {
+>       on: { POKE: "/awake" },
+>     },
+>     awake: {
+>       initial: "/awake/wander",
+>       enter: (ctx) => {
+>         ctx.wakes += 1;
+>         msg.post(ctx.light, "enable");
+>       },
+>       exit: (ctx) => msg.post(ctx.light, "disable"),
+>       on: {
+>         POKE: "/asleep",
+>         BUMP: [
+>           {
+>             to: "/resting",
+>             when: (ctx, event) => ctx.energy <= event.cost,
+>             run: (ctx) => {
+>               ctx.energy = 0;
+>             },
+>           },
+>           {
+>             run: (ctx, event) => {
+>               ctx.energy -= event.cost;
+>             },
+>           },
+>         ],
+>       },
+>       states: {
+>         wander: {
+>           on: { SEE_PLAYER: "/awake/follow" },
+>         },
+>         follow: {
+>           on: { LOSE_PLAYER: "/awake/wander", SEE_PLAYER: "/awake/follow" },
+>         },
+>       },
+>     },
+>     resting: {
+>       on: {
+>         RECHARGE: {
+>           to: "/awake",
+>           run: (ctx) => {
+>             ctx.energy = 3;
+>           },
+>         },
+>       },
+>     },
+>   },
+> });
+>
+> ```
+>
+> ```ts step title="buddy.ts"
+> import { defineScript } from "@defold-typescript/types";
+> import { buddyMachine } from "./buddy-machine";
+>
+> const TOUCH = hash("touch");
+>
+> export default defineScript({
+>   init() {
+>     msg.post(".", "acquire_input_focus");
+>     msg.post("#light", "disable");
+>     return {
+>       buddy: buddyMachine.start({ light: msg.url("#light"), wakes: 0, energy: 3 }),
+>     };
+>   },
+>   on_input(self, action_id, action) {
+>     if (action_id === TOUCH && action.pressed) {
+>       self.buddy.send({ type: "POKE" });
+>     }
+>   },
+>   final(self) {
+>     self.buddy.stop();
+>   },
+> });
+> ```
+
+### Try it
+
+1. You put three buddies in a level. How many machines are running, and how many times is `buddyMachine` defined?
+2. Why can't `buddy-machine.ts` export the script as well?
+
+> [!MORE] Answer
+> 1. Three machines, one definition. `defineMachine` describes a buddy once, and each `start` in `init` makes a running copy with its own state and its own data.
+> 2. A file that exports `defineScript` becomes a script component, and nothing else can import it. The machine stays in a plain module so any script can use it.
+
+## 8. Time and every-frame checks
+
+The buddy is in a game now, and a game runs frame by frame. So far the buddy only moves when something pokes it. What if it should get bored of following after a few seconds, or nod off when nobody plays with it?
+
+It needs a sense of time, and the machine can't feel time on its own. **Somebody has to tell it how much has passed.** That somebody is your script, once per frame:
+
+```ts step title="buddy.ts"
+    };
+  },
+  update(self, dt) { // [!code ++]
+    self.buddy.update(dt); // [!code ++]
+  }, // [!code ++]
+  on_input(self, action_id, action) {
+```
+
+Defold calls the script's `update` every frame with `dt`, the seconds since the last one, and the script passes it on. That one call gives every state two new keys:
+
+- **`after`** is a timer: "after this many seconds in this state, go there."
+- **`update`** is a function that runs every frame while the state is active. Return a state path to move there, or `undefined` to stay.
+
+<div data-hsm-demo="buddy-time"></div>
+
+Wake the buddy, press `SEE_PLAYER`, and then keep your hands off. What does the bar on `follow` do when it fills up?
+
+```ts step title="buddy-machine.ts"
+      exit: (ctx) => msg.post(ctx.light, "disable"),
+      after: { 30: "/asleep" }, // [!code ++]
+      on: {
+        // ...
+        follow: {
+          after: { 4: "/awake/wander" }, // [!code ++]
+          on: { LOSE_PLAYER: "/awake/wander", SEE_PLAYER: "/awake/follow" },
+        },
+      },
+    },
+    resting: {
+      update: (ctx, dt) => { // [!code ++]
+        ctx.energy = math.min(3, ctx.energy + dt); // [!code ++]
+        return ctx.energy >= 3 ? "/awake" : undefined; // [!code ++]
+      }, // [!code ++]
+      on: {
+        RECHARGE: {
+```
+
+- **`after: { 4: "/awake/wander" }`**: four seconds after it starts to follow, the buddy gives up and wanders.
+- **`after: { 30: "/asleep" }`** on `awake`: half a minute awake, and it nods off.
+- **`update`** on `resting` adds each frame's `dt` to the battery, and `math.min` keeps it from going past 3. Once it's full the hook returns `"/awake"` and the buddy gets up. Until then it returns `undefined`, and the buddy keeps resting.
+
+A few rules about time are worth knowing:
+
+- Each state's timer starts at zero every time the state is entered.
+- Timers count the `dt` you pass in. If you stop calling `update`, time stands still. Pause the diagram to see it.
+- `update` hooks get the first chance each frame. Timers only fire if none of them moved the machine.
 - At most one timer moves the machine in one `update` call.
 
 ### A parent's timer keeps running
 
-A state's clock keeps ticking while its children change. That makes "sparkle on and off for two seconds" easy. Pick up a star and watch the two bars: the children's restart every tenth of a second, the parent's runs straight through.
+Look at the two bars while the buddy follows you: one on `follow`, one on `awake`. Press `SEE_PLAYER` again when `follow`'s bar is nearly full. Which bar starts over?
 
-<div data-hsm-demo="sparkle"></div>
+Only `follow`'s. That is the rule from [lesson 6](#6-enter-exit-and-the-order-of-things) at work: `SEE_PLAYER` names `follow`'s own state, so `follow` exits, enters again, and its clock starts from zero.
 
-```ts
+`awake` was never left. **Its clock runs straight through**, whatever its children do. Isn't that handy? "Follow for four seconds at a time, and sleep after thirty in total" takes two short lines.
+
+### Try it
+
+1. The buddy follows you, and you press `SEE_PLAYER` every three seconds. Does it ever wander? Does it ever fall asleep?
+2. Give an awake buddy a bump of cost 3, then pause time. Does the battery fill?
+
+> [!MORE] Answer
+> 1. It never wanders, because `follow`'s four seconds start over each time. It does fall asleep: `awake`'s thirty seconds keep counting through every restart.
+> 2. No. The `update` hook only runs when `update(dt)` is called, and a paused clock calls nothing. `RECHARGE` still works, because it is an event.
+
+## 9. Waiting for things to finish
+
+A poke flips the buddy from asleep to awake in an instant, and its light snaps on. A sleepy robot should wake up slowly: fade the light in over a second, and only then count as awake.
+
+So waking up is now a job that takes a while and then **finishes**. Who tells the machine that the fade is done? You could guess with a one-second timer. Better to let the animation say so itself.
+
+Start work like that in a state's **`task`**. The task receives a **`finish`** function, and you call it with an event when the work is done.
+
+<div data-hsm-demo="buddy-waking"></div>
+
+Poke the buddy and watch the light: it glows dimly while `waking` is active. What happens at the end of the fade?
+
+```ts step title="buddy-machine.ts"
+type BuddyEvent =
+  | { type: "POKE" }
+  | { type: "WOKEN" } // [!code ++]
+  | { type: "BUMP"; cost: number }
+// ...
+    asleep: {
+      on: { POKE: "/awake" }, // [!code --]
+      on: { POKE: "/waking" }, // [!code ++]
+    },
+    waking: { // [!code ++]
+      task: (ctx, finish) => { // [!code ++]
+        go.set(ctx.light, "tint.w", 0); // [!code ++]
+        msg.post(ctx.light, "enable"); // [!code ++]
+        go.animate(ctx.light, "tint.w", go.PLAYBACK_ONCE_FORWARD, 1, go.EASING_LINEAR, 1, 0, () => { // [!code ++]
+          finish({ type: "WOKEN" }); // [!code ++]
+        }); // [!code ++]
+      }, // [!code ++]
+      exit: (ctx) => { // [!code ++]
+        go.cancel_animations(ctx.light, "tint.w"); // [!code ++]
+        msg.post(ctx.light, "disable"); // [!code ++]
+      }, // [!code ++]
+      on: { WOKEN: "/awake", POKE: "/asleep" }, // [!code ++]
+    }, // [!code ++]
+    awake: {
+```
+
+- **`on: { POKE: "/waking" }`**: a poke no longer wakes the buddy outright. It starts the wake-up.
+- **`task`** runs when `waking` is entered. It shows the light fully see-through and asks Defold to fade it in over one second. When the fade ends, Defold calls the function at the end, and `finish` hands the machine a `WOKEN` event.
+- **`exit`** stops what the task started: it cancels the fade and hides the light. If the buddy goes on to `awake`, `awake`'s own `enter` shows the light again at once.
+- **`on: { WOKEN: "/awake", POKE: "/asleep" }`**: the end of the fade wakes the buddy, and a poke during the fade sends it back to sleep.
+
+### Why the cleanup matters
+
+Poke the buddy, and poke it again halfway through the fade. The light goes off, as it should.
+
+Now turn off "cancel in exit" and do the same. See what happens? The fade keeps running on a buddy that is already asleep, so the light ends up fully on while the machine says `asleep`. That's the bug the cleanup in `exit` prevents.
+
+One more thing is in the log. When the leftover fade ends, it still calls `finish`, and the machine **ignores it**, because `waking` was already left. A late `finish` can never wake a buddy that has moved on.
+
+> [!WARNING] **Always clean up in exit.** `exit` runs however a state ends, including when the machine is stopped, so it's the one reliable place to cancel animations, timers and requests.
+
+### Try it
+
+1. You poke the buddy, change your mind, and poke it again during the fade. Does `ctx.wakes` go up?
+2. With "cancel in exit" off, the late `finish` is ignored. So why is the light still wrong?
+
+> [!MORE] Answer
+> 1. No. `wakes` is counted in `awake`'s `enter`, and the buddy never got there.
+> 2. Ignoring the event protects the machine, not the sprite. The animation itself kept running, and only your `exit` hook can stop it.
+
+## 10. Messages from Defold
+
+Until now `SEE_PLAYER` and `LOSE_PLAYER` were events you made up, and nothing in the game sends them. Defold already knows when the player comes near. Give the buddy a trigger collision object, and Defold posts it a `trigger_response` message each time something walks in or out.
+
+Do you have to turn that message into a `SEE_PLAYER` by hand? No. **A Defold message can be an event just as it is.**
+
+```ts step title="buddy-machine.ts"
 import { defineMachine } from "@defold-typescript/types/hsm";
-
-interface SparkleCtx {
-  readonly sprite: Url;
-}
-
-type SparkleEvent = { type: "STAR" };
-
-export const sparkle = defineMachine<SparkleCtx, SparkleEvent>()({
-  initial: "/normal",
-  states: {
-    normal: { on: { STAR: "/sparkling" } },
-    sparkling: {
-      initial: "/sparkling/shown",
-      after: { 2: "/normal" }, // the whole thing lasts 2 s
-      exit: (ctx) => msg.post(ctx.sprite, "enable"), // always end visible
-      states: {
-        shown: {
-          enter: (ctx) => msg.post(ctx.sprite, "enable"),
-          after: { 0.1: "/sparkling/hidden" },
+import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/defold"; // [!code ++]
+// ...
+  | { type: "RECHARGE" }
+  | { type: "SEE_PLAYER" } // [!code --]
+  | { type: "LOSE_PLAYER" }; // [!code --]
+  | MessageEvent<"trigger_response">; // [!code ++]
+// ...
+        wander: {
+          on: { SEE_PLAYER: "/awake/follow" }, // [!code --]
+          on: { // [!code ++]
+            trigger_response: { // [!code ++]
+              to: "/awake/follow", // [!code ++]
+              when: (_ctx, event) => event.enter, // [!code ++]
+            }, // [!code ++]
+          }, // [!code ++]
         },
-        hidden: {
-          enter: (ctx) => msg.post(ctx.sprite, "disable"),
-          after: { 0.1: "/sparkling/shown" },
+        follow: {
+          after: { 4: "/awake/wander" },
+          on: { LOSE_PLAYER: "/awake/wander", SEE_PLAYER: "/awake/follow" }, // [!code --]
+          on: { // [!code ++]
+            trigger_response: [ // [!code ++]
+              { to: "/awake/follow", when: (_ctx, event) => event.enter }, // [!code ++]
+              { to: "/awake/wander" }, // [!code ++]
+            ], // [!code ++]
+          }, // [!code ++]
         },
-      },
-    },
-  },
-});
-```
-
-## 8. Waiting for things to finish
-
-Some work takes a while: an animation, loading a level, a web request. Start it in the state's `task`. It receives a `finish` function; call it with an event when the work is done.
-
-Walk into the door's trigger, and press `CLOSE` halfway through the fade. Then turn off "cancel in exit" and do it again. The fade keeps running on a door that's already closed, so the door ends up invisible while the machine says `closed`. That's the bug cleanup in `exit` prevents. Notice too that the late `finish` is ignored, because `opening` was already left.
-
-<div data-hsm-demo="door"></div>
-
-```ts
-import { defineMachine } from "@defold-typescript/types/hsm";
-import type { MessageEvent } from "@defold-typescript/types/hsm/defold";
-
-interface DoorCtx {
-  readonly sprite: Url;
-  opens: number;
-}
-
-// Defold's trigger_response message, as a machine event
-type DoorEvent = MessageEvent<"trigger_response"> | { type: "OPENED" } | { type: "CLOSE" };
-
-export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
-  initial: "/closed",
-  states: {
-    closed: {
-      enter: (ctx) => go.set(ctx.sprite, "tint.w", 1),
-      on: { trigger_response: { to: "/opening", when: (_ctx, event) => event.enter } },
-    },
-    opening: {
-      task: (ctx, finish) => {
-        go.animate(ctx.sprite, "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 0.5, 0, () => {
-          finish({ type: "OPENED" });
-        });
-      },
-      exit: (ctx) => go.cancel_animations(ctx.sprite, "tint.w"), // cleanup!
-      on: { OPENED: "/open", CLOSE: "/closed" },
-    },
-    open: {
-      enter: (ctx) => {
-        ctx.opens += 1;
-      },
-      after: { 3: "/closed" },
-      on: { CLOSE: "/closed" },
-    },
-  },
-});
-```
-
-> [!WARNING] **Always clean up in exit.** `exit` runs however a state ends, including when the machine is stopped, so it's the one reliable place to cancel animations, timers and requests. Never put cleanup after an `await`: by the time it runs, the state may already be gone.
-
-## 9. One thing at a time
-
-You may call `m.send()` from inside a hook or `run`, but it won't run right away. The event waits in a queue until the current transition, every enter and exit included, has finished. All queued events run before the outer `send`, `update` or `start` call returns.
-
-Start the level with a cached save and watch the log: `loading` sends `LOADED` from its enter hook, the event is queued, and it's handled before `start()` returns. Then press `QUIT`: `done` calls `m.stop()`, which exits every state and leaves `path` as `undefined`. After that, events do nothing.
-
-<div data-hsm-demo="level"></div>
-
-```ts
-import { defineMachine } from "@defold-typescript/types/hsm";
-
-interface LevelCtx {
-  cached: boolean;
-}
-
-type LevelEvent = { type: "LOADED" } | { type: "QUIT" };
-
-export const level = defineMachine<LevelCtx, LevelEvent>()({
-  initial: "/loading",
-  states: {
-    loading: {
-      enter: (ctx, m) => {
-        if (ctx.cached) m.send({ type: "LOADED" }); // queued
-      },
-      on: { LOADED: "/playing" },
-    },
-    playing: { on: { QUIT: "/done" } },
-    done: { enter: (_ctx, m) => m.stop() },
-  },
-});
-```
-
-## 10. Putting it in a Defold game
-
-**Step 1.** Put each machine in its own plain file that doesn't export `defineScript`. Plain modules compile to `.lua` and any script can import them; a file exporting `defineScript` becomes a script component that nothing else can import.
-
-```ts title="door-machine.ts"
-import { defineMachine } from "@defold-typescript/types/hsm";
-import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/defold";
-
-export interface DoorCtx {
-  readonly sprite: Url;
-  opens: number;
-}
-
-export type DoorEvent = MessageEvent<"trigger_response"> | { type: "OPENED" } | { type: "CLOSE" };
-
-// the door from part 8
-export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
-  initial: "/closed",
-  states: {
-    closed: {
-      enter: (ctx) => go.set(ctx.sprite, "tint.w", 1),
-      on: { trigger_response: { to: "/opening", when: (_ctx, event) => event.enter } },
-    },
-    opening: {
-      task: (ctx, finish) => {
-        go.animate(ctx.sprite, "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 0.5, 0, () => {
-          finish({ type: "OPENED" });
-        });
-      },
-      exit: (ctx) => go.cancel_animations(ctx.sprite, "tint.w"),
-      on: { OPENED: "/open", CLOSE: "/closed" },
-    },
-    open: {
-      enter: (ctx) => {
-        ctx.opens += 1;
-      },
-      after: { 3: "/closed" },
-      on: { CLOSE: "/closed" },
-    },
+// ...
   },
 });
 
-// turns Defold's "trigger_response" message into a machine event
-export const doorEvents = messageEvents(["trigger_response"]);
+export const buddyEvents = messageEvents(["trigger_response"]); // [!code ++]
 ```
 
-**Step 2.** Give every game object its own copy, and wire it to the four script callbacks:
+- **`MessageEvent<"trigger_response">`** is Defold's message as a machine event. Its `type` is the message name, and it carries the message's fields: `event.enter` is `true` when the player walked in and `false` when they walked out.
+- **In `wander`**, the `when` skips the rule when the player walks out, so only walking in starts a follow. The rule doesn't read the context, and the underscore in `_ctx` says so.
+- **In `follow`**, the list reads like an if/else again: walked in, follow afresh. Otherwise, back to wandering.
+- **`messageEvents(["trigger_response"])`** builds the translator the script is about to use. Build it once, at the top of the module.
 
-```ts title="door.ts"
+The script hands its messages over:
+
+```ts step title="buddy.ts"
 import { defineScript } from "@defold-typescript/types";
-import { doorEvents, doorMachine } from "./door-machine";
-
-export default defineScript({
-  // one machine for THIS door
-  init() {
-    return { door: doorMachine.start({ sprite: msg.url("#sprite"), opens: 0 }) };
-  },
-  // the heartbeat
-  update(self, dt) {
-    self.door.update(dt);
-  },
-  // Defold message -> event
-  on_message(self, message_id, message, sender) {
-    const event = doorEvents.toEvent(message_id, message, sender);
-    if (event !== undefined) {
-      self.door.send(event);
+import { buddyMachine } from "./buddy-machine"; // [!code --]
+import { buddyEvents, buddyMachine } from "./buddy-machine"; // [!code ++]
+// ...
+      self.buddy.send({ type: "POKE" });
     }
   },
-  // object deleted: run the exit hooks
+  on_message(self, message_id, message, sender) { // [!code ++]
+    const event = buddyEvents.toEvent(message_id, message, sender); // [!code ++]
+    if (event !== undefined) { // [!code ++]
+      self.buddy.send(event); // [!code ++]
+    } // [!code ++]
+  }, // [!code ++]
   final(self) {
-    self.door.stop();
-  },
-});
 ```
 
-> [!WARNING] **Create machines in init.** A machine created at the top of a script file is shared by every object that runs the script, so all your doors would open together.
+- **`buddyEvents.toEvent(...)`** turns a message you listed into a typed event. For any other message it returns `undefined`, which is why the script checks before it sends.
 
-`messageEvents` converts the Defold messages you list into typed events and returns `undefined` for any other message, which is why the script checks before sending. Build it once, at the top of a module.
+For the full rules, see [the message bridge](./state-machines.md#the-message-bridge).
 
-**Step 3.** The script in step 2 passes `opens: 0`, a number only the machine uses. The `privateCtx` key lets the machine build it. The context keeps what the script hands in:
+### Try it
 
-```ts excerpt
-export interface DoorCtx {
-  readonly sprite: Url;
+1. The player walks out of the trigger while the buddy wanders. What happens?
+2. The buddy is asleep and the player walks in. Does it wake up?
+3. Your game also posts a `collision_response` to the buddy. Does the machine ever see it?
+
+> [!MORE] Answer
+> 1. Nothing. The only rule in `wander` has a `when` that says no, there is no second rule to try, and the event is ignored.
+> 2. No. Only the children of `awake` have a rule for `trigger_response`. A poke is still the way to wake it.
+> 3. No. `collision_response` isn't in the list given to `messageEvents`, so `toEvent` returns `undefined` and the script sends nothing.
+
+## 11. One thing at a time
+
+A new buddy starts asleep, and somebody has to poke it. Wouldn't it be nicer if it woke itself up the first time?
+
+The buddy knows whether it has ever been awake: that's `ctx.wakes`. So `asleep` could check the number on the way in and send itself a poke.
+
+Here is the catch. `asleep`'s `enter` hook runs in the middle of a transition. Can a machine take a new event while it's still busy with the last one?
+
+It can't, and it doesn't have to. An event sent from inside a hook or a `run` **waits in a queue** until the current transition, every exit and enter included, has finished. Then it gets its turn.
+
+<div data-hsm-demo="buddy-queue"></div>
+
+Press "start() with wakes = 0" and read the log from the top. Can you find the line where the poke has to wait?
+
+```ts step title="buddy-machine.ts"
+    asleep: {
+      enter: (ctx, machine) => { // [!code ++]
+        if (ctx.wakes === 0) machine.send({ type: "POKE" }); // [!code ++]
+      }, // [!code ++]
+      on: { POKE: "/waking" },
+    },
+```
+
+- **`enter: (ctx, machine) => ...`**: every hook gets the running machine as its last parameter, so it can send events to it.
+- **`if (ctx.wakes === 0)`**: only a buddy that has never been awake pokes itself.
+
+Back to the log. `enter /asleep` comes first, then `POKE queued`, and only after that does `asleep` exit. Every queued event is handled before the outer call returns, so by the time `start()` hands you the buddy it is already in `/waking`.
+
+It stays there, by the way. This diagram has no clock, and [lesson 8](#8-time-and-every-frame-checks) told you what that means: time stands still, and the fade never ends.
+
+### What stop leaves behind
+
+Now press "stop()". That is what the script's `final` does when the buddy's game object is deleted.
+
+Every active state exits, innermost first, so `waking`'s cleanup runs and the light goes off. After that `path` is `undefined`, and events do nothing at all.
+
+### Try it
+
+1. Press "start() with wakes = 1". What is different in the log?
+2. Start with `wakes` at 0 again, then poke the buddy while it is waking. Where does it end up, and why?
+3. After "stop()", press `POKE`. What does the log say?
+
+> [!MORE] Answer
+> 1. No poke is queued. This buddy has been awake before, so it stays in `/asleep` until you poke it.
+> 2. In `/waking` again. Your poke sends it to `/asleep`, whose `enter` finds `wakes` still at 0 (the buddy never reached `awake`) and queues another poke.
+> 3. That `POKE` is ignored because the machine is stopped. A stopped machine never starts again. To get a buddy back, `start` a new one.
+
+## 12. The machine's own data
+
+Look at what the script hands to `start`: a light, `wakes: 0` and `energy: 3`.
+
+The light makes sense. Only the script knows which sprite it is. But the two numbers? Only the machine ever uses them, and every script that starts a buddy has to get them right.
+
+Shouldn't the machine set up its own data? It can, with one key: **`privateCtx`**.
+
+```ts step title="buddy-machine.ts"
+interface BuddyCtx {
+  light: Url;
+  wakes: number; // [!code --]
+  energy: number; // [!code --]
 }
+// ...
+export const buddyMachine = defineMachine<BuddyCtx, BuddyEvent>()({
+  privateCtx: () => ({ wakes: 0, energy: 3 }), // [!code ++]
+  initial: "/asleep",
 ```
 
-The machine builds the rest in `privateCtx`, at the top of its config:
-
-```ts excerpt
-export const doorMachine = defineMachine<DoorCtx, DoorEvent>()({
-  // the machine's own data, built fresh for every door
-  privateCtx: () => ({ opens: 0 }),
-  initial: "/closed",
+```ts step title="buddy.ts"
+    return {
+      buddy: buddyMachine.start({ light: msg.url("#light"), wakes: 0, energy: 3 }), // [!code --]
+      buddy: buddyMachine.start({ light: msg.url("#light") }), // [!code ++]
+    };
 ```
 
-The hooks still read `ctx.opens`. `start` takes the sprite alone, and `self.door.ctx` shows the sprite alone:
+- **`privateCtx`** is a function that builds the machine's own fields, fresh for every buddy that starts.
+- **`BuddyCtx`** keeps only what a script hands in: the light.
+- **`start`** takes the light alone now, and `self.buddy.ctx` shows the light alone.
 
-```ts excerpt
-return { door: doorMachine.start({ sprite: msg.url("#sprite") }) };
-```
+And the hooks? **Not one of them changed.** They still read `ctx.wakes` and `ctx.energy`, exactly as before.
 
-> [!NOTE] **Hidden, not locked.** The field is hidden by type only: at run time it sits on the same `ctx` as the sprite. A machine with no data of its own leaves `privateCtx` out. [Private fields with `privateCtx`](./state-machines.md#private-fields-with-privatectx) has the rules.
+> [!NOTE] **Hidden, not locked.** The fields are hidden by type only: at run time they sit on the same `ctx` as the light. A machine with no data of its own leaves `privateCtx` out. [Private fields with `privateCtx`](./state-machines.md#private-fields-with-privatectx) has the rules.
 
-## 11. Designing your own
+> [!MORE] The whole file so far
+>
+> ```ts step title="buddy-machine.ts"
+> import { defineMachine } from "@defold-typescript/types/hsm";
+> import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/defold";
+>
+> interface BuddyCtx {
+>   light: Url;
+> }
+>
+> type BuddyEvent =
+>   | { type: "POKE" }
+>   | { type: "WOKEN" }
+>   | { type: "BUMP"; cost: number }
+>   | { type: "RECHARGE" }
+>   | MessageEvent<"trigger_response">;
+>
+> export const buddyMachine = defineMachine<BuddyCtx, BuddyEvent>()({
+>   privateCtx: () => ({ wakes: 0, energy: 3 }),
+>   initial: "/asleep",
+>   states: {
+>     asleep: {
+>       enter: (ctx, machine) => {
+>         if (ctx.wakes === 0) machine.send({ type: "POKE" });
+>       },
+>       on: { POKE: "/waking" },
+>     },
+>     waking: {
+>       task: (ctx, finish) => {
+>         go.set(ctx.light, "tint.w", 0);
+>         msg.post(ctx.light, "enable");
+>         go.animate(ctx.light, "tint.w", go.PLAYBACK_ONCE_FORWARD, 1, go.EASING_LINEAR, 1, 0, () => {
+>           finish({ type: "WOKEN" });
+>         });
+>       },
+>       exit: (ctx) => {
+>         go.cancel_animations(ctx.light, "tint.w");
+>         msg.post(ctx.light, "disable");
+>       },
+>       on: { WOKEN: "/awake", POKE: "/asleep" },
+>     },
+>     awake: {
+>       initial: "/awake/wander",
+>       enter: (ctx) => {
+>         ctx.wakes += 1;
+>         msg.post(ctx.light, "enable");
+>       },
+>       exit: (ctx) => msg.post(ctx.light, "disable"),
+>       after: { 30: "/asleep" },
+>       on: {
+>         POKE: "/asleep",
+>         BUMP: [
+>           {
+>             to: "/resting",
+>             when: (ctx, event) => ctx.energy <= event.cost,
+>             run: (ctx) => {
+>               ctx.energy = 0;
+>             },
+>           },
+>           {
+>             run: (ctx, event) => {
+>               ctx.energy -= event.cost;
+>             },
+>           },
+>         ],
+>       },
+>       states: {
+>         wander: {
+>           on: {
+>             trigger_response: {
+>               to: "/awake/follow",
+>               when: (_ctx, event) => event.enter,
+>             },
+>           },
+>         },
+>         follow: {
+>           after: { 4: "/awake/wander" },
+>           on: {
+>             trigger_response: [
+>               { to: "/awake/follow", when: (_ctx, event) => event.enter },
+>               { to: "/awake/wander" },
+>             ],
+>           },
+>         },
+>       },
+>     },
+>     resting: {
+>       update: (ctx, dt) => {
+>         ctx.energy = math.min(3, ctx.energy + dt);
+>         return ctx.energy >= 3 ? "/awake" : undefined;
+>       },
+>       on: {
+>         RECHARGE: {
+>           to: "/awake",
+>           run: (ctx) => {
+>             ctx.energy = 3;
+>           },
+>         },
+>       },
+>     },
+>   },
+> });
+>
+> export const buddyEvents = messageEvents(["trigger_response"]);
+> ```
+>
+> ```ts step title="buddy.ts"
+> import { defineScript } from "@defold-typescript/types";
+> import { buddyEvents, buddyMachine } from "./buddy-machine";
+>
+> const TOUCH = hash("touch");
+>
+> export default defineScript({
+>   init() {
+>     msg.post(".", "acquire_input_focus");
+>     msg.post("#light", "disable");
+>     return {
+>       buddy: buddyMachine.start({ light: msg.url("#light") }),
+>     };
+>   },
+>   update(self, dt) {
+>     self.buddy.update(dt);
+>   },
+>   on_input(self, action_id, action) {
+>     if (action_id === TOUCH && action.pressed) {
+>       self.buddy.send({ type: "POKE" });
+>     }
+>   },
+>   on_message(self, message_id, message, sender) {
+>     const event = buddyEvents.toEvent(message_id, message, sender);
+>     if (event !== undefined) {
+>       self.buddy.send(event);
+>     }
+>   },
+>   final(self) {
+>     self.buddy.stop();
+>   },
+> });
+> ```
 
-1. **List the modes.** What can this thing be doing? Each one is a state.
-2. **List what can happen.** Presses, bumps, messages, timeouts. Each is an event or an `after`.
+### Try it
+
+1. Two buddies start one after the other, and the first one wakes up twice. What is the second one's `wakes`?
+2. Each script should pick a name for its buddy. Does `name` go in `BuddyCtx` or in `privateCtx`?
+
+> [!MORE] Answer
+> 1. Zero. `privateCtx` runs once for every `start`, so each buddy gets numbers of its own.
+> 2. In `BuddyCtx`. The script hands it in, like the light. `privateCtx` is for what only the machine uses.
+
+## 13. Designing your own
+
+You have built a whole buddy. How would you start on a machine of your own? The same way, in seven steps:
+
+1. **List the modes.** What can this thing be doing? Each one is a state. The buddy has `asleep`, `waking`, `awake` and `resting`.
+2. **List what can happen.** Pokes, bumps, messages, timeouts. Each is an event or an `after`.
 3. **Draw the arrows.** For each state, which events move it, and where?
-4. **Look for groups.** States that share arrows can live inside a parent.
-5. **Add conditions last.** `when` and `run` handle the "it depends" cases.
-6. **Plan cleanup.** Whatever a state starts, its `exit` should stop.
+4. **Look for groups.** States that share arrows can live inside a parent, the way `wander` and `follow` share `awake`'s poke and bump.
+5. **Add conditions last.** `when` and `run` handle the "it depends" cases, like a bump that may or may not tire the buddy out.
+6. **Plan cleanup.** Whatever a state starts, its `exit` should stop. `waking` starts a fade, so `waking` cancels it.
 7. **Split the data.** What a script hands in goes in the context. What only the machine uses goes in `privateCtx`.
 
 ### Common beginner mistakes
@@ -584,3 +1030,10 @@ return { door: doorMachine.start({ sprite: msg.url("#sprite") }) };
 - Expecting `send()` inside a hook to happen instantly.
 - Cleaning up anywhere other than `exit`.
 - Starting the machine at the top of a script file instead of in `init`.
+
+### Try it
+
+1. Design a machine for a coin. It bobs until the player touches it, plays a one-second sparkle, and is then gone. Name its states, its events and its cleanup.
+
+> [!MORE] Answer
+> 1. States: `bobbing`, `collected` and `gone`. Events: a `trigger_response` from the player, and a `DONE` that the sparkle's `task` hands to `finish`. Cleanup: `collected` cancels the sparkle in its `exit`, in case the coin is deleted halfway through.

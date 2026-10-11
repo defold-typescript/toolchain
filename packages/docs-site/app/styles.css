@@ -1821,29 +1821,6 @@
   background: color-mix(in srgb, var(--color-warning) 55%, var(--color-surface-2));
   box-shadow: 0 0 14px 2px color-mix(in srgb, var(--color-warning) 18%, transparent);
 }
-.hsm-sprite {
-  width: 3.4rem;
-  height: 3.4rem;
-  border-radius: 12px;
-  background: var(--hsm-event);
-}
-.hsm-sprite.hsm-hidden {
-  opacity: 0.08;
-}
-.hsm-doorframe {
-  display: flex;
-  width: 4.6rem;
-  height: 6rem;
-  padding: 4px;
-  border: 3px solid var(--color-border-strong);
-  border-bottom: 0;
-  border-radius: 6px 6px 0 0;
-}
-.hsm-door {
-  flex: 1;
-  border-radius: 3px;
-  background: #8a6a4a;
-}
 @media (prefers-reduced-motion: reduce) {
   .hsm-demo *,
   .hsm-demo li.hsm-rule {

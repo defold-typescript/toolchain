@@ -37,7 +37,7 @@ function drive(id: DemoId) {
 
 describe("activePaths", () => {
   test("lists every active path from the outermost state down, and none when stopped", () => {
-    expect(activePaths("/on/dim")).toEqual(["/on", "/on/dim"]);
+    expect(activePaths("/awake/follow")).toEqual(["/awake", "/awake/follow"]);
     expect(activePaths(undefined)).toEqual([]);
   });
 });
@@ -49,177 +49,224 @@ describe("hsm tutorial demos", () => {
     }
   });
 
-  test("nested-lamp: DIM while off is ignored", () => {
-    const d = drive("nested-lamp");
-    expect(d.run.path).toBe("/off");
+  test("buddy-nested: SEE_PLAYER while asleep is ignored", () => {
+    const d = drive("buddy-nested");
+    expect(d.run.path).toBe("/asleep");
     const mark = d.lines.length;
-    d.press("DIM");
-    expect(d.since(mark, "drop")).toEqual(["nobody handles DIM, so it is ignored"]);
-    expect(d.run.path).toBe("/off");
-  });
-
-  test("nested-lamp: TOGGLE in on.dim climbs to on, then exits innermost first", () => {
-    const d = drive("nested-lamp");
-    d.press("TOGGLE");
-    d.press("DIM");
-    expect(d.run.path).toBe("/on/dim");
-    const mark = d.lines.length;
-    d.press("TOGGLE");
-    expect(d.since(mark, "bubble", "exit", "enter")).toEqual([
-      "/on/dim has no TOGGLE rule, asks its parent",
-      "exit /on/dim",
-      "exit /on",
-      "enter /off",
-    ]);
-    expect(d.run.path).toBe("/off");
-  });
-
-  test("remembering-lamp: turning it back on returns to dim, entering on first", () => {
-    const d = drive("remembering-lamp");
-    d.press("TOGGLE");
-    expect(d.run.path).toBe("/on/bright");
-    d.press("DIM");
-    d.press("TOGGLE");
-    expect(d.run.path).toBe("/off");
-    const mark = d.lines.length;
-    d.press("TOGGLE");
-    expect(d.since(mark, "exit", "enter")).toEqual(["exit /off", "enter /on", "enter /on/dim"]);
-    expect(d.run.path).toBe("/on/dim");
-    expect(d.ctx.switches).toBe(2);
-    d.press("DIM");
-    d.press("TOGGLE");
-    d.press("TOGGLE");
-    expect(d.run.path).toBe("/on/bright");
-  });
-
-  test("buddy: a bump that uses up the energy exits follow and alive, then enters resting", () => {
-    const d = drive("buddy");
     d.press("SEE_PLAYER");
-    expect(d.run.path).toBe("/alive/follow");
+    expect(d.since(mark, "drop")).toEqual(["nobody handles SEE_PLAYER, so it is ignored"]);
+    expect(d.run.path).toBe("/asleep");
+  });
+
+  test("buddy-nested: POKE in follow climbs to awake, then exits innermost first", () => {
+    const d = drive("buddy-nested");
+    d.press("POKE");
+    d.press("SEE_PLAYER");
+    expect(d.run.path).toBe("/awake/follow");
+    const mark = d.lines.length;
+    d.press("POKE");
+    expect(d.since(mark, "bubble", "exit", "enter")).toEqual([
+      "/awake/follow has no POKE rule, asks its parent",
+      "exit /awake/follow",
+      "exit /awake",
+      "enter /asleep",
+    ]);
+    expect(d.run.path).toBe("/asleep");
+  });
+
+  test("buddy-energy: a bump that uses up the energy exits follow and awake, then enters resting", () => {
+    const d = drive("buddy-energy");
+    d.press("POKE");
+    d.press("SEE_PLAYER");
+    expect(d.run.path).toBe("/awake/follow");
     expect(d.ctx.energy).toBe(3);
     const mark = d.lines.length;
     d.press("BUMP (cost 3)");
-    expect(d.since(mark, "exit", "enter")).toEqual([
-      "exit /alive/follow",
-      "exit /alive",
+    expect(d.since(mark, "exit", "action", "enter")).toEqual([
+      "exit /awake/follow",
+      "exit /awake",
+      "run: energy = 0",
       "enter /resting",
     ]);
+    expect(d.ctx.energy).toBe(0);
     expect(d.run.path).toBe("/resting");
   });
 
-  test("buddy: a small bump runs only the action", () => {
-    const d = drive("buddy");
-    expect(d.run.path).toBe("/alive/wander");
+  test("buddy-energy: a small bump runs only its run", () => {
+    const d = drive("buddy-energy");
+    d.press("POKE");
+    expect(d.run.path).toBe("/awake/wander");
     const mark = d.lines.length;
     d.press("BUMP (cost 1)");
     expect(d.since(mark, "exit", "enter")).toEqual([]);
-    expect(d.since(mark, "action")).toHaveLength(1);
+    expect(d.since(mark, "action")).toEqual(["run: lose energy"]);
     expect(d.ctx.energy).toBe(2);
-    expect(d.run.path).toBe("/alive/wander");
+    expect(d.run.path).toBe("/awake/wander");
   });
 
-  test("buddy: SEE_PLAYER twice in follow restarts follow", () => {
-    const d = drive("buddy");
-    d.press("SEE_PLAYER");
+  test("buddy-energy: RECHARGE runs between the exit and the enter, and refills the energy", () => {
+    const d = drive("buddy-energy");
+    d.press("POKE");
+    d.press("BUMP (cost 3)");
     const mark = d.lines.length;
-    d.press("SEE_PLAYER");
-    expect(d.since(mark, "exit", "enter")).toEqual(["exit /alive/follow", "enter /alive/follow"]);
+    d.press("RECHARGE");
+    expect(d.since(mark, "exit", "action", "enter")).toEqual([
+      "exit /resting",
+      "run: energy = 3",
+      "enter /awake",
+      "enter /awake/wander (initial child)",
+    ]);
+    expect(d.ctx.energy).toBe(3);
   });
 
-  test("feet: walking off a ledge falls after the 0.1 s coyote timer", () => {
-    const d = drive("feet");
-    d.press("Walk off a ledge");
-    d.step(0.05);
-    expect(d.run.path).toBe("/coyote");
+  test("buddy-time: follow returns to wander after 4 s", () => {
+    const d = drive("buddy-time");
+    d.press("POKE");
+    d.press("SEE_PLAYER");
+    for (let i = 0; i < 7; i++) d.step(0.5);
+    expect(d.run.path).toBe("/awake/follow");
     const mark = d.lines.length;
-    for (let i = 0; i < 10 && d.run.path === "/coyote"; i++) d.step(0.05);
-    expect(d.run.path).toBe("/falling");
+    d.step(0.5);
     expect(d.since(mark, "timer", "exit", "enter")).toEqual([
-      "/coyote: 0.1 s timer fired",
-      "exit /coyote",
-      "enter /falling",
+      "/awake/follow: 4 s timer fired",
+      "exit /awake/follow",
+      "enter /awake/wander",
     ]);
   });
 
-  test("feet: JUMP during coyote time still jumps", () => {
-    const d = drive("feet");
-    d.press("Walk off a ledge");
-    d.step(0.05);
-    expect(d.run.path).toBe("/coyote");
-    d.press("JUMP");
-    expect(d.run.path).toBe("/jumping");
+  test("buddy-time: SEE_PLAYER at 3 s restarts follow's clock while awake's clock keeps its 3 s", () => {
+    const d = drive("buddy-time");
+    d.press("POKE");
+    d.press("SEE_PLAYER");
+    for (let i = 0; i < 6; i++) d.step(0.5);
+    expect(d.run.clock("/awake/follow")).toBe(3);
+    const mark = d.lines.length;
+    d.press("SEE_PLAYER");
+    expect(d.since(mark, "exit", "enter")).toEqual(["exit /awake/follow", "enter /awake/follow"]);
+    expect(d.run.clock("/awake/follow")).toBe(0);
+    expect(d.run.clock("/awake")).toBe(3);
+    expect(d.ctx.wakes).toBe(1);
+    for (let i = 0; i < 7; i++) d.step(0.5);
+    expect(d.run.path).toBe("/awake/follow");
+    d.step(0.5);
+    expect(d.run.path).toBe("/awake/wander");
   });
 
-  test("sparkle: the children blink while the parent's 2 s timer runs straight through", () => {
-    const d = drive("sparkle");
-    d.press("STAR");
-    const seen = new Set<string | undefined>();
-    const visible = new Set<unknown>();
-    // 39 ticks of 0.05 s: 1.95 s, just short of the parent's timer.
-    for (let i = 0; i < 39; i++) {
-      d.step(0.05);
-      expect(d.run.instance.matches("/sparkling")).toBe(true);
-      seen.add(d.run.path);
-      visible.add(d.ctx.visible);
-    }
-    expect([...seen].sort()).toEqual(["/sparkling/hidden", "/sparkling/shown"]);
-    expect([...visible].sort()).toEqual([false, true]);
-    for (let i = 0; i < 3; i++) d.step(0.05);
-    expect(d.run.path).toBe("/normal");
-    expect(d.ctx.visible).toBe(true);
-  });
-
-  test("door: without cleanup the fade outlives opening and its late finish is ignored", () => {
-    const d = drive("door");
-    d.press("Toggle cancel in exit");
-    expect(d.ctx.cleanup).toBe(false);
-    d.press("Player walks in");
-    expect(d.run.path).toBe("/opening");
-    d.step(0.25);
-    d.press("CLOSE");
+  test("buddy-time: awake falls asleep at 30 s and its exit turns the light off", () => {
+    const d = drive("buddy-time");
+    d.press("POKE");
+    expect(d.ctx.lit).toBe(true);
+    for (let i = 0; i < 59; i++) d.step(0.5);
+    expect(d.run.path).toBe("/awake/wander");
     const mark = d.lines.length;
     d.step(0.5);
-    expect(d.run.path).toBe("/closed");
-    expect(d.ctx.tint).toBe(0);
-    expect(d.since(mark, "drop")).toEqual([
-      "late finish(OPENED) ignored: /opening was already left",
+    expect(d.since(mark, "timer", "exit", "enter")).toEqual([
+      "/awake: 30 s timer fired",
+      "exit /awake/wander",
+      "exit /awake",
+      "enter /asleep",
     ]);
+    expect(d.ctx.lit).toBe(false);
   });
 
-  test("door: with cleanup in exit the closed door stays visible", () => {
-    const d = drive("door");
+  test("buddy-time: resting returns to awake once its update hook has filled the energy", () => {
+    const d = drive("buddy-time");
+    d.press("POKE");
+    d.press("BUMP (cost 3)");
+    expect(d.run.path).toBe("/resting");
+    expect(d.ctx.energy).toBe(0);
+    for (let i = 0; i < 5; i++) d.step(0.5);
+    expect(d.run.path).toBe("/resting");
+    const mark = d.lines.length;
+    d.step(0.5);
+    expect(d.since(mark, "event")).toEqual(['/resting: update returned "/awake"']);
+    expect(d.ctx.energy).toBe(3);
+    expect(d.run.path).toBe("/awake/wander");
+  });
+
+  test("buddy-waking: the fade finishes with WOKEN and the buddy is awake", () => {
+    const d = drive("buddy-waking");
+    d.press("POKE");
+    expect(d.run.path).toBe("/waking");
+    d.step(0.5);
+    expect(d.run.path).toBe("/waking");
+    const mark = d.lines.length;
+    d.step(0.5);
+    expect(d.since(mark, "note", "exit", "enter")).toEqual([
+      "/waking: finish(WOKEN)",
+      "exit /waking",
+      "enter /awake",
+      "enter /awake/wander (initial child)",
+    ]);
+    expect(d.ctx.lit).toBe(true);
+  });
+
+  test("buddy-waking: with cleanup in exit, POKE during the fade leaves the light off", () => {
+    const d = drive("buddy-waking");
     expect(d.ctx.cleanup).toBe(true);
-    d.press("Player walks in");
-    d.step(0.25);
-    d.press("CLOSE");
-    const mark = d.lines.length;
+    d.press("POKE");
     d.step(0.5);
-    expect(d.run.path).toBe("/closed");
-    expect(d.ctx.tint).toBe(1);
+    expect(d.ctx.lit).toBe(true);
+    d.press("POKE");
+    expect(d.run.path).toBe("/asleep");
+    expect(d.ctx.lit).toBe(false);
+    const mark = d.lines.length;
+    d.step(1);
+    expect(d.run.path).toBe("/asleep");
+    expect(d.ctx.lit).toBe(false);
     expect(d.since(mark, "drop")).toEqual([]);
   });
 
-  test("level: a cached start queues LOADED and handles it before start returns", () => {
-    const d = drive("level");
-    d.press("start() with cached = true");
-    expect(d.run.path).toBe("/playing");
+  test("buddy-waking: without cleanup the fade runs on and its late finish is ignored", () => {
+    const d = drive("buddy-waking");
+    d.press("Toggle cancel in exit");
+    expect(d.ctx.cleanup).toBe(false);
+    d.press("POKE");
+    d.step(0.5);
+    d.press("POKE");
+    expect(d.run.path).toBe("/asleep");
+    const mark = d.lines.length;
+    d.step(1);
+    expect(d.run.path).toBe("/asleep");
+    expect(d.ctx.lit).toBe(true);
+    expect(d.since(mark, "drop")).toEqual(["late finish(WOKEN) ignored: /waking was already left"]);
+  });
+
+  test("buddy-queue: a first start queues POKE and is in waking when start returns", () => {
+    const d = drive("buddy-queue");
+    d.press("start() with wakes = 0");
+    expect(d.run.path).toBe("/waking");
     const texts = d.lines.map((line) => line.text);
-    const queued = texts.indexOf("LOADED queued (machine is busy)");
-    const returned = texts.indexOf('start() returned, path = "/playing"');
+    const queued = texts.lastIndexOf("POKE queued (machine is busy)");
+    const returned = texts.lastIndexOf('start() returned, path = "/waking"');
     expect(queued).toBeGreaterThanOrEqual(0);
     expect(returned).toBeGreaterThan(queued);
   });
 
-  test("level: QUIT stops the machine and later events are ignored", () => {
-    const d = drive("level");
-    d.press("start() with cached = true");
-    const beforeQuit = d.lines.length;
-    d.press("QUIT");
+  test("buddy-queue: a buddy that has been awake before stays asleep at start", () => {
+    const d = drive("buddy-queue");
+    const mark = d.lines.length;
+    d.press("start() with wakes = 1");
+    expect(d.run.path).toBe("/asleep");
+    expect(d.since(mark, "queue")).toEqual([]);
+  });
+
+  test("buddy-queue: stop exits the active state, and an event after it changes nothing", () => {
+    const d = drive("buddy-queue");
+    expect(d.run.path).toBe("/waking");
+    expect(d.ctx.lit).toBe(true);
+    const beforeStop = d.lines.length;
+    d.press("stop()");
     expect(d.run.path).toBeUndefined();
     expect(d.run.stopped).toBe(true);
-    expect(d.since(beforeQuit, "note")).toContain("stopped, path = undefined");
+    expect(d.since(beforeStop, "exit", "note")).toEqual([
+      "exit /waking",
+      "stopped, path = undefined",
+    ]);
+    expect(d.ctx.lit).toBe(false);
     const mark = d.lines.length;
-    d.press("LOADED");
-    expect(d.since(mark, "drop")).toEqual(["LOADED ignored: machine is stopped"]);
+    d.press("POKE");
+    expect(d.since(mark, "drop")).toEqual(["POKE ignored: machine is stopped"]);
+    expect(d.run.path).toBeUndefined();
   });
 });
