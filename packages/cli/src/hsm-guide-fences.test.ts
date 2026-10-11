@@ -9,8 +9,8 @@
  * compile under the same checks.
  * A `ts step` fence on the tutorial is a diff of a file the reader builds: the
  * files each lesson leaves must compile and transpile as one project, and the
- * last lesson's project must use every member and function the hsm entry
- * points ship, so a member `hsm` gains needs a lesson that uses it.
+ * last lesson's project must use every member and call every function the hsm
+ * entry points ship, so a member `hsm` gains needs a lesson that uses it.
  * The manual's reference tables are held to the `StateConfig`, `Machine`,
  * `MachineInstance` and `WaitGroup` interfaces of the hsm source.
  */
@@ -272,14 +272,15 @@ const UNTAUGHT_INTERFACES = new Set(["EventObject"]);
 interface HsmCoverage {
   /** Each member the project never names, as `<declaring type>.<member>`. */
   readonly members: string[];
-  /** Each exported function the project never names. */
+  /** Each exported function the project never calls. */
   readonly functions: string[];
 }
 
 /**
  * What `files`, one project, leaves unused of the surface the four hsm entry points ship: the
  * members of every exported interface and of `StateConfig`, and every exported function. A member
- * typed `never` only reports a renamed key, so it is no part of the surface.
+ * typed `never` only reports a renamed key, so it is no part of the surface. A function is used
+ * where it is called: importing it, or naming it without a call, is no use.
  */
 function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
   const project = writeFenceProject(
@@ -335,6 +336,7 @@ function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
   }
 
   const used = new Set<ts.Declaration>();
+  const called = new Set<ts.Declaration>();
   const use = (symbol: ts.Symbol | undefined): void => {
     if (symbol === undefined) return;
     const target = symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol;
@@ -343,6 +345,9 @@ function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
   const visit = (node: ts.Node): void => {
     if (ts.isIdentifier(node)) {
       use(checker.getSymbolAtLocation(node));
+    } else if (ts.isCallExpression(node)) {
+      const declaration = checker.getResolvedSignature(node)?.declaration;
+      if (declaration !== undefined) called.add(declaration);
     } else if (ts.isObjectLiteralExpression(node)) {
       const contextual = checker.getContextualType(node);
       // A key one variant of a union lacks is no property of the union, so each variant is asked.
@@ -362,12 +367,15 @@ function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
     visit(source);
   }
 
-  const unused = (listed: ReadonlyMap<ts.Declaration, string>): string[] =>
+  const unused = (
+    listed: ReadonlyMap<ts.Declaration, string>,
+    covered: ReadonlySet<ts.Declaration>,
+  ): string[] =>
     [...listed]
-      .filter(([declaration]) => !used.has(declaration))
+      .filter(([declaration]) => !covered.has(declaration))
       .map(([, label]) => label)
       .sort();
-  return { members: unused(members), functions: unused(functions) };
+  return { members: unused(members, used), functions: unused(functions, called) };
 }
 
 describe(`${LESSON_PAGE} lessons`, () => {
@@ -451,7 +459,57 @@ describe("hsm guide lesson gate", () => {
   );
 });
 
+/**
+ * `files` with every call of a function in `names` unmade: the callee, a name or a member of a
+ * namespace import, stays as a value and in a type query, cast to `never`. Every import stays.
+ */
+function withoutCallsTo(
+  files: ReadonlyMap<string, string>,
+  names: readonly string[],
+): Map<string, string> {
+  const mutant = new Map<string, string>();
+  for (const [title, body] of files) {
+    const source = ts.createSourceFile(title, body, ts.ScriptTarget.Latest, true);
+    const callees: ts.Expression[] = [];
+    const visit = (node: ts.Node): void => {
+      if (ts.isCallExpression(node)) {
+        const callee = node.expression;
+        const name = ts.isIdentifier(callee)
+          ? callee
+          : ts.isPropertyAccessExpression(callee) && ts.isIdentifier(callee.expression)
+            ? callee.name
+            : undefined;
+        if (name !== undefined && names.includes(name.text)) callees.push(callee);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    let text = body;
+    for (const callee of callees.sort((a, b) => b.getStart(source) - a.getStart(source))) {
+      const written = callee.getText(source);
+      const uncalled = `(${written} as typeof ${written} as never)`;
+      text = `${text.slice(0, callee.getStart(source))}${uncalled}${text.slice(callee.getEnd())}`;
+    }
+    mutant.set(title, text);
+  }
+  return mutant;
+}
+
 describe("hsm guide coverage gate", () => {
+  test(
+    "a function the last project imports and never calls is unused",
+    () => {
+      const page = readFileSync(path.join(GUIDE_DIR, LESSON_PAGE), "utf8");
+      const last = lessonProjects(page).at(-1);
+      expect(last, "the page has a lesson project").toBeDefined();
+      const exported = unusedHsmSurface(new Map([["empty.ts", ""]])).functions;
+      expect(exported.length).toBeGreaterThan(0);
+      const mutant = withoutCallsTo((last as LessonProject).files, exported);
+      expect(unusedHsmSurface(mutant).functions).toEqual(exported);
+    },
+    SLOW,
+  );
+
   test(
     "the coverage gate can fail",
     () => {
