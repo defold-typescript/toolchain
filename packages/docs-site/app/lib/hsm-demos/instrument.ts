@@ -615,7 +615,7 @@ function wrapState(s: Session, config: State, path: string): State {
       const entry = s.entries.get(path);
       const proxy = proxyOf(s, m);
       emit(s, "note", `${path}: task started`);
-      return task(
+      const cleanup = task(
         ctx,
         (event) => {
           if (s.entries.get(path) !== entry || !proxy.matches(path)) {
@@ -632,6 +632,12 @@ function wrapState(s: Session, config: State, path: string): State {
         },
         proxy,
       );
+      if (typeof cleanup !== "function") return cleanup;
+      // The library calls this after the state's `exit` hook, so the line follows the exit line.
+      return () => {
+        emit(s, "note", `${path}: task cleanup ran`);
+        cleanup();
+      };
     };
   }
 
