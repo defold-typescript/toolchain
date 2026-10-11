@@ -13,7 +13,7 @@ const TOLERANCE = 2;
 
 test("wheel-scrolling reaches and holds the page bottom", async ({ page }) => {
   await page.goto("/state-machines-tutorial");
-  await expect(page.locator('[data-hsm-demo="door"] .hsm-demo')).toBeAttached();
+  await expect(page.locator('[data-hsm-demo="buddy-waking"] .hsm-demo')).toBeAttached();
 
   const maxScroll = () =>
     page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);

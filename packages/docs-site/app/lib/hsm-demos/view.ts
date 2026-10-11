@@ -269,39 +269,15 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   host.replaceChildren(frame);
 
   let figure: HTMLElement | undefined;
-  let pane: HTMLElement | undefined;
-  let paneOpacity = "";
 
   function patchVisual(target: HTMLElement, spec: DemoVisual) {
     if (figure === undefined) {
       figure = el("div");
       figure.setAttribute("role", "img");
-      if (spec.kind === "door") {
-        pane = el("div", "hsm-door");
-        figure.append(pane);
-      }
       target.append(figure);
     }
-    switch (spec.kind) {
-      case "bulb":
-        setClass(figure, spec.glow === "off" ? "hsm-bulb" : `hsm-bulb hsm-${spec.glow}`);
-        setLabel(figure, `lamp ${spec.glow}`);
-        return;
-      case "sprite":
-        setClass(figure, spec.shown ? "hsm-sprite" : "hsm-sprite hsm-hidden");
-        setLabel(figure, spec.shown ? "sprite shown" : "sprite hidden");
-        return;
-      case "door": {
-        setClass(figure, "hsm-doorframe");
-        setLabel(figure, `door, ${Math.round(spec.opacity * 100)}% visible`);
-        const opacity = spec.opacity.toFixed(2);
-        if (pane && opacity !== paneOpacity) {
-          pane.style.opacity = opacity;
-          paneOpacity = opacity;
-        }
-        return;
-      }
-    }
+    setClass(figure, spec.glow === "off" ? "hsm-bulb" : `hsm-bulb hsm-${spec.glow}`);
+    setLabel(figure, `light ${spec.glow}`);
   }
 
   let lines: ReadoutLine[] = [];

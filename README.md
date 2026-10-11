@@ -46,7 +46,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 - [Build Tetris](https://defold-typescript.github.io/toolchain/tetris-tutorial) — build a complete Tetris game from scratch: write TypeScript, compile it to Lua, and wire the scene in the Defold editor, seeing the whole workflow end to end.
 - [Vectors and rotations](https://defold-typescript.github.io/toolchain/vectors-tutorial) — the math behind movement, one game problem at a time: positions, vectors, speed, dt, rotation, the dot product, and local versus world space, ending with a ship that drifts through space.
-- [State machines, one click at a time](https://defold-typescript.github.io/toolchain/state-machines-tutorial) — a hands-on first look at `hsm` for readers who have never used a state machine: eight live diagrams you drive with buttons, from a two-state lamp to timers, waiting on work, and wiring a machine into a Defold script.
+- [State machines, one click at a time](https://defold-typescript.github.io/toolchain/state-machines-tutorial) — a hands-on first look at `hsm` for readers who have never used a state machine: one robot buddy machine grows lesson by lesson, each change shown as a diff, with live diagrams you drive with buttons, from two states to timers, waiting on work, and wiring the machine into a Defold script.
 
 ### TypeScript
 

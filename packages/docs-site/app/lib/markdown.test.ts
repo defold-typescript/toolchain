@@ -102,6 +102,19 @@ describe("renderMarkdown", () => {
     expect(html).not.toContain("[!code --]");
   });
 
+  test("a `ts step` fence renders as a titled TypeScript diff", async () => {
+    const html = await renderMarkdown(
+      '```ts step title="buddy-machine.ts"\nconst kept = 0;\nconst added = 1; // [!code ++]\nconst removed = 2; // [!code --]\n```\n',
+    );
+    expect(html).toMatch(
+      /<figcaption class="code-title">.*TypeScript.*buddy-machine\.ts<\/figcaption>/,
+    );
+    expect(html).toContain('<code class="language-ts">');
+    expect(html).toMatch(/<span class="line[^"]*\bdiff\b[^"]*\badd\b/);
+    expect(html).toMatch(/<span class="line[^"]*\bdiff\b[^"]*\bremove\b/);
+    expect(html).not.toContain("[!code");
+  });
+
   test("a meta range coexists with a title= caption", async () => {
     const html = await renderMarkdown('```ts title="x.ts" {1}\nconst a = 1;\n```\n');
     expect(html).toMatch(/<figcaption class="code-title">.*x\.ts<\/figcaption>/);
