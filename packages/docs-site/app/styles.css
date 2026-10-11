@@ -1649,6 +1649,19 @@
   font-weight: 400;
   font-style: italic;
 }
+.hsm-tag {
+  padding: 0 0.4rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.hsm-state.hsm-on > .hsm-state-name > .hsm-tag {
+  color: var(--hsm-lit);
+}
 .hsm-demo ul.hsm-rules,
 .hsm-demo ol.hsm-steps {
   display: flex;

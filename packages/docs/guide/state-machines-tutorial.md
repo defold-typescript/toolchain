@@ -1857,6 +1857,10 @@ export const buddyMachine = defineMachine<BuddyCtx, BuddyEvent, "busy">()({ // [
 - **`tags: ["busy"]`** hangs the name on a state. It holds while that state is active, children included: all of `resting`, in both regions.
 - **`self.buddy.hasTag("busy")`** asks whether any active state carries the tag. The script names no state at all.
 
+Here is the buddy with its tag. Time starts paused and the buddy is in `waking`: what does `hasTag("busy")` say? Press "Resume time" and watch the answer change when the buddy gets up. Then tire it out with `BUMP (cost 3)`.
+
+<div data-hsm-demo="buddy-busy"></div>
+
 Why not a flag? You could set `ctx.busy = true` in every `enter` and back to `false` in every `exit`. And you'd be right back in [lesson 1](#1-why-bother), with a flag that can disagree with the state. **A tag can't disagree. It is read straight off the active states.**
 
 A tag is only a name. It has no rules and no hooks, so behavior that states share still goes on a parent.
