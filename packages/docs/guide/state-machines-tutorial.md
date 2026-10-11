@@ -14,7 +14,7 @@ Here is a small robot buddy. Go on, poke it.
 
 What did you just do? You pressed `POKE`, and the buddy woke up. Press it again, and it goes back to sleep.
 
-That's a state machine. The buddy is always in exactly one **state**: `asleep` or `awake`. Pressing `POKE` sends an **event**, and a **transition** rule moves the buddy to the other state. The glowing box is the state it's in right now, and the log shows each step as it happens.
+That's a state machine. The buddy is always in exactly one **state**: `asleep` or `awake`. Pressing `POKE` sends an **event**, and a **transition** rule moves the buddy to the other state. The glowing box is the state it's in right now, the drawing shows the buddy in that state, and the log shows each step as it happens.
 
 This page grows that buddy one idea at a time. By the end it wanders, greets you, follows you, gets tired and charges at a dock, and it is still one machine in one file.
 
@@ -326,7 +326,7 @@ A rule can be written three ways, and you have now seen all of them:
 
 ## 6. enter, exit, and the order of things
 
-The buddy rests when it's tired, but nobody can see that. Let's give it a **light** that is on while it's awake.
+The buddy rests when it's tired, but in the game nothing shows it. Let's give it a **light** that is on while it's awake.
 
 You know the hook that turns it on: `enter` runs when the buddy arrives in `awake`. But where do you turn it off? The buddy can leave `awake` by falling asleep or by getting tired, and a third way may come along tomorrow.
 

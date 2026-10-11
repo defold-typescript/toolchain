@@ -1801,25 +1801,82 @@
   align-items: center;
   min-height: 5rem;
 }
-.hsm-bulb {
-  width: 4rem;
-  height: 4rem;
-  border: 2px solid var(--color-border-strong);
-  border-radius: 50%;
-  background: var(--color-surface-2);
+.hsm-buddy {
+  width: 9rem;
+}
+.hsm-buddy svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hsm-b-shell {
+  fill: var(--color-bg);
+}
+.hsm-b-player,
+.hsm-b-light,
+.hsm-b-eyes-open,
+.hsm-b-eyes-half,
+.hsm-b-eyes-shut,
+.hsm-b-battery,
+.hsm-b-zz {
+  opacity: 0;
   transition:
-    background-color 0.3s,
-    box-shadow 0.3s;
+    opacity 0.25s,
+    transform 0.25s,
+    fill 0.3s,
+    stroke 0.3s,
+    filter 0.3s;
 }
-.hsm-bulb.hsm-lit {
-  border-color: var(--color-warning);
-  background: var(--color-warning);
-  box-shadow: 0 0 36px 8px color-mix(in srgb, var(--color-warning) 40%, transparent);
+.hsm-b-robot {
+  transition: opacity 0.25s;
 }
-.hsm-bulb.hsm-dim {
-  border-color: var(--color-warning);
-  background: color-mix(in srgb, var(--color-warning) 55%, var(--color-surface-2));
-  box-shadow: 0 0 14px 2px color-mix(in srgb, var(--color-warning) 18%, transparent);
+.hsm-b-eyes-open,
+.hsm-b-eyes-half {
+  fill: var(--hsm-lit);
+  stroke: none;
+}
+.hsm-b-player,
+.hsm-b-eyes-shut,
+.hsm-b-battery,
+.hsm-b-zz {
+  stroke: var(--color-text-muted);
+}
+.hsm-b-charge {
+  stroke: var(--hsm-exit);
+}
+.hsm-b-light {
+  fill: var(--color-surface-2);
+  stroke: var(--color-border-strong);
+}
+.hsm-pose-asleep :is(.hsm-b-eyes-shut, .hsm-b-zz),
+.hsm-pose-waking .hsm-b-eyes-half,
+.hsm-pose-awake .hsm-b-eyes-open,
+.hsm-pose-follow :is(.hsm-b-eyes-open, .hsm-b-player),
+.hsm-pose-resting :is(.hsm-b-eyes-shut, .hsm-b-battery),
+:is(.hsm-light-off, .hsm-light-dim, .hsm-light-lit) .hsm-b-light {
+  opacity: 1;
+}
+.hsm-pose-follow .hsm-b-eyes-open {
+  transform: translateX(-2.5px);
+}
+.hsm-pose-stopped .hsm-b-robot {
+  opacity: 0.4;
+}
+.hsm-light-dim .hsm-b-light {
+  fill: color-mix(in srgb, var(--color-warning) 55%, var(--color-surface-2));
+  stroke: var(--color-warning);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--color-warning) 40%, transparent));
+}
+.hsm-light-lit .hsm-b-light {
+  fill: var(--color-warning);
+  stroke: var(--color-warning);
+  filter: drop-shadow(0 0 7px var(--color-warning));
 }
 @media (prefers-reduced-motion: reduce) {
   .hsm-demo *,

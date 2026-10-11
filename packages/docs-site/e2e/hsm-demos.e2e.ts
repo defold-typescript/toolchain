@@ -22,6 +22,23 @@ test("the first buddy demo wakes up and logs the transition", async ({ page }) =
   await expect(log.last()).toHaveText("enter /awake");
 });
 
+test("the first buddy's figure follows the machine", async ({ page }) => {
+  await page.goto("/state-machines-tutorial");
+  const demo = page.locator('[data-hsm-demo="buddy-first"] .hsm-demo');
+  await expect(demo).toBeVisible();
+
+  const asleep = demo.getByRole("img", { name: "buddy asleep", exact: true });
+  await expect(asleep).toBeVisible();
+  await expect(asleep.locator(".hsm-b-eyes-shut")).toHaveCSS("opacity", "1");
+  await expect(asleep.locator(".hsm-b-eyes-open")).toHaveCSS("opacity", "0");
+
+  await demo.getByRole("button", { name: "POKE" }).click();
+  const awake = demo.getByRole("img", { name: "buddy awake", exact: true });
+  await expect(awake).toBeVisible();
+  await expect(awake.locator(".hsm-b-eyes-open")).toHaveCSS("opacity", "1");
+  await expect(awake.locator(".hsm-b-eyes-shut")).toHaveCSS("opacity", "0");
+});
+
 // The timed demos share one animation-frame heartbeat. Rewriting DOM nodes on
 // every frame makes WebKit pull the page back while the reader scrolls, so a
 // demo whose shown values have not changed must leave its DOM untouched.

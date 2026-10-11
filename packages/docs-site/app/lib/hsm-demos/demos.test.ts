@@ -18,6 +18,9 @@ function drive(id: DemoId) {
     get ctx(): DemoCtx {
       return run.ctx;
     },
+    get visual() {
+      return demo.visual?.(run);
+    },
     press(label: string) {
       const button = demo.buttons.find((b) => b.label === label);
       if (button === undefined) throw new Error(`${id} has no "${label}" button`);
@@ -268,5 +271,79 @@ describe("hsm tutorial demos", () => {
     d.press("POKE");
     expect(d.since(mark, "drop")).toEqual(["POKE ignored: machine is stopped"]);
     expect(d.run.path).toBeUndefined();
+  });
+});
+
+describe("the buddy figure", () => {
+  test("buddy-first: the pose follows the two states", () => {
+    const d = drive("buddy-first");
+    expect(d.visual).toEqual({ pose: "asleep" });
+    d.press("POKE");
+    expect(d.visual).toEqual({ pose: "awake" });
+  });
+
+  test("buddy-nested: follow is its own pose and wander draws as awake", () => {
+    const d = drive("buddy-nested");
+    d.press("POKE");
+    expect(d.visual).toEqual({ pose: "awake" });
+    d.press("SEE_PLAYER");
+    expect(d.visual).toEqual({ pose: "follow" });
+    d.press("LOSE_PLAYER");
+    expect(d.visual).toEqual({ pose: "awake" });
+    d.press("POKE");
+    expect(d.visual).toEqual({ pose: "asleep" });
+  });
+
+  test("buddy-energy: a tired buddy rests until it is recharged", () => {
+    const d = drive("buddy-energy");
+    d.press("POKE");
+    d.press("BUMP (cost 3)");
+    expect(d.visual).toEqual({ pose: "resting" });
+    d.press("RECHARGE");
+    expect(d.visual).toEqual({ pose: "awake" });
+  });
+
+  test("buddy-time: the light is on only while the buddy is awake", () => {
+    const d = drive("buddy-time");
+    expect(d.visual).toEqual({ pose: "asleep", light: "off" });
+    d.press("POKE");
+    expect(d.visual).toEqual({ pose: "awake", light: "lit" });
+    d.press("BUMP (cost 3)");
+    expect(d.visual).toEqual({ pose: "resting", light: "off" });
+  });
+
+  test("buddy-waking: the light is dim through the fade and lit once awake", () => {
+    const d = drive("buddy-waking");
+    d.press("POKE");
+    d.step(0.5);
+    expect(d.visual).toEqual({ pose: "waking", light: "dim" });
+    d.step(0.5);
+    expect(d.visual).toEqual({ pose: "awake", light: "lit" });
+  });
+
+  test("buddy-waking: without cleanup the buddy sleeps with its light on", () => {
+    const d = drive("buddy-waking");
+    d.press("Toggle cancel in exit");
+    d.press("POKE");
+    d.step(0.5);
+    d.press("POKE");
+    d.step(1);
+    expect(d.visual).toEqual({ pose: "asleep", light: "lit" });
+  });
+
+  test("buddy-waking: with cleanup the same presses leave the light off", () => {
+    const d = drive("buddy-waking");
+    d.press("POKE");
+    d.step(0.5);
+    d.press("POKE");
+    d.step(1);
+    expect(d.visual).toEqual({ pose: "asleep", light: "off" });
+  });
+
+  test("buddy-queue: a stopped machine draws the stopped pose", () => {
+    const d = drive("buddy-queue");
+    expect(d.visual).toEqual({ pose: "waking", light: "dim" });
+    d.press("stop()");
+    expect(d.visual).toEqual({ pose: "stopped", light: "off" });
   });
 });
