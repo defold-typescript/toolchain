@@ -159,3 +159,76 @@ test("an off-screen demo pauses", async ({ page }) => {
   await host.scrollIntoViewIfNeeded();
   expect(await mutationsOver(host, 1000), "mutations after scrolling back").toBeGreaterThan(0);
 });
+
+// A press that sends an event shows on the figure for a moment: a jolt for a
+// bump the machine takes, a hop for any other event it takes, and a question
+// mark for one no active state takes.
+
+function energyDemo(page: Page) {
+  const demo = page.locator('[data-hsm-demo="buddy-energy"] .hsm-demo');
+  return {
+    demo,
+    visual: demo.locator(".hsm-visual"),
+    press: (name: string) => demo.getByRole("button", { name, exact: true }).click(),
+  };
+}
+
+test("the buddy answers each press", async ({ page }) => {
+  await page.goto("/state-machines-tutorial");
+  const { demo, visual, press } = energyDemo(page);
+  await demo.scrollIntoViewIfNeeded();
+
+  await press("BUMP (cost 1)");
+  await expect(visual).toHaveClass(/hsm-react-ignored/);
+  await expect(visual).not.toHaveClass(/hsm-react-/);
+
+  await press("POKE");
+  await expect(visual).toHaveClass(/hsm-react-hop/);
+
+  await press("BUMP (cost 1)");
+  await expect(visual).toHaveClass(/hsm-react-bump/);
+  await expect(visual.locator(".hsm-b-robot")).toHaveCSS("animation-name", "hsm-bump");
+
+  // The answer is the one from before the press: this bump is taken, and the
+  // resting buddy it leaves behind would take none.
+  await expect(visual).not.toHaveClass(/hsm-react-/);
+  await press("BUMP (cost 3)");
+  await expect(visual).toHaveClass(/hsm-react-bump/);
+});
+
+// Read in one go: a value polled for could be the one left after the reaction is over.
+function reactionNow(visual: Locator) {
+  return visual.evaluate((node) => {
+    const style = (selector: string) => getComputedStyle(node.querySelector(selector) as Element);
+    return {
+      reaction: [...node.classList].filter((name) => name.startsWith("hsm-react-")),
+      hit: style(".hsm-b-hit").opacity,
+      huh: style(".hsm-b-huh").opacity,
+      robot: style(".hsm-b-robot").animationName,
+    };
+  });
+}
+
+test("with reduced motion the marks show and the buddy stays still", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/state-machines-tutorial");
+  const { demo, visual, press } = energyDemo(page);
+  await demo.scrollIntoViewIfNeeded();
+
+  await press("BUMP (cost 1)");
+  expect(await reactionNow(visual)).toEqual({
+    reaction: ["hsm-react-ignored"],
+    hit: "0",
+    huh: "1",
+    robot: "none",
+  });
+
+  await press("POKE");
+  await press("BUMP (cost 1)");
+  expect(await reactionNow(visual)).toEqual({
+    reaction: ["hsm-react-bump"],
+    hit: "1",
+    huh: "0",
+    robot: "none",
+  });
+});
