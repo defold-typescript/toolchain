@@ -1069,7 +1069,7 @@ hsm buddy frame 60: /waking -> /awake/wander (WOKEN: /waking, 0) [/awake/wander]
 
 Both calls do nothing in a release build, so you can leave them in. [Debug a machine](./state-machines.md#debug-a-machine) explains every part of a line, and [`hsm-view`](./hsm-view.md) has a page of its own.
 
-From here on the diagrams step aside. **Every "Try it" is yours to run in `hsm-view`.**
+Some of the lessons ahead still have a diagram. **Every "Try it" is yours to run in `hsm-view`.**
 
 ### Try it
 
@@ -1131,7 +1131,11 @@ Give the decision a state of its own. It needs no event and no timer, because it
 - **`run`** on the second rule counts the wake-up, and `awake`'s `enter` is back to one line. A rule's `run` only runs when that rule is taken, so a buddy sent off to rest isn't counted.
 - **`"/checkup"`** shows up twice more, in `resting`. A rested buddy passes the same check on its way up.
 
-The buddy never stays in `checkup`. By the time `send` returns, it has gone in and out again. So how do you know it was ever there? Watch the log in `hsm-view`: it shows two moves, and `checkup` glows for a moment.
+Here is the buddy with its checkup. Give it a bump of cost 2.5, poke it to sleep and poke it again. Which rule lights up when the fade ends?
+
+<div data-hsm-demo="buddy-checkup"></div>
+
+The buddy never stays in `checkup`. By the time `send` returns, it has gone in and out again. So how do you know it was ever there? Read the log: it shows `checkup` entered and left again in one step.
 
 > [!NOTE] **Checked after a move, not every frame.** The machine looks at `always` when a move has just ended. A number that changes later, in a `run` or an `update` hook, goes unnoticed until the next move. To watch a value every frame, return a path from an `update` hook, as `resting` does.
 
@@ -1163,6 +1167,10 @@ Can a state remember which child it was in? It can, and it takes one line: **`re
 
 - **`restoreDepth: 1`** makes `awake` remember which child was active when the buddy left, and go back to that child the next time it is entered.
 - **`initial`** stays. The first time the buddy gets up there is nothing to remember yet, so it starts in `wander`.
+
+Make the buddy follow you, give it a bump of cost 3 and wait. Which child is it in when it gets up?
+
+<div data-hsm-demo="buddy-memory"></div>
 
 Why the `1`? It says how many levels down to remember. The children of `awake` have no children of their own, so one level is all there is.
 

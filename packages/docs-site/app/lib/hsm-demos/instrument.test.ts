@@ -1,6 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import type { Demo, DemoCtx } from "./demos";
-import { afterChip, send, startDemo, step, type TraceEntry } from "./instrument";
+import {
+  afterChip,
+  alwaysChip,
+  diagramChips,
+  ruleChip,
+  send,
+  startDemo,
+  step,
+  type TraceEntry,
+  type TraceFire,
+  type TraceLine,
+} from "./instrument";
 
 function tick(ctx: DemoCtx): void {
   ctx.tick = (ctx.tick as number) + 1;
@@ -117,10 +128,84 @@ const roller: Demo = {
   readout: () => [],
 };
 
-function start(spec: Demo) {
+const decider: Demo = {
+  title: "Decider",
+  subtitle: "A state that picks a rule the moment it is entered.",
+  config: {
+    initial: "/idle",
+    states: {
+      idle: { on: { GO: "/check" } },
+      check: {
+        always: [
+          { to: "/low", when: (ctx) => (ctx.level as number) < 1 },
+          {
+            to: "/high",
+            run: (ctx) => {
+              ctx.count = (ctx.count as number) + 1;
+            },
+          },
+        ],
+      },
+      low: { on: { FILL: "/check" } },
+      high: {},
+    },
+  },
+  ctx: () => ({ level: 3, count: 0 }),
+  buttons: [],
+  readout: () => [],
+  notes: {
+    "/check|always|0": "if the level is under 1",
+    "/check|always|1|run": "count + 1",
+  },
+};
+
+// The two differ in `restoreDepth` alone.
+function lamp(memory: { readonly restoreDepth?: number }): Demo {
+  return {
+    title: "Lamp",
+    subtitle: "A parent left in its second child.",
+    config: {
+      initial: "/off",
+      states: {
+        off: { on: { ON: "/on" } },
+        on: {
+          ...memory,
+          initial: "/on/a",
+          on: { OFF: "/off" },
+          states: {
+            a: { on: { NEXT: "/on/b" } },
+            b: {},
+          },
+        },
+      },
+    },
+    ctx: () => ({}),
+    buttons: [],
+    readout: () => [],
+  };
+}
+
+const rememberer = lamp({ restoreDepth: 1 });
+const forgetter = lamp({});
+
+function start(spec: Demo, ctxOverride?: Partial<DemoCtx>) {
   const trace: TraceEntry[] = [];
-  const run = startDemo(spec, (entry) => trace.push(entry));
+  const run = startDemo(spec, (entry) => trace.push(entry), ctxOverride);
   return { run, trace };
+}
+
+function texts(trace: readonly TraceEntry[], from: number, ...kinds: TraceLine["kind"][]) {
+  return trace
+    .slice(from)
+    .filter((entry): entry is TraceLine => entry.kind !== "fire" && kinds.includes(entry.kind))
+    .map((line) => line.text);
+}
+
+function fired(trace: readonly TraceEntry[], from: number): string[] {
+  return trace
+    .slice(from)
+    .filter((entry): entry is TraceFire => entry.kind === "fire")
+    .map((entry) => entry.chip);
 }
 
 describe("step clocks across an update-hook move", () => {
@@ -184,5 +269,66 @@ describe("a tagged demo", () => {
     const walking = start(roller).run;
     send(walking, { type: "HIT" });
     expect(walking.matches("/hurt")).toBe(true);
+  });
+});
+
+describe("an always rule", () => {
+  test("the rules are narrated in the order the machine tries them, and the one taken glows", () => {
+    const { run, trace } = start(decider);
+    const mark = trace.length;
+    send(run, { type: "GO" });
+    expect(texts(trace, mark, "event", "when", "exit", "action", "enter")).toEqual([
+      "send GO",
+      "exit /idle",
+      "enter /check",
+      '/check: when "if the level is under 1" said no',
+      '/check: always chose "/high"',
+      "exit /check",
+      "run: count + 1",
+      "enter /high",
+    ]);
+    expect(fired(trace, mark)).toEqual([ruleChip("/idle", "GO", 0), alwaysChip("/check", 1)]);
+    expect(run.ctx.count).toBe(1);
+  });
+
+  test("a rule whose when passes is taken first, and the run of the rule after it stays unrun", () => {
+    const { run, trace } = start(decider, { level: 0 });
+    const mark = trace.length;
+    send(run, { type: "GO" });
+    expect(texts(trace, mark, "event")).toContain('/check: always chose "/low"');
+    expect(fired(trace, mark).at(-1)).toBe(alwaysChip("/check", 0));
+    expect(run.ctx.count).toBe(0);
+  });
+
+  test("the diagram lists a state's always rules after its event rules", () => {
+    expect(diagramChips(decider.config)).toEqual([
+      ruleChip("/idle", "GO", 0),
+      alwaysChip("/check", 0),
+      alwaysChip("/check", 1),
+      ruleChip("/low", "FILL", 0),
+    ]);
+  });
+});
+
+describe("a remembered child", () => {
+  test("the first entry reads initial child, and the entry after a leave reads remembered child", () => {
+    const { run, trace } = start(rememberer);
+    const first = trace.length;
+    send(run, { type: "ON" });
+    expect(texts(trace, first, "enter")).toEqual(["enter /on", "enter /on/a (initial child)"]);
+    send(run, { type: "NEXT" });
+    send(run, { type: "OFF" });
+    const second = trace.length;
+    send(run, { type: "ON" });
+    expect(texts(trace, second, "enter")).toEqual(["enter /on", "enter /on/b (remembered child)"]);
+  });
+
+  test("without restoreDepth the child the parent was left in reads initial child", () => {
+    const { run, trace } = start(forgetter);
+    send(run, { type: "ON" });
+    send(run, { type: "OFF" });
+    const second = trace.length;
+    send(run, { type: "ON" });
+    expect(texts(trace, second, "enter")).toEqual(["enter /on", "enter /on/a (initial child)"]);
   });
 });
