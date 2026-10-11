@@ -176,18 +176,21 @@ function energyDemo(page: Page) {
 test("the buddy answers each press", async ({ page }) => {
   await page.goto("/state-machines-tutorial");
   const { demo, visual, press } = energyDemo(page);
+  const robot = visual.locator(".hsm-b-robot");
   await demo.scrollIntoViewIfNeeded();
 
   await press("BUMP (cost 1)");
   await expect(visual).toHaveClass(/hsm-react-ignored/);
+  await expect(robot).toHaveCSS("animation-name", "hsm-shake");
   await expect(visual).not.toHaveClass(/hsm-react-/);
 
   await press("POKE");
   await expect(visual).toHaveClass(/hsm-react-hop/);
+  await expect(robot).toHaveCSS("animation-name", "hsm-hop");
 
   await press("BUMP (cost 1)");
   await expect(visual).toHaveClass(/hsm-react-bump/);
-  await expect(visual.locator(".hsm-b-robot")).toHaveCSS("animation-name", "hsm-bump");
+  await expect(robot).toHaveCSS("animation-name", "hsm-bump");
 
   // The answer is the one from before the press: this bump is taken, and the
   // resting buddy it leaves behind would take none.
