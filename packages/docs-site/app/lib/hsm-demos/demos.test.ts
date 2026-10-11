@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { type BuddyReaction, DEMOS, type DemoCtx, type DemoId } from "./demos";
 import {
   activePaths,
+  afterChip,
   type DemoRun,
   diagramChips,
   everyChip,
@@ -633,6 +634,81 @@ describe("hsm tutorial demos", () => {
     expect(d.run.path).toBe(hello);
     expect(d.run.routine(hello)).toEqual({ step: 0, progress: 0 });
   });
+
+  const shown = afterChip("/resting/lamp/shown", 0.5);
+
+  // Wakes the buddy and bumps away its energy, which sends it to rest; returns the log mark of the bump.
+  function tireOut(d: ReturnType<typeof drive>): number {
+    d.step(0.5);
+    d.step(0.5);
+    const pressed = d.lines.length;
+    d.press("BUMP (cost 3)");
+    return pressed;
+  }
+
+  test("buddy-regions: a resting buddy is in two states at once", () => {
+    const d = drive("buddy-regions");
+    const pressed = tireOut(d);
+    expect(d.run.path).toBe("/resting/battery/filling");
+    expect(d.readout("leaves")).toBe("/resting/battery/filling, /resting/lamp/shown");
+    expect(d.visual).toEqual({ pose: "resting", light: "lit" });
+    expect(d.since(pressed, "enter")).toEqual([
+      "enter /resting",
+      "enter /resting/battery (region)",
+      "enter /resting/battery/filling (initial child)",
+      "enter /resting/lamp (region)",
+      "enter /resting/lamp/shown (initial child)",
+    ]);
+  });
+
+  test("buddy-regions: the light blinks until the battery is full, then stays on", () => {
+    const d = drive("buddy-regions");
+    d.press("start() with napSeconds = 5");
+    tireOut(d);
+    const lights: (string | undefined)[] = [];
+    for (let i = 0; i < 6; i++) {
+      d.step(0.5);
+      lights.push(d.visual?.light);
+    }
+    expect(lights).toEqual(["off", "lit", "off", "lit", "off", "lit"]);
+    expect(d.run.leaves).toEqual(["/resting/battery/full", "/resting/lamp/shown"]);
+
+    const full = d.lines.length;
+    for (let i = 0; i < 3; i++) {
+      d.step(0.5);
+      expect(d.visual?.light).toBe("lit");
+      expect(d.run.waiting(shown)).toBe(true);
+    }
+    expect(d.since(full, "when")).toEqual([
+      '/resting/lamp/shown: 0.5 s timer is due, but when "if the battery is not full" said no',
+    ]);
+
+    const last = d.lines.length;
+    d.step(0.5);
+    expect(d.run.path).toBe("/awake/wander");
+    expect(d.since(last, "exit").slice(0, 5)).toEqual([
+      "exit /resting/lamp/shown",
+      "exit /resting/lamp",
+      "exit /resting/battery/full",
+      "exit /resting/battery",
+      "exit /resting",
+    ]);
+  });
+
+  test("buddy-regions: RECHARGE is offered to both regions first", () => {
+    const d = drive("buddy-regions");
+    tireOut(d);
+    const pressed = d.lines.length;
+    d.press("RECHARGE");
+    expect(d.since(pressed, "bubble")).toEqual([
+      "/resting/battery/filling has no RECHARGE rule, asks its parent",
+      "/resting/battery has no RECHARGE rule, so its region does not take it",
+      "/resting/lamp/shown has no RECHARGE rule, asks its parent",
+      "/resting/lamp has no RECHARGE rule, so its region does not take it",
+    ]);
+    expect(d.reaction).toBe("hop");
+    expect(d.run.path).toBe("/awake/wander");
+  });
 });
 
 // A string presses the button with that label; a number lets that many seconds pass in 0.5 s steps.
@@ -729,6 +805,7 @@ const WALKS: Record<DemoId, readonly (string | number)[]> = {
   "buddy-nap": CHECKUP_WALK,
   "buddy-chirp": CHECKUP_WALK,
   "buddy-greeting": GREETING_WALK,
+  "buddy-regions": GREETING_WALK,
 };
 
 describe("every rule a diagram draws can be used", () => {

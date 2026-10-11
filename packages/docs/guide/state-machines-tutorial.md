@@ -1587,6 +1587,10 @@ For the whole picture there is **`leaves`**, a list with one path per region:
 
 An event is offered to every region, and each one may take it. `resting`'s own rules, like `RECHARGE`, only get the event when no region took it.
 
+Here is the buddy with its two regions. Once it's awake, press `BUMP (cost 3)` and count the glowing boxes inside `resting`. Then press `RECHARGE` and read the log: who is asked before `resting`? For a nap that outlasts the battery, press `start() with napSeconds = 5` and tire the buddy out again.
+
+<div data-hsm-demo="buddy-regions"></div>
+
 For the full rules, see [Run regions side by side with `parallel`](./state-machines.md#run-regions-side-by-side-with-parallel).
 
 > [!MORE] The whole file so far

@@ -56,6 +56,13 @@ function leafBox(page: Page, demo: Locator, name: string): Locator {
   });
 }
 
+// A region, by its own name: its name element also holds the word "region".
+function regionBox(page: Page, demo: Locator, name: string): Locator {
+  return demo.locator(".hsm-region", {
+    has: page.locator(".hsm-state-name", { hasText: new RegExp(`^${name} region$`) }),
+  });
+}
+
 function mutationsOver(host: Locator, ms: number): Promise<number> {
   return host.evaluate(
     (node, duration) =>
@@ -318,4 +325,36 @@ test("the greeting marks the step it is in and clears the mark when it ends", as
   await demo.getByRole("button", { name: "Resume time" }).click();
   await expect(leafBox(page, demo, "follow")).toHaveClass(/hsm-on/, { timeout: 4000 });
   await expect(marked).toHaveCount(0);
+});
+
+// A parallel state keeps every region active, and the diagram draws the regions
+// next to each other. The lamp region blinks the light while the battery fills.
+
+test("a resting buddy lights both regions side by side, and its light blinks", async ({ page }) => {
+  await page.goto("/state-machines-tutorial");
+  const demo = page.locator('[data-hsm-demo="buddy-regions"] .hsm-demo');
+  await demo.scrollIntoViewIfNeeded();
+  await expect(stateBox(page, demo, "awake")).toHaveClass(/hsm-on/, { timeout: 4000 });
+  await demo.getByRole("button", { name: "BUMP (cost 3)", exact: true }).click();
+
+  const battery = regionBox(page, demo, "battery");
+  const lamp = regionBox(page, demo, "lamp");
+  await expect(battery).toHaveClass(/hsm-on/);
+  await expect(lamp).toHaveClass(/hsm-on/);
+  // `filling` is where its region starts, so its name carries "starts here".
+  await expect(leafBox(page, demo, "filling starts here")).toHaveClass(/hsm-on/);
+
+  const left = await battery.boundingBox();
+  const right = await lamp.boundingBox();
+  if (left === null || right === null) throw new Error("a region has no box");
+  expect(right.y).toBeLessThan(left.y + left.height);
+  expect(left.y).toBeLessThan(right.y + right.height);
+  expect(right.x).toBeGreaterThanOrEqual(left.x + left.width);
+
+  await expect(
+    demo.getByRole("img", { name: "buddy resting, light off", exact: true }),
+  ).toBeVisible({ timeout: 2000 });
+  await expect(demo.getByRole("img", { name: "buddy resting, light on", exact: true })).toBeVisible(
+    { timeout: 2000 },
+  );
 });
