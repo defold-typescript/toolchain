@@ -1217,6 +1217,10 @@ There is a key for exactly this: **`every`**.
 
 A sixteenth each second: a full battery lasts 48 seconds of being awake.
 
+Here is the buddy with its drain. Watch the bar on the `every 1 s` line fill up and start over. What does the log say each time it is full?
+
+<div data-hsm-demo="buddy-drain"></div>
+
 ### A run is not a move
 
 Nothing exits and nothing enters when the function runs. The buddy stays exactly where it is, and `awake`'s clock keeps counting toward its thirty seconds.
@@ -1294,6 +1298,10 @@ Two smaller things ride along. The nap rule's own `run` sets `napSeconds` back t
 What happens when the two seconds are over and the battery isn't full yet? The timer doesn't give up. **The machine asks its `when` again on every `update`**, until the answer is yes or the buddy leaves the state.
 
 So a nap lasts at least `napSeconds`, and as long as the battery needs. Whichever takes longer.
+
+Give this buddy a bump of cost 3 and watch the timer line in `resting`. What does it say between two seconds and three?
+
+<div data-hsm-demo="buddy-nap"></div>
 
 ### When the delay is read
 
