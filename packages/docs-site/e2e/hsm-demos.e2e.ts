@@ -81,7 +81,7 @@ function mutationsOver(host: Locator, ms: number): Promise<number> {
 
 test("an idle timed demo writes nothing between frames", async ({ page }) => {
   await page.goto("/state-machines-tutorial");
-  for (const id of ["buddy-time", "buddy-waking"]) {
+  for (const id of ["buddy-time", "buddy-waking", "buddy-queue"]) {
     const host = page.locator(`[data-hsm-demo="${id}"]`);
     await host.scrollIntoViewIfNeeded();
     await expect(host.locator(".hsm-demo")).toBeVisible();
@@ -93,6 +93,48 @@ test("an idle timed demo writes nothing between frames", async ({ page }) => {
   await waking.scrollIntoViewIfNeeded();
   await waking.getByRole("button", { name: "POKE" }).click();
   await expect(stateBox(page, waking, "awake")).toHaveClass(/hsm-on/, { timeout: 4000 });
+});
+
+test("the queue demo's clock starts paused", async ({ page }) => {
+  await page.goto("/state-machines-tutorial");
+  const demo = page.locator('[data-hsm-demo="buddy-queue"] .hsm-demo');
+  await demo.scrollIntoViewIfNeeded();
+  await expect(stateBox(page, demo, "waking")).toHaveClass(/hsm-on/);
+  const resume = demo.getByRole("button", { name: "Resume time" });
+  await expect(resume).toBeVisible();
+
+  await resume.click();
+  await expect(stateBox(page, demo, "awake")).toHaveClass(/hsm-on/, { timeout: 4000 });
+  await expect(demo.getByRole("button", { name: "Pause time" })).toBeVisible();
+});
+
+// A filled button sends an event an active state takes now, and the rules of a
+// state that is not active are dimmed.
+
+test("a filled button is one the machine takes", async ({ page }) => {
+  await page.goto("/state-machines-tutorial");
+  const demo = page.locator('[data-hsm-demo="buddy-nested"] .hsm-demo');
+  await demo.scrollIntoViewIfNeeded();
+  const poke = demo.getByRole("button", { name: "POKE", exact: true });
+  const see = demo.getByRole("button", { name: "SEE_PLAYER", exact: true });
+  const lose = demo.getByRole("button", { name: "LOSE_PLAYER", exact: true });
+  const transparent = "rgba(0, 0, 0, 0)";
+
+  await expect(poke).toHaveClass(/hsm-can/);
+  await expect(poke).not.toHaveCSS("background-color", transparent);
+  await expect(see).not.toHaveClass(/hsm-can/);
+  await expect(see).toHaveCSS("background-color", transparent);
+
+  await poke.click();
+  await expect(see).toHaveClass(/hsm-can/);
+  await expect(lose).not.toHaveClass(/hsm-can/);
+  // Found by their text: `stateBox` matches a parent box too, and the name of
+  // `wander` carries "starts here".
+  await expect(demo.locator("li.hsm-rule", { hasText: "SEE_PLAYER" })).toHaveCSS("opacity", "1");
+  await expect(demo.locator("li.hsm-rule", { hasText: "LOSE_PLAYER" })).toHaveCSS(
+    "opacity",
+    "0.55",
+  );
 });
 
 // Only demos the reader can see advance, so a running demo scrolled out of view
