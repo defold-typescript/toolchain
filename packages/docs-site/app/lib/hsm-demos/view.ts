@@ -188,6 +188,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     const title = el("div", "hsm-state-name", name);
     if (parent.initial === path) title.append(" ", span("hsm-init", "starts here"));
     if (region) title.append(" ", span("hsm-init", "region"));
+    for (const tag of config.tags ?? []) title.append(" ", span("hsm-tag", tag));
     box.append(title);
 
     const rules = el("ul", "hsm-rules");
