@@ -1673,6 +1673,18 @@
   height: 2px;
   background: var(--hsm-lit);
 }
+.hsm-wait-mark {
+  display: none;
+  color: var(--hsm-event);
+  font-family: var(--font-sans);
+  font-style: italic;
+}
+.hsm-rule.hsm-wait .hsm-wait-mark {
+  display: inline;
+}
+.hsm-rule.hsm-wait .hsm-bar {
+  background: var(--hsm-event);
+}
 .hsm-hooks {
   margin-top: 0.25rem;
   color: var(--color-text-muted);

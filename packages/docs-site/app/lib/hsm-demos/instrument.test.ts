@@ -4,6 +4,8 @@ import {
   afterChip,
   alwaysChip,
   diagramChips,
+  everyChip,
+  listChip,
   ruleChip,
   send,
   startDemo,
@@ -11,6 +13,7 @@ import {
   type TraceEntry,
   type TraceFire,
   type TraceLine,
+  updateChip,
 } from "./instrument";
 
 function tick(ctx: DemoCtx): void {
@@ -188,6 +191,80 @@ function lamp(memory: { readonly restoreDepth?: number }): Demo {
 const rememberer = lamp({ restoreDepth: 1 });
 const forgetter = lamp({});
 
+// The longer delay is written first, and its key sorts first too.
+const drainer: Demo = {
+  title: "Drainer",
+  subtitle: "Two every entries, one a single function and one a list.",
+  config: {
+    initial: "/on",
+    states: {
+      on: {
+        every: {
+          1: (ctx) => {
+            ctx.count = (ctx.count as number) + 1;
+          },
+          0.5: [
+            (ctx) => {
+              ctx.half = (ctx.half as number) + 1;
+            },
+          ],
+        },
+        on: { OFF: "/off" },
+      },
+      off: { on: { ON: "/on" } },
+    },
+  },
+  ctx: () => ({ count: 0, half: 0 }),
+  buttons: [],
+  readout: () => [],
+  notes: { "/on|every|1": "count + 1" },
+};
+
+const napper: Demo = {
+  title: "Napper",
+  subtitle: "A timer that carries a rule, then one that reads its delay and waits.",
+  config: {
+    initial: "/work",
+    states: {
+      work: {
+        after: {
+          1: {
+            to: "/nap",
+            run: (ctx) => {
+              ctx.nap = (ctx.nap as number) + 1;
+            },
+          },
+        },
+      },
+      nap: {
+        update: (ctx, dt) => {
+          ctx.rest = (ctx.rest as number) + dt;
+          return undefined;
+        },
+        after: [
+          {
+            delay: (ctx) => ctx.nap as number,
+            to: "/work",
+            when: (ctx) => (ctx.rest as number) >= 3,
+            run: (ctx) => {
+              ctx.nap = 1;
+            },
+          },
+        ],
+      },
+    },
+  },
+  ctx: () => ({ nap: 1, rest: 0 }),
+  buttons: [],
+  readout: () => [],
+  quietUpdates: ["/nap"],
+  notes: {
+    "/work|after|1": "nap + 1",
+    "/nap|after|#0": "if rested",
+    "/nap|after|#0|run": "nap = 1",
+  },
+};
+
 function start(spec: Demo, ctxOverride?: Partial<DemoCtx>) {
   const trace: TraceEntry[] = [];
   const run = startDemo(spec, (entry) => trace.push(entry), ctxOverride);
@@ -307,6 +384,137 @@ describe("an always rule", () => {
       alwaysChip("/check", 1),
       ruleChip("/low", "FILL", 0),
     ]);
+  });
+});
+
+describe("an every entry", () => {
+  const halfRan: TraceEntry[] = [
+    { kind: "timer", text: "/on: every 0.5 s ran" },
+    { kind: "fire", chip: everyChip("/on", 0.5) },
+    { kind: "action", text: "run: run code" },
+  ];
+
+  test("each run is narrated shortest delay first, and its chip glows", () => {
+    const { run, trace } = start(drainer);
+    const first = trace.length;
+    step(run, 0.5);
+    expect(trace.slice(first)).toEqual(halfRan);
+    expect(run.ctx.half).toBe(1);
+    expect(run.ctx.count).toBe(0);
+
+    const second = trace.length;
+    step(run, 0.5);
+    expect(trace.slice(second)).toEqual([
+      ...halfRan,
+      { kind: "timer", text: "/on: every 1 s ran" },
+      { kind: "fire", chip: everyChip("/on", 1) },
+      { kind: "action", text: "run: count + 1" },
+    ]);
+    expect(run.clock("/on")).toBe(1);
+  });
+
+  test("a bar fills over its delay, starts over, and is empty while its state is inactive", () => {
+    const { run } = start(drainer);
+    const whole = everyChip("/on", 1);
+    const half = everyChip("/on", 0.5);
+    step(run, 0.25);
+    expect(run.progress(whole)).toBe(0.25);
+    expect(run.progress(half)).toBe(0.5);
+    for (let i = 0; i < 3; i++) step(run, 0.25);
+    expect(run.progress(whole)).toBe(0);
+    expect(run.progress(half)).toBe(0);
+    step(run, 0.25);
+    expect(run.progress(whole)).toBe(0.25);
+    send(run, { type: "OFF" });
+    expect(run.progress(whole)).toBe(0);
+  });
+
+  test("the diagram lists a state's every entries after its event rules, shortest delay first", () => {
+    expect(diagramChips(drainer.config)).toEqual([
+      ruleChip("/on", "OFF", 0),
+      everyChip("/on", 0.5),
+      everyChip("/on", 1),
+      ruleChip("/off", "ON", 0),
+    ]);
+  });
+});
+
+describe("a timer that carries a rule", () => {
+  const work = afterChip("/work", 1);
+  const nap = listChip("/nap", "after", 0);
+
+  // The second step fires work's timer, so the nap starts with a clock of zero.
+  function napping() {
+    const started = start(napper);
+    step(started.run, 0.5);
+    step(started.run, 0.5);
+    return started;
+  }
+
+  test("its line and chip lead the exits, its run sits between exit and enter, and the next delay is read on entry", () => {
+    const { run, trace } = start(napper);
+    step(run, 0.5);
+    expect(run.delayOf(nap)).toBeUndefined();
+    expect(run.delayOf(work)).toBe(1);
+
+    const mark = trace.length;
+    step(run, 0.5);
+    expect(trace.slice(mark)).toEqual([
+      { kind: "timer", text: "/work: 1 s timer fired" },
+      { kind: "fire", chip: work },
+      { kind: "exit", text: "exit /work" },
+      { kind: "action", text: "run: nap + 1" },
+      { kind: "enter", text: "enter /nap" },
+      { kind: "note", text: "/nap: after delay read: 2 s" },
+    ]);
+    expect(run.delayOf(nap)).toBe(2);
+    expect(run.delayOf(work)).toBe(1);
+  });
+
+  test("a delay read on entry holds for the stay, whatever the context says later", () => {
+    const { run } = napping();
+    run.ctx.nap = 9;
+    for (let i = 0; i < 3; i++) step(run, 0.5);
+    expect(run.delayOf(nap)).toBe(2);
+    expect(run.progress(nap)).toBe(0.75);
+    expect(run.waiting(nap)).toBe(false);
+  });
+
+  test("a due timer its when holds back waits, says so once, and fires when the answer is yes", () => {
+    const { run, trace } = napping();
+    run.ctx.nap = 9;
+    for (let i = 0; i < 3; i++) step(run, 0.5);
+
+    const due = trace.length;
+    step(run, 0.5);
+    expect(run.waiting(nap)).toBe(true);
+    expect(run.progress(nap)).toBe(1);
+    expect(texts(trace, due, "when")).toEqual([
+      '/nap: 2 s timer is due, but when "if rested" said no',
+    ]);
+
+    const again = trace.length;
+    step(run, 0.5);
+    expect(run.waiting(nap)).toBe(true);
+    expect(texts(trace, again, "when")).toEqual([]);
+
+    const rested = trace.length;
+    step(run, 0.5);
+    expect(trace.slice(rested)).toEqual([
+      { kind: "timer", text: "/nap: 2 s timer fired" },
+      { kind: "fire", chip: nap },
+      { kind: "exit", text: "exit /nap" },
+      { kind: "action", text: "run: nap = 1" },
+      { kind: "enter", text: "enter /work" },
+    ]);
+    expect(run.waiting(nap)).toBe(false);
+    expect(run.delayOf(nap)).toBeUndefined();
+    expect(run.ctx.nap).toBe(1);
+  });
+
+  test("a state listed as quiet draws no update line", () => {
+    expect(diagramChips(napper.config, napper.quietUpdates)).toEqual([work, nap]);
+    expect(diagramChips(napper.config)).toEqual([work, updateChip("/nap"), nap]);
   });
 });
 
