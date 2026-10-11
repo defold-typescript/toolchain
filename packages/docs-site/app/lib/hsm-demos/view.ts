@@ -173,6 +173,11 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
         const why = note(chip.id);
         if (why) parts.push(" ", span("hsm-why", why));
         addChip(rules, chip.id, parts);
+      } else if (chip.kind === "always") {
+        const parts: (string | Node)[] = [span("hsm-ev", "at once"), ` → ${chip.to}`];
+        const why = note(chip.id);
+        if (why) parts.push(" ", span("hsm-why", why));
+        addChip(rules, chip.id, parts);
       } else if (chip.kind === "update") {
         addChip(rules, chip.id, [
           span("hsm-ev", "every frame"),
@@ -193,6 +198,9 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
 
     const hooks = hookList(config);
     if (hooks) box.append(el("div", "hsm-hooks", hooks));
+    if (config.restoreDepth !== undefined) {
+      box.append(el("div", "hsm-hooks", "remembers its last child"));
+    }
 
     if (config.states) {
       const kids = el("div", "hsm-level hsm-kids");

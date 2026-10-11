@@ -66,7 +66,8 @@ export interface DemoSpec<Ctx, E extends EventObject> {
   readonly paused?: boolean;
   readonly speed?: number;
   /**
-   * Plain-words labels for rule chips, keyed by chip id (`<path>|on|<event>|<index>`, `<path>|update`).
+   * Plain-words labels for rule chips, keyed by chip id (`<path>|on|<event>|<index>`,
+   * `<path>|always|<index>`, `<path>|update`).
    * A rule whose label describes its `when` names what its `run` does under `<chip id>|run`.
    */
   readonly notes?: Readonly<Record<string, string>>;
@@ -539,6 +540,246 @@ const buddyQueue = demo<FadeCtx, QueueEvent>({
   },
 });
 
+const CHECKUP_NOTES = {
+  ...ENERGY_NOTES,
+  "/resting|update": "fill up, then go to checkup",
+  "/awake/wander|on|trigger_response|0": "if the player walked in",
+  "/awake/follow|on|trigger_response|0": "if the player walked in",
+  "/awake/follow|on|trigger_response|1": "otherwise",
+  "/checkup|always|0": "if the battery is under 1",
+  "/checkup|always|1": "otherwise",
+  "/checkup|always|1|run": "wakes + 1",
+};
+
+const buddyCheckup = demo<FadeCtx, QueueEvent>({
+  title: "The buddy checks its battery",
+  subtitle: "checkup never waits: it picks a rule the moment it is entered.",
+  timed: true,
+  config: {
+    initial: "/asleep",
+    states: {
+      asleep: {
+        enter: (ctx, m) => {
+          if (ctx.wakes === 0) m.send({ type: "POKE" });
+        },
+        on: { POKE: "/waking" },
+      },
+      waking: {
+        task: (ctx, finish) => {
+          ctx.glow = 0;
+          ctx.lit = true;
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
+        },
+        exit: (ctx) => {
+          ctx.fade = undefined;
+          ctx.lit = false;
+        },
+        on: { WOKEN: "/checkup", POKE: "/asleep" },
+      },
+      checkup: {
+        always: [
+          { to: "/resting", when: (ctx) => ctx.energy < 1 },
+          {
+            to: "/awake",
+            run: (ctx) => {
+              ctx.wakes += 1;
+            },
+          },
+        ],
+      },
+      awake: {
+        initial: "/awake/wander",
+        enter: (ctx) => {
+          ctx.lit = true;
+        },
+        exit: (ctx) => {
+          ctx.lit = false;
+        },
+        after: { 30: "/asleep" },
+        on: {
+          POKE: "/asleep",
+          BUMP: [
+            {
+              to: "/resting",
+              when: (ctx, event) => ctx.energy <= event.cost,
+              run: (ctx) => {
+                ctx.energy = 0;
+              },
+            },
+            {
+              run: (ctx, event) => {
+                ctx.energy -= event.cost;
+              },
+            },
+          ],
+        },
+        states: {
+          wander: {
+            on: {
+              trigger_response: { to: "/awake/follow", when: (_ctx, event) => event.enter },
+            },
+          },
+          follow: {
+            after: { 4: "/awake/wander" },
+            on: {
+              trigger_response: [
+                { to: "/awake/follow", when: (_ctx, event) => event.enter },
+                { to: "/awake/wander" },
+              ],
+            },
+          },
+        },
+      },
+      resting: {
+        update: (ctx, dt) => {
+          ctx.energy = Math.min(3, ctx.energy + dt);
+          return ctx.energy >= 3 ? "/checkup" : undefined;
+        },
+        on: {
+          RECHARGE: {
+            to: "/checkup",
+            run: (ctx) => {
+              ctx.energy = 3;
+            },
+          },
+        },
+      },
+    },
+  },
+  ctx: () => ({ lit: false, glow: 1, fade: undefined, wakes: 0, energy: 3 }),
+  tick: advanceFade,
+  buttons: [
+    { label: "POKE", event: { type: "POKE" } },
+    { label: "trigger_response (enter true)", event: { type: "trigger_response", enter: true } },
+    { label: "trigger_response (enter false)", event: { type: "trigger_response", enter: false } },
+    { label: "BUMP (cost 1)", event: { type: "BUMP", cost: 1 } },
+    { label: "BUMP (cost 2.5)", event: { type: "BUMP", cost: 2.5 } },
+    { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
+    { label: "RECHARGE", event: { type: "RECHARGE" } },
+  ],
+  readout: (m) => [
+    ["ctx.energy", m.ctx.energy.toFixed(1)],
+    ["ctx.wakes", String(m.ctx.wakes)],
+  ],
+  visual: (m) => ({ pose: buddyPose(m), light: lightGlow(m.ctx) }),
+  notes: CHECKUP_NOTES,
+});
+
+const buddyMemory = demo<FadeCtx, QueueEvent>({
+  title: "The buddy remembers",
+  subtitle: "awake goes back to the child it was in.",
+  timed: true,
+  config: {
+    initial: "/asleep",
+    states: {
+      asleep: {
+        enter: (ctx, m) => {
+          if (ctx.wakes === 0) m.send({ type: "POKE" });
+        },
+        on: { POKE: "/waking" },
+      },
+      waking: {
+        task: (ctx, finish) => {
+          ctx.glow = 0;
+          ctx.lit = true;
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
+        },
+        exit: (ctx) => {
+          ctx.fade = undefined;
+          ctx.lit = false;
+        },
+        on: { WOKEN: "/checkup", POKE: "/asleep" },
+      },
+      checkup: {
+        always: [
+          { to: "/resting", when: (ctx) => ctx.energy < 1 },
+          {
+            to: "/awake",
+            run: (ctx) => {
+              ctx.wakes += 1;
+            },
+          },
+        ],
+      },
+      awake: {
+        restoreDepth: 1,
+        initial: "/awake/wander",
+        enter: (ctx) => {
+          ctx.lit = true;
+        },
+        exit: (ctx) => {
+          ctx.lit = false;
+        },
+        after: { 30: "/asleep" },
+        on: {
+          POKE: "/asleep",
+          BUMP: [
+            {
+              to: "/resting",
+              when: (ctx, event) => ctx.energy <= event.cost,
+              run: (ctx) => {
+                ctx.energy = 0;
+              },
+            },
+            {
+              run: (ctx, event) => {
+                ctx.energy -= event.cost;
+              },
+            },
+          ],
+        },
+        states: {
+          wander: {
+            on: {
+              trigger_response: { to: "/awake/follow", when: (_ctx, event) => event.enter },
+            },
+          },
+          follow: {
+            after: { 4: "/awake/wander" },
+            on: {
+              trigger_response: [
+                { to: "/awake/follow", when: (_ctx, event) => event.enter },
+                { to: "/awake/wander" },
+              ],
+            },
+          },
+        },
+      },
+      resting: {
+        update: (ctx, dt) => {
+          ctx.energy = Math.min(3, ctx.energy + dt);
+          return ctx.energy >= 3 ? "/checkup" : undefined;
+        },
+        on: {
+          RECHARGE: {
+            to: "/checkup",
+            run: (ctx) => {
+              ctx.energy = 3;
+            },
+          },
+        },
+      },
+    },
+  },
+  ctx: () => ({ lit: false, glow: 1, fade: undefined, wakes: 0, energy: 3 }),
+  tick: advanceFade,
+  buttons: [
+    { label: "POKE", event: { type: "POKE" } },
+    { label: "trigger_response (enter true)", event: { type: "trigger_response", enter: true } },
+    { label: "trigger_response (enter false)", event: { type: "trigger_response", enter: false } },
+    { label: "BUMP (cost 1)", event: { type: "BUMP", cost: 1 } },
+    { label: "BUMP (cost 2.5)", event: { type: "BUMP", cost: 2.5 } },
+    { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
+    { label: "RECHARGE", event: { type: "RECHARGE" } },
+  ],
+  readout: (m) => [
+    ['matches("/awake/follow")', String(m.matches("/awake/follow"))],
+    ["ctx.energy", m.ctx.energy.toFixed(1)],
+  ],
+  visual: (m) => ({ pose: buddyPose(m), light: lightGlow(m.ctx) }),
+  notes: CHECKUP_NOTES,
+});
+
 export const DEMOS = {
   "buddy-first": buddyFirst,
   "buddy-nested": buddyNested,
@@ -546,6 +787,8 @@ export const DEMOS = {
   "buddy-time": buddyTime,
   "buddy-waking": buddyWaking,
   "buddy-queue": buddyQueue,
+  "buddy-checkup": buddyCheckup,
+  "buddy-memory": buddyMemory,
 } satisfies Record<string, Demo>;
 
 export type DemoId = keyof typeof DEMOS;
