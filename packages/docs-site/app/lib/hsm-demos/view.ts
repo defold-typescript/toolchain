@@ -177,10 +177,17 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   }
 
   function renderState(name: string, config: State, path: string, parent: State): HTMLElement {
-    const box = el("div", config.states ? "hsm-state hsm-compound" : "hsm-state");
+    const parallel = config.type === "parallel";
+    const region = parent.type === "parallel";
+    const classes = ["hsm-state"];
+    if (config.states) classes.push("hsm-compound");
+    if (parallel) classes.push("hsm-parallel");
+    if (region) classes.push("hsm-region");
+    const box = el("div", classes.join(" "));
     boxes.set(path, box);
     const title = el("div", "hsm-state-name", name);
     if (parent.initial === path) title.append(" ", span("hsm-init", "starts here"));
+    if (region) title.append(" ", span("hsm-init", "region"));
     box.append(title);
 
     const rules = el("ul", "hsm-rules");
@@ -249,9 +256,10 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     if (config.restoreDepth !== undefined) {
       box.append(el("div", "hsm-hooks", "remembers its last child"));
     }
+    if (parallel) box.append(el("div", "hsm-hooks", "keeps every region active"));
 
     if (config.states) {
-      const kids = el("div", "hsm-level hsm-kids");
+      const kids = el("div", parallel ? "hsm-level hsm-kids hsm-regions" : "hsm-level hsm-kids");
       for (const [childName, child] of Object.entries(config.states)) {
         kids.append(renderState(childName, child, `${path}/${childName}`, config));
       }

@@ -328,6 +328,50 @@ const greeter: Demo = {
   routines: { "/hello": ["start", "say one, wait 0.2 s", "say two, wait 0.3 s"] },
 };
 
+// `lamp` is listed ahead of `battery`: the library runs regions in name order, not in this one.
+const rester: Demo = {
+  title: "Rester",
+  subtitle: "A parallel state with a timer in its second region.",
+  config: {
+    initial: "/rest",
+    states: {
+      rest: {
+        type: "parallel",
+        on: { WAKE: "/up" },
+        states: {
+          lamp: {
+            initial: "/rest/lamp/shown",
+            states: {
+              shown: { after: { 0.5: "/rest/lamp/hidden" } },
+              hidden: { after: { 0.5: "/rest/lamp/shown" } },
+            },
+          },
+          battery: {
+            initial: "/rest/battery/filling",
+            states: {
+              filling: { on: { FULL: "/rest/battery/full" } },
+              full: {},
+            },
+          },
+        },
+      },
+      up: {},
+    },
+  },
+  ctx: () => ({}),
+  buttons: [],
+  readout: () => [],
+};
+
+/** The lines a send logs when neither state of a region of `rester` has a rule for `type`. */
+function regionLines(region: "battery" | "lamp", type: string): string[] {
+  const leaf = region === "battery" ? "filling" : "shown";
+  return [
+    `/rest/${region}/${leaf} has no ${type} rule, asks its parent`,
+    `/rest/${region} has no ${type} rule, so its region does not take it`,
+  ];
+}
+
 // A routine goes on in a promise continuation, which runs before a zero timeout does.
 function settle(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -813,5 +857,64 @@ describe("a discarded run", () => {
     step(b.run, 0.3);
     await settle();
     expect(b.run.path).toBe("/idle");
+  });
+});
+
+describe("a parallel state", () => {
+  test("a timer in the second region counts the run's clock", () => {
+    const { run } = start(rester);
+    step(run, 0.25);
+    expect(run.clock("/rest/lamp/shown")).toBe(0.25);
+    expect(run.clock("/rest")).toBe(0.25);
+    expect(run.progress(afterChip("/rest/lamp/shown", 0.5))).toBe(0.5);
+
+    step(run, 0.25);
+    expect(run.leaves).toEqual(["/rest/battery/filling", "/rest/lamp/hidden"]);
+    expect(run.clock("/rest/lamp/hidden")).toBe(0);
+    expect(run.clock("/rest/lamp")).toBe(0.5);
+    expect(run.clock("/rest/battery/filling")).toBe(0.5);
+  });
+
+  test("each region is asked before the parallel state", () => {
+    const { run, trace } = start(rester);
+    const mark = trace.length;
+    send(run, { type: "WAKE" });
+    expect(texts(trace, mark, "bubble")).toEqual([
+      ...regionLines("battery", "WAKE"),
+      ...regionLines("lamp", "WAKE"),
+    ]);
+    expect(run.path).toBe("/up");
+  });
+
+  test("a region that takes the event leaves the parallel state unasked", () => {
+    const { run, trace } = start(rester);
+    const mark = trace.length;
+    send(run, { type: "FULL" });
+    expect(texts(trace, mark, "bubble")).toEqual(regionLines("lamp", "FULL"));
+    expect(texts(trace, mark, "drop")).toEqual([]);
+    expect(run.leaves).toEqual(["/rest/battery/full", "/rest/lamp/shown"]);
+  });
+
+  test("an event nobody takes climbs past the parallel state", () => {
+    const { run, trace } = start(rester);
+    const mark = trace.length;
+    send(run, { type: "NOPE" });
+    expect(texts(trace, mark, "bubble")).toEqual([
+      ...regionLines("battery", "NOPE"),
+      ...regionLines("lamp", "NOPE"),
+      "/rest has no NOPE rule, asks its parent",
+    ]);
+    expect(texts(trace, mark, "drop")).toEqual(["nobody handles NOPE, so it is ignored"]);
+  });
+
+  test("a region's root says what it is", () => {
+    const { trace } = start(rester);
+    expect(texts(trace, 0, "enter")).toEqual([
+      "enter /rest (initial child)",
+      "enter /rest/battery (region)",
+      "enter /rest/battery/filling (initial child)",
+      "enter /rest/lamp (region)",
+      "enter /rest/lamp/shown (initial child)",
+    ]);
   });
 });
