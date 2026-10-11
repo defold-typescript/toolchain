@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { waitGroup } from "@defold-typescript/hsm";
+import { sequence } from "@defold-typescript/hsm/async";
 import type { Demo, DemoCtx } from "./demos";
 import {
   afterChip,
@@ -11,6 +12,7 @@ import {
   send,
   startDemo,
   step,
+  stepChip,
   stop,
   type TraceEntry,
   type TraceFire,
@@ -297,6 +299,37 @@ const loader: Demo = {
 
 function report(ctx: DemoCtx, job: "a" | "b"): void {
   (ctx[job] as () => void)();
+}
+
+// The routine is the library's own `sequence`, which waits through Defold's global `timer`.
+const greeter: Demo = {
+  title: "Greeter",
+  subtitle: "A routine with two waits.",
+  config: {
+    initial: "/idle",
+    states: {
+      idle: { on: { GO: "/hello" } },
+      hello: {
+        task: sequence(async (ctx, signal) => {
+          ctx.said = "one";
+          await signal.wait(0.2);
+          ctx.said = "two";
+          await signal.wait(0.3);
+          return { type: "DONE" };
+        }),
+        on: { DONE: "/idle", QUIT: "/idle" },
+      },
+    },
+  },
+  ctx: () => ({ said: "" }),
+  buttons: [],
+  readout: () => [],
+  routines: { "/hello": ["start", "say one, wait 0.2 s", "say two, wait 0.3 s"] },
+};
+
+// A routine goes on in a promise continuation, which runs before a zero timeout does.
+function settle(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 function start(spec: Demo, ctxOverride?: Partial<DemoCtx>) {
@@ -622,5 +655,122 @@ describe("a remembered child", () => {
     const second = trace.length;
     send(run, { type: "ON" });
     expect(texts(trace, second, "enter")).toEqual(["enter /on", "enter /on/a (initial child)"]);
+  });
+});
+
+describe("a sequence waits on the run's own clock", () => {
+  test("a wait counts the run's clock and nothing else", async () => {
+    const { run, trace } = start(greeter);
+    send(run, { type: "GO" });
+    expect(run.ctx.said).toBe("one");
+    for (let i = 0; i < 3; i++) await settle();
+    expect(run.ctx.said).toBe("one");
+
+    step(run, 0.1);
+    await settle();
+    expect(run.ctx.said).toBe("one");
+    step(run, 0.1);
+    await settle();
+    expect(run.ctx.said).toBe("two");
+
+    const last = trace.length;
+    step(run, 0.3);
+    await settle();
+    expect(run.path).toBe("/idle");
+    expect(texts(trace, last, "note", "exit", "enter")).toEqual([
+      "/hello: finish(DONE)",
+      "exit /hello",
+      "/hello: task cleanup ran",
+      "enter /idle",
+    ]);
+  });
+
+  test("leaving the state cancels the pending wait", async () => {
+    const { run, trace } = start(greeter);
+    send(run, { type: "GO" });
+    step(run, 0.1);
+    const sent = trace.length;
+    send(run, { type: "QUIT" });
+    expect(texts(trace, sent, "exit", "note", "enter")).toEqual([
+      "exit /hello",
+      "/hello: task cleanup ran",
+      "timer.cancel: the 0.2 s wait was cancelled",
+      "enter /idle",
+    ]);
+
+    const left = trace.length;
+    step(run, 1);
+    await settle();
+    expect(run.ctx.said).toBe("one");
+    expect(trace.slice(left)).toEqual([]);
+  });
+
+  test("each run keeps its own waits", async () => {
+    const a = start(greeter);
+    const b = start(greeter);
+    send(a.run, { type: "GO" });
+    step(a.run, 0.2);
+    await settle();
+    expect(a.run.ctx.said).toBe("two");
+
+    step(b.run, 5);
+    await settle();
+    expect(a.run.path).toBe("/hello");
+
+    step(a.run, 0.3);
+    await settle();
+    expect(a.run.path).toBe("/idle");
+  });
+});
+
+describe("a routine's steps", () => {
+  const hello = "/hello";
+
+  test("the running step is the number of waits the stay has started", async () => {
+    const { run, trace } = start(greeter);
+    const sent = trace.length;
+    send(run, { type: "GO" });
+    expect(fired(trace, sent)).toEqual([
+      ruleChip("/idle", "GO", 0),
+      stepChip(hello, 0),
+      stepChip(hello, 1),
+    ]);
+    expect(run.routine(hello)).toEqual({ step: 1, progress: 0 });
+    expect(run.routine("/idle")).toBeUndefined();
+
+    step(run, 0.1);
+    expect(run.routine(hello)).toEqual({ step: 1, progress: 0.5 });
+
+    const second = trace.length;
+    step(run, 0.1);
+    await settle();
+    expect(run.routine(hello)).toEqual({ step: 2, progress: 0 });
+    expect(fired(trace, second)).toEqual([stepChip(hello, 2)]);
+
+    step(run, 0.3);
+    await settle();
+    expect(run.routine(hello)).toBeUndefined();
+  });
+
+  test("a state that was left has no running step, and the next stay counts from the top", () => {
+    const { run } = start(greeter);
+    send(run, { type: "GO" });
+    step(run, 0.1);
+    send(run, { type: "QUIT" });
+    expect(run.routine(hello)).toBeUndefined();
+
+    send(run, { type: "GO" });
+    expect(run.routine(hello)).toEqual({ step: 1, progress: 0 });
+  });
+
+  test("a diagram lists a state's steps after its rules", () => {
+    expect(diagramChips(greeter.config, [], greeter.routines)).toEqual([
+      ruleChip("/idle", "GO", 0),
+      ruleChip(hello, "DONE", 0),
+      ruleChip(hello, "QUIT", 0),
+      stepChip(hello, 0),
+      stepChip(hello, 1),
+      stepChip(hello, 2),
+    ]);
   });
 });

@@ -6,7 +6,8 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./async": "./src/async.ts"
   },
   "scripts": {
     "declarations": "bun scripts/emit-declarations.ts",

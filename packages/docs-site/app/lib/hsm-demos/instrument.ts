@@ -22,6 +22,13 @@ import type { BuddyReaction, Demo, DemoButton, DemoCtx, DemoView } from "./demos
  * Two lines have no hook to come from and are derived for display: the
  * bubbling line (from the config and the path before `send`) and "nobody
  * handles" (a sent event no rule fired for).
+ *
+ * `sequence` waits through Defold's global `timer`, which is imitated here on each run's own
+ * clock. A routine goes on in a promise continuation, where no call names its run, so a wait
+ * belongs to the run that last called into the runtime. That is exact as long as a run's
+ * continuations finish before another run acts: the page steps each diagram in an
+ * animation-frame callback of its own, and a test awaits a zero timeout before it touches
+ * another run.
  */
 
 export type TraceKind =
@@ -41,7 +48,7 @@ export interface TraceLine {
   readonly text: string;
 }
 
-/** A rule or timer chip on the diagram that was just used. */
+/** A rule or timer chip on the diagram that was just used, or a routine step that just started. */
 export interface TraceFire {
   readonly kind: "fire";
   readonly chip: string;
@@ -85,6 +92,11 @@ export function everyChip(path: string, delay: number): string {
 /** An entry of the list form of `after` or `every`, which has no fixed delay to be named by. */
 export function listChip(path: string, key: TimerKey, index: number): string {
   return `${path}|${key}|#${index}`;
+}
+
+/** A step of the routine a state's `sequence` task runs; step 0 is the stretch up to its first wait. */
+export function stepChip(path: string, index: number): string {
+  return `${path}|step|${index}`;
 }
 
 export function ruleList(spec: unknown): readonly Rule[] {
@@ -186,10 +198,19 @@ export type ChipSpec =
       readonly id: string;
       readonly delay: number | undefined;
       readonly to: string | undefined;
-    };
+    }
+  | { readonly kind: "step"; readonly id: string; readonly index: number; readonly label: string };
 
-/** A quiet state's `update` hook never returns a path, so it gets no rule line. */
-export function stateChips(config: State, path: string, quietUpdate = false): ChipSpec[] {
+/**
+ * A quiet state's `update` hook never returns a path, so it gets no rule line. `steps` holds the
+ * labels of the state's routine, which are listed after its rules.
+ */
+export function stateChips(
+  config: State,
+  path: string,
+  quietUpdate = false,
+  steps: readonly string[] = [],
+): ChipSpec[] {
   const chips: ChipSpec[] = [];
   for (const [type, spec] of Object.entries(config.on ?? {})) {
     if (spec === undefined) continue;
@@ -210,19 +231,29 @@ export function stateChips(config: State, path: string, quietUpdate = false): Ch
     const delay = fixedDelay(entry.delay);
     chips.push({ kind: "after", id: entry.chip, delay, to: afterRule(entry.written).to });
   }
+  steps.forEach((label, index) => {
+    chips.push({ kind: "step", id: stepChip(path, index), index, label });
+  });
   return chips;
 }
 
 /**
  * The id of every chip a diagram draws: each state below the root, parents before children.
- * `quietUpdates` holds the paths of the states whose `update` hook never returns a path.
+ * `quietUpdates` holds the paths of the states whose `update` hook never returns a path, and
+ * `routines` the step labels of the states whose task is a routine, by path.
  */
-export function diagramChips(root: State, quietUpdates: readonly string[] = []): string[] {
+export function diagramChips(
+  root: State,
+  quietUpdates: readonly string[] = [],
+  routines: Readonly<Record<string, readonly string[]>> = {},
+): string[] {
   const ids: string[] = [];
   const collect = (config: State, path: string) => {
     for (const [name, child] of Object.entries(config.states ?? {})) {
       const at = childPath(path, name);
-      for (const chip of stateChips(child, at, quietUpdates.includes(at))) ids.push(chip.id);
+      for (const chip of stateChips(child, at, quietUpdates.includes(at), routines[at])) {
+        ids.push(chip.id);
+      }
       collect(child, at);
     }
   };
@@ -277,6 +308,20 @@ interface Session {
   readonly delays: Map<string, number>;
   /** The due `after` chips whose `when` said no during the current stay. */
   readonly held: Set<string>;
+  /** The run's pending `timer.delay` waits, in the order they were filed. */
+  readonly waits: Wait[];
+  /** The routine of the state the run is in, and the number of waits it has started in this stay. */
+  routine: { readonly path: string; step: number } | undefined;
+}
+
+type TimerCallback = (self: unknown, handle: number, elapsed: number) => void;
+
+/** One imitated `timer.delay`, counted by the clock of the run that holds it. */
+interface Wait {
+  readonly handle: number;
+  readonly seconds: number;
+  elapsed: number;
+  readonly callback: TimerCallback;
 }
 
 interface TimerChip {
@@ -302,13 +347,25 @@ export interface DemoRun extends DemoView<DemoCtx> {
   readonly delayOf: (chip: string) => number | undefined;
   /** Whether an `after` chip is due and held back by its `when`, for as long as its state stays active. */
   readonly waiting: (chip: string) => boolean;
+  /**
+   * The step the routine of the state at `path` is in, and how full the bar of the wait it filed
+   * last is, from 0 to 1; the bar is empty while no wait is pending. `undefined` unless the run's
+   * routine is at `path`.
+   */
+  readonly routine: (
+    path: string,
+  ) => { readonly step: number; readonly progress: number } | undefined;
 }
 
 const sessions = new WeakMap<DemoRun, Session>();
 
+/** The run that last called into the runtime; an imitated `timer.delay` files its wait there. */
+let scope: Session | undefined;
+
 function sessionOf(run: DemoRun): Session {
   const session = sessions.get(run);
   if (session === undefined) throw new Error("not a running demo");
+  scope = session;
   return session;
 }
 
@@ -318,6 +375,60 @@ function emit(s: Session, kind: TraceKind, text: string): void {
 
 function fire(s: Session, chip: string): void {
   if (!s.muted) s.trace({ kind: "fire", chip });
+}
+
+/** The run that holds each pending wait, by handle. */
+const holders = new Map<number, Session>();
+let lastHandle = 0;
+
+function unfile(s: Session, handle: number): Wait | undefined {
+  const at = s.waits.findIndex((wait) => wait.handle === handle);
+  if (at < 0) return undefined;
+  holders.delete(handle);
+  return s.waits.splice(at, 1)[0];
+}
+
+/** Defold's `timer` as far as `sequence` uses it, with `step` in place of real time. */
+const imitatedTimer = {
+  delay(seconds: number, repeating: boolean, callback: TimerCallback): number {
+    if (repeating) throw new Error("the imitated timer.delay does not repeat");
+    const s = scope;
+    if (s === undefined) throw new Error("timer.delay was called with no demo running");
+    lastHandle++;
+    s.waits.push({ handle: lastHandle, seconds, elapsed: 0, callback });
+    holders.set(lastHandle, s);
+    if (s.routine !== undefined) {
+      s.routine.step++;
+      fire(s, stepChip(s.routine.path, s.routine.step));
+    }
+    return lastHandle;
+  },
+  cancel(handle: number): boolean {
+    const s = holders.get(handle);
+    const wait = s === undefined ? undefined : unfile(s, handle);
+    if (s === undefined || wait === undefined) return false;
+    emit(s, "note", `timer.cancel: the ${wait.seconds} s wait was cancelled`);
+    return true;
+  },
+};
+
+/** Passes `dt` on the run's pending waits, then calls back the ones that are over, oldest first. */
+function advanceWaits(s: Session, dt: number): void {
+  for (const wait of s.waits) wait.elapsed += dt;
+  for (const wait of s.waits.filter((pending) => pending.elapsed >= pending.seconds)) {
+    // A callback that ran just before may have cancelled this one.
+    if (unfile(s, wait.handle) !== undefined) wait.callback(undefined, wait.handle, wait.elapsed);
+  }
+}
+
+function routineOf(s: Session, path: string) {
+  const routine = s.routine;
+  if (routine === undefined || routine.path !== path) return undefined;
+  const wait = s.waits[s.waits.length - 1];
+  if (wait === undefined) return { step: routine.step, progress: 0 };
+  // A wait of zero seconds is over the moment it is filed.
+  const progress = wait.seconds > 0 ? Math.min(1, wait.elapsed / wait.seconds) : 1;
+  return { step: routine.step, progress };
 }
 
 function isStopped(s: Session): boolean {
@@ -605,16 +716,22 @@ function wrapState(s: Session, config: State, path: string): State {
   const exit = config.exit;
   wrapped.exit = (ctx, m) => {
     s.lastChild.set(parentPath(path), path);
+    if (s.routine?.path === path) s.routine = undefined;
     emit(s, "exit", `exit ${path}`);
     exit?.(ctx, proxyOf(s, m));
   };
 
   const task = config.task;
   if (task !== undefined) {
+    const isRoutine = s.demo.routines?.[path] !== undefined;
     wrapped.task = (ctx, finish, m) => {
       const entry = s.entries.get(path);
       const proxy = proxyOf(s, m);
       emit(s, "note", `${path}: task started`);
+      if (isRoutine) {
+        s.routine = { path, step: 0 };
+        fire(s, stepChip(path, 0));
+      }
       const cleanup = task(
         ctx,
         (event) => {
@@ -646,6 +763,7 @@ function wrapState(s: Session, config: State, path: string): State {
 
 /** Runs one call into the machine from outside it, then reports events no rule handled. */
 function fromOutside(s: Session, event: EventObject | undefined, body: () => void): void {
+  scope = s;
   const wasStopped = isStopped(s);
   if (s.depth === 0) {
     s.sent = event === undefined ? [] : [event];
@@ -732,7 +850,11 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     timers: new Map(),
     delays: new Map(),
     held: new Set(),
+    waits: [],
+    routine: undefined,
   };
+  // `timer` is declared as a namespace, which has no assignable type.
+  (globalThis as unknown as { timer: typeof imitatedTimer }).timer = imitatedTimer;
   const machine = define(
     wrapState(s, demo.config, "") as MachineConfig<DemoCtx, EventObject, string>,
   );
@@ -760,6 +882,7 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     progress: (chip) => chipProgress(s, chip),
     delayOf: (chip) => chipDelay(s, chip),
     waiting: (chip) => s.held.has(chip) && instance.matches(s.timers.get(chip)?.path ?? ""),
+    routine: (path) => routineOf(s, path),
   };
   sessions.set(run, s);
   return run;
@@ -793,11 +916,16 @@ export function reactionTo(run: DemoRun, button: DemoButton): BuddyReaction | un
   return button.event.type === "BUMP" ? "bump" : "hop";
 }
 
-/** Advances a demo by `dt` seconds: the imitated Defold work first, then the machine's `update`. */
+/**
+ * Advances a demo by `dt` seconds: the imitated Defold work first, then the waits of the
+ * imitated timer, then the machine's `update`.
+ */
 export function step(run: DemoRun, dt: number): void {
   const s = sessionOf(run);
   if (isStopped(s)) return;
   s.demo.tick?.(s.ctx, dt);
+  if (isStopped(s)) return;
+  advanceWaits(s, dt);
   if (isStopped(s)) return;
   const instance = s.instance as Instance;
   const before = activePaths(instance.path);
