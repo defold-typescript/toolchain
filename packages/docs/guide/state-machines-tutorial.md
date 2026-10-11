@@ -14,7 +14,7 @@ Here is a small robot buddy. Go on, poke it.
 
 What did you just do? You pressed `POKE`, and the buddy woke up. Press it again, and it goes back to sleep.
 
-That's a state machine. The buddy is always in exactly one **state**: `asleep` or `awake`. Pressing `POKE` sends an **event**, and a **transition** rule moves the buddy to the other state. The glowing box is the state it's in right now, the drawing shows the buddy in that state, and the log shows each step as it happens. A filled button is an event the buddy takes right now. An outlined one still sends its event, and the log says what became of it.
+That's a state machine. The buddy is always in exactly one **state**: `asleep` or `awake`. Pressing `POKE` sends an **event**, and a **transition** rule moves the buddy to the other state. The glowing box is the state it's in right now, the drawing shows the buddy in that state, and the log shows each step as it happens. A filled button is an event the buddy takes right now. An outlined one still sends its event, and the log says what became of it. The buddy hops when it takes an event and shows a question mark at one nobody takes.
 
 This page grows that buddy one idea at a time. By the end it wanders, greets you, follows you, gets tired and charges at a dock, and it is still one machine in one file.
 
@@ -215,7 +215,7 @@ It **climbs up** to the parent. `awake` does have a rule, so the buddy goes to s
 2. Follow, poke the buddy to sleep, and poke it awake again. Is it wandering or following?
 
 > [!MORE] Answer
-> 1. Nobody handles it, so it is ignored. `asleep` has no rule for `SEE_PLAYER` and no parent to ask.
+> 1. Nobody handles it, so it is ignored, and the buddy shows a question mark. `asleep` has no rule for `SEE_PLAYER` and no parent to ask.
 > 2. Wandering. Entering `awake` starts at its `initial`, whatever the buddy was doing before. [Lesson 15](#15-remember-where-you-were) shows how to change that.
 
 ## 5. Conditions and side effects
@@ -231,7 +231,7 @@ Two tools handle "it depends":
 
 <div data-hsm-demo="buddy-energy"></div>
 
-Wake the buddy and give it a small bump. Which rule lights up, and what happens to `ctx.energy`?
+Wake the buddy and give it a small bump. Which rule lights up, what does the buddy do, and what happens to `ctx.energy`?
 
 First the buddy needs a battery, and two new events:
 
