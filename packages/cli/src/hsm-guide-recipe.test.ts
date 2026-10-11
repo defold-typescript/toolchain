@@ -2,8 +2,8 @@
  * The State machines guide's animation recipe is a whole machine, so this runs the
  * `knight-machine.ts` fence as the page prints it, over the hsm source, and plays the
  * part of the engine: it records each flipbook and fires the completion callbacks.
- * The save and load recipes and the door requests recipe are whole machines too, and
- * run the same way.
+ * The save and load recipes, the door requests recipe and the waiting recipes are whole
+ * machines too, and run the same way.
  */
 import { afterAll, afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -378,5 +378,167 @@ describe("the door requests recipe", () => {
     door.send({ type: "open_door", sender: CALLER });
     expect(door.path).toBe("/open");
     expect(calls).toEqual([]);
+  });
+});
+
+interface Waiter {
+  readonly path: string | undefined;
+  readonly leaves: readonly string[];
+  readonly send: (event: { type: string }) => void;
+  readonly update: (dt: number) => void;
+}
+
+interface WaiterMachine<Ctx> {
+  readonly start: (ctx: Ctx) => Waiter;
+}
+
+const CONFIG_URL = "https://example.com/config.json";
+
+describe("the waiting recipes", () => {
+  let calls: [string, readonly unknown[]][] = [];
+  let watched: MachineEngine | undefined;
+
+  /** The machine of a fence, with every engine call it makes from here on kept in `calls`. */
+  function recipeMachine<Ctx>(title: string, name: string): WaiterMachine<Ctx> {
+    const fence = fenceMachine(title, name);
+    watched = fence.engine;
+    fence.engine.setSink((entry) => {
+      if (entry.kind === "engine") {
+        calls.push([entry.api, entry.args]);
+      }
+    });
+    return fence.machine as WaiterMachine<Ctx>;
+  }
+
+  function callbackOf(api: string, slot: number, nth: number): (...args: unknown[]) => void {
+    const call = calls.filter(([name]) => name === api)[nth];
+    const callback = call?.[1][slot];
+    if (typeof callback !== "function") {
+      throw new Error(`call ${nth} of ${api} has no callback in argument ${slot}`);
+    }
+    return callback as (...args: unknown[]) => void;
+  }
+
+  function animationEnds(nth = 0): void {
+    callbackOf("go.animate", 7, nth)();
+  }
+
+  function responseArrives(status: number): void {
+    callbackOf("http.request", 2, 0)(undefined, undefined, { status });
+  }
+
+  const promisesSettle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  const posted = () => calls.filter(([api]) => api === "msg.post").map(([, args]) => args[1]);
+
+  beforeEach(() => {
+    calls = [];
+  });
+
+  afterEach(() => {
+    watched?.setSink(undefined);
+    watched = undefined;
+  });
+
+  test("the last child of a chain names the next state", () => {
+    const intro = recipeMachine<object>("wait-chain.ts", "introMachine").start({});
+    intro.update(2);
+    intro.update(2);
+    expect(intro.path).toBe("/intro/credits");
+    intro.update(2);
+    expect(intro.path).toBe("/menu");
+  });
+
+  test("the parent of a chain decides where to go once the chain has ended", () => {
+    const machine = recipeMachine<{ firstRun: boolean }>(
+      "wait-chain-parent.ts",
+      "gatedIntroMachine",
+    );
+    const pathAfterIntro = (firstRun: boolean) => {
+      const intro = machine.start({ firstRun });
+      intro.update(2);
+      intro.update(2);
+      intro.update(2);
+      return intro.path;
+    };
+    expect(pathAfterIntro(true)).toBe("/tutorial");
+    expect(pathAfterIntro(false)).toBe("/menu");
+  });
+
+  const startLevel = () =>
+    recipeMachine<{ url: string; curtain: string }>("wait-fixed.ts", "levelMachine").start({
+      url: CONFIG_URL,
+      curtain: SPRITE,
+    });
+
+  test("a group of two pieces waits for both", () => {
+    const level = startLevel();
+    animationEnds();
+    expect(level.path).toBe("/loading");
+    responseArrives(200);
+    expect(level.path).toBe("/playing");
+  });
+
+  test("a piece that fails ends the wait itself", () => {
+    const level = startLevel();
+    responseArrives(500);
+    expect(level.path).toBe("/failed");
+    animationEnds();
+    expect(level.path).toBe("/failed");
+  });
+
+  const waveMachine = () => recipeMachine<{ enemies: string[] }>("wait-counted.ts", "waveMachine");
+
+  test("a group counted while the game runs waits for every piece", () => {
+    const wave = waveMachine().start({ enemies: ["/grunt1", "/grunt2", "/grunt3"] });
+    animationEnds(0);
+    animationEnds(1);
+    expect(wave.path).toBe("/entering");
+    animationEnds(2);
+    expect(wave.path).toBe("/fighting");
+  });
+
+  test("a group with nothing to count has moved on when start returns", () => {
+    expect(waveMachine().start({ enemies: [] }).path).toBe("/fighting");
+  });
+
+  test("regions join once each has reached its last state, in either order", () => {
+    const machine = recipeMachine<object>("wait-regions.ts", "raidMachine");
+    const raid = machine.start({});
+    raid.send({ type: "FADED" });
+    expect([...raid.leaves]).toEqual(["/setup/doors/opening", "/setup/music/ready"]);
+    raid.send({ type: "OPENED" });
+    expect(raid.path).toBe("/fight");
+
+    const reversed = machine.start({});
+    reversed.send({ type: "OPENED" });
+    reversed.send({ type: "FADED" });
+    expect(reversed.path).toBe("/fight");
+  });
+
+  const startBoot = () =>
+    recipeMachine<{ url: string; logo: string }>("wait-sequence.ts", "bootMachine").start({
+      url: CONFIG_URL,
+      logo: SPRITE,
+    });
+
+  test("a sequence goes on after its group has finished", async () => {
+    const boot = startBoot();
+    responseArrives(200);
+    animationEnds();
+    await promisesSettle();
+    expect(boot.path).toBe("/playing");
+    expect(posted()).toEqual(["disable"]);
+  });
+
+  test("a sequence whose state was left does no work once its group finishes", async () => {
+    const boot = startBoot();
+    boot.send({ type: "SKIP" });
+    expect(boot.path).toBe("/menu");
+    responseArrives(200);
+    animationEnds();
+    await promisesSettle();
+    expect(boot.path).toBe("/menu");
+    expect(posted()).toEqual([]);
   });
 });
