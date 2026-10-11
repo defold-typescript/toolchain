@@ -712,7 +712,24 @@ interface Transition<Ctx, E extends EventObject> {
   readonly target: number;
   readonly when: Guard<Ctx, E> | undefined;
   readonly run: readonly MoveAction<Ctx, E>[];
+  // Set on an after timer only, whose sorted position is not its entry: the delay of a record
+  // entry, the index of a list entry.
+  key?: number;
 }
+
+/**
+ * How the core calls a `MoveListener`: the declared arguments, then the path of the state whose
+ * rule made the move and that rule's key. `MoveListener` declares neither.
+ * @noSelf
+ */
+type MoveReport<E extends EventObject> = (
+  from: string,
+  to: string | undefined,
+  cause: MoveCause,
+  event: E | undefined,
+  source: string | undefined,
+  key: number | undefined,
+) => void;
 
 type Delay<Ctx> = number | ((ctx: Ctx) => number);
 
@@ -1163,11 +1180,13 @@ function compileTimer<Ctx, E extends EventObject>(
   compiled: Compiled<Ctx, E>,
   index: number,
   spec: string | AfterRule<Ctx, string, E>,
+  key: number,
 ): Transition<Ctx, E> {
   const rule = compileTransition(compiled, index, spec as string | TransitionConfig<Ctx, E>);
   if (rule.target === NO_STATE && rule.run.length === 0) {
     throw `hsm: state "${describePath(compiled.paths[index] as string)}" has an after timer with no "to" and no "run"`;
   }
+  rule.key = key;
   return rule;
 }
 
@@ -1192,7 +1211,7 @@ function compileAfter<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, in
       const delay = parseDelay(key);
       checkDelay(path, delay, key);
       const spec = byDelay[key as unknown as number] as string | AfterRule<Ctx, string, E>;
-      insertTimer(delays, rules, delay, compileTimer(compiled, index, spec));
+      insertTimer(delays, rules, delay, compileTimer(compiled, index, spec, delay));
     }
     return;
   }
@@ -1208,7 +1227,7 @@ function compileAfter<Ctx, E extends EventObject>(compiled: Compiled<Ctx, E>, in
       checkDelay(path, delay, delay);
     }
     listDelays[i] = delay;
-    listRules[i] = compileTimer(compiled, index, entry);
+    listRules[i] = compileTimer(compiled, index, entry, i);
   }
   if (perInstance) {
     compiled.afterListDelays[index] = listDelays;
@@ -1745,10 +1764,12 @@ function createMachine<Ctx, E extends EventObject>(
       to: string | undefined,
       cause: MoveCause,
       event: E | undefined,
+      source?: string,
+      key?: number,
     ): void {
       const current = listeners;
       for (let i = 0; i < current.length; i++) {
-        (current[i] as MoveListener<E>)(from, to, cause, event);
+        (current[i] as MoveReport<E>)(from, to, cause, event, source, key);
       }
     }
 
@@ -1985,6 +2006,7 @@ function createMachine<Ctx, E extends EventObject>(
       run: readonly MoveAction<Ctx, E>[] | undefined,
       event: E | undefined,
       cause: MoveCause,
+      key?: number,
     ): void {
       if (target === NO_STATE) {
         runActions(run, event);
@@ -2005,7 +2027,7 @@ function createMachine<Ctx, E extends EventObject>(
       refreshLeaves();
       moved = true;
       if (listeners.length > 0) {
-        report(from, firstLeaf(domain), cause, event);
+        report(from, firstLeaf(domain), cause, event, paths[source] as string, key);
       }
     }
 
@@ -2040,7 +2062,7 @@ function createMachine<Ctx, E extends EventObject>(
             busy = false;
             throw `hsm: state "${describePath(paths[state] as string)}" took ${ALWAYS_LIMIT} always transitions in a row; check for an always loop`;
           }
-          transition(state, candidate.target, candidate.run, undefined, "always");
+          transition(state, candidate.target, candidate.run, undefined, "always", i);
           return true;
         }
       }
@@ -2075,7 +2097,7 @@ function createMachine<Ctx, E extends EventObject>(
       for (let i = 0; i < list.length; i++) {
         const candidate = list[i] as Transition<Ctx, E>;
         if (candidate.when === undefined || candidate.when(ctx, event, instance)) {
-          transition(state, candidate.target, candidate.run, event, "event");
+          transition(state, candidate.target, candidate.run, event, "event", i);
           return true;
         }
       }
@@ -2320,7 +2342,7 @@ function createMachine<Ctx, E extends EventObject>(
             // Set before the move: a `to` naming this state re-enters it, which clears the flags.
             flags[i] = true;
             if (rule.target !== NO_STATE) {
-              transition(state, rule.target, rule.run, undefined, "after");
+              transition(state, rule.target, rule.run, undefined, "after", rule.key);
               return true;
             }
             runActions(rule.run, undefined);

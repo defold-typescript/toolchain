@@ -3,7 +3,8 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { requireHsmSourceDir } from "@defold-typescript/transpiler";
-import type { LiveInstance } from "../src/hsm-view-live";
+import { ruleId } from "../src/hsm-view-index";
+import type { LiveInstance, LiveRule } from "../src/hsm-view-live";
 import { createHsmViewApp, type HsmViewIndex } from "../src/hsm-view-server";
 import { createSession } from "../src/hsm-view-session";
 import { liveSnapshot } from "./live";
@@ -22,18 +23,38 @@ export const guard = defineMachine("guard")({
 });
 `;
 
+const RULES = `import { defineMachine } from "@defold-typescript/types/hsm";
+export const rules = defineMachine("rules")({
+  initial: "/a",
+  on: { RESET: "/a" },
+  states: {
+    a: {
+      on: { GO: [{ to: "/b", when: () => false }, { to: "/b" }], after: "/b" },
+      after: { 0: "/b", 0.5: "/c" },
+    },
+    b: { after: [{ delay: 2, to: "/a" }, { delay: () => 0.5, to: "/c" }], update: () => "/c" },
+    c: { always: [{ to: "/a", when: () => false }, { to: "/d" }] },
+    d: { on: { after: "/a" } },
+  },
+});
+`;
+
 let dir: string;
 let index: HsmViewIndex;
+let rulesIndex: HsmViewIndex;
+
+async function indexOf(name: string, source: string): Promise<HsmViewIndex> {
+  const file = path.join(dir, name);
+  writeFileSync(file, source);
+  const session = createSession({ file, hsmSourceDir: requireHsmSourceDir() });
+  const app = createHsmViewApp({ session, client: { js: "", css: "" } });
+  return (await (await app.request("/api/index")).json()) as HsmViewIndex;
+}
 
 beforeAll(async () => {
   dir = mkdtempSync(path.join(os.tmpdir(), "hsm-view-live-"));
-  writeFileSync(path.join(dir, "main.ts"), GUARD);
-  const session = createSession({
-    file: path.join(dir, "main.ts"),
-    hsmSourceDir: requireHsmSourceDir(),
-  });
-  const app = createHsmViewApp({ session, client: { js: "", css: "" } });
-  index = (await (await app.request("/api/index")).json()) as HsmViewIndex;
+  index = await indexOf("main.ts", GUARD);
+  rulesIndex = await indexOf("rules.ts", RULES);
 });
 
 afterAll(() => {
@@ -113,5 +134,46 @@ describe("liveSnapshot", () => {
     expect(snapshot.running).toBe(false);
     expect(snapshot.active).toEqual([]);
     expect(snapshot.leaves).toEqual([]);
+  });
+
+  const moved = (reason: string, rule?: LiveRule) =>
+    liveSnapshot(rulesIndex, undefined, instance(["/a"]), {
+      move: {
+        label: "guard",
+        from: "/a",
+        to: "/a",
+        reason,
+        ...(rule === undefined ? {} : { rule }),
+      },
+    }).snapshot;
+
+  test("glows the rule the game names", () => {
+    const byEvent = moved("GO", { source: "/a", key: 1 });
+    expect(byEvent.fired).toEqual([ruleId("/a", "on", "GO", 1)]);
+    expect(byEvent.entries).toEqual([
+      { kind: "transition", t: 0, from: "/a", to: "/a", cause: "event", event: { type: "GO" } },
+    ]);
+
+    expect(moved("after", { source: "/a", key: 0.5 }).fired).toEqual([
+      ruleId("/a", "after", "0.5"),
+    ]);
+    expect(moved("after", { source: "/b", key: 1 }).fired).toEqual([ruleId("/b", "after", 1)]);
+    expect(moved("always", { source: "/c", key: 1 }).fired).toEqual([ruleId("/c", "always", 1)]);
+    expect(moved("update", { source: "/b" }).fired).toEqual([ruleId("/b", "update")]);
+    expect(moved("RESET", { source: "", key: 0 }).fired).toEqual([ruleId("", "on", "RESET", 0)]);
+    expect(moved("after", { source: "/d", key: 0 }).fired).toEqual([
+      ruleId("/d", "on", "after", 0),
+    ]);
+  });
+
+  test("glows no rule a report leaves open", () => {
+    expect(moved("GO").fired).toEqual([]);
+    expect(moved("stop").fired).toEqual([]);
+    expect(moved("GO", { source: "/a", key: 7 }).fired).toEqual([]);
+    expect(moved("GO", { source: "/zzz", key: 0 }).fired).toEqual([]);
+    // `/a` places both the timer under `0` and entry `0` of its rule for an event typed `after`.
+    expect(rulesIndex.rules[ruleId("/a", "after", "0")]).toBeDefined();
+    expect(rulesIndex.rules[ruleId("/a", "on", "after", 0)]).toBeDefined();
+    expect(moved("after", { source: "/a", key: 0 }).fired).toEqual([]);
   });
 });

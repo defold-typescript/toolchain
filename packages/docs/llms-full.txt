@@ -4436,15 +4436,15 @@ export default defineScript({
 
 ```text
 hsm door frame 0: inspecting [/closed]
-hsm door frame 120: /closed -> /opening (trigger_response) [/opening]
-hsm door frame 150: /opening -> /open (OPENED) [/open]
+hsm door frame 120: /closed -> /opening (trigger_response: /closed, 0) [/opening]
+hsm door frame 150: /opening -> /open (OPENED: /opening, 0) [/open]
 hsm door frame 200: unhandled (trigger_response) [/open]
-hsm door frame 330: /open -> /closed (after) [/closed]
+hsm door frame 330: /open -> /closed (after: /open, 3) [/closed]
 ```
 
 An `unhandled` line carries the event's `type` and the active leaves. It prints once per type until the machine's next move, so an event sent every frame does not flood the console.
 
-The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update`, `always`, `stop` or `reload`. The brackets list every active leaf after the move, joined by `, `, so a parallel machine's line names each region's leaf. After `stop()` the new path reads `(stopped)` and the brackets are empty. A label already used by another `inspect` call gets the next ordinal no other call has used, `enemy#2`, `enemy#3`, in both the console lines and the drawn text. In a console line, a backslash escapes each `\`, `[`, `]`, `(`, `)`, `,`, `>` and `:` inside the label, a path or the event's `type`, and a line break reads `\n` (a carriage return `\r`), so every line splits back into the same parts; the drawn text shows the names as they are. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the active leaves joined by `, `, 40 units above the target's world position.
+The frame number counts `draw` calls, so it tracks `update` when you draw every frame. The paths are leaf paths. The text in parentheses is the event's `type`, or, when no event moved the machine, the cause: `after`, `update`, `always`, `stop` or `reload`. After it come the path of the state whose rule made the move, empty for the root, and that rule's key: the entry's index in an `on` or `always` list (`0` for a single rule), the delay of an `after` record entry, or the index of an `after` list entry. An `update` move names the state alone; `stop` and `reload` name neither. The brackets list every active leaf after the move, joined by `, `, so a parallel machine's line names each region's leaf. After `stop()` the new path reads `(stopped)` and the brackets are empty. A label already used by another `inspect` call gets the next ordinal no other call has used, `enemy#2`, `enemy#3`, in both the console lines and the drawn text. In a console line, a backslash escapes each `\`, `[`, `]`, `(`, `)`, `,`, `>` and `:` inside the label, a path or the event's `type`, and a line break reads `\n` (a carriage return `\r`), so every line splits back into the same parts; the drawn text shows the names as they are. `draw(target)` posts `draw_debug_text` to `@render:` with the label and the active leaves joined by `, `, 40 units above the target's world position.
 
 In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect` registers nothing and `draw` does nothing, so the calls can stay in shipped code.
 
@@ -7713,7 +7713,7 @@ The page can follow a running game instead of the simulation, tinting the states
 2. In the game, call [`inspect(instance, label)`](./state-machines.md#debug-a-machine) on each instance you want to follow. Each label shows up in the bar's live dropdown; a repeated label is listed with its ordinal (`enemy#2`), as the game draws it, and a stopped instance is marked `(stopped)`.
 3. Pick the machine the instance runs in the machine dropdown, then pick its label in the live dropdown. The page does not guess which machine a label belongs to.
 
-While attached, the active states are tinted from the leaves the game reports, each entry glows, and each move is logged with its event or cause. Start, the event buttons, Play and Step are off, and the ctx panel reads "ctx is not sent by the game". Choosing `live: off` or another machine detaches and shows the simulation where it was. When the game restarts, the list empties and an attached page detaches with a log line.
+While attached, the active states are tinted from the leaves the game reports, each entry glows, and each move is logged with its event or cause. Each move also glows the rule that made it, as in [the simulation](#read-the-code). Nothing glows dimly and an `every` run does not glow, since the game reports moves only. A move whose line names no rule, or a rule the picked machine does not define, glows none. Start, the event buttons, Play and Step are off, and the ctx panel reads "ctx is not sent by the game". Choosing `live: off` or another machine detaches and shows the simulation where it was. When the game restarts, the list empties and an attached page detaches with a log line.
 
 A banner names any reported state the picked machine does not define: either a different machine is picked, or the game runs source other than the files on disk. The states it does define stay tinted. A release build reports nothing, as `inspect` does nothing there.
 

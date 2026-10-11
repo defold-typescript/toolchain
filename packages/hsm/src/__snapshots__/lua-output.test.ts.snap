@@ -403,7 +403,7 @@ local function entryPositions(list, sorted)
     end
     return positions
 end
-local function compileTimer(compiled, index, spec)
+local function compileTimer(compiled, index, spec, key)
     local rule = compileTransition(compiled, index, spec)
     if rule.target == NO_STATE and #rule.run == 0 then
         error(
@@ -411,6 +411,7 @@ local function compileTimer(compiled, index, spec)
             0
         )
     end
+    rule.key = key
     return rule
 end
 local function compileAfter(compiled, index)
@@ -435,7 +436,7 @@ local function compileAfter(compiled, index)
                 delays,
                 rules,
                 delay,
-                compileTimer(compiled, index, spec)
+                compileTimer(compiled, index, spec, delay)
             )
         end
         return
@@ -454,7 +455,7 @@ local function compileAfter(compiled, index)
                 checkDelay(path, delay, delay)
             end
             listDelays[i + 1] = delay
-            listRules[i + 1] = compileTimer(compiled, index, entry)
+            listRules[i + 1] = compileTimer(compiled, index, entry, i)
             i = i + 1
         end
     end
@@ -942,12 +943,19 @@ local function createMachine(definition)
                 unhandledListeners = withoutListener(unhandledListeners, listener)
             end
         end
-        function report(from, to, cause, event)
+        function report(from, to, cause, event, source, key)
             local current = listeners
             do
                 local i = 0
                 while i < #current do
-                    current[i + 1](from, to, cause, event)
+                    current[i + 1](
+                        from,
+                        to,
+                        cause,
+                        event,
+                        source,
+                        key
+                    )
                     i = i + 1
                 end
             end
@@ -1173,7 +1181,7 @@ local function createMachine(definition)
                 leaf = child
             end
         end
-        function transition(source, target, run, event, cause)
+        function transition(source, target, run, event, cause, key)
             if target == NO_STATE then
                 runActions(run, event)
                 return
@@ -1200,7 +1208,9 @@ local function createMachine(definition)
                     from,
                     firstLeaf(domain),
                     cause,
-                    event
+                    event,
+                    paths[source + 1],
+                    key
                 )
             end
         end
@@ -1252,7 +1262,8 @@ local function createMachine(definition)
                             candidate.target,
                             candidate.run,
                             nil,
-                            "always"
+                            "always",
+                            i
                         )
                         return true
                     end
@@ -1299,7 +1310,8 @@ local function createMachine(definition)
                             candidate.target,
                             candidate.run,
                             event,
-                            "event"
+                            "event",
+                            i
                         )
                         return true
                     end
@@ -1572,7 +1584,8 @@ local function createMachine(definition)
                                     rule.target,
                                     rule.run,
                                     nil,
-                                    "after"
+                                    "after",
+                                    rule.key
                                 )
                                 return true
                             end
@@ -1915,16 +1928,23 @@ function ____exports.inspect(instance, label)
     local frame = 0
     local moves = 0
     local unhandledAt = record()
-    instance.onMove(function(from, to, cause, event)
+    instance.onMove(function(from, to, cause, event, source, key)
         moves = moves + 1
+        local ____escapeField_2 = escapeField
         local ____temp_1
         if event == nil then
             ____temp_1 = cause
         else
             ____temp_1 = event.type
         end
-        local reason = ____temp_1
-        print(((((((((((("hsm " .. loggedLabel) .. " frame ") .. tostring(frame)) .. ": ") .. escapeField(from)) .. " -> ") .. shown(to)) .. " (") .. escapeField(reason)) .. ") [") .. shownList(instance.leaves, escapeField)) .. "]")
+        local reason = ____escapeField_2(____temp_1)
+        if source ~= nil then
+            reason = (reason .. ": ") .. escapeField(source)
+            if key ~= nil then
+                reason = (reason .. ", ") .. tostring(key)
+            end
+        end
+        print(((((((((((("hsm " .. loggedLabel) .. " frame ") .. tostring(frame)) .. ": ") .. escapeField(from)) .. " -> ") .. shown(to)) .. " (") .. reason) .. ") [") .. shownList(instance.leaves, escapeField)) .. "]")
     end)
     instance.onUnhandled(function(event)
         if unhandledAt[event.type] == moves then
