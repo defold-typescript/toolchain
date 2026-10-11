@@ -311,20 +311,21 @@ describe("tag types", () => {
   });
 
   test("an unannotated machine carries the tags, in a hook, in a when and on the instance", () => {
+    type HookPath = "/a" | "/b" | `/a/${string}` | `/b/${string}`;
     const checks: boolean[] = [];
     const m = defineMachine<Ctx, Ev, Tag>()({
       initial: "/a",
       states: {
         a: {
           enter: (_ctx, machine) => {
-            const exact: Equal<typeof machine, MachineInstance<Ctx, Ev, string, Tag>> = true;
+            const exact: Equal<typeof machine, MachineInstance<Ctx, Ev, HookPath, Tag>> = true;
             checks.push(exact);
           },
           on: {
             GO: {
               to: "/b",
               when: (_ctx, _event, machine) => {
-                const exact: Equal<typeof machine, MachineView<string, Tag>> = true;
+                const exact: Equal<typeof machine, MachineView<HookPath, Tag>> = true;
                 checks.push(exact);
                 return true;
               },
