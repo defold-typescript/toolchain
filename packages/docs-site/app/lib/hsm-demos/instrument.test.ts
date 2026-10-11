@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { waitGroup } from "@defold-typescript/hsm";
+import { type EventObject, waitGroup } from "@defold-typescript/hsm";
 import { sequence } from "@defold-typescript/hsm/async";
 import type { Demo, DemoCtx } from "./demos";
 import {
@@ -375,7 +375,15 @@ const ignorer: Demo = {
     states: {
       a: {
         initial: "/a/b",
-        on: { GO: { to: "/c", when: (ctx) => ctx.open === true } },
+        on: {
+          GO: { to: "/c", when: (ctx) => ctx.open === true },
+          TWICE: {
+            run: (ctx, _event, m) => {
+              m.send(ctx.again as EventObject);
+              m.send(ctx.again as EventObject);
+            },
+          },
+        },
         unhandled: (ctx) => hear(ctx, "a"),
         states: {
           b: { unhandled: (ctx) => hear(ctx, "b") },
@@ -388,6 +396,31 @@ const ignorer: Demo = {
   buttons: [],
   readout: () => [],
   notes: { "/a|unhandled": "note it" },
+};
+
+const halter: Demo = {
+  title: "Halter",
+  subtitle: "A rule stops the machine with events still queued.",
+  config: {
+    initial: "/a",
+    states: {
+      a: {
+        on: {
+          BURST: {
+            run: (ctx, _event, m) => {
+              m.send(ctx.lost as EventObject);
+              m.send({ type: "HALT" });
+              m.send(ctx.lost as EventObject);
+            },
+          },
+          HALT: { run: (_ctx, _event, m) => m.stop() },
+        },
+      },
+    },
+  },
+  ctx: () => ({}),
+  buttons: [],
+  readout: () => [],
 };
 
 /** The lines a send logs when neither state of a region of `rester` has a rule for `type`. */
@@ -987,5 +1020,73 @@ describe("an unhandled hook", () => {
     expect(trace.length).toBe(logged);
     expect(run.ctx.heard).toEqual([]);
     expect(start(ignorer, { open: true }).run.can({ type: "GO" })).toBe(true);
+  });
+
+  test("one event object sent again is named on every send", () => {
+    const { run, trace } = start(ignorer);
+    const nope = { type: "NOPE" };
+    for (let sends = 0; sends < 3; sends++) {
+      const mark = trace.length;
+      send(run, nope);
+      expect(texts(trace, mark, "drop", "action")).toEqual([
+        "nobody handles NOPE, so it is ignored",
+        ...hooks,
+      ]);
+    }
+    expect(run.ctx.heard).toEqual(["b", "a", "b", "a", "b", "a"]);
+  });
+
+  test("an object a rule took is named when it is ignored later", () => {
+    const { run, trace } = start(ignorer);
+    const go = { type: "GO" };
+    let mark = trace.length;
+    send(run, go);
+    expect(texts(trace, mark, "when", "drop", "action")).toEqual([
+      '/a: when "check" said no',
+      "nobody handles GO, so it is ignored",
+      ...hooks,
+    ]);
+    run.ctx.open = true;
+    mark = trace.length;
+    send(run, go);
+    expect(run.path).toBe("/c");
+    expect(texts(trace, mark, "drop", "action")).toEqual([]);
+    for (let sends = 0; sends < 2; sends++) {
+      mark = trace.length;
+      send(run, go);
+      expect(texts(trace, mark, "drop", "action")).toEqual(["nobody handles GO, so it is ignored"]);
+    }
+    expect(run.ctx.heard).toEqual(["b", "a"]);
+  });
+
+  test("one call that queues an object twice names it twice", () => {
+    const nope = { type: "NOPE" };
+    const { run, trace } = start(ignorer, { again: nope });
+    const mark = trace.length;
+    send(run, { type: "TWICE" });
+    expect(texts(trace, mark, "queue", "drop", "action")).toEqual([
+      "run: run code",
+      "NOPE queued (machine is busy)",
+      "NOPE queued (machine is busy)",
+      "nobody handles NOPE, so it is ignored",
+      ...hooks,
+      "nobody handles NOPE, so it is ignored",
+      ...hooks,
+    ]);
+    expect(run.ctx.heard).toEqual(["b", "a", "b", "a"]);
+  });
+});
+
+describe("a stop with events still queued", () => {
+  test("the log names what the stop dropped, and nothing else", () => {
+    const nope = { type: "NOPE" };
+    const { run, trace } = start(halter, { lost: nope });
+    const mark = trace.length;
+    send(run, { type: "BURST" });
+    expect(run.stopped).toBe(true);
+    expect(texts(trace, mark, "drop")).toEqual([
+      "nobody handles NOPE, so it is ignored",
+      "stop() dropped NOPE",
+    ]);
   });
 });
