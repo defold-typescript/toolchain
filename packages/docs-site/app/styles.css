@@ -1627,7 +1627,8 @@
   font-weight: 400;
   font-style: italic;
 }
-.hsm-demo ul.hsm-rules {
+.hsm-demo ul.hsm-rules,
+.hsm-demo ol.hsm-steps {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -1635,7 +1636,11 @@
   padding: 0;
   list-style: none;
 }
-.hsm-demo li.hsm-rule {
+.hsm-demo ol.hsm-steps {
+  counter-reset: hsm-step;
+}
+.hsm-demo li.hsm-rule,
+.hsm-demo li.hsm-step {
   position: relative;
   overflow: hidden;
   margin: 0;
@@ -1650,6 +1655,17 @@
     color 0.5s,
     opacity 0.25s;
 }
+.hsm-demo li.hsm-step {
+  counter-increment: hsm-step;
+  font-family: var(--font-sans);
+}
+.hsm-demo li.hsm-step::before {
+  content: counter(hsm-step) ". ";
+  font-family: var(--font-mono);
+}
+.hsm-demo li.hsm-step.hsm-step-on {
+  color: var(--hsm-event);
+}
 .hsm-ev {
   color: var(--hsm-event);
 }
@@ -1657,7 +1673,8 @@
   font-family: var(--font-sans);
   font-style: italic;
 }
-.hsm-demo li.hsm-rule.hsm-flash {
+.hsm-demo li.hsm-rule.hsm-flash,
+.hsm-demo li.hsm-step.hsm-flash {
   background: var(--hsm-lit);
   color: var(--color-bg);
   transition: none;
@@ -1739,7 +1756,8 @@
 .hsm-button.hsm-can:hover {
   background: color-mix(in srgb, var(--hsm-event) 85%, var(--color-text));
 }
-.hsm-demo .hsm-state:not(.hsm-on) > .hsm-rules > li.hsm-rule:not(.hsm-flash) {
+.hsm-demo .hsm-state:not(.hsm-on) > .hsm-rules > li.hsm-rule:not(.hsm-flash),
+.hsm-demo .hsm-state:not(.hsm-on) > .hsm-steps > li.hsm-step:not(.hsm-flash) {
   opacity: 0.55;
 }
 .hsm-button.hsm-ghost {
@@ -1952,7 +1970,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .hsm-demo *,
-  .hsm-demo li.hsm-rule {
+  .hsm-demo li.hsm-rule,
+  .hsm-demo li.hsm-step {
     transition: none;
   }
   .hsm-demo .hsm-visual .hsm-b-robot {

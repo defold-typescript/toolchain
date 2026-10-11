@@ -24,7 +24,7 @@ import {
 
 /**
  * Builds the live diagrams in place of each `[data-hsm-demo]` placeholder and
- * drives the timed ones from one shared animation-frame heartbeat. Loaded only
+ * drives each timed one from an animation-frame loop of its own. Loaded only
  * on a page that places a demo.
  */
 
@@ -86,6 +86,16 @@ interface TimerBar {
   width: string;
 }
 
+/** One step of a routine: its mark and the bar of the wait it is in. */
+interface StepLine {
+  readonly path: string;
+  readonly index: number;
+  readonly element: HTMLLIElement;
+  readonly bar: HTMLSpanElement;
+  on: boolean;
+  width: string;
+}
+
 interface ReadoutLine {
   readonly key: string;
   readonly value: HTMLSpanElement;
@@ -108,6 +118,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   const boxes = new Map<string, HTMLElement>();
   const chips = new Map<string, Chip>();
   const bars: TimerBar[] = [];
+  const steps: StepLine[] = [];
   let dirty = true;
   let playing = !demo.paused;
   let speed = demo.speed ?? 1;
@@ -119,6 +130,8 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   const visual = demo.visual ? el("div", "hsm-visual") : undefined;
 
   const trace = (entry: TraceEntry) => {
+    // A used chip counts too: a routine step that starts in a promise continuation logs no line.
+    dirty = true;
     if (entry.kind === "fire") {
       flash(entry.chip);
       return;
@@ -126,7 +139,6 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     log.append(el("li", `hsm-l-${entry.kind}`, entry.text));
     while (log.childElementCount > LOG_CAP) log.firstElementChild?.remove();
     log.scrollTop = log.scrollHeight;
-    dirty = true;
   };
 
   function flash(id: string) {
@@ -172,10 +184,18 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     box.append(title);
 
     const rules = el("ul", "hsm-rules");
+    const routine = el("ol", "hsm-steps");
     const note = (id: string) => demo.notes?.[id];
     const quietUpdate = demo.quietUpdates?.includes(path) ?? false;
-    for (const chip of stateChips(config, path, quietUpdate)) {
-      if (chip.kind === "on") {
+    for (const chip of stateChips(config, path, quietUpdate, demo.routines?.[path])) {
+      if (chip.kind === "step") {
+        const element = el("li", "hsm-step", chip.label);
+        const bar = span("hsm-bar", "");
+        element.append(bar);
+        routine.append(element);
+        chips.set(chip.id, { element, timer: undefined });
+        steps.push({ path, index: chip.index, element, bar, on: false, width: "" });
+      } else if (chip.kind === "on") {
         const parts: (string | Node)[] = [
           span("hsm-ev", chip.type),
           ` → ${chip.to ?? "stay here"}`,
@@ -222,6 +242,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
       }
     }
     if (rules.childElementCount > 0) box.append(rules);
+    if (routine.childElementCount > 0) box.append(routine);
 
     const hooks = hookList(config, quietUpdate);
     if (hooks) box.append(el("div", "hsm-hooks", hooks));
@@ -371,6 +392,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     updateReadout();
     if (visual && demo.visual) patchVisual(visual, demo.visual(run));
     updateBars();
+    updateSteps();
     dirty = false;
   }
 
@@ -396,6 +418,24 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     }
   }
 
+  // The step a routine is in is marked, and its bar is the wait it is in; every other bar is empty.
+  function updateSteps() {
+    for (const line of steps) {
+      const routine = run.routine(line.path);
+      const progress = routine?.step === line.index ? routine.progress : undefined;
+      const on = progress !== undefined;
+      if (on !== line.on) {
+        line.element.classList.toggle("hsm-step-on", on);
+        line.on = on;
+      }
+      const width = `${(progress ?? 0) * 100}%`;
+      if (width !== line.width) {
+        line.bar.style.width = width;
+        line.width = width;
+      }
+    }
+  }
+
   refresh();
 
   return {
@@ -416,11 +456,11 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
 
 /** Mounts every placeholder that names a known demo; returns a function that stops them all. */
 export function mountDemos(hosts: Iterable<HTMLElement>): () => void {
-  const mounted = new Map<Element, { readonly demo: Mounted; visible: boolean }>();
+  const mounted = new Map<Element, { readonly demo: Mounted; visible: boolean; handle: number }>();
   for (const host of hosts) {
     const id = host.dataset.hsmDemo;
     if (id !== undefined && Object.hasOwn(DEMOS, id)) {
-      mounted.set(host, { demo: mountDemo(host, DEMOS[id as DemoId]), visible: false });
+      mounted.set(host, { demo: mountDemo(host, DEMOS[id as DemoId]), visible: false, handle: 0 });
     }
   }
   // Only demos on screen advance: the reader cannot see the others, and their
@@ -432,18 +472,24 @@ export function mountDemos(hosts: Iterable<HTMLElement>): () => void {
     }
   });
   for (const host of mounted.keys()) observer.observe(host);
-  let last: number | undefined;
-  let handle = 0;
-  const beat = (now: number) => {
-    const dt = last === undefined ? 0 : Math.min((now - last) / 1000, MAX_FRAME_SECONDS);
-    last = now;
-    for (const { demo, visible } of mounted.values()) if (visible) demo.frame(dt);
-    handle = requestAnimationFrame(beat);
-  };
-  handle = requestAnimationFrame(beat);
+  // Each demo steps in a callback of its own. A routine goes on in a promise continuation, and
+  // the browser runs those before the next callback, while the wait they file still belongs to
+  // the demo that stepped.
+  for (const item of mounted.values()) {
+    let last: number | undefined;
+    const beat = (now: number) => {
+      const dt = last === undefined ? 0 : Math.min((now - last) / 1000, MAX_FRAME_SECONDS);
+      last = now;
+      if (item.visible) item.demo.frame(dt);
+      item.handle = requestAnimationFrame(beat);
+    };
+    item.handle = requestAnimationFrame(beat);
+  }
   return () => {
     observer.disconnect();
-    cancelAnimationFrame(handle);
-    for (const { demo } of mounted.values()) demo.dispose();
+    for (const { demo, handle } of mounted.values()) {
+      cancelAnimationFrame(handle);
+      demo.dispose();
+    }
   };
 }

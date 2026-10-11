@@ -1457,6 +1457,10 @@ import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/d
 
 `wander` now goes to `greeting` when you walk in, and `follow` comes after the hello.
 
+Here is the buddy with its hello. Press `trigger_response (enter true)` and watch the list in `greeting`. Which step is marked while the light is off? The diagram plays Defold's timer with its own clock, so pausing it holds the routine too.
+
+<div data-hsm-demo="buddy-greeting"></div>
+
 ### Cleanup in a sequence
 
 Leaving the state cancels the wait that is pending. That's the sequence's own cleanup, and you get it for free.
