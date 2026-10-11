@@ -21,8 +21,9 @@ import type { BuddyReaction, Demo, DemoButton, DemoCtx, DemoView } from "./demos
  *
  * Two kinds of line have no hook to come from and are derived for display: the
  * bubbling lines (from the config and the leaves before `send`) and "nobody
- * handles" (a sent event no rule fired for). The second is printed by the first
- * `unhandled` hook the event runs, or after the call when none ran.
+ * handles" (a sent event no rule fired for). The second is printed where the library
+ * drops the event: by the first `unhandled` hook it runs, or by the runtime's own
+ * `onUnhandled` listener when none ran.
  *
  * `sequence` waits through Defold's global `timer`, which is imitated here on each run's own
  * clock. A routine goes on in a promise continuation, where no call names its run, so a wait
@@ -318,11 +319,15 @@ interface Session {
   starting: boolean;
   /** Above zero while a send, update or start from outside the machine runs. */
   depth: number;
-  /** Events sent during the current outside call, checked for a handler once it returns. */
+  /** Events sent during the current outside call, checked for a stop that dropped them once it returns. */
   sent: EventObject[];
-  readonly handled: WeakSet<EventObject>;
-  /** The dropped events the log has named. */
-  readonly reported: WeakSet<EventObject>;
+  /** Whether the event the machine is dropping has its line in the log. */
+  dropNamed: boolean;
+  /**
+   * The events of the current outside call the machine has dealt with: one entry for each rule
+   * that took one, and one for each drop.
+   */
+  settled: EventObject[];
   /** States entered during the current outside call. */
   readonly entered: Set<string>;
   readonly clocks: Map<string, number>;
@@ -404,10 +409,10 @@ function fire(s: Session, chip: string): void {
   if (!s.muted) s.trace({ kind: "fire", chip });
 }
 
-/** Names an event no rule took, once. */
-function reportDropped(s: Session, event: EventObject): void {
-  if (s.reported.has(event)) return;
-  s.reported.add(event);
+/** Names the event the machine is dropping, once for the drop. */
+function nameDrop(s: Session, event: EventObject): void {
+  if (s.dropNamed) return;
+  s.dropNamed = true;
   emit(s, "drop", `nobody handles ${event.type}, so it is ignored`);
 }
 
@@ -469,8 +474,22 @@ function isStopped(s: Session): boolean {
   return s.instance !== undefined && s.instance.path === undefined;
 }
 
+/**
+ * Keeps the run's machine and listens for its drops. The library calls a listener after the
+ * hooks of the event it drops, so the listener names a drop no hook named and closes it.
+ */
+function adopt(s: Session, m: Instance): void {
+  if (s.instance !== undefined) return;
+  s.instance = m;
+  m.onUnhandled((event) => {
+    nameDrop(s, event);
+    s.dropNamed = false;
+    s.settled.push(event);
+  });
+}
+
 function proxyOf(s: Session, m: Instance): Instance {
-  s.instance ??= m;
+  adopt(s, m);
   if (s.proxy !== undefined) return s.proxy;
   s.proxy = {
     get ctx() {
@@ -647,7 +666,7 @@ function wrapRule(s: Session, rule: Rule, path: string, type: string, index: num
   }
   wrapped.run = [
     (_ctx, event) => {
-      s.handled.add(event);
+      s.settled.push(event);
       fire(s, chip);
       if (rule.to === undefined) {
         emit(s, "note", `${describe(path)}: rule has no to, so nothing exits or enters`);
@@ -726,9 +745,9 @@ function wrapState(s: Session, config: State, path: string): State {
   const unhandled = config.unhandled;
   if (unhandled !== undefined) {
     const note = s.demo.notes?.[`${path}|unhandled`] ?? "run code";
-    // The library hands every hook the event object that was sent, so the first one to run names it.
+    // The library runs every hook of a drop before its listeners, so the first hook to run names the event.
     wrapped.unhandled = (ctx, event, m) => {
-      reportDropped(s, event);
+      nameDrop(s, event);
       emit(s, "action", `${describe(path)}: unhandled hook: ${note}`);
       unhandled(ctx, event, proxyOf(s, m));
     };
@@ -808,12 +827,13 @@ function wrapState(s: Session, config: State, path: string): State {
   return wrapped;
 }
 
-/** Runs one call into the machine from outside it, then reports events no rule handled. */
+/** Runs one call into the machine from outside it, then reports the events a stop dropped. */
 function fromOutside(s: Session, event: EventObject | undefined, body: () => void): void {
   scope = s;
   const wasStopped = isStopped(s);
   if (s.depth === 0) {
     s.sent = event === undefined ? [] : [event];
+    s.settled = [];
     s.entered.clear();
   }
   s.depth++;
@@ -824,10 +844,14 @@ function fromOutside(s: Session, event: EventObject | undefined, body: () => voi
   }
   if (s.depth > 0) return;
   const stopped = isStopped(s);
-  for (const sent of s.sent) {
-    if (s.handled.has(sent) || s.reported.has(sent)) continue;
-    if (stopped) emit(s, "drop", `stop() dropped ${sent.type}`);
-    else reportDropped(s, sent);
+  if (stopped) {
+    // One call can send an object more than once, so each entry answers for a single send.
+    const settled = [...s.settled];
+    for (const sent of s.sent) {
+      const at = settled.indexOf(sent);
+      if (at < 0) emit(s, "drop", `stop() dropped ${sent.type}`);
+      else settled.splice(at, 1);
+    }
   }
   s.sent = [];
   if (stopped && !wasStopped) emit(s, "note", "stopped, path = undefined");
@@ -901,8 +925,8 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     starting: false,
     depth: 0,
     sent: [],
-    handled: new WeakSet(),
-    reported: new WeakSet(),
+    dropNamed: false,
+    settled: [],
     entered: new Set(),
     clocks: new Map(),
     entries: new Map(),
@@ -920,9 +944,7 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
   );
   if (ctxOverride !== undefined) emit(s, "note", `start(${JSON.stringify(ctxOverride)})`);
   s.starting = true;
-  fromOutside(s, undefined, () => {
-    s.instance = machine.start(s.ctx);
-  });
+  fromOutside(s, undefined, () => adopt(s, machine.start(s.ctx)));
   s.starting = false;
   const instance = s.instance as unknown as Instance;
   emit(s, "note", `start() returned, path = ${describePath(instance.path)}`);
