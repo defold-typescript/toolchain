@@ -16,22 +16,28 @@ const ALL_PATHS = ["/menu", "/play", ...PLAY_PATHS];
 interface Slots {
   readonly onTarget: string;
   readonly to: string;
+  readonly when: string;
   readonly after: string;
   readonly afterListTo: string;
   readonly always: string;
   readonly initial: string;
-  readonly onEntry: string;
+  readonly enter: string;
+  readonly idleOn: string;
+  readonly update: string;
   readonly matches: string;
 }
 
 const VALID: Slots = {
   onTarget: '"/play"',
   to: '"/play/run"',
+  when: "(ctx) => ctx.count > 0",
   after: '"/play"',
   afterListTo: '"/menu"',
   always: '{ to: "/play", when: (ctx) => ctx.count > 99 }',
   initial: '"/play/idle"',
-  onEntry: 'BACK: "/menu"',
+  enter: "(ctx) => {\n            ctx.count += 1;\n          }",
+  idleOn: 'on: { BACK: "/menu" },',
+  update: "(ctx) => {\n            ctx.count += 1;\n          }",
   matches: '"/menu"',
 };
 
@@ -51,7 +57,7 @@ const machine = defineMachine<Ctx, Ev>()({${firstKey}
     menu: {
       on: {
         GO: ${slots.onTarget},
-        STEP: { when: (ctx) => ctx.count > 0, to: ${slots.to} },
+        STEP: { when: ${slots.when}, to: ${slots.to} },
       },
       after: { 1: ${slots.after} },
       always: ${slots.always},
@@ -61,15 +67,11 @@ const machine = defineMachine<Ctx, Ev>()({${firstKey}
       initial: ${slots.initial},
       states: {
         ${PLAY_CHILDREN[0]}: {
-          enter: (ctx) => {
-            ctx.count += 1;
-          },
-          on: { ${slots.onEntry} },
+          enter: ${slots.enter},
+          ${slots.idleOn}
         },
         ${PLAY_CHILDREN[1]}: {
-          update: (ctx) => {
-            ctx.count += 1;
-          },
+          update: ${slots.update},
         },
       },
     },
@@ -108,8 +110,13 @@ const host: ts.LanguageServiceHost = {
 };
 const service = ts.createLanguageService(host, ts.createDocumentRegistry());
 
-function offered(slot: keyof Slots, withCursor: string, rootLine?: string): string[] {
-  const marked = fixture({ ...VALID, [slot]: withCursor }, rootLine);
+function offered(
+  slot: keyof Slots,
+  withCursor: string,
+  rootLine?: string,
+  others?: Partial<Slots>,
+): string[] {
+  const marked = fixture({ ...VALID, ...others, [slot]: withCursor }, rootLine);
   const position = marked.indexOf(CURSOR);
   source = marked.replace(CURSOR, "");
   version++;
@@ -168,10 +175,21 @@ describe("hsm path completion", () => {
   });
 
   test("an on key offers the event types", () => {
-    expect(offered("onEntry", CURSOR)).toEqual(sorted(EVENTS));
+    expect(offered("idleOn", `on: { ${CURSOR} },`)).toEqual(sorted(EVENTS));
   });
 
   test("matches on the started instance offers the machine's paths", () => {
     expect(offered("matches", `"${CURSOR}"`)).toEqual(sorted(ALL_PATHS));
+  });
+
+  test("a callback's machine completes the paths", () => {
+    const inEnter = `(ctx, machine) => {\n            machine.matches("${CURSOR}");\n          }`;
+    const inWhen = `(ctx, _event, machine) => machine.matches("${CURSOR}")`;
+    const inUpdate = `(ctx, _dt, machine) => {\n            machine.matches("${CURSOR}");\n            return undefined;\n          }`;
+    expect(offered("enter", inEnter)).toEqual(sorted(ALL_PATHS));
+    expect(offered("when", inWhen)).toEqual(sorted(ALL_PATHS));
+    expect(offered("update", inUpdate)).toEqual(sorted(ALL_PATHS));
+    // With no slot but callbacks in the states of play, its children are not known in a callback.
+    expect(offered("enter", inEnter, undefined, { idleOn: "" })).toEqual(["/menu", "/play"]);
   });
 });

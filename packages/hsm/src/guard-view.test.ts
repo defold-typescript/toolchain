@@ -185,7 +185,8 @@ describe("guards at run time", () => {
 });
 
 describe("guard types", () => {
-  test("an unannotated machine parameter is exactly MachineView", () => {
+  test("an unannotated machine parameter is exactly MachineView with the machine's paths", () => {
+    type HookPath = "/a" | "/b" | "/c" | `/a/${string}` | `/b/${string}` | `/c/${string}`;
     const seen: boolean[] = [];
     const m = defineMachine<object, Ev>()({
       initial: "/a",
@@ -195,7 +196,7 @@ describe("guard types", () => {
             GO: {
               to: "/b",
               when: (_ctx, _event, machine) => {
-                const exact: Equal<typeof machine, MachineView> = true;
+                const exact: Equal<typeof machine, MachineView<HookPath>> = true;
                 seen.push(exact);
                 return true;
               },
@@ -206,7 +207,7 @@ describe("guard types", () => {
           always: {
             to: "/c",
             when: (_ctx, machine) => {
-              const exact: Equal<typeof machine, MachineView> = true;
+              const exact: Equal<typeof machine, MachineView<HookPath>> = true;
               seen.push(exact);
               return true;
             },
