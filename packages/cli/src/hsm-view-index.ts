@@ -1,4 +1,5 @@
 import { type LoadedFile, locationOf, type SourceSpan } from "./hsm-view-load";
+import { type RuleKey, ruleId } from "./hsm-view-rule-id";
 
 interface StateConfig {
   readonly states?: Readonly<Record<string, StateConfig>>;
@@ -36,17 +37,7 @@ export interface StateRuleIds {
 
 export type MachineRuleIds = Readonly<Record<string, StateRuleIds>>;
 
-export type RuleKey =
-  | [kind: "on", event: string, index: number]
-  | [kind: "after", key: string | number]
-  | [kind: "every", key: string | number]
-  | [kind: "always", index: number]
-  | [kind: "update"];
-
-/** The JSON text of a tuple, so no state path or event type can make two rules share an id. */
-export function ruleId(statePath: string, ...key: RuleKey): string {
-  return JSON.stringify([statePath, ...key]);
-}
+export { type RuleKey, ruleId };
 
 function childPath(parent: string, name: string): string {
   return `${parent}/${name}`;

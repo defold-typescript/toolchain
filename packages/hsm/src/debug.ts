@@ -103,11 +103,12 @@ function shownLeaves(leaves: readonly string[]): string {
 
 /**
  * Prints one line when it is called, then one line for each move `instance` makes, each starting
- * with `hsm` and the label. An event no active state takes prints an `unhandled` line with its
- * `type` and the active leaves, once per type until the next move. Call it once after `start`. A
- * label another `inspect` call already used gets an ordinal, such as `enemy#2`. In a release
- * build it registers nothing and returns an inspector whose `draw` does nothing, so the calls can
- * stay in shipped code.
+ * with `hsm` and the label. A move's line names the state whose rule made it and that rule's key.
+ * An event no active state takes prints an `unhandled` line with its `type` and the active
+ * leaves, once per type until the next move. Call it once after `start`. A label another
+ * `inspect` call already used gets an ordinal, such as `enemy#2`. In a release build it registers
+ * nothing and returns an inspector whose `draw` does nothing, so the calls can stay in shipped
+ * code.
  */
 export function inspect<Ctx, E extends EventObject, P extends string>(
   instance: MachineInstance<Ctx, E, P>,
@@ -121,11 +122,17 @@ export function inspect<Ctx, E extends EventObject, P extends string>(
   let frame = 0;
   let moves = 0;
   const unhandledAt = record<number>();
-  instance.onMove((from, to, cause, event) => {
+  instance.onMove((from, to, cause, event, source?: string, key?: number) => {
     moves++;
-    const reason = event === undefined ? cause : event.type;
+    let reason = escapeField(event === undefined ? cause : event.type);
+    if (source !== undefined) {
+      reason = `${reason}: ${escapeField(source)}`;
+      if (key !== undefined) {
+        reason = `${reason}, ${key}`;
+      }
+    }
     print(
-      `hsm ${loggedLabel} frame ${frame}: ${escapeField(from)} -> ${shown(to)} (${escapeField(reason)}) [${shownList(instance.leaves, escapeField)}]`,
+      `hsm ${loggedLabel} frame ${frame}: ${escapeField(from)} -> ${shown(to)} (${reason}) [${shownList(instance.leaves, escapeField)}]`,
     );
   });
   instance.onUnhandled((event) => {

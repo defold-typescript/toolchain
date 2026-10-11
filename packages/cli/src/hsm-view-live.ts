@@ -4,6 +4,13 @@ export interface LiveInstance {
   readonly stopped: boolean;
 }
 
+export interface LiveRule {
+  /** The path of the state that holds the rule, empty for the root. */
+  readonly source: string;
+  /** An entry's index in its list, or the delay of an `after` record entry; absent for an `update` hook. */
+  readonly key?: number;
+}
+
 export interface LiveMove {
   readonly label: string;
   readonly from: string;
@@ -11,6 +18,8 @@ export interface LiveMove {
   readonly to: string | undefined;
   /** The event's `type`, or the cause when no event moved the machine. */
   readonly reason: string;
+  /** The rule the game says made the move, absent when the line names none. */
+  readonly rule?: LiveRule;
 }
 
 export interface LiveMessage {
@@ -33,6 +42,7 @@ export interface LiveRegistry {
 
 const LEVEL_PREFIX = /^[A-Z]+:SCRIPT: /;
 const DIGITS = /^\d+$/;
+const RULE_KEY = /^-?\d+(\.\d+)?(e[+-]?\d+)?$/i;
 const ENGINE_START = /^INFO:ENGINE: Defold Engine\b/;
 const STOPPED = "(stopped)";
 const UNHANDLED_OPEN = "unhandled (";
@@ -141,11 +151,27 @@ function parseMove(
   }
   const stopped =
     reasonOpen - (arrow + 4) === STOPPED.length && isToken(glyphs, arrow + 4, STOPPED);
-  return {
+  const reasonStart = reasonOpen + 2;
+  const reasonEnd = to - 1;
+  const ruleAt = findToken(glyphs, ": ", reasonStart, reasonEnd);
+  const move = {
     from: field(glyphs, from, arrow),
     to: stopped ? undefined : field(glyphs, arrow + 4, reasonOpen),
-    reason: field(glyphs, reasonOpen + 2, to - 1),
+    reason: field(glyphs, reasonStart, ruleAt < 0 ? reasonEnd : ruleAt),
   };
+  if (ruleAt < 0) {
+    return move;
+  }
+  const sourceStart = ruleAt + 2;
+  const keyAt = findToken(glyphs, ", ", sourceStart, reasonEnd);
+  if (keyAt < 0) {
+    return { ...move, rule: { source: field(glyphs, sourceStart, reasonEnd) } };
+  }
+  const key = field(glyphs, keyAt + 2, reasonEnd);
+  if (!RULE_KEY.test(key)) {
+    return undefined;
+  }
+  return { ...move, rule: { source: field(glyphs, sourceStart, keyAt), key: Number(key) } };
 }
 
 function isUnhandled(glyphs: readonly Glyph[], from: number, to: number): boolean {

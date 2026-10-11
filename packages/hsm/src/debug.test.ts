@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { consoleLines } from "../../cli/src/editor-attach";
-import { createLiveRegistry, parseInspectLine } from "../../cli/src/hsm-view-live";
+import { createLiveRegistry, type LiveMove, parseInspectLine } from "../../cli/src/hsm-view-live";
 import { inspect } from "./debug";
 import { defineMachine } from "./index";
 
@@ -62,6 +62,21 @@ function startDoor() {
   }).start({});
 }
 
+type RecordedMove = Omit<LiveMove, "label">;
+
+function recorded(
+  from: string,
+  to: string | undefined,
+  reason: string,
+  source: string | undefined,
+  key: number | undefined,
+): RecordedMove {
+  if (source === undefined) {
+    return { from, to, reason };
+  }
+  return { from, to, reason, rule: key === undefined ? { source } : { source, key } };
+}
+
 type BossEv = { type: "HIT (crit), now" } | { type: "MISS (x), now: [y] -> z\n" };
 
 function startBoss() {
@@ -96,7 +111,7 @@ describe("inspect", () => {
     door.send({ type: "OPEN" });
     expect(printed).toEqual([
       "hsm door frame 0: inspecting [/closed]",
-      "hsm door frame 0: /closed -> /open (OPEN) [/open]",
+      "hsm door frame 0: /closed -> /open (OPEN: /closed, 0) [/open]",
     ]);
   });
 
@@ -110,8 +125,8 @@ describe("inspect", () => {
     door.stop();
     expect(printed).toEqual([
       "hsm gate frame 0: inspecting [/closed]",
-      "hsm gate frame 0: /closed -> /open (OPEN) [/open]",
-      "hsm gate frame 2: /open -> /closed (after) [/closed]",
+      "hsm gate frame 0: /closed -> /open (OPEN: /closed, 0) [/open]",
+      "hsm gate frame 2: /open -> /closed (after: /open, 1) [/closed]",
       "hsm gate frame 2: /closed -> (stopped) (stop) []",
     ]);
   });
@@ -130,9 +145,9 @@ describe("inspect", () => {
     expect(printed).toEqual([
       "hsm latch frame 0: inspecting [/closed]",
       "hsm latch frame 0: unhandled (CLOSE) [/closed]",
-      "hsm latch frame 1: /closed -> /open (OPEN) [/open]",
+      "hsm latch frame 1: /closed -> /open (OPEN: /closed, 0) [/open]",
       "hsm latch frame 1: unhandled (OPEN) [/open]",
-      "hsm latch frame 1: /open -> /closed (CLOSE) [/closed]",
+      "hsm latch frame 1: /open -> /closed (CLOSE: /open, 0) [/closed]",
       "hsm latch frame 1: unhandled (CLOSE) [/closed]",
     ]);
   });
@@ -177,7 +192,7 @@ describe("inspect", () => {
       "hsm odd frame 0: inspecting [/a]",
       "hsm odd frame 0: unhandled (__proto__) [/a]",
       "hsm odd frame 0: unhandled (constructor) [/a]",
-      "hsm odd frame 0: /a -> /b (GO) [/b]",
+      "hsm odd frame 0: /a -> /b (GO: /a, 0) [/b]",
       "hsm odd frame 0: unhandled (__proto__) [/b]",
       "hsm odd frame 0: unhandled (constructor) [/b]",
     ]);
@@ -203,7 +218,7 @@ describe("inspect", () => {
     hero.send({ type: "WALK" });
     expect(printed).toEqual([
       "hsm hero frame 0: inspecting [/alive/move/idle, /alive/weapon/ready]",
-      "hsm hero frame 0: /alive/move/idle -> /alive/move/walk (WALK) [/alive/move/walk, /alive/weapon/ready]",
+      "hsm hero frame 0: /alive/move/idle -> /alive/move/walk (WALK: /alive/move/idle, 0) [/alive/move/walk, /alive/weapon/ready]",
     ]);
   });
 
@@ -264,14 +279,66 @@ describe("inspect", () => {
     ]);
   });
 
+  test("names the state and the rule that made each move", () => {
+    type RuleEv = { type: "GO" } | { type: "RESET" };
+    const machine = defineMachine<{ open: boolean; wait: number }, RuleEv>()({
+      initial: "/a",
+      on: { RESET: "/a" },
+      states: {
+        a: { on: { GO: [{ to: "/b", when: (ctx) => ctx.open }, { to: "/b" }] } },
+        b: {
+          after: [
+            { delay: 2, to: "/a" },
+            { delay: 0.5, to: "/c" },
+          ],
+        },
+        c: { always: [{ to: "/a", when: (ctx) => ctx.open }, { to: "/d" }] },
+        d: { update: () => "/e" },
+        e: { after: { 0.5: "/f" } },
+        f: {
+          after: [
+            { delay: 2, to: "/a" },
+            { delay: (ctx) => ctx.wait, to: "/a" },
+          ],
+        },
+      },
+    }).start({ open: false, wait: 0.5 });
+    inspect(machine, "m");
+    machine.send({ type: "GO" });
+    machine.update(0.5);
+    machine.update(0.1);
+    machine.update(0.5);
+    machine.update(0.5);
+    machine.send({ type: "RESET" });
+    machine.stop();
+
+    const lines = printed.slice(1);
+    const named = lines.map((line) => {
+      const move = parseInspectLine(line)?.move;
+      return { reason: move?.reason, rule: move?.rule };
+    });
+    expect(named).toStrictEqual([
+      { reason: "GO", rule: { source: "/a", key: 1 } },
+      { reason: "after", rule: { source: "/b", key: 1 } },
+      { reason: "always", rule: { source: "/c", key: 1 } },
+      { reason: "update", rule: { source: "/d" } },
+      { reason: "after", rule: { source: "/e", key: 0.5 } },
+      { reason: "after", rule: { source: "/f", key: 1 } },
+      { reason: "RESET", rule: { source: "", key: 0 } },
+      { reason: "stop", rule: undefined },
+    ]);
+    expect(lines[0]).toBe("hsm m frame 0: /a -> /b (GO: /a, 1) [/b]");
+    expect(lines[7]).toBe("hsm m frame 0: /a -> (stopped) (stop) []");
+  });
+
   test("every printed line reads back the label, leaves and move whatever the names hold", () => {
     const boss = startBoss();
     const label = "boss frame 2: [x]";
     const leaves = [[...boss.leaves]];
-    const moves: { from: string; to: string | undefined; reason: string }[] = [];
+    const moves: RecordedMove[] = [];
     inspect(boss, label);
-    boss.onMove((from, to, cause, event) => {
-      moves.push({ from, to, reason: event === undefined ? cause : event.type });
+    boss.onMove((from, to, cause, event, source?: string, key?: number) => {
+      moves.push(recorded(from, to, event === undefined ? cause : event.type, source, key));
       leaves.push([...boss.leaves]);
     });
     boss.send({ type: "HIT (crit), now" });
@@ -330,10 +397,10 @@ describe("inspect", () => {
     }).start({});
     const label = "split\nlabel\rhere";
     const leaves = [[...split.leaves]];
-    const moves: { from: string; to: string | undefined; reason: string }[] = [];
+    const moves: RecordedMove[] = [];
     inspect(split, label);
-    split.onMove((from, to, cause, event) => {
-      moves.push({ from, to, reason: event === undefined ? cause : event.type });
+    split.onMove((from, to, cause, event, source?: string, key?: number) => {
+      moves.push(recorded(from, to, event === undefined ? cause : event.type, source, key));
       leaves.push([...split.leaves]);
     });
     split.send({ type: "HIT\r\nnow" });
