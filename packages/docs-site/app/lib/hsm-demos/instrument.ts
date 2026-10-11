@@ -21,7 +21,8 @@ import type { BuddyReaction, Demo, DemoButton, DemoCtx, DemoView } from "./demos
  *
  * Two kinds of line have no hook to come from and are derived for display: the
  * bubbling lines (from the config and the leaves before `send`) and "nobody
- * handles" (a sent event no rule fired for).
+ * handles" (a sent event no rule fired for). The second is printed by the first
+ * `unhandled` hook the event runs, or after the call when none ran.
  *
  * `sequence` waits through Defold's global `timer`, which is imitated here on each run's own
  * clock. A routine goes on in a promise continuation, where no call names its run, so a wait
@@ -320,6 +321,8 @@ interface Session {
   /** Events sent during the current outside call, checked for a handler once it returns. */
   sent: EventObject[];
   readonly handled: WeakSet<EventObject>;
+  /** The dropped events the log has named. */
+  readonly reported: WeakSet<EventObject>;
   /** States entered during the current outside call. */
   readonly entered: Set<string>;
   readonly clocks: Map<string, number>;
@@ -399,6 +402,13 @@ function emit(s: Session, kind: TraceKind, text: string): void {
 
 function fire(s: Session, chip: string): void {
   if (!s.muted) s.trace({ kind: "fire", chip });
+}
+
+/** Names an event no rule took, once. */
+function reportDropped(s: Session, event: EventObject): void {
+  if (s.reported.has(event)) return;
+  s.reported.add(event);
+  emit(s, "drop", `nobody handles ${event.type}, so it is ignored`);
 }
 
 /** The run that holds each pending wait, by handle. */
@@ -713,6 +723,17 @@ function wrapState(s: Session, config: State, path: string): State {
     ) as NonNullable<State["after"]>;
   }
 
+  const unhandled = config.unhandled;
+  if (unhandled !== undefined) {
+    const note = s.demo.notes?.[`${path}|unhandled`] ?? "run code";
+    // The library hands every hook the event object that was sent, so the first one to run names it.
+    wrapped.unhandled = (ctx, event, m) => {
+      reportDropped(s, event);
+      emit(s, "action", `${describe(path)}: unhandled hook: ${note}`);
+      unhandled(ctx, event, proxyOf(s, m));
+    };
+  }
+
   // The root has no box on the diagram, so its own entry and exit stay silent.
   if (path === "") return wrapped;
 
@@ -804,12 +825,9 @@ function fromOutside(s: Session, event: EventObject | undefined, body: () => voi
   if (s.depth > 0) return;
   const stopped = isStopped(s);
   for (const sent of s.sent) {
-    if (s.handled.has(sent)) continue;
-    emit(
-      s,
-      "drop",
-      stopped ? `stop() dropped ${sent.type}` : `nobody handles ${sent.type}, so it is ignored`,
-    );
+    if (s.handled.has(sent) || s.reported.has(sent)) continue;
+    if (stopped) emit(s, "drop", `stop() dropped ${sent.type}`);
+    else reportDropped(s, sent);
   }
   s.sent = [];
   if (stopped && !wasStopped) emit(s, "note", "stopped, path = undefined");
@@ -884,6 +902,7 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     depth: 0,
     sent: [],
     handled: new WeakSet(),
+    reported: new WeakSet(),
     entered: new Set(),
     clocks: new Map(),
     entries: new Map(),
@@ -923,6 +942,7 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     },
     matches: (path) => instance.matches(path),
     hasTag: (tag) => instance.hasTag(tag),
+    can: (event) => canTake(run, event),
     clock: (path) => (instance.matches(path) ? (s.clocks.get(path) ?? 0) : 0),
     progress: (chip) => chipProgress(s, chip),
     delayOf: (chip) => chipDelay(s, chip),

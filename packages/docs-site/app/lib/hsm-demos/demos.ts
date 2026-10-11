@@ -36,7 +36,7 @@ export interface DemoVisual {
 }
 
 /** What a readout or visual may read from a running demo. */
-export interface DemoView<Ctx> {
+export interface DemoView<Ctx, E extends EventObject = EventObject> {
   readonly ctx: Ctx;
   readonly path: string | undefined;
   /** Every active leaf's path, one per region, in the order the library runs the regions. */
@@ -44,6 +44,8 @@ export interface DemoView<Ctx> {
   readonly stopped: boolean;
   readonly matches: (path: string) => boolean;
   readonly hasTag: (tag: string) => boolean;
+  /** Whether an active state would take `event` now; asking adds no log line and runs no hook. */
+  readonly can: (event: E) => boolean;
 }
 
 function buddyPose(m: DemoView<unknown>): BuddyPose {
@@ -62,7 +64,7 @@ export interface DemoSpec<Ctx, E extends EventObject> {
   readonly ctx: () => Ctx;
   readonly buttonsLabel?: string;
   readonly buttons: readonly DemoButton<Ctx, E>[];
-  readonly readout: (m: DemoView<Ctx>) => readonly (readonly [string, string])[];
+  readonly readout: (m: DemoView<Ctx, E>) => readonly (readonly [string, string])[];
   readonly visual?: (m: DemoView<Ctx>) => DemoVisual;
   /** Advances the imitated Defold work (an animation) before the machine's own update. */
   readonly tick?: (ctx: Ctx, dt: number) => void;
@@ -77,6 +79,7 @@ export interface DemoSpec<Ctx, E extends EventObject> {
    * written by delay, `<path>|<after or every>|#<index>` for the list form).
    * A rule whose label describes its `when` names what its `run` does under `<chip id>|run`.
    * A delay that is a function is shown as the words under `<chip id>|delay` until it is read.
+   * What a state's `unhandled` hook does is named under `<path>|unhandled`.
    */
   readonly notes?: Readonly<Record<string, string>>;
   /** The paths of the states whose `update` hook never returns a path; they get no rule line for it. */
@@ -1876,6 +1879,236 @@ const buddyBusy = demo<ChirpCtx, GreetingEvent>({
   },
 });
 
+// `beeps` counts the `sound.play("#beep")` calls.
+type BeepCtx = ChirpCtx & { beeps: number };
+
+const buddyBeep = demo<BeepCtx, GreetingEvent>({
+  title: "The buddy beeps",
+  subtitle: "resting answers every event nobody took.",
+  timed: true,
+  config: {
+    initial: "/asleep",
+    states: {
+      asleep: {
+        enter: (ctx, m) => {
+          if (ctx.wakes === 0) m.send({ type: "POKE" });
+        },
+        on: { POKE: "/waking" },
+      },
+      waking: {
+        tags: ["busy"],
+        task: (ctx, finish) => {
+          const group = waitGroup();
+          ctx.glow = 0;
+          ctx.lit = true;
+          ctx.fade = { t: 0, duration: 1, done: group.add() };
+          ctx.chirp = { t: 0, duration: 0.5, done: group.add() };
+          group.wait(() => finish({ type: "WOKEN" }));
+          return () => {
+            ctx.fade = undefined;
+            ctx.chirp = undefined;
+            ctx.lit = false;
+          };
+        },
+        on: { WOKEN: "/checkup", POKE: "/asleep" },
+      },
+      checkup: {
+        always: [
+          { to: "/resting", when: (ctx) => ctx.energy < 1 },
+          {
+            to: "/awake",
+            run: (ctx) => {
+              ctx.wakes += 1;
+            },
+          },
+        ],
+      },
+      awake: {
+        restoreDepth: 1,
+        initial: "/awake/wander",
+        enter: (ctx) => {
+          ctx.lit = true;
+        },
+        exit: (ctx) => {
+          ctx.lit = false;
+        },
+        after: { 30: "/asleep" },
+        every: [
+          {
+            delay: (ctx) => (ctx.energy < 2 ? 2 : 1),
+            run: (_ctx, m) => m.send({ type: "BUMP", cost: 1 / 16 }),
+          },
+        ],
+        on: {
+          POKE: "/asleep",
+          BUMP: [
+            {
+              to: "/resting",
+              when: (ctx, event) => ctx.energy <= event.cost,
+              run: (ctx) => {
+                ctx.energy = 0;
+              },
+            },
+            {
+              run: (ctx, event) => {
+                ctx.energy -= event.cost;
+              },
+            },
+          ],
+        },
+        states: {
+          wander: {
+            on: {
+              trigger_response: { to: "/awake/greeting", when: (_ctx, event) => event.enter },
+            },
+          },
+          greeting: {
+            task: sequence(async (ctx, signal) => {
+              await new Promise<void>((resolve) => {
+                ctx.chirp = { t: 0, duration: 0.5, done: resolve };
+              });
+              if (signal.aborted) return;
+              for (let blink = 0; blink < 2; blink++) {
+                ctx.lit = false;
+                await signal.wait(0.2);
+                ctx.lit = true;
+                await signal.wait(0.2);
+              }
+              return { type: "GREETED" };
+            }),
+            exit: (ctx) => {
+              ctx.chirp = undefined;
+            },
+            on: { GREETED: "/awake/follow" },
+          },
+          follow: {
+            after: {
+              4: {
+                to: "/awake/wander",
+                run: (ctx) => {
+                  ctx.napSeconds = Math.min(5, ctx.napSeconds + 1);
+                },
+              },
+            },
+            on: {
+              trigger_response: [
+                { to: "/awake/follow", when: (_ctx, event) => event.enter },
+                { to: "/awake/wander" },
+              ],
+            },
+          },
+        },
+      },
+      resting: {
+        type: "parallel",
+        tags: ["busy"],
+        unhandled: (ctx) => {
+          ctx.beeps += 1;
+        },
+        after: [
+          {
+            delay: (ctx) => ctx.napSeconds,
+            to: "/checkup",
+            when: (ctx) => ctx.energy >= 3,
+            run: (ctx) => {
+              ctx.napSeconds = 2;
+            },
+          },
+        ],
+        on: {
+          RECHARGE: {
+            to: "/checkup",
+            run: (ctx) => {
+              ctx.energy = 3;
+            },
+          },
+        },
+        states: {
+          battery: {
+            initial: "/resting/battery/filling",
+            states: {
+              filling: {
+                update: (ctx, dt) => {
+                  ctx.energy = Math.min(3, ctx.energy + dt);
+                  return ctx.energy >= 3 ? "/resting/battery/full" : undefined;
+                },
+              },
+              full: {},
+            },
+          },
+          lamp: {
+            initial: "/resting/lamp/shown",
+            exit: (ctx) => {
+              ctx.lit = false;
+            },
+            states: {
+              shown: {
+                enter: (ctx) => {
+                  ctx.lit = true;
+                },
+                after: {
+                  0.5: {
+                    to: "/resting/lamp/hidden",
+                    when: (_ctx, machine) => !machine.matches("/resting/battery/full"),
+                  },
+                },
+              },
+              hidden: {
+                enter: (ctx) => {
+                  ctx.lit = false;
+                },
+                after: { 0.5: "/resting/lamp/shown" },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  ctx: () => ({
+    lit: false,
+    glow: 1,
+    fade: undefined,
+    chirp: undefined,
+    wakes: 0,
+    energy: 3,
+    napSeconds: 2,
+    beeps: 0,
+  }),
+  tick: advanceJobs,
+  buttons: [
+    { label: "POKE", event: { type: "POKE" } },
+    { label: "trigger_response (enter true)", event: { type: "trigger_response", enter: true } },
+    { label: "trigger_response (enter false)", event: { type: "trigger_response", enter: false } },
+    { label: "BUMP (cost 1)", event: { type: "BUMP", cost: 1 } },
+    { label: "BUMP (cost 2.5)", event: { type: "BUMP", cost: 2.5 } },
+    { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
+    { label: "RECHARGE", event: { type: "RECHARGE" } },
+  ],
+  readout: (m) => [
+    ["beeps", String(m.ctx.beeps)],
+    ["can(POKE)", String(m.can({ type: "POKE" }))],
+    ["can(trigger_response, enter true)", String(m.can({ type: "trigger_response", enter: true }))],
+    ["ctx.energy", m.ctx.energy.toFixed(2)],
+  ],
+  visual: (m) => ({ pose: buddyPose(m), light: lightGlow(m.ctx) }),
+  notes: {
+    ...NAP_NOTES,
+    "/resting/battery/filling|update": "fill up, then go to full",
+    "/resting/lamp/shown|after|0.5": "if the battery is not full",
+    "/resting|unhandled": "play the beep",
+  },
+  routines: {
+    "/awake/greeting": [
+      "play the chirp, wait for it to end",
+      "light off, wait 0.2 s",
+      "light on, wait 0.2 s",
+      "light off, wait 0.2 s",
+      "light on, wait 0.2 s",
+    ],
+  },
+});
+
 export const DEMOS = {
   "buddy-first": buddyFirst,
   "buddy-nested": buddyNested,
@@ -1891,6 +2124,7 @@ export const DEMOS = {
   "buddy-greeting": buddyGreeting,
   "buddy-regions": buddyRegions,
   "buddy-busy": buddyBusy,
+  "buddy-beep": buddyBeep,
 } satisfies Record<string, Demo>;
 
 export type DemoId = keyof typeof DEMOS;
