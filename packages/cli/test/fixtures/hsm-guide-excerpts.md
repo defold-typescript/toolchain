@@ -98,8 +98,8 @@ export function canPause(guard: Guard): boolean {
   return guard.can({ type: "PAUSE" });
 }
 
-function hurt<P extends string>(
-  guard: MachineInstance<GuardCtx, GuardEvent, P>,
+function hurt(
+  guard: MachineInstance<GuardCtx, GuardEvent>,
 ): void {
   guard.send({ type: "HIT", damage: 1 });
 }
@@ -111,8 +111,6 @@ export const asleep: GuardPath = "/asleep";
 export function ambush(guard: Guard, seen: GuardMessage): boolean {
   guard.send(seen);
   hurt(guard);
-  // @ts-expect-error -- `MachineInstance<Ctx, E>` has `string` paths; a started instance does not fit it
-  const loose: MachineInstance<GuardCtx, GuardEvent> = guard;
   return isAlive(guard);
 }
 ```

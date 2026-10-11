@@ -2819,6 +2819,7 @@ describe("always", () => {
       run: () => {},
     };
     expect(withRun.to).toBe("/c");
+    type HookPath = "/a" | "/b" | "/c" | `/a/${string}` | `/b/${string}` | `/c/${string}`;
     const seen: boolean[] = [];
     const m = defineMachine<Ctx, Ev>()({
       initial: "/a",
@@ -2828,7 +2829,7 @@ describe("always", () => {
             to: "/b",
             run: (ctx, machine) => {
               const ctxExact: Equal<typeof ctx, Ctx> = true;
-              const machineExact: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+              const machineExact: Equal<typeof machine, MachineInstance<Ctx, Ev, HookPath>> = true;
               seen.push(ctxExact, machineExact);
             },
           },

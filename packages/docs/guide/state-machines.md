@@ -1100,7 +1100,7 @@ export const raidMachine = defineMachine<object, RaidEvent>()({
 
 The rules:
 
-- **Hold each last state's path in a constant.** The `machine` a `when` receives takes any string in `matches`, so a mistyped path there compiles and never matches. The same constant is the region's `to`, and a `to` that names no state fails to compile.
+- **Hold each last state's path in a constant.** One constant is the region's `to` and the path the join's `when` asks `matches` about, and each fails to compile when it names no state.
 - **The join is asked after the regions.** `always` is checked deepest first, so a region's own `always` rules run before the parallel state's rule, and its `when` sees each region where it came to rest.
 - **The active states already hold the answer.** A counter in the context, raised by each region as it finishes, repeats what `matches` reads and has to be reset on every entry.
 
@@ -2067,7 +2067,43 @@ m.send({ type: "LOSE" }); // a new table on every call
 
 **Tags are the third type argument.** `defineMachine<Ctx, E, Tag>()` takes a union of tag names, such as `"invulnerable" | "busy"`, and a state's `tags` and every `hasTag` call accept only those. A machine defined with two type arguments has no tags: a `tags` entry and a `hasTag` call both fail to compile. See [Name a group of states with tags](#name-a-group-of-states-with-tags).
 
-**`start` returns a `MachineInstance<Ctx, E, P, Tag>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. Hooks, `when` and `run` are typed before the paths are known, so the `machine` they receive uses plain `string` for `path` and `matches()`: a hook, a `run` and a `task` receive a `MachineInstance<Ctx, E, string, Tag>`, and a `when` receives a `MachineView<string, Tag>`. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`. The context, event and path types come from the machine the same way; see [Read types off the machine](#read-types-off-the-machine). The optional second argument of `start` is `readonly P[]`, so a copy of `leaves` fits, and a list loaded as `string[]` takes a cast where it is loaded; see [Start at saved paths](#start-at-saved-paths).
+**`start` returns a `MachineInstance<Ctx, E, P, Tag>`,** where `P` is the union of the machine's state paths: `matches()` accepts only those, and `path` is one of them or `undefined` once stopped. Because `path` can be `undefined`, a lookup table keyed by path can only be indexed after a check. To name an instance's type, for a field or a parameter, write `ReturnType<typeof doorMachine.start>`. The context, event and path types come from the machine the same way; see [Read types off the machine](#read-types-off-the-machine). The optional second argument of `start` is `readonly P[]`, so a copy of `leaves` fits, and a list loaded as `string[]` takes a cast where it is loaded; see [Start at saved paths](#start-at-saved-paths).
+
+**A callback's `machine` knows the machine's paths.** In a hook, a `when`, a `run` and a `task`, `path`, `leaves` and `matches()` take the machine's paths, and so does `onMove` on the `machine` of a hook, a `run` and a `task`. A variable typed `string` does not fit `matches()` there: give it a union of the paths it can hold, such as `"/off" | "/on"`. A state that does not exist fails to compile, and the editor suggests the paths as you type the argument of `matches()`:
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+type LampEvent = { type: "TOGGLE" };
+
+defineMachine<{ presses: number }, LampEvent>()({
+  initial: "/off",
+  states: {
+    off: {
+      on: {
+        TOGGLE: {
+          to: "/on",
+          // @ts-expect-error -- "/of" is not one of the machine's paths
+          when: (_ctx, _event, machine) => machine.matches("/of"),
+        },
+      },
+    },
+    on: {
+      on: {
+        TOGGLE: {
+          to: "/off",
+          when: (_ctx, _event, machine) => machine.matches("/on"),
+        },
+      },
+    },
+  },
+});
+```
+
+Two kinds of path compile there and name no state:
+
+- **Below a leaf.** Any path below a state with no children, such as `"/off/deeper"`, compiles and never matches.
+- **Below a level of callbacks only.** When every state at one `states` level holds nothing but callbacks with unannotated parameters, any path below that level's parent compiles. Annotate the parameters of one callback in that level, as in `enter: (ctx: LampCtx) => { ... }`, and the level's states are checked.
 
 **`StatePath<C>` lists a config's paths,** each with its leading `/`. Paths are spelled out four levels deep; below that, any string under a fourth-level path is accepted.
 
@@ -3247,13 +3283,13 @@ Write a function for any machine with this context and these events
 
 </td><td>
 
-Add a type parameter for the paths: without it, `MachineInstance` takes `string` paths, which a started instance does not fit
+Type the parameter `MachineInstance<Ctx, E>`: a started instance and a callback's `machine` both fit
 
 </td><td>
 
 ```ts excerpt
-function hurt<P extends string>(
-  guard: MachineInstance<GuardCtx, GuardEvent, P>,
+function hurt(
+  guard: MachineInstance<GuardCtx, GuardEvent>,
 ): void {
   guard.send({ type: "HIT", damage: 1 });
 }

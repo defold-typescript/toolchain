@@ -602,13 +602,14 @@ describe("unhandled hook at run time", () => {
 
 describe("unhandled hook types", () => {
   test("an unannotated hook sees ctx, the event union and the instance, on the root and at every depth", () => {
+    type HookPath = "/a" | `/a/${string}`;
     const checks: boolean[] = [];
     const m = defineMachine<Ctx, Ev>()({
       initial: "/a",
       unhandled: (ctx, event, machine) => {
         const exactCtx: Equal<typeof ctx, Ctx> = true;
         const exactEvent: Equal<typeof event, Readonly<Ev>> = true;
-        const exactMachine: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+        const exactMachine: Equal<typeof machine, MachineInstance<Ctx, Ev, HookPath>> = true;
         checks.push(exactCtx, exactEvent, exactMachine);
       },
       states: {
@@ -617,7 +618,7 @@ describe("unhandled hook types", () => {
           unhandled: (ctx, event, machine) => {
             const exactCtx: Equal<typeof ctx, Ctx> = true;
             const exactEvent: Equal<typeof event, Readonly<Ev>> = true;
-            const exactMachine: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+            const exactMachine: Equal<typeof machine, MachineInstance<Ctx, Ev, HookPath>> = true;
             checks.push(exactCtx, exactEvent, exactMachine);
           },
           states: {
@@ -625,7 +626,10 @@ describe("unhandled hook types", () => {
               unhandled: (ctx, event, machine) => {
                 const exactCtx: Equal<typeof ctx, Ctx> = true;
                 const exactEvent: Equal<typeof event, Readonly<Ev>> = true;
-                const exactMachine: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+                const exactMachine: Equal<
+                  typeof machine,
+                  MachineInstance<Ctx, Ev, HookPath>
+                > = true;
                 checks.push(exactCtx, exactEvent, exactMachine);
               },
             },

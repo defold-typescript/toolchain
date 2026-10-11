@@ -443,6 +443,7 @@ describe("timer rules at define time", () => {
 
 describe("timer rule types", () => {
   test("an unannotated when and run are typed in both forms", () => {
+    type HookPath = "/a" | "/b" | "/c" | `/a/${string}` | `/b/${string}` | `/c/${string}`;
     const seen: boolean[] = [];
     const m = defineMachine<Ctx, Ev>()({
       initial: "/a",
@@ -453,7 +454,7 @@ describe("timer rule types", () => {
               to: "/b",
               when: (ctx, machine) => {
                 const ctxExact: Equal<typeof ctx, Readonly<Ctx>> = true;
-                const viewExact: Equal<typeof machine, MachineView> = true;
+                const viewExact: Equal<typeof machine, MachineView<HookPath>> = true;
                 const hidden: unknown[] = [];
                 // @ts-expect-error a when reads the machine and cannot send to it
                 hidden.push(machine.send);
@@ -462,7 +463,10 @@ describe("timer rule types", () => {
               },
               run: (ctx, machine) => {
                 const ctxExact: Equal<typeof ctx, Ctx> = true;
-                const machineExact: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+                const machineExact: Equal<
+                  typeof machine,
+                  MachineInstance<Ctx, Ev, HookPath>
+                > = true;
                 seen.push(ctxExact, machineExact);
               },
             },
@@ -475,7 +479,7 @@ describe("timer rule types", () => {
               to: "/c",
               when: (ctx, machine) => {
                 const ctxExact: Equal<typeof ctx, Readonly<Ctx>> = true;
-                const viewExact: Equal<typeof machine, MachineView> = true;
+                const viewExact: Equal<typeof machine, MachineView<HookPath>> = true;
                 const hidden: unknown[] = [];
                 // @ts-expect-error a when reads the machine and cannot send to it
                 hidden.push(machine.send);
@@ -484,7 +488,10 @@ describe("timer rule types", () => {
               },
               run: (ctx, machine) => {
                 const ctxExact: Equal<typeof ctx, Ctx> = true;
-                const machineExact: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+                const machineExact: Equal<
+                  typeof machine,
+                  MachineInstance<Ctx, Ev, HookPath>
+                > = true;
                 seen.push(ctxExact, machineExact);
               },
             },
