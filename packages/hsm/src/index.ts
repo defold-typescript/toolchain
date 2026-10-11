@@ -77,9 +77,10 @@ export interface MachineInstance<
   /** The context passed to `start`. */
   readonly ctx: Ctx;
   /**
-   * Whether a rule of an active state would take `event` if it were sent at that moment. A rule
-   * with no `to` counts. No hook, `run` or listener runs and nothing is queued, and once the
-   * machine is stopped the answer is `false`.
+   * Whether a rule of an active state would take `event` if it were sent at that moment. The
+   * answer is for that one event, payload included: a rule's `when` reads it. A rule with no
+   * `to` counts. No hook, `run` or listener runs and nothing is queued, and once the machine is
+   * stopped the answer is `false`.
    */
   readonly can: (event: E) => boolean;
   /**
