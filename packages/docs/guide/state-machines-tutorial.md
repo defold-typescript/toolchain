@@ -1383,6 +1383,10 @@ import { defineMachine, waitGroup } from "@defold-typescript/types/hsm"; // [!co
 
 Which one is done first, the fade or the chirp? It doesn't matter. That's the whole point of counting.
 
+Here is the buddy in `waking`. Its clock is paused, and the readout says two jobs are pending. Press "Resume time". Which job reports first, and when does the buddy move on?
+
+<div data-hsm-demo="buddy-chirp"></div>
+
 > [!NOTE] **`wait` goes last.** Call `group.wait` after every `add`. A group with nothing to wait for calls back at once.
 
 ### exit, or the function a task returns?

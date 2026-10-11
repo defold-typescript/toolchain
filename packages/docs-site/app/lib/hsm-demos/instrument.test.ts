@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { waitGroup } from "@defold-typescript/hsm";
 import type { Demo, DemoCtx } from "./demos";
 import {
   afterChip,
@@ -10,6 +11,7 @@ import {
   send,
   startDemo,
   step,
+  stop,
   type TraceEntry,
   type TraceFire,
   type TraceLine,
@@ -265,6 +267,38 @@ const napper: Demo = {
   },
 };
 
+// The two reports are kept on the context, so a test plays the engine's part and calls them.
+const loader: Demo = {
+  title: "Loader",
+  subtitle: "A task that counts two jobs and returns its cleanup.",
+  config: {
+    initial: "/loading",
+    states: {
+      loading: {
+        task: (ctx, finish) => {
+          const group = waitGroup();
+          ctx.a = group.add();
+          ctx.b = group.add();
+          group.wait(() => finish({ type: "READY" }));
+          return () => {
+            ctx.cleaned = (ctx.cleaned as number) + 1;
+          };
+        },
+        on: { READY: "/ready", CANCEL: "/idle" },
+      },
+      ready: {},
+      idle: {},
+    },
+  },
+  ctx: () => ({ a: undefined, b: undefined, cleaned: 0 }),
+  buttons: [],
+  readout: () => [],
+};
+
+function report(ctx: DemoCtx, job: "a" | "b"): void {
+  (ctx[job] as () => void)();
+}
+
 function start(spec: Demo, ctxOverride?: Partial<DemoCtx>) {
   const trace: TraceEntry[] = [];
   const run = startDemo(spec, (entry) => trace.push(entry), ctxOverride);
@@ -515,6 +549,56 @@ describe("a timer that carries a rule", () => {
   test("a state listed as quiet draws no update line", () => {
     expect(diagramChips(napper.config, napper.quietUpdates)).toEqual([work, nap]);
     expect(diagramChips(napper.config)).toEqual([work, updateChip("/nap"), nap]);
+  });
+});
+
+describe("a task that returns its cleanup", () => {
+  test("the cleanup is narrated after the exit line once the last job has reported", () => {
+    const { run, trace } = start(loader);
+    const mark = trace.length;
+    report(run.ctx, "a");
+    expect(trace.slice(mark)).toEqual([]);
+    expect(run.path).toBe("/loading");
+
+    report(run.ctx, "b");
+    expect(trace.slice(mark)).toEqual([
+      { kind: "note", text: "/loading: finish(READY)" },
+      { kind: "exit", text: "exit /loading" },
+      { kind: "note", text: "/loading: task cleanup ran" },
+      { kind: "fire", chip: ruleChip("/loading", "READY", 0) },
+      { kind: "enter", text: "enter /ready" },
+    ]);
+    expect(run.ctx.cleaned).toBe(1);
+  });
+
+  test("another way out runs it once, and the reports that come in later are ignored", () => {
+    const { run, trace } = start(loader);
+    const sent = trace.length;
+    send(run, { type: "CANCEL" });
+    expect(texts(trace, sent, "exit", "note", "enter")).toEqual([
+      "exit /loading",
+      "/loading: task cleanup ran",
+      "enter /idle",
+    ]);
+
+    const late = trace.length;
+    report(run.ctx, "a");
+    report(run.ctx, "b");
+    expect(texts(trace, late, "drop")).toEqual([
+      "late finish(READY) ignored: /loading was already left",
+    ]);
+    expect(run.ctx.cleaned).toBe(1);
+  });
+
+  test("a stop runs it too", () => {
+    const { run, trace } = start(loader);
+    const mark = trace.length;
+    stop(run);
+    expect(texts(trace, mark, "exit", "note")).toEqual([
+      "exit /loading",
+      "/loading: task cleanup ran",
+      "stopped, path = undefined",
+    ]);
   });
 });
 
