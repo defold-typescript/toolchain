@@ -7,6 +7,8 @@
  * A fence that cannot compile alone, a config key or a method shown by itself,
  * is a `ts excerpt` fence: it must quote the excerpt source, whose fences
  * compile under the same checks.
+ * A `ts step` fence on the tutorial is a diff of a file the reader builds: the
+ * files each lesson leaves must compile and transpile as one project.
  * The manual's reference tables are held to the `StateConfig`, `Machine`,
  * `MachineInstance` and `WaitGroup` interfaces of the hsm source.
  */
@@ -16,11 +18,13 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
 import * as ts from "typescript";
+import { fenceTitle, isStepFence, lessonProjects, tsFences } from "./hsm-guide-steps";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const GUIDE_DIR = path.join(REPO_ROOT, "packages", "docs", "guide");
 const REFERENCE_PAGE = "state-machines.md";
-const FENCED_PAGES = [REFERENCE_PAGE, "state-machines-tutorial.md"];
+const LESSON_PAGE = "state-machines-tutorial.md";
+const FENCED_PAGES = [REFERENCE_PAGE, LESSON_PAGE];
 const EXCERPT_SOURCE = path.join(REPO_ROOT, "packages/cli/test/fixtures/hsm-guide-excerpts.md");
 const FENCED_FILES = [...FENCED_PAGES.map((page) => path.join(GUIDE_DIR, page)), EXCERPT_SOURCE];
 const SCAFFOLD_TSCONFIG = path.join(import.meta.dir, "scaffold-tsconfig.json");
@@ -58,28 +62,9 @@ interface Fence {
   readonly body: string;
 }
 
-// The same `title="..."` info-string shape the docs site renders as a file name.
-function fenceTitle(info: string): string | undefined {
-  const match = info.match(/\btitle=(?:"([^"]*)"|'([^']*)')/);
-  const title = match?.[1] ?? match?.[2] ?? "";
-  return title.length > 0 ? title : undefined;
-}
-
-// A fence inside a callout (`> [!WARNING]`) carries the blockquote prefix on every line, and its
-// closing line must carry the prefix its opening line has.
-const TS_FENCE = /^(> ?)?```ts(?=[\s{]|$)([^\n]*)\n([\s\S]*?)^\1```/gm;
-
-interface TsFence {
-  readonly info: string;
-  readonly body: string;
-}
-
-function tsFences(text: string): TsFence[] {
-  return [...text.matchAll(TS_FENCE)].map((m) => ({
-    info: m[2] as string,
-    body: m[1] === undefined ? (m[3] as string) : (m[3] as string).replace(/^> ?/gm, ""),
-  }));
-}
+// A fence title names a file relative to `src/`: a `src/` title claims to quote
+// a docs/examples file (guide-source-parity.test.ts), and these fences quote none.
+const FENCE_TITLE = /^(?!src\/)[\w-]+(?:\/[\w-]+)*\.ts$/;
 
 // The info string's second token, as the docs site reads `original`: Shiki and
 // the language badge take only the first, so the fence still renders as `ts`.
@@ -103,21 +88,28 @@ function guideFences(guide: string): Fence[] {
   const fences: Fence[] = [];
   let index = 0;
   for (const { info, body } of tsFences(guide)) {
-    if (isExcerptFence(info)) continue;
+    if (isExcerptFence(info) || isStepFence(info)) continue;
     const title = fenceTitle(info);
     if (title === undefined) {
       fences.push({ label: `ts fence #${index}`, rel: `guide-fence-${index}.ts`, body });
     } else {
-      // Relative to `src/`: a `src/` title claims to quote a docs/examples file
-      // (guide-source-parity.test.ts), and these fences quote none.
-      expect(title, `ts fence #${index} title names a file under src/`).toMatch(
-        /^(?!src\/)[\w-]+(?:\/[\w-]+)*\.ts$/,
-      );
+      expect(title, `ts fence #${index} title names a file under src/`).toMatch(FENCE_TITLE);
       fences.push({ label: title, rel: title, body });
     }
     index++;
   }
   return fences;
+}
+
+/** Every file of every lesson's project, each project under its own `lesson-<nn>/`. */
+function lessonFences(page: string): Fence[] {
+  return lessonProjects(page).flatMap((project, i) => {
+    const dir = `lesson-${String(i + 1).padStart(2, "0")}`;
+    return [...project.files].map(([title, body]): Fence => {
+      expect(title, `step fence title under "${project.heading}"`).toMatch(FENCE_TITLE);
+      return { label: `${project.heading} > ${title}`, rel: `${dir}/${title}`, body };
+    });
+  });
 }
 
 const tempRoots: string[] = [];
@@ -197,6 +189,31 @@ function typeCheck(project: FenceProject): Map<string, string[]> {
   return byFile;
 }
 
+/** The diagnostics of `project`, keyed by the label of the fence or declaration that has them. */
+function failingFences(fences: readonly Fence[], project: FenceProject): Record<string, string[]> {
+  const found = typeCheck(project);
+  const failing: Record<string, string[]> = {};
+  const labelled: [string, string][] = [
+    ["", "(global)"],
+    ...[...project.declarations.keys()].map((rel): [string, string] => [rel, rel]),
+    ...fences.map((fence): [string, string] => [fence.rel, fence.label]),
+  ];
+  for (const [rel, label] of labelled) {
+    const diagnostics = found.get(rel);
+    if (diagnostics !== undefined) failing[label] = diagnostics;
+  }
+  return failing;
+}
+
+function transpileErrors(project: FenceProject): string[] {
+  const files: Record<string, string> = {};
+  for (const [rel, text] of project.declarations) files[rel] = text;
+  for (const [rel, text] of project.sources) files[rel] = text;
+  return transpileProject({ files })
+    .diagnostics.filter((d) => d.category === undefined)
+    .map((d) => `${d.file ?? "(project)"}:${d.line ?? 0}: ${d.message}`);
+}
+
 for (const file of FENCED_FILES) {
   const page = path.basename(file);
   const guide = readFileSync(file, "utf8");
@@ -219,18 +236,7 @@ for (const file of FENCED_FILES) {
     test(
       "every ts fence type-checks against the shipped hsm declarations at the scaffold strictness",
       () => {
-        const found = typeCheck(pageFenceProject());
-        const failing: Record<string, string[]> = {};
-        const labelled: [string, string][] = [
-          ["", "(global)"],
-          ...[...pageFenceProject().declarations.keys()].map((rel): [string, string] => [rel, rel]),
-          ...guideFences(guide).map((fence): [string, string] => [fence.rel, fence.label]),
-        ];
-        for (const [rel, label] of labelled) {
-          const diagnostics = found.get(rel);
-          if (diagnostics !== undefined) failing[label] = diagnostics;
-        }
-        expect(failing).toEqual({});
+        expect(failingFences(guideFences(guide), pageFenceProject())).toEqual({});
       },
       SLOW,
     );
@@ -238,19 +244,80 @@ for (const file of FENCED_FILES) {
     test(
       "every ts fence transpiles to Lua",
       () => {
-        const project = pageFenceProject();
-        const files: Record<string, string> = {};
-        for (const [rel, text] of project.declarations) files[rel] = text;
-        for (const [rel, text] of project.sources) files[rel] = text;
-        const errors = transpileProject({ files })
-          .diagnostics.filter((d) => d.category === undefined)
-          .map((d) => `${d.file ?? "(project)"}:${d.line ?? 0}: ${d.message}`);
-        expect(errors).toEqual([]);
+        expect(transpileErrors(pageFenceProject())).toEqual([]);
       },
       SLOW,
     );
   });
 }
+
+describe(`${LESSON_PAGE} lessons`, () => {
+  const page = readFileSync(path.join(GUIDE_DIR, LESSON_PAGE), "utf8");
+
+  let lessonProject: FenceProject | undefined;
+  const lessonFenceProject = (): FenceProject => {
+    lessonProject ??= writeFenceProject(lessonFences(page));
+    return lessonProject;
+  };
+
+  test(
+    "every lesson's project type-checks at the scaffold strictness",
+    () => {
+      const fences = lessonFences(page);
+      expect(fences.length).toBeGreaterThan(0);
+      expect(failingFences(fences, lessonFenceProject())).toEqual({});
+    },
+    SLOW,
+  );
+
+  test(
+    "every lesson's project transpiles to Lua",
+    () => {
+      expect(lessonFenceProject().sources.size).toBeGreaterThan(0);
+      expect(transpileErrors(lessonFenceProject())).toEqual([]);
+    },
+    SLOW,
+  );
+});
+
+describe("hsm guide lesson gate", () => {
+  test(
+    "the lesson gate can fail",
+    () => {
+      const page = [
+        "## 1. Two states",
+        "",
+        '```ts step title="lamp.ts"',
+        'import { defineMachine } from "@defold-typescript/types/hsm";',
+        "",
+        'export const lamp = defineMachine<{}, { type: "TOGGLE" }>()({',
+        '  initial: "/off",',
+        "  states: {",
+        '    off: { on: { TOGGLE: "/on" } },',
+        '    on: { on: { TOGGLE: "/off" } },',
+        "  },",
+        "});",
+        "```",
+        "",
+        "## 2. A renamed state",
+        "",
+        '```ts step title="lamp.ts"',
+        '    off: { on: { TOGGLE: "/on" } },',
+        '    on: { on: { TOGGLE: "/off" } }, // [!code --]',
+        '    lit: { on: { TOGGLE: "/off" } }, // [!code ++]',
+        "  },",
+        "```",
+        "",
+      ].join("\n");
+      const fences = lessonFences(page);
+      expect(fences.map((fence) => fence.rel)).toEqual(["lesson-01/lamp.ts", "lesson-02/lamp.ts"]);
+      const found = typeCheck(writeFenceProject(fences));
+      expect(found.get("lesson-01/lamp.ts")).toBeUndefined();
+      expect(found.get("lesson-02/lamp.ts")?.length ?? 0).toBeGreaterThan(0);
+    },
+    SLOW,
+  );
+});
 
 describe("hsm guide fence gate", () => {
   test(
