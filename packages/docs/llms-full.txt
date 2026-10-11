@@ -4024,8 +4024,34 @@ m.send({ type: "TOGGLE" });
 m.can(DIM); // true, and the lamp is still in /on/bright
 ```
 
+`can` asks about one event, not about an event type. Pass the event as `send` would get it, payload included: a `when` reads the payload, so two events of one type can get different answers.
+
+```ts
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+type EnemyCtx = { health: number };
+type EnemyEvent = { type: "HIT"; damage: number };
+
+export const enemy = defineMachine<EnemyCtx, EnemyEvent>()({
+  initial: "/alive",
+  states: {
+    alive: {
+      on: { HIT: { to: "/dead", when: (ctx, event) => ctx.health <= event.damage } },
+    },
+    dead: {},
+  },
+});
+
+const e = enemy.start({ health: 3 });
+e.can({ type: "HIT", damage: 3 }); // true: this hit is fatal
+e.can({ type: "HIT", damage: 1 }); // false: the only rule's `when` fails
+// @ts-expect-error a HIT carries its damage
+e.can({ type: "HIT" });
+```
+
 The rules:
 
+- **It answers for the event it is given.** The event has the type `send` takes, so a payload the event carries is required.
 - **It checks `when`.** A rule counts when its `when` is missing or passes.
 - **A rule with no `to` counts.** `can` asks whether a rule would take the event, not whether the state would change.
 - **Nothing runs.** No hook, `unhandled` included, and no `run`, `onMove` listener or `onUnhandled` listener is called, and the event is not queued.
