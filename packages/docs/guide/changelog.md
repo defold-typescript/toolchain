@@ -26,7 +26,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took, resume a saved game, answer more about a running machine and show more in `hsm-view`, and the guide gains a recipe:**
+- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took, resume a saved game, answer more about a running machine and show more in `hsm-view`, and the guide gains recipes:**
   - **`every`** — a state runs code each time a delay passes while it is active, such as damage every half second or a rate of fire read from the context; a long frame runs it once, and a run is not a move; see [Repeat while a state is active](./state-machines.md#repeat-while-a-state-is-active).
   - **Rules on timers and `always`** — an `after` timer takes `to`, `when` and `run`, so a state can run code at a set time without leaving and a timer can wait for a condition once its delay has passed, and an `always` rule takes `run`; see [Rules on a timer](./state-machines.md#rules-on-a-timer).
   - **`waitGroup()`** — a `task` that starts several engine calls waits for all of them: each `add()` returns the callback to pass, as in `http.request(url, "GET", group.add())`, and `wait` runs its callback once every one has reported; see [`WaitGroup`](./state-machines.md#waitgroup).
@@ -38,6 +38,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Start position** — `start(ctx, at)` takes a list of state paths, such as a saved copy of `leaves`, and enters those states through an ordinary entry; a path the machine lacks falls back to its closest parent, so a save made before an edit still loads; see [Start at saved paths](./state-machines.md#start-at-saved-paths).
   - **[`hsm-view`](./hsm-view.md)** — the page glows an `every` entry that ran and the timer that fired, and dims a timer its `when` holds back; see [Read the code](./hsm-view.md#read-the-code). Attached to a running game, it glows the rule that made each move, which an `inspect` move line names by its state and key, as in `(OPEN: /closed, 0)`; see [Attach to a running game](./hsm-view.md#attach-to-a-running-game).
   - **Animation recipe** — the guide builds one knight machine with looping animations, one-shots that finish before the next state, in-between animations between postures and a jump kept until it can play; see [Animation states with one-shots](./state-machines.md#animation-states-with-one-shots).
+  - **Waiting recipes** — the guide shows how a state moves on once something has finished: a chain of child states, engine work counted with `waitGroup()`, parallel regions joined by an `always` rule, and a group awaited in a `sequence`; see [Wait for something to finish](./state-machines.md#wait-for-something-to-finish).
 
 ### Fixed
 
