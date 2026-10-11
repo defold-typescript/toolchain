@@ -922,6 +922,7 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
       return isStopped(s);
     },
     matches: (path) => instance.matches(path),
+    hasTag: (tag) => instance.hasTag(tag),
     clock: (path) => (instance.matches(path) ? (s.clocks.get(path) ?? 0) : 0),
     progress: (chip) => chipProgress(s, chip),
     delayOf: (chip) => chipDelay(s, chip),

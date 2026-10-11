@@ -709,6 +709,30 @@ describe("hsm tutorial demos", () => {
     expect(d.reaction).toBe("hop");
     expect(d.run.path).toBe("/awake/wander");
   });
+
+  test("buddy-busy: the buddy is busy while it wakes and while it rests", () => {
+    const d = drive("buddy-busy");
+    const busy = () => d.readout('hasTag("busy")');
+    expect(d.run.path).toBe("/waking");
+    expect(busy()).toBe("true");
+    expect(d.readout("hint")).toBe('""');
+
+    d.step(0.5);
+    d.step(0.5);
+    expect(d.run.path).toBe("/awake/wander");
+    expect(busy()).toBe("false");
+    expect(d.readout("hint")).toBe('"poke me"');
+
+    d.press("BUMP (cost 3)");
+    expect(busy()).toBe("true");
+
+    d.step(0.5);
+    expect(d.run.leaves).toEqual(["/resting/battery/filling", "/resting/lamp/hidden"]);
+    expect(busy()).toBe("true");
+
+    d.press("RECHARGE");
+    expect(busy()).toBe("false");
+  });
 });
 
 // A string presses the button with that label; a number lets that many seconds pass in 0.5 s steps.
@@ -806,6 +830,7 @@ const WALKS: Record<DemoId, readonly (string | number)[]> = {
   "buddy-chirp": CHECKUP_WALK,
   "buddy-greeting": GREETING_WALK,
   "buddy-regions": GREETING_WALK,
+  "buddy-busy": GREETING_WALK,
 };
 
 describe("every rule a diagram draws can be used", () => {
