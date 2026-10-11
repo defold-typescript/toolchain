@@ -22,6 +22,10 @@ export type BuddyPose = (typeof BUDDY_POSES)[number];
 export const BUDDY_LIGHTS = ["off", "dim", "lit"] as const;
 export type BuddyLight = (typeof BUDDY_LIGHTS)[number];
 
+/** How the figure answers one event a button sends: a jolt, a hop, or a question mark when no active state takes it. */
+export const BUDDY_REACTIONS = ["bump", "hop", "ignored"] as const;
+export type BuddyReaction = (typeof BUDDY_REACTIONS)[number];
+
 /** The drawn buddy. A machine with no light yet leaves `light` out. */
 export interface DemoVisual {
   readonly pose: BuddyPose;

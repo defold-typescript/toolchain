@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { BUDDY_LIGHTS, BUDDY_POSES } from "./demos";
-import { BUDDY_SVG, figureClass } from "./figure";
+import { BUDDY_LIGHTS, BUDDY_POSES, BUDDY_REACTIONS } from "./demos";
+import { BUDDY_SVG, figureClass, reactionClass } from "./figure";
 
 const STYLES_CSS = readFileSync(join(import.meta.dir, "../../styles.css"), "utf8");
 
@@ -22,6 +22,22 @@ describe("the buddy figure and its stylesheet", () => {
           expect(hasSelector(className), className).toBe(true);
         }
       }
+    }
+  });
+
+  test("every reaction has a rule", () => {
+    for (const reaction of BUDDY_REACTIONS) {
+      expect(hasSelector(reactionClass(reaction)), reaction).toBe(true);
+    }
+  });
+
+  test("every animation a reaction starts has its keyframes", () => {
+    const started = [
+      ...STYLES_CSS.matchAll(/\.hsm-react-[^{}]*\{[^}]*?animation:\s*([\w-]+)/g),
+    ].map((match) => match[1] as string);
+    expect(started.length).toBeGreaterThan(0);
+    for (const name of started) {
+      expect(STYLES_CSS, name).toMatch(new RegExp(`@keyframes\\s+${name}\\s*\\{`));
     }
   });
 
