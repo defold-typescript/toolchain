@@ -191,6 +191,111 @@ describe("createSession", () => {
     expect(high.path).toBe("/b");
   });
 
+  test("leaves out the rules a can call checked", () => {
+    const asked = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: { on: { GO: "/b" } },
+    b: {
+      enter: (_ctx, m) => { m.can({ type: "LOCKED" }); },
+      on: { LOCKED: [{ to: "/a", when: () => false }] },
+    },
+  },
+}`),
+    );
+    asked.start({});
+    const moved = asked.send({ type: "GO" });
+    expect(moved.fired).toEqual([ruleId("/a", "on", "GO", 0)]);
+    expect(moved.rejected).toEqual([]);
+    expect(asked.send({ type: "LOCKED" }).rejected).toEqual([ruleId("/b", "on", "LOCKED", 0)]);
+
+    const mixed = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: {
+      on: {
+        GO: [{ to: "/b", when: () => false }, { run: (_ctx, _event, m) => { m.can({ type: "LOCKED" }); } }],
+        LOCKED: [{ to: "/b", when: () => false }],
+      },
+    },
+    b: {},
+  },
+}`),
+    );
+    mixed.start({});
+    const both = mixed.send({ type: "GO" });
+    expect(both.rejected).toEqual([ruleId("/a", "on", "GO", 0)]);
+    expect(both.fired).toEqual([ruleId("/a", "on", "GO", 1)]);
+
+    const rooted = session(
+      machine(`{
+  initial: "/a",
+  enter: (_ctx, m) => { m.can({ type: "GO" }); },
+  on: { GO: [{ to: "/b", when: () => false }] },
+  states: { a: {}, b: {} },
+}`),
+    );
+    expect(rooted.start({}).rejected).toEqual([]);
+    expect(rooted.send({ type: "GO" }).rejected).toEqual([ruleId("", "on", "GO", 0)]);
+
+    const ticking = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: {
+      update: (_ctx, _dt, m) => { m.can({ type: "GO" }); return undefined; },
+      on: { GO: [{ to: "/b", when: () => false }] },
+    },
+    b: {},
+  },
+}`),
+    );
+    ticking.start({});
+    expect(ticking.update(0.1).rejected).toEqual([]);
+
+    const throwing = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: {
+      on: {
+        ASK: { run: (_ctx, _event, m) => { try { m.can({ type: "BOOM" }); } catch {} } },
+        BOOM: [{ to: "/b", when: () => { throw new Error("boom"); } }],
+        GO: [{ to: "/b", when: () => false }],
+      },
+    },
+    b: {},
+  },
+}`),
+    );
+    throwing.start({});
+    throwing.send({ type: "ASK" });
+    expect(throwing.send({ type: "GO" }).rejected).toEqual([ruleId("/a", "on", "GO", 0)]);
+
+    const nested = session(
+      machine(`{
+  initial: "/a",
+  states: {
+    a: {
+      on: {
+        ASK: { run: (_ctx, _event, m) => { m.can({ type: "OUTER" }); } },
+        OUTER: [
+          { to: "/b", when: (_ctx, _event, m) => (m as unknown as { can: (event: { type: string }) => boolean }).can({ type: "INNER" }) },
+          { to: "/b", when: () => false },
+        ],
+        INNER: [{ to: "/b", when: () => false }],
+      },
+    },
+    b: {},
+  },
+}`),
+    );
+    nested.start({});
+    expect(nested.send({ type: "ASK" }).rejected).toEqual([]);
+  });
+
   test("hands a guard the machine", () => {
     const view = session(
       machine(`{
