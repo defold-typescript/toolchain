@@ -39,6 +39,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **[`hsm-view`](./hsm-view.md)** — the page glows an `every` entry that ran and the timer that fired, and dims a timer its `when` holds back; see [Read the code](./hsm-view.md#read-the-code). Attached to a running game, it glows the rule that made each move, which an `inspect` move line names by its state and key, as in `(OPEN: /closed, 0)`; see [Attach to a running game](./hsm-view.md#attach-to-a-running-game).
   - **Animation recipe** — the guide builds one knight machine with looping animations, one-shots that finish before the next state, in-between animations between postures and a jump kept until it can play; see [Animation states with one-shots](./state-machines.md#animation-states-with-one-shots).
   - **Waiting recipes** — the guide shows how a state moves on once something has finished: a chain of child states, engine work counted with `waitGroup()`, parallel regions joined by an `always` rule, and a group awaited in a `sequence`; see [Wait for something to finish](./state-machines.md#wait-for-something-to-finish).
+  - **Several machines recipes** — the guide shows how two machines work together: machines on separate game objects that post messages to each other, two machines in one script where one reads the other, and a machine that runs only while a state of another is active; see [Several machines](./state-machines.md#several-machines).
 
 ### Fixed
 
