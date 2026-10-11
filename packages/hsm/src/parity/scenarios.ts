@@ -1537,6 +1537,54 @@ function startPosition(): string[] {
   return log;
 }
 
+function regionJoin(): string[] {
+  const A_END = "/work/a/end";
+  const B_END = "/work/b/end";
+  const log: string[] = [];
+  const machine = defineMachine<Ctx, Ev>()({
+    initial: "/work",
+    states: {
+      work: {
+        ...logged("work"),
+        type: "parallel",
+        always: {
+          to: "/done",
+          when: (_ctx, machine) => {
+            log.push(`join sees ${shownLeaves(machine.leaves)}`);
+            return machine.matches(A_END) && machine.matches(B_END);
+          },
+        },
+        states: {
+          a: {
+            initial: "/work/a/run",
+            states: { run: { on: { GO: A_END, PING: A_END } }, end: logged("a.end") },
+          },
+          b: {
+            initial: "/work/b/run",
+            states: {
+              run: { on: { HIT: "/work/b/mid", PING: "/work/b/mid" } },
+              mid: { ...logged("b.mid"), always: B_END },
+              end: logged("b.end"),
+            },
+          },
+        },
+      },
+      done: logged("done"),
+    },
+  });
+  const m = machine.start(newCtx(log));
+  m.onMove((from, to, cause, event) => {
+    log.push(`${shown(from)} -> ${shown(to)} ${cause} ${event === undefined ? "-" : event.type}`);
+  });
+  m.send({ type: "GO" });
+  log.push(`leaves=${shownLeaves(m.leaves)}`);
+  m.send({ type: "HIT" });
+  log.push(`path=${shown(m.path)}`);
+  const both = machine.start(newCtx(log));
+  both.send({ type: "PING" });
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -1568,6 +1616,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "unhandled hooks run before the listener", run: () => unhandledHooks() },
   { name: "tags follow the active states", run: () => stateTags() },
   { name: "start at saved paths", run: () => startPosition() },
+  { name: "a parallel state's always joins its regions", run: () => regionJoin() },
 ];
 
 export function runScenario(name: string): string {

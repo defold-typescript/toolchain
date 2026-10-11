@@ -3249,4 +3249,75 @@ describe("parallel regions", () => {
       });
     expect(thrownMessage(withInitial)).toContain("every child is entered");
   });
+
+  type JoinEv = { type: "A" } | { type: "B" } | { type: "BOTH" };
+
+  const A_END = "/work/a/end";
+  const B_END = "/work/b/end";
+
+  function joined(seen: string[]) {
+    return defineMachine<object, JoinEv>()({
+      initial: "/work",
+      states: {
+        work: {
+          type: "parallel",
+          always: {
+            to: "/done",
+            when: (_ctx, machine) => {
+              seen.push(machine.leaves.join(","));
+              return machine.matches(A_END) && machine.matches(B_END);
+            },
+          },
+          states: {
+            a: {
+              initial: "/work/a/run",
+              states: { run: { on: { A: A_END, BOTH: A_END } }, end: {} },
+            },
+            b: {
+              initial: "/work/b/run",
+              states: {
+                run: { on: { B: "/work/b/mid", BOTH: "/work/b/mid" } },
+                mid: { always: B_END },
+                end: {},
+              },
+            },
+          },
+        },
+        done: {},
+      },
+    });
+  }
+
+  test("a parallel state's always waits while a region is unfinished", () => {
+    const m = joined([]).start({});
+    m.send({ type: "A" });
+    expect(m.leaves).toEqual(["/work/a/end", "/work/b/run"]);
+  });
+
+  test("a parallel state's always is taken once every region is in its last state", () => {
+    const m = joined([]).start({});
+    const moves: [string | undefined, string][] = [];
+    m.onMove((_from, to, cause) => {
+      moves.push([to, cause]);
+    });
+    m.send({ type: "A" });
+    m.send({ type: "B" });
+    expect(m.path).toBe("/done");
+    expect(moves[moves.length - 1]).toEqual(["/done", "always"]);
+  });
+
+  test("the join follows in the send that finished the last region", () => {
+    const m = joined([]).start({});
+    m.send({ type: "BOTH" });
+    expect(m.path).toBe("/done");
+  });
+
+  test("a parallel state's always is asked after its regions' always rules have run", () => {
+    const seen: string[] = [];
+    const m = joined(seen).start({});
+    m.send({ type: "A" });
+    m.send({ type: "B" });
+    expect(seen.filter((leaves) => leaves.includes("/work/b/mid"))).toEqual([]);
+    expect(seen[seen.length - 1]).toBe("/work/a/end,/work/b/end");
+  });
 });

@@ -401,6 +401,67 @@ export const taggedGuard = defineMachine<GuardCtx, GuardEvent, "alert">()({
 });
 ```
 
+```ts title="guard-waiting.ts"
+import { defineMachine, waitGroup } from "@defold-typescript/types/hsm";
+
+interface GuardCtx {
+  readonly sprite: Url;
+}
+
+type GuardEvent =
+  | { type: "AWAKE" }
+  | { type: "DRAWN" }
+  | { type: "CALLED" };
+
+const SWORD_OUT = "/alert/sword/out";
+const BACKUP_CALLED = "/alert/radio/called";
+
+export const wakingGuard = defineMachine<GuardCtx, GuardEvent>()({
+  initial: "/waking",
+  states: {
+    waking: {
+      task: (ctx, finish) => {
+        const group = waitGroup();
+        sprite.play_flipbook(
+          ctx.sprite,
+          "rise",
+          group.add(),
+        );
+        sound.play("#yawn", {}, group.add());
+        group.wait(() => finish({ type: "AWAKE" }));
+      },
+      on: { AWAKE: "/alert" },
+    },
+    alert: {
+      type: "parallel",
+      always: {
+        to: "/fight",
+        when: (_ctx, machine) =>
+          machine.matches(SWORD_OUT) &&
+          machine.matches(BACKUP_CALLED),
+      },
+      states: {
+        sword: {
+          initial: "/alert/sword/drawing",
+          states: {
+            drawing: { on: { DRAWN: SWORD_OUT } },
+            out: {},
+          },
+        },
+        radio: {
+          initial: "/alert/radio/calling",
+          states: {
+            calling: { on: { CALLED: BACKUP_CALLED } },
+            called: {},
+          },
+        },
+      },
+    },
+    fight: {},
+  },
+});
+```
+
 ```ts title="guard-private.ts"
 import { defineMachine } from "@defold-typescript/types/hsm";
 

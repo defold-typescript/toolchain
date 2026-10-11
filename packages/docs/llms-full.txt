@@ -3545,7 +3545,7 @@ export const blink = defineMachine<{ readonly sprite: Url }, BlinkEvent>()({
 });
 ```
 
-A state that starts several pieces of engine work and moves on when all of them have finished counts them with a [`WaitGroup`](#waitgroup).
+A state that starts several pieces of engine work and moves on when all of them have finished counts them with a [`WaitGroup`](#waitgroup); [Wait for something to finish](#wait-for-something-to-finish) has the recipes.
 
 ##### Cleanup runs on exit, never after an `await`
 
@@ -3643,6 +3643,272 @@ export const fetcher = defineMachine<{ readonly url: string }, FetchEvent>()({
   },
 });
 ```
+
+#### Wait for something to finish
+
+Many states exist to wait: an intro plays to its end, a level loads, every door of a room opens. A statechart marks such an end with a *final state*, a child that tells its parent the work is done. This library has no final state. It answers the same need with pieces it already has, and what finishes picks the recipe:
+
+| What finishes                                      | Recipe                                                                                              |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| A chain of child states that run one after another | The last child names the next state; see [A chain of child states](#a-chain-of-child-states)       |
+| Several pieces of engine work a state started      | A `task` waits on a `waitGroup`; see [Work that completes](#work-that-completes)                   |
+| Regions with states of their own                   | `always` on the parallel state; see [Regions with states of their own](#regions-with-states-of-their-own) |
+
+A [`sequence`](#scripted-sequences) that starts several pieces of work waits on the same group; see [A group inside a sequence](#a-group-inside-a-sequence).
+
+##### A chain of child states
+
+When the children run one after another, the last one names what comes next. A target is a full path, so it can name a state outside the parent:
+
+```ts title="wait-chain.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+export type IntroEvent = { type: "SKIP" };
+
+export const introMachine = defineMachine<object, IntroEvent>()({
+  initial: "/intro",
+  states: {
+    intro: {
+      initial: "/intro/logo",
+      on: { SKIP: "/menu" },
+      states: {
+        logo: { after: { 2: "/intro/title" } },
+        title: { after: { 2: "/intro/credits" } },
+        credits: { after: { 2: "/menu" } },
+      },
+    },
+    menu: {},
+  },
+});
+```
+
+`/intro/credits` ends the intro by naming `/menu`. `/intro` needs no rule of its own for it.
+
+Let the parent decide when the chain should not know what follows it: the next state depends on a condition, or more than one child can end the chain. The last timer then leads to a child that sends an event, and the parent has a rule for that event:
+
+```ts title="wait-chain-parent.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+export interface GatedIntroCtx {
+  readonly firstRun: boolean;
+}
+
+export type GatedIntroEvent = { type: "INTRO_DONE" };
+
+export const gatedIntroMachine = defineMachine<GatedIntroCtx, GatedIntroEvent>()({
+  initial: "/intro",
+  states: {
+    intro: {
+      initial: "/intro/logo",
+      on: {
+        INTRO_DONE: [{ to: "/tutorial", when: (ctx) => ctx.firstRun }, { to: "/menu" }],
+      },
+      states: {
+        logo: { after: { 2: "/intro/title" } },
+        title: { after: { 2: "/intro/credits" } },
+        credits: { after: { 2: "/intro/done" } },
+        done: { enter: (_ctx, machine) => machine.send({ type: "INTRO_DONE" }) },
+      },
+    },
+    tutorial: {},
+    menu: {},
+  },
+});
+```
+
+`done` sends `INTRO_DONE` from its `enter` hook. The event is queued, runs as soon as the move into `done` has finished, and bubbles to `/intro`, whose rule picks the next state.
+
+##### Work that completes
+
+Engine work that reports through a callback is counted with a [`WaitGroup`](#waitgroup). A `task` builds the group and hands one `group.add()` to each engine call, and `group.wait` finishes with an event once every piece has reported:
+
+```ts title="wait-fixed.ts"
+import { defineMachine, waitGroup } from "@defold-typescript/types/hsm";
+
+export interface LevelCtx {
+  readonly url: string;
+  readonly curtain: Url;
+}
+
+export type LevelEvent = { type: "READY" } | { type: "FAILED" };
+
+export const levelMachine = defineMachine<LevelCtx, LevelEvent>()({
+  initial: "/loading",
+  states: {
+    loading: {
+      task: (ctx, finish) => {
+        const group = waitGroup();
+        go.animate(
+          ctx.curtain,
+          "tint.w",
+          go.PLAYBACK_ONCE_FORWARD,
+          0,
+          go.EASING_LINEAR,
+          0.5,
+          0,
+          group.add(),
+        );
+        const loaded = group.add();
+        http.request(ctx.url, "GET", (_self, _id, response) => {
+          if (response.status === 200) {
+            loaded();
+          } else {
+            finish({ type: "FAILED" });
+          }
+        });
+        group.wait(() => finish({ type: "READY" }));
+      },
+      on: { READY: "/playing", FAILED: "/failed" },
+    },
+    playing: {},
+    failed: {},
+  },
+});
+```
+
+The fade takes `group.add()` as its callback. The request can fail, so it gets a callback of its own: a response with status 200 reports to the group, and any other status calls `finish` with `FAILED` itself. Once `/loading` is left, whatever the group reports later ends in a `finish` that is ignored.
+
+The number of pieces need not be written in the code. A loop adds one piece per item of a list whose length is known only while the game runs:
+
+```ts title="wait-counted.ts"
+import { defineMachine, waitGroup } from "@defold-typescript/types/hsm";
+
+export interface WaveCtx {
+  readonly enemies: readonly Url[];
+}
+
+export type WaveEvent = { type: "ARRIVED" };
+
+export const waveMachine = defineMachine<WaveCtx, WaveEvent>()({
+  initial: "/entering",
+  states: {
+    entering: {
+      task: (ctx, finish) => {
+        const group = waitGroup();
+        for (const enemy of ctx.enemies) {
+          go.animate(
+            enemy,
+            "position.y",
+            go.PLAYBACK_ONCE_FORWARD,
+            0,
+            go.EASING_OUTQUAD,
+            1,
+            0,
+            group.add(),
+          );
+        }
+        group.wait(() => finish({ type: "ARRIVED" }));
+      },
+      on: { ARRIVED: "/fighting" },
+    },
+    fighting: {},
+  },
+});
+```
+
+`group.wait` goes after the loop. With an empty list nothing is pending, so `wait` calls back at once and the machine is in `/fighting` when `start` returns.
+
+##### Regions with states of their own
+
+When each part has states of its own, make the parts regions of a parallel state and put an [`always`](#move-on-at-once-with-always) rule on that state. Its `when` asks `matches` for the last state of each region:
+
+```ts title="wait-regions.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+export type RaidEvent = { type: "OPENED" } | { type: "FADED" };
+
+const DOORS_OPEN = "/setup/doors/open";
+const MUSIC_READY = "/setup/music/ready";
+
+export const raidMachine = defineMachine<object, RaidEvent>()({
+  initial: "/setup",
+  states: {
+    setup: {
+      type: "parallel",
+      always: {
+        to: "/fight",
+        when: (_ctx, machine) => machine.matches(DOORS_OPEN) && machine.matches(MUSIC_READY),
+      },
+      states: {
+        doors: {
+          initial: "/setup/doors/opening",
+          states: {
+            opening: { on: { OPENED: DOORS_OPEN } },
+            open: {},
+          },
+        },
+        music: {
+          initial: "/setup/music/fading",
+          states: {
+            fading: { on: { FADED: MUSIC_READY } },
+            ready: {},
+          },
+        },
+      },
+    },
+    fight: {},
+  },
+});
+```
+
+`OPENED` and `FADED` can arrive in either order. The move that brings the second region to its last state is followed by the move to `/fight`, in the same `send`.
+
+The rules:
+
+- **Hold each last state's path in a constant.** The `machine` a `when` receives takes any string in `matches`, so a mistyped path there compiles and never matches. The same constant is the region's `to`, and a `to` that names no state fails to compile.
+- **The join is asked after the regions.** `always` is checked deepest first, so a region's own `always` rules run before the parallel state's rule, and its `when` sees each region where it came to rest.
+- **The active states already hold the answer.** A counter in the context, raised by each region as it finishes, repeats what `matches` reads and has to be reset on every entry.
+
+##### A group inside a sequence
+
+A [`sequence`](#scripted-sequences) waits on a group through a promise around `wait`:
+
+```ts title="wait-sequence.ts"
+import { defineMachine, waitGroup } from "@defold-typescript/types/hsm";
+import { sequence } from "@defold-typescript/types/hsm/async";
+
+export interface BootCtx {
+  readonly url: string;
+  readonly logo: Url;
+}
+
+export type BootEvent = { type: "READY" } | { type: "SKIP" };
+
+export const bootMachine = defineMachine<BootCtx, BootEvent>()({
+  initial: "/booting",
+  states: {
+    booting: {
+      task: sequence(async (ctx, signal) => {
+        const group = waitGroup();
+        http.request(ctx.url, "GET", group.add());
+        go.animate(
+          ctx.logo,
+          "tint.w",
+          go.PLAYBACK_ONCE_FORWARD,
+          1,
+          go.EASING_LINEAR,
+          0.5,
+          0,
+          group.add(),
+        );
+        await new Promise<void>((resolve) => group.wait(() => resolve()));
+        if (signal.aborted) return;
+        msg.post(ctx.logo, "disable");
+        return { type: "READY" };
+      }),
+      on: { READY: "/playing", SKIP: "/menu" },
+    },
+    playing: {},
+    menu: {},
+  },
+});
+```
+
+Leaving `/booting` does not cancel that promise. It resolves when the last piece reports, and the code after the `await` then runs, so the `signal.aborted` check returns before the logo is hidden for a state that is no longer active.
+
+`wait` takes an arrow function that calls `resolve`. `group.wait(resolve)` passes the type check and fails the build with `Unable to convert function with a 'this' parameter to function 'callback' with no 'this'`.
+
+A piece that never reports keeps its state waiting, whichever recipe counts it; put a deadline on the state, as the [watchdog](#watchdog) does. A machine that has finished altogether ends itself with `stop()` in the `enter` hook of its last state; see [Run to completion, `task` and `stop`](#run-to-completion-task-and-stop).
 
 #### Define a machine in a plain module
 
@@ -4818,7 +5084,7 @@ Two rules carry over to any migration:
 
 #### Cheat sheet
 
-Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies. The two snippets on private fields come from a second guard, one that counts its hits itself, the snippets on timer rules and on `every` from a third, one that shouts and scans while on alert, and the snippet on tags from a fourth, one that answers the radio only while alert.
+Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies. The two snippets on private fields come from a second guard, one that counts its hits itself, the snippets on timer rules and on `every` from a third, one that shouts and scans while on alert, the snippet on tags from a fourth, one that answers the radio only while alert, and the two snippets on waiting from a fifth, one that wakes up, then draws its sword and calls for backup before a fight.
 
 ##### Configure a state
 
@@ -5025,6 +5291,50 @@ task: (_ctx, finish) => {
   sound.play("#death", {}, () => {
     finish({ type: "DEAD" });
   });
+}
+```
+
+</td></tr>
+<tr><td>
+
+Wait for several engine callbacks
+
+</td><td>
+
+A [`waitGroup`](#waitgroup) in a `task`: one `add()` per callback, and `wait` calls `finish`; see [Work that completes](#work-that-completes)
+
+</td><td>
+
+```ts excerpt
+task: (ctx, finish) => {
+  const group = waitGroup();
+  sprite.play_flipbook(
+    ctx.sprite,
+    "rise",
+    group.add(),
+  );
+  sound.play("#yawn", {}, group.add());
+  group.wait(() => finish({ type: "AWAKE" }));
+}
+```
+
+</td></tr>
+<tr><td>
+
+Move on when every region has finished
+
+</td><td>
+
+[`always`](#move-on-at-once-with-always) on the parallel state, with a `when` that asks `matches` for the last state of each region; see [Regions with states of their own](#regions-with-states-of-their-own)
+
+</td><td>
+
+```ts excerpt
+always: {
+  to: "/fight",
+  when: (_ctx, machine) =>
+    machine.matches(SWORD_OUT) &&
+    machine.matches(BACKUP_CALLED),
 }
 ```
 
@@ -5568,7 +5878,7 @@ export const level = defineMachine<LevelCtx, LevelEvent>()({
 | `add`  | `() => () => void`               | Records one pending piece of work and returns the function that reports it finished. That function counts once and ignores its arguments. |
 | `wait` | `(callback: () => void) => void` | Calls `callback` once when nothing added is pending: at once when nothing is pending at the call, and otherwise inside the report that finishes the last piece. |
 
-A group knows nothing about a machine. Built inside a `task`, it is new for each entry of the state. A report that arrives after the state was left ends in a `finish` that is ignored, and a piece that never reports is a case for the [watchdog](#watchdog).
+A group knows nothing about a machine. Built inside a `task`, it is new for each entry of the state. A report that arrives after the state was left ends in a `finish` that is ignored, and a piece that never reports is a case for the [watchdog](#watchdog). [Work that completes](#work-that-completes) has a group with a piece that can fail and one counted while the game runs, and [A group inside a sequence](#a-group-inside-a-sequence) waits on one with `await`.
 
 ### Init
 
