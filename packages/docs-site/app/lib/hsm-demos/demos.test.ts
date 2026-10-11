@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { DEMOS, type DemoCtx, type DemoId } from "./demos";
+import { type BuddyReaction, DEMOS, type DemoCtx, type DemoId } from "./demos";
 import {
   activePaths,
   type DemoRun,
   diagramChips,
   press,
+  reactionTo,
   startDemo,
   step,
   type TraceLine,
@@ -21,6 +22,7 @@ function drive(id: DemoId) {
     if (entry.kind === "fire") fired.add(entry.chip);
     else lines.push(entry);
   });
+  let reaction: BuddyReaction | undefined;
   return {
     lines,
     fired,
@@ -37,9 +39,14 @@ function drive(id: DemoId) {
     get taking(): string[] {
       return demo.buttons.filter((b) => takes(run, b)).map((b) => b.label);
     },
+    /** How the figure answered the last press; `undefined` when that button sent no event. */
+    get reaction() {
+      return reaction;
+    },
     press(label: string) {
       const button = demo.buttons.find((b) => b.label === label);
       if (button === undefined) throw new Error(`${id} has no "${label}" button`);
+      reaction = reactionTo(run, button);
       if (!("event" in button)) {
         run = press(run, button);
         return;
@@ -401,6 +408,54 @@ describe("which buttons the machine takes", () => {
     expect(d.lines.length).toBe(logged);
     d.press("stop()");
     expect(d.taking).toEqual([]);
+  });
+});
+
+describe("the buddy reacts to a press", () => {
+  test("buddy-energy: a bump is a jolt only while awake takes it", () => {
+    const d = drive("buddy-energy");
+    d.press("BUMP (cost 1)");
+    expect(d.reaction).toBe("ignored");
+    d.press("POKE");
+    expect(d.reaction).toBe("hop");
+    d.press("BUMP (cost 1)");
+    expect(d.reaction).toBe("bump");
+    d.press("BUMP (cost 3)");
+    expect(d.reaction).toBe("bump");
+    expect(d.run.path).toBe("/resting");
+    d.press("BUMP (cost 1)");
+    expect(d.reaction).toBe("ignored");
+    d.press("RECHARGE");
+    expect(d.reaction).toBe("hop");
+  });
+
+  test("buddy-queue: stop and start send no event, and a stopped machine takes none", () => {
+    const d = drive("buddy-queue");
+    d.press("stop()");
+    expect(d.reaction).toBeUndefined();
+    d.press("POKE");
+    expect(d.reaction).toBe("ignored");
+    d.press("start() with wakes = 1");
+    expect(d.reaction).toBeUndefined();
+    d.press("POKE");
+    expect(d.reaction).toBe("hop");
+  });
+
+  test("buddy-queue: a when that says no is a question mark", () => {
+    const d = drive("buddy-queue");
+    d.step(0.5);
+    d.step(0.5);
+    expect(d.run.path).toBe("/awake/wander");
+    d.press("trigger_response (enter false)");
+    expect(d.reaction).toBe("ignored");
+    d.press("trigger_response (enter true)");
+    expect(d.reaction).toBe("hop");
+  });
+
+  test("buddy-waking: a button that changes the code sends no event", () => {
+    const d = drive("buddy-waking");
+    d.press("Toggle cancel in exit");
+    expect(d.reaction).toBeUndefined();
   });
 });
 

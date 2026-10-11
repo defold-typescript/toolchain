@@ -1840,7 +1840,9 @@
 .hsm-b-eyes-half,
 .hsm-b-eyes-shut,
 .hsm-b-battery,
-.hsm-b-zz {
+.hsm-b-zz,
+.hsm-b-hit,
+.hsm-b-huh {
   opacity: 0;
   transition:
     opacity 0.25s,
@@ -1851,6 +1853,8 @@
 }
 .hsm-b-robot {
   transition: opacity 0.25s;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
 }
 .hsm-b-eyes-open,
 .hsm-b-eyes-half {
@@ -1894,9 +1898,52 @@
   stroke: var(--color-warning);
   filter: drop-shadow(0 0 7px var(--color-warning));
 }
+.hsm-b-hit {
+  stroke: var(--hsm-exit);
+}
+.hsm-b-huh {
+  stroke: var(--hsm-queue);
+}
+.hsm-react-bump .hsm-b-hit,
+.hsm-react-ignored .hsm-b-huh {
+  opacity: 1;
+}
+.hsm-react-bump .hsm-b-robot {
+  animation: hsm-bump 0.45s ease-out;
+}
+.hsm-react-hop .hsm-b-robot {
+  animation: hsm-hop 0.35s ease-out;
+}
+.hsm-react-ignored .hsm-b-robot {
+  animation: hsm-shake 0.45s ease-in-out;
+}
+@keyframes hsm-bump {
+  20% {
+    transform: translateX(-7px) rotate(-6deg);
+  }
+  55% {
+    transform: translateX(3px) rotate(2deg);
+  }
+}
+@keyframes hsm-hop {
+  40% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes hsm-shake {
+  25% {
+    transform: rotate(-4deg);
+  }
+  75% {
+    transform: rotate(4deg);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .hsm-demo *,
   .hsm-demo li.hsm-rule {
     transition: none;
+  }
+  .hsm-demo .hsm-visual .hsm-b-robot {
+    animation: none;
   }
 }

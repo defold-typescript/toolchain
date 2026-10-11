@@ -1,4 +1,4 @@
-import type { BuddyLight, BuddyPose, DemoVisual } from "./demos";
+import type { BuddyLight, BuddyPose, BuddyReaction, DemoVisual } from "./demos";
 
 /**
  * The buddy drawn beside each live diagram. One drawing holds the parts of
@@ -30,6 +30,11 @@ export function figureLabel(visual: DemoVisual): string {
   return visual.light === undefined ? pose : `${pose}, light ${LIGHT_WORDS[visual.light]}`;
 }
 
+/** The class a reaction puts on the element around the figure for as long as it shows. */
+export function reactionClass(reaction: BuddyReaction): string {
+  return `hsm-react-${reaction}`;
+}
+
 export const BUDDY_SVG = `<svg viewBox="0 0 120 84" aria-hidden="true" focusable="false">
   <g class="hsm-b-player">
     <circle cx="18" cy="42" r="6" />
@@ -52,4 +57,6 @@ export const BUDDY_SVG = `<svg viewBox="0 0 120 84" aria-hidden="true" focusable
     <circle class="hsm-b-shell" cx="67" cy="77" r="4" />
   </g>
   <g class="hsm-b-zz"><path d="M90 22h7l-7 8h7" /><path d="M101 9h5l-5 6h5" /></g>
+  <g class="hsm-b-hit"><path d="M86 30l7-4M87 37h8M86 44l7 4" /></g>
+  <g class="hsm-b-huh"><path d="M92 45a5 5 0 1 1 6.5 4.8q-1.5 1-1.5 3.2" /><path d="M97 58v.5" /></g>
 </svg>`;

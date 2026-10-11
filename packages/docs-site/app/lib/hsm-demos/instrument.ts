@@ -8,7 +8,7 @@ import {
   type StateConfig,
   type TransitionConfig,
 } from "@defold-typescript/hsm";
-import type { Demo, DemoButton, DemoCtx, DemoView } from "./demos";
+import type { BuddyReaction, Demo, DemoButton, DemoCtx, DemoView } from "./demos";
 
 /**
  * Runs a tutorial demo on the real `hsm` library and narrates it. The config is
@@ -508,6 +508,13 @@ export function canTake(run: DemoRun, event: EventObject): boolean {
 /** Whether the button sends an event the machine would take now; false for a button that sends none. */
 export function takes(run: DemoRun, button: DemoButton): boolean {
   return "event" in button && canTake(run, button.event);
+}
+
+/** How the figure answers a press, asked before the press; `undefined` for a button that sends no event. */
+export function reactionTo(run: DemoRun, button: DemoButton): BuddyReaction | undefined {
+  if (!("event" in button)) return undefined;
+  if (!canTake(run, button.event)) return "ignored";
+  return button.event.type === "BUMP" ? "bump" : "hop";
 }
 
 /** Advances a demo by `dt` seconds: the imitated Defold work first, then the machine's `update`. */

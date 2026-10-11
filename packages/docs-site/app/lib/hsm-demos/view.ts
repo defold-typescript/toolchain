@@ -1,5 +1,6 @@
 import type { StateConfig } from "@defold-typescript/hsm";
 import {
+  type BuddyReaction,
   DEMOS,
   type Demo,
   type DemoButton,
@@ -7,11 +8,12 @@ import {
   type DemoId,
   type DemoVisual,
 } from "./demos";
-import { BUDDY_SVG, figureClass, figureLabel } from "./figure";
+import { BUDDY_SVG, figureClass, figureLabel, reactionClass } from "./figure";
 import {
   type DemoRun,
   describePath,
   press,
+  reactionTo,
   restart,
   startDemo,
   stateChips,
@@ -30,6 +32,7 @@ type State = StateConfig<DemoCtx, { readonly type: string }>;
 
 const LOG_CAP = 120;
 const FLASH_MS = 650;
+const REACT_MS = 600;
 const MAX_FRAME_SECONDS = 0.1;
 const SPEEDS: readonly (readonly [number, string])[] = [
   [1, "Normal speed"],
@@ -126,6 +129,23 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     chip.timer = setTimeout(() => chip.element.classList.remove("hsm-flash"), FLASH_MS);
   }
 
+  let reaction: string | undefined;
+  let reactionTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // The class goes on the element around the figure: every refresh rewrites the figure's own.
+  function react(next: BuddyReaction) {
+    if (visual === undefined) return;
+    if (reaction !== undefined) visual.classList.remove(reaction);
+    void visual.offsetWidth;
+    reaction = reactionClass(next);
+    visual.classList.add(reaction);
+    clearTimeout(reactionTimer);
+    reactionTimer = setTimeout(() => {
+      if (reaction !== undefined) visual.classList.remove(reaction);
+      reaction = undefined;
+    }, REACT_MS);
+  }
+
   function addChip(rules: HTMLUListElement, id: string, parts: (string | Node)[]) {
     const element = el("li", "hsm-rule");
     element.append(...parts);
@@ -215,7 +235,9 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
 
   function pressButton(spec: DemoButton) {
     if ("restartWith" in spec) clearLog();
+    const answer = reactionTo(run, spec);
     run = press(run, spec);
+    if (answer !== undefined) react(answer);
     dirty = true;
   }
 
@@ -339,6 +361,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     },
     dispose: () => {
       for (const chip of chips.values()) clearTimeout(chip.timer);
+      clearTimeout(reactionTimer);
       host.replaceChildren();
     },
   };
