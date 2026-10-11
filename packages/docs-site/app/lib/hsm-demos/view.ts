@@ -7,6 +7,7 @@ import {
   type DemoId,
   type DemoVisual,
 } from "./demos";
+import { BUDDY_SVG, figureClass, figureLabel } from "./figure";
 import {
   afterChip,
   afterDelays,
@@ -274,10 +275,11 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     if (figure === undefined) {
       figure = el("div");
       figure.setAttribute("role", "img");
+      figure.innerHTML = BUDDY_SVG;
       target.append(figure);
     }
-    setClass(figure, spec.glow === "off" ? "hsm-bulb" : `hsm-bulb hsm-${spec.glow}`);
-    setLabel(figure, `light ${spec.glow}`);
+    setClass(figure, figureClass(spec));
+    setLabel(figure, figureLabel(spec));
   }
 
   let lines: ReadoutLine[] = [];
