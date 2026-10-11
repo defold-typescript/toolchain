@@ -27,7 +27,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took, resume a saved game, complete the paths a callback asks about, answer more about a running machine and show more in `hsm-view`, and the guide gains recipes:**
+- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took, resume a saved game, complete the paths a callback asks about, answer more about a running machine and show more in `hsm-view`, and the guide gains recipes and states each rule once:**
   - **`every`** — a state runs code each time a delay passes while it is active, such as damage every half second or a rate of fire read from the context; a long frame runs it once, and a run is not a move; see [Repeat while a state is active](./state-machines.md#repeat-while-a-state-is-active).
   - **Rules on timers and `always`** — an `after` timer takes `to`, `when` and `run`, so a state can run code at a set time without leaving and a timer can wait for a condition once its delay has passed, and an `always` rule takes `run`; see [Rules on a timer](./state-machines.md#rules-on-a-timer).
   - **`waitGroup()`** — a `task` that starts several engine calls waits for all of them: each `add()` returns the callback to pass, as in `http.request(url, "GET", group.add())`, and `wait` runs its callback once every one has reported; see [`WaitGroup`](./state-machines.md#waitgroup).
@@ -42,6 +42,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Animation recipe** — the guide builds one knight machine with looping animations, one-shots that finish before the next state, in-between animations between postures and a jump kept until it can play; see [Animation states with one-shots](./state-machines.md#animation-states-with-one-shots).
   - **Waiting recipes** — the guide shows how a state moves on once something has finished: a chain of child states, engine work counted with `waitGroup()`, parallel regions joined by an `always` rule, and a group awaited in a `sequence`; see [Wait for something to finish](./state-machines.md#wait-for-something-to-finish).
   - **Several machines recipes** — the guide shows how two machines work together: machines on separate game objects that post messages to each other, two machines in one script where one reads the other, and a machine that runs only while a state of another is active; see [Several machines](./state-machines.md#several-machines).
+  - **Shorter guide** — the [State machines](./state-machines.md) guide states each rule once, in the section that owns it, and shows the few lines that carry each sample in place of whole scripts.
 
 ### Fixed
 
