@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[Stricter callbacks](./state-machines.md#types):** a `when` that assigns to a field of `ctx`, a callback that assigns to a field of its event, and a `machine.matches()` in a hook given a `string` variable or a path that names no state all fail to compile.
 > - **State machines** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), put [rules on timers](./state-machines.md#rules-on-a-timer), group states with [tags](./state-machines.md#name-a-group-of-states-with-tags), wait for several engine calls with [`waitGroup()`](./state-machines.md#waitgroup), react to any event no state took with one [`unhandled`](./state-machines.md#react-to-an-unhandled-event) hook and resume a saved game from [saved state paths](./state-machines.md#start-at-saved-paths).
 > - **[`hsm-view`](./hsm-view.md)** glows `every` runs, dims held timers, glows nothing for a `can` call and, attached to a running game, glows the rule each `inspect` move line names.
-> - **The [state machines tutorial](./state-machines-tutorial.md)** builds one robot buddy machine step by step and shows each change as a diff.
+> - **The [state machines tutorial](./state-machines-tutorial.md)** builds one robot buddy machine and a charging dock step by step, shows each change as a diff and covers every `hsm` feature.
 
 ### Breaking
 
@@ -27,7 +27,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took, resume a saved game, complete the paths a callback asks about, answer more about a running machine and show more in `hsm-view`, the guide gains recipes and states each rule once, and the tutorial builds one machine step by step:**
+- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took, resume a saved game, complete the paths a callback asks about, answer more about a running machine and show more in `hsm-view`, the guide gains recipes and states each rule once, and the tutorial teaches every feature on one machine:**
   - **`every`** — a state runs code each time a delay passes while it is active, such as damage every half second or a rate of fire read from the context; a long frame runs it once, and a run is not a move; see [Repeat while a state is active](./state-machines.md#repeat-while-a-state-is-active).
   - **Rules on timers and `always`** — an `after` timer takes `to`, `when` and `run`, so a state can run code at a set time without leaving and a timer can wait for a condition once its delay has passed, and an `always` rule takes `run`; see [Rules on a timer](./state-machines.md#rules-on-a-timer).
   - **`waitGroup()`** — a `task` that starts several engine calls waits for all of them: each `add()` returns the callback to pass, as in `http.request(url, "GET", group.add())`, and `wait` runs its callback once every one has reported; see [`WaitGroup`](./state-machines.md#waitgroup).
@@ -43,7 +43,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Waiting recipes** — the guide shows how a state moves on once something has finished: a chain of child states, engine work counted with `waitGroup()`, parallel regions joined by an `always` rule, and a group awaited in a `sequence`; see [Wait for something to finish](./state-machines.md#wait-for-something-to-finish).
   - **Several machines recipes** — the guide shows how two machines work together: machines on separate game objects that post messages to each other, two machines in one script where one reads the other, and a machine that runs only while a state of another is active; see [Several machines](./state-machines.md#several-machines).
   - **Shorter guide** — the [State machines](./state-machines.md) guide states each rule once, in the section that owns it, and shows the few lines that carry each sample in place of whole scripts.
-  - **One machine in the tutorial** — [State machines, one click at a time](./state-machines-tutorial.md) builds a single robot buddy machine step by step, shows each change as a diff of the file you are writing, and runs the buddy of each lesson in a live diagram.
+  - **One machine in the tutorial** — [State machines, one click at a time](./state-machines-tutorial.md) builds one robot buddy machine and a charging dock step by step, shows each change as a diff of the file you are writing, and covers every `hsm` feature. Live diagrams run the first lessons, and the later ones run your own file in `hsm-view`.
 
 ### Fixed
 
