@@ -67,10 +67,14 @@ export interface DemoSpec<Ctx, E extends EventObject> {
   readonly speed?: number;
   /**
    * Plain-words labels for rule chips, keyed by chip id (`<path>|on|<event>|<index>`,
-   * `<path>|always|<index>`, `<path>|update`).
+   * `<path>|always|<index>`, `<path>|update`, `<path>|<after or every>|<delay>` for the form
+   * written by delay, `<path>|<after or every>|#<index>` for the list form).
    * A rule whose label describes its `when` names what its `run` does under `<chip id>|run`.
+   * A delay that is a function is shown as the words under `<chip id>|delay` until it is read.
    */
   readonly notes?: Readonly<Record<string, string>>;
+  /** The paths of the states whose `update` hook never returns a path; they get no rule line for it. */
+  readonly quietUpdates?: readonly string[];
 }
 
 export type Demo = DemoSpec<DemoCtx, EventObject>;
@@ -540,15 +544,20 @@ const buddyQueue = demo<FadeCtx, QueueEvent>({
   },
 });
 
-const CHECKUP_NOTES = {
+// Every rule of a buddy with a checkup, apart from the `update` hook of `resting`.
+const CHECKUP_RULE_NOTES = {
   ...ENERGY_NOTES,
-  "/resting|update": "fill up, then go to checkup",
   "/awake/wander|on|trigger_response|0": "if the player walked in",
   "/awake/follow|on|trigger_response|0": "if the player walked in",
   "/awake/follow|on|trigger_response|1": "otherwise",
   "/checkup|always|0": "if the battery is under 1",
   "/checkup|always|1": "otherwise",
   "/checkup|always|1|run": "wakes + 1",
+};
+
+const CHECKUP_NOTES = {
+  ...CHECKUP_RULE_NOTES,
+  "/resting|update": "fill up, then go to checkup",
 };
 
 const buddyCheckup = demo<FadeCtx, QueueEvent>({
@@ -780,6 +789,274 @@ const buddyMemory = demo<FadeCtx, QueueEvent>({
   notes: CHECKUP_NOTES,
 });
 
+const buddyDrain = demo<FadeCtx, QueueEvent>({
+  title: "The buddy runs down",
+  subtitle: "awake sends itself a small BUMP every second.",
+  timed: true,
+  config: {
+    initial: "/asleep",
+    states: {
+      asleep: {
+        enter: (ctx, m) => {
+          if (ctx.wakes === 0) m.send({ type: "POKE" });
+        },
+        on: { POKE: "/waking" },
+      },
+      waking: {
+        task: (ctx, finish) => {
+          ctx.glow = 0;
+          ctx.lit = true;
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
+        },
+        exit: (ctx) => {
+          ctx.fade = undefined;
+          ctx.lit = false;
+        },
+        on: { WOKEN: "/checkup", POKE: "/asleep" },
+      },
+      checkup: {
+        always: [
+          { to: "/resting", when: (ctx) => ctx.energy < 1 },
+          {
+            to: "/awake",
+            run: (ctx) => {
+              ctx.wakes += 1;
+            },
+          },
+        ],
+      },
+      awake: {
+        restoreDepth: 1,
+        initial: "/awake/wander",
+        enter: (ctx) => {
+          ctx.lit = true;
+        },
+        exit: (ctx) => {
+          ctx.lit = false;
+        },
+        after: { 30: "/asleep" },
+        every: {
+          1: (_ctx, m) => m.send({ type: "BUMP", cost: 1 / 16 }),
+        },
+        on: {
+          POKE: "/asleep",
+          BUMP: [
+            {
+              to: "/resting",
+              when: (ctx, event) => ctx.energy <= event.cost,
+              run: (ctx) => {
+                ctx.energy = 0;
+              },
+            },
+            {
+              run: (ctx, event) => {
+                ctx.energy -= event.cost;
+              },
+            },
+          ],
+        },
+        states: {
+          wander: {
+            on: {
+              trigger_response: { to: "/awake/follow", when: (_ctx, event) => event.enter },
+            },
+          },
+          follow: {
+            after: { 4: "/awake/wander" },
+            on: {
+              trigger_response: [
+                { to: "/awake/follow", when: (_ctx, event) => event.enter },
+                { to: "/awake/wander" },
+              ],
+            },
+          },
+        },
+      },
+      resting: {
+        update: (ctx, dt) => {
+          ctx.energy = Math.min(3, ctx.energy + dt);
+          return ctx.energy >= 3 ? "/checkup" : undefined;
+        },
+        on: {
+          RECHARGE: {
+            to: "/checkup",
+            run: (ctx) => {
+              ctx.energy = 3;
+            },
+          },
+        },
+      },
+    },
+  },
+  ctx: () => ({ lit: false, glow: 1, fade: undefined, wakes: 0, energy: 3 }),
+  tick: advanceFade,
+  buttons: [
+    { label: "POKE", event: { type: "POKE" } },
+    { label: "trigger_response (enter true)", event: { type: "trigger_response", enter: true } },
+    { label: "trigger_response (enter false)", event: { type: "trigger_response", enter: false } },
+    { label: "BUMP (cost 1)", event: { type: "BUMP", cost: 1 } },
+    { label: "BUMP (cost 2.5)", event: { type: "BUMP", cost: 2.5 } },
+    { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
+    { label: "RECHARGE", event: { type: "RECHARGE" } },
+  ],
+  readout: (m) => [
+    ["ctx.energy", m.ctx.energy.toFixed(2)],
+    ['matches("/awake")', String(m.matches("/awake"))],
+  ],
+  visual: (m) => ({ pose: buddyPose(m), light: lightGlow(m.ctx) }),
+  notes: { ...CHECKUP_NOTES, "/awake|every|1": "send BUMP, cost 1/16" },
+});
+
+// `napSeconds` is how long the next nap lasts.
+type NapCtx = FadeCtx & { napSeconds: number };
+
+const buddyNap = demo<NapCtx, QueueEvent>({
+  title: "The buddy naps as long as it needs",
+  subtitle: "resting reads its delay when it is entered, then waits for a full battery.",
+  timed: true,
+  config: {
+    initial: "/asleep",
+    states: {
+      asleep: {
+        enter: (ctx, m) => {
+          if (ctx.wakes === 0) m.send({ type: "POKE" });
+        },
+        on: { POKE: "/waking" },
+      },
+      waking: {
+        task: (ctx, finish) => {
+          ctx.glow = 0;
+          ctx.lit = true;
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
+        },
+        exit: (ctx) => {
+          ctx.fade = undefined;
+          ctx.lit = false;
+        },
+        on: { WOKEN: "/checkup", POKE: "/asleep" },
+      },
+      checkup: {
+        always: [
+          { to: "/resting", when: (ctx) => ctx.energy < 1 },
+          {
+            to: "/awake",
+            run: (ctx) => {
+              ctx.wakes += 1;
+            },
+          },
+        ],
+      },
+      awake: {
+        restoreDepth: 1,
+        initial: "/awake/wander",
+        enter: (ctx) => {
+          ctx.lit = true;
+        },
+        exit: (ctx) => {
+          ctx.lit = false;
+        },
+        after: { 30: "/asleep" },
+        every: [
+          {
+            delay: (ctx) => (ctx.energy < 2 ? 2 : 1),
+            run: (_ctx, m) => m.send({ type: "BUMP", cost: 1 / 16 }),
+          },
+        ],
+        on: {
+          POKE: "/asleep",
+          BUMP: [
+            {
+              to: "/resting",
+              when: (ctx, event) => ctx.energy <= event.cost,
+              run: (ctx) => {
+                ctx.energy = 0;
+              },
+            },
+            {
+              run: (ctx, event) => {
+                ctx.energy -= event.cost;
+              },
+            },
+          ],
+        },
+        states: {
+          wander: {
+            on: {
+              trigger_response: { to: "/awake/follow", when: (_ctx, event) => event.enter },
+            },
+          },
+          follow: {
+            after: {
+              4: {
+                to: "/awake/wander",
+                run: (ctx) => {
+                  ctx.napSeconds = Math.min(5, ctx.napSeconds + 1);
+                },
+              },
+            },
+            on: {
+              trigger_response: [
+                { to: "/awake/follow", when: (_ctx, event) => event.enter },
+                { to: "/awake/wander" },
+              ],
+            },
+          },
+        },
+      },
+      resting: {
+        update: (ctx, dt) => {
+          ctx.energy = Math.min(3, ctx.energy + dt);
+          return undefined;
+        },
+        after: [
+          {
+            delay: (ctx) => ctx.napSeconds,
+            to: "/checkup",
+            when: (ctx) => ctx.energy >= 3,
+            run: (ctx) => {
+              ctx.napSeconds = 2;
+            },
+          },
+        ],
+        on: {
+          RECHARGE: {
+            to: "/checkup",
+            run: (ctx) => {
+              ctx.energy = 3;
+            },
+          },
+        },
+      },
+    },
+  },
+  ctx: () => ({ lit: false, glow: 1, fade: undefined, wakes: 0, energy: 3, napSeconds: 2 }),
+  tick: advanceFade,
+  buttons: [
+    { label: "POKE", event: { type: "POKE" } },
+    { label: "trigger_response (enter true)", event: { type: "trigger_response", enter: true } },
+    { label: "trigger_response (enter false)", event: { type: "trigger_response", enter: false } },
+    { label: "BUMP (cost 1)", event: { type: "BUMP", cost: 1 } },
+    { label: "BUMP (cost 2.5)", event: { type: "BUMP", cost: 2.5 } },
+    { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
+    { label: "RECHARGE", event: { type: "RECHARGE" } },
+  ],
+  readout: (m) => [
+    ["ctx.energy", m.ctx.energy.toFixed(2)],
+    ["ctx.napSeconds", String(m.ctx.napSeconds)],
+  ],
+  visual: (m) => ({ pose: buddyPose(m), light: lightGlow(m.ctx) }),
+  quietUpdates: ["/resting"],
+  notes: {
+    ...CHECKUP_RULE_NOTES,
+    "/awake|every|#0": "send BUMP, cost 1/16",
+    "/awake|every|#0|delay": "1 s, or 2 s on a low battery",
+    "/awake/follow|after|4": "napSeconds + 1, up to 5",
+    "/resting|after|#0": "if the battery is full",
+    "/resting|after|#0|run": "napSeconds = 2",
+    "/resting|after|#0|delay": "napSeconds",
+  },
+});
+
 export const DEMOS = {
   "buddy-first": buddyFirst,
   "buddy-nested": buddyNested,
@@ -789,6 +1066,8 @@ export const DEMOS = {
   "buddy-queue": buddyQueue,
   "buddy-checkup": buddyCheckup,
   "buddy-memory": buddyMemory,
+  "buddy-drain": buddyDrain,
+  "buddy-nap": buddyNap,
 } satisfies Record<string, Demo>;
 
 export type DemoId = keyof typeof DEMOS;

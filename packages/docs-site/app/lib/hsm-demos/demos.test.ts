@@ -4,6 +4,8 @@ import {
   activePaths,
   type DemoRun,
   diagramChips,
+  everyChip,
+  listChip,
   press,
   reactionTo,
   startDemo,
@@ -367,6 +369,132 @@ describe("hsm tutorial demos", () => {
     const { d } = restWhileFollowing("buddy-checkup");
     expect(d.run.path).toBe("/awake/wander");
   });
+
+  // The fade ends on the second step, which leaves awake's clock at half a second;
+  // `mark` is where the third step starts.
+  function drainedOnce() {
+    const d = drive("buddy-drain");
+    d.step(0.5);
+    d.step(0.5);
+    const mark = d.lines.length;
+    d.step(0.5);
+    return { d, mark };
+  }
+
+  test("buddy-drain: each second awake sends a small bump that waits its turn", () => {
+    const { d, mark } = drainedOnce();
+    expect(d.since(mark, "timer", "action", "queue", "when")).toEqual([
+      "/awake: every 1 s ran",
+      "run: send BUMP, cost 1/16",
+      "BUMP queued (machine is busy)",
+      '/awake: when "if the bump uses up the energy" said no',
+      "run: lose energy",
+    ]);
+    expect(d.ctx.energy).toBe(2.9375);
+  });
+
+  test("buddy-drain: four seconds awake cost four sixteenths and move nothing, and a sleeping buddy keeps its battery", () => {
+    const { d, mark } = drainedOnce();
+    for (let i = 0; i < 7; i++) d.step(0.5);
+    expect(d.ctx.energy).toBe(2.75);
+    expect(d.run.path).toBe("/awake/wander");
+    expect(d.run.clock("/awake")).toBe(4.5);
+    expect(d.since(mark, "exit", "enter")).toEqual([]);
+
+    d.press("POKE");
+    for (let i = 0; i < 4; i++) d.step(0.5);
+    expect(d.ctx.energy).toBe(2.75);
+    expect(d.run.progress(everyChip("/awake", 1))).toBe(0);
+  });
+
+  test("buddy-drain: the drain empties the battery through the BUMP rules", () => {
+    const d = drive("buddy-drain");
+    d.step(0.5);
+    d.step(0.5);
+    d.press("BUMP (cost 2.5)");
+    for (let i = 0; i < 14; i++) d.step(0.5);
+    const mark = d.lines.length;
+    d.step(0.5);
+    expect(d.run.path).toBe("/resting");
+    expect(d.ctx.energy).toBe(0);
+    expect(d.since(mark, "action", "exit", "enter")).toEqual([
+      "run: send BUMP, cost 1/16",
+      "exit /awake/wander",
+      "exit /awake",
+      "run: energy = 0",
+      "enter /resting",
+    ]);
+  });
+
+  const nap = listChip("/resting", "after", 0);
+  const drain = listChip("/awake", "every", 0);
+
+  test("buddy-nap: a nap whose two seconds are over waits for a full battery", () => {
+    const d = drive("buddy-nap");
+    d.step(0.5);
+    d.step(0.5);
+    const pressed = d.lines.length;
+    d.press("BUMP (cost 3)");
+    expect(d.since(pressed, "note")).toContain("/resting: after delay read: 2 s");
+
+    for (let i = 0; i < 4; i++) d.step(0.5);
+    expect(d.run.path).toBe("/resting");
+    expect(d.ctx.energy).toBe(2);
+    expect(d.run.waiting(nap)).toBe(true);
+    const held = ['/resting: 2 s timer is due, but when "if the battery is full" said no'];
+    expect(d.since(pressed, "when")).toEqual(held);
+    d.step(0.5);
+    expect(d.since(pressed, "when")).toEqual(held);
+
+    const mark = d.lines.length;
+    d.step(0.5);
+    expect(d.run.path).toBe("/awake/wander");
+    expect(d.since(mark, "timer")).toEqual(["/resting: 2 s timer fired"]);
+    expect(d.ctx.wakes).toBe(2);
+    expect(d.run.waiting(nap)).toBe(false);
+  });
+
+  test("buddy-nap: a buddy that gave up following twice naps four seconds, battery full or not", () => {
+    const d = drive("buddy-nap");
+    d.step(0.5);
+    d.step(0.5);
+    for (let round = 0; round < 2; round++) {
+      d.press("trigger_response (enter true)");
+      for (let i = 0; i < 8; i++) d.step(0.5);
+    }
+    expect(d.ctx.napSeconds).toBe(4);
+    expect(d.ctx.energy).toBe(2.5);
+
+    d.press("BUMP (cost 3)");
+    expect(d.run.delayOf(nap)).toBe(4);
+    for (let i = 0; i < 6; i++) d.step(0.5);
+    expect(d.run.path).toBe("/resting");
+    expect(d.ctx.energy).toBe(3);
+    expect(d.run.waiting(nap)).toBe(false);
+
+    d.step(0.5);
+    d.step(0.5);
+    expect(d.run.path).toBe("/awake/wander");
+    expect(d.ctx.napSeconds).toBe(2);
+  });
+
+  test("buddy-nap: the drain's delay is read when awake is entered and holds for the stay", () => {
+    const d = drive("buddy-nap");
+    d.step(0.5);
+    d.step(0.5);
+    expect(d.run.delayOf(drain)).toBe(1);
+    d.press("BUMP (cost 1)");
+    d.press("BUMP (cost 1)");
+    expect(d.run.delayOf(drain)).toBe(1);
+
+    d.press("POKE");
+    d.press("POKE");
+    d.step(0.5);
+    d.step(0.5);
+    expect(d.run.delayOf(drain)).toBe(2);
+    for (let i = 0; i < 3; i++) d.step(0.5);
+    expect(d.ctx.energy).toBe(0.9375);
+  });
 });
 
 // A string presses the button with that label; a number lets that many seconds pass in 0.5 s steps.
@@ -379,7 +507,7 @@ const AWAKE_TAIL = [
   "POKE",
   "POKE",
 ] as const;
-// Both buddies with a checkup take the same route; it reaches each `always` rule and each way into `checkup`.
+// Every buddy with a checkup takes the same route; it reaches each `always` rule and each way into `checkup`.
 const CHECKUP_WALK = [
   "POKE",
   1,
@@ -451,6 +579,8 @@ const WALKS: Record<DemoId, readonly (string | number)[]> = {
   ],
   "buddy-checkup": CHECKUP_WALK,
   "buddy-memory": CHECKUP_WALK,
+  "buddy-drain": CHECKUP_WALK,
+  "buddy-nap": CHECKUP_WALK,
 };
 
 describe("every rule a diagram draws can be used", () => {
@@ -461,7 +591,8 @@ describe("every rule a diagram draws can be used", () => {
         if (typeof move === "string") d.press(move);
         else for (let passed = 0; passed < move; passed += 0.5) d.step(0.5);
       }
-      expect([...d.fired].sort()).toEqual(diagramChips(DEMOS[id].config).sort());
+      const drawn = diagramChips(DEMOS[id].config, DEMOS[id].quietUpdates);
+      expect([...d.fired].sort()).toEqual(drawn.sort());
     });
   }
 });

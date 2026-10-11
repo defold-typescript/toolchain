@@ -1,4 +1,5 @@
 import {
+  type AfterRule,
   type AlwaysConfig,
   defineMachine,
   type EventObject,
@@ -18,10 +19,9 @@ import type { BuddyReaction, Demo, DemoButton, DemoCtx, DemoView } from "./demos
  * leading action that reports which rule fired. Wrapping adds no states, rules
  * or targets, so the machine behaves exactly as the page's code does.
  *
- * Three lines have no hook to come from and are derived for display: the
- * bubbling line (from the config and the path before `send`), "nobody handles"
- * (a sent event no rule fired for), and the timer line (an `update` that moved
- * the machine while no `update` hook returned a path).
+ * Two lines have no hook to come from and are derived for display: the
+ * bubbling line (from the config and the path before `send`) and "nobody
+ * handles" (a sent event no rule fired for).
  */
 
 export type TraceKind =
@@ -55,7 +55,11 @@ type State = StateConfig<DemoCtx, EventObject, string>;
 type Rule = TransitionConfig<DemoCtx, EventObject, EventObject, string, string>;
 type Action = MoveAction<DemoCtx, EventObject, EventObject, string>;
 type AlwaysRule = AlwaysConfig<DemoCtx, string, EventObject, string>;
-type AlwaysAction = RunAction<DemoCtx, EventObject, string>;
+type AfterTimer = AfterRule<DemoCtx, string, EventObject, string>;
+/** A function a `run` calls where there is no event: under `always`, `after` and `every`. */
+type Run = RunAction<DemoCtx, EventObject, string>;
+type Delay = number | ((ctx: Readonly<DemoCtx>) => number);
+type TimerKey = "after" | "every";
 type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 
 export function ruleChip(path: string, type: string, index: number): string {
@@ -74,6 +78,15 @@ export function afterChip(path: string, delay: number): string {
   return `${path}|after|${delay}`;
 }
 
+export function everyChip(path: string, delay: number): string {
+  return `${path}|every|${delay}`;
+}
+
+/** An entry of the list form of `after` or `every`, which has no fixed delay to be named by. */
+export function listChip(path: string, key: TimerKey, index: number): string {
+  return `${path}|${key}|#${index}`;
+}
+
 export function ruleList(spec: unknown): readonly Rule[] {
   if (typeof spec === "string") return [{ to: spec }];
   if (Array.isArray(spec)) return spec as Rule[];
@@ -87,10 +100,61 @@ export function alwaysList(spec: unknown): readonly AlwaysRule[] {
   return list.map((rule) => (typeof rule === "string" ? { to: rule } : (rule as AlwaysRule)));
 }
 
-export function afterDelays(config: State): number[] {
-  return Object.keys(config.after ?? {})
+/** A timer as a rule object; a bare path is a rule with that `to`. */
+function afterRule(written: unknown): AfterTimer {
+  return typeof written === "string" ? { to: written } : (written as AfterTimer);
+}
+
+function runList<A>(declared: A | readonly A[] | undefined): readonly A[] {
+  if (declared === undefined) return [];
+  return Array.isArray(declared) ? (declared as readonly A[]) : [declared as A];
+}
+
+/** One `after` or `every` entry and the chip it is drawn as. */
+interface Timed {
+  readonly chip: string;
+  readonly delay: Delay;
+  /** A value of the record form, or an entry of the list form. */
+  readonly written: unknown;
+}
+
+interface TimedList {
+  /** Written as a list of entries that each carry a `delay`, not as a record by delay. */
+  readonly list: boolean;
+  readonly entries: readonly Timed[];
+}
+
+/**
+ * A state's `after` or `every` entries in the order the diagram lists them: the record form
+ * shortest delay first, the list form in list order. The two are told apart as the library
+ * does: a list is the form whose first entry is an object with a `delay`.
+ */
+function timedList(spec: object | undefined, path: string, key: TimerKey): TimedList {
+  if (spec === undefined) return { list: false, entries: [] };
+  const first = (spec as readonly { readonly delay?: unknown }[])[0];
+  if (typeof first === "object" && first.delay !== undefined) {
+    const entries = (spec as readonly { readonly delay: Delay }[]).map((written, index) => ({
+      chip: listChip(path, key, index),
+      delay: written.delay,
+      written,
+    }));
+    return { list: true, entries };
+  }
+  const byDelay = spec as Readonly<Record<number, unknown>>;
+  const entries = Object.keys(byDelay)
     .map(Number)
-    .sort((a, b) => a - b);
+    .sort((a, b) => a - b)
+    .map((delay) => ({
+      chip: key === "after" ? afterChip(path, delay) : everyChip(path, delay),
+      delay,
+      written: byDelay[delay],
+    }));
+  return { list: false, entries };
+}
+
+/** A delay written as a number; `undefined` for a function, whose value is read on each entry. */
+function fixedDelay(delay: Delay): number | undefined {
+  return typeof delay === "number" ? delay : undefined;
 }
 
 /** `"/on/dim"` to `["/on", "/on/dim"]`; a stopped machine (`undefined`) to `[]`. */
@@ -115,9 +179,17 @@ export type ChipSpec =
     }
   | { readonly kind: "always"; readonly id: string; readonly to: string }
   | { readonly kind: "update"; readonly id: string }
-  | { readonly kind: "after"; readonly id: string; readonly delay: number; readonly to: string };
+  // A delay of `undefined` is a function of the context.
+  | { readonly kind: "every"; readonly id: string; readonly delay: number | undefined }
+  | {
+      readonly kind: "after";
+      readonly id: string;
+      readonly delay: number | undefined;
+      readonly to: string | undefined;
+    };
 
-export function stateChips(config: State, path: string): ChipSpec[] {
+/** A quiet state's `update` hook never returns a path, so it gets no rule line. */
+export function stateChips(config: State, path: string, quietUpdate = false): ChipSpec[] {
   const chips: ChipSpec[] = [];
   for (const [type, spec] of Object.entries(config.on ?? {})) {
     if (spec === undefined) continue;
@@ -128,21 +200,29 @@ export function stateChips(config: State, path: string): ChipSpec[] {
   alwaysList(config.always).forEach((rule, index) => {
     chips.push({ kind: "always", id: alwaysChip(path, index), to: rule.to });
   });
-  if (config.update !== undefined) chips.push({ kind: "update", id: updateChip(path) });
-  const after = config.after as Record<number, string> | undefined;
-  for (const delay of afterDelays(config)) {
-    chips.push({ kind: "after", id: afterChip(path, delay), delay, to: after?.[delay] as string });
+  if (config.update !== undefined && !quietUpdate) {
+    chips.push({ kind: "update", id: updateChip(path) });
+  }
+  for (const entry of timedList(config.every, path, "every").entries) {
+    chips.push({ kind: "every", id: entry.chip, delay: fixedDelay(entry.delay) });
+  }
+  for (const entry of timedList(config.after, path, "after").entries) {
+    const delay = fixedDelay(entry.delay);
+    chips.push({ kind: "after", id: entry.chip, delay, to: afterRule(entry.written).to });
   }
   return chips;
 }
 
-/** The id of every chip a diagram draws: each state below the root, parents before children. */
-export function diagramChips(root: State): string[] {
+/**
+ * The id of every chip a diagram draws: each state below the root, parents before children.
+ * `quietUpdates` holds the paths of the states whose `update` hook never returns a path.
+ */
+export function diagramChips(root: State, quietUpdates: readonly string[] = []): string[] {
   const ids: string[] = [];
   const collect = (config: State, path: string) => {
     for (const [name, child] of Object.entries(config.states ?? {})) {
       const at = childPath(path, name);
-      for (const chip of stateChips(child, at)) ids.push(chip.id);
+      for (const chip of stateChips(child, at, quietUpdates.includes(at))) ids.push(chip.id);
       collect(child, at);
     }
   };
@@ -188,14 +268,21 @@ interface Session {
   /** States entered during the current outside call. */
   readonly entered: Set<string>;
   readonly clocks: Map<string, number>;
-  readonly fired: Map<string, number>;
   readonly entries: Map<string, number>;
   /** The child each state was last left in, by the parent's path. */
   readonly lastChild: Map<string, string>;
-  updating: boolean;
-  updateMoved: boolean;
-  dueTimer: { readonly path: string; readonly delay: number } | undefined;
-  timerNoted: boolean;
+  /** Every `after` and `every` chip, by id. */
+  readonly timers: Map<string, TimerChip>;
+  /** What each delay function returned for the current stay, by chip. */
+  readonly delays: Map<string, number>;
+  /** The due `after` chips whose `when` said no during the current stay. */
+  readonly held: Set<string>;
+}
+
+interface TimerChip {
+  readonly path: string;
+  readonly key: TimerKey;
+  readonly delay: number | undefined;
 }
 
 export interface DemoRun extends DemoView<DemoCtx> {
@@ -203,6 +290,18 @@ export interface DemoRun extends DemoView<DemoCtx> {
   readonly instance: Instance;
   /** Seconds the state at `path` has been active, counted as its timers count them; 0 when inactive. */
   readonly clock: (path: string) => number;
+  /**
+   * How full the bar of an `after` or `every` chip is, from 0 to 1. An `every` bar starts over
+   * each time its delay has passed; any bar is empty while its state is inactive.
+   */
+  readonly progress: (chip: string) => number;
+  /**
+   * The delay an `after` or `every` chip counts: the number written, or what its function
+   * returned for the stay its state is in. `undefined` for a function while the state is inactive.
+   */
+  readonly delayOf: (chip: string) => number | undefined;
+  /** Whether an `after` chip is due and held back by its `when`, for as long as its state stays active. */
+  readonly waiting: (chip: string) => boolean;
 }
 
 const sessions = new WeakMap<DemoRun, Session>();
@@ -261,30 +360,6 @@ function proxyOf(s: Session, m: Instance): Instance {
   return s.proxy;
 }
 
-// The library fires at most one timer per update, on the deepest active state
-// whose next delay is due; this is that state, worked out before the update so
-// the timer line can lead the exits it causes.
-function dueTimer(s: Session, dt: number): Session["dueTimer"] {
-  const active = activePaths((s.instance as Instance).path);
-  for (let i = active.length - 1; i >= 0; i--) {
-    const path = active[i] as string;
-    const delays = afterDelays(s.configs.get(path) as State);
-    const next = s.fired.get(path) ?? 0;
-    const delay = delays[next];
-    if (delay !== undefined && delay <= (s.clocks.get(path) ?? 0) + dt) return { path, delay };
-  }
-  return undefined;
-}
-
-function noteTimer(s: Session): void {
-  if (!s.updating || s.updateMoved || s.timerNoted || s.dueTimer === undefined) return;
-  const { path, delay } = s.dueTimer;
-  s.timerNoted = true;
-  s.fired.set(path, (s.fired.get(path) ?? 0) + 1);
-  emit(s, "timer", `${describe(path)}: ${delay} s timer fired`);
-  fire(s, afterChip(path, delay));
-}
-
 /** What a rule's `run` does, in plain words: its own note, else the note of the rule it belongs to. */
 function runNote(s: Session, chip: string): string {
   return s.demo.notes?.[`${chip}|run`] ?? s.demo.notes?.[chip] ?? "run code";
@@ -292,9 +367,7 @@ function runNote(s: Session, chip: string): string {
 
 function wrapAlways(s: Session, rule: AlwaysRule, path: string, index: number): AlwaysRule {
   const chip = alwaysChip(path, index);
-  const declared = rule.run;
-  const run: readonly AlwaysAction[] =
-    declared === undefined ? [] : typeof declared === "function" ? [declared] : declared;
+  const run = runList<Run>(rule.run);
   const when = rule.when;
   return {
     ...rule,
@@ -311,7 +384,7 @@ function wrapAlways(s: Session, rule: AlwaysRule, path: string, index: number): 
         if (run.length > 0) emit(s, "action", `run: ${runNote(s, chip)}`);
       },
       ...run.map(
-        (action): AlwaysAction =>
+        (action): Run =>
           (ctx, m) =>
             action(ctx, proxyOf(s, m)),
       ),
@@ -319,12 +392,105 @@ function wrapAlways(s: Session, rule: AlwaysRule, path: string, index: number): 
   };
 }
 
+/** The delay an entry counts during the current stay: the number written, or what its function returned on entry. */
+function stayDelay(s: Session, entry: Timed): number | undefined {
+  return typeof entry.delay === "number" ? entry.delay : s.delays.get(entry.chip);
+}
+
+// The library calls a delay function right after the state's `enter` hook, once per stay.
+function wrapDelay(s: Session, entry: Timed, path: string, key: TimerKey): Delay {
+  const delay = entry.delay;
+  if (typeof delay === "number") return delay;
+  return (ctx) => {
+    const seconds = delay(ctx);
+    s.delays.set(entry.chip, seconds);
+    emit(s, "note", `${describe(path)}: ${key} delay read: ${seconds} s`);
+    return seconds;
+  };
+}
+
+/** Copies a state's `after` or `every` in the form it was written, each entry replaced by `wrap`'s. */
+function wrapTimed<T extends object>(
+  s: Session,
+  timed: TimedList,
+  path: string,
+  key: TimerKey,
+  wrap: (entry: Timed) => T,
+): unknown {
+  for (const entry of timed.entries) {
+    s.timers.set(entry.chip, { path, key, delay: fixedDelay(entry.delay) });
+  }
+  if (timed.list) {
+    return timed.entries.map((entry) => ({
+      ...wrap(entry),
+      delay: wrapDelay(s, entry, path, key),
+    }));
+  }
+  const byDelay: Record<number, T> = {};
+  for (const entry of timed.entries) byDelay[entry.delay as number] = wrap(entry);
+  return byDelay;
+}
+
+/** The `run` of one `every` entry: `declared` behind an action that narrates the run. */
+function wrapEvery(s: Session, entry: Timed, declared: readonly Run[], path: string): Run[] {
+  return [
+    () => {
+      emit(s, "timer", `${describe(path)}: every ${stayDelay(s, entry)} s ran`);
+      fire(s, entry.chip);
+      emit(s, "action", `run: ${runNote(s, entry.chip)}`);
+    },
+    ...declared.map(
+      (action): Run =>
+        (ctx, m) =>
+          action(ctx, proxyOf(s, m)),
+    ),
+  ];
+}
+
+/**
+ * One `after` timer as a rule that narrates itself. The machine asks a due timer's `when` on
+ * every update until it passes, so the wrapped `when` is where a timer is seen to fire or wait.
+ */
+function wrapAfter(s: Session, entry: Timed, path: string): AfterTimer {
+  const { chip } = entry;
+  const rule = afterRule(entry.written);
+  const declared = runList<Run>(rule.run);
+  const when = rule.when;
+  const wrapped: Mutable<AfterTimer> = {
+    ...rule,
+    when: (ctx, machine) => {
+      const timer = `${describe(path)}: ${stayDelay(s, entry)} s timer`;
+      if (when === undefined || when(ctx, machine)) {
+        // The machine takes a timer that passes at once, so its line and chip lead the exits.
+        s.held.delete(chip);
+        emit(s, "timer", `${timer} fired`);
+        fire(s, chip);
+        return true;
+      }
+      if (!s.held.has(chip)) {
+        s.held.add(chip);
+        emit(s, "when", `${timer} is due, but when "${s.demo.notes?.[chip] ?? "check"}" said no`);
+      }
+      return false;
+    },
+  };
+  if (declared.length > 0) {
+    wrapped.run = [
+      () => emit(s, "action", `run: ${runNote(s, chip)}`),
+      ...declared.map(
+        (action): Run =>
+          (ctx, m) =>
+            action(ctx, proxyOf(s, m)),
+      ),
+    ];
+  }
+  return wrapped;
+}
+
 function wrapRule(s: Session, rule: Rule, path: string, type: string, index: number): Rule {
   const chip = ruleChip(path, type, index);
   const note = s.demo.notes?.[chip];
-  const declared = rule.run;
-  const run: readonly Action[] =
-    declared === undefined ? [] : typeof declared === "function" ? [declared] : declared;
+  const run = runList<Action>(rule.run);
   const wrapped: Mutable<Rule> = { ...rule };
   const when = rule.when;
   if (when !== undefined) {
@@ -386,7 +552,6 @@ function wrapState(s: Session, config: State, path: string): State {
     wrapped.update = (ctx, dt, m) => {
       const target = update(ctx, dt, proxyOf(s, m));
       if (typeof target === "string") {
-        s.updateMoved = true;
         emit(s, "event", `${describe(path)}: update returned "${target}"`);
         fire(s, updateChip(path));
       }
@@ -394,12 +559,30 @@ function wrapState(s: Session, config: State, path: string): State {
     };
   }
 
+  if (config.every !== undefined) {
+    const every = timedList(config.every, path, "every");
+    wrapped.every = wrapTimed(s, every, path, "every", (entry) => {
+      // A list entry holds its `run` beside the delay; the record form holds it under the delay.
+      const declared = every.list
+        ? (entry.written as { readonly run: Run | readonly Run[] }).run
+        : (entry.written as Run | readonly Run[]);
+      const run = wrapEvery(s, entry, runList(declared), path);
+      return every.list ? { run } : run;
+    }) as NonNullable<State["every"]>;
+  }
+
+  const after = timedList(config.after, path, "after");
+  if (config.after !== undefined) {
+    wrapped.after = wrapTimed(s, after, path, "after", (entry) =>
+      wrapAfter(s, entry, path),
+    ) as NonNullable<State["after"]>;
+  }
+
   // The root has no box on the diagram, so its own entry and exit stay silent.
   if (path === "") return wrapped;
 
   const enter = config.enter;
   wrapped.enter = (ctx, m) => {
-    noteTimer(s);
     const parent = parentPath(path);
     const above = s.configs.get(parent) as State;
     const withParent = parent === "" ? s.starting : s.entered.has(parent);
@@ -412,7 +595,7 @@ function wrapState(s: Session, config: State, path: string): State {
       how = " (initial child)";
     }
     s.clocks.set(path, 0);
-    s.fired.set(path, 0);
+    for (const entry of after.entries) s.held.delete(entry.chip);
     s.entries.set(path, (s.entries.get(path) ?? 0) + 1);
     s.entered.add(path);
     emit(s, "enter", `enter ${path}${how}`);
@@ -421,7 +604,6 @@ function wrapState(s: Session, config: State, path: string): State {
 
   const exit = config.exit;
   wrapped.exit = (ctx, m) => {
-    noteTimer(s);
     s.lastChild.set(parentPath(path), path);
     emit(s, "exit", `exit ${path}`);
     exit?.(ctx, proxyOf(s, m));
@@ -501,6 +683,24 @@ function sendFromOutside(s: Session, event: EventObject): void {
   fromOutside(s, event, () => instance.send(event));
 }
 
+/** The delay a timer chip counts: the number written, or what its function returned for the stay its state is in. */
+function chipDelay(s: Session, chip: string): number | undefined {
+  const timer = s.timers.get(chip);
+  if (timer === undefined) return undefined;
+  if (timer.delay !== undefined) return timer.delay;
+  return s.instance?.matches(timer.path) ? s.delays.get(chip) : undefined;
+}
+
+function chipProgress(s: Session, chip: string): number {
+  const timer = s.timers.get(chip);
+  const delay = chipDelay(s, chip);
+  if (timer === undefined || delay === undefined || !s.instance?.matches(timer.path)) return 0;
+  const clock = s.clocks.get(timer.path) ?? 0;
+  if (timer.key === "every") return (clock % delay) / delay;
+  // A delay of zero is due the moment the state is entered.
+  return delay > 0 ? Math.min(1, clock / delay) : 1;
+}
+
 // The demo configs are typed per spec; at this point every demo is the erased `Demo`.
 const define = defineMachine<DemoCtx, EventObject, string>() as unknown as (
   config: MachineConfig<DemoCtx, EventObject, string>,
@@ -521,13 +721,11 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     handled: new WeakSet(),
     entered: new Set(),
     clocks: new Map(),
-    fired: new Map(),
     entries: new Map(),
     lastChild: new Map(),
-    updating: false,
-    updateMoved: false,
-    dueTimer: undefined,
-    timerNoted: false,
+    timers: new Map(),
+    delays: new Map(),
+    held: new Set(),
   };
   const machine = define(
     wrapState(s, demo.config, "") as MachineConfig<DemoCtx, EventObject, string>,
@@ -553,6 +751,9 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     },
     matches: (path) => instance.matches(path),
     clock: (path) => (instance.matches(path) ? (s.clocks.get(path) ?? 0) : 0),
+    progress: (chip) => chipProgress(s, chip),
+    delayOf: (chip) => chipDelay(s, chip),
+    waiting: (chip) => s.held.has(chip) && instance.matches(s.timers.get(chip)?.path ?? ""),
   };
   sessions.set(run, s);
   return run;
@@ -594,15 +795,7 @@ export function step(run: DemoRun, dt: number): void {
   if (isStopped(s)) return;
   const instance = s.instance as Instance;
   const before = activePaths(instance.path);
-  s.dueTimer = dueTimer(s, dt);
-  s.updating = true;
-  s.updateMoved = false;
-  s.timerNoted = false;
-  try {
-    fromOutside(s, undefined, () => instance.update(dt));
-  } finally {
-    s.updating = false;
-  }
+  fromOutside(s, undefined, () => instance.update(dt));
   // The library adds dt to every active state's clock before the hooks run, hook move
   // or not; a state entered during this update starts from zero.
   for (const path of before) {
