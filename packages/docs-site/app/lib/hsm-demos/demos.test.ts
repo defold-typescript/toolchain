@@ -733,6 +733,51 @@ describe("hsm tutorial demos", () => {
     d.press("RECHARGE");
     expect(busy()).toBe("false");
   });
+
+  test("buddy-beep: walking up to a resting buddy beeps and moves nothing", () => {
+    const d = drive("buddy-beep");
+    tireOut(d);
+    const pressed = d.lines.length;
+    d.press("trigger_response (enter true)");
+    expect(d.reaction).toBe("ignored");
+    expect(d.readout("beeps")).toBe("1");
+    expect(d.since(pressed, "drop", "action")).toEqual([
+      "nobody handles trigger_response, so it is ignored",
+      "/resting: unhandled hook: play the beep",
+    ]);
+    expect(d.since(pressed, "exit", "enter")).toEqual([]);
+    expect(d.run.leaves).toEqual(["/resting/battery/filling", "/resting/lamp/shown"]);
+  });
+
+  test("buddy-beep: an awake buddy ignores without a beep", () => {
+    const d = drive("buddy-beep");
+    d.step(0.5);
+    d.step(0.5);
+    const pressed = d.lines.length;
+    d.press("trigger_response (enter false)");
+    expect(d.since(pressed, "drop")).toEqual(["nobody handles trigger_response, so it is ignored"]);
+    expect(d.since(pressed, "action")).toEqual([]);
+    expect(d.readout("beeps")).toBe("0");
+  });
+
+  test("buddy-beep: can answers before anything is sent", () => {
+    const d = drive("buddy-beep");
+    const poke = () => d.readout("can(POKE)");
+    const walk = () => d.readout("can(trigger_response, enter true)");
+    expect(poke()).toBe("true");
+    expect(walk()).toBe("false");
+
+    tireOut(d);
+    const logged = d.lines.length;
+    expect(poke()).toBe("false");
+    expect(walk()).toBe("false");
+    expect(d.lines.length).toBe(logged);
+    expect(d.readout("beeps")).toBe("0");
+
+    d.press("RECHARGE");
+    expect(poke()).toBe("true");
+    expect(walk()).toBe("true");
+  });
 });
 
 // A string presses the button with that label; a number lets that many seconds pass in 0.5 s steps.
@@ -831,6 +876,7 @@ const WALKS: Record<DemoId, readonly (string | number)[]> = {
   "buddy-greeting": GREETING_WALK,
   "buddy-regions": GREETING_WALK,
   "buddy-busy": GREETING_WALK,
+  "buddy-beep": GREETING_WALK,
 };
 
 describe("every rule a diagram draws can be used", () => {

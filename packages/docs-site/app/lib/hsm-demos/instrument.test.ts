@@ -363,6 +363,33 @@ const rester: Demo = {
   readout: () => [],
 };
 
+function hear(ctx: DemoCtx, state: "a" | "b"): void {
+  (ctx.heard as string[]).push(state);
+}
+
+const ignorer: Demo = {
+  title: "Ignorer",
+  subtitle: "A parent and its child both answer an event nobody took.",
+  config: {
+    initial: "/a",
+    states: {
+      a: {
+        initial: "/a/b",
+        on: { GO: { to: "/c", when: (ctx) => ctx.open === true } },
+        unhandled: (ctx) => hear(ctx, "a"),
+        states: {
+          b: { unhandled: (ctx) => hear(ctx, "b") },
+        },
+      },
+      c: {},
+    },
+  },
+  ctx: () => ({ heard: [], open: false }),
+  buttons: [],
+  readout: () => [],
+  notes: { "/a|unhandled": "note it" },
+};
+
 /** The lines a send logs when neither state of a region of `rester` has a rule for `type`. */
 function regionLines(region: "battery" | "lamp", type: string): string[] {
   const leaf = region === "battery" ? "filling" : "shown";
@@ -916,5 +943,49 @@ describe("a parallel state", () => {
       "enter /rest/lamp (region)",
       "enter /rest/lamp/shown (initial child)",
     ]);
+  });
+});
+
+describe("an unhandled hook", () => {
+  const hooks = ["/a/b: unhandled hook: run code", "/a: unhandled hook: note it"];
+
+  test("a dropped event is named once, ahead of the hooks it runs", () => {
+    const { run, trace } = start(ignorer);
+    const mark = trace.length;
+    send(run, { type: "NOPE" });
+    expect(texts(trace, mark, "drop", "action")).toEqual([
+      "nobody handles NOPE, so it is ignored",
+      ...hooks,
+    ]);
+    expect(run.ctx.heard).toEqual(["b", "a"]);
+  });
+
+  test("a when that says no drops the event too", () => {
+    const { run, trace } = start(ignorer);
+    const mark = trace.length;
+    send(run, { type: "GO" });
+    expect(texts(trace, mark, "when", "drop", "action")).toEqual([
+      '/a: when "check" said no',
+      "nobody handles GO, so it is ignored",
+      ...hooks,
+    ]);
+  });
+
+  test("an event a rule takes runs no hook", () => {
+    const { run, trace } = start(ignorer, { open: true });
+    const mark = trace.length;
+    send(run, { type: "GO" });
+    expect(run.path).toBe("/c");
+    expect(texts(trace, mark, "drop", "action")).toEqual([]);
+    expect(run.ctx.heard).toEqual([]);
+  });
+
+  test("asking adds no line and runs no hook", () => {
+    const { run, trace } = start(ignorer);
+    const logged = trace.length;
+    expect(run.can({ type: "GO" })).toBe(false);
+    expect(trace.length).toBe(logged);
+    expect(run.ctx.heard).toEqual([]);
+    expect(start(ignorer, { open: true }).run.can({ type: "GO" })).toBe(true);
   });
 });

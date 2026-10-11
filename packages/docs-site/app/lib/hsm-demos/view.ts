@@ -58,7 +58,7 @@ function span(className: string, text: string): HTMLSpanElement {
 
 // A quiet `update` hook has no rule line to show it, so it is named with the other hooks.
 function hookList(config: State, quietUpdate: boolean): string | undefined {
-  const hooks = (["enter", "exit", "task", "update"] as const).filter(
+  const hooks = (["enter", "exit", "task", "update", "unhandled"] as const).filter(
     (key) => config[key] !== undefined && (key !== "update" || quietUpdate),
   );
   if (hooks.length === 0) return undefined;
