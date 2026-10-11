@@ -54,6 +54,22 @@ const pair: Demo = {
   readout: () => [],
 };
 
+// A state with two tags beside one with none, to tell a tagged box from a plain one.
+const tagged: Demo = {
+  title: "Tagged",
+  subtitle: "One state carries two tags.",
+  config: {
+    initial: "/a",
+    states: {
+      a: { tags: ["busy", "loud"], on: { GO: "/b" } },
+      b: {},
+    },
+  },
+  ctx: () => ({}),
+  buttons: [],
+  readout: () => [],
+};
+
 // Happy DOM's observer reports no host on screen, so no frame steps the run.
 function mount(spec: Demo) {
   const host = document.createElement("div");
@@ -126,6 +142,17 @@ describe("a parallel state on the diagram", () => {
       "c",
     ]);
     expect(["b", "d", "plain", "e"].filter(glowing)).toEqual([]);
+    dispose();
+  });
+});
+
+describe("a state's tags on the diagram", () => {
+  test("a box names the tags its state carries, in the order the config gives", () => {
+    const { host, dispose } = mount(tagged);
+    const tags = (name: string) =>
+      Array.from(box(host, name).querySelectorAll(".hsm-tag")).map((node) => node.textContent);
+    expect(tags("a")).toEqual(["busy", "loud"]);
+    expect(tags("b")).toEqual([]);
     dispose();
   });
 });
