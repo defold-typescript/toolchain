@@ -29,6 +29,9 @@ import type { BuddyReaction, Demo, DemoButton, DemoCtx, DemoView } from "./demos
  * continuations finish before another run acts: the page steps each diagram in an
  * animation-frame callback of its own, and a test awaits a zero timeout before it touches
  * another run.
+ *
+ * `holders` and `scope` are the two module-level references to a run: a state's exit clears the
+ * first through the task's cleanup, and `discard` clears both.
  */
 
 export type TraceKind =
@@ -943,6 +946,12 @@ export function stop(run: DemoRun): void {
   if (isStopped(s)) return;
   emit(s, "event", "stop()");
   fromOutside(s, undefined, () => run.instance.stop());
+}
+
+/** Stops a run that will not be used again and lets go of it. */
+export function discard(run: DemoRun): void {
+  stop(run);
+  scope = undefined;
 }
 
 /**
