@@ -232,3 +232,22 @@ test("with reduced motion the marks show and the buddy stays still", async ({ pa
     robot: "none",
   });
 });
+
+// An always rule has no event to name, so its chip reads "at once", and a state
+// with restoreDepth says that it remembers.
+
+test("the checkup's rules read at once, and only the remembering awake says so", async ({
+  page,
+}) => {
+  await page.goto("/state-machines-tutorial");
+  const checkup = page.locator('[data-hsm-demo="buddy-checkup"] .hsm-demo');
+  await checkup.scrollIntoViewIfNeeded();
+  await expect(
+    stateBox(page, checkup, "checkup").locator("li.hsm-rule", { hasText: "at once" }),
+  ).toHaveCount(2);
+  await expect(stateBox(page, checkup, "awake")).not.toContainText("remembers its last child");
+
+  const memory = page.locator('[data-hsm-demo="buddy-memory"] .hsm-demo');
+  await memory.scrollIntoViewIfNeeded();
+  await expect(stateBox(page, memory, "awake")).toContainText("remembers its last child");
+});

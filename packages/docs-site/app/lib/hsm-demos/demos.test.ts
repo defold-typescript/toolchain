@@ -306,6 +306,67 @@ describe("hsm tutorial demos", () => {
     expect(d.since(mark, "drop")).toEqual(["POKE ignored: machine is stopped"]);
     expect(d.run.path).toBeUndefined();
   });
+
+  test("buddy-checkup: the fade ends in checkup, which moves on to awake at once and counts the wake-up", () => {
+    const d = drive("buddy-checkup");
+    d.step(0.5);
+    const mark = d.lines.length;
+    d.step(0.5);
+    expect(d.run.path).toBe("/awake/wander");
+    expect(d.ctx.wakes).toBe(1);
+    expect(d.since(mark, "event", "exit", "enter")).toEqual([
+      "exit /waking",
+      "enter /checkup",
+      '/checkup: always chose "/awake"',
+      "exit /checkup",
+      "enter /awake",
+      "enter /awake/wander (initial child)",
+    ]);
+  });
+
+  test("buddy-checkup: a buddy low on energy rests without being counted awake", () => {
+    const d = drive("buddy-checkup");
+    d.step(0.5);
+    d.step(0.5);
+    d.press("BUMP (cost 2.5)");
+    d.press("POKE");
+    d.press("POKE");
+    d.step(0.5);
+    d.step(0.5);
+    expect(d.run.path).toBe("/resting");
+    expect(d.ctx.wakes).toBe(1);
+    expect(d.visual).toEqual({ pose: "resting", light: "off" });
+    // The step that ends the fade also runs resting's update hook once.
+    expect(d.ctx.energy).toBe(1);
+    for (let i = 0; i < 4; i++) d.step(0.5);
+    expect(d.run.path).toBe("/awake/wander");
+    expect(d.ctx.wakes).toBe(2);
+  });
+
+  // The buddy follows, tires out and rests until its energy is back; `mark` is where the last step starts.
+  function restWhileFollowing(id: DemoId) {
+    const d = drive(id);
+    d.step(0.5);
+    d.step(0.5);
+    d.press("trigger_response (enter true)");
+    d.press("BUMP (cost 3)");
+    for (let i = 0; i < 5; i++) d.step(0.5);
+    const mark = d.lines.length;
+    d.step(0.5);
+    return { d, mark };
+  }
+
+  test("buddy-memory: awake goes back to the child it was left in", () => {
+    const { d, mark } = restWhileFollowing("buddy-memory");
+    expect(d.run.path).toBe("/awake/follow");
+    expect(d.visual?.pose).toBe("follow");
+    expect(d.since(mark, "enter").at(-1)).toBe("enter /awake/follow (remembered child)");
+  });
+
+  test("buddy-checkup: without restoreDepth the same presses end in wander", () => {
+    const { d } = restWhileFollowing("buddy-checkup");
+    expect(d.run.path).toBe("/awake/wander");
+  });
 });
 
 // A string presses the button with that label; a number lets that many seconds pass in 0.5 s steps.
@@ -317,6 +378,28 @@ const AWAKE_TAIL = [
   3,
   "POKE",
   "POKE",
+] as const;
+// Both buddies with a checkup take the same route; it reaches each `always` rule and each way into `checkup`.
+const CHECKUP_WALK = [
+  "POKE",
+  1,
+  "trigger_response (enter true)",
+  "trigger_response (enter true)",
+  "trigger_response (enter false)",
+  "trigger_response (enter true)",
+  4,
+  "BUMP (cost 1)",
+  "BUMP (cost 3)",
+  "RECHARGE",
+  "BUMP (cost 2.5)",
+  "POKE",
+  "POKE",
+  1,
+  3,
+  "POKE",
+  "POKE",
+  1,
+  30,
 ] as const;
 const WALKS: Record<DemoId, readonly (string | number)[]> = {
   "buddy-first": ["POKE", "POKE"],
@@ -366,6 +449,8 @@ const WALKS: Record<DemoId, readonly (string | number)[]> = {
     1,
     30,
   ],
+  "buddy-checkup": CHECKUP_WALK,
+  "buddy-memory": CHECKUP_WALK,
 };
 
 describe("every rule a diagram draws can be used", () => {
