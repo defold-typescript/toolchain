@@ -1915,6 +1915,10 @@ Asking is free. No hook runs, no `run` runs, and nothing moves. A resting buddy 
 
 So the two work as a pair. `can` is for the events **you** choose to send. `unhandled` is for the ones that simply arrive.
 
+Here is the buddy with its beep. Tire it out with `BUMP (cost 3)`, then press `trigger_response (enter true)`: the log names the hook, and `beeps` goes up. The readout asks `can` for you. A button sends its event either way, so the buddy also beeps at a `POKE` that your script would have held back.
+
+<div data-hsm-demo="buddy-beep"></div>
+
 For the full rules, see [React to an unhandled event](./state-machines.md#react-to-an-unhandled-event) and [Ask whether an event would be taken](./state-machines.md#ask-whether-an-event-would-be-taken).
 
 ### Try it
