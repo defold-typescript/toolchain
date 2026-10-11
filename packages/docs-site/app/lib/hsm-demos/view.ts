@@ -5,13 +5,13 @@ import {
   type Demo,
   type DemoButton,
   type DemoCtx,
-  type DemoId,
   type DemoVisual,
 } from "./demos";
 import { BUDDY_SVG, figureClass, figureLabel, reactionClass } from "./figure";
 import {
   type DemoRun,
   describePath,
+  discard,
   press,
   reactionTo,
   restart,
@@ -447,6 +447,8 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
       if (dirty) refresh();
     },
     dispose: () => {
+      // A routine left waiting keeps its run, and the run keeps this diagram.
+      discard(run);
       for (const chip of chips.values()) clearTimeout(chip.timer);
       clearTimeout(reactionTimer);
       host.replaceChildren();
@@ -454,13 +456,20 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   };
 }
 
-/** Mounts every placeholder that names a known demo; returns a function that stops them all. */
-export function mountDemos(hosts: Iterable<HTMLElement>): () => void {
+/**
+ * Mounts every placeholder that names a known demo; returns a function that stops the diagrams
+ * and their runs.
+ */
+export function mountDemos(
+  hosts: Iterable<HTMLElement>,
+  demos: Readonly<Record<string, Demo>> = DEMOS,
+): () => void {
   const mounted = new Map<Element, { readonly demo: Mounted; visible: boolean; handle: number }>();
   for (const host of hosts) {
     const id = host.dataset.hsmDemo;
-    if (id !== undefined && Object.hasOwn(DEMOS, id)) {
-      mounted.set(host, { demo: mountDemo(host, DEMOS[id as DemoId]), visible: false, handle: 0 });
+    const demo = id !== undefined && Object.hasOwn(demos, id) ? demos[id] : undefined;
+    if (demo !== undefined) {
+      mounted.set(host, { demo: mountDemo(host, demo), visible: false, handle: 0 });
     }
   }
   // Only demos on screen advance: the reader cannot see the others, and their
