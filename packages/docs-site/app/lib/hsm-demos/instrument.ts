@@ -1,10 +1,12 @@
 import {
+  type AlwaysConfig,
   defineMachine,
   type EventObject,
   type Machine,
   type MachineConfig,
   type MachineInstance,
   type MoveAction,
+  type RunAction,
   type StateConfig,
   type TransitionConfig,
 } from "@defold-typescript/hsm";
@@ -52,10 +54,16 @@ type Instance = MachineInstance<DemoCtx, EventObject, string, string>;
 type State = StateConfig<DemoCtx, EventObject, string>;
 type Rule = TransitionConfig<DemoCtx, EventObject, EventObject, string, string>;
 type Action = MoveAction<DemoCtx, EventObject, EventObject, string>;
+type AlwaysRule = AlwaysConfig<DemoCtx, string, EventObject, string>;
+type AlwaysAction = RunAction<DemoCtx, EventObject, string>;
 type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 
 export function ruleChip(path: string, type: string, index: number): string {
   return `${path}|on|${type}|${index}`;
+}
+
+export function alwaysChip(path: string, index: number): string {
+  return `${path}|always|${index}`;
 }
 
 export function updateChip(path: string): string {
@@ -70,6 +78,13 @@ export function ruleList(spec: unknown): readonly Rule[] {
   if (typeof spec === "string") return [{ to: spec }];
   if (Array.isArray(spec)) return spec as Rule[];
   return [spec as Rule];
+}
+
+/** A state's `always` rules in the order the machine tries them; a bare path is a rule with that `to`. */
+export function alwaysList(spec: unknown): readonly AlwaysRule[] {
+  if (spec === undefined) return [];
+  const list = Array.isArray(spec) ? (spec as readonly (string | AlwaysRule)[]) : [spec];
+  return list.map((rule) => (typeof rule === "string" ? { to: rule } : (rule as AlwaysRule)));
 }
 
 export function afterDelays(config: State): number[] {
@@ -98,6 +113,7 @@ export type ChipSpec =
       readonly type: string;
       readonly to: string | undefined;
     }
+  | { readonly kind: "always"; readonly id: string; readonly to: string }
   | { readonly kind: "update"; readonly id: string }
   | { readonly kind: "after"; readonly id: string; readonly delay: number; readonly to: string };
 
@@ -109,6 +125,9 @@ export function stateChips(config: State, path: string): ChipSpec[] {
       chips.push({ kind: "on", id: ruleChip(path, type, index), type, to: rule.to });
     });
   }
+  alwaysList(config.always).forEach((rule, index) => {
+    chips.push({ kind: "always", id: alwaysChip(path, index), to: rule.to });
+  });
   if (config.update !== undefined) chips.push({ kind: "update", id: updateChip(path) });
   const after = config.after as Record<number, string> | undefined;
   for (const delay of afterDelays(config)) {
@@ -171,6 +190,8 @@ interface Session {
   readonly clocks: Map<string, number>;
   readonly fired: Map<string, number>;
   readonly entries: Map<string, number>;
+  /** The child each state was last left in, by the parent's path. */
+  readonly lastChild: Map<string, string>;
   updating: boolean;
   updateMoved: boolean;
   dueTimer: { readonly path: string; readonly delay: number } | undefined;
@@ -264,6 +285,40 @@ function noteTimer(s: Session): void {
   fire(s, afterChip(path, delay));
 }
 
+/** What a rule's `run` does, in plain words: its own note, else the note of the rule it belongs to. */
+function runNote(s: Session, chip: string): string {
+  return s.demo.notes?.[`${chip}|run`] ?? s.demo.notes?.[chip] ?? "run code";
+}
+
+function wrapAlways(s: Session, rule: AlwaysRule, path: string, index: number): AlwaysRule {
+  const chip = alwaysChip(path, index);
+  const declared = rule.run;
+  const run: readonly AlwaysAction[] =
+    declared === undefined ? [] : typeof declared === "function" ? [declared] : declared;
+  const when = rule.when;
+  return {
+    ...rule,
+    // The machine takes the first rule that passes at once, so the line of a yes leads the exits.
+    when: (ctx, machine) => {
+      const passed = when === undefined || when(ctx, machine);
+      if (passed) emit(s, "event", `${describe(path)}: always chose "${rule.to}"`);
+      else emit(s, "when", `${describe(path)}: when "${s.demo.notes?.[chip] ?? "check"}" said no`);
+      return passed;
+    },
+    run: [
+      () => {
+        fire(s, chip);
+        if (run.length > 0) emit(s, "action", `run: ${runNote(s, chip)}`);
+      },
+      ...run.map(
+        (action): AlwaysAction =>
+          (ctx, m) =>
+            action(ctx, proxyOf(s, m)),
+      ),
+    ],
+  };
+}
+
 function wrapRule(s: Session, rule: Rule, path: string, type: string, index: number): Rule {
   const chip = ruleChip(path, type, index);
   const note = s.demo.notes?.[chip];
@@ -286,9 +341,7 @@ function wrapRule(s: Session, rule: Rule, path: string, type: string, index: num
       if (rule.to === undefined) {
         emit(s, "note", `${describe(path)}: rule has no to, so nothing exits or enters`);
       }
-      if (run.length > 0) {
-        emit(s, "action", `run: ${s.demo.notes?.[`${chip}|run`] ?? note ?? "run code"}`);
-      }
+      if (run.length > 0) emit(s, "action", `run: ${runNote(s, chip)}`);
     },
     ...run.map(
       (action): Action =>
@@ -321,6 +374,13 @@ function wrapState(s: Session, config: State, path: string): State {
     wrapped.on = on as NonNullable<State["on"]>;
   }
 
+  if (config.always !== undefined) {
+    // The list holds at least the one rule it was copied from.
+    wrapped.always = alwaysList(config.always).map((rule, i) =>
+      wrapAlways(s, rule, path, i),
+    ) as unknown as NonNullable<State["always"]>;
+  }
+
   const update = config.update;
   if (update !== undefined) {
     wrapped.update = (ctx, dt, m) => {
@@ -341,20 +401,28 @@ function wrapState(s: Session, config: State, path: string): State {
   wrapped.enter = (ctx, m) => {
     noteTimer(s);
     const parent = parentPath(path);
-    const viaInitial =
-      (s.configs.get(parent) as State).initial === path &&
-      (parent === "" ? s.starting : s.entered.has(parent));
+    const above = s.configs.get(parent) as State;
+    const withParent = parent === "" ? s.starting : s.entered.has(parent);
+    // Read from the parent's own restoreDepth: an ancestor's key that reaches this far down, and
+    // a move that names the child, are not told apart from it.
+    let how = "";
+    if (withParent && above.restoreDepth !== undefined && s.lastChild.get(parent) === path) {
+      how = " (remembered child)";
+    } else if (withParent && above.initial === path) {
+      how = " (initial child)";
+    }
     s.clocks.set(path, 0);
     s.fired.set(path, 0);
     s.entries.set(path, (s.entries.get(path) ?? 0) + 1);
     s.entered.add(path);
-    emit(s, "enter", `enter ${path}${viaInitial ? " (initial child)" : ""}`);
+    emit(s, "enter", `enter ${path}${how}`);
     enter?.(ctx, proxyOf(s, m));
   };
 
   const exit = config.exit;
   wrapped.exit = (ctx, m) => {
     noteTimer(s);
+    s.lastChild.set(parentPath(path), path);
     emit(s, "exit", `exit ${path}`);
     exit?.(ctx, proxyOf(s, m));
   };
@@ -455,6 +523,7 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     clocks: new Map(),
     fired: new Map(),
     entries: new Map(),
+    lastChild: new Map(),
     updating: false,
     updateMoved: false,
     dueTimer: undefined,
