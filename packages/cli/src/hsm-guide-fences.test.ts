@@ -272,7 +272,7 @@ const UNTAUGHT_INTERFACES = new Set(["EventObject"]);
 interface HsmCoverage {
   /** Each member the project never names, as `<declaring type>.<member>`. */
   readonly members: string[];
-  /** Each exported function the project never calls. */
+  /** Each exported function the project never calls, once whatever its overloads. */
   readonly functions: string[];
 }
 
@@ -280,7 +280,8 @@ interface HsmCoverage {
  * What `files`, one project, leaves unused of the surface the four hsm entry points ship: the
  * members of every exported interface and of `StateConfig`, and every exported function. A member
  * typed `never` only reports a renamed key, so it is no part of the surface. A function is used
- * where it is called: importing it, or naming it without a call, is no use.
+ * where it is called, and a call of any of its overloads uses it: importing it, or naming it
+ * without a call, is no use.
  */
 function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
   const project = writeFenceProject(
@@ -298,7 +299,8 @@ function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
   const checker = program.getTypeChecker();
 
   const members = new Map<ts.Declaration, string>();
-  const functions = new Map<ts.Declaration, string>();
+  const functions = new Map<ts.Symbol, string>();
+  const overloads = new Map<ts.Declaration, ts.Symbol>();
   const listMembers = (type: ts.Type): void => {
     for (const member of checker.getPropertiesOfType(type)) {
       for (const declaration of member.declarations ?? []) {
@@ -320,7 +322,8 @@ function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
     for (const exported of checker.getExportsOfModule(moduleSymbol)) {
       for (const declaration of exported.declarations ?? []) {
         if (ts.isFunctionDeclaration(declaration)) {
-          functions.set(declaration, exported.name);
+          functions.set(exported, exported.name);
+          overloads.set(declaration, exported);
         } else if (ts.isInterfaceDeclaration(declaration)) {
           if (!UNTAUGHT_INTERFACES.has(exported.name)) {
             listMembers(checker.getDeclaredTypeOfSymbol(exported));
@@ -336,7 +339,7 @@ function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
   }
 
   const used = new Set<ts.Declaration>();
-  const called = new Set<ts.Declaration>();
+  const called = new Set<ts.Symbol>();
   const use = (symbol: ts.Symbol | undefined): void => {
     if (symbol === undefined) return;
     const target = symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol;
@@ -347,7 +350,8 @@ function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
       use(checker.getSymbolAtLocation(node));
     } else if (ts.isCallExpression(node)) {
       const declaration = checker.getResolvedSignature(node)?.declaration;
-      if (declaration !== undefined) called.add(declaration);
+      const callee = declaration === undefined ? undefined : overloads.get(declaration);
+      if (callee !== undefined) called.add(callee);
     } else if (ts.isObjectLiteralExpression(node)) {
       const contextual = checker.getContextualType(node);
       // A key one variant of a union lacks is no property of the union, so each variant is asked.
@@ -367,12 +371,9 @@ function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
     visit(source);
   }
 
-  const unused = (
-    listed: ReadonlyMap<ts.Declaration, string>,
-    covered: ReadonlySet<ts.Declaration>,
-  ): string[] =>
+  const unused = <K>(listed: ReadonlyMap<K, string>, covered: ReadonlySet<K>): string[] =>
     [...listed]
-      .filter(([declaration]) => !covered.has(declaration))
+      .filter(([key]) => !covered.has(key))
       .map(([, label]) => label)
       .sort();
   return { members: unused(members, used), functions: unused(functions, called) };
@@ -538,6 +539,39 @@ describe("hsm guide coverage gate", () => {
       expect(unused.members).not.toContain("CompoundState.initial");
       expect(unused.functions).toContain("waitGroup");
       expect(unused.functions).not.toContain("defineMachine");
+    },
+    SLOW,
+  );
+
+  test(
+    "a call of one overload covers the function",
+    () => {
+      const overloaded = (last: string): string =>
+        [
+          'import { waitGroup, type WaitGroup } from "@defold-typescript/types/hsm";',
+          "",
+          'declare module "@defold-typescript/types/hsm" {',
+          '  function waitGroup(label: "added"): WaitGroup;',
+          "}",
+          "",
+          last,
+        ].join("\n");
+      const unusedFunctions = (last: string): string[] =>
+        unusedHsmSurface(new Map([["overload.ts", overloaded(last)]])).functions;
+
+      const both: Fence = {
+        label: "overload.ts",
+        rel: "overload.ts",
+        body: overloaded('export const groups = [waitGroup(), waitGroup("added")];'),
+      };
+      expect(failingFences([both], writeFenceProject([both]))).toEqual({});
+      expect(
+        unusedFunctions("export const held = waitGroup;").filter((name) => name === "waitGroup"),
+      ).toEqual(["waitGroup"]);
+      expect(unusedFunctions("export const group = waitGroup();")).not.toContain("waitGroup");
+      expect(unusedFunctions('export const group = waitGroup("added");')).not.toContain(
+        "waitGroup",
+      );
     },
     SLOW,
   );
