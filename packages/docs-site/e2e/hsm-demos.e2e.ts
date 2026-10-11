@@ -39,12 +39,19 @@ test("the first buddy's figure follows the machine", async ({ page }) => {
   await expect(awake.locator(".hsm-b-eyes-shut")).toHaveCSS("opacity", "0");
 });
 
-// The timed demos share one animation-frame heartbeat. Rewriting DOM nodes on
-// every frame makes WebKit pull the page back while the reader scrolls, so a
+// Each timed demo runs on an animation-frame loop of its own. Rewriting DOM nodes
+// on every frame makes WebKit pull the page back while the reader scrolls, so a
 // demo whose shown values have not changed must leave its DOM untouched.
 
 function stateBox(page: Page, demo: Locator, name: string): Locator {
   return demo.locator(".hsm-state", {
+    has: page.locator(".hsm-state-name", { hasText: new RegExp(`^${name}$`) }),
+  });
+}
+
+// A state with no children, by name: `stateBox` would match its parent too.
+function leafBox(page: Page, demo: Locator, name: string): Locator {
+  return demo.locator(".hsm-state:not(.hsm-compound)", {
     has: page.locator(".hsm-state-name", { hasText: new RegExp(`^${name}$`) }),
   });
 }
@@ -281,4 +288,34 @@ test("the drain is a line with a bar, and the nap shows the delay it read and wa
   const timer = resting.locator("li.hsm-rule", { hasText: "after 2 s" });
   await expect(timer).toHaveCount(1);
   await expect(timer).toHaveClass(/hsm-wait/, { timeout: 4000 });
+});
+
+// A routine's steps are a numbered list in its state's box. The step it is in is
+// marked, and pausing the diagram's clock holds the routine where it is.
+
+test("the greeting marks the step it is in and clears the mark when it ends", async ({ page }) => {
+  await page.goto("/state-machines-tutorial");
+  const demo = page.locator('[data-hsm-demo="buddy-greeting"] .hsm-demo');
+  await demo.scrollIntoViewIfNeeded();
+  const steps = leafBox(page, demo, "greeting").locator("ol.hsm-steps li");
+  const marked = demo.locator("ol.hsm-steps li.hsm-step-on");
+  await expect(steps).toHaveCount(5);
+  await expect(marked).toHaveCount(0);
+
+  await expect(stateBox(page, demo, "awake")).toHaveClass(/hsm-on/, { timeout: 4000 });
+  await demo.getByRole("button", { name: "trigger_response (enter true)", exact: true }).click();
+  await expect(steps.first()).toHaveClass(/hsm-step-on/);
+
+  // The chirp is the first step, and the blinks after it run for 1.6 s at half speed.
+  const chirp = demo
+    .locator(".hsm-readout div", { has: page.locator(".hsm-k", { hasText: /^chirp$/ }) })
+    .locator(".hsm-v");
+  await expect(chirp).toHaveText("silent", { timeout: 4000 });
+  await demo.getByRole("button", { name: "Pause time" }).click();
+  await expect(marked).toHaveCount(1);
+  await expect(steps.first()).not.toHaveClass(/hsm-step-on/);
+
+  await demo.getByRole("button", { name: "Resume time" }).click();
+  await expect(leafBox(page, demo, "follow")).toHaveClass(/hsm-on/, { timeout: 4000 });
+  await expect(marked).toHaveCount(0);
 });

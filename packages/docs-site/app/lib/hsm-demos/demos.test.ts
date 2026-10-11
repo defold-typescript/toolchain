@@ -69,6 +69,10 @@ function drive(id: DemoId) {
       if (!demo.timed) throw new Error(`${id} has no clock`);
       step(run, dt);
     },
+    /** Lets a routine go on: its promise continuations run before a zero timeout does. */
+    settle(): Promise<void> {
+      return new Promise((resolve) => setTimeout(resolve, 0));
+    },
     since(mark: number, ...kinds: TraceLine["kind"][]): string[] {
       return lines
         .slice(mark)
@@ -432,6 +436,7 @@ describe("hsm tutorial demos", () => {
 
   const nap = listChip("/resting", "after", 0);
   const drain = listChip("/awake", "every", 0);
+  const hello = "/awake/greeting";
 
   test("buddy-nap: a nap whose two seconds are over waits for a full battery", () => {
     const d = drive("buddy-nap");
@@ -543,6 +548,91 @@ describe("hsm tutorial demos", () => {
     expect(d.run.path).toBe("/asleep");
     expect(d.since(left, "drop", "note")).toEqual([]);
   });
+
+  // Wakes the buddy and walks in, which starts the hello.
+  async function greeting() {
+    const d = drive("buddy-greeting");
+    for (let i = 0; i < 2; i++) {
+      d.step(0.5);
+      await d.settle();
+    }
+    d.press("trigger_response (enter true)");
+    return d;
+  }
+
+  test("buddy-greeting: the routine runs its steps in order and ends by itself", async () => {
+    const d = await greeting();
+    expect(d.run.path).toBe(hello);
+    expect(d.run.routine(hello)).toEqual({ step: 0, progress: 0 });
+
+    d.step(0.5);
+    await d.settle();
+    expect(d.run.routine(hello)?.step).toBe(1);
+    expect(d.visual?.light).toBe("off");
+
+    for (const [index, light] of [
+      [2, "lit"],
+      [3, "off"],
+      [4, "lit"],
+    ] as const) {
+      d.step(0.2);
+      await d.settle();
+      expect(d.run.routine(hello)?.step).toBe(index);
+      expect(d.visual?.light).toBe(light);
+    }
+
+    const last = d.lines.length;
+    d.step(0.2);
+    await d.settle();
+    expect(d.run.path).toBe("/awake/follow");
+    expect(d.run.routine(hello)).toBeUndefined();
+    expect(d.since(last, "exit", "enter")).toEqual(["exit /awake/greeting", "enter /awake/follow"]);
+    expect(d.since(last, "note")).toContain("/awake/greeting: finish(GREETED)");
+  });
+
+  test("buddy-greeting: walking out is ignored", async () => {
+    const d = await greeting();
+    const pressed = d.lines.length;
+    d.press("trigger_response (enter false)");
+    expect(d.run.path).toBe(hello);
+    expect(d.reaction).toBe("ignored");
+    expect(d.since(pressed, "drop")).toEqual(["nobody handles trigger_response, so it is ignored"]);
+  });
+
+  test("buddy-greeting: a tired buddy greets again when it gets up", async () => {
+    const d = await greeting();
+    d.step(0.5);
+    await d.settle();
+    const pressed = d.lines.length;
+    d.press("BUMP (cost 3)");
+    expect(d.run.path).toBe("/resting");
+    expect(d.run.routine(hello)).toBeUndefined();
+    expect(d.since(pressed, "note")).toContain("timer.cancel: the 0.2 s wait was cancelled");
+
+    let last = d.lines.length;
+    for (let i = 0; i < 6; i++) {
+      last = d.lines.length;
+      d.step(0.5);
+      await d.settle();
+    }
+    expect(d.run.path).toBe(hello);
+    expect(d.since(last, "enter")).toContain("enter /awake/greeting (remembered child)");
+    expect(d.run.routine(hello)).toEqual({ step: 0, progress: 0 });
+  });
+
+  test("buddy-greeting: a hello that starts over has no wait left from the one before", async () => {
+    const d = await greeting();
+    d.step(0.5);
+    await d.settle();
+    d.step(0.1);
+    await d.settle();
+    expect(d.run.routine(hello)).toEqual({ step: 1, progress: 0.5 });
+
+    d.press("BUMP (cost 3)");
+    d.press("RECHARGE");
+    expect(d.run.path).toBe(hello);
+    expect(d.run.routine(hello)).toEqual({ step: 0, progress: 0 });
+  });
 });
 
 // A string presses the button with that label; a number lets that many seconds pass in 0.5 s steps.
@@ -577,6 +667,14 @@ const CHECKUP_WALK = [
   1,
   30,
 ] as const;
+// Here walking in starts the hello, and three seconds see it through to `follow`.
+const GREETING_WALK = [
+  ...CHECKUP_WALK.slice(0, 3),
+  3,
+  ...CHECKUP_WALK.slice(3, 6),
+  3,
+  ...CHECKUP_WALK.slice(6),
+];
 const WALKS: Record<DemoId, readonly (string | number)[]> = {
   "buddy-first": ["POKE", "POKE"],
   "buddy-nested": ["POKE", "SEE_PLAYER", "LOSE_PLAYER", "POKE"],
@@ -630,17 +728,25 @@ const WALKS: Record<DemoId, readonly (string | number)[]> = {
   "buddy-drain": CHECKUP_WALK,
   "buddy-nap": CHECKUP_WALK,
   "buddy-chirp": CHECKUP_WALK,
+  "buddy-greeting": GREETING_WALK,
 };
 
 describe("every rule a diagram draws can be used", () => {
   for (const id of Object.keys(WALKS) as DemoId[]) {
-    test(id, () => {
+    test(id, async () => {
       const d = drive(id);
       for (const move of WALKS[id]) {
-        if (typeof move === "string") d.press(move);
-        else for (let passed = 0; passed < move; passed += 0.5) d.step(0.5);
+        if (typeof move === "string") {
+          d.press(move);
+          continue;
+        }
+        for (let passed = 0; passed < move; passed += 0.5) {
+          d.step(0.5);
+          await d.settle();
+        }
       }
-      const drawn = diagramChips(DEMOS[id].config, DEMOS[id].quietUpdates);
+      const demo = DEMOS[id];
+      const drawn = diagramChips(demo.config, demo.quietUpdates, demo.routines);
       expect([...d.fired].sort()).toEqual(drawn.sort());
     });
   }
