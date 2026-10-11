@@ -245,7 +245,9 @@ function wrapRule(s: Session, rule: Rule, path: string, type: string, index: num
       if (rule.to === undefined) {
         emit(s, "note", `${describe(path)}: rule has no to, so nothing exits or enters`);
       }
-      if (run.length > 0) emit(s, "action", `run: ${note ?? "run code"}`);
+      if (run.length > 0) {
+        emit(s, "action", `run: ${s.demo.notes?.[`${chip}|run`] ?? note ?? "run code"}`);
+      }
     },
     ...run.map(
       (action): Action =>
@@ -474,9 +476,18 @@ export function step(run: DemoRun, dt: number): void {
   }
 }
 
+/** Stops a demo from outside the machine, as a script's `final` does, and narrates the exits. */
+export function stop(run: DemoRun): void {
+  const s = sessionOf(run);
+  if (isStopped(s)) return;
+  emit(s, "event", "stop()");
+  fromOutside(s, undefined, () => run.instance.stop());
+}
+
 /**
- * Presses a demo button: sends its event, changes the world, or stops this
- * machine quietly and starts a fresh one. Returns the run to use from now on.
+ * Presses a demo button: sends its event, changes the world, stops the
+ * machine, or stops this machine quietly and starts a fresh one. Returns the
+ * run to use from now on.
  */
 export function press(run: DemoRun, button: DemoButton): DemoRun {
   if ("event" in button) {
@@ -485,6 +496,10 @@ export function press(run: DemoRun, button: DemoButton): DemoRun {
   }
   if ("change" in button) {
     button.change(run.ctx);
+    return run;
+  }
+  if ("stop" in button) {
+    stop(run);
     return run;
   }
   return restart(run, button.restartWith);

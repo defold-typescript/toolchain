@@ -11,12 +11,14 @@ export type DemoCtx = Record<string, unknown>;
 export type DemoButton<Ctx = DemoCtx, E extends EventObject = EventObject> =
   | { readonly label: string; readonly event: E }
   | { readonly label: string; readonly change: (ctx: Ctx) => void }
-  | { readonly label: string; readonly restartWith: Partial<Ctx> };
+  | { readonly label: string; readonly restartWith: Partial<Ctx> }
+  | { readonly label: string; readonly stop: true };
 
-export type DemoVisual =
-  | { readonly kind: "bulb"; readonly glow: "off" | "dim" | "lit" }
-  | { readonly kind: "sprite"; readonly shown: boolean }
-  | { readonly kind: "door"; readonly opacity: number };
+/** The buddy's light: off, part-way through a fade, or fully on. */
+export interface DemoVisual {
+  readonly kind: "bulb";
+  readonly glow: "off" | "dim" | "lit";
+}
 
 /** What a readout or visual may read from a running demo. */
 export interface DemoView<Ctx> {
@@ -40,7 +42,10 @@ export interface DemoSpec<Ctx, E extends EventObject> {
   /** Driven by the page heartbeat, with pause and speed controls. */
   readonly timed?: boolean;
   readonly speed?: number;
-  /** Plain-words labels for rule chips, keyed by chip id (`<path>|on|<event>|<index>`, `<path>|update`). */
+  /**
+   * Plain-words labels for rule chips, keyed by chip id (`<path>|on|<event>|<index>`, `<path>|update`).
+   * A rule whose label describes its `when` names what its `run` does under `<chip id>|run`.
+   */
   readonly notes?: Readonly<Record<string, string>>;
 }
 
@@ -52,145 +57,98 @@ function demo<Ctx, E extends EventObject>(spec: DemoSpec<Ctx, E>): Demo {
   return spec as unknown as Demo;
 }
 
-type LampCtx = { switches: number };
-type LampEvent = { type: "TOGGLE" } | { type: "DIM" };
+type FirstCtx = { wakes: number };
+type FirstEvent = { type: "POKE" };
 
-const lamp = demo<LampCtx, LampEvent>({
-  title: "A lamp",
+const buddyFirst = demo<FirstCtx, FirstEvent>({
+  title: "A robot buddy",
   subtitle: "Two states, one event.",
   config: {
-    initial: "/off",
+    initial: "/asleep",
     states: {
-      off: { on: { TOGGLE: "/on" } },
-      on: {
+      asleep: { on: { POKE: "/awake" } },
+      awake: {
         enter: (ctx) => {
-          ctx.switches += 1;
+          ctx.wakes += 1;
         },
-        on: { TOGGLE: "/off" },
+        on: { POKE: "/asleep" },
       },
     },
   },
-  ctx: () => ({ switches: 0 }),
-  buttons: [{ label: "TOGGLE", event: { type: "TOGGLE" } }],
-  readout: (m) => [["ctx.switches", String(m.ctx.switches)]],
-  visual: (m) => ({ kind: "bulb", glow: m.matches("/on") ? "lit" : "off" }),
+  ctx: () => ({ wakes: 0 }),
+  buttons: [{ label: "POKE", event: { type: "POKE" } }],
+  readout: (m) => [["ctx.wakes", String(m.ctx.wakes)]],
+  visual: (m) => ({ kind: "bulb", glow: m.matches("/awake") ? "lit" : "off" }),
 });
 
-const nestedLamp = demo<LampCtx, LampEvent>({
-  title: "A lamp with brightness",
-  subtitle: "bright and dim live inside on.",
+type NestedEvent = FirstEvent | { type: "SEE_PLAYER" } | { type: "LOSE_PLAYER" };
+
+const buddyNested = demo<FirstCtx, NestedEvent>({
+  title: "The buddy wanders and follows",
+  subtitle: "wander and follow live inside awake.",
   config: {
-    initial: "/off",
+    initial: "/asleep",
     states: {
-      off: { on: { TOGGLE: "/on" } },
-      on: {
-        initial: "/on/bright",
+      asleep: { on: { POKE: "/awake" } },
+      awake: {
+        initial: "/awake/wander",
         enter: (ctx) => {
-          ctx.switches += 1;
+          ctx.wakes += 1;
         },
-        on: { TOGGLE: "/off" },
+        on: { POKE: "/asleep" },
         states: {
-          bright: { on: { DIM: "/on/dim" } },
-          dim: { on: { DIM: "/on/bright" } },
+          wander: { on: { SEE_PLAYER: "/awake/follow" } },
+          follow: { on: { LOSE_PLAYER: "/awake/wander" } },
         },
       },
     },
   },
-  ctx: () => ({ switches: 0 }),
+  ctx: () => ({ wakes: 0 }),
   buttons: [
-    { label: "TOGGLE", event: { type: "TOGGLE" } },
-    { label: "DIM", event: { type: "DIM" } },
+    { label: "POKE", event: { type: "POKE" } },
+    { label: "SEE_PLAYER", event: { type: "SEE_PLAYER" } },
+    { label: "LOSE_PLAYER", event: { type: "LOSE_PLAYER" } },
   ],
   readout: (m) => [
-    ['matches("/on")', String(m.matches("/on"))],
-    ['matches("/on/dim")', String(m.matches("/on/dim"))],
-    ["ctx.switches", String(m.ctx.switches)],
+    ['matches("/awake")', String(m.matches("/awake"))],
+    ['matches("/awake/follow")', String(m.matches("/awake/follow"))],
+    ["ctx.wakes", String(m.ctx.wakes)],
   ],
-  visual: (m) => ({
-    kind: "bulb",
-    glow: m.matches("/on/bright") ? "lit" : m.matches("/on/dim") ? "dim" : "off",
-  }),
+  visual: (m) => ({ kind: "bulb", glow: m.matches("/awake") ? "lit" : "off" }),
 });
 
-type MemoryLampCtx = { switches: number; dimmed: boolean };
+type EnergyCtx = { wakes: number; energy: number };
+type EnergyEvent = NestedEvent | { type: "BUMP"; cost: number } | { type: "RECHARGE" };
 
-const rememberingLamp = demo<MemoryLampCtx, LampEvent>({
-  title: "A lamp that remembers",
-  subtitle: "Turning it back on returns to bright or dim.",
+const ENERGY_NOTES = {
+  "/awake|on|BUMP|0": "if the bump uses up the energy",
+  "/awake|on|BUMP|0|run": "energy = 0",
+  "/awake|on|BUMP|1": "lose energy",
+  "/resting|on|RECHARGE|0": "energy = 3",
+};
+
+const buddyEnergy = demo<EnergyCtx, EnergyEvent>({
+  title: "The buddy gets tired",
+  subtitle: "BUMP is handled by awake, whichever child is active.",
   config: {
-    initial: "/off",
+    initial: "/asleep",
     states: {
-      off: {
-        on: {
-          TOGGLE: [
-            // was it dim? go straight back to dim
-            { to: "/on/dim", when: (ctx) => ctx.dimmed },
-            // otherwise, bright
-            { to: "/on/bright" },
-          ],
-        },
-      },
-      on: {
-        initial: "/on/bright",
+      asleep: { on: { POKE: "/awake" } },
+      awake: {
+        initial: "/awake/wander",
         enter: (ctx) => {
-          ctx.switches += 1;
+          ctx.wakes += 1;
         },
-        on: { TOGGLE: "/off" },
-        states: {
-          bright: {
-            enter: (ctx) => {
-              ctx.dimmed = false;
-            },
-            on: { DIM: "/on/dim" },
-          },
-          dim: {
-            enter: (ctx) => {
-              ctx.dimmed = true;
-            },
-            on: { DIM: "/on/bright" },
-          },
-        },
-      },
-    },
-  },
-  ctx: () => ({ switches: 0, dimmed: false }),
-  buttons: [
-    { label: "TOGGLE", event: { type: "TOGGLE" } },
-    { label: "DIM", event: { type: "DIM" } },
-  ],
-  readout: (m) => [
-    ["ctx.dimmed", String(m.ctx.dimmed)],
-    ["ctx.switches", String(m.ctx.switches)],
-  ],
-  visual: (m) => ({
-    kind: "bulb",
-    glow: m.matches("/on/bright") ? "lit" : m.matches("/on/dim") ? "dim" : "off",
-  }),
-  notes: {
-    "/off|on|TOGGLE|0": "if it was dim",
-    "/off|on|TOGGLE|1": "otherwise",
-  },
-});
-
-type BuddyCtx = { energy: number };
-type BuddyEvent =
-  | { type: "BUMP"; cost: number }
-  | { type: "SEE_PLAYER" }
-  | { type: "LOSE_PLAYER" }
-  | { type: "FALL" }
-  | { type: "RECHARGE" };
-
-const buddy = demo<BuddyCtx, BuddyEvent>({
-  title: "A robot buddy",
-  subtitle: "BUMP is handled by alive, whichever child is active.",
-  config: {
-    initial: "/alive",
-    states: {
-      alive: {
-        initial: "/alive/wander",
         on: {
+          POKE: "/asleep",
           BUMP: [
-            { to: "/resting", when: (ctx, event) => ctx.energy <= event.cost },
+            {
+              to: "/resting",
+              when: (ctx, event) => ctx.energy <= event.cost,
+              run: (ctx) => {
+                ctx.energy = 0;
+              },
+            },
             {
               run: (ctx, event) => {
                 ctx.energy -= event.cost;
@@ -199,20 +157,14 @@ const buddy = demo<BuddyCtx, BuddyEvent>({
           ],
         },
         states: {
-          wander: { on: { SEE_PLAYER: "/alive/follow" } },
-          follow: {
-            on: {
-              LOSE_PLAYER: "/alive/wander",
-              SEE_PLAYER: "/alive/follow",
-              FALL: "/resting",
-            },
-          },
+          wander: { on: { SEE_PLAYER: "/awake/follow" } },
+          follow: { on: { LOSE_PLAYER: "/awake/wander" } },
         },
       },
       resting: {
         on: {
           RECHARGE: {
-            to: "/alive",
+            to: "/awake",
             run: (ctx) => {
               ctx.energy = 3;
             },
@@ -221,177 +173,206 @@ const buddy = demo<BuddyCtx, BuddyEvent>({
       },
     },
   },
-  ctx: () => ({ energy: 3 }),
+  ctx: () => ({ wakes: 0, energy: 3 }),
   buttons: [
+    { label: "POKE", event: { type: "POKE" } },
     { label: "SEE_PLAYER", event: { type: "SEE_PLAYER" } },
     { label: "LOSE_PLAYER", event: { type: "LOSE_PLAYER" } },
     { label: "BUMP (cost 1)", event: { type: "BUMP", cost: 1 } },
     { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
-    { label: "FALL", event: { type: "FALL" } },
     { label: "RECHARGE", event: { type: "RECHARGE" } },
   ],
   readout: (m) => [
     ["ctx.energy", String(m.ctx.energy)],
-    ['matches("/alive")', String(m.matches("/alive"))],
+    ['matches("/awake")', String(m.matches("/awake"))],
   ],
-  notes: {
-    "/alive|on|BUMP|0": "if the bump uses up the energy",
-    "/alive|on|BUMP|1": "lose energy",
-    "/resting|on|RECHARGE|0": "energy = 3",
-  },
+  visual: (m) => ({ kind: "bulb", glow: m.matches("/awake") ? "lit" : "off" }),
+  notes: ENERGY_NOTES,
 });
 
-type FeetCtx = { on_ground: boolean };
-type FeetEvent = { type: "JUMP" };
+// From here on the buddy has a light. `msg.post(ctx.light, "enable")` and
+// `"disable"` are imitated by `ctx.lit`.
+type TimeCtx = EnergyCtx & { lit: boolean };
 
-const land = (ctx: FeetCtx) => (ctx.on_ground ? "/grounded" : undefined);
-
-const feet = demo<FeetCtx, FeetEvent>({
-  title: "Feet with coyote time",
-  subtitle: "Running at quarter speed so you can see the timers.",
+const buddyTime = demo<TimeCtx, EnergyEvent>({
+  title: "The buddy keeps time",
+  subtitle: "Two timers and an every-frame check.",
   timed: true,
-  speed: 0.25,
   config: {
-    initial: "/grounded",
+    initial: "/asleep",
     states: {
-      grounded: {
-        update: (ctx) => (ctx.on_ground ? undefined : "/coyote"),
-        on: { JUMP: "/jumping" },
-      },
-      coyote: {
-        update: land,
-        after: { 0.1: "/falling" },
-        on: { JUMP: "/jumping" },
-      },
-      jumping: { after: { 0.4: "/falling" } },
-      falling: { update: land },
-    },
-  },
-  ctx: () => ({ on_ground: true }),
-  buttonsLabel: "Change the world, or send an event",
-  buttons: [
-    {
-      label: "Walk off a ledge",
-      change: (ctx) => {
-        ctx.on_ground = false;
-      },
-    },
-    {
-      label: "Touch the ground",
-      change: (ctx) => {
-        ctx.on_ground = true;
-      },
-    },
-    { label: "JUMP", event: { type: "JUMP" } },
-  ],
-  readout: (m) => [["ctx.on_ground", String(m.ctx.on_ground)]],
-  notes: {
-    "/grounded|update": "no ground? go to coyote",
-    "/coyote|update": "ground back? go to grounded",
-    "/falling|update": "ground back? go to grounded",
-  },
-});
-
-type SparkleCtx = { visible: boolean };
-type SparkleEvent = { type: "STAR" };
-
-const sparkle = demo<SparkleCtx, SparkleEvent>({
-  title: "Star sparkle",
-  subtitle: "The sprite square is shown and hidden by enter hooks.",
-  timed: true,
-  speed: 0.5,
-  config: {
-    initial: "/normal",
-    states: {
-      normal: { on: { STAR: "/sparkling" } },
-      sparkling: {
-        initial: "/sparkling/shown",
-        after: { 2: "/normal" },
+      asleep: { on: { POKE: "/awake" } },
+      awake: {
+        initial: "/awake/wander",
+        enter: (ctx) => {
+          ctx.wakes += 1;
+          ctx.lit = true;
+        },
         exit: (ctx) => {
-          ctx.visible = true;
+          ctx.lit = false;
+        },
+        after: { 30: "/asleep" },
+        on: {
+          POKE: "/asleep",
+          BUMP: [
+            {
+              to: "/resting",
+              when: (ctx, event) => ctx.energy <= event.cost,
+              run: (ctx) => {
+                ctx.energy = 0;
+              },
+            },
+            {
+              run: (ctx, event) => {
+                ctx.energy -= event.cost;
+              },
+            },
+          ],
         },
         states: {
-          shown: {
-            enter: (ctx) => {
-              ctx.visible = true;
-            },
-            after: { 0.1: "/sparkling/hidden" },
+          wander: { on: { SEE_PLAYER: "/awake/follow" } },
+          follow: {
+            after: { 4: "/awake/wander" },
+            on: { LOSE_PLAYER: "/awake/wander", SEE_PLAYER: "/awake/follow" },
           },
-          hidden: {
-            enter: (ctx) => {
-              ctx.visible = false;
+        },
+      },
+      resting: {
+        update: (ctx, dt) => {
+          ctx.energy = Math.min(3, ctx.energy + dt);
+          return ctx.energy >= 3 ? "/awake" : undefined;
+        },
+        on: {
+          RECHARGE: {
+            to: "/awake",
+            run: (ctx) => {
+              ctx.energy = 3;
             },
-            after: { 0.1: "/sparkling/shown" },
           },
         },
       },
     },
   },
-  ctx: () => ({ visible: true }),
-  buttons: [{ label: "STAR", event: { type: "STAR" } }],
-  readout: (m) => [["sprite", m.ctx.visible ? "enabled" : "disabled"]],
-  visual: (m) => ({ kind: "sprite", shown: m.ctx.visible }),
+  ctx: () => ({ lit: false, wakes: 0, energy: 3 }),
+  buttons: [
+    { label: "POKE", event: { type: "POKE" } },
+    { label: "SEE_PLAYER", event: { type: "SEE_PLAYER" } },
+    { label: "LOSE_PLAYER", event: { type: "LOSE_PLAYER" } },
+    { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
+    { label: "RECHARGE", event: { type: "RECHARGE" } },
+  ],
+  readout: (m) => [["ctx.energy", m.ctx.energy.toFixed(1)]],
+  visual: (m) => ({ kind: "bulb", glow: m.ctx.lit ? "lit" : "off" }),
+  notes: { ...ENERGY_NOTES, "/resting|update": "fill up, then go to awake" },
 });
 
+/** An imitated `go.animate` of the light's `tint.w` from 0 to 1. */
 interface Fade {
   t: number;
   readonly duration: number;
   readonly done: () => void;
 }
 
-type DoorCtx = { tint: number; fade: Fade | undefined; cleanup: boolean; opens: number };
-type DoorEvent =
-  | { type: "trigger_response"; enter: boolean }
-  | { type: "OPENED" }
-  | { type: "CLOSE" };
+// `glow` stands for the light's `tint.w`, and `fade` for the animation on it.
+type FadeCtx = TimeCtx & { glow: number; fade: Fade | undefined };
 
-const door = demo<DoorCtx, DoorEvent>({
-  title: "A door",
-  subtitle: "The fade is slowed down. The door opens by fading out.",
+function advanceFade(ctx: FadeCtx, dt: number): void {
+  const fade = ctx.fade;
+  if (fade === undefined) return;
+  fade.t += dt;
+  ctx.glow = Math.min(1, fade.t / fade.duration);
+  if (fade.t >= fade.duration) {
+    ctx.fade = undefined;
+    fade.done();
+  }
+}
+
+function lightGlow(ctx: FadeCtx): DemoVisual["glow"] {
+  if (!ctx.lit) return "off";
+  return ctx.glow < 1 ? "dim" : "lit";
+}
+
+type WakingCtx = FadeCtx & { cleanup: boolean };
+type WakingEvent = EnergyEvent | { type: "WOKEN" };
+
+const buddyWaking = demo<WakingCtx, WakingEvent>({
+  title: "The buddy wakes up slowly",
+  subtitle: "Running at half speed so you can catch the fade.",
   timed: true,
   speed: 0.5,
   config: {
-    initial: "/closed",
+    initial: "/asleep",
     states: {
-      closed: {
-        enter: (ctx) => {
-          ctx.tint = 1;
-        },
-        on: { trigger_response: { to: "/opening", when: (_ctx, event) => event.enter } },
-      },
-      opening: {
+      asleep: { on: { POKE: "/waking" } },
+      waking: {
         task: (ctx, finish) => {
-          ctx.fade = { t: 0, duration: 0.5, done: () => finish({ type: "OPENED" }) };
+          ctx.glow = 0;
+          ctx.lit = true;
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
         },
         exit: (ctx) => {
-          if (ctx.cleanup) ctx.fade = undefined;
+          if (!ctx.cleanup) return;
+          ctx.fade = undefined;
+          ctx.lit = false;
         },
-        on: { OPENED: "/open", CLOSE: "/closed" },
+        on: { WOKEN: "/awake", POKE: "/asleep" },
       },
-      open: {
+      awake: {
+        initial: "/awake/wander",
         enter: (ctx) => {
-          ctx.opens += 1;
+          ctx.wakes += 1;
+          ctx.lit = true;
         },
-        after: { 3: "/closed" },
-        on: { CLOSE: "/closed" },
+        exit: (ctx) => {
+          ctx.lit = false;
+        },
+        after: { 30: "/asleep" },
+        on: {
+          POKE: "/asleep",
+          BUMP: [
+            {
+              to: "/resting",
+              when: (ctx, event) => ctx.energy <= event.cost,
+              run: (ctx) => {
+                ctx.energy = 0;
+              },
+            },
+            {
+              run: (ctx, event) => {
+                ctx.energy -= event.cost;
+              },
+            },
+          ],
+        },
+        states: {
+          wander: { on: { SEE_PLAYER: "/awake/follow" } },
+          follow: {
+            after: { 4: "/awake/wander" },
+            on: { LOSE_PLAYER: "/awake/wander", SEE_PLAYER: "/awake/follow" },
+          },
+        },
+      },
+      resting: {
+        update: (ctx, dt) => {
+          ctx.energy = Math.min(3, ctx.energy + dt);
+          return ctx.energy >= 3 ? "/awake" : undefined;
+        },
+        on: {
+          RECHARGE: {
+            to: "/awake",
+            run: (ctx) => {
+              ctx.energy = 3;
+            },
+          },
+        },
       },
     },
   },
-  ctx: () => ({ tint: 1, fade: undefined, cleanup: true, opens: 0 }),
-  tick: (ctx, dt) => {
-    const fade = ctx.fade;
-    if (fade === undefined) return;
-    fade.t += dt;
-    ctx.tint = Math.max(0, 1 - fade.t / fade.duration);
-    if (fade.t >= fade.duration) {
-      ctx.fade = undefined;
-      fade.done();
-    }
-  },
+  ctx: () => ({ lit: false, glow: 1, fade: undefined, cleanup: true, wakes: 0, energy: 3 }),
+  tick: advanceFade,
+  buttonsLabel: "Send an event, or change the code",
   buttons: [
-    { label: "Player walks in", event: { type: "trigger_response", enter: true } },
-    { label: "Player walks out", event: { type: "trigger_response", enter: false } },
-    { label: "CLOSE", event: { type: "CLOSE" } },
+    { label: "POKE", event: { type: "POKE" } },
     {
       label: "Toggle cancel in exit",
       change: (ctx) => {
@@ -402,58 +383,133 @@ const door = demo<DoorCtx, DoorEvent>({
   readout: (m) => [
     ["cancel in exit", m.ctx.cleanup ? "on" : "off (bug!)"],
     ["animation", m.ctx.fade === undefined ? "none" : "running"],
-    ["ctx.opens", String(m.ctx.opens)],
+    ["light", m.ctx.lit ? "enabled" : "disabled"],
   ],
-  visual: (m) => ({ kind: "door", opacity: m.ctx.tint }),
-  notes: { "/closed|on|trigger_response|0": "if the player walked in" },
+  visual: (m) => ({ kind: "bulb", glow: lightGlow(m.ctx) }),
+  notes: { ...ENERGY_NOTES, "/resting|update": "fill up, then go to awake" },
 });
 
-type LevelCtx = { cached: boolean };
-type LevelEvent = { type: "LOADED" } | { type: "QUIT" };
+type QueueEvent =
+  | { type: "POKE" }
+  | { type: "BUMP"; cost: number }
+  | { type: "RECHARGE" }
+  | { type: "WOKEN" }
+  | { type: "trigger_response"; enter: boolean };
 
-const level = demo<LevelCtx, LevelEvent>({
-  title: "A level",
-  subtitle: "Events sent from inside a hook wait their turn.",
+const buddyQueue = demo<FadeCtx, QueueEvent>({
+  title: "The buddy wakes itself",
+  subtitle: "Time stands still in this one, so the fade never ends.",
   config: {
-    initial: "/loading",
+    initial: "/asleep",
     states: {
-      loading: {
+      asleep: {
         enter: (ctx, m) => {
-          if (ctx.cached) m.send({ type: "LOADED" });
+          if (ctx.wakes === 0) m.send({ type: "POKE" });
         },
-        on: { LOADED: "/playing" },
+        on: { POKE: "/waking" },
       },
-      playing: { on: { QUIT: "/done" } },
-      done: {
-        enter: (_ctx, m) => {
-          m.stop();
+      waking: {
+        task: (ctx, finish) => {
+          ctx.glow = 0;
+          ctx.lit = true;
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
+        },
+        exit: (ctx) => {
+          ctx.fade = undefined;
+          ctx.lit = false;
+        },
+        on: { WOKEN: "/awake", POKE: "/asleep" },
+      },
+      awake: {
+        initial: "/awake/wander",
+        enter: (ctx) => {
+          ctx.wakes += 1;
+          ctx.lit = true;
+        },
+        exit: (ctx) => {
+          ctx.lit = false;
+        },
+        after: { 30: "/asleep" },
+        on: {
+          POKE: "/asleep",
+          BUMP: [
+            {
+              to: "/resting",
+              when: (ctx, event) => ctx.energy <= event.cost,
+              run: (ctx) => {
+                ctx.energy = 0;
+              },
+            },
+            {
+              run: (ctx, event) => {
+                ctx.energy -= event.cost;
+              },
+            },
+          ],
+        },
+        states: {
+          wander: {
+            on: {
+              trigger_response: { to: "/awake/follow", when: (_ctx, event) => event.enter },
+            },
+          },
+          follow: {
+            after: { 4: "/awake/wander" },
+            on: {
+              trigger_response: [
+                { to: "/awake/follow", when: (_ctx, event) => event.enter },
+                { to: "/awake/wander" },
+              ],
+            },
+          },
+        },
+      },
+      resting: {
+        update: (ctx, dt) => {
+          ctx.energy = Math.min(3, ctx.energy + dt);
+          return ctx.energy >= 3 ? "/awake" : undefined;
+        },
+        on: {
+          RECHARGE: {
+            to: "/awake",
+            run: (ctx) => {
+              ctx.energy = 3;
+            },
+          },
         },
       },
     },
   },
-  ctx: () => ({ cached: true }),
-  buttonsLabel: "Start it, or send an event",
+  ctx: () => ({ lit: false, glow: 1, fade: undefined, wakes: 0, energy: 3 }),
+  tick: advanceFade,
+  buttonsLabel: "Start it, stop it, or send an event",
   buttons: [
-    { label: "start() with cached = true", restartWith: { cached: true } },
-    { label: "start() with cached = false", restartWith: { cached: false } },
-    { label: "LOADED", event: { type: "LOADED" } },
-    { label: "QUIT", event: { type: "QUIT" } },
+    { label: "start() with wakes = 0", restartWith: { wakes: 0 } },
+    { label: "start() with wakes = 1", restartWith: { wakes: 1 } },
+    { label: "POKE", event: { type: "POKE" } },
+    { label: "stop()", stop: true },
   ],
   readout: (m) => [
-    ["ctx.cached", String(m.ctx.cached)],
+    ["ctx.wakes", String(m.ctx.wakes)],
     ["stopped", String(m.stopped)],
   ],
+  visual: (m) => ({ kind: "bulb", glow: lightGlow(m.ctx) }),
+  notes: {
+    ...ENERGY_NOTES,
+    "/resting|update": "fill up, then go to awake",
+    "/awake/wander|on|trigger_response|0": "if the player walked in",
+    "/awake/follow|on|trigger_response|0": "if the player walked in",
+    "/awake/follow|on|trigger_response|1": "otherwise",
+  },
 });
 
 export const DEMOS = {
-  lamp,
-  "nested-lamp": nestedLamp,
-  "remembering-lamp": rememberingLamp,
-  buddy,
-  feet,
-  sparkle,
-  door,
-  level,
+  "buddy-first": buddyFirst,
+  "buddy-nested": buddyNested,
+  "buddy-energy": buddyEnergy,
+  "buddy-time": buddyTime,
+  "buddy-waking": buddyWaking,
+  "buddy-queue": buddyQueue,
 } satisfies Record<string, Demo>;
 
 export type DemoId = keyof typeof DEMOS;
