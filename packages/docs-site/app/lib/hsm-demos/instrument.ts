@@ -19,8 +19,8 @@ import type { BuddyReaction, Demo, DemoButton, DemoCtx, DemoView } from "./demos
  * leading action that reports which rule fired. Wrapping adds no states, rules
  * or targets, so the machine behaves exactly as the page's code does.
  *
- * Two lines have no hook to come from and are derived for display: the
- * bubbling line (from the config and the path before `send`) and "nobody
+ * Two kinds of line have no hook to come from and are derived for display: the
+ * bubbling lines (from the config and the leaves before `send`) and "nobody
  * handles" (a sent event no rule fired for).
  *
  * `sequence` waits through Defold's global `timer`, which is imitated here on each run's own
@@ -177,6 +177,27 @@ export function activePaths(path: string | undefined): string[] {
   if (path === undefined || path === "") return [];
   const segments = path.split("/").slice(1);
   return segments.map((_, i) => `/${segments.slice(0, i + 1).join("/")}`);
+}
+
+/** Every active path once: the `activePaths` of each leaf, in the order of `leaves`. */
+export function activeStates(leaves: readonly string[]): string[] {
+  const active = new Set<string>();
+  for (const leaf of leaves) {
+    for (const path of activePaths(leaf)) active.add(path);
+  }
+  return [...active];
+}
+
+/** The active children of the state at `path`, in the order their leaves appear in `leaves`. */
+function activeChildren(path: string, leaves: readonly string[]): string[] {
+  const children: string[] = [];
+  for (const leaf of leaves) {
+    if (!leaf.startsWith(`${path}/`)) continue;
+    const end = leaf.indexOf("/", path.length + 1);
+    const child = end < 0 ? leaf : leaf.slice(0, end);
+    if (!children.includes(child)) children.push(child);
+  }
+  return children;
 }
 
 /** The root's path is `""`, so a child of the root is `/<name>`. */
@@ -703,7 +724,9 @@ function wrapState(s: Session, config: State, path: string): State {
     // Read from the parent's own restoreDepth: an ancestor's key that reaches this far down, and
     // a move that names the child, are not told apart from it.
     let how = "";
-    if (withParent && above.restoreDepth !== undefined && s.lastChild.get(parent) === path) {
+    if (above.type === "parallel") {
+      how = " (region)";
+    } else if (withParent && above.restoreDepth !== undefined && s.lastChild.get(parent) === path) {
       how = " (remembered child)";
     } else if (withParent && above.initial === path) {
       how = " (initial child)";
@@ -800,14 +823,29 @@ function sendFromOutside(s: Session, event: EventObject): void {
     return;
   }
   emit(s, "event", `send ${describeEvent(event)}`);
-  const active = activePaths(instance.path);
-  for (let i = active.length - 1; i >= 0; i--) {
-    const path = active[i] as string;
-    const on = s.configs.get(path)?.on as Record<string, unknown> | undefined;
-    if (on?.[event.type] !== undefined) break;
-    emit(s, "bubble", `${path} has no ${event.type} rule, asks its parent`);
+  for (const top of activeChildren("", instance.leaves)) {
+    narrateOffer(s, top, event.type, instance.leaves);
   }
   fromOutside(s, event, () => instance.send(event));
+}
+
+/**
+ * Narrates the offer of an event type to the state at `path` as the library makes it: to every
+ * active child first, then to the state itself unless a child has a rule for the type. Returns
+ * whether a state at or below `path` has one.
+ */
+function narrateOffer(s: Session, path: string, type: string, leaves: readonly string[]): boolean {
+  let below = false;
+  for (const child of activeChildren(path, leaves)) {
+    if (narrateOffer(s, child, type, leaves)) below = true;
+  }
+  if (below) return true;
+  const on = s.configs.get(path)?.on as Record<string, unknown> | undefined;
+  if (on?.[type] !== undefined) return true;
+  const region = s.configs.get(parentPath(path))?.type === "parallel";
+  const next = region ? "so its region does not take it" : "asks its parent";
+  emit(s, "bubble", `${path} has no ${type} rule, ${next}`);
+  return false;
 }
 
 /** The delay a timer chip counts: the number written, or what its function returned for the stay its state is in. */
@@ -877,6 +915,9 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     get path() {
       return instance.path;
     },
+    get leaves() {
+      return instance.leaves;
+    },
     get stopped() {
       return isStopped(s);
     },
@@ -931,7 +972,8 @@ export function step(run: DemoRun, dt: number): void {
   advanceWaits(s, dt);
   if (isStopped(s)) return;
   const instance = s.instance as Instance;
-  const before = activePaths(instance.path);
+  // The library updates `leaves` in place, so the active states are listed before the update.
+  const before = activeStates(instance.leaves);
   fromOutside(s, undefined, () => instance.update(dt));
   // The library adds dt to every active state's clock before the hooks run, hook move
   // or not; a state entered during this update starts from zero.
