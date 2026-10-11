@@ -6,6 +6,7 @@ import {
   afterChip,
   alwaysChip,
   diagramChips,
+  discard,
   everyChip,
   listChip,
   ruleChip,
@@ -772,5 +773,45 @@ describe("a routine's steps", () => {
       stepChip(hello, 1),
       stepChip(hello, 2),
     ]);
+  });
+});
+
+describe("a discarded run", () => {
+  test("it leaves its routine, and the pending wait is cancelled", () => {
+    const { run, trace } = start(greeter);
+    send(run, { type: "GO" });
+    const mark = trace.length;
+    discard(run);
+    expect(run.stopped).toBe(true);
+    expect(texts(trace, mark, "exit", "note")).toEqual([
+      "exit /hello",
+      "/hello: task cleanup ran",
+      "timer.cancel: the 0.2 s wait was cancelled",
+      "stopped, path = undefined",
+    ]);
+  });
+
+  test("no run is in scope after it", () => {
+    const { run } = start(greeter);
+    send(run, { type: "GO" });
+    discard(run);
+    expect(() => timer.delay(1, false, () => {})).toThrow(
+      "timer.delay was called with no demo running",
+    );
+  });
+
+  test("the other runs go on", async () => {
+    const a = start(greeter);
+    const b = start(greeter);
+    send(a.run, { type: "GO" });
+    send(b.run, { type: "GO" });
+    discard(a.run);
+
+    step(b.run, 0.2);
+    await settle();
+    expect(b.run.ctx.said).toBe("two");
+    step(b.run, 0.3);
+    await settle();
+    expect(b.run.path).toBe("/idle");
   });
 });
