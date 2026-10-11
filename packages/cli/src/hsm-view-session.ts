@@ -15,6 +15,7 @@ interface RuntimeInstance {
   readonly path: string | undefined;
   readonly leaves: readonly string[];
   readonly matches: (path: string) => boolean;
+  can: (event: EventObject) => boolean;
   readonly send: (event: EventObject) => void;
   readonly update: (dt: number) => void;
   readonly onMove: (
@@ -205,6 +206,8 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   let entered: string[] = [];
   let fired: string[] = [];
   let rejected: string[] = [];
+  let probing = 0;
+  const guarded = new WeakSet<object>();
   let entries: SnapshotEntry[] = [];
   let t = 0;
   let picked: string | undefined;
@@ -227,6 +230,26 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       haltedError = message;
     }
     entries.push({ kind: "error", t, message });
+  };
+
+  // Called from every `enter`, the root's first: `start` runs the initial `enter` hooks before
+  // it returns the instance. The set outlives `instrument`, which a reload runs again while a
+  // keyed machine keeps its instance. A guard a `can` call runs can call `can` itself, so
+  // `probing` is a depth.
+  const guardCan = (machine: RuntimeInstance): void => {
+    if (guarded.has(machine)) {
+      return;
+    }
+    guarded.add(machine);
+    const can = machine.can;
+    machine.can = (event) => {
+      probing++;
+      try {
+        return can(event);
+      } finally {
+        probing--;
+      }
+    };
   };
 
   const instrument = (configValue: unknown): unknown => {
@@ -264,7 +287,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
               ...rule,
               when: (ctx: unknown, event?: EventObject, machine?: RuntimeInstance) => {
                 const accepted = when(ctx, event, machine);
-                if (!accepted && id !== undefined) {
+                if (!accepted && id !== undefined && probing === 0) {
                   rejected.push(id);
                 }
                 return accepted;
@@ -389,12 +412,13 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         };
       }
       const enter = state.enter;
-      if (path !== "") {
-        wrapped.enter = (ctx: unknown, machine: RuntimeInstance) => {
+      wrapped.enter = (ctx: unknown, machine: RuntimeInstance) => {
+        guardCan(machine);
+        if (path !== "") {
           entered.push(path);
-          enter?.(ctx, machine);
-        };
-      }
+        }
+        enter?.(ctx, machine);
+      };
       return wrapped as StateConfig;
     };
     return wrap(config, "");
