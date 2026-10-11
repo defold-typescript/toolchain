@@ -37,8 +37,9 @@ export type UnhandledListener<E extends EventObject> = (event: Readonly<E>) => v
 
 /**
  * What a `when` sees of the running machine: which states are active, and nothing that changes
- * it. `P` is the union of the machine's state paths; the `machine` a `when` receives uses plain
- * `string` paths instead. `Tag` is the union of the machine's tag names.
+ * it. `P` is the union of the paths it takes. The `machine` a `when` receives takes the machine's
+ * state paths, and also any path below a leaf state and below a level whose states hold only
+ * callbacks with unannotated parameters. `Tag` is the union of the machine's tag names.
  * @noSelf
  */
 export interface MachineView<P extends string = string, Tag extends string = never> {
@@ -52,8 +53,12 @@ export interface MachineView<P extends string = string, Tag extends string = nev
    * once stopped. It is the same array on every read, updated in place.
    */
   readonly leaves: readonly P[];
+  // Read off a method signature, which TypeScript compares bivariantly: a machine with narrower
+  // paths fits a parameter typed with wider ones, so a hook typed `StateHook<Ctx, E>` fits its
+  // slot. `this: void` repeats on the signature what `@noSelf` says of the interface: a call
+  // passes no self in Lua.
   /** Whether the state at the full path `path` is active. Ancestors of the current state count. */
-  readonly matches: (path: P) => boolean;
+  readonly matches: { matches(this: void, path: P): boolean }["matches"];
   /**
    * Whether an active state carries `tag`. A parent's tag holds while any of its children is
    * active, and a tag in any region of a parallel state counts. The answer is `false` for a name
@@ -63,9 +68,11 @@ export interface MachineView<P extends string = string, Tag extends string = nev
 }
 
 /**
- * One running machine, returned by `start`. `P` is the union of the machine's state paths; the
- * `machine` a hook, a `run` or a `task` receives uses plain `string` paths instead. `Tag` is the
- * union of the machine's tag names.
+ * One running machine, returned by `start`. `P` is the union of the paths it takes: the
+ * machine's state paths on a started instance. The `machine` a hook, a `run` or a `task`
+ * receives takes those paths, and also any path below a leaf state and below a level whose
+ * states hold only callbacks with unannotated parameters. `Tag` is the union of the machine's tag
+ * names.
  * @noSelf
  */
 export interface MachineInstance<
@@ -120,29 +127,41 @@ export interface MachineInstance<
 /**
  * A function a rule's `run` calls during the move, after the `exit` hooks and before the `enter`
  * hooks. Its `event` is the variant the `on` key names, and is read-only: a `run` changes `ctx`
- * and cannot assign to a field of the event.
+ * and cannot assign to a field of the event. `Hook` is the union of the paths its `machine`
+ * takes: the machine's paths for a `run` written in the config, and any `string` when left out.
  */
-export type MoveAction<Ctx, E extends EventObject, V extends E = E, Tag extends string = never> = (
-  ctx: Ctx,
-  event: Readonly<V>,
-  machine: MachineInstance<Ctx, E, string, Tag>,
-) => void;
+export type MoveAction<
+  Ctx,
+  E extends EventObject,
+  V extends E = E,
+  Tag extends string = never,
+  Hook extends string = string,
+> = (ctx: Ctx, event: Readonly<V>, machine: MachineInstance<Ctx, E, Hook, Tag>) => void;
 
 /**
- * A function a `run` calls where there is no event: under `after`, `always` and `every`.
+ * A function a `run` calls where there is no event: under `after`, `always` and `every`. `Hook`
+ * is the union of the paths its `machine` takes: the machine's paths for a `run` written in the
+ * config, and any `string` when left out.
  */
-export type RunAction<Ctx, E extends EventObject, Tag extends string = never> = (
-  ctx: Ctx,
-  machine: MachineInstance<Ctx, E, string, Tag>,
-) => void;
+export type RunAction<
+  Ctx,
+  E extends EventObject,
+  Tag extends string = never,
+  Hook extends string = string,
+> = (ctx: Ctx, machine: MachineInstance<Ctx, E, Hook, Tag>) => void;
 
 // A rule typed without the machine's event type has no run. The default cannot be EventObject:
 // MachineInstance is invariant in E, so such a rule would not fit a machine with narrower events.
 // That makes the rule types invariant in E too, and TypeScript does not compare two instances of
 // one type by structure, so each slot lists the rule typed without E beside the one typed with it.
-type RuleRun<Ctx, E extends EventObject, Tag extends string = never> = [E] extends [never]
+type RuleRun<
+  Ctx,
+  E extends EventObject,
+  Tag extends string = never,
+  Hook extends string = string,
+> = [E] extends [never]
   ? never
-  : RunAction<Ctx, E, Tag> | readonly RunAction<Ctx, E, Tag>[];
+  : RunAction<Ctx, E, Tag, Hook> | readonly RunAction<Ctx, E, Tag, Hook>[];
 
 // A list with a first entry: Lua cannot tell [] from {}, so an empty list would compile to a
 // transition with no to. It is an object type, not a tuple, because TypeScript reports a bad
@@ -164,6 +183,7 @@ export interface TransitionConfig<
   V extends E = E,
   To extends string = string,
   Tag extends string = never,
+  Hook extends string = string,
 > {
   /**
    * The full path of the state to move to. A `to` naming the state the rule is on exits and
@@ -180,7 +200,7 @@ export interface TransitionConfig<
   readonly when?: (
     ctx: Readonly<Ctx>,
     event: Readonly<V>,
-    machine: MachineView<string, Tag>,
+    machine: MachineView<Hook, Tag>,
   ) => boolean;
   /**
    * Runs during the move. The event is accepted when its key matches and `when` passes; then
@@ -188,7 +208,7 @@ export interface TransitionConfig<
    * entered, outermost first. Shared ancestors neither exit nor enter. A rule with no `to` runs
    * only `run`.
    */
-  readonly run?: MoveAction<Ctx, E, V, Tag> | readonly MoveAction<Ctx, E, V, Tag>[];
+  readonly run?: MoveAction<Ctx, E, V, Tag, Hook> | readonly MoveAction<Ctx, E, V, Tag, Hook>[];
   /** Renamed to `to`. */
   readonly target?: never;
   /** Renamed to `when`. */
@@ -209,11 +229,16 @@ export type TransitionSpec<
   V extends E = E,
   To extends string = string,
   Tag extends string = never,
-> = To | TransitionConfig<Ctx, E, V, To, Tag> | RuleList<TransitionConfig<Ctx, E, V, To, Tag>>;
+  Hook extends string = string,
+> =
+  | To
+  | TransitionConfig<Ctx, E, V, To, Tag, Hook>
+  | RuleList<TransitionConfig<Ctx, E, V, To, Tag, Hook>>;
 
 /**
  * The object form of an `always` rule: a `to`, an optional `when` and an optional `run`. It gets
- * no event. `E` is the machine's event type; a rule typed without it has no `run`.
+ * no event. `E` is the machine's event type; a rule typed without it has no `run`. `Hook` is
+ * the union of the paths the `machine` of its `when` and `run` takes: any `string` when left out.
  * @noSelf
  */
 export interface AlwaysConfig<
@@ -221,6 +246,7 @@ export interface AlwaysConfig<
   To extends string = string,
   E extends EventObject = never,
   Tag extends string = never,
+  Hook extends string = string,
 > {
   /**
    * The full path of the state to move to. An `always` rule without one throws when the machine
@@ -232,9 +258,9 @@ export interface AlwaysConfig<
    * level deep: a write belongs in `run`. `machine` reads the active states; inside a parallel
    * state it shows the regions that already moved.
    */
-  readonly when?: (ctx: Readonly<Ctx>, machine: MachineView<string, Tag>) => boolean;
+  readonly when?: (ctx: Readonly<Ctx>, machine: MachineView<Hook, Tag>) => boolean;
   /** Runs between the `exit` and `enter` hooks of the move, only when the rule is taken. */
-  readonly run?: RuleRun<Ctx, E, Tag>;
+  readonly run?: RuleRun<Ctx, E, Tag, Hook>;
   /** Renamed to `to`. */
   readonly target?: never;
   /** Renamed to `when`. */
@@ -250,16 +276,18 @@ export type AlwaysSpec<
   To extends string = string,
   E extends EventObject = never,
   Tag extends string = never,
+  Hook extends string = string,
 > =
   | To
-  | AlwaysConfig<Ctx, To, E, Tag>
-  | AlwaysConfig<Ctx, To, never, Tag>
-  | RuleList<AlwaysConfig<Ctx, To, E, Tag> | AlwaysConfig<Ctx, To, never, Tag>>;
+  | AlwaysConfig<Ctx, To, E, Tag, Hook>
+  | AlwaysConfig<Ctx, To, never, Tag, Hook>
+  | RuleList<AlwaysConfig<Ctx, To, E, Tag, Hook> | AlwaysConfig<Ctx, To, never, Tag, Hook>>;
 
 /**
  * The object form of a rule on an `after` timer: a `to`, a `when` and a `run`, each optional. A
  * rule with neither a `to` nor a `run` throws when the machine is defined. `E` is the machine's
- * event type; a rule typed without it has no `run`.
+ * event type; a rule typed without it has no `run`. `Hook` is the union of the paths the
+ * `machine` of its `when` and `run` takes: any `string` when left out.
  * @noSelf
  */
 export interface AfterRule<
@@ -267,6 +295,7 @@ export interface AfterRule<
   To extends string = string,
   E extends EventObject = never,
   Tag extends string = never,
+  Hook extends string = string,
 > {
   /**
    * The full path of the state to move to when the timer fires. A rule without one runs its
@@ -279,12 +308,12 @@ export interface AfterRule<
    * side effects. `ctx` is read-only here, one level deep: a write belongs in `run`. `machine`
    * reads the active states.
    */
-  readonly when?: (ctx: Readonly<Ctx>, machine: MachineView<string, Tag>) => boolean;
+  readonly when?: (ctx: Readonly<Ctx>, machine: MachineView<Hook, Tag>) => boolean;
   /**
    * Runs when the timer fires: between the `exit` and `enter` hooks of the move, or on its own
    * for a rule with no `to`.
    */
-  readonly run?: RuleRun<Ctx, E, Tag>;
+  readonly run?: RuleRun<Ctx, E, Tag, Hook>;
 }
 
 /**
@@ -296,7 +325,8 @@ export interface AfterConfig<
   To extends string = string,
   E extends EventObject = never,
   Tag extends string = never,
-> extends AfterRule<Ctx, To, E, Tag> {
+  Hook extends string = string,
+> extends AfterRule<Ctx, To, E, Tag, Hook> {
   /**
    * The delay in seconds of game time: a number, or a function of the context that returns one.
    * A function is read once each time the state is entered, after its `enter` hook, and again on
@@ -311,7 +341,12 @@ export interface AfterConfig<
  * One entry of the list form of `every`: a `delay` and the `run` it repeats.
  * @noSelf
  */
-export interface EveryConfig<Ctx, E extends EventObject, Tag extends string = never> {
+export interface EveryConfig<
+  Ctx,
+  E extends EventObject,
+  Tag extends string = never,
+  Hook extends string = string,
+> {
   /**
    * The seconds of game time between two runs: a number, or a function of the context that
    * returns one. A function is read once each time the state is entered, after its `enter` hook,
@@ -321,7 +356,7 @@ export interface EveryConfig<Ctx, E extends EventObject, Tag extends string = ne
    */
   readonly delay: number | ((ctx: Readonly<Ctx>) => number);
   /** Runs each time the delay passes: one function, or a list run in order. */
-  readonly run: RunAction<Ctx, E, Tag> | readonly RunAction<Ctx, E, Tag>[];
+  readonly run: RunAction<Ctx, E, Tag, Hook> | readonly RunAction<Ctx, E, Tag, Hook>[];
   /** Not taken here: an `after` timer leaves the state. */
   readonly to?: never;
   /** Not taken here: a `run` tests a condition itself. */
@@ -337,57 +372,75 @@ export type OnConfig<
   E extends EventObject,
   To extends string = string,
   Tag extends string = never,
+  Hook extends string = string,
 > = {
-  readonly [K in E["type"]]?: TransitionSpec<Ctx, E, Extract<E, { type: K }>, To, Tag>;
+  readonly [K in E["type"]]?: TransitionSpec<Ctx, E, Extract<E, { type: K }>, To, Tag, Hook>;
 };
 
 /**
  * Runs on every way in (`enter`) or out (`exit`) of the state: a move, `start` and `stop`. A hot
  * reload enters the states it adds, but drops a removed state without its `exit`. It gets no
- * event; event data reaches `enter` through `ctx`, set in `run`.
+ * event; event data reaches `enter` through `ctx`, set in `run`. `Hook` is the union of the
+ * paths its `machine` takes: the machine's paths for a hook written in the config, and any
+ * `string` when left out.
  */
-export type StateHook<Ctx, E extends EventObject, Tag extends string = never> = (
-  ctx: Ctx,
-  machine: MachineInstance<Ctx, E, string, Tag>,
-) => void;
+export type StateHook<
+  Ctx,
+  E extends EventObject,
+  Tag extends string = never,
+  Hook extends string = string,
+> = (ctx: Ctx, machine: MachineInstance<Ctx, E, Hook, Tag>) => void;
 
 /**
  * Runs on every `update(dt)` while the state is active, deepest state first. It returns a full
  * path to move there, or `undefined` to pass. The first hook to return a path wins: the hooks
  * above it and the `after` timers of its region do not run on that call, and the move has no
  * `run`. Under a parallel state the other regions still run their hooks and timers, unless the
- * move left the parallel state or entered it again.
+ * move left the parallel state or entered it again. `Hook` is the union of the paths its
+ * `machine` takes: the machine's paths for a hook written in the config, and any `string` when
+ * left out.
  */
 export type UpdateHook<
   Ctx,
   E extends EventObject,
   To extends string = string,
   Tag extends string = never,
-> = (ctx: Ctx, dt: number, machine: MachineInstance<Ctx, E, string, Tag>) => To | undefined;
+  Hook extends string = string,
+> = (ctx: Ctx, dt: number, machine: MachineInstance<Ctx, E, Hook, Tag>) => To | undefined;
 
 /**
  * Runs when the machine drops an event while the state is active: for the events `onUnhandled`
  * reports, and no others. Every active state that has the hook runs it, deepest first, in the
  * order `update` hooks run. `event` is the machine's whole event union, and is read-only: the
  * hook cannot assign to its fields. The hook moves nothing: a `send` from it queues, and a
- * `stop()` ends the step once every hook and listener has run for the event.
+ * `stop()` ends the step once every hook and listener has run for the event. `Hook` is the
+ * union of the paths its `machine` takes: the machine's paths for a hook written in the config,
+ * and any `string` when left out.
  */
-export type UnhandledHook<Ctx, E extends EventObject, Tag extends string = never> = (
-  ctx: Ctx,
-  event: Readonly<E>,
-  machine: MachineInstance<Ctx, E, string, Tag>,
-) => void;
+export type UnhandledHook<
+  Ctx,
+  E extends EventObject,
+  Tag extends string = never,
+  Hook extends string = string,
+> = (ctx: Ctx, event: Readonly<E>, machine: MachineInstance<Ctx, E, Hook, Tag>) => void;
 
 /**
  * Starts work that lives as long as the state. `finish` sends one event and is ignored after the
  * first call or once the state is left. The returned cleanup runs on every way out. A task that
- * starts several callbacks counts them with `waitGroup`.
+ * starts several callbacks counts them with `waitGroup`. `Hook` is the union of the paths its
+ * `machine` takes: the machine's paths for a task written in the config, and any `string` when
+ * left out.
  * @noSelf
  */
-export type TaskStart<Ctx, E extends EventObject, Tag extends string = never> = (
+export type TaskStart<
+  Ctx,
+  E extends EventObject,
+  Tag extends string = never,
+  Hook extends string = string,
+> = (
   ctx: Ctx,
   finish: (event: E) => void,
-  machine: MachineInstance<Ctx, E, string, Tag>,
+  machine: MachineInstance<Ctx, E, Hook, Tag>,
   // biome-ignore lint/suspicious/noConfusingVoidType: `void` keeps an expression-body task returning a void call (`=> go.animate(...)`) valid.
 ) => (() => void) | void;
 
@@ -499,8 +552,9 @@ type AnyChild<
   T,
   To extends string,
   Tag extends string = never,
+  Hook extends string = string,
 > = unknown extends T
-  ? { readonly [name: string]: StateNode<Ctx, E, unknown, string, To, Tag> }
+  ? { readonly [name: string]: StateNode<Ctx, E, unknown, string, To, Tag, Hook> }
   : unknown;
 
 // `states` is the only slot that infers the tree; every other slot that mentions it is wrapped
@@ -510,8 +564,10 @@ type AnyChild<
 // NoInfer over a union that holds object types hides its string members from completion.
 // `every` mentions no path and is wrapped whole all the same: where inference reads it, an
 // unannotated callback in it, such as `delay: (ctx) => ctx.rate`, gets no parameter types.
-// No callback parameter mentions the tree: one that did would make TypeScript settle the tree
-// at the first such callback, before the states beside it are read.
+// No callback parameter mentions `T`: one that did would make TypeScript settle the tree at the
+// first such callback, before the states beside it are read. Callback parameters mention the
+// hook tree, through `Hook`: a second tree inferred from the same `states` keys, which settles
+// at the first callback and types nothing else.
 // `tags` mentions only `Tag`, which the first `defineMachine` call fixes and nothing infers, so
 // it stays outside NoInfer.
 /** @noSelf */
@@ -522,11 +578,12 @@ interface StateBase<
   Self extends string,
   To extends string,
   Tag extends string = never,
+  Hook extends string = string,
 > {
   /** Child states, by name. A name is non-empty and contains no `/`. */
   readonly states?: {
-    readonly [K in keyof T]: StateNode<Ctx, E, T[K], `${Self}/${K & string}`, To, Tag>;
-  } & NoInfer<AnyChild<Ctx, E, T, To, Tag>>;
+    readonly [K in keyof T]: StateNode<Ctx, E, T[K], `${Self}/${K & string}`, To, Tag, Hook>;
+  } & NoInfer<AnyChild<Ctx, E, T, To, Tag, Hook>>;
   /**
    * Names from the machine's third type argument that hold while the state is active, read with
    * `hasTag`.
@@ -536,7 +593,7 @@ interface StateBase<
    * Rules by event `type`, each a target path, a rule object or a list of them. An event starts
    * at the deepest active state and moves up to the parent while no rule takes it.
    */
-  readonly on?: NoInfer<OnConfig<Ctx, E, To, Tag>>;
+  readonly on?: NoInfer<OnConfig<Ctx, E, To, Tag, Hook>>;
   /**
    * Timers, in one of two forms: targets or `AfterRule` objects by delay in seconds of game
    * time, such as `{ 2: "/idle" }`, or a list of `AfterConfig` entries, such as
@@ -554,10 +611,10 @@ interface StateBase<
     | {
         readonly [seconds: number]:
           | To
-          | AfterRule<Ctx, To, E, Tag>
-          | AfterRule<Ctx, To, never, Tag>;
+          | AfterRule<Ctx, To, E, Tag, Hook>
+          | AfterRule<Ctx, To, never, Tag, Hook>;
       }
-    | readonly (AfterConfig<Ctx, To, E, Tag> | AfterConfig<Ctx, To, never, Tag>)[]
+    | readonly (AfterConfig<Ctx, To, E, Tag, Hook> | AfterConfig<Ctx, To, never, Tag, Hook>)[]
   >;
   /**
    * Code that repeats while the state is active, in one of two forms: a `run` by delay in
@@ -576,35 +633,37 @@ interface StateBase<
    */
   readonly every?: NoInfer<
     | {
-        readonly [seconds: number]: RunAction<Ctx, E, Tag> | readonly RunAction<Ctx, E, Tag>[];
+        readonly [seconds: number]:
+          | RunAction<Ctx, E, Tag, Hook>
+          | readonly RunAction<Ctx, E, Tag, Hook>[];
       }
-    | readonly EveryConfig<Ctx, E, Tag>[]
+    | readonly EveryConfig<Ctx, E, Tag, Hook>[]
   >;
   /**
    * Rules taken right after any move that leaves this state active; the first whose `when` is
    * missing or passes wins, and its `run` runs during the move. It is checked after a move only:
    * not after a rule with no `to`, and not on an `update` call that moves nothing.
    */
-  readonly always?: AlwaysSpec<Ctx, To, E, Tag>;
+  readonly always?: AlwaysSpec<Ctx, To, E, Tag, Hook>;
   /**
    * Runs each time the state is entered, outermost state first: on a move, at `start`, and when
    * a hot reload adds the state. It gets no event.
    */
-  readonly enter?: StateHook<Ctx, E, Tag>;
+  readonly enter?: StateHook<Ctx, E, Tag, Hook>;
   /**
    * Runs each time the state is left, deepest state first, including on `stop()`. A state a hot
    * reload removes is dropped without it.
    */
-  readonly exit?: StateHook<Ctx, E, Tag>;
+  readonly exit?: StateHook<Ctx, E, Tag, Hook>;
   /**
    * Runs on every `update(dt)` while the state is active. Return one of the machine's full paths
    * to move there, or `undefined` to stay.
    */
-  readonly update?: NoInfer<UpdateHook<Ctx, E, To, Tag>>;
+  readonly update?: NoInfer<UpdateHook<Ctx, E, To, Tag, Hook>>;
   /** Started on each entry; see `TaskStart`. */
-  readonly task?: TaskStart<Ctx, E, Tag>;
+  readonly task?: TaskStart<Ctx, E, Tag, Hook>;
   /** Runs when the machine drops an event while the state is active; see `UnhandledHook`. */
-  readonly unhandled?: UnhandledHook<Ctx, E, Tag>;
+  readonly unhandled?: UnhandledHook<Ctx, E, Tag, Hook>;
   /** Renamed to `task`. */
   readonly invoke?: never;
 }
@@ -617,7 +676,8 @@ interface CompoundState<
   Self extends string,
   To extends string,
   Tag extends string = never,
-> extends StateBase<Ctx, E, T, Self, To, Tag> {
+  Hook extends string = string,
+> extends StateBase<Ctx, E, T, Self, To, Tag, Hook> {
   /**
    * `"parallel"` keeps every child active at once, each as a region with its own active state.
    * Not allowed on the root.
@@ -645,7 +705,8 @@ interface ParallelState<
   Self extends string,
   To extends string,
   Tag extends string = never,
-> extends StateBase<Ctx, E, T, Self, To, Tag> {
+  Hook extends string = string,
+> extends StateBase<Ctx, E, T, Self, To, Tag, Hook> {
   /**
    * `"parallel"` keeps every child active at once, each as a region with its own active state.
    * Not allowed on the root.
@@ -662,24 +723,28 @@ type StateNode<
   Self extends string,
   To extends string,
   Tag extends string = never,
-> = CompoundState<Ctx, E, T, Self, To, Tag> | ParallelState<Ctx, E, T, Self, To, Tag>;
+  Hook extends string = string,
+> = CompoundState<Ctx, E, T, Self, To, Tag, Hook> | ParallelState<Ctx, E, T, Self, To, Tag, Hook>;
 
-type RootState<Ctx, E extends EventObject, T, Tag extends string = never> = CompoundState<
+// The tree callbacks see, inferred from the `states` keys alone.
+type HookStates<HT> = { readonly [K in keyof HT]: { readonly states?: HookStates<HT[K]> } };
+
+type RootState<
   Ctx,
-  E,
+  E extends EventObject,
   T,
-  "",
-  NoInfer<SlotPath<T>>,
-  Tag
-> & {
+  Tag extends string = never,
+  HT = unknown,
+> = CompoundState<Ctx, E, T, "", NoInfer<SlotPath<T>>, Tag, NoInfer<SlotPath<HT>>> & {
   readonly initial: string;
   readonly states: object;
-};
+} & { readonly states: HookStates<HT> };
 
 /**
  * The config of one state. Every field is optional. A state with child `states` is a compound
  * state and needs an `initial`, unless its `type` is `"parallel"`; a state without children is a
- * leaf. `Tag` is the union of the machine's tag names.
+ * leaf. `Tag` is the union of the machine's tag names. The `machine` a callback of a config
+ * typed this way receives takes any `string` path.
  */
 export type StateConfig<Ctx, E extends EventObject, Tag extends string = never> = StateNode<
   Ctx,
@@ -693,7 +758,8 @@ export type StateConfig<Ctx, E extends EventObject, Tag extends string = never> 
 /**
  * The root config passed to `defineMachine`. It takes the fields of a state and requires
  * `initial` and `states`. The root has no name and cannot be parallel. `Tag` is the union of the
- * machine's tag names.
+ * machine's tag names. The `machine` a callback of a config typed this way receives takes any
+ * `string` path.
  */
 export type MachineConfig<Ctx, E extends EventObject, Tag extends string = never> = CompoundState<
   Ctx,
@@ -2472,8 +2538,8 @@ type WithPrivate<Ctx, Priv> = [Priv] extends [never] ? Ctx : Ctx & Priv;
  */
 export function defineMachine<Ctx, E extends EventObject, Tag extends string = never>(
   key?: string,
-): <T, Priv extends object = never>(
-  config: RootState<WithPrivate<Ctx, Priv>, E, T, Tag> & PrivateCtxConfig<Ctx, Priv>,
+): <T, Priv extends object = never, HT = unknown>(
+  config: RootState<WithPrivate<Ctx, Priv>, E, T, Tag, HT> & PrivateCtxConfig<Ctx, Priv>,
 ) => Machine<Ctx, E, TreePath<T>, Tag> {
   return ((config: MachineConfig<Ctx, E>) => define(key, config)) as never;
 }

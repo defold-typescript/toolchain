@@ -360,6 +360,7 @@ describe("every at define time and on entry", () => {
 
 describe("every types", () => {
   test("an unannotated run and delay are typed in both forms", () => {
+    type HookPath = "/a" | `/a/${string}`;
     const seen: boolean[] = [];
     const m = defineMachine<Ctx, Ev>()({
       initial: "/a",
@@ -368,7 +369,7 @@ describe("every types", () => {
           every: {
             1: (ctx, machine) => {
               const ctxExact: Equal<typeof ctx, Ctx> = true;
-              const machineExact: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+              const machineExact: Equal<typeof machine, MachineInstance<Ctx, Ev, HookPath>> = true;
               seen.push(ctxExact, machineExact);
             },
           },
@@ -384,7 +385,10 @@ describe("every types", () => {
                   },
                   run: (ctx, machine) => {
                     const ctxExact: Equal<typeof ctx, Ctx> = true;
-                    const machineExact: Equal<typeof machine, MachineInstance<Ctx, Ev>> = true;
+                    const machineExact: Equal<
+                      typeof machine,
+                      MachineInstance<Ctx, Ev, HookPath>
+                    > = true;
                     seen.push(ctxExact, machineExact);
                   },
                 },
