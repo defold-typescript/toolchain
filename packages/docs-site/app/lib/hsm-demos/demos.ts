@@ -14,10 +14,18 @@ export type DemoButton<Ctx = DemoCtx, E extends EventObject = EventObject> =
   | { readonly label: string; readonly restartWith: Partial<Ctx> }
   | { readonly label: string; readonly stop: true };
 
-/** The buddy's light: off, part-way through a fade, or fully on. */
+/** Every way the figure draws the buddy; `stopped` is a machine with no active state. */
+export const BUDDY_POSES = ["asleep", "waking", "awake", "follow", "resting", "stopped"] as const;
+export type BuddyPose = (typeof BUDDY_POSES)[number];
+
+/** The buddy's antenna light: off, part-way through a fade, or fully on. */
+export const BUDDY_LIGHTS = ["off", "dim", "lit"] as const;
+export type BuddyLight = (typeof BUDDY_LIGHTS)[number];
+
+/** The drawn buddy. A machine with no light yet leaves `light` out. */
 export interface DemoVisual {
-  readonly kind: "bulb";
-  readonly glow: "off" | "dim" | "lit";
+  readonly pose: BuddyPose;
+  readonly light?: BuddyLight;
 }
 
 /** What a readout or visual may read from a running demo. */
@@ -26,6 +34,15 @@ export interface DemoView<Ctx> {
   readonly path: string | undefined;
   readonly stopped: boolean;
   readonly matches: (path: string) => boolean;
+}
+
+function buddyPose(m: DemoView<unknown>): BuddyPose {
+  if (m.matches("/awake/follow")) return "follow";
+  if (m.matches("/awake")) return "awake";
+  if (m.matches("/waking")) return "waking";
+  if (m.matches("/resting")) return "resting";
+  if (m.matches("/asleep")) return "asleep";
+  return "stopped";
 }
 
 export interface DemoSpec<Ctx, E extends EventObject> {
@@ -78,7 +95,7 @@ const buddyFirst = demo<FirstCtx, FirstEvent>({
   ctx: () => ({ wakes: 0 }),
   buttons: [{ label: "POKE", event: { type: "POKE" } }],
   readout: (m) => [["ctx.wakes", String(m.ctx.wakes)]],
-  visual: (m) => ({ kind: "bulb", glow: m.matches("/awake") ? "lit" : "off" }),
+  visual: (m) => ({ pose: buddyPose(m) }),
 });
 
 type NestedEvent = FirstEvent | { type: "SEE_PLAYER" } | { type: "LOSE_PLAYER" };
@@ -114,7 +131,7 @@ const buddyNested = demo<FirstCtx, NestedEvent>({
     ['matches("/awake/follow")', String(m.matches("/awake/follow"))],
     ["ctx.wakes", String(m.ctx.wakes)],
   ],
-  visual: (m) => ({ kind: "bulb", glow: m.matches("/awake") ? "lit" : "off" }),
+  visual: (m) => ({ pose: buddyPose(m) }),
 });
 
 type EnergyCtx = { wakes: number; energy: number };
@@ -186,7 +203,7 @@ const buddyEnergy = demo<EnergyCtx, EnergyEvent>({
     ["ctx.energy", String(m.ctx.energy)],
     ['matches("/awake")', String(m.matches("/awake"))],
   ],
-  visual: (m) => ({ kind: "bulb", glow: m.matches("/awake") ? "lit" : "off" }),
+  visual: (m) => ({ pose: buddyPose(m) }),
   notes: ENERGY_NOTES,
 });
 
@@ -262,7 +279,7 @@ const buddyTime = demo<TimeCtx, EnergyEvent>({
     { label: "RECHARGE", event: { type: "RECHARGE" } },
   ],
   readout: (m) => [["ctx.energy", m.ctx.energy.toFixed(1)]],
-  visual: (m) => ({ kind: "bulb", glow: m.ctx.lit ? "lit" : "off" }),
+  visual: (m) => ({ pose: buddyPose(m), light: m.ctx.lit ? "lit" : "off" }),
   notes: { ...ENERGY_NOTES, "/resting|update": "fill up, then go to awake" },
 });
 
@@ -287,7 +304,7 @@ function advanceFade(ctx: FadeCtx, dt: number): void {
   }
 }
 
-function lightGlow(ctx: FadeCtx): DemoVisual["glow"] {
+function lightGlow(ctx: FadeCtx): BuddyLight {
   if (!ctx.lit) return "off";
   return ctx.glow < 1 ? "dim" : "lit";
 }
@@ -385,7 +402,7 @@ const buddyWaking = demo<WakingCtx, WakingEvent>({
     ["animation", m.ctx.fade === undefined ? "none" : "running"],
     ["light", m.ctx.lit ? "enabled" : "disabled"],
   ],
-  visual: (m) => ({ kind: "bulb", glow: lightGlow(m.ctx) }),
+  visual: (m) => ({ pose: buddyPose(m), light: lightGlow(m.ctx) }),
   notes: { ...ENERGY_NOTES, "/resting|update": "fill up, then go to awake" },
 });
 
@@ -493,7 +510,7 @@ const buddyQueue = demo<FadeCtx, QueueEvent>({
     ["ctx.wakes", String(m.ctx.wakes)],
     ["stopped", String(m.stopped)],
   ],
-  visual: (m) => ({ kind: "bulb", glow: lightGlow(m.ctx) }),
+  visual: (m) => ({ pose: buddyPose(m), light: lightGlow(m.ctx) }),
   notes: {
     ...ENERGY_NOTES,
     "/resting|update": "fill up, then go to awake",
