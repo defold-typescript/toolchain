@@ -72,6 +72,39 @@ describe("parseInspectLine", () => {
       parseInspectLine("DEBUG:SCRIPT: hsm door frame 1: /closed -> /open (OPEN)"),
     ).toBeUndefined();
   });
+
+  test("reads the rule a move line names", () => {
+    const line = (reason: string) => `hsm door frame 3: /closed -> /open (${reason}) [/open]`;
+    const moveOf = (reason: string) => parseInspectLine(line(reason))?.move;
+
+    expect(moveOf("OPEN: /closed, 0")).toEqual({
+      from: "/closed",
+      to: "/open",
+      reason: "OPEN",
+      rule: { source: "/closed", key: 0 },
+    });
+
+    const timed = moveOf("after: /open, 0.5");
+    expect(timed?.reason).toBe("after");
+    expect(timed?.rule).toEqual({ source: "/open", key: 0.5 });
+
+    expect(moveOf("update: /open")?.rule).toStrictEqual({ source: "/open" });
+    expect(moveOf("RESET: , 0")?.rule).toEqual({ source: "", key: 0 });
+
+    const escaped = moveOf("a\\: b: /p\\, q, 2");
+    expect(escaped?.reason).toBe("a: b");
+    expect(escaped?.rule).toEqual({ source: "/p, q", key: 2 });
+
+    const bare = moveOf("OPEN");
+    expect(bare?.reason).toBe("OPEN");
+    expect(bare !== undefined && "rule" in bare).toBe(false);
+
+    expect(parseInspectLine(line("OPEN: /closed, x"))).toBeUndefined();
+    expect(parseInspectLine(line("OPEN: /closed, "))).toBeUndefined();
+
+    const message = createLiveRegistry().feed(line("OPEN: /closed, 0"));
+    expect(message?.move?.rule).toEqual({ source: "/closed", key: 0 });
+  });
 });
 
 describe("createLiveRegistry", () => {

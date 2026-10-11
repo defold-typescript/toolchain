@@ -203,6 +203,16 @@ const EXPECTED: Record<string, string[]> = {
     "/move/run -> /rest update -",
     "/rest -> (stopped) stop -",
   ],
+  "a move names its rule": [
+    "event /a 1",
+    "after /b 1",
+    "always /c 1",
+    "update /d -",
+    "after /e 0.5",
+    "after /f 1",
+    "event (root) 0",
+    "stop - -",
+  ],
   "hot reload": [
     "enter idle",
     "same=true",

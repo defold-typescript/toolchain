@@ -556,6 +556,65 @@ function onMoveReports(): string[] {
   return log;
 }
 
+type RuleEv = { type: "GO" } | { type: "RESET" };
+
+interface RuleCtx {
+  open: boolean;
+  wait: number;
+}
+
+function shownSource(source: string | undefined): string {
+  if (source === undefined) {
+    return "-";
+  }
+  return source === "" ? "(root)" : source;
+}
+
+// A string and a number print the same text, so a key that is not a number is quoted.
+function shownKey(key: unknown): string {
+  if (key === undefined) {
+    return "-";
+  }
+  return typeof key === "number" ? `${key}` : `"${key}"`;
+}
+
+function moveNamesItsRule(): string[] {
+  const log: string[] = [];
+  const m = defineMachine<RuleCtx, RuleEv>()({
+    initial: "/a",
+    on: { RESET: "/a" },
+    states: {
+      a: { on: { GO: [{ to: "/b", when: (ctx) => ctx.open }, { to: "/b" }] } },
+      b: {
+        after: [
+          { delay: 2, to: "/a" },
+          { delay: 0.5, to: "/c" },
+        ],
+      },
+      c: { always: [{ to: "/a", when: (ctx) => ctx.open }, { to: "/d" }] },
+      d: { update: () => "/e" },
+      e: { after: { 0.5: "/f" } },
+      f: {
+        after: [
+          { delay: 2, to: "/a" },
+          { delay: (ctx) => ctx.wait, to: "/a" },
+        ],
+      },
+    },
+  }).start({ open: false, wait: 0.5 });
+  m.onMove((_from, _to, cause, _event, source?: string, key?: number) => {
+    log.push(`${cause} ${shownSource(source)} ${shownKey(key)}`);
+  });
+  m.send({ type: "GO" });
+  m.update(0.5);
+  m.update(0.1);
+  m.update(0.5);
+  m.update(0.5);
+  m.send({ type: "RESET" });
+  m.stop();
+  return log;
+}
+
 function hotReload(): string[] {
   const log: string[] = [];
   const first = defineMachine<Ctx, Ev>("parity hot reload")({
@@ -1491,6 +1550,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "names and update targets", run: () => namesAndUpdateTargets() },
   { name: "definition errors", run: () => definitionErrors() },
   { name: "onMove reports every cause", run: () => onMoveReports() },
+  { name: "a move names its rule", run: () => moveNamesItsRule() },
   { name: "hot reload", run: () => hotReload() },
   { name: "restore depth", run: () => restoreDepth() },
   { name: "always transitions", run: () => alwaysTransitions() },
