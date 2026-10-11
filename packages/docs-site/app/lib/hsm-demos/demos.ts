@@ -1,9 +1,10 @@
-import type { EventObject, MachineConfig } from "@defold-typescript/hsm";
+import { type EventObject, type MachineConfig, waitGroup } from "@defold-typescript/hsm";
 
 /**
  * The live diagrams on the state machines tutorial. Each spec is a real `hsm`
- * config plus what its panel shows; Defold calls (`msg.post`, `go.animate`) are
- * imitated through `ctx` fields that the readout and visual read back.
+ * config plus what its panel shows; Defold calls (`msg.post`, `go.animate`,
+ * `sound.play`) are imitated through `ctx` fields that the readout and visual
+ * read back.
  */
 
 export type DemoCtx = Record<string, unknown>;
@@ -295,15 +296,18 @@ const buddyTime = demo<TimeCtx, EnergyEvent>({
   notes: { ...ENERGY_NOTES, "/resting|update": "fill up, then go to awake" },
 });
 
-/** An imitated `go.animate` of the light's `tint.w` from 0 to 1. */
-interface Fade {
+/**
+ * An imitated Defold call that takes time and then reports: a `go.animate` of the light's
+ * `tint.w` from 0 to 1, a `sound.play`.
+ */
+interface Job {
   t: number;
   readonly duration: number;
   readonly done: () => void;
 }
 
 // `glow` stands for the light's `tint.w`, and `fade` for the animation on it.
-type FadeCtx = TimeCtx & { glow: number; fade: Fade | undefined };
+type FadeCtx = TimeCtx & { glow: number; fade: Job | undefined };
 
 function advanceFade(ctx: FadeCtx, dt: number): void {
   const fade = ctx.fade;
@@ -910,6 +914,16 @@ const buddyDrain = demo<FadeCtx, QueueEvent>({
 // `napSeconds` is how long the next nap lasts.
 type NapCtx = FadeCtx & { napSeconds: number };
 
+const NAP_NOTES = {
+  ...CHECKUP_RULE_NOTES,
+  "/awake|every|#0": "send BUMP, cost 1/16",
+  "/awake|every|#0|delay": "1 s, or 2 s on a low battery",
+  "/awake/follow|after|4": "napSeconds + 1, up to 5",
+  "/resting|after|#0": "if the battery is full",
+  "/resting|after|#0|run": "napSeconds = 2",
+  "/resting|after|#0|delay": "napSeconds",
+};
+
 const buddyNap = demo<NapCtx, QueueEvent>({
   title: "The buddy naps as long as it needs",
   subtitle: "resting reads its delay when it is entered, then waits for a full battery.",
@@ -1046,15 +1060,182 @@ const buddyNap = demo<NapCtx, QueueEvent>({
   ],
   visual: (m) => ({ pose: buddyPose(m), light: lightGlow(m.ctx) }),
   quietUpdates: ["/resting"],
-  notes: {
-    ...CHECKUP_RULE_NOTES,
-    "/awake|every|#0": "send BUMP, cost 1/16",
-    "/awake|every|#0|delay": "1 s, or 2 s on a low battery",
-    "/awake/follow|after|4": "napSeconds + 1, up to 5",
-    "/resting|after|#0": "if the battery is full",
-    "/resting|after|#0|run": "napSeconds = 2",
-    "/resting|after|#0|delay": "napSeconds",
+  notes: NAP_NOTES,
+});
+
+// `chirp` stands for the `sound.play` that runs beside the fade.
+type ChirpCtx = NapCtx & { chirp: Job | undefined };
+
+function advanceJobs(ctx: ChirpCtx, dt: number): void {
+  advanceFade(ctx, dt);
+  // Read after the fade: a fade that was the last job has left `waking`, and its cleanup cleared the chirp.
+  const chirp = ctx.chirp;
+  if (chirp === undefined) return;
+  chirp.t += dt;
+  if (chirp.t >= chirp.duration) {
+    ctx.chirp = undefined;
+    chirp.done();
+  }
+}
+
+function pendingJobs(ctx: ChirpCtx): string {
+  const pending: string[] = [];
+  if (ctx.fade !== undefined) pending.push("fade");
+  if (ctx.chirp !== undefined) pending.push("chirp");
+  return pending.length === 0 ? "0" : `${pending.length}: ${pending.join(", ")}`;
+}
+
+const buddyChirp = demo<ChirpCtx, QueueEvent>({
+  title: "The buddy wakes with a chirp",
+  subtitle: "Time starts paused in this one. waking has started two jobs and waits for both.",
+  timed: true,
+  paused: true,
+  speed: 0.5,
+  config: {
+    initial: "/asleep",
+    states: {
+      asleep: {
+        enter: (ctx, m) => {
+          if (ctx.wakes === 0) m.send({ type: "POKE" });
+        },
+        on: { POKE: "/waking" },
+      },
+      waking: {
+        task: (ctx, finish) => {
+          const group = waitGroup();
+          ctx.glow = 0;
+          ctx.lit = true;
+          ctx.fade = { t: 0, duration: 1, done: group.add() };
+          ctx.chirp = { t: 0, duration: 0.5, done: group.add() };
+          group.wait(() => finish({ type: "WOKEN" }));
+          return () => {
+            ctx.fade = undefined;
+            ctx.chirp = undefined;
+            ctx.lit = false;
+          };
+        },
+        on: { WOKEN: "/checkup", POKE: "/asleep" },
+      },
+      checkup: {
+        always: [
+          { to: "/resting", when: (ctx) => ctx.energy < 1 },
+          {
+            to: "/awake",
+            run: (ctx) => {
+              ctx.wakes += 1;
+            },
+          },
+        ],
+      },
+      awake: {
+        restoreDepth: 1,
+        initial: "/awake/wander",
+        enter: (ctx) => {
+          ctx.lit = true;
+        },
+        exit: (ctx) => {
+          ctx.lit = false;
+        },
+        after: { 30: "/asleep" },
+        every: [
+          {
+            delay: (ctx) => (ctx.energy < 2 ? 2 : 1),
+            run: (_ctx, m) => m.send({ type: "BUMP", cost: 1 / 16 }),
+          },
+        ],
+        on: {
+          POKE: "/asleep",
+          BUMP: [
+            {
+              to: "/resting",
+              when: (ctx, event) => ctx.energy <= event.cost,
+              run: (ctx) => {
+                ctx.energy = 0;
+              },
+            },
+            {
+              run: (ctx, event) => {
+                ctx.energy -= event.cost;
+              },
+            },
+          ],
+        },
+        states: {
+          wander: {
+            on: {
+              trigger_response: { to: "/awake/follow", when: (_ctx, event) => event.enter },
+            },
+          },
+          follow: {
+            after: {
+              4: {
+                to: "/awake/wander",
+                run: (ctx) => {
+                  ctx.napSeconds = Math.min(5, ctx.napSeconds + 1);
+                },
+              },
+            },
+            on: {
+              trigger_response: [
+                { to: "/awake/follow", when: (_ctx, event) => event.enter },
+                { to: "/awake/wander" },
+              ],
+            },
+          },
+        },
+      },
+      resting: {
+        update: (ctx, dt) => {
+          ctx.energy = Math.min(3, ctx.energy + dt);
+          return undefined;
+        },
+        after: [
+          {
+            delay: (ctx) => ctx.napSeconds,
+            to: "/checkup",
+            when: (ctx) => ctx.energy >= 3,
+            run: (ctx) => {
+              ctx.napSeconds = 2;
+            },
+          },
+        ],
+        on: {
+          RECHARGE: {
+            to: "/checkup",
+            run: (ctx) => {
+              ctx.energy = 3;
+            },
+          },
+        },
+      },
+    },
   },
+  ctx: () => ({
+    lit: false,
+    glow: 1,
+    fade: undefined,
+    chirp: undefined,
+    wakes: 0,
+    energy: 3,
+    napSeconds: 2,
+  }),
+  tick: advanceJobs,
+  buttons: [
+    { label: "POKE", event: { type: "POKE" } },
+    { label: "trigger_response (enter true)", event: { type: "trigger_response", enter: true } },
+    { label: "trigger_response (enter false)", event: { type: "trigger_response", enter: false } },
+    { label: "BUMP (cost 1)", event: { type: "BUMP", cost: 1 } },
+    { label: "BUMP (cost 2.5)", event: { type: "BUMP", cost: 2.5 } },
+    { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
+    { label: "RECHARGE", event: { type: "RECHARGE" } },
+  ],
+  readout: (m) => [
+    ["jobs pending", pendingJobs(m.ctx)],
+    ["ctx.energy", m.ctx.energy.toFixed(2)],
+  ],
+  visual: (m) => ({ pose: buddyPose(m), light: lightGlow(m.ctx) }),
+  quietUpdates: ["/resting"],
+  notes: NAP_NOTES,
 });
 
 export const DEMOS = {
@@ -1068,6 +1249,7 @@ export const DEMOS = {
   "buddy-memory": buddyMemory,
   "buddy-drain": buddyDrain,
   "buddy-nap": buddyNap,
+  "buddy-chirp": buddyChirp,
 } satisfies Record<string, Demo>;
 
 export type DemoId = keyof typeof DEMOS;

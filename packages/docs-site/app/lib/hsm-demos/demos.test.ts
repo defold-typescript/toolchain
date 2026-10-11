@@ -37,6 +37,10 @@ function drive(id: DemoId) {
     get visual() {
       return demo.visual?.(run);
     },
+    /** The value the panel's readout shows under `key`. */
+    readout(key: string): string | undefined {
+      return demo.readout(run).find(([label]) => label === key)?.[1];
+    },
     /** The labels of the buttons the page would fill now, in button order. */
     get taking(): string[] {
       return demo.buttons.filter((b) => takes(run, b)).map((b) => b.label);
@@ -495,6 +499,50 @@ describe("hsm tutorial demos", () => {
     for (let i = 0; i < 3; i++) d.step(0.5);
     expect(d.ctx.energy).toBe(0.9375);
   });
+
+  test("buddy-chirp: waking waits for both jobs", () => {
+    const d = drive("buddy-chirp");
+    expect(d.run.path).toBe("/waking");
+    expect(d.readout("jobs pending")).toBe("2: fade, chirp");
+
+    const chirped = d.lines.length;
+    d.step(0.5);
+    expect(d.readout("jobs pending")).toBe("1: fade");
+    expect(d.run.path).toBe("/waking");
+    expect(d.since(chirped, "note")).toEqual([]);
+
+    const faded = d.lines.length;
+    d.step(0.5);
+    expect(d.run.path).toBe("/awake/wander");
+    expect(d.readout("jobs pending")).toBe("0");
+    expect(d.visual).toEqual({ pose: "awake", light: "lit" });
+    expect(d.since(faded, "exit", "note").slice(0, 3)).toEqual([
+      "/waking: finish(WOKEN)",
+      "exit /waking",
+      "/waking: task cleanup ran",
+    ]);
+  });
+
+  test("buddy-chirp: a poke during the fade stops both jobs", () => {
+    const d = drive("buddy-chirp");
+    d.step(0.5);
+    d.step(0.5);
+    d.press("POKE");
+    d.press("POKE");
+    expect(d.readout("jobs pending")).toBe("2: fade, chirp");
+
+    d.step(0.25);
+    d.press("POKE");
+    expect(d.run.path).toBe("/asleep");
+    expect(d.readout("jobs pending")).toBe("0");
+    expect(d.visual).toEqual({ pose: "asleep", light: "off" });
+
+    const left = d.lines.length;
+    d.step(0.5);
+    d.step(0.5);
+    expect(d.run.path).toBe("/asleep");
+    expect(d.since(left, "drop", "note")).toEqual([]);
+  });
 });
 
 // A string presses the button with that label; a number lets that many seconds pass in 0.5 s steps.
@@ -581,6 +629,7 @@ const WALKS: Record<DemoId, readonly (string | number)[]> = {
   "buddy-memory": CHECKUP_WALK,
   "buddy-drain": CHECKUP_WALK,
   "buddy-nap": CHECKUP_WALK,
+  "buddy-chirp": CHECKUP_WALK,
 };
 
 describe("every rule a diagram draws can be used", () => {
