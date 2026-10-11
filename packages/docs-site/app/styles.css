@@ -1606,11 +1606,33 @@
 .hsm-compound {
   flex: 2 1 14rem;
 }
+/* A parallel state takes a row of its own, which leaves its regions room to sit side by side. */
+.hsm-parallel {
+  flex-basis: 100%;
+}
+.hsm-regions {
+  align-items: stretch;
+}
+.hsm-region {
+  border-style: dashed;
+}
+/* Half a row is narrower than a path three states deep, and a rule line clips what overflows it. */
+.hsm-demo .hsm-region li.hsm-rule {
+  overflow-wrap: anywhere;
+}
+@container (min-width: 40rem) {
+  .hsm-regions {
+    flex-wrap: nowrap;
+  }
+}
 .hsm-state.hsm-on {
   border-color: var(--hsm-lit);
   box-shadow:
     0 0 0 1px var(--hsm-lit),
     0 0 18px color-mix(in srgb, var(--hsm-lit) 35%, transparent);
+}
+.hsm-region.hsm-on {
+  border-style: solid;
 }
 .hsm-state-name {
   font-family: var(--font-mono);
