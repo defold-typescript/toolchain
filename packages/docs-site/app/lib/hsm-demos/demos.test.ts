@@ -1,17 +1,29 @@
 import { describe, expect, test } from "bun:test";
 import { DEMOS, type DemoCtx, type DemoId } from "./demos";
-import { activePaths, type DemoRun, press, startDemo, step, type TraceLine } from "./instrument";
+import {
+  activePaths,
+  type DemoRun,
+  diagramChips,
+  press,
+  startDemo,
+  step,
+  type TraceLine,
+  takes,
+} from "./instrument";
 
 // Each scenario is a "try this" the tutorial page asks of the reader, driven
 // through the same button and heartbeat entries the live diagram uses.
 function drive(id: DemoId) {
   const demo = DEMOS[id];
   const lines: TraceLine[] = [];
+  const fired = new Set<string>();
   let run: DemoRun = startDemo(demo, (entry) => {
-    if (entry.kind !== "fire") lines.push(entry);
+    if (entry.kind === "fire") fired.add(entry.chip);
+    else lines.push(entry);
   });
   return {
     lines,
+    fired,
     get run() {
       return run;
     },
@@ -21,12 +33,27 @@ function drive(id: DemoId) {
     get visual() {
       return demo.visual?.(run);
     },
+    /** The labels of the buttons the page would fill now, in button order. */
+    get taking(): string[] {
+      return demo.buttons.filter((b) => takes(run, b)).map((b) => b.label);
+    },
     press(label: string) {
       const button = demo.buttons.find((b) => b.label === label);
       if (button === undefined) throw new Error(`${id} has no "${label}" button`);
+      if (!("event" in button)) {
+        run = press(run, button);
+        return;
+      }
+      // The mark the page shows has to agree with what the machine then does with the event.
+      const marked = takes(run, button);
+      const mark = lines.length;
       run = press(run, button);
+      const dropped = lines.slice(mark).some((line) => line.kind === "drop");
+      expect(dropped, `${id}: "${label}" was ${marked ? "filled" : "outlined"}`).toBe(!marked);
     },
     step(dt: number) {
+      // The page gives a diagram without a clock no way to pass time.
+      if (!demo.timed) throw new Error(`${id} has no clock`);
       step(run, dt);
     },
     since(mark: number, ...kinds: TraceLine["kind"][]): string[] {
@@ -271,6 +298,109 @@ describe("hsm tutorial demos", () => {
     d.press("POKE");
     expect(d.since(mark, "drop")).toEqual(["POKE ignored: machine is stopped"]);
     expect(d.run.path).toBeUndefined();
+  });
+});
+
+// A string presses the button with that label; a number lets that many seconds pass in 0.5 s steps.
+const AWAKE_TAIL = [
+  "BUMP (cost 1)",
+  "BUMP (cost 3)",
+  "RECHARGE",
+  "BUMP (cost 3)",
+  3,
+  "POKE",
+  "POKE",
+] as const;
+const WALKS: Record<DemoId, readonly (string | number)[]> = {
+  "buddy-first": ["POKE", "POKE"],
+  "buddy-nested": ["POKE", "SEE_PLAYER", "LOSE_PLAYER", "POKE"],
+  "buddy-energy": [
+    "POKE",
+    "SEE_PLAYER",
+    "LOSE_PLAYER",
+    "BUMP (cost 1)",
+    "BUMP (cost 3)",
+    "RECHARGE",
+    "POKE",
+  ],
+  "buddy-time": [
+    "POKE",
+    "SEE_PLAYER",
+    "SEE_PLAYER",
+    "LOSE_PLAYER",
+    "SEE_PLAYER",
+    4,
+    ...AWAKE_TAIL,
+    30,
+  ],
+  "buddy-waking": [
+    "POKE",
+    "POKE",
+    "POKE",
+    1,
+    "SEE_PLAYER",
+    "SEE_PLAYER",
+    "LOSE_PLAYER",
+    "SEE_PLAYER",
+    4,
+    ...AWAKE_TAIL,
+    1,
+    30,
+  ],
+  "buddy-queue": [
+    "POKE",
+    1,
+    "trigger_response (enter true)",
+    "trigger_response (enter true)",
+    "trigger_response (enter false)",
+    "trigger_response (enter true)",
+    4,
+    ...AWAKE_TAIL,
+    1,
+    30,
+  ],
+};
+
+describe("every rule a diagram draws can be used", () => {
+  for (const id of Object.keys(WALKS) as DemoId[]) {
+    test(id, () => {
+      const d = drive(id);
+      for (const move of WALKS[id]) {
+        if (typeof move === "string") d.press(move);
+        else for (let passed = 0; passed < move; passed += 0.5) d.step(0.5);
+      }
+      expect([...d.fired].sort()).toEqual(diagramChips(DEMOS[id].config).sort());
+    });
+  }
+});
+
+describe("which buttons the machine takes", () => {
+  test("buddy-energy: the filled buttons follow the active states and their parents", () => {
+    const d = drive("buddy-energy");
+    expect(d.taking).toEqual(["POKE"]);
+    d.press("POKE");
+    expect(d.taking).toEqual(["POKE", "SEE_PLAYER", "BUMP (cost 1)", "BUMP (cost 3)"]);
+    d.press("SEE_PLAYER");
+    expect(d.taking).toEqual(["POKE", "LOSE_PLAYER", "BUMP (cost 1)", "BUMP (cost 3)"]);
+    d.press("BUMP (cost 3)");
+    expect(d.taking).toEqual(["RECHARGE"]);
+  });
+
+  test("buddy-queue: a when that says no leaves its button outlined and the log alone", () => {
+    const d = drive("buddy-queue");
+    expect(d.taking).toEqual(["POKE"]);
+    d.step(0.5);
+    d.step(0.5);
+    const logged = d.lines.length;
+    expect(d.taking).toEqual([
+      "POKE",
+      "trigger_response (enter true)",
+      "BUMP (cost 1)",
+      "BUMP (cost 3)",
+    ]);
+    expect(d.lines.length).toBe(logged);
+    d.press("stop()");
+    expect(d.taking).toEqual([]);
   });
 });
 

@@ -9,18 +9,15 @@ import {
 } from "./demos";
 import { BUDDY_SVG, figureClass, figureLabel } from "./figure";
 import {
-  afterChip,
-  afterDelays,
   type DemoRun,
   describePath,
   press,
   restart,
-  ruleChip,
-  ruleList,
   startDemo,
+  stateChips,
   step,
   type TraceEntry,
-  updateChip,
+  takes,
 } from "./instrument";
 
 /**
@@ -99,7 +96,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   const chips = new Map<string, Chip>();
   const bars: TimerBar[] = [];
   let dirty = true;
-  let playing = true;
+  let playing = !demo.paused;
   let speed = demo.speed ?? 1;
 
   const log = el("ol", "hsm-log");
@@ -146,32 +143,31 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
 
     const rules = el("ul", "hsm-rules");
     const note = (id: string) => demo.notes?.[id];
-    for (const [type, spec] of Object.entries(config.on ?? {})) {
-      ruleList(spec).forEach((rule, i) => {
-        const id = ruleChip(path, type, i);
-        const parts: (string | Node)[] = [span("hsm-ev", type), ` → ${rule.to ?? "stay here"}`];
-        if (rule.to === path) parts.push(" ", span("hsm-why", "(restart)"));
-        const why = note(id);
+    for (const chip of stateChips(config, path)) {
+      if (chip.kind === "on") {
+        const parts: (string | Node)[] = [
+          span("hsm-ev", chip.type),
+          ` → ${chip.to ?? "stay here"}`,
+        ];
+        if (chip.to === path) parts.push(" ", span("hsm-why", "(restart)"));
+        const why = note(chip.id);
         if (why) parts.push(" ", span("hsm-why", why));
-        addChip(rules, id, parts);
-      });
-    }
-    if (config.update) {
-      addChip(rules, updateChip(path), [
-        span("hsm-ev", "every frame"),
-        " ",
-        span("hsm-why", note(updateChip(path)) ?? "update hook"),
-      ]);
-    }
-    for (const delay of afterDelays(config)) {
-      const target = (config.after as Record<number, string>)[delay] as string;
-      const chip = addChip(rules, afterChip(path, delay), [
-        span("hsm-ev", `after ${delay} s`),
-        ` → ${target}`,
-      ]);
-      const bar = span("hsm-bar", "");
-      chip.append(bar);
-      bars.push({ path, delay, bar, width: "" });
+        addChip(rules, chip.id, parts);
+      } else if (chip.kind === "update") {
+        addChip(rules, chip.id, [
+          span("hsm-ev", "every frame"),
+          " ",
+          span("hsm-why", note(chip.id) ?? "update hook"),
+        ]);
+      } else {
+        const element = addChip(rules, chip.id, [
+          span("hsm-ev", `after ${chip.delay} s`),
+          ` → ${chip.to}`,
+        ]);
+        const bar = span("hsm-bar", "");
+        element.append(bar);
+        bars.push({ path, delay: chip.delay, bar, width: "" });
+      }
     }
     if (rules.childElementCount > 0) box.append(rules);
 
@@ -195,7 +191,10 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   }
   const diagram = el("div", "hsm-diagram");
   const legend = el("div", "hsm-legend");
-  legend.append(el("i"), "Glowing boxes are active. A rule lights up when it's used.");
+  legend.append(
+    el("i"),
+    "Glowing boxes are active. A rule lights up when it's used. A filled button is an event the machine takes right now.",
+  );
   diagram.append(level, legend);
 
   let run: DemoRun = startDemo(demo, trace);
@@ -223,17 +222,21 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   const side = el("div", "hsm-side");
   if (visual) side.append(visual);
   const buttons = el("div", "hsm-buttons");
+  const eventButtons: { readonly spec: DemoButton; readonly node: HTMLButtonElement }[] = [];
   for (const spec of demo.buttons) {
-    buttons.append(button(spec.label, !("event" in spec), () => pressButton(spec)));
+    const node = button(spec.label, !("event" in spec), () => pressButton(spec));
+    if ("event" in spec) eventButtons.push({ spec, node });
+    buttons.append(node);
   }
   const group = el("div");
   group.append(el("div", "hsm-group-label", demo.buttonsLabel ?? "Send an event"), buttons);
   side.append(group);
 
   if (demo.timed) {
-    const pause = button("Pause time", true, () => {
+    const pauseLabel = () => (playing ? "Pause time" : "Resume time");
+    const pause = button(pauseLabel(), true, () => {
       playing = !playing;
-      pause.textContent = playing ? "Pause time" : "Resume time";
+      pause.textContent = pauseLabel();
     });
     const select = el("select", "hsm-speed");
     select.setAttribute("aria-label", "Speed");
@@ -307,6 +310,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
 
   function refresh() {
     for (const [path, box] of boxes) box.classList.toggle("hsm-on", run.matches(path));
+    for (const { spec, node } of eventButtons) node.classList.toggle("hsm-can", takes(run, spec));
     updateReadout();
     if (visual && demo.visual) patchVisual(visual, demo.visual(run));
     updateBars();
