@@ -462,6 +462,63 @@ export const wakingGuard = defineMachine<GuardCtx, GuardEvent>()({
 });
 ```
 
+```ts title="guard-duel.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+interface DuelCtx {
+  readonly done: () => void;
+}
+
+type DuelEvent = { type: "PARRY" };
+
+export const duelMachine = defineMachine<DuelCtx, DuelEvent>()({
+  initial: "/circling",
+  states: {
+    circling: {
+      on: { PARRY: "/circling" },
+      after: { 2: "/over" },
+    },
+    over: { enter: (ctx) => ctx.done() },
+  },
+});
+
+interface GuardCtx {
+  duel?: ReturnType<typeof duelMachine.start>;
+}
+
+type GuardEvent =
+  | { type: "CHALLENGE" }
+  | { type: "BLOCK" }
+  | { type: "DUEL_OVER" };
+
+export const duellingGuard = defineMachine<GuardCtx, GuardEvent>()({
+  initial: "/patrol",
+  states: {
+    patrol: { on: { CHALLENGE: "/duel" } },
+    duel: {
+      task: (ctx, finish) => {
+        const duel = duelMachine.start({
+          done: () => finish({ type: "DUEL_OVER" }),
+        });
+        ctx.duel = duel;
+        return () => {
+          duel.stop();
+          ctx.duel = undefined;
+        };
+      },
+      update: (ctx, dt) => {
+        ctx.duel?.update(dt);
+        return undefined;
+      },
+      on: {
+        BLOCK: { run: (ctx) => ctx.duel?.send({ type: "PARRY" }) },
+        DUEL_OVER: "/patrol",
+      },
+    },
+  },
+});
+```
+
 ```ts title="guard-private.ts"
 import { defineMachine } from "@defold-typescript/types/hsm";
 

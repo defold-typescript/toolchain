@@ -3545,7 +3545,7 @@ export const blink = defineMachine<{ readonly sprite: Url }, BlinkEvent>()({
 });
 ```
 
-A state that starts several pieces of engine work and moves on when all of them have finished counts them with a [`WaitGroup`](#waitgroup); [Wait for something to finish](#wait-for-something-to-finish) has the recipes.
+A state that starts several pieces of engine work and moves on when all of them have finished counts them with a [`WaitGroup`](#waitgroup); [Wait for something to finish](#wait-for-something-to-finish) has the recipes. A state that runs a second machine for as long as it is active starts it in its `task` too; see [A machine that lives during one state](#a-machine-that-lives-during-one-state).
 
 ##### Cleanup runs on exit, never after an `await`
 
@@ -4107,6 +4107,313 @@ export default defineScript({
 
 To restart one state and keep the instance, name the state as its own target; see [Events and transitions](#events-and-transitions).
 
+#### Several machines
+
+Parts of one object that each have a state are compound or [parallel](#run-regions-side-by-side-with-parallel) states of one machine. A second machine is for a second thing: another game object, or something that has a life of its own. An instance is a plain object. It fits in a context or on `self`, so the library has no spawn call and no parent or child helper. How the two machines relate picks the recipe:
+
+| The machines                                         | Recipe                                                                                                                                          |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| On separate game objects                             | Each script runs its own machine, and they post messages; see [Separate objects talk with messages](#separate-objects-talk-with-messages)      |
+| Two in one script, where one reads the other         | The reader holds the other instance in its context; see [Two machines in one script](#two-machines-in-one-script)                              |
+| One that exists only while a state of another is active | The state's `task` starts it and the cleanup stops it; see [A machine that lives during one state](#a-machine-that-lives-during-one-state) |
+
+##### Separate objects talk with messages
+
+Machines on separate game objects never hold each other. Each script runs its own machine, and the two talk the way any two scripts do, with `msg.post`. A boss spawns its minions, wakes them, and drops its shield once the last one is down:
+
+```ts title="boss-machine.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/defold";
+
+declare global {
+  interface CustomMessages {
+    minion_wake: {};
+    minion_ready: {};
+    minion_down: {};
+  }
+}
+
+export interface BossCtx {
+  readonly minions: Hash[];
+  alive: number;
+}
+
+export type BossEvent = MessageEvent<"minion_ready" | "minion_down">;
+
+export const bossMachine = defineMachine<BossCtx, BossEvent>()({
+  initial: "/shielded",
+  states: {
+    shielded: {
+      enter: (ctx) => {
+        for (const minion of ctx.minions) {
+          msg.post(minion, "minion_wake");
+        }
+      },
+      on: {
+        minion_ready: {
+          run: (ctx) => {
+            ctx.alive += 1;
+          },
+        },
+        minion_down: [
+          { to: "/exposed", when: (ctx) => ctx.alive === 1 },
+          {
+            run: (ctx) => {
+              ctx.alive -= 1;
+            },
+          },
+        ],
+      },
+    },
+    exposed: {},
+  },
+});
+
+export const bossEvents = messageEvents(["minion_ready", "minion_down"]);
+```
+
+The minion answers whoever woke it, and keeps that url for later:
+
+```ts title="minion-machine.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+import { type MessageEvent, messageEvents } from "@defold-typescript/types/hsm/defold";
+
+export interface MinionCtx {
+  hp: number;
+  owner?: Url;
+}
+
+export type MinionEvent = MessageEvent<"minion_wake"> | { type: "HIT" };
+
+export const minionMachine = defineMachine<MinionCtx, MinionEvent>()({
+  initial: "/asleep",
+  states: {
+    asleep: {
+      on: {
+        minion_wake: {
+          to: "/awake",
+          run: (ctx, event) => {
+            ctx.owner = event.sender;
+            msg.post(event.sender, "minion_ready");
+          },
+        },
+      },
+    },
+    awake: {
+      on: {
+        HIT: [
+          { to: "/down", when: (ctx) => ctx.hp <= 1 },
+          {
+            run: (ctx) => {
+              ctx.hp -= 1;
+            },
+          },
+        ],
+      },
+    },
+    down: {
+      enter: (ctx) => {
+        if (ctx.owner !== undefined) {
+          msg.post(ctx.owner, "minion_down");
+        }
+      },
+    },
+  },
+});
+
+export const minionEvents = messageEvents(["minion_wake"]);
+```
+
+The boss's script spawns the minions and hands their ids to the machine:
+
+```ts title="boss.ts"
+import { defineScript } from "@defold-typescript/types";
+import { bossEvents, bossMachine } from "./boss-machine";
+
+export default defineScript({
+  init() {
+    const minions = [factory.create("#minions"), factory.create("#minions")];
+    return { boss: bossMachine.start({ minions, alive: 0 }) };
+  },
+  on_message(self, message_id, message, sender) {
+    const event = bossEvents.toEvent(message_id, message, sender);
+    if (event !== undefined) {
+      self.boss.send(event);
+    }
+  },
+  final(self) {
+    self.boss.stop();
+  },
+});
+```
+
+The minion's script has the shape of [`door.ts`](#one-instance-per-object-on-self): it starts `minionMachine` with its `hp`, passes each message through `minionEvents.toEvent`, and sends `HIT` itself when something hurts the minion.
+
+Who posts what to whom:
+
+- **The boss posts `minion_wake` to each minion** from the `enter` hook of `/shielded`, which runs inside `start`. The ids come from `factory.create`.
+- **A minion posts `minion_ready` to `event.sender`,** the boss's script, and keeps that url in `ctx.owner`.
+- **A minion posts `minion_down` to `ctx.owner`** from the `enter` hook of `/down`.
+
+Neither module imports the other. The boss knows its minions by the ids it was started with, and a minion knows its owner by the sender of the message that woke it, so the same minion serves any object that wakes it. `CustomMessages` is global: the three messages are declared once, in `boss-machine.ts`, and both modules see them. [The message bridge](#the-message-bridge) covers `messageEvents` and `event.sender`.
+
+##### Two machines in one script
+
+Two machines in one script are two instances on `self`. When a rule of one depends on the state of the other, the first holds the second in its context and asks it in a `when`. A hero jumps only while the round is being played:
+
+```ts title="round-machines.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+export type RoundEvent = { type: "FINISH" };
+
+export const roundMachine = defineMachine<object, RoundEvent>()({
+  initial: "/countdown",
+  states: {
+    countdown: { after: { 3: "/playing" } },
+    playing: { on: { FINISH: "/over" } },
+    over: {},
+  },
+});
+
+export interface HeroCtx {
+  readonly round: ReturnType<typeof roundMachine.start>;
+}
+
+export type HeroEvent = { type: "JUMP" } | { type: "LAND" };
+
+export const heroMachine = defineMachine<HeroCtx, HeroEvent>()({
+  initial: "/grounded",
+  states: {
+    grounded: {
+      on: {
+        JUMP: { to: "/airborne", when: (ctx) => ctx.round.matches("/playing") },
+      },
+    },
+    airborne: { on: { LAND: "/grounded" } },
+  },
+});
+```
+
+The script starts the round first, because the hero's context needs it:
+
+```ts title="hero.ts"
+import { defineScript } from "@defold-typescript/types";
+import { heroMachine, roundMachine } from "./round-machines";
+
+export default defineScript({
+  init() {
+    const round = roundMachine.start({});
+    return { round, hero: heroMachine.start({ round }) };
+  },
+  update(self, dt) {
+    self.round.update(dt);
+    self.hero.update(dt);
+  },
+  final(self) {
+    self.hero.stop();
+    self.round.stop();
+  },
+});
+```
+
+The rules:
+
+- **Tick the machine that is read first.** `update` ticks the round, then the hero, so a rule of the hero sees where the round is in this frame.
+- **Stop them in the opposite order.** `final` stops the hero while the round it reads is still running.
+- **A mistyped path fails to compile.** The type of `round` carries the round's paths, so `ctx.round.matches("/playng")` is an error where it is written.
+
+##### A machine that lives during one state
+
+A machine that exists only while one state of another is active is started in that state's [`task`](#engine-callbacks-task-and-finish) and stopped in the cleanup the `task` returns. A brawler counts a combo while it fights. The combo is a machine of its own: every hit gives it one more second, and it ends when a second passes with no hit.
+
+```ts title="combo-machines.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+export interface ComboCtx {
+  hits: number;
+  readonly done: (hits: number) => void;
+}
+
+export type ComboEvent = { type: "HIT" };
+
+export const comboMachine = defineMachine<ComboCtx, ComboEvent>()({
+  initial: "/open",
+  states: {
+    open: {
+      on: {
+        HIT: {
+          to: "/open",
+          run: (ctx) => {
+            ctx.hits += 1;
+          },
+        },
+      },
+      after: { 1: "/closed" },
+    },
+    closed: { enter: (ctx) => ctx.done(ctx.hits) },
+  },
+});
+
+export interface BrawlerCtx {
+  combo?: ReturnType<typeof comboMachine.start>;
+  best: number;
+}
+
+export type BrawlerEvent =
+  | { type: "ENGAGE" }
+  | { type: "PUNCH" }
+  | { type: "FLEE" }
+  | { type: "COMBO_ENDED"; hits: number };
+
+export const brawlerMachine = defineMachine<BrawlerCtx, BrawlerEvent>()({
+  initial: "/roaming",
+  states: {
+    roaming: { on: { ENGAGE: "/fighting" } },
+    fighting: {
+      task: (ctx, finish) => {
+        const combo = comboMachine.start({
+          hits: 0,
+          done: (hits) => finish({ type: "COMBO_ENDED", hits }),
+        });
+        ctx.combo = combo;
+        return () => {
+          combo.stop();
+          ctx.combo = undefined;
+        };
+      },
+      update: (ctx, dt) => {
+        ctx.combo?.update(dt);
+        return undefined;
+      },
+      on: {
+        PUNCH: { run: (ctx) => ctx.combo?.send({ type: "HIT" }) },
+        COMBO_ENDED: {
+          to: "/roaming",
+          run: (ctx, event) => {
+            if (event.hits > ctx.best) {
+              ctx.best = event.hits;
+            }
+          },
+        },
+        FLEE: "/roaming",
+      },
+    },
+  },
+});
+```
+
+`HIT` names `/open` as its own target, so the state is entered again and its `after` timer starts over.
+
+The five parts, in the order they run:
+
+1. **Start in the `task`.** Every entry of `/fighting` starts a new combo and keeps it in `ctx.combo`.
+2. **Tick in `update`.** The `update` hook of `/fighting` passes its `dt` on. A machine nobody ticks is frozen, and its `after` never ends.
+3. **Send from a rule.** `PUNCH` has a `run` and no `to`: the brawler stays where it is and the combo gets a `HIT`.
+4. **Report through a callback.** `/closed` calls `ctx.done`, which calls the `finish` of the brawler's `task`. The brawler takes `COMBO_ENDED` once its own step has ended, and `finish` is ignored once `/fighting` is left.
+5. **Stop in the cleanup.** It runs on every way out of `/fighting`, `FLEE` and `stop()` included, so no combo outlives the fight.
+
+The callback sits in the combo's context because a machine sees only its context and its events. The combo knows nothing about the brawler, and any machine can start one.
+
 #### Hot reload
 
 Hot reload lets you edit a machine while the game runs and see the change without restarting. To use it, give `defineMachine` a key, a name for this definition:
@@ -4581,7 +4888,7 @@ export const liftMachine = defineMachine<{ floor: number }, MessageEvent<"call_l
 export const liftEvents = messageEvents(["call_lift"]);
 ```
 
-A machine sees only its `ctx` and its events, never `self`, so script data a hook needs goes into `ctx` at `start`.
+A machine sees only its `ctx` and its events, never `self`, so script data a hook needs goes into `ctx` at `start`. For two objects whose machines message each other, see [Separate objects talk with messages](#separate-objects-talk-with-messages).
 
 A script that already dispatches with `onMessage` (see [Messages](./messages.md)) has narrowed payloads in hand and can `send` them directly, with no mapper. An event built by hand for a `MessageEvent` union includes `sender`, which the `onMessage` handler receives.
 
@@ -5084,7 +5391,7 @@ Two rules carry over to any migration:
 
 #### Cheat sheet
 
-Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies. The two snippets on private fields come from a second guard, one that counts its hits itself, the snippets on timer rules and on `every` from a third, one that shouts and scans while on alert, the snippet on tags from a fourth, one that answers the radio only while alert, and the two snippets on waiting from a fifth, one that wakes up, then draws its sword and calls for backup before a fight.
+Short answers to common tasks. Each snippet is an excerpt of one enemy machine: a guard with `health` that patrols, goes on alert, takes hits and dies. The two snippets on private fields come from a second guard, one that counts its hits itself, the snippets on timer rules and on `every` from a third, one that shouts and scans while on alert, the snippet on tags from a fourth, one that answers the radio only while alert, the two snippets on waiting from a fifth, one that wakes up, then draws its sword and calls for backup before a fight, and the snippet on a second machine from a sixth, one that fights a duel.
 
 ##### Configure a state
 
@@ -5335,6 +5642,30 @@ always: {
   when: (_ctx, machine) =>
     machine.matches(SWORD_OUT) &&
     machine.matches(BACKUP_CALLED),
+}
+```
+
+</td></tr>
+<tr><td>
+
+Run a second machine while a state is active
+
+</td><td>
+
+Start it in the state's [`task`](#engine-callbacks-task-and-finish), tick it from `update` and stop it in the cleanup; see [A machine that lives during one state](#a-machine-that-lives-during-one-state)
+
+</td><td>
+
+```ts excerpt
+task: (ctx, finish) => {
+  const duel = duelMachine.start({
+    done: () => finish({ type: "DUEL_OVER" }),
+  });
+  ctx.duel = duel;
+  return () => {
+    duel.stop();
+    ctx.duel = undefined;
+  };
 }
 ```
 
