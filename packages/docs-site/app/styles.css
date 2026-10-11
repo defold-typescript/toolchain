@@ -1647,7 +1647,8 @@
   line-height: 1.35;
   transition:
     background-color 0.5s,
-    color 0.5s;
+    color 0.5s,
+    opacity 0.25s;
 }
 .hsm-ev {
   color: var(--hsm-event);
@@ -1704,15 +1705,30 @@
 }
 .hsm-button {
   padding: 0.35rem 0.75rem;
-  border: 1.5px solid color-mix(in srgb, var(--hsm-event) 60%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--hsm-event) 35%, transparent);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--hsm-event) 8%, transparent);
-  color: var(--hsm-event);
+  background: transparent;
+  color: color-mix(in srgb, var(--hsm-event) 70%, var(--color-text-muted));
   font: 600 0.78rem var(--font-mono);
   cursor: pointer;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
 }
 .hsm-button:hover {
-  background: color-mix(in srgb, var(--hsm-event) 18%, transparent);
+  background: color-mix(in srgb, var(--hsm-event) 12%, transparent);
+}
+.hsm-button.hsm-can {
+  border-color: var(--hsm-event);
+  background: var(--hsm-event);
+  color: var(--color-bg);
+}
+.hsm-button.hsm-can:hover {
+  background: color-mix(in srgb, var(--hsm-event) 85%, var(--color-text));
+}
+.hsm-demo .hsm-state:not(.hsm-on) > .hsm-rules > li.hsm-rule:not(.hsm-flash) {
+  opacity: 0.55;
 }
 .hsm-button.hsm-ghost {
   border-color: var(--color-border-strong);

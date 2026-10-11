@@ -14,7 +14,7 @@ Here is a small robot buddy. Go on, poke it.
 
 What did you just do? You pressed `POKE`, and the buddy woke up. Press it again, and it goes back to sleep.
 
-That's a state machine. The buddy is always in exactly one **state**: `asleep` or `awake`. Pressing `POKE` sends an **event**, and a **transition** rule moves the buddy to the other state. The glowing box is the state it's in right now, the drawing shows the buddy in that state, and the log shows each step as it happens.
+That's a state machine. The buddy is always in exactly one **state**: `asleep` or `awake`. Pressing `POKE` sends an **event**, and a **transition** rule moves the buddy to the other state. The glowing box is the state it's in right now, the drawing shows the buddy in that state, and the log shows each step as it happens. A filled button is an event the buddy takes right now. An outlined one still sends its event, and the log says what became of it.
 
 This page grows that buddy one idea at a time. By the end it wanders, greets you, follows you, gets tired and charges at a dock, and it is still one machine in one file.
 
@@ -807,18 +807,18 @@ Press "start() with wakes = 0" and read the log from the top. Can you find the l
 
 Back to the log. `enter /asleep` comes first, then `POKE queued`, and only after that does `asleep` exit. Every queued event is handled before the outer call returns, so by the time `start()` hands you the buddy it is already in `/waking`.
 
-It stays there, by the way. This diagram has no clock, and [lesson 8](#8-time-and-every-frame-checks) told you what that means: time stands still, and the fade never ends.
+It stays there, by the way. This diagram starts with its clock paused, and [lesson 8](#8-time-and-every-frame-checks) told you what that means: no `update` runs, so the fade waits. Press "Resume time" when you want the buddy to finish waking.
 
 ### What stop leaves behind
 
 Now press "stop()". That is what the script's `final` does when the buddy's game object is deleted.
 
-Every active state exits, innermost first, so `waking`'s cleanup runs and the light goes off. After that `path` is `undefined`, and events do nothing at all.
+Every active state exits, innermost first, so the `exit` hooks run and the light goes off. After that `path` is `undefined`, and events do nothing at all.
 
 ### Try it
 
 1. Press "start() with wakes = 1". What is different in the log?
-2. Start with `wakes` at 0 again, then poke the buddy while it is waking. Where does it end up, and why?
+2. Pause time, start with `wakes` at 0 again, then poke the buddy while it is waking. Where does it end up, and why?
 3. After "stop()", press `POKE`. What does the log say?
 
 > [!MORE] Answer
