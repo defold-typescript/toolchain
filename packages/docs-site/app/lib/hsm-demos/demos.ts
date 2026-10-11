@@ -58,6 +58,8 @@ export interface DemoSpec<Ctx, E extends EventObject> {
   readonly tick?: (ctx: Ctx, dt: number) => void;
   /** Driven by the page heartbeat, with pause and speed controls. */
   readonly timed?: boolean;
+  /** Starts with the clock paused; read only with `timed`. */
+  readonly paused?: boolean;
   readonly speed?: number;
   /**
    * Plain-words labels for rule chips, keyed by chip id (`<path>|on|<event>|<index>`, `<path>|update`).
@@ -275,6 +277,7 @@ const buddyTime = demo<TimeCtx, EnergyEvent>({
     { label: "POKE", event: { type: "POKE" } },
     { label: "SEE_PLAYER", event: { type: "SEE_PLAYER" } },
     { label: "LOSE_PLAYER", event: { type: "LOSE_PLAYER" } },
+    { label: "BUMP (cost 1)", event: { type: "BUMP", cost: 1 } },
     { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
     { label: "RECHARGE", event: { type: "RECHARGE" } },
   ],
@@ -390,6 +393,11 @@ const buddyWaking = demo<WakingCtx, WakingEvent>({
   buttonsLabel: "Send an event, or change the code",
   buttons: [
     { label: "POKE", event: { type: "POKE" } },
+    { label: "SEE_PLAYER", event: { type: "SEE_PLAYER" } },
+    { label: "LOSE_PLAYER", event: { type: "LOSE_PLAYER" } },
+    { label: "BUMP (cost 1)", event: { type: "BUMP", cost: 1 } },
+    { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
+    { label: "RECHARGE", event: { type: "RECHARGE" } },
     {
       label: "Toggle cancel in exit",
       change: (ctx) => {
@@ -415,7 +423,9 @@ type QueueEvent =
 
 const buddyQueue = demo<FadeCtx, QueueEvent>({
   title: "The buddy wakes itself",
-  subtitle: "Time stands still in this one, so the fade never ends.",
+  subtitle: "Time starts paused in this one, so the fade waits for you.",
+  timed: true,
+  paused: true,
   config: {
     initial: "/asleep",
     states: {
@@ -504,6 +514,11 @@ const buddyQueue = demo<FadeCtx, QueueEvent>({
     { label: "start() with wakes = 0", restartWith: { wakes: 0 } },
     { label: "start() with wakes = 1", restartWith: { wakes: 1 } },
     { label: "POKE", event: { type: "POKE" } },
+    { label: "trigger_response (enter true)", event: { type: "trigger_response", enter: true } },
+    { label: "trigger_response (enter false)", event: { type: "trigger_response", enter: false } },
+    { label: "BUMP (cost 1)", event: { type: "BUMP", cost: 1 } },
+    { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
+    { label: "RECHARGE", event: { type: "RECHARGE" } },
     { label: "stop()", stop: true },
   ],
   readout: (m) => [

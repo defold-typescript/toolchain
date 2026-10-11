@@ -90,6 +90,47 @@ function childPath(parent: string, name: string): string {
   return `${parent}/${name}`;
 }
 
+/** One rule line of a state box, in the order the diagram lists them. */
+export type ChipSpec =
+  | {
+      readonly kind: "on";
+      readonly id: string;
+      readonly type: string;
+      readonly to: string | undefined;
+    }
+  | { readonly kind: "update"; readonly id: string }
+  | { readonly kind: "after"; readonly id: string; readonly delay: number; readonly to: string };
+
+export function stateChips(config: State, path: string): ChipSpec[] {
+  const chips: ChipSpec[] = [];
+  for (const [type, spec] of Object.entries(config.on ?? {})) {
+    if (spec === undefined) continue;
+    ruleList(spec).forEach((rule, index) => {
+      chips.push({ kind: "on", id: ruleChip(path, type, index), type, to: rule.to });
+    });
+  }
+  if (config.update !== undefined) chips.push({ kind: "update", id: updateChip(path) });
+  const after = config.after as Record<number, string> | undefined;
+  for (const delay of afterDelays(config)) {
+    chips.push({ kind: "after", id: afterChip(path, delay), delay, to: after?.[delay] as string });
+  }
+  return chips;
+}
+
+/** The id of every chip a diagram draws: each state below the root, parents before children. */
+export function diagramChips(root: State): string[] {
+  const ids: string[] = [];
+  const collect = (config: State, path: string) => {
+    for (const [name, child] of Object.entries(config.states ?? {})) {
+      const at = childPath(path, name);
+      for (const chip of stateChips(child, at)) ids.push(chip.id);
+      collect(child, at);
+    }
+  };
+  collect(root, "");
+  return ids;
+}
+
 /** `"/on/dim"` to `"/on"`, and `"/on"` to the root's `""`. */
 function parentPath(path: string): string {
   return path.slice(0, Math.max(0, path.lastIndexOf("/")));
@@ -450,6 +491,23 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
 
 export function send(run: DemoRun, event: EventObject): void {
   sendFromOutside(sessionOf(run), event);
+}
+
+/** Whether an active state would take `event` now. The trace is muted while the library's `can` runs, so a `when` that says no adds no log line. */
+export function canTake(run: DemoRun, event: EventObject): boolean {
+  const s = sessionOf(run);
+  const muted = s.muted;
+  s.muted = true;
+  try {
+    return run.instance.can(event);
+  } finally {
+    s.muted = muted;
+  }
+}
+
+/** Whether the button sends an event the machine would take now; false for a button that sends none. */
+export function takes(run: DemoRun, button: DemoButton): boolean {
+  return "event" in button && canTake(run, button.event);
 }
 
 /** Advances a demo by `dt` seconds: the imitated Defold work first, then the machine's `update`. */
