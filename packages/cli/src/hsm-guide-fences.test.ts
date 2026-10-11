@@ -8,7 +8,9 @@
  * is a `ts excerpt` fence: it must quote the excerpt source, whose fences
  * compile under the same checks.
  * A `ts step` fence on the tutorial is a diff of a file the reader builds: the
- * files each lesson leaves must compile and transpile as one project.
+ * files each lesson leaves must compile and transpile as one project, and the
+ * last lesson's project must use every member and function the hsm entry
+ * points ship, so a member `hsm` gains needs a lesson that uses it.
  * The manual's reference tables are held to the `StateConfig`, `Machine`,
  * `MachineInstance` and `WaitGroup` interfaces of the hsm source.
  */
@@ -18,7 +20,13 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
 import * as ts from "typescript";
-import { fenceTitle, isStepFence, lessonProjects, tsFences } from "./hsm-guide-steps";
+import {
+  fenceTitle,
+  isStepFence,
+  type LessonProject,
+  lessonProjects,
+  tsFences,
+} from "./hsm-guide-steps";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const GUIDE_DIR = path.join(REPO_ROOT, "packages", "docs", "guide");
@@ -251,6 +259,117 @@ for (const file of FENCED_FILES) {
   });
 }
 
+const HSM_ENTRY_POINTS = [
+  "@defold-typescript/types/hsm",
+  "@defold-typescript/types/hsm/async",
+  "@defold-typescript/types/hsm/debug",
+  "@defold-typescript/types/hsm/defold",
+];
+
+// The tutorial's events are its own union, so nothing names `type` through `EventObject`.
+const UNTAUGHT_INTERFACES = new Set(["EventObject"]);
+
+interface HsmCoverage {
+  /** Each member the project never names, as `<declaring type>.<member>`. */
+  readonly members: string[];
+  /** Each exported function the project never names. */
+  readonly functions: string[];
+}
+
+/**
+ * What `files`, one project, leaves unused of the surface the four hsm entry points ship: the
+ * members of every exported interface and of `StateConfig`, and every exported function. A member
+ * typed `never` only reports a renamed key, so it is no part of the surface.
+ */
+function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
+  const project = writeFenceProject(
+    [...files].map(([title, body]): Fence => ({ label: title, rel: title, body })),
+  );
+  const declarationFiles = HSM_ENTRY_POINTS.map((entry) => (TYPE_PATHS[entry] as string[])[0]);
+  const program = ts.createProgram(
+    [
+      path.join(project.src, "env.d.ts"),
+      ...(declarationFiles as string[]),
+      ...[...project.sources.keys()].map((rel) => path.join(project.src, rel)),
+    ],
+    compilerOptions(project.src),
+  );
+  const checker = program.getTypeChecker();
+
+  const members = new Map<ts.Declaration, string>();
+  const functions = new Map<ts.Declaration, string>();
+  const listMembers = (type: ts.Type): void => {
+    for (const member of checker.getPropertiesOfType(type)) {
+      for (const declaration of member.declarations ?? []) {
+        if (!ts.isPropertySignature(declaration) && !ts.isMethodSignature(declaration)) continue;
+        if (declaration.type?.kind === ts.SyntaxKind.NeverKeyword) continue;
+        const owner = declaration.parent;
+        if (ts.isInterfaceDeclaration(owner)) {
+          members.set(declaration, `${owner.name.text}.${member.name}`);
+        }
+      }
+    }
+  };
+  for (const file of declarationFiles as string[]) {
+    const source = program.getSourceFile(file);
+    const moduleSymbol = source === undefined ? undefined : checker.getSymbolAtLocation(source);
+    if (moduleSymbol === undefined) {
+      throw new Error(`${file} is not a module of the program`);
+    }
+    for (const exported of checker.getExportsOfModule(moduleSymbol)) {
+      for (const declaration of exported.declarations ?? []) {
+        if (ts.isFunctionDeclaration(declaration)) {
+          functions.set(declaration, exported.name);
+        } else if (ts.isInterfaceDeclaration(declaration)) {
+          if (!UNTAUGHT_INTERFACES.has(exported.name)) {
+            listMembers(checker.getDeclaredTypeOfSymbol(exported));
+          }
+        } else if (ts.isTypeAliasDeclaration(declaration) && exported.name === "StateConfig") {
+          const declared = checker.getDeclaredTypeOfSymbol(exported);
+          for (const variant of declared.isUnion() ? declared.types : [declared]) {
+            listMembers(variant);
+          }
+        }
+      }
+    }
+  }
+
+  const used = new Set<ts.Declaration>();
+  const use = (symbol: ts.Symbol | undefined): void => {
+    if (symbol === undefined) return;
+    const target = symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol;
+    for (const declaration of target.declarations ?? []) used.add(declaration);
+  };
+  const visit = (node: ts.Node): void => {
+    if (ts.isIdentifier(node)) {
+      use(checker.getSymbolAtLocation(node));
+    } else if (ts.isObjectLiteralExpression(node)) {
+      const contextual = checker.getContextualType(node);
+      // A key one variant of a union lacks is no property of the union, so each variant is asked.
+      const variants =
+        contextual === undefined ? [] : contextual.isUnion() ? contextual.types : [contextual];
+      for (const property of node.properties) {
+        const name = property.name;
+        if (name === undefined || !(ts.isIdentifier(name) || ts.isStringLiteral(name))) continue;
+        for (const variant of variants) use(checker.getPropertyOfType(variant, name.text));
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  for (const rel of project.sources.keys()) {
+    const source = program.getSourceFile(path.join(project.src, rel));
+    if (source === undefined) throw new Error(`${rel} is not a file of the program`);
+    visit(source);
+  }
+
+  const unused = (listed: ReadonlyMap<ts.Declaration, string>): string[] =>
+    [...listed]
+      .filter(([declaration]) => !used.has(declaration))
+      .map(([, label]) => label)
+      .sort();
+  return { members: unused(members), functions: unused(functions) };
+}
+
 describe(`${LESSON_PAGE} lessons`, () => {
   const page = readFileSync(path.join(GUIDE_DIR, LESSON_PAGE), "utf8");
 
@@ -259,6 +378,19 @@ describe(`${LESSON_PAGE} lessons`, () => {
     lessonProject ??= writeFenceProject(lessonFences(page));
     return lessonProject;
   };
+
+  test(
+    "the last lesson's project uses every hsm member",
+    () => {
+      const last = lessonProjects(page).at(-1);
+      expect(last, "the page has a lesson project").toBeDefined();
+      expect(unusedHsmSurface((last as LessonProject).files)).toEqual({
+        members: [],
+        functions: [],
+      });
+    },
+    SLOW,
+  );
 
   test(
     "every lesson's project type-checks at the scaffold strictness",
@@ -314,6 +446,40 @@ describe("hsm guide lesson gate", () => {
       const found = typeCheck(writeFenceProject(fences));
       expect(found.get("lesson-01/lamp.ts")).toBeUndefined();
       expect(found.get("lesson-02/lamp.ts")?.length ?? 0).toBeGreaterThan(0);
+    },
+    SLOW,
+  );
+});
+
+describe("hsm guide coverage gate", () => {
+  test(
+    "the coverage gate can fail",
+    () => {
+      const page = [
+        "## 1. Two states",
+        "",
+        '```ts step title="lamp.ts"',
+        'import { defineMachine } from "@defold-typescript/types/hsm";',
+        "",
+        'export const lamp = defineMachine<{}, { type: "TOGGLE" }>()({',
+        '  initial: "/off",',
+        "  states: {",
+        '    off: { on: { TOGGLE: "/on" } },',
+        '    on: { on: { TOGGLE: "/off" } },',
+        "  },",
+        "});",
+        "```",
+        "",
+      ].join("\n");
+      const [only] = lessonProjects(page);
+      const unused = unusedHsmSurface((only as LessonProject).files);
+      expect(unused.members).toContain("StateBase.after");
+      expect(unused.members).toContain("StateBase.every");
+      expect(unused.members).not.toContain("StateBase.on");
+      expect(unused.members).not.toContain("StateBase.states");
+      expect(unused.members).not.toContain("CompoundState.initial");
+      expect(unused.functions).toContain("waitGroup");
+      expect(unused.functions).not.toContain("defineMachine");
     },
     SLOW,
   );
