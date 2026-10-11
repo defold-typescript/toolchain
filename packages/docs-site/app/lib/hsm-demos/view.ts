@@ -56,8 +56,11 @@ function span(className: string, text: string): HTMLSpanElement {
   return el("span", className, text);
 }
 
-function hookList(config: State): string | undefined {
-  const hooks = (["enter", "exit", "task"] as const).filter((key) => config[key] !== undefined);
+// A quiet `update` hook has no rule line to show it, so it is named with the other hooks.
+function hookList(config: State, quietUpdate: boolean): string | undefined {
+  const hooks = (["enter", "exit", "task", "update"] as const).filter(
+    (key) => config[key] !== undefined && (key !== "update" || quietUpdate),
+  );
   if (hooks.length === 0) return undefined;
   const last = hooks[hooks.length - 1] as string;
   const named = hooks.length === 1 ? last : `${hooks.slice(0, -1).join(", ")} and ${last}`;
@@ -69,10 +72,17 @@ interface Chip {
   timer: ReturnType<typeof setTimeout> | undefined;
 }
 
+/** An `after` or `every` line: its bar, and the parts that change while the machine runs. */
 interface TimerBar {
-  readonly path: string;
-  readonly delay: number;
+  readonly id: string;
+  readonly key: "after" | "every";
+  readonly element: HTMLLIElement;
+  readonly label: HTMLSpanElement;
+  /** What the label reads while a delay function has no value for the current stay. */
+  readonly unread: string;
   readonly bar: HTMLSpanElement;
+  text: string;
+  waiting: boolean;
   width: string;
 }
 
@@ -163,7 +173,8 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
 
     const rules = el("ul", "hsm-rules");
     const note = (id: string) => demo.notes?.[id];
-    for (const chip of stateChips(config, path)) {
+    const quietUpdate = demo.quietUpdates?.includes(path) ?? false;
+    for (const chip of stateChips(config, path, quietUpdate)) {
       if (chip.kind === "on") {
         const parts: (string | Node)[] = [
           span("hsm-ev", chip.type),
@@ -185,18 +196,34 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
           span("hsm-why", note(chip.id) ?? "update hook"),
         ]);
       } else {
-        const element = addChip(rules, chip.id, [
-          span("hsm-ev", `after ${chip.delay} s`),
-          ` → ${chip.to}`,
-        ]);
+        // A delay that is a function has no value until its state is entered.
+        const unread = `${chip.kind} ${note(`${chip.id}|delay`) ?? "? s"}`;
+        const text = chip.delay === undefined ? unread : `${chip.kind} ${chip.delay} s`;
+        const label = span("hsm-ev", text);
+        const parts: (string | Node)[] = [label];
+        if (chip.kind === "after") parts.push(` → ${chip.to ?? "stay here"}`);
+        const why = note(chip.id);
+        if (why) parts.push(" ", span("hsm-why", why));
+        if (chip.kind === "after") parts.push(" ", span("hsm-wait-mark", "waiting"));
         const bar = span("hsm-bar", "");
-        element.append(bar);
-        bars.push({ path, delay: chip.delay, bar, width: "" });
+        parts.push(bar);
+        const element = addChip(rules, chip.id, parts);
+        bars.push({
+          id: chip.id,
+          key: chip.kind,
+          element,
+          label,
+          unread,
+          bar,
+          text,
+          waiting: false,
+          width: "",
+        });
       }
     }
     if (rules.childElementCount > 0) box.append(rules);
 
-    const hooks = hookList(config);
+    const hooks = hookList(config, quietUpdate);
     if (hooks) box.append(el("div", "hsm-hooks", hooks));
     if (config.restoreDepth !== undefined) {
       box.append(el("div", "hsm-hooks", "remembers its last child"));
@@ -347,9 +374,21 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     dirty = false;
   }
 
+  // Each part is written only when it changes: an idle demo leaves its DOM alone.
   function updateBars() {
     for (const timer of bars) {
-      const width = `${Math.min(100, (run.clock(timer.path) / timer.delay) * 100)}%`;
+      const delay = run.delayOf(timer.id);
+      const text = delay === undefined ? timer.unread : `${timer.key} ${delay} s`;
+      if (text !== timer.text) {
+        timer.label.textContent = text;
+        timer.text = text;
+      }
+      const waiting = run.waiting(timer.id);
+      if (waiting !== timer.waiting) {
+        timer.element.classList.toggle("hsm-wait", waiting);
+        timer.waiting = waiting;
+      }
+      const width = `${run.progress(timer.id) * 100}%`;
       if (width !== timer.width) {
         timer.bar.style.width = width;
         timer.width = width;

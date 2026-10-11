@@ -254,3 +254,31 @@ test("the checkup's rules read at once, and only the remembering awake says so",
   await memory.scrollIntoViewIfNeeded();
   await expect(stateBox(page, memory, "awake")).toContainText("remembers its last child");
 });
+
+// An every entry is a rule line with a bar. A delay that is a function shows its
+// words until its state is entered and the seconds it read from then on, and a due
+// timer that its when holds back is marked as waiting.
+
+test("the drain is a line with a bar, and the nap shows the delay it read and waits", async ({
+  page,
+}) => {
+  await page.goto("/state-machines-tutorial");
+  const drain = page.locator('[data-hsm-demo="buddy-drain"] .hsm-demo');
+  await drain.scrollIntoViewIfNeeded();
+  const every = stateBox(page, drain, "awake").locator("li.hsm-rule", { hasText: "every 1 s" });
+  await expect(every).toHaveCount(1);
+  await expect(every.locator(".hsm-bar")).toHaveCount(1);
+
+  const nap = page.locator('[data-hsm-demo="buddy-nap"] .hsm-demo');
+  await nap.scrollIntoViewIfNeeded();
+  const resting = stateBox(page, nap, "resting");
+  await expect(resting.locator("li.hsm-rule", { hasText: "after napSeconds" })).toHaveCount(1);
+  await expect(resting.locator("li.hsm-rule", { hasText: "every frame" })).toHaveCount(0);
+
+  await expect(stateBox(page, nap, "awake")).toHaveClass(/hsm-on/, { timeout: 4000 });
+  await nap.getByRole("button", { name: "BUMP (cost 3)", exact: true }).click();
+  // The battery is full a second after the two seconds are over, so the line waits for one second.
+  const timer = resting.locator("li.hsm-rule", { hasText: "after 2 s" });
+  await expect(timer).toHaveCount(1);
+  await expect(timer).toHaveClass(/hsm-wait/, { timeout: 4000 });
+});
