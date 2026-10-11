@@ -1,9 +1,11 @@
 /**
  * The State machines guide's animation recipe is a whole machine, so this runs the
- * `knight-machine.ts` fence as the page prints it, over the hsm source, and plays the
+ * `knight-machine.ts` fence of the excerpt source, over the hsm source, and plays the
  * part of the engine: it records each flipbook and fires the completion callbacks.
  * The save and load recipes, the door requests recipe, the waiting recipes and the several
  * machines recipes are whole machines too, and run the same way.
+ * The page shows each machine as `ts excerpt` fences, which the fence gate holds to the
+ * excerpt source, and every machine run here has to be quoted by one of them.
  */
 import { afterAll, afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -14,18 +16,65 @@ import { loadMachines, type MachineEngine, type MachineLoad } from "./hsm-view-l
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const GUIDE_PAGE = path.join(REPO_ROOT, "packages", "docs", "guide", "state-machines.md");
+const EXCERPT_SOURCE = path.join(REPO_ROOT, "packages/cli/test/fixtures/hsm-guide-excerpts.md");
 const RECIPE_FENCE = "knight-machine.ts";
 const RECIPE_MACHINE = "knightMachine";
 
-const TITLED_TS_FENCE = /^```ts[^\n]*\btitle="([^"]+)"[^\n]*\n([\s\S]*?)^```/gm;
+/** The fences of the excerpt source this gate runs; a scenario can name no other. */
+const RECIPE_TITLES = [
+  "knight-machine.ts",
+  "chest-routed.ts",
+  "chest-machine.ts",
+  "door-requests.ts",
+  "wait-chain.ts",
+  "wait-chain-parent.ts",
+  "wait-fixed.ts",
+  "wait-counted.ts",
+  "wait-regions.ts",
+  "wait-sequence.ts",
+  "boss-machine.ts",
+  "minion-machine.ts",
+  "round-machines.ts",
+  "combo-machines.ts",
+] as const;
 
-function titledFence(page: string, title: string): string {
-  for (const match of page.matchAll(TITLED_TS_FENCE)) {
+type RecipeTitle = (typeof RECIPE_TITLES)[number];
+
+const TITLED_TS_FENCE = /^```ts[^\n]*\btitle="([^"]+)"[^\n]*\n([\s\S]*?)^```/gm;
+const TS_EXCERPT_FENCE = /^```ts[ \t]+excerpt(?=\s)[^\n]*\n([\s\S]*?)^```/gm;
+
+function titledFence(source: string, title: string): string {
+  for (const match of source.matchAll(TITLED_TS_FENCE)) {
     if (match[1] === title) {
       return match[2] as string;
     }
   }
-  throw new Error(`state-machines.md has no ts fence titled ${title}`);
+  throw new Error(`hsm-guide-excerpts.md has no ts fence titled ${title}`);
+}
+
+function collapseWhitespace(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * The recipes no `ts excerpt` fence of `page` quotes. An excerpt quotes a recipe when that
+ * recipe's fence in `source` holds it, whitespace aside, and no other recipe's does: lines
+ * two recipes share show the reader neither one.
+ */
+function unquotedRecipes(page: string, source: string): RecipeTitle[] {
+  const bodies = RECIPE_TITLES.map((title) => collapseWhitespace(titledFence(source, title)));
+  const quoted = new Set<RecipeTitle>();
+  for (const match of page.matchAll(TS_EXCERPT_FENCE)) {
+    const excerpt = collapseWhitespace(match[1] as string);
+    if (excerpt.length === 0) {
+      continue;
+    }
+    const holders = RECIPE_TITLES.filter((_, index) => bodies[index]?.includes(excerpt));
+    if (holders.length === 1) {
+      quoted.add(holders[0] as RecipeTitle);
+    }
+  }
+  return RECIPE_TITLES.filter((title) => !quoted.has(title));
 }
 
 interface LoadedFence {
@@ -40,10 +89,10 @@ const loadedFences = new Map<string, MachineLoad>();
  * The machine named `name` of the fence titled `title`, with its engine; a fence loads once, so
  * the machines of one fence share one hsm runtime and one engine.
  */
-function fenceMachine(title: string, name: string): LoadedFence {
+function fenceMachine(title: RecipeTitle, name: string): LoadedFence {
   let loaded = loadedFences.get(title);
   if (loaded === undefined) {
-    const body = titledFence(readFileSync(GUIDE_PAGE, "utf8"), title);
+    const body = titledFence(readFileSync(EXCERPT_SOURCE, "utf8"), title);
     const dir = mkdtempSync(path.join(os.tmpdir(), "hsm-guide-recipe-"));
     dirs.push(dir);
     const file = path.join(dir, title);
@@ -398,7 +447,7 @@ let calls: [string, readonly unknown[]][] = [];
 let watched: MachineEngine | undefined;
 
 /** The machine of a fence, with every engine call it makes from here on kept in `calls`. */
-function recipeMachine<Ctx>(title: string, name: string): RecipeMachine<Ctx> {
+function recipeMachine<Ctx>(title: RecipeTitle, name: string): RecipeMachine<Ctx> {
   const fence = fenceMachine(title, name);
   watched = fence.engine;
   fence.engine.setSink((entry) => {
@@ -680,5 +729,30 @@ describe("the several machines recipes", () => {
     brawler.update(2);
     expect(brawler.path).toBe("/roaming");
     expect(brawler.ctx.best).toBe(0);
+  });
+});
+
+describe("the recipes on the page", () => {
+  const source = readFileSync(EXCERPT_SOURCE, "utf8");
+
+  /** A page whose excerpts are the whole fences of `titles`. */
+  const pageQuoting = (titles: readonly RecipeTitle[]) =>
+    titles.map((title) => `\`\`\`ts excerpt\n${titledFence(source, title)}\`\`\`\n`).join("\n");
+
+  test("every machine the gate runs is quoted by the page", () => {
+    expect(unquotedRecipes(readFileSync(GUIDE_PAGE, "utf8"), source)).toEqual([]);
+  });
+
+  test("the quote check can fail", () => {
+    const missing: RecipeTitle = "wait-chain.ts";
+    const rest = RECIPE_TITLES.filter((title) => title !== missing);
+    expect(unquotedRecipes(pageQuoting(RECIPE_TITLES), source)).toEqual([]);
+    expect(unquotedRecipes(pageQuoting(rest), source)).toEqual([missing]);
+  });
+
+  test("lines several recipes share quote none of them", () => {
+    const shared =
+      '```ts excerpt\nimport { defineMachine } from "@defold-typescript/types/hsm";\n```\n';
+    expect(unquotedRecipes(shared, source)).toEqual([...RECIPE_TITLES]);
   });
 });
