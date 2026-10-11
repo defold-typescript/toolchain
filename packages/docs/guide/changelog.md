@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[Read-only callback arguments](./state-machines.md#types):** a `when` that assigns to a field of `ctx`, or a callback that assigns to a field of its event, fails to compile.
 > - **State machines** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), put [rules on timers](./state-machines.md#rules-on-a-timer), group states with [tags](./state-machines.md#name-a-group-of-states-with-tags), wait for several engine calls with [`waitGroup()`](./state-machines.md#waitgroup) and react to any event no state took with one [`unhandled`](./state-machines.md#react-to-an-unhandled-event) hook.
 > - **A saved game** resumes where it stopped: [`start` takes saved state paths](./state-machines.md#start-at-saved-paths).
-> - **[`hsm-view`](./hsm-view.md#read-the-code)** glows `every` runs and dims held timers.
+> - **[`hsm-view`](./hsm-view.md#attach-to-a-running-game)** glows `every` runs, dims held timers and, attached to a running game, glows the rule each `inspect` move line names.
 
 ### Breaking
 
@@ -26,9 +26,9 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took, resume a saved game and answer more about a running machine, and the guide gains a recipe:**
-  - **`every`** — a state runs code each time a delay passes while it is active, such as damage every half second or a rate of fire read from the context; a long frame runs it once, and a run is not a move; see [Repeat while a state is active](./state-machines.md#repeat-while-a-state-is-active). [`hsm-view`](./hsm-view.md#read-the-code) glows the entry that ran.
-  - **Rules on timers and `always`** — an `after` timer takes `to`, `when` and `run`, so a state can run code at a set time without leaving and a timer can wait for a condition once its delay has passed, and an `always` rule takes `run`; see [Rules on a timer](./state-machines.md#rules-on-a-timer). [`hsm-view`](./hsm-view.md#read-the-code) glows the timer that fired and dims one its `when` holds back.
+- **[State machines](./state-machines.md) repeat code while a state is active, take rules on timers, name groups of states with tags, wait for several engine calls, react to the events no state took, resume a saved game, answer more about a running machine and show more in `hsm-view`, and the guide gains a recipe:**
+  - **`every`** — a state runs code each time a delay passes while it is active, such as damage every half second or a rate of fire read from the context; a long frame runs it once, and a run is not a move; see [Repeat while a state is active](./state-machines.md#repeat-while-a-state-is-active).
+  - **Rules on timers and `always`** — an `after` timer takes `to`, `when` and `run`, so a state can run code at a set time without leaving and a timer can wait for a condition once its delay has passed, and an `always` rule takes `run`; see [Rules on a timer](./state-machines.md#rules-on-a-timer).
   - **`waitGroup()`** — a `task` that starts several engine calls waits for all of them: each `add()` returns the callback to pass, as in `http.request(url, "GET", group.add())`, and `wait` runs its callback once every one has reported; see [`WaitGroup`](./state-machines.md#waitgroup).
   - **A `when` reads the machine** — a rule's `when` receives the running machine as its last argument, read-only, so a rule can depend on the active states through `matches` and `hasTag`, as in `when: (_ctx, _event, machine) => machine.matches("/alive/posture/standing")`; see [Read another region in a `when`](./state-machines.md#read-another-region-in-a-when).
   - **Tags** — a state lists `tags`, and `hasTag` on the instance and on the `machine` every callback receives answers whether any active state carries one, such as every state in which the player takes no damage; the names are the third type argument of `defineMachine`; see [Name a group of states with tags](./state-machines.md#name-a-group-of-states-with-tags).
@@ -36,6 +36,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`unhandled` hook** — one hook on a state, or on the root, reacts to every event no state took, such as refusing any request by name; the event stays unhandled, so `can` still answers `false` for it; see [React to an unhandled event](./state-machines.md#react-to-an-unhandled-event).
   - **`onUnhandled(listener)`** — calls the listener with each event no active state took, and `inspect` prints an `unhandled` line for it; see [Listen for unhandled events](./state-machines.md#listen-for-unhandled-events).
   - **Start position** — `start(ctx, at)` takes a list of state paths, such as a saved copy of `leaves`, and enters those states through an ordinary entry; a path the machine lacks falls back to its closest parent, so a save made before an edit still loads; see [Start at saved paths](./state-machines.md#start-at-saved-paths).
+  - **[`hsm-view`](./hsm-view.md)** — the page glows an `every` entry that ran and the timer that fired, and dims a timer its `when` holds back; see [Read the code](./hsm-view.md#read-the-code). Attached to a running game, it glows the rule that made each move, which an `inspect` move line names by its state and key, as in `(OPEN: /closed, 0)`; see [Attach to a running game](./hsm-view.md#attach-to-a-running-game).
   - **Animation recipe** — the guide builds one knight machine with looping animations, one-shots that finish before the next state, in-between animations between postures and a jump kept until it can play; see [Animation states with one-shots](./state-machines.md#animation-states-with-one-shots).
 
 ### Fixed
