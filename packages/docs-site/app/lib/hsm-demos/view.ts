@@ -305,7 +305,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   }
 
   function pressButton(spec: DemoButton) {
-    if ("restartWith" in spec) clearLog();
+    if ("restartWith" in spec || "startSaved" in spec) clearLog();
     const answer = reactionTo(run, spec);
     run = press(run, spec);
     if (answer !== undefined) react(answer);

@@ -12,7 +12,8 @@ import { sequence } from "@defold-typescript/hsm/async";
  * `sound.play`) are imitated through `ctx` fields that the readout and visual
  * read back. `timer.delay`, which a `sequence` waits through, is imitated by the
  * runtime on each diagram's own clock, and `print` by the function a spec's
- * `script` is handed.
+ * `script` is handed. `sys.save` and `sys.load` are imitated by the diagram's own
+ * save: one button keeps a copy of `leaves`, and another starts a new machine at it.
  */
 
 export type DemoCtx = Record<string, unknown>;
@@ -21,7 +22,11 @@ export type DemoButton<Ctx = DemoCtx, E extends EventObject = EventObject> =
   | { readonly label: string; readonly event: E }
   | { readonly label: string; readonly change: (ctx: Ctx) => void }
   | { readonly label: string; readonly restartWith: Partial<Ctx> }
-  | { readonly label: string; readonly stop: true };
+  | { readonly label: string; readonly stop: true }
+  // Keeps a copy of the machine's `leaves` for the diagram.
+  | { readonly label: string; readonly save: true }
+  // Stops this machine quietly and starts a new one at the kept paths.
+  | { readonly label: string; readonly startSaved: true };
 
 /** Every way the figure draws the buddy; `stopped` is a machine with no active state. */
 export const BUDDY_POSES = ["asleep", "waking", "awake", "follow", "resting", "stopped"] as const;
@@ -47,6 +52,8 @@ export interface DemoView<Ctx, E extends EventObject = EventObject> {
   readonly path: string | undefined;
   /** Every active leaf's path, one per region, in the order the library runs the regions. */
   readonly leaves: readonly string[];
+  /** The paths the diagram's save button kept last; `undefined` until it is pressed. A restart keeps them. */
+  readonly saved: readonly string[] | undefined;
   readonly stopped: boolean;
   readonly matches: (path: string) => boolean;
   readonly hasTag: (tag: string) => boolean;
@@ -2147,6 +2154,26 @@ const buddyListen = demo<BeepCtx, GreetingEvent>({
   ],
 });
 
+// Lesson 25 changes `buddy.ts` and leaves the machine alone. It has no script: the diagram is
+// about what comes back.
+const buddySave = demo<BeepCtx, GreetingEvent>({
+  ...beepSpec,
+  title: "Save and load",
+  subtitle: "A new buddy starts where the saved one was.",
+  buttonsLabel: "Save it, load it, or send an event",
+  buttons: [
+    { label: "save leaves", save: true },
+    { label: "start() at the saved paths", startSaved: true },
+    ...beepSpec.buttons,
+  ],
+  readout: (m) => [
+    ["leaves", m.leaves.join(", ")],
+    ["saved", m.saved === undefined ? "no save yet" : m.saved.join(", ")],
+    ["ctx.wakes", String(m.ctx.wakes)],
+    ["ctx.energy", m.ctx.energy.toFixed(2)],
+  ],
+});
+
 export const DEMOS = {
   "buddy-first": buddyFirst,
   "buddy-nested": buddyNested,
@@ -2164,6 +2191,7 @@ export const DEMOS = {
   "buddy-busy": buddyBusy,
   "buddy-beep": buddyBeep,
   "buddy-listen": buddyListen,
+  "buddy-save": buddySave,
 } satisfies Record<string, Demo>;
 
 export type DemoId = keyof typeof DEMOS;
