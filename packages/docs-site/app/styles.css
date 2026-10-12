@@ -1838,7 +1838,8 @@
 .hsm-v {
   color: var(--hsm-lit);
 }
-.hsm-demo ol.hsm-log {
+.hsm-demo ol.hsm-log,
+.hsm-demo ol.hsm-heard {
   height: 13rem;
   overflow-y: auto;
   margin: 0;
@@ -1850,10 +1851,17 @@
   font-size: 0.72rem;
   line-height: 1.5;
 }
-.hsm-log li {
+.hsm-demo ol.hsm-heard {
+  height: 6.5rem;
+}
+.hsm-log li,
+.hsm-heard li {
   margin: 0;
   padding: 0.05rem 0;
   color: var(--color-text-muted);
+}
+.hsm-heard li {
+  overflow-wrap: anywhere;
 }
 .hsm-log li.hsm-l-event {
   margin-top: 0.3rem;

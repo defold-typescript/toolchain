@@ -9,6 +9,7 @@ import {
   discard,
   everyChip,
   listChip,
+  restart,
   ruleChip,
   send,
   startDemo,
@@ -496,6 +497,37 @@ const witness: Demo = {
   ctx: () => ({ seen: [] }),
   buttons: [],
   readout: () => [],
+};
+
+// The script does what a game script does with the buddy it started: it adds two listeners.
+const overheard: Demo = {
+  title: "Overheard",
+  subtitle: "A script listens to the machine it started.",
+  config: {
+    initial: "/a",
+    states: {
+      a: {
+        enter: (ctx, m) => {
+          if (ctx.auto === true) m.send({ type: "GO" });
+        },
+        on: { GO: "/b" },
+      },
+      b: {
+        on: { BACK: "/a" },
+        unhandled: (ctx) => hear(ctx, "b"),
+      },
+    },
+  },
+  ctx: () => ({ heard: [], seen: [], auto: false }),
+  buttons: [],
+  readout: () => [],
+  script: (buddy, print) => {
+    buddy.onMove((from, to, cause) => print(`${from} -> ${to} (${cause}), now in ${buddy.path}`));
+    buddy.onUnhandled((event) => {
+      see(buddy.ctx, "script", event);
+      print(`dropped ${event.type} in ${buddy.path}`);
+    });
+  },
 };
 
 /** The lines a send logs when neither state of a region of `rester` has a rule for `type`. */
@@ -1211,5 +1243,55 @@ describe("the event a spec is handed", () => {
     // toEqual passes for any object with the same type, so each event is compared by identity.
     for (const [, event] of seen.slice(0, 2)) expect(event).toBe(nope);
     for (const [, event] of seen.slice(2)) expect(event).toBe(go);
+  });
+});
+
+describe("a spec's script", () => {
+  test("it hears nothing of the way in, and reads the buddy when it is called", () => {
+    const { run, trace } = start(overheard, { auto: true });
+    expect(run.path).toBe("/b");
+    expect(texts(trace, 0, "heard")).toEqual([]);
+    send(run, { type: "BACK" });
+    expect(texts(trace, 0, "heard")).toEqual([
+      "/b -> /a (event), now in /a",
+      "/a -> /b (event), now in /b",
+    ]);
+  });
+
+  test("a drop is heard after the log names it and the hook ran", () => {
+    const { run, trace } = start(overheard);
+    send(run, { type: "GO" });
+    const mark = trace.length;
+    send(run, { type: "NOPE" });
+    expect(texts(trace, mark, "drop", "action", "heard")).toEqual([
+      "nobody handles NOPE, so it is ignored",
+      "/b: unhandled hook: run code",
+      "dropped NOPE in /b",
+    ]);
+    expect(run.ctx.heard).toEqual(["b"]);
+  });
+
+  test("a drop no hook answers is named first too, and the script is handed the event that was sent", () => {
+    const { run, trace } = start(overheard);
+    const nope = { type: "NOPE" };
+    send(run, nope);
+    expect(texts(trace, 0, "drop", "heard")).toEqual([
+      "nobody handles NOPE, so it is ignored",
+      "dropped NOPE in /a",
+    ]);
+    const seen = run.ctx.seen as [string, unknown][];
+    expect(seen.map(([who]) => who)).toEqual(["script"]);
+    // toEqual passes for any object with the same type, so the event is compared by identity.
+    expect(seen[0]?.[1]).toBe(nope);
+  });
+
+  test("a restart prints nothing, and the new buddy is listened to once", () => {
+    const { run, trace } = start(overheard);
+    send(run, { type: "GO" });
+    const mark = trace.length;
+    const next = restart(run);
+    expect(texts(trace, mark, "heard")).toEqual([]);
+    send(next, { type: "GO" });
+    expect(texts(trace, mark, "heard")).toEqual(["/a -> /b (event), now in /b"]);
   });
 });
