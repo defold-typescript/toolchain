@@ -1357,11 +1357,18 @@ describe("typed paths", () => {
     expect(thrownMessage(bareInitial)).toContain('initial "leaf"');
   });
 
-  test("a path below a leaf compiles and is left to the definition-time check", () => {
+  test("a path below a leaf fails to compile and still throws when the machine is defined", () => {
     const belowLeaf = () =>
       defineMachine<Ctx, Ev>()({
         initial: "/a",
-        states: { a: { on: { GO: "/a/below" } } },
+        states: {
+          a: {
+            on: {
+              // @ts-expect-error a has no child states
+              GO: "/a/below",
+            },
+          },
+        },
       });
 
     expect(thrownMessage(belowLeaf)).toBe('hsm: state "/a" targets unknown state "/a/below"');
@@ -2483,7 +2490,15 @@ describe("restoreDepth", () => {
         },
       });
     const onLeaf = () =>
-      defineMachine<Ctx, PlayEv>()({ initial: "/leaf", states: { leaf: { restoreDepth: 1 } } });
+      defineMachine<Ctx, PlayEv>()({
+        initial: "/leaf",
+        states: {
+          leaf: {
+            // @ts-expect-error leaf has no child states
+            restoreDepth: 1,
+          },
+        },
+      });
     const onParallel = () =>
       defineMachine<Ctx, PlayEv>()({
         initial: "/alive",
@@ -2819,7 +2834,7 @@ describe("always", () => {
       run: () => {},
     };
     expect(withRun.to).toBe("/c");
-    type HookPath = "/a" | "/b" | "/c" | `/a/${string}` | `/b/${string}` | `/c/${string}`;
+    type HookPath = "/a" | "/b" | "/c";
     const seen: boolean[] = [];
     const m = defineMachine<Ctx, Ev>()({
       initial: "/a",

@@ -30,8 +30,9 @@ export type UnhandledListener<E extends EventObject> = (event: Readonly<E>) => v
 /**
  * What a `when` sees of the running machine: which states are active, and nothing that changes
  * it. `P` is the union of the paths it takes. The `machine` a `when` receives takes the machine's
- * state paths, and also any path below a leaf state and below a level whose states hold only
- * callbacks with unannotated parameters. `Tag` is the union of the machine's tag names.
+ * state paths, and also any path below a state that holds only callbacks with unannotated
+ * parameters and `after` or `every` lists with one in them, or whose child states all do. `Tag`
+ * is the union of the machine's tag names.
  * @noSelf
  */
 export interface MachineView<P extends string = string, Tag extends string = never> {
@@ -59,9 +60,9 @@ export interface MachineView<P extends string = string, Tag extends string = nev
 /**
  * One running machine, returned by `start`. `P` is the union of the paths it takes: the
  * machine's state paths on a started instance. The `machine` a hook, a `run` or a `task`
- * receives takes those paths, and also any path below a leaf state and below a level whose
- * states hold only callbacks with unannotated parameters. `Tag` is the union of the machine's tag
- * names.
+ * receives takes those paths, and also any path below a state that holds only callbacks with
+ * unannotated parameters and `after` or `every` lists with one in them, or whose child states all
+ * do. `Tag` is the union of the machine's tag names.
  * @noSelf
  */
 export interface MachineInstance<Ctx, E extends EventObject, P extends string = string, Tag extends string = never> extends MachineView<P, Tag> {
@@ -345,10 +346,6 @@ type TreePathsBelow<T, D extends number> = {
     [K in keyof T & string]: K | `${K}/${D extends 1 ? keyof T[K] extends never ? never : string : TreePathsBelow<T[K], PathDepth[D]>}`;
 }[keyof T & string];
 type TreePath<T> = `/${TreePathsBelow<T, 4>}`;
-type SlotPathsBelow<T, D extends number> = unknown extends T ? string : {
-    [K in keyof T & string]: K | `${K}/${D extends 1 ? string : SlotPathsBelow<T[K], PathDepth[D]>}`;
-}[keyof T & string];
-type SlotPath<T> = `/${SlotPathsBelow<T, 4>}`;
 type TreeOf<C> = C extends {
     readonly states: infer Children;
 } ? {
@@ -474,16 +471,30 @@ interface ParallelState<Ctx, E extends EventObject, T, Self extends string, To e
     readonly restoreDepth?: never;
 }
 type StateNode<Ctx, E extends EventObject, T, Self extends string, To extends string, Tag extends string = never, Hook extends string = string> = CompoundState<Ctx, E, T, Self, To, Tag, Hook> | ParallelState<Ctx, E, T, Self, To, Tag, Hook>;
-type HookStates<HT> = {
-    readonly [K in keyof HT]: {
-        readonly states?: HookStates<HT[K]>;
-    };
+type StateKey = keyof CompoundState<unknown, EventObject, unknown, string, string> | keyof ParallelState<unknown, EventObject, unknown, string, string>;
+type NodeLevel<NT> = {
+    readonly [K in keyof NT]: NodeKeys<NT[K]> & InferOnly<NT[K]>;
 };
-type RootState<Ctx, E extends EventObject, T, Tag extends string = never, HT = unknown> = CompoundState<Ctx, E, T, "", NoInfer<SlotPath<T>>, Tag, NoInfer<SlotPath<HT>>> & {
+type NodeKeys<N> = {
+    readonly [P in keyof N]: NodeSlot<P, N[P], keyof N>;
+};
+type NodeSlot<P, V, Keys> = P extends "states" ? NodeLevel<V> : P extends "initial" | "restoreDepth" ? "states" extends Keys ? unknown : never : P extends StateKey ? unknown : never;
+type InferOnly<X> = X extends unknown ? unknown : X;
+type StatesOf<N> = N extends {
+    readonly states: infer C;
+} ? C : unknown;
+type HasStates<N> = "states" extends keyof N ? true : false;
+type NodePathsBelow<L, D extends number> = unknown extends L ? string : {
+    [K in keyof L & string]: K | (unknown extends L[K] ? `${K}/${string}` : HasStates<L[K]> extends true ? `${K}/${D extends 1 ? string : NodePathsBelow<StatesOf<L[K]>, PathDepth[D]>}` : never);
+}[keyof L & string];
+type NodePath<NT> = `/${NodePathsBelow<NT, 4>}`;
+type RootState<Ctx, E extends EventObject, T, Tag extends string = never, NT = unknown, HT = unknown> = CompoundState<Ctx, E, T, "", NoInfer<NodePath<NT>>, Tag, NoInfer<NodePath<HT>>> & {
     readonly initial: string;
     readonly states: object;
 } & {
-    readonly states: HookStates<HT>;
+    readonly states: NodeLevel<NT>;
+} & {
+    readonly states: NodeLevel<HT>;
 };
 /**
  * The config of one state. Every field is optional. A state with child `states` is a compound
@@ -521,7 +532,7 @@ type WithPrivate<Ctx, Priv> = [Priv] extends [never] ? Ctx : Ctx & Priv;
  * then sees those fields beside `Ctx`, while `start` takes only `Ctx` and the instance it returns
  * shows only `Ctx` in its `ctx`. A machine without fields of its own leaves `privateCtx` out.
  */
-export declare function defineMachine<Ctx, E extends EventObject, Tag extends string = never>(key?: string): <T, Priv extends object = never, HT = unknown>(config: RootState<WithPrivate<Ctx, Priv>, E, T, Tag, HT> & PrivateCtxConfig<Ctx, Priv>) => Machine<Ctx, E, TreePath<T>, Tag>;
+export declare function defineMachine<Ctx, E extends EventObject, Tag extends string = never>(key?: string): <T, Priv extends object = never, NT = unknown, HT = unknown>(config: RootState<WithPrivate<Ctx, Priv>, E, T, Tag, NT, HT> & PrivateCtxConfig<Ctx, Priv>) => Machine<Ctx, E, TreePath<T>, Tag>;
 /**
  * Makes a group that counts the engine work a `task` started and tells when all of it has
  * finished. Each `add()` returns the callback to pass to one engine call, and `wait` runs its
