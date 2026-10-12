@@ -2997,7 +2997,7 @@ Pausing in mid-air and sending `RESUME` lands on `/playing/air/rise`, running th
 - **A parallel state is not a level.** The count passes through it to every region.
 - **A target inside the state wins.** `RESTART` names `/playing/ground` and lands there whatever `playing` remembers. Every other entry uses the memory: a target of `/playing` itself, and a parent's `initial` chain that passes through it.
 - **The first entry uses `initial`,** and each instance keeps its own memory.
-- **What throws.** `restoreDepth` throws when the machine is defined if it is not a whole number from 1 or `"all"`, if it is larger than the number of levels below the state, or if the state has no child states. The first two are also compile errors. The compile check counts a parallel state as a level and follows the tree five levels down, so three mistakes are caught only by the throw: `restoreDepth` on a state with no child states, a count too large only because a parallel state is not a level, and a wrong count on a state with more than five levels below it.
+- **What throws.** `restoreDepth` throws when the machine is defined if it is not a whole number from 1 or `"all"`, if it is larger than the number of levels below the state, or if the state has no child states. All three are also compile errors. The compile check counts a parallel state as a level and follows the tree five levels down, so two mistakes are caught only by the throw: a count too large only because a parallel state is not a level, and a wrong count on a state with more than five levels below it.
 
 #### Move on at once with `always`
 
@@ -3631,6 +3631,7 @@ m.send({ type: "LOSE" }); // a new table on every call
 - **`defineMachine` takes two calls.** `defineMachine<Ctx, E>()` fixes the context and event types and takes the optional [hot reload](#hot-reload) key. The second call takes the config, which has to be inferred: its literal shape is where the state paths come from.
 - **Events are objects with a string `type`,** plus any payload fields. `on` accepts only the `type` values of `E` as keys, and each `when` and `run` sees the variant its key names.
 - **Tags are the third type argument;** see [Name a group of states with tags](#name-a-group-of-states-with-tags).
+- **A state takes only the fields of a state.** A field no state has, such as a misspelled `entr` or an extra `label`, fails to compile, also on a state built ahead of the config in a constant or by a helper.
 - **`start` returns a `MachineInstance<Ctx, E, P, Tag>`,** where `P` is the union of the machine's state paths. `path` can be `undefined`, so a lookup table keyed by path is indexed only after a check. Name the type with `ReturnType<typeof doorMachine.start>`; see [Read types off the machine](#read-types-off-the-machine).
 - **The second argument of `start` is `readonly P[]`,** so a copy of `leaves` fits, and a list loaded as `string[]` takes a cast where it is loaded; see [Start at saved paths](#start-at-saved-paths).
 - **`MessageEvent<K>` and `messageEvents`** turn Defold messages into machine events; see [The message bridge](#the-message-bridge).
@@ -3656,13 +3657,19 @@ when: (ctx, event) => {
 GO: "/nowhere",
 ```
 
+A path below a state with no child states fails to compile too, and so do `initial` and `restoreDepth` on such a state:
+
+```ts excerpt
+// @ts-expect-error -- "/done" has no child states, so no path goes below it
+GO: "/done/deeper",
+```
+
 **A callback's `machine` knows the machine's paths.** In a hook, a `when`, a `run` and a `task`, `path`, `leaves` and `matches()` take the machine's paths, and so does `onMove` on the `machine` of a hook, a `run` and a `task`. A variable typed `string` does not fit `matches()` there: give it a union of the paths it can hold, such as `"/off" | "/on"`.
 
-Some paths that name no state still compile:
+Two cases need care:
 
-- **Below a leaf.** A path below a state with no children, such as `"/idle/deeper"`, compiles, and so do `initial` and `restoreDepth` on a leaf. Each one throws when the machine is defined, except in `matches()`, where the path never matches.
 - **A hook declared outside the config.** An `update` hook returns one of the machine's paths or `undefined`; a plain `string` does not compile. TypeScript widens a function's single returned path to `string`, so such a hook needs `as const`: `const land = () => "/grounded" as const`.
-- **A level of callbacks only.** When every state at one `states` level holds nothing but callbacks with unannotated parameters, its targets are still checked, but the editor does not suggest its children, and `matches()` in a callback accepts any path below that level's parent. Annotate the parameters of one callback in that level, as in `enter: (ctx: LampCtx) => { ... }`, and `matches()` checks the level's states.
+- **A state that holds only callbacks.** In a callback, `matches()` accepts any path below a state that holds nothing but callbacks with unannotated parameters, and below a parent whose child states are all like that. An `after` or `every` list with such a callback in it counts as one. Targets in the config are still checked there, but the editor does not suggest the children of such a parent. Annotate the parameters of one hook of the state, as in `enter: (ctx: LampCtx) => { ... }`, or of every callback in the list, and `matches()` checks those paths.
 
 **`StatePath<C>` lists a config's paths,** each with its leading `/`. Paths are spelled out four levels deep; below that, any string under a fourth-level path is accepted. Here `game` is a config object written `as const`:
 
