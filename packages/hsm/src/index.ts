@@ -38,8 +38,9 @@ export type UnhandledListener<E extends EventObject> = (event: Readonly<E>) => v
 /**
  * What a `when` sees of the running machine: which states are active, and nothing that changes
  * it. `P` is the union of the paths it takes. The `machine` a `when` receives takes the machine's
- * state paths, and also any path below a leaf state and below a level whose states hold only
- * callbacks with unannotated parameters. `Tag` is the union of the machine's tag names.
+ * state paths, and also any path below a state that holds only callbacks with unannotated
+ * parameters and `after` or `every` lists with one in them, or whose child states all do. `Tag`
+ * is the union of the machine's tag names.
  * @noSelf
  */
 export interface MachineView<P extends string = string, Tag extends string = never> {
@@ -70,9 +71,9 @@ export interface MachineView<P extends string = string, Tag extends string = nev
 /**
  * One running machine, returned by `start`. `P` is the union of the paths it takes: the
  * machine's state paths on a started instance. The `machine` a hook, a `run` or a `task`
- * receives takes those paths, and also any path below a leaf state and below a level whose
- * states hold only callbacks with unannotated parameters. `Tag` is the union of the machine's tag
- * names.
+ * receives takes those paths, and also any path below a state that holds only callbacks with
+ * unannotated parameters and `after` or `every` lists with one in them, or whose child states all
+ * do. `Tag` is the union of the machine's tag names.
  * @noSelf
  */
 export interface MachineInstance<
@@ -505,19 +506,6 @@ type TreePathsBelow<T, D extends number> = {
 
 type TreePath<T> = `/${TreePathsBelow<T, 4>}`;
 
-// The paths a config slot accepts. TypeScript checks a config once before it types the
-// callbacks, and a level whose states hold only callbacks has no inferred children in that
-// check, so a node with no inferred children accepts any path below it.
-type SlotPathsBelow<T, D extends number> = unknown extends T
-  ? string
-  : {
-      [K in keyof T & string]:
-        | K
-        | `${K}/${D extends 1 ? string : SlotPathsBelow<T[K], PathDepth[D]>}`;
-    }[keyof T & string];
-
-type SlotPath<T> = `/${SlotPathsBelow<T, 4>}`;
-
 type TreeOf<C> = C extends { readonly states: infer Children }
   ? { readonly [K in keyof Children]: TreeOf<Children[K]> }
   : unknown;
@@ -557,6 +545,10 @@ type AnyChild<
   ? { readonly [name: string]: StateNode<Ctx, E, unknown, string, To, Tag, Hook> }
   : unknown;
 
+// A config is read into three trees. `T`, inferred from the `states` keys alone, types the
+// started instance and each state's `initial` and `restoreDepth`. The node tree types the
+// config slots, through `To`. The hook node tree types the callbacks, through `Hook`. The two
+// node trees are intersected onto the root's `states` in `RootState`.
 // `states` is the only slot that infers the tree; every other slot that mentions it is wrapped
 // in NoInfer. `on`, `after` and `update` are wrapped whole so inference never reads them:
 // without exactOptionalPropertyTypes, reading `on` asks for the paths while the tree is still
@@ -566,8 +558,8 @@ type AnyChild<
 // unannotated callback in it, such as `delay: (ctx) => ctx.rate`, gets no parameter types.
 // No callback parameter mentions `T`: one that did would make TypeScript settle the tree at the
 // first such callback, before the states beside it are read. Callback parameters mention the
-// hook tree, through `Hook`: a second tree inferred from the same `states` keys, which settles
-// at the first callback and types nothing else.
+// hook node tree, through `Hook`: a second node tree inferred from the same config, which
+// settles at the first callback and types nothing else.
 // `tags` mentions only `Tag`, which the first `defineMachine` call fixes and nothing infers, so
 // it stays outside NoInfer.
 /** @noSelf */
@@ -726,19 +718,75 @@ type StateNode<
   Hook extends string = string,
 > = CompoundState<Ctx, E, T, Self, To, Tag, Hook> | ParallelState<Ctx, E, T, Self, To, Tag, Hook>;
 
-// The tree callbacks see, inferred from the `states` keys alone.
-type HookStates<HT> = { readonly [K in keyof HT]: { readonly states?: HookStates<HT[K]> } };
+type StateKey =
+  | keyof CompoundState<unknown, EventObject, unknown, string, string>
+  | keyof ParallelState<unknown, EventObject, unknown, string, string>;
 
+// The node tree: every key each state writes, so a state with a `states` key is a level
+// whatever its children are, and a state without one is a leaf. Each state is inferred at two
+// sites. The mapped type `NodeKeys` reads a state that holds a callback with unannotated
+// parameters beside one other slot, property by property. The bare site `InferOnly` reads a
+// state that holds no such callback whole, `{}` included, which the mapped type never reads
+// because `{}` has no property. A bare `NT[K]` in its place would intersect the state literal
+// into every slot type, and a bad target would be reported on the whole `on` object.
+type NodeLevel<NT> = { readonly [K in keyof NT]: NodeKeys<NT[K]> & InferOnly<NT[K]> };
+
+type NodeKeys<N> = { readonly [P in keyof N]: NodeSlot<P, N[P], keyof N> };
+
+// The slot value is a type argument of its own: inside the true branch of
+// `P extends "states"`, `N[P]` reads as `N[P & "states"]`, which inference does not look for,
+// and the level below would never be inferred. `NodeKeys` makes every key the config writes a
+// known property, which switches the excess-property check off for a state, so a key no state
+// has maps to `never` to keep that error. `initial` and `restoreDepth` map to `never` on a
+// state with no `states` key.
+type NodeSlot<P, V, Keys> = P extends "states"
+  ? NodeLevel<V>
+  : P extends "initial" | "restoreDepth"
+    ? "states" extends Keys
+      ? unknown
+      : never
+    : P extends StateKey
+      ? unknown
+      : never;
+
+type InferOnly<X> = X extends unknown ? unknown : X;
+
+type StatesOf<N> = N extends { readonly states: infer C } ? C : unknown;
+
+type HasStates<N> = "states" extends keyof N ? true : false;
+
+// The paths a config slot or a callback's machine accepts, read off a node tree. TypeScript
+// checks a config once before it types the callbacks, and a state that holds only callbacks
+// with unannotated parameters, or `after` and `every` lists with one in them, is `unknown` in
+// that check: it may be a leaf, or a compound state whose `initial` is missing. Such a state
+// accepts any path below it. Every other state with no `states` key accepts none.
+type NodePathsBelow<L, D extends number> = unknown extends L
+  ? string
+  : {
+      [K in keyof L & string]:
+        | K
+        | (unknown extends L[K]
+            ? `${K}/${string}`
+            : HasStates<L[K]> extends true
+              ? `${K}/${D extends 1 ? string : NodePathsBelow<StatesOf<L[K]>, PathDepth[D]>}`
+              : never);
+    }[keyof L & string];
+
+type NodePath<NT> = `/${NodePathsBelow<NT, 4>}`;
+
+// The node tree is applied to the children of `states` only; the root's own keys, `privateCtx`
+// among them, are not read into it.
 type RootState<
   Ctx,
   E extends EventObject,
   T,
   Tag extends string = never,
+  NT = unknown,
   HT = unknown,
-> = CompoundState<Ctx, E, T, "", NoInfer<SlotPath<T>>, Tag, NoInfer<SlotPath<HT>>> & {
+> = CompoundState<Ctx, E, T, "", NoInfer<NodePath<NT>>, Tag, NoInfer<NodePath<HT>>> & {
   readonly initial: string;
   readonly states: object;
-} & { readonly states: HookStates<HT> };
+} & { readonly states: NodeLevel<NT> } & { readonly states: NodeLevel<HT> };
 
 /**
  * The config of one state. Every field is optional. A state with child `states` is a compound
@@ -2538,8 +2586,8 @@ type WithPrivate<Ctx, Priv> = [Priv] extends [never] ? Ctx : Ctx & Priv;
  */
 export function defineMachine<Ctx, E extends EventObject, Tag extends string = never>(
   key?: string,
-): <T, Priv extends object = never, HT = unknown>(
-  config: RootState<WithPrivate<Ctx, Priv>, E, T, Tag, HT> & PrivateCtxConfig<Ctx, Priv>,
+): <T, Priv extends object = never, NT = unknown, HT = unknown>(
+  config: RootState<WithPrivate<Ctx, Priv>, E, T, Tag, NT, HT> & PrivateCtxConfig<Ctx, Priv>,
 ) => Machine<Ctx, E, TreePath<T>, Tag> {
   return ((config: MachineConfig<Ctx, E>) => define(key, config)) as never;
 }

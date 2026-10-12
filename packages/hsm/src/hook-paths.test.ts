@@ -22,14 +22,7 @@ type Ev = { type: "GO" } | { type: "BACK" };
 type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
-type HookPath =
-  | "/menu"
-  | "/play"
-  | "/play/idle"
-  | "/play/run"
-  | `/menu/${string}`
-  | `/play/idle/${string}`
-  | `/play/run/${string}`;
+type HookPath = "/menu" | "/play" | "/play/idle" | "/play/run";
 
 function newCtx(): Ctx {
   return { n: 0, seen: [] };
@@ -290,7 +283,7 @@ describe("path types", () => {
               enter: (_ctx, machine) => {
                 const exact: Equal<
                   typeof machine.path,
-                  "/menu" | "/play" | `/menu/${string}` | `/play/${string}` | undefined
+                  "/menu" | "/play" | `/play/${string}` | undefined
                 > = true;
                 checks.push(exact, machine.matches("/play/anything"));
               },

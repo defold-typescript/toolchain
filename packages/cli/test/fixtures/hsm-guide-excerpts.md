@@ -1961,6 +1961,25 @@ defineMachine<{ steps: number }, GoEvent>()({
 });
 ```
 
+```ts title="below-leaf.ts"
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+type GoEvent = { type: "GO" };
+
+defineMachine<{ steps: number }, GoEvent>()({
+  initial: "/idle",
+  states: {
+    idle: {
+      on: {
+        // @ts-expect-error -- "/done" has no child states, so no path goes below it
+        GO: "/done/deeper",
+      },
+    },
+    done: {},
+  },
+});
+```
+
 ```ts title="state-path.ts"
 import type { StatePath } from "@defold-typescript/types/hsm";
 

@@ -186,7 +186,7 @@ describe("guards at run time", () => {
 
 describe("guard types", () => {
   test("an unannotated machine parameter is exactly MachineView with the machine's paths", () => {
-    type HookPath = "/a" | "/b" | "/c" | `/a/${string}` | `/b/${string}` | `/c/${string}`;
+    type HookPath = "/a" | "/b" | "/c";
     const seen: boolean[] = [];
     const m = defineMachine<object, Ev>()({
       initial: "/a",
