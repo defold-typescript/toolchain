@@ -1,4 +1,23 @@
 import type { StateConfig } from "@defold-typescript/hsm";
+import caretIcon from "@phosphor-icons/core/bold/caret-down-bold.svg?raw";
+import restartIcon from "@phosphor-icons/core/duotone/arrow-counter-clockwise-duotone.svg?raw";
+import enterIcon from "@phosphor-icons/core/duotone/arrow-square-in-duotone.svg?raw";
+import exitIcon from "@phosphor-icons/core/duotone/arrow-square-out-duotone.svg?raw";
+import arrowIcon from "@phosphor-icons/core/duotone/arrow-square-right-duotone.svg?raw";
+import reenterIcon from "@phosphor-icons/core/duotone/arrows-clockwise-duotone.svg?raw";
+import historyIcon from "@phosphor-icons/core/duotone/clock-counter-clockwise-duotone.svg?raw";
+import saveIcon from "@phosphor-icons/core/duotone/floppy-disk-duotone.svg?raw";
+import loadIcon from "@phosphor-icons/core/duotone/folder-open-duotone.svg?raw";
+import speedIcon from "@phosphor-icons/core/duotone/gauge-duotone.svg?raw";
+import taskIcon from "@phosphor-icons/core/duotone/kanban-duotone.svg?raw";
+import pauseIcon from "@phosphor-icons/core/duotone/pause-duotone.svg?raw";
+import playIcon from "@phosphor-icons/core/duotone/play-duotone.svg?raw";
+import startIcon from "@phosphor-icons/core/duotone/power-duotone.svg?raw";
+import regionsIcon from "@phosphor-icons/core/duotone/square-split-horizontal-duotone.svg?raw";
+import starIcon from "@phosphor-icons/core/duotone/star-duotone.svg?raw";
+import stopIcon from "@phosphor-icons/core/duotone/stop-duotone.svg?raw";
+import tagIcon from "@phosphor-icons/core/duotone/tag-duotone.svg?raw";
+import { TOOLTIP_TRIGGER_SLOT } from "../../components/ui/tooltip";
 import {
   type BuddyReaction,
   DEMOS,
@@ -24,7 +43,7 @@ import {
 
 /**
  * Builds the live diagrams in place of each `[data-hsm-demo]` placeholder and
- * drives each timed one from an animation-frame loop of its own. Loaded only
+ * drives each one from an animation-frame loop of its own. Loaded only
  * on a page that places a demo.
  */
 
@@ -56,12 +75,34 @@ function span(className: string, text: string): HTMLSpanElement {
   return el("span", className, text);
 }
 
+const HOOKS = ["enter", "exit", "task", "update", "unhandled"] as const;
+type Hook = (typeof HOOKS)[number];
+
+interface HookGlyph {
+  readonly svg: string;
+  /** What the tooltip says in place of "has <name> hook". */
+  readonly words?: string;
+  /** The class that gives the glyph a color of its own. */
+  readonly tint?: string;
+}
+
+/** The hooks a box shows as a glyph by its state's name. Every other hook is named in words. */
+const HOOK_GLYPHS: Partial<Record<Hook, HookGlyph>> = {
+  enter: { svg: enterIcon },
+  exit: { svg: exitIcon },
+  task: {
+    svg: taskIcon,
+    words: "has a task: work that takes time and reports when it is done",
+    tint: "hsm-task",
+  },
+};
+
 // A quiet `update` hook has no rule line to show it, so it is named with the other hooks.
-function hookList(config: State, quietUpdate: boolean): string | undefined {
-  const hooks = (["enter", "exit", "task", "update", "unhandled"] as const).filter(
-    (key) => config[key] !== undefined && (key !== "update" || quietUpdate),
-  );
-  if (hooks.length === 0) return undefined;
+function hooksOf(config: State, quietUpdate: boolean): Hook[] {
+  return HOOKS.filter((key) => config[key] !== undefined && (key !== "update" || quietUpdate));
+}
+
+function hookWords(hooks: readonly Hook[]): string {
   const last = hooks[hooks.length - 1] as string;
   const named = hooks.length === 1 ? last : `${hooks.slice(0, -1).join(", ")} and ${last}`;
   return `has ${named} ${hooks.length === 1 ? "hook" : "hooks"}`;
@@ -101,6 +142,143 @@ interface ReadoutLine {
   readonly value: HTMLSpanElement;
 }
 
+type EventButton = Extract<DemoButton, { readonly event: unknown }>;
+type CodeSwitch = Extract<DemoButton, { readonly change: unknown }>;
+
+/** Machine time as a clock reads it: hours, minutes and seconds. */
+export function clockText(seconds: number): string {
+  // A sum of frame times falls just short of the second it has reached.
+  const whole = Math.floor(seconds + 1e-6);
+  const two = (value: number) => String(value).padStart(2, "0");
+  return `${two(Math.floor(whole / 3600))}:${two(Math.floor(whole / 60) % 60)}:${two(whole % 60)}`;
+}
+
+/** A Phosphor glyph beside a button's words, or in place of them. */
+function icon(svg: string, className = "hsm-icon"): HTMLSpanElement {
+  const node = el("span", className);
+  node.setAttribute("aria-hidden", "true");
+  node.innerHTML = svg;
+  return node;
+}
+
+/** A glyph that stands for words: a screen reader reads them in its place. */
+function wordGlyph(svg: string, className: string, words: string): HTMLSpanElement {
+  const node = icon(svg, className);
+  node.removeAttribute("aria-hidden");
+  node.setAttribute("role", "img");
+  node.setAttribute("aria-label", words);
+  return node;
+}
+
+/** The arrow between a rule's trigger and where it leads, read out as "to". */
+function arrow(): HTMLSpanElement {
+  return wordGlyph(arrowIcon, "hsm-icon hsm-arrow", "to");
+}
+
+/** A mark shown as a glyph. Its words are the page's tooltip, reached by pointer or keyboard. */
+function markGlyph(svg: string, words: string, tint?: string): HTMLSpanElement {
+  const node = wordGlyph(svg, tint ? `hsm-icon hsm-mark ${tint}` : "hsm-icon hsm-mark", words);
+  node.tabIndex = 0;
+  nameGlyph(node, words);
+  return node;
+}
+
+/** Names a button that is a glyph alone: for a screen reader, and in the page's tooltip. */
+function nameGlyph(node: HTMLElement, words: string) {
+  node.setAttribute("aria-label", words);
+  tooltip(node, words);
+}
+
+/** Gives an element the page's tooltip. */
+function tooltip(node: HTMLElement, words: string) {
+  node.dataset.slot = TOOLTIP_TRIGGER_SLOT;
+  node.dataset.tooltipContent = words;
+}
+
+function glyphOf(spec: DemoButton): string | undefined {
+  if ("restartWith" in spec) return startIcon;
+  if ("stop" in spec) return stopIcon;
+  if ("save" in spec) return saveIcon;
+  if ("startSaved" in spec) return loadIcon;
+  return undefined;
+}
+
+/**
+ * A menu drawn over the page, after shadcn/ui's DropdownMenu: it opens under the button that
+ * was pressed, and the arrow keys walk its items.
+ */
+interface Menu {
+  readonly element: HTMLDivElement;
+  /** The button the menu is open under; `undefined` while it is closed. */
+  opener: HTMLButtonElement | undefined;
+}
+
+const MENU_GAP = 4;
+const MENU_EDGE = 8;
+const MENU_KEYS: Readonly<Record<string, (at: number, count: number) => number>> = {
+  ArrowDown: (at, count) => (at + 1) % count,
+  ArrowUp: (at, count) => (at - 1 + count) % count,
+  Home: () => 0,
+  End: (_at, count) => count - 1,
+};
+
+/** `closed` runs when the menu closes, whoever closed it. */
+function createMenu(closed: () => void = () => {}): Menu {
+  const element = el("div", "hsm-menu");
+  element.setAttribute("popover", "auto");
+  element.setAttribute("role", "menu");
+  const menu: Menu = { element, opener: undefined };
+  // The browser closes the menu on Escape and on a press outside it, with no call from here.
+  element.addEventListener("beforetoggle", (event) => {
+    if ((event as ToggleEvent).newState !== "closed") return;
+    menu.opener?.setAttribute("aria-expanded", "false");
+    menu.opener = undefined;
+    closed();
+  });
+  element.addEventListener("keydown", (event) => {
+    const move = MENU_KEYS[event.key];
+    if (move === undefined) return;
+    event.preventDefault();
+    const items = Array.from(element.querySelectorAll("button"));
+    items[move(items.indexOf(document.activeElement as HTMLButtonElement), items.length)]?.focus();
+  });
+  return menu;
+}
+
+function openMenu(menu: Menu, opener: HTMLButtonElement) {
+  // One menu may serve several buttons, so it may be open under another of them.
+  if (menu.opener === undefined) menu.element.showPopover();
+  else menu.opener.setAttribute("aria-expanded", "false");
+  menu.opener = opener;
+  opener.setAttribute("aria-expanded", "true");
+  // The menu is placed on the page, not on the screen, so that it scrolls with its button.
+  const at = opener.getBoundingClientRect();
+  const room = document.documentElement.clientWidth - menu.element.offsetWidth - MENU_EDGE;
+  const left = Math.max(MENU_EDGE, Math.min(at.left, room));
+  menu.element.style.left = `${left + window.scrollX}px`;
+  menu.element.style.top = `${at.bottom + MENU_GAP + window.scrollY}px`;
+  const items = Array.from(menu.element.querySelectorAll("button"));
+  (items.find((item) => item.getAttribute("aria-checked") === "true") ?? items[0])?.focus();
+}
+
+/** Makes `opener` a button of `menu`: a press opens the menu under it, or closes it there. */
+function opens(opener: HTMLButtonElement, menu: Menu, opened: () => void = () => {}) {
+  opener.addEventListener("click", (event) => {
+    // The browser would toggle the menu by itself, before it has been placed.
+    event.preventDefault();
+    if (menu.opener === opener) {
+      menu.element.hidePopover();
+      return;
+    }
+    openMenu(menu, opener);
+    opened();
+  });
+  // To the browser, a press on a menu's own button is not a press outside the menu.
+  opener.popoverTargetElement = menu.element;
+  opener.setAttribute("aria-haspopup", "menu");
+  opener.setAttribute("aria-expanded", "false");
+}
+
 function setClass(node: HTMLElement, value: string) {
   if (node.className !== value) node.className = value;
 }
@@ -119,9 +297,27 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   const chips = new Map<string, Chip>();
   const bars: TimerBar[] = [];
   const steps: StepLine[] = [];
+  // The spec's buttons that send an event, by event, in the order the spec lists them.
+  const senders = new Map<string, EventButton[]>();
+  for (const spec of demo.buttons) {
+    if (!("event" in spec)) continue;
+    const list = senders.get(spec.event.type);
+    if (list) list.push(spec);
+    else senders.set(spec.event.type, [spec]);
+  }
+  // Each element that sends an event, with the buttons it stands for: a name with a menu stands for all of its menu's.
+  const sendButtons: { readonly specs: readonly EventButton[]; readonly node: HTMLElement }[] = [];
+  // Every event name the diagram draws, by event, whichever box it is in.
+  const names = new Map<string, HTMLElement[]>();
+  const menus = new Map<string, Menu>();
+  let pointed: { readonly node: HTMLElement; readonly type: string } | undefined;
+  let focused: string | undefined;
   let dirty = true;
-  let playing = !demo.paused;
+  let playing = true;
   let speed = demo.speed ?? 1;
+  // The time the machine has been given: it runs at the speed that is set and stands still
+  // while the clock is paused or the machine is stopped.
+  let elapsed = 0;
 
   const log = el("ol", "hsm-log");
   log.setAttribute("aria-live", "polite");
@@ -181,6 +377,92 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     return element;
   }
 
+  // An event is marked wherever it is named while one of its names is pointed at or reached
+  // with the keyboard, or while its menu is open. The same name in a parent's box and in a
+  // child's is the same event.
+  function markSame() {
+    for (const [type, nodes] of names) {
+      const same =
+        type === pointed?.type || type === focused || menus.get(type)?.opener !== undefined;
+      for (const node of nodes) node.classList.toggle("hsm-same", same);
+    }
+  }
+
+  function link(node: HTMLElement, type: string) {
+    node.addEventListener("pointerenter", () => {
+      pointed = { node, type };
+      markSame();
+    });
+    node.addEventListener("pointerleave", () => {
+      if (pointed?.node === node) pointed = undefined;
+      markSame();
+    });
+    // A press focuses a name too, and a name that was only pressed is not marked for it.
+    node.addEventListener("focus", () => {
+      if (!node.matches(":focus-visible")) return;
+      focused = type;
+      markSame();
+    });
+    node.addEventListener("blur", () => {
+      if (focused === type) focused = undefined;
+      markSame();
+    });
+  }
+
+  /** The buttons of one event, listed under whichever of its names was pressed. */
+  function variantMenu(type: string, specs: readonly EventButton[]): Menu {
+    const menu = createMenu(() => {
+      // A hidden item is not left by the pointer, so it would stay pointed at.
+      if (pointed !== undefined && menu.element.contains(pointed.node)) pointed = undefined;
+      markSame();
+    });
+    for (const spec of specs) {
+      const item = button("", "hsm-item", () => {
+        menu.element.hidePopover();
+        pressButton(spec);
+      });
+      item.setAttribute("role", "menuitem");
+      item.append(span("hsm-item-name", spec.label));
+      link(item, type);
+      sendButtons.push({ specs: [spec], node: item });
+      menu.element.append(item);
+    }
+    menus.set(type, menu);
+    return menu;
+  }
+
+  function menuButton(type: string, specs: readonly EventButton[]): HTMLButtonElement {
+    const menu = menus.get(type) ?? variantMenu(type, specs);
+    const node = button(type, "hsm-ev hsm-name hsm-send hsm-pick", () => {});
+    opens(node, menu, markSame);
+    sendButtons.push({ specs, node });
+    return node;
+  }
+
+  /**
+   * An event's name in a rule line. A name that says all its one button sends is that button. A
+   * name with several buttons, or with one that sends more than the name says, opens a menu of
+   * them. An event with no button is one the machine sends itself, and its name is only a name.
+   */
+  function eventName(type: string): HTMLElement {
+    const specs = senders.get(type) ?? [];
+    const [only] = specs;
+    let node: HTMLElement;
+    if (only === undefined) {
+      node = span("hsm-ev hsm-name", type);
+    } else if (specs.length === 1 && only.label === type) {
+      node = button(type, "hsm-ev hsm-name hsm-send", () => pressButton(only));
+      sendButtons.push({ specs, node });
+    } else {
+      node = menuButton(type, specs);
+    }
+    link(node, type);
+    const same = names.get(type);
+    if (same) same.push(node);
+    else names.set(type, [node]);
+    return node;
+  }
+
   function renderState(name: string, config: State, path: string, parent: State): HTMLElement {
     const parallel = config.type === "parallel";
     const region = parent.type === "parallel";
@@ -190,16 +472,35 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     if (region) classes.push("hsm-region");
     const box = el("div", classes.join(" "));
     boxes.set(path, box);
+    const quietUpdate = demo.quietUpdates?.includes(path) ?? false;
+    const hooks = hooksOf(config, quietUpdate);
     const title = el("div", "hsm-state-name", name);
-    if (parent.initial === path) title.append(" ", span("hsm-init", "starts here"));
+    // What a state is, has or does belongs to the state and not to a rule, so it sits by the name.
+    if (parent.initial === path) {
+      title.append(markGlyph(starIcon, "initial", "hsm-initial"));
+    }
+    for (const hook of hooks) {
+      const glyph = HOOK_GLYPHS[hook];
+      if (glyph === undefined) continue;
+      title.append(markGlyph(glyph.svg, glyph.words ?? hookWords([hook]), glyph.tint));
+    }
+    if (config.restoreDepth !== undefined) {
+      title.append(markGlyph(historyIcon, "remembers its last child"));
+    }
+    if (parallel) title.append(markGlyph(regionsIcon, "keeps every region active"));
     if (region) title.append(" ", span("hsm-init", "region"));
-    for (const tag of config.tags ?? []) title.append(" ", span("hsm-tag", tag));
+    for (const tag of config.tags ?? []) {
+      const pill = el("span", "hsm-tag");
+      pill.append(wordGlyph(tagIcon, "hsm-icon", "tag"), tag);
+      pill.tabIndex = 0;
+      tooltip(pill, `tag: hasTag("${tag}") is true while this state is active`);
+      title.append(" ", pill);
+    }
     box.append(title);
 
     const rules = el("ul", "hsm-rules");
     const routine = el("ol", "hsm-steps");
     const note = (id: string) => demo.notes?.[id];
-    const quietUpdate = demo.quietUpdates?.includes(path) ?? false;
     for (const chip of stateChips(config, path, quietUpdate, demo.routines?.[path])) {
       if (chip.kind === "step") {
         const element = el("li", "hsm-step", chip.label);
@@ -210,15 +511,17 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
         steps.push({ path, index: chip.index, element, bar, on: false, width: "" });
       } else if (chip.kind === "on") {
         const parts: (string | Node)[] = [
-          span("hsm-ev", chip.type),
-          ` → ${chip.to ?? "stay here"}`,
+          eventName(chip.type),
+          " ",
+          arrow(),
+          ` ${chip.to ?? "stay here"}`,
         ];
-        if (chip.to === path) parts.push(" ", span("hsm-why", "(restart)"));
+        if (chip.to === path) parts.push(" ", markGlyph(reenterIcon, "restarts this state"));
         const why = note(chip.id);
         if (why) parts.push(" ", span("hsm-why", why));
         addChip(rules, chip.id, parts);
       } else if (chip.kind === "always") {
-        const parts: (string | Node)[] = [span("hsm-ev", "at once"), ` → ${chip.to}`];
+        const parts: (string | Node)[] = [span("hsm-ev", "at once"), " ", arrow(), ` ${chip.to}`];
         const why = note(chip.id);
         if (why) parts.push(" ", span("hsm-why", why));
         addChip(rules, chip.id, parts);
@@ -234,7 +537,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
         const text = chip.delay === undefined ? unread : `${chip.kind} ${chip.delay} s`;
         const label = span("hsm-ev", text);
         const parts: (string | Node)[] = [label];
-        if (chip.kind === "after") parts.push(` → ${chip.to ?? "stay here"}`);
+        if (chip.kind === "after") parts.push(" ", arrow(), ` ${chip.to ?? "stay here"}`);
         const why = note(chip.id);
         if (why) parts.push(" ", span("hsm-why", why));
         if (chip.kind === "after") parts.push(" ", span("hsm-wait-mark", "waiting"));
@@ -257,12 +560,8 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     if (rules.childElementCount > 0) box.append(rules);
     if (routine.childElementCount > 0) box.append(routine);
 
-    const hooks = hookList(config, quietUpdate);
-    if (hooks) box.append(el("div", "hsm-hooks", hooks));
-    if (config.restoreDepth !== undefined) {
-      box.append(el("div", "hsm-hooks", "remembers its last child"));
-    }
-    if (parallel) box.append(el("div", "hsm-hooks", "keeps every region active"));
+    const worded = hooks.filter((hook) => HOOK_GLYPHS[hook] === undefined);
+    if (worded.length > 0) box.append(el("div", "hsm-hooks", hookWords(worded)));
 
     if (config.states) {
       const kids = el("div", parallel ? "hsm-level hsm-kids hsm-regions" : "hsm-level hsm-kids");
@@ -280,83 +579,135 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
     level.append(renderState(name, child, `/${name}`, root));
   }
   const diagram = el("div", "hsm-diagram");
-  const legend = el("div", "hsm-legend");
-  legend.append(
-    el("i"),
-    "Glowing boxes are active. A rule lights up when it's used. A filled button is an event the machine takes right now.",
-  );
-  diagram.append(level, legend);
+  diagram.append(level, ...Array.from(menus.values(), (menu) => menu.element));
 
   let run: DemoRun = startDemo(demo, trace);
 
-  function clearLog() {
+  /** A new machine starts with empty lists and its time at zero. */
+  function startFresh() {
     log.replaceChildren();
     heard?.replaceChildren();
+    elapsed = 0;
   }
 
-  function button(label: string, ghost: boolean, onClick: () => void): HTMLButtonElement {
-    const node = el("button", ghost ? "hsm-button hsm-ghost" : "hsm-button", label);
+  /** With a `glyph`, the words sit in an element of their own after it. */
+  function button(
+    label: string,
+    className: string,
+    onClick: (event: MouseEvent) => void,
+    glyph?: string,
+  ): HTMLButtonElement {
+    const node = el("button", className, glyph === undefined ? label : undefined);
+    if (glyph !== undefined) node.append(icon(glyph), span("hsm-label", label));
     node.type = "button";
-    node.addEventListener("click", () => {
-      onClick();
+    node.addEventListener("click", (event) => {
+      onClick(event);
       refresh();
     });
     return node;
   }
 
   function pressButton(spec: DemoButton) {
-    if ("restartWith" in spec || "startSaved" in spec) clearLog();
+    if ("restartWith" in spec || "startSaved" in spec) startFresh();
     const answer = reactionTo(run, spec);
     run = press(run, spec);
     if (answer !== undefined) react(answer);
     dirty = true;
   }
 
+  // Everything that drives the machine from outside its diagram is in one row at the top: the
+  // restart, the clock and the speeds that every diagram has, a rule, then a lesson's own buttons.
+  const controls = el("div", "hsm-controls");
+  // The restart is a glyph alone. Its words are its label, and the page's tooltip shows them.
+  const restartButton = button("", "hsm-button hsm-square", () => {
+    startFresh();
+    run = restart(run);
+    dirty = true;
+  });
+  restartButton.append(icon(restartIcon));
+  nameGlyph(restartButton, "Restart machine");
+
+  // The clock's button is a glyph alone too. Its name is what the next press does.
+  const pauseGlyph = icon(pauseIcon);
+  const pause = button("", "hsm-button hsm-square", () => {
+    playing = !playing;
+    showClock();
+  });
+  pause.append(pauseGlyph);
+  function showClock() {
+    pauseGlyph.innerHTML = playing ? pauseIcon : playIcon;
+    nameGlyph(pause, playing ? "Pause time" : "Resume time");
+  }
+  showClock();
+  const transport = el("div", "hsm-transport");
+
+  // The speeds are a menu, and its button reads the speed that is set.
+  const speedWords = span("hsm-label", "");
+  const speedButton = button("", "hsm-button hsm-speed", () => {});
+  speedButton.append(icon(speedIcon), speedWords, icon(caretIcon, "hsm-icon hsm-caret"));
+  const speedMenu = createMenu();
+  speedMenu.element.setAttribute("aria-label", "Speed");
+  const speedItems = SPEEDS.map(([value, label]) => {
+    const item = button(label, "hsm-item", () => {
+      speed = value;
+      speedMenu.element.hidePopover();
+      showSpeed();
+    });
+    item.setAttribute("role", "menuitemradio");
+    speedMenu.element.append(item);
+    return { value, label, item };
+  });
+  function showSpeed() {
+    for (const { value, item } of speedItems) {
+      item.setAttribute("aria-checked", String(value === speed));
+    }
+    speedWords.textContent = speedItems.find(({ value }) => value === speed)?.label ?? "Speed";
+  }
+  showSpeed();
+  opens(speedButton, speedMenu);
+  // The machine's time sits on the row's lower edge, under the restart and the clock's button.
+  const timer = el("div", "hsm-timer");
+  timer.setAttribute("role", "timer");
+  timer.setAttribute("aria-label", "Machine time");
+  const timerText = document.createTextNode(clockText(0));
+  timer.append(timerText);
+  transport.append(restartButton, pause, speedButton, speedMenu.element, timer);
+  controls.append(transport);
+
+  // An event is sent from its name in the diagram. A button here does something else, or sends
+  // an event that no box names.
+  const others = demo.buttons.filter((spec) => !("event" in spec) || !names.has(spec.event.type));
+  // A button that changes the code is a switch, and shows whether its piece of the code is in.
+  const switches: { readonly spec: CodeSwitch; readonly node: HTMLButtonElement; on: boolean }[] =
+    [];
+  // The rule is drawn between the two parts, so a row with one part has none.
+  const extras = el("div", "hsm-extras");
+  for (const spec of others) {
+    const flips = "change" in spec;
+    const node = button(
+      spec.label,
+      flips ? "hsm-switch" : "hsm-button",
+      () => pressButton(spec),
+      glyphOf(spec),
+    );
+    if (flips) {
+      node.setAttribute("role", "switch");
+      node.setAttribute("aria-checked", "true");
+      switches.push({ spec, node, on: true });
+    }
+    // A button's words say what it does, and its hint says what that means for the buddy.
+    if (spec.hint !== undefined) {
+      node.dataset.slot = TOOLTIP_TRIGGER_SLOT;
+      node.dataset.tooltipContent = spec.hint;
+    }
+    extras.append(node);
+  }
+  if (others.length > 0) controls.append(extras);
+
   const side = el("div", "hsm-side");
   if (visual) side.append(visual);
-  const buttons = el("div", "hsm-buttons");
-  const eventButtons: { readonly spec: DemoButton; readonly node: HTMLButtonElement }[] = [];
-  for (const spec of demo.buttons) {
-    const node = button(spec.label, !("event" in spec), () => pressButton(spec));
-    if ("event" in spec) eventButtons.push({ spec, node });
-    buttons.append(node);
-  }
-  const group = el("div");
-  group.append(el("div", "hsm-group-label", demo.buttonsLabel ?? "Send an event"), buttons);
-  side.append(group);
-
-  if (demo.timed) {
-    const pauseLabel = () => (playing ? "Pause time" : "Resume time");
-    const pause = button(pauseLabel(), true, () => {
-      playing = !playing;
-      pause.textContent = pauseLabel();
-    });
-    const select = el("select", "hsm-speed");
-    select.setAttribute("aria-label", "Speed");
-    for (const [value, label] of SPEEDS) {
-      const option = el("option", undefined, label);
-      option.value = String(value);
-      option.selected = value === speed;
-      select.append(option);
-    }
-    select.addEventListener("change", () => {
-      speed = Number(select.value);
-    });
-    const clock = el("div", "hsm-clock");
-    clock.append(pause, select);
-    side.append(clock);
-  }
-
-  const restartRow = el("div", "hsm-buttons");
-  restartRow.append(
-    button("Restart machine", true, () => {
-      clearLog();
-      run = restart(run);
-      dirty = true;
-    }),
-  );
   if (heard === undefined) {
-    side.append(readout, log, restartRow);
+    side.append(readout, log);
   } else {
     // The two lists stack: the side column is too narrow for two columns of paths.
     const captioned = (caption: string, list: HTMLElement) => {
@@ -368,16 +719,13 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
       readout,
       captioned("What the machine did", log),
       captioned("What the listeners heard", heard),
-      restartRow,
     );
   }
 
-  const head = el("div", "hsm-head");
-  head.append(el("div", "hsm-title", demo.title), el("p", "hsm-subtitle", demo.subtitle));
   const body = el("div", "hsm-body");
   body.append(diagram, side);
   const frame = el("div", "hsm-demo not-prose");
-  frame.append(head, body);
+  frame.append(controls, body);
   host.replaceChildren(frame);
 
   let figure: HTMLElement | undefined;
@@ -418,8 +766,28 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
 
   function refresh() {
     for (const [path, box] of boxes) box.classList.toggle("hsm-on", run.matches(path));
-    for (const { spec, node } of eventButtons) node.classList.toggle("hsm-can", takes(run, spec));
+    const taken = new Set<EventButton>();
+    for (const specs of senders.values()) {
+      for (const spec of specs) if (takes(run, spec)) taken.add(spec);
+    }
+    for (const { specs, node } of sendButtons) {
+      node.classList.toggle(
+        "hsm-can",
+        specs.some((spec) => taken.has(spec)),
+      );
+    }
+    // A restart gives the machine fresh data, so a switch is read back and not kept from its press.
+    for (const item of switches) {
+      const on = item.spec.on(run.ctx);
+      if (on === item.on) continue;
+      item.node.setAttribute("aria-checked", String(on));
+      item.on = on;
+    }
     updateReadout();
+    const time = clockText(elapsed);
+    if (timerText.data !== time) timerText.data = time;
+    // The time is lit while it runs: with the clock going and the machine not stopped.
+    timer.classList.toggle("hsm-timer-on", playing && !run.stopped);
     if (visual && demo.visual) patchVisual(visual, demo.visual(run));
     updateBars();
     updateSteps();
@@ -470,8 +838,9 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
 
   return {
     frame: (dt) => {
-      if (demo.timed && playing && !run.stopped && dt > 0) {
+      if (playing && !run.stopped && dt > 0) {
         step(run, dt * speed);
+        elapsed += dt * speed;
         dirty = true;
       }
       if (dirty) refresh();

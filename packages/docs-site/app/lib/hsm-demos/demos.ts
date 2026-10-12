@@ -18,15 +18,23 @@ import { sequence } from "@defold-typescript/hsm/async";
 
 export type DemoCtx = Record<string, unknown>;
 
-export type DemoButton<Ctx = DemoCtx, E extends EventObject = EventObject> =
-  | { readonly label: string; readonly event: E }
-  | { readonly label: string; readonly change: (ctx: Ctx) => void }
-  | { readonly label: string; readonly restartWith: Partial<Ctx> }
-  | { readonly label: string; readonly stop: true }
+export type DemoButton<Ctx = DemoCtx, E extends EventObject = EventObject> = {
+  /** What the button does, in the page's own words: a call, or what the code does. */
+  readonly label: string;
+  /** What a press means for the buddy, shown in a tooltip over a button of the diagram's row. */
+  readonly hint?: string;
+} & (
+  | { readonly event: E }
+  // A switch over one piece of the code: `change` flips it, and `on` says whether that piece is in.
+  // The label reads as what the code does while the switch is on.
+  | { readonly change: (ctx: Ctx) => void; readonly on: (ctx: Ctx) => boolean }
+  | { readonly restartWith: Partial<Ctx> }
+  | { readonly stop: true }
   // Keeps a copy of the machine's `leaves` for the diagram.
-  | { readonly label: string; readonly save: true }
+  | { readonly save: true }
   // Stops this machine quietly and starts a new one at the kept paths.
-  | { readonly label: string; readonly startSaved: true };
+  | { readonly startSaved: true }
+);
 
 /** Every way the figure draws the buddy; `stopped` is a machine with no active state. */
 export const BUDDY_POSES = ["asleep", "waking", "awake", "follow", "resting", "stopped"] as const;
@@ -71,20 +79,18 @@ function buddyPose(m: DemoView<unknown>): BuddyPose {
 }
 
 export interface DemoSpec<Ctx, E extends EventObject> {
-  readonly title: string;
-  readonly subtitle: string;
   readonly config: MachineConfig<Ctx, E, string>;
   readonly ctx: () => Ctx;
-  readonly buttonsLabel?: string;
+  /**
+   * An event button whose label is its event's name is that name in the diagram. Any other is
+   * listed in a menu under the name.
+   */
   readonly buttons: readonly DemoButton<Ctx, E>[];
   readonly readout: (m: DemoView<Ctx, E>) => readonly (readonly [string, string])[];
   readonly visual?: (m: DemoView<Ctx>) => DemoVisual;
   /** Advances the imitated Defold work (an animation) before the machine's own update. */
   readonly tick?: (ctx: Ctx, dt: number) => void;
-  /** Driven by the page heartbeat, with pause and speed controls. */
-  readonly timed?: boolean;
-  /** Starts with the clock paused; read only with `timed`. */
-  readonly paused?: boolean;
+  /** How fast the diagram's clock runs when it starts; 1 when left out. */
   readonly speed?: number;
   /**
    * Plain-words labels for rule chips, keyed by chip id (`<path>|on|<event>|<index>`,
@@ -123,32 +129,9 @@ function demo<Ctx, E extends EventObject>(spec: DemoSpec<Ctx, E>): Demo {
 type FirstCtx = { wakes: number };
 type FirstEvent = { type: "POKE" };
 
-const buddyFirst = demo<FirstCtx, FirstEvent>({
-  title: "A robot buddy",
-  subtitle: "Two states, one event.",
-  config: {
-    initial: "/asleep",
-    states: {
-      asleep: { on: { POKE: "/awake" } },
-      awake: {
-        enter: (ctx) => {
-          ctx.wakes += 1;
-        },
-        on: { POKE: "/asleep" },
-      },
-    },
-  },
-  ctx: () => ({ wakes: 0 }),
-  buttons: [{ label: "POKE", event: { type: "POKE" } }],
-  readout: (m) => [["ctx.wakes", String(m.ctx.wakes)]],
-  visual: (m) => ({ pose: buddyPose(m) }),
-});
-
 type NestedEvent = FirstEvent | { type: "SEE_PLAYER" } | { type: "LOSE_PLAYER" };
 
 const buddyNested = demo<FirstCtx, NestedEvent>({
-  title: "The buddy wanders and follows",
-  subtitle: "wander and follow live inside awake.",
   config: {
     initial: "/asleep",
     states: {
@@ -191,8 +174,6 @@ const ENERGY_NOTES = {
 };
 
 const buddyEnergy = demo<EnergyCtx, EnergyEvent>({
-  title: "The buddy gets tired",
-  subtitle: "BUMP is handled by awake, whichever child is active.",
   config: {
     initial: "/asleep",
     states: {
@@ -258,9 +239,6 @@ const buddyEnergy = demo<EnergyCtx, EnergyEvent>({
 type TimeCtx = EnergyCtx & { lit: boolean };
 
 const buddyTime = demo<TimeCtx, EnergyEvent>({
-  title: "The buddy keeps time",
-  subtitle: "Two timers and an every-frame check.",
-  timed: true,
   config: {
     initial: "/asleep",
     states: {
@@ -360,12 +338,9 @@ function lightGlow(ctx: FadeCtx): BuddyLight {
 }
 
 type WakingCtx = FadeCtx & { cleanup: boolean };
-type WakingEvent = EnergyEvent | { type: "WOKEN" };
+type WakingEvent = EnergyEvent | { type: "WAKING_DONE" };
 
 const buddyWaking = demo<WakingCtx, WakingEvent>({
-  title: "The buddy wakes up slowly",
-  subtitle: "Running at half speed so you can catch the fade.",
-  timed: true,
   speed: 0.5,
   config: {
     initial: "/asleep",
@@ -375,14 +350,14 @@ const buddyWaking = demo<WakingCtx, WakingEvent>({
         task: (ctx, finish) => {
           ctx.glow = 0;
           ctx.lit = true;
-          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WAKING_DONE" }) };
         },
         exit: (ctx) => {
           if (!ctx.cleanup) return;
           ctx.fade = undefined;
           ctx.lit = false;
         },
-        on: { WOKEN: "/awake", POKE: "/asleep" },
+        on: { WAKING_DONE: "/awake", POKE: "/asleep" },
       },
       awake: {
         initial: "/awake/wander",
@@ -437,7 +412,6 @@ const buddyWaking = demo<WakingCtx, WakingEvent>({
   },
   ctx: () => ({ lit: false, glow: 1, fade: undefined, cleanup: true, wakes: 0, energy: 3 }),
   tick: advanceFade,
-  buttonsLabel: "Send an event, or change the code",
   buttons: [
     { label: "POKE", event: { type: "POKE" } },
     { label: "SEE_PLAYER", event: { type: "SEE_PLAYER" } },
@@ -446,14 +420,15 @@ const buddyWaking = demo<WakingCtx, WakingEvent>({
     { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
     { label: "RECHARGE", event: { type: "RECHARGE" } },
     {
-      label: "Toggle cancel in exit",
+      label: "Exit cleans up",
+      hint: "Switch off to take the cleanup out of the exit hook of waking",
       change: (ctx) => {
         ctx.cleanup = !ctx.cleanup;
       },
+      on: (ctx) => ctx.cleanup,
     },
   ],
   readout: (m) => [
-    ["cancel in exit", m.ctx.cleanup ? "on" : "off (bug!)"],
     ["animation", m.ctx.fade === undefined ? "none" : "running"],
     ["light", m.ctx.lit ? "enabled" : "disabled"],
   ],
@@ -465,14 +440,10 @@ type QueueEvent =
   | { type: "POKE" }
   | { type: "BUMP"; cost: number }
   | { type: "RECHARGE" }
-  | { type: "WOKEN" }
+  | { type: "WAKING_DONE" }
   | { type: "trigger_response"; enter: boolean };
 
 const buddyQueue = demo<FadeCtx, QueueEvent>({
-  title: "The buddy wakes itself",
-  subtitle: "Time starts paused in this one, so the fade waits for you.",
-  timed: true,
-  paused: true,
   config: {
     initial: "/asleep",
     states: {
@@ -486,13 +457,13 @@ const buddyQueue = demo<FadeCtx, QueueEvent>({
         task: (ctx, finish) => {
           ctx.glow = 0;
           ctx.lit = true;
-          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WAKING_DONE" }) };
         },
         exit: (ctx) => {
           ctx.fade = undefined;
           ctx.lit = false;
         },
-        on: { WOKEN: "/awake", POKE: "/asleep" },
+        on: { WAKING_DONE: "/awake", POKE: "/asleep" },
       },
       awake: {
         initial: "/awake/wander",
@@ -556,17 +527,24 @@ const buddyQueue = demo<FadeCtx, QueueEvent>({
   },
   ctx: () => ({ lit: false, glow: 1, fade: undefined, wakes: 0, energy: 3 }),
   tick: advanceFade,
-  buttonsLabel: "Start it, stop it, or send an event",
   buttons: [
-    { label: "start() with wakes = 0", restartWith: { wakes: 0 } },
-    { label: "start() with wakes = 1", restartWith: { wakes: 1 } },
+    {
+      label: "start({ wakes: 0 })",
+      hint: "Start a new buddy that has never been awake",
+      restartWith: { wakes: 0 },
+    },
+    {
+      label: "start({ wakes: 1 })",
+      hint: "Start a new buddy that has been awake once",
+      restartWith: { wakes: 1 },
+    },
     { label: "POKE", event: { type: "POKE" } },
     { label: "trigger_response (enter true)", event: { type: "trigger_response", enter: true } },
     { label: "trigger_response (enter false)", event: { type: "trigger_response", enter: false } },
     { label: "BUMP (cost 1)", event: { type: "BUMP", cost: 1 } },
     { label: "BUMP (cost 3)", event: { type: "BUMP", cost: 3 } },
     { label: "RECHARGE", event: { type: "RECHARGE" } },
-    { label: "stop()", stop: true },
+    { label: "stop()", hint: "Stop the machine, as deleting its game object does", stop: true },
   ],
   readout: (m) => [
     ["ctx.wakes", String(m.ctx.wakes)],
@@ -599,9 +577,6 @@ const CHECKUP_NOTES = {
 };
 
 const buddyCheckup = demo<FadeCtx, QueueEvent>({
-  title: "The buddy checks its battery",
-  subtitle: "checkup never waits: it picks a rule the moment it is entered.",
-  timed: true,
   config: {
     initial: "/asleep",
     states: {
@@ -615,13 +590,13 @@ const buddyCheckup = demo<FadeCtx, QueueEvent>({
         task: (ctx, finish) => {
           ctx.glow = 0;
           ctx.lit = true;
-          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WAKING_DONE" }) };
         },
         exit: (ctx) => {
           ctx.fade = undefined;
           ctx.lit = false;
         },
-        on: { WOKEN: "/checkup", POKE: "/asleep" },
+        on: { WAKING_DONE: "/checkup", POKE: "/asleep" },
       },
       checkup: {
         always: [
@@ -713,9 +688,6 @@ const buddyCheckup = demo<FadeCtx, QueueEvent>({
 });
 
 const buddyMemory = demo<FadeCtx, QueueEvent>({
-  title: "The buddy remembers",
-  subtitle: "awake goes back to the child it was in.",
-  timed: true,
   config: {
     initial: "/asleep",
     states: {
@@ -729,13 +701,13 @@ const buddyMemory = demo<FadeCtx, QueueEvent>({
         task: (ctx, finish) => {
           ctx.glow = 0;
           ctx.lit = true;
-          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WAKING_DONE" }) };
         },
         exit: (ctx) => {
           ctx.fade = undefined;
           ctx.lit = false;
         },
-        on: { WOKEN: "/checkup", POKE: "/asleep" },
+        on: { WAKING_DONE: "/checkup", POKE: "/asleep" },
       },
       checkup: {
         always: [
@@ -828,9 +800,6 @@ const buddyMemory = demo<FadeCtx, QueueEvent>({
 });
 
 const buddyDrain = demo<FadeCtx, QueueEvent>({
-  title: "The buddy runs down",
-  subtitle: "awake sends itself a small BUMP every second.",
-  timed: true,
   config: {
     initial: "/asleep",
     states: {
@@ -844,13 +813,13 @@ const buddyDrain = demo<FadeCtx, QueueEvent>({
         task: (ctx, finish) => {
           ctx.glow = 0;
           ctx.lit = true;
-          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WAKING_DONE" }) };
         },
         exit: (ctx) => {
           ctx.fade = undefined;
           ctx.lit = false;
         },
-        on: { WOKEN: "/checkup", POKE: "/asleep" },
+        on: { WAKING_DONE: "/checkup", POKE: "/asleep" },
       },
       checkup: {
         always: [
@@ -959,9 +928,6 @@ const NAP_NOTES = {
 };
 
 const buddyNap = demo<NapCtx, QueueEvent>({
-  title: "The buddy naps as long as it needs",
-  subtitle: "resting reads its delay when it is entered, then waits for a full battery.",
-  timed: true,
   config: {
     initial: "/asleep",
     states: {
@@ -975,13 +941,13 @@ const buddyNap = demo<NapCtx, QueueEvent>({
         task: (ctx, finish) => {
           ctx.glow = 0;
           ctx.lit = true;
-          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WOKEN" }) };
+          ctx.fade = { t: 0, duration: 1, done: () => finish({ type: "WAKING_DONE" }) };
         },
         exit: (ctx) => {
           ctx.fade = undefined;
           ctx.lit = false;
         },
-        on: { WOKEN: "/checkup", POKE: "/asleep" },
+        on: { WAKING_DONE: "/checkup", POKE: "/asleep" },
       },
       checkup: {
         always: [
@@ -1120,10 +1086,6 @@ function pendingJobs(ctx: ChirpCtx): string {
 }
 
 const buddyChirp = demo<ChirpCtx, QueueEvent>({
-  title: "The buddy wakes with a chirp",
-  subtitle: "Time starts paused in this one. waking has started two jobs and waits for both.",
-  timed: true,
-  paused: true,
   speed: 0.5,
   config: {
     initial: "/asleep",
@@ -1141,14 +1103,14 @@ const buddyChirp = demo<ChirpCtx, QueueEvent>({
           ctx.lit = true;
           ctx.fade = { t: 0, duration: 1, done: group.add() };
           ctx.chirp = { t: 0, duration: 0.5, done: group.add() };
-          group.wait(() => finish({ type: "WOKEN" }));
+          group.wait(() => finish({ type: "WAKING_DONE" }));
           return () => {
             ctx.fade = undefined;
             ctx.chirp = undefined;
             ctx.lit = false;
           };
         },
-        on: { WOKEN: "/checkup", POKE: "/asleep" },
+        on: { WAKING_DONE: "/checkup", POKE: "/asleep" },
       },
       checkup: {
         always: [
@@ -1272,12 +1234,9 @@ const buddyChirp = demo<ChirpCtx, QueueEvent>({
   notes: NAP_NOTES,
 });
 
-type GreetingEvent = QueueEvent | { type: "GREETED" };
+type GreetingEvent = QueueEvent | { type: "GREETING_DONE" };
 
 const buddyGreeting = demo<ChirpCtx, GreetingEvent>({
-  title: "The buddy says hello",
-  subtitle: "Running at half speed so you can follow the blinks.",
-  timed: true,
   speed: 0.5,
   config: {
     initial: "/asleep",
@@ -1295,14 +1254,14 @@ const buddyGreeting = demo<ChirpCtx, GreetingEvent>({
           ctx.lit = true;
           ctx.fade = { t: 0, duration: 1, done: group.add() };
           ctx.chirp = { t: 0, duration: 0.5, done: group.add() };
-          group.wait(() => finish({ type: "WOKEN" }));
+          group.wait(() => finish({ type: "WAKING_DONE" }));
           return () => {
             ctx.fade = undefined;
             ctx.chirp = undefined;
             ctx.lit = false;
           };
         },
-        on: { WOKEN: "/checkup", POKE: "/asleep" },
+        on: { WAKING_DONE: "/checkup", POKE: "/asleep" },
       },
       checkup: {
         always: [
@@ -1366,12 +1325,12 @@ const buddyGreeting = demo<ChirpCtx, GreetingEvent>({
                 ctx.lit = true;
                 await signal.wait(0.2);
               }
-              return { type: "GREETED" };
+              return { type: "GREETING_DONE" };
             }),
             exit: (ctx) => {
               ctx.chirp = undefined;
             },
-            on: { GREETED: "/awake/follow" },
+            on: { GREETING_DONE: "/awake/follow" },
           },
           follow: {
             after: {
@@ -1456,9 +1415,6 @@ const buddyGreeting = demo<ChirpCtx, GreetingEvent>({
 });
 
 const buddyRegions = demo<ChirpCtx, GreetingEvent>({
-  title: "The buddy blinks while it rests",
-  subtitle: "resting keeps two regions active at once.",
-  timed: true,
   config: {
     initial: "/asleep",
     states: {
@@ -1475,14 +1431,14 @@ const buddyRegions = demo<ChirpCtx, GreetingEvent>({
           ctx.lit = true;
           ctx.fade = { t: 0, duration: 1, done: group.add() };
           ctx.chirp = { t: 0, duration: 0.5, done: group.add() };
-          group.wait(() => finish({ type: "WOKEN" }));
+          group.wait(() => finish({ type: "WAKING_DONE" }));
           return () => {
             ctx.fade = undefined;
             ctx.chirp = undefined;
             ctx.lit = false;
           };
         },
-        on: { WOKEN: "/checkup", POKE: "/asleep" },
+        on: { WAKING_DONE: "/checkup", POKE: "/asleep" },
       },
       checkup: {
         always: [
@@ -1546,12 +1502,12 @@ const buddyRegions = demo<ChirpCtx, GreetingEvent>({
                 ctx.lit = true;
                 await signal.wait(0.2);
               }
-              return { type: "GREETED" };
+              return { type: "GREETING_DONE" };
             }),
             exit: (ctx) => {
               ctx.chirp = undefined;
             },
-            on: { GREETED: "/awake/follow" },
+            on: { GREETING_DONE: "/awake/follow" },
           },
           follow: {
             after: {
@@ -1643,9 +1599,12 @@ const buddyRegions = demo<ChirpCtx, GreetingEvent>({
     napSeconds: 2,
   }),
   tick: advanceJobs,
-  buttonsLabel: "Start it with a longer nap, or send an event",
   buttons: [
-    { label: "start() with napSeconds = 5", restartWith: { napSeconds: 5 } },
+    {
+      label: "start({ napSeconds: 5 })",
+      hint: "Start a new buddy whose nap lasts five seconds",
+      restartWith: { napSeconds: 5 },
+    },
     { label: "POKE", event: { type: "POKE" } },
     { label: "trigger_response (enter true)", event: { type: "trigger_response", enter: true } },
     { label: "trigger_response (enter false)", event: { type: "trigger_response", enter: false } },
@@ -1678,10 +1637,7 @@ const buddyRegions = demo<ChirpCtx, GreetingEvent>({
 });
 
 const buddyBusy = demo<ChirpCtx, GreetingEvent>({
-  title: "The buddy is busy",
-  subtitle: "Time starts paused in this one. waking carries the busy tag, and so does resting.",
-  timed: true,
-  paused: true,
+  speed: 0.5,
   config: {
     initial: "/asleep",
     states: {
@@ -1699,14 +1655,14 @@ const buddyBusy = demo<ChirpCtx, GreetingEvent>({
           ctx.lit = true;
           ctx.fade = { t: 0, duration: 1, done: group.add() };
           ctx.chirp = { t: 0, duration: 0.5, done: group.add() };
-          group.wait(() => finish({ type: "WOKEN" }));
+          group.wait(() => finish({ type: "WAKING_DONE" }));
           return () => {
             ctx.fade = undefined;
             ctx.chirp = undefined;
             ctx.lit = false;
           };
         },
-        on: { WOKEN: "/checkup", POKE: "/asleep" },
+        on: { WAKING_DONE: "/checkup", POKE: "/asleep" },
       },
       checkup: {
         always: [
@@ -1770,12 +1726,12 @@ const buddyBusy = demo<ChirpCtx, GreetingEvent>({
                 ctx.lit = true;
                 await signal.wait(0.2);
               }
-              return { type: "GREETED" };
+              return { type: "GREETING_DONE" };
             }),
             exit: (ctx) => {
               ctx.chirp = undefined;
             },
-            on: { GREETED: "/awake/follow" },
+            on: { GREETING_DONE: "/awake/follow" },
           },
           follow: {
             after: {
@@ -1904,9 +1860,6 @@ const buddyBusy = demo<ChirpCtx, GreetingEvent>({
 type BeepCtx = ChirpCtx & { beeps: number };
 
 const beepSpec: DemoSpec<BeepCtx, GreetingEvent> = {
-  title: "The buddy beeps",
-  subtitle: "resting answers every event nobody took.",
-  timed: true,
   config: {
     initial: "/asleep",
     states: {
@@ -1924,14 +1877,14 @@ const beepSpec: DemoSpec<BeepCtx, GreetingEvent> = {
           ctx.lit = true;
           ctx.fade = { t: 0, duration: 1, done: group.add() };
           ctx.chirp = { t: 0, duration: 0.5, done: group.add() };
-          group.wait(() => finish({ type: "WOKEN" }));
+          group.wait(() => finish({ type: "WAKING_DONE" }));
           return () => {
             ctx.fade = undefined;
             ctx.chirp = undefined;
             ctx.lit = false;
           };
         },
-        on: { WOKEN: "/checkup", POKE: "/asleep" },
+        on: { WAKING_DONE: "/checkup", POKE: "/asleep" },
       },
       checkup: {
         always: [
@@ -1995,12 +1948,12 @@ const beepSpec: DemoSpec<BeepCtx, GreetingEvent> = {
                 ctx.lit = true;
                 await signal.wait(0.2);
               }
-              return { type: "GREETED" };
+              return { type: "GREETING_DONE" };
             }),
             exit: (ctx) => {
               ctx.chirp = undefined;
             },
-            on: { GREETED: "/awake/follow" },
+            on: { GREETING_DONE: "/awake/follow" },
           },
           follow: {
             after: {
@@ -2135,8 +2088,6 @@ const buddyBeep = demo(beepSpec);
 // Lesson 23 changes the script that owns the buddy and leaves the machine alone.
 const buddyListen = demo<BeepCtx, GreetingEvent>({
   ...beepSpec,
-  title: "The buddy, overheard",
-  subtitle: "A script hears every move and every ignored event.",
   // The page's two listeners. Its `pprint(buddy.ctx)` is left out: this `ctx` also holds the
   // fields that imitate Defold, which the page's buddy does not have.
   script: (buddy, print) => {
@@ -2158,12 +2109,17 @@ const buddyListen = demo<BeepCtx, GreetingEvent>({
 // about what comes back.
 const buddySave = demo<BeepCtx, GreetingEvent>({
   ...beepSpec,
-  title: "Save and load",
-  subtitle: "A new buddy starts where the saved one was.",
-  buttonsLabel: "Save it, load it, or send an event",
   buttons: [
-    { label: "save leaves", save: true },
-    { label: "start() at the saved paths", startSaved: true },
+    {
+      label: "sys.save(..., { at: leaves })",
+      hint: "Keep a copy of the buddy's active states",
+      save: true,
+    },
+    {
+      label: "start(..., save.at)",
+      hint: "Start a new buddy in the states that were saved",
+      startSaved: true,
+    },
     ...beepSpec.buttons,
   ],
   readout: (m) => [
@@ -2175,7 +2131,6 @@ const buddySave = demo<BeepCtx, GreetingEvent>({
 });
 
 export const DEMOS = {
-  "buddy-first": buddyFirst,
   "buddy-nested": buddyNested,
   "buddy-energy": buddyEnergy,
   "buddy-time": buddyTime,

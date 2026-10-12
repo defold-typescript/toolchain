@@ -30,8 +30,6 @@ function tick(ctx: DemoCtx): void {
 // None of these specs is on the tutorial page, and every DEMOS entry must be placed there,
 // so they stay local to this file.
 const airborne: Demo = {
-  title: "Airborne",
-  subtitle: "A parent timer over a child update hook.",
   config: {
     initial: "/airborne",
     states: {
@@ -53,8 +51,6 @@ const airborne: Demo = {
 };
 
 const spin: Demo = {
-  title: "Spin",
-  subtitle: "An update hook that re-enters its own state.",
   config: {
     initial: "/spin",
     states: {
@@ -69,8 +65,6 @@ const spin: Demo = {
 };
 
 const knight: Demo = {
-  title: "Knight",
-  subtitle: "A jump allowed only while standing.",
   config: {
     initial: "/alive",
     states: {
@@ -108,8 +102,6 @@ const knight: Demo = {
 };
 
 const roller: Demo = {
-  title: "Roller",
-  subtitle: "A hit that lands only outside the tagged state.",
   config: {
     initial: "/walk",
     on: {
@@ -139,8 +131,6 @@ const roller: Demo = {
 };
 
 const decider: Demo = {
-  title: "Decider",
-  subtitle: "A state that picks a rule the moment it is entered.",
   config: {
     initial: "/idle",
     states: {
@@ -172,8 +162,6 @@ const decider: Demo = {
 // The two differ in `restoreDepth` alone.
 function lamp(memory: { readonly restoreDepth?: number }): Demo {
   return {
-    title: "Lamp",
-    subtitle: "A parent left in its second child.",
     config: {
       initial: "/off",
       states: {
@@ -200,8 +188,6 @@ const forgetter = lamp({});
 
 // The longer delay is written first, and its key sorts first too.
 const drainer: Demo = {
-  title: "Drainer",
-  subtitle: "Two every entries, one a single function and one a list.",
   config: {
     initial: "/on",
     states: {
@@ -228,8 +214,6 @@ const drainer: Demo = {
 };
 
 const napper: Demo = {
-  title: "Napper",
-  subtitle: "A timer that carries a rule, then one that reads its delay and waits.",
   config: {
     initial: "/work",
     states: {
@@ -274,8 +258,6 @@ const napper: Demo = {
 
 // The two reports are kept on the context, so a test plays the engine's part and calls them.
 const loader: Demo = {
-  title: "Loader",
-  subtitle: "A task that counts two jobs and returns its cleanup.",
   config: {
     initial: "/loading",
     states: {
@@ -306,8 +288,6 @@ function report(ctx: DemoCtx, job: "a" | "b"): void {
 
 // The routine is the library's own `sequence`, which waits through Defold's global `timer`.
 const greeter: Demo = {
-  title: "Greeter",
-  subtitle: "A routine with two waits.",
   config: {
     initial: "/idle",
     states: {
@@ -332,8 +312,6 @@ const greeter: Demo = {
 
 // `lamp` is listed ahead of `battery`: the library runs regions in name order, not in this one.
 const rester: Demo = {
-  title: "Rester",
-  subtitle: "A parallel state with a timer in its second region.",
   config: {
     initial: "/rest",
     states: {
@@ -374,8 +352,6 @@ function see(ctx: DemoCtx, who: string, event: unknown): void {
 }
 
 const ignorer: Demo = {
-  title: "Ignorer",
-  subtitle: "A parent and its child both answer an event nobody took.",
   config: {
     initial: "/a",
     states: {
@@ -405,8 +381,6 @@ const ignorer: Demo = {
 };
 
 const halter: Demo = {
-  title: "Halter",
-  subtitle: "A rule stops the machine with events still queued.",
   config: {
     initial: "/a",
     states: {
@@ -431,8 +405,6 @@ const halter: Demo = {
 
 // Both regions have a PING rule, so one send of it fires two rules.
 const splitter: Demo = {
-  title: "Splitter",
-  subtitle: "Two regions take one event, and their parent stops the machine.",
   config: {
     initial: "/both",
     states: {
@@ -470,8 +442,6 @@ const splitter: Demo = {
 
 // Every place the library hands an event out records the object it was given.
 const witness: Demo = {
-  title: "Witness",
-  subtitle: "Each hook and listener keeps the event it was handed.",
   config: {
     initial: "/a",
     states: {
@@ -502,8 +472,6 @@ const witness: Demo = {
 
 // The script does what a game script does with the buddy it started: it adds two listeners.
 const overheard: Demo = {
-  title: "Overheard",
-  subtitle: "A script listens to the machine it started.",
   config: {
     initial: "/a",
     states: {
@@ -533,8 +501,6 @@ const overheard: Demo = {
 
 // `on` counts its entries, to tell a new machine's context from the saved machine's.
 const keeper: Demo = {
-  title: "Keeper",
-  subtitle: "A parent that counts its entries and remembers its child.",
   config: {
     initial: "/off",
     states: {

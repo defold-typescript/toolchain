@@ -21,7 +21,7 @@ const TRIGGER_SELECTOR = `[data-slot="${TOOLTIP_TRIGGER_SLOT}"]`;
  *
  * Touch handling: hover shows tips for mouse pointers only, a focus raised by a
  * tap is ignored until the next keyboard input ends that suppression, and any
- * `pointerdown` or scroll dismisses the tip.
+ * `pointerdown`, or a scroll that moves the trigger, dismisses the tip.
  *
  * The tip is measured after it renders with its text, then placed with
  * `labelTooltipPosition`; it stays invisible until that second pass.
@@ -34,8 +34,23 @@ export default function UiTooltip() {
     let active: HTMLElement | null = null;
     const tapFocus = watchTapFocus(document);
 
+    const place = (trigger: HTMLElement) => {
+      const r = trigger.getBoundingClientRect();
+      setTip({
+        text: trigger.dataset.tooltipContent ?? "",
+        rect: { left: r.left, top: r.top, bottom: r.bottom, width: r.width },
+      });
+    };
+
+    // A trigger may change its label while its tip is shown: a button whose press flips what
+    // the next press does. The tip then reads the new label, and is measured again.
+    const relabelled = new MutationObserver(() => {
+      if (active) place(active);
+    });
+
     const hide = () => {
       if (!active) return;
+      relabelled.disconnect();
       active.removeAttribute("aria-describedby");
       active = null;
       setTip(null);
@@ -43,14 +58,12 @@ export default function UiTooltip() {
 
     const show = (trigger: HTMLElement) => {
       if (trigger === active) return;
+      relabelled.disconnect();
       active?.removeAttribute("aria-describedby");
       active = trigger;
       trigger.setAttribute("aria-describedby", TIP_ID);
-      const r = trigger.getBoundingClientRect();
-      setTip({
-        text: trigger.dataset.tooltipContent ?? "",
-        rect: { left: r.left, top: r.top, bottom: r.bottom, width: r.width },
-      });
+      relabelled.observe(trigger, { attributeFilter: ["data-tooltip-content"] });
+      place(trigger);
     };
 
     const triggerOf = (target: EventTarget | null) =>
@@ -75,21 +88,29 @@ export default function UiTooltip() {
       if (triggerOf(event.target) === active) hide();
     };
     const onPointerDown = () => hide();
+    // A scroll moves the trigger out from under its tip. One inside a box that does not hold the
+    // trigger, such as a log that follows its last line, moves nothing and leaves the tip up.
+    const onScroll = (event: Event) => {
+      if (!active) return;
+      if (event.target instanceof Node && !event.target.contains(active)) return;
+      hide();
+    };
 
     document.addEventListener("pointerover", onPointerOver);
     document.addEventListener("pointerout", onPointerOut);
     document.addEventListener("focusin", onFocusIn);
     document.addEventListener("focusout", onFocusOut);
     document.addEventListener("pointerdown", onPointerDown, true);
-    window.addEventListener("scroll", hide, true);
+    window.addEventListener("scroll", onScroll, true);
     return () => {
+      relabelled.disconnect();
       tapFocus.dispose();
       document.removeEventListener("pointerover", onPointerOver);
       document.removeEventListener("pointerout", onPointerOut);
       document.removeEventListener("focusin", onFocusIn);
       document.removeEventListener("focusout", onFocusOut);
       document.removeEventListener("pointerdown", onPointerDown, true);
-      window.removeEventListener("scroll", hide, true);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, []);
 
