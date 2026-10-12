@@ -126,6 +126,10 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
   const log = el("ol", "hsm-log");
   log.setAttribute("aria-live", "polite");
   log.setAttribute("aria-label", "What the machine did");
+  // What the spec's script printed. Only a spec with a script prints, so only it gets the list.
+  const heard = demo.script === undefined ? undefined : el("ol", "hsm-heard");
+  heard?.setAttribute("aria-live", "polite");
+  heard?.setAttribute("aria-label", "What the listeners heard");
   const readout = el("div", "hsm-readout");
   const visual = demo.visual ? el("div", "hsm-visual") : undefined;
 
@@ -136,9 +140,10 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
       flash(entry.chip);
       return;
     }
-    log.append(el("li", `hsm-l-${entry.kind}`, entry.text));
-    while (log.childElementCount > LOG_CAP) log.firstElementChild?.remove();
-    log.scrollTop = log.scrollHeight;
+    const list = entry.kind === "heard" && heard !== undefined ? heard : log;
+    list.append(el("li", `hsm-l-${entry.kind}`, entry.text));
+    while (list.childElementCount > LOG_CAP) list.firstElementChild?.remove();
+    list.scrollTop = list.scrollHeight;
   };
 
   function flash(id: string) {
@@ -286,6 +291,7 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
 
   function clearLog() {
     log.replaceChildren();
+    heard?.replaceChildren();
   }
 
   function button(label: string, ghost: boolean, onClick: () => void): HTMLButtonElement {
@@ -349,7 +355,22 @@ function mountDemo(host: HTMLElement, demo: Demo): Mounted {
       dirty = true;
     }),
   );
-  side.append(readout, log, restartRow);
+  if (heard === undefined) {
+    side.append(readout, log, restartRow);
+  } else {
+    // The two lists stack: the side column is too narrow for two columns of paths.
+    const captioned = (caption: string, list: HTMLElement) => {
+      const part = el("div");
+      part.append(el("div", "hsm-group-label", caption), list);
+      return part;
+    };
+    side.append(
+      readout,
+      captioned("What the machine did", log),
+      captioned("What the listeners heard", heard),
+      restartRow,
+    );
+  }
 
   const head = el("div", "hsm-head");
   head.append(el("div", "hsm-title", demo.title), el("p", "hsm-subtitle", demo.subtitle));
