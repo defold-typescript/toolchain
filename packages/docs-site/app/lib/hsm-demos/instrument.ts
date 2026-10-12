@@ -39,6 +39,9 @@ import type { BuddyReaction, Demo, DemoButton, DemoCtx, DemoView } from "./demos
  *
  * `holders` and `scope` are the two module-level references to a run: a state's exit clears the
  * first through the task's cleanup, and `discard` clears both.
+ *
+ * A spec's `script` runs once `start` has returned, as the script that owns the buddy goes on
+ * after its own `start` call. Each line it prints is a `heard` line.
  */
 
 export type TraceKind =
@@ -51,7 +54,9 @@ export type TraceKind =
   | "timer"
   | "queue"
   | "drop"
-  | "note";
+  | "note"
+  // A line the spec's script printed, which the diagram shows in a list of its own.
+  | "heard";
 
 export interface TraceLine {
   readonly kind: TraceKind;
@@ -499,7 +504,9 @@ function isStopped(s: Session): boolean {
 
 /**
  * Keeps the run's machine and listens for its drops. The library calls a listener after the
- * hooks of the event it drops, so the listener names a drop no hook named and closes it.
+ * hooks of the event it drops, so the listener names a drop no hook named and closes it. It is
+ * added during `start`, ahead of any listener the spec's script adds, so the log names a drop
+ * before the script hears it.
  */
 function adopt(s: Session, m: Instance): void {
   if (s.instance !== undefined) return;
@@ -980,6 +987,8 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
   s.starting = false;
   const instance = s.instance as unknown as Instance;
   emit(s, "note", `start() returned, path = ${describePath(instance.path)}`);
+  // A muted run prints nothing, which keeps the stop of a quiet restart out of the list.
+  demo.script?.(proxyOf(s, instance), (line) => emit(s, "heard", line));
 
   const run: DemoRun = {
     demo,

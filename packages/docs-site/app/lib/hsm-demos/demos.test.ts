@@ -778,6 +778,61 @@ describe("hsm tutorial demos", () => {
     expect(poke()).toBe("true");
     expect(walk()).toBe("true");
   });
+
+  test("buddy-listen: the way in is not heard, and a small bump moves nothing", () => {
+    const d = drive("buddy-listen");
+    expect(d.run.path).toBe("/waking");
+    expect(d.since(0, "heard")).toEqual([]);
+    d.step(0.5);
+    d.step(0.5);
+    expect(d.since(0, "heard")).toEqual([
+      "buddy: /waking -> /checkup (event), now in /checkup",
+      "buddy: /checkup -> /awake/wander (always), now in /awake/wander",
+    ]);
+    const pressed = d.lines.length;
+    d.press("BUMP (cost 1)");
+    expect(d.since(pressed, "heard")).toEqual([]);
+    expect(d.readout("ctx.energy")).toBe("2.00");
+  });
+
+  test("buddy-listen: each region moves on its own", () => {
+    const d = drive("buddy-listen");
+    const pressed = tireOut(d);
+    expect(d.since(pressed, "heard")).toEqual([
+      "buddy: /awake/wander -> /resting/battery/filling (event), now in /resting/battery/filling",
+    ]);
+    const stepped = d.lines.length;
+    d.step(0.5);
+    expect(d.since(stepped, "heard")).toEqual([
+      "buddy: /resting/lamp/shown -> /resting/lamp/hidden (after), now in /resting/battery/filling",
+    ]);
+  });
+
+  test("buddy-listen: a drop is heard after the buddy's own hook", () => {
+    const d = drive("buddy-listen");
+    tireOut(d);
+    const pressed = d.lines.length;
+    d.press("trigger_response (enter true)");
+    expect(d.since(pressed, "drop", "action", "heard")).toEqual([
+      "nobody handles trigger_response, so it is ignored",
+      "/resting: unhandled hook: play the beep",
+      "buddy dropped trigger_response in /resting/battery/filling",
+    ]);
+  });
+
+  test("buddy-listen: the thirtieth bump finds nobody awake", () => {
+    const d = drive("buddy-listen");
+    d.step(0.5);
+    d.step(0.5);
+    for (let passed = 0; passed < 31; passed += 0.5) d.step(0.5);
+    expect(d.run.path).toBe("/asleep");
+    const heard = d.since(0, "heard");
+    expect(heard.slice(-2)).toEqual([
+      "buddy: /awake/wander -> /asleep (after), now in /asleep",
+      "buddy dropped BUMP in /asleep",
+    ]);
+    expect(heard.filter((line) => line.startsWith("buddy dropped"))).toHaveLength(1);
+  });
 });
 
 // A string presses the button with that label; a number lets that many seconds pass in 0.5 s steps.
@@ -877,6 +932,7 @@ const WALKS: Record<DemoId, readonly (string | number)[]> = {
   "buddy-regions": GREETING_WALK,
   "buddy-busy": GREETING_WALK,
   "buddy-beep": GREETING_WALK,
+  "buddy-listen": GREETING_WALK,
 };
 
 describe("every rule a diagram draws can be used", () => {

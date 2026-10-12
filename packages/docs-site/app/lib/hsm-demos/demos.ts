@@ -1,4 +1,9 @@
-import { type EventObject, type MachineConfig, waitGroup } from "@defold-typescript/hsm";
+import {
+  type EventObject,
+  type MachineConfig,
+  type MachineInstance,
+  waitGroup,
+} from "@defold-typescript/hsm";
 import { sequence } from "@defold-typescript/hsm/async";
 
 /**
@@ -6,7 +11,8 @@ import { sequence } from "@defold-typescript/hsm/async";
  * config plus what its panel shows; Defold calls (`msg.post`, `go.animate`,
  * `sound.play`) are imitated through `ctx` fields that the readout and visual
  * read back. `timer.delay`, which a `sequence` waits through, is imitated by the
- * runtime on each diagram's own clock.
+ * runtime on each diagram's own clock, and `print` by the function a spec's
+ * `script` is handed.
  */
 
 export type DemoCtx = Record<string, unknown>;
@@ -89,6 +95,14 @@ export interface DemoSpec<Ctx, E extends EventObject> {
    * to its first `signal.wait`; entry n starts with its nth wait.
    */
   readonly routines?: Readonly<Record<string, readonly string[]>>;
+  /**
+   * What the script that owns the buddy does once `start` has returned. Each line it prints
+   * goes to the diagram's second list.
+   */
+  readonly script?: (
+    buddy: MachineInstance<Ctx, E, string, string>,
+    print: (line: string) => void,
+  ) => void;
 }
 
 export type Demo = DemoSpec<DemoCtx, EventObject>;
@@ -1882,7 +1896,7 @@ const buddyBusy = demo<ChirpCtx, GreetingEvent>({
 // `beeps` counts the `sound.play("#beep")` calls.
 type BeepCtx = ChirpCtx & { beeps: number };
 
-const buddyBeep = demo<BeepCtx, GreetingEvent>({
+const beepSpec: DemoSpec<BeepCtx, GreetingEvent> = {
   title: "The buddy beeps",
   subtitle: "resting answers every event nobody took.",
   timed: true,
@@ -2107,6 +2121,30 @@ const buddyBeep = demo<BeepCtx, GreetingEvent>({
       "light on, wait 0.2 s",
     ],
   },
+};
+
+const buddyBeep = demo(beepSpec);
+
+// Lesson 23 changes the script that owns the buddy and leaves the machine alone.
+const buddyListen = demo<BeepCtx, GreetingEvent>({
+  ...beepSpec,
+  title: "The buddy, overheard",
+  subtitle: "A script hears every move and every ignored event.",
+  // The page's two listeners. Its `pprint(buddy.ctx)` is left out: this `ctx` also holds the
+  // fields that imitate Defold, which the page's buddy does not have.
+  script: (buddy, print) => {
+    buddy.onMove((from, to, cause) => {
+      print(`buddy: ${from} -> ${to} (${cause}), now in ${buddy.path}`);
+    });
+    buddy.onUnhandled((event) => {
+      print(`buddy dropped ${event.type} in ${buddy.path}`);
+    });
+  },
+  readout: (m) => [
+    ["leaves", m.leaves.join(", ")],
+    ["beeps", String(m.ctx.beeps)],
+    ["ctx.energy", m.ctx.energy.toFixed(2)],
+  ],
 });
 
 export const DEMOS = {
@@ -2125,6 +2163,7 @@ export const DEMOS = {
   "buddy-regions": buddyRegions,
   "buddy-busy": buddyBusy,
   "buddy-beep": buddyBeep,
+  "buddy-listen": buddyListen,
 } satisfies Record<string, Demo>;
 
 export type DemoId = keyof typeof DEMOS;
