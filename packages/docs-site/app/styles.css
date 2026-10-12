@@ -1536,6 +1536,8 @@
   --hsm-exit: var(--color-badge-deprecated);
   --hsm-action: var(--color-badge-global);
   --hsm-queue: var(--color-warning);
+  --hsm-initial: var(--fig-spd);
+  --hsm-task: var(--fig-vel);
   container-type: inline-size;
   margin: 1.5rem 0 2rem;
   border: 1px solid var(--color-border);
@@ -1546,23 +1548,86 @@
   font-size: 0.95rem;
   line-height: 1.5;
 }
-.hsm-head {
-  padding: 0.9rem 1.1rem 0.2rem;
+/* Everything that drives the machine from outside its diagram, in one band across the frame.
+   The restart, the clock and the speeds, which every diagram has, are one part. A lesson's own
+   buttons are the other, and a rule runs between the two across the whole band. */
+.hsm-controls {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-2);
 }
-.hsm-title {
-  font-weight: 600;
+.hsm-transport,
+.hsm-extras {
+  display: flex;
+  gap: 0.5rem 0.4rem;
+  align-items: center;
+  padding: 0.6rem 1.1rem;
 }
-.hsm-subtitle {
-  margin: 0.1rem 0 0;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
+.hsm-extras {
+  flex-wrap: wrap;
+  gap: 0.5rem 0.6rem;
+  min-width: 0;
+}
+/* The machine's time lies on the lower edge of its part, so the rule there passes behind it.
+   Its ground runs from the left edge of the restart to the right edge of the clock's button:
+   two square buttons and the gap between them. */
+.hsm-transport {
+  position: relative;
+}
+.hsm-timer {
+  position: absolute;
+  bottom: -2px;
+  left: 1.1rem;
+  z-index: 1;
+  width: calc(2 * 2.25rem + 0.4rem);
+  border-radius: 0.375rem;
+  background: var(--color-bg);
+  color: var(--color-text-faint);
+  font: 0.68rem / 1.5 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+  transform: translateY(50%);
+  transition: color 0.2s;
+}
+/* Lit while the machine's time runs, and dim while it stands still. */
+.hsm-timer.hsm-timer-on {
+  color: var(--hsm-lit);
+}
+/* In a narrow frame the two parts stack, and the rule lies between them. The second part
+   leaves room for the half of the machine's time that hangs below that rule. */
+.hsm-transport:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+.hsm-transport + .hsm-extras {
+  padding-top: 1.1rem;
+}
+@container (min-width: 40rem) {
+  .hsm-controls {
+    flex-direction: row;
+  }
+  /* The first part keeps to the top, level with the first line of buttons beside it. */
+  .hsm-transport {
+    align-items: flex-start;
+  }
+  .hsm-transport:not(:last-child) {
+    padding-right: 0.8rem;
+    border-right: 1px solid var(--color-border);
+    border-bottom: 0;
+  }
+  .hsm-transport + .hsm-extras {
+    padding-top: 0.6rem;
+    padding-left: 0.8rem;
+  }
 }
 .hsm-body {
   display: grid;
   grid-template-columns: 1fr;
 }
+/* The top leaves room for the half of the machine's time that hangs below the row. */
 .hsm-diagram {
-  padding: 1rem 1.1rem 1.1rem;
+  padding: 1.5rem 1.1rem 1.1rem;
   min-width: 0;
 }
 .hsm-side {
@@ -1650,9 +1715,10 @@
   font-style: italic;
 }
 .hsm-tag {
-  padding: 0 0.4rem;
-  border: 1px solid currentColor;
-  border-radius: 999px;
+  padding: 0.05rem 0.35rem 0.05rem 0.2rem;
+  border-radius: 4px;
+  /* Mixed from the text's color, so the fill turns with it when the state is lit. */
+  background: color-mix(in srgb, currentColor 14%, transparent);
   color: var(--color-text-muted);
   font-family: var(--font-sans);
   font-size: 0.7rem;
@@ -1661,6 +1727,15 @@
 }
 .hsm-state.hsm-on > .hsm-state-name > .hsm-tag {
   color: var(--hsm-lit);
+}
+/* The glyph that says a pill is a tag. */
+.hsm-tag > .hsm-icon {
+  margin-right: 0.25em;
+  vertical-align: calc(-0.15em + 1px);
+}
+.hsm-tag > .hsm-icon svg {
+  width: 1em;
+  height: 1em;
 }
 .hsm-demo ul.hsm-rules,
 .hsm-demo ol.hsm-steps {
@@ -1704,18 +1779,129 @@
 .hsm-ev {
   color: var(--hsm-event);
 }
+/* An event's name takes its padding back on the left, so it lines up with the other rule lines. */
+.hsm-name {
+  margin-left: -0.2rem;
+  padding: 0 0.2rem;
+  border-radius: 4px;
+}
+/* A name that sends its event is a button that reads as a link. */
+.hsm-send {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+/* Drawn with borders: a character here would become part of the button's name. */
+.hsm-pick::after {
+  content: "";
+  display: inline-block;
+  margin-left: 0.3em;
+  border: 0.3em solid transparent;
+  border-top-color: currentColor;
+  border-bottom-width: 0;
+  vertical-align: middle;
+}
+/* Filled in an active state's box only: the same event named in an idle box is not taken there. */
+.hsm-state.hsm-on > .hsm-rules > .hsm-rule > .hsm-send.hsm-can,
+.hsm-item.hsm-can > .hsm-item-name {
+  background: var(--hsm-event);
+  color: var(--color-bg);
+  text-decoration: none;
+}
+.hsm-name.hsm-same {
+  background: color-mix(in srgb, var(--hsm-event) 18%, transparent);
+  box-shadow: 0 0 0 1.5px var(--hsm-event);
+}
+.hsm-state.hsm-on > .hsm-rules > .hsm-rule > .hsm-send.hsm-can.hsm-same {
+  background: color-mix(in srgb, var(--hsm-event) 85%, var(--color-text));
+}
+/* A rule line clips what leaves it, so the ring sits on the name's edge. */
+.hsm-send:focus-visible {
+  outline: 2px solid var(--hsm-lit);
+  outline-offset: 0;
+}
+/* A menu follows the popup of the site's version menus. It is drawn over the page, at the place
+   the diagram gives it. */
+.hsm-menu {
+  position: absolute;
+  inset: auto;
+  min-width: 10rem;
+  margin: 0;
+  padding: 0.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow:
+    0 10px 15px -3px var(--color-shadow),
+    0 4px 6px -4px var(--color-shadow);
+  font: 0.875rem var(--font-sans);
+}
+.hsm-menu:popover-open {
+  display: flex;
+  flex-direction: column;
+}
+.hsm-item {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+/* The item the keyboard is on is shown as the one the pointer is on. */
+.hsm-item:hover,
+.hsm-item:focus-visible {
+  outline: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.hsm-item[aria-checked="true"] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+.hsm-item[aria-checked="true"]::after {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+/* An event in a menu reads as it does in a rule line. */
+.hsm-item-name {
+  padding: 0 0.3rem;
+  border-radius: 4px;
+  color: var(--hsm-event);
+  font: 0.78rem var(--font-mono);
+}
 .hsm-why {
   font-family: var(--font-sans);
   font-style: italic;
 }
 .hsm-demo li.hsm-rule.hsm-flash,
 .hsm-demo li.hsm-step.hsm-flash {
-  background: var(--hsm-lit);
-  color: var(--color-bg);
+  /* Half of the lit color, so a flash marks its line without shouting. The words keep the
+     text's own color: the page's background color no longer reads on a fill this light. */
+  background: color-mix(in srgb, var(--hsm-lit) 50%, transparent);
+  color: var(--color-text);
   transition: none;
 }
 .hsm-rule.hsm-flash .hsm-ev {
-  color: var(--color-bg);
+  color: var(--color-text);
 }
 .hsm-bar {
   position: absolute;
@@ -1743,89 +1929,170 @@
   font-size: 0.75rem;
   font-style: italic;
 }
-.hsm-legend {
-  margin-top: 0.8rem;
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-}
-.hsm-legend i {
-  display: inline-block;
-  width: 0.7rem;
-  height: 0.7rem;
-  margin-right: 0.3rem;
-  vertical-align: -1px;
-  border: 1.5px solid var(--hsm-lit);
-  border-radius: 3px;
-}
 .hsm-group-label {
   margin-bottom: 0.3rem;
   color: var(--color-text-muted);
   font-size: 0.8rem;
 }
-.hsm-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
+/* A button of the row follows the site's own toolbar: its theme toggle and its version menus. */
 .hsm-button {
-  padding: 0.35rem 0.75rem;
-  border: 1.5px solid color-mix(in srgb, var(--hsm-event) 35%, transparent);
-  border-radius: 999px;
-  background: transparent;
-  color: color-mix(in srgb, var(--hsm-event) 70%, var(--color-text-muted));
-  font: 600 0.78rem var(--font-mono);
+  display: inline-flex;
+  gap: 0.375rem;
+  align-items: center;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font: 500 0.875rem var(--font-sans);
+  white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 0.2s,
-    border-color 0.2s,
-    color 0.2s;
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
-.hsm-button:hover {
-  background: color-mix(in srgb, var(--hsm-event) 12%, transparent);
+.hsm-button:hover,
+.hsm-button[aria-expanded="true"] {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
 }
-.hsm-button.hsm-can {
-  border-color: var(--hsm-event);
-  background: var(--hsm-event);
-  color: var(--color-bg);
+/* A button lifts under the pointer and sinks while it is pressed. It moves by a whole pixel
+   of its position, at once: a transform would redraw a button that sits between two pixels on
+   a whole one, and it would jump sideways. A touch leaves no pointer behind, so only a device
+   that hovers lifts it. */
+.hsm-button {
+  position: relative;
+  top: 0;
 }
-.hsm-button.hsm-can:hover {
-  background: color-mix(in srgb, var(--hsm-event) 85%, var(--color-text));
+/* The button keeps the pointer while it moves: its lower edge stays where it was. */
+.hsm-button::before {
+  content: "";
+  position: absolute;
+  inset: -1px -1px -3px;
 }
-.hsm-demo .hsm-state:not(.hsm-on) > .hsm-rules > li.hsm-rule:not(.hsm-flash),
+@media (hover: hover) {
+  .hsm-button:hover {
+    top: -1px;
+    box-shadow: 0 2px 4px var(--color-shadow);
+  }
+}
+.hsm-button:active {
+  top: 1px;
+  box-shadow: none;
+}
+/* A button that is a glyph alone, as wide as it is tall. */
+.hsm-square {
+  justify-content: center;
+  width: 2.25rem;
+  padding: 0;
+}
+.hsm-icon {
+  display: inline-flex;
+}
+.hsm-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+.hsm-square .hsm-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+/* The arrow in a rule line takes the size of that line's text. */
+.hsm-arrow {
+  vertical-align: -0.2em;
+}
+.hsm-arrow svg {
+  width: 1.15em;
+  height: 1.15em;
+}
+/* A mark shown as a glyph: what a state has or does, by its name, or a note on a rule line. */
+.hsm-mark {
+  border-radius: 3px;
+  vertical-align: -0.2em;
+}
+.hsm-mark svg {
+  width: 1.15em;
+  height: 1.15em;
+}
+/* By a name a margin sets the glyph off, since a space would add to the text the name is found
+   by. */
+.hsm-state-name > .hsm-mark {
+  margin-left: 0.4em;
+  color: var(--color-text-muted);
+}
+.hsm-state-name > .hsm-mark + .hsm-mark {
+  margin-left: 0.15em;
+}
+.hsm-state-name > .hsm-initial {
+  color: var(--hsm-initial);
+}
+.hsm-state-name > .hsm-task {
+  color: var(--hsm-task);
+}
+.hsm-caret {
+  color: var(--color-text-faint);
+  transition: transform 0.15s;
+}
+.hsm-button[aria-expanded="true"] > .hsm-caret {
+  transform: rotate(180deg);
+}
+/* A switch over a piece of the code: the knob is on the right while that piece is in. */
+.hsm-switch {
+  position: relative;
+  min-height: 1.2rem;
+  padding: 0 0 0 2.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: 400 0.82rem var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+.hsm-switch::before,
+.hsm-switch::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  border-radius: 999px;
+}
+.hsm-switch::before {
+  left: 0;
+  width: 2.1rem;
+  height: 1.2rem;
+  margin-top: -0.6rem;
+  background: var(--color-border-strong);
+  transition: background-color 0.2s;
+}
+.hsm-switch::after {
+  left: 0.15rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: -0.45rem;
+  background: var(--color-bg);
+  transition: transform 0.2s;
+}
+.hsm-switch[aria-checked="true"]::before {
+  background: var(--hsm-lit);
+}
+.hsm-switch[aria-checked="true"]::after {
+  transform: translateX(0.9rem);
+}
+/* A line that names the marked event shows in full, in an idle box too. */
+.hsm-demo .hsm-state:not(.hsm-on) > .hsm-rules > li.hsm-rule:not(.hsm-flash):not(:has(.hsm-same)),
 .hsm-demo .hsm-state:not(.hsm-on) > .hsm-steps > li.hsm-step:not(.hsm-flash) {
   opacity: 0.55;
 }
-.hsm-button.hsm-ghost {
-  border-color: var(--color-border-strong);
-  background: transparent;
-  color: var(--color-text-muted);
-  font: 400 0.82rem var(--font-sans);
-}
-.hsm-button.hsm-ghost:hover {
-  color: var(--color-text);
-}
 .hsm-button:focus-visible,
-.hsm-speed:focus-visible {
+.hsm-switch:focus-visible {
   outline: 2px solid var(--hsm-lit);
   outline-offset: 2px;
-}
-.hsm-clock {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  align-items: center;
-}
-.hsm-speed {
-  padding: 0.3rem 0.45rem;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 8px;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font: 0.8rem var(--font-sans);
 }
 .hsm-readout {
   overflow-x: auto;
   padding: 0.5rem 0.65rem;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-code-bg);
   font-family: var(--font-mono);
@@ -1843,7 +2110,8 @@
   height: 13rem;
   overflow-y: auto;
   margin: 0;
-  padding: 0.45rem 0.55rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-code-bg);
   list-style: none;
@@ -2014,7 +2282,9 @@
 @media (prefers-reduced-motion: reduce) {
   .hsm-demo *,
   .hsm-demo li.hsm-rule,
-  .hsm-demo li.hsm-step {
+  .hsm-demo li.hsm-step,
+  .hsm-switch::before,
+  .hsm-switch::after {
     transition: none;
   }
   .hsm-demo .hsm-visual .hsm-b-robot {

@@ -66,8 +66,6 @@ function drive(id: DemoId) {
       expect(dropped, `${id}: "${label}" was ${marked ? "filled" : "outlined"}`).toBe(!marked);
     },
     step(dt: number) {
-      // The page gives a diagram without a clock no way to pass time.
-      if (!demo.timed) throw new Error(`${id} has no clock`);
       step(run, dt);
     },
     /** Lets a routine go on: its promise continuations run before a zero timeout does. */
@@ -232,7 +230,7 @@ describe("hsm tutorial demos", () => {
     expect(d.run.path).toBe("/awake/wander");
   });
 
-  test("buddy-waking: the fade finishes with WOKEN and the buddy is awake", () => {
+  test("buddy-waking: the fade finishes with WAKING_DONE and the buddy is awake", () => {
     const d = drive("buddy-waking");
     d.press("POKE");
     expect(d.run.path).toBe("/waking");
@@ -241,7 +239,7 @@ describe("hsm tutorial demos", () => {
     const mark = d.lines.length;
     d.step(0.5);
     expect(d.since(mark, "note", "exit", "enter")).toEqual([
-      "/waking: finish(WOKEN)",
+      "/waking: finish(WAKING_DONE)",
       "exit /waking",
       "enter /awake",
       "enter /awake/wander (initial child)",
@@ -267,7 +265,7 @@ describe("hsm tutorial demos", () => {
 
   test("buddy-waking: without cleanup the fade runs on and its late finish is ignored", () => {
     const d = drive("buddy-waking");
-    d.press("Toggle cancel in exit");
+    d.press("Exit cleans up");
     expect(d.ctx.cleanup).toBe(false);
     d.press("POKE");
     d.step(0.5);
@@ -277,12 +275,14 @@ describe("hsm tutorial demos", () => {
     d.step(1);
     expect(d.run.path).toBe("/asleep");
     expect(d.ctx.lit).toBe(true);
-    expect(d.since(mark, "drop")).toEqual(["late finish(WOKEN) ignored: /waking was already left"]);
+    expect(d.since(mark, "drop")).toEqual([
+      "late finish(WAKING_DONE) ignored: /waking was already left",
+    ]);
   });
 
   test("buddy-queue: a first start queues POKE and is in waking when start returns", () => {
     const d = drive("buddy-queue");
-    d.press("start() with wakes = 0");
+    d.press("start({ wakes: 0 })");
     expect(d.run.path).toBe("/waking");
     const texts = d.lines.map((line) => line.text);
     const queued = texts.lastIndexOf("POKE queued (machine is busy)");
@@ -294,7 +294,7 @@ describe("hsm tutorial demos", () => {
   test("buddy-queue: a buddy that has been awake before stays asleep at start", () => {
     const d = drive("buddy-queue");
     const mark = d.lines.length;
-    d.press("start() with wakes = 1");
+    d.press("start({ wakes: 1 })");
     expect(d.run.path).toBe("/asleep");
     expect(d.since(mark, "queue")).toEqual([]);
   });
@@ -523,7 +523,7 @@ describe("hsm tutorial demos", () => {
     expect(d.readout("jobs pending")).toBe("0");
     expect(d.visual).toEqual({ pose: "awake", light: "lit" });
     expect(d.since(faded, "exit", "note").slice(0, 3)).toEqual([
-      "/waking: finish(WOKEN)",
+      "/waking: finish(WAKING_DONE)",
       "exit /waking",
       "/waking: task cleanup ran",
     ]);
@@ -588,7 +588,7 @@ describe("hsm tutorial demos", () => {
     expect(d.run.path).toBe("/awake/follow");
     expect(d.run.routine(hello)).toBeUndefined();
     expect(d.since(last, "exit", "enter")).toEqual(["exit /awake/greeting", "enter /awake/follow"]);
-    expect(d.since(last, "note")).toContain("/awake/greeting: finish(GREETED)");
+    expect(d.since(last, "note")).toContain("/awake/greeting: finish(GREETING_DONE)");
   });
 
   test("buddy-greeting: walking out is ignored", async () => {
@@ -663,7 +663,7 @@ describe("hsm tutorial demos", () => {
 
   test("buddy-regions: the light blinks until the battery is full, then stays on", () => {
     const d = drive("buddy-regions");
-    d.press("start() with napSeconds = 5");
+    d.press("start({ napSeconds: 5 })");
     tireOut(d);
     const lights: (string | undefined)[] = [];
     for (let i = 0; i < 6; i++) {
@@ -838,7 +838,7 @@ describe("hsm tutorial demos", () => {
     const d = drive("buddy-save");
     tireOut(d);
     d.step(0.5);
-    d.press("save leaves");
+    d.press("sys.save(..., { at: leaves })");
     const saved = "/resting/battery/filling, /resting/lamp/hidden";
     expect(d.readout("saved")).toBe(saved);
 
@@ -847,7 +847,7 @@ describe("hsm tutorial demos", () => {
     expect(d.readout("saved")).toBe(saved);
 
     const loaded = d.lines.length;
-    d.press("start() at the saved paths");
+    d.press("start(..., save.at)");
     expect(d.since(loaded, "enter")).toEqual([
       "enter /resting",
       "enter /resting/battery (region)",
@@ -877,11 +877,11 @@ describe("hsm tutorial demos", () => {
       d.step(0.5);
       await d.settle();
     }
-    d.press("save leaves");
+    d.press("sys.save(..., { at: leaves })");
     expect(d.readout("saved")).toBe("/awake/follow");
 
     const loaded = d.lines.length;
-    d.press("start() at the saved paths");
+    d.press("start(..., save.at)");
     expect(d.run.path).toBe("/awake/follow");
     expect(d.since(loaded, "enter")).toEqual(["enter /awake", "enter /awake/follow"]);
 
@@ -900,7 +900,7 @@ describe("hsm tutorial demos", () => {
     expect(d.readout("saved")).toBe("no save yet");
     d.step(0.5);
     d.step(0.5);
-    d.press("start() at the saved paths");
+    d.press("start(..., save.at)");
     expect(d.run.path).toBe("/waking");
     expect(d.readout("ctx.wakes")).toBe("0");
     expect(d.readout("saved")).toBe("no save yet");
@@ -948,7 +948,6 @@ const GREETING_WALK = [
   ...CHECKUP_WALK.slice(6),
 ];
 const WALKS: Record<DemoId, readonly (string | number)[]> = {
-  "buddy-first": ["POKE", "POKE"],
   "buddy-nested": ["POKE", "SEE_PLAYER", "LOSE_PLAYER", "POKE"],
   "buddy-energy": [
     "POKE",
@@ -1083,7 +1082,7 @@ describe("the buddy reacts to a press", () => {
     expect(d.reaction).toBeUndefined();
     d.press("POKE");
     expect(d.reaction).toBe("ignored");
-    d.press("start() with wakes = 1");
+    d.press("start({ wakes: 1 })");
     expect(d.reaction).toBeUndefined();
     d.press("POKE");
     expect(d.reaction).toBe("hop");
@@ -1102,21 +1101,15 @@ describe("the buddy reacts to a press", () => {
 
   test("buddy-waking: a button that changes the code sends no event", () => {
     const d = drive("buddy-waking");
-    d.press("Toggle cancel in exit");
+    d.press("Exit cleans up");
     expect(d.reaction).toBeUndefined();
   });
 });
 
 describe("the buddy figure", () => {
-  test("buddy-first: the pose follows the two states", () => {
-    const d = drive("buddy-first");
-    expect(d.visual).toEqual({ pose: "asleep" });
-    d.press("POKE");
-    expect(d.visual).toEqual({ pose: "awake" });
-  });
-
   test("buddy-nested: follow is its own pose and wander draws as awake", () => {
     const d = drive("buddy-nested");
+    expect(d.visual).toEqual({ pose: "asleep" });
     d.press("POKE");
     expect(d.visual).toEqual({ pose: "awake" });
     d.press("SEE_PLAYER");
@@ -1156,7 +1149,7 @@ describe("the buddy figure", () => {
 
   test("buddy-waking: without cleanup the buddy sleeps with its light on", () => {
     const d = drive("buddy-waking");
-    d.press("Toggle cancel in exit");
+    d.press("Exit cleans up");
     d.press("POKE");
     d.step(0.5);
     d.press("POKE");

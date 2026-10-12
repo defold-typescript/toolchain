@@ -314,6 +314,12 @@ export function describePath(path: string | undefined): string {
   return path === undefined ? "undefined" : JSON.stringify(path);
 }
 
+/** Starting data as the page's code writes it: `{ wakes: 0 }`. */
+function describeFields(fields: Readonly<Record<string, unknown>>): string {
+  const written = Object.entries(fields).map(([key, value]) => `${key}: ${JSON.stringify(value)}`);
+  return written.length === 0 ? "{}" : `{ ${written.join(", ")} }`;
+}
+
 function describeEvent(event: EventObject): string {
   const fields = Object.entries(event)
     .filter(([key]) => key !== "type")
@@ -998,7 +1004,7 @@ export function startDemo(
   const machine = define(
     wrapState(s, demo.config, "") as MachineConfig<DemoCtx, EventObject, string>,
   );
-  if (ctxOverride !== undefined) emit(s, "note", `start(${JSON.stringify(ctxOverride)})`);
+  if (ctxOverride !== undefined) emit(s, "note", `start(${describeFields(ctxOverride)})`);
   const at = from.at;
   if (at !== undefined) emit(s, "note", `start(ctx, ${JSON.stringify(at)})`);
   s.starting = true;
