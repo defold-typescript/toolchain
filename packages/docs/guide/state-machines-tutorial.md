@@ -1967,6 +1967,10 @@ Remember "hidden, not locked" from [lesson 12](#12-the-machines-own-data)? Here 
 
 Each `onMove` and `onUnhandled` call hands back a function. Call it, and that listener is removed.
 
+Here is the buddy with both listeners. The second list holds what they printed, without the `pprint`. Tire the buddy out with `BUMP (cost 3)` and watch the lamp: every blink is a move, and `path` keeps naming the battery's state. Then press `trigger_response (enter true)`: the buddy beeps first, and your listener hears the drop after it.
+
+<div data-hsm-demo="buddy-listen"></div>
+
 For everything a running machine offers, see [`MachineInstance`](./state-machines.md#machineinstance).
 
 ### Try it

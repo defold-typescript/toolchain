@@ -70,6 +70,25 @@ const tagged: Demo = {
   readout: () => [],
 };
 
+// A script that prints each move, to tell what it printed from the machine's own log.
+const chatty: Demo = {
+  title: "Chatty",
+  subtitle: "A script prints each move.",
+  config: {
+    initial: "/a",
+    states: {
+      a: { on: { GO: "/b" } },
+      b: {},
+    },
+  },
+  ctx: () => ({}),
+  buttons: [{ label: "GO", event: { type: "GO" } }],
+  readout: () => [],
+  script: (buddy, print) => {
+    buddy.onMove((from, to) => print(`${from} to ${to}`));
+  },
+};
+
 // Happy DOM's observer reports no host on screen, so no frame steps the run.
 function mount(spec: Demo) {
   const host = document.createElement("div");
@@ -92,6 +111,13 @@ function added(log: HTMLElement, from: number): (string | null)[] {
   return Array.from(log.children)
     .slice(from)
     .map((entry) => entry.textContent);
+}
+
+function click(host: HTMLElement, label: string): void {
+  const button = Array.from(host.querySelectorAll("button")).find(
+    (node) => node.textContent === label,
+  ) as HTMLButtonElement;
+  button.click();
 }
 
 describe("the function mountDemos returns", () => {
@@ -117,6 +143,28 @@ describe("the function mountDemos returns", () => {
     const mark = log.childElementCount;
     dispose();
     expect(added(log, mark)).toContain("timer.cancel: the 1 s wait was cancelled");
+  });
+});
+
+describe("what a spec's script printed", () => {
+  test("it is listed apart from the log, and starts over with the machine", () => {
+    const { host, log, dispose } = mount(chatty);
+    const heard = host.querySelector(".hsm-heard");
+    expect(heard).not.toBeNull();
+    const printed = () => added(heard as HTMLElement, 0);
+    expect(printed()).toEqual([]);
+    click(host, "GO");
+    expect(printed()).toEqual(["/a to /b"]);
+    expect(added(log, 0)).not.toContain("/a to /b");
+    click(host, "Restart machine");
+    expect(printed()).toEqual([]);
+    dispose();
+  });
+
+  test("a spec with no script gets no second list", () => {
+    const { host, dispose } = mount(tagged);
+    expect(host.querySelector(".hsm-heard")).toBeNull();
+    dispose();
   });
 });
 
