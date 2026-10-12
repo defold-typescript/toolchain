@@ -89,6 +89,26 @@ const chatty: Demo = {
   },
 };
 
+// A save button and a load button, to tell the run a load returns from the one it stopped.
+const vault: Demo = {
+  title: "Vault",
+  subtitle: "A machine that can be saved and loaded.",
+  config: {
+    initial: "/a",
+    states: {
+      a: { on: { GO: "/b" } },
+      b: {},
+    },
+  },
+  ctx: () => ({}),
+  buttons: [
+    { label: "GO", event: { type: "GO" } },
+    { label: "save", save: true },
+    { label: "load", startSaved: true },
+  ],
+  readout: (m) => [["saved", m.saved === undefined ? "none" : m.saved.join(", ")]],
+};
+
 // Happy DOM's observer reports no host on screen, so no frame steps the run.
 function mount(spec: Demo) {
   const host = document.createElement("div");
@@ -164,6 +184,20 @@ describe("what a spec's script printed", () => {
   test("a spec with no script gets no second list", () => {
     const { host, dispose } = mount(tagged);
     expect(host.querySelector(".hsm-heard")).toBeNull();
+    dispose();
+  });
+});
+
+describe("a diagram's save and load buttons", () => {
+  test("the readout follows the save, and a load starts the log over", () => {
+    const { host, log, dispose } = mount(vault);
+    click(host, "GO");
+    click(host, "save");
+    expect(host.querySelector(".hsm-readout")?.textContent).toContain("saved /b");
+    click(host, "load");
+    expect(log.firstElementChild?.textContent).toBe('start(ctx, ["/b"])');
+    expect(box(host, "b").classList.contains("hsm-on")).toBe(true);
+    expect(box(host, "a").classList.contains("hsm-on")).toBe(false);
     dispose();
   });
 });
