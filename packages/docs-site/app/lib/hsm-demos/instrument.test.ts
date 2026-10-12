@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { type EventObject, waitGroup } from "@defold-typescript/hsm";
 import { sequence } from "@defold-typescript/hsm/async";
-import type { Demo, DemoCtx } from "./demos";
+import type { Demo, DemoButton, DemoCtx } from "./demos";
 import {
   afterChip,
   alwaysChip,
@@ -9,6 +9,7 @@ import {
   discard,
   everyChip,
   listChip,
+  press,
   restart,
   ruleChip,
   send,
@@ -529,6 +530,36 @@ const overheard: Demo = {
     });
   },
 };
+
+// `on` counts its entries, to tell a new machine's context from the saved machine's.
+const keeper: Demo = {
+  title: "Keeper",
+  subtitle: "A parent that counts its entries and remembers its child.",
+  config: {
+    initial: "/off",
+    states: {
+      off: { on: { ON: "/on" } },
+      on: {
+        restoreDepth: 1,
+        initial: "/on/dim",
+        enter: (ctx) => {
+          ctx.count = (ctx.count as number) + 1;
+        },
+        on: { OFF: "/off" },
+        states: {
+          dim: { on: { UP: "/on/bright" } },
+          bright: {},
+        },
+      },
+    },
+  },
+  ctx: () => ({ count: 0 }),
+  buttons: [],
+  readout: () => [],
+};
+
+const SAVE: DemoButton = { label: "save", save: true };
+const LOAD: DemoButton = { label: "load", startSaved: true };
 
 /** The lines a send logs when neither state of a region of `rester` has a rule for `type`. */
 function regionLines(region: "battery" | "lamp", type: string): string[] {
@@ -1293,5 +1324,55 @@ describe("a spec's script", () => {
     expect(texts(trace, mark, "heard")).toEqual([]);
     send(next, { type: "GO" });
     expect(texts(trace, mark, "heard")).toEqual(["/a -> /b (event), now in /b"]);
+  });
+});
+
+describe("a diagram's save", () => {
+  test("saving keeps a copy of the list", () => {
+    const { run, trace } = start(keeper);
+    send(run, { type: "ON" });
+    send(run, { type: "UP" });
+    const mark = trace.length;
+    press(run, SAVE);
+    expect(run.saved).toEqual(["/on/bright"]);
+    expect(trace.slice(mark)).toEqual([{ kind: "note", text: "saved leaves: /on/bright" }]);
+    send(run, { type: "OFF" });
+    expect(run.saved).toEqual(["/on/bright"]);
+  });
+
+  test("starting at the saved paths is an ordinary start of a new machine", () => {
+    const { run, trace } = start(keeper);
+    for (const type of ["ON", "OFF", "ON", "UP"]) send(run, { type });
+    press(run, SAVE);
+    const mark = trace.length;
+    const next = press(run, LOAD);
+    expect(next).not.toBe(run);
+    expect(next.leaves).toEqual(["/on/bright"]);
+    expect(next.ctx.count).toBe(1);
+    expect(next.saved).toEqual(["/on/bright"]);
+    expect(texts(trace, mark, "note", "enter")).toEqual([
+      'start(ctx, ["/on/bright"])',
+      "enter /on",
+      "enter /on/bright",
+      'start() returned, path = "/on/bright"',
+    ]);
+    expect(texts(trace, mark, "exit")).toEqual([]);
+  });
+
+  test("with nothing saved, the new machine starts the ordinary way", () => {
+    const { run, trace } = start(keeper);
+    send(run, { type: "ON" });
+    const mark = trace.length;
+    const next = press(run, LOAD);
+    expect(next.path).toBe("/off");
+    expect(next.saved).toBeUndefined();
+    expect(texts(trace, mark, "note").filter((text) => text.startsWith("start(ctx"))).toEqual([]);
+  });
+
+  test("a restart keeps the save", () => {
+    const { run } = start(keeper);
+    send(run, { type: "ON" });
+    press(run, SAVE);
+    expect(restart(run).saved).toEqual(["/on/dim"]);
   });
 });

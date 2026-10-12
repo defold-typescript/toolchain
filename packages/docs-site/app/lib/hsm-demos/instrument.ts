@@ -42,6 +42,9 @@ import type { BuddyReaction, Demo, DemoButton, DemoCtx, DemoView } from "./demos
  *
  * A spec's `script` runs once `start` has returned, as the script that owns the buddy goes on
  * after its own `start` call. Each line it prints is a `heard` line.
+ *
+ * A run carries the diagram's save from one machine to the next, as a save file outlives the
+ * machine that wrote it.
  */
 
 export type TraceKind =
@@ -355,6 +358,14 @@ interface Session {
   readonly waits: Wait[];
   /** The routine of the state the run is in, and the number of waits it has started in this stay. */
   routine: { readonly path: string; step: number } | undefined;
+  /** The paths the diagram's save button kept last. */
+  saved: readonly string[] | undefined;
+}
+
+/** What a new run starts from: the diagram's save to carry on, and the paths to start at. */
+export interface StartFrom {
+  readonly saved?: readonly string[];
+  readonly at?: readonly string[];
 }
 
 type TimerCallback = (self: unknown, handle: number, elapsed: number) => void;
@@ -952,7 +963,12 @@ const define = defineMachine<DemoCtx, EventObject, string>() as unknown as (
   config: MachineConfig<DemoCtx, EventObject, string>,
 ) => Machine<DemoCtx, EventObject, string, string>;
 
-export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCtx>): DemoRun {
+export function startDemo(
+  demo: Demo,
+  trace: Trace,
+  ctxOverride?: Partial<DemoCtx>,
+  from: StartFrom = {},
+): DemoRun {
   const s: Session = {
     demo,
     trace,
@@ -975,6 +991,7 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     held: new Set(),
     waits: [],
     routine: undefined,
+    saved: from.saved,
   };
   // `timer` is declared as a namespace, which has no assignable type.
   (globalThis as unknown as { timer: typeof imitatedTimer }).timer = imitatedTimer;
@@ -982,8 +999,10 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     wrapState(s, demo.config, "") as MachineConfig<DemoCtx, EventObject, string>,
   );
   if (ctxOverride !== undefined) emit(s, "note", `start(${JSON.stringify(ctxOverride)})`);
+  const at = from.at;
+  if (at !== undefined) emit(s, "note", `start(ctx, ${JSON.stringify(at)})`);
   s.starting = true;
-  fromOutside(s, () => adopt(s, machine.start(s.ctx)));
+  fromOutside(s, () => adopt(s, machine.start(s.ctx, at)));
   s.starting = false;
   const instance = s.instance as unknown as Instance;
   emit(s, "note", `start() returned, path = ${describePath(instance.path)}`);
@@ -999,6 +1018,9 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     },
     get leaves() {
       return instance.leaves;
+    },
+    get saved() {
+      return s.saved;
     },
     get stopped() {
       return isStopped(s);
@@ -1082,7 +1104,8 @@ export function discard(run: DemoRun): void {
 
 /**
  * Presses a demo button: sends its event, changes the world, stops the
- * machine, or stops this machine quietly and starts a fresh one. Returns the
+ * machine, keeps a copy of its `leaves`, or stops this machine quietly and
+ * starts a fresh one, at the kept paths for a `startSaved` button. Returns the
  * run to use from now on.
  */
 export function press(run: DemoRun, button: DemoButton): DemoRun {
@@ -1098,13 +1121,34 @@ export function press(run: DemoRun, button: DemoButton): DemoRun {
     stop(run);
     return run;
   }
+  if ("save" in button) {
+    const s = sessionOf(run);
+    // The library changes `leaves` in place, so the save is a copy, as the page's `[...]` is.
+    const saved = [...run.leaves];
+    s.saved = saved;
+    emit(s, "note", `saved leaves: ${saved.join(", ")}`);
+    return run;
+  }
+  if ("startSaved" in button) return startOver(run, undefined, true);
   return restart(run, button.restartWith);
 }
 
 /** Stops this machine without narrating it and starts a fresh one on the same trace. */
 export function restart(run: DemoRun, ctxOverride?: Partial<DemoCtx>): DemoRun {
+  return startOver(run, ctxOverride, false);
+}
+
+/** A restart that hands the diagram's save to the new run, which starts at it when `atSaved`. */
+function startOver(
+  run: DemoRun,
+  ctxOverride: Partial<DemoCtx> | undefined,
+  atSaved: boolean,
+): DemoRun {
   const s = sessionOf(run);
   s.muted = true;
   run.instance.stop();
-  return startDemo(s.demo, s.trace, ctxOverride);
+  const saved = s.saved;
+  // Nothing saved is no list at all, as the page's `save.at` is `undefined` with no save file.
+  if (saved === undefined) return startDemo(s.demo, s.trace, ctxOverride);
+  return startDemo(s.demo, s.trace, ctxOverride, atSaved ? { saved, at: saved } : { saved });
 }

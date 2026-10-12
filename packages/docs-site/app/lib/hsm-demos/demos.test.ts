@@ -833,6 +833,78 @@ describe("hsm tutorial demos", () => {
     ]);
     expect(heard.filter((line) => line.startsWith("buddy dropped"))).toHaveLength(1);
   });
+
+  test("buddy-save: a buddy saved while resting starts a new nap with a full battery", () => {
+    const d = drive("buddy-save");
+    tireOut(d);
+    d.step(0.5);
+    d.press("save leaves");
+    const saved = "/resting/battery/filling, /resting/lamp/hidden";
+    expect(d.readout("saved")).toBe(saved);
+
+    d.press("RECHARGE");
+    expect(d.readout("leaves")).toBe("/awake/wander");
+    expect(d.readout("saved")).toBe(saved);
+
+    const loaded = d.lines.length;
+    d.press("start() at the saved paths");
+    expect(d.since(loaded, "enter")).toEqual([
+      "enter /resting",
+      "enter /resting/battery (region)",
+      "enter /resting/battery/filling (initial child)",
+      "enter /resting/lamp (region)",
+      "enter /resting/lamp/hidden",
+    ]);
+    expect(d.run.leaves).toEqual(["/resting/battery/filling", "/resting/lamp/hidden"]);
+    expect(d.readout("ctx.wakes")).toBe("0");
+    expect(d.readout("ctx.energy")).toBe("3.00");
+
+    d.step(0.5);
+    expect(d.run.leaves).toEqual(["/resting/battery/full", "/resting/lamp/shown"]);
+    expect(d.visual).toEqual({ pose: "resting", light: "lit" });
+
+    for (let more = 0; more < 3; more++) d.step(0.5);
+    expect(d.run.path).toBe("/awake/wander");
+    expect(d.readout("ctx.wakes")).toBe("1");
+  });
+
+  test("buddy-save: a buddy saved in follow gets up in follow", async () => {
+    const d = drive("buddy-save");
+    d.step(0.5);
+    d.step(0.5);
+    d.press("trigger_response (enter true)");
+    for (let passed = 0; passed < 3; passed += 0.5) {
+      d.step(0.5);
+      await d.settle();
+    }
+    d.press("save leaves");
+    expect(d.readout("saved")).toBe("/awake/follow");
+
+    const loaded = d.lines.length;
+    d.press("start() at the saved paths");
+    expect(d.run.path).toBe("/awake/follow");
+    expect(d.since(loaded, "enter")).toEqual(["enter /awake", "enter /awake/follow"]);
+
+    d.press("BUMP (cost 3)");
+    const recharged = d.lines.length;
+    d.press("RECHARGE");
+    expect(d.since(recharged, "enter")).toEqual([
+      "enter /checkup",
+      "enter /awake",
+      "enter /awake/follow (remembered child)",
+    ]);
+  });
+
+  test("buddy-save: with no save a new buddy starts the way it always did", () => {
+    const d = drive("buddy-save");
+    expect(d.readout("saved")).toBe("no save yet");
+    d.step(0.5);
+    d.step(0.5);
+    d.press("start() at the saved paths");
+    expect(d.run.path).toBe("/waking");
+    expect(d.readout("ctx.wakes")).toBe("0");
+    expect(d.readout("saved")).toBe("no save yet");
+  });
 });
 
 // A string presses the button with that label; a number lets that many seconds pass in 0.5 s steps.
@@ -933,6 +1005,7 @@ const WALKS: Record<DemoId, readonly (string | number)[]> = {
   "buddy-busy": GREETING_WALK,
   "buddy-beep": GREETING_WALK,
   "buddy-listen": GREETING_WALK,
+  "buddy-save": GREETING_WALK,
 };
 
 describe("every rule a diagram draws can be used", () => {

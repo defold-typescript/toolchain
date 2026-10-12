@@ -2061,6 +2061,10 @@ Only the **states** were saved. `privateCtx` runs as it does for any new buddy, 
 
 And an old save? If a path names a state you have since removed, the buddy starts in the closest parent that still exists.
 
+Here is the buddy with a save. Tire it out with `BUMP (cost 3)`, press `save leaves`, then `RECHARGE` to get it up. Now press `start() at the saved paths`: a new buddy starts in `resting`, with a full battery and `wakes` at 0. Give it two seconds.
+
+<div data-hsm-demo="buddy-save"></div>
+
 For the full rules, see [Start at saved paths](./state-machines.md#start-at-saved-paths).
 
 ### Try it
