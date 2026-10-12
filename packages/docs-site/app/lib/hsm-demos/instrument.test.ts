@@ -367,6 +367,10 @@ function hear(ctx: DemoCtx, state: "a" | "b"): void {
   (ctx.heard as string[]).push(state);
 }
 
+function see(ctx: DemoCtx, who: string, event: unknown): void {
+  (ctx.seen as [string, unknown][]).push([who, event]);
+}
+
 const ignorer: Demo = {
   title: "Ignorer",
   subtitle: "A parent and its child both answer an event nobody took.",
@@ -419,6 +423,77 @@ const halter: Demo = {
     },
   },
   ctx: () => ({}),
+  buttons: [],
+  readout: () => [],
+};
+
+// Both regions have a PING rule, so one send of it fires two rules.
+const splitter: Demo = {
+  title: "Splitter",
+  subtitle: "Two regions take one event, and their parent stops the machine.",
+  config: {
+    initial: "/both",
+    states: {
+      both: {
+        type: "parallel",
+        on: { HALT: { run: (_ctx, _event, m) => m.stop() } },
+        states: {
+          left: {
+            on: {
+              PING: {
+                run: (_ctx, event, m) => {
+                  m.send({ type: "HALT" });
+                  m.send(event);
+                },
+              },
+              PAIR: {
+                run: (ctx, _event, m) => {
+                  m.send(ctx.again as EventObject);
+                  m.send(ctx.again as EventObject);
+                  m.send({ type: "HALT" });
+                },
+              },
+              KEEP: {},
+            },
+          },
+          right: { on: { PING: {} } },
+        },
+      },
+    },
+  },
+  ctx: () => ({}),
+  buttons: [],
+  readout: () => [],
+};
+
+// Every place the library hands an event out records the object it was given.
+const witness: Demo = {
+  title: "Witness",
+  subtitle: "Each hook and listener keeps the event it was handed.",
+  config: {
+    initial: "/a",
+    states: {
+      a: {
+        enter: (ctx, m) => {
+          m.onUnhandled((event) => see(ctx, "listener", event));
+          m.onMove((_from, _to, _cause, event) => see(ctx, "move", event));
+        },
+        on: {
+          GO: {
+            to: "/b",
+            when: (ctx, event) => {
+              see(ctx, "when", event);
+              return true;
+            },
+            run: (ctx, event) => see(ctx, "run", event),
+          },
+        },
+        unhandled: (ctx, event) => see(ctx, "hook", event),
+      },
+      b: {},
+    },
+  },
+  ctx: () => ({ seen: [] }),
   buttons: [],
   readout: () => [],
 };
@@ -1088,5 +1163,53 @@ describe("a stop with events still queued", () => {
       "nobody handles NOPE, so it is ignored",
       "stop() dropped NOPE",
     ]);
+  });
+
+  test("a send two regions took is named when a stop drops it from the queue", () => {
+    const { run, trace } = start(splitter);
+    const ping = { type: "PING" };
+    const mark = trace.length;
+    send(run, ping);
+    expect(run.stopped).toBe(true);
+    expect(fired(trace, mark)).toEqual([
+      ruleChip("/both/left", "PING", 0),
+      ruleChip("/both/right", "PING", 0),
+      ruleChip("/both", "HALT", 0),
+    ]);
+    expect(texts(trace, mark, "queue", "drop")).toEqual([
+      "HALT queued (machine is busy)",
+      "PING queued (machine is busy)",
+      "stop() dropped PING",
+    ]);
+  });
+
+  test("one object a rule takes twice in a row is not called dropped", () => {
+    const keep = { type: "KEEP" };
+    const { run, trace } = start(splitter, { again: keep });
+    const mark = trace.length;
+    send(run, { type: "PAIR" });
+    expect(run.stopped).toBe(true);
+    expect(fired(trace, mark)).toEqual([
+      ruleChip("/both/left", "PAIR", 0),
+      ruleChip("/both/left", "KEEP", 0),
+      ruleChip("/both/left", "KEEP", 0),
+      ruleChip("/both", "HALT", 0),
+    ]);
+    expect(texts(trace, mark, "drop")).toEqual([]);
+  });
+});
+
+describe("the event a spec is handed", () => {
+  test("a hook or listener is handed the event that was sent", () => {
+    const { run } = start(witness);
+    const nope = { type: "NOPE" };
+    const go = { type: "GO" };
+    send(run, nope);
+    send(run, go);
+    const seen = run.ctx.seen as [string, unknown][];
+    expect(seen.map(([who]) => who)).toEqual(["hook", "listener", "when", "run", "move"]);
+    // toEqual passes for any object with the same type, so each event is compared by identity.
+    for (const [, event] of seen.slice(0, 2)) expect(event).toBe(nope);
+    for (const [, event] of seen.slice(2)) expect(event).toBe(go);
   });
 });
