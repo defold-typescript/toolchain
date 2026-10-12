@@ -311,7 +311,7 @@ describe("tag types", () => {
   });
 
   test("an unannotated machine carries the tags, in a hook, in a when and on the instance", () => {
-    type HookPath = "/a" | "/b" | `/a/${string}` | `/b/${string}`;
+    type HookPath = "/a" | "/b";
     const checks: boolean[] = [];
     const m = defineMachine<Ctx, Ev, Tag>()({
       initial: "/a",

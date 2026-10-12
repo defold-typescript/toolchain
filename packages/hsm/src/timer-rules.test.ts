@@ -443,7 +443,7 @@ describe("timer rules at define time", () => {
 
 describe("timer rule types", () => {
   test("an unannotated when and run are typed in both forms", () => {
-    type HookPath = "/a" | "/b" | "/c" | `/a/${string}` | `/b/${string}` | `/c/${string}`;
+    type HookPath = "/a" | "/b" | "/c" | `/b/${string}`;
     const seen: boolean[] = [];
     const m = defineMachine<Ctx, Ev>()({
       initial: "/a",
