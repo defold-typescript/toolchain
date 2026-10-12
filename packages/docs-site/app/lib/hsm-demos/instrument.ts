@@ -7,6 +7,7 @@ import {
   type MachineConfig,
   type MachineInstance,
   type MoveAction,
+  type MoveListener,
   type RunAction,
   type StateConfig,
   type TransitionConfig,
@@ -24,6 +25,10 @@ import type { BuddyReaction, Demo, DemoButton, DemoCtx, DemoView } from "./demos
  * handles" (a sent event no rule fired for). The second is printed where the library
  * drops the event: by the first `unhandled` hook it runs, or by the runtime's own
  * `onUnhandled` listener when none ran.
+ *
+ * The machine is handed an object of its own for each send: the library marks no point where it
+ * starts on the next queued event, so the spec's object cannot tell two regions taking one send
+ * from one region taking two sends of it. Every hook and listener gets the spec's event back.
  *
  * `sequence` waits through Defold's global `timer`, which is imitated here on each run's own
  * clock. A routine goes on in a promise continuation, where no call names its run, so a wait
@@ -319,15 +324,16 @@ interface Session {
   starting: boolean;
   /** Above zero while a send, update or start from outside the machine runs. */
   depth: number;
-  /** Events sent during the current outside call, checked for a stop that dropped them once it returns. */
-  sent: EventObject[];
+  /**
+   * The sends of the current outside call the machine has neither taken nor dropped, as the
+   * objects the machine holds for them and in the order they were sent. A stop dropped the ones
+   * still here once the call returns.
+   */
+  readonly pending: Set<EventObject>;
   /** Whether the event the machine is dropping has its line in the log. */
   dropNamed: boolean;
-  /**
-   * The events of the current outside call the machine has dealt with: one entry for each rule
-   * that took one, and one for each drop.
-   */
-  settled: EventObject[];
+  /** The spec's event behind each object the machine holds for a send. */
+  readonly origins: WeakMap<EventObject, EventObject>;
   /** States entered during the current outside call. */
   readonly entered: Set<string>;
   readonly clocks: Map<string, number>;
@@ -364,6 +370,7 @@ interface TimerChip {
 
 export interface DemoRun extends DemoView<DemoCtx> {
   readonly demo: Demo;
+  /** The machine itself: a listener added on it gets the machine's object for a send, not the spec's event. */
   readonly instance: Instance;
   /** Seconds the state at `path` has been active, counted as its timers count them; 0 when inactive. */
   readonly clock: (path: string) => number;
@@ -414,6 +421,22 @@ function nameDrop(s: Session, event: EventObject): void {
   if (s.dropNamed) return;
   s.dropNamed = true;
   emit(s, "drop", `nobody handles ${event.type}, so it is ignored`);
+}
+
+/**
+ * The event the spec sent. One that reached the library some other way, through a task's
+ * `finish` or a `can`, is the spec's own already.
+ */
+function specEvent(s: Session, event: EventObject): EventObject {
+  return s.origins.get(event) ?? event;
+}
+
+/** Files one send and returns the machine's object for it. The library reads `type` from an event and nothing else. */
+function track(s: Session, event: EventObject): EventObject {
+  const held = { type: event.type };
+  s.origins.set(held, event);
+  s.pending.add(held);
+  return held;
 }
 
 /** The run that holds each pending wait, by handle. */
@@ -484,9 +507,15 @@ function adopt(s: Session, m: Instance): void {
   m.onUnhandled((event) => {
     nameDrop(s, event);
     s.dropNamed = false;
-    s.settled.push(event);
+    s.pending.delete(event);
   });
 }
+
+/**
+ * A move listener as the core calls it: the declared arguments, then the path of the state whose
+ * rule made the move and that rule's key.
+ */
+type MoveCall = (...args: [...Parameters<MoveListener<EventObject, string>>, ...unknown[]]) => void;
 
 function proxyOf(s: Session, m: Instance): Instance {
   adopt(s, m);
@@ -510,16 +539,24 @@ function proxyOf(s: Session, m: Instance): Instance {
         return;
       }
       emit(s, "queue", `${event.type} queued (machine is busy)`);
-      s.sent.push(event);
-      m.send(event);
+      m.send(track(s, event));
     },
     update: (dt) => m.update(dt),
     stop: () => {
       if (s.depth > 0) emit(s, "note", "stop() requested; finishing this step first");
       m.stop();
     },
-    onMove: (listener) => m.onMove(listener),
-    onUnhandled: (listener) => m.onUnhandled(listener),
+    onMove: (listener) =>
+      m.onMove((from, to, cause, event, ...rest: unknown[]) =>
+        (listener as MoveCall)(
+          from,
+          to,
+          cause,
+          event === undefined ? undefined : specEvent(s, event),
+          ...rest,
+        ),
+      ),
+    onUnhandled: (listener) => m.onUnhandled((event) => listener(specEvent(s, event))),
   };
   return s.proxy;
 }
@@ -659,14 +696,15 @@ function wrapRule(s: Session, rule: Rule, path: string, type: string, index: num
   const when = rule.when;
   if (when !== undefined) {
     wrapped.when = (ctx, event, machine) => {
-      const passed = when(ctx, event, machine);
+      const passed = when(ctx, specEvent(s, event), machine);
       if (!passed) emit(s, "when", `${describe(path)}: when "${note ?? "check"}" said no`);
       return passed;
     };
   }
   wrapped.run = [
     (_ctx, event) => {
-      s.settled.push(event);
+      // The rule of a second region that takes the same send finds it gone already.
+      s.pending.delete(event);
       fire(s, chip);
       if (rule.to === undefined) {
         emit(s, "note", `${describe(path)}: rule has no to, so nothing exits or enters`);
@@ -676,7 +714,7 @@ function wrapRule(s: Session, rule: Rule, path: string, type: string, index: num
     ...run.map(
       (action): Action =>
         (ctx, event, m) =>
-          action(ctx, event, proxyOf(s, m)),
+          action(ctx, specEvent(s, event), proxyOf(s, m)),
     ),
   ];
   return wrapped;
@@ -749,7 +787,7 @@ function wrapState(s: Session, config: State, path: string): State {
     wrapped.unhandled = (ctx, event, m) => {
       nameDrop(s, event);
       emit(s, "action", `${describe(path)}: unhandled hook: ${note}`);
-      unhandled(ctx, event, proxyOf(s, m));
+      unhandled(ctx, specEvent(s, event), proxyOf(s, m));
     };
   }
 
@@ -811,7 +849,7 @@ function wrapState(s: Session, config: State, path: string): State {
             finish(event);
             return;
           }
-          fromOutside(s, event, () => finish(event));
+          fromOutside(s, () => finish(event));
         },
         proxy,
       );
@@ -827,13 +865,12 @@ function wrapState(s: Session, config: State, path: string): State {
   return wrapped;
 }
 
-/** Runs one call into the machine from outside it, then reports the events a stop dropped. */
-function fromOutside(s: Session, event: EventObject | undefined, body: () => void): void {
+/** Runs one call into the machine from outside it, then reports the sends a stop dropped. */
+function fromOutside(s: Session, body: () => void): void {
   scope = s;
   const wasStopped = isStopped(s);
   if (s.depth === 0) {
-    s.sent = event === undefined ? [] : [event];
-    s.settled = [];
+    s.pending.clear();
     s.entered.clear();
   }
   s.depth++;
@@ -845,15 +882,10 @@ function fromOutside(s: Session, event: EventObject | undefined, body: () => voi
   if (s.depth > 0) return;
   const stopped = isStopped(s);
   if (stopped) {
-    // One call can send an object more than once, so each entry answers for a single send.
-    const settled = [...s.settled];
-    for (const sent of s.sent) {
-      const at = settled.indexOf(sent);
-      if (at < 0) emit(s, "drop", `stop() dropped ${sent.type}`);
-      else settled.splice(at, 1);
-    }
+    // One call can send an object more than once, so each entry is the machine's object for a single send.
+    for (const dropped of s.pending) emit(s, "drop", `stop() dropped ${dropped.type}`);
   }
-  s.sent = [];
+  s.pending.clear();
   if (stopped && !wasStopped) emit(s, "note", "stopped, path = undefined");
 }
 
@@ -868,7 +900,7 @@ function sendFromOutside(s: Session, event: EventObject): void {
   for (const top of activeChildren("", instance.leaves)) {
     narrateOffer(s, top, event.type, instance.leaves);
   }
-  fromOutside(s, event, () => instance.send(event));
+  fromOutside(s, () => instance.send(track(s, event)));
 }
 
 /**
@@ -924,9 +956,9 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
     muted: false,
     starting: false,
     depth: 0,
-    sent: [],
+    pending: new Set(),
     dropNamed: false,
-    settled: [],
+    origins: new WeakMap(),
     entered: new Set(),
     clocks: new Map(),
     entries: new Map(),
@@ -944,7 +976,7 @@ export function startDemo(demo: Demo, trace: Trace, ctxOverride?: Partial<DemoCt
   );
   if (ctxOverride !== undefined) emit(s, "note", `start(${JSON.stringify(ctxOverride)})`);
   s.starting = true;
-  fromOutside(s, undefined, () => adopt(s, machine.start(s.ctx)));
+  fromOutside(s, () => adopt(s, machine.start(s.ctx)));
   s.starting = false;
   const instance = s.instance as unknown as Instance;
   emit(s, "note", `start() returned, path = ${describePath(instance.path)}`);
@@ -1017,7 +1049,7 @@ export function step(run: DemoRun, dt: number): void {
   const instance = s.instance as Instance;
   // The library updates `leaves` in place, so the active states are listed before the update.
   const before = activeStates(instance.leaves);
-  fromOutside(s, undefined, () => instance.update(dt));
+  fromOutside(s, () => instance.update(dt));
   // The library adds dt to every active state's clock before the hooks run, hook move
   // or not; a state entered during this update starts from zero.
   for (const path of before) {
@@ -1030,7 +1062,7 @@ export function stop(run: DemoRun): void {
   const s = sessionOf(run);
   if (isStopped(s)) return;
   emit(s, "event", "stop()");
-  fromOutside(s, undefined, () => run.instance.stop());
+  fromOutside(s, () => run.instance.stop());
 }
 
 /** Stops a run that will not be used again and lets go of it. */
