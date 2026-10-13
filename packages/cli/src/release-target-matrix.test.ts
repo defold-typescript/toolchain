@@ -12,6 +12,7 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
+import { loadApiTargetsRegistry } from "./api-registry";
 import { selectApiSurface } from "./api-surface";
 import { bobCachePath, resolveBobJar } from "./bob";
 import type { DefoldIo } from "./bob-command";
@@ -96,6 +97,18 @@ function compileAgainstSurface(version: string, source: string): { code: number;
   }
 }
 
+// The oldest release the registry commits a surface for. `DEFOLD_VERSIONS` is
+// the pre-baked pair, which stops at the previous minor line, so its last entry
+// is not the oldest surface a project can pin.
+function oldestCommittedVersion(): string {
+  const [oldest] = loadApiTargetsRegistry()
+    .filter((target) => (target.source ?? null) === null)
+    .map((target) => target.id.replace(/^defold-/, ""))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  if (oldest === undefined) throw new Error("the registry commits no surface");
+  return oldest;
+}
+
 function scaffoldProject(dir: string, main = "export const answer = 1;\n"): void {
   writeFileSync(path.join(dir, "game.project"), "[project]\ntitle = matrix\n");
   writeFileSync(
@@ -160,10 +173,8 @@ describe("the demoted 1.13.0 surface sits strictly between its neighbours", () =
   });
 
   test("carries the material namespace, which 1.13.0 promoted", () => {
-    const oldest = DEFOLD_VERSIONS[DEFOLD_VERSIONS.length - 1];
-    if (oldest === undefined) throw new Error("DEFOLD_VERSIONS is empty");
     expect(surfaceFile(RESTORED, "material.d.ts")).toContain("namespace material");
-    const oldestDir = selectMatrixSurface(oldest).generatedDir;
+    const oldestDir = selectMatrixSurface(oldestCommittedVersion()).generatedDir;
     expect(oldestDir).not.toBeNull();
     expect(existsSync(path.join(oldestDir ?? "", "material.d.ts"))).toBe(false);
   });
@@ -446,11 +457,10 @@ describe("runMatrixCommand drives the CLI seams offline", () => {
     // ensureMaterializedReference), then a real `tsc --noEmit` runs against the
     // materialized ambient surface. Real Bob/engine cross-compilation remains the
     // advisory live matrix's job; this proves the committed type surfaces.
-    // The oldest supported release, not `PREVIOUS_STABLE`: the snippet below is
-    // "absent before 1.13", and once a second 1.13 patch is supported the
-    // previous-stable slot is itself a 1.13 surface that must compile it.
-    const oldestVersion = DEFOLD_VERSIONS[DEFOLD_VERSIONS.length - 1];
-    if (oldestVersion === undefined) throw new Error("DEFOLD_VERSIONS is empty");
+    // The oldest release with a committed surface, not `PREVIOUS_STABLE`: the
+    // snippet below is "absent before 1.13", and the previous-stable slot holds
+    // a 1.13 or later surface that must compile it.
+    const oldestVersion = oldestCommittedVersion();
     const currentSurface = selectMatrixSurface(CURRENT_STABLE_DEFOLD_VERSION);
     const oldestSurface = selectMatrixSurface(oldestVersion);
     expect(currentSurface.available && oldestSurface.available).toBe(true);

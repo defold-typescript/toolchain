@@ -692,6 +692,21 @@ declare global {
      */
     function get_body(url: string | Hash | Url): Opaque<"b2Body"> | undefined;
     /**
+     * Returns the id of the game object that owns the body's collision-object component.
+     * Raises a Lua error if the body handle is invalid or its game object has been deleted.
+     *
+     * @param body - the Box2D body
+     * @returns the game object id, or `nil` if the body has no associated game object
+     * @example
+     * ```ts
+     * const body = b2d.get_body("#collisionobject");
+     * if (body !== undefined) {
+     *   const id = b2d.get_gameobject_id(body);
+     * }
+     * ```
+     */
+    function get_gameobject_id(body: Opaque<"b2Body">): Hash | undefined;
+    /**
      * Get the Box2D version information for the active backend.
      *
      * @returns version information

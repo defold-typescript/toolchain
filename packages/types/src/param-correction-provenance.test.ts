@@ -118,12 +118,12 @@ const SURFACES = retainedSurfaces(
 // Corrections some retained target already declares correctly while an older
 // one still needs them, each with the targets that resolved it.
 const PARAM_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
-  "gui.animate:param:property": ["defold-1.13.2"],
-  "gui.cancel_animations:param:property": ["defold-1.13.2"],
-  "resource.create_texture_async:param:path": ["defold-1.13.2"],
-  "render.get_render_target_width:param:render_target": ["defold-1.13.2"],
-  "render.get_render_target_height:param:render_target": ["defold-1.13.2"],
-  "render.set_render_target_size:param:render_target": ["defold-1.13.2"],
+  "gui.animate:param:property": ["defold-1.13.2", "defold-1.14.0"],
+  "gui.cancel_animations:param:property": ["defold-1.13.2", "defold-1.14.0"],
+  "resource.create_texture_async:param:path": ["defold-1.13.2", "defold-1.14.0"],
+  "render.get_render_target_width:param:render_target": ["defold-1.13.2", "defold-1.14.0"],
+  "render.get_render_target_height:param:render_target": ["defold-1.13.2", "defold-1.14.0"],
+  "render.set_render_target_size:param:render_target": ["defold-1.13.2", "defold-1.14.0"],
   // Older targets type these `number`; 1.13.2 retypes the handle to an opaque
   // type that no longer admits the number the binding reads.
   "resource.get_texture_info:param:path": ["defold-1.12.4", "defold-1.13.0", "defold-1.13.1"],

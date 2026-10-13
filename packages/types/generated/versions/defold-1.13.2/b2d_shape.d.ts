@@ -1,0 +1,423 @@
+/** @noSelfInFile */
+import type { Opaque, Vector3 } from "../../../src/core-types";
+
+declare global {
+  /**
+   * Constants for functional shape tables used with `b2d.body.create_fixture`
+   * and returned from `b2d.fixture.get_shape`.
+   */
+  namespace b2d.shape {
+    type b2Shape = Opaque<"b2Shape">;
+    type definition = { type: b2d.shape.SHAPE_TYPE; radius: number; center?: Vector3 } | { type: b2d.shape.SHAPE_TYPE; radius: number; center1: Vector3; center2: Vector3 } | { type: b2d.shape.SHAPE_TYPE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: b2d.shape.SHAPE_TYPE; hx: number; hy: number; center?: Vector3; angle?: number } | { type: b2d.shape.SHAPE_TYPE; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
+    type SHAPE_TYPE = typeof b2d.shape.SHAPE_TYPE_BOX | typeof b2d.shape.SHAPE_TYPE_CAPSULE | typeof b2d.shape.SHAPE_TYPE_CHAIN | typeof b2d.shape.SHAPE_TYPE_CIRCLE | typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_GRID | typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_SEGMENT;
+    /**
+     * Box shape type alias. Uses the polygon enum value, but indicates the `hx`/`hy` box convenience format.
+     */
+    const SHAPE_TYPE_BOX: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_BOX" };
+    /**
+     * Capsule shape type.
+     */
+    const SHAPE_TYPE_CAPSULE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CAPSULE" };
+    /**
+     * Chain shape type.
+     */
+    const SHAPE_TYPE_CHAIN: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CHAIN" };
+    /**
+     * Circle shape type.
+     */
+    const SHAPE_TYPE_CIRCLE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CIRCLE" };
+    /**
+     * Edge shape type alias. Compatibility alias for `b2d.shape.SHAPE_TYPE_SEGMENT`.
+     */
+    const SHAPE_TYPE_EDGE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_EDGE" };
+    /**
+     * Grid shape type.
+     */
+    const SHAPE_TYPE_GRID: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_GRID" };
+    /**
+     * Polygon shape type.
+     */
+    const SHAPE_TYPE_POLYGON: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_POLYGON" };
+    /**
+     * Segment shape type.
+     */
+    const SHAPE_TYPE_SEGMENT: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_SEGMENT" };
+    /**
+     * Check if contact events are enabled for a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns true if contact events are enabled
+     */
+    function are_contact_events_enabled(shape_id: Opaque<"b2Shape">): boolean;
+    /**
+     * Check if contact events are enabled for a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns true if contact events are enabled
+     */
+    function are_contact_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
+    /**
+     * Check if hit events are enabled for a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns true if hit events are enabled
+     */
+    function are_hit_events_enabled(shape_id: Opaque<"b2Shape">): boolean;
+    /**
+     * Check if hit events are enabled for a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns true if hit events are enabled
+     */
+    function are_hit_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
+    /**
+     * Check if pre-solve events are enabled for a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns true if pre-solve events are enabled
+     */
+    function are_pre_solve_events_enabled(shape_id: Opaque<"b2Shape">): boolean;
+    /**
+     * Check if pre-solve events are enabled for a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns true if pre-solve events are enabled
+     */
+    function are_pre_solve_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
+    /**
+     * Check if sensor events are enabled for a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns true if sensor events are enabled
+     */
+    function are_sensor_events_enabled(shape_id: Opaque<"b2Shape">): boolean;
+    /**
+     * Check if sensor events are enabled for a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns true if sensor events are enabled
+     */
+    function are_sensor_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
+    /**
+     * Enable or disable contact events for a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @param enable - true to enable contact events
+     */
+    function enable_contact_events(shape_id: Opaque<"b2Shape">, enable: boolean): void;
+    /**
+     * Enable or disable contact events for a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param enable - true to enable contact events
+     */
+    function enable_contact_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
+    /**
+     * Enable or disable hit events for a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @param enable - true to enable hit events
+     */
+    function enable_hit_events(shape_id: Opaque<"b2Shape">, enable: boolean): void;
+    /**
+     * Enable or disable hit events for a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param enable - true to enable hit events
+     */
+    function enable_hit_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
+    /**
+     * Enable or disable pre-solve events for a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @param enable - true to enable pre-solve events
+     */
+    function enable_pre_solve_events(shape_id: Opaque<"b2Shape">, enable: boolean): void;
+    /**
+     * Enable or disable pre-solve events for a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param enable - true to enable pre-solve events
+     */
+    function enable_pre_solve_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
+    /**
+     * Enable or disable sensor events for a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @param enable - true to enable sensor events
+     */
+    function enable_sensor_events(shape_id: Opaque<"b2Shape">, enable: boolean): void;
+    /**
+     * Enable or disable sensor events for a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param enable - true to enable sensor events
+     */
+    function enable_sensor_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
+    /**
+     * Get the body owning a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns owning body
+     */
+    function get_body(shape_id: Opaque<"b2Shape">): Opaque<"b2Body">;
+    /**
+     * Get the body owning a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns owning body
+     */
+    function get_body(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2Body">;
+    /**
+     * Get the closest point on a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @param target - world target point
+     * @returns closest world point on the shape
+     */
+    function get_closest_point(shape_id: Opaque<"b2Shape">, target: Vector3): Vector3;
+    /**
+     * Get the closest point on a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param target - world target point
+     * @returns closest world point on the shape
+     */
+    function get_closest_point(body: Opaque<"b2Body">, shape_index: number, target: Vector3): Vector3;
+    /**
+     * Get shape contact capacity.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns maximum contact data count
+     */
+    function get_contact_capacity(shape_id: Opaque<"b2Shape">): number;
+    /**
+     * Get shape contact capacity.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns maximum contact data count
+     */
+    function get_contact_capacity(body: Opaque<"b2Body">, shape_index: number): number;
+    /**
+     * Get touching contact data for a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns touching contacts
+     */
+    function get_contact_data(shape_id: Opaque<"b2Shape">): b2d.contact_data[];
+    /**
+     * Get touching contact data for a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns touching contacts
+     */
+    function get_contact_data(body: Opaque<"b2Body">, shape_index: number): b2d.contact_data[];
+    /**
+     * Get mass data for a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns shape mass data
+     */
+    function get_mass_data(shape_id: Opaque<"b2Shape">): b2d.mass_data;
+    /**
+     * Get mass data for a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns shape mass data
+     */
+    function get_mass_data(body: Opaque<"b2Body">, shape_index: number): b2d.mass_data;
+    /**
+     * Get shape material id.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns shape material id
+     */
+    function get_material(shape_id: Opaque<"b2Shape">): number;
+    /**
+     * Get shape material id.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns shape material id
+     */
+    function get_material(body: Opaque<"b2Body">, shape_index: number): number;
+    /**
+     * Get sensor overlap capacity.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns maximum sensor overlap count
+     */
+    function get_sensor_capacity(shape_id: Opaque<"b2Shape">): number;
+    /**
+     * Get sensor overlap capacity.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns maximum sensor overlap count
+     */
+    function get_sensor_capacity(body: Opaque<"b2Body">, shape_index: number): number;
+    /**
+     * Get sensor overlaps.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns overlapping shapes
+     */
+    function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): b2d.shape_info[];
+    /**
+     * Get sensor overlaps.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns overlapping shapes
+     */
+    function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): b2d.shape_info[];
+    /**
+     * Get a shape's geometry.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
+     */
+    function get_shape(shape_id: Opaque<"b2Shape">): b2d.shape.definition;
+    /**
+     * Get a shape's geometry.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
+     */
+    function get_shape(body: Opaque<"b2Body">, shape_index: number): b2d.shape.definition;
+    /**
+     * Get the world owning a shape.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns owning world
+     */
+    function get_world(shape_id: Opaque<"b2Shape">): Opaque<"b2World">;
+    /**
+     * Get the world owning a shape.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns owning world
+     */
+    function get_world(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2World">;
+    /**
+     * Validate a shape handle.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @returns true if the shape handle still refers to a live Box2D shape
+     */
+    function is_valid(shape_id: Opaque<"b2Shape">): boolean;
+    /**
+     * Validate a shape handle.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns true if the shape handle still refers to a live Box2D shape
+     */
+    function is_valid(body: Opaque<"b2Body">, shape_index: number): boolean;
+    /**
+     * Ray cast a shape directly.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @param origin - world ray origin
+     * @param translation - world ray translation
+     * @param max_fraction - optional maximum translation fraction, defaults to 1
+     * @returns cast result, or `nil`
+     */
+    function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.shape_cast_output | undefined;
+    /**
+     * Ray cast a shape directly.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param origin - world ray origin
+     * @param translation - world ray translation
+     * @param max_fraction - optional maximum translation fraction, defaults to 1
+     * @returns cast result, or `nil`
+     */
+    function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.shape_cast_output | undefined;
+    /**
+     * Set shape material id.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @param material - shape material id
+     */
+    function set_material(shape_id: Opaque<"b2Shape">, material: number): void;
+    /**
+     * Set shape material id.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param material - shape material id
+     */
+    function set_material(body: Opaque<"b2Body">, shape_index: number, material: number): void;
+    /**
+     * This updates the shape geometry using the same table format as
+     * `b2d.body.create_shape` and `b2d.shape.get_shape`. The body mass is not
+     * updated unless `update_mass` is true.
+     *
+     * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
+     * @param definition - shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
+     * @param update_mass - true to reset body mass from shapes
+     * @example
+     * ```ts
+     * const body = b2d.get_body("#collisionobject");
+     * if (body !== undefined) {
+     *   // Move a circle shape relative to the body origin.
+     *   const circle = b2d.shape.get_shape(body, 1);
+     *   const radius = "radius" in circle ? circle.radius : undefined;
+     *   b2d.shape.set_shape(body, 1, { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: radius ?? 16, center: vmath.vector3(24, 0, 0) }, true);
+     *
+     *   // Replace a segment shape's local endpoints.
+     *   b2d.shape.set_shape(body, 2, {
+     *     type: b2d.shape.SHAPE_TYPE_SEGMENT,
+     *     v1: vmath.vector3(-32, 0, 0),
+     *     v2: vmath.vector3(32, 0, 0),
+     *   });
+     *
+     *   // Update a box shape using the polygon box convenience format.
+     *   b2d.shape.set_shape(
+     *     body,
+     *     3,
+     *     {
+     *       type: b2d.shape.SHAPE_TYPE_BOX,
+     *       hx: 16,
+     *       hy: 8,
+     *       center: vmath.vector3(0, 20, 0),
+     *       angle: math.rad(30),
+     *     },
+     *     true,
+     *   );
+     * }
+     * ```
+     */
+    function set_shape(shape_id: Opaque<"b2Shape">, definition: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 }, update_mass?: boolean): void;
+    /**
+     * This updates the shape geometry using the same table format as
+     * `b2d.body.create_shape` and `b2d.shape.get_shape`. The body mass is not
+     * updated unless `update_mass` is true.
+     *
+     * @param body - The body that owns the shape.
+     * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param definition - shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
+     * @param update_mass - true to reset body mass from shapes
+     */
+    function set_shape(body: Opaque<"b2Body">, shape_index: number, definition: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 }, update_mass?: boolean): void;
+  }
+}
+
+export {};

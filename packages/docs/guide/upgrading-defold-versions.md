@@ -291,9 +291,9 @@ page](/api/defold-1.13.0/gui) shows the narrower one for comparison.
 
 ## Defold 1.13.2
 
-Defold 1.13.2 is the current stable release and the toolchain's default API
-target. Most of its API changes widen a type or name a table shape that was
-anonymous before, so code written against 1.13.1 keeps compiling. A few changes
+Defold 1.13.2 is a **patch** over [1.13.1](#defold-1131). Most of its API
+changes widen a type or name a table shape that was anonymous before, so code
+written against 1.13.1 keeps compiling. A few changes
 can break a build: `b2d.get_world`, `b2d.body.get_name` and `b2d.body.get_next`
 may return nothing, `json.decode` returns `unknown`, and the LuaSocket
 `getpeername`, `getsockname` and `getstats` methods return several values instead
@@ -614,3 +614,102 @@ the old name.
 
 <!-- no-action: label.get_text -->
 <!-- no-action: label.set_text -->
+
+<!-- release: 1.14.0 -->
+
+## Defold 1.14.0
+
+Defold 1.14.0 is the current stable release and the toolchain's default API
+target. Its Lua API changes only add: nothing was removed, nothing was
+deprecated and no signature got narrower, so **a project on 1.13.2 needs no
+source change for the Lua API**. Move the pin and rebuild. The release also
+changes engine behavior and project settings that the compiler cannot check, so
+walk the last two topics below by hand. A project on an older release migrates
+through the notes above as well.
+
+The runbook above, with this release's concrete targets:
+
+```sh
+# what you ship today
+bunx @defold-typescript/cli build --defold-target 1.13.2
+
+# the same project against the new surface
+bunx @defold-typescript/cli build --defold-target 1.14.0
+```
+
+### Added Lua APIs
+
+These are additive, so no existing call changes. A project that uses them must
+pin `--defold-target 1.14.0` or newer.
+
+#### b2d.get_gameobject_id
+
+`b2d.get_gameobject_id` returns the id of the game object that owns a Box2D
+body, on the 1.14.0 [`b2d`](/api/defold-1.14.0/b2d) surface. It returns
+`Hash | undefined`, because a body created from script belongs to no game
+object. Check the result before using it.
+
+#### bullet3d.get_gameobject_id
+
+`bullet3d.get_gameobject_id` does the same for a Bullet collision object or
+rigid body, on the 1.14.0 [`bullet3d`](/api/defold-1.14.0/bullet3d) surface. It
+also returns `Hash | undefined`.
+
+### Cubemap render targets
+
+A render target can be a cubemap, and a render script picks the face it draws
+to. Three additions carry this:
+
+- **Face constants.** `graphics.CUBEMAP_FACE_POSITIVE_X`,
+  `graphics.CUBEMAP_FACE_NEGATIVE_X`, `graphics.CUBEMAP_FACE_POSITIVE_Y`,
+  `graphics.CUBEMAP_FACE_NEGATIVE_Y`, `graphics.CUBEMAP_FACE_POSITIVE_Z` and
+  `graphics.CUBEMAP_FACE_NEGATIVE_Z` name the six faces on the 1.14.0
+  [`graphics`](/api/defold-1.14.0/graphics) surface.
+- **The `face` option.** The options table of `render.set_render_target` takes a
+  `face` key typed as one of those constants. It is valid only for a cubemap
+  render target and defaults to `graphics.CUBEMAP_FACE_POSITIVE_X`.
+- **The `type` key.** The parameter table of `render.render_target` takes a
+  `type` key, and `graphics.TEXTURE_TYPE_CUBE_MAP` creates the target as a
+  cubemap. A cubemap render target needs equal width and height.
+
+Both keys are optional, so existing calls keep compiling. Compare the 1.14.0
+[`render`](/api/defold-1.14.0/render) surface with the [1.13.2 `render`
+page](/api/defold-1.13.2/render).
+
+### Behavior changes with no signature change
+
+These compile unchanged against 1.14.0 and behave differently at run time.
+
+- **Accelerometer input is off by default.** The `on_input` action carries
+  `acc_x`, `acc_y` and `acc_z` only when `use_accelerometer` under `[input]` is
+  enabled in `game.project`. A game that reads them must turn the setting on.
+- **Matrix vertex attributes take a matrix.** For a custom vertex attribute of a
+  matrix type, `go.get` returns a `vmath.matrix4` and `go.set` takes one,
+  whatever the attribute's size. A 2x2 matrix attribute no longer reads or
+  writes as a `vmath.vector4`.
+
+#### gui.get_layout_objects
+
+Each layout object's `x` and `y` are relative to the text node's pivot and are
+not scaled. 1.13.2 measured them from the node's upper-left layout origin. Code
+that places something over an inline sprite or link from these values must
+start from the pivot and apply the node's scale and rotation itself. See the
+1.14.0 [`gui`](/api/defold-1.14.0/gui) surface.
+
+#### label.get_layout_objects
+
+Same change as `gui.get_layout_objects`, relative to the label's pivot. See the
+1.14.0 [`label`](/api/defold-1.14.0/label) surface.
+
+### Project and platform migrations
+
+- **Scripts always share one Lua state.** The Shared State setting is gone from
+  `game.project`: game object, GUI and render scripts run in one Lua state. A
+  project that had the setting off now shares globals and the cache of loaded
+  modules between its scripts, so two scripts that set the same global name
+  overwrite each other.
+- **32-bit Windows is removed.** The `x86-win32` platform no longer builds. Change
+  any build script that names it to `x86_64-win32`.
+- **Native extensions need 1.14.0 builds.** The engine's native interface
+  changed, so an extension that ships prebuilt libraries, and an extension with
+  an editor plugin, must be updated to a release built for 1.14.0.
