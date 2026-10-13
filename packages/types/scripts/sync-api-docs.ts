@@ -538,6 +538,35 @@ export interface CoverageInput {
   ignoredUpstream?: ReadonlyMap<string, string>;
 }
 
+// The Lua docs of a zip, grouped by the namespace each one declares. Entry names
+// belong to one release (`label` is one entry in 1.9.8 and two in 1.14.0), so
+// the declared namespace picks the docs. Entries are read in sorted order
+// because `mergeApiDocs` keeps the first doc's `info` and the docs' element
+// order; only `.json` entries are read because each read of a real zip is one
+// `unzip -p` process.
+export function groupDocsByNamespace(
+  zip: ZipAccessor,
+): Map<string, { entry: string; doc: Record<string, unknown> }[]> {
+  const grouped = new Map<string, { entry: string; doc: Record<string, unknown> }[]>();
+  for (const entry of [...zip.entries()].sort()) {
+    if (!entry.endsWith(".json")) continue;
+    const raw = zip.read(entry);
+    let doc: unknown;
+    try {
+      doc = JSON.parse(raw);
+    } catch {
+      continue;
+    }
+    if (!isRecord(doc)) continue;
+    const namespace = isRecord(doc.info) ? doc.info.namespace : undefined;
+    if (typeof namespace !== "string" || !LUA_NAMESPACE.test(namespace)) continue;
+    const group = grouped.get(namespace) ?? [];
+    group.push({ entry, doc });
+    grouped.set(namespace, group);
+  }
+  return grouped;
+}
+
 // Enumerate every `doc/*.json` zip entry, reading its `info.namespace` and the
 // count of FUNCTION elements. Only function-bearing docs are returned, so
 // message-only / struct-only docs never reach the coverage guard.

@@ -7,6 +7,7 @@ import {
   EDITOR_MANIFEST,
   type ExtractedFixture,
   extractAnnotationFixtures,
+  groupDocsByNamespace,
   IGNORED_UPSTREAM,
   mergeApiDocs,
   readZip,
@@ -15,7 +16,6 @@ import {
 } from "./sync-api-docs";
 
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
-const LUA_NAMESPACE = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
 const DECLARED_NAME_KINDS = new Set(["CONSTANT", "ENUM", "STRUCT", "TYPEDEF", "CLASS"]);
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
@@ -73,11 +73,6 @@ export function promotedNamespacesThrough(version: string): string[] {
 interface RawElement extends Record<string, unknown> {
   type?: string;
   name?: string;
-}
-
-interface RawApiDoc extends Record<string, unknown> {
-  info?: { namespace?: string };
-  elements?: RawElement[];
 }
 
 export interface ReleaseBaselineModule {
@@ -175,20 +170,6 @@ export type ReleaseImportPlan = Omit<ReleaseImportManifest, "snapshots"> & {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function parsedDoc(raw: string): RawApiDoc | null {
-  try {
-    const value: unknown = JSON.parse(raw);
-    return isRecord(value) ? (value as RawApiDoc) : null;
-  } catch {
-    return null;
-  }
-}
-
-function namespaceOf(doc: RawApiDoc): string | null {
-  const namespace = isRecord(doc.info) ? doc.info.namespace : undefined;
-  return typeof namespace === "string" && LUA_NAMESPACE.test(namespace) ? namespace : null;
 }
 
 function elementsOf(doc: unknown): RawElement[] {
@@ -297,16 +278,7 @@ export function buildReleaseImportPlan(input: {
     throw new Error(`expected an exact Defold release version, received '${input.version}'`);
   }
 
-  const grouped = new Map<string, Array<{ entry: string; doc: RawApiDoc }>>();
-  for (const zipEntry of [...input.zip.entries()].sort()) {
-    const doc = parsedDoc(input.zip.read(zipEntry));
-    if (!doc) continue;
-    const namespace = namespaceOf(doc);
-    if (!namespace) continue;
-    const group = grouped.get(namespace) ?? [];
-    group.push({ entry: zipEntry, doc });
-    grouped.set(namespace, group);
-  }
+  const grouped = groupDocsByNamespace(input.zip);
 
   const baselineModules = [...input.baseline.modules, ...input.baseline.luaStdlib];
   const generatedNamespaces = new Set(input.baseline.modules.map((module) => module.namespace));
@@ -319,7 +291,7 @@ export function buildReleaseImportPlan(input: {
   };
 
   const sources: ReleaseSource[] = incomingNamespaces.map((namespace) => {
-    const group = grouped.get(namespace) as Array<{ entry: string; doc: RawApiDoc }>;
+    const group = grouped.get(namespace) ?? [];
     return {
       namespace,
       entries: group.map(({ entry }) => entry).sort(),

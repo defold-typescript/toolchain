@@ -9,15 +9,18 @@ const TYPES_FIXTURES = path.resolve(import.meta.dir, "../../types/fixtures");
 interface FakeZip {
   has: (entry: string) => boolean;
   read: (entry: string) => string;
+  entries: () => string[];
 }
 
-// namespace -> ref-doc.zip entry for the multi-kind fixture. Mirrors the
-// types-package SYNC_MANIFEST so the fake zip serves docs under the same keys
-// `resolveTargetModules` reads.
-const MULTI_KIND_ZIP_ENTRIES: Record<string, readonly string[]> = {
-  gui: ["doc/gamesys-gui_ddf.proto_doc.json", "doc/gui_script.cpp_doc.json"],
-  render: ["doc/render-render_ddf.proto_doc.json", "doc/render-render_script.cpp_doc.json"],
-  sprite: ["doc/gamesys-sprite_ddf.proto_doc.json", "doc/scripts-script_sprite.cpp_doc.json"],
+const LABEL_ZIP_ENTRY = "doc/label_doc.json";
+
+// namespace -> ref-doc.zip entry for the multi-kind fixture. `resolveTargetModules`
+// reads every `.json` entry and groups the docs by the namespace each declares,
+// so one entry per namespace serves that namespace's whole fixture.
+const MULTI_KIND_ZIP_ENTRIES: Record<string, string> = {
+  gui: "doc/gui_doc.json",
+  render: "doc/render_doc.json",
+  sprite: "doc/sprite_doc.json",
 };
 
 export const noDownload = async (): Promise<Uint8Array> => {
@@ -26,7 +29,8 @@ export const noDownload = async (): Promise<Uint8Array> => {
 
 // Offline ref-doc resolve options for the `defold-1.9.8` (label-only) target: a
 // seeded cache pointing at an in-memory zip that serves the committed label
-// fixture. Only `label` is resolved, so the fake zip ignores the entry key.
+// fixture. The resolver reads every `.json` entry and groups by declared
+// namespace, so the zip lists the one entry the 1.9.8 release holds for `label`.
 export function labelRefDocResolveOpts(): {
   cacheDir: string;
   readZip: () => FakeZip;
@@ -35,8 +39,12 @@ export function labelRefDocResolveOpts(): {
   const version = "1.9.8";
   const json = readFileSync(LABEL_FIXTURE, "utf8");
   const fakeZip: FakeZip = {
-    has: () => true,
-    read: () => json,
+    has: (entry) => entry === LABEL_ZIP_ENTRY,
+    entries: () => [LABEL_ZIP_ENTRY],
+    read: (entry) => {
+      if (entry !== LABEL_ZIP_ENTRY) throw new Error(`unexpected zip entry ${entry}`);
+      return json;
+    },
   };
   const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ref-doc-"));
   mkdirSync(path.join(cacheDir, version), { recursive: true });
@@ -55,12 +63,12 @@ export function multiKindRefDocResolveOpts(): {
 } {
   const version = "1.9.8";
   const docs: Record<string, string> = {};
-  for (const [namespace, zipEntries] of Object.entries(MULTI_KIND_ZIP_ENTRIES)) {
-    const fixture = readFileSync(path.join(TYPES_FIXTURES, `${namespace}_doc.json`), "utf8");
-    for (const zipEntry of zipEntries) docs[zipEntry] = fixture;
+  for (const [namespace, zipEntry] of Object.entries(MULTI_KIND_ZIP_ENTRIES)) {
+    docs[zipEntry] = readFileSync(path.join(TYPES_FIXTURES, `${namespace}_doc.json`), "utf8");
   }
   const fakeZip: FakeZip = {
     has: (entry) => entry in docs,
+    entries: () => Object.keys(docs),
     read: (entry) => {
       const doc = docs[entry];
       if (doc === undefined) throw new Error(`unexpected zip entry ${entry}`);

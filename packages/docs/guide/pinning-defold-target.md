@@ -468,8 +468,8 @@ changes the exit code, so a network hiccup or upstream drift cannot fail the gat
 
 The public `defold-1.9.8` example target is periodically checked with the
 advisory, network-touching `bun run ref-doc-delta` command. It verifies that the
-live Defold 1.9.8 reference docs still include `label.get_text` and still omit
-`label.set_text`. If the command fails, update the registry target or the example
+live Defold 1.9.8 reference docs still include `label.get_text` and
+`label.set_text` and still omit `label.get_layout_objects`. If the command fails, update the registry target or the example
 delta; do not ignore the drift.
 
 Before promoting a new stable Defold release, inventory its reference archive

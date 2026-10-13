@@ -116,7 +116,7 @@
     "import-defold-release": "bun scripts/import-defold-release.ts",
     "sync-api-docs": "bun scripts/sync-api-docs.ts",
     "sync-engine-bindings": "bun scripts/sync-engine-bindings.ts",
-    "ref-doc-delta": "bun scripts/ref-doc-delta.ts --target defold-1.9.8 --namespace label --present label.get_text --absent label.set_text"
+    "ref-doc-delta": "bun scripts/ref-doc-delta.ts --target defold-1.9.8 --namespace label --present label.get_text --present label.set_text --absent label.get_layout_objects"
   },
   "dependencies": {
     "lua-types": "^2.13.1",
