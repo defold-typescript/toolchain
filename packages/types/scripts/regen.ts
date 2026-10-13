@@ -120,6 +120,12 @@ function withSkipRules(entry: ModuleManifestEntry, module: ApiTargetModule): Mod
   };
 }
 
+// Shared by both module sources: a step applied in one branch alone gives a
+// ref-doc surface different members from a committed one.
+function restoreOmittedMembers(modules: readonly ModuleManifestEntry[]): ModuleManifestEntry[] {
+  return restoreSharedHandleMethods(synthesizeProseConstants(modules));
+}
+
 export function loadTargetModules(
   target: ApiTarget,
   packageRoot: string = PACKAGE_ROOT,
@@ -142,7 +148,7 @@ export function loadTargetModules(
     };
     return withSkipRules(entry, module);
   });
-  return restoreSharedHandleMethods(synthesizeProseConstants(modules));
+  return restoreOmittedMembers(modules);
 }
 
 export interface ModuleManifestEntry {
@@ -217,7 +223,7 @@ export async function resolveTargetModules(
     };
     return withSkipRules(entry, module);
   });
-  return synthesizeProseConstants(modules);
+  return restoreOmittedMembers(modules);
 }
 
 const API_TARGETS = loadApiTargets();
