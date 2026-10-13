@@ -255,7 +255,7 @@
     },
     {
       "repo": "https://github.com/britzl/monarch",
-      "ref": "6.0.2",
+      "ref": "6.0.3",
       "license": "MIT",
       "authored": "fixtures/authored/monarch.monarch.d.ts",
       "moduleId": "monarch.monarch",
@@ -266,7 +266,7 @@
     },
     {
       "repo": "https://github.com/britzl/monarch",
-      "ref": "6.0.2",
+      "ref": "6.0.3",
       "license": "MIT",
       "authored": "fixtures/authored/monarch.transitions.easings.d.ts",
       "moduleId": "monarch.transitions.easings",
@@ -277,7 +277,7 @@
     },
     {
       "repo": "https://github.com/britzl/monarch",
-      "ref": "6.0.2",
+      "ref": "6.0.3",
       "license": "MIT",
       "authored": "fixtures/authored/monarch.transitions.gui.d.ts",
       "moduleId": "monarch.transitions.gui",
