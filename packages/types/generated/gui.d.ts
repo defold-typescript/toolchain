@@ -27,11 +27,11 @@ declare global {
        */
       text_length: number;
       /**
-       * lower-left x-coordinate relative to the text node's upper-left layout origin
+       * unscaled lower-left x-coordinate relative to the text node's pivot
        */
       x: number;
       /**
-       * lower-left y-coordinate relative to the text node's upper-left layout origin
+       * unscaled lower-left y-coordinate relative to the text node's pivot
        */
       y: number;
       /**
@@ -969,7 +969,7 @@ declare global {
     /**
      * Returns the sprites and links found in the text node's current layout.
      * Each object's `x` and `y` identify its lower-left corner relative to the
-     * text node's upper-left layout origin.
+     * text node's pivot, before applying the node's scale and rotation.
      *
      * @param node - text node to inspect
      * @returns layout objects in source order. **0️⃣ `text_offset` is 0-based; passed to Defold unchanged.**
@@ -1713,7 +1713,8 @@ declare global {
     function set_clipping_visible(node: Opaque<"node">, visible: boolean): void;
     /**
      * Sets the color of the supplied node. The components
-     * of the supplied vector3 or vector4 should contain the color channel values:
+     * of the supplied vector3 or vector4 should contain the color channel values
+     * in the range 0 to 1:
      *
      * Component
      * Color value

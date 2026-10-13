@@ -27,11 +27,11 @@ declare global {
        */
       text_length: number;
       /**
-       * lower-left x-coordinate relative to the label's upper-left layout origin
+       * unscaled lower-left x-coordinate relative to the label's pivot
        */
       x: number;
       /**
-       * lower-left y-coordinate relative to the label's upper-left layout origin
+       * unscaled lower-left y-coordinate relative to the label's pivot
        */
       y: number;
       /**
@@ -52,7 +52,7 @@ declare global {
      * Each entry contains `type`, `id`, the zero-based UTF-32 `text_offset`,
      * `text_length`, resolved `x`, `y`, `width`
      * and `height`, and an `attributes` table. The position is the lower-left
-     * object corner relative to the label's upper-left layout origin.
+     * object corner relative to the label's pivot, before applying scale and rotation.
      * Inline resource rendering is not part of this MVP; sprites use their explicit
      * dimensions or a one-em square fallback.
      *

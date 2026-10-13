@@ -1,0 +1,341 @@
+{
+  "tag": "1.14.0",
+  "commit": "a81dbb0478e8b73931dc2d671563204f6ac0ef82",
+  "files": [
+    {
+      "path": "engine/crash/src/script_crash.cpp",
+      "blobSha": "16a5a05d244559c345cd3df32b492d452a9f6938",
+      "sha256": "99f9a1362f6197fc44e04dc0163c8bca714fa5ac03d75b3a0bae9ee3af44e81b"
+    },
+    {
+      "path": "engine/engine/src/script/script_engine.cpp",
+      "blobSha": "9aa41ba04bc2f4a399633a850ca360904a38049a",
+      "sha256": "9815b5349497842b8a76c6e3b02c5915d7050e57c2f3008dc6a65e37f1e69c40"
+    },
+    {
+      "path": "engine/gameobject/src/gameobject/comp_script.cpp",
+      "blobSha": "62e0962f05f4a00aedb4e4b4a0b6b8573ce0f836",
+      "sha256": "4ec9b2679f511f83d6069a316a66ff35cc5cfd7d8375c39832bd1c9e8d77264a"
+    },
+    {
+      "path": "engine/gameobject/src/gameobject/gameobject_props_lua.cpp",
+      "blobSha": "13ab419b6465a0b03c69cb99b48c54df25d226e9",
+      "sha256": "c30cc0344dbadce292d9182f8fed0f1a03b733c5ac1ab1c37a21e2307a083ff4"
+    },
+    {
+      "path": "engine/gameobject/src/gameobject/gameobject_script.cpp",
+      "blobSha": "55b035d1c058cf7d76bffcdcfe101f6741507134",
+      "sha256": "286271a01baba5e91315b82bd490a2945aba61331712cbdf4274c8352bd9a376"
+    },
+    {
+      "path": "engine/gameobject/src/gameobject/gameobject_script_util.cpp",
+      "blobSha": "a3de54572d34a2af617ed64355cb64ddc36addf5",
+      "sha256": "b565a5dc8d31fc7f5cbb04ca9eb172507894c988a5b2dd89f0aa571868edbf7f"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/gamesys_script.cpp",
+      "blobSha": "9ed57058f24cf30ca3446204f944070ba0cedea9",
+      "sha256": "9dedae7f61e1e3a52d14e76c8e680f865ce864ca3ef80524ed9bbc2397aba89e"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/box2d/script_box2d.cpp",
+      "blobSha": "35f667c8a91e043dd0ac98917f9d33329860a7f8",
+      "sha256": "72d566b4f9616906c23ecc85bdd40a580e73633f1fe758bcff14ad6bbb3d65d1"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/box2d/v2/script_box2d_body_v2.cpp",
+      "blobSha": "bfbb3296f2f875298d6d363c6e94f0024b12647a",
+      "sha256": "d674584a76ec7fe75b1df940ca6d25b96728880cb1014d8a39d02b15db8454a1"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/box2d/v2/script_box2d_fixture_v2.cpp",
+      "blobSha": "2674734930317b162eca0c2f4688a039c1fb16a3",
+      "sha256": "9db6c1e5ecc0ad0bd4203e065eb960c25a9508be0368cfbf1749bfabb8d3d7a4"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/box2d/v2/script_box2d_joint_v2.cpp",
+      "blobSha": "0df8206764fcc295d8b50d733c8b4697141ef21a",
+      "sha256": "a52269b0775185668c1507b5e3072f1dd9099bc064ce0cdf279c1722503d4f78"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/box2d/v2/script_box2d_shape_v2.cpp",
+      "blobSha": "78184ef4877bf62137dbec70275a8465605895f6",
+      "sha256": "35fe71404a9855014d7d9b4f732c648d900a299b0dece08322133f9352961fe3"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/box2d/v2/script_box2d_world_v2.cpp",
+      "blobSha": "72eb3f0671a174a40a44c1f002892ffb3ab59dee",
+      "sha256": "9eeb498d4287d2fffe9b3ec69dc6205c20cba0974b2311e71b42715900e7c253"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/box2d/v3/script_box2d_body_v3.cpp",
+      "blobSha": "51cd3ede6713cb78cac97e052e4af78e43332cb7",
+      "sha256": "e144e4877b5f330be3b4b4c09c92b57fc1bf23dbee2cfabac2d29ab7562c0bba"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/box2d/v3/script_box2d_chain_v3.cpp",
+      "blobSha": "38648199dec15f8fec944f2eaadee70cfe17ff07",
+      "sha256": "1c37f3bdec84cd733b5511fc281c9a054e3f990959d69e2b458b7fd59227df30"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/box2d/v3/script_box2d_joint_v3.cpp",
+      "blobSha": "8bf2c318bdf864d28b1a88e2237d5eb4a408968d",
+      "sha256": "b414d0cc319897b259fed930ec02b12b3c59065dc492bbd7c82562ab8e428e9f"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/box2d/v3/script_box2d_shape_v3.cpp",
+      "blobSha": "6466e0e8933db822b211919dc10fb3fc09b2fa22",
+      "sha256": "68e303576f9637f1772dddbac2c150ae62418b80f715b617439b6828e4198364"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/box2d/v3/script_box2d_world_v3.cpp",
+      "blobSha": "5ed5a05f556b9fba1698959b93fe89db3483bebf",
+      "sha256": "43fdb5df4f10dcc80c57325dbeb3037e9ca0b4b353dd3d94b58cce9069de2e1a"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/bullet3d/script_bullet3d.cpp",
+      "blobSha": "d427f658f45b15a9d07301cfb788280bb5083eb4",
+      "sha256": "9afedf0705ac4eb8cc40809c53e9258f3cda48bd3b466d52a68087b34a3d5f68"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_collision_object.cpp",
+      "blobSha": "d73027017337f7d986055b840c8969f07cfcaa52",
+      "sha256": "b5a456ec2a3b94ba930a169a909c1d7e98bb1348b78df0fb11ea6c044c99c0bd"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_constraint.cpp",
+      "blobSha": "478621d8528e4db16cf6e7550314ce8a7c33835b",
+      "sha256": "6422d8ea292ffd32a6631ca50204c7c879e2ad9162cfcb2e2af9d5e0f8f0a3bc"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_rigid_body.cpp",
+      "blobSha": "8238c15d108f2f530efbf8eaf871a4d8cfa30802",
+      "sha256": "28b02a8fe8b2ecedccb5f112800794f1a95d0f8b7c3cafa66ef378bda61a6143"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_shape.cpp",
+      "blobSha": "ac6cca86468be8e264c6b18f7d55e08f06176414",
+      "sha256": "aa1ca02105c00863f3d0356e7ce107eb518bdb7db5bf542d6adc024f5b6a4351"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_world.cpp",
+      "blobSha": "ce32c13d858c1cbe23559a94db86aa7cd2f85fb3",
+      "sha256": "fa4fae053faaf5ec12a99ccc38f52a1458a1d1620a7270baa8e4dc165a685296"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_buffer.cpp",
+      "blobSha": "05accabd477de2f38b65b4d2b22c533eff4a412e",
+      "sha256": "9c74a08b7aa39afe4f88c26f78b9bf11fd162b67bc5b0c270f85a523568f7b22"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_collection_factory.cpp",
+      "blobSha": "3c6cd63102a0794a7ceb93d653e7112ab3bfbccb",
+      "sha256": "19be3742037721011b2bbecf7fed445261fc91bd58a5729da40809fbd9e9c82c"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_collectionproxy.cpp",
+      "blobSha": "8492d30c46f25b5cfe718c4f683cb8abbfe8339a",
+      "sha256": "9faa771335aad10970cf904252d5faae977962c407f2fa93e44b1dd0514a8561"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_compute.cpp",
+      "blobSha": "a10815a2bc6fca816553b56a0d23b8aea4d84a00",
+      "sha256": "bcf19f97d5518a47696920ceacdaaf7fa37b0d2208f5f0d7ab289a2c43999493"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_factory.cpp",
+      "blobSha": "f59dee8fb4f2c4baa0b38bf9131386e567171d4e",
+      "sha256": "df20de4ae9494abf875e71f468b56b732add418c770f745aaeb79d0b0affbfbb"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_font.cpp",
+      "blobSha": "195e54e07b457a57ae8b6019911cec94beb62fc4",
+      "sha256": "2a87d3a03ababebed905b851d37eb6cb821f03ae1d42cd0c330657316cafa1e7"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_http.cpp",
+      "blobSha": "6e87619dc28dc1b709c304c1b438867d8985ba31",
+      "sha256": "46966d92bb8adec792db80c2c1d42eedca12bebccd07f85d929c537ef458128d"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_http_js.cpp",
+      "blobSha": "e72a57633b2de38bdd1a54b8c64fa5d926eb020f",
+      "sha256": "23cd2e5555d02bc2a1faac45de64116942fbfe9d732bc9a1b2da2b9f0b0c3a50"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_image.cpp",
+      "blobSha": "0b7c66c2209d8cc3fd2cb3cdc03469e487350ad8",
+      "sha256": "0ef39bda9de2db39ec59f97ffb04d916b522b80bd1a51a3cfdc8d07f23f0d281"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_label.cpp",
+      "blobSha": "2d3d02925cd1675c9bfbad389fe04e3212fbc3eb",
+      "sha256": "b9f9d51aad9fb4746decf0df2c2d90463a585923f8885556bb814fa25cc46ea7"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_material.cpp",
+      "blobSha": "8affbcb0250e18843ea1314454a0b5352307420e",
+      "sha256": "32142df5dddd7be94b8ed3509e219d8a5be9254a55e99d7c39ab2fd704789d03"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_model.cpp",
+      "blobSha": "90281167266082450cb3689d290d1b4749e116b4",
+      "sha256": "db2a545e938bb057f0e61a1952c8b7816740a6666f87db37653d31778a7d3765"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_particlefx.cpp",
+      "blobSha": "27d2170354673cd7cc52799d1c935a1673e1e9d9",
+      "sha256": "24196c82809ab89c82e04b2a0a3978d8e0424a7b2a7763774ab61b362150f9f5"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_physics.cpp",
+      "blobSha": "73fb999c71d396c94d27e8530265fe84c9b5e595",
+      "sha256": "0f24a85c4c145ee91568a7f960decf7c6f401731fcf9ff8627dfcc62f9c2d379"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_resource.cpp",
+      "blobSha": "64516190694ce9f51b4924df0e1819bcbe7fca6f",
+      "sha256": "0f3df733d31e60508ef8dc312e381a7040906767a8caa7cc04c6bee27d7aff7e"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_sound.cpp",
+      "blobSha": "b2c605a543027c1b4273ca15ad720fe0af96483b",
+      "sha256": "0bc38669c545e66b9a4689a82758c119165adf77e3f093e9415469c94d618053"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_sprite.cpp",
+      "blobSha": "53bd78f9893d76e1e5274f935da2608b1b2c89fc",
+      "sha256": "f3359a8373921ef8d7e38924dd142164e9cccac430548bf7ae35a065f5b177ca"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_sys_gamesys.cpp",
+      "blobSha": "5fac2749dede02a56c93476ae442fd2148fc63cc",
+      "sha256": "fb7496dad015c2d13505dcf60089a4456d7fa68c5a0bc3c0e19b38292931e5b7"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_tilemap.cpp",
+      "blobSha": "5e258c993073433a893437e96eb0eda10d2701d0",
+      "sha256": "2bdf30bc2919fdd76f010910ad5c7876d30efeb3bcdfee10234729f63f4a5cd8"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/scripts/script_window.cpp",
+      "blobSha": "08328c720bf0d47f40c401db39e25d3e55d60df9",
+      "sha256": "03b4962f55c626f2b73ebe978035be93215eb6e0ef91802bf8c8f12c81c2544b"
+    },
+    {
+      "path": "engine/gui/src/gui_script.cpp",
+      "blobSha": "2deb59873b1222364f40ee9764c7d2671cc01052",
+      "sha256": "21622cfec9432d8729b4e96304dc245ebefe990b363f743c5369f3ba60e0353e"
+    },
+    {
+      "path": "engine/liveupdate/src/script_liveupdate.cpp",
+      "blobSha": "fa775d5967abcfa955fa9ceb8d82af433d8ef9fa",
+      "sha256": "c22228e16c8e8b9bf987c3a9d85854b3ea8a26e45f2a1d0bd1ec0dd701c97663"
+    },
+    {
+      "path": "engine/profiler/src/profiler.cpp",
+      "blobSha": "7bb862d886d64e46eed0b6c0ec24cbc24533d535",
+      "sha256": "963b1923a3524aef96e0b9ff3f586c31ec89e9f2f899b93f92557c9a8bdc5890"
+    },
+    {
+      "path": "engine/render/src/render/render_script.cpp",
+      "blobSha": "41f60a86d7cf9323ee4c07ac341f8cc605b6c805",
+      "sha256": "105a5a67a8f9cd80db85d185da8e5cbaa03eb7c835b1dd9f6a6f0b310e5b8fac"
+    },
+    {
+      "path": "engine/render/src/render/render_script_camera.cpp",
+      "blobSha": "4a9884479777459ec9ebb17ce48292475f1e5e62",
+      "sha256": "d8af6b188f58110bd8c2e85238f86a9f4ad29dde6eff1a81a880b4137d8512bf"
+    },
+    {
+      "path": "engine/script/src/script.cpp",
+      "blobSha": "a624c9c5ff5d5b1f8d149715623f4a0fadcfb847",
+      "sha256": "461ec16d3d835919070e45febe1a141fe36c2f4851b9f6511952f5c1bffc60a4"
+    },
+    {
+      "path": "engine/script/src/script_asan.cpp",
+      "blobSha": "7557a0ec0f4bd806d3bb081de63359d39bc45f8b",
+      "sha256": "c109a86b7c523dd0480dc66aae094e296be1060eee7ba7b046318117772f191f"
+    },
+    {
+      "path": "engine/script/src/script_bitop.cpp",
+      "blobSha": "b294a6c1005ab6d9548a352d5dc13d5b4101d18a",
+      "sha256": "51bfe5489889a5fb90ff83509ce4943bbb5d03527b262b1be7581407a0e2c544"
+    },
+    {
+      "path": "engine/script/src/script_ddf.cpp",
+      "blobSha": "91c09bc677caf56e9fa1164841d616847685cddc",
+      "sha256": "9c1c8cd496e9a3c820d12550d4194ea215e3446b77da363756827a110d6eea50"
+    },
+    {
+      "path": "engine/script/src/script_graphics.cpp",
+      "blobSha": "5afda7cf9f9202e73705b9262d72b370fd26ed9f",
+      "sha256": "79920a799a3aced89402d2f32614edfbdc2e3a93e2a9627c003b0f4c2384ad12"
+    },
+    {
+      "path": "engine/script/src/script_hash.cpp",
+      "blobSha": "253af599082fc6e54e029fcc0592ffac1910adf1",
+      "sha256": "0d76c65543191cc9866615ba37109e77f430a216c98dedf474d4f546f9f9ed10"
+    },
+    {
+      "path": "engine/script/src/script_html5.cpp",
+      "blobSha": "e8c4fec3927042098fdd5212649a4525913c5a77",
+      "sha256": "a0c1fbb55c6655d45a030cbdd705cc32f78b6a5f624542ac7be102bbbd5956a3"
+    },
+    {
+      "path": "engine/script/src/script_html5_js.cpp",
+      "blobSha": "bb25d899bea7769d192e724b0154244b76b55bb7",
+      "sha256": "42eea1b18a557ce9dd507eff3c1a88ab713d2a5eb3e5b3b1a60190ee3cc61f07"
+    },
+    {
+      "path": "engine/script/src/script_json.cpp",
+      "blobSha": "5adaaef412bc7dda497145a57995478c9e95c05a",
+      "sha256": "a4ed92cdb7af30b282321841c39e98d7887f40971e69b544a31bf2fb837102a5"
+    },
+    {
+      "path": "engine/script/src/script_luasocket.cpp",
+      "blobSha": "b9fe287016025c631d6d86ccbe1f9ea09e7127e2",
+      "sha256": "889345c46384cd17a76a30991fe6d97f529497191acc64fa73f899de818398ef"
+    },
+    {
+      "path": "engine/script/src/script_module.cpp",
+      "blobSha": "5178c9d5474feebd0530ba7167379aa1c4a10103",
+      "sha256": "cd11b30e708904c7d8b7b48a7ea1a7f7ac313c1d04f78bc16562b12004600b75"
+    },
+    {
+      "path": "engine/script/src/script_msg.cpp",
+      "blobSha": "8f0270eea52467f0aa6fd78f58c76c8675e465cb",
+      "sha256": "089d40349a4f6241743580801fe38d9704f0ba1bb66a666d013ab6ad850a73d2"
+    },
+    {
+      "path": "engine/script/src/script_sys.cpp",
+      "blobSha": "0d2840e44d94ca4fba1b768f94f08ca0aaa79cb1",
+      "sha256": "2a0e6e118f5efa2080954ee11ee1c0b82461bda2470eb1975f1dfa2eda4db3c4"
+    },
+    {
+      "path": "engine/script/src/script_table.cpp",
+      "blobSha": "dcf3e428c5735404c890075b82b10866f98f0e46",
+      "sha256": "03b5249bc9f09dad035b460a143e6edd071d2f72ff6e01ab14576db0d58b948b"
+    },
+    {
+      "path": "engine/script/src/script_timer.cpp",
+      "blobSha": "76834d3f8df07ba5378fbe2d2adb31b2886f8265",
+      "sha256": "0cd3b722411122f32613dad73a7a5c313a4e3eb5b7bcaf83c1fbc861978bbe74"
+    },
+    {
+      "path": "engine/script/src/script_types.cpp",
+      "blobSha": "62322798bd298107e643d93a5a2a9683f6dc0a8a",
+      "sha256": "c03d49b6265c9dac0597db5296ef3139c2c47ee334c8e3ad40813726c74cd1d2"
+    },
+    {
+      "path": "engine/script/src/script_vmath.cpp",
+      "blobSha": "0f161b747860db0c36526652f2df9b2f925fa7de",
+      "sha256": "79186ed2a9eb0d5bfc2d2c9878a3eb551cf4209b22dea73901ca16ee8a3138ee"
+    },
+    {
+      "path": "engine/script/src/script_zlib.cpp",
+      "blobSha": "451d9db550c7dc60b92e88d358b96fd218ddb786",
+      "sha256": "8708e3b1190d447e53f303cb46cd11ff8f407e6802e28a6b18f2d35d11465927"
+    }
+  ]
+}

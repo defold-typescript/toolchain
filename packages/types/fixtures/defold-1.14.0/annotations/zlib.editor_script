@@ -1,0 +1,27 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---@class defold_api.zlib
+zlib = {}
+
+---Deflate (compress) a buffer
+---@param buf string buffer to deflate
+---@return string buf deflated buffer
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zlib.deflate:buf)
+function zlib.deflate(buf) end
+
+---Inflate (decompress) a buffer
+---@param buf string buffer to inflate
+---@return string buf inflated buffer
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zlib.inflate:buf)
+function zlib.inflate(buf) end

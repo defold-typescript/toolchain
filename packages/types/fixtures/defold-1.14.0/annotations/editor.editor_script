@@ -1,0 +1,1137 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---@class defold_api.editor
+---Editor scripting documentation
+---@field prefs defold_api.editor.prefs
+---@field tx defold_api.editor.tx
+---@field ui defold_api.editor.ui
+---A string, SHA1 of Defold editor
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.editor_sha1)
+---@field editor_sha1 any
+---A string, SHA1 of Defold engine
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.engine_sha1)
+---@field engine_sha1 any
+---Editor platform id.
+---
+---A `string`, either:
+---- `"x86_64-win32"`
+---- `"x86_64-macos"`
+---- `"arm64-macos"`
+---- `"x86_64-linux"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.platform)
+---@field platform any
+---A string, version name of Defold
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.version)
+---@field version any
+editor = {}
+
+---@class defold_api.editor.prefs
+---@field SCOPE defold_api.editor.prefs.SCOPE
+---@field schema defold_api.editor.prefs.schema
+editor.prefs = {}
+
+---@class defold_api.editor.tx
+editor.tx = {}
+
+---@class defold_api.editor.ui
+---@field ALIGNMENT defold_api.editor.ui.ALIGNMENT
+---@field COLOR defold_api.editor.ui.COLOR
+---@field HEADING_STYLE defold_api.editor.ui.HEADING_STYLE
+---@field ICON defold_api.editor.ui.ICON
+---@field ISSUE_SEVERITY defold_api.editor.ui.ISSUE_SEVERITY
+---@field ORIENTATION defold_api.editor.ui.ORIENTATION
+---@field PADDING defold_api.editor.ui.PADDING
+---@field SPACING defold_api.editor.ui.SPACING
+---@field TEXT_ALIGNMENT defold_api.editor.ui.TEXT_ALIGNMENT
+editor.ui = {}
+
+---@class defold_api.editor.prefs.SCOPE
+---`"global"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.SCOPE)
+---@field GLOBAL editor.prefs.SCOPE
+---`"project"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.SCOPE)
+---@field PROJECT editor.prefs.SCOPE
+editor.prefs.SCOPE = {}
+
+---@class defold_api.editor.prefs.schema
+editor.prefs.schema = {}
+
+---@class defold_api.editor.ui.ALIGNMENT
+---`"bottom"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ALIGNMENT)
+---@field BOTTOM editor.ui.ALIGNMENT
+---`"bottom-left"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ALIGNMENT)
+---@field BOTTOM_LEFT editor.ui.ALIGNMENT
+---`"bottom-right"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ALIGNMENT)
+---@field BOTTOM_RIGHT editor.ui.ALIGNMENT
+---`"center"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ALIGNMENT)
+---@field CENTER editor.ui.ALIGNMENT
+---`"left"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ALIGNMENT)
+---@field LEFT editor.ui.ALIGNMENT
+---`"right"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ALIGNMENT)
+---@field RIGHT editor.ui.ALIGNMENT
+---`"top"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ALIGNMENT)
+---@field TOP editor.ui.ALIGNMENT
+---`"top-left"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ALIGNMENT)
+---@field TOP_LEFT editor.ui.ALIGNMENT
+---`"top-right"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ALIGNMENT)
+---@field TOP_RIGHT editor.ui.ALIGNMENT
+editor.ui.ALIGNMENT = {}
+
+---@class defold_api.editor.ui.COLOR
+---`"error"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.COLOR)
+---@field ERROR editor.ui.COLOR
+---`"hint"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.COLOR)
+---@field HINT editor.ui.COLOR
+---`"override"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.COLOR)
+---@field OVERRIDE editor.ui.COLOR
+---`"text"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.COLOR)
+---@field TEXT editor.ui.COLOR
+---`"warning"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.COLOR)
+---@field WARNING editor.ui.COLOR
+editor.ui.COLOR = {}
+
+---@class defold_api.editor.ui.HEADING_STYLE
+---`"dialog"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.HEADING_STYLE)
+---@field DIALOG editor.ui.HEADING_STYLE
+---`"form"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.HEADING_STYLE)
+---@field FORM editor.ui.HEADING_STYLE
+---`"h1"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.HEADING_STYLE)
+---@field H1 editor.ui.HEADING_STYLE
+---`"h2"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.HEADING_STYLE)
+---@field H2 editor.ui.HEADING_STYLE
+---`"h3"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.HEADING_STYLE)
+---@field H3 editor.ui.HEADING_STYLE
+---`"h4"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.HEADING_STYLE)
+---@field H4 editor.ui.HEADING_STYLE
+---`"h5"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.HEADING_STYLE)
+---@field H5 editor.ui.HEADING_STYLE
+---`"h6"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.HEADING_STYLE)
+---@field H6 editor.ui.HEADING_STYLE
+editor.ui.HEADING_STYLE = {}
+
+---@class defold_api.editor.ui.ICON
+---`"clear"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ICON)
+---@field CLEAR editor.ui.ICON
+---`"minus"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ICON)
+---@field MINUS editor.ui.ICON
+---`"open-resource"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ICON)
+---@field OPEN_RESOURCE editor.ui.ICON
+---`"plus"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ICON)
+---@field PLUS editor.ui.ICON
+editor.ui.ICON = {}
+
+---@class defold_api.editor.ui.ISSUE_SEVERITY
+---`"error"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ISSUE_SEVERITY)
+---@field ERROR editor.ui.ISSUE_SEVERITY
+---`"warning"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ISSUE_SEVERITY)
+---@field WARNING editor.ui.ISSUE_SEVERITY
+editor.ui.ISSUE_SEVERITY = {}
+
+---@class defold_api.editor.ui.ORIENTATION
+---`"horizontal"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ORIENTATION)
+---@field HORIZONTAL editor.ui.ORIENTATION
+---`"vertical"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ORIENTATION)
+---@field VERTICAL editor.ui.ORIENTATION
+editor.ui.ORIENTATION = {}
+
+---@class defold_api.editor.ui.PADDING
+---`"large"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.PADDING)
+---@field LARGE editor.ui.PADDING
+---`"medium"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.PADDING)
+---@field MEDIUM editor.ui.PADDING
+---`"none"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.PADDING)
+---@field NONE editor.ui.PADDING
+---`"small"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.PADDING)
+---@field SMALL editor.ui.PADDING
+editor.ui.PADDING = {}
+
+---@class defold_api.editor.ui.SPACING
+---`"large"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.SPACING)
+---@field LARGE editor.ui.SPACING
+---`"medium"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.SPACING)
+---@field MEDIUM editor.ui.SPACING
+---`"none"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.SPACING)
+---@field NONE editor.ui.SPACING
+---`"small"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.SPACING)
+---@field SMALL editor.ui.SPACING
+editor.ui.SPACING = {}
+
+---@class defold_api.editor.ui.TEXT_ALIGNMENT
+---`"center"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.TEXT_ALIGNMENT)
+---@field CENTER editor.ui.TEXT_ALIGNMENT
+---`"justify"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.TEXT_ALIGNMENT)
+---@field JUSTIFY editor.ui.TEXT_ALIGNMENT
+---`"left"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.TEXT_ALIGNMENT)
+---@field LEFT editor.ui.TEXT_ALIGNMENT
+---`"right"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.TEXT_ALIGNMENT)
+---@field RIGHT editor.ui.TEXT_ALIGNMENT
+editor.ui.TEXT_ALIGNMENT = {}
+
+---@enum defold_enum.editor.prefs.SCOPE: string
+local __defold_enum_editor_prefs_SCOPE = {
+    GLOBAL = nil,
+    PROJECT = nil,
+}
+
+---Constants for scope enums
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.SCOPE)
+---@alias editor.prefs.SCOPE defold_enum.editor.prefs.SCOPE
+---| `editor.prefs.SCOPE.GLOBAL`
+---| `editor.prefs.SCOPE.PROJECT`
+
+---@enum defold_enum.editor.ui.ALIGNMENT: string
+local __defold_enum_editor_ui_ALIGNMENT = {
+    TOP_LEFT = nil,
+    TOP = nil,
+    TOP_RIGHT = nil,
+    LEFT = nil,
+    CENTER = nil,
+    RIGHT = nil,
+    BOTTOM_LEFT = nil,
+    BOTTOM = nil,
+    BOTTOM_RIGHT = nil,
+}
+
+---Constants for alignment enums
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ALIGNMENT)
+---@alias editor.ui.ALIGNMENT defold_enum.editor.ui.ALIGNMENT
+---| `editor.ui.ALIGNMENT.TOP_LEFT`
+---| `editor.ui.ALIGNMENT.TOP`
+---| `editor.ui.ALIGNMENT.TOP_RIGHT`
+---| `editor.ui.ALIGNMENT.LEFT`
+---| `editor.ui.ALIGNMENT.CENTER`
+---| `editor.ui.ALIGNMENT.RIGHT`
+---| `editor.ui.ALIGNMENT.BOTTOM_LEFT`
+---| `editor.ui.ALIGNMENT.BOTTOM`
+---| `editor.ui.ALIGNMENT.BOTTOM_RIGHT`
+
+---@enum defold_enum.editor.ui.COLOR: string
+local __defold_enum_editor_ui_COLOR = {
+    TEXT = nil,
+    HINT = nil,
+    OVERRIDE = nil,
+    WARNING = nil,
+    ERROR = nil,
+}
+
+---Constants for color enums
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.COLOR)
+---@alias editor.ui.COLOR defold_enum.editor.ui.COLOR
+---| `editor.ui.COLOR.TEXT`
+---| `editor.ui.COLOR.HINT`
+---| `editor.ui.COLOR.OVERRIDE`
+---| `editor.ui.COLOR.WARNING`
+---| `editor.ui.COLOR.ERROR`
+
+---@enum defold_enum.editor.ui.HEADING_STYLE: string
+local __defold_enum_editor_ui_HEADING_STYLE = {
+    H1 = nil,
+    H2 = nil,
+    H3 = nil,
+    H4 = nil,
+    H5 = nil,
+    H6 = nil,
+    DIALOG = nil,
+    FORM = nil,
+}
+
+---Constants for heading style enums
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.HEADING_STYLE)
+---@alias editor.ui.HEADING_STYLE defold_enum.editor.ui.HEADING_STYLE
+---| `editor.ui.HEADING_STYLE.H1`
+---| `editor.ui.HEADING_STYLE.H2`
+---| `editor.ui.HEADING_STYLE.H3`
+---| `editor.ui.HEADING_STYLE.H4`
+---| `editor.ui.HEADING_STYLE.H5`
+---| `editor.ui.HEADING_STYLE.H6`
+---| `editor.ui.HEADING_STYLE.DIALOG`
+---| `editor.ui.HEADING_STYLE.FORM`
+
+---@enum defold_enum.editor.ui.ICON: string
+local __defold_enum_editor_ui_ICON = {
+    OPEN_RESOURCE = nil,
+    PLUS = nil,
+    MINUS = nil,
+    CLEAR = nil,
+}
+
+---Constants for icon enums
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ICON)
+---@alias editor.ui.ICON defold_enum.editor.ui.ICON
+---| `editor.ui.ICON.OPEN_RESOURCE`
+---| `editor.ui.ICON.PLUS`
+---| `editor.ui.ICON.MINUS`
+---| `editor.ui.ICON.CLEAR`
+
+---@enum defold_enum.editor.ui.ISSUE_SEVERITY: string
+local __defold_enum_editor_ui_ISSUE_SEVERITY = {
+    WARNING = nil,
+    ERROR = nil,
+}
+
+---Constants for issue severity enums
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ISSUE_SEVERITY)
+---@alias editor.ui.ISSUE_SEVERITY defold_enum.editor.ui.ISSUE_SEVERITY
+---| `editor.ui.ISSUE_SEVERITY.WARNING`
+---| `editor.ui.ISSUE_SEVERITY.ERROR`
+
+---@enum defold_enum.editor.ui.ORIENTATION: string
+local __defold_enum_editor_ui_ORIENTATION = {
+    VERTICAL = nil,
+    HORIZONTAL = nil,
+}
+
+---Constants for orientation enums
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.ORIENTATION)
+---@alias editor.ui.ORIENTATION defold_enum.editor.ui.ORIENTATION
+---| `editor.ui.ORIENTATION.VERTICAL`
+---| `editor.ui.ORIENTATION.HORIZONTAL`
+
+---@enum defold_enum.editor.ui.PADDING: string
+local __defold_enum_editor_ui_PADDING = {
+    NONE = nil,
+    SMALL = nil,
+    MEDIUM = nil,
+    LARGE = nil,
+}
+
+---Constants for padding enums
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.PADDING)
+---@alias editor.ui.PADDING defold_enum.editor.ui.PADDING
+---| `editor.ui.PADDING.NONE`
+---| `editor.ui.PADDING.SMALL`
+---| `editor.ui.PADDING.MEDIUM`
+---| `editor.ui.PADDING.LARGE`
+
+---@enum defold_enum.editor.ui.SPACING: string
+local __defold_enum_editor_ui_SPACING = {
+    NONE = nil,
+    SMALL = nil,
+    MEDIUM = nil,
+    LARGE = nil,
+}
+
+---Constants for spacing enums
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.SPACING)
+---@alias editor.ui.SPACING defold_enum.editor.ui.SPACING
+---| `editor.ui.SPACING.NONE`
+---| `editor.ui.SPACING.SMALL`
+---| `editor.ui.SPACING.MEDIUM`
+---| `editor.ui.SPACING.LARGE`
+
+---@enum defold_enum.editor.ui.TEXT_ALIGNMENT: string
+local __defold_enum_editor_ui_TEXT_ALIGNMENT = {
+    LEFT = nil,
+    CENTER = nil,
+    RIGHT = nil,
+    JUSTIFY = nil,
+}
+
+---Constants for text alignment enums
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.TEXT_ALIGNMENT)
+---@alias editor.ui.TEXT_ALIGNMENT defold_enum.editor.ui.TEXT_ALIGNMENT
+---| `editor.ui.TEXT_ALIGNMENT.LEFT`
+---| `editor.ui.TEXT_ALIGNMENT.CENTER`
+---| `editor.ui.TEXT_ALIGNMENT.RIGHT`
+---| `editor.ui.TEXT_ALIGNMENT.JUSTIFY`
+
+---Run bob the builder program
+---
+---For the full documentation of the available commands and options, see [the bob manual](https://defold.com/manuals/bob/).
+---
+---**Examples:**
+---
+---Print help in the console:
+---```
+---editor.bob({help = true})
+---```
+---
+---Bundle the game for the host platform:
+---```
+---local opts = {
+---    archive = true,
+---    platform = editor.platform
+---}
+---editor.bob(opts, "distclean", "resolve", "build", "bundle")
+---```
+---Using snake_cased and repeated options:
+---```
+---local opts = {
+---    archive = true,
+---    platform = editor.platform,
+---    build_server = "https://build.my-company.com",
+---    settings = {"test.ini", "headless.ini"}
+---}
+---editor.bob(opts, "distclean", "resolve", "build")
+---```
+---@param options? table<string, string|integer|boolean|(string|integer|boolean)[]> table of command line options for bob, without the leading dashes (`--`). You can use snake_case instead of kebab-case for option keys. Only long option names are supported (i.e. `output`, not `o`). Supported value types are strings, integers and booleans. If an option takes no arguments, use a boolean (i.e. `true`). If an option may be repeated, you can use an array of values.
+---@param ... string bob commands, e.g. `"resolve"` or `"build"`
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.bob:options-...)
+function editor.bob(options, ...) end
+
+---Open a URL in the default browser or a registered application
+---@param url string http(s) or file URL
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.browse:url)
+function editor.browse(url) end
+
+---Check whether this list property supports add, clear, and remove operations on the supplied node.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@return boolean value
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.can_add:node-property)
+function editor.can_add(node, property) end
+
+---Check whether this property is exposed for reading on the supplied node or resource.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@return boolean value
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.can_get:node-property)
+function editor.can_get(node, property) end
+
+---Check whether this list property supports reordering on the supplied node.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@return boolean value
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.can_reorder:node-property)
+function editor.can_reorder(node, property) end
+
+---Check whether this property supports reset on the supplied node.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@return boolean value
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.can_reset:node-property)
+function editor.can_reset(node, property) end
+
+---Check whether this property is exposed for setting on the supplied node.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@return boolean value
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.can_set:node-property)
+function editor.can_set(node, property) end
+
+---Create an editor command
+---
+---**Examples:**
+---
+---Print Git history for a file:
+---```
+---editor.command({
+---  label = "Git History",
+---  query = {
+---    selection = {
+---      type = "resource",
+---      cardinality = "one"
+---    }
+---  },
+---  run = function(opts)
+---    editor.execute(
+---      "git",
+---      "log",
+---      "--follow",
+---      "." .. editor.get(opts.selection, "path"),
+---      {reload_resources=false})
+---  end
+---})
+---```
+---@param opts editor.command.options command options
+---@return editor.command command
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.command:opts)
+function editor.command(opts) end
+
+---Create a directory if it does not exist, and all non-existent parent directories.
+---
+---Throws an error if the directory can't be created.
+---
+---**Examples:**
+---
+---```
+---editor.create_directory("/assets/gen")
+---```
+---@param resource_path string Resource path (starting with `/`)
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.create_directory:resource_path)
+function editor.create_directory(resource_path) end
+
+---Create resources (including non-existent parent directories).
+---
+---Throws an error if any of the provided resource paths already exist
+---
+---**Examples:**
+---
+---Create a single resource from template:
+---```
+---editor.create_resources({
+---  "/npc.go"
+---})
+---```
+---Create multiple resources:
+---```
+---editor.create_resources({
+---  "/npc.go",
+---  "/levels/1.collection",
+---  "/levels/2.collection",
+---})
+---```
+---Create a resource with custom content:
+---```
+---editor.create_resources({
+---  {"/npc.script", "go.property('hp', 100)"}
+---})
+---```
+---@param resources (string|editor.create_resources.resource)[] resource paths (strings starting with `/`) or pairs containing a resource path and optional content
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.create_resources:resources)
+function editor.create_resources(resources) end
+
+---Delete a directory if it exists, and all existent child directories and files.
+---
+---Throws an error if the directory can't be deleted.
+---
+---**Examples:**
+---
+---```
+---editor.delete_directory("/assets/gen")
+---```
+---@param resource_path string Resource path (starting with `/`)
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.delete_directory:resource_path)
+function editor.delete_directory(resource_path) end
+
+---Execute a shell command.
+---
+---Any shell command arguments should be provided as separate argument strings to this function. If the exit code of the process is not zero, this function throws error. By default, the function returns `nil`, but it can be configured to capture the output of the shell command as string and return it — set `out` option to `"capture"` to do it.
+---By default, after this shell command is executed, the editor will reload resources from disk.
+---
+---**Examples:**
+---
+---Make a directory with spaces in it:
+---```
+---editor.execute("mkdir", "new dir")
+---```
+---Read the git status:
+---```
+---local status = editor.execute("git", "status", "--porcelain", {
+---  reload_resources = false,
+---  out = "capture"
+---})
+---```
+---@overload fun(command:string, ...:string, options?:editor.execute.options):nil|string
+---@param command string Shell command name to execute
+---@param ... string Optional shell command arguments
+---@return nil|string result If `out` option is set to `"capture"`, returns the output as string with trimmed trailing newlines. Otherwise, returns `nil`.
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.execute:command-...-options)
+function editor.execute(command, ...) end
+
+---Query information about file system path
+---@param path string External file path, resolved against project root if relative
+---@return editor.external_file_attributes.result attributes external file attributes
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.external_file_attributes:path)
+function editor.external_file_attributes(path) end
+
+---Download the latest version of the project library dependencies and reload library-provided editor scripts.
+---
+---This function may replace library-provided editor commands, hooks, routes, and UI contributed by editor scripts, so it should typically be the last operation performed by a command.
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.fetch_libraries:)
+function editor.fetch_libraries() end
+
+---Get a value of a node property inside the editor.
+---
+---Some properties might be read-only, and some might be unavailable in different contexts, so you should use `editor.can_get()` before reading them and `editor.can_set()` before making the editor set them.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@return any value property value
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.get:node-property)
+function editor.get(node, property) end
+
+---Open a file in a registered application
+---@param path string file path
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.open_external_file:path)
+function editor.open_external_file(path) end
+
+---Get preference value
+---
+---The schema for the preference value should be defined beforehand.
+---@param key string dot-separated preference key path
+---@return any value current pref value or default if a schema for the key path exists, nil otherwise
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.get:key)
+function editor.prefs.get(key) end
+
+---Check if preference value is explicitly set
+---
+---The schema for the preference value should be defined beforehand.
+---@param key string dot-separated preference key path
+---@return boolean value flag indicating if the value is explicitly set
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.is_set:key)
+function editor.prefs.is_set(key) end
+
+---array schema
+---@param opts editor.prefs.schema.array.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.array:opts)
+function editor.prefs.schema.array(opts) end
+
+---boolean schema
+---@param opts? editor.prefs.schema.boolean.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.boolean:opts)
+function editor.prefs.schema.boolean(opts) end
+
+---enum value schema
+---@param opts editor.prefs.schema.enum.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.enum:opts)
+function editor.prefs.schema.enum(opts) end
+
+---integer schema
+---@param opts? editor.prefs.schema.integer.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.integer:opts)
+function editor.prefs.schema.integer(opts) end
+
+---keyword schema
+---
+---A keyword is a short string that is interned within the editor runtime, useful e.g. for identifiers
+---@param opts? editor.prefs.schema.keyword.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.keyword:opts)
+function editor.prefs.schema.keyword(opts) end
+
+---floating-point number schema
+---@param opts? editor.prefs.schema.number.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.number:opts)
+function editor.prefs.schema.number(opts) end
+
+---heterogeneous object schema
+---@param opts editor.prefs.schema.object.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.object:opts)
+function editor.prefs.schema.object(opts) end
+
+---homogeneous object schema
+---@param opts editor.prefs.schema.object_of.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.object_of:opts)
+function editor.prefs.schema.object_of(opts) end
+
+---one of schema
+---@param opts editor.prefs.schema.one_of.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.one_of:opts)
+function editor.prefs.schema.one_of(opts) end
+
+---password schema
+---
+---A password is a string that is encrypted when stored in a preference file
+---@param opts? editor.prefs.schema.password.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.password:opts)
+function editor.prefs.schema.password(opts) end
+
+---set schema
+---
+---Set is represented as a lua table with `true` values
+---@param opts editor.prefs.schema.set.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.set:opts)
+function editor.prefs.schema.set(opts) end
+
+---string schema
+---@param opts? editor.prefs.schema.string.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.string:opts)
+function editor.prefs.schema.string(opts) end
+
+---tuple schema
+---
+---A tuple is a fixed-length array where each item has its own defined type
+---@param opts editor.prefs.schema.tuple.options schema options
+---@return editor.schema value Prefs schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.tuple:opts)
+function editor.prefs.schema.tuple(opts) end
+
+---Set preference value
+---
+---The schema for the preference value should be defined beforehand.
+---@param key string dot-separated preference key path
+---@param value any new pref value to set
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.set:key-value)
+function editor.prefs.set(key, value) end
+
+---List property names for a node.
+---
+---The result is context-sensitive and can vary by node/resource type and editor state. Returned names are readable with `editor.get(node, property)`. Mutating capabilities are per-property; use `editor.can_set()`, `editor.can_reset()`, `editor.can_add()`, and `editor.can_reorder()` to check which operations are supported.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@return string[] properties sorted unique editor property names available in the current context
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.properties:node)
+function editor.properties(node) end
+
+---Query information about a project resource
+---@param resource_path string Resource path (starting with `/`)
+---@return editor.resource_attributes.result value resource attributes
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.resource_attributes:resource_path)
+function editor.resource_attributes(resource_path) end
+
+---Persist any unsaved changes to disk
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.save:)
+function editor.save() end
+
+---Change the editor state in a single, undoable transaction
+---@param txs editor.transaction_step[] An array of transaction steps created using `editor.tx.*` functions
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.transact:txs)
+function editor.transact(txs) end
+
+---Create a transaction step that will add a child item to a node's list property when transacted with `editor.transact()`.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@param value table<string, any> Added item for the property, a table from property key to either a valid `editor.tx.set()`-able value, or an array of valid `editor.tx.add()`-able values
+---@return editor.transaction_step tx A transaction step
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.tx.add:node-property-value)
+function editor.tx.add(node, property, value) end
+
+---Create a transaction step that will remove all items from node's list property when transacted with `editor.transact()`.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@return editor.transaction_step tx A transaction step
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.tx.clear:node-property)
+function editor.tx.clear(node, property) end
+
+---Create a transaction step that will remove a child node from the node's list property when transacted with `editor.transact()`.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@param child_node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@return editor.transaction_step tx A transaction step
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.tx.remove:node-property-child_node)
+function editor.tx.remove(node, property, child_node) end
+
+---Create a transaction step that reorders child nodes in a node list defined by the property if supported (see `editor.can_reorder()`)
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@param child_nodes any[] array of child nodes (the same as returned by `editor.get(node, property)`) in new order
+---@return editor.transaction_step tx A transaction step
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.tx.reorder:node-property-child_nodes)
+function editor.tx.reorder(node, property, child_nodes) end
+
+---Create a transaction step that will reset an overridden property to its default value when transacted with `editor.transact()`.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@return editor.transaction_step tx A transaction step
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.tx.reset:node-property)
+function editor.tx.reset(node, property) end
+
+---Create transaction step that will set the node's property to a supplied value when transacted with `editor.transact()`.
+---@param node string|userdata Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
+---@param property string Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
+---@param value any A new value for the property
+---@return editor.transaction_step tx A transaction step
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.tx.set:node-property-value)
+function editor.tx.set(node, property, value) end
+
+---Button with a label and/or an icon
+---@param props editor.ui.button.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.button:props)
+function editor.ui.button(props) end
+
+---Check box with a label
+---@param props editor.ui.check_box.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.check_box:props)
+function editor.ui.check_box(props) end
+
+---Convert a function to a UI component.
+---
+---The wrapped function may call any hooks functions (`editor.ui.use_*`), but on any function invocation, the hooks calls must be the same, and in the same order. This means that hooks should not be used inside loops and conditions or after a conditional return statement.
+---
+---The `grow`, `row_span`, and `column_span` props are supported automatically.
+---@generic T: table<string, any>
+---@param fn fun(props:T):editor.component function, will receive a single table of props when called
+---@return fun(props:T):editor.component value decorated component function that may be invoked with a props table to create a component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.component:fn)
+function editor.ui.component(fn) end
+
+---Dialog component, a top-level window component that can't be used as a child of other components
+---@param props editor.ui.dialog.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.dialog:props)
+function editor.ui.dialog(props) end
+
+---Dialog button shown in the footer of a dialog
+---@param props editor.ui.dialog_button.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.dialog_button:props)
+function editor.ui.dialog_button(props) end
+
+---Input component for selecting files from the file system
+---@param props editor.ui.external_file_field.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.external_file_field:props)
+function editor.ui.external_file_field(props) end
+
+---Layout container that places its children in a 2D grid
+---@param props editor.ui.grid.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.grid:props)
+function editor.ui.grid(props) end
+
+---A text heading
+---@param props editor.ui.heading.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.heading:props)
+function editor.ui.heading(props) end
+
+---Layout container that places its children in a horizontal row one after another
+---@param props editor.ui.horizontal.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.horizontal:props)
+function editor.ui.horizontal(props) end
+
+---An icon from a predefined set
+---@param props editor.ui.icon.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.icon:props)
+function editor.ui.icon(props) end
+
+---An image
+---@param props editor.ui.image.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.image:props)
+function editor.ui.image(props) end
+
+---Integer input component based on a text field, reports changes on commit (`Enter` or focus loss)
+---@param props editor.ui.integer_field.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.integer_field:props)
+function editor.ui.integer_field(props) end
+
+---Label intended for use with input components
+---@param props editor.ui.label.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.label:props)
+function editor.ui.label(props) end
+
+---Number input component based on a text field, reports changes on commit (`Enter` or focus loss)
+---@param props editor.ui.number_field.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.number_field:props)
+function editor.ui.number_field(props) end
+
+---Open a resource using its primary or selected view, either in the editor or in a third-party app. Code and Text views accept a one-based cursor or range in `args`: `{line = 42}`, `{line = 42, column = 12}`, or `{from = {line = 42, column = 12}, to = {line = 43, column = 4}}`
+---@param resource_path string Resource path (starting with `/`)
+---@param view? string View to open: `"code"`, `"text"`, `"scene"`, `"html"`, or `"form"`
+---@param args? any View-specific open arguments; requires `view`. Currently supported by Code and Text views.
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.open_resource:resource_path-view-args)
+function editor.ui.open_resource(resource_path, view, args) end
+
+---A paragraph of text
+---@param props editor.ui.paragraph.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.paragraph:props)
+function editor.ui.paragraph(props) end
+
+---Input component for selecting project resources
+---@param props editor.ui.resource_field.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.resource_field:props)
+function editor.ui.resource_field(props) end
+
+---Layout container that optionally shows scroll bars if child contents overflow the assigned bounds
+---@param props editor.ui.scroll.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.scroll:props)
+function editor.ui.scroll(props) end
+
+---Dropdown select box with an array of options
+---@param props editor.ui.select_box.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.select_box:props)
+function editor.ui.select_box(props) end
+
+---Thin line for visual content separation, by default horizontal and aligned to center
+---@param props editor.ui.separator.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.separator:props)
+function editor.ui.separator(props) end
+
+---Show a dialog and await a result
+---@param dialog editor.component a component that resolves to `editor.ui.dialog(...)`
+---@return any value dialog result, the value used as a `result` prop in a `editor.ui.dialog_button({...})` selected by the user, or `nil` if the dialog was closed and there was no `cancel = true` dialog button with `result` prop set
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.show_dialog:dialog)
+function editor.ui.show_dialog(dialog) end
+
+---Show a modal OS directory selection dialog and await a result
+---@param opts? editor.ui.show_external_directory_dialog.options dialog options
+---@return string|nil value either absolute directory path or nil if user canceled directory selection
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.show_external_directory_dialog:opts)
+function editor.ui.show_external_directory_dialog(opts) end
+
+---Show a modal OS file selection dialog and await a result
+---@param opts? editor.ui.show_external_file_dialog.options dialog options
+---@return string|nil value either absolute file path or nil if user canceled file selection
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.show_external_file_dialog:opts)
+function editor.ui.show_external_file_dialog(opts) end
+
+---Show a modal resource selection dialog and await a result
+---@param opts? editor.ui.show_resource_dialog.options dialog options
+---@return string|string[]|nil value if user made no selection, returns `nil`. Otherwise, if selection mode is `"single"`, returns selected resource path; otherwise returns a non-empty array of selected resource paths.
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.show_resource_dialog:opts)
+function editor.ui.show_resource_dialog(opts) end
+
+---String input component based on a text field, reports changes on commit (`Enter` or focus loss)
+---@param props editor.ui.string_field.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.string_field:props)
+function editor.ui.string_field(props) end
+
+---Tab used in the `tabs` prop of `editor.ui.tabs(...)`
+---@param props editor.ui.tab.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.tab:props)
+function editor.ui.tab(props) end
+
+---Layout container that shows one selected tab content at a time
+---@param props editor.ui.tabs.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.tabs:props)
+function editor.ui.tabs(props) end
+
+---A hook that caches the result of a computation between re-renders.
+---
+---See `editor.ui.component` for hooks caveats and rules. If any of the arguments to `use_memo` change during a component refresh (checked with `==`), the value will be recomputed.
+---
+---**Examples:**
+---
+---<pre><code>local function increment(n)
+---    return n + 1
+---end
+---
+---local function make_listener(set_count)
+---    return function()
+---        set_count(increment)
+---    end
+---end
+---
+---local counter_button = editor.ui.component(function(props)
+---    local count, set_count = editor.ui.use_state(props.count)
+---    local on_pressed = editor.ui.use_memo(make_listener, set_count)
+---    return editor.ui.text_button {
+---        text = tostring(count),
+---        on_pressed = on_pressed
+---    }
+---end)</code></pre>
+---@param compute function function that will be used to compute the cached value
+---@param ... any args to the computation function
+---@return any values all returned values of the compute function
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.use_memo:compute-...)
+function editor.ui.use_memo(compute, ...) end
+
+---A hook that adds local state to the component.
+---
+---See `editor.ui.component` for hooks caveats and rules. If any of the arguments to `use_state` change during a component refresh (checked with `==`), the current state will be reset to the initial one.
+---
+---**Examples:**
+---
+---<pre><code>local function increment(n)
+---  return n + 1
+---end
+---
+---local counter_button = editor.ui.component(function(props)
+---  local count, set_count = editor.ui.use_state(props.count)
+---  return editor.ui.text_button {
+---    text = tostring(count),
+---    on_pressed = function()
+---      set_count(increment)
+---    end
+---  }
+---end)</code></pre>
+---@param init any|function local state initializer, either initial data structure or function that produces the data structure
+---@param ... any used when `init` is a function, the args are passed to the initializer function
+---@return any state current local state, starts with initial state, then may be changed using the returned `set_state` function
+---@return function set_state function that changes the local state and causes the component to refresh. Pass a value to set the new state directly, or pass an updater function that receives the current state and any additional arguments; the updater's return value becomes the new state.
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.use_state:init-...)
+function editor.ui.use_state(init, ...) end
+
+---Layout container that places its children in a vertical column one after another
+---@param props editor.ui.vertical.props component properties
+---@return editor.component value UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.vertical:props)
+function editor.ui.vertical(props) end

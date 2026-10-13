@@ -95,7 +95,7 @@ describe("planBump", () => {
   });
 
   test("a new-minor target plans add-default plus demote-prior", () => {
-    const plan = planBump("1.14.0");
+    const plan = planBump(NEXT_MINOR);
     expect(plan.transition).toBe("minor");
     const kinds = plan.targetOps.map((op) => op.kind);
     expect(kinds).toContain("add-default");
@@ -103,13 +103,13 @@ describe("planBump", () => {
   });
 
   test("a minor retains the outgoing current as the previous minor", () => {
-    const plan = planBump("1.14.0");
-    expect(plan.prebaked).toEqual(["1.14.0", RELEASE_MODEL.current]);
+    const plan = planBump(NEXT_MINOR);
+    expect(plan.prebaked).toEqual([NEXT_MINOR, RELEASE_MODEL.current]);
     expect(plan.demotedFromPrebaked).not.toContain(RELEASE_MODEL.current);
   });
 
   test("the minor demote op matches targetMetaFor(prior-default, { isDefault: false })", () => {
-    const plan = planBump("1.14.0");
+    const plan = planBump(NEXT_MINOR);
     const demote = plan.targetOps.find((op) => op.kind === "demote");
     expect(demote).toBeDefined();
     expect(demote?.version).toBe(RELEASE_MODEL.current);
@@ -138,7 +138,7 @@ describe("runBump", () => {
   test("a blocked import aborts before any subsequent write", () => {
     const ran: BumpStageId[] = [];
     const summary = runBump({
-      to: "1.14.0",
+      to: NEXT_MINOR,
       runStage: (stage) => {
         ran.push(stage);
         if (stage === "import") {
@@ -157,7 +157,7 @@ describe("runBump", () => {
 
   test("a failing stage exits non-zero and names the failed stage", () => {
     const summary = runBump({
-      to: "1.14.0",
+      to: NEXT_MINOR,
       runStage: (stage) => {
         if (stage === "import") return { ok: true, ready: true };
         if (stage === "sync") return { ok: false };
@@ -171,7 +171,7 @@ describe("runBump", () => {
   test("a ready full run runs every stage and reports the genuine manual decisions", () => {
     const ran: BumpStageId[] = [];
     const summary = runBump({
-      to: "1.14.0",
+      to: NEXT_MINOR,
       runStage: (stage) => {
         ran.push(stage);
         if (stage === "import") return { ok: true, ready: true };
@@ -218,7 +218,7 @@ describe("remainingHumanDecisions", () => {
   });
 
   test("a bump reports the import-manifest release tag reconfirmation", () => {
-    const joined = remainingHumanDecisions(planBump("1.14.0")).join("\n");
+    const joined = remainingHumanDecisions(planBump(NEXT_MINOR)).join("\n");
     expect(joined).toMatch(/manifest.*tag/i);
     expect(joined).toContain("import-manifest.json");
   });
@@ -505,7 +505,7 @@ describe("runBumpCli --json", () => {
 
   test("a ready run writes exactly one JSON document to stdout", () => {
     const { io, out } = sink();
-    const code = runBumpCli(["--to", "1.14.0", "--json"], io, readyRunStage);
+    const code = runBumpCli(["--to", NEXT_MINOR, "--json"], io, readyRunStage);
     expect(code).toBe(0);
     const stdout = out.join("").trim();
     expect(stdout.split("\n").filter(Boolean).length).toBe(1);
@@ -516,7 +516,7 @@ describe("runBumpCli --json", () => {
 
   test("a failed run also writes exactly one JSON document to stdout", () => {
     const { io, out } = sink();
-    const code = runBumpCli(["--to", "1.14.0", "--json"], io, (stage) => {
+    const code = runBumpCli(["--to", NEXT_MINOR, "--json"], io, (stage) => {
       if (stage === "import") return { ok: true, ready: true };
       if (stage === "sync") return { ok: false };
       return { ok: true };
@@ -550,7 +550,7 @@ describe("spawn IO seam", () => {
 describe("runBump thrown-stage structuring", () => {
   test("a stage that throws yields ok:false with the failed stage and never proceeds", () => {
     const summary = runBump({
-      to: "1.14.0",
+      to: NEXT_MINOR,
       runStage: (stage) => {
         if (stage === "import") return { ok: true, ready: true };
         if (stage === "sync") throw new Error("boom");

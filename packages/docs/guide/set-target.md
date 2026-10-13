@@ -71,8 +71,8 @@ rejected with the resolvable targets listed, and nothing is written:
 
 ```
 defold-typescript set-target: error: '1.42.99' names a version the API registry
-cannot provide; nothing was written. Resolvable targets: 1.13.2, 1.13.1, 1.13.0,
-1.12.4, 1.9.8. Pin one of them, or a channel (stable|beta|alpha).
+cannot provide; nothing was written. Resolvable targets: 1.14.0, 1.13.2, 1.13.1,
+1.13.0, 1.12.4, 1.9.8. Pin one of them, or a channel (stable|beta|alpha).
 ```
 
 That catches the typo where you made it, instead of letting it surface later as

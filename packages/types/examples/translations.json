@@ -17,6 +17,12 @@
       "ts": "const body = b2d.get_body(\"#collisionobject\");\nif (body !== undefined) {\n  // Move a circle shape relative to the body origin.\n  const circle = b2d.fixture.get_shape(body, 1);\n  const radius = \"radius\" in circle ? circle.radius : undefined;\n  b2d.fixture.set_shape(body, 1, { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: radius ?? 16, center: vmath.vector3(24, 0, 0) }, true);\n\n  // Replace an edge shape's local endpoints.\n  b2d.fixture.set_shape(body, 2, {\n    type: b2d.shape.SHAPE_TYPE_EDGE,\n    v1: vmath.vector3(-32, 0, 0),\n    v2: vmath.vector3(32, 0, 0),\n  });\n\n  // Update a box shape using the polygon box convenience format.\n  // The existing polygon must already have four vertices.\n  b2d.fixture.set_shape(\n    body,\n    3,\n    {\n      type: b2d.shape.SHAPE_TYPE_BOX,\n      hx: 16,\n      hy: 8,\n      center: vmath.vector3(0, 20, 0),\n      angle: math.rad(30),\n    },\n    true,\n  );\n}"
     }
   ],
+  "b2d.get_gameobject_id": [
+    {
+      "sourceHash": "eb6ca97a8d3c27db",
+      "ts": "const body = b2d.get_body(\"#collisionobject\");\nif (body !== undefined) {\n  const id = b2d.get_gameobject_id(body);\n}"
+    }
+  ],
   "b2d.shape.set_shape": [
     {
       "sourceHash": "f31970e9ebb8d446",
@@ -87,6 +93,12 @@
     {
       "sourceHash": "91bc34d28899d0c1",
       "ts": "// Join two bodies at matching local pivots and explicitly destroy the\n// constraint when the script is finalized:\nexport default defineScript({\n  init() {\n    const body_a = bullet3d.get_rigid_body(\"/body_a#collisionobject\");\n    const body_b = bullet3d.get_rigid_body(\"/body_b#collisionobject\");\n    let constraint: bullet3d.constraint.btTypedConstraint | undefined;\n    if (body_a !== undefined) {\n      constraint = bullet3d.constraint.create_point_to_point(body_a, body_b, {\n        pivot_a: vmath.vector3(0.5, 0, 0),\n        pivot_b: vmath.vector3(-0.5, 0, 0),\n      });\n    }\n    return { constraint };\n  },\n\n  final(self) {\n    if (self.constraint !== undefined && bullet3d.constraint.is_valid(self.constraint)) {\n      bullet3d.constraint.destroy(self.constraint);\n    }\n  },\n});"
+    }
+  ],
+  "bullet3d.get_gameobject_id": [
+    {
+      "sourceHash": "48ba7c199938dd13",
+      "ts": "const object = bullet3d.get_collision_object(\"#collisionobject\");\nif (object !== undefined) {\n  const id = bullet3d.get_gameobject_id(object);\n}"
     }
   ],
   "bullet3d.get_rigid_body": [

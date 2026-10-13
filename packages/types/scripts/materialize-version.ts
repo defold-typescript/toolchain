@@ -11,6 +11,7 @@ import {
   loadSrcAugmentations,
   loadTargetEditorModules,
   MESSAGES_MANIFEST,
+  type ModuleManifestEntry,
   type ResolveTargetOptions,
   resolveTargetModules,
 } from "./regen";
@@ -138,13 +139,18 @@ export async function buildVersionedSurfaceFiles(
     opts.augmentations ?? loadSrcAugmentations(opts.resolveOpts?.packageRoot ?? undefined)
   ).filter((file) => kept(file.path));
 
-  const files: VersionedSurfaceFile[] = [...modules, ...editorModules].map((entry) => ({
-    path: entry.outFile,
-    contents: generateModuleDeclaration({
-      ...entry,
-      importsFrom: surfaceCoreTypesImport(entry.outFile),
-    }).contents,
-  }));
+  // Re-rooting an entry makes it a new object no committed manifest holds, so
+  // each lane is handed to the emit as the surface it routes: a type one module
+  // declares for another, or names from another, resolves only across the set.
+  const rerooted = (entries: readonly ModuleManifestEntry[]): ModuleManifestEntry[] =>
+    entries.map((entry) => ({ ...entry, importsFrom: surfaceCoreTypesImport(entry.outFile) }));
+  const files: VersionedSurfaceFile[] = [rerooted(modules), rerooted(editorModules)].flatMap(
+    (surface) =>
+      surface.map((entry) => ({
+        path: entry.outFile,
+        contents: generateModuleDeclaration(entry, { surface }).contents,
+      })),
+  );
 
   files.push(...augmentations);
   files.push({ path: "core-types.d.ts", contents: CORE_TYPES_REEXPORT });

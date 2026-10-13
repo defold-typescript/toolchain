@@ -1,0 +1,1789 @@
+{
+  "elements": [
+    {
+      "type": "MESSAGE",
+      "name": "acquire_input_focus",
+      "brief": "acquires the user input focus",
+      "description": "Post this message to a game object instance to make that instance acquire the user input focus.\nUser input is distributed by the engine to every instance that has\nrequested it. The last instance to request focus will receive it first.\nThis means that the scripts in the instance will have first-hand-chance\nat reacting on user input, possibly consuming it (by returning\n<code>true</code> from <code>on_input</code>) so that no other instances\ncan react on it. The most common case is for a script to send this message\nto itself when it needs to respond to user input.\nA script belonging to an instance which has the user input focus will\nreceive the input actions in its <code>on_input</code> callback function.\nSee <a href=\"#on_input\">on_input</a> for more information on how user input can be\nhandled.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "This example demonstrates how to acquire and act on user input.\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- acquire input focus as soon as the instance has been initialized</span>\n    <span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;.&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;acquire_input_focus&quot;</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">on_input</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">action_id</span><span class=\"p\">,</span> <span class=\"n\">action</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- check which input we received</span>\n    <span class=\"kr\">if</span> <span class=\"n\">action_id</span> <span class=\"o\">==</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_action&quot;</span><span class=\"p\">)</span> <span class=\"kr\">then</span>\n        <span class=\"c1\">-- act on the input</span>\n        <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_action_amount</span> <span class=\"o\">=</span> <span class=\"n\">action</span><span class=\"p\">.</span><span class=\"n\">value</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "MESSAGE",
+      "name": "release_input_focus",
+      "brief": "releases the user input focus",
+      "description": "Post this message to an instance to make that instance release the user input focus.\nSee <a href=\"#acquire_input_focus\">acquire_input_focus</a> for more information on how the user input handling\nworks.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "How to make a game object stop receiving input:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;.&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;release_input_focus&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "MESSAGE",
+      "name": "set_parent",
+      "brief": "sets the parent of the receiving instance",
+      "description": "When this message is sent to an instance, it sets the parent of that instance. This means that the instance will exist\nin the geometrical space of its parent, like a basic transformation hierarchy or scene graph. If no parent is specified,\nthe instance will be detached from any parent and exist in world space. A script can send this message to itself to set\nthe parent of its instance.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "parent_id",
+          "doc": "the id of the new parent",
+          "types": ["hash"],
+          "is_optional": "False"
+        },
+        {
+          "name": "keep_world_transform",
+          "doc": "if the world transform of the instance should be preserved when changing spaces, 0 for false and 1 for true. The default value is 1.",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Attach myself to another instance \"my_parent\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;.&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;set_parent&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">parent_id</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_parent&quot;</span><span class=\"p\">)})</span>\n</code></pre></div>\n\nAttach an instance \"my_instance\" to another instance \"my_parent\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_instance&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;set_parent&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">parent_id</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_parent&quot;</span><span class=\"p\">)})</span>\n</code></pre></div>\n\nDetach an instance \"my_instance\" from its parent (if any):\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_instance&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;set_parent&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "MESSAGE",
+      "name": "enable",
+      "brief": "enables the receiving component",
+      "description": "This message enables the receiving component. All components are enabled by default, which means they will receive input, updates\nand be a part of the simulation. A component is disabled when it receives the <code>disable</code> message.\n<span class=\"icon-alert\"></span> Components that currently supports this message are:\n<ul>\n<li>Camera</li>\n<li>Collection Proxy</li>\n<li>Collision Object</li>\n<li>Gui</li>\n<li>Label</li>\n<li>Spine Model</li>\n<li>Sprite</li>\n<li>Tile Grid</li>\n<li>Model</li>\n<li>Mesh</li>\n</ul>",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "Enable the component \"my_component\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;#my_component&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;enable&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "MESSAGE",
+      "name": "disable",
+      "brief": "disables the receiving component",
+      "description": "This message disables the receiving component. All components are enabled by default, which means they will receive input, updates\nand be a part of the simulation. A component is disabled when it receives the <code>disable</code> message.\n<span class=\"icon-alert\"></span> Components that currently supports this message are:\n<ul>\n<li>Camera</li>\n<li>Collection Proxy</li>\n<li>Collision Object</li>\n<li>Gui</li>\n<li>Label</li>\n<li>Spine Model</li>\n<li>Sprite</li>\n<li>Tile Grid</li>\n<li>Model</li>\n<li>Mesh</li>\n</ul>",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "Disable the component \"my_component\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;#my_component&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;disable&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "go.EASING",
+      "brief": "Easing curves",
+      "description": "Easing curves",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "go.EASING_INBACK",
+          "doc": "in-back",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INBOUNCE",
+          "doc": "in-bounce",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INCIRC",
+          "doc": "in-circlic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INCUBIC",
+          "doc": "in-cubic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INELASTIC",
+          "doc": "in-elastic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INEXPO",
+          "doc": "in-exponential",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INOUTBACK",
+          "doc": "in-out-back",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INOUTBOUNCE",
+          "doc": "in-out-bounce",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INOUTCIRC",
+          "doc": "in-out-circlic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INOUTCUBIC",
+          "doc": "in-out-cubic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INOUTELASTIC",
+          "doc": "in-out-elastic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INOUTEXPO",
+          "doc": "in-out-exponential",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INOUTQUAD",
+          "doc": "in-out-quadratic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INOUTQUART",
+          "doc": "in-out-quartic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INOUTQUINT",
+          "doc": "in-out-quintic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INOUTSINE",
+          "doc": "in-out-sine",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INQUAD",
+          "doc": "in-quadratic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INQUART",
+          "doc": "in-quartic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INQUINT",
+          "doc": "in-quintic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_INSINE",
+          "doc": "in-sine",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_LINEAR",
+          "doc": "linear interpolation",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTBACK",
+          "doc": "out-back",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTBOUNCE",
+          "doc": "out-bounce",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTCIRC",
+          "doc": "out-circlic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTCUBIC",
+          "doc": "out-cubic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTELASTIC",
+          "doc": "out-elastic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTEXPO",
+          "doc": "out-exponential",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTINBACK",
+          "doc": "out-in-back",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTINBOUNCE",
+          "doc": "out-in-bounce",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTINCIRC",
+          "doc": "out-in-circlic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTINCUBIC",
+          "doc": "out-in-cubic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTINELASTIC",
+          "doc": "out-in-elastic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTINEXPO",
+          "doc": "out-in-exponential",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTINQUAD",
+          "doc": "out-in-quadratic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTINQUART",
+          "doc": "out-in-quartic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTINQUINT",
+          "doc": "out-in-quintic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTINSINE",
+          "doc": "out-in-sine",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTQUAD",
+          "doc": "out-quadratic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTQUART",
+          "doc": "out-quartic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTQUINT",
+          "doc": "out-quintic",
+          "type": ""
+        },
+        {
+          "name": "go.EASING_OUTSINE",
+          "doc": "out-sine",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "go.PLAYBACK",
+      "brief": "Playback modes",
+      "description": "Playback modes",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "go.PLAYBACK_LOOP_BACKWARD",
+          "doc": "loop backward",
+          "type": ""
+        },
+        {
+          "name": "go.PLAYBACK_LOOP_FORWARD",
+          "doc": "loop forward",
+          "type": ""
+        },
+        {
+          "name": "go.PLAYBACK_LOOP_PINGPONG",
+          "doc": "ping pong loop",
+          "type": ""
+        },
+        {
+          "name": "go.PLAYBACK_NONE",
+          "doc": "no playback",
+          "type": ""
+        },
+        {
+          "name": "go.PLAYBACK_ONCE_BACKWARD",
+          "doc": "once backward",
+          "type": ""
+        },
+        {
+          "name": "go.PLAYBACK_ONCE_FORWARD",
+          "doc": "once forward",
+          "type": ""
+        },
+        {
+          "name": "go.PLAYBACK_ONCE_PINGPONG",
+          "doc": "once ping pong",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "go.property_options",
+      "brief": "Property access options",
+      "description": "Options for accessing indexed or internal component properties with <a href=\"/ref/go#go.get\">go.get</a> and <a href=\"/ref/go#go.set\">go.set</a>.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "index?",
+          "doc": "Index into an array property, starting at one.",
+          "type": "integer"
+        },
+        {
+          "name": "key?",
+          "doc": "Name of an internal property.",
+          "type": "hash"
+        },
+        {
+          "name": "keys?",
+          "doc": "Internal component resources identified by key, such as particle FX emitters.",
+          "type": "hash[]"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "on_input.action",
+      "brief": "Input action",
+      "description": "Data supplied to the global <code>on_input</code> lifecycle function.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "value?",
+          "doc": "Amount of input, usually 1 for buttons or between 0 and 1 for analogue input; absent for pointer movement and text input.",
+          "type": "number"
+        },
+        {
+          "name": "pressed?",
+          "doc": "Whether the input was pressed this frame; absent for pointer movement and text input.",
+          "type": "boolean"
+        },
+        {
+          "name": "released?",
+          "doc": "Whether the input was released this frame; absent for pointer movement and text input.",
+          "type": "boolean"
+        },
+        {
+          "name": "repeated?",
+          "doc": "Whether the input was repeated this frame; absent for pointer movement and text input.",
+          "type": "boolean"
+        },
+        {
+          "name": "x?",
+          "doc": "Pointer x-coordinate; absent for gamepad, key, and text input.",
+          "type": "number"
+        },
+        {
+          "name": "y?",
+          "doc": "Pointer y-coordinate; absent for gamepad, key, and text input.",
+          "type": "number"
+        },
+        {
+          "name": "screen_x?",
+          "doc": "Pointer x-coordinate in screen space; absent for gamepad, key, and text input.",
+          "type": "number"
+        },
+        {
+          "name": "screen_y?",
+          "doc": "Pointer y-coordinate in screen space; absent for gamepad, key, and text input.",
+          "type": "number"
+        },
+        {
+          "name": "dx?",
+          "doc": "Change in the pointer x-coordinate; absent for gamepad, key, and text input.",
+          "type": "number"
+        },
+        {
+          "name": "dy?",
+          "doc": "Change in the pointer y-coordinate; absent for gamepad, key, and text input.",
+          "type": "number"
+        },
+        {
+          "name": "screen_dx?",
+          "doc": "Change in the pointer x-coordinate in screen space; absent for gamepad, key, and text input.",
+          "type": "number"
+        },
+        {
+          "name": "screen_dy?",
+          "doc": "Change in the pointer y-coordinate in screen space; absent for gamepad, key, and text input.",
+          "type": "number"
+        },
+        {
+          "name": "acc_x?",
+          "doc": "Accelerometer x value, when present.",
+          "type": "number"
+        },
+        {
+          "name": "acc_y?",
+          "doc": "Accelerometer y value, when present.",
+          "type": "number"
+        },
+        {
+          "name": "acc_z?",
+          "doc": "Accelerometer z value, when present.",
+          "type": "number"
+        },
+        {
+          "name": "gamepad?",
+          "doc": "Index of the gamepad that provided the input.",
+          "type": "integer"
+        },
+        {
+          "name": "userid?",
+          "doc": "Id of the user associated with the controller.",
+          "type": "integer"
+        },
+        {
+          "name": "gamepad_guid?",
+          "doc": "SDL-compatible guid, supplied with a gamepad-connected action.",
+          "type": "string"
+        },
+        {
+          "name": "gamepad_guid_info?",
+          "doc": "Parsed guid information, supplied with a gamepad-connected action.",
+          "type": "on_input.gamepad_guid_info"
+        },
+        {
+          "name": "gamepad_unknown?",
+          "doc": "Whether the input originated from an unknown or unmapped gamepad.",
+          "type": "boolean"
+        },
+        {
+          "name": "gamepad_name?",
+          "doc": "Name of a connected gamepad.",
+          "type": "string"
+        },
+        {
+          "name": "gamepad_axis?",
+          "doc": "Axis values, supplied only for raw gamepad input.",
+          "type": "number[]"
+        },
+        {
+          "name": "gamepad_hats?",
+          "doc": "Hat values, supplied only for raw gamepad input.",
+          "type": "number[]"
+        },
+        {
+          "name": "gamepad_buttons?",
+          "doc": "Button values, supplied only for raw gamepad input.",
+          "type": "number[]"
+        },
+        {
+          "name": "touch?",
+          "doc": "Touch inputs, one entry per finger.",
+          "type": "on_input.touch[]"
+        },
+        {
+          "name": "text?",
+          "doc": "Text entered by a text action, or the current sequence for marked-text composition such as Japanese Kana.",
+          "type": "string"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "on_input.touch",
+      "brief": "Touch input",
+      "description": "One touch entry in <a href=\"/ref/on_input#on_input.action\">on_input.action</a>.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "id",
+          "doc": "Identifier for the touch during its lifetime.",
+          "type": "integer"
+        },
+        {
+          "name": "pressed",
+          "doc": "Whether the finger was pressed this frame.",
+          "type": "boolean"
+        },
+        {
+          "name": "released",
+          "doc": "Whether the finger was released this frame.",
+          "type": "boolean"
+        },
+        {
+          "name": "tap_count",
+          "doc": "Number of taps, such as one for a single tap and two for a double tap.",
+          "type": "integer"
+        },
+        {
+          "name": "x",
+          "doc": "Touch x-coordinate.",
+          "type": "number"
+        },
+        {
+          "name": "y",
+          "doc": "Touch y-coordinate.",
+          "type": "number"
+        },
+        {
+          "name": "screen_x",
+          "doc": "Touch x-coordinate in screen space.",
+          "type": "number"
+        },
+        {
+          "name": "screen_y",
+          "doc": "Touch y-coordinate in screen space.",
+          "type": "number"
+        },
+        {
+          "name": "dx",
+          "doc": "Change in the touch x-coordinate.",
+          "type": "number"
+        },
+        {
+          "name": "dy",
+          "doc": "Change in the touch y-coordinate.",
+          "type": "number"
+        },
+        {
+          "name": "screen_dx",
+          "doc": "Change in the touch x-coordinate in screen space.",
+          "type": "number"
+        },
+        {
+          "name": "screen_dy",
+          "doc": "Change in the touch y-coordinate in screen space.",
+          "type": "number"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "on_input.gamepad_guid_info",
+      "brief": "Gamepad guid information",
+      "description": "Parsed fields from a connected gamepad guid.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "vendor",
+          "doc": "USB vendor id.",
+          "type": "integer"
+        },
+        {
+          "name": "product",
+          "doc": "USB product id.",
+          "type": "integer"
+        },
+        {
+          "name": "bus",
+          "doc": "Bus used to communicate with the device.",
+          "type": "integer"
+        },
+        {
+          "name": "crc",
+          "doc": "SDL CRC16 signature.",
+          "type": "integer"
+        },
+        {
+          "name": "version",
+          "doc": "Device or firmware version.",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "PROPERTY",
+      "name": "position",
+      "brief": "<span class=\"type\">vector3</span> game object position",
+      "description": "The position of the game object.\nThe type of the property is vector3.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "How to query a game object's position, either as a vector3 or selecting a specific dimension:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"c1\">-- get position from &quot;player&quot;</span>\n  <span class=\"kd\">local</span> <span class=\"n\">pos</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;player&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;position&quot;</span><span class=\"p\">)</span>\n  <span class=\"kd\">local</span> <span class=\"n\">posx</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;player&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;position.x&quot;</span><span class=\"p\">)</span>\n  <span class=\"c1\">-- do something useful</span>\n  <span class=\"nb\">assert</span><span class=\"p\">(</span><span class=\"n\">pos</span><span class=\"p\">.</span><span class=\"n\">x</span> <span class=\"o\">==</span> <span class=\"n\">posx</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "PROPERTY",
+      "name": "rotation",
+      "brief": "<span class=\"type\">quaternion</span> game object rotation",
+      "description": "The rotation of the game object.\nThe type of the property is quaternion.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "How to set a game object's rotation:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"c1\">-- set &quot;player&quot; rotation to 45 degrees around z.</span>\n  <span class=\"kd\">local</span> <span class=\"n\">rotz</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">quat_rotation_z</span><span class=\"p\">(</span><span class=\"mf\">3.141592</span> <span class=\"o\">/</span> <span class=\"mi\">4</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;player&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;rotation&quot;</span><span class=\"p\">,</span> <span class=\"n\">rotz</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "PROPERTY",
+      "name": "euler",
+      "brief": "<span class=\"type\">vector3</span> game object euler rotation",
+      "description": "The rotation of the game object expressed in Euler angles.\nEuler angles are specified in degrees in the interval (-360, 360).\nThe type of the property is vector3.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "How to set a game object's rotation with euler angles, either as a vector3 or selecting a specific dimension:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"c1\">-- set &quot;player&quot; euler z rotation component to 45 degrees around z.</span>\n  <span class=\"kd\">local</span> <span class=\"n\">rotz</span> <span class=\"o\">=</span> <span class=\"mi\">45</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;player&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;euler.z&quot;</span><span class=\"p\">,</span> <span class=\"n\">rotz</span><span class=\"p\">)</span>\n  <span class=\"kd\">local</span> <span class=\"n\">rot</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;player&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;euler&quot;</span><span class=\"p\">)</span>\n  <span class=\"c1\">-- do something useful</span>\n  <span class=\"nb\">assert</span><span class=\"p\">(</span><span class=\"n\">rot</span><span class=\"p\">.</span><span class=\"n\">z</span> <span class=\"o\">==</span> <span class=\"n\">rotz</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "PROPERTY",
+      "name": "scale",
+      "brief": "<span class=\"type\">number</span> game object scale",
+      "description": "The uniform scale of the game object. The type of the property is number.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "How to scale a game object:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"c1\">-- Double the scaling on &quot;player&quot;</span>\n  <span class=\"kd\">local</span> <span class=\"n\">scale</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;player&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;scale&quot;</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;player&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;scale&quot;</span><span class=\"p\">,</span> <span class=\"n\">scale</span> <span class=\"o\">*</span> <span class=\"mi\">2</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get",
+      "brief": "gets a named property of the specified game object or component",
+      "description": "gets a named property of the specified game object or component",
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "the value of the specified property",
+          "types": [
+            "number",
+            "boolean",
+            "hash",
+            "string",
+            "url",
+            "vector3",
+            "vector4",
+            "quaternion",
+            "resource_data"
+          ]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "url of the game object or component having the property",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        },
+        {
+          "name": "property",
+          "doc": "id of the property to retrieve",
+          "types": ["string", "hash"],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "optional property access options",
+          "types": ["go.property_options"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Get a property \"speed\" from a script \"player\", the property must be declared in the player-script:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;speed&quot;</span><span class=\"p\">,</span> <span class=\"mi\">50</span><span class=\"p\">)</span>\n</code></pre></div>\n\nThen in the calling script (assumed to belong to the same game object, but does not have to):\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">speed</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;#player&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;speed&quot;</span><span class=\"p\">)</span>\n</code></pre></div>\n\nGet a value in a material property array\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- get the first vector4 in the array: example[0] (the glsl indices are 0-based)</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"n\">url</span><span class=\"p\">,</span> <span class=\"s2\">&quot;example&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">index</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">})</span>\n\n<span class=\"c1\">-- get the last vector4 in the array: example[15] (the glsl indices are 0-based)</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"n\">url</span><span class=\"p\">,</span> <span class=\"s2\">&quot;example&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">index</span><span class=\"o\">=</span><span class=\"mi\">16</span><span class=\"p\">})</span>\n\n<span class=\"c1\">-- get an element of a vector4 in the array: example[0].x (the glsl indices are 0-based)</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"n\">url</span><span class=\"p\">,</span> <span class=\"s2\">&quot;example.x&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">index</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">})</span>\n</code></pre></div>\n\nGetting all values in a material property array as a table\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- get all vector4&#39;s in the constant array</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"n\">url</span><span class=\"p\">,</span> <span class=\"s2\">&quot;example&quot;</span><span class=\"p\">)</span>\n<span class=\"c1\">-- result: { vector4, vector4, ... }</span>\n\n<span class=\"c1\">-- get all elements of the vector4&#39;s from an array</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"n\">url</span><span class=\"p\">,</span> <span class=\"s2\">&quot;example.x&quot;</span><span class=\"p\">)</span>\n<span class=\"c1\">-- result: { number1, number2, ... }</span>\n</code></pre></div>\n\nGet a named property\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- get the resource of a certain gui font</span>\n<span class=\"kd\">local</span> <span class=\"n\">font_hash</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;#gui&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;fonts&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">key</span> <span class=\"o\">=</span> <span class=\"s2\">&quot;system_font_BIG&quot;</span><span class=\"p\">})</span>\n</code></pre></div>\n\nGet a property from a sub-component, using the \"keys\" options table\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- Addressing the first level of a component:</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;#particlefx&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;material&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"n\">keys</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"s2\">&quot;cone_emitter&quot;</span> <span class=\"p\">}</span> <span class=\"p\">})</span>\n</code></pre></div>\n\nGet a property into a deeper sub-hierarchy (if the component supports it).\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- Note: There is currently no component that supports this, but a custom component could.</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get</span><span class=\"p\">(</span><span class=\"s2\">&quot;#my_component&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;some_property&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"n\">keys</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"s2\">&quot;root&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;child_node&quot;</span> <span class=\"p\">}</span> <span class=\"p\">})</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.set",
+      "brief": "sets a named property of the specified game object or component, or a material constant",
+      "description": "sets a named property of the specified game object or component, or a material constant",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "url of the game object or component having the property",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        },
+        {
+          "name": "property",
+          "doc": "id of the property to set",
+          "types": ["string", "hash"],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "the value to set",
+          "types": [
+            "number",
+            "boolean",
+            "hash",
+            "string",
+            "url",
+            "vector3",
+            "vector4",
+            "quaternion",
+            "resource_data"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "optional property access options",
+          "types": ["go.property_options"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Set a property \"speed\" of a script \"player\", the property must be declared in the player-script:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;speed&quot;</span><span class=\"p\">,</span> <span class=\"mi\">50</span><span class=\"p\">)</span>\n</code></pre></div>\n\nThen in the calling script (assumed to belong to the same game object, but does not have to):\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#player&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;speed&quot;</span><span class=\"p\">,</span> <span class=\"mi\">100</span><span class=\"p\">)</span>\n</code></pre></div>\n\nSet a vector4 in a material property array\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- set the first vector4 in the array: example[0] = v (the glsl indices are 0-based)</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"n\">url</span><span class=\"p\">,</span> <span class=\"s2\">&quot;example&quot;</span><span class=\"p\">,</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector4</span><span class=\"p\">(</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">1</span><span class=\"p\">),</span> <span class=\"p\">{</span><span class=\"n\">index</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">})</span>\n\n<span class=\"c1\">-- set the last vector4 in the array: example[15] = v (the glsl indices are 0-based)</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"n\">url</span><span class=\"p\">,</span> <span class=\"s2\">&quot;example&quot;</span><span class=\"p\">,</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector4</span><span class=\"p\">(</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">),</span> <span class=\"p\">{</span><span class=\"n\">index</span><span class=\"o\">=</span><span class=\"mi\">16</span><span class=\"p\">})</span>\n\n<span class=\"c1\">-- set an element of a vector4 in the array: example[0].x = 7 (the glsl indices are 0-based)</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"n\">url</span><span class=\"p\">,</span> <span class=\"s2\">&quot;example.x&quot;</span><span class=\"p\">,</span> <span class=\"mi\">7</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">index</span><span class=\"o\">=</span><span class=\"mi\">1</span><span class=\"p\">})</span>\n</code></pre></div>\n\nSet a material property array by a table of vector4\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- set the first two vector4&#39;s in the array</span>\n<span class=\"c1\">-- if the array has more than two elements in the array they will not be set</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"n\">url</span><span class=\"p\">,</span> <span class=\"s2\">&quot;example&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector4</span><span class=\"p\">(</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">1</span><span class=\"p\">),</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector4</span><span class=\"p\">(</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">,</span><span class=\"mi\">2</span><span class=\"p\">)</span> <span class=\"p\">})</span>\n</code></pre></div>\n\nSet a named property\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;big_font&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">font</span><span class=\"p\">())</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#gui&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;fonts&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">big_font</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">key</span> <span class=\"o\">=</span> <span class=\"s2\">&quot;system_font_BIG&quot;</span><span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nSet a property on a sub-component, using the \"keys\" options table\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">)</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#particlefx&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;material&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"n\">keys</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"s2\">&quot;cone_emitter&quot;</span> <span class=\"p\">}</span> <span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nSet a property in a deeper sub-hierarchy (if the component supports it).\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- Note: There is currently no component that supports this, but a custom component could.</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#my_component&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;some_property&quot;</span><span class=\"p\">,</span> <span class=\"n\">some_value</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"n\">keys</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"s2\">&quot;root&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;child_node&quot;</span> <span class=\"p\">}</span> <span class=\"p\">})</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get_position",
+      "brief": "gets the position of a game object instance",
+      "description": "The position is relative the parent (if any). Use <a href=\"/ref/go#go.get_world_position\">go.get_world_position</a> to retrieve the global world position.",
+      "returnvalues": [
+        {
+          "name": "position",
+          "doc": "instance position",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the position for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Get the position of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">p</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_position</span><span class=\"p\">()</span>\n</code></pre></div>\n\nGet the position of another game object instance \"my_gameobject\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">pos</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_position</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_gameobject&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "request_transform transform_response",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get_rotation",
+      "brief": "gets the rotation of the game object instance",
+      "description": "The rotation is relative to the parent (if any). Use <a href=\"/ref/go#go.get_world_rotation\">go.get_world_rotation</a> to retrieve the global world rotation.",
+      "returnvalues": [
+        {
+          "name": "rotation",
+          "doc": "instance rotation",
+          "types": ["quaternion"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the rotation for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Get the rotation of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">r</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_rotation</span><span class=\"p\">()</span>\n</code></pre></div>\n\nGet the rotation of another game object instance with id \"x\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">r</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_rotation</span><span class=\"p\">(</span><span class=\"s2\">&quot;x&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get_scale",
+      "brief": "gets the 3D scale factor of the game object instance",
+      "description": "The scale is relative the parent (if any). Use <a href=\"/ref/go#go.get_world_scale\">go.get_world_scale</a> to retrieve the global world 3D scale factor.",
+      "returnvalues": [
+        {
+          "name": "scale",
+          "doc": "instance scale factor",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the scale for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Get the scale of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_scale</span><span class=\"p\">()</span>\n</code></pre></div>\n\nGet the scale of another game object instance with id \"x\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_scale</span><span class=\"p\">(</span><span class=\"s2\">&quot;x&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get_scale_uniform",
+      "brief": "gets the uniform scale factor of the game object instance",
+      "description": "The uniform scale is relative the parent (if any). If the underlying scale vector is non-uniform the min element of the vector is returned as the uniform scale factor.",
+      "returnvalues": [
+        {
+          "name": "scale",
+          "doc": "uniform instance scale factor",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the uniform scale for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Get the scale of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_scale_uniform</span><span class=\"p\">()</span>\n</code></pre></div>\n\nGet the uniform scale of another game object instance with id \"x\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_scale_uniform</span><span class=\"p\">(</span><span class=\"s2\">&quot;x&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.set_position",
+      "brief": "sets the position of the game object instance",
+      "description": "The position is relative to the parent (if any). The global world position cannot be manually set.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "position to set",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to set the position for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Set the position of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">p</span> <span class=\"o\">=</span> <span class=\"p\">...</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_position</span><span class=\"p\">(</span><span class=\"n\">p</span><span class=\"p\">)</span>\n</code></pre></div>\n\nSet the position of another game object instance with id \"x\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">p</span> <span class=\"o\">=</span> <span class=\"p\">...</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_position</span><span class=\"p\">(</span><span class=\"n\">p</span><span class=\"p\">,</span> <span class=\"s2\">&quot;x&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.set_rotation",
+      "brief": "sets the rotation of the game object instance",
+      "description": "The rotation is relative to the parent (if any). The global world rotation cannot be manually set.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "rotation",
+          "doc": "rotation to set",
+          "types": ["quaternion"],
+          "is_optional": "False"
+        },
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the rotation for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Set the rotation of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">r</span> <span class=\"o\">=</span> <span class=\"p\">...</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_rotation</span><span class=\"p\">(</span><span class=\"n\">r</span><span class=\"p\">)</span>\n</code></pre></div>\n\nSet the rotation of another game object instance with id \"x\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">r</span> <span class=\"o\">=</span> <span class=\"p\">...</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_rotation</span><span class=\"p\">(</span><span class=\"n\">r</span><span class=\"p\">,</span> <span class=\"s2\">&quot;x&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.set_scale",
+      "brief": "sets the scale factor of the game object instance",
+      "description": "The scale factor is relative to the parent (if any). The global world scale factor cannot be manually set.\n<span class=\"icon-attention\"></span> See <a href=\"/manuals/project-settings/#allow-dynamic-transforms\">manual</a> to know how physics affected when setting scale from this function.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "scale",
+          "doc": "vector or uniform scale factor, must be greater than 0",
+          "types": ["number", "vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the scale for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Set the scale of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mf\">2.0</span><span class=\"p\">,</span> <span class=\"mf\">1.0</span><span class=\"p\">,</span> <span class=\"mf\">1.0</span><span class=\"p\">)</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_scale</span><span class=\"p\">(</span><span class=\"n\">s</span><span class=\"p\">)</span>\n</code></pre></div>\n\nSet the scale of another game object instance with id \"obj_id\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"mf\">1.2</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_scale</span><span class=\"p\">(</span><span class=\"n\">s</span><span class=\"p\">,</span> <span class=\"s2\">&quot;obj_id&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.set_scale_xy",
+      "brief": "sets the scale factor only for width and height (x and y) of the game object instance",
+      "description": "The scale factor is relative to the parent (if any). The global world scale factor cannot be manually set.\n<span class=\"icon-attention\"></span> See <a href=\"/manuals/project-settings/#allow-dynamic-transforms\">manual</a> to know how physics affected when setting scale from this function.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "scale",
+          "doc": "vector or uniform scale factor, must be greater than 0",
+          "types": ["number", "vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the scale for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Set the scale of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mf\">2.0</span><span class=\"p\">,</span> <span class=\"mf\">1.0</span><span class=\"p\">,</span> <span class=\"mf\">5.0</span><span class=\"p\">)</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_scale_xy</span><span class=\"p\">(</span><span class=\"n\">s</span><span class=\"p\">)</span> <span class=\"c1\">-- z will not be set here, only x and y</span>\n</code></pre></div>\n\nSet the scale of another game object instance with id \"obj_id\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"mf\">1.2</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_scale_xy</span><span class=\"p\">(</span><span class=\"n\">s</span><span class=\"p\">,</span> <span class=\"s2\">&quot;obj_id&quot;</span><span class=\"p\">)</span> <span class=\"c1\">-- z will not be set here, only x and y</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.set_parent",
+      "brief": "sets the parent for a specific game object instance",
+      "description": "Sets the parent for a game object instance. This means that the instance will exist in the geometrical space of its parent,\nlike a basic transformation hierarchy or scene graph. If no parent is specified, the instance will be detached from any parent and exist in world\nspace.\nThis function will generate a <code>set_parent</code> message. It is not until the message has been processed that the change actually takes effect. This\ntypically happens later in the same frame or the beginning of the next frame. Refer to the manual to learn how messages are processed by the\nengine.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to set parent for, defaults to the instance containing the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        },
+        {
+          "name": "parent_id",
+          "doc": "optional id of the new parent game object, defaults to detaching game object from its parent",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        },
+        {
+          "name": "keep_world_transform",
+          "doc": "optional boolean, set to true to maintain the world transform when changing spaces. Defaults to false.",
+          "types": ["boolean"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Attach myself to another instance \"my_parent\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_parent</span><span class=\"p\">(</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(),</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_parent&quot;</span><span class=\"p\">))</span>\n</code></pre></div>\n\nAttach an instance \"my_instance\" to another instance \"my_parent\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_parent</span><span class=\"p\">(</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_instance&quot;</span><span class=\"p\">),</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_parent&quot;</span><span class=\"p\">))</span>\n</code></pre></div>\n\nDetach an instance \"my_instance\" from its parent (if any):\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_parent</span><span class=\"p\">(</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_instance&quot;</span><span class=\"p\">))</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get_parent",
+      "brief": "get the parent for a specific game object instance",
+      "description": "Get the parent for a game object instance.",
+      "returnvalues": [
+        {
+          "name": "parent_id",
+          "doc": "parent instance or <code>nil</code>",
+          "types": ["hash", "nil"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get parent for, defaults to the instance containing the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Get parent of the instance containing the calling script:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">parent_id</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_parent</span><span class=\"p\">()</span>\n</code></pre></div>\n\nGet parent of the instance with id \"x\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">parent_id</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_parent</span><span class=\"p\">(</span><span class=\"s2\">&quot;x&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get_world_position",
+      "brief": "gets the game object instance world position",
+      "description": "The function will return the world position calculated at the end of the previous frame.\nTo recalculate it within the current frame, use <a href=\"/ref/go#go.update_world_transform\">go.update_world_transform</a> on the instance before calling this.\nUse <a href=\"/ref/go#go.get_position\">go.get_position</a> to retrieve the position relative to the parent.",
+      "returnvalues": [
+        {
+          "name": "position",
+          "doc": "instance world position",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the world position for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Get the world position of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">p</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_position</span><span class=\"p\">()</span>\n</code></pre></div>\n\nGet the world position of another game object instance with id \"x\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">p</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_position</span><span class=\"p\">(</span><span class=\"s2\">&quot;x&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get_world_rotation",
+      "brief": "gets the game object instance world rotation",
+      "description": "The function will return the world rotation calculated at the end of the previous frame.\nTo recalculate it within the current frame, use <a href=\"/ref/go#go.update_world_transform\">go.update_world_transform</a> on the instance before calling this.\nUse <a href=\"/ref/go#go.get_rotation\">go.get_rotation</a> to retrieve the rotation relative to the parent.",
+      "returnvalues": [
+        {
+          "name": "rotation",
+          "doc": "instance world rotation",
+          "types": ["quaternion"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the world rotation for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Get the world rotation of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">r</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_rotation</span><span class=\"p\">()</span>\n</code></pre></div>\n\nGet the world rotation of another game object instance with id \"x\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">r</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_rotation</span><span class=\"p\">(</span><span class=\"s2\">&quot;x&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get_world_scale",
+      "brief": "gets the game object instance world 3D scale factor",
+      "description": "The function will return the world 3D scale factor calculated at the end of the previous frame.\nTo recalculate it within the current frame, use <a href=\"/ref/go#go.update_world_transform\">go.update_world_transform</a> on the instance before calling this.\nUse <a href=\"/ref/go#go.get_scale\">go.get_scale</a> to retrieve the 3D scale factor relative to the parent.\nThis vector is derived by decomposing the transformation matrix and should be used with care.\nFor most cases it should be fine to use <a href=\"/ref/go#go.get_world_scale_uniform\">go.get_world_scale_uniform</a> instead.",
+      "returnvalues": [
+        {
+          "name": "scale",
+          "doc": "instance world 3D scale factor",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the world scale for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Get the world 3D scale of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_scale</span><span class=\"p\">()</span>\n</code></pre></div>\n\nGet the world scale of another game object instance \"x\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_scale</span><span class=\"p\">(</span><span class=\"s2\">&quot;x&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get_world_scale_uniform",
+      "brief": "gets the uniform game object instance world scale factor",
+      "description": "The function will return the world scale factor calculated at the end of the previous frame.\nTo recalculate it within the current frame, use <a href=\"/ref/go#go.update_world_transform\">go.update_world_transform</a> on the instance before calling this.\nUse <a href=\"/ref/go#go.get_scale_uniform\">go.get_scale_uniform</a> to retrieve the scale factor relative to the parent.",
+      "returnvalues": [
+        {
+          "name": "scale",
+          "doc": "instance world scale factor",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the world scale for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Get the world scale of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_scale_uniform</span><span class=\"p\">()</span>\n</code></pre></div>\n\nGet the world scale of another game object instance with id \"x\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">s</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_scale_uniform</span><span class=\"p\">(</span><span class=\"s2\">&quot;x&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get_world_transform",
+      "brief": "gets the game object instance world transform matrix",
+      "description": "The function will return the world transform matrix calculated at the end of the previous frame.\nTo recalculate it within the current frame, use <a href=\"/ref/go#go.update_world_transform\">go.update_world_transform</a> on the instance before calling this.",
+      "returnvalues": [
+        {
+          "name": "transform",
+          "doc": "instance world transform",
+          "types": ["matrix4"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to get the world transform for, by default the instance of the calling script",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Get the world transform of the game object instance the script is attached to:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">m</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_transform</span><span class=\"p\">()</span>\n</code></pre></div>\n\nGet the world transform of another game object instance with id \"x\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">m</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_transform</span><span class=\"p\">(</span><span class=\"s2\">&quot;x&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.update_world_transform",
+      "brief": "updates the world transform for a game object instance",
+      "description": "Recalculates and updates the cached world transform immediately for the target instance\nand its ancestors (parent chain up to the collection root). Descendants (children) are\nnot updated by this function.\nIf no id is provided, the instance of the calling script is used.\n<span class=\"icon-attention\"></span> Use this after changing local transform mid-frame when you need the\nnew world transform right away (e.g. before end-of-frame updates). Note that child\ninstances will still have last-frame world transforms until the regular update.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id of the game object instance to update",
+          "types": ["string", "hash", "url"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Update this game object's world transform:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">update_world_transform</span><span class=\"p\">()</span>\n</code></pre></div>\n\nUpdate another game object's world transform:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">update_world_transform</span><span class=\"p\">(</span><span class=\"s2\">&quot;/other&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.get_id",
+      "brief": "gets the id of an instance",
+      "description": "Returns or constructs an instance identifier. The instance id is a hash\nof the absolute path to the instance.\n<ul>\n<li>If <code>path</code> is specified, it can either be absolute or relative to the instance of the calling script.</li>\n<li>If <code>path</code> is not specified, the id of the game object instance the script is attached to will be returned.</li>\n</ul>",
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "instance id",
+          "types": ["hash"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "path of the instance for which to return the id",
+          "types": ["string"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "For the instance with path <code>/my_sub_collection/my_instance</code>, the following calls are equivalent:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">id</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">()</span> <span class=\"c1\">-- no path, defaults to the instance containing the calling script</span>\n<span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">id</span><span class=\"p\">)</span> <span class=\"c1\">--&gt; hash: [/my_sub_collection/my_instance]</span>\n\n<span class=\"kd\">local</span> <span class=\"n\">id</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_sub_collection/my_instance&quot;</span><span class=\"p\">)</span> <span class=\"c1\">-- absolute path</span>\n<span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">id</span><span class=\"p\">)</span> <span class=\"c1\">--&gt; hash: [/my_sub_collection/my_instance]</span>\n\n<span class=\"kd\">local</span> <span class=\"n\">id</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_instance&quot;</span><span class=\"p\">)</span> <span class=\"c1\">-- relative path</span>\n<span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">id</span><span class=\"p\">)</span> <span class=\"c1\">--&gt; hash: [/my_sub_collection/my_instance]</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.animate",
+      "brief": "animates a named property of the specified game object or component",
+      "description": "This is only supported for numerical properties. If the node property is already being\nanimated, that animation will be canceled and replaced by the new one.\nIf a <code>complete_function</code> (lua function) is specified, that function will be called when the animation has completed.\nBy starting a new animation in that function, several animations can be sequenced together. See the examples for more information.\n<span class=\"icon-attention\"></span> If you call <code>go.animate()</code> from a game object's <code>final()</code> function,\nany passed <code>complete_function</code> will be ignored and never called upon animation completion.\nSee the <a href=\"/manuals/properties\">properties guide</a> for which properties can be animated and the <a href=\"/manuals/animation\">animation guide</a> for how\nthem.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "url of the game object or component having the property",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        },
+        {
+          "name": "property",
+          "doc": "id of the property to animate",
+          "types": ["string", "hash"],
+          "is_optional": "False"
+        },
+        {
+          "name": "playback",
+          "doc": "playback mode of the animation\n<ul>\n<li><code>go.PLAYBACK_ONCE_FORWARD</code></li>\n<li><code>go.PLAYBACK_ONCE_BACKWARD</code></li>\n<li><code>go.PLAYBACK_ONCE_PINGPONG</code></li>\n<li><code>go.PLAYBACK_LOOP_FORWARD</code></li>\n<li><code>go.PLAYBACK_LOOP_BACKWARD</code></li>\n<li><code>go.PLAYBACK_LOOP_PINGPONG</code></li>\n</ul>",
+          "types": ["go.PLAYBACK"],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "target property value",
+          "types": ["number", "vector3", "vector4", "quaternion"],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "easing to use during animation. Either specify a constant, see the <a href=\"/manuals/animation#_easing\">animation guide</a> for a complete list, or a vmath.vector with a curve",
+          "types": ["vector", "go.EASING"],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "duration of the animation in seconds",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "delay before the animation starts in seconds",
+          "types": ["number"],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "optional function to call when the animation has completed\n<dl>\n<dt><code>self</code></dt>\n<dd>\n<span class=\"type\">script_instance</span> The current script instance.\n</dd>\n<dt><code>url</code></dt>\n<dd>\n<span class=\"type\">url</span> The game object or component instance for which the property is animated.\n</dd>\n<dt><code>property</code></dt>\n<dd>\n<span class=\"type\">hash</span> The id of the animated property.\n</dd>\n</dl>",
+          "types": ["fun(self:script_instance, url:url, property:hash)"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Animate the position of a game object to x = 10 during 1 second, then y = 20 during 1 second:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"kr\">function</span> <span class=\"nf\">x_done</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">url</span><span class=\"p\">,</span> <span class=\"n\">property</span><span class=\"p\">)</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">animate</span><span class=\"p\">(</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(),</span> <span class=\"s2\">&quot;position.y&quot;</span><span class=\"p\">,</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">PLAYBACK_ONCE_FORWARD</span><span class=\"p\">,</span> <span class=\"mi\">20</span><span class=\"p\">,</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">EASING_LINEAR</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">animate</span><span class=\"p\">(</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(),</span> <span class=\"s2\">&quot;position.x&quot;</span><span class=\"p\">,</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">PLAYBACK_ONCE_FORWARD</span><span class=\"p\">,</span> <span class=\"mi\">10</span><span class=\"p\">,</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">EASING_LINEAR</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"n\">x_done</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nAnimate the y position of a game object using a crazy custom easing curve:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">values</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n                 <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span>\n                 <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n                 <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span>\n                 <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n                 <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span>\n                 <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span>\n                 <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">1</span> <span class=\"p\">}</span>\n<span class=\"kd\">local</span> <span class=\"n\">vec</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector</span><span class=\"p\">(</span><span class=\"n\">values</span><span class=\"p\">)</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">animate</span><span class=\"p\">(</span><span class=\"s2\">&quot;go&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;position.y&quot;</span><span class=\"p\">,</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">PLAYBACK_LOOP_PINGPONG</span><span class=\"p\">,</span> <span class=\"mi\">100</span><span class=\"p\">,</span> <span class=\"n\">vec</span><span class=\"p\">,</span> <span class=\"mf\">2.0</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.cancel_animations",
+      "brief": "cancels all or specified property animations of the game object or component",
+      "description": "By calling this function, all or specified stored property animations of the game object or component will be canceled.\nSee the <a href=\"/manuals/properties\">properties guide</a> for which properties can be animated and the <a href=\"/manuals/animation\">animation guide</a> for how to animate them.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "url of the game object or component",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        },
+        {
+          "name": "property",
+          "doc": "optional id of the property to cancel",
+          "types": ["string", "hash"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Cancel the animation of the position of a game object:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">cancel_animations</span><span class=\"p\">(</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(),</span> <span class=\"s2\">&quot;position&quot;</span><span class=\"p\">)</span>\n</code></pre></div>\n\nCancel all property animations of the current game object:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">cancel_animations</span><span class=\"p\">(</span><span class=\"s2\">&quot;.&quot;</span><span class=\"p\">)</span>\n</code></pre></div>\n\nCancel all property animations of the sprite component of the current game object:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">cancel_animations</span><span class=\"p\">(</span><span class=\"s2\">&quot;#sprite&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.delete",
+      "brief": "delete one or more game object instances",
+      "description": "Delete one or more game objects identified by id. Deletion is asynchronous meaning that\nthe game object(s) are scheduled for deletion which will happen at the end of the current\nframe. Note that game objects scheduled for deletion will be counted against\n<code>max_instances</code> in \"game.project\" until they are actually removed.\n<span class=\"icon-attention\"></span> Deleting a game object containing a particle FX component emitting particles will not immediately stop the particle FX from emitting particles. You need to manually stop the particle FX using <code>particlefx.stop()</code>.\n<span class=\"icon-attention\"></span> Deleting a game object containing a sound component that is playing will not immediately stop the sound from playing. You need to manually stop the sound using <code>sound.stop()</code>.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "optional id or table of id's of the instance(s) to delete, the instance of the calling script is deleted by default",
+          "types": ["string", "hash", "url", "(string|hash|url)[]"],
+          "is_optional": "True"
+        },
+        {
+          "name": "recursive",
+          "doc": "optional boolean, set to true to recursively delete child hiearchy in child to parent order",
+          "types": ["boolean"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "This example demonstrates how to delete game objects\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- Delete the script game object</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">delete</span><span class=\"p\">()</span>\n<span class=\"c1\">-- Delete a game object with the id &quot;my_game_object&quot;.</span>\n<span class=\"kd\">local</span> <span class=\"n\">id</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_game_object&quot;</span><span class=\"p\">)</span> <span class=\"c1\">-- retrieve the id of the game object to be deleted</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">delete</span><span class=\"p\">(</span><span class=\"n\">id</span><span class=\"p\">)</span>\n<span class=\"c1\">-- Delete a list of game objects.</span>\n<span class=\"kd\">local</span> <span class=\"n\">ids</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_object_1&quot;</span><span class=\"p\">),</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_object_2&quot;</span><span class=\"p\">),</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_object_3&quot;</span><span class=\"p\">)</span> <span class=\"p\">}</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">delete</span><span class=\"p\">(</span><span class=\"n\">ids</span><span class=\"p\">)</span>\n</code></pre></div>\n\nThis example demonstrates how to delete a game objects and their children (child to parent order)\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- Delete the script game object and it&#39;s children</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">delete</span><span class=\"p\">(</span><span class=\"kc\">true</span><span class=\"p\">)</span>\n<span class=\"c1\">-- Delete a game object with the id &quot;my_game_object&quot; and it&#39;s children.</span>\n<span class=\"kd\">local</span> <span class=\"n\">id</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_game_object&quot;</span><span class=\"p\">)</span> <span class=\"c1\">-- retrieve the id of the game object to be deleted</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">delete</span><span class=\"p\">(</span><span class=\"n\">id</span><span class=\"p\">,</span> <span class=\"kc\">true</span><span class=\"p\">)</span>\n<span class=\"c1\">-- Delete a list of game objects and their children.</span>\n<span class=\"kd\">local</span> <span class=\"n\">ids</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_object_1&quot;</span><span class=\"p\">),</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_object_2&quot;</span><span class=\"p\">),</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_object_3&quot;</span><span class=\"p\">)</span> <span class=\"p\">}</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">delete</span><span class=\"p\">(</span><span class=\"n\">ids</span><span class=\"p\">,</span> <span class=\"kc\">true</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.property",
+      "brief": "define a property for the script",
+      "description": "This function defines a property which can then be used in the script through the self-reference.\nThe properties defined this way are automatically exposed in the editor in game objects and collections which use the script.\nNote that you can only use this function outside any callback-functions like init and update.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "the id of the property",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "default value of the property. In the case of a url, only the empty constructor msg.url() is allowed. In the case of a resource one of the resource constructors (eg resource.atlas(), resource.font() etc) is expected.",
+          "types": [
+            "number",
+            "hash",
+            "string",
+            "url",
+            "vector3",
+            "vector4",
+            "quaternion",
+            "resource_data",
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "This example demonstrates how to define a property called \"health\" in a script.\nThe health is decreased whenever someone sends a message called \"take_damage\" to the script.\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;health&quot;</span><span class=\"p\">,</span> <span class=\"mi\">100</span><span class=\"p\">)</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- prints 100 to the output</span>\n    <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">health</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">on_message</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">message_id</span><span class=\"p\">,</span> <span class=\"n\">message</span><span class=\"p\">,</span> <span class=\"n\">sender</span><span class=\"p\">)</span>\n    <span class=\"kr\">if</span> <span class=\"n\">message_id</span> <span class=\"o\">==</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;take_damage&quot;</span><span class=\"p\">)</span> <span class=\"kr\">then</span>\n        <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">health</span> <span class=\"o\">=</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">health</span> <span class=\"o\">-</span> <span class=\"n\">message</span><span class=\"p\">.</span><span class=\"n\">damage</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;Ouch! My health is now: &quot;</span> <span class=\"o\">..</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">health</span><span class=\"p\">)</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nText properties can contain UTF-8 and newline characters:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;player_name&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;Player One&quot;</span><span class=\"p\">)</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;dialogue&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;First line</span><span class=\"se\">\\n</span><span class=\"s2\">Second line&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.exists",
+      "brief": "check if the specified game object exists",
+      "description": "This function can check for game objects in any collection by specifying\nthe collection name in the URL.",
+      "returnvalues": [
+        {
+          "name": "exists",
+          "doc": "true if the game object exists",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "url of the game object to check",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Check if game object \"my_game_object\" exists in the current collection\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">exists</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_game_object&quot;</span><span class=\"p\">)</span>\n</code></pre></div>\n\nCheck if game object exists in another collection\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">exists</span><span class=\"p\">(</span><span class=\"s2\">&quot;other_collection:/my_game_object&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.world_to_local_position",
+      "brief": "convert position to game object's coordinate space",
+      "description": "<span class=\"icon-attention\"></span> The function uses world transformation calculated at the end of previous frame.",
+      "returnvalues": [
+        {
+          "name": "converted_postion",
+          "doc": "converted position",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "position which need to be converted",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "url",
+          "doc": "url of the game object which coordinate system convert to",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Convert position of \"test\" game object into coordinate space of \"child\" object.\n<div class=\"codehilite\"><pre><span></span><code>  <span class=\"kd\">local</span> <span class=\"n\">test_pos</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_position</span><span class=\"p\">(</span><span class=\"s2\">&quot;/test&quot;</span><span class=\"p\">)</span>\n  <span class=\"kd\">local</span> <span class=\"n\">child_pos</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_position</span><span class=\"p\">(</span><span class=\"s2\">&quot;/child&quot;</span><span class=\"p\">)</span>\n  <span class=\"kd\">local</span> <span class=\"n\">new_position</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">world_to_local_position</span><span class=\"p\">(</span><span class=\"n\">test_pos</span><span class=\"p\">,</span> <span class=\"s2\">&quot;/child&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go.world_to_local_transform",
+      "brief": "convert transformation matrix to game object's coordinate space",
+      "description": "<span class=\"icon-attention\"></span> The function uses world transformation calculated at the end of previous frame.",
+      "returnvalues": [
+        {
+          "name": "converted_transform",
+          "doc": "converted transformation",
+          "types": ["matrix4"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "transformation",
+          "doc": "transformation which need to be converted",
+          "types": ["matrix4"],
+          "is_optional": "False"
+        },
+        {
+          "name": "url",
+          "doc": "url of the game object which coordinate system convert to",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Convert transformation of \"test\" game object into coordinate space of \"child\" object.\n<div class=\"codehilite\"><pre><span></span><code>   <span class=\"kd\">local</span> <span class=\"n\">test_transform</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_transform</span><span class=\"p\">(</span><span class=\"s2\">&quot;/test&quot;</span><span class=\"p\">)</span>\n   <span class=\"kd\">local</span> <span class=\"n\">child_transform</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_transform</span><span class=\"p\">(</span><span class=\"s2\">&quot;/child&quot;</span><span class=\"p\">)</span>\n   <span class=\"kd\">local</span> <span class=\"n\">result_transform</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">world_to_local_transform</span><span class=\"p\">(</span><span class=\"n\">test_transform</span><span class=\"p\">,</span> <span class=\"s2\">&quot;/child&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "called when a script component is initialized",
+      "description": "This is a callback-function, which is called by the engine when a script component is initialized. It can be used\nto set the initial state of the script.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "script instance used for storing state",
+          "types": ["script_instance"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- set up useful data</span>\n    <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_value</span> <span class=\"o\">=</span> <span class=\"mi\">1</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final",
+      "brief": "called when a script component is finalized",
+      "description": "This is a callback-function, which is called by the engine when a script component is finalized (destroyed). It can\nbe used to e.g. take some last action, report the finalization to other game object instances, delete spawned objects\nor release user input focus (see <a href=\"#release_input_focus\">release_input_focus</a>).",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "script instance used for storing state",
+          "types": ["script_instance"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">final</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- report finalization</span>\n    <span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_friend_instance&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;im_dead&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">my_stats</span> <span class=\"o\">=</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">some_value</span><span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "called every frame to update the script component",
+      "description": "This is a callback-function, which is called by the engine every frame to update the state of a script component.\nIt can be used to perform any kind of game related tasks, e.g. moving the game object instance.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "script instance used for storing state",
+          "types": ["script_instance"],
+          "is_optional": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "the time-step of the frame update",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "This example demonstrates how to move a game object instance through the script component:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- set initial velocity to be 1 along world x-axis</span>\n    <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_velocity</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">update</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">dt</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- move the game object instance</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_position</span><span class=\"p\">(</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_position</span><span class=\"p\">()</span> <span class=\"o\">+</span> <span class=\"n\">dt</span> <span class=\"o\">*</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_velocity</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fixed_update",
+      "brief": "called at fixed intervals to update the script component",
+      "description": "This is a callback-function, which is called by the engine at fixed intervals to update the state of a script\ncomponent. The function will be called if 'Fixed Update Frequency' is enabled in the Engine section of game.project.\nIt can for instance be used to update game logic with the physics simulation if using a fixed timestep for the\nphysics (enabled by ticking 'Use Fixed Timestep' in the Physics section of game.project).",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "script instance used for storing state",
+          "types": ["script_instance"],
+          "is_optional": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "the time-step of the frame update",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "late_update",
+      "brief": "called at the end of the frame for a final update of the script component",
+      "description": "This is a callback-function, which is called by the engine at the end of the frame to update the state of a script\ncomponent. Use it to make final adjustments to the game object instance.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "script instance used for storing state",
+          "types": ["script_instance"],
+          "is_optional": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "the time-step of the frame update",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_message",
+      "brief": "called when a message has been sent to the script component",
+      "description": "This is a callback-function, which is called by the engine whenever a message has been sent to the script component.\nIt can be used to take action on the message, e.g. send a response back to the sender of the message.\nThe <code>message</code> parameter is a table containing the message data. If the message is sent from the engine, the\ndocumentation of the message specifies which data is supplied.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "script instance used for storing state",
+          "types": ["script_instance"],
+          "is_optional": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "id of the received message",
+          "types": ["hash"],
+          "is_optional": "False"
+        },
+        {
+          "name": "message",
+          "doc": "a table containing the message data",
+          "types": ["table<any, any>"],
+          "is_optional": "False"
+        },
+        {
+          "name": "sender",
+          "doc": "address of the sender",
+          "types": ["url"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "This example demonstrates how a game object instance, called \"a\", can communicate with another instance, called \"b\". It\nis assumed that both script components of the instances has id \"script\".\nScript of instance \"a\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- let b know about some important data</span>\n    <span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;b#script&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;my_data&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span><span class=\"n\">important_value</span> <span class=\"o\">=</span> <span class=\"mi\">1</span><span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>\n\nScript of instance \"b\":\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- store the url of instance &quot;a&quot; for later use, by specifying nil as socket we</span>\n    <span class=\"c1\">-- automatically use our own socket</span>\n    <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">a_url</span> <span class=\"o\">=</span> <span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">url</span><span class=\"p\">(</span><span class=\"kc\">nil</span><span class=\"p\">,</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_id</span><span class=\"p\">(</span><span class=\"s2\">&quot;a&quot;</span><span class=\"p\">),</span> <span class=\"s2\">&quot;script&quot;</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">on_message</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">message_id</span><span class=\"p\">,</span> <span class=\"n\">message</span><span class=\"p\">,</span> <span class=\"n\">sender</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- check message and sender</span>\n    <span class=\"kr\">if</span> <span class=\"n\">message_id</span> <span class=\"o\">==</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_data&quot;</span><span class=\"p\">)</span> <span class=\"ow\">and</span> <span class=\"n\">sender</span> <span class=\"o\">==</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">a_url</span> <span class=\"kr\">then</span>\n        <span class=\"c1\">-- use the data in some way</span>\n        <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">important_value</span> <span class=\"o\">=</span> <span class=\"n\">message</span><span class=\"p\">.</span><span class=\"n\">important_value</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_input",
+      "brief": "called when user input is received",
+      "description": "This is a callback-function, which is called by the engine when user input is sent to the game object instance of the script.\nIt can be used to take action on the input, e.g. move the instance according to the input.\nFor an instance to obtain user input, it must first acquire input focus\nthrough the message <code>acquire_input_focus</code>.\nAny instance that has obtained input will be put on top of an\ninput stack. Input is sent to all listeners on the stack until the\nend of stack is reached, or a listener returns <code>true</code>\nto signal that it wants input to be consumed.\nSee the documentation of <a href=\"#acquire_input_focus\">acquire_input_focus</a> for more\ninformation.",
+      "returnvalues": [
+        {
+          "name": "consume",
+          "doc": "optional boolean to signal if the input should be consumed (not passed on to others) or not, default is false",
+          "types": ["boolean", "nil"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "script instance used for storing state",
+          "types": ["script_instance"],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "id of the received input action, as mapped in the input_binding-file, or <code>nil</code> for mouse movement",
+          "types": ["hash", "nil"],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "input data for the action",
+          "types": ["on_input.action"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "This example demonstrates how a game object instance can be moved as a response to user input.\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- acquire input focus</span>\n    <span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;.&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;acquire_input_focus&quot;</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- maximum speed the instance can be moved</span>\n    <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">max_speed</span> <span class=\"o\">=</span> <span class=\"mi\">2</span>\n    <span class=\"c1\">-- velocity of the instance, initially zero</span>\n    <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">velocity</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">()</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">update</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">dt</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- move the instance</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_position</span><span class=\"p\">(</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_position</span><span class=\"p\">()</span> <span class=\"o\">+</span> <span class=\"n\">dt</span> <span class=\"o\">*</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">velocity</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">on_input</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">action_id</span><span class=\"p\">,</span> <span class=\"n\">action</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- check for movement input</span>\n    <span class=\"kr\">if</span> <span class=\"n\">action_id</span> <span class=\"o\">==</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;right&quot;</span><span class=\"p\">)</span> <span class=\"kr\">then</span>\n        <span class=\"kr\">if</span> <span class=\"n\">action</span><span class=\"p\">.</span><span class=\"n\">released</span> <span class=\"kr\">then</span> <span class=\"c1\">-- reset velocity if input was released</span>\n            <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">velocity</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">()</span>\n        <span class=\"kr\">else</span> <span class=\"c1\">-- update velocity</span>\n            <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">velocity</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"n\">action</span><span class=\"p\">.</span><span class=\"n\">value</span> <span class=\"o\">*</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">max_speed</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">)</span>\n        <span class=\"kr\">end</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_reload",
+      "brief": "called when the script component is reloaded",
+      "description": "This is a callback-function, which is called by the engine when the script component is reloaded, e.g. from the editor.\nIt can be used for live development, e.g. to tweak constants or set up the state properly for the instance.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "script instance used for storing state",
+          "types": ["script_instance"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "This example demonstrates how to tweak the speed of a game object instance that is moved on user input.\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- acquire input focus</span>\n    <span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">post</span><span class=\"p\">(</span><span class=\"s2\">&quot;.&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;acquire_input_focus&quot;</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- maximum speed the instance can be moved, this value is tweaked in the on_reload function below</span>\n    <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">max_speed</span> <span class=\"o\">=</span> <span class=\"mi\">2</span>\n    <span class=\"c1\">-- velocity of the instance, initially zero</span>\n    <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">velocity</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">()</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">update</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">dt</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- move the instance</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_position</span><span class=\"p\">(</span><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_position</span><span class=\"p\">()</span> <span class=\"o\">+</span> <span class=\"n\">dt</span> <span class=\"o\">*</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">velocity</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">on_input</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">action_id</span><span class=\"p\">,</span> <span class=\"n\">action</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- check for movement input</span>\n    <span class=\"kr\">if</span> <span class=\"n\">action_id</span> <span class=\"o\">==</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;right&quot;</span><span class=\"p\">)</span> <span class=\"kr\">then</span>\n        <span class=\"kr\">if</span> <span class=\"n\">action</span><span class=\"p\">.</span><span class=\"n\">released</span> <span class=\"kr\">then</span> <span class=\"c1\">-- reset velocity if input was released</span>\n            <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">velocity</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">()</span>\n        <span class=\"kr\">else</span> <span class=\"c1\">-- update velocity</span>\n            <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">velocity</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"n\">action</span><span class=\"p\">.</span><span class=\"n\">value</span> <span class=\"o\">*</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">max_speed</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">)</span>\n        <span class=\"kr\">end</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">on_reload</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- edit this value and reload the script component</span>\n    <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">max_speed</span> <span class=\"o\">=</span> <span class=\"mi\">100</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "go",
+    "name": "Game object",
+    "brief": "Game object API documentation",
+    "description": "Game object API documentation",
+    "path": "engine/gameobject/proto/gameobject/gameobject_ddf.proto",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

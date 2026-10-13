@@ -451,6 +451,10 @@ export interface GenerateOptions {
   translations?: TranslationStore;
   urlParameters?: UrlParameterTable;
   registeredConstants?: ReadonlySet<string>;
+  // The modules the entry is emitted beside, the entry among them. Routing
+  // reads this set instead of looking the entry up in a committed manifest, so
+  // a surface built with its own import root still routes as a whole.
+  surface?: readonly ModuleManifestEntry[];
 }
 
 interface PreparedGeneratedModule {
@@ -472,7 +476,7 @@ function prepareGeneratedModule(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): PreparedGeneratedModule {
-  const routed = routedModuleOf(entry);
+  const routed = routedModuleOf(entry, options?.surface);
   const { module, dropped } = routed?.prepared ?? withheldApiModule(entry);
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
   const translations = options?.translations ?? loadTranslations();
@@ -495,36 +499,61 @@ interface RoutedSurface {
 }
 
 const routedSurfaces = new Map<string, RoutedSurface>();
+const routedCallerSurfaces = new WeakMap<readonly ModuleManifestEntry[], RoutedSurface>();
+
+function routeSurface(entries: readonly ModuleManifestEntry[]): RoutedSurface {
+  const withheld = entries.map(withheldApiModule);
+  const routed = routeTypeDeclarations(withheld.map(({ module }) => module));
+  return {
+    modules: new Map(
+      entries.map((member, index) => [
+        member,
+        {
+          module: routed[index] as ApiModule,
+          dropped: (withheld[index] as { dropped: string[] }).dropped,
+        },
+      ]),
+    ),
+    declaredTypes: declaredTypePaths(routed),
+  };
+}
 
 // A doc may declare a type another module owns (`b2d.joint.revolute_definition`
 // in the `b2d` doc) or name one another doc declares (`material.constant_info`
 // in `compute`), so each committed surface is routed as a whole: the runtime
-// modules and the editor modules of one target, never across targets. An entry
-// outside every committed manifest routes alone, as a single-module surface.
-function routedModuleOf(entry: ModuleManifestEntry):
+// modules and the editor modules of one target, never across targets. A caller
+// that names its own surface routes that set instead. An entry with neither, and
+// outside every committed manifest, routes alone, as a single-module surface.
+function routedModuleOf(
+  entry: ModuleManifestEntry,
+  callerSurface?: readonly ModuleManifestEntry[],
+):
   | {
       prepared: { module: ApiModule; dropped: string[] };
       declaredTypes: ReadonlyMap<string, string>;
     }
   | undefined {
+  if (callerSurface !== undefined) {
+    let surface = routedCallerSurfaces.get(callerSurface);
+    if (surface === undefined) {
+      surface = routeSurface(callerSurface);
+      routedCallerSurfaces.set(callerSurface, surface);
+    }
+    const prepared = surface.modules.get(entry);
+    // Falling back to a lone module here would emit `unknown` for every type a
+    // sibling declares, which type-checks and so goes unnoticed.
+    if (prepared === undefined) {
+      throw new Error(
+        `module "${entry.namespace}" is not a member of the surface it is emitted in`,
+      );
+    }
+    return { prepared, declaredTypes: surface.declaredTypes };
+  }
   const located = committedSurfaceOf(entry);
   if (located === undefined) return undefined;
   let surface = routedSurfaces.get(located.key);
   if (surface === undefined) {
-    const withheld = located.entries.map(withheldApiModule);
-    const routed = routeTypeDeclarations(withheld.map(({ module }) => module));
-    surface = {
-      modules: new Map(
-        located.entries.map((member, index) => [
-          member,
-          {
-            module: routed[index] as ApiModule,
-            dropped: (withheld[index] as { dropped: string[] }).dropped,
-          },
-        ]),
-      ),
-      declaredTypes: declaredTypePaths(routed),
-    };
+    surface = routeSurface(located.entries);
     routedSurfaces.set(located.key, surface);
   }
   const prepared = surface.modules.get(located.member);
