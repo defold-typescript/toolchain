@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.50.1
+
+> Summary:
+>
+> - **[deftest](/api/deftest)** types follow `2.9.0`.
+
+### Improved
+
+- **The [deftest](/api/deftest) library types are checked against `britzl/deftest` `2.9.0`**, and its API reference page names that tag; the declarations are unchanged.
+
 ## v0.50.0
 
 > Summary:
