@@ -13,7 +13,7 @@
     },
     {
       "repo": "https://github.com/britzl/deftest",
-      "ref": "2.8.0",
+      "ref": "2.9.0",
       "license": "MIT",
       "authored": "fixtures/authored/deftest.deftest.d.ts",
       "moduleId": "deftest.deftest",
