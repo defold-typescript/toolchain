@@ -13,6 +13,7 @@ import {
   EDITOR_VM_MANIFEST,
   extractAnnotationFixtures,
   extractFixtures,
+  groupDocsByNamespace,
   IGNORED_UPSTREAM,
   LUA_STDLIB_MANIFEST,
   mergeApiDocs,
@@ -794,6 +795,48 @@ describe("upstream-coverage guard", () => {
       ignoredUpstream: new Map(),
     });
     expect(report.unmappedUpstream).toEqual([]);
+  });
+});
+
+describe("groupDocsByNamespace", () => {
+  test("groups the Lua docs of a zip by declared namespace, in sorted entry order", () => {
+    const second = { info: { namespace: "alpha" }, elements: [{ name: "alpha.b" }] };
+    const first = { info: { namespace: "alpha" }, elements: [{ name: "alpha.a" }] };
+    const beta = { info: { namespace: "beta.sub" }, elements: [] };
+    const text: Record<string, string> = {
+      "doc/z_second.json": JSON.stringify(second),
+      "doc/a_first.json": JSON.stringify(first),
+      "doc/beta_doc.json": JSON.stringify(beta),
+      "doc/broken.json": "{",
+      "doc/sdk.json": JSON.stringify({ info: { namespace: "dmGraphics" }, elements: [] }),
+      "doc/noinfo.json": JSON.stringify({ elements: [] }),
+    };
+    const listed = [
+      "doc/z_second.json",
+      "doc/a_first.json",
+      "doc/beta_doc.json",
+      "doc/alpha_doc.script_api",
+      "doc/broken.json",
+      "doc/sdk.json",
+      "doc/noinfo.json",
+    ];
+    const zip: ZipAccessor = {
+      has: (entry) => listed.includes(entry),
+      entries: () => [...listed],
+      read: (entry) => {
+        if (!Object.hasOwn(text, entry)) throw new Error(`unexpected read of ${entry}`);
+        return text[entry] as string;
+      },
+    };
+
+    const grouped = groupDocsByNamespace(zip);
+
+    expect([...grouped.keys()].sort()).toEqual(["alpha", "beta.sub"]);
+    expect(grouped.get("alpha")).toEqual([
+      { entry: "doc/a_first.json", doc: first },
+      { entry: "doc/z_second.json", doc: second },
+    ]);
+    expect(grouped.get("beta.sub")).toEqual([{ entry: "doc/beta_doc.json", doc: beta }]);
   });
 });
 

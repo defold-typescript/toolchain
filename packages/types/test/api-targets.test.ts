@@ -15,7 +15,7 @@ import {
   resolveTargetModules,
   VERSIONED_MODULE_MANIFEST,
 } from "../scripts/regen";
-import { DEFOLD_VERSION, SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync-api-docs";
+import { DEFOLD_VERSION, type ZipAccessor } from "../scripts/sync-api-docs";
 import { UNBOUND_SKIPS } from "../src/emit-dts";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
@@ -66,14 +66,15 @@ function labelRefDocZip(): { fakeZip: ZipAccessor; cacheDir: string; version: st
   // Intentionally historical: 1.9.8 is a fixed ref-doc regression target, not the
   // current/previous release, so it stays a literal across version bumps.
   const version = "1.9.8";
-  const labelEntry = SYNC_MANIFEST.find((e) => e.namespace === "label");
-  if (!labelEntry) throw new Error("no label SYNC_MANIFEST entry");
+  // The name the 1.9.8 zip gives its label doc; the pinned release splits the
+  // namespace over two entries with other names.
+  const labelEntry = "doc/label_doc.json";
   const labelDoc = readFileSync(resolve(PACKAGE_ROOT, "fixtures", "label_doc.json"), "utf8");
   const fakeZip: ZipAccessor = {
-    has: (e) => e === labelEntry.zipEntry,
-    entries: () => [labelEntry.zipEntry],
+    has: (e) => e === labelEntry,
+    entries: () => [labelEntry],
     read: (e) => {
-      if (e !== labelEntry.zipEntry) throw new Error(`unexpected zip entry ${e}`);
+      if (e !== labelEntry) throw new Error(`unexpected zip entry ${e}`);
       return labelDoc;
     },
   };
@@ -349,12 +350,21 @@ describe("api-targets registry", () => {
     if (!target) throw new Error("no default target");
     const version = DEFOLD_VERSION;
     const zipText = new Map<string, string>();
+    // Each namespace is served as two docs, the second half listed first so
+    // archive order differs from sorted entry order.
     for (const module of target.modules) {
-      const sync = SYNC_MANIFEST.find((s) => s.namespace === module.namespace);
-      if (!sync) throw new Error(`no SYNC_MANIFEST entry for ${module.namespace}`);
-      zipText.set(
-        sync.zipEntry,
+      const doc = JSON.parse(
         readFileSync(resolve(PACKAGE_ROOT, target.fixturesDir, module.fixture), "utf8"),
+      ) as { elements: unknown[] };
+      const cut = Math.ceil(doc.elements.length / 2);
+      const stem = module.fixture.replace(/\.json$/, "");
+      zipText.set(
+        `doc/${stem}.b.json`,
+        JSON.stringify({ ...doc, elements: doc.elements.slice(cut) }),
+      );
+      zipText.set(
+        `doc/${stem}.a.json`,
+        JSON.stringify({ ...doc, elements: doc.elements.slice(0, cut) }),
       );
     }
     const fakeZip: ZipAccessor = {
@@ -386,7 +396,7 @@ describe("api-targets registry", () => {
     expect(differing).toEqual([]);
   });
 
-  test("ref-doc target with a namespace absent from SYNC_MANIFEST throws", async () => {
+  test("ref-doc target with a namespace no zip doc declares throws", async () => {
     const { fakeZip, cacheDir, version } = labelRefDocZip();
     const tmp = mkdtempSync(resolve(tmpdir(), "api-targets-"));
     const registryPath = resolve(tmp, "api-targets.json");
@@ -417,7 +427,7 @@ describe("api-targets registry", () => {
     );
     const target = loadApiTargets(registryPath).find((t) => t.id === "ref-bogus");
     if (!target) throw new Error("no ref-bogus target");
-    expect(
+    await expect(
       resolveTargetModules(target, { cacheDir, readZip: () => fakeZip, download: noDownload }),
     ).rejects.toThrow(/ref-bogus.*nope/);
   });
