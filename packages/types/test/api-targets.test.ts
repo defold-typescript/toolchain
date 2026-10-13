@@ -344,6 +344,48 @@ describe("api-targets registry", () => {
     expect(contents).toContain("get_text");
   });
 
+  test("a ref-doc copy of the default target emits the committed surface", async () => {
+    const target = loadApiTargets().find((t) => t.default === true);
+    if (!target) throw new Error("no default target");
+    const version = DEFOLD_VERSION;
+    const zipText = new Map<string, string>();
+    for (const module of target.modules) {
+      const sync = SYNC_MANIFEST.find((s) => s.namespace === module.namespace);
+      if (!sync) throw new Error(`no SYNC_MANIFEST entry for ${module.namespace}`);
+      zipText.set(
+        sync.zipEntry,
+        readFileSync(resolve(PACKAGE_ROOT, target.fixturesDir, module.fixture), "utf8"),
+      );
+    }
+    const fakeZip: ZipAccessor = {
+      has: (e) => zipText.has(e),
+      entries: () => [...zipText.keys()],
+      read: (e) => {
+        const text = zipText.get(e);
+        if (text === undefined) throw new Error(`unexpected zip entry ${e}`);
+        return text;
+      },
+    };
+    const cacheDir = mkdtempSync(resolve(tmpdir(), "ref-doc-cache-"));
+    mkdirSync(resolve(cacheDir, version), { recursive: true });
+    writeFileSync(resolve(cacheDir, version, "ref-doc.zip"), "seeded");
+    const copy: ApiTarget = { ...target, default: false, source: { kind: "ref-doc", version } };
+    const modules = await resolveTargetModules(copy, {
+      cacheDir,
+      readZip: () => fakeZip,
+      download: noDownload,
+    });
+    expect(modules.length).toBeGreaterThan(0);
+    const differing = modules
+      .filter(
+        (entry) =>
+          generateModuleDeclaration(entry, { surface: modules }).contents !==
+          readFileSync(resolve(PACKAGE_ROOT, target.generatedDir, entry.outFile), "utf8"),
+      )
+      .map((entry) => entry.outFile);
+    expect(differing).toEqual([]);
+  });
+
   test("ref-doc target with a namespace absent from SYNC_MANIFEST throws", async () => {
     const { fakeZip, cacheDir, version } = labelRefDocZip();
     const tmp = mkdtempSync(resolve(tmpdir(), "api-targets-"));
