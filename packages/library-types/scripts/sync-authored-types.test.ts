@@ -863,7 +863,7 @@ describe("monarch migration integrity", () => {
       expect(target).toBeDefined();
       expect(target?.namespace).toBe(moduleId);
       expect(target?.repo).toBe("https://github.com/britzl/monarch");
-      expect(target?.ref).toBe("6.0.2");
+      expect(target?.ref).toBe("6.0.3");
       expect(target?.license).toBe("MIT");
       expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
       expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
