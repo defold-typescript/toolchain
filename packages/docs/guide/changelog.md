@@ -13,12 +13,14 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[deftest](/api/deftest) and [monarch.monarch](/api/monarch.monarch)** types follow their newest upstream tags.
+> - **[Library types](/api) follow newer upstream tags** for deftest, monarch and panthera.
 
 ### Improved
 
-- **The [deftest](/api/deftest) library types are checked against `britzl/deftest` `2.9.0`**, and its API reference page names that tag; the declarations are unchanged.
-- **The [monarch.monarch](/api/monarch.monarch), [monarch.transitions.easings](/api/monarch.transitions.easings) and [monarch.transitions.gui](/api/monarch.transitions.gui) library types are checked against `britzl/monarch` `6.0.3`**, and their API reference pages name that tag; the declarations are unchanged.
+- **Three library types are checked against newer upstream tags**, and their [API reference](/api) pages name the new tag. The declarations are unchanged, so project code compiles as before.
+  - **[deftest](/api/deftest)** is checked against `britzl/deftest` `2.9.0`.
+  - **[monarch.monarch](/api/monarch.monarch)**, [monarch.transitions.easings](/api/monarch.transitions.easings) and [monarch.transitions.gui](/api/monarch.transitions.gui) are checked against `britzl/monarch` `6.0.3`.
+  - **[panthera](/api/panthera)** is checked against `Insality/panthera` `runtime.11`.
 
 ## v0.50.0
 

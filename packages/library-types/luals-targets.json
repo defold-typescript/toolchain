@@ -184,7 +184,7 @@
     },
     {
       "repo": "https://github.com/Insality/panthera",
-      "ref": "runtime.10",
+      "ref": "runtime.11",
       "license": "MIT",
       "sourceGlobs": ["panthera/**/*.lua"],
       "moduleId": "panthera.panthera",
