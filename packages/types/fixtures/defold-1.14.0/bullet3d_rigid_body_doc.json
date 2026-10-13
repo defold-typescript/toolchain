@@ -1,0 +1,1376 @@
+{
+  "elements": [
+    {
+      "type": "ENUM",
+      "name": "bullet3d.rigid_body.FLAG",
+      "brief": "Rigid body flags",
+      "description": "Combine these constants into the complete flag mask accepted by\n<code>bullet3d.rigid_body.set_flags()</code>.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "BT_DISABLE_WORLD_GRAVITY",
+          "doc": "Disable automatic world gravity. Set this bit before assigning custom body gravity that must survive later world-gravity changes or re-adding the body to a world.",
+          "type": ""
+        },
+        {
+          "name": "BT_ENABLE_GYROSCOPIC_FORCE_EXPLICIT",
+          "doc": "Enable explicit gyroscopic force integration.",
+          "type": ""
+        },
+        {
+          "name": "BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_WORLD",
+          "doc": "Enable implicit world-space gyroscopic force integration.",
+          "type": ""
+        },
+        {
+          "name": "BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_BODY",
+          "doc": "Enable implicit body-space gyroscopic force integration. This flag is enabled by default for newly constructed rigid bodies.",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.is_valid",
+      "brief": "Test whether a handle refers to a valid rigid body",
+      "description": "Test whether a handle refers to a valid rigid body",
+      "returnvalues": [
+        {
+          "name": "valid",
+          "doc": "rigid body validity",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_world",
+      "brief": "Get the body's world",
+      "description": "Get the body's world",
+      "returnvalues": [
+        {
+          "name": "world",
+          "doc": "owning world",
+          "types": ["btDiscreteDynamicsWorld"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_mass",
+      "brief": "Get mass",
+      "description": "Get mass",
+      "returnvalues": [
+        {
+          "name": "mass",
+          "doc": "mass, or zero for an infinite-mass body",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_inverse_mass",
+      "brief": "Get inverse mass",
+      "description": "Get inverse mass",
+      "returnvalues": [
+        {
+          "name": "inverse_mass",
+          "doc": "inverse mass",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_mass",
+      "brief": "Set mass and calculate local inertia",
+      "description": "Recalculates local inertia from the body's current collision shape. Only a\ndynamic body can be changed; zero mass cannot be used to convert it into a\nstatic body. Values too small to have a finite native inverse are rejected.\nThe body is activated after the update.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "dynamic rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "mass",
+          "doc": "finite mass greater than zero",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Change the mass of a dynamic collision object and inspect its recalculated inertia:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">body</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_rigid_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject&quot;</span><span class=\"p\">)</span>\n    <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">rigid_body</span><span class=\"p\">.</span><span class=\"n\">set_mass</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"mi\">5</span><span class=\"p\">)</span>\n    <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;local inertia&quot;</span><span class=\"p\">,</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">rigid_body</span><span class=\"p\">.</span><span class=\"n\">get_local_inertia</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">))</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_local_inertia",
+      "brief": "Get local inertia",
+      "description": "Returns the diagonal local inertia in Defold mass-times-distance-squared\nunits. A zero component denotes an axis with zero inverse inertia.",
+      "returnvalues": [
+        {
+          "name": "inertia",
+          "doc": "diagonal local inertia",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_mass_properties",
+      "brief": "Set explicit mass properties",
+      "description": "Sets mass and diagonal local inertia together, updates the world-space\ninertia tensor, and activates the body. Only dynamic bodies are accepted.\nA zero inertia component is allowed and disables angular response on that\nlocal axis; negative, non-finite, or nonzero values too small to have a\nfinite native inverse are rejected.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "dynamic rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "mass",
+          "doc": "finite mass greater than zero",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "local_inertia",
+          "doc": "finite non-negative diagonal local inertia in Defold mass-times-distance-squared units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_linear_velocity",
+      "brief": "Get linear velocity",
+      "description": "Get linear velocity",
+      "returnvalues": [
+        {
+          "name": "velocity",
+          "doc": "velocity in Defold units per second",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_linear_velocity",
+      "brief": "Set linear velocity",
+      "description": "Set linear velocity",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "velocity",
+          "doc": "finite velocity in Defold units per second",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_angular_velocity",
+      "brief": "Get angular velocity",
+      "description": "Get angular velocity",
+      "returnvalues": [
+        {
+          "name": "velocity",
+          "doc": "angular velocity in radians per second",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_angular_velocity",
+      "brief": "Set angular velocity",
+      "description": "Set angular velocity",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "velocity",
+          "doc": "finite angular velocity in radians per second",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_damping",
+      "brief": "Get linear and angular damping",
+      "description": "Get linear and angular damping",
+      "returnvalues": [
+        {
+          "name": "linear",
+          "doc": "linear damping",
+          "types": ["number"]
+        },
+        {
+          "name": "angular",
+          "doc": "angular damping",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_damping",
+      "brief": "Set linear and angular damping",
+      "description": "Set linear and angular damping",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "linear",
+          "doc": "finite linear damping in <code>[0, 1]</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "angular",
+          "doc": "finite angular damping in <code>[0, 1]</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_linear_damping",
+      "brief": "Get linear damping",
+      "description": "Get linear damping",
+      "returnvalues": [
+        {
+          "name": "damping",
+          "doc": "linear damping",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_linear_damping",
+      "brief": "Set linear damping",
+      "description": "Set linear damping",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "damping",
+          "doc": "finite linear damping in <code>[0, 1]</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_angular_damping",
+      "brief": "Get angular damping",
+      "description": "Get angular damping",
+      "returnvalues": [
+        {
+          "name": "damping",
+          "doc": "angular damping",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_angular_damping",
+      "brief": "Set angular damping",
+      "description": "Set angular damping",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "damping",
+          "doc": "finite angular damping in <code>[0, 1]</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_linear_factor",
+      "brief": "Get the linear factor",
+      "description": "Get the linear factor",
+      "returnvalues": [
+        {
+          "name": "factor",
+          "doc": "per-axis linear factor",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_linear_factor",
+      "brief": "Set the linear factor",
+      "description": "Set the linear factor",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "factor",
+          "doc": "per-axis linear factor",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_angular_factor",
+      "brief": "Get the angular factor",
+      "description": "Get the angular factor",
+      "returnvalues": [
+        {
+          "name": "factor",
+          "doc": "per-axis angular factor",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_angular_factor",
+      "brief": "Set the angular factor",
+      "description": "Set the angular factor",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "factor",
+          "doc": "per-axis angular factor",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_gravity",
+      "brief": "Get body gravity",
+      "description": "Get body gravity",
+      "returnvalues": [
+        {
+          "name": "gravity",
+          "doc": "gravity in Defold units per second squared",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_gravity",
+      "brief": "Set body gravity",
+      "description": "A later <code>bullet3d.world.set_gravity()</code> call, or removing and re-adding the\nbody to a world, can overwrite custom body gravity unless the body's\n<code>BT_DISABLE_WORLD_GRAVITY</code> flag is set.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "gravity",
+          "doc": "gravity in Defold units per second squared",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Give one body persistent custom gravity without discarding its other flags:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">body</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_rigid_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject&quot;</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">flags</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">rigid_body</span><span class=\"p\">.</span><span class=\"n\">get_flags</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">)</span>\n    <span class=\"n\">flags</span> <span class=\"o\">=</span> <span class=\"n\">bit</span><span class=\"p\">.</span><span class=\"n\">bor</span><span class=\"p\">(</span><span class=\"n\">flags</span><span class=\"p\">,</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">rigid_body</span><span class=\"p\">.</span><span class=\"n\">BT_DISABLE_WORLD_GRAVITY</span><span class=\"p\">)</span>\n    <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">rigid_body</span><span class=\"p\">.</span><span class=\"n\">set_flags</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"n\">flags</span><span class=\"p\">)</span>\n    <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">rigid_body</span><span class=\"p\">.</span><span class=\"n\">set_gravity</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">4</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">))</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_flags",
+      "brief": "Get rigid body flags",
+      "description": "Get rigid body flags",
+      "returnvalues": [
+        {
+          "name": "flags",
+          "doc": "rigid body flags",
+          "types": ["integer"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_flags",
+      "brief": "Set rigid body flags",
+      "description": "This replaces the complete flag mask. Every enabled gyroscopic mode is\nevaluated independently, so clear existing gyroscopic mode bits before\nselecting a different mode.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "flags",
+          "doc": "rigid body flags",
+          "types": ["integer"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.has_flag",
+      "brief": "Test a rigid body flag",
+      "description": "Test a rigid body flag",
+      "returnvalues": [
+        {
+          "name": "set",
+          "doc": "<code>true</code> when all requested flag bits are set",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "flag",
+          "doc": "flag or mask",
+          "types": ["integer"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_linear_sleeping_threshold",
+      "brief": "Get the linear sleeping threshold",
+      "description": "Get the linear sleeping threshold",
+      "returnvalues": [
+        {
+          "name": "threshold",
+          "doc": "threshold in Defold units per second",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_angular_sleeping_threshold",
+      "brief": "Get the angular sleeping threshold",
+      "description": "Get the angular sleeping threshold",
+      "returnvalues": [
+        {
+          "name": "threshold",
+          "doc": "threshold in radians per second",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.set_sleeping_thresholds",
+      "brief": "Set the sleeping thresholds",
+      "description": "Set the sleeping thresholds",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "linear",
+          "doc": "finite non-negative linear threshold in Defold units per second",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "angular",
+          "doc": "finite non-negative angular threshold in radians per second",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_total_force",
+      "brief": "Get total accumulated force",
+      "description": "Get total accumulated force",
+      "returnvalues": [
+        {
+          "name": "force",
+          "doc": "accumulated force in Defold units",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_total_torque",
+      "brief": "Get total accumulated torque",
+      "description": "Get total accumulated torque",
+      "returnvalues": [
+        {
+          "name": "torque",
+          "doc": "accumulated torque in Defold squared units",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_center_of_mass_position",
+      "brief": "Get the center-of-mass world position",
+      "description": "Get the center-of-mass world position",
+      "returnvalues": [
+        {
+          "name": "position",
+          "doc": "center-of-mass position in Defold units",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.apply_central_force",
+      "brief": "Apply a force at the center of mass",
+      "description": "Apply a force at the center of mass",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "force",
+          "doc": "force in Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.apply_force",
+      "brief": "Apply a force at a world-space position",
+      "description": "This has the same point semantics as <code>b2d.body.apply_force</code>: <code>world_position</code>\nis the point where the force is applied. The binding converts it to the\ncenter-of-mass-relative offset expected by Bullet's <code>applyForce</code> method.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "force",
+          "doc": "force in Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "world_position",
+          "doc": "application point in world space and Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Apply an upward force at the game object's current world position:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">body</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_rigid_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject&quot;</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">force</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">100</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">)</span>\n    <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">rigid_body</span><span class=\"p\">.</span><span class=\"n\">apply_force</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"n\">force</span><span class=\"p\">,</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_position</span><span class=\"p\">())</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.apply_force_at_relative_position",
+      "brief": "Apply a force at a center-of-mass-relative position",
+      "description": "This exposes Bullet's <code>btRigidBody::applyForce</code> point convention directly.\n<code>relative_position</code> is an offset from the body's center of mass expressed in\nworld axes, not a world position or body-local coordinate.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "force",
+          "doc": "force in Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "relative_position",
+          "doc": "center-of-mass-relative offset in world axes and Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.apply_torque",
+      "brief": "Apply torque",
+      "description": "Apply torque",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "torque",
+          "doc": "torque in Defold squared units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.apply_central_impulse",
+      "brief": "Apply an impulse at the center of mass",
+      "description": "Apply an impulse at the center of mass",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "impulse",
+          "doc": "impulse in Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.apply_linear_impulse",
+      "brief": "Apply a linear impulse at a world-space position",
+      "description": "This has the same point semantics as <code>b2d.body.apply_linear_impulse</code>.\n<code>world_position</code> is converted to the center-of-mass-relative offset expected\nby Bullet's <code>applyImpulse</code> method.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "impulse",
+          "doc": "impulse in Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "world_position",
+          "doc": "application point in world space and Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.apply_impulse",
+      "brief": "Apply an impulse at a relative position",
+      "description": "This exposes Bullet's <code>btRigidBody::applyImpulse</code> point convention directly.\n<code>relative_position</code> is an offset from the body's center of mass expressed in\nworld axes, not a world position or body-local coordinate.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "impulse",
+          "doc": "impulse in Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "relative_position",
+          "doc": "center-of-mass-relative offset in world axes and Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.apply_torque_impulse",
+      "brief": "Apply a torque impulse",
+      "description": "Apply a torque impulse",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "impulse",
+          "doc": "angular impulse in Defold squared units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.clear_forces",
+      "brief": "Clear accumulated force and torque",
+      "description": "Clear accumulated force and torque",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_velocity_in_local_point",
+      "brief": "Get velocity at a center-of-mass-relative point",
+      "description": "The relative position is expressed in world axes. Despite Bullet's function\nname, it is not a body-local coordinate.",
+      "returnvalues": [
+        {
+          "name": "velocity",
+          "doc": "point velocity in Defold units per second",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "relative_position",
+          "doc": "center-of-mass-relative offset in world axes and Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_linear_velocity_from_world_point",
+      "brief": "Get velocity at a world-space point",
+      "description": "This has the same point semantics as\n<code>b2d.body.get_linear_velocity_from_world_point</code>.",
+      "returnvalues": [
+        {
+          "name": "velocity",
+          "doc": "point velocity in Defold units per second",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "world_point",
+          "doc": "point in world space and Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.get_linear_velocity_from_local_point",
+      "brief": "Get velocity at a body-local point",
+      "description": "This has the same point semantics as\n<code>b2d.body.get_linear_velocity_from_local_point</code>. The local origin is the\nbody's center of mass.",
+      "returnvalues": [
+        {
+          "name": "velocity",
+          "doc": "point velocity in Defold units per second",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        },
+        {
+          "name": "local_point",
+          "doc": "point in body-local space and Defold units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.rigid_body.compute_aabb",
+      "brief": "Compute the world-space AABB",
+      "description": "Calls Bullet's native <code>btRigidBody::getAabb</code>, which immediately calculates\nthe bounds from the body's current collision shape and world transform. This\ndoes not read the broadphase proxy's cached AABB.",
+      "returnvalues": [
+        {
+          "name": "aabb",
+          "doc": "world-space bounds in Defold units",
+          "types": ["bullet3d.world.aabb"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "rigid body",
+          "types": ["btRigidBody"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "bullet3d.rigid_body",
+    "name": "bullet3d.rigid_body",
+    "brief": "Bullet rigid body API",
+    "description": "Rigid body functions accept the collision object userdata returned by\n`bullet3d.get_rigid_body()`. Passing a trigger ghost object raises an error.\nDefold retains ownership of the collision shape, motion state, world\nmembership, and native user pointer. The shape's logical children can be\nmutated through `bullet3d.shape`; shared resource shapes become per-instance\ncopies on first mutation. Mass and local inertia can be changed for dynamic\nbodies without changing their Defold collision-object type.\n\nLinear quantities use Defold units. Angular velocity, damping, and factors\nare unscaled. Torque and angular impulse use squared physics scale because\ninertia scales with length squared. Floating-point and vector inputs must be\nfinite. Damping must be in `[0, 1]`, and sleeping thresholds must be\nnon-negative.",
+    "path": "engine/gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_rigid_body.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

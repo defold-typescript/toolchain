@@ -1,0 +1,175 @@
+/** @noSelfInFile */
+import type { Opaque, Vector3 } from "../../../src/core-types";
+
+declare global {
+  /**
+   * Functions for interacting with fixtures attached to Box2D bodies.
+   * Fixtures are addressed functionally by `(body, fixture_index)` rather than persistent Lua handles.
+   */
+  namespace b2d.fixture {
+    /**
+     * Get fixture AABB for a child shape.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param child_index - 1-based child shape index. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns the fixture AABB
+     */
+    function get_aabb(body: Opaque<"b2Body">, fixture_index: number, child_index: number): b2d.aabb;
+    /**
+     * Get fixture density.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns density in kg/m^2
+     */
+    function get_density(body: Opaque<"b2Body">, fixture_index: number): number;
+    /**
+     * Get fixture filter data for a child shape.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param child_index - 1-based child shape index. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns the filter data
+     */
+    function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): b2d.filter;
+    /**
+     * Get fixture friction.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     */
+    function get_friction(body: Opaque<"b2Body">, fixture_index: number): number;
+    /**
+     * Get fixture restitution.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     */
+    function get_restitution(body: Opaque<"b2Body">, fixture_index: number): number;
+    /**
+     * Get the fixture shape as a functional shape table.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     * @returns the shape definition, suitable for reuse in b2d.body.create_fixture
+     */
+    function get_shape(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.definition;
+    /**
+     * Get the fixture type.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     */
+    function get_type(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.SHAPE_TYPE;
+    /**
+     * Check if a fixture is a sensor.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     */
+    function is_sensor(body: Opaque<"b2Body">, fixture_index: number): boolean;
+    /**
+     * Refilter a fixture.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param touch_proxies - if true, touch broad-phase proxies
+     */
+    function refilter(body: Opaque<"b2Body">, fixture_index: number, touch_proxies: boolean): void;
+    /**
+     * Set fixture density.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param density - density in kg/m^2
+     * @param update_mass - if true, reset body mass data after the change
+     */
+    function set_density(body: Opaque<"b2Body">, fixture_index: number, density: number, update_mass?: boolean): void;
+    /**
+     * Set fixture filter data for a child shape.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param child_index - 1-based child shape index. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param filter - the filter data
+     */
+    function set_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number, filter: b2d.filter): void;
+    /**
+     * Set fixture friction.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     */
+    function set_friction(body: Opaque<"b2Body">, fixture_index: number, friction: number): void;
+    /**
+     * Set fixture restitution.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     */
+    function set_restitution(body: Opaque<"b2Body">, fixture_index: number, restitution: number): void;
+    /**
+     * Set sensor mode for a fixture.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     */
+    function set_sensor(body: Opaque<"b2Body">, fixture_index: number, enabled: boolean): void;
+    /**
+     * This updates the existing Box2D v2 shape using the same table format as
+     * b2d.body.create_fixture and b2d.fixture.get_shape.
+     * The shape type must match the current fixture shape type. Polygon updates must
+     * keep the same vertex count. Chain shape geometry cannot be updated in-place.
+     * The body mass is not updated unless `update_mass` is true.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param shape - the shape definition
+     * @param update_mass - if true, reset body mass data after the change
+     * @example
+     * ```ts
+     * const body = b2d.get_body("#collisionobject");
+     * if (body !== undefined) {
+     *   // Move a circle shape relative to the body origin.
+     *   const circle = b2d.fixture.get_shape(body, 1);
+     *   const radius = "radius" in circle ? circle.radius : undefined;
+     *   b2d.fixture.set_shape(body, 1, { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: radius ?? 16, center: vmath.vector3(24, 0, 0) }, true);
+     *
+     *   // Replace an edge shape's local endpoints.
+     *   b2d.fixture.set_shape(body, 2, {
+     *     type: b2d.shape.SHAPE_TYPE_EDGE,
+     *     v1: vmath.vector3(-32, 0, 0),
+     *     v2: vmath.vector3(32, 0, 0),
+     *   });
+     *
+     *   // Update a box shape using the polygon box convenience format.
+     *   // The existing polygon must already have four vertices.
+     *   b2d.fixture.set_shape(
+     *     body,
+     *     3,
+     *     {
+     *       type: b2d.shape.SHAPE_TYPE_BOX,
+     *       hx: 16,
+     *       hy: 8,
+     *       center: vmath.vector3(0, 20, 0),
+     *       angle: math.rad(30),
+     *     },
+     *     true,
+     *   );
+     * }
+     * ```
+     */
+    function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void;
+    /**
+     * Test a point against a fixture.
+     *
+     * @param body - body
+     * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
+     * @param point - point in world coordinates
+     */
+    function test_point(body: Opaque<"b2Body">, fixture_index: number, point: Vector3): boolean;
+  }
+}
+
+export {};

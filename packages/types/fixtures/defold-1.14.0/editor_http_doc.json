@@ -1,0 +1,476 @@
+{
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "http.response",
+      "brief": "hTTP server response",
+      "description": "HTTP server response",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "hTTP server response",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "http.route",
+      "brief": "hTTP server route",
+      "description": "HTTP server route",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "hTTP server route",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "http.server.request",
+      "brief": "hTTP server request",
+      "description": "HTTP server request",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "[string]",
+          "doc": "route path parameter extracted from a path pattern",
+          "type": "any"
+        },
+        {
+          "name": "path",
+          "doc": "full matched path, starting with <code>/</code>",
+          "type": "string"
+        },
+        {
+          "name": "method",
+          "doc": "HTTP request method, e.g. <code>\"POST\"</code>",
+          "type": "string"
+        },
+        {
+          "name": "headers",
+          "doc": "request headers, keyed by lowercase header name",
+          "type": "table<string, string|string[]>"
+        },
+        { "name": "query?", "doc": "query string", "type": "string" },
+        {
+          "name": "body?",
+          "doc": "request body, whose type depends on the route's <code>as</code> argument",
+          "type": "any"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "http.server.handler",
+      "brief": "hTTP server request handler",
+      "description": "HTTP server request handler",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "hTTP server request handler",
+          "types": [
+            "fun(request:http.server.request):(http.response|integer|nil, table<string, string>|nil, string|nil)"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "http.request.method",
+      "brief": "hTTP request method, either a common method or a custom method string",
+      "description": "HTTP request method, either a common method or a custom method string",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "hTTP request method, either a common method or a custom method string",
+          "types": [
+            "\"GET\"",
+            "\"POST\"",
+            "\"PUT\"",
+            "\"PATCH\"",
+            "\"DELETE\"",
+            "\"HEAD\"",
+            "\"OPTIONS\"",
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "http.request.options",
+      "brief": "options for http.request",
+      "description": "Options for http.request",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "method?",
+          "doc": "request method, defaults to <code>\"GET\"</code>",
+          "type": "http.request.method"
+        },
+        { "name": "headers?", "doc": "request headers", "type": "table<string, string>" },
+        { "name": "body?", "doc": "request body", "type": "string" },
+        {
+          "name": "as?",
+          "doc": "response body converter; mutually exclusive with <code>path</code>",
+          "type": "\"string\"|\"json\""
+        },
+        {
+          "name": "path?",
+          "doc": "destination file path, resolved against project root if relative; mutually exclusive with <code>as</code>",
+          "type": "string"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "http.request.response",
+      "brief": "response returned by http.request",
+      "description": "Response returned by http.request",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        { "name": "status", "doc": "response code", "type": "integer" },
+        {
+          "name": "headers",
+          "doc": "response headers, where keys are lowercase and repeated headers have arrays of values",
+          "type": "table<string, string|string[]>"
+        },
+        {
+          "name": "body?",
+          "doc": "response body, present only when the <code>as</code> option was provided",
+          "type": "any"
+        },
+        {
+          "name": "path?",
+          "doc": "resolved absolute destination path, present after a successful response was written using the <code>path</code> option",
+          "type": "string"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "http.request",
+      "brief": "perform an HTTP request",
+      "description": "Perform an HTTP request",
+      "returnvalues": [
+        { "name": "response", "doc": "HTTP response", "types": ["http.request.response"] }
+      ],
+      "parameters": [
+        { "name": "url", "doc": "request URL", "types": ["string"], "is_optional": "False" },
+        {
+          "name": "opts",
+          "doc": "request options",
+          "types": ["http.request.options"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "http.server.local_url",
+      "brief": "editor's HTTP server local url",
+      "description": "Editor's HTTP server local url",
+      "returnvalues": [],
+      "parameters": [{ "name": "value", "doc": "", "types": ["string"], "is_optional": "False" }],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "http.server.port",
+      "brief": "editor's HTTP server port",
+      "description": "Editor's HTTP server port",
+      "returnvalues": [],
+      "parameters": [{ "name": "value", "doc": "", "types": ["integer"], "is_optional": "False" }],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "http.server.url",
+      "brief": "editor's HTTP server url",
+      "description": "Editor's HTTP server url",
+      "returnvalues": [],
+      "parameters": [{ "name": "value", "doc": "", "types": ["string"], "is_optional": "False" }],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "http.server.external_file_response",
+      "brief": "create HTTP response that will stream the content of a file defined by the path",
+      "description": "Create HTTP response that will stream the content of a file defined by the path",
+      "returnvalues": [
+        { "name": "response", "doc": "HTTP response value, userdata", "types": ["http.response"] }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "External file path, resolved against project root if relative",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "status",
+          "doc": "HTTP status code, an integer, default 200",
+          "types": ["integer"],
+          "is_optional": "True"
+        },
+        {
+          "name": "headers",
+          "doc": "HTTP response headers, a table from lower-case header names to header values",
+          "types": ["table<string, string>"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "http.server.json_response",
+      "brief": "create HTTP response with a JSON value",
+      "description": "Create HTTP response with a JSON value",
+      "returnvalues": [
+        { "name": "response", "doc": "HTTP response value, userdata", "types": ["http.response"] }
+      ],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "Any Lua value that may be represented as JSON",
+          "types": ["any"],
+          "is_optional": "False"
+        },
+        {
+          "name": "status",
+          "doc": "HTTP status code, an integer, default 200",
+          "types": ["integer"],
+          "is_optional": "True"
+        },
+        {
+          "name": "headers",
+          "doc": "HTTP response headers, a table from lower-case header names to header values",
+          "types": ["table<string, string>"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "http.server.resource_response",
+      "brief": "create HTTP response that will stream the content of a resource defined by the resource path",
+      "description": "Create HTTP response that will stream the content of a resource defined by the resource path",
+      "returnvalues": [
+        { "name": "response", "doc": "HTTP response value, userdata", "types": ["http.response"] }
+      ],
+      "parameters": [
+        {
+          "name": "resource_path",
+          "doc": "Resource path (starting with <code>/</code>)",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "status",
+          "doc": "HTTP status code, an integer, default 200",
+          "types": ["integer"],
+          "is_optional": "True"
+        },
+        {
+          "name": "headers",
+          "doc": "HTTP response headers, a table from lower-case header names to header values",
+          "types": ["table<string, string>"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "http.server.response",
+      "brief": "create HTTP response",
+      "description": "Create HTTP response",
+      "returnvalues": [
+        { "name": "response", "doc": "HTTP response value, userdata", "types": ["http.response"] }
+      ],
+      "parameters": [
+        {
+          "name": "status",
+          "doc": "HTTP status code, an integer, default 200",
+          "types": ["integer"],
+          "is_optional": "True"
+        },
+        {
+          "name": "headers",
+          "doc": "HTTP response headers, a table from lower-case header names to header values",
+          "types": ["table<string, string>"],
+          "is_optional": "True"
+        },
+        { "name": "body", "doc": "HTTP response body", "types": ["string"], "is_optional": "True" }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "http.server.route",
+      "brief": "create route definition for the editor's HTTP server",
+      "description": "Create route definition for the editor's HTTP server",
+      "returnvalues": [{ "name": "route", "doc": "HTTP server route", "types": ["http.route"] }],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "HTTP URI path, starts with <code>/</code>; may include path patterns (<code>{name}</code> for a single segment and <code>{*name}</code> for the rest of the request path) that will be extracted from the path and provided to the handler as a part of the request",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "method",
+          "doc": "HTTP request method, default <code>\"GET\"</code>",
+          "types": ["string"],
+          "is_optional": "True"
+        },
+        {
+          "name": "as",
+          "doc": "Request body converter, either <code>\"string\"</code> or <code>\"json\"</code>; the body will be discarded if not specified",
+          "types": ["\"string\"", "\"json\""],
+          "is_optional": "True"
+        },
+        {
+          "name": "openapi",
+          "doc": "Optional OpenAPI Operation Object for this route method, exposed from <code>/openapi.json</code>. Must follow <code>https://spec.openapis.org/oas/v3.0.3.html#operation-object</code>.",
+          "types": ["table<string, any>"],
+          "is_optional": "True"
+        },
+        {
+          "name": "handler",
+          "doc": "Request handler. Return either a single response value or arguments accepted by <code>http.server.response()</code>.",
+          "types": ["http.server.handler"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Receive JSON and respond with JSON:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"nv\">http</span>.<span class=\"nv\">server</span>.<span class=\"nv\">route</span><span class=\"ss\">(</span>\n  <span class=\"s2\">&quot;</span><span class=\"s\">/json</span><span class=\"s2\">&quot;</span>, <span class=\"s2\">&quot;</span><span class=\"s\">POST</span><span class=\"s2\">&quot;</span>, <span class=\"s2\">&quot;</span><span class=\"s\">json</span><span class=\"s2\">&quot;</span>,\n  <span class=\"nv\">function</span><span class=\"ss\">(</span><span class=\"nv\">request</span><span class=\"ss\">)</span>\n    <span class=\"nv\">pprint</span><span class=\"ss\">(</span><span class=\"nv\">request</span>.<span class=\"nv\">body</span><span class=\"ss\">)</span>\n    <span class=\"k\">return</span> <span class=\"mi\">200</span>\n  <span class=\"k\">end</span>\n<span class=\"ss\">)</span>\n</code></pre></div>\n\nExtract parts of the path:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"nv\">http</span>.<span class=\"nv\">server</span>.<span class=\"nv\">route</span><span class=\"ss\">(</span>\n  <span class=\"s2\">&quot;</span><span class=\"s\">/users/{user}/orders</span><span class=\"s2\">&quot;</span>,\n  <span class=\"nv\">function</span><span class=\"ss\">(</span><span class=\"nv\">request</span><span class=\"ss\">)</span>\n    <span class=\"nv\">print</span><span class=\"ss\">(</span><span class=\"nv\">request</span>.<span class=\"nv\">user</span><span class=\"ss\">)</span>\n  <span class=\"k\">end</span>\n<span class=\"ss\">)</span>\n</code></pre></div>\n\nSimple file server:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"nv\">http</span>.<span class=\"nv\">server</span>.<span class=\"nv\">route</span><span class=\"ss\">(</span>\n  <span class=\"s2\">&quot;</span><span class=\"s\">/files/{*file}</span><span class=\"s2\">&quot;</span>,\n  <span class=\"nv\">function</span><span class=\"ss\">(</span><span class=\"nv\">request</span><span class=\"ss\">)</span>\n    <span class=\"nv\">local</span> <span class=\"nv\">attrs</span> <span class=\"o\">=</span> <span class=\"nv\">editor</span>.<span class=\"nv\">external_file_attributes</span><span class=\"ss\">(</span><span class=\"nv\">request</span>.<span class=\"nv\">file</span><span class=\"ss\">)</span>\n    <span class=\"k\">if</span> <span class=\"nv\">attrs</span>.<span class=\"nv\">is_file</span> <span class=\"k\">then</span>\n      <span class=\"k\">return</span> <span class=\"nv\">http</span>.<span class=\"nv\">server</span>.<span class=\"nv\">external_file_response</span><span class=\"ss\">(</span><span class=\"nv\">request</span>.<span class=\"nv\">file</span><span class=\"ss\">)</span>\n    <span class=\"k\">elseif</span> <span class=\"nv\">attrs</span>.<span class=\"nv\">is_directory</span> <span class=\"k\">then</span>\n      <span class=\"k\">return</span> <span class=\"mi\">400</span>\n    <span class=\"k\">else</span>\n      <span class=\"k\">return</span> <span class=\"mi\">404</span>\n    <span class=\"k\">end</span>\n  <span class=\"k\">end</span>\n<span class=\"ss\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "http",
+    "name": "Editor",
+    "brief": "Editor scripting documentation",
+    "description": "Editor scripting documentation",
+    "path": "",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

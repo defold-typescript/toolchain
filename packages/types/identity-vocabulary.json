@@ -158,6 +158,7 @@
     "graphics.COMPRESSION_TYPE": "number",
     "graphics.CONTEXT_FEATURE": "number",
     "graphics.COORDINATE_SPACE": "number",
+    "graphics.CUBEMAP_FACE": "number",
     "graphics.DATA_TYPE": "number",
     "graphics.FACE_TYPE": "number",
     "graphics.SEMANTIC_TYPE": "number",

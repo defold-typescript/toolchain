@@ -477,15 +477,15 @@ const SURFACES = retainedSurfaces(
 // in one target lands here instead of deleting a correction older targets still
 // pay for.
 const FIELD_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
-  "sys.get_sys_info:return:sys_info:device_model": ["defold-1.13.2"],
-  "sys.get_sys_info:return:sys_info:manufacturer": ["defold-1.13.2"],
-  "sys.get_sys_info:return:sys_info:device_ident": ["defold-1.13.2"],
-  "sys.get_sys_info:return:sys_info:user_agent": ["defold-1.13.2"],
-  "sys.get_ifaddrs:return:ifaddrs:address": ["defold-1.13.2"],
-  "sys.get_ifaddrs:return:ifaddrs:mac": ["defold-1.13.2"],
+  "sys.get_sys_info:return:sys_info:device_model": ["defold-1.13.2", "defold-1.14.0"],
+  "sys.get_sys_info:return:sys_info:manufacturer": ["defold-1.13.2", "defold-1.14.0"],
+  "sys.get_sys_info:return:sys_info:device_ident": ["defold-1.13.2", "defold-1.14.0"],
+  "sys.get_sys_info:return:sys_info:user_agent": ["defold-1.13.2", "defold-1.14.0"],
+  "sys.get_ifaddrs:return:ifaddrs:address": ["defold-1.13.2", "defold-1.14.0"],
+  "sys.get_ifaddrs:return:ifaddrs:mac": ["defold-1.13.2", "defold-1.14.0"],
 };
 const RETURN_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
-  "b2d.get_body": ["defold-1.13.2"],
+  "b2d.get_body": ["defold-1.13.2", "defold-1.14.0"],
 };
 
 // Return corrections a retained target retypes and fixes in the same change: its
@@ -494,9 +494,9 @@ const RETURN_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = 
 // checked by hand against the target's emit; a retype that still gets the slot
 // wrong gains a `retypedUpstream` pin instead.
 const RETURN_CORRECTIONS_RETYPED_FIXED: Record<string, readonly string[]> = {
-  "b2d.shape.ray_cast": ["defold-1.13.2"],
-  "b2d.world.cast_ray_closest": ["defold-1.13.2"],
-  "gui.new_texture": ["defold-1.13.2"],
+  "b2d.shape.ray_cast": ["defold-1.13.2", "defold-1.14.0"],
+  "b2d.world.cast_ray_closest": ["defold-1.13.2", "defold-1.14.0"],
+  "gui.new_texture": ["defold-1.13.2", "defold-1.14.0"],
 };
 
 interface LifecycleVerdict {

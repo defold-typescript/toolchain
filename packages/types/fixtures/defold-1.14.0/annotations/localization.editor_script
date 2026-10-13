@@ -1,0 +1,43 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---@class defold_api.localization
+localization = {}
+
+---Create a message pattern that renders a list with the "and" conjunction (for example: a, b, and c) once it is stringified
+---@param items (nil|boolean|number|string|editor.message)[] array of values; each value may be `nil`, `boolean`, `number`, `string`, or another `message` instance
+---@return editor.message message a userdata value that, when stringified with `tostring()`, will produce a localized text according to the currently selected language in the editor
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#localization.and_list:items)
+function localization.and_list(items) end
+
+---Create a message pattern that concatenates values (similar to `table.concat`) and performs the actual concatenation when stringified
+---@param items (nil|boolean|number|string|editor.message)[] array of values; each value may be `nil`, `boolean`, `number`, `string`, or another `message` instance
+---@param separator? nil|boolean|number|string|editor.message optional separator inserted between values; defaults to an empty string
+---@return editor.message message a userdata value that, when stringified with `tostring()`, will produce a localized text according to the currently selected language in the editor
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#localization.concat:items-separator)
+function localization.concat(items, separator) end
+
+---Create a message pattern for a localization key defined in an `.editor_localization` file; the actual localization happens when the returned value is stringified
+---@param key string localization key defined in an `.editor_localization` file
+---@param vars? table<string, nil|boolean|number|string|editor.message> optional table with variables to be substituted in the localized string that uses [ICU Message Format](https://unicode-org.github.io/icu/userguide/format_parse/messages/) syntax; keys must be strings; values must be either `nil`, `boolean`, `number`, `string`, or another `message` instance
+---@return editor.message message a userdata value that, when stringified with `tostring()`, will produce a localized text according to the currently selected language in the editor
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#localization.message:key-vars)
+function localization.message(key, vars) end
+
+---Create a message pattern that renders a list with the "or" conjunction (for example: a, b, or c) once it is stringified
+---@param items (nil|boolean|number|string|editor.message)[] array of values; each value may be `nil`, `boolean`, `number`, `string`, or another `message` instance
+---@return editor.message message a userdata value that, when stringified with `tostring()`, will produce a localized text according to the currently selected language in the editor
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#localization.or_list:items)
+function localization.or_list(items) end

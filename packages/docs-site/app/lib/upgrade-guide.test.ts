@@ -43,9 +43,10 @@ const guideHtml = await renderGuidePage(GUIDE_DIR, guidePage);
 // line, so the same splitter reads the rendered page as well as the source.
 const releaseBody = releaseSection(guideBody, RELEASE) ?? "";
 // The hop a baseline project actually makes spans every release after the
-// baseline up to the current one — 1.13.0 through 1.13.2 — so migration coverage
-// is asserted over their union, mirroring `collectMigrationGuide`. Each release
-// keeps its own notes under its own marker rather than being relabelled forward.
+// baseline up to the current one, so migration coverage is asserted over their
+// union, the way `collectMigrationGuide` unions the sections of its own span.
+// Each release keeps its own notes under its own marker rather than being
+// relabelled forward.
 const BASELINE = "1.12.4";
 function spanOf(source: string): string {
   return releaseSections(source)
@@ -468,30 +469,33 @@ describe("upgrading-defold-versions guide", () => {
     expect(releaseBody).toContain(`--defold-target ${RELEASE}`);
   });
 
-  // Scoped to the hop this release makes, exactly as `collectAvailability` scopes
-  // the readiness gate's removed set: a symbol retired in an older release is
-  // documented under that release's own section against *its* predecessor, and
-  // demanding a link here would blame this release for a removal it did not make.
-  test("links every symbol this release retires to its predecessor's API page", () => {
+  // Scoped to the hop each release makes, exactly as `collectAvailability` scopes
+  // the readiness gate's removed set: a symbol a release retires is linked from
+  // that release's own section to *its* predecessor, and a release that retires
+  // nothing owes no link. Every adjacent pair on the version axis is judged, so
+  // the links stay checked while the newest hop is additive.
+  test("links every symbol a release retires to its predecessor's API page", () => {
     const doc = availabilityDoc();
-    const [newest, previous] = doc.versions;
-    expect(newest).toBeDefined();
-    expect(previous).toBeDefined();
-    const namespaces = new Set(
-      doc.records
-        .filter(
-          (r) =>
-            previous !== undefined &&
-            newest !== undefined &&
-            r.availableIn.includes(previous) &&
-            !r.availableIn.includes(newest),
-        )
-        .map((r) => r.identity.namespace),
-    );
-    expect(namespaces.size).toBeGreaterThan(0);
-    for (const namespace of namespaces) {
-      expect(releaseBody).toContain(`/api/defold-${previous}/${namespace}`);
-    }
+    const hops = doc.versions.slice(1).map((older, index) => {
+      const newer = doc.versions[index] ?? "";
+      const namespaces = new Set(
+        doc.records
+          .filter((r) => r.availableIn.includes(older) && !r.availableIn.includes(newer))
+          .map((r) => r.identity.namespace),
+      );
+      return { newer, older, namespaces };
+    });
+    expect(hops.some((hop) => hop.namespaces.size > 0)).toBe(true);
+    const unlinked = hops.flatMap(({ newer, older, namespaces }) => {
+      const linked = new Set(
+        apiLinkTargets(releaseSection(guideBody, newer) ?? "").map((href) => href.split("#")[0]),
+      );
+      return [...namespaces]
+        .map((namespace) => `/api/defold-${older}/${namespace}`)
+        .filter((route) => !linked.has(route))
+        .map((route) => `${newer}: ${route}`);
+    });
+    expect(unlinked).toEqual([]);
   });
 
   // The guide's surface claims are version-specific, so every API link it makes

@@ -1,0 +1,855 @@
+{
+  "elements": [
+    {
+      "type": "STRUCT",
+      "name": "bullet3d.world.aabb",
+      "brief": "Bullet world axis-aligned bounding box",
+      "description": "Bullet world axis-aligned bounding box",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "lower",
+          "doc": "lower world-space bound in Defold units",
+          "type": "vector3"
+        },
+        {
+          "name": "upper",
+          "doc": "upper world-space bound in Defold units",
+          "type": "vector3"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "bullet3d.world.query_filter",
+      "brief": "Bullet world query filter",
+      "description": "Bullet world query filter",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "category_bits?",
+          "doc": "unsigned 16-bit category bits; defaults to <code>65535</code>",
+          "type": "integer"
+        },
+        {
+          "name": "mask_bits?",
+          "doc": "unsigned 16-bit mask bits; defaults to <code>65535</code>",
+          "type": "integer"
+        },
+        {
+          "name": "include_triggers?",
+          "doc": "whether to include objects without contact response; defaults to <code>true</code>",
+          "type": "boolean"
+        },
+        {
+          "name": "ignore?",
+          "doc": "one collision object or an array of collision objects to exclude",
+          "type": "btCollisionObject|btCollisionObject[]"
+        },
+        {
+          "name": "report_initial_overlaps?",
+          "doc": "whether casts synthesize fraction-zero hits for initial overlaps; defaults to <code>false</code>",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "bullet3d.world.cast_result",
+      "brief": "Bullet world cast result",
+      "description": "Bullet world cast result",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "object",
+          "doc": "hit collision object",
+          "type": "btCollisionObject"
+        },
+        {
+          "name": "point",
+          "doc": "hit point in world space and Defold units",
+          "type": "vector3"
+        },
+        {
+          "name": "normal",
+          "doc": "outward unit surface normal",
+          "type": "vector3"
+        },
+        {
+          "name": "fraction",
+          "doc": "fraction along the supplied translation in <code>[0, 1]</code>",
+          "type": "number"
+        },
+        {
+          "name": "shape_index?",
+          "doc": "one-based compound child index",
+          "type": "integer"
+        },
+        {
+          "name": "initial_overlap",
+          "doc": "whether the hit was synthesized from an initial overlap",
+          "type": "boolean"
+        },
+        {
+          "name": "inside",
+          "doc": "whether a synthesized ray-origin hit starts inside the object",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "bullet3d.world.contact_result",
+      "brief": "Bullet world contact result",
+      "description": "Bullet world contact result",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "object_a",
+          "doc": "first collision object",
+          "type": "btCollisionObject"
+        },
+        {
+          "name": "object_b",
+          "doc": "second collision object",
+          "type": "btCollisionObject"
+        },
+        {
+          "name": "position_a",
+          "doc": "contact point on object A in world space and Defold units",
+          "type": "vector3"
+        },
+        {
+          "name": "position_b",
+          "doc": "contact point on object B in world space and Defold units",
+          "type": "vector3"
+        },
+        {
+          "name": "normal_on_b",
+          "doc": "unit normal pointing from object B toward object A",
+          "type": "vector3"
+        },
+        {
+          "name": "distance",
+          "doc": "signed contact distance in Defold units",
+          "type": "number"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.is_valid",
+      "brief": "Test whether a world handle is valid",
+      "description": "Test whether a world handle is valid",
+      "returnvalues": [
+        {
+          "name": "valid",
+          "doc": "<code>true</code> if the native world still exists",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.get_gravity",
+      "brief": "Get world gravity",
+      "description": "Get world gravity",
+      "returnvalues": [
+        {
+          "name": "gravity",
+          "doc": "gravity in Defold units per second squared",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.set_gravity",
+      "brief": "Set world gravity",
+      "description": "Bullet propagates the new value to active dynamic bodies unless they have\n<code>bullet3d.rigid_body.BT_DISABLE_WORLD_GRAVITY</code> set. Such bodies retain their\ncustom body gravity.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "gravity",
+          "doc": "finite gravity in Defold units per second squared",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Set gravity for the current collection's physics world:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">world</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_world</span><span class=\"p\">()</span>\n    <span class=\"kr\">if</span> <span class=\"n\">world</span> <span class=\"kr\">then</span>\n        <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">world</span><span class=\"p\">.</span><span class=\"n\">set_gravity</span><span class=\"p\">(</span><span class=\"n\">world</span><span class=\"p\">,</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"o\">-</span><span class=\"mf\">9.81</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">))</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.get_collision_object_count",
+      "brief": "Get the number of collision objects in the world",
+      "description": "Get the number of collision objects in the world",
+      "returnvalues": [
+        {
+          "name": "count",
+          "doc": "number of collision objects",
+          "types": ["integer"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.get_collision_objects",
+      "brief": "Enumerate collision objects",
+      "description": "Returns the Defold-owned collision objects currently registered in the world.\nInternal or unmanaged Bullet objects without Defold ownership metadata are\nnot exposed.",
+      "returnvalues": [
+        {
+          "name": "objects",
+          "doc": "array of collision-object handles",
+          "types": ["btCollisionObject[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_results",
+          "doc": "maximum number of results, or zero for all",
+          "types": ["integer"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.overlap_aabb",
+      "brief": "Find broadphase AABB overlaps",
+      "description": "Finds collision objects whose Bullet broadphase bounds overlap the supplied\nworld-space AABB. This is intentionally a broadphase query and can include\nobjects whose actual collision geometry does not intersect the box. Use\n<a href=\"#bullet3d\">bullet3d.world.overlap_point</a> or\n<a href=\"#bullet3d\">bullet3d.world.overlap_shape</a> for exact narrow-phase overlap tests.",
+      "returnvalues": [
+        {
+          "name": "objects",
+          "doc": "array of overlapping collision-object handles",
+          "types": ["btCollisionObject[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "aabb",
+          "doc": "world-space bounds",
+          "types": ["bullet3d.world.aabb"],
+          "is_optional": "False"
+        },
+        {
+          "name": "filter",
+          "doc": "query filter",
+          "types": ["bullet3d.world.query_filter"],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_results",
+          "doc": "maximum number of results, or zero for all",
+          "types": ["integer"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.overlap_point",
+      "brief": "Find collision objects containing a point",
+      "description": "Performs an exact narrow-phase test using a temporary zero-radius Bullet\nsphere at the world-space point. A result is returned only for a contact with\nsigned distance less than or equal to zero, so broadphase-only false positives\nare removed. Results on an exact surface follow Bullet's contact tolerance.",
+      "returnvalues": [
+        {
+          "name": "objects",
+          "doc": "array of overlapping collision-object handles",
+          "types": ["btCollisionObject[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "point",
+          "doc": "point in world space",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "filter",
+          "doc": "query filter",
+          "types": ["bullet3d.world.query_filter"],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_results",
+          "doc": "maximum number of results, or zero for all",
+          "types": ["integer"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.overlap_shape",
+      "brief": "Find collision objects overlapping a convex shape",
+      "description": "Performs an exact Bullet contact test for a temporary sphere, box, Y-axis\ncapsule, or convex hull. Multiple native contact points for the same target\nobject are deduplicated in the returned overlap array.",
+      "returnvalues": [
+        {
+          "name": "objects",
+          "doc": "array of overlapping collision-object handles",
+          "types": ["btCollisionObject[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "shape",
+          "doc": "convex query shape",
+          "types": ["bullet3d.shape.definition"],
+          "is_optional": "False"
+        },
+        {
+          "name": "filter",
+          "doc": "query filter",
+          "types": ["bullet3d.world.query_filter"],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_results",
+          "doc": "maximum number of results, or zero for all",
+          "types": ["integer"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Find non-trigger objects overlapping a two-unit sphere around this game object:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">world</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_world</span><span class=\"p\">()</span>\n    <span class=\"kd\">local</span> <span class=\"n\">shape</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"nb\">type</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">shape</span><span class=\"p\">.</span><span class=\"n\">SHAPE_TYPE_SPHERE</span><span class=\"p\">,</span>\n        <span class=\"n\">diameter</span> <span class=\"o\">=</span> <span class=\"mi\">2</span><span class=\"p\">,</span>\n        <span class=\"n\">position</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_position</span><span class=\"p\">(),</span>\n    <span class=\"p\">}</span>\n    <span class=\"kd\">local</span> <span class=\"n\">filter</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">include_triggers</span> <span class=\"o\">=</span> <span class=\"kc\">false</span> <span class=\"p\">}</span>\n    <span class=\"kd\">local</span> <span class=\"n\">overlaps</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">world</span><span class=\"p\">.</span><span class=\"n\">overlap_shape</span><span class=\"p\">(</span><span class=\"n\">world</span><span class=\"p\">,</span> <span class=\"n\">shape</span><span class=\"p\">,</span> <span class=\"n\">filter</span><span class=\"p\">)</span>\n\n    <span class=\"kr\">for</span> <span class=\"n\">_</span><span class=\"p\">,</span> <span class=\"n\">object</span> <span class=\"kr\">in</span> <span class=\"nb\">ipairs</span><span class=\"p\">(</span><span class=\"n\">overlaps</span><span class=\"p\">)</span> <span class=\"kr\">do</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;overlap&quot;</span><span class=\"p\">,</span> <span class=\"n\">object</span><span class=\"p\">)</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.cast_ray",
+      "brief": "Cast a ray",
+      "description": "Casts immediately from <code>origin</code> to <code>origin + translation</code> and returns all\nmatching hits sorted by fraction. Translation must be non-zero.\nBullet's convex ray test normally does not report a ray whose start and end are both inside\nthe same convex hull. Set <code>filter.report_initial_overlaps = true</code> to perform\nan exact point-overlap test at the origin and synthesize one deduplicated hit\nper initially touching or overlapping object with <code>fraction = 0</code>, zero <code>normal</code>,\n<code>point = origin</code>, <code>initial_overlap = true</code>, and <code>inside = true</code>. The point is\nthe query origin, not a surface contact. This explicitly supports the\ninside-hull behavior requested by issue #5348. Fraction-zero native callbacks\nand starting overlaps are suppressed when the option is false.",
+      "returnvalues": [
+        {
+          "name": "hits",
+          "doc": "cast results sorted by ascending fraction",
+          "types": ["bullet3d.world.cast_result[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "origin",
+          "doc": "ray origin in world space",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "translation",
+          "doc": "non-zero ray displacement in world units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "filter",
+          "doc": "query filter",
+          "types": ["bullet3d.world.query_filter"],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_results",
+          "doc": "maximum sorted hits, or zero for all",
+          "types": ["integer"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.cast_ray_closest",
+      "brief": "Cast a ray and return the closest hit",
+      "description": "Equivalent to <a href=\"#bullet3d\">bullet3d.world.cast_ray</a> with one result, but returns the\nhit table directly or <code>nil</code> on a miss.",
+      "returnvalues": [
+        {
+          "name": "hit",
+          "doc": "closest cast result, or <code>nil</code> on a miss",
+          "types": ["bullet3d.world.cast_result", "nil"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "origin",
+          "doc": "ray origin in world space",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "translation",
+          "doc": "non-zero ray displacement in world units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "filter",
+          "doc": "query filter",
+          "types": ["bullet3d.world.query_filter"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Cast downward and report the closest non-trigger hit:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">world</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_world</span><span class=\"p\">()</span>\n    <span class=\"kd\">local</span> <span class=\"n\">origin</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_position</span><span class=\"p\">()</span>\n    <span class=\"kd\">local</span> <span class=\"n\">translation</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"o\">-</span><span class=\"mi\">100</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">filter</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">include_triggers</span> <span class=\"o\">=</span> <span class=\"kc\">false</span> <span class=\"p\">}</span>\n\n    <span class=\"kd\">local</span> <span class=\"n\">hit</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">world</span><span class=\"p\">.</span><span class=\"n\">cast_ray_closest</span><span class=\"p\">(</span>\n        <span class=\"n\">world</span><span class=\"p\">,</span> <span class=\"n\">origin</span><span class=\"p\">,</span> <span class=\"n\">translation</span><span class=\"p\">,</span> <span class=\"n\">filter</span><span class=\"p\">)</span>\n    <span class=\"kr\">if</span> <span class=\"n\">hit</span> <span class=\"kr\">then</span>\n        <span class=\"kd\">local</span> <span class=\"n\">distance</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">length</span><span class=\"p\">(</span><span class=\"n\">translation</span><span class=\"p\">)</span> <span class=\"o\">*</span> <span class=\"n\">hit</span><span class=\"p\">.</span><span class=\"n\">fraction</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;hit&quot;</span><span class=\"p\">,</span> <span class=\"n\">hit</span><span class=\"p\">.</span><span class=\"n\">object</span><span class=\"p\">,</span> <span class=\"s2\">&quot;after&quot;</span><span class=\"p\">,</span> <span class=\"n\">distance</span><span class=\"p\">,</span> <span class=\"s2\">&quot;units&quot;</span><span class=\"p\">)</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.cast_ray_async",
+      "brief": "Cast a ray asynchronously",
+      "description": "Queues the same ray query as <a href=\"#bullet3d\">bullet3d.world.cast_ray</a> and returns without\nexecuting it. After the next physics step, <code>callback(self, hits)</code> receives the\ncast-result array sorted by fraction. The query observes post-step world state.\nIt is deferred on the main thread, not executed concurrently; use it to move\nwork out of the current Lua call and to query the stepped state, not as a\nguarantee of lower total CPU time. Queued casts for the same world share one\nbroadphase AABB refresh and all finish before their callbacks begin.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "origin",
+          "doc": "ray origin in world space",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "translation",
+          "doc": "non-zero ray displacement in world units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "function called as <code>callback(self, hits)</code>",
+          "types": ["fun(self:script_instance, hits:bullet3d.world.cast_result[])"],
+          "is_optional": "False"
+        },
+        {
+          "name": "filter",
+          "doc": "query filter",
+          "types": ["bullet3d.world.query_filter"],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_results",
+          "doc": "maximum sorted hits, or zero for all",
+          "types": ["integer"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Queue a downward cast and inspect only the closest non-trigger hit:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">world</span><span class=\"p\">.</span><span class=\"n\">cast_ray_async</span><span class=\"p\">(</span>\n    <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_world</span><span class=\"p\">(),</span>\n    <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_position</span><span class=\"p\">(),</span>\n    <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"o\">-</span><span class=\"mi\">100</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n    <span class=\"kr\">function</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">hits</span><span class=\"p\">)</span>\n        <span class=\"kr\">if</span> <span class=\"n\">hits</span><span class=\"p\">[</span><span class=\"mi\">1</span><span class=\"p\">]</span> <span class=\"kr\">then</span>\n            <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;hit&quot;</span><span class=\"p\">,</span> <span class=\"n\">hits</span><span class=\"p\">[</span><span class=\"mi\">1</span><span class=\"p\">].</span><span class=\"n\">object</span><span class=\"p\">)</span>\n        <span class=\"kr\">end</span>\n    <span class=\"kr\">end</span><span class=\"p\">,</span>\n    <span class=\"p\">{</span> <span class=\"n\">include_triggers</span> <span class=\"o\">=</span> <span class=\"kc\">false</span> <span class=\"p\">},</span>\n    <span class=\"mi\">1</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.cast_shape",
+      "brief": "Cast a convex shape",
+      "description": "Sweeps the temporary shape from <code>shape.position</code> by <code>translation</code>, while\ninterpolating from <code>shape.rotation</code> to <code>shape.target_rotation</code>. Translation\nmust be non-zero. The query executes immediately and returns all matching hits\nsorted by fraction. Bullet's convex sweep supports only convex query shapes.\nWhen <code>filter.report_initial_overlaps</code> is true, an exact contact test at the\nstarting transform synthesizes one deduplicated hit per overlapping object\nwith <code>fraction = 0</code>, <code>point = shape.position</code>, zero <code>normal</code>,\n<code>initial_overlap = true</code>, and <code>inside = false</code>. The point is the query-shape\norigin, not a surface contact, and the result does not report penetration depth.",
+      "returnvalues": [
+        {
+          "name": "hits",
+          "doc": "cast results sorted by ascending fraction",
+          "types": ["bullet3d.world.cast_result[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "shape",
+          "doc": "convex query shape with optional target rotation",
+          "types": ["bullet3d.shape.definition"],
+          "is_optional": "False"
+        },
+        {
+          "name": "translation",
+          "doc": "non-zero sweep displacement in world units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "filter",
+          "doc": "query filter",
+          "types": ["bullet3d.world.query_filter"],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_results",
+          "doc": "maximum sorted hits, or zero for all",
+          "types": ["integer"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.cast_shape_closest",
+      "brief": "Cast a convex shape and return the closest hit",
+      "description": "Equivalent to <a href=\"#bullet3d\">bullet3d.world.cast_shape</a> with one result, but returns\nthe hit table directly or <code>nil</code> on a miss.",
+      "returnvalues": [
+        {
+          "name": "hit",
+          "doc": "closest cast result, or <code>nil</code> on a miss",
+          "types": ["bullet3d.world.cast_result", "nil"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "shape",
+          "doc": "convex query shape with optional target rotation",
+          "types": ["bullet3d.shape.definition"],
+          "is_optional": "False"
+        },
+        {
+          "name": "translation",
+          "doc": "non-zero sweep displacement in world units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "filter",
+          "doc": "query filter",
+          "types": ["bullet3d.world.query_filter"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.cast_shape_async",
+      "brief": "Cast a convex shape asynchronously",
+      "description": "Queues the same convex sweep as <a href=\"#bullet3d\">bullet3d.world.cast_shape</a> and returns\nwithout executing it. After the next physics step, <code>callback(self, hits)</code>\nreceives the sorted cast-result array from the post-step world state. The\noperation is deferred on the main thread rather than run concurrently. All\nqueued casts for one world share one broadphase AABB refresh and all finish\nbefore their callbacks begin.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "shape",
+          "doc": "convex query shape with optional target rotation",
+          "types": ["bullet3d.shape.definition"],
+          "is_optional": "False"
+        },
+        {
+          "name": "translation",
+          "doc": "non-zero sweep displacement in world units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "function called as <code>callback(self, hits)</code>",
+          "types": ["fun(self:script_instance, hits:bullet3d.world.cast_result[])"],
+          "is_optional": "False"
+        },
+        {
+          "name": "filter",
+          "doc": "query filter",
+          "types": ["bullet3d.world.query_filter"],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_results",
+          "doc": "maximum sorted hits, or zero for all",
+          "types": ["integer"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.contact_test",
+      "brief": "Test one collision object against the world",
+      "description": "Runs Bullet's discrete contact test between <code>object</code> and matching objects in\nthe same world. The supplied object is always <code>object_a</code> in returned contacts.\nThe borrowed collision-object handle must belong to <code>world</code>. Bullet may return\nseveral contact points for one object pair and may include small positive\ncontact-margin distances.",
+      "returnvalues": [
+        {
+          "name": "contacts",
+          "doc": "normalized contact results",
+          "types": ["bullet3d.world.contact_result[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "object",
+          "doc": "collision object belonging to the world",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "filter",
+          "doc": "filter applied to candidate <code>object_b</code> values",
+          "types": ["bullet3d.world.query_filter"],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_results",
+          "doc": "maximum number of contact points, or zero for all",
+          "types": ["integer"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Inspect current contacts for this collision object:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">update</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">dt</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">world</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_world</span><span class=\"p\">()</span>\n    <span class=\"kd\">local</span> <span class=\"n\">object</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">get_collision_object</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject&quot;</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">filter</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">include_triggers</span> <span class=\"o\">=</span> <span class=\"kc\">false</span> <span class=\"p\">}</span>\n    <span class=\"kd\">local</span> <span class=\"n\">contacts</span> <span class=\"o\">=</span> <span class=\"n\">bullet3d</span><span class=\"p\">.</span><span class=\"n\">world</span><span class=\"p\">.</span><span class=\"n\">contact_test</span><span class=\"p\">(</span><span class=\"n\">world</span><span class=\"p\">,</span> <span class=\"n\">object</span><span class=\"p\">,</span> <span class=\"n\">filter</span><span class=\"p\">)</span>\n\n    <span class=\"kr\">for</span> <span class=\"n\">_</span><span class=\"p\">,</span> <span class=\"n\">contact</span> <span class=\"kr\">in</span> <span class=\"nb\">ipairs</span><span class=\"p\">(</span><span class=\"n\">contacts</span><span class=\"p\">)</span> <span class=\"kr\">do</span>\n        <span class=\"kr\">if</span> <span class=\"n\">contact</span><span class=\"p\">.</span><span class=\"n\">distance</span> <span class=\"o\">&lt;</span> <span class=\"mi\">0</span> <span class=\"kr\">then</span>\n            <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;penetration&quot;</span><span class=\"p\">,</span> <span class=\"o\">-</span><span class=\"n\">contact</span><span class=\"p\">.</span><span class=\"n\">distance</span><span class=\"p\">,</span> <span class=\"s2\">&quot;against&quot;</span><span class=\"p\">,</span> <span class=\"n\">contact</span><span class=\"p\">.</span><span class=\"n\">object_b</span><span class=\"p\">)</span>\n        <span class=\"kr\">end</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bullet3d.world.contact_pair_test",
+      "brief": "Test a collision-object pair",
+      "description": "Runs Bullet's discrete pair contact algorithm without changing the simulation.\nBoth borrowed handles must belong to <code>world</code> and must identify different\nobjects. The output preserves the caller's A/B order even when Bullet's\ninternal manifold order is reversed. Collision filters are not applied to an\nexplicitly selected pair.",
+      "returnvalues": [
+        {
+          "name": "contacts",
+          "doc": "normalized contact results",
+          "types": ["bullet3d.world.contact_result[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "world handle",
+          "types": ["btDiscreteDynamicsWorld"],
+          "is_optional": "False"
+        },
+        {
+          "name": "object_a",
+          "doc": "first collision object in the world",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "object_b",
+          "doc": "different second collision object in the world",
+          "types": ["btCollisionObject"],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_results",
+          "doc": "maximum number of contact points, or zero for all",
+          "types": ["integer"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "bullet3d.world",
+    "name": "bullet3d.world",
+    "brief": "Bullet dynamics world API",
+    "description": "Read and tune the Bullet dynamics world owned by the current collection.\nDefold remains responsible for world lifetime, stepping, collision objects,\ncallbacks, and debug drawing.\n\nWorld and collision-object values returned by this API are borrowed,\ngenerational handles. They become invalid when their collection or owning\ngame object is deleted and must not be retained as native pointers.\n\nAll positions, distances, translations, dimensions and contact distances use\nDefold world units. The binding converts them using `physics.scale`. Rotations\nand unit normals are not scaled. Query functions refresh Bullet broadphase\nAABBs before execution, so collision-object transform changes are visible.\n\nQuery filters are optional tables with these fields:\n\n`category_bits`\n: [type:integer] unsigned 16-bit category bits, default `65535`\n\n`mask_bits`\n: [type:integer] unsigned 16-bit mask bits, default `65535`\n\n`include_triggers`\n: [type:boolean] include objects without contact response, default `true`\n\n`ignore`\n: [type:btCollisionObject|btCollisionObject[]] one collision-object handle or an array of handles to exclude\n\n`report_initial_overlaps`\n: [type:boolean] report shapes overlapping the cast origin as synthesized fraction-zero hits, default `false`\n\n`report_initial_overlaps` is a `bullet3d.world` query option only. It does\nnot change `physics.raycast()` or either Box2D backend.\n\nCategory and mask checks are reciprocal: the query category must match the\nobject's mask and the object's category must match the query mask.\n\nTemporary query shapes use the same geometry fields as\n[ref:bullet3d.shape.get_shape]:\na sphere has `type` and `diameter`, a box has `type` and `dimensions`, a\nY-axis capsule has `type`, `diameter` and `height`, and a convex hull has\n`type` and a `vertices` array with at least four `vector3` values. The `type`\nis one of the `bullet3d.shape.SHAPE_TYPE_*` constants. Every shape can specify\n`position` and `rotation`; their defaults are zero and the identity rotation.\nCast shapes can also specify `target_rotation`, which defaults to `rotation`.\nCapsule `height` is the length of the cylindrical middle section; total\nend-to-end height is `height + diameter`. Query sizes are always expressed\nin Defold world units. Except for triangle meshes, a table returned by\n`bullet3d.shape.get_shape` can be reused directly after adding the desired\nquery transform fields. Queries accept only sphere, box, capsule, and hull.\nHull vertices describe a convex hull; concave input is convexified by Bullet.\nAll query vectors and scalar sizes must be finite. Diameters, dimensions and\ncapsule heights must be greater than zero; hulls require at least four finite\nvertices. Cast translations must be finite and non-zero. Query rotations\nmust be finite, non-zero quaternions and are normalized by the binding. AABB\nlower bounds must not exceed their corresponding upper bounds.\n\nOverlap and enumeration results are arrays of `btCollisionObject` handles.\nCast results are tables containing `object`, `point`, `normal`, `fraction`,\n`initial_overlap`, and `inside`. `shape_index` is present when Bullet reports\na compound child and is one-based. Cast arrays are sorted by ascending\nfraction. `fraction` is in `[0, 1]` along the supplied translation. For native\nhits, `normal` is the hit object's outward unit surface normal; synthesized\ninitial-overlap hits use a zero normal. `inside` is true for a synthesized\nray-origin hit when Bullet reports signed contact distance less than or equal\nto zero. It denotes initial contact or penetration rather than strict\ngeometric containment, and exact-surface cases follow Bullet's contact\ntolerance. Shape-cast initial overlaps set only `initial_overlap`.\n\nContact results contain `object_a`, `object_b`, `position_a`, `position_b`,\n`normal_on_b`, and signed `distance`. Positions are points on their named\nobjects, and `normal_on_b` points from object B toward object A. A negative\ndistance is penetration and a small positive distance is Bullet's contact\nmargin. Object order is always normalized to the order supplied by the caller.\n\n`max_results` is optional. Zero or omission means unlimited results. A\nnegative value is an error. Broadphase overlaps, native world enumeration,\ncontacts, and equal-fraction cast hits have unspecified order. A capped query\ncan therefore return a different equal-priority subset after world changes.\nSynchronous queries execute immediately and do not advance simulation.\nAsync casts are deferred until after the next physics step. They execute on\nthe main thread rather than a worker thread, and all queued casts for one\nworld share one broadphase AABB refresh. Every cast in the batch completes\nbefore any callback runs, so callback mutations cannot affect other query\ncomputations in that batch. Deferral avoids blocking the Lua call site but\ndoes not remove the cast work from the frame.\nNative fraction-zero cast callbacks are suppressed. Starting overlaps are\nomitted by default, or reported through the exact, deduplicated synthesis\nenabled by `report_initial_overlaps`; this avoids direction-dependent Bullet\nresults for casts that start touching or penetrating another object.",
+    "path": "engine/gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_world.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}
