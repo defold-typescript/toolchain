@@ -380,9 +380,9 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
   test("attributes deftest to britzl/deftest as an authored-here forked library", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("deftest");
     expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("2.8.0");
+    expect(meta.commit).toBe("2.9.0");
     expect(meta.authorUrl).toBe("https://github.com/britzl/deftest");
-    expect(meta.sourceUrl).toBe("https://github.com/britzl/deftest/tree/2.8.0");
+    expect(meta.sourceUrl).toBe("https://github.com/britzl/deftest/tree/2.9.0");
     expect(meta.license).toBe("MIT");
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
   });
