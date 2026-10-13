@@ -318,7 +318,9 @@ The website's own routes carry a version *range*, not one surface: the unprefixe
 `/api/<version>/<namespace>` is the range ending at that version, and
 `/api/<version>/<namespace>?since=<version>` states both bounds explicitly — for
 example [`go` from 1.12.4 through
-1.13.0](/api/defold-1.13.0/go?since=defold-1.12.4). That range is a reader's
+1.13.0](/api/defold-1.13.0/go?since=defold-1.12.4). A browser fills a missing
+`?since=` from the reader's last **From** choice, so write it out whenever the
+lower bound matters. That range is a reader's
 view, never an artifact dimension: `llms.txt`, `llms-full.txt` and the search and
 symbol indexes are always built full-range. So whatever a human has selected in
 the dropdowns, read a symbol's availability from the `Availability` tags in

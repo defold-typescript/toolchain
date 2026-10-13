@@ -20,17 +20,28 @@ export function RangeColumn({
   label,
   options,
   limit,
+  newest,
 }: {
   bound: "from" | "to";
   label: string;
   options: readonly RangeSelectorOption[];
   /** The oldest tracked release, named under the `From` column as the end of the axis. */
   limit?: string | undefined;
+  /** The newest tracked release's id, given to the `To` column so it can flag a window that stops short of it. */
+  newest?: string | undefined;
 }) {
   const current = options.find((option) => option.isCurrent) ?? options[0];
+  // The server flags the routed window; the pre-paint reconciliation re-derives
+  // the flag from `data-range-newest` for the range it reads out of storage.
+  const stale = newest !== undefined && current !== undefined && current.id !== newest;
   return (
-    <details class="group relative" data-range-column={bound}>
-      <summary class="inline-flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text-muted transition hover:border-border-strong hover:text-text [&::-webkit-details-marker]:hidden [&_svg]:size-4">
+    <details
+      class="group relative"
+      data-range-column={bound}
+      data-range-newest={newest}
+      data-range-stale={stale ? "" : undefined}
+    >
+      <summary class="inline-flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text-muted transition hover:border-border-strong hover:text-text group-data-[range-stale]:border-danger group-data-[range-stale]:bg-danger/10 group-data-[range-stale]:hover:border-danger [&::-webkit-details-marker]:hidden [&_svg]:size-4">
         <span
           aria-hidden="true"
           class="inline-flex text-text-faint"
@@ -107,7 +118,7 @@ export function RangeSelectorControls({
         options={selector.from}
         limit={selector.oldest?.label}
       />
-      <RangeColumn bound="to" label="To" options={selector.to} />
+      <RangeColumn bound="to" label="To" options={selector.to} newest={selector.newest} />
     </fieldset>
   );
 }

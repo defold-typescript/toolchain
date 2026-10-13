@@ -3,10 +3,13 @@ import {
   type ApiSurfaceConfig,
   type ApiSurfaceRange,
   activeRangeForPath,
+  apiNavForPath,
   canonicalLinkPath,
+  chooseRangeOption,
   readStoredRange,
   reconcileRangeSelector,
   resolveApiSurfaceRedirect,
+  retargetRangeOptions,
   rewriteApiNavForRange,
   showApiSurfaceSelector,
 } from "./api-surface-pref";
@@ -73,10 +76,10 @@ describe("readStoredRange — legacy stored values migrate instead of resetting"
   });
 });
 
-describe("readStoredRange — an explicit URL always wins over the stored range", () => {
+describe("readStoredRange — a bound the URL states wins over the stored one", () => {
   test("a version-prefixed path yields that `to` whatever is stored", () => {
     expect(
-      readStoredRange("/api/defold-1.12.4/go", "", "defold-1.13.0|defold-1.13.0", CONFIG),
+      readStoredRange("/api/defold-1.12.4/go", "", "defold-1.12.0|defold-1.13.0", CONFIG),
     ).toEqual({ from: OLDEST, to: "defold-1.12.4" });
   });
 
@@ -94,10 +97,32 @@ describe("readStoredRange — an explicit URL always wins over the stored range"
     });
   });
 
-  test("a routed page with no `?since=` states the full range, ignoring a stored `from`", () => {
+  test("a routed page with no `?since=` keeps the stored `from`", () => {
     expect(
       readStoredRange("/api/defold-1.13.0/go", "", "defold-1.12.4|defold-1.12.4", CONFIG),
+    ).toEqual({ from: "defold-1.12.4", to: DEFAULT });
+  });
+
+  test("a stored `from` newer than the routed `to` clamps down to `to`", () => {
+    expect(
+      readStoredRange("/api/defold-1.12.4/go", "", "defold-1.13.0|defold-1.13.0", CONFIG),
+    ).toEqual({ from: "defold-1.12.4", to: "defold-1.12.4" });
+  });
+
+  test("`?since=` naming the oldest version states the full range over a stored `from`", () => {
+    expect(
+      readStoredRange(
+        "/api/defold-1.13.0/go",
+        "?since=defold-1.12.0",
+        "defold-1.12.4|defold-1.12.4",
+        CONFIG,
+      ),
     ).toEqual(FULL);
+  });
+
+  test("a legacy stored value, which never held a `from`, leaves a routed page at the full range", () => {
+    expect(readStoredRange("/api/defold-1.13.0/go", "", "defold-1.12.4", CONFIG)).toEqual(FULL);
+    expect(readStoredRange("/api/defold-1.13.0/go", "", "combined", CONFIG)).toEqual(FULL);
   });
 
   test("an untracked `?since=` widens to the oldest version instead of dropping the page", () => {
@@ -227,6 +252,95 @@ describe("showApiSurfaceSelector", () => {
   });
 });
 
+// What a selector click persists, and where it goes on a page whose option hrefs
+// the server rendered against a range the reader is not on.
+describe("chooseRangeOption", () => {
+  const SAVED = "defold-1.12.0|defold-1.12.4";
+  const choose = (
+    path: string,
+    stored: string | null,
+    bound: string,
+    version: string,
+    config = CONFIG,
+  ) =>
+    chooseRangeOption(
+      path,
+      "",
+      stored,
+      bound,
+      version,
+      config,
+      readStoredRange,
+      resolveApiSurfaceRedirect,
+    );
+
+  test("moving From on a page that states no window keeps the saved To", () => {
+    expect(choose("/guides/build", SAVED, "from", "defold-1.12.4")).toEqual({
+      stored: "defold-1.12.4|defold-1.12.4",
+      target: "/api/defold-1.12.4?since=defold-1.12.4",
+    });
+  });
+
+  test("moving To on a page that states no window keeps the saved From", () => {
+    expect(choose("/guides/build", "defold-1.12.4|defold-1.12.4", "to", DEFAULT)).toEqual({
+      stored: "defold-1.12.4|defold-1.13.0",
+      target: "/api/defold-1.13.0?since=defold-1.12.4",
+    });
+  });
+
+  test("a choice that restores the default range lands on the un-prefixed entry point", () => {
+    expect(choose("/guides/build", SAVED, "to", DEFAULT)).toEqual({
+      stored: "defold-1.12.0|defold-1.13.0",
+      target: "/api",
+    });
+  });
+
+  test("keeps the namespace an un-prefixed API page names", () => {
+    // `camera` is outside the saved window, so the reader rests on its bare route
+    // until a choice widens the window far enough to own it.
+    expect(choose("/api/camera", "defold-1.12.4|defold-1.12.4", "to", DEFAULT).target).toBe(
+      "/api/defold-1.13.0/camera?since=defold-1.12.4",
+    );
+  });
+
+  test("stays on a version-independent page, which no window owns", () => {
+    expect(choose("/api/base", SAVED, "from", "defold-1.12.4").target).toBe("/api/base");
+  });
+
+  test("leaves the href alone where the server already rendered it right", () => {
+    // The route states the window the options were rendered against.
+    expect(choose("/api/defold-1.12.4/go", SAVED, "from", "defold-1.12.4")).toEqual({
+      stored: "defold-1.12.4|defold-1.12.4",
+      target: null,
+    });
+    // The reader is on the default range, the one every other page is rendered at.
+    expect(choose("/guides/build", null, "to", "defold-1.12.4")).toEqual({
+      stored: "defold-1.12.0|defold-1.12.4",
+      target: null,
+    });
+  });
+
+  test("moving To on a routed page keeps the saved From its URL does not state", () => {
+    expect(choose("/api/defold-1.12.4/go", "defold-1.12.4|defold-1.12.4", "to", DEFAULT)).toEqual({
+      stored: "defold-1.12.4|defold-1.13.0",
+      target: null,
+    });
+  });
+
+  test("a From newer than To collapses the window onto the chosen version", () => {
+    expect(choose("/guides/build", SAVED, "from", DEFAULT)).toEqual({
+      stored: "defold-1.13.0|defold-1.13.0",
+      target: "/api/defold-1.13.0?since=defold-1.13.0",
+    });
+  });
+
+  test("carries the deploy base", () => {
+    expect(choose("/toolchain/guides/build", SAVED, "from", "defold-1.12.4", BASED).target).toBe(
+      "/toolchain/api/defold-1.12.4?since=defold-1.12.4",
+    );
+  });
+});
+
 describe("rewriteApiNavForRange", () => {
   const nav = (): NavCategory[] => [
     { id: "guides", label: "Guides", route: "/guides", links: [] },
@@ -300,6 +414,47 @@ describe("rewriteApiNavForRange", () => {
     );
     const leaves = out.find((c) => c.id === "api")?.links[0]?.children ?? [];
     expect(leaves.find((l) => l.label === "go")?.badgeHtml).toBe("<span>PILL</span>");
+  });
+
+  describe("apiNavForPath", () => {
+    const apiOf = (path: string, config = CONFIG) =>
+      apiNavForPath(nav(), path, "", config).find((c) => c.id === "api");
+    const goOf = (path: string, config = CONFIG) =>
+      apiOf(path, config)?.links[0]?.children?.find((l) => l.label === "go")?.route;
+
+    test("leaves the API links un-prefixed on every page that states no window", () => {
+      for (const path of ["/", "/guides/build", "/api", "/api/go", "/api/base"]) {
+        expect(apiOf(path)?.route).toBe("/api");
+        expect(goOf(path)).toBe("/api/go");
+      }
+    });
+
+    test("moves the API links onto the window a versioned route states", () => {
+      expect(apiOf("/api/defold-1.12.4/go")?.route).toBe("/api/defold-1.12.4");
+      expect(goOf("/api/defold-1.12.4/go")).toBe("/api/defold-1.12.4/go");
+      // The default version's own family is a stated window too.
+      expect(goOf("/api/defold-1.13.0")).toBe("/api/defold-1.13.0/go");
+    });
+
+    test("reads a versioned route past the deploy base", () => {
+      expect(goOf("/toolchain/api/defold-1.12.4/go", BASED)).toBe("/api/defold-1.12.4/go");
+      expect(goOf("/toolchain/guides/build", BASED)).toBe("/api/go");
+    });
+
+    // A prefixed link would name the default version as the reader's choice and
+    // skip the redirect, so the link and the redirect are held together here.
+    test("the API link on a page that states no window lands on the persisted one", () => {
+      const route = apiOf("/guides/build")?.route as string;
+      expect(
+        resolveApiSurfaceRedirect(
+          route,
+          "",
+          "defold-1.12.0|defold-1.12.4",
+          CONFIG,
+          readStoredRange,
+        ),
+      ).toBe("/api/defold-1.12.4");
+    });
   });
 });
 
@@ -401,6 +556,11 @@ describe("reconcileRangeSelector (DOM contract)", () => {
     const root = doc.createElement("div");
     root.documentElement = root;
     for (const bound of ["from", "to"] as const) {
+      // Only the `To` column is told which version is the newest.
+      const column = doc.createElement("details");
+      column.setAttribute("data-range-column", bound);
+      if (bound === "to") column.setAttribute("data-range-newest", DEFAULT);
+      root.appendChild(column);
       const summary = doc.createElement("span");
       summary.setAttribute("data-range-summary", bound);
       summary.textContent = "server-rendered";
@@ -428,7 +588,11 @@ describe("reconcileRangeSelector (DOM contract)", () => {
       root
         .querySelectorAll("[data-range-summary]")
         .find((s) => s.getAttribute("data-range-summary") === bound);
-    return { root, optionFor, summaryFor };
+    const columnFor = (bound: string) =>
+      root
+        .querySelectorAll("[data-range-column]")
+        .find((c) => c.getAttribute("data-range-column") === bound);
+    return { root, optionFor, summaryFor, columnFor };
   }
 
   test("marks the active option in both columns and writes both summaries", () => {
@@ -471,6 +635,36 @@ describe("reconcileRangeSelector (DOM contract)", () => {
     const { root } = selectorDom();
     reconcileRangeSelector(root, { from: "defold-1.12.4", to: DEFAULT });
     expect(root.getAttribute("data-api-range-current")).toBe("defold-1.12.4|defold-1.13.0");
+  });
+
+  test("flags the To column only while its bound stops short of the newest version", () => {
+    const { root, columnFor } = selectorDom();
+    reconcileRangeSelector(root, { from: OLDEST, to: "defold-1.12.4" });
+    expect(columnFor("to")?.getAttribute("data-range-stale")).toBe("");
+    expect(columnFor("from")?.getAttribute("data-range-stale")).toBeNull();
+    reconcileRangeSelector(root, { from: OLDEST, to: DEFAULT });
+    expect(columnFor("to")?.getAttribute("data-range-stale")).toBeNull();
+  });
+});
+
+describe("retargetRangeOptions", () => {
+  test("re-points only the options it is given a target for", () => {
+    const doc = new FakeDoc();
+    const root = doc.createElement("div");
+    const option = (bound: string, id: string) => {
+      const el = doc.createElement("a");
+      el.setAttribute("data-range-option", id);
+      el.setAttribute("data-range-bound", bound);
+      el.setAttribute("href", "/server-rendered");
+      root.appendChild(el);
+      return el;
+    };
+    const moved = option("from", "defold-1.12.4");
+    const kept = option("to", DEFAULT);
+
+    retargetRangeOptions(root, (bound, version) => (bound === "from" ? `/api/${version}` : null));
+    expect(moved.getAttribute("href")).toBe("/api/defold-1.12.4");
+    expect(kept.getAttribute("href")).toBe("/server-rendered");
   });
 });
 
@@ -517,6 +711,37 @@ describe("pre-paint serialization contract", () => {
     isolate(reconcileRangeSelector)(root, { from: OLDEST, to: DEFAULT });
     expect(option.getAttribute("aria-current")).toBe("page");
     expect(summary.textContent).toBe("Defold 1.13.0");
+  });
+
+  test("chooseRangeOption runs with no module scope", () => {
+    const isolated = isolate(chooseRangeOption);
+    expect(
+      isolated(
+        "/guides/build",
+        "",
+        "defold-1.12.0|defold-1.12.4",
+        "from",
+        "defold-1.12.4",
+        CONFIG,
+        isolate(readStoredRange),
+        isolate(resolveApiSurfaceRedirect),
+      ),
+    ).toEqual({
+      stored: "defold-1.12.4|defold-1.12.4",
+      target: "/api/defold-1.12.4?since=defold-1.12.4",
+    });
+  });
+
+  test("retargetRangeOptions runs with no module scope", () => {
+    const doc = new FakeDoc();
+    const root = doc.createElement("div");
+    const option = doc.createElement("a");
+    option.setAttribute("data-range-option", DEFAULT);
+    option.setAttribute("data-range-bound", "to");
+    root.appendChild(option);
+
+    isolate(retargetRangeOptions)(root, () => "/api");
+    expect(option.getAttribute("href")).toBe("/api");
   });
 });
 

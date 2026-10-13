@@ -512,7 +512,8 @@ describe("upgrading-defold-versions guide", () => {
     const routes = apiRoutes();
     const targets = apiLinkTargets(guideBody);
     expect(targets.length).toBeGreaterThan(0);
-    const broken = targets.filter((href) => !routes.has(href.split("#")[0] ?? href));
+    // A `?since=` query narrows the page a route serves; it names no route of its own.
+    const broken = targets.filter((href) => !routes.has(href.split(/[?#]/)[0] ?? href));
     expect(broken).toEqual([]);
   });
 

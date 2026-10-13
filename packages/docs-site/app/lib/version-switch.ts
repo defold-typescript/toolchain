@@ -30,6 +30,12 @@ export interface RangeSelector {
    * only when no version is tracked at all.
    */
   oldest?: { id: string; label: string } | undefined;
+  /**
+   * The newest tracked version's route id — the first entry of the same
+   * newest-first axis. The `To` column compares its bound against it, so a window
+   * that stops short of the newest release is flagged in the closed chrome.
+   */
+  newest?: string | undefined;
 }
 
 /**
@@ -126,6 +132,7 @@ export function buildRangeSelector({
     from: column(hrefs.from),
     to: column(hrefs.to),
     oldest: oldestId === undefined ? undefined : { id: oldestId, label: versionLabel(oldestId) },
+    newest: ids[0],
   };
 }
 

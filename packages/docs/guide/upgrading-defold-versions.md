@@ -73,9 +73,12 @@ to". Two dropdowns pick the range:
 
 Setting both to the same release is the exact-version view — everything that
 release carries, and nothing else, as on [the 1.13.0 `go`
-page](/api/defold-1.13.0/go). The unprefixed `/api/<namespace>` is the full range
-across every tracked release, `/api/<version>/<namespace>` is the range ending at
-that version, and appending `?since=<version>` states the lower bound explicitly.
+page](/api/defold-1.13.0/go?since=defold-1.13.0). The unprefixed
+`/api/<namespace>` is the full range across every tracked release,
+`/api/<version>/<namespace>` is the range ending at that version, and appending
+`?since=<version>` states the lower bound explicitly. Without it the page starts
+at the **From** you last picked, or at the oldest tracked release if you never
+picked one.
 
 A page that spans releases carries two vocabularies, and they answer different
 questions:

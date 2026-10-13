@@ -3,7 +3,8 @@ import type { NavCategory, NavLink } from "./nav";
 // The browser-persisted "which version range am I browsing" preference. New users
 // carry no value; the redirect then defaults them to the full range ending at the
 // default version. The range selector records the chosen pair here as
-// `"<from>|<to>"` so later un-prefixed API entry points honor the last choice.
+// `"<from>|<to>"` so later un-prefixed API entry points honor the last choice
+// and a routed page without `?since=` keeps the chosen `from`.
 // The key is unchanged from the single-surface era on purpose: `readStoredRange`
 // migrates the values it used to hold rather than resetting returning readers.
 export const API_SURFACE_STORAGE_KEY = "apiSurface";
@@ -55,17 +56,23 @@ export interface ApiSurfaceConfig {
 export type BadgeCountTable = Record<string, Record<string, readonly [number, number, number]>>;
 
 /**
- * The version range a page should show: the URL when it states one, else the
- * persisted preference, always clamped so `from` is older-or-equal to `to`.
+ * The version range a page should show: each bound the URL states, the persisted
+ * preference for a bound it leaves out, always clamped so `from` is
+ * older-or-equal to `to`.
  *
- * An explicit route is the reader's stated intent and wins outright — a
- * `/api/<version>/…` path fixes `to`, and `?since=` fixes `from` (a routed page
- * without one states the full range). Only an un-prefixed entry point falls
- * through to storage, where the three shapes the key used to hold are migrated
- * rather than discarded: the retired `combined` id and any unparseable value
- * resolve to the full default range, and a bare version id becomes the full range
- * ending at it. An untracked bound is a hand-edited URL rather than a missing
- * page, so it widens to the oldest tracked version.
+ * What the URL states is the reader's intent and wins over storage — a
+ * `/api/<version>/…` path fixes `to`, and `?since=` fixes `from`. An un-prefixed
+ * entry point states neither and takes both from storage. A routed page without
+ * `?since=` takes only its `from` there: the static build renders one page per
+ * version, so the links between those pages cannot carry the reader's `from`,
+ * and reading the gap as the oldest version would widen the window on every
+ * click. A stored `from` newer than the routed `to` clamps down to it, and
+ * `?since=<oldest>` is how a URL states the full range outright. The three shapes
+ * the key used to hold are migrated rather than discarded: the retired `combined`
+ * id and any unparseable value resolve to the full default range, and a bare
+ * version id becomes the full range ending at it. An untracked bound is a
+ * hand-edited URL rather than a missing page, so it widens to the oldest tracked
+ * version.
  *
  * SELF-CONTAINED ON PURPOSE: this function references no module-scope identifiers
  * (it inlines its own path, query and range parsing) so the renderer can serialize
@@ -98,8 +105,6 @@ export function readStoredRange(
   const sinceRaw = sinceMatch ? decodeURIComponent(sinceMatch[1] as string) : "";
   const since = ids.indexOf(sinceRaw) >= 0 ? sinceRaw : "";
 
-  if (routed) return clamp(since || oldest, routed);
-
   let from = oldest;
   let to = config.defaultVersionId;
   const stored = storedValue || "";
@@ -114,7 +119,7 @@ export function readStoredRange(
   } else if (ids.indexOf(stored) >= 0) {
     to = stored;
   }
-  return clamp(since || from, to);
+  return clamp(since || from, routed || to);
 }
 
 /**
@@ -198,6 +203,76 @@ export function resolveApiSurfaceRedirect(
 }
 
 /**
+ * What choosing one selector option means on this page: the `"<from>|<to>"` pair
+ * to persist, and the destination when the option's own href is not it.
+ *
+ * The chosen bound moves and the other keeps the reader's current value; a `from`
+ * newer than `to` collapses the window onto the chosen version. The server
+ * renders the option hrefs against the window the *route* states, so on a page
+ * that states none they carry the default range's other bound, and following one
+ * would move the bound the reader did not touch. `target` is then the un-prefixed
+ * API entry point for this page, steered by `resolveRedirect` exactly as a nav
+ * link is; it is `null` when the href is already right — a routed page, or a
+ * reader whose range is the default one.
+ *
+ * SELF-CONTAINED ON PURPOSE, exactly as {@link readStoredRange} is: `readRange`
+ * and `resolveRedirect` arrive as parameters so the body references no module
+ * scope and the renderer can serialize it with `.toString()`.
+ */
+export function chooseRangeOption(
+  pathname: string,
+  search: string,
+  storedValue: string | null,
+  bound: string,
+  version: string,
+  config: ApiSurfaceConfig,
+  readRange: (
+    pathname: string,
+    search: string,
+    storedValue: string | null,
+    config: ApiSurfaceConfig,
+  ) => ApiSurfaceRange,
+  resolveRedirect: (
+    pathname: string,
+    search: string,
+    storedValue: string | null,
+    config: ApiSurfaceConfig,
+    readRange: (
+      pathname: string,
+      search: string,
+      storedValue: string | null,
+      config: ApiSurfaceConfig,
+    ) => ApiSurfaceRange,
+  ) => string | null,
+): { stored: string; target: string | null } {
+  const ids = config.versionIds;
+  const current = readRange(pathname, search, storedValue, config);
+  let from = bound === "from" ? version : current.from;
+  let to = bound === "from" ? current.to : version;
+  if (ids.indexOf(from) < ids.indexOf(to)) {
+    from = version;
+    to = version;
+  }
+  const stored = `${from}|${to}`;
+
+  const base = config.base;
+  let path = pathname;
+  if (base && path.indexOf(base) === 0) path = path.slice(base.length);
+  if (path.charAt(0) !== "/") path = `/${path}`;
+  const seg = path.replace(/\/+$/, "").split("/").filter(Boolean);
+  const first = seg[0] === "api" ? seg[1] || "" : "";
+  const oldest = ids[ids.length - 1] || config.defaultVersionId;
+  if (
+    ids.indexOf(first) >= 0 ||
+    (current.from === oldest && current.to === config.defaultVersionId)
+  ) {
+    return { stored, target: null };
+  }
+  const entry = `${base}/api${first ? `/${first}` : ""}`;
+  return { stored, target: resolveRedirect(entry, "", stored, config, readRange) || entry };
+}
+
+/**
  * The canonical target a routed page should declare, or `null` when it is not a
  * duplicate of anything.
  *
@@ -266,8 +341,11 @@ interface RangeSelectorRoot {
  * a dot, every other option in that column is cleared, and the column's
  * `[data-range-summary]` label is set from the active option's bare form. The
  * two columns are reconciled independently, so narrowing one bound never clears
- * the other's marker. The document element also records the reconciled range so
- * CSS can key off it. The server renders the summary and active option for the
+ * the other's marker. A column that names the newest tracked version in
+ * `data-range-newest` carries `data-range-stale` exactly while `to` is not that
+ * version, which is what turns its closed chrome red. The document element also
+ * records the reconciled range so CSS can key off it. The server renders the
+ * summary, the active option and the stale flag for the
  * JS-disabled fallback; this reconciles them to the client-persisted range that
  * the server could not read.
  *
@@ -325,6 +403,43 @@ export function reconcileRangeSelector(root: RangeSelectorRoot, range: ApiSurfac
         : bound === "from"
           ? range.from
           : range.to;
+  }
+  // Only the `To` column names a newest version, so a column without the
+  // attribute is never flagged.
+  const columns = root.querySelectorAll("[data-range-newest]");
+  for (let i = 0; i < columns.length; i += 1) {
+    const column = columns[i];
+    if (!column) continue;
+    if (column.getAttribute("data-range-newest") === range.to) {
+      column.removeAttribute("data-range-stale");
+    } else {
+      column.setAttribute("data-range-stale", "");
+    }
+  }
+}
+
+/**
+ * Point each selector option at the destination `targetFor` names for it, and
+ * leave the server-rendered href wherever it answers `null`. The renderer feeds
+ * it {@link chooseRangeOption}'s `target`, and runs it with the reconciliation
+ * rather than on click, so a hovered, copied or new-tab link agrees with a plain
+ * click.
+ *
+ * SELF-CONTAINED ON PURPOSE, as {@link reconcileRangeSelector} is.
+ */
+export function retargetRangeOptions(
+  root: RangeSelectorRoot,
+  targetFor: (bound: string, version: string) => string | null,
+): void {
+  const options = root.querySelectorAll("[data-range-option]");
+  for (let i = 0; i < options.length; i += 1) {
+    const option = options[i];
+    if (!option) continue;
+    const bound = option.getAttribute("data-range-bound");
+    const version = option.getAttribute("data-range-option");
+    if (bound === null || version === null) continue;
+    const target = targetFor(bound, version);
+    if (target) option.setAttribute("href", target);
   }
 }
 
@@ -397,4 +512,33 @@ export function rewriteApiNavForRange(
       links: category.links.map((link) => rewriteLink(link, range, namespaces, oldest)),
     };
   });
+}
+
+// Whether a path is an explicit `/api/<version>/…` route, the only kind that
+// states its own window. Server-side only, so unlike the serialized readers'
+// inlined copies this parse is a plain helper.
+function statesWindow(pathname: string, config: ApiSurfaceConfig): boolean {
+  let path = pathname;
+  if (config.base && path.indexOf(config.base) === 0) path = path.slice(config.base.length);
+  const seg = path.replace(/\/+$/, "").split("/").filter(Boolean);
+  return seg[0] === "api" && config.versionIds.includes(seg[1] ?? "");
+}
+
+/**
+ * The nav a page renders. Only an explicit `/api/<version>/…` route states a
+ * window, so only there are the API links moved onto it by
+ * {@link rewriteApiNavForRange}. Every other page — a guide, the bare canonical
+ * `/api/…` route, a version-independent page — keeps the un-prefixed links: the
+ * server cannot read the persisted range there, and a prefixed link would state
+ * the default version as the reader's choice and override it, where an
+ * un-prefixed one leaves {@link resolveApiSurfaceRedirect} to apply it.
+ */
+export function apiNavForPath(
+  categories: NavCategory[],
+  pathname: string,
+  search: string,
+  config: ApiSurfaceConfig,
+): NavCategory[] {
+  if (!statesWindow(pathname, config)) return categories;
+  return rewriteApiNavForRange(categories, activeRangeForPath(pathname, search, config), config);
 }
