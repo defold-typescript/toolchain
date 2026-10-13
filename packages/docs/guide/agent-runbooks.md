@@ -1433,6 +1433,19 @@ bump reports each one as a manual review point rather than deciding silently.
 `bump:defold` reports the decisions it deliberately will not make (its
 `remainingHumanDecisions`); resolve each by hand:
 
+- **Vendor the engine bindings** — `bump:defold --to` fails at its `regen` stage
+  until `fixtures/defold-<new>/engine-bindings/` exists, and no bump stage
+  creates it. A failed bump prints no `remainingHumanDecisions`, so the rest of
+  this list still applies. Run the networked sync, then regenerate:
+
+  ```sh
+  GITHUB_TOKEN="$(gh auth token)" bun packages/types/scripts/sync-engine-bindings.ts
+  bun run regen:all
+  ```
+
+  The sync re-reads every vendored target. A changed `commit` under an older
+  target means upstream moved that release tag; check that no binding file
+  changed with it.
 - **Curate `api-migrations.json`** for the `<from> -> <to>` transition — the
   deprecation list is never auto-edited.
 - **Re-confirm `import-manifest.json`** — verify the imported release tag matches

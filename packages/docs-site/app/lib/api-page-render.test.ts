@@ -3412,7 +3412,8 @@ describe("overload added/removed summary", () => {
   });
 
   // The one-signature block a function whose signature changed renders under,
-  // and the `Signature changed` lines in it.
+  // the `Signature changed` lines in it, and the release the current form
+  // arrived in, which is the release those lines name.
   const revised = (page: ApiPage, name: string) => {
     const newest = page.availability?.versions[0] ?? "";
     const current = apiModuleSymbols(page, page.translations, page.signatures).filter(
@@ -3427,13 +3428,13 @@ describe("overload added/removed summary", () => {
       headings,
       block,
       changed: historyLines(block).filter((l) => l.startsWith("Signature changed in Defold ")),
+      arrived: bareId(current[0]?.availability?.availableIn.at(-1) ?? ""),
     };
   };
 
   test("b2d.get_world renders one signature with one Signature changed line", () => {
     const page = pageOf("b2d");
-    const newest = bareId(page.availability?.versions[0] ?? "");
-    const { headings, block, changed } = revised(page, "b2d.get_world");
+    const { headings, block, changed, arrived } = revised(page, "b2d.get_world");
     expect(headings).toHaveLength(1);
     expect(headings[0]).not.toContain("api-overload-count");
     expect(headings[0]).not.toContain("api-badge-dot--new");
@@ -3441,7 +3442,7 @@ describe("overload added/removed summary", () => {
     expect(block).not.toMatch(SUMMARY);
     expect(changed).toHaveLength(1);
     expect(changed[0]).toStartWith(
-      `Signature changed in Defold ${newest} — before: \`(): Opaque<"b2World">\``,
+      `Signature changed in Defold ${arrived} — before: \`(): Opaque<"b2World">\``,
     );
   });
 
@@ -3477,13 +3478,12 @@ describe("overload added/removed summary", () => {
 
   test("json.decode renders one signature with one Signature changed line and no summary", () => {
     const page = pageOf("json");
-    const newest = bareId(page.availability?.versions[0] ?? "");
-    const { headings, block, changed } = revised(page, "json.decode");
+    const { headings, block, changed, arrived } = revised(page, "json.decode");
     expect(headings).toHaveLength(1);
     expect(headings[0]).not.toContain("api-overload-count");
     expect(block).not.toMatch(SUMMARY);
     expect(changed).toHaveLength(1);
-    expect(changed[0]).toStartWith(`Signature changed in Defold ${newest} — before: `);
+    expect(changed[0]).toStartWith(`Signature changed in Defold ${arrived} — before: `);
   });
 
   test("an overload removed before the newest version is uncounted history", () => {

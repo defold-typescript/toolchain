@@ -1,0 +1,174 @@
+{
+  "elements": [
+    {
+      "type": "STRUCT",
+      "name": "http.response",
+      "brief": "HTTP response data",
+      "description": "HTTP response data",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "status",
+          "doc": "response status",
+          "type": "integer"
+        },
+        {
+          "name": "response?",
+          "doc": "response data when it is not saved to disk",
+          "type": "string"
+        },
+        {
+          "name": "headers?",
+          "doc": "response headers for status 200 or 206",
+          "type": "table<string, string>"
+        },
+        {
+          "name": "path?",
+          "doc": "destination path when the response is saved to disk",
+          "type": "string"
+        },
+        {
+          "name": "error?",
+          "doc": "unexpected error, such as a file I/O error",
+          "type": "string"
+        },
+        {
+          "name": "bytes_received?",
+          "doc": "bytes transferred when progress reporting is enabled",
+          "type": "integer"
+        },
+        {
+          "name": "bytes_total?",
+          "doc": "total request size when progress reporting is enabled",
+          "type": "integer"
+        },
+        {
+          "name": "range_start?",
+          "doc": "requested-file start offset",
+          "type": "integer"
+        },
+        {
+          "name": "range_end?",
+          "doc": "requested-file end offset, inclusive",
+          "type": "integer"
+        },
+        {
+          "name": "document_size?",
+          "doc": "full requested-file size",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "http.request_options",
+      "brief": "HTTP request options",
+      "description": "HTTP request options",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "timeout?",
+          "doc": "timeout in seconds",
+          "type": "number"
+        },
+        {
+          "name": "path?",
+          "doc": "absolute destination path; overwritten only for status 200",
+          "type": "string"
+        },
+        {
+          "name": "ignore_cache?",
+          "doc": "do not return cached data for status 304; unavailable on HTML5",
+          "type": "boolean"
+        },
+        {
+          "name": "chunked_transfer?",
+          "doc": "use chunked transfer encoding for HTTPS requests larger than 16 KB; defaults to true and is unavailable on HTML5",
+          "type": "boolean"
+        },
+        {
+          "name": "report_progress?",
+          "doc": "report transferred and total byte counts to the callback",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "http.request",
+      "brief": "perform a HTTP/HTTPS request",
+      "description": "Perform a HTTP/HTTPS request.\n<span class=\"icon-attention\"></span> If no timeout value is passed, the configuration value \"network.http_timeout\" is used. If that is not set, the timeout value is <code>0</code> (which blocks indefinitely).",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "target url",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "method",
+          "doc": "HTTP/HTTPS method, e.g. \"GET\", \"PUT\", \"POST\" etc.",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "response callback function\n<dl>\n<dt><code>self</code></dt>\n<dd><span class=\"type\">script_instance</span> The current script instance</dd>\n<dt><code>id</code></dt>\n<dd><span class=\"type\">hash</span> Internal message identifier. Do not use!</dd>\n</dl>",
+          "types": ["fun(self:script_instance, id:hash, response:http.response)"],
+          "is_optional": "False"
+        },
+        {
+          "name": "headers",
+          "doc": "optional table with custom headers",
+          "types": ["table<string, string>"],
+          "is_optional": "True"
+        },
+        {
+          "name": "post_data",
+          "doc": "optional data to send",
+          "types": ["string"],
+          "is_optional": "True"
+        },
+        {
+          "name": "options",
+          "doc": "optional request options",
+          "types": ["http.request_options"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Basic HTTP-GET request. The callback receives a table with the response\nin the fields status, the response (the data) and headers (a table).\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"kr\">function</span> <span class=\"nf\">http_result</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">_</span><span class=\"p\">,</span> <span class=\"n\">response</span><span class=\"p\">)</span>\n    <span class=\"kr\">if</span> <span class=\"n\">response</span><span class=\"p\">.</span><span class=\"n\">bytes_total</span> <span class=\"o\">~=</span> <span class=\"kc\">nil</span> <span class=\"kr\">then</span>\n        <span class=\"n\">update_my_progress_bar</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">response</span><span class=\"p\">.</span><span class=\"n\">bytes_received</span> <span class=\"o\">/</span> <span class=\"n\">response</span><span class=\"p\">.</span><span class=\"n\">bytes_total</span><span class=\"p\">)</span>\n    <span class=\"kr\">else</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">response</span><span class=\"p\">.</span><span class=\"n\">status</span><span class=\"p\">)</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">response</span><span class=\"p\">.</span><span class=\"n\">response</span><span class=\"p\">)</span>\n        <span class=\"n\">pprint</span><span class=\"p\">(</span><span class=\"n\">response</span><span class=\"p\">.</span><span class=\"n\">headers</span><span class=\"p\">)</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">http</span><span class=\"p\">.</span><span class=\"n\">request</span><span class=\"p\">(</span><span class=\"s2\">&quot;http://www.google.com&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;GET&quot;</span><span class=\"p\">,</span> <span class=\"n\">http_result</span><span class=\"p\">,</span> <span class=\"kc\">nil</span><span class=\"p\">,</span> <span class=\"kc\">nil</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"n\">report_progress</span> <span class=\"o\">=</span> <span class=\"kc\">true</span> <span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "http",
+    "name": "HTTP",
+    "brief": "HTTP API documentation",
+    "description": "Functions for performing HTTP and HTTPS requests.",
+    "path": "engine/gamesys/src/gamesys/scripts/script_http.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

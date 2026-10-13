@@ -2023,6 +2023,10 @@
     "verdict": "manual",
     "reason": "lua_type switch"
   },
+  "defold-1.13.2:msg.post:too-loose:2": {
+    "verdict": "accepted",
+    "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
+  },
   "defold-1.13.2:render.set_blend_equation_separate:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
@@ -2036,6 +2040,330 @@
     "reason": "Opaque<\"render_target\"> is the branded numeric handle the engine reads as a number; the matching info handle field returns it"
   },
   "defold-1.13.2:resource.get_texture_info:too-loose:1": {
+    "verdict": "accepted",
+    "reason": "Opaque<\"texture\"> is the branded numeric handle the engine reads as a number; the matching info handle field returns it"
+  },
+  "defold-1.14.0:b2d.body.create_fixture:field-undeclared:2.user_data": {
+    "verdict": "accepted",
+    "reason": "read only to raise \"Fixture user_data is not supported\""
+  },
+  "defold-1.14.0:b2d.chain.from_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.fixture.set_shape:field-undeclared:3.shape": {
+    "verdict": "accepted",
+    "reason": "the binding also takes the shape wrapped as { shape = ... }; the declaration types the documented bare shape table"
+  },
+  "defold-1.14.0:b2d.joint.create_filter:arity": {
+    "verdict": "accepted",
+    "reason": "the ref-doc documents an optional definition table the binding never reads; passing one is ignored"
+  },
+  "defold-1.14.0:b2d.joint.create_prismatic:manual": {
+    "verdict": "manual",
+    "reason": "CheckVector3 at a non-literal index"
+  },
+  "defold-1.14.0:b2d.joint.create_wheel:manual": {
+    "verdict": "manual",
+    "reason": "CheckVector3 at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.are_contact_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.are_hit_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.are_pre_solve_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.are_sensor_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.enable_contact_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.enable_hit_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.enable_pre_solve_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.enable_sensor_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.get_aabb:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.get_body:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.get_closest_point:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.get_contact_capacity:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.get_contact_data:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.get_density:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.get_filter_data:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.get_friction:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.get_mass_data:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.get_material:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.get_restitution:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.get_sensor_capacity:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.get_sensor_overlaps:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.get_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.get_type:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.get_world:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.is_sensor:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.is_valid:arity": {
+    "verdict": "accepted",
+    "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
+  },
+  "defold-1.14.0:b2d.shape.is_valid:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "defold-1.14.0:b2d.shape.is_valid:required-as-optional:2": {
+    "verdict": "accepted",
+    "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
+  },
+  "defold-1.14.0:b2d.shape.ray_cast:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; luaL_checknumber at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.refilter:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.set_density:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.set_filter_data:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.set_friction:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.set_material:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.set_restitution:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.set_sensor:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.shape.set_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.14.0:b2d.shape.test_point:missing-declaration": {
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
+  },
+  "defold-1.14.0:b2d.world.cast_mover:field-unread:4.group_index": {
+    "verdict": "accepted",
+    "reason": "shared b2d.world.query_filter struct; the Box2D v3 mover filter reads only category and mask bits"
+  },
+  "defold-1.14.0:b2d.world.collide_mover:field-unread:3.group_index": {
+    "verdict": "accepted",
+    "reason": "shared b2d.world.query_filter struct; the Box2D v3 mover filter reads only category and mask bits"
+  },
+  "defold-1.14.0:bullet3d.collision_object.is_valid:arity": {
+    "verdict": "accepted",
+    "reason": "the binding tests slot 1 through a validity helper without a kind check, so the one declared argument is read"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_cone_twist:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_cone_twist:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_generic_6dof_spring:field-undeclared:3.use_linear_reference_frame_a": {
+    "verdict": "accepted",
+    "reason": "the binding reads the field only to reject it with RejectIneffectiveField, so declaring it would invite a runtime error"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_generic_6dof_spring:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_generic_6dof_spring:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_generic_6dof:field-undeclared:3.use_linear_reference_frame_a": {
+    "verdict": "accepted",
+    "reason": "the binding reads the field only to reject it with RejectIneffectiveField, so declaring it would invite a runtime error"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_generic_6dof:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_generic_6dof:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_hinge:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_hinge:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_hinge2:manual": {
+    "verdict": "manual",
+    "reason": "axis vectors are read with CheckVector3 at a computed index; the declared three-argument shape matches"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_hinge2:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_hinge2:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_point_to_point:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_point_to_point:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_slider:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_slider:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_universal:manual": {
+    "verdict": "manual",
+    "reason": "axis vectors are read with CheckVector3 at a computed index; the declared three-argument shape matches"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_universal:manual:1": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_a through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.constraint.create_universal:manual:2": {
+    "verdict": "manual",
+    "reason": "CheckCreateInput reads body_b through a shared helper; declared as a bullet3d collision object"
+  },
+  "defold-1.14.0:bullet3d.shape.is_valid:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "defold-1.14.0:bullet3d.shape.set_shape:field-unread:2.position": {
+    "verdict": "accepted",
+    "reason": "shared bullet3d.shape.definition struct; set_shape replaces the geometry and ignores placement fields"
+  },
+  "defold-1.14.0:bullet3d.shape.set_shape:field-unread:2.rotation": {
+    "verdict": "accepted",
+    "reason": "shared bullet3d.shape.definition struct; set_shape replaces the geometry and ignores placement fields"
+  },
+  "defold-1.14.0:bullet3d.shape.set_shape:field-unread:2.target_rotation": {
+    "verdict": "accepted",
+    "reason": "shared bullet3d.shape.definition struct; set_shape replaces the geometry and ignores placement fields"
+  },
+  "defold-1.14.0:bullet3d.world.cast_ray_closest:arity": {
+    "verdict": "accepted",
+    "reason": "the shared cast body reads a max_results slot that the closest variant never uses"
+  },
+  "defold-1.14.0:bullet3d.world.cast_shape_closest:arity": {
+    "verdict": "accepted",
+    "reason": "the shared cast body reads a max_results slot that the closest variant never uses"
+  },
+  "defold-1.14.0:bullet3d.world.is_valid:arity": {
+    "verdict": "accepted",
+    "reason": "the binding tests slot 1 through a validity helper without a kind check, so the one declared argument is read"
+  },
+  "defold-1.14.0:collectionproxy.load:manual:2": {
+    "verdict": "manual",
+    "reason": "no read of this slot"
+  },
+  "defold-1.14.0:collectionproxy.load:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "defold-1.14.0:render.set_blend_equation_separate:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checknumber at a non-literal index"
+  },
+  "defold-1.14.0:render.set_blend_func_separate:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checknumber at a non-literal index"
+  },
+  "defold-1.14.0:render.set_render_target:field-unread:2.face": {
+    "verdict": "accepted",
+    "reason": "the binding reads face with lua_getfield on the pushed options copy after the transient lua_next loop, a relative stack index the extraction does not resolve"
+  },
+  "defold-1.14.0:resource.get_render_target_info:too-loose:1": {
+    "verdict": "accepted",
+    "reason": "Opaque<\"render_target\"> is the branded numeric handle the engine reads as a number; the matching info handle field returns it"
+  },
+  "defold-1.14.0:resource.get_texture_info:too-loose:1": {
     "verdict": "accepted",
     "reason": "Opaque<\"texture\"> is the branded numeric handle the engine reads as a number; the matching info handle field returns it"
   },

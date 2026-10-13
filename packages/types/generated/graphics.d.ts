@@ -119,6 +119,7 @@ declare global {
     type COMPRESSION_TYPE = typeof graphics.COMPRESSION_TYPE_BASIS_ETC1S | typeof graphics.COMPRESSION_TYPE_BASIS_UASTC | typeof graphics.COMPRESSION_TYPE_DEFAULT | typeof graphics.COMPRESSION_TYPE_WEBP | typeof graphics.COMPRESSION_TYPE_WEBP_LOSSY;
     type CONTEXT_FEATURE = typeof graphics.CONTEXT_FEATURE_3D_TEXTURES | typeof graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX | typeof graphics.CONTEXT_FEATURE_COMPUTE_SHADER | typeof graphics.CONTEXT_FEATURE_INSTANCING | typeof graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING | typeof graphics.CONTEXT_FEATURE_STORAGE_BUFFER | typeof graphics.CONTEXT_FEATURE_TEXTURE_ARRAY | typeof graphics.CONTEXT_FEATURE_VSYNC;
     type COORDINATE_SPACE = typeof graphics.COORDINATE_SPACE_DEFAULT | typeof graphics.COORDINATE_SPACE_LOCAL | typeof graphics.COORDINATE_SPACE_WORLD;
+    type CUBEMAP_FACE = typeof graphics.CUBEMAP_FACE_NEGATIVE_X | typeof graphics.CUBEMAP_FACE_NEGATIVE_Y | typeof graphics.CUBEMAP_FACE_NEGATIVE_Z | typeof graphics.CUBEMAP_FACE_POSITIVE_X | typeof graphics.CUBEMAP_FACE_POSITIVE_Y | typeof graphics.CUBEMAP_FACE_POSITIVE_Z;
     type DATA_TYPE = typeof graphics.DATA_TYPE_BYTE | typeof graphics.DATA_TYPE_FLOAT | typeof graphics.DATA_TYPE_INT | typeof graphics.DATA_TYPE_SHORT | typeof graphics.DATA_TYPE_UNSIGNED_BYTE | typeof graphics.DATA_TYPE_UNSIGNED_INT | typeof graphics.DATA_TYPE_UNSIGNED_SHORT;
     type FACE_TYPE = typeof graphics.FACE_TYPE_BACK | typeof graphics.FACE_TYPE_FRONT | typeof graphics.FACE_TYPE_FRONT_AND_BACK;
     type SEMANTIC_TYPE = typeof graphics.SEMANTIC_TYPE_BONE_INDICES | typeof graphics.SEMANTIC_TYPE_BONE_WEIGHTS | typeof graphics.SEMANTIC_TYPE_COLOR | typeof graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS | typeof graphics.SEMANTIC_TYPE_NONE | typeof graphics.SEMANTIC_TYPE_NORMAL | typeof graphics.SEMANTIC_TYPE_NORMAL_MATRIX | typeof graphics.SEMANTIC_TYPE_PAGE_INDEX | typeof graphics.SEMANTIC_TYPE_POSITION | typeof graphics.SEMANTIC_TYPE_TANGENT | typeof graphics.SEMANTIC_TYPE_TEXCOORD | typeof graphics.SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D | typeof graphics.SEMANTIC_TYPE_WORLD_MATRIX;
@@ -307,6 +308,12 @@ declare global {
      * World vertex attribute coordinate space.
      */
     const COORDINATE_SPACE_WORLD: number & { readonly __brand: "graphics.COORDINATE_SPACE_WORLD" };
+    const CUBEMAP_FACE_NEGATIVE_X: number & { readonly __brand: "graphics.CUBEMAP_FACE_NEGATIVE_X" };
+    const CUBEMAP_FACE_NEGATIVE_Y: number & { readonly __brand: "graphics.CUBEMAP_FACE_NEGATIVE_Y" };
+    const CUBEMAP_FACE_NEGATIVE_Z: number & { readonly __brand: "graphics.CUBEMAP_FACE_NEGATIVE_Z" };
+    const CUBEMAP_FACE_POSITIVE_X: number & { readonly __brand: "graphics.CUBEMAP_FACE_POSITIVE_X" };
+    const CUBEMAP_FACE_POSITIVE_Y: number & { readonly __brand: "graphics.CUBEMAP_FACE_POSITIVE_Y" };
+    const CUBEMAP_FACE_POSITIVE_Z: number & { readonly __brand: "graphics.CUBEMAP_FACE_POSITIVE_Z" };
     /**
      * Signed 8-bit vertex attribute data.
      */

@@ -1,0 +1,1166 @@
+/** @noSelfInFile */
+import type { Hash, Matrix4, Quaternion, Url, Vector, Vector3, Vector4 } from "../../../src/core-types";
+
+declare global {
+  /**
+   * Game object API documentation
+   */
+  namespace go {
+    /**
+     * Options for accessing indexed or internal component properties with go.get and go.set.
+     */
+    export interface property_options {
+      /**
+       * Index into an array property, starting at one.
+       */
+      index?: number;
+      /**
+       * Name of an internal property.
+       */
+      key?: Hash;
+      /**
+       * Internal component resources identified by key, such as particle FX emitters.
+       */
+      keys?: Hash[];
+    }
+    export type Easing = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE;
+    export type Playback = typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_PINGPONG | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_PINGPONG;
+    export type EASING = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE;
+    export type PLAYBACK = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG;
+    /**
+     * in-back
+     */
+    export const EASING_INBACK: number & { readonly __brand: "go.EASING_INBACK" };
+    /**
+     * in-bounce
+     */
+    export const EASING_INBOUNCE: number & { readonly __brand: "go.EASING_INBOUNCE" };
+    /**
+     * in-circlic
+     */
+    export const EASING_INCIRC: number & { readonly __brand: "go.EASING_INCIRC" };
+    /**
+     * in-cubic
+     */
+    export const EASING_INCUBIC: number & { readonly __brand: "go.EASING_INCUBIC" };
+    /**
+     * in-elastic
+     */
+    export const EASING_INELASTIC: number & { readonly __brand: "go.EASING_INELASTIC" };
+    /**
+     * in-exponential
+     */
+    export const EASING_INEXPO: number & { readonly __brand: "go.EASING_INEXPO" };
+    /**
+     * in-out-back
+     */
+    export const EASING_INOUTBACK: number & { readonly __brand: "go.EASING_INOUTBACK" };
+    /**
+     * in-out-bounce
+     */
+    export const EASING_INOUTBOUNCE: number & { readonly __brand: "go.EASING_INOUTBOUNCE" };
+    /**
+     * in-out-circlic
+     */
+    export const EASING_INOUTCIRC: number & { readonly __brand: "go.EASING_INOUTCIRC" };
+    /**
+     * in-out-cubic
+     */
+    export const EASING_INOUTCUBIC: number & { readonly __brand: "go.EASING_INOUTCUBIC" };
+    /**
+     * in-out-elastic
+     */
+    export const EASING_INOUTELASTIC: number & { readonly __brand: "go.EASING_INOUTELASTIC" };
+    /**
+     * in-out-exponential
+     */
+    export const EASING_INOUTEXPO: number & { readonly __brand: "go.EASING_INOUTEXPO" };
+    /**
+     * in-out-quadratic
+     */
+    export const EASING_INOUTQUAD: number & { readonly __brand: "go.EASING_INOUTQUAD" };
+    /**
+     * in-out-quartic
+     */
+    export const EASING_INOUTQUART: number & { readonly __brand: "go.EASING_INOUTQUART" };
+    /**
+     * in-out-quintic
+     */
+    export const EASING_INOUTQUINT: number & { readonly __brand: "go.EASING_INOUTQUINT" };
+    /**
+     * in-out-sine
+     */
+    export const EASING_INOUTSINE: number & { readonly __brand: "go.EASING_INOUTSINE" };
+    /**
+     * in-quadratic
+     */
+    export const EASING_INQUAD: number & { readonly __brand: "go.EASING_INQUAD" };
+    /**
+     * in-quartic
+     */
+    export const EASING_INQUART: number & { readonly __brand: "go.EASING_INQUART" };
+    /**
+     * in-quintic
+     */
+    export const EASING_INQUINT: number & { readonly __brand: "go.EASING_INQUINT" };
+    /**
+     * in-sine
+     */
+    export const EASING_INSINE: number & { readonly __brand: "go.EASING_INSINE" };
+    /**
+     * linear interpolation
+     */
+    export const EASING_LINEAR: number & { readonly __brand: "go.EASING_LINEAR" };
+    /**
+     * out-back
+     */
+    export const EASING_OUTBACK: number & { readonly __brand: "go.EASING_OUTBACK" };
+    /**
+     * out-bounce
+     */
+    export const EASING_OUTBOUNCE: number & { readonly __brand: "go.EASING_OUTBOUNCE" };
+    /**
+     * out-circlic
+     */
+    export const EASING_OUTCIRC: number & { readonly __brand: "go.EASING_OUTCIRC" };
+    /**
+     * out-cubic
+     */
+    export const EASING_OUTCUBIC: number & { readonly __brand: "go.EASING_OUTCUBIC" };
+    /**
+     * out-elastic
+     */
+    export const EASING_OUTELASTIC: number & { readonly __brand: "go.EASING_OUTELASTIC" };
+    /**
+     * out-exponential
+     */
+    export const EASING_OUTEXPO: number & { readonly __brand: "go.EASING_OUTEXPO" };
+    /**
+     * out-in-back
+     */
+    export const EASING_OUTINBACK: number & { readonly __brand: "go.EASING_OUTINBACK" };
+    /**
+     * out-in-bounce
+     */
+    export const EASING_OUTINBOUNCE: number & { readonly __brand: "go.EASING_OUTINBOUNCE" };
+    /**
+     * out-in-circlic
+     */
+    export const EASING_OUTINCIRC: number & { readonly __brand: "go.EASING_OUTINCIRC" };
+    /**
+     * out-in-cubic
+     */
+    export const EASING_OUTINCUBIC: number & { readonly __brand: "go.EASING_OUTINCUBIC" };
+    /**
+     * out-in-elastic
+     */
+    export const EASING_OUTINELASTIC: number & { readonly __brand: "go.EASING_OUTINELASTIC" };
+    /**
+     * out-in-exponential
+     */
+    export const EASING_OUTINEXPO: number & { readonly __brand: "go.EASING_OUTINEXPO" };
+    /**
+     * out-in-quadratic
+     */
+    export const EASING_OUTINQUAD: number & { readonly __brand: "go.EASING_OUTINQUAD" };
+    /**
+     * out-in-quartic
+     */
+    export const EASING_OUTINQUART: number & { readonly __brand: "go.EASING_OUTINQUART" };
+    /**
+     * out-in-quintic
+     */
+    export const EASING_OUTINQUINT: number & { readonly __brand: "go.EASING_OUTINQUINT" };
+    /**
+     * out-in-sine
+     */
+    export const EASING_OUTINSINE: number & { readonly __brand: "go.EASING_OUTINSINE" };
+    /**
+     * out-quadratic
+     */
+    export const EASING_OUTQUAD: number & { readonly __brand: "go.EASING_OUTQUAD" };
+    /**
+     * out-quartic
+     */
+    export const EASING_OUTQUART: number & { readonly __brand: "go.EASING_OUTQUART" };
+    /**
+     * out-quintic
+     */
+    export const EASING_OUTQUINT: number & { readonly __brand: "go.EASING_OUTQUINT" };
+    /**
+     * out-sine
+     */
+    export const EASING_OUTSINE: number & { readonly __brand: "go.EASING_OUTSINE" };
+    /**
+     * loop backward
+     */
+    export const PLAYBACK_LOOP_BACKWARD: number & { readonly __brand: "go.PLAYBACK_LOOP_BACKWARD" };
+    /**
+     * loop forward
+     */
+    export const PLAYBACK_LOOP_FORWARD: number & { readonly __brand: "go.PLAYBACK_LOOP_FORWARD" };
+    /**
+     * ping pong loop
+     */
+    export const PLAYBACK_LOOP_PINGPONG: number & { readonly __brand: "go.PLAYBACK_LOOP_PINGPONG" };
+    /**
+     * no playback
+     */
+    export const PLAYBACK_NONE: number & { readonly __brand: "go.PLAYBACK_NONE" };
+    /**
+     * once backward
+     */
+    export const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: "go.PLAYBACK_ONCE_BACKWARD" };
+    /**
+     * once forward
+     */
+    export const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" };
+    /**
+     * once ping pong
+     */
+    export const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: "go.PLAYBACK_ONCE_PINGPONG" };
+    /**
+     * This is only supported for numerical properties. If the node property is already being
+     * animated, that animation will be canceled and replaced by the new one.
+     * If a `complete_function` (lua function) is specified, that function will be called when the animation has completed.
+     * By starting a new animation in that function, several animations can be sequenced together. See the examples for more information.
+     * If you call `go.animate()` from a game object's `final()` function,
+     * any passed `complete_function` will be ignored and never called upon animation completion.
+     * See the properties guide for which properties can be animated and the animation guide for how
+     * them.
+     *
+     * @param url - url of the game object or component having the property
+     * @param property - id of the property to animate
+     * @param playback - playback mode of the animation
+     *
+     * - `go.PLAYBACK_ONCE_FORWARD`
+     * - `go.PLAYBACK_ONCE_BACKWARD`
+     * - `go.PLAYBACK_ONCE_PINGPONG`
+     * - `go.PLAYBACK_LOOP_FORWARD`
+     * - `go.PLAYBACK_LOOP_BACKWARD`
+     * - `go.PLAYBACK_LOOP_PINGPONG`
+     * @param to - target property value
+     * @param easing - easing to use during animation. Either specify a constant, see the animation guide for a complete list, or a vmath.vector with a curve
+     * @param duration - duration of the animation in seconds
+     * @param delay - delay before the animation starts in seconds
+     * @param complete_function - optional function to call when the animation has completed
+     *
+     * `self`
+     *
+     * script_instance The current script instance.
+     *
+     * `url`
+     *
+     * url The game object or component instance for which the property is animated.
+     *
+     * `property`
+     *
+     * hash The id of the animated property.
+     * @example
+     * Animate the position of a game object to x = 10 during 1 second, then y = 20 during 1 second:
+     * ```ts
+     * go.animate(go.get_id(), "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1, 0, () => {
+     *   go.animate(go.get_id(), "position.y", go.PLAYBACK_ONCE_FORWARD, 20, go.EASING_LINEAR, 1);
+     * });
+     * ```
+     * @example
+     * Animate the y position of a game object using a crazy custom easing curve:
+     * ```ts
+     * const values = [
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     * ];
+     * const vec = vmath.vector(values);
+     * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);
+     * ```
+     */
+    export function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay?: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void;
+    /**
+     * By calling this function, all or specified stored property animations of the game object or component will be canceled.
+     * See the properties guide for which properties can be animated and the animation guide for how to animate them.
+     *
+     * @param url - url of the game object or component
+     * @param property - optional id of the property to cancel
+     * @example
+     * Cancel the animation of the position of a game object:
+     * ```ts
+     * go.cancel_animations(go.get_id(), "position");
+     * ```
+     * @example
+     * Cancel all property animations of the current game object:
+     * ```ts
+     * go.cancel_animations(".");
+     * ```
+     * @example
+     * Cancel all property animations of the sprite component of the current game object:
+     * ```ts
+     * go.cancel_animations("#sprite");
+     * ```
+     */
+    export function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;
+    /**
+     * Delete one or more game objects identified by id. Deletion is asynchronous meaning that
+     * the game object(s) are scheduled for deletion which will happen at the end of the current
+     * frame. Note that game objects scheduled for deletion will be counted against
+     * `max_instances` in "game.project" until they are actually removed.
+     * Deleting a game object containing a particle FX component emitting particles will not immediately stop the particle FX from emitting particles. You need to manually stop the particle FX using `particlefx.stop()`.
+     * Deleting a game object containing a sound component that is playing will not immediately stop the sound from playing. You need to manually stop the sound using `sound.stop()`.
+     *
+     * @param id - optional id or table of id's of the instance(s) to delete, the instance of the calling script is deleted by default
+     * @param recursive - optional boolean, set to true to recursively delete child hiearchy in child to parent order
+     * @example
+     * This example demonstrates how to delete game objects
+     * ```ts
+     * // Delete the script's own game object.
+     * go.delete();
+     * // Delete a game object with the id "my_game_object".
+     * const id = go.get_id("my_game_object"); // retrieve the id of the game object to be deleted
+     * go.delete(id);
+     * // Delete a list of game objects.
+     * const ids = [hash("/my_object_1"), hash("/my_object_2"), hash("/my_object_3")];
+     * go.delete(ids);
+     * ```
+     * @example
+     * This example demonstrates how to delete a game objects and their children (child to parent order)
+     * ```ts
+     * // Delete the script's own game object and its children.
+     * go.delete(true);
+     * // Delete a game object with the id "my_game_object" and its children.
+     * const id = go.get_id("my_game_object"); // retrieve the id of the game object to be deleted
+     * go.delete(id, true);
+     * // Delete a list of game objects and their children.
+     * const ids = [hash("/my_object_1"), hash("/my_object_2"), hash("/my_object_3")];
+     * go.delete(ids, true);
+     * ```
+     */
+    function _delete(id?: SceneGameObjectAddress | Hash | Url | (string | Hash | Url)[] | boolean, recursive?: boolean): void;
+    /**
+     * This function can check for game objects in any collection by specifying
+     * the collection name in the URL.
+     *
+     * @param url - url of the game object to check
+     * @returns true if the game object exists
+     * @example
+     * Check if game object "my_game_object" exists in the current collection
+     * ```ts
+     * go.exists("/my_game_object");
+     * ```
+     * @example
+     * Check if game object exists in another collection
+     * ```ts
+     * go.exists("other_collection:/my_game_object");
+     * ```
+     */
+    export function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
+    /**
+     * This is a callback-function, which is called by the engine when a script component is finalized (destroyed). It can
+     * be used to e.g. take some last action, report the finalization to other game object instances, delete spawned objects
+     * or release user input focus (see release_input_focus).
+     *
+     * @param self - script instance used for storing state
+     * @example
+     * ```ts
+     * export default defineScript({
+     *   init() {
+     *     return { some_value: 0 };
+     *   },
+     *
+     *   final(self) {
+     *     // report finalization
+     *     msg.post("my_friend_instance", "im_dead", { my_stats: self.some_value });
+     *   },
+     * });
+     * ```
+     */
+    export function final(self: unknown): void;
+    /**
+     * This is a callback-function, which is called by the engine at fixed intervals to update the state of a script
+     * component. The function will be called if 'Fixed Update Frequency' is enabled in the Engine section of game.project.
+     * It can for instance be used to update game logic with the physics simulation if using a fixed timestep for the
+     * physics (enabled by ticking 'Use Fixed Timestep' in the Physics section of game.project).
+     *
+     * @param self - script instance used for storing state
+     * @param dt - the time-step of the frame update
+     */
+    export function fixed_update(self: unknown, dt: number): void;
+    /**
+     * Returns or constructs an instance identifier. The instance id is a hash
+     * of the absolute path to the instance.
+     *
+     * - If `path` is specified, it can either be absolute or relative to the instance of the calling script.
+     * - If `path` is not specified, the id of the game object instance the script is attached to will be returned.
+     *
+     * @param path - path of the instance for which to return the id
+     * @returns instance id
+     * @example
+     * ```ts
+     * // For the instance with path /my_sub_collection/my_instance, the following calls
+     * // are equivalent:
+     * const id = go.get_id(); // no path, defaults to the instance containing the calling script
+     * print(id); // => hash: [/my_sub_collection/my_instance]
+     *
+     * const id2 = go.get_id("/my_sub_collection/my_instance"); // absolute path
+     * print(id2); // => hash: [/my_sub_collection/my_instance]
+     *
+     * const id3 = go.get_id("my_instance"); // relative path
+     * print(id3); // => hash: [/my_sub_collection/my_instance]
+     * ```
+     */
+    export function get_id(path?: string): Hash;
+    /**
+     * Get the parent for a game object instance.
+     *
+     * @param id - optional id of the game object instance to get parent for, defaults to the instance containing the calling script
+     * @returns parent instance or `nil`
+     * @example
+     * Get parent of the instance containing the calling script:
+     * ```ts
+     * const parent_id = go.get_parent();
+     * ```
+     * @example
+     * Get parent of the instance with id "x":
+     * ```ts
+     * const parent_id = go.get_parent("x");
+     * ```
+     */
+    export function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;
+    /**
+     * The position is relative the parent (if any). Use go.get_world_position to retrieve the global world position.
+     *
+     * @param id - optional id of the game object instance to get the position for, by default the instance of the calling script
+     * @returns instance position
+     * @example
+     * Get the position of the game object instance the script is attached to:
+     * ```ts
+     * const p = go.get_position();
+     * ```
+     * @example
+     * Get the position of another game object instance "my_gameobject":
+     * ```ts
+     * const pos = go.get_position("my_gameobject");
+     * ```
+     */
+    export function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;
+    /**
+     * The rotation is relative to the parent (if any). Use go.get_world_rotation to retrieve the global world rotation.
+     *
+     * @param id - optional id of the game object instance to get the rotation for, by default the instance of the calling script
+     * @returns instance rotation
+     * @example
+     * Get the rotation of the game object instance the script is attached to:
+     * ```ts
+     * const r = go.get_rotation();
+     * ```
+     * @example
+     * Get the rotation of another game object instance with id "x":
+     * ```ts
+     * const r = go.get_rotation("x");
+     * ```
+     */
+    export function get_rotation(id?: SceneGameObjectAddress | Hash | Url): Quaternion;
+    /**
+     * The scale is relative the parent (if any). Use go.get_world_scale to retrieve the global world 3D scale factor.
+     *
+     * @param id - optional id of the game object instance to get the scale for, by default the instance of the calling script
+     * @returns instance scale factor
+     * @example
+     * Get the scale of the game object instance the script is attached to:
+     * ```ts
+     * const s = go.get_scale();
+     * ```
+     * @example
+     * Get the scale of another game object instance with id "x":
+     * ```ts
+     * const s = go.get_scale("x");
+     * ```
+     */
+    export function get_scale(id?: SceneGameObjectAddress | Hash | Url): Vector3;
+    /**
+     * The uniform scale is relative the parent (if any). If the underlying scale vector is non-uniform the min element of the vector is returned as the uniform scale factor.
+     *
+     * @param id - optional id of the game object instance to get the uniform scale for, by default the instance of the calling script
+     * @returns uniform instance scale factor
+     * @example
+     * Get the scale of the game object instance the script is attached to:
+     * ```ts
+     * const s = go.get_scale_uniform();
+     * ```
+     * @example
+     * Get the uniform scale of another game object instance with id "x":
+     * ```ts
+     * const s = go.get_scale_uniform("x");
+     * ```
+     */
+    export function get_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;
+    /**
+     * The function will return the world position calculated at the end of the previous frame.
+     * To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
+     * Use go.get_position to retrieve the position relative to the parent.
+     *
+     * @param id - optional id of the game object instance to get the world position for, by default the instance of the calling script
+     * @returns instance world position
+     * @example
+     * Get the world position of the game object instance the script is attached to:
+     * ```ts
+     * const p = go.get_world_position();
+     * ```
+     * @example
+     * Get the world position of another game object instance with id "x":
+     * ```ts
+     * // Relative addressing by id — no socket prefix:
+     * const p = go.get_world_position("x");
+     * ```
+     */
+    export function get_world_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;
+    /**
+     * The function will return the world rotation calculated at the end of the previous frame.
+     * To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
+     * Use go.get_rotation to retrieve the rotation relative to the parent.
+     *
+     * @param id - optional id of the game object instance to get the world rotation for, by default the instance of the calling script
+     * @returns instance world rotation
+     * @example
+     * Get the world rotation of the game object instance the script is attached to:
+     * ```ts
+     * const r = go.get_world_rotation();
+     * ```
+     * @example
+     * Get the world rotation of another game object instance with id "x":
+     * ```ts
+     * const r = go.get_world_rotation("x");
+     * ```
+     */
+    export function get_world_rotation(id?: SceneGameObjectAddress | Hash | Url): Quaternion;
+    /**
+     * The function will return the world 3D scale factor calculated at the end of the previous frame.
+     * To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
+     * Use go.get_scale to retrieve the 3D scale factor relative to the parent.
+     * This vector is derived by decomposing the transformation matrix and should be used with care.
+     * For most cases it should be fine to use go.get_world_scale_uniform instead.
+     *
+     * @param id - optional id of the game object instance to get the world scale for, by default the instance of the calling script
+     * @returns instance world 3D scale factor
+     * @example
+     * Get the world 3D scale of the game object instance the script is attached to:
+     * ```ts
+     * const s = go.get_world_scale();
+     * ```
+     * @example
+     * Get the world scale of another game object instance "x":
+     * ```ts
+     * const s = go.get_world_scale("x");
+     * ```
+     */
+    export function get_world_scale(id?: SceneGameObjectAddress | Hash | Url): Vector3;
+    /**
+     * The function will return the world scale factor calculated at the end of the previous frame.
+     * To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
+     * Use go.get_scale_uniform to retrieve the scale factor relative to the parent.
+     *
+     * @param id - optional id of the game object instance to get the world scale for, by default the instance of the calling script
+     * @returns instance world scale factor
+     * @example
+     * Get the world scale of the game object instance the script is attached to:
+     * ```ts
+     * const s = go.get_world_scale_uniform();
+     * ```
+     * @example
+     * Get the world scale of another game object instance with id "x":
+     * ```ts
+     * const s = go.get_world_scale_uniform("x");
+     * ```
+     */
+    export function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;
+    /**
+     * The function will return the world transform matrix calculated at the end of the previous frame.
+     * To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
+     *
+     * @param id - optional id of the game object instance to get the world transform for, by default the instance of the calling script
+     * @returns instance world transform
+     * @example
+     * Get the world transform of the game object instance the script is attached to:
+     * ```ts
+     * const m = go.get_world_transform();
+     * ```
+     * @example
+     * Get the world transform of another game object instance with id "x":
+     * ```ts
+     * const m = go.get_world_transform("x");
+     * ```
+     */
+    export function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;
+    /**
+     * This is a callback-function, which is called by the engine when a script component is initialized. It can be used
+     * to set the initial state of the script.
+     *
+     * @param self - script instance used for storing state
+     * @example
+     * ```ts
+     * export default defineScript({
+     *   init() {
+     *     // set up useful data
+     *     return { my_value: 1 };
+     *   },
+     * });
+     * ```
+     */
+    export function init(self: unknown): void;
+    /**
+     * This is a callback-function, which is called by the engine at the end of the frame to update the state of a script
+     * component. Use it to make final adjustments to the game object instance.
+     *
+     * @param self - script instance used for storing state
+     * @param dt - the time-step of the frame update
+     */
+    export function late_update(self: unknown, dt: number): void;
+    /**
+     * This is a callback-function, which is called by the engine when user input is sent to the game object instance of the script.
+     * It can be used to take action on the input, e.g. move the instance according to the input.
+     * For an instance to obtain user input, it must first acquire input focus
+     * through the message `acquire_input_focus`.
+     * Any instance that has obtained input will be put on top of an
+     * input stack. Input is sent to all listeners on the stack until the
+     * end of stack is reached, or a listener returns `true`
+     * to signal that it wants input to be consumed.
+     * See the documentation of acquire_input_focus for more
+     * information.
+     *
+     * @param self - script instance used for storing state
+     * @param action_id - id of the received input action, as mapped in the input_binding-file, or `nil` for mouse movement
+     * @param action - input data for the action. **0️⃣ `gamepad` is 0-based; passed to Defold unchanged.**
+     * @returns optional boolean to signal if the input should be consumed (not passed on to others) or not, default is false
+     * @example
+     * ```ts
+     * // This example demonstrates how a game object instance can be moved as a response to user input.
+     * export default defineScript({
+     *   init() {
+     *     // acquire input focus
+     *     msg.post(".", "acquire_input_focus");
+     *     return {
+     *       // maximum speed the instance can be moved
+     *       max_speed: 2,
+     *       // velocity of the instance, initially zero
+     *       velocity: vmath.vector3(),
+     *     };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // move the instance
+     *     go.set_position(go.get_position().add(self.velocity.mul(dt)));
+     *   },
+     *
+     *   on_input(self, action_id, action) {
+     *     // check for movement input
+     *     if (action_id === hash("right")) {
+     *       if (action.released) {
+     *         // reset velocity if input was released
+     *         self.velocity = vmath.vector3();
+     *       } else {
+     *         // update velocity
+     *         self.velocity = vmath.vector3((action.value ?? 0) * self.max_speed, 0, 0);
+     *       }
+     *     }
+     *   },
+     * });
+     * ```
+     */
+    export function on_input(self: unknown, action_id: Hash | undefined, action: go.on_input.action): boolean | undefined;
+    /**
+     * This is a callback-function, which is called by the engine whenever a message has been sent to the script component.
+     * It can be used to take action on the message, e.g. send a response back to the sender of the message.
+     * The `message` parameter is a table containing the message data. If the message is sent from the engine, the
+     * documentation of the message specifies which data is supplied.
+     *
+     * @param self - script instance used for storing state
+     * @param message_id - id of the received message
+     * @param message - a table containing the message data
+     * @param sender - address of the sender
+     * @example
+     * This example demonstrates how a game object instance, called "a", can communicate with another instance, called "b". It
+     * is assumed that both script components of the instances has id "script".
+     * Script of instance "a":
+     * ```ts
+     * // This example demonstrates how a game object instance, called "a", can communicate with another instance, called "b". It
+     * // is assumed that both script components of the instances has id "script".
+     *
+     * // a.script — Script of instance "a":
+     * export default defineScript({
+     *   init() {
+     *     // let b know about some important data
+     *     msg.post("b#script", "my_data", { important_value: 1 });
+     *   },
+     * });
+     * ```
+     * @example
+     * Script of instance "b":
+     * ```ts
+     * // b.script — Script of instance "b":
+     * export default defineScript({
+     *   init() {
+     *     // store the url of instance "a" for later use, by specifying undefined as socket we
+     *     // automatically use our own socket
+     *     return { a_url: msg.url(undefined, go.get_id("a"), "script"), important_value: 0 };
+     *   },
+     *
+     *   on_message(self, message_id, message, sender) {
+     *     // check message and sender
+     *     if (message_id === hash("my_data") && sender === self.a_url && typeof message.important_value === "number") {
+     *       // use the data in some way
+     *       self.important_value = message.important_value;
+     *     }
+     *   },
+     * });
+     * ```
+     */
+    export function on_message(self: unknown, message_id: Hash, message: LuaMap<AnyNotNil, unknown> | Record<string, unknown>, sender: Url): void;
+    /**
+     * This is a callback-function, which is called by the engine when the script component is reloaded, e.g. from the editor.
+     * It can be used for live development, e.g. to tweak constants or set up the state properly for the instance.
+     *
+     * @param self - script instance used for storing state
+     * @example
+     * ```ts
+     * // This example demonstrates how to tweak the speed of a game object instance that is moved on user input.
+     * export default defineScript({
+     *   init() {
+     *     // acquire input focus
+     *     msg.post(".", "acquire_input_focus");
+     *     return {
+     *       // maximum speed the instance can be moved, this value is tweaked in the on_reload function below
+     *       max_speed: 2,
+     *       // velocity of the instance, initially zero
+     *       velocity: vmath.vector3(),
+     *     };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // move the instance
+     *     go.set_position(go.get_position().add(self.velocity.mul(dt)));
+     *   },
+     *
+     *   on_input(self, action_id, action) {
+     *     // check for movement input
+     *     if (action_id === hash("right")) {
+     *       if (action.released) {
+     *         // reset velocity if input was released
+     *         self.velocity = vmath.vector3();
+     *       } else {
+     *         // update velocity
+     *         self.velocity = vmath.vector3((action.value ?? 0) * self.max_speed, 0, 0);
+     *       }
+     *     }
+     *   },
+     *
+     *   on_reload(self) {
+     *     // edit this value and reload the script component
+     *     self.max_speed = 100;
+     *   },
+     * });
+     * ```
+     */
+    export function on_reload(self: unknown): void;
+    /**
+     * Sets the parent for a game object instance. This means that the instance will exist in the geometrical space of its parent,
+     * like a basic transformation hierarchy or scene graph. If no parent is specified, the instance will be detached from any parent and exist in world
+     * space.
+     * This function will generate a `set_parent` message. It is not until the message has been processed that the change actually takes effect. This
+     * typically happens later in the same frame or the beginning of the next frame. Refer to the manual to learn how messages are processed by the
+     * engine.
+     *
+     * @param id - optional id of the game object instance to set parent for, defaults to the instance containing the calling script
+     * @param parent_id - optional id of the new parent game object, defaults to detaching game object from its parent
+     * @param keep_world_transform - optional boolean, set to true to maintain the world transform when changing spaces. Defaults to false.
+     * @example
+     * Attach myself to another instance "my_parent":
+     * ```ts
+     * go.set_parent(go.get_id(), go.get_id("my_parent"));
+     * ```
+     * @example
+     * Attach an instance "my_instance" to another instance "my_parent":
+     * ```ts
+     * go.set_parent(go.get_id("my_instance"), go.get_id("my_parent"));
+     * ```
+     * @example
+     * Detach an instance "my_instance" from its parent (if any):
+     * ```ts
+     * go.set_parent(go.get_id("my_instance"));
+     * ```
+     */
+    export function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
+    /**
+     * The position is relative to the parent (if any). The global world position cannot be manually set.
+     *
+     * @param position - position to set
+     * @param id - optional id of the game object instance to set the position for, by default the instance of the calling script
+     * @example
+     * Set the position of the game object instance the script is attached to:
+     * ```ts
+     * // `p` is the desired position (a Vector3).
+     * const p = vmath.vector3();
+     * go.set_position(p);
+     * ```
+     * @example
+     * Set the position of another game object instance with id "x":
+     * ```ts
+     * // `p` is the desired position (a Vector3).
+     * const p = vmath.vector3();
+     *
+     * // Relative addressing by id — no socket prefix:
+     * go.set_position(p, "x");
+     * ```
+     */
+    export function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
+    /**
+     * The rotation is relative to the parent (if any). The global world rotation cannot be manually set.
+     *
+     * @param rotation - rotation to set
+     * @param id - optional id of the game object instance to get the rotation for, by default the instance of the calling script
+     * @example
+     * Set the rotation of the game object instance the script is attached to:
+     * ```ts
+     * // `r` is the desired rotation (a Quaternion).
+     * const r = vmath.quat();
+     * go.set_rotation(r);
+     * ```
+     * @example
+     * Set the rotation of another game object instance with id "x":
+     * ```ts
+     * // `r` is the desired rotation (a Quaternion).
+     * const r = vmath.quat();
+     * go.set_rotation(r, "x");
+     * ```
+     */
+    export function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;
+    /**
+     * The scale factor is relative to the parent (if any). The global world scale factor cannot be manually set.
+     * See manual to know how physics affected when setting scale from this function.
+     *
+     * @param scale - vector or uniform scale factor, must be greater than 0
+     * @param id - optional id of the game object instance to get the scale for, by default the instance of the calling script
+     * @example
+     * Set the scale of the game object instance the script is attached to:
+     * ```ts
+     * const s = vmath.vector3(2.0, 1.0, 1.0);
+     * go.set_scale(s);
+     * ```
+     * @example
+     * Set the scale of another game object instance with id "obj_id":
+     * ```ts
+     * const s = 1.2;
+     * go.set_scale(s, "obj_id");
+     * ```
+     */
+    export function set_scale(scale: number | Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
+    /**
+     * The scale factor is relative to the parent (if any). The global world scale factor cannot be manually set.
+     * See manual to know how physics affected when setting scale from this function.
+     *
+     * @param scale - vector or uniform scale factor, must be greater than 0
+     * @param id - optional id of the game object instance to get the scale for, by default the instance of the calling script
+     * @example
+     * Set the scale of the game object instance the script is attached to:
+     * ```ts
+     * const s = vmath.vector3(2.0, 1.0, 5.0);
+     * go.set_scale_xy(s); // z will not be set here, only x and y
+     * ```
+     * @example
+     * Set the scale of another game object instance with id "obj_id":
+     * ```ts
+     * const s = 1.2;
+     * go.set_scale_xy(s, "obj_id"); // z will not be set here, only x and y
+     * ```
+     */
+    export function set_scale_xy(scale: number | Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
+    /**
+     * This is a callback-function, which is called by the engine every frame to update the state of a script component.
+     * It can be used to perform any kind of game related tasks, e.g. moving the game object instance.
+     *
+     * @param self - script instance used for storing state
+     * @param dt - the time-step of the frame update
+     * @example
+     * ```ts
+     * // This example demonstrates how to move a game object instance through the script component:
+     * export default defineScript({
+     *   init() {
+     *     // set initial velocity to be 1 along world x-axis
+     *     return { my_velocity: vmath.vector3(1, 0, 0) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // move the game object instance
+     *     go.set_position(go.get_position().add(self.my_velocity.mul(dt)));
+     *   },
+     * });
+     * ```
+     */
+    export function update(self: unknown, dt: number): void;
+    /**
+     * Recalculates and updates the cached world transform immediately for the target instance
+     * and its ancestors (parent chain up to the collection root). Descendants (children) are
+     * not updated by this function.
+     * If no id is provided, the instance of the calling script is used.
+     * Use this after changing local transform mid-frame when you need the
+     * new world transform right away (e.g. before end-of-frame updates). Note that child
+     * instances will still have last-frame world transforms until the regular update.
+     *
+     * @param id - optional id of the game object instance to update
+     * @example
+     * Update this game object's world transform:
+     * ```ts
+     * go.update_world_transform();
+     * ```
+     * @example
+     * Update another game object's world transform:
+     * ```ts
+     * go.update_world_transform("/other");
+     * ```
+     */
+    export function update_world_transform(id?: SceneGameObjectAddress | Hash | Url): void;
+    /**
+     * The function uses world transformation calculated at the end of previous frame.
+     *
+     * @param position - position which need to be converted
+     * @param url - url of the game object which coordinate system convert to
+     * @returns converted position
+     * @example
+     * ```ts
+     * // Convert position of "test" game object into coordinate space of "child" object.
+     * const test_pos = go.get_world_position("/test");
+     * const child_pos = go.get_world_position("/child");
+     * const new_position = go.world_to_local_position(test_pos, "/child");
+     * ```
+     */
+    export function world_to_local_position(position: Vector3, url?: SceneGameObjectAddress | Hash | Url): Vector3;
+    /**
+     * The function uses world transformation calculated at the end of previous frame.
+     *
+     * @param transformation - transformation which need to be converted
+     * @param url - url of the game object which coordinate system convert to
+     * @returns converted transformation
+     * @example
+     * ```ts
+     * // Convert transform of "test" game object into coordinate space of "child" object.
+     * const test_transform = go.get_world_transform("/test");
+     * const child_transform = go.get_world_transform("/child");
+     * const result_transform = go.world_to_local_transform(test_transform, "/child");
+     * ```
+     */
+    export function world_to_local_transform(transformation: Matrix4, url?: SceneGameObjectAddress | Hash | Url): Matrix4;
+    export { _delete as delete };
+    export namespace on_input {
+      /**
+       * Data supplied to the global `on_input` lifecycle function.
+       */
+      interface action {
+        /**
+         * Amount of input, usually 1 for buttons or between 0 and 1 for analogue input; absent for pointer movement and text input.
+         */
+        value?: number;
+        /**
+         * Whether the input was pressed this frame; absent for pointer movement and text input.
+         */
+        pressed?: boolean;
+        /**
+         * Whether the input was released this frame; absent for pointer movement and text input.
+         */
+        released?: boolean;
+        /**
+         * Whether the input was repeated this frame; absent for pointer movement and text input.
+         */
+        repeated?: boolean;
+        /**
+         * Pointer x-coordinate; absent for gamepad, key, and text input.
+         */
+        x?: number;
+        /**
+         * Pointer y-coordinate; absent for gamepad, key, and text input.
+         */
+        y?: number;
+        /**
+         * Pointer x-coordinate in screen space; absent for gamepad, key, and text input.
+         */
+        screen_x?: number;
+        /**
+         * Pointer y-coordinate in screen space; absent for gamepad, key, and text input.
+         */
+        screen_y?: number;
+        /**
+         * Change in the pointer x-coordinate; absent for gamepad, key, and text input.
+         */
+        dx?: number;
+        /**
+         * Change in the pointer y-coordinate; absent for gamepad, key, and text input.
+         */
+        dy?: number;
+        /**
+         * Change in the pointer x-coordinate in screen space; absent for gamepad, key, and text input.
+         */
+        screen_dx?: number;
+        /**
+         * Change in the pointer y-coordinate in screen space; absent for gamepad, key, and text input.
+         */
+        screen_dy?: number;
+        /**
+         * Accelerometer x value, when present.
+         */
+        acc_x?: number;
+        /**
+         * Accelerometer y value, when present.
+         */
+        acc_y?: number;
+        /**
+         * Accelerometer z value, when present.
+         */
+        acc_z?: number;
+        /**
+         * Index of the gamepad that provided the input.
+         */
+        gamepad?: number;
+        /**
+         * Id of the user associated with the controller.
+         */
+        userid?: number;
+        /**
+         * SDL-compatible guid, supplied with a gamepad-connected action.
+         */
+        gamepad_guid?: string;
+        /**
+         * Parsed guid information, supplied with a gamepad-connected action.
+         */
+        gamepad_guid_info?: go.on_input.gamepad_guid_info;
+        /**
+         * Whether the input originated from an unknown or unmapped gamepad.
+         */
+        gamepad_unknown?: boolean;
+        /**
+         * Name of a connected gamepad.
+         */
+        gamepad_name?: string;
+        /**
+         * Axis values, supplied only for raw gamepad input.
+         */
+        gamepad_axis?: number[];
+        /**
+         * Hat values, supplied only for raw gamepad input.
+         */
+        gamepad_hats?: number[];
+        /**
+         * Button values, supplied only for raw gamepad input.
+         */
+        gamepad_buttons?: number[];
+        /**
+         * Touch inputs, one entry per finger.
+         */
+        touch?: go.on_input.touch[];
+        /**
+         * Text entered by a text action, or the current sequence for marked-text composition such as Japanese Kana.
+         */
+        text?: string;
+      }
+      /**
+       * Parsed fields from a connected gamepad guid.
+       */
+      interface gamepad_guid_info {
+        /**
+         * USB vendor id.
+         */
+        vendor: number;
+        /**
+         * USB product id.
+         */
+        product: number;
+        /**
+         * Bus used to communicate with the device.
+         */
+        bus: number;
+        /**
+         * SDL CRC16 signature.
+         */
+        crc: number;
+        /**
+         * Device or firmware version.
+         */
+        version: number;
+      }
+      /**
+       * One touch entry in on_input.action.
+       */
+      interface touch {
+        /**
+         * Identifier for the touch during its lifetime.
+         */
+        id: number;
+        /**
+         * Whether the finger was pressed this frame.
+         */
+        pressed: boolean;
+        /**
+         * Whether the finger was released this frame.
+         */
+        released: boolean;
+        /**
+         * Number of taps, such as one for a single tap and two for a double tap.
+         */
+        tap_count: number;
+        /**
+         * Touch x-coordinate.
+         */
+        x: number;
+        /**
+         * Touch y-coordinate.
+         */
+        y: number;
+        /**
+         * Touch x-coordinate in screen space.
+         */
+        screen_x: number;
+        /**
+         * Touch y-coordinate in screen space.
+         */
+        screen_y: number;
+        /**
+         * Change in the touch x-coordinate.
+         */
+        dx: number;
+        /**
+         * Change in the touch y-coordinate.
+         */
+        dy: number;
+        /**
+         * Change in the touch x-coordinate in screen space.
+         */
+        screen_dx: number;
+        /**
+         * Change in the touch y-coordinate in screen space.
+         */
+        screen_dy: number;
+      }
+    }
+    export interface properties {
+      /**
+       * The rotation of the game object expressed in Euler angles.
+       * Euler angles are specified in degrees in the interval (-360, 360).
+       * The type of the property is vector3.
+       */
+      euler: Vector3;
+      /**
+       * The position of the game object.
+       * The type of the property is vector3.
+       */
+      position: Vector3;
+      /**
+       * The rotation of the game object.
+       * The type of the property is quaternion.
+       */
+      rotation: Quaternion;
+      /**
+       * The scale of the game object. `go.get` returns a vector3; `go.set` and `go.animate` also take a number, which sets a uniform scale.
+       */
+      scale: number | Vector3;
+    }
+  }
+}
+
+export {};

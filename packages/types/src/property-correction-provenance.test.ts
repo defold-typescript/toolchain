@@ -65,8 +65,8 @@ function sightings(key: string): Sighting[] {
 // older one still needs them, each with the targets whose span changed to the
 // corrected type. A changed span in every retained target is a deletion instead.
 const PROPERTY_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
-  "camera.projection": ["defold-1.13.2"],
-  "camera.view": ["defold-1.13.2"],
+  "camera.projection": ["defold-1.13.2", "defold-1.14.0"],
+  "camera.view": ["defold-1.13.2", "defold-1.14.0"],
 };
 
 describe("property-type correction provenance", () => {

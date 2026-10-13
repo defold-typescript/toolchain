@@ -54,6 +54,22 @@ declare global {
      */
     function get_collision_object(url: string | Hash | Url): Opaque<"btCollisionObject" | "btRigidBody"> | undefined;
     /**
+     * Returns the id of the game object that owns the collision-object component.
+     * Accepts both rigid bodies and ghost trigger objects.
+     * Raises a Lua error if the handle is invalid or its game object has been deleted.
+     *
+     * @param object - the Bullet collision object
+     * @returns the game object id, or `nil` if the collision object has no associated game object
+     * @example
+     * ```ts
+     * const object = bullet3d.get_collision_object("#collisionobject");
+     * if (object !== undefined) {
+     *   const id = bullet3d.get_gameobject_id(object);
+     * }
+     * ```
+     */
+    function get_gameobject_id(object: Opaque<"btCollisionObject" | "btRigidBody"> | Opaque<"btRigidBody">): Hash | undefined;
+    /**
      * Trigger components are ghost objects, so this function returns `nil` for them.
      * This function raises an error unless the collection uses 3D physics.
      *

@@ -1,0 +1,183 @@
+{
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "compute.get_samplers",
+      "brief": "gets texture samplers from a compute program",
+      "description": "Returns a table of all the texture samplers in the compute program. This function will return all the texture samplers\nthat are available, even the ones that have not been specified in the compute resource.",
+      "returnvalues": [
+        {
+          "name": "table",
+          "doc": "Information about the texture samplers.",
+          "types": ["material.sampler_info[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Get the texture samplers from a compute program resource\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">samplers</span> <span class=\"o\">=</span> <span class=\"n\">compute</span><span class=\"p\">.</span><span class=\"n\">get_samplers</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_compute.computec&quot;</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "compute.get_constants",
+      "brief": "gets shader constants from a compute program",
+      "description": "Returns a table of all the shader constants in the compute program.",
+      "returnvalues": [
+        {
+          "name": "table",
+          "doc": "Information about the shader constants.",
+          "types": ["material.constant_info[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Get the shader constants from a compute program resource\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">constants</span> <span class=\"o\">=</span> <span class=\"n\">compute</span><span class=\"p\">.</span><span class=\"n\">get_constants</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_compute.computec&quot;</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "compute.get_textures",
+      "brief": "gets textures associated with a compute program",
+      "description": "Returns a table of all the textures from the compute program.",
+      "returnvalues": [
+        {
+          "name": "table",
+          "doc": "Information about the compute textures.",
+          "types": ["material.texture_info[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Get the textures from a compute program resource\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">textures</span> <span class=\"o\">=</span> <span class=\"n\">compute</span><span class=\"p\">.</span><span class=\"n\">get_textures</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_compute.computec&quot;</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "compute.set_samplers",
+      "brief": "sets texture samplers in a compute program",
+      "description": "Sets texture samplers in a compute program, if the samplers exist. Use this function to change the settings of texture samplers.\nTo set actual textures that should be bound to the samplers, use the <code>compute.set_textures</code> function instead.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "samplers",
+          "doc": "Sampler options keyed by sampler name. Partial updates are supported.",
+          "types": ["table<string|hash, material.sampler_options>"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Configures a sampler in a compute program\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">compute</span><span class=\"p\">.</span><span class=\"n\">set_samplers</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_compute.computec&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"n\">texture_sampler</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">u_wrap</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_WRAP_REPEAT</span><span class=\"p\">,</span> <span class=\"n\">v_wrap</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_WRAP_MIRRORED_REPEAT</span> <span class=\"p\">}</span>\n    <span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "compute.set_constants",
+      "brief": "sets shader constants in a compute program",
+      "description": "Sets shader constants in a compute program, if the constants exist.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "constants",
+          "doc": "Constant options keyed by constant name. Partial updates are supported.",
+          "types": ["table<string|hash, material.constant_options>"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Set a shader constant in a compute program\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">update</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- update the &#39;tint&#39; constant</span>\n    <span class=\"n\">compute</span><span class=\"p\">.</span><span class=\"n\">set_constants</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_compute.computec&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"n\">tint</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">value</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector4</span><span class=\"p\">(</span><span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"p\">}</span>\n    <span class=\"p\">})</span>\n    <span class=\"c1\">-- change the type of the &#39;view_proj&#39; constant to CONSTANT_TYPE_USER_MATRIX4 so the renderer can set our custom data</span>\n    <span class=\"n\">compute</span><span class=\"p\">.</span><span class=\"n\">set_constants</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_compute.computec&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"n\">view_proj</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">value</span> <span class=\"o\">=</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_view_proj</span><span class=\"p\">,</span> <span class=\"nb\">type</span> <span class=\"o\">=</span> <span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">CONSTANT_TYPE_USER_MATRIX4</span> <span class=\"p\">}</span>\n    <span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "compute.set_textures",
+      "brief": "sets textures in a compute program",
+      "description": "Sets textures in a compute program, if the samplers exist.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "textures",
+          "doc": "A table keyed by sampler name with texture resources as values.",
+          "types": ["table<string|hash, string|hash>"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Set a texture in a compute program from a resource\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_texture&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">texture</span><span class=\"p\">())</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">compute</span><span class=\"p\">.</span><span class=\"n\">set_textures</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_compute.computec&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"n\">my_texture</span> <span class=\"o\">=</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_texture</span>\n    <span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "compute",
+    "name": "Compute",
+    "brief": "Compute API documentation",
+    "description": "Functions for interacting with compute programs.",
+    "path": "engine/gamesys/src/gamesys/scripts/script_compute.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

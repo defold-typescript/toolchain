@@ -102,7 +102,7 @@ declare global {
        */
       flags?: render.RENDER_TARGET_FLAG | number;
     }
-    type render_target_params = { sample_count?: number } & { [key: number]: render.render_target_buffer_params };
+    type render_target_params = { type?: graphics.TEXTURE_TYPE; sample_count?: number } & { [key: number]: render.render_target_buffer_params };
     /**
      * Render-target activation options
      */
@@ -111,6 +111,10 @@ declare global {
        * Buffers whose contents become undefined after the target is deactivated. Missing buffers are ignored; combined depth-stencil buffers remain non-transient unless both are selected.
        */
       transient?: graphics.BUFFER_TYPE[];
+      /**
+       * Cubemap face selected for rendering. Valid only for cubemap render targets.
+       */
+      face?: graphics.CUBEMAP_FACE;
     }
     type texture = Opaque<"texture">;
     type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
@@ -951,6 +955,16 @@ declare global {
      *
      * @param render_target - render target to set. Omit it, pass `nil`, or use render.RENDER_TARGET_DEFAULT to set the default render target
      * @param options - optional render-target activation options
+     *
+     * `face`
+     * number Cubemap face selected for rendering. This option is valid only for cubemap render targets and defaults to `graphics.CUBEMAP_FACE_POSITIVE_X`.
+     *
+     * - `graphics.CUBEMAP_FACE_POSITIVE_X`
+     * - `graphics.CUBEMAP_FACE_NEGATIVE_X`
+     * - `graphics.CUBEMAP_FACE_POSITIVE_Y`
+     * - `graphics.CUBEMAP_FACE_NEGATIVE_Y`
+     * - `graphics.CUBEMAP_FACE_POSITIVE_Z`
+     * - `graphics.CUBEMAP_FACE_NEGATIVE_Z`
      * @example
      * How to set a render target and draw to it and then switch back to the default render target
      * The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support
@@ -1009,6 +1023,7 @@ declare global {
     /**
      * Sets the render target size for a render target created from
      * either a render script, or from a render target resource.
+     * Cubemap render targets require equal width and height.
      *
      * @param render_target - render target to set size for
      * @param width - new render target width

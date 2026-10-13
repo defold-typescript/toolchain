@@ -427,6 +427,52 @@ describe("buildVersionedSurfaceFiles graphics semantic types", () => {
   }
 });
 
+// A release the toolchain ships no surface for compiles against what this
+// builder writes, and the example gate judges every demoted target's runtime
+// kinds against it too. A fixture-backed target has both that surface and a
+// committed one, so it is where the builder is held to regen's emit: a module
+// emitted on its own loses every type another module of the surface declares,
+// and the members routed to it.
+describe("buildVersionedSurfaceFiles committed-surface parity", () => {
+  const rerooted = (contents: string): string =>
+    contents.replace(/from "(?:\.\.?\/)+(?:src\/)?core-types"/g, 'from "<core-types>"');
+  const committed = loadApiTargets().filter(
+    (target) => (target.source ?? null) == null && target.default !== true,
+  );
+
+  test("some demoted target is fixture-backed", () => {
+    expect(committed.length).toBeGreaterThan(0);
+  });
+
+  for (const target of committed) {
+    test(`${target.id} emits every module as its committed surface declares it`, async () => {
+      const files = await buildVersionedSurfaceFiles(target);
+      const declared = [...target.modules, ...(target.editorModules ?? [])].map(
+        (module) => module.outFile,
+      );
+      expect(declared.length).toBeGreaterThan(0);
+      const differing = declared.filter((outFile) => {
+        const built = files.find((file) => file.path === outFile)?.contents;
+        const shipped = readFileSync(resolve(PACKAGE_ROOT, target.generatedDir, outFile), "utf8");
+        return built === undefined || rerooted(built) !== rerooted(shipped);
+      });
+      expect(differing).toEqual([]);
+    });
+  }
+
+  // Routing such an entry alone would type-check, with `unknown` where a
+  // sibling's type belongs, so the emit refuses instead.
+  test("an entry emitted beside a surface that does not hold it is refused", async () => {
+    const [target] = committed;
+    if (!target) throw new Error("no fixture-backed demoted target");
+    const [entry] = await resolveTargetModules(target);
+    if (!entry) throw new Error(`${target.id} resolves no module`);
+    expect(() => generateModuleDeclaration(entry, { surface: [] })).toThrow(
+      /not a member of the surface/,
+    );
+  });
+});
+
 describe("buildVersionedSurfaceFiles src augmentation carry", () => {
   test("SRC_AUGMENTATION_MODULES is the kind manifest's src set, not a second list", () => {
     // The union over every runtime kind index: an augmentation restricted to a
