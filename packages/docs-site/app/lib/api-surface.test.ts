@@ -367,7 +367,7 @@ describe("loadApiSurface library pages", () => {
       if (!meta) continue;
       expect(meta.authoredHere).toBe(true);
       expect(meta.authorUrl).toBe("https://github.com/britzl/monarch");
-      expect(meta.commit).toBe("6.0.2");
+      expect(meta.commit).toBe("6.0.3");
       expect(meta.importString).toBe(`import * as ${alias} from "${namespace}"`);
     }
   });
