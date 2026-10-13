@@ -12085,7 +12085,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### bullet3d
 
 - function get_collision_object(url: string | Hash | Url): Opaque<"btCollisionObject" | "btRigidBody"> | undefined; [since 1.13.2]
-- function get_gameobject_id(object: Opaque<"btCollisionObject" | "btRigidBody"> | Opaque<"btRigidBody">): Hash | undefined; [since 1.14.0]
+- function get_gameobject_id(object: Opaque<"btCollisionObject" | "btRigidBody">): Hash | undefined; [since 1.14.0]
 - function get_rigid_body(url: string | Hash | Url): Opaque<"btRigidBody"> | undefined; [since 1.13.2]
 - function get_version(): bullet3d.version_info; [since 1.13.2]
 - function get_world(): bullet3d.btDiscreteDynamicsWorld | undefined; [since 1.13.2]

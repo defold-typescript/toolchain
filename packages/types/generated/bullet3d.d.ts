@@ -68,7 +68,7 @@ declare global {
      * }
      * ```
      */
-    function get_gameobject_id(object: Opaque<"btCollisionObject" | "btRigidBody"> | Opaque<"btRigidBody">): Hash | undefined;
+    function get_gameobject_id(object: Opaque<"btCollisionObject" | "btRigidBody">): Hash | undefined;
     /**
      * Trigger components are ghost objects, so this function returns `nil` for them.
      * This function raises an error unless the collection uses 3D physics.

@@ -21,6 +21,7 @@ import gui113Doc from "../fixtures/defold-1.13.1/gui_doc.json" with { type: "jso
 import materialDoc from "../fixtures/defold-1.13.1/material_doc.json" with { type: "json" };
 import model113Doc from "../fixtures/defold-1.13.1/model_doc.json" with { type: "json" };
 import sprite113Doc from "../fixtures/defold-1.13.1/sprite_doc.json" with { type: "json" };
+import bullet3d114Doc from "../fixtures/defold-1.14.0/bullet3d_doc.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
 import httpDoc from "../fixtures/http_doc.json" with { type: "json" };
@@ -6564,5 +6565,40 @@ describe("UNDOCUMENTED_CONSTANTS back-fill", () => {
         });
       }
     }
+  });
+});
+
+describe("Opaque members another member admits", () => {
+  test("bullet3d.get_gameobject_id takes one handle type for both bullet handles", () => {
+    const module = parseDefoldApiDoc(bullet3d114Doc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "bullet3d.get_gameobject_id")],
+    });
+    expect(out).toContain(
+      'function get_gameobject_id(object: Opaque<"btCollisionObject" | "btRigidBody">): Hash | undefined;',
+    );
+  });
+
+  test("the narrower member goes in either order and unrelated brands stay apart", () => {
+    const out = emitDeclarations(
+      parseDefoldApiDoc({
+        info: { namespace: "probe" },
+        elements: [
+          {
+            type: "FUNCTION",
+            name: "probe.take",
+            parameters: [
+              { name: "narrow_first", doc: "", types: ["btRigidBody", "btCollisionObject"] },
+              { name: "unrelated", doc: "", types: ["node", "texture"] },
+            ],
+            returnvalues: [],
+          },
+        ],
+      }),
+    );
+    expect(out).toContain(
+      'function take(narrow_first: Opaque<"btCollisionObject" | "btRigidBody">, unrelated: Opaque<"node"> | Opaque<"texture">): void;',
+    );
   });
 });
