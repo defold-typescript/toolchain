@@ -5639,6 +5639,27 @@ function unionFromTokens(tokens: readonly string[], mapType: DefoldTypeMapper): 
 }
 
 const BRAND_ARM = /^(?:number|string) & \{ readonly __brand: "([^"]+)" \}$/;
+const OPAQUE_ARM = /^Opaque<("[^"]+"(?: \| "[^"]+")*)>$/;
+
+// Drops each `Opaque` arm whose brands are a proper subset of another `Opaque`
+// arm's. `Opaque<Name>` holds `Name` in one readonly property, so a narrower
+// brand set is assignable to a wider one and the narrower arm adds nothing.
+// An arm of any other shape (`Opaque<"x">[]`, an intersection) is never dropped
+// and never causes a drop.
+function withoutSubsumedOpaqueArms(mapped: readonly string[]): string[] {
+  const brandSets = mapped.map((arm) => {
+    const match = OPAQUE_ARM.exec(arm);
+    return match === null ? undefined : new Set((match[1] as string).split(" | "));
+  });
+  return mapped.filter((_, index) => {
+    const own = brandSets[index];
+    if (own === undefined) return true;
+    return !brandSets.some(
+      (other) =>
+        other !== undefined && other.size > own.size && [...own].every((b) => other.has(b)),
+    );
+  });
+}
 
 // Joins already-mapped arms, collapsing the branded ones to their alias when
 // they are exactly a `CONSTANT_UNION_ALIASES` member set. The alias takes the
@@ -5646,16 +5667,17 @@ const BRAND_ARM = /^(?:number|string) & \{ readonly __brand: "([^"]+)" \}$/;
 // (`gui.Easing | Vector`). Arms that are not constants are untouched, and a set
 // with no row keeps every arm inline.
 function joinUnionArms(mapped: readonly string[]): string {
+  const arms = withoutSubsumedOpaqueArms(mapped);
   const branded: string[] = [];
-  for (const arm of mapped) {
+  for (const arm of arms) {
     const match = BRAND_ARM.exec(arm);
     if (match !== null) branded.push(match[1] as string);
   }
   const alias = constantUnionAlias(branded);
-  if (alias === undefined) return mapped.join(" | ");
+  if (alias === undefined) return arms.join(" | ");
   const out: string[] = [];
   let placed = false;
-  for (const arm of mapped) {
+  for (const arm of arms) {
     if (BRAND_ARM.test(arm)) {
       if (placed) continue;
       out.push(`${alias.home}.${alias.name}`);
