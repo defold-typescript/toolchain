@@ -8,7 +8,7 @@ import {
   verifyRefDocDelta,
 } from "./ref-doc-delta";
 import type { ApiTarget } from "./regen";
-import type { SyncManifestEntry, ZipAccessor } from "./sync-api-docs";
+import type { ZipAccessor } from "./sync-api-docs";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const VERSION = "1.9.8";
@@ -28,10 +28,6 @@ const CURRENT_TARGET: ApiTarget = {
   source: null,
   modules: [{ namespace: "label", fixture: "label_doc.json", outFile: "label.d.ts" }],
 };
-const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
-  { namespace: "label", zipEntry: "label.json", fixture: "fixtures/label_doc.json" },
-];
-
 function labelDoc(names: readonly string[]): unknown {
   return {
     info: { namespace: "label", brief: "", description: "" },
@@ -42,7 +38,6 @@ function labelDoc(names: readonly string[]): unknown {
 function fakeResolveOpts(doc: unknown): {
   cacheDir: string;
   readZip: () => ZipAccessor;
-  syncManifest: readonly SyncManifestEntry[];
 } {
   const cacheDir = mkdtempSync(resolve(PACKAGE_ROOT, "ref-doc-delta-cache-"));
   mkdirSync(resolve(cacheDir, VERSION), { recursive: true });
@@ -57,7 +52,6 @@ function fakeResolveOpts(doc: unknown): {
         return JSON.stringify(doc);
       },
     }),
-    syncManifest: SYNC_MANIFEST,
   };
 }
 
@@ -170,7 +164,7 @@ describe("ref-doc delta verifier", () => {
     const mise = readFileSync(resolve(PACKAGE_ROOT, "..", "..", "mise.toml"), "utf8");
 
     expect(typesPackage.scripts["ref-doc-delta"]).toContain("scripts/ref-doc-delta.ts");
-    expect(rootPackage.scripts["ref-doc-delta"]).toBe("bun --cwd packages/types run ref-doc-delta");
+    expect(rootPackage.scripts["ref-doc-delta"]).toBe("bun run --cwd packages/types ref-doc-delta");
     expect(mise).toContain("[tasks.ref-doc-delta]");
     expect(mise).toContain("Advisory live ref-doc delta verifier");
     expect(rootPackage.scripts.test).not.toContain("ref-doc-delta");

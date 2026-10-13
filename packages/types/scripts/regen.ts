@@ -42,7 +42,7 @@ import {
 import { loadTranslations } from "./example-store-io";
 import { synthesizeProseConstants } from "./prose-constants";
 import { restoreSharedHandleMethods } from "./shared-handle-methods";
-import { type readZip, SYNC_MANIFEST, type SyncManifestEntry } from "./sync-api-docs";
+import { groupDocsByNamespace, mergeApiDocs, type readZip } from "./sync-api-docs";
 
 export interface ApiTargetModule {
   readonly namespace: string;
@@ -180,7 +180,6 @@ export interface ResolveTargetOptions {
   readonly cacheDir?: string;
   readonly download?: DownloadRefDoc;
   readonly readZip?: typeof readZip;
-  readonly syncManifest?: readonly SyncManifestEntry[];
   readonly packageRoot?: string;
   readonly channel?: RefDocChannel;
   readonly fetchChannelInfo?: FetchChannelInfo;
@@ -188,8 +187,8 @@ export interface ResolveTargetOptions {
 
 // Source-aware module resolution: a `null`-source target reads committed
 // fixtures from disk (delegates to loadTargetModules); a `ref-doc` target
-// resolves its docs on demand from the version's ref-doc zip, keyed by the
-// SYNC_MANIFEST namespace -> zip-entry map.
+// resolves its docs on demand from the version's ref-doc zip, reading every
+// doc the zip declares for the namespace, merged.
 export async function resolveTargetModules(
   target: ApiTarget,
   opts: ResolveTargetOptions = {},
@@ -206,17 +205,17 @@ export async function resolveTargetModules(
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
     ...(opts.fetchChannelInfo ? { fetchChannelInfo: opts.fetchChannelInfo } : {}),
   });
-  const syncManifest = opts.syncManifest ?? SYNC_MANIFEST;
+  const grouped = groupDocsByNamespace(zip);
   const modules = target.modules.map((module) => {
-    const sync = syncManifest.find((s) => s.namespace === module.namespace);
-    if (!sync) {
+    const group = grouped.get(module.namespace);
+    if (!group) {
       throw new Error(
-        `api-targets.json: target "${target.id}" module "${module.namespace}": no SYNC_MANIFEST zip entry`,
+        `api-targets.json: target "${target.id}" module "${module.namespace}": no doc in the ref-doc zip declares this namespace`,
       );
     }
     const entry: ModuleManifestEntry = {
       namespace: module.namespace,
-      doc: JSON.parse(zip.read(sync.zipEntry)),
+      doc: mergeApiDocs(group.map((item) => item.doc)),
       outFile: module.outFile,
       importsFrom: target.coreTypesImport,
       sourceProvenance: provenance,

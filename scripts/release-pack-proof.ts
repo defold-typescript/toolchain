@@ -405,8 +405,8 @@ export interface ProofVerdict {
 
 // A single-module ref-doc target, resolved from an injected zip so the proof
 // never touches the network or a cached download. The generator's own
-// `resolveTargetModules` keys the zip entry off the supplied sync manifest, so
-// the whole ref-doc path runs exactly as it does for a registered version.
+// `resolveTargetModules` finds the doc by the namespace it declares, so the
+// whole ref-doc path runs exactly as it does for a registered version.
 const PROOF_NAMESPACE = "label";
 const PROOF_ZIP_ENTRY = "doc/label_doc.json";
 const PROOF_DOC = JSON.stringify({
@@ -468,13 +468,6 @@ export async function refDocMaterialize(installDir: string): Promise<ProofVerdic
               return PROOF_DOC;
             },
           }),
-          syncManifest: [
-            {
-              namespace: PROOF_NAMESPACE,
-              zipEntry: PROOF_ZIP_ENTRY,
-              fixture: `fixtures/${PROOF_NAMESPACE}_doc.json`,
-            },
-          ],
         },
       },
     );

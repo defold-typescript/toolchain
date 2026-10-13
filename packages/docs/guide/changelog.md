@@ -14,6 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **Defold 1.14.0 is the default API target** ([what changed](./upgrading-defold-versions.md#defold-1140)), and its new APIs are typed.
+> - **Pins built on demand are complete**: channel and Defold 1.9.8 pins get all their types ([pinning](./pinning-defold-target.md)).
 
 ### Improved
 
@@ -23,6 +24,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **Types on a channel pin** — a project pinned to a channel whose release the toolchain builds on demand keeps the types one module declares for another, such as the `b2d.aabb` that `b2d.fixture.get_aabb` returns, and functions documented under another module, such as `bullet3d.collision_object.get_shapes`. The types came out as `unknown` and the functions were missing; see [Pinning the Defold target](./pinning-defold-target.md).
+- **Defold 1.9.8 pin** — a project whose [pinned Defold target](./pinning-defold-target.md) is Defold 1.9.8 gets its [label](/api/label) declarations. The toolchain looked for that module's reference under the file name a later Defold release gives it, and found none.
 
 ## v0.49.0
 
