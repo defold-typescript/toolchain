@@ -15,16 +15,19 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **Defold 1.14.0 is the default API target** ([what changed](./upgrading-defold-versions.md#defold-1140)), and its new APIs are typed.
 > - **Pins built on demand are complete**: channel and Defold 1.9.8 pins get all their types ([pinning](./pinning-defold-target.md)).
+> - **The [API reference](/api) keeps a saved version range** and marks an outdated one in red.
 
 ### Improved
 
 - **Defold 1.14.0 is the default API target**, so a project that pins no target compiles against it, and code written against 1.13.2 compiles unchanged. [Upgrading Defold versions](./upgrading-defold-versions.md#defold-1140) lists the engine and project changes the compiler cannot check, and `--defold-target 1.13.2` keeps the previous surface.
 - **Defold 1.14.0 APIs are typed**: `b2d.get_gameobject_id` and `bullet3d.get_gameobject_id` return the game object that owns a physics body. A render script draws to one face of a cubemap render target with the `face` option of `render.set_render_target`, the `type` key of `render.render_target` and the [`graphics.CUBEMAP_FACE_*`](/api/graphics) constants.
+- **The [API reference](/api) flags a version range that stops short of the newest Defold release**: the `To` dropdown turns red while it shows an older version, so a range saved on an earlier visit stands out once a newer release is tracked.
 
 ### Fixed
 
 - **Types on a channel pin** — a project pinned to a channel whose release the toolchain builds on demand keeps the types one module declares for another, such as the `b2d.aabb` that `b2d.fixture.get_aabb` returns, and functions documented under another module, such as `bullet3d.collision_object.get_shapes`. The types came out as `unknown` and the functions were missing; see [Pinning the Defold target](./pinning-defold-target.md).
 - **Defold 1.9.8 pin** — a project whose [pinned Defold target](./pinning-defold-target.md) is Defold 1.9.8 gets its [label](/api/label) declarations. The toolchain looked for that module's reference under the file name a later Defold release gives it, and found none.
+- **Saved version range in the [API reference](/api)** — the range picked in the `From` / `To` dropdowns holds when you open the API from a guide page, move one end of the range there, or follow a link between API pages. `To` jumped to the newest Defold release and `From` widened to the oldest, until the next guide page showed the saved range again.
 
 ## v0.49.0
 

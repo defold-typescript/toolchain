@@ -76,6 +76,10 @@
    * badge (`bg-warning/15`), so the two read as the same signal. */
   --color-warning: #9a6700;
 
+  /* Alarm tone for chrome showing something other than the newest state, such
+   * as a `To` version pinned behind the newest tracked release. */
+  --color-danger: #cf222e;
+
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -104,6 +108,8 @@
   --color-overload-count: #2dd4bf;
 
   --color-warning: #d29922;
+
+  --color-danger: #f85149;
 }
 
 /*

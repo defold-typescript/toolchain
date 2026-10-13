@@ -26,11 +26,13 @@ import {
   API_SURFACE_STORAGE_KEY,
   type ApiSurfaceConfig,
   activeRangeForPath,
+  apiNavForPath,
   canonicalLinkPath,
+  chooseRangeOption,
   readStoredRange,
   reconcileRangeSelector,
   resolveApiSurfaceRedirect,
-  rewriteApiNavForRange,
+  retargetRangeOptions,
   showApiSurfaceSelector,
 } from "../lib/api-surface-pref";
 import { withBase } from "../lib/base";
@@ -290,7 +292,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
       .map(toEngineNamespace),
     libraries,
   });
-  const surfaceNav = rewriteApiNavForRange(nav, activeRange, surfaceConfig);
+  const surfaceNav = apiNavForPath(nav, path, search, surfaceConfig);
 
   const activeId = activeCategoryId(path, surfaceNav) ?? surfaceNav[0]?.id;
   const activeCategory = surfaceNav.find((category) => category.id === activeId) ?? surfaceNav[0];
@@ -309,11 +311,12 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   // Pre-paint: (1) redirect an un-prefixed API page onto the persisted range,
   // (2) record range-selector clicks as a `<from>|<to>` pair, (3) reconcile both
   // selector columns and expose the range on the document element before CSS
-  // loads, then (4) hide the symbols the `from` bound excludes — once pre-paint
-  // for whatever DOM already exists and again on `DOMContentLoaded` for the body
-  // it could not see. A version-independent page therefore keeps the reader's
-  // window without briefly showing a wider one.
-  const surfaceInit = `(function(){var K=${surfaceKey},C=${surfaceConfigJson};var readRange=${readStoredRange.toString()};var stored=function(){try{return localStorage.getItem(K);}catch(_){return null;}};try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,location.search,stored(),C,readRange);if(t&&t!==location.pathname+location.search){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-range-option'),b=el.getAttribute('data-range-bound');if(v!=null&&b!=null){try{var cur=readRange(location.pathname,location.search,stored(),C);var next=b==='from'?[v,cur.to]:[cur.from,v];var i=C.versionIds.indexOf(next[0]),j=C.versionIds.indexOf(next[1]);if(i<j)next=b==='from'?[v,v]:[v,v];localStorage.setItem(K,next[0]+'|'+next[1]);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}try{var r=${reconcileRangeSelector.toString()};var filter=${applySinceFilter.toString()};var range;try{range=readRange(location.pathname,location.search,stored(),C);}catch(_){return;}var apply=function(){try{r(document,range);}catch(_){}try{filter(document,range,C);}catch(_){}};apply();if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}}catch(e){}})();`;
+  // loads, then (4) hide the symbols the `from` bound excludes and (5) point the
+  // selector options at the reader's range where this page states none — once
+  // pre-paint for whatever DOM already exists and again on `DOMContentLoaded` for
+  // the body it could not see. A version-independent page therefore keeps the
+  // reader's window without briefly showing a wider one.
+  const surfaceInit = `(function(){var K=${surfaceKey},C=${surfaceConfigJson};var readRange=${readStoredRange.toString()};var f=${resolveApiSurfaceRedirect.toString()};var choose=${chooseRangeOption.toString()};var stored=function(){try{return localStorage.getItem(K);}catch(_){return null;}};var pick=function(b,v){return choose(location.pathname,location.search,stored(),b,v,C,readRange,f);};try{var t=f(location.pathname,location.search,stored(),C,readRange);if(t&&t!==location.pathname+location.search){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-range-option'),b=el.getAttribute('data-range-bound');if(v!=null&&b!=null){try{localStorage.setItem(K,pick(b,v).stored);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}try{var r=${reconcileRangeSelector.toString()};var filter=${applySinceFilter.toString()};var retarget=${retargetRangeOptions.toString()};var range;try{range=readRange(location.pathname,location.search,stored(),C);}catch(_){return;}var apply=function(){try{r(document,range);}catch(_){}try{filter(document,range,C);}catch(_){}try{retarget(document,function(b,v){return pick(b,v).target;});}catch(_){}};apply();if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}}catch(e){}})();`;
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
   const styles = clientStyles();
