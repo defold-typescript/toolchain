@@ -18,6 +18,7 @@ const VALUE_TYPE_NAMES = [
   "Hash",
   "Url",
   "Opaque",
+  "ConstantArray",
 ] as const;
 
 // TSTL operator metamethod types -> their display operator and arity. A method
@@ -29,6 +30,7 @@ const OPERATOR_METHODS: Record<string, { op: string; unary: boolean }> = {
   LuaMultiplicationMethod: { op: "*", unary: false },
   LuaDivisionMethod: { op: "/", unary: false },
   LuaNegationMethod: { op: "-", unary: true },
+  LuaLengthMethod: { op: "#", unary: true },
 };
 
 const INTERFACE_RE = /export interface (\w+)[^{]*\{([\s\S]*?)\}/g;
@@ -95,10 +97,13 @@ interface RawMember {
 }
 
 // Walk an interface body line by line, skipping JSDoc blocks, index
-// signatures, and brand (`[symbol]`) members, yielding `name: RHS` pairs.
+// signatures, brand (`[symbol]`) members and setters, yielding `name: RHS`
+// pairs. A getter yields its return type, and an RHS the formatter wrapped at
+// a trailing `&` or `|` is joined back into one line.
 function parseMembers(body: string): RawMember[] {
   const members: RawMember[] = [];
   let inJsdoc = false;
+  let pending = "";
   for (const raw of body.split("\n")) {
     const line = raw.trim();
     if (!line) continue;
@@ -111,9 +116,16 @@ function parseMembers(body: string): RawMember[] {
       continue;
     }
     if (line.startsWith("*") || line.startsWith("//")) continue;
-    const decl = line.replace(/^readonly\s+/, "");
-    if (decl.startsWith("[")) continue;
-    const match = decl.match(/^(\w+)\s*:\s*(.+?);?$/);
+    const joined = pending ? `${pending} ${line}` : line;
+    if (/[&|]$/.test(joined)) {
+      pending = joined;
+      continue;
+    }
+    pending = "";
+    const decl = joined.replace(/^readonly\s+/, "");
+    if (decl.startsWith("[") || decl.startsWith("set ")) continue;
+    const match =
+      decl.match(/^get\s+(\w+)\(\)\s*:\s*(.+?);?$/) ?? decl.match(/^(\w+)\s*:\s*(.+?);?$/);
     if (!match) continue;
     members.push({ name: match[1] as string, rhs: (match[2] as string).trim() });
   }
@@ -148,7 +160,9 @@ function parseOperatorMethod(name: string, rhs: string): ApiFunction[] {
     const parameters = spec.unary
       ? []
       : [{ name: "rhs", doc: "", types: [generics[0] as string], isOptional: false }];
-    const brief = spec.unary ? "Lua unary `-` operator." : `Lua \`${spec.op}\` operator.`;
+    const brief = spec.unary
+      ? `Lua unary \`${spec.op}\` operator.`
+      : `Lua \`${spec.op}\` operator.`;
     return {
       name,
       brief,

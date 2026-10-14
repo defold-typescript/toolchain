@@ -1434,7 +1434,7 @@
       "render\u0000CONSTANT\u0000render.SORT_NONE\u0000": "const SORT_NONE: number & { readonly __brand: \"render.SORT_NONE\" };",
       "render\u0000CONSTANT\u0000render.TEXTURE_BIT\u0000": "const TEXTURE_BIT: number & { readonly __brand: \"render.TEXTURE_BIT\" };",
       "render\u0000FUNCTION\u0000render.clear\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;",
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.STATE): void;",
@@ -1478,10 +1478,10 @@
       "render\u0000TYPEDEF\u0000RENDER_TARGET_FLAG\u0000": "type RENDER_TARGET_FLAG = typeof render.TEXTURE_BIT;",
       "render\u0000TYPEDEF\u0000SORT\u0000": "type SORT = typeof render.SORT_BACK_TO_FRONT | typeof render.SORT_FRONT_TO_BACK | typeof render.SORT_NONE;",
       "render\u0000TYPEDEF\u0000camera_options\u0000": "interface camera_options { use_frustum?: boolean; }",
-      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
+      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000debug_draw_options\u0000": "interface debug_draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; }",
-      "render\u0000TYPEDEF\u0000dispatch_options\u0000": "interface dispatch_options { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; }",
-      "render\u0000TYPEDEF\u0000draw_options\u0000": "interface draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: render.SORT; }",
+      "render\u0000TYPEDEF\u0000dispatch_options\u0000": "interface dispatch_options { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; }",
+      "render\u0000TYPEDEF\u0000draw_options\u0000": "interface draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: render.SORT; }",
       "render\u0000TYPEDEF\u0000render_predicate\u0000": "type render_predicate = number;",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000render_target_buffer_params\u0000": "interface render_target_buffer_params { format: graphics.TEXTURE_FORMAT; width: number; height: number; min_filter?: graphics.TEXTURE_FILTER; mag_filter?: graphics.TEXTURE_FILTER; u_wrap?: graphics.TEXTURE_WRAP; v_wrap?: graphics.TEXTURE_WRAP; w_wrap?: graphics.TEXTURE_WRAP; flags?: render.RENDER_TARGET_FLAG | number; }",
@@ -3228,7 +3228,7 @@
       "render\u0000CONSTANT\u0000render.SORT_NONE\u0000": "const SORT_NONE: number & { readonly __brand: \"render.SORT_NONE\" };",
       "render\u0000CONSTANT\u0000render.TEXTURE_BIT\u0000": "const TEXTURE_BIT: number & { readonly __brand: \"render.TEXTURE_BIT\" };",
       "render\u0000FUNCTION\u0000render.clear\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;",
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.STATE): void;",
@@ -3272,10 +3272,10 @@
       "render\u0000TYPEDEF\u0000RENDER_TARGET_FLAG\u0000": "type RENDER_TARGET_FLAG = typeof render.TEXTURE_BIT;",
       "render\u0000TYPEDEF\u0000SORT\u0000": "type SORT = typeof render.SORT_BACK_TO_FRONT | typeof render.SORT_FRONT_TO_BACK | typeof render.SORT_NONE;",
       "render\u0000TYPEDEF\u0000camera_options\u0000": "interface camera_options { use_frustum?: boolean; }",
-      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
+      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000debug_draw_options\u0000": "interface debug_draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; }",
-      "render\u0000TYPEDEF\u0000dispatch_options\u0000": "interface dispatch_options { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; }",
-      "render\u0000TYPEDEF\u0000draw_options\u0000": "interface draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: render.SORT; }",
+      "render\u0000TYPEDEF\u0000dispatch_options\u0000": "interface dispatch_options { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; }",
+      "render\u0000TYPEDEF\u0000draw_options\u0000": "interface draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: render.SORT; }",
       "render\u0000TYPEDEF\u0000render_predicate\u0000": "type render_predicate = number;",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000render_target_buffer_params\u0000": "interface render_target_buffer_params { format: graphics.TEXTURE_FORMAT; width: number; height: number; min_filter?: graphics.TEXTURE_FILTER; mag_filter?: graphics.TEXTURE_FILTER; u_wrap?: graphics.TEXTURE_WRAP; v_wrap?: graphics.TEXTURE_WRAP; w_wrap?: graphics.TEXTURE_WRAP; flags?: render.RENDER_TARGET_FLAG | number; }",
@@ -4653,13 +4653,13 @@
       "render\u0000CONSTANT\u0000render.SORT_NONE\u0000": "const SORT_NONE: number & { readonly __brand: \"render.SORT_NONE\" };",
       "render\u0000CONSTANT\u0000render.TEXTURE_BIT\u0000": "const TEXTURE_BIT: number & { readonly __brand: \"render.TEXTURE_BIT\" };",
       "render\u0000FUNCTION\u0000render.clear\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;",
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash | number): void;",
-      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;",
-      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;",
+      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }): void;",
+      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
@@ -4692,7 +4692,7 @@
       "render\u0000FUNCTION\u0000render.set_view\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false}]->[]": "function set_view(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_viewport\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_viewport(x: number, y: number, width: number, height: number): void;",
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
-      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
+      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
@@ -6016,13 +6016,13 @@
       "render\u0000CONSTANT\u0000render.SORT_NONE\u0000": "const SORT_NONE: number & { readonly __brand: \"render.SORT_NONE\" };",
       "render\u0000CONSTANT\u0000render.TEXTURE_BIT\u0000": "const TEXTURE_BIT: number & { readonly __brand: \"render.TEXTURE_BIT\" };",
       "render\u0000FUNCTION\u0000render.clear\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;",
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash | number): void;",
-      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;",
-      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;",
+      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }): void;",
+      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
@@ -6055,7 +6055,7 @@
       "render\u0000FUNCTION\u0000render.set_view\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false}]->[]": "function set_view(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_viewport\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_viewport(x: number, y: number, width: number, height: number): void;",
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
-      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
+      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
@@ -7049,13 +7049,13 @@
       "render\u0000CONSTANT\u0000render.SORT_NONE\u0000": "const SORT_NONE: number & { readonly __brand: \"render.SORT_NONE\" };",
       "render\u0000CONSTANT\u0000render.TEXTURE_BIT\u0000": "const TEXTURE_BIT: number & { readonly __brand: \"render.TEXTURE_BIT\" };",
       "render\u0000FUNCTION\u0000render.clear\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;",
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash | number): void;",
-      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;",
-      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;",
+      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }): void;",
+      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
@@ -7086,7 +7086,7 @@
       "render\u0000FUNCTION\u0000render.set_view\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false}]->[]": "function set_view(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_viewport\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_viewport(x: number, y: number, width: number, height: number): void;",
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
-      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
+      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
@@ -11029,9 +11029,9 @@
           "optional": false
         }
       },
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }\"],\"isOptional\":false}]": {
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": {
         "return:0:buffer": {
-          "type": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }",
+          "type": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }",
           "optional": false
         }
       },
@@ -15863,9 +15863,9 @@
           "optional": false
         }
       },
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }\"],\"isOptional\":false}]": {
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": {
         "return:0:buffer": {
-          "type": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }",
+          "type": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }",
           "optional": false
         }
       },
@@ -19796,9 +19796,9 @@
           "optional": false
         }
       },
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }\"],\"isOptional\":false}]": {
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": {
         "return:0:buffer": {
-          "type": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }",
+          "type": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }",
           "optional": false
         }
       },
@@ -19819,14 +19819,14 @@
         "param:1:y": { "type": "number", "optional": false },
         "param:2:z": { "type": "number", "optional": false },
         "param:3:options": {
-          "type": "{ constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }",
+          "type": "{ constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }",
           "optional": true
         }
       },
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:predicate": { "type": "Opaque<\"render_predicate\">", "optional": false },
         "param:1:options": {
-          "type": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }",
+          "type": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }",
           "optional": true
         }
       },
@@ -23751,9 +23751,9 @@
           "optional": false
         }
       },
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }\"],\"isOptional\":false}]": {
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": {
         "return:0:buffer": {
-          "type": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }",
+          "type": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }",
           "optional": false
         }
       },
@@ -23774,14 +23774,14 @@
         "param:1:y": { "type": "number", "optional": false },
         "param:2:z": { "type": "number", "optional": false },
         "param:3:options": {
-          "type": "{ constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }",
+          "type": "{ constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }",
           "optional": true
         }
       },
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:predicate": { "type": "Opaque<\"render_predicate\">", "optional": false },
         "param:1:options": {
-          "type": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }",
+          "type": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }",
           "optional": true
         }
       },
@@ -26404,9 +26404,9 @@
           "optional": false
         }
       },
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }\"],\"isOptional\":false}]": {
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": {
         "return:0:buffer": {
-          "type": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }",
+          "type": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }",
           "optional": false
         }
       },
@@ -26427,14 +26427,14 @@
         "param:1:y": { "type": "number", "optional": false },
         "param:2:z": { "type": "number", "optional": false },
         "param:3:options": {
-          "type": "{ constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }",
+          "type": "{ constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }",
           "optional": true
         }
       },
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:predicate": { "type": "Opaque<\"render_predicate\">", "optional": false },
         "param:1:options": {
-          "type": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }",
+          "type": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }",
           "optional": true
         }
       },

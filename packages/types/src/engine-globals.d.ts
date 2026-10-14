@@ -36,7 +36,7 @@ declare global {
   type Opaque<Name extends string> = Core.Opaque<Name>;
   /** A message-passing address with `socket`, `path`, and `fragment`; see {@link Core.Url}. */
   type Url = Core.Url;
-  /** A read-only numeric vector accessed by index; see {@link Core.Vector}. */
+  /** A numeric vector read and written by 1-based index; see {@link Core.Vector}. */
   type Vector = Core.Vector;
   /** A three-component vector with `x`, `y`, `z`; see {@link Core.Vector3}. */
   type Vector3 = Core.Vector3;
@@ -46,4 +46,6 @@ declare global {
   type Quaternion = Core.Quaternion;
   /** A 4x4 transformation matrix; see {@link Core.Matrix4}. */
   type Matrix4 = Core.Matrix4;
+  /** An array constant read back from a constant buffer, 1-based with no length; see {@link Core.ConstantArray}. */
+  type ConstantArray<T> = Core.ConstantArray<T>;
 }

@@ -113,6 +113,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [vmath](llms-full.txt#vmath)
 - [window](llms-full.txt#window)
 - [zlib](llms-full.txt#zlib)
+- [ConstantArray](@defold-typescript/types/src/core-types.ts)
 - [Hash](@defold-typescript/types/src/core-types.ts)
 - [Matrix4](@defold-typescript/types/src/core-types.ts)
 - [Opaque](@defold-typescript/types/src/core-types.ts)
