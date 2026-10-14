@@ -31,6 +31,7 @@ import graphics114Doc from "../fixtures/defold-1.14.0/graphics_doc.json" with { 
 import http114Doc from "../fixtures/defold-1.14.0/http_doc.json" with { type: "json" };
 import image114Doc from "../fixtures/defold-1.14.0/image_doc.json" with { type: "json" };
 import model114Doc from "../fixtures/defold-1.14.0/model_doc.json" with { type: "json" };
+import physics114Doc from "../fixtures/defold-1.14.0/physics_doc.json" with { type: "json" };
 import render114Doc from "../fixtures/defold-1.14.0/render_doc.json" with { type: "json" };
 import sprite114Doc from "../fixtures/defold-1.14.0/sprite_doc.json" with { type: "json" };
 import sys114Doc from "../fixtures/defold-1.14.0/sys_doc.json" with { type: "json" };
@@ -6046,9 +6047,32 @@ describe("STRUCT and TYPEDEF declarations", () => {
   });
 
   test("a union typedef aliases its arms", () => {
-    expect(aliasLine(emitDeclarations(physicsModule), "event")).toBe(
-      'type event = BuiltinMessages["contact_point_event"] | BuiltinMessages["collision_event"] | BuiltinMessages["trigger_event"] | BuiltinMessages["ray_cast_response"] | BuiltinMessages["ray_cast_missed"];',
+    const other = parseDefoldApiDoc({
+      info: { namespace: "physics" },
+      elements: [{ ...physicsEvent, name: "physics.other_event" }],
+    });
+    expect(aliasLine(emitDeclarations(other), "other_event")).toBe(
+      'type other_event = BuiltinMessages["contact_point_event"] | BuiltinMessages["collision_event"] | BuiltinMessages["trigger_event"] | BuiltinMessages["ray_cast_response"] | BuiltinMessages["ray_cast_missed"];',
     );
+  });
+
+  test("the physics listener event union gives each message arm its `type` hash", () => {
+    expect(aliasLine(emitDeclarations(physicsModule), "event")).toBe(
+      'type event = BuiltinMessages["contact_point_event"] & { type: Hash<"contact_point_event"> } | BuiltinMessages["collision_event"] & { type: Hash<"collision_event"> } | BuiltinMessages["trigger_event"] & { type: Hash<"trigger_event"> } | BuiltinMessages["ray_cast_response"] & { type: Hash<"ray_cast_response"> } | BuiltinMessages["ray_cast_missed"] & { type: Hash<"ray_cast_missed"> };',
+    );
+  });
+
+  test("on the 1.14.0 reference only the listener event union carries `type`", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(physics114Doc));
+    expect(aliasLine(out, "event")).toContain(
+      'BuiltinMessages["collision_event"] & { type: Hash<"collision_event"> }',
+    );
+    const raycast = out
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.startsWith("function raycast("));
+    expect(raycast).toContain('BuiltinMessages["ray_cast_response"]');
+    expect(raycast).not.toContain("type: Hash");
   });
 
   test("a literal typedef aliases its literals", () => {

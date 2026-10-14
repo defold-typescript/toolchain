@@ -139,9 +139,12 @@ export function applyMessageFieldCorrections(
 
 // What only the engine states about a message the catalog mirrors from the
 // reference: proto optionality, a field the handler reads or the sender fills,
-// or a message a component handles. `evidence` names `<path>:<symbol>` in the
-// 1.14.0 engine source. Each kind throws once the catalog already states its
-// fact, since that means upstream fixed the reference and the entry is deleted.
+// a message a component handles, or the shape of a field the reference types
+// only as `table`. `evidence` names `<path>:<symbol>` in the 1.14.0 engine
+// source. Each kind throws once the catalog already states its fact, since that
+// means upstream fixed the reference and the entry is deleted; a `retype` throws
+// once the catalog stops declaring its pinned `upstream` types, since upstream
+// retyped the field and the entry is re-verified against what it now says.
 export type MessageEngineCorrection = {
   readonly origin: string;
   readonly name: string;
@@ -154,6 +157,12 @@ export type MessageEngineCorrection = {
       readonly description: string;
       readonly fields: readonly MessageField[];
     }
+  | {
+      readonly kind: "retype";
+      readonly fields: readonly string[];
+      readonly tsType: string;
+      readonly upstream: readonly string[];
+    }
 );
 
 const SCRIPT_DDF_DEFAULTS =
@@ -163,6 +172,12 @@ const SOUND_EVENT =
 
 function optionalField(name: string, types: string[], doc: string): MessageField {
   return { name, types, optional: true, doc };
+}
+
+// The listener and `on_message` paths agree: the DDF the message carries
+// declares the same sub-message fields the listener push sets.
+function physicsBody(message: string): string {
+  return `gamesys/proto/gamesys/physics_ddf.proto:${message} declares the same required fields for the on_message payload`;
 }
 
 function otherGroupField(): MessageField {
@@ -284,6 +299,34 @@ export const MESSAGE_ENGINE_CORRECTIONS: readonly MessageEngineCorrection[] = [
     evidence:
       "gamesys/proto/gamesys/physics_ddf.proto:TriggerResponse declares a required group, and comp_collision_object.cpp:TriggerEnteredCallback sets it to the other object's group",
   },
+  {
+    kind: "retype",
+    origin: "physics",
+    name: "contact_point_event",
+    fields: ["a", "b"],
+    tsType:
+      "{ position: Vector3; instance_position: Vector3; normal: Vector3; relative_velocity: Vector3; mass: number; id: Hash; group: Hash }",
+    upstream: ["table"],
+    evidence: `gamesys/src/gamesys/scripts/script_physics.cpp:PushContactPoint sets these seven fields on each body, and ${physicsBody("ContactPoint")}`,
+  },
+  {
+    kind: "retype",
+    origin: "physics",
+    name: "collision_event",
+    fields: ["a", "b"],
+    tsType: "{ position: Vector3; id: Hash; group: Hash }",
+    upstream: ["table"],
+    evidence: `gamesys/src/gamesys/scripts/script_physics.cpp:PushCollision sets these three fields on each body, and ${physicsBody("Collision")}`,
+  },
+  {
+    kind: "retype",
+    origin: "physics",
+    name: "trigger_event",
+    fields: ["a", "b"],
+    tsType: "{ id: Hash; group: Hash }",
+    upstream: ["table"],
+    evidence: `gamesys/src/gamesys/scripts/script_physics.cpp:PushTrigger sets these two fields on each body, and ${physicsBody("Trigger")}`,
+  },
 ];
 
 export function applyMessageEngineCorrections(
@@ -325,7 +368,6 @@ export function applyMessageEngineCorrections(
       }
       continue;
     }
-    const optional = correction.kind === "optional";
     for (const name of correction.fields) {
       const field = entry.payload.find((candidate) => candidate.name === name);
       if (!field) {
@@ -333,6 +375,16 @@ export function applyMessageEngineCorrections(
           `applyMessageEngineCorrections: no catalog field matches ${identity} field=${name}`,
         );
       }
+      if (correction.kind === "retype") {
+        if (field.types.join("|") !== correction.upstream.join("|")) {
+          throw new Error(
+            `applyMessageEngineCorrections: the catalog now declares ${field.types.join("|")} for field ${name} of ${identity}, not the pinned ${correction.upstream.join("|")}; re-verify the correction`,
+          );
+        }
+        field.types = [correction.tsType];
+        continue;
+      }
+      const optional = correction.kind === "optional";
       if (field.optional === optional) throw stale(`field ${name} is already ${correction.kind}`);
       field.optional = optional;
     }

@@ -21,6 +21,7 @@ import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { scanEmittedRequires } from "./lua-require-scan";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
+import { physicsEventGuardLoweringPlugin } from "./physics-event-guard-lowering";
 import { importsTimersModule, timersLoweringPlugin } from "./timers-lowering";
 import { TIMERS_RUNTIME } from "./timers-runtime";
 import { typeApplicationErasurePlugin } from "./type-application-erasure";
@@ -356,6 +357,7 @@ function transpileVirtual(
         { plugin: editorScriptErasurePlugin },
         { plugin: messageGuardLoweringPlugin },
         { plugin: windowEventGuardLoweringPlugin },
+        { plugin: physicsEventGuardLoweringPlugin },
         { plugin: messageDispatchLoweringPlugin },
         { plugin: timersLoweringPlugin },
         { plugin: hsmLoweringPlugin },

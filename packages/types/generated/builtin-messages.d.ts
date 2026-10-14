@@ -9,9 +9,9 @@ declare global {
     apply_force: { force: Vector3; position: Vector3 };
     async_load: Record<string, never>;
     clear_color: { color: Vector4 };
-    collision_event: { a: Record<string | number, unknown>; b: Record<string | number, unknown> };
+    collision_event: { a: { position: Vector3; id: Hash; group: Hash }; b: { position: Vector3; id: Hash; group: Hash } };
     collision_response: { other_id: Hash; other_position: Vector3; other_group: Hash; own_group: Hash; group: Hash };
-    contact_point_event: { applied_impulse: number; distance: number; a: Record<string | number, unknown>; b: Record<string | number, unknown> };
+    contact_point_event: { applied_impulse: number; distance: number; a: { position: Vector3; instance_position: Vector3; normal: Vector3; relative_velocity: Vector3; mass: number; id: Hash; group: Hash }; b: { position: Vector3; instance_position: Vector3; normal: Vector3; relative_velocity: Vector3; mass: number; id: Hash; group: Hash } };
     contact_point_response: { position: Vector3; normal: Vector3; relative_velocity: Vector3; distance: number; applied_impulse: number; life_time: number; mass: number; other_mass: number; other_id: Hash; other_position: Vector3; other_group: Hash; own_group: Hash; group: Hash };
     disable: Record<string, never>;
     draw_debug_text: { position: Vector3; text: string; color: Vector4 };
@@ -57,7 +57,7 @@ declare global {
     text_object_unhovered: { id: Hash; type: Hash; src: string };
     toggle_physics_debug: Record<string, never>;
     toggle_profile: Record<string, never>;
-    trigger_event: { enter: boolean; a: Record<string | number, unknown>; b: Record<string | number, unknown> };
+    trigger_event: { enter: boolean; a: { id: Hash; group: Hash }; b: { id: Hash; group: Hash } };
     trigger_response: { other_id: Hash; enter: boolean; other_group: Hash; own_group: Hash; group: Hash };
     unload: Record<string, never>;
     window_resized: { height: number; width: number };

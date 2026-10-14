@@ -449,6 +449,65 @@ describe("applyMessageEngineCorrections", () => {
     ).toThrow(/no catalog field matches/);
   });
 
+  describe("retype", () => {
+    const collision: MessageCatalog = {
+      entries: [
+        {
+          name: "collision_event",
+          origin: "physics",
+          description: "",
+          payload: [
+            { name: "a", types: ["table"], optional: false, doc: "" },
+            { name: "b", types: ["table"], optional: false, doc: "" },
+          ],
+        },
+      ],
+    };
+    const body = "{ id: Hash; group: Hash }";
+    const retypeA: MessageEngineCorrection = {
+      kind: "retype",
+      origin: "physics",
+      name: "collision_event",
+      fields: ["a"],
+      tsType: body,
+      upstream: ["table"],
+      evidence: "test",
+    };
+
+    test("replaces only the named field's type with its tsType", () => {
+      const out = applyMessageEngineCorrections(collision, [retypeA]);
+      expect(out.entries[0]?.payload.map((field) => [field.name, field.types])).toEqual([
+        ["a", [body]],
+        ["b", ["table"]],
+      ]);
+      expect(collision.entries[0]?.payload[0]?.types).toEqual(["table"]);
+      const emitted = emitBuiltinMessages(out);
+      expect(emitted).toContain(
+        `collision_event: { a: ${body}; b: Record<string | number, unknown> };`,
+      );
+      expect(emitted).toContain('import type { Hash } from "../src/core-types";');
+    });
+
+    test("throws once the catalog's field types differ from the pinned upstream", () => {
+      const retyped: MessageCatalog = {
+        entries: [
+          {
+            name: "collision_event",
+            origin: "physics",
+            description: "",
+            payload: [{ name: "a", types: ["physics.collision_info"], optional: false, doc: "" }],
+          },
+        ],
+      };
+      expect(() => applyMessageEngineCorrections(retyped, [retypeA])).toThrow(
+        /now declares physics\.collision_info for field a.*re-verify the correction/,
+      );
+      expect(() =>
+        applyMessageEngineCorrections(collision, [{ ...retypeA, fields: ["c"] }]),
+      ).toThrow(/no catalog field matches/);
+    });
+  });
+
   test("every committed correction matches the committed catalog and names its engine evidence", () => {
     expect(MESSAGE_ENGINE_CORRECTIONS.length).toBeGreaterThan(0);
     for (const correction of MESSAGE_ENGINE_CORRECTIONS) {

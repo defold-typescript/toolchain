@@ -21,6 +21,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [`typeof` cannot narrow engine values](#typeof-cannot-narrow-engine-values--they-are-lua-userdata) — Defold handles are Lua `userdata`, so `typeof x === "object"` is `false` for them at runtime.
 - [`on_message` ids are hashes, not strings](#on_message-ids-are-hashes-not-strings) — compare `message_id` against a `hash("…")` constant; a string literal never matches at runtime.
 - [`window.set_listener` hands `event` and `data` separately](#windowset_listener-hands-event-and-data-as-separate-params) — an `event` check leaves `data.width` as `number | undefined`; the `isWindowEvent` guard narrows `data` to the event's payload.
+- [Physics listener events narrow with `isPhysicsEvent`](#physics-listener-events-narrow-with-isphysicsevent-not-a-type-check) — `event.type == hash("…")` leaves the event union unnarrowed; the `isPhysicsEvent` guard narrows it to one event.
 - [`null`/`undefined`/`== null` all become `nil`](#null-undefined-and--null-all-collapse-to-nil) — the three TS forms collapse to one Lua check; you cannot tell them apart at runtime.
 - [`===` and `==` are the same Lua](#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard) — both lower to a non-coercing Lua `==`; `==` is not JS loose equality here, and the real equality footgun is `if (cell)`.
 - [`as` is not a runtime check](#as-is-a-compile-time-assertion-not-a-runtime-check) — a cast erases to nothing; the value is unverified at runtime.
@@ -257,6 +258,40 @@ window.set_listener((self, event, data) => {
 ```
 
 `isWindowEvent` is declaration-only: the transpiler lowers the call to a bare `event == window.WINDOW_EVENT_RESIZED`, so there is no runtime function and no import to add. Only `WINDOW_EVENT_RESIZED` carries fields; every other event receives an empty table, so `data` narrows to `Record<string, never>`. This is the same wall — and the same fix — as [`on_message` ids](#on_message-ids-are-hashes-not-strings): the engine hands back a payload whose shape depends on a separate id/event argument, and a declaration-only guard is the path to that exact shape.
+
+## Physics listener events narrow with `isPhysicsEvent`, not a `type` check
+
+**Symptom.** A `physics.set_event_listener` callback checks each event's `type`, but the event is still the whole union inside the branch, so `event.a` does not type-check:
+
+```ts
+physics.set_event_listener((self, events) => {
+  for (const event of events) {
+    if (event.type == hash("collision_event")) {
+      // event is still any of the five events; not all of them have `a`
+    }
+  }
+});
+```
+
+**Why.** The engine sets `type` on every event to the hash of its message name, and the generated `physics.event` gives each member its own `type: Hash<"…">`. A `Hash` is an object type, though, not a literal, so TypeScript cannot use it to pick one member of the union.
+
+**Typed alternative.** Use the provided `isPhysicsEvent` guard. It takes the event and its message name and narrows the event to that one member, so `a` and `b` carry the fields the engine sets for that event:
+
+```ts
+physics.set_event_listener((self, events) => {
+  for (const event of events) {
+    if (isPhysicsEvent(event, "contact_point_event")) {
+      print(event.a.mass, event.a.normal);  // a: { position, instance_position, normal, relative_velocity, mass, id, group }
+    } else if (isPhysicsEvent(event, "collision_event")) {
+      print(event.a.id, event.b.id);  // a: { position, id, group }
+    } else if (isPhysicsEvent(event, "trigger_event")) {
+      print(event.enter, event.a.group);  // a: { id, group }
+    }
+  }
+});
+```
+
+`isPhysicsEvent` is declaration-only: the transpiler lowers the call to `event.type == hash("contact_point_event")`, so there is no runtime function and no import to add. A misspelled name is a compile error. The event union exists from Defold 1.13.2 on; on 1.13.1 and older the reference names no event type, so `events` is `unknown` there and the guard does not apply.
 
 ## `null`, `undefined`, and `== null` all collapse to `nil`
 
