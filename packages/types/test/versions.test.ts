@@ -431,8 +431,9 @@ describe("committed API surfaces — render.ClearBufferKey and render.RenderTarg
 });
 
 // The compile wall above cannot see a missing `render_target` skip: the authored
-// wide arm repeats the generated signature verbatim, so an un-skipped surface
-// accepts exactly the same calls. Parity between the two production registries
+// wide arm repeats the generated signature, its table typed through
+// `render.RenderTargetParams` as the slot the generator withholds, so an
+// un-skipped surface accepts exactly the same calls. Parity between the two production registries
 // is what catches a skip wired into one target and forgotten in another.
 describe("api-targets — every overload-covered skip is wired into every target", () => {
   const completeTargets = selectCompleteVersionSurfaces(loadApiTargets());

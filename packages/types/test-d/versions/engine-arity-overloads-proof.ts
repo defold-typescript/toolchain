@@ -7,8 +7,9 @@ export {};
 // below, and only a target that really skipped the function rejects it.
 //
 // `render.render_target` has no counterpart here: its authored wide arm repeats
-// the generated signature verbatim, so a surviving generated declaration adds no
-// call shape and no compile-time predicate can see it. The skip-parity case in
+// the generated signature, its table typed through `render.RenderTargetParams` as
+// the withheld slot, so a surviving generated declaration adds no call shape and
+// no compile-time predicate can see it. The skip-parity case in
 // `test/versions.test.ts` covers that side instead.
 
 // @ts-expect-error the generated `x: number | Vector3` arm is the only signature
