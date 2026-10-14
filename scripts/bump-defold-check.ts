@@ -5,7 +5,7 @@ import {
   buildLlmsTxt,
   PACKAGE_TARGET,
 } from "../packages/docs-site/scripts/build-llms.ts";
-import { registeredConstantFqns } from "../packages/types/scripts/engine-binding-extract.ts";
+import { targetBindingOptions } from "../packages/types/scripts/binding-pin.ts";
 import {
   buildSignaturesArtifact,
   type SignaturesArtifact,
@@ -103,7 +103,7 @@ export function collectDriftInputs(root: string): DriftInputs {
     },
     signatures: {
       committed: committedSignatures,
-      fresh: buildSignaturesArtifact({ registeredConstantsOf: registeredConstantFqns }),
+      fresh: buildSignaturesArtifact({ emitOptionsOf: (target) => targetBindingOptions(target) }),
     },
   };
 }

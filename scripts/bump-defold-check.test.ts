@@ -7,7 +7,7 @@ import {
   buildLlmsTxt,
   PACKAGE_TARGET,
 } from "../packages/docs-site/scripts/build-llms.ts";
-import { registeredConstantFqns } from "../packages/types/scripts/engine-binding-extract.ts";
+import { targetBindingOptions } from "../packages/types/scripts/binding-pin.ts";
 import { buildSignaturesArtifact } from "../packages/types/scripts/generate-api-signatures.ts";
 import {
   collectDriftInputs,
@@ -215,7 +215,9 @@ function freshCorrectRoot(
   writeFileSync(
     join(root, "packages/types/api-signatures.json"),
     overrides.signatures ??
-      JSON.stringify(buildSignaturesArtifact({ registeredConstantsOf: registeredConstantFqns })),
+      JSON.stringify(
+        buildSignaturesArtifact({ emitOptionsOf: (target) => targetBindingOptions(target) }),
+      ),
   );
   return root;
 }

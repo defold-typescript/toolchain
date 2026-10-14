@@ -26,7 +26,9 @@ import bullet3d114Doc from "../fixtures/defold-1.14.0/bullet3d_doc.json" with { 
 import collectionproxy114Doc from "../fixtures/defold-1.14.0/collectionproxy_doc.json" with {
   type: "json",
 };
+import factory114Doc from "../fixtures/defold-1.14.0/factory_doc.json" with { type: "json" };
 import http114Doc from "../fixtures/defold-1.14.0/http_doc.json" with { type: "json" };
+import image114Doc from "../fixtures/defold-1.14.0/image_doc.json" with { type: "json" };
 import render114Doc from "../fixtures/defold-1.14.0/render_doc.json" with { type: "json" };
 import sprite114Doc from "../fixtures/defold-1.14.0/sprite_doc.json" with { type: "json" };
 import window114Doc from "../fixtures/defold-1.14.0/window_doc.json" with { type: "json" };
@@ -4811,6 +4813,50 @@ describe("return-side optionality corrections", () => {
     const closest = world.split("\n").filter((l) => l.includes("function cast_ray_closest("));
     expect(closest).toHaveLength(2);
     for (const line of closest) expect(line.trim()).toEndWith("leaf_visits: number } | undefined;");
+  });
+
+  test("a binding-pinned correction applies only where the binding evidence holds its key", () => {
+    const factory = parseDefoldApiDoc(factory114Doc);
+    const evidence = new Set(["factory.create"]);
+    expect(
+      signatureLine(emitDeclarations(factory, { bindingEvidence: evidence }), "function create("),
+    ).toEndWith("): Hash | undefined;");
+    expect(signatureLine(emitDeclarations(factory), "function create(")).toEndWith("): Hash;");
+    expect(
+      signatureLine(
+        emitDeclarations(factory, { bindingEvidence: new Set(["factory.unload"]) }),
+        "function create(",
+      ),
+    ).toEndWith("): Hash;");
+  });
+
+  test("a nullable correction keeps each target's own base type", () => {
+    const evidence = new Set(["collectionproxy.set_collection"]);
+    expect(
+      signatureLine(
+        emitDeclarations(parseDefoldApiDoc(collectionproxy114Doc), { bindingEvidence: evidence }),
+        "function set_collection(",
+      ),
+    ).toEndWith("): LuaMultiReturn<[boolean, collectionproxy.RESULT | undefined]>;");
+    expect(
+      signatureLine(
+        emitDeclarations(parseDefoldApiDoc(collectionproxy113Doc), { bindingEvidence: evidence }),
+        "function set_collection(",
+      ),
+    ).toEndWith("): LuaMultiReturn<[boolean, number | undefined]>;");
+  });
+
+  test("a non-nullable correction drops the nil upstream declares", () => {
+    const image = parseDefoldApiDoc(image114Doc);
+    expect(
+      signatureLine(
+        emitDeclarations(image, { bindingEvidence: new Set(["image.get_astc_header"]) }),
+        "function get_astc_header(",
+      ),
+    ).toEndWith("): image.astc_header;");
+    expect(signatureLine(emitDeclarations(image), "function get_astc_header(")).toEndWith(
+      "): image.astc_header | undefined;",
+    );
   });
 
   test("a slot-scoped correction rewrites one value of a multi-return", () => {

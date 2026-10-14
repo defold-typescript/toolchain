@@ -539,10 +539,20 @@
         "undefined"
       ]
     },
+    "collectionproxy.set_collection": {
+      "pins": [["number"], ["collectionproxy.RESULT"]],
+      "adds": ["nil"],
+      "slot": "code"
+    },
+    "factory.create": { "pins": [["hash"]], "adds": ["nil"] },
     "gui.new_texture": {
       "pins": [["number"]],
       "replaces": ["number", "undefined"],
       "slot": "code"
+    },
+    "image.get_astc_header": {
+      "pins": [["table", "nil"], ["image.astc_header", "nil"]],
+      "removes": ["nil"]
     },
     "render.predicate": {
       "pins": [["number"], ["render_predicate"]],
@@ -557,6 +567,15 @@
     "socket.protect": {
       "pins": [["function(function())"], ["fun(...:any):any"]],
       "replaces": ["(...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>"]
+    },
+    "tilemap.get_tile": { "pins": [["number"], ["integer"]], "adds": ["nil"] },
+    "tilemap.get_tile_info": {
+      "pins": [["table"], ["{ index:integer, h_flip:boolean, v_flip:boolean, rotate_90:boolean }"]],
+      "adds": ["nil"]
+    },
+    "tilemap.get_tiles": {
+      "pins": [["table"], ["table<integer, table<integer, integer>>"]],
+      "adds": ["nil"]
     }
   }
 }

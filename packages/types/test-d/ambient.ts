@@ -77,13 +77,13 @@ physics.set_gravity("down");
 // @ts-expect-error physics.get_gravity returns Vector3, not string
 const _badG: string = physics.get_gravity();
 
-const _f: Hash = factory.create(msg.url(), vmath.vector3(1, 2, 3), vmath.quat(), {}, 1);
+const _f: Hash | undefined = factory.create(msg.url(), vmath.vector3(1, 2, 3), vmath.quat(), {}, 1);
 factory.create(msg.url(), vmath.vector3(0, 0, 0), vmath.quat(), {}, vmath.vector3(1, 1, 1));
 
 // @ts-expect-error factory.create rotation must be Quaternion, not a string
 factory.create(msg.url(), vmath.vector3(0, 0, 0), "not a quat", {}, 1);
 
-// @ts-expect-error factory.create returns Hash, not string
+// @ts-expect-error factory.create returns a Hash or undefined, not a string
 const _badF: string = factory.create(msg.url(), vmath.vector3(0, 0, 0), vmath.quat(), {}, 1);
 
 void _f;
@@ -185,7 +185,7 @@ void _badBone;
 
 tilemap.set_tile(msg.url(), "ground", 1, 1, 5, 0);
 tilemap.set_tile(msg.url(), go.get_id("ground"), 1, 1, 5, 0);
-const _tile: number = tilemap.get_tile(msg.url(), "ground", 1, 1);
+const _tile: number | undefined = tilemap.get_tile(msg.url(), "ground", 1, 1);
 tilemap.set_visible(msg.url(), "ground", true);
 const [_boundsX, _boundsY, _boundsW, _boundsH] = tilemap.get_bounds(msg.url());
 

@@ -248,6 +248,10 @@ export interface ReturnTypeProvenance {
   readonly sightedIn: readonly string[];
   readonly neededBy: readonly string[];
   readonly resolvedIn: readonly string[];
+  // Targets whose vendored binding does not show a binding-pinned entry's pin,
+  // so the emitter leaves the entry off there. Never a resolution: upstream
+  // documented nothing, the engine source changed.
+  readonly unboundIn: readonly string[];
   readonly driftedIn: readonly string[];
   readonly typeDrift: readonly string[];
 }
@@ -255,13 +259,20 @@ export interface ReturnTypeProvenance {
 // Same ranking argument as `FIELD_VERDICT_RANK`: `emitReturn` applies the
 // correction to every declaration of the FQN in a target, so one drifted
 // declaration makes that target's emit wrong whatever its siblings say.
-type ReturnVerdict = "drift" | "needed" | "resolved";
+// Binding evidence is per target, so `unbound` never meets `needed` there.
+type ReturnVerdict = "drift" | "needed" | "unbound" | "resolved";
 
 const RETURN_VERDICT_RANK: Record<ReturnVerdict, number> = {
-  drift: 2,
-  needed: 1,
+  drift: 3,
+  needed: 2,
+  unbound: 1,
   resolved: 0,
 };
+
+// Whether the declared tokens already say what the correction does.
+function declaresCorrection(tokens: readonly string[], correction: ReturnTypeCorrection): boolean {
+  return correction.nullable === false ? !tokens.includes("nil") : tokens.includes("nil");
+}
 
 // The return-type class has the same two-sided evidence: the declared tokens
 // still say what the correction contradicts, and the slot prose still states the
@@ -273,9 +284,14 @@ const RETURN_VERDICT_RANK: Record<ReturnVerdict, number> = {
 // return correction replaces the whole emitted type, so a base upstream no longer
 // declares means the correction now overwrites a type nobody verified — a
 // decision for a human, not a deletion and not a silent bank.
+//
+// A binding-pinned entry rests on the engine source rather than the prose, so
+// its prose is never searched. `bindingEvidence` maps each vendored target to
+// the keys whose pin holds there; a target absent from it shows no evidence.
 export function returnCorrectionProvenance(
   entries: readonly [string, ReturnTypeCorrection][],
   surfaces: readonly ProvenanceSurface[],
+  bindingEvidence: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
 ): ReturnTypeProvenance[] {
   return entries.map(([key, correction]) => {
     const namespace = namespaceOf(key);
@@ -299,8 +315,14 @@ export function returnCorrectionProvenance(
             `${surface.target}: pinned ${pins.map((pin) => pin.join("|")).join(" or ")}, found ${tokens.join("|")}`,
           );
         } else if (
-          tokens.includes("nil") ||
-          !decodeSlotProse(slot.doc ?? "").includes(correction.reason)
+          correction.binding !== undefined &&
+          bindingEvidence.get(surface.target)?.has(key) !== true
+        ) {
+          verdict = "unbound";
+        } else if (
+          declaresCorrection(tokens, correction) ||
+          (correction.binding === undefined &&
+            !decodeSlotProse(slot.doc ?? "").includes(correction.reason))
         ) {
           verdict = "resolved";
         } else {
@@ -323,6 +345,7 @@ export function returnCorrectionProvenance(
       sightedIn,
       neededBy: inBucket("needed"),
       resolvedIn: inBucket("resolved"),
+      unboundIn: inBucket("unbound"),
       driftedIn,
       typeDrift: driftedIn.flatMap((target) => [...(drift.get(target) ?? [])]).sort(),
     };

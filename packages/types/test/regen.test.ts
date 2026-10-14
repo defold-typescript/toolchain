@@ -3,6 +3,7 @@ import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { globalNamespacesIn } from "../scripts/augmentation-namespaces";
+import { targetBindingOptions } from "../scripts/binding-pin";
 import {
   EDITOR_MODULE_MANIFEST,
   EDITOR_SKIP_FUNCTIONS,
@@ -30,7 +31,7 @@ import {
 } from "../scripts/regen";
 import { EDITOR_VM_MANIFEST, extractFixtures, type ZipAccessor } from "../scripts/sync-api-docs";
 import { parseDefoldApiDoc } from "../src/api-doc";
-import { routeTypeDeclarations } from "../src/emit-dts";
+import { type ReturnTypeCorrection, routeTypeDeclarations } from "../src/emit-dts";
 import { unexpressedFixtureNames } from "./declared-fqns";
 
 const GENERATED = resolve(import.meta.dir, "..", "generated");
@@ -43,6 +44,19 @@ const COMMITTED_MODULES = [
   ...EDITOR_MODULE_MANIFEST,
   ...EDITOR_VM_MODULE_MANIFEST,
 ];
+
+// The per-target inputs `regen` emits each committed entry with: the default
+// target's for its runtime modules, the entry's own target for a versioned one,
+// and none for the default target's editor modules.
+const REGEN_TARGETS = loadApiTargets();
+function regenTargetOf(id: string) {
+  const target = REGEN_TARGETS.find((candidate) => candidate.id === id);
+  if (!target) throw new Error(`no target ${id}`);
+  return target;
+}
+const DEFAULT_REGEN_TARGET = REGEN_TARGETS.find((candidate) => candidate.default === true);
+if (!DEFAULT_REGEN_TARGET) throw new Error("api-targets.json: no default target");
+const DEFAULT_REGEN_OPTIONS = targetBindingOptions(DEFAULT_REGEN_TARGET);
 
 // Verbatim 1.13.2 editor-doc declarations: the VM `http` library's typedefs and
 // struct beside one struct the editor namespace owns.
@@ -175,7 +189,10 @@ describe("regen drift guard", () => {
   test.each(
     COMMITTED_MODULES.map((entry) => [entry.namespace, entry] as const),
   )("%s: committed generated file matches a fresh pipeline run byte-for-byte", async (_namespace, entry) => {
-    const { contents: fresh } = generateModuleDeclaration(entry);
+    const { contents: fresh } = generateModuleDeclaration(
+      entry,
+      MODULE_MANIFEST.includes(entry) ? DEFAULT_REGEN_OPTIONS : undefined,
+    );
     const committed = await Bun.file(resolve(GENERATED, entry.outFile)).text();
     if (committed !== fresh) {
       throw new Error(`${entry.outFile} is stale — run \`bun run regen\` in \`packages/types/\``);
@@ -1129,7 +1146,10 @@ describe("versioned regen drift guard", () => {
       (entry) => [`${entry.versionId}/${entry.namespace}`, entry] as const,
     ),
   )("%s: committed versioned file matches a fresh pipeline run byte-for-byte", async (_label, entry) => {
-    const { contents: fresh } = generateModuleDeclaration(entry);
+    const { contents: fresh } = generateModuleDeclaration(
+      entry,
+      targetBindingOptions(regenTargetOf(entry.versionId)),
+    );
     const path = resolve(GENERATED, "versions", entry.versionId, entry.outFile);
     const committed = await Bun.file(path).text();
     if (committed !== fresh) {
@@ -1605,5 +1625,53 @@ describe("restricted src augmentation scoping", () => {
       const declared = augmentations.find((a) => a.name === name)?.namespaces ?? [];
       expect(declared).toContain(namespace);
     }
+  });
+});
+
+describe("per-target binding evidence", () => {
+  const targets = loadApiTargets();
+  const target = (id: string) => {
+    const found = targets.find((candidate) => candidate.id === id);
+    if (!found) throw new Error(`no target ${id}`);
+    return found;
+  };
+  const NIL_PUSH = {
+    file: "gamesys/src/gamesys/scripts/script_factory.cpp",
+    cFunction: "FactoryComp_Create",
+  };
+  const entries: readonly [string, ReturnTypeCorrection][] = [
+    [
+      "factory.create",
+      {
+        nullable: true,
+        upstream: ["hash"],
+        reason: "pushes nil",
+        binding: { ...NIL_PUSH, contains: "lua_pushnil(L);" },
+      },
+    ],
+    [
+      "factory.never",
+      {
+        nullable: true,
+        upstream: ["hash"],
+        reason: "pins a push the body never makes",
+        binding: { ...NIL_PUSH, lacks: "lua_pushnil(L);" },
+      },
+    ],
+    ["factory.prose", { ts: "Hash | undefined", upstream: ["hash"], reason: "or nil" }],
+  ];
+
+  test("a vendored target's evidence holds exactly the binding-pinned keys whose pin holds", () => {
+    const options = targetBindingOptions(target("defold-1.14.0"), entries);
+    expect([...(options.bindingEvidence ?? [])]).toEqual(["factory.create"]);
+    expect(options.registeredConstants?.size ?? 0).toBeGreaterThan(0);
+  });
+
+  test("an unvendored target gets an empty evidence set", () => {
+    const refDoc = targets.find((candidate) => (candidate.source ?? null) !== null);
+    if (!refDoc) throw new Error("api-targets.json: no ref-doc target");
+    const options = targetBindingOptions(refDoc, entries);
+    expect([...(options.bindingEvidence ?? ["missing"])]).toEqual([]);
+    expect(options.registeredConstants).toBeUndefined();
   });
 });

@@ -337,7 +337,7 @@ grep -rn "function create" node_modules/@defold-typescript/types/generated/
 ```
 
 Quote what the surface declares as authoritative — for `factory.create` it is
-`factory.create(url, position?, rotation?, properties?, scale?): Hash`. If the
+`factory.create(url, position?, rotation?, properties?, scale?): Hash | undefined`. If the
 grep returns nothing, the symbol does not exist on this surface; do not invent
 it.
 
@@ -1200,7 +1200,8 @@ Confirm each id names a real component and the snippet builds — see
 
 Add a `.factory` component to a game object and point it at the prototype `.go`.
 At runtime, `factory.create(url, position?, rotation?, properties?, scale?)`
-returns the spawned object's id as a `Hash`. The fourth argument, `properties`,
+returns the spawned object's id as a `Hash`, or `undefined` when the spawn
+fails, so narrow it before use. The fourth argument, `properties`,
 seeds the new script's `self` before its `init` runs, so each spawned instance
 can start with its own state.
 
