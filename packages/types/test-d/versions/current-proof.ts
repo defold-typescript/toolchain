@@ -10,7 +10,7 @@ sprite.set_hflip("sprite#s", true);
 type WindowListener = NonNullable<Parameters<typeof window.set_listener>[0]>;
 window.set_listener((_self, event, data) => {
   if (isWindowEvent(event, data, window.WINDOW_EVENT_ICONIFIED)) {
-    const _none: undefined = data;
+    const _none: Record<string, never> = data;
     void _none;
   }
   isWindowEvent(event, data, window.WINDOW_EVENT_ICONFIED);

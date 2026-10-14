@@ -31,6 +31,8 @@ declare global {
      * - number `range_start`: the start offset into the requested file
      * - number `range_end`: the end offset into the requested file (inclusive)
      * - number `document_size`: the full size of the requested file
+     *
+     * With `report_progress` set, the callback also receives progress events carrying `bytes_sent`, `bytes_received`, `bytes_total` and `url` but no `status`; `response.bytes_received !== undefined` marks a progress event, since a final response never carries it.
      * @param headers - optional table with custom headers
      * @param post_data - optional data to send
      * @param options - optional table with request parameters. Supported entries:
@@ -70,7 +72,7 @@ declare global {
      * });
      * ```
      */
-    function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;
+    function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;
   }
 }
 
