@@ -818,6 +818,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [`===` and `==` are the same Lua](#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard) — both lower to a non-coercing Lua `==`; `==` is not JS loose equality here, and the real equality footgun is `if (cell)`.
 - [`as` is not a runtime check](#as-is-a-compile-time-assertion-not-a-runtime-check) — a cast erases to nothing; the value is unverified at runtime.
 - [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.properties["color"]`, not off the namespace object.
+- [Texture format constants can be `undefined`](#texture-format-constants-can-be-undefined) — the engine registers most formats only when the driver supports them; check the constant before a `render.render_target` or `resource.create_texture` table uses it.
 - [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
 - [URL addressing: same-world is relative, `socket:` crosses worlds](#url-addressing-same-world-objects-are-relative-socket-crosses-worlds) — a sibling instance is `"camera"` or `"/camera"`, a sibling component is `"#name"`; `socket:` names a target world by its collection `Name` and is reserved for crossing into a collection-proxy-loaded world.
 - [npm packages do not resolve](#npm-packages-do-not-resolve--vendor-the-source-instead) — the build compiles only your `include`-matched files, so `node_modules` is never read; copy the source into `src/`[^src-root] and import it relatively.
@@ -890,7 +891,7 @@ window.set_dim_mode(window.get_dim_mode());          // TS error — the getter 
 
 A few slots name no constant at all (`gui.new_texture`'s `type` lists only strings, `iap.get_provider_id`, typed once [`resolve`](./resolve.md) has run for extension-iap, names constants no ref-doc defines) and keep the generic `Opaque<"constant">`. `packages/types/test-d/documented-constant-slots.ts` pins the documented calls in each affected namespace.
 
-**A table whose *keys* are constants is a `LuaMap`, not an object literal.** A brand is not one of the three types a TypeScript index signature accepts (`string | number | symbol`), so a generated declaration cannot describe "a table keyed by these constants" as an index signature — it uses a `LuaMap` whose key parameter carries the brand, as `render.clear`'s `LuaMap<render.ClearBufferKey, number | Vector4>` does. Writing one is its own subject: see [Lua table constructs](./lua-table-constructs.md).
+**A table whose *keys* are constants is a `LuaMap`, not an object literal.** A brand is not one of the three types a TypeScript index signature accepts (`string | number | symbol`), so a generated declaration cannot describe "a table keyed by these constants" as an index signature — it uses a `LuaMap` whose key parameter carries the brand, as `render.clear`'s `LuaMap<render.ClearBufferKey, number | Vector4>` does. Writing one is its own subject: see [Lua table constructs](./lua-table-constructs.md). `render.render_target` is the exception: its reference indexes the table by plain number, so an object literal with computed keys compiles (`{ [graphics.BUFFER_TYPE_DEPTH_BIT]: { … } }`). Each buffer's fields are checked; the keys are not, so a constant from another family is accepted as a key.
 
 #### Engine handles are opaque — you cannot fabricate or cast across kinds
 
@@ -1218,6 +1219,38 @@ info.not_a_field;
 **Typed alternative.** Read the members directly — `sys.get_sys_info().system_name`, `liveupdate.get_mounts()[0].uri`, `tilemap.get_tile_info(url, layer, x, y).index` — instead of indexing an opaque record and casting. For an options argument, pass only the fields you need (`image.load(data, { flip_vertically: true })`); omitted fields and `{}` still type-check, except the fields the engine reads unconditionally, such as the `type`, `format`, `width` and `height` of a [`resource.create_texture`](/api/resource) table, which stay required. To build the table `render.render_target` takes ahead of the call, type it as `render.RenderTargetParams`, which every pin declares: on 1.13.2 and newer it is the reference's `render.render_target_params` (optional `type` and `sample_count`, plus one `render.render_target_buffer_params` with a required `format`, `width` and `height` per buffer key), and on older pins it is the bare `Record<string | number, unknown>`.
 
 **How we pin this in the type tests.** `packages/types/test-d/sys-info-table-fields.ts` asserts `sys.get_sys_info().system_name` is assignable to `string` and that a bogus field carries `@ts-expect-error`; `packages/types/test-d/example-shaped-table-curations.ts` pins the example-proven `liveupdate.get_mounts()` and `tilemap.get_tile_info()` shapes; `packages/types/test-d/physics-set-shape-fields.ts` pins the variant `physics.get_shape()` record — `type` reads as `number`, while `diameter` and `height` need narrowing before they are; `packages/types/test-d/resource-atlas-frame-forms.ts` pins the atlas tables — empty lists, an animation with neither frame form, and an ordinary `T[]` carry `@ts-expect-error`; `packages/types/test-d/b2d-backend-shape-kinds.ts` pins each Box2D backend's shape kinds — a v2 fixture rejects a capsule and a v3 shape rejects a chain. The fidelity audit and the emitter share the table recovery and curation data (`packages/types/src/emit-dts.ts`), so the `recordTables` loss gate and the emitted surface cannot drift; if a recovered field's type regressed to `unknown` the audit's `unknownTokens` would surface it.
+
+#### Texture format constants can be `undefined`
+
+**Symptom.** On Defold 1.13.2 and newer targets, a `render.render_target` or `resource.create_texture` table that names a format constant directly fails to typecheck:
+
+```ts
+render.render_target({
+  [graphics.BUFFER_TYPE_COLOR0_BIT]: {
+    format: graphics.TEXTURE_FORMAT_RGBA, // TS error: the constant may be `undefined`
+    width: 1024,
+    height: 1024,
+  },
+});
+```
+
+**Why.** The engine registers a texture format constant only when the graphics driver supports that format, so on a device without it the Lua global is `nil`. The typings declare every `graphics.TEXTURE_FORMAT_*` constant as possibly `undefined`, except `graphics.TEXTURE_FORMAT_DEPTH` and `graphics.TEXTURE_FORMAT_STENCIL`, which always exist. A buffer's or texture's `format` takes a `graphics.TEXTURE_FORMAT`, which excludes `undefined`, so an unguarded constant is rejected. Pins older than 1.13.2 declare every format unconditionally, and their `render.render_target` takes an open record.
+
+**Typed alternative.** Read the format constant into a local, check it, and pass the narrowed value:
+
+```ts
+// the engine registers a texture format only when the driver supports it
+const format = graphics.TEXTURE_FORMAT_RGBA;
+if (format !== undefined) {
+  const target = render.render_target({
+    [graphics.BUFFER_TYPE_COLOR0_BIT]: { format, width: 1024, height: 1024 },
+  });
+}
+```
+
+The check runs at runtime too, so a device without the format takes your fallback instead of handing the engine a `nil` format. When a render script's `init` builds the target, return `undefined` from `init` if the format is missing, and open each other callback that reads `self` with `if (self === undefined) return;`. A depth or stencil buffer needs no check.
+
+**How we pin this in the type tests.** `packages/types/test-d/engine-arity-overloads.ts` passes a depth-only table and a checked RGBA table to both `render.render_target` arities, and puts `@ts-expect-error` on an unguarded format, a buffer with no `width`, a wrap mode given a filter constant, and an open record.
 
 #### `async`/`await` work but there is no event loop
 
@@ -13293,8 +13326,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_window_height(): number;
 - function get_window_width(): number;
 - function predicate(tags: (string | Hash)[]): Opaque<"render_predicate">;
-- render.render_target(parameters: Record<string | number, unknown>): Opaque<"render_target"> [through 1.13.1] [signature transition]
-- render.render_target(name: string, parameters: Record<string | number, unknown>): Opaque<"render_target">
+- render.render_target(parameters: render.RenderTargetParams): Opaque<"render_target"> [through 1.13.1] [signature transition]
+- render.render_target(name: string, parameters: render.RenderTargetParams): Opaque<"render_target">
 - function set_blend_equation_separate(equation_color: graphics.BLEND_EQUATION, equation_alpha: graphics.BLEND_EQUATION): void; [since 1.13.0]
 - function set_blend_func(source_factor: graphics.BLEND_FACTOR, destination_factor: graphics.BLEND_FACTOR): void;
 - function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void; [since 1.13.0]

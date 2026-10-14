@@ -13,16 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **Breaking: two [callback payloads](./typescript-gotchas.md) are typed.**
-> - **`render.RenderTargetParams`** types [render targets](./typescript-gotchas.md).
+> - **Breaking: [two callback payloads](./typescript-gotchas.md) and `render.render_target`'s table are typed.**
 
 ### Breaking
 
 - **[Two callback payloads](./typescript-gotchas.md#windowset_listener-hands-event-and-data-as-separate-params) are typed structs on Defold 1.13.2 and newer targets**: a `window.set_listener` callback receives `data` as `window.event_data`, and a `collectionproxy.load` callback receives `message` as `collectionproxy.load_data`. A callback that annotates either parameter as a record, or reads a key the engine never sends, stops compiling; drop the annotation or name the struct.
-
-### Improved
-
-- **`render.RenderTargetParams`** names the table the Defold reference gives `render.render_target` on every pinned target: `render.render_target_params` on 1.13.2 and newer, the bare record on older pins, so [a render target's parameters](./typescript-gotchas.md#field-documented-tables-are-typed-object-shapes-not-opaque-records) can be typed and checked before the call.
+- **`render.render_target` checks its table on Defold 1.13.2 and newer targets**, in both arities: each buffer needs a `format`, `width` and `height`, and a format constant other than depth or stencil needs [a nil check](./typescript-gotchas.md#texture-format-constants-can-be-undefined) first. To build the table ahead of the call, type it as `render.RenderTargetParams`, which every pinned target declares, as an open record on older pins.
 
 ## v0.50.1
 
