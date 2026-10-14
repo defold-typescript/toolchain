@@ -2,11 +2,14 @@ import { describe, expect, test } from "bun:test";
 import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
 import {
   applyMessageDeprecations,
+  applyMessageEngineCorrections,
   applyMessageFieldCorrections,
   emitBuiltinMessages,
   MESSAGE_DEPRECATIONS,
+  MESSAGE_ENGINE_CORRECTIONS,
   MESSAGE_FIELD_CORRECTIONS,
   type MessageCatalog,
+  type MessageEngineCorrection,
   parseMessagesDoc,
 } from "./emit-messages";
 
@@ -265,7 +268,9 @@ describe("applyMessageDeprecations", () => {
     const raw = JSON.parse(
       await Bun.file(new URL("../fixtures/messages_doc.json", import.meta.url)).text(),
     );
-    const catalog = applyMessageFieldCorrections(applyMessageDeprecations(parseMessagesDoc(raw)));
+    const catalog = applyMessageEngineCorrections(
+      applyMessageFieldCorrections(applyMessageDeprecations(parseMessagesDoc(raw))),
+    );
     const emitted = emitBuiltinMessages(catalog);
     const generated = await Bun.file(
       new URL("../generated/builtin-messages.d.ts", import.meta.url),
@@ -328,5 +333,130 @@ describe("applyMessageFieldCorrections", () => {
   test("every committed correction matches the committed catalog", () => {
     expect(MESSAGE_FIELD_CORRECTIONS.length).toBeGreaterThan(0);
     expect(() => applyMessageFieldCorrections(parseMessagesDoc(messagesDoc))).not.toThrow();
+  });
+});
+
+describe("applyMessageEngineCorrections", () => {
+  const sound: MessageCatalog = {
+    entries: [
+      {
+        name: "play_sound",
+        origin: "sound",
+        description: "",
+        payload: [
+          { name: "gain", types: ["number"], optional: true, doc: "" },
+          { name: "delay", types: ["number"], optional: false, doc: "" },
+        ],
+      },
+      {
+        name: "sound_done",
+        origin: "sound",
+        description: "",
+        payload: [{ name: "play_id", types: ["number"], optional: true, doc: "" }],
+      },
+    ],
+  };
+  const pan = { name: "pan", types: ["number"], optional: true, doc: "" };
+  const optionalDelay: MessageEngineCorrection = {
+    kind: "optional",
+    origin: "sound",
+    name: "play_sound",
+    fields: ["delay"],
+    evidence: "test",
+  };
+  const requiredPlayId: MessageEngineCorrection = {
+    kind: "required",
+    origin: "sound",
+    name: "sound_done",
+    fields: ["play_id"],
+    evidence: "test",
+  };
+  const addPan: MessageEngineCorrection = {
+    kind: "add-field",
+    origin: "sound",
+    name: "play_sound",
+    fields: [pan],
+    evidence: "test",
+  };
+  const addSetPan: MessageEngineCorrection = {
+    kind: "add-message",
+    origin: "sound",
+    name: "set_pan",
+    description: "Set the pan.",
+    fields: [pan],
+    evidence: "test",
+  };
+
+  function payloadOf(catalog: MessageCatalog, name: string) {
+    return catalog.entries
+      .find((entry) => entry.name === name)
+      ?.payload.map((field) => [field.name, field.optional]);
+  }
+
+  test("optional and required flip only the named fields", () => {
+    const out = applyMessageEngineCorrections(sound, [optionalDelay, requiredPlayId]);
+    expect(payloadOf(out, "play_sound")).toEqual([
+      ["gain", true],
+      ["delay", true],
+    ]);
+    expect(payloadOf(out, "sound_done")).toEqual([["play_id", false]]);
+    expect(payloadOf(sound, "play_sound")).toEqual([
+      ["gain", true],
+      ["delay", false],
+    ]);
+  });
+
+  test("add-field appends the engine fields and add-message adds the message", () => {
+    const out = applyMessageEngineCorrections(sound, [addPan, addSetPan]);
+    expect(payloadOf(out, "play_sound")).toEqual([
+      ["gain", true],
+      ["delay", false],
+      ["pan", true],
+    ]);
+    const setPan = out.entries.find((entry) => entry.name === "set_pan");
+    expect(setPan).toEqual({
+      name: "set_pan",
+      origin: "sound",
+      description: "Set the pan.",
+      payload: [pan],
+    });
+    expect(sound.entries).toHaveLength(2);
+  });
+
+  test("each kind throws once the catalog already states the engine fact", () => {
+    expect(() =>
+      applyMessageEngineCorrections(sound, [{ ...optionalDelay, fields: ["gain"] }]),
+    ).toThrow(/already optional.*delete the correction/);
+    expect(() =>
+      applyMessageEngineCorrections(sound, [
+        { ...requiredPlayId, name: "play_sound", fields: ["delay"] },
+      ]),
+    ).toThrow(/already required.*delete the correction/);
+    expect(() =>
+      applyMessageEngineCorrections(sound, [{ ...addPan, fields: [{ ...pan, name: "gain" }] }]),
+    ).toThrow(/already declares field gain.*delete the correction/);
+    expect(() =>
+      applyMessageEngineCorrections(sound, [{ ...addSetPan, name: "play_sound" }]),
+    ).toThrow(/already declares message.*delete the correction/);
+  });
+
+  test("throws when a correction targets a message or field the catalog lacks", () => {
+    expect(() => applyMessageEngineCorrections({ entries: [] }, [optionalDelay])).toThrow(
+      /no catalog message matches/,
+    );
+    expect(() =>
+      applyMessageEngineCorrections(sound, [{ ...optionalDelay, fields: ["speed"] }]),
+    ).toThrow(/no catalog field matches/);
+  });
+
+  test("every committed correction matches the committed catalog and names its engine evidence", () => {
+    expect(MESSAGE_ENGINE_CORRECTIONS.length).toBeGreaterThan(0);
+    for (const correction of MESSAGE_ENGINE_CORRECTIONS) {
+      expect(correction.evidence).toMatch(/^[\w/.]+\.(cpp|proto):\w+ /);
+    }
+    const base = applyMessageFieldCorrections(
+      applyMessageDeprecations(parseMessagesDoc(messagesDoc)),
+    );
+    expect(() => applyMessageEngineCorrections(base)).not.toThrow();
   });
 });

@@ -1,7 +1,7 @@
 {
   "info": {
     "namespace": "builtin_messages",
-    "version": "1.13.0",
+    "version": "1.14.0",
     "description": "Defold's built-in message ids and the payload shape each one carries."
   },
   "messages": [
@@ -58,6 +58,18 @@
           "types": ["hash"],
           "optional": false,
           "doc": "Hashed animation id."
+        },
+        {
+          "name": "offset",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Normalized initial value of the animation cursor when the animation starts playing."
+        },
+        {
+          "name": "playback_rate",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Rate the animation plays at. Must be positive."
         }
       ]
     },
@@ -289,12 +301,6 @@
       "description": "Reported when an asynchronous ray cast hits nothing.",
       "payload": [
         {
-          "name": "group",
-          "types": ["hash"],
-          "optional": false,
-          "doc": "Collision group mask used for the ray cast."
-        },
-        {
           "name": "request_id",
           "types": ["number"],
           "optional": false,
@@ -383,7 +389,7 @@
         {
           "name": "gain",
           "types": ["number"],
-          "optional": false,
+          "optional": true,
           "doc": "Target gain between 0 and 1."
         }
       ]
@@ -396,7 +402,7 @@
         {
           "name": "play_id",
           "types": ["number"],
-          "optional": false,
+          "optional": true,
           "doc": "The id passed to play_sound."
         }
       ]
@@ -409,7 +415,7 @@
         {
           "name": "play_id",
           "types": ["number"],
-          "optional": false,
+          "optional": true,
           "doc": "The id passed to play_sound."
         }
       ]
