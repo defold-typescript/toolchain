@@ -31,7 +31,7 @@ void arbTableSerialized;
 // Runtime-owned passthrough: the spawn-time `properties` overrides are keyed by
 // the spawned object's own script-property names, so the table is an arbitrary
 // literal accepted as-is, not a typed shape.
-const arbTableSpawned: Hash = factory.create(
+const arbTableSpawned: Hash | undefined = factory.create(
   "#factory",
   undefined,
   undefined,

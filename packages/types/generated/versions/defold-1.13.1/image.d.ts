@@ -44,7 +44,7 @@ declare global {
      * }
      * ```
      */
-    function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined;
+    function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number };
     /**
      * Load image (PNG or JPEG) from buffer.
      *

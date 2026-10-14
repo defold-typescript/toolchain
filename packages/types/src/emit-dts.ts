@@ -80,6 +80,10 @@ export interface EmitOptions {
   // `UNDOCUMENTED_CONSTANTS` back-fill. Absent for a surface with no vendored
   // bindings (a ref-doc target), where every entry the ref-doc omits is emitted.
   registeredConstants?: ReadonlySet<string>;
+  // The `RETURN_TYPE_CORRECTIONS` keys whose binding pin holds in the target's
+  // vendored engine source. A binding-pinned entry applies only when its key is
+  // here, so a surface with no vendored bindings (absent) applies none of them.
+  bindingEvidence?: ReadonlySet<string>;
   // The functions a target's skip rules removed from the module, read only to
   // type an `OVERLOAD_SLOT_ALIASES` slot.
   withheldFunctions?: readonly ApiFunction[];
@@ -370,8 +374,22 @@ export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
 // destructured into separate arguments; a boxed `LuaMultiReturn` is rejected
 // because TSTL passes it as one table, which is always truthy. `reason` quotes
 // the slot prose the provenance test searches for, as for the `nil` entries.
-export interface ReturnTypeCorrection {
-  readonly ts: string;
+//
+// An entry with a `binding` rests on the engine source instead of the prose:
+// it applies only on a target whose vendored binding shows the pin (the
+// `EmitOptions.bindingEvidence` keys), and `reason` names that binding in words.
+// A nil push proves nil-ability and nothing about the base type, so such an
+// entry usually carries `nullable` rather than `ts`.
+export interface BindingPin {
+  // Relative to the target's vendored `engine/` tree.
+  readonly file: string;
+  readonly cFunction: string;
+  // Token snippets the function body must contain and must lack; at least one.
+  readonly contains?: string;
+  readonly lacks?: string;
+}
+
+interface ReturnCorrectionBase {
   readonly upstream: readonly string[];
   // A later release's spelling of the same defect; see `correction-pins.ts`.
   readonly retypedUpstream?: readonly (readonly string[])[];
@@ -379,10 +397,33 @@ export interface ReturnTypeCorrection {
   // The named value of a multi-return the correction rewrites; `ts` is then
   // that value's type. Absent, the correction rewrites a single return.
   readonly slot?: string;
+  readonly binding?: BindingPin;
+}
+
+// `ts` replaces the emitted type. `nullable` keeps the type each target maps
+// from its own tokens and only adds or drops the `nil`, so a target whose
+// spelling differs keeps its own base.
+export type ReturnTypeCorrection = ReturnCorrectionBase &
+  (
+    | { readonly ts: string; readonly nullable?: undefined }
+    | { readonly nullable: boolean; readonly ts?: undefined }
+  );
+
+// The early nil return both tilemap readers take for an unknown layer, and
+// `TileMap_Get` for a cell out of range too.
+function tilemapEarlyNil(cFunction: string): BindingPin {
+  return {
+    file: "gamesys/src/gamesys/scripts/script_tilemap.cpp",
+    cFunction,
+    contains: "lua_pushnil(L); assert(top + 1 == lua_gettop(L)); return 1;",
+  };
 }
 
 // Keyed by FQN, mirroring PROPERTY_TYPE_CORRECTIONS.
-export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> = new Map([
+export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> = new Map<
+  string,
+  ReturnTypeCorrection
+>([
   [
     "b2d.get_body",
     {
@@ -445,6 +486,85 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       upstream: ["function"],
       retypedUpstream: [["fun(...:any):any"]],
       reason: "the customized try function.",
+    },
+  ],
+  [
+    "factory.create",
+    {
+      nullable: true,
+      upstream: ["hash"],
+      reason: "script_factory.cpp:FactoryComp_Create pushes nil when the spawn fails",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_factory.cpp",
+        cFunction: "FactoryComp_Create",
+        contains: "dmScript::PushHash(L, id); } else { lua_pushnil(L); }",
+      },
+    },
+  ],
+  // 1.13.2 retypes each tilemap return to a precise spelling of the same value
+  // and still omits the nil.
+  ...(
+    [
+      ["tilemap.get_tile", ["number"], ["integer"]],
+      [
+        "tilemap.get_tile_info",
+        ["table"],
+        ["{ index:integer, h_flip:boolean, v_flip:boolean, rotate_90:boolean }"],
+      ],
+    ] as const
+  ).map(
+    ([key, upstream, retyped]) =>
+      [
+        key,
+        {
+          nullable: true,
+          upstream,
+          retypedUpstream: [retyped],
+          reason:
+            "script_tilemap.cpp:TileMap_Get pushes nil for an unknown layer or a cell out of range",
+          binding: tilemapEarlyNil("TileMap_Get"),
+        },
+      ] as const,
+  ),
+  [
+    "tilemap.get_tiles",
+    {
+      nullable: true,
+      upstream: ["table"],
+      retypedUpstream: [["table<integer, table<integer, integer>>"]],
+      reason: "script_tilemap.cpp:TileMap_GetTiles pushes nil for an unknown layer",
+      binding: tilemapEarlyNil("TileMap_GetTiles"),
+    },
+  ],
+  [
+    "collectionproxy.set_collection",
+    {
+      nullable: true,
+      upstream: ["number"],
+      retypedUpstream: [["collectionproxy.RESULT"]],
+      reason:
+        "script_collectionproxy.cpp:CollectionProxy_SetCollection pushes true, nil when the change succeeds",
+      slot: "code",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_collectionproxy.cpp",
+        cFunction: "CollectionProxy_SetCollection",
+        contains: "case SET_COLLECTION_PATH_RESULT_OK: lua_pushboolean(L, 1); lua_pushnil(L);",
+      },
+    },
+  ],
+  [
+    "image.get_astc_header",
+    {
+      nullable: false,
+      upstream: ["table", "nil"],
+      retypedUpstream: [["image.astc_header", "nil"]],
+      reason: "script_image.cpp:Image_GetAstcHeader raises on invalid data and never pushes nil",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_image.cpp",
+        cFunction: "Image_GetAstcHeader",
+        contains: 'return luaL_error(L, "Data is not a valid .astc file");',
+        lacks: "lua_pushnil(L);",
+      },
     },
   ],
 ]);
@@ -3992,6 +4112,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   const knownConstantFqns = options?.knownConstantFqns;
   const translations = options?.translations ?? {};
   const urlParameters = options?.urlParameters ?? [];
+  const bindingEvidence = options?.bindingEvidence ?? new Set<string>();
   const baseNotes = indexBaseNoteResolver(options?.indexBaseSource ?? "engine");
   const { rawMapType, mapType } = moduleTypeMappers(module, constantsByFqn, options);
   const constantTokens = constantSlotTokenResolver(
@@ -4076,6 +4197,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
     mapType,
     constantTokens,
     urlParameters,
+    bindingEvidence,
   )) {
     lines.push(`${INDENT}${decl}${aliasDecl}`);
   }
@@ -4093,7 +4215,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
         lines.push(docLine);
       }
       lines.push(
-        `${handleIndent}${emitMethod(fn, mapType, resolver, constantTokens, urlParameters)}`,
+        `${handleIndent}${emitMethod(fn, mapType, resolver, constantTokens, urlParameters, bindingEvidence)}`,
       );
     }
     lines.push(`${INDENT}}`);
@@ -4124,7 +4246,15 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
     const emitName = aliasName(fn.name, aliases);
     for (const docLine of functionDocLines(fn.original, translations, baseNotes))
       lines.push(docLine);
-    const line = emitFunction(fn, emitName, mapType, resolver, constantTokens, urlParameters);
+    const line = emitFunction(
+      fn,
+      emitName,
+      mapType,
+      resolver,
+      constantTokens,
+      urlParameters,
+      bindingEvidence,
+    );
     lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
     const alternative = firstSlotAlternative(fn, module.namespace);
     if (alternative !== null) {
@@ -4140,6 +4270,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
         resolver,
         constantTokens,
         urlParameters,
+        bindingEvidence,
       );
       lines.push(`${INDENT}${reserved ? "" : decl}${overload}`);
     }
@@ -4214,7 +4345,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
           lines.push(docLine);
         }
         lines.push(
-          `${bodyIndent}${reserved ? "" : segmentDecl}${emitFunction(fn, emitName, mapType, resolver, constantTokens, urlParameters)}`,
+          `${bodyIndent}${reserved ? "" : segmentDecl}${emitFunction(fn, emitName, mapType, resolver, constantTokens, urlParameters, bindingEvidence)}`,
         );
       }
       aliasReservedSegments(group.children.keys(), segmentAliases);
@@ -4255,6 +4386,7 @@ function overloadSlotAliasDeclarations(
   mapType: DefoldTypeMapper,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
+  bindingEvidence: ReadonlySet<string>,
 ): string[] {
   const resolver = buildTableDocResolver(
     functions.map((fn) => ({ name: fn.name, slots: [...fn.parameters, ...fn.returnValues] })),
@@ -4274,6 +4406,7 @@ function overloadSlotAliasDeclarations(
         resolver,
         constantTokens,
         urlParameters,
+        bindingEvidence,
         slots,
       );
       const slot = slots[slotKey("param", position, p.name)];
@@ -4345,6 +4478,7 @@ export function emitSymbolSignatures(
   const constantsByFqn = new Map(module.constants.map((c) => [c.name, c]));
   const knownConstantFqns = options?.knownConstantFqns;
   const urlParameters = options?.urlParameters ?? [];
+  const bindingEvidence = options?.bindingEvidence ?? new Set<string>();
   const { rawMapType, mapType } = moduleTypeMappers(module, constantsByFqn, options);
   const constantTokens = constantSlotTokenResolver(
     module,
@@ -4382,6 +4516,7 @@ export function emitSymbolSignatures(
       resolver,
       constantTokens,
       urlParameters,
+      bindingEvidence,
       slotTypes,
     );
     const alternative = firstSlotAlternative(prepared, module.namespace);
@@ -4395,6 +4530,7 @@ export function emitSymbolSignatures(
             resolver,
             constantTokens,
             urlParameters,
+            bindingEvidence,
           )}`;
     out.push({ identity: fnIdentity(fn), tsSignature, slotTypes });
   }
@@ -4436,6 +4572,7 @@ export function emitSymbolSignatures(
         resolver,
         constantTokens,
         urlParameters,
+        bindingEvidence,
         slotTypes,
       ),
       slotTypes,
@@ -4454,6 +4591,7 @@ export function emitSymbolSignatures(
           resolver,
           constantTokens,
           urlParameters,
+          bindingEvidence,
           slotTypes,
         ),
         slotTypes,
@@ -4959,6 +5097,7 @@ function memberSignature(
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
+  bindingEvidence: ReadonlySet<string>,
   slotSink?: Record<string, SlotType>,
 ): string {
   const original = prepared.original.parameters;
@@ -4987,6 +5126,7 @@ function memberSignature(
     resolver,
     constantTokens,
     elementName,
+    bindingEvidence,
   );
   const predicateToken = TYPE_PREDICATES.get(elementName);
   const soleParam = original[0];
@@ -5024,9 +5164,10 @@ function emitFunction(
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
+  bindingEvidence: ReadonlySet<string>,
   slotSink?: Record<string, SlotType>,
 ): string {
-  return `function ${memberSignature(prepared, name, mapType, resolver, constantTokens, urlParameters, slotSink)}`;
+  return `function ${memberSignature(prepared, name, mapType, resolver, constantTokens, urlParameters, bindingEvidence, slotSink)}`;
 }
 
 // A colon-method member of a handle interface: identical signature machinery to a
@@ -5038,6 +5179,7 @@ function emitMethod(
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
+  bindingEvidence: ReadonlySet<string>,
   slotSink?: Record<string, SlotType>,
 ): string {
   return memberSignature(
@@ -5047,6 +5189,7 @@ function emitMethod(
     resolver,
     constantTokens,
     urlParameters,
+    bindingEvidence,
     slotSink,
   );
 }
@@ -5386,12 +5529,24 @@ function emitParameter(
   return { text: `${name}${optional ? "?" : ""}: ${type}`, type, optional };
 }
 
+// A `nullable` correction rewrites only the `nil` in the declared tokens and
+// leaves the rest to the ordinary mapping and its top-level `nil` projection.
+function correctedReturnTokens(
+  types: readonly string[],
+  correction: ReturnTypeCorrection | undefined,
+): readonly string[] {
+  if (correction?.nullable === undefined) return types;
+  const base = types.filter((token) => token !== "nil");
+  return correction.nullable ? [...base, "nil"] : base;
+}
+
 function emitReturn(
   returnValues: ApiParameter[],
   mapType: DefoldTypeMapper,
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   elementName: string,
+  bindingEvidence: ReadonlySet<string>,
 ): { type: string; trailing: string; slots: EmittedSlot[] } {
   // An authored whole-return override is not a per-slot render, so it reports no
   // slots and leaves the consumer on its token-derived fallback.
@@ -5400,23 +5555,30 @@ function emitReturn(
   // Kept beside the override lookup so the two stay visibly distinct: this one
   // contradicts a declared token rather than filling an empty `returnvalues`,
   // and it is a per-slot render, so it reports its slot.
-  const correction = RETURN_TYPE_CORRECTIONS.get(elementName);
+  const listed = RETURN_TYPE_CORRECTIONS.get(elementName);
+  const correction =
+    listed?.binding === undefined || bindingEvidence.has(elementName) ? listed : undefined;
   if (returnValues.length === 0) return { type: "void", trailing: "", slots: [] };
   if (returnValues.length > 1) {
     // Defold multi-returns are positional and always present; each slot maps
     // straight through (unknown when the doc lists no type) into a tuple that
     // typescript-to-lua erases to `local a, b = fn()`.
-    const emitted = returnValues.map((rv, index) => ({
-      position: index,
-      name: rv.name,
-      ts:
+    const emitted = returnValues.map((rv, index) => {
+      const applied =
         correction?.slot !== undefined &&
         correction.slot === rv.name &&
         pinMatches(rv.types, correctionPins(correction))
-          ? correction.ts
-          : rv.types.length > 0
+          ? correction
+          : undefined;
+      const types = correctedReturnTokens(rv.types, applied);
+      return {
+        position: index,
+        name: rv.name,
+        ts:
+          applied?.ts ??
+          (types.length > 0
             ? mapSlotUnion(
-                rv.types,
+                types,
                 rv.doc,
                 mapType,
                 false,
@@ -5426,8 +5588,9 @@ function emitReturn(
                 "return",
                 rv.name,
               )
-            : "unknown",
-    }));
+            : "unknown"),
+      };
+    });
     return {
       type: `LuaMultiReturn<[${emitted.map((slot) => slot.ts).join(", ")}]>`,
       trailing: "",
@@ -5436,21 +5599,24 @@ function emitReturn(
   }
   const first = returnValues[0];
   if (!first) return { type: "void", trailing: "", slots: [] };
-  if (
+  const applied =
     correction !== undefined &&
     correction.slot === undefined &&
     pinMatches(first.types, correctionPins(correction))
-  ) {
+      ? correction
+      : undefined;
+  if (applied?.ts !== undefined) {
     return {
-      type: correction.ts,
+      type: applied.ts,
       trailing: "",
-      slots: [{ position: 0, name: first.name, ts: correction.ts }],
+      slots: [{ position: 0, name: first.name, ts: applied.ts }],
     };
   }
+  const types = correctedReturnTokens(first.types, applied);
   const ts =
-    first.types.length > 0
+    types.length > 0
       ? mapSlotUnion(
-          first.types,
+          types,
           first.doc,
           mapType,
           false,

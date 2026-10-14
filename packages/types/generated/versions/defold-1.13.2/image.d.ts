@@ -122,7 +122,7 @@ declare global {
      * }
      * ```
      */
-    function get_astc_header(buffer: string): image.astc_header | undefined;
+    function get_astc_header(buffer: string): image.astc_header;
     /**
      * Load image (PNG or JPEG) from buffer.
      *

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { targetBindingOptions } from "../scripts/binding-pin";
 import { readBindingsForTarget } from "../scripts/engine-binding-extract";
 import { buildFidelityReport } from "../scripts/fidelity-audit";
 import {
@@ -163,8 +164,9 @@ describe("api-targets registry", () => {
 
   test("every registry module regenerates byte-for-byte", async () => {
     for (const target of loadApiTargets().filter((t) => t.source == null)) {
+      const emitOptions = targetBindingOptions(target);
       for (const entry of loadTargetModules(target)) {
-        const { contents: fresh } = generateModuleDeclaration(entry);
+        const { contents: fresh } = generateModuleDeclaration(entry, emitOptions);
         const committed = await Bun.file(
           target.default
             ? resolve(GENERATED, entry.outFile)
@@ -386,10 +388,13 @@ describe("api-targets registry", () => {
       download: noDownload,
     });
     expect(modules.length).toBeGreaterThan(0);
+    // The copy reads the same release's reference through the zip lane; what its
+    // engine source decides is the default target's, which the copy cannot read.
+    const emitOptions = targetBindingOptions(target);
     const differing = modules
       .filter(
         (entry) =>
-          generateModuleDeclaration(entry, { surface: modules }).contents !==
+          generateModuleDeclaration(entry, { ...emitOptions, surface: modules }).contents !==
           readFileSync(resolve(PACKAGE_ROOT, target.generatedDir, entry.outFile), "utf8"),
       )
       .map((entry) => entry.outFile);

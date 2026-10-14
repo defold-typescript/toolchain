@@ -66,7 +66,7 @@ declare global {
      * }
      * ```
      */
-    function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number;
+    function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;
     /**
      * Get the tile information at the specified position in the tilemap.
      * The position is identified by the tile index starting at origin
@@ -94,7 +94,7 @@ declare global {
      * }
      * ```
      */
-    function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean };
+    function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;
     /**
      * Retrieves all the tiles for the specified layer in the tilemap.
      * It returns a table of rows where the keys are the
@@ -112,13 +112,13 @@ declare global {
      * let count = 0;
      * for (let row_index = bottom; row_index <= bottom + rows_count - 1; row_index++) {
      *   for (let column_index = left; column_index <= left + columns_count - 1; column_index++) {
-     *     tile = tiles.get(row_index)?.get(column_index) ?? 0;
+     *     tile = tiles?.get(row_index)?.get(column_index) ?? 0;
      *     count = count + 1;
      *   }
      * }
      * ```
      */
-    function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>>;
+    function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;
     /**
      * Resets a shader constant for a tile map component.
      * The constant must be defined in the material assigned to the tile map.

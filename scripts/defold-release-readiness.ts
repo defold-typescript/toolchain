@@ -20,6 +20,7 @@ import {
 import { releaseSection, releaseSections } from "../packages/docs-site/app/lib/upgrade-guide.ts";
 import { searchIndexOutputs } from "../packages/docs-site/scripts/build-search-index.ts";
 import { symbolIndexOutputs } from "../packages/docs-site/scripts/build-symbol-index.ts";
+import { targetBindingOptions } from "../packages/types/scripts/binding-pin.ts";
 import {
   type ApiTarget,
   generateModuleDeclaration,
@@ -628,9 +629,10 @@ function regenerateTargetDeclarations(
   const target = apiTargets.find((t) => t.id === id);
   if (target === undefined) return null;
   try {
+    const emitOptions = targetBindingOptions(target);
     const byOutFile = new Map<string, string>();
     for (const entry of loadTargetModules(target, packageRoot)) {
-      byOutFile.set(entry.outFile, generateModuleDeclaration(entry).contents);
+      byOutFile.set(entry.outFile, generateModuleDeclaration(entry, emitOptions).contents);
     }
     return byOutFile;
   } catch {
