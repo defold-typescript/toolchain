@@ -137,6 +137,8 @@ export const PROPERTY_TARGETS: Readonly<Record<string, string>> = {
   camera: "CAMERA",
   physics: "COLLISION",
   mesh: "MESH",
+  factory: "FACTORY",
+  collectionfactory: "COLLECTIONFACTORY",
   gui: "GUI",
 };
 

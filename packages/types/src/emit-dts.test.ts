@@ -615,6 +615,25 @@ describe("emitDeclarations", () => {
     expect(out).toMatch(/\n\s+rate: number;/);
   });
 
+  test("a property the engine refuses to write emits readonly without upstream's mark", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(model114Doc));
+    expect(out).toContain("readonly animation: Hash;");
+    expect(out).toMatch(/\n\s+cursor: number;/);
+  });
+
+  test("a read-only correction throws once upstream marks the property READ ONLY", () => {
+    const module = parseDefoldApiDoc(model114Doc);
+    const marked: ApiModule = {
+      ...module,
+      properties: module.properties.map((p) =>
+        p.name === "animation"
+          ? { ...p, description: `<span class="mark">READ ONLY</span> ${p.description}` }
+          : p,
+      ),
+    };
+    expect(() => emitDeclarations(marked)).toThrow("model.animation");
+  });
+
   test("a param whose types are in-module constant FQNs emits a union of brand types", () => {
     const module: ApiModule = {
       namespace: "ns",

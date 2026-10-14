@@ -5786,6 +5786,26 @@ function emitReturn(
 // only".
 const READ_ONLY_MARK = /^\s*<span class="mark">READ ONLY<\/span>/;
 
+// A property the engine reads but refuses to write while upstream omits the
+// READ ONLY mark. `evidence` names the component source that shows the missing
+// write branch. The emit throws once upstream adds the mark, so the entry is
+// deleted rather than outliving the defect it corrects.
+export interface ReadOnlyPropertyCorrection {
+  readonly evidence: string;
+}
+
+// Keyed `<namespace>.<property>`, mirroring PROPERTY_TYPE_CORRECTIONS.
+export const READ_ONLY_PROPERTY_CORRECTIONS: ReadonlyMap<string, ReadOnlyPropertyCorrection> =
+  new Map([
+    [
+      "model.animation",
+      {
+        evidence:
+          "comp_model.cpp:CompModelSetProperty has no animation branch, so the write falls through to the material-constant lookup and fails",
+      },
+    ],
+  ]);
+
 function emitPropertyMembers(
   p: ApiProperty,
   mapType: DefoldTypeMapper,
@@ -5806,7 +5826,14 @@ function emitPropertyMembers(
       : p.types.length > 0
         ? unionFromTokens(p.types, mapType)
         : "unknown";
-  const modifier = READ_ONLY_MARK.test(p.description) ? "readonly " : "";
+  const marked = READ_ONLY_MARK.test(p.description);
+  const readOnlyCorrected = READ_ONLY_PROPERTY_CORRECTIONS.has(`${namespace}.${p.name}`);
+  if (marked && readOnlyCorrected) {
+    throw new Error(
+      `read-only property correction ${namespace}.${p.name}: upstream marks the property READ ONLY`,
+    );
+  }
+  const modifier = marked || readOnlyCorrected ? "readonly " : "";
   return keys.map((key) => `${modifier}${key}: ${ts};`);
 }
 

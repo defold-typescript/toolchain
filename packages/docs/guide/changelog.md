@@ -16,7 +16,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **Breaking: [hooks and callbacks](./script-lifecycle.md) match what the engine calls and passes**, and `render.render_target`'s table is typed.
 > - **Breaking: [five engine returns can be `undefined`](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil)**, so narrow them before use, and ray-cast results carry no `request_id` or `group`.
 > - **Breaking: [a vector's size is `v.length()` and `url.path` can be `undefined`](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined).**
-> - **Reads and writes match the engine**: id tables read by path, `go.get` reads `Matrix4`, `Url` fields are writable, and `sys.get_sys_info` always returns its strings.
+> - **Reads and writes match the engine**: [component property catalogs](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace) declare its keys and the typed `go.set<P>()` rejects the ones it never writes, id tables read by path, and `Url` fields are writable.
 > - **[Built-in messages](./messages.md#the-message-type-surface) and physics events match the engine**: defaulted fields are optional, missing fields are declared, and [`isPhysicsEvent`](./typescript-gotchas.md#physics-listener-events-narrow-with-isphysicsevent-not-a-type-check) narrows a listener event.
 
 ### Breaking
@@ -28,6 +28,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`isWindowEvent`** narrows a non-resize event's `data` to `Record<string, never>`, the empty table the engine passes, not `undefined`.
 - **`render.render_target` checks its table on Defold 1.13.2 and newer targets**, in both arities: each buffer needs a `format`, `width` and `height`, and a format constant other than depth or stencil needs [a nil check](./typescript-gotchas.md#texture-format-constants-can-be-undefined) first. To build the table ahead of the call, type it as `render.RenderTargetParams`, which every pinned target declares, as an open record on older pins.
 - **Five engine returns can be `undefined`, as the engine source shows**: `factory.create` when the spawn fails, `tilemap.get_tile`, `tilemap.get_tile_info` and `tilemap.get_tiles` for an unknown layer (the first two also for a cell out of range), and the second value of `collectionproxy.set_collection` when the change succeeds. Code that uses the result directly stops compiling; [narrow it](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil) with `!== undefined` first.
+- **[The typed `go.set<P>()` form](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace) rejects keys the engine never writes**: `model.animation` and `sprite.texture0` are read-only, so a typed write to either stops compiling.
 - **Ray-cast results carry only what the engine sends**: `physics.raycast` results have no `request_id`, and on Defold 1.12.4 to 1.13.1 targets the result is one hit or a list of hits, as on newer ones; the `ray_cast_missed` message has no `group`. Code that reads either field, or indexes the result without an `Array.isArray` check, stops compiling.
 - **Three engine userdata types follow the metatables the engine registers**:
   - **`vmath.vector`** gives its size through `Vector.length`, called as `v.length()`, which compiles to `#v`; reading `v.length` as a field raises at runtime and stops compiling.
@@ -41,7 +42,8 @@ What changed in each published `defold-typescript` toolchain release.
 - **More returned tables, property reads and callback payloads match what the engine source pushes**:
   - **`graphics.adapter_limits`** declares `max_storage_buffers_per_stage` on Defold 1.14.0 targets.
   - **`sys.interface_info`** declares `family`, `"ipv4"` or `"ipv6"`, absent for any other interface, on Defold 1.13.2 and newer targets.
-  - **`go.get` and `go.set`** read and write a `Matrix4` property.
+  - **`go.get` and `go.set`** read and write a `Matrix4` property, and `go.get` reads `"position.x"` and every other single-component transform key as a `number`, and `"scale.xy"` as a `Vector3`.
+  - **Component property catalogs** declare the keys the engine handles: `model.properties` gains `material` and `skin`, `physics.properties` gains `bullet` (Box2D only), `mesh.properties` gains `material` and `texture0` through `texture15`, and new `factory.properties` and `collectionfactory.properties` declare a read-only `prototype`.
   - **Id tables** from `collectionfactory.create`, `gui.get_tree` and `gui.clone_tree` read by path as well as by hash, as in `ids.get("/go")`.
   - **`on_input` touch entries** declare all twelve fields as always present, so `touch.x` is a `number` with no `undefined` check.
   - **`http.request`** responses declare `url`, and `report_progress` events declare `bytes_sent`.
