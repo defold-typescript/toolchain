@@ -9,7 +9,7 @@ import {
   projectRelativeBase,
   SCAFFOLDED_DEFIGNORE_LINES,
 } from "@defold-typescript/transpiler";
-import type { ScriptHookName } from "@defold-typescript/types";
+import type { RenderScriptHooks, ScriptHookName } from "@defold-typescript/types";
 import { isFileIncluded } from "./build-output";
 
 import { repairDefoldNamespace } from "./defold-target";
@@ -318,8 +318,9 @@ const SNIPPET_HOOK_ORDER = Object.keys(HOOK_SIGNATURES) as ScriptHookName[];
 
 // Emit every hook except `init` (the caller writes it with its return
 // placeholder) and any hook in `omit` as a commented `name(sig) {$N},` line.
-// `omit` tracks each kind's narrowed hook type: render omits `on_input`
-// (`RenderScriptHooks`), gui omits `fixed_update`/`late_update` (`GuiScriptHooks`).
+// `omit` tracks each kind's narrowed hook type: render omits `on_input`,
+// `final`, `fixed_update` and `late_update` (`RenderScriptHooks`), gui omits
+// `fixed_update`/`late_update` (`GuiScriptHooks`).
 // Tab stops run sequentially from `startTabStop` across the hooks actually emitted.
 function hookLines(omit: ReadonlySet<ScriptHookName>, startTabStop: number): string[] {
   const lines: string[] = [];
@@ -339,8 +340,9 @@ function hookLines(omit: ReadonlySet<ScriptHookName>, startTabStop: number): str
 // templates over the lifecycle factories. Two self-typing variants per kind:
 // inline-self (TSelf inferred from `init`'s return) and typed-self (an explicit
 // dummy `Self` placeholder). Hook order mirrors the Lua templates; each kind's
-// `omit` set drops the hooks its narrowed type rejects (render `on_input`, gui
-// `fixed_update`/`late_update`). The final `$0` lands inside `init`.
+// `omit` set drops the hooks its narrowed type rejects (render `on_input`,
+// `final`, `fixed_update` and `late_update`, gui `fixed_update`/`late_update`).
+// The final `$0` lands inside `init`.
 function inlineSnippetBody(factory: string, omit: ReadonlySet<ScriptHookName>): string[] {
   return [
     `import { ${factory} } from "@defold-typescript/types";`,
@@ -376,7 +378,18 @@ function typedSnippetBody(factory: string, omit: ReadonlySet<ScriptHookName>): s
 
 const NO_OMIT: ReadonlySet<ScriptHookName> = new Set();
 const GUI_OMIT: ReadonlySet<ScriptHookName> = new Set(["fixed_update", "late_update"]);
-const RENDER_OMIT: ReadonlySet<ScriptHookName> = new Set(["on_input"]);
+const RENDER_OMITTED_HOOKS = ["on_input", "final", "fixed_update", "late_update"] as const;
+const RENDER_OMIT: ReadonlySet<ScriptHookName> = new Set(RENDER_OMITTED_HOOKS);
+
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
+// drift-pin: the render snippets omit exactly the hooks RenderScriptHooks rejects
+const _renderOmitPinnedToType: Equal<
+  (typeof RENDER_OMITTED_HOOKS)[number],
+  Exclude<ScriptHookName, keyof RenderScriptHooks<unknown>>
+> = true;
+void _renderOmitPinnedToType;
 
 export const VSCODE_SNIPPETS_CONTENT: Record<string, VscodeSnippet> = {
   "Defold script (inferred self)": {

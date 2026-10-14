@@ -19,8 +19,9 @@ if (isWindowEvent(event, data, window.WINDOW_EVENT_RESIZED)) {
 }
 
 if (isWindowEvent(event, data, window.WINDOW_EVENT_FOCUS_LOST)) {
-  // @ts-expect-error focus events carry no data (narrowed to undefined)
-  void data.width;
+  // @ts-expect-error focus events carry an empty table, so no width to read
+  const _width: number = data.width;
+  void _width;
 }
 
 // @ts-expect-error DIMMING_ON is not a window event constant
@@ -33,7 +34,7 @@ window.set_listener((_self, received, payload) => {
     return;
   }
   if (isWindowEvent(received, payload, window.WINDOW_EVENT_ICONIFIED)) {
-    const _none: undefined = payload;
+    const _none: Record<string, never> = payload;
     void _none;
   }
 });

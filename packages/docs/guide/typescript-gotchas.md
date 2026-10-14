@@ -256,7 +256,7 @@ window.set_listener((self, event, data) => {
 });
 ```
 
-`isWindowEvent` is declaration-only: the transpiler lowers the call to a bare `event == window.WINDOW_EVENT_RESIZED`, so there is no runtime function and no import to add. Only `WINDOW_EVENT_RESIZED` carries fields; every other event narrows `data` to `undefined`. This is the same wall — and the same fix — as [`on_message` ids](#on_message-ids-are-hashes-not-strings): the engine hands back a payload whose shape depends on a separate id/event argument, and a declaration-only guard is the path to that exact shape.
+`isWindowEvent` is declaration-only: the transpiler lowers the call to a bare `event == window.WINDOW_EVENT_RESIZED`, so there is no runtime function and no import to add. Only `WINDOW_EVENT_RESIZED` carries fields; every other event receives an empty table, so `data` narrows to `Record<string, never>`. This is the same wall — and the same fix — as [`on_message` ids](#on_message-ids-are-hashes-not-strings): the engine hands back a payload whose shape depends on a separate id/event argument, and a declaration-only guard is the path to that exact shape.
 
 ## `null`, `undefined`, and `== null` all collapse to `nil`
 
