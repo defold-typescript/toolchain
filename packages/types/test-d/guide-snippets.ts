@@ -63,8 +63,9 @@ defineScript({
 });
 
 // packages/docs/guide/agent-runbooks.md "Spawn objects with a factory" —
-// factory.create(...) returns the spawned object's id as a Hash.
-const _spawned: Hash = factory.create("#enemyfactory", undefined, undefined, {
+// factory.create(...) returns the spawned object's id as a Hash, or undefined
+// when the spawn fails.
+const _spawned: Hash | undefined = factory.create("#enemyfactory", undefined, undefined, {
   health: 100,
 });
 

@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import committed from "../api-signatures.json" with { type: "json" };
 import { OVERLOAD_COVERED_SKIPS } from "../src/emit-dts";
 import { splitTopLevel } from "../src/luals-type-expr";
-import { registeredConstantFqns } from "./engine-binding-extract";
+import { targetBindingOptions } from "./binding-pin";
 import { selectCompleteVersionSurfaces } from "./generate-api-availability";
 import {
   buildSignaturesArtifact,
@@ -16,6 +16,11 @@ import { loadApiTargets, loadTargetModules } from "./regen";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const SIGNATURES_PATH = resolve(PACKAGE_ROOT, "api-signatures.json");
+// The options `generate-api-signatures --write` builds the committed artifact with.
+const COMMITTED_OPTIONS = {
+  emitOptionsOf: (target: Parameters<typeof targetBindingOptions>[0]) =>
+    targetBindingOptions(target),
+};
 
 // The committed version axis, read from the same production selector the
 // artifact builder uses, so a version rotation needs no edit here.
@@ -37,7 +42,7 @@ function committedDtsBlob(version: string): string {
 }
 
 describe("authoritative signature artifact", () => {
-  const artifact = buildSignaturesArtifact();
+  const artifact = buildSignaturesArtifact(COMMITTED_OPTIONS);
 
   test("emits one signature string per emitted symbol per committed version", () => {
     expect(Object.keys(artifact.versions).sort()).toEqual(
@@ -154,7 +159,7 @@ describe("authoritative signature artifact", () => {
 // page, which reads only this artifact, renders an empty signature for a symbol
 // the surface really ships.
 describe("hand-authored symbols survive the skip filter", () => {
-  const artifact = buildSignaturesArtifact();
+  const artifact = buildSignaturesArtifact(COMMITTED_OPTIONS);
 
   const declaredSkips = (target: (typeof COMPLETE_TARGETS)[number]): string[] => {
     const out: string[] = [];
@@ -196,7 +201,7 @@ describe("hand-authored symbols survive the skip filter", () => {
 });
 
 describe("per-slot rendered types travel with the signature", () => {
-  const artifact = buildSignaturesArtifact();
+  const artifact = buildSignaturesArtifact(COMMITTED_OPTIONS);
 
   const functionKey = (version: string, namespace: string, name: string): string => {
     const hit = Object.keys(artifact.versions[version] ?? {}).find((key) => {
@@ -299,15 +304,13 @@ describe("per-slot rendered types travel with the signature", () => {
 
 describe("committed artifact drift gate", () => {
   test("fresh derivation equals the committed api-signatures.json", () => {
-    expect(buildSignaturesArtifact({ registeredConstantsOf: registeredConstantFqns })).toEqual(
+    expect(buildSignaturesArtifact(COMMITTED_OPTIONS)).toEqual(
       committed as unknown as SignaturesArtifact,
     );
   });
 
   test("committed api-signatures.json is byte-equal to a fresh serialization", () => {
-    const fresh = serializeSignaturesArtifact(
-      buildSignaturesArtifact({ registeredConstantsOf: registeredConstantFqns }),
-    );
+    const fresh = serializeSignaturesArtifact(buildSignaturesArtifact(COMMITTED_OPTIONS));
     expect(fresh).toBe(readFileSync(SIGNATURES_PATH, "utf8"));
   });
 });

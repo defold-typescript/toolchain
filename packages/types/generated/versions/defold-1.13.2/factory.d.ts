@@ -43,7 +43,9 @@ declare global {
      *     // create a new game object and provide property values
      *     const created = factory.create("#factory", undefined, undefined, { my_value: 1 });
      *     // communicate with the object
-     *     msg.post(created, "hello");
+     *     if (created !== undefined) {
+     *       msg.post(created, "hello");
+     *     }
      *   },
      * });
      * ```
@@ -59,7 +61,7 @@ declare global {
      * });
      * ```
      */
-    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash;
+    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash | undefined;
     /**
      * This returns status of the factory.
      * Calling this function when the factory is not marked as dynamic loading always returns

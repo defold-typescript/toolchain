@@ -338,7 +338,7 @@
   "factory.create": [
     {
       "sourceHash": "df32ef57d1e2366e",
-      "ts": "export default defineScript({\n  init(self) {\n    // create a new game object and provide property values\n    const created = factory.create(\"#factory\", undefined, undefined, { my_value: 1 });\n    // communicate with the object\n    msg.post(created, \"hello\");\n  },\n});"
+      "ts": "export default defineScript({\n  init(self) {\n    // create a new game object and provide property values\n    const created = factory.create(\"#factory\", undefined, undefined, { my_value: 1 });\n    // communicate with the object\n    if (created !== undefined) {\n      msg.post(created, \"hello\");\n    }\n  },\n});"
     },
     {
       "sourceHash": "981a4891837250a9",
@@ -2261,7 +2261,7 @@
   "tilemap.get_tiles": [
     {
       "sourceHash": "61b14de4991f966b",
-      "ts": "const [left, bottom, columns_count, rows_count] = tilemap.get_bounds(\"#tilemap\");\nconst tiles = tilemap.get_tiles(\"#tilemap\", \"layer\");\nlet tile = 0;\nlet count = 0;\nfor (let row_index = bottom; row_index <= bottom + rows_count - 1; row_index++) {\n  for (let column_index = left; column_index <= left + columns_count - 1; column_index++) {\n    tile = tiles.get(row_index)?.get(column_index) ?? 0;\n    count = count + 1;\n  }\n}"
+      "ts": "const [left, bottom, columns_count, rows_count] = tilemap.get_bounds(\"#tilemap\");\nconst tiles = tilemap.get_tiles(\"#tilemap\", \"layer\");\nlet tile = 0;\nlet count = 0;\nfor (let row_index = bottom; row_index <= bottom + rows_count - 1; row_index++) {\n  for (let column_index = left; column_index <= left + columns_count - 1; column_index++) {\n    tile = tiles?.get(row_index)?.get(column_index) ?? 0;\n    count = count + 1;\n  }\n}"
     }
   ],
   "tilemap.reset_constant": [

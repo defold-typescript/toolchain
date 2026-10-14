@@ -638,7 +638,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string | Hash): string[];",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.load_data, sender: Url) => void): void;",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.RESULT]>;",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.RESULT | undefined]>;",
       "collectionproxy\u0000TYPEDEF\u0000RESULT\u0000": "type RESULT = typeof collectionproxy.RESULT_ALREADY_LOADED | typeof collectionproxy.RESULT_LOADING | typeof collectionproxy.RESULT_NOT_EXCLUDED;",
       "collectionproxy\u0000TYPEDEF\u0000TIME_STEP_MODE\u0000": "type TIME_STEP_MODE = 0 | 1;",
       "collectionproxy\u0000TYPEDEF\u0000load_data\u0000": "interface load_data { progress?: number; code?: number; }",
@@ -678,7 +678,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.STATUS;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -1237,7 +1237,7 @@
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGB\u0000": "const TYPE_RGB: string & { readonly __brand: \"image.TYPE_RGB\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGBA\u0000": "const TYPE_RGBA: string & { readonly __brand: \"image.TYPE_RGBA\" };",
-      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_astc_header(buffer: string): image.astc_header | undefined;",
+      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_astc_header(buffer: string): image.astc_header;",
       "image\u0000FUNCTION\u0000image.load\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load(buffer: string, options?: boolean | image.load_options): image.load_result | undefined;",
       "image\u0000FUNCTION\u0000image.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load_buffer(buffer: string, options?: boolean | image.load_options): image.load_buffer_result | undefined;",
       "image\u0000TYPEDEF\u0000TYPE\u0000": "type TYPE = typeof image.TYPE_RGB | typeof image.TYPE_RGBA | typeof image.TYPE_LUMINANCE | typeof image.TYPE_LUMINANCE_ALPHA;",
@@ -1696,9 +1696,9 @@
       "tilemap\u0000CONSTANT\u0000tilemap.ROTATE_90\u0000": "const ROTATE_90: number & { readonly __brand: \"tilemap.ROTATE_90\" };",
       "tilemap\u0000CONSTANT\u0000tilemap.V_FLIP\u0000": "const V_FLIP: number & { readonly __brand: \"tilemap.V_FLIP\" };",
       "tilemap\u0000FUNCTION\u0000tilemap.get_bounds\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_bounds(url: string | Hash | Url): LuaMultiReturn<[number, number, number, number]>;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean };",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaTable<number, LuaTable<number, number>>;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaTable<number, LuaTable<number, number>> | undefined;",
       "tilemap\u0000FUNCTION\u0000tilemap.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.TRANSFORM | number): boolean;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_visible\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;",
@@ -2439,7 +2439,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string | Hash): string[];",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.load_data, sender: Url) => void): void;",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.RESULT]>;",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.RESULT | undefined]>;",
       "collectionproxy\u0000TYPEDEF\u0000RESULT\u0000": "type RESULT = typeof collectionproxy.RESULT_ALREADY_LOADED | typeof collectionproxy.RESULT_LOADING | typeof collectionproxy.RESULT_NOT_EXCLUDED;",
       "collectionproxy\u0000TYPEDEF\u0000TIME_STEP_MODE\u0000": "type TIME_STEP_MODE = 0 | 1;",
       "collectionproxy\u0000TYPEDEF\u0000load_data\u0000": "interface load_data { progress?: number; code?: number; }",
@@ -2479,7 +2479,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.STATUS;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -3031,7 +3031,7 @@
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGB\u0000": "const TYPE_RGB: string & { readonly __brand: \"image.TYPE_RGB\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGBA\u0000": "const TYPE_RGBA: string & { readonly __brand: \"image.TYPE_RGBA\" };",
-      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_astc_header(buffer: string): image.astc_header | undefined;",
+      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_astc_header(buffer: string): image.astc_header;",
       "image\u0000FUNCTION\u0000image.load\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load(buffer: string, options?: boolean | image.load_options): image.load_result | undefined;",
       "image\u0000FUNCTION\u0000image.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load_buffer(buffer: string, options?: boolean | image.load_options): image.load_buffer_result | undefined;",
       "image\u0000TYPEDEF\u0000TYPE\u0000": "type TYPE = typeof image.TYPE_RGB | typeof image.TYPE_RGBA | typeof image.TYPE_LUMINANCE | typeof image.TYPE_LUMINANCE_ALPHA;",
@@ -3490,9 +3490,9 @@
       "tilemap\u0000CONSTANT\u0000tilemap.ROTATE_90\u0000": "const ROTATE_90: number & { readonly __brand: \"tilemap.ROTATE_90\" };",
       "tilemap\u0000CONSTANT\u0000tilemap.V_FLIP\u0000": "const V_FLIP: number & { readonly __brand: \"tilemap.V_FLIP\" };",
       "tilemap\u0000FUNCTION\u0000tilemap.get_bounds\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_bounds(url: string | Hash | Url): LuaMultiReturn<[number, number, number, number]>;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean };",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaTable<number, LuaTable<number, number>>;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaTable<number, LuaTable<number, number>> | undefined;",
       "tilemap\u0000FUNCTION\u0000tilemap.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.TRANSFORM | number): boolean;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_visible\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;",
@@ -3961,7 +3961,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string | Hash): string[];",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: Record<string | number, unknown> | undefined, callback: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): void;",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number]>;",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;",
       "compute\u0000FUNCTION\u0000compute.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];",
       "compute\u0000FUNCTION\u0000compute.get_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[];",
       "compute\u0000FUNCTION\u0000compute.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];",
@@ -3995,7 +3995,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -4497,7 +4497,7 @@
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGB\u0000": "const TYPE_RGB: string & { readonly __brand: \"image.TYPE_RGB\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGBA\u0000": "const TYPE_RGBA: string & { readonly __brand: \"image.TYPE_RGBA\" };",
-      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined;",
+      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number };",
       "image\u0000FUNCTION\u0000image.load\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: string } | undefined;",
       "image\u0000FUNCTION\u0000image.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load_buffer(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: Opaque<\"buffer\"> } | undefined;",
       "json\u0000FUNCTION\u0000json.decode\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function decode(json: string, options?: { decode_null_as_userdata?: boolean }): Record<string | number, unknown>;",
@@ -4864,9 +4864,9 @@
       "tilemap\u0000CONSTANT\u0000tilemap.ROTATE_90\u0000": "const ROTATE_90: number & { readonly __brand: \"tilemap.ROTATE_90\" };",
       "tilemap\u0000CONSTANT\u0000tilemap.V_FLIP\u0000": "const V_FLIP: number & { readonly __brand: \"tilemap.V_FLIP\" };",
       "tilemap\u0000FUNCTION\u0000tilemap.get_bounds\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_bounds(url: string | Hash | Url): LuaMultiReturn<[number, number, number, number]>;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean };",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>>;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;",
       "tilemap\u0000FUNCTION\u0000tilemap.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): boolean;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_visible\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;",
@@ -5325,7 +5325,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_LOADING\u0000": "const RESULT_LOADING: number & { readonly __brand: \"collectionproxy.RESULT_LOADING\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string | Hash): string[];",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number]>;",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;",
       "compute\u0000FUNCTION\u0000compute.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];",
       "compute\u0000FUNCTION\u0000compute.get_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[];",
       "compute\u0000FUNCTION\u0000compute.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];",
@@ -5359,7 +5359,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -5860,7 +5860,7 @@
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGB\u0000": "const TYPE_RGB: string & { readonly __brand: \"image.TYPE_RGB\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGBA\u0000": "const TYPE_RGBA: string & { readonly __brand: \"image.TYPE_RGBA\" };",
-      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined;",
+      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number };",
       "image\u0000FUNCTION\u0000image.load\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: string } | undefined;",
       "image\u0000FUNCTION\u0000image.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load_buffer(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: Opaque<\"buffer\"> } | undefined;",
       "json\u0000FUNCTION\u0000json.decode\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function decode(json: string, options?: { decode_null_as_userdata?: boolean }): Record<string | number, unknown>;",
@@ -6227,9 +6227,9 @@
       "tilemap\u0000CONSTANT\u0000tilemap.ROTATE_90\u0000": "const ROTATE_90: number & { readonly __brand: \"tilemap.ROTATE_90\" };",
       "tilemap\u0000CONSTANT\u0000tilemap.V_FLIP\u0000": "const V_FLIP: number & { readonly __brand: \"tilemap.V_FLIP\" };",
       "tilemap\u0000FUNCTION\u0000tilemap.get_bounds\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_bounds(url: string | Hash | Url): LuaMultiReturn<[number, number, number, number]>;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean };",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>>;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;",
       "tilemap\u0000FUNCTION\u0000tilemap.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): boolean;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_visible\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;",
@@ -6430,7 +6430,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_LOADING\u0000": "const RESULT_LOADING: number & { readonly __brand: \"collectionproxy.RESULT_LOADING\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string | Hash): string[];",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number]>;",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;",
       "crash\u0000CONSTANT\u0000crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT\u0000": "const SYSFIELD_ANDROID_BUILD_FINGERPRINT: number & { readonly __brand: \"crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT\" };",
       "crash\u0000CONSTANT\u0000crash.SYSFIELD_DEVICE_LANGUAGE\u0000": "const SYSFIELD_DEVICE_LANGUAGE: number & { readonly __brand: \"crash.SYSFIELD_DEVICE_LANGUAGE\" };",
       "crash\u0000CONSTANT\u0000crash.SYSFIELD_DEVICE_MODEL\u0000": "const SYSFIELD_DEVICE_MODEL: number & { readonly __brand: \"crash.SYSFIELD_DEVICE_MODEL\" };",
@@ -6458,7 +6458,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -6921,7 +6921,7 @@
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGB\u0000": "const TYPE_RGB: string & { readonly __brand: \"image.TYPE_RGB\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGBA\u0000": "const TYPE_RGBA: string & { readonly __brand: \"image.TYPE_RGBA\" };",
-      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined;",
+      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number };",
       "image\u0000FUNCTION\u0000image.load\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: string } | undefined;",
       "image\u0000FUNCTION\u0000image.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load_buffer(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: Opaque<\"buffer\"> } | undefined;",
       "json\u0000FUNCTION\u0000json.decode\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function decode(json: string, options?: { decode_null_as_userdata?: boolean }): Record<string | number, unknown>;",
@@ -7257,9 +7257,9 @@
       "tilemap\u0000CONSTANT\u0000tilemap.ROTATE_90\u0000": "const ROTATE_90: number & { readonly __brand: \"tilemap.ROTATE_90\" };",
       "tilemap\u0000CONSTANT\u0000tilemap.V_FLIP\u0000": "const V_FLIP: number & { readonly __brand: \"tilemap.V_FLIP\" };",
       "tilemap\u0000FUNCTION\u0000tilemap.get_bounds\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_bounds(url: string | Hash | Url): LuaMultiReturn<[number, number, number, number]>;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean };",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>>;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): boolean;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_visible\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;",
       "tilemap\u0000PROPERTY\u0000material\u0000": "material: Hash;",
@@ -9859,11 +9859,11 @@
           "optional": false
         }
       },
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": {
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:prototype": { "type": "string | undefined", "optional": false },
         "return:0:success": { "type": "boolean", "optional": false },
-        "return:1:code": { "type": "collectionproxy.RESULT", "optional": false }
+        "return:1:code": { "type": "collectionproxy.RESULT | undefined", "optional": false }
       },
       "compute\u0000FUNCTION\u0000compute.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
@@ -9937,7 +9937,7 @@
         "param:0:index": { "type": "crash.USERFIELD", "optional": false },
         "param:1:value": { "type": "string", "optional": false }
       },
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": {
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
@@ -9946,7 +9946,7 @@
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
-        "return:0:id": { "type": "Hash", "optional": false }
+        "return:0:id": { "type": "Hash | undefined", "optional": false }
       },
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -10701,9 +10701,9 @@
         "param:4:post_data": { "type": "string", "optional": true },
         "param:5:options": { "type": "http.request_options", "optional": true }
       },
-      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
+      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
-        "return:0:header": { "type": "image.astc_header | undefined", "optional": false }
+        "return:0:header": { "type": "image.astc_header", "optional": false }
       },
       "image\u0000FUNCTION\u0000image.load\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
@@ -11850,28 +11850,28 @@
         "return:2:w": { "type": "number", "optional": false },
         "return:3:h": { "type": "number", "optional": false }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "param:2:x": { "type": "number", "optional": false },
         "param:3:y": { "type": "number", "optional": false },
-        "return:0:tile": { "type": "number", "optional": false }
+        "return:0:tile": { "type": "number | undefined", "optional": false }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "param:2:x": { "type": "number", "optional": false },
         "param:3:y": { "type": "number", "optional": false },
         "return:0:tile_info": {
-          "type": "{ index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean }",
+          "type": "{ index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined",
           "optional": false
         }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "return:0:tiles": {
-          "type": "LuaTable<number, LuaTable<number, number>>",
+          "type": "LuaTable<number, LuaTable<number, number>> | undefined",
           "optional": false
         }
       },
@@ -14684,11 +14684,11 @@
           "optional": false
         }
       },
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": {
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:prototype": { "type": "string | undefined", "optional": false },
         "return:0:success": { "type": "boolean", "optional": false },
-        "return:1:code": { "type": "collectionproxy.RESULT", "optional": false }
+        "return:1:code": { "type": "collectionproxy.RESULT | undefined", "optional": false }
       },
       "compute\u0000FUNCTION\u0000compute.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
@@ -14762,7 +14762,7 @@
         "param:0:index": { "type": "crash.USERFIELD", "optional": false },
         "param:1:value": { "type": "string", "optional": false }
       },
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": {
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
@@ -14771,7 +14771,7 @@
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
-        "return:0:id": { "type": "Hash", "optional": false }
+        "return:0:id": { "type": "Hash | undefined", "optional": false }
       },
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -15526,9 +15526,9 @@
         "param:4:post_data": { "type": "string", "optional": true },
         "param:5:options": { "type": "http.request_options", "optional": true }
       },
-      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
+      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
-        "return:0:header": { "type": "image.astc_header | undefined", "optional": false }
+        "return:0:header": { "type": "image.astc_header", "optional": false }
       },
       "image\u0000FUNCTION\u0000image.load\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
@@ -16675,28 +16675,28 @@
         "return:2:w": { "type": "number", "optional": false },
         "return:3:h": { "type": "number", "optional": false }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "param:2:x": { "type": "number", "optional": false },
         "param:3:y": { "type": "number", "optional": false },
-        "return:0:tile": { "type": "number", "optional": false }
+        "return:0:tile": { "type": "number | undefined", "optional": false }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "param:2:x": { "type": "number", "optional": false },
         "param:3:y": { "type": "number", "optional": false },
         "return:0:tile_info": {
-          "type": "{ index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean }",
+          "type": "{ index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined",
           "optional": false
         }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "return:0:tiles": {
-          "type": "LuaTable<number, LuaTable<number, number>>",
+          "type": "LuaTable<number, LuaTable<number, number>> | undefined",
           "optional": false
         }
       },
@@ -18565,11 +18565,11 @@
           "optional": false
         }
       },
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": {
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:prototype": { "type": "string | undefined", "optional": false },
         "return:0:success": { "type": "boolean", "optional": false },
-        "return:1:code": { "type": "number", "optional": false }
+        "return:1:code": { "type": "number | undefined", "optional": false }
       },
       "compute\u0000FUNCTION\u0000compute.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
@@ -18652,13 +18652,13 @@
         "param:0:index": { "type": "number", "optional": false },
         "param:1:value": { "type": "string", "optional": false }
       },
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": {
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": { "type": "Record<string | number, unknown>", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
-        "return:0:id": { "type": "Hash", "optional": false }
+        "return:0:id": { "type": "Hash | undefined", "optional": false }
       },
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -19415,10 +19415,10 @@
           "optional": true
         }
       },
-      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
+      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
         "return:0:table": {
-          "type": "{ width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined",
+          "type": "{ width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number }",
           "optional": false
         }
       },
@@ -20626,27 +20626,30 @@
         "return:2:w": { "type": "number", "optional": false },
         "return:3:h": { "type": "number", "optional": false }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "param:2:x": { "type": "number", "optional": false },
         "param:3:y": { "type": "number", "optional": false },
-        "return:0:tile": { "type": "number", "optional": false }
+        "return:0:tile": { "type": "number | undefined", "optional": false }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "param:2:x": { "type": "number", "optional": false },
         "param:3:y": { "type": "number", "optional": false },
         "return:0:tile_info": {
-          "type": "{ index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean }",
+          "type": "{ index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined",
           "optional": false
         }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
-        "return:0:tiles": { "type": "LuaMap<number, LuaMap<number, number>>", "optional": false }
+        "return:0:tiles": {
+          "type": "LuaMap<number, LuaMap<number, number>> | undefined",
+          "optional": false
+        }
       },
       "tilemap\u0000FUNCTION\u0000tilemap.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -22508,11 +22511,11 @@
         "param:0:collectionproxy": { "type": "Url | string | Hash", "optional": false },
         "return:0:resources": { "type": "string[]", "optional": false }
       },
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": {
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:prototype": { "type": "string | undefined", "optional": false },
         "return:0:success": { "type": "boolean", "optional": false },
-        "return:1:code": { "type": "number", "optional": false }
+        "return:1:code": { "type": "number | undefined", "optional": false }
       },
       "compute\u0000FUNCTION\u0000compute.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
@@ -22595,13 +22598,13 @@
         "param:0:index": { "type": "number", "optional": false },
         "param:1:value": { "type": "string", "optional": false }
       },
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": {
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": { "type": "Record<string | number, unknown>", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
-        "return:0:id": { "type": "Hash", "optional": false }
+        "return:0:id": { "type": "Hash | undefined", "optional": false }
       },
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -23358,10 +23361,10 @@
           "optional": true
         }
       },
-      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
+      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
         "return:0:table": {
-          "type": "{ width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined",
+          "type": "{ width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number }",
           "optional": false
         }
       },
@@ -24569,27 +24572,30 @@
         "return:2:w": { "type": "number", "optional": false },
         "return:3:h": { "type": "number", "optional": false }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "param:2:x": { "type": "number", "optional": false },
         "param:3:y": { "type": "number", "optional": false },
-        "return:0:tile": { "type": "number", "optional": false }
+        "return:0:tile": { "type": "number | undefined", "optional": false }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "param:2:x": { "type": "number", "optional": false },
         "param:3:y": { "type": "number", "optional": false },
         "return:0:tile_info": {
-          "type": "{ index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean }",
+          "type": "{ index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined",
           "optional": false
         }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
-        "return:0:tiles": { "type": "LuaMap<number, LuaMap<number, number>>", "optional": false }
+        "return:0:tiles": {
+          "type": "LuaMap<number, LuaMap<number, number>> | undefined",
+          "optional": false
+        }
       },
       "tilemap\u0000FUNCTION\u0000tilemap.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -25274,11 +25280,11 @@
         "param:0:collectionproxy": { "type": "Url | string | Hash", "optional": false },
         "return:0:resources": { "type": "string[]", "optional": false }
       },
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": {
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:prototype": { "type": "string | undefined", "optional": false },
         "return:0:success": { "type": "boolean", "optional": false },
-        "return:1:code": { "type": "number", "optional": false }
+        "return:1:code": { "type": "number | undefined", "optional": false }
       },
       "crash\u0000FUNCTION\u0000crash.get_backtrace\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:handle": { "type": "number", "optional": false },
@@ -25319,13 +25325,13 @@
         "param:0:index": { "type": "number", "optional": false },
         "param:1:value": { "type": "string", "optional": false }
       },
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": {
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": { "type": "Record<string | number, unknown>", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
-        "return:0:id": { "type": "Hash", "optional": false }
+        "return:0:id": { "type": "Hash | undefined", "optional": false }
       },
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -26073,10 +26079,10 @@
           "optional": true
         }
       },
-      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
+      "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
         "return:0:table": {
-          "type": "{ width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined",
+          "type": "{ width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number }",
           "optional": false
         }
       },
@@ -27196,27 +27202,30 @@
         "return:2:w": { "type": "number", "optional": false },
         "return:3:h": { "type": "number", "optional": false }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "param:2:x": { "type": "number", "optional": false },
         "param:3:y": { "type": "number", "optional": false },
-        "return:0:tile": { "type": "number", "optional": false }
+        "return:0:tile": { "type": "number | undefined", "optional": false }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "param:2:x": { "type": "number", "optional": false },
         "param:3:y": { "type": "number", "optional": false },
         "return:0:tile_info": {
-          "type": "{ index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean }",
+          "type": "{ index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined",
           "optional": false
         }
       },
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
-        "return:0:tiles": { "type": "LuaMap<number, LuaMap<number, number>>", "optional": false }
+        "return:0:tiles": {
+          "type": "LuaMap<number, LuaMap<number, number>> | undefined",
+          "optional": false
+        }
       },
       "tilemap\u0000FUNCTION\u0000tilemap.set_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },

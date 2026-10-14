@@ -9,6 +9,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { targetBindingOptions } from "./binding-pin";
 import {
   buildVersionedSurfaceFiles,
   CORE_TYPES_REEXPORT,
@@ -446,7 +447,9 @@ describe("buildVersionedSurfaceFiles committed-surface parity", () => {
 
   for (const target of committed) {
     test(`${target.id} emits every module as its committed surface declares it`, async () => {
-      const files = await buildVersionedSurfaceFiles(target);
+      const files = await buildVersionedSurfaceFiles(target, {
+        emitOptions: targetBindingOptions(target),
+      });
       const declared = [...target.modules, ...(target.editorModules ?? [])].map(
         (module) => module.outFile,
       );

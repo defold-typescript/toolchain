@@ -457,6 +457,7 @@ export interface GenerateOptions {
   translations?: TranslationStore;
   urlParameters?: UrlParameterTable;
   registeredConstants?: ReadonlySet<string>;
+  bindingEvidence?: ReadonlySet<string>;
   // The modules the entry is emitted beside, the entry among them. Routing
   // reads this set instead of looking the entry up in a committed manifest, so
   // a surface built with its own import root still routes as a whole.
@@ -469,6 +470,7 @@ interface PreparedGeneratedModule {
   translations: TranslationStore;
   urlParameters: UrlParameterTable;
   registeredConstants: ReadonlySet<string> | undefined;
+  bindingEvidence: ReadonlySet<string> | undefined;
   typeLeaves: Readonly<Record<string, string>> | undefined;
   declaredTypes: ReadonlyMap<string, string> | undefined;
   dropped: string[];
@@ -494,6 +496,7 @@ function prepareGeneratedModule(
     translations,
     urlParameters,
     registeredConstants: options?.registeredConstants,
+    bindingEvidence: options?.bindingEvidence,
     typeLeaves: entry.typeLeaves,
     declaredTypes: routed?.declaredTypes,
     dropped,
@@ -746,6 +749,7 @@ export function generateModuleDeclaration(
     translations,
     urlParameters,
     registeredConstants,
+    bindingEvidence,
     typeLeaves,
     declaredTypes,
     dropped,
@@ -757,6 +761,7 @@ export function generateModuleDeclaration(
     urlParameters,
     withheldFunctions,
     ...(registeredConstants ? { registeredConstants } : {}),
+    ...(bindingEvidence ? { bindingEvidence } : {}),
     ...(typeLeaves ? { typeLeaves } : {}),
     ...(declaredTypes ? { declaredTypes } : {}),
     ...(entry.indexBaseSource ? { indexBaseSource: entry.indexBaseSource } : {}),
@@ -781,6 +786,7 @@ export function generateModuleSignatures(
     knownConstantFqns,
     urlParameters,
     registeredConstants,
+    bindingEvidence,
     typeLeaves,
     declaredTypes,
   } = prepareGeneratedModule(entry, options);
@@ -788,6 +794,7 @@ export function generateModuleSignatures(
     knownConstantFqns,
     urlParameters,
     ...(registeredConstants ? { registeredConstants } : {}),
+    ...(bindingEvidence ? { bindingEvidence } : {}),
     ...(typeLeaves ? { typeLeaves } : {}),
     ...(declaredTypes ? { declaredTypes } : {}),
   });
@@ -1136,14 +1143,12 @@ export async function regenerate(
 
   // Imported here rather than at module scope: the vendored engine bindings are
   // not published, and `resolve` loads this module from an installed package.
-  const { registeredConstantFqns } = await import("./engine-binding-extract");
+  const { targetBindingOptions } = await import("./binding-pin");
   const generated = resolve(import.meta.dir, "..", "generated");
   io.mkdir(resolve(generated, "editor-vm"));
-  const defaultRegistered = registeredConstantFqns(DEFAULT_TARGET);
+  const defaultBinding = targetBindingOptions(DEFAULT_TARGET);
   for (const entry of MODULE_MANIFEST) {
-    const { contents, dropped } = generateModuleDeclaration(entry, {
-      ...(defaultRegistered ? { registeredConstants: defaultRegistered } : {}),
-    });
+    const { contents, dropped } = generateModuleDeclaration(entry, defaultBinding);
     if (dropped.length > 0) {
       io.log(`note: dropped skipped member(s) from ${entry.namespace}: ${dropped.join(", ")}`);
     }
@@ -1192,10 +1197,9 @@ export async function regenerate(
   };
   for (const entry of VERSIONED_MODULE_MANIFEST) {
     const target = versionedTargets.find((t) => t.id === entry.versionId);
-    const registeredConstants = target ? registeredConstantFqns(target) : undefined;
     const { contents, dropped } = generateModuleDeclaration(
       entry,
-      registeredConstants ? { registeredConstants } : undefined,
+      target ? targetBindingOptions(target) : undefined,
     );
     if (dropped.length > 0) {
       io.log(

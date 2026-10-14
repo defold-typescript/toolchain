@@ -567,6 +567,13 @@ function withoutNil(kinds: readonly LuaKind[]): LuaKind[] {
   return kinds.filter((kind) => kind !== "nil");
 }
 
+// A `nullable` correction keeps the pinned base and only adds or drops `nil`.
+function nullableKinds(pin: AnnotationKinds | undefined, nullable: boolean): LuaKind[] | undefined {
+  if (pin === undefined || pin.kinds === "any" || pin.unmapped.length > 0) return undefined;
+  const base = withoutNil(pin.kinds);
+  return (nullable ? [...base, "nil" as const] : base).sort();
+}
+
 export type CorrectionAgreement = "repeats" | "agrees" | "differs" | "absent";
 
 // Whether upstream's annotation still shows the defect a correction fixes
@@ -594,7 +601,8 @@ export function correctionAgreement(
     const kinds = found.kinds;
     const pins = [entry.upstream, ...(entry.retypedUpstream ?? [])].map((pin) => resolve(pin));
     if (pins.some((pin) => pin.kinds !== "any" && sameKinds(pin.kinds, kinds))) return "repeats";
-    const corrected = tsTypeKinds(entry.ts);
+    const corrected =
+      entry.ts !== undefined ? tsTypeKinds(entry.ts) : nullableKinds(pins[0], entry.nullable);
     return corrected && sameKinds(corrected, kinds) ? "agrees" : "differs";
   }
 

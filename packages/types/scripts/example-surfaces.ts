@@ -18,6 +18,7 @@ import ts from "typescript";
 import { parseDefoldApiDoc } from "../src/api-doc";
 import { splitExampleSources } from "../src/doc-comment";
 import { hashExampleSource, proseLuaFences, type TranslationStore } from "../src/example-store";
+import { targetBindingOptions } from "./binding-pin";
 import { buildVersionedSurfaceFiles, renderMaterializedKindIndex } from "./materialize-version";
 import {
   type ApiTarget,
@@ -186,7 +187,9 @@ async function materializedRuntimeKindFiles(
   target: ApiTarget,
   virtualRoot: string,
 ): Promise<{ files: SurfaceFile[]; kinds: { entry: KindManifestEntry; path: string }[] }> {
-  const built = await buildVersionedSurfaceFiles(target);
+  const built = await buildVersionedSurfaceFiles(target, {
+    emitOptions: targetBindingOptions(target),
+  });
   const files: SurfaceFile[] = built.map((file) => ({
     path: resolve(virtualRoot, file.path),
     contents: file.contents,
