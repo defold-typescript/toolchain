@@ -637,7 +637,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_LOADING\u0000": "const RESULT_LOADING: number & { readonly __brand: \"collectionproxy.RESULT_LOADING\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string | Hash): string[];",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): void;",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.load_data, sender: Url) => void): void;",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.RESULT]>;",
       "collectionproxy\u0000TYPEDEF\u0000RESULT\u0000": "type RESULT = typeof collectionproxy.RESULT_ALREADY_LOADED | typeof collectionproxy.RESULT_LOADING | typeof collectionproxy.RESULT_NOT_EXCLUDED;",
       "collectionproxy\u0000TYPEDEF\u0000TIME_STEP_MODE\u0000": "type TIME_STEP_MODE = 0 | 1;",
@@ -1789,7 +1789,7 @@
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): window.safe_area;",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: window.DimModeStateSettable): void;",
-      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined): void;",
+      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void) | undefined): void;",
       "window\u0000FUNCTION\u0000window.set_mouse_lock\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mouse_lock(flag: boolean): void;",
       "window\u0000FUNCTION\u0000window.set_position\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_position(x: number, y: number): void;",
       "window\u0000FUNCTION\u0000window.set_size\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_size(width: number, height: number): void;",
@@ -2438,7 +2438,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_LOADING\u0000": "const RESULT_LOADING: number & { readonly __brand: \"collectionproxy.RESULT_LOADING\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string | Hash): string[];",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): void;",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.load_data, sender: Url) => void): void;",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.RESULT]>;",
       "collectionproxy\u0000TYPEDEF\u0000RESULT\u0000": "type RESULT = typeof collectionproxy.RESULT_ALREADY_LOADED | typeof collectionproxy.RESULT_LOADING | typeof collectionproxy.RESULT_NOT_EXCLUDED;",
       "collectionproxy\u0000TYPEDEF\u0000TIME_STEP_MODE\u0000": "type TIME_STEP_MODE = 0 | 1;",
@@ -3583,7 +3583,7 @@
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): window.safe_area;",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: window.DimModeStateSettable): void;",
-      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined): void;",
+      "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void) | undefined): void;",
       "window\u0000FUNCTION\u0000window.set_mouse_lock\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mouse_lock(flag: boolean): void;",
       "window\u0000FUNCTION\u0000window.set_position\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_position(x: number, y: number): void;",
       "window\u0000FUNCTION\u0000window.set_size\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_size(width: number, height: number): void;",
@@ -9855,7 +9855,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:options": { "type": "{} | undefined", "optional": false },
         "param:2:callback": {
-          "type": "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
+          "type": "(self: unknown, message_id: Hash, message: collectionproxy.load_data, sender: Url) => void",
           "optional": false
         }
       },
@@ -12165,7 +12165,7 @@
       },
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": {
-          "type": "((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined",
+          "type": "((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void) | undefined",
           "optional": false
         }
       },
@@ -14680,7 +14680,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:options": { "type": "{} | undefined", "optional": false },
         "param:2:callback": {
-          "type": "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
+          "type": "(self: unknown, message_id: Hash, message: collectionproxy.load_data, sender: Url) => void",
           "optional": false
         }
       },
@@ -16990,7 +16990,7 @@
       },
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": {
-          "type": "((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined",
+          "type": "((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void) | undefined",
           "optional": false
         }
       },

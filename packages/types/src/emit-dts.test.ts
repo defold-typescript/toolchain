@@ -22,6 +22,12 @@ import materialDoc from "../fixtures/defold-1.13.1/material_doc.json" with { typ
 import model113Doc from "../fixtures/defold-1.13.1/model_doc.json" with { type: "json" };
 import sprite113Doc from "../fixtures/defold-1.13.1/sprite_doc.json" with { type: "json" };
 import bullet3d114Doc from "../fixtures/defold-1.14.0/bullet3d_doc.json" with { type: "json" };
+import collectionproxy114Doc from "../fixtures/defold-1.14.0/collectionproxy_doc.json" with {
+  type: "json",
+};
+import http114Doc from "../fixtures/defold-1.14.0/http_doc.json" with { type: "json" };
+import sprite114Doc from "../fixtures/defold-1.14.0/sprite_doc.json" with { type: "json" };
+import window114Doc from "../fixtures/defold-1.14.0/window_doc.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
 import httpDoc from "../fixtures/http_doc.json" with { type: "json" };
@@ -5292,6 +5298,33 @@ describe("signatures upstream documents in prose", () => {
   test("collectionproxy.load's callback receives a Hash message id, a record message and a Url sender", () => {
     expect(emittedLine(collectionproxy113Doc, "function load(")).toContain(
       "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
+    );
+  });
+
+  test("collectionproxy.load's callback takes the reference's message struct where the reference types it", () => {
+    expect(emittedLine(collectionproxy114Doc, "function load(")).toContain(
+      "(self: unknown, message_id: Hash, message: collectionproxy.load_data, sender: Url) => void",
+    );
+  });
+
+  test("window.set_listener's callback keeps the event union and takes the reference's data struct where the reference types it", () => {
+    const line = emittedLine(window114Doc, "function set_listener(");
+    expect(line).toContain(
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: a TS template literal type in emitted text
+      "event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>]",
+    );
+    expect(line).toContain("data: window.event_data) => void) | undefined");
+  });
+
+  test("http.request's callback keeps the documented response table where the reference names a withheld struct", () => {
+    const line = emittedLine(http114Doc, "function request(");
+    expect(line).toContain("response: { status: number;");
+    expect(line).not.toContain("http.response");
+  });
+
+  test("sprite.play_flipbook's complete_function keeps the inline completion message where the reference types it", () => {
+    expect(emittedLine(sprite114Doc, "function play_flipbook(")).toContain(
+      "message: { current_tile: number; id: Hash }",
     );
   });
 
