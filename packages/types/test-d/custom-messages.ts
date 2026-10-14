@@ -54,6 +54,7 @@ msg.post(_url, "contact_point_response", {
   other_position: vmath.vector3(),
   other_group: _hash,
   own_group: _hash,
+  group: _hash,
 });
 
 // @ts-expect-error apply_force requires `force` and `position`

@@ -1,5 +1,6 @@
 /// <reference path="../index.d.ts" />
 import type { Hash, Matrix4, Url, Vector3, Vector4 } from "../src/core-types";
+import { defineScript } from "../src/lifecycle";
 
 const _url = null as unknown as Url;
 const _hash = null as unknown as Hash;
@@ -28,6 +29,7 @@ msg.post(_url, "acquire_input_focus", {});
 msg.post(_url, "acquire_input_focus", { foo: 1 });
 
 msg.post(_url, "play_animation", { id: _hash });
+msg.post(_url, "play_animation", { id: _hash, offset: 0.5, playback_rate: 2 });
 msg.post(_url, "my_custom_message", { anything: 1 });
 msg.post(_url, "another_custom", "string payload" as unknown as Record<string, never>);
 
@@ -59,12 +61,26 @@ const _rayResponseShape: {
 } = _rayResponse;
 void _rayResponseShape;
 
-const _rayMissed: BuiltinMessages["ray_cast_missed"] = {
-  group: _hash,
-  request_id: 0,
-};
-const _rayMissedShape: { group: Hash; request_id: number } = _rayMissed;
+const _rayMissed: BuiltinMessages["ray_cast_missed"] = { request_id: 0 };
+const _rayMissedShape: { request_id: number } = _rayMissed;
 void _rayMissedShape;
+
+defineScript({
+  on_message(_self, message_id, message) {
+    if (isMessage(message_id, message, "ray_cast_missed")) {
+      // @ts-expect-error ray_cast_missed carries only request_id; the engine sends no group
+      void message.group;
+    }
+    if (isMessage(message_id, message, "collision_response")) {
+      const _group: Hash = message.group;
+      void _group;
+    }
+    if (isMessage(message_id, message, "trigger_response")) {
+      const _group: Hash = message.group;
+      void _group;
+    }
+  },
+});
 
 msg.post(_url, "play_sound", { gain: 1, delay: 0, play_id: 1 });
 msg.post(_url, "play_sound", {});
@@ -85,9 +101,20 @@ void _playSoundStartTime;
 // @ts-expect-error start_time must be number, not string
 msg.post(_url, "play_sound", { start_time: "soon" });
 
+msg.post(_url, "play_sound", { pan: 0.5, speed: 2 });
+
 msg.post(_url, "set_gain", { gain: 0.5 });
+msg.post(_url, "set_gain", {});
 
 msg.post(_url, "stop_sound");
+msg.post(_url, "stop_sound", { play_id: 1 });
+
+msg.post(_url, "pause_sound", { pause: true });
+msg.post(_url, "set_pan", { pan: 0 });
+
+msg.post(_url, "set_camera", { aspect_ratio: 16 / 9, fov: 1, near_z: 0.1, far_z: 500 });
+msg.post(_url, "reboot", { arg1: "x" });
+msg.post(_url, "start_record", { file_name: "a" });
 
 const _soundDone: BuiltinMessages["sound_done"] = { play_id: 0 };
 const _soundDoneShape: { play_id: number } = _soundDone;
