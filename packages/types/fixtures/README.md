@@ -103,11 +103,14 @@ unlisted one.
 
 ## messages_doc.json
 
-- **Defold version**: 1.12.4 (stable)
-- **Source**: hand-vendored from the Defold API reference. Defold's `ref-doc.zip`
-  ships per-namespace function/variable docs but no machine-readable export
-  for built-in message ids and their payload shapes, so this fixture is the
-  source of truth until upstream offers one.
+- **Defold version**: the default target in `../api-targets.json`
+- **Source**: hand-vendored from the default target's API reference. Defold's
+  `ref-doc.zip` ships per-namespace function/variable docs but no
+  machine-readable export for built-in message ids and their payload shapes.
+  `src/message-payload-drift.test.ts` holds this fixture to the `MESSAGE`
+  elements of that reference in both directions (message ids, field names,
+  optionality); what only the engine states lives in
+  `MESSAGE_ENGINE_CORRECTIONS` (`src/emit-messages.ts`), not here.
 - **How to refresh**: edit by hand. Each entry needs a `name`, an `origin`
   (the namespace that ships the message, e.g. `go`, `sprite`, `physics`),
   and a `payload` array of `{ name, types, optional, doc }` fields. The

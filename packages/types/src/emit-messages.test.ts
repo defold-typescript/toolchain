@@ -4,6 +4,7 @@ import {
   applyMessageDeprecations,
   applyMessageEngineCorrections,
   applyMessageFieldCorrections,
+  applyMessageOverlays,
   emitBuiltinMessages,
   MESSAGE_DEPRECATIONS,
   MESSAGE_ENGINE_CORRECTIONS,
@@ -268,10 +269,7 @@ describe("applyMessageDeprecations", () => {
     const raw = JSON.parse(
       await Bun.file(new URL("../fixtures/messages_doc.json", import.meta.url)).text(),
     );
-    const catalog = applyMessageEngineCorrections(
-      applyMessageFieldCorrections(applyMessageDeprecations(parseMessagesDoc(raw))),
-    );
-    const emitted = emitBuiltinMessages(catalog);
+    const emitted = emitBuiltinMessages(applyMessageOverlays(parseMessagesDoc(raw)));
     const generated = await Bun.file(
       new URL("../generated/builtin-messages.d.ts", import.meta.url),
     ).text();

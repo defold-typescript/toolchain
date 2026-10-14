@@ -37,14 +37,14 @@
         {
           "name": "parent_id",
           "types": ["hash"],
-          "optional": true,
-          "doc": "Hash of the new parent (omit or nil to clear)."
+          "optional": false,
+          "doc": "The id of the new parent."
         },
         {
           "name": "keep_world_transform",
           "types": ["0", "1"],
-          "optional": true,
-          "doc": "1 to preserve world transform; 0 (default) to keep local transform."
+          "optional": false,
+          "doc": "If the world transform of the instance should be preserved when changing spaces, 0 for false and 1 for true. The default value is 1."
         }
       ]
     },
@@ -510,31 +510,6 @@
           "types": ["vector4"],
           "optional": false,
           "doc": "Clear colour as an RGBA vector4."
-        }
-      ]
-    },
-    {
-      "name": "set_view_projection",
-      "origin": "render",
-      "description": "Posted automatically by camera components to the render script with the active view and projection matrices.",
-      "payload": [
-        {
-          "name": "id",
-          "types": ["hash"],
-          "optional": false,
-          "doc": "Id of the camera component that posted the matrices."
-        },
-        {
-          "name": "view",
-          "types": ["matrix4"],
-          "optional": false,
-          "doc": "View matrix of the camera."
-        },
-        {
-          "name": "projection",
-          "types": ["matrix4"],
-          "optional": false,
-          "doc": "Projection matrix of the camera."
         }
       ]
     },

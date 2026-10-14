@@ -54,6 +54,12 @@ describe("message payload ref-doc drift guard", () => {
     expect(messageElements.length).toBeGreaterThan(0);
   });
 
+  test("the catalog declares exactly the reference's message names", () => {
+    expect([...catalog.keys()].sort()).toEqual(
+      [...new Set(messageElements.map((element) => element.name))].sort(),
+    );
+  });
+
   test("every reference MESSAGE element exists in the catalog with an exact field-name set", () => {
     for (const element of messageElements) {
       const payload = catalog.get(element.name);
@@ -66,14 +72,14 @@ describe("message payload ref-doc drift guard", () => {
     }
   });
 
-  test("every field the reference marks optional is optional in the catalog", () => {
+  test("every catalog field is optional exactly when the reference marks it optional", () => {
     for (const element of messageElements) {
       const payload = catalog.get(element.name) ?? [];
-      for (const field of element.fields.filter((candidate) => candidate.optional)) {
+      for (const field of element.fields) {
         expect(
           payload.find((candidate) => candidate.name === field.name)?.optional,
-          `${element.fixture}: "${element.name}" field "${field.name}" is optional in the ref-doc`,
-        ).toBe(true);
+          `${element.fixture}: "${element.name}" field "${field.name}" optionality drifted from ref-doc`,
+        ).toBe(field.optional);
       }
     }
   });
