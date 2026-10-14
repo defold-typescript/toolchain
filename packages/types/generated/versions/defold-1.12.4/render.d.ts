@@ -191,8 +191,11 @@ declare global {
      * ```ts
      * export default defineRenderScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return undefined;
      *     const color_params = {
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *       width: render.get_window_width(),
      *       height: render.get_window_height(),
      *     };
@@ -203,6 +206,7 @@ declare global {
      *   },
      *
      *   update(self, dt) {
+     *     if (self === undefined) return;
      *     render.enable_texture(0, self.my_render_target, graphics.BUFFER_TYPE_COLOR0_BIT);
      *     // draw a predicate with the render target available as texture 0 in the predicate
      *     // material shader.
@@ -232,8 +236,11 @@ declare global {
      * ```ts
      * export default defineRenderScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return undefined;
      *     const color_params = {
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *       width: render.get_window_width(),
      *       height: render.get_window_height(),
      *     };
@@ -244,6 +251,7 @@ declare global {
      *   },
      *
      *   update(self, dt) {
+     *     if (self === undefined) return;
      *     render.set_compute("bloom");
      *     render.enable_texture(0, self.backing_texture);
      *     render.enable_texture(1, self.scene_rt);
@@ -433,8 +441,11 @@ declare global {
      * ```ts
      * export default defineRenderScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return undefined;
      *     const color_params = {
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *       width: render.get_window_width(),
      *       height: render.get_window_height(),
      *     };
@@ -445,6 +456,7 @@ declare global {
      *   },
      *
      *   update(self, dt) {
+     *     if (self === undefined) return;
      *     // enable target so all drawing is done to it
      *     render.set_render_target(self.my_render_target);
      *
@@ -525,8 +537,11 @@ declare global {
      * ```ts
      * export default defineRenderScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return undefined;
      *     const color_params = {
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *       width: render.get_window_width(),
      *       height: render.get_window_height(),
      *     };
@@ -538,6 +553,7 @@ declare global {
      *   },
      *
      *   update(self, dt) {
+     *     if (self === undefined) return;
      *     // get the height of the render target color buffer
      *     const h = render.get_render_target_height(self.target_right, graphics.BUFFER_TYPE_COLOR0_BIT);
      *     // get the height of a render target resource
@@ -562,8 +578,11 @@ declare global {
      * ```ts
      * export default defineRenderScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return undefined;
      *     const color_params = {
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *       width: render.get_window_width(),
      *       height: render.get_window_height(),
      *     };
@@ -575,6 +594,7 @@ declare global {
      *   },
      *
      *   update(self, dt) {
+     *     if (self === undefined) return;
      *     // get the width of the render target color buffer
      *     const w = render.get_render_target_width(self.target_right, graphics.BUFFER_TYPE_COLOR0_BIT);
      *     // get the width of a render target resource
@@ -954,8 +974,11 @@ declare global {
      * // The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support
      * export default defineRenderScript({
      *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return undefined;
      *     const color_params = {
-     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       format,
      *       width: render.get_window_width(),
      *       height: render.get_window_height(),
      *     };
@@ -966,6 +989,7 @@ declare global {
      *   },
      *
      *   update(self, dt) {
+     *     if (self === undefined) return;
      *     // set render target so all drawing is done to it
      *     render.set_render_target(self.my_render_target, {
      *       transient: [graphics.BUFFER_TYPE_DEPTH_BIT, graphics.BUFFER_TYPE_STENCIL_BIT],

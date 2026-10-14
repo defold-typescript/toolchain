@@ -105,13 +105,13 @@ const NAMESPACES: readonly OverloadNamespace[] = [
     storePath: RENDER_SIGNATURES_PATH,
     fqns: ["render.render_target"],
     reflow: {
-      from: 'function render_target(parameters: Record<string | number, unknown>): Opaque<"render_target">;',
-      to: 'function render_target(\n      parameters: Record<string | number, unknown>,\n    ): Opaque<"render_target">;',
+      from: 'function render_target(parameters: render.RenderTargetParams): Opaque<"render_target">;',
+      to: 'function render_target(\n      parameters: render.RenderTargetParams,\n    ): Opaque<"render_target">;',
     },
     driftSignature: {
       fqn: "render.render_target",
-      from: "name: string,\n      parameters: Record<string | number, unknown>,",
-      to: "name: string,\n      parameters: Record<string, unknown>,",
+      from: "name: string,\n      parameters: render.RenderTargetParams,",
+      to: "name: string,\n      parameters: Record<string | number, unknown>,",
     },
     driftDoc: {
       fqn: "render.render_target",
