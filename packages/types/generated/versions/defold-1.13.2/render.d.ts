@@ -15,7 +15,7 @@ declare global {
        */
       use_frustum?: boolean;
     }
-    type constant_buffer = Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };
+    type constant_buffer = Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };
     /**
      * Debug-draw options
      */
@@ -36,7 +36,7 @@ declare global {
       /**
        * Constants used by the compute program. The values are copied when `render.dispatch_compute()` is called.
        */
-      constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };
+      constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };
     }
     /**
      * Render draw options
@@ -53,7 +53,7 @@ declare global {
       /**
        * Constants used while rendering. The values are copied when `render.draw()` is called.
        */
-      constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };
+      constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };
       /**
        * World-entry sort order. The default is the renderer's preferred back-to-front order.
        */
@@ -219,7 +219,7 @@ declare global {
      * constants.light_colors[3] = vmath.vector4(1, 1, 1, 1);
      * ```
      */
-    function constant_buffer(): Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };
+    function constant_buffer(): Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };
     /**
      * Deletes a render target created by a render script.
      * You cannot delete a render target resource.

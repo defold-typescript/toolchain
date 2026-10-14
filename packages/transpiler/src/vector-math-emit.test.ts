@@ -88,3 +88,59 @@ describe("vector math operator emit", () => {
     expect(result.lua).toContain("m * v");
   });
 });
+
+describe("userdata metamethod emit", () => {
+  test("v.length() emits the Lua length operator", () => {
+    const source = [
+      "export function go() {",
+      "  const v = vmath.vector([1, 2, 3]);",
+      "  return v.length();",
+      "}",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchSnapshot();
+  });
+
+  test("m.mul(scalar) emits Lua *", () => {
+    const source = [
+      "export function go() {",
+      "  const m = vmath.matrix4();",
+      "  return m.mul(2);",
+      "}",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchSnapshot();
+  });
+
+  test("v[i] = x passes the 1-based index to Defold unchanged", () => {
+    const source = [
+      "export function go() {",
+      "  const v = vmath.vector([1, 2, 3]);",
+      "  v[1] = 2;",
+      "  return v;",
+      "}",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchSnapshot();
+  });
+
+  test("url.path = x emits a plain field assignment", () => {
+    const source = [
+      "export function go() {",
+      "  const url = msg.url();",
+      '  url.path = "go";',
+      "  return url;",
+      "}",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchSnapshot();
+  });
+});
