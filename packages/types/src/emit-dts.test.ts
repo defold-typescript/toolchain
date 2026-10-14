@@ -5619,6 +5619,13 @@ describe("defaultMapType LuaLS fallback", () => {
     );
   });
 
+  test("a message only the engine declares resolves to its BuiltinMessages entry", () => {
+    expect(defaultMapType("message.sound.pause_sound")).toBe('BuiltinMessages["pause_sound"]');
+    expect(defaultMapType("message.render.set_view_projection")).toBe(
+      'BuiltinMessages["set_view_projection"]',
+    );
+  });
+
   test("1.13.1 tokens keep their whole-token mapping", () => {
     expect(defaultMapType("table")).toBe("Record<string | number, unknown>");
     expect(defaultMapType("function(self, url, result)")).toBe(
