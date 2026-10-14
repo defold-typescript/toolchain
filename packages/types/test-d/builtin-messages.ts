@@ -2,11 +2,14 @@
 import type { Hash, Matrix4, Url, Vector3, Vector4 } from "../src/core-types";
 import { defineScript } from "../src/lifecycle";
 
+// Stricter than mutual assignability, which accepts an extra optional field.
+type Identical<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
 const _url = null as unknown as Url;
 const _hash = null as unknown as Hash;
 const _v3 = null as unknown as Vector3;
 const _v4 = null as unknown as Vector4;
-const _m4 = null as unknown as Matrix4;
 
 msg.post(_url, "set_parent", { parent_id: _hash, keep_world_transform: 1 });
 msg.post(_url, "set_parent", { parent_id: _hash, keep_world_transform: 0 });
@@ -112,6 +115,11 @@ msg.post(_url, "stop_sound", { play_id: 1 });
 msg.post(_url, "pause_sound", { pause: true });
 msg.post(_url, "set_pan", { pan: 0 });
 
+const _pauseSoundPayload: Identical<BuiltinMessages["pause_sound"], { pause?: boolean }> = true;
+void _pauseSoundPayload;
+const _setPanPayload: Identical<BuiltinMessages["set_pan"], { pan?: number }> = true;
+void _setPanPayload;
+
 msg.post(_url, "set_camera", { aspect_ratio: 16 / 9, fov: 1, near_z: 0.1, far_z: 500 });
 msg.post(_url, "reboot", { arg1: "x" });
 msg.post(_url, "start_record", { file_name: "a" });
@@ -167,14 +175,11 @@ msg.post(_url, "draw_debug_text", { position: _v3, text: "hp: 100", color: _v4 }
 // @ts-expect-error draw_debug_text text must be string, not number
 msg.post(_url, "draw_debug_text", { position: _v3, text: 0, color: _v4 });
 
-const _setViewProjection: BuiltinMessages["set_view_projection"] = {
-  id: _hash,
-  view: _m4,
-  projection: _m4,
-};
-const _setViewProjectionShape: { id: Hash; view: Matrix4; projection: Matrix4 } =
-  _setViewProjection;
-void _setViewProjectionShape;
+const _setViewProjectionPayload: Identical<
+  BuiltinMessages["set_view_projection"],
+  { id: Hash; view: Matrix4; projection: Matrix4 }
+> = true;
+void _setViewProjectionPayload;
 
 const _windowResized: BuiltinMessages["window_resized"] = { height: 0, width: 0 };
 const _windowResizedShape: { height: number; width: number } = _windowResized;
@@ -196,4 +201,3 @@ void _url;
 void _hash;
 void _v3;
 void _v4;
-void _m4;

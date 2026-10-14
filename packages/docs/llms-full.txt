@@ -2085,7 +2085,7 @@ Defold delivers a message as a hashed id and a plain table, so the payload's sha
 
 #### The message type surface
 
-`BuiltinMessages` (generated in `packages/types/generated/builtin-messages.d.ts` from the Defold reference docs, not hand-maintained) maps each built-in message id to its payload shape, and `BuiltinMessageId = keyof BuiltinMessages` is the union of those ids. Both are ambient globals — no import. Because the catalog is regenerated from the ref docs rather than curated by hand, it is exhaustive: every message Defold documents is in it, so a valid built-in id always type-checks and a typo never does. Where the engine source disagrees with the docs, the engine wins: a field the engine fills with a default is optional, and a field or message a component handles but the docs omit (`stop_sound`'s `play_id`, `pause_sound`, `group` on collision responses) is declared.
+`BuiltinMessages` (generated in `packages/types/generated/builtin-messages.d.ts`) maps each built-in message id to its payload shape, and `BuiltinMessageId = keyof BuiltinMessages` is the union of those ids. Both are ambient globals — no import. Defold ships no machine-readable list of its messages, so the catalog they are generated from, `messages_doc.json`, is refreshed by hand from the default target's reference docs. A test holds it to that reference in both directions: the same message ids, the same fields, and the same optional fields. Every message Defold documents is in it, so a valid built-in id always type-checks. Where the reference is incomplete, a curated overlay backed by the engine source wins: a field the engine fills with a default is optional, and a field or message the engine handles or sends but the reference omits is declared (`stop_sound`'s `play_id`, `pause_sound`, `set_pan`, `set_view_projection`, `group` on collision responses).
 
 #### Sending: `msg.post` payload narrowing
 
@@ -2314,7 +2314,7 @@ export default defineScript({
 Two rules are worth knowing:
 
 - **A built-in id wins a collision.** Declaring a key that is already a built-in message id — `set_parent`, say — leaves the built-in payload in force; your entry is inert rather than silently re-typing an engine message.
-- **Augment `CustomMessages`, not `BuiltinMessages`.** Merging your ids into `BuiltinMessages` happens to work today, and is not supported: it puts your ids inside a catalog regenerated from the Defold reference docs, and the day Defold ships a message of the same name your declaration becomes a duplicate-key error with nothing pointing at the cause.
+- **Augment `CustomMessages`, not `BuiltinMessages`.** Merging your ids into `BuiltinMessages` happens to work today, and is not supported: it puts your ids inside the generated built-in catalog, and the day Defold ships a message of the same name your declaration becomes a duplicate-key error with nothing pointing at the cause.
 
 Nothing about the lowering changes. A custom id emits the same `message_id == hash("spawn_wave")` comparison a built-in one does, so the declaration costs no runtime.
 
