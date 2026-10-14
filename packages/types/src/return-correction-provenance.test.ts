@@ -492,9 +492,26 @@ describe("binding-pinned return correction provenance", () => {
     const retyped = surface("bound", "factory", [create(["number"])]);
     expect(returnCorrectionProvenance(entries, [retyped], holds)[0]).toMatchObject({
       neededBy: [],
+      unboundIn: [],
       driftedIn: ["bound"],
       typeDrift: ["bound: pinned hash, found number"],
     });
+  });
+
+  test("unbound, not drift, where the binding lacks the pin and the tokens changed", () => {
+    const unpinned = surface("unpinned", "factory", [create(["number"])]);
+    const evidence = new Map([...holds, ["unpinned", new Set<string>()]]);
+    expect(returnCorrectionProvenance(entries, [unpinned], evidence)).toEqual([
+      {
+        key: CREATE,
+        sightedIn: ["unpinned"],
+        neededBy: [],
+        resolvedIn: [],
+        unboundIn: ["unpinned"],
+        driftedIn: [],
+        typeDrift: [],
+      },
+    ]);
   });
 
   test("unbound where the target's binding does not show the pin", () => {

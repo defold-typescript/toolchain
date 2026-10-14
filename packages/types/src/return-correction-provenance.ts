@@ -259,7 +259,8 @@ export interface ReturnTypeProvenance {
 // Same ranking argument as `FIELD_VERDICT_RANK`: `emitReturn` applies the
 // correction to every declaration of the FQN in a target, so one drifted
 // declaration makes that target's emit wrong whatever its siblings say.
-// Binding evidence is per target, so `unbound` never meets `needed` there.
+// Binding evidence is per target, so for a binding-pinned entry `unbound` never
+// meets another verdict in the same target.
 type ReturnVerdict = "drift" | "needed" | "unbound" | "resolved";
 
 const RETURN_VERDICT_RANK: Record<ReturnVerdict, number> = {
@@ -288,6 +289,8 @@ function declaresCorrection(tokens: readonly string[], correction: ReturnTypeCor
 // A binding-pinned entry rests on the engine source rather than the prose, so
 // its prose is never searched. `bindingEvidence` maps each vendored target to
 // the keys whose pin holds there; a target absent from it shows no evidence.
+// A target without the entry's evidence is `unbound` before its tokens are
+// read, because the emitter leaves the entry off there.
 export function returnCorrectionProvenance(
   entries: readonly [string, ReturnTypeCorrection][],
   surfaces: readonly ProvenanceSurface[],
@@ -307,18 +310,18 @@ export function returnCorrectionProvenance(
         const tokens = slot.types ?? [];
 
         let verdict: ReturnVerdict;
-        if (!pinMatches(tokens, pins)) {
+        if (
+          correction.binding !== undefined &&
+          bindingEvidence.get(surface.target)?.has(key) !== true
+        ) {
+          verdict = "unbound";
+        } else if (!pinMatches(tokens, pins)) {
           verdict = "drift";
           const messages = drift.get(surface.target) ?? new Set<string>();
           drift.set(surface.target, messages);
           messages.add(
             `${surface.target}: pinned ${pins.map((pin) => pin.join("|")).join(" or ")}, found ${tokens.join("|")}`,
           );
-        } else if (
-          correction.binding !== undefined &&
-          bindingEvidence.get(surface.target)?.has(key) !== true
-        ) {
-          verdict = "unbound";
         } else if (
           declaresCorrection(tokens, correction) ||
           (correction.binding === undefined &&
