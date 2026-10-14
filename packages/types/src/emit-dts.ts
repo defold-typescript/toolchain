@@ -80,6 +80,9 @@ export interface EmitOptions {
   // `UNDOCUMENTED_CONSTANTS` back-fill. Absent for a surface with no vendored
   // bindings (a ref-doc target), where every entry the ref-doc omits is emitted.
   registeredConstants?: ReadonlySet<string>;
+  // The functions a target's skip rules removed from the module, read only to
+  // type an `OVERLOAD_SLOT_ALIASES` slot.
+  withheldFunctions?: readonly ApiFunction[];
 }
 
 export const TS_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
@@ -1557,6 +1560,13 @@ function unionAliasDeclaration(
     nilable.has(member) ? `NonNullable<typeof ${member}>` : `typeof ${member}`;
   return `type ${name} = ${members.map(arm).join(" | ")};`;
 }
+
+// A slot of a function the authored-overload lane declares, published under
+// one alias on every target so the version-independent overload file can
+// name the type each target's own reference gives that slot.
+export const OVERLOAD_SLOT_ALIASES: ReadonlyMap<string, string> = new Map([
+  ["render.render_target:param:parameters", "RenderTargetParams"],
+]);
 
 const DOC_CONSTANT_TOKEN =
   /(?<![A-Za-z0-9_.])([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*\.[A-Z][A-Z0-9_]*)(\*)?/g;
@@ -4060,6 +4070,15 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   for (const aliasDecl of constantUnionAliasDeclarations(module.namespace)) {
     lines.push(`${INDENT}${decl}${aliasDecl}`);
   }
+  for (const aliasDecl of overloadSlotAliasDeclarations(
+    [...module.functions, ...(options?.withheldFunctions ?? [])],
+    prefix,
+    mapType,
+    constantTokens,
+    urlParameters,
+  )) {
+    lines.push(`${INDENT}${decl}${aliasDecl}`);
+  }
   for (const alias of enumAliases.topLevel) {
     lines.push(
       `${INDENT}${decl}${unionAliasDeclaration(alias.name, alias.members, alias.nilable)}`,
@@ -4224,6 +4243,53 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
 
   lines.push("}");
   return `${lines.join("\n")}\n`;
+}
+
+// One `type <alias> = <slot type>;` per `OVERLOAD_SLOT_ALIASES` slot these
+// functions carry, in alias order. The type is the one `emitFunction` reports
+// for the slot, so it reads as the function's own signature would. The
+// resolver spans these functions alone, leaving the module's own untouched.
+function overloadSlotAliasDeclarations(
+  functions: readonly ApiFunction[],
+  prefix: string,
+  mapType: DefoldTypeMapper,
+  constantTokens: ConstantSlotTokens,
+  urlParameters: UrlParameterTable,
+): string[] {
+  const resolver = buildTableDocResolver(
+    functions.map((fn) => ({ name: fn.name, slots: [...fn.parameters, ...fn.returnValues] })),
+  );
+  const types = new Map<string, string>();
+  for (const fn of functions) {
+    for (const [position, p] of fn.parameters.entries()) {
+      const alias = OVERLOAD_SLOT_ALIASES.get(tableSlotKey(fn.name, "param", p.name));
+      if (alias === undefined) continue;
+      const prepared = prepareFunction(fn, prefix);
+      if (prepared === null) continue;
+      const slots: Record<string, SlotType> = {};
+      emitFunction(
+        prepared,
+        prepared.name,
+        mapType,
+        resolver,
+        constantTokens,
+        urlParameters,
+        slots,
+      );
+      const slot = slots[slotKey("param", position, p.name)];
+      if (slot === undefined) {
+        throw new Error(`${fn.name} reports no type for its aliased slot "${p.name}"`);
+      }
+      const seen = types.get(alias);
+      if (seen !== undefined && seen !== slot.type) {
+        throw new Error(`${alias} is typed both ${seen} and ${slot.type}`);
+      }
+      types.set(alias, slot.type);
+    }
+  }
+  return [...types]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([alias, type]) => `type ${alias} = ${type};`);
 }
 
 /**

@@ -248,6 +248,26 @@ describe("go facade skip", () => {
   });
 });
 
+describe("overload slot alias of a withheld function", () => {
+  test("the default render surface types the alias from the skipped render_target", () => {
+    const render = MODULE_MANIFEST.find((e) => e.namespace === "render");
+    if (!render) throw new Error("render manifest entry missing");
+    const { contents } = generateModuleDeclaration(render);
+    expect(contents).toContain("type RenderTargetParams = render.render_target_params;");
+    expect(contents).not.toContain("function render_target(");
+  });
+
+  test("the 1.13.1 render surface types the alias as the bare record", () => {
+    const render = VERSIONED_MODULE_MANIFEST.find(
+      (e) => e.versionId === "defold-1.13.1" && e.namespace === "render",
+    );
+    if (!render) throw new Error("defold-1.13.1 render manifest entry missing");
+    const { contents } = generateModuleDeclaration(render);
+    expect(contents).toContain("type RenderTargetParams = Record<string | number, unknown>;");
+    expect(contents).not.toContain("function render_target(");
+  });
+});
+
 describe("surface-wide type routing", () => {
   const emitted = (namespace: string): string => {
     const entry = MODULE_MANIFEST.find((e) => e.namespace === namespace);

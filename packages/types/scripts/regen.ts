@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
 import {
+  type ApiFunction,
   type ApiModule,
   parseDefoldApiDoc,
   type SkipOverloadRule,
@@ -471,6 +472,7 @@ interface PreparedGeneratedModule {
   typeLeaves: Readonly<Record<string, string>> | undefined;
   declaredTypes: ReadonlyMap<string, string> | undefined;
   dropped: string[];
+  withheldFunctions: ApiFunction[];
 }
 
 // Parse a manifest entry, apply its `skipFunctions` and `skipOverloads` filters, and resolve the
@@ -482,7 +484,7 @@ function prepareGeneratedModule(
   options?: GenerateOptions,
 ): PreparedGeneratedModule {
   const routed = routedModuleOf(entry, options?.surface);
-  const { module, dropped } = routed?.prepared ?? withheldApiModule(entry);
+  const { module, dropped, withheldFunctions } = routed?.prepared ?? withheldApiModule(entry);
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
   const translations = options?.translations ?? loadTranslations();
   const urlParameters = options?.urlParameters ?? committedUrlParameters();
@@ -495,11 +497,12 @@ function prepareGeneratedModule(
     typeLeaves: entry.typeLeaves,
     declaredTypes: routed?.declaredTypes,
     dropped,
+    withheldFunctions,
   };
 }
 
 interface RoutedSurface {
-  readonly modules: ReadonlyMap<ModuleManifestEntry, { module: ApiModule; dropped: string[] }>;
+  readonly modules: ReadonlyMap<ModuleManifestEntry, WithheldModule>;
   readonly declaredTypes: ReadonlyMap<string, string>;
 }
 
@@ -513,10 +516,7 @@ function routeSurface(entries: readonly ModuleManifestEntry[]): RoutedSurface {
     modules: new Map(
       entries.map((member, index) => [
         member,
-        {
-          module: routed[index] as ApiModule,
-          dropped: (withheld[index] as { dropped: string[] }).dropped,
-        },
+        { ...(withheld[index] as WithheldModule), module: routed[index] as ApiModule },
       ]),
     ),
     declaredTypes: declaredTypePaths(routed),
@@ -534,7 +534,7 @@ function routedModuleOf(
   callerSurface?: readonly ModuleManifestEntry[],
 ):
   | {
-      prepared: { module: ApiModule; dropped: string[] };
+      prepared: WithheldModule;
       declaredTypes: ReadonlyMap<string, string>;
     }
   | undefined {
@@ -622,8 +622,14 @@ function committedSurfaceOf(
   };
 }
 
+interface WithheldModule {
+  module: ApiModule;
+  dropped: string[];
+  withheldFunctions: ApiFunction[];
+}
+
 // The parsed module with the entry's `skipFunctions` and `skipOverloads` applied.
-function withheldApiModule(entry: ModuleManifestEntry): { module: ApiModule; dropped: string[] } {
+function withheldApiModule(entry: ModuleManifestEntry): WithheldModule {
   let module = parseDefoldApiDoc(entry.doc);
   const prefix = `${module.namespace}.`;
   const dropped: string[] = [];
@@ -651,7 +657,8 @@ function withheldApiModule(entry: ModuleManifestEntry): { module: ApiModule; dro
     }
     return withheld(name);
   };
-  module.functions = module.functions.filter((fn) => !withheld(fn.name));
+  const withheldFunctions = module.functions.filter((fn) => withheld(fn.name));
+  module.functions = module.functions.filter((fn) => !withheldFunctions.includes(fn));
   module.variables = module.variables.filter((v) => !withheld(v.name));
   const withheldConstants = new Set<string>();
   module.constants = module.constants.filter((c) => {
@@ -667,7 +674,7 @@ function withheldApiModule(entry: ModuleManifestEntry): { module: ApiModule; dro
   if (module.structs) module.structs = module.structs.filter((s) => !withheldType(s.name));
   module.typedefs = module.typedefs.filter((t) => t.aliasOf === undefined || !withheldType(t.name));
   module = withholdOverloads(module, entry.skipOverloads ?? []);
-  return { module, dropped };
+  return { module, dropped, withheldFunctions };
 }
 
 // The field corrections one target's runtime entries leave inert: every entry is
@@ -742,11 +749,13 @@ export function generateModuleDeclaration(
     typeLeaves,
     declaredTypes,
     dropped,
+    withheldFunctions,
   } = prepareGeneratedModule(entry, options);
   const emitted = emitDeclarations(module, {
     knownConstantFqns,
     translations,
     urlParameters,
+    withheldFunctions,
     ...(registeredConstants ? { registeredConstants } : {}),
     ...(typeLeaves ? { typeLeaves } : {}),
     ...(declaredTypes ? { declaredTypes } : {}),
