@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.51.0
+
+> Summary:
+>
+> - **Breaking: two [callback payloads](./typescript-gotchas.md) are typed.**
+
+### Breaking
+
+- **[Two callback payloads](./typescript-gotchas.md#windowset_listener-hands-event-and-data-as-separate-params) are typed structs on Defold 1.13.2 and newer targets**: a `window.set_listener` callback receives `data` as `window.event_data`, and a `collectionproxy.load` callback receives `message` as `collectionproxy.load_data`. A callback that annotates either parameter as a record, or reads a key the engine never sends, stops compiling; drop the annotation or name the struct.
+
 ## v0.50.1
 
 > Summary:

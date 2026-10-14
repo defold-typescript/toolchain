@@ -161,7 +161,7 @@ declare global {
      * });
      * ```
      */
-    function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined): void;
+    function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void) | undefined): void;
     /**
      * Set the locking state for current mouse cursor on a PC platform.
      * This function locks or unlocks the mouse cursor to the center point of the window. While the cursor is locked,

@@ -30,7 +30,12 @@ import {
   indexBaseNoteResolver,
   OVERRIDE_RETURN_SLOT,
 } from "./index-slot-classifications";
-import { type LualsPosition, mapLualsExpression, needsArrayParens } from "./luals-type-expr";
+import {
+  isLualsFunctionToken,
+  type LualsPosition,
+  mapLualsExpression,
+  needsArrayParens,
+} from "./luals-type-expr";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
 export { summaryFor };
@@ -2704,41 +2709,83 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
 ]);
 
 // Slot-keyed (`element:param:name`, mirroring TABLE_SLOT_CURATIONS) replacements
-// for a callback parameter's recovered signature, used where the generic
-// `recoverCallbackSignature` `unknown`-everywhere form leaves real engine type
-// information on the table. The value is the full emitted function type. Honest
-// only: `window.set_listener` discriminates `event` by the union of the
-// `WINDOW_EVENT_*` constants the surface's own `window` namespace declares, and
-// its `data` is a bare record (only resize carries fields — `isWindowEvent` is the
-// path to typed `data`), mirroring the `msg.post` (send, typed) / `isMessage`
-// (receive, narrow) split.
+// for a callback parameter's signature. Each entry carries two forms, chosen by
+// the token the reference gives the slot. `untyped` answers a bare
+// `function(a, b, c)` token, where the generic `recoverCallbackSignature`
+// `unknown`-everywhere form leaves real engine type information on the table.
+// `typed` answers a `fun(a:T, ...)` token, where the reference names a type for
+// each parameter; `null` there emits the reference's own signature. Each form
+// is the full emitted function type. Honest only.
 //
-// The other entries type what the slot's own prose lists and nothing more.
+// `window.set_listener` discriminates `event` by the union of the
+// `WINDOW_EVENT_*` constants the surface's own `window` namespace declares, on
+// both forms: the union is derived from the surface, so each version accepts
+// exactly the constants it declares. Its untyped `data` is a bare record (only
+// resize carries fields) and its typed `data` is the reference's
+// `window.event_data`; `isWindowEvent` narrows either to the event's payload,
+// mirroring the `msg.post` (send, typed) / `isMessage` (receive, narrow) split.
+//
+// The other untyped forms type what the slot's own prose lists and nothing more.
 // `http.request`'s response fields are the `<ul>` under "The response data.
 // Contains the fields:"; each is conditional ("if not saved on disc", "only if
 // option report_progress is true") except `status`, and `headers` is the same
-// string map the request sends. `sprite.play_flipbook`'s message is the
-// "Information about the completion" list. `collectionproxy.load` documents
+// string map the request sends. Its typed form is the same signature: the typed
+// reference names `http.response`, which the runtime surface withholds.
+// `sprite.play_flipbook`'s message is the "Information about the completion"
+// list. Its typed form is the same signature: the typed reference names the
+// built-in `animation_done` message, which has this shape, and the inline form
+// keeps the fields visible in the signature. `collectionproxy.load` documents
 // only that the callback receives `proxy_loading`, `proxy_ready` or
-// `proxy_error` messages and lists no fields, so its message is the bare record
-// `window.set_listener`'s `data` is.
-export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, string> = new Map([
+// `proxy_error` messages and lists no fields on the untyped reference, so its
+// untyped message is the bare record `window.set_listener`'s untyped `data` is;
+// the typed reference names `collectionproxy.load_data`, so its typed form
+// defers to the reference.
+export interface CallbackSignatureCuration {
+  /** Emitted for a bare `function(...)` token. */
+  readonly untyped: string;
+  /** Emitted for a typed `fun(...)` token; `null` emits the reference's own signature. */
+  readonly typed: string | null;
+}
+
+const onBothForms = (signature: string): CallbackSignatureCuration => ({
+  untyped: signature,
+  typed: signature,
+});
+
+export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, CallbackSignatureCuration> = new Map<
+  string,
+  CallbackSignatureCuration
+>([
   [
     "window.set_listener:param:callback",
-    // biome-ignore lint/suspicious/noTemplateCurlyInString: emitted verbatim as a TS template literal type
-    "(self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void",
+    {
+      untyped:
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: emitted verbatim as a TS template literal type
+        "(self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void",
+      typed:
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: emitted verbatim as a TS template literal type
+        "(self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void",
+    },
   ],
   [
     "http.request:param:callback",
-    "(self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
+    onBothForms(
+      "(self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
+    ),
   ],
   [
     "sprite.play_flipbook:param:complete_function",
-    "(self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void",
+    onBothForms(
+      "(self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void",
+    ),
   ],
   [
     "collectionproxy.load:param:callback",
-    "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
+    {
+      untyped:
+        "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
+      typed: null,
+    },
   ],
 ]);
 
@@ -5521,11 +5568,17 @@ function mapSlotUnion(
       // return slots.
       ts = "undefined";
     } else {
-      const curated =
+      const curation =
         slotKind !== undefined && slotName !== undefined
           ? CALLBACK_SIGNATURE_CURATIONS.get(tableSlotKey(elementName, slotKind, slotName))
           : undefined;
-      ts = curated ?? mapType(token);
+      if (curation === undefined) {
+        ts = mapType(token);
+      } else if (isLualsFunctionToken(token)) {
+        ts = curation.typed ?? mapType(token);
+      } else {
+        ts = curation.untyped;
+      }
     }
     push(ts);
   }
