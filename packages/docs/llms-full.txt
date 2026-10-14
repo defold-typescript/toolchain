@@ -2050,7 +2050,7 @@ Defold delivers a message as a hashed id and a plain table, so the payload's sha
 
 #### The message type surface
 
-`BuiltinMessages` (generated in `packages/types/generated/builtin-messages.d.ts` from the Defold reference docs, not hand-maintained) maps each built-in message id to its payload shape, and `BuiltinMessageId = keyof BuiltinMessages` is the union of those ids. Both are ambient globals — no import. Because the catalog is regenerated from the ref docs rather than curated by hand, it is exhaustive: every message Defold documents is in it, so a valid built-in id always type-checks and a typo never does.
+`BuiltinMessages` (generated in `packages/types/generated/builtin-messages.d.ts` from the Defold reference docs, not hand-maintained) maps each built-in message id to its payload shape, and `BuiltinMessageId = keyof BuiltinMessages` is the union of those ids. Both are ambient globals — no import. Because the catalog is regenerated from the ref docs rather than curated by hand, it is exhaustive: every message Defold documents is in it, so a valid built-in id always type-checks and a typo never does. Where the engine source disagrees with the docs, the engine wins: a field the engine fills with a default is optional, and a field or message a component handles but the docs omit (`stop_sound`'s `play_id`, `pause_sound`, `group` on collision responses) is declared.
 
 #### Sending: `msg.post` payload narrowing
 

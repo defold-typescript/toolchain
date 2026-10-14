@@ -6,8 +6,11 @@ import {
   surfaceProgram,
   UnmappedLuaKindError,
 } from "../../types/scripts/lua-kind";
-import { type ApiTarget, MESSAGES_MANIFEST } from "../../types/scripts/regen";
-import { parseMessagesDoc } from "../../types/src/emit-messages";
+import {
+  type ApiTarget,
+  builtinMessagesCatalog,
+  MESSAGES_MANIFEST,
+} from "../../types/scripts/regen";
 import { MESSAGE_FIELD_OVERRIDES, MESSAGE_ORIGINS, MESSAGE_RECEIVERS } from "./contexts";
 import type { Unverified } from "./index-probes";
 import { MESSAGE_DENYLIST } from "./probe-denylist";
@@ -148,7 +151,7 @@ export function messageProbes(
   const checker = program.getTypeChecker();
   const constants = new Set(declaredMembers(program, comparedNamespaces(target)).constants.keys());
   const origins = new Map(
-    parseMessagesDoc(MESSAGES_MANIFEST.doc).entries.map((entry) => [entry.name, entry.origin]),
+    builtinMessagesCatalog(MESSAGES_MANIFEST).entries.map((entry) => [entry.name, entry.origin]),
   );
   const symbol = builtinMessages(program, checker);
   if (symbol === undefined) throw new Error("api-probe: the surface declares no BuiltinMessages");
