@@ -11,11 +11,12 @@ import { buildSymbolIndex } from "./symbol-index";
 // source does.
 const SRC = `
 /**
- * A read-only numeric vector accessed by index; \`length\` is its component count.
+ * A numeric vector of any size, accessed by index for reads and writes;
+ * \`v.length()\` is its component count.
  */
 export interface Vector {
-  readonly [index: number]: number;
-  readonly length: number;
+  [index: number]: number;
+  length: LuaLengthMethod<number>;
 }
 
 /**
@@ -68,7 +69,17 @@ export interface Quaternion {
 export interface Matrix4 {
   m00: number;
   c0: Vector4;
-  mul: LuaMultiplicationMethod<Matrix4, Matrix4> & LuaMultiplicationMethod<Vector4, Vector4>;
+  mul: LuaMultiplicationMethod<Matrix4, Matrix4> &
+    LuaMultiplicationMethod<Vector4, Vector4> &
+    LuaMultiplicationMethod<number, Matrix4>;
+}
+
+/**
+ * An array constant read back from a constant buffer: the engine's 1-based
+ * proxy over the constant's slots, not a Lua table.
+ */
+export interface ConstantArray<T> {
+  [index: number]: T;
 }
 
 declare const HashBrand: unique symbol;
@@ -125,9 +136,12 @@ export interface Opaque<Name extends string> {
  * A message-passing address with \`socket\`, \`path\`, and \`fragment\` components.
  */
 export interface Url {
-  readonly socket: Hash;
-  readonly path: Hash;
-  readonly fragment: Hash | undefined;
+  get socket(): Hash;
+  set socket(value: Hash | string);
+  get path(): Hash | undefined;
+  set path(value: Hash | string | undefined);
+  get fragment(): Hash | undefined;
+  set fragment(value: Hash | string | undefined);
 }
 `;
 
@@ -209,6 +223,7 @@ describe("jsdocToMarkdown", () => {
 describe("parseGlobalTypes", () => {
   test("returns one global-type page per value type, including the Opaque brand", () => {
     expect(PAGES.map((p) => p.namespace).sort()).toEqual([
+      "ConstantArray",
       "Hash",
       "Matrix4",
       "Opaque",
@@ -252,10 +267,11 @@ describe("parseGlobalTypes", () => {
     expect(methodSignatures("Vector3", "unm")).toEqual(["unm(): Vector3"]);
   });
 
-  test("Matrix4 mul overload yields two function entries", () => {
+  test("Matrix4 mul overload wrapped across lines yields one function entry per arm", () => {
     expect(methodSignatures("Matrix4", "mul").sort()).toEqual([
       "mul(rhs: Matrix4): Matrix4",
       "mul(rhs: Vector4): Vector4",
+      "mul(rhs: number): Matrix4",
     ]);
   });
 
@@ -300,16 +316,20 @@ describe("parseGlobalTypes", () => {
     expect(opaque.brief.toLowerCase()).toContain("never");
   });
 
-  test("Url carries socket/path/fragment with fragment optional", () => {
+  test("Url reads socket/path/fragment from their getters, with path and fragment optional", () => {
     const url = pageNamed("Url");
-    expect(url.module.properties.map((p) => p.name)).toEqual(["socket", "path", "fragment"]);
-    const fragment = url.module.properties.find((p) => p.name === "fragment");
-    expect(fragment?.types).toContain("undefined");
+    expect(url.module.properties.map((p) => [p.name, p.types])).toEqual([
+      ["socket", ["Hash"]],
+      ["path", ["Hash", "undefined"]],
+      ["fragment", ["Hash", "undefined"]],
+    ]);
   });
 
-  test("Vector exposes length and notes numeric indexing", () => {
+  test("Vector exposes length as the Lua # operator and notes numeric indexing", () => {
     const vector = pageNamed("Vector");
-    expect(vector.module.properties.map((p) => p.name)).toEqual(["length"]);
+    expect(vector.module.properties).toEqual([]);
+    expect(methodSignatures("Vector", "length")).toEqual(["length(): number"]);
+    expect(vector.module.functions.map((f) => f.brief)).toEqual(["Lua unary `#` operator."]);
     expect(vector.brief.toLowerCase()).toMatch(/index/);
   });
 

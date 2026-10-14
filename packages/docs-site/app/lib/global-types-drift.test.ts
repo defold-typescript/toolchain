@@ -13,6 +13,7 @@ const KNOWN_OPERATOR_METHODS = [
   "LuaMultiplicationMethod",
   "LuaDivisionMethod",
   "LuaNegationMethod",
+  "LuaLengthMethod",
 ];
 
 describe("global-types drift guard", () => {
@@ -24,7 +25,7 @@ describe("global-types drift guard", () => {
     expect(documented.slice().sort()).toEqual(reexported.slice().sort());
   });
 
-  test("every operator-method RHS uses one of the five known Lua<Op>Method types", () => {
+  test("every operator-method RHS uses one of the six known Lua<Op>Method types", () => {
     // The parser throws on an unrecognised operator-method type, so a clean
     // parse of the real source already proves every method RHS is known; the
     // explicit set check makes the failure message name the offending type.
