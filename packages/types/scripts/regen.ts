@@ -16,9 +16,7 @@ import {
   type SymbolSignature,
 } from "../src/emit-dts";
 import {
-  applyMessageDeprecations,
-  applyMessageEngineCorrections,
-  applyMessageFieldCorrections,
+  applyMessageOverlays,
   type EmitBuiltinMessagesOptions,
   emitBuiltinMessages,
   type MessageCatalog,
@@ -403,17 +401,16 @@ export interface MessagesManifestEntry {
 // Unlike MODULE_MANIFEST, this surface is hand-maintained: Defold ships no
 // machine-readable export for built-in message ids, so refresh fixtures/
 // messages_doc.json by hand from the default target's API reference. The
-// message-payload-drift test holds its field names and optionality to that
-// reference; what only the engine states is MESSAGE_ENGINE_CORRECTIONS.
+// message-payload-drift test holds its message ids, field names and optionality
+// to that reference in both directions; what only the engine states is
+// MESSAGE_ENGINE_CORRECTIONS.
 export const MESSAGES_MANIFEST: MessagesManifestEntry = {
   doc: messagesDoc,
   outFile: "builtin-messages.d.ts",
 };
 
 export function builtinMessagesCatalog(entry: MessagesManifestEntry): MessageCatalog {
-  return applyMessageEngineCorrections(
-    applyMessageFieldCorrections(applyMessageDeprecations(parseMessagesDoc(entry.doc))),
-  );
+  return applyMessageOverlays(parseMessagesDoc(entry.doc));
 }
 
 export function generateBuiltinMessagesDeclaration(

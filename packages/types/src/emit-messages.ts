@@ -139,8 +139,8 @@ export function applyMessageFieldCorrections(
 
 // What only the engine states about a message the catalog mirrors from the
 // reference: proto optionality, a field the handler reads or the sender fills,
-// a message a component handles, or the shape of a field the reference types
-// only as `table`. `evidence` names `<path>:<symbol>` in the 1.14.0 engine
+// a message a component handles or posts, or the shape of a field the reference
+// types only as `table`. `evidence` names `<path>:<symbol>` in the 1.14.0 engine
 // source. Each kind throws once the catalog already states its fact, since that
 // means upstream fixed the reference and the entry is deleted; a `retype` throws
 // once the catalog stops declaring its pinned `upstream` types, since upstream
@@ -172,6 +172,10 @@ const SOUND_EVENT =
 
 function optionalField(name: string, types: string[], doc: string): MessageField {
   return { name, types, optional: true, doc };
+}
+
+function requiredField(name: string, types: string[], doc: string): MessageField {
+  return { name, types, optional: false, doc };
 }
 
 // The listener and `on_message` paths agree: the DDF the message carries
@@ -217,6 +221,13 @@ export const MESSAGE_ENGINE_CORRECTIONS: readonly MessageEngineCorrection[] = [
     name: "play_animation",
     fields: ["offset", "playback_rate"],
     evidence: `gamesys/proto/gamesys/sprite_ddf.proto:PlayAnimation declares both optional with defaults 0 and 1, comp_sprite.cpp:CompSpriteOnMessage passes both to PlayAnimation, and ${SCRIPT_DDF_DEFAULTS}`,
+  },
+  {
+    kind: "optional",
+    origin: "go",
+    name: "set_parent",
+    fields: ["parent_id", "keep_world_transform"],
+    evidence: `gameobject/proto/gameobject/gameobject_ddf.proto:SetParent declares both optional with defaults 0 and 1, gameobject.cpp:DispatchMessagesFunction handles it, and ${SCRIPT_DDF_DEFAULTS}`,
   },
   {
     kind: "required",
@@ -274,6 +285,20 @@ export const MESSAGE_ENGINE_CORRECTIONS: readonly MessageEngineCorrection[] = [
     fields: [optionalField("pan", ["number"], "Pan between -1 and 1, default 0.")],
     evidence:
       "gamesys/proto/gamesys/gamesys_ddf.proto:SetPan declares pan, and comp_sound.cpp:CompSoundOnMessage sets the component's pan",
+  },
+  {
+    kind: "add-message",
+    origin: "render",
+    name: "set_view_projection",
+    description:
+      "Posted automatically by camera components to the render script with the active view and projection matrices.",
+    fields: [
+      requiredField("id", ["hash"], "Id of the camera component that posted the matrices."),
+      requiredField("view", ["matrix4"], "View matrix of the camera."),
+      requiredField("projection", ["matrix4"], "Projection matrix of the camera."),
+    ],
+    evidence:
+      "gamesys/proto/gamesys/gamesys_ddf.proto:SetViewProjection declares id, view and projection required, and comp_camera.cpp:PostRenderScriptSetViewProjectionMsg posts it to the render socket on every camera update",
   },
   {
     kind: "add-field",
@@ -390,6 +415,15 @@ export function applyMessageEngineCorrections(
     }
   }
   return { entries };
+}
+
+// The built-in message surface is the catalog plus these overlays. Every reader
+// of it goes through here, so a message the engine overlay adds is never missing
+// from one of them.
+export function applyMessageOverlays(catalog: MessageCatalog): MessageCatalog {
+  return applyMessageEngineCorrections(
+    applyMessageFieldCorrections(applyMessageDeprecations(catalog)),
+  );
 }
 
 const TS_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;

@@ -21,6 +21,7 @@ import {
   splitExampleSources,
   summaryFor,
 } from "./doc-comment";
+import { applyMessageOverlays, parseMessagesDoc } from "./emit-messages";
 import type { TranslationStore } from "./example-store";
 import { lookupExampleSegments, translateProseFences } from "./example-store";
 import {
@@ -6148,7 +6149,7 @@ function joinUnionArms(mapped: readonly string[]): string {
 }
 
 const BUILTIN_MESSAGE_NAMES: ReadonlySet<string> = new Set(
-  messagesDoc.messages.map((message) => message.name),
+  applyMessageOverlays(parseMessagesDoc(messagesDoc)).entries.map((entry) => entry.name),
 );
 const MESSAGE_REFERENCE = /^message\.[a-z_]+\.([a-z_]+)$/;
 
