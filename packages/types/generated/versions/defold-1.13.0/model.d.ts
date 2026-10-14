@@ -228,7 +228,7 @@ declare global {
       /**
        * The current animation set on the component. The type of the property is hash.
        */
-      animation: Hash;
+      readonly animation: Hash;
       /**
        * The normalized animation cursor. The type of the property is number.
        * Please note that model events may not fire as expected when the cursor is manipulated directly.

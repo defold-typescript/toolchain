@@ -12,6 +12,8 @@ describe("property probes", () => {
   test("every shipped catalog is read, overlays included, each against its probe component", () => {
     expect([...new Set(generation.probes.map((probe) => probe.catalog))].sort()).toEqual([
       "camera",
+      "collectionfactory",
+      "factory",
       "go",
       "gui",
       "label",
@@ -38,6 +40,8 @@ describe("property probes", () => {
     expect(byKey.get("label.scale")?.kinds).toEqual(["vector3"]);
     expect(byKey.get("go.position")?.target).toBe("GO");
     expect(byKey.get("physics.mass")?.target).toBe("COLLISION");
+    expect(byKey.get("factory.prototype")).toMatchObject({ target: "FACTORY", readonly: true });
+    expect(byKey.get("go.position.x")?.kinds).toEqual(["number"]);
   });
 
   test("a keyed gui catalog member addresses one of the probe gui's resources", () => {
