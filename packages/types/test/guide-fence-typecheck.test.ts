@@ -39,6 +39,12 @@ interface FenceSelection {
 const SELECTED: readonly FenceSelection[] = [
   { page: "typescript-gotchas.md", lead: "**Naming the enum.**", nth: 0, kind: "gui-script" },
   {
+    page: "typescript-gotchas.md",
+    lead: "**Typed alternative.** Read the format constant into a local",
+    nth: 0,
+    kind: "render-script",
+  },
+  {
     page: "typescript-vs-lua.md",
     lead: "### Engine indexes use Defold's base",
     nth: 0,

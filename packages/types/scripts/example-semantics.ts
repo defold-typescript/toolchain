@@ -6,7 +6,8 @@ import ts from "typescript";
  *
  * These read the parsed body rather than its diagnostics. Every defect they
  * name compiles: `render.render_target` takes an open
- * `Record<string | number, unknown>`, a texture specification is an open object
+ * `Record<string | number, unknown>` on older pins and a table whose buffer keys
+ * are all optional on newer ones, a texture specification is an open object
  * literal, and nothing types a handle's lifetime — so the compiler cannot see
  * that `{}` declares no attachment, that `page: 1` addresses a page of a
  * one-page array, or that a handle freed in `update` is freed again next frame.

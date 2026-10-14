@@ -436,7 +436,7 @@ const DOOMED_JOINT =
   'physics.create_joint(physics.JOINT_TYPE_FIXED, COLLISION, "doomed", vmath.vector3(), PEER_COLLISION, vmath.vector3())';
 
 const RENDER_TARGET =
-  'render.render_target("probe", { [graphics.BUFFER_TYPE_COLOR0_BIT]: { format: graphics.TEXTURE_FORMAT_RGBA, width: 16, height: 16 } })';
+  'render.render_target("probe", { [graphics.BUFFER_TYPE_COLOR0_BIT]: { format: graphics.TEXTURE_FORMAT_RGBA!, width: 16, height: 16 } })';
 
 // The value an accepted-witness call passes for each kind a binding reads. A url,
 // a buffer or an engine handle only means something for its slot, so those
