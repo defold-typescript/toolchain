@@ -53,3 +53,13 @@ ____exports.a = scores.a
 return ____exports
 "
 `;
+
+exports[`data-structures transpile lowers a string-keyed read on a hash-keyed id table to an index read 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local ids = collectionfactory.create("#factory")
+____exports.spawned = ids["/go"]
+____exports.root = gui.get_tree(gui.get_node("root")).box
+return ____exports
+"
+`;

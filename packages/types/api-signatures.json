@@ -626,7 +626,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash>;",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.STATUS;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -746,7 +746,7 @@
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (string | Hash | Url)[] | boolean, recursive?: boolean): void;",
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function exists(url: SceneGameObjectAddress | Hash | Url): boolean;",
-      "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\",\"string\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion",
+      "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\",\"string\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4",
       "go\u0000FUNCTION\u0000go.get_id\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_id(path?: string): Hash;",
       "go\u0000FUNCTION\u0000go.get_parent\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;",
       "go\u0000FUNCTION\u0000go.get_position\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;",
@@ -759,7 +759,7 @@
       "go\u0000FUNCTION\u0000go.get_world_scale_uniform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;",
       "go\u0000FUNCTION\u0000go.get_world_transform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Matrix4\"],\"isOptional\":false}]": "function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;",
       "go\u0000FUNCTION\u0000go.property\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\",\"string\"],\"isOptional\":false}]->[]": "go.property(name: string, value: number): ScriptProperty<number>\ngo.property(name: string, value: boolean): ScriptProperty<boolean>\ngo.property(name: string, value: Hash): ScriptProperty<Hash>\ngo.property(name: string, value: Url): ScriptProperty<Url>\ngo.property(name: string, value: Vector3): ScriptProperty<Vector3>\ngo.property(name: string, value: Vector4): ScriptProperty<Vector4>\ngo.property(name: string, value: Quaternion): ScriptProperty<Quaternion>\ngo.property(name: string, value: string): ScriptProperty<string>",
-      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void",
+      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[], options?: GoPropertyOptions): void",
       "go\u0000FUNCTION\u0000go.set_parent\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;",
       "go\u0000FUNCTION\u0000go.set_position\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.set_rotation\u0000[{\"types\":[\"Quaternion\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;",
@@ -961,7 +961,7 @@
       "graphics\u0000TYPEDEF\u0000TEXTURE_USAGE_FLAG\u0000": "type TEXTURE_USAGE_FLAG = typeof graphics.TEXTURE_USAGE_FLAG_COLOR | typeof graphics.TEXTURE_USAGE_FLAG_INPUT | typeof graphics.TEXTURE_USAGE_FLAG_MEMORYLESS | typeof graphics.TEXTURE_USAGE_FLAG_SAMPLE | typeof graphics.TEXTURE_USAGE_FLAG_STORAGE;",
       "graphics\u0000TYPEDEF\u0000TEXTURE_WRAP\u0000": "type TEXTURE_WRAP = typeof graphics.TEXTURE_WRAP_CLAMP_TO_BORDER | typeof graphics.TEXTURE_WRAP_CLAMP_TO_EDGE | typeof graphics.TEXTURE_WRAP_MIRRORED_REPEAT | typeof graphics.TEXTURE_WRAP_REPEAT;",
       "graphics\u0000TYPEDEF\u0000adapter_info\u0000": "interface adapter_info { family: string; version_major: number; version_minor: number; limits: graphics.adapter_limits; extensions: string[]; features: graphics.CONTEXT_FEATURE[]; }",
-      "graphics\u0000TYPEDEF\u0000adapter_limits\u0000": "interface adapter_limits { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number; }",
+      "graphics\u0000TYPEDEF\u0000adapter_limits\u0000": "interface adapter_limits { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number; max_storage_buffers_per_stage: number; }",
       "gui\u0000CONSTANT\u0000gui.ADJUST_FIT\u0000": "const ADJUST_FIT: number & { readonly __brand: \"gui.ADJUST_FIT\" };",
       "gui\u0000CONSTANT\u0000gui.ADJUST_STRETCH\u0000": "const ADJUST_STRETCH: number & { readonly __brand: \"gui.ADJUST_STRETCH\" };",
       "gui\u0000CONSTANT\u0000gui.ADJUST_ZOOM\u0000": "const ADJUST_ZOOM: number & { readonly __brand: \"gui.ADJUST_ZOOM\" };",
@@ -1071,7 +1071,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | Hash | gui.PROP): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">>;",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function get(node: Opaque<\"node\">, property: string | Hash | gui.PROP, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;",
@@ -1119,7 +1119,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">>;",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.TYPE, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -1374,7 +1374,7 @@
       "physics\u0000FUNCTION\u0000physics.get_joint_reaction_torque\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;",
       "physics\u0000FUNCTION\u0000physics.get_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;",
       "physics\u0000FUNCTION\u0000physics.get_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(url: string | Hash | Url, shape: string | Hash): physics.shape_data;",
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.raycast_options): BuiltinMessages[\"ray_cast_response\"][] | BuiltinMessages[\"ray_cast_response\"] | undefined;",
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.raycast_options): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined;",
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;",
       "physics\u0000FUNCTION\u0000physics.set_event_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_event_listener(callback?: (self: unknown, events: physics.event[]) => void): void;",
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
@@ -1685,10 +1685,10 @@
       "sys\u0000TYPEDEF\u0000REQUEST_STATUS\u0000": "type REQUEST_STATUS = typeof sys.REQUEST_STATUS_ERROR_IO_ERROR | typeof sys.REQUEST_STATUS_ERROR_NOT_FOUND | typeof sys.REQUEST_STATUS_FINISHED;",
       "sys\u0000TYPEDEF\u0000application_info\u0000": "interface application_info { installed: boolean; }",
       "sys\u0000TYPEDEF\u0000engine_info\u0000": "interface engine_info { version: string; version_sha1: string; is_debug: boolean; }",
-      "sys\u0000TYPEDEF\u0000interface_info\u0000": "interface interface_info { name: string; address?: string; mac?: string; up: boolean; running: boolean; }",
+      "sys\u0000TYPEDEF\u0000interface_info\u0000": "interface interface_info { name: string; address?: string; mac?: string; up: boolean; running: boolean; family?: \"ipv4\" | \"ipv6\"; }",
       "sys\u0000TYPEDEF\u0000load_buffer_result\u0000": "interface load_buffer_result { status: sys.REQUEST_STATUS; buffer?: Opaque<\"buffer\">; }",
       "sys\u0000TYPEDEF\u0000open_url_attributes\u0000": "interface open_url_attributes { target?: string; }",
-      "sys\u0000TYPEDEF\u0000sys_info\u0000": "interface sys_info { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string; }",
+      "sys\u0000TYPEDEF\u0000sys_info\u0000": "interface sys_info { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string; }",
       "sys\u0000TYPEDEF\u0000sys_info_options\u0000": "interface sys_info_options { ignore_secure?: boolean; }",
       "tilemap\u0000CONSTANT\u0000tilemap.H_FLIP\u0000": "const H_FLIP: number & { readonly __brand: \"tilemap.H_FLIP\" };",
       "tilemap\u0000CONSTANT\u0000tilemap.ROTATE_180\u0000": "const ROTATE_180: number & { readonly __brand: \"tilemap.ROTATE_180\" };",
@@ -2427,7 +2427,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash>;",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.STATUS;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -2547,7 +2547,7 @@
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (string | Hash | Url)[] | boolean, recursive?: boolean): void;",
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function exists(url: SceneGameObjectAddress | Hash | Url): boolean;",
-      "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\",\"string\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion",
+      "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\",\"string\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4",
       "go\u0000FUNCTION\u0000go.get_id\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_id(path?: string): Hash;",
       "go\u0000FUNCTION\u0000go.get_parent\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;",
       "go\u0000FUNCTION\u0000go.get_position\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;",
@@ -2560,7 +2560,7 @@
       "go\u0000FUNCTION\u0000go.get_world_scale_uniform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;",
       "go\u0000FUNCTION\u0000go.get_world_transform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Matrix4\"],\"isOptional\":false}]": "function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;",
       "go\u0000FUNCTION\u0000go.property\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\",\"string\"],\"isOptional\":false}]->[]": "go.property(name: string, value: number): ScriptProperty<number>\ngo.property(name: string, value: boolean): ScriptProperty<boolean>\ngo.property(name: string, value: Hash): ScriptProperty<Hash>\ngo.property(name: string, value: Url): ScriptProperty<Url>\ngo.property(name: string, value: Vector3): ScriptProperty<Vector3>\ngo.property(name: string, value: Vector4): ScriptProperty<Vector4>\ngo.property(name: string, value: Quaternion): ScriptProperty<Quaternion>\ngo.property(name: string, value: string): ScriptProperty<string>",
-      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void",
+      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[], options?: GoPropertyOptions): void",
       "go\u0000FUNCTION\u0000go.set_parent\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;",
       "go\u0000FUNCTION\u0000go.set_position\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.set_rotation\u0000[{\"types\":[\"Quaternion\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;",
@@ -2865,7 +2865,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | Hash | gui.PROP): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">>;",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function get(node: Opaque<\"node\">, property: string | Hash | gui.PROP, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;",
@@ -2913,7 +2913,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">>;",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.TYPE, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -3168,7 +3168,7 @@
       "physics\u0000FUNCTION\u0000physics.get_joint_reaction_torque\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;",
       "physics\u0000FUNCTION\u0000physics.get_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;",
       "physics\u0000FUNCTION\u0000physics.get_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(url: string | Hash | Url, shape: string | Hash): physics.shape_data;",
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.raycast_options): BuiltinMessages[\"ray_cast_response\"][] | BuiltinMessages[\"ray_cast_response\"] | undefined;",
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.raycast_options): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined;",
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;",
       "physics\u0000FUNCTION\u0000physics.set_event_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_event_listener(callback?: (self: unknown, events: physics.event[]) => void): void;",
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
@@ -3479,10 +3479,10 @@
       "sys\u0000TYPEDEF\u0000REQUEST_STATUS\u0000": "type REQUEST_STATUS = typeof sys.REQUEST_STATUS_ERROR_IO_ERROR | typeof sys.REQUEST_STATUS_ERROR_NOT_FOUND | typeof sys.REQUEST_STATUS_FINISHED;",
       "sys\u0000TYPEDEF\u0000application_info\u0000": "interface application_info { installed: boolean; }",
       "sys\u0000TYPEDEF\u0000engine_info\u0000": "interface engine_info { version: string; version_sha1: string; is_debug: boolean; }",
-      "sys\u0000TYPEDEF\u0000interface_info\u0000": "interface interface_info { name: string; address?: string; mac?: string; up: boolean; running: boolean; }",
+      "sys\u0000TYPEDEF\u0000interface_info\u0000": "interface interface_info { name: string; address?: string; mac?: string; up: boolean; running: boolean; family?: \"ipv4\" | \"ipv6\"; }",
       "sys\u0000TYPEDEF\u0000load_buffer_result\u0000": "interface load_buffer_result { status: sys.REQUEST_STATUS; buffer?: Opaque<\"buffer\">; }",
       "sys\u0000TYPEDEF\u0000open_url_attributes\u0000": "interface open_url_attributes { target?: string; }",
-      "sys\u0000TYPEDEF\u0000sys_info\u0000": "interface sys_info { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string; }",
+      "sys\u0000TYPEDEF\u0000sys_info\u0000": "interface sys_info { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string; }",
       "sys\u0000TYPEDEF\u0000sys_info_options\u0000": "interface sys_info_options { ignore_secure?: boolean; }",
       "tilemap\u0000CONSTANT\u0000tilemap.H_FLIP\u0000": "const H_FLIP: number & { readonly __brand: \"tilemap.H_FLIP\" };",
       "tilemap\u0000CONSTANT\u0000tilemap.ROTATE_180\u0000": "const ROTATE_180: number & { readonly __brand: \"tilemap.ROTATE_180\" };",
@@ -3950,7 +3950,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaMap<Hash, Hash>;",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -4059,7 +4059,7 @@
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean, recursive?: boolean): void;",
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function exists(url: SceneGameObjectAddress | Hash | Url): boolean;",
-      "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion",
+      "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4",
       "go\u0000FUNCTION\u0000go.get_id\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_id(path?: string): Hash;",
       "go\u0000FUNCTION\u0000go.get_parent\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;",
       "go\u0000FUNCTION\u0000go.get_position\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;",
@@ -4072,7 +4072,7 @@
       "go\u0000FUNCTION\u0000go.get_world_scale_uniform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;",
       "go\u0000FUNCTION\u0000go.get_world_transform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Matrix4\"],\"isOptional\":false}]": "function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;",
       "go\u0000FUNCTION\u0000go.property\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false}]->[]": "go.property(name: string, value: number): ScriptProperty<number>\ngo.property(name: string, value: boolean): ScriptProperty<boolean>\ngo.property(name: string, value: Hash): ScriptProperty<Hash>\ngo.property(name: string, value: Url): ScriptProperty<Url>\ngo.property(name: string, value: Vector3): ScriptProperty<Vector3>\ngo.property(name: string, value: Vector4): ScriptProperty<Vector4>\ngo.property(name: string, value: Quaternion): ScriptProperty<Quaternion>\ngo.property(name: string, value: string): ScriptProperty<string>",
-      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void",
+      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[], options?: GoPropertyOptions): void",
       "go\u0000FUNCTION\u0000go.set_parent\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;",
       "go\u0000FUNCTION\u0000go.set_position\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.set_rotation\u0000[{\"types\":[\"Quaternion\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;",
@@ -4351,7 +4351,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaMap<Hash, Opaque<\"node\">>;",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function get(node: Opaque<\"node\">, property: string | Hash | gui.Property, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;",
@@ -4398,7 +4398,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaMap<Hash, Opaque<\"node\">>;",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.NodeType, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -4605,7 +4605,7 @@
       "physics\u0000FUNCTION\u0000physics.get_joint_reaction_torque\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;",
       "physics\u0000FUNCTION\u0000physics.get_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;",
       "physics\u0000FUNCTION\u0000physics.get_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };",
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined;",
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined;",
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;",
       "physics\u0000FUNCTION\u0000physics.set_event_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_event_listener(callback?: (self: unknown, events: unknown) => void): void;",
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
@@ -4842,7 +4842,7 @@
       "sys\u0000FUNCTION\u0000sys.get_host_path\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_host_path(filename: string): string;",
       "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_ifaddrs(): { name: string; address?: string; mac?: string; up: boolean; running: boolean }[];",
       "sys\u0000FUNCTION\u0000sys.get_save_file\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_save_file(application_id: string, file_name: string): string;",
-      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string };",
+      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };",
       "sys\u0000FUNCTION\u0000sys.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function load(filename: string): Record<string | number, unknown>;",
       "sys\u0000FUNCTION\u0000sys.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false}]": "function load_buffer(path: string): Opaque<\"buffer\">;",
       "sys\u0000FUNCTION\u0000sys.load_buffer_async\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function load_buffer_async(path: string, status_callback: (self: unknown, request_id: unknown, result: unknown) => void): number;",
@@ -5315,7 +5315,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaMap<Hash, Hash>;",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -5423,7 +5423,7 @@
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean, recursive?: boolean): void;",
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function exists(url: SceneGameObjectAddress | Hash | Url): boolean;",
-      "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion",
+      "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4",
       "go\u0000FUNCTION\u0000go.get_id\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_id(path?: string): Hash;",
       "go\u0000FUNCTION\u0000go.get_parent\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;",
       "go\u0000FUNCTION\u0000go.get_position\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;",
@@ -5436,7 +5436,7 @@
       "go\u0000FUNCTION\u0000go.get_world_scale_uniform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;",
       "go\u0000FUNCTION\u0000go.get_world_transform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Matrix4\"],\"isOptional\":false}]": "function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;",
       "go\u0000FUNCTION\u0000go.property\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false}]->[]": "go.property(name: string, value: number): ScriptProperty<number>\ngo.property(name: string, value: boolean): ScriptProperty<boolean>\ngo.property(name: string, value: Hash): ScriptProperty<Hash>\ngo.property(name: string, value: Url): ScriptProperty<Url>\ngo.property(name: string, value: Vector3): ScriptProperty<Vector3>\ngo.property(name: string, value: Vector4): ScriptProperty<Vector4>\ngo.property(name: string, value: Quaternion): ScriptProperty<Quaternion>\ngo.property(name: string, value: string): ScriptProperty<string>",
-      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void",
+      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[], options?: GoPropertyOptions): void",
       "go\u0000FUNCTION\u0000go.set_parent\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;",
       "go\u0000FUNCTION\u0000go.set_position\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.set_rotation\u0000[{\"types\":[\"Quaternion\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;",
@@ -5714,7 +5714,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaMap<Hash, Opaque<\"node\">>;",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function get(node: Opaque<\"node\">, property: string | Hash | gui.Property, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;",
@@ -5761,7 +5761,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaMap<Hash, Opaque<\"node\">>;",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.NodeType, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -5968,7 +5968,7 @@
       "physics\u0000FUNCTION\u0000physics.get_joint_reaction_torque\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;",
       "physics\u0000FUNCTION\u0000physics.get_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;",
       "physics\u0000FUNCTION\u0000physics.get_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };",
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined;",
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined;",
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;",
       "physics\u0000FUNCTION\u0000physics.set_event_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_event_listener(callback?: (self: unknown, events: unknown) => void): void;",
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
@@ -6205,7 +6205,7 @@
       "sys\u0000FUNCTION\u0000sys.get_host_path\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_host_path(filename: string): string;",
       "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_ifaddrs(): { name: string; address?: string; mac?: string; up: boolean; running: boolean }[];",
       "sys\u0000FUNCTION\u0000sys.get_save_file\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_save_file(application_id: string, file_name: string): string;",
-      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string };",
+      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };",
       "sys\u0000FUNCTION\u0000sys.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function load(filename: string): Record<string | number, unknown>;",
       "sys\u0000FUNCTION\u0000sys.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false}]": "function load_buffer(path: string): Opaque<\"buffer\">;",
       "sys\u0000FUNCTION\u0000sys.load_buffer_async\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function load_buffer_async(path: string, status_callback: (self: unknown, request_id: unknown, result: unknown) => void): number;",
@@ -6420,7 +6420,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaMap<Hash, Hash>;",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -6522,7 +6522,7 @@
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean, recursive?: boolean): void;",
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function exists(url: SceneGameObjectAddress | Hash | Url): boolean;",
-      "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion",
+      "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4",
       "go\u0000FUNCTION\u0000go.get_id\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_id(path?: string): Hash;",
       "go\u0000FUNCTION\u0000go.get_parent\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;",
       "go\u0000FUNCTION\u0000go.get_position\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;",
@@ -6535,7 +6535,7 @@
       "go\u0000FUNCTION\u0000go.get_world_scale_uniform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;",
       "go\u0000FUNCTION\u0000go.get_world_transform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Matrix4\"],\"isOptional\":false}]": "function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;",
       "go\u0000FUNCTION\u0000go.property\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false}]->[]": "go.property(name: string, value: number): ScriptProperty<number>\ngo.property(name: string, value: boolean): ScriptProperty<boolean>\ngo.property(name: string, value: Hash): ScriptProperty<Hash>\ngo.property(name: string, value: Url): ScriptProperty<Url>\ngo.property(name: string, value: Vector3): ScriptProperty<Vector3>\ngo.property(name: string, value: Vector4): ScriptProperty<Vector4>\ngo.property(name: string, value: Quaternion): ScriptProperty<Quaternion>\ngo.property(name: string, value: string): ScriptProperty<string>",
-      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void",
+      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"resource\\\">\",\"Quaternion\",\"Url\",\"Vector3\",\"Vector4\",\"boolean\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[], options?: GoPropertyOptions): void",
       "go\u0000FUNCTION\u0000go.set_parent\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;",
       "go\u0000FUNCTION\u0000go.set_position\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.set_rotation\u0000[{\"types\":[\"Quaternion\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;",
@@ -6775,7 +6775,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaMap<Hash, Opaque<\"node\">>;",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function get(node: Opaque<\"node\">, property: string | Hash | gui.Property, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;",
@@ -6822,7 +6822,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaMap<Hash, Opaque<\"node\">>;",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.NodeType, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -7001,7 +7001,7 @@
       "physics\u0000FUNCTION\u0000physics.get_joint_reaction_torque\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;",
       "physics\u0000FUNCTION\u0000physics.get_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;",
       "physics\u0000FUNCTION\u0000physics.get_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };",
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined;",
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined;",
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;",
       "physics\u0000FUNCTION\u0000physics.set_event_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_event_listener(callback?: (self: unknown, events: unknown) => void): void;",
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
@@ -7235,7 +7235,7 @@
       "sys\u0000FUNCTION\u0000sys.get_host_path\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_host_path(filename: string): string;",
       "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_ifaddrs(): { name: string; address?: string; mac?: string; up: boolean; running: boolean }[];",
       "sys\u0000FUNCTION\u0000sys.get_save_file\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_save_file(application_id: string, file_name: string): string;",
-      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string };",
+      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };",
       "sys\u0000FUNCTION\u0000sys.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function load(filename: string): Record<string | number, unknown>;",
       "sys\u0000FUNCTION\u0000sys.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false}]": "function load_buffer(path: string): Opaque<\"buffer\">;",
       "sys\u0000FUNCTION\u0000sys.load_buffer_async\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function load_buffer_async(path: string, status_callback: (self: unknown, request_id: unknown, result: unknown) => void): number;",
@@ -9827,7 +9827,10 @@
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
-        "return:0:ids": { "type": "LuaTable<Hash, Hash>", "optional": false }
+        "return:0:ids": {
+          "type": "LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }",
+          "optional": false
+        }
       },
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -10169,7 +10172,10 @@
       },
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:clones": { "type": "LuaTable<Hash, Opaque<\"node\">>", "optional": false }
+        "return:0:clones": {
+          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false }
@@ -10360,7 +10366,10 @@
       },
       "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:clones": { "type": "LuaTable<Hash, Opaque<\"node\">>", "optional": false }
+        "return:0:clones": {
+          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -10919,13 +10928,13 @@
         "param:1:shape": { "type": "string | Hash", "optional": false },
         "return:0:table": { "type": "physics.shape_data", "optional": false }
       },
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:from": { "type": "Vector3", "optional": false },
         "param:1:to": { "type": "Vector3", "optional": false },
         "param:2:groups": { "type": "Hash[]", "optional": false },
         "param:3:options": { "type": "physics.raycast_options", "optional": true },
         "return:0:result": {
-          "type": "BuiltinMessages[\"ray_cast_response\"][] | BuiltinMessages[\"ray_cast_response\"] | undefined",
+          "type": "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
           "optional": false
         }
       },
@@ -14652,7 +14661,10 @@
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
-        "return:0:ids": { "type": "LuaTable<Hash, Hash>", "optional": false }
+        "return:0:ids": {
+          "type": "LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }",
+          "optional": false
+        }
       },
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -14994,7 +15006,10 @@
       },
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:clones": { "type": "LuaTable<Hash, Opaque<\"node\">>", "optional": false }
+        "return:0:clones": {
+          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false }
@@ -15185,7 +15200,10 @@
       },
       "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:clones": { "type": "LuaTable<Hash, Opaque<\"node\">>", "optional": false }
+        "return:0:clones": {
+          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -15744,13 +15762,13 @@
         "param:1:shape": { "type": "string | Hash", "optional": false },
         "return:0:table": { "type": "physics.shape_data", "optional": false }
       },
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:from": { "type": "Vector3", "optional": false },
         "param:1:to": { "type": "Vector3", "optional": false },
         "param:2:groups": { "type": "Hash[]", "optional": false },
         "param:3:options": { "type": "physics.raycast_options", "optional": true },
         "return:0:result": {
-          "type": "BuiltinMessages[\"ray_cast_response\"][] | BuiltinMessages[\"ray_cast_response\"] | undefined",
+          "type": "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
           "optional": false
         }
       },
@@ -18530,7 +18548,10 @@
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
-        "return:0:ids": { "type": "LuaMap<Hash, Hash>", "optional": false }
+        "return:0:ids": {
+          "type": "LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }",
+          "optional": false
+        }
       },
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -18882,7 +18903,10 @@
       },
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:clones": { "type": "LuaMap<Hash, Opaque<\"node\">>", "optional": false }
+        "return:0:clones": {
+          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false }
@@ -19069,7 +19093,10 @@
       },
       "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:clones": { "type": "LuaMap<Hash, Opaque<\"node\">>", "optional": false }
+        "return:0:clones": {
+          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -19668,13 +19695,13 @@
           "optional": false
         }
       },
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:from": { "type": "Vector3", "optional": false },
         "param:1:to": { "type": "Vector3", "optional": false },
         "param:2:groups": { "type": "Hash[]", "optional": false },
         "param:3:options": { "type": "{ all?: boolean }", "optional": true },
         "return:0:result": {
-          "type": "{ fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined",
+          "type": "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
           "optional": false
         }
       },
@@ -20549,7 +20576,7 @@
       "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:options": { "type": "{ ignore_secure?: boolean }", "optional": true },
         "return:0:sys_info": {
-          "type": "{ device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string }",
+          "type": "{ device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string }",
           "optional": false
         }
       },
@@ -22487,7 +22514,10 @@
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
-        "return:0:ids": { "type": "LuaMap<Hash, Hash>", "optional": false }
+        "return:0:ids": {
+          "type": "LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }",
+          "optional": false
+        }
       },
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -22828,7 +22858,10 @@
       },
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:clones": { "type": "LuaMap<Hash, Opaque<\"node\">>", "optional": false }
+        "return:0:clones": {
+          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false }
@@ -23015,7 +23048,10 @@
       },
       "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:clones": { "type": "LuaMap<Hash, Opaque<\"node\">>", "optional": false }
+        "return:0:clones": {
+          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -23614,13 +23650,13 @@
           "optional": false
         }
       },
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:from": { "type": "Vector3", "optional": false },
         "param:1:to": { "type": "Vector3", "optional": false },
         "param:2:groups": { "type": "Hash[]", "optional": false },
         "param:3:options": { "type": "{ all?: boolean }", "optional": true },
         "return:0:result": {
-          "type": "{ fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined",
+          "type": "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
           "optional": false
         }
       },
@@ -24495,7 +24531,7 @@
       "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:options": { "type": "{ ignore_secure?: boolean }", "optional": true },
         "return:0:sys_info": {
-          "type": "{ device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string }",
+          "type": "{ device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string }",
           "optional": false
         }
       },
@@ -25256,7 +25292,10 @@
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
-        "return:0:ids": { "type": "LuaMap<Hash, Hash>", "optional": false }
+        "return:0:ids": {
+          "type": "LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }",
+          "optional": false
+        }
       },
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -25546,7 +25585,10 @@
       },
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:clones": { "type": "LuaMap<Hash, Opaque<\"node\">>", "optional": false }
+        "return:0:clones": {
+          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false }
@@ -25733,7 +25775,10 @@
       },
       "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:clones": { "type": "LuaMap<Hash, Opaque<\"node\">>", "optional": false }
+        "return:0:clones": {
+          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -26258,13 +26303,13 @@
           "optional": false
         }
       },
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": {
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": {
         "param:0:from": { "type": "Vector3", "optional": false },
         "param:1:to": { "type": "Vector3", "optional": false },
         "param:2:groups": { "type": "Hash[]", "optional": false },
         "param:3:options": { "type": "{ all?: boolean }", "optional": true },
         "return:0:result": {
-          "type": "{ fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined",
+          "type": "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
           "optional": false
         }
       },
@@ -27125,7 +27170,7 @@
       "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:options": { "type": "{ ignore_secure?: boolean }", "optional": true },
         "return:0:sys_info": {
-          "type": "{ device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string }",
+          "type": "{ device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string }",
           "optional": false
         }
       },

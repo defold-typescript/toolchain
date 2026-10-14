@@ -86,7 +86,7 @@ declare global {
      * }
      * ```
      */
-    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash>;
+    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };
     /**
      * This returns status of the collection factory.
      * Calling this function when the factory is not marked as dynamic loading always returns COMP_COLLECTION_FACTORY_STATUS_LOADED.

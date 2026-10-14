@@ -27,10 +27,12 @@ import collectionproxy114Doc from "../fixtures/defold-1.14.0/collectionproxy_doc
   type: "json",
 };
 import factory114Doc from "../fixtures/defold-1.14.0/factory_doc.json" with { type: "json" };
+import graphics114Doc from "../fixtures/defold-1.14.0/graphics_doc.json" with { type: "json" };
 import http114Doc from "../fixtures/defold-1.14.0/http_doc.json" with { type: "json" };
 import image114Doc from "../fixtures/defold-1.14.0/image_doc.json" with { type: "json" };
 import render114Doc from "../fixtures/defold-1.14.0/render_doc.json" with { type: "json" };
 import sprite114Doc from "../fixtures/defold-1.14.0/sprite_doc.json" with { type: "json" };
+import sys114Doc from "../fixtures/defold-1.14.0/sys_doc.json" with { type: "json" };
 import window114Doc from "../fixtures/defold-1.14.0/window_doc.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
@@ -1262,7 +1264,7 @@ describe("emitDeclarations", () => {
   test("sys.get_sys_info options recover dash-list fields", () => {
     const module = parseDefoldApiDoc(sysDoc);
     expect(emitDeclarations(module)).toContain(
-      "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string };",
+      "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };",
     );
   });
 
@@ -3042,10 +3044,20 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ],
     });
     expect(out).toContain(
-      "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined;",
+      "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash }[] | undefined;",
     );
     expect(out).toContain(
       "function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;",
+    );
+    // Where the binding pin holds, the whole return is the single-or-list hit
+    // Physics_RayCast pushes, still without request_id.
+    expect(
+      emitDeclarations(
+        { ...module, functions: [requireFunction(module, "physics.raycast")] },
+        { bindingEvidence: new Set(["physics.raycast"]) },
+      ),
+    ).toContain(
+      'options?: { all?: boolean }): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined;',
     );
   });
 
@@ -4745,24 +4757,38 @@ describe("return-side optionality corrections", () => {
     return line.trim();
   }
 
-  test("sys.get_sys_info marks the platform-gated fields optional and leaves the rest required", () => {
+  const SYS_INFO_STRINGS = [
+    "device_model",
+    "manufacturer",
+    "system_name",
+    "system_version",
+    "api_version",
+    "language",
+    "device_language",
+    "territory",
+    "device_ident",
+    "user_agent",
+  ];
+
+  test("sys.get_sys_info emits every field required, the platform-gated ones included", () => {
     const line = signatureLine(emitDeclarations(sys), "function get_sys_info(");
-    for (const field of ["device_model", "manufacturer", "device_ident", "user_agent"]) {
-      expect(line).toContain(`${field}?: string`);
-    }
-    for (const field of [
-      "system_name",
-      "system_version",
-      "api_version",
-      "language",
-      "device_language",
-      "territory",
-    ]) {
+    for (const field of SYS_INFO_STRINGS) {
       expect(line).toContain(`${field}: string`);
       expect(line).not.toContain(`${field}?:`);
     }
     expect(line).toContain("gmt_offset: number");
     expect(line).not.toContain("gmt_offset?:");
+  });
+
+  test("the sys.sys_info struct keeps the members upstream marks optional required", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(sys114Doc));
+    const lines = out.split("\n");
+    const start = lines.indexOf("  interface sys_info {");
+    expect(start).toBeGreaterThan(-1);
+    const members = lines.slice(start, lines.indexOf("  }", start));
+    for (const field of SYS_INFO_STRINGS) {
+      expect(members).toContain(`    ${field}: string;`);
+    }
   });
 
   test("sys.get_ifaddrs marks address and mac optional and leaves the rest required", () => {
@@ -4788,9 +4814,9 @@ describe("return-side optionality corrections", () => {
   });
 
   test("a correction sets only presence, never the field's type", () => {
-    const line = signatureLine(emitDeclarations(sys), "function get_sys_info(");
-    expect(line).toContain("device_model?: string");
-    expect(line).not.toContain("device_model?: string | undefined");
+    const line = signatureLine(emitDeclarations(sys), "function get_ifaddrs(");
+    expect(line).toContain("address?: string");
+    expect(line).not.toContain("address?: string | undefined");
   });
 
   test("b2d.get_body carries the prose-documented nil alternative", () => {
@@ -4828,6 +4854,60 @@ describe("return-side optionality corrections", () => {
         "function create(",
       ),
     ).toEndWith("): Hash;");
+  });
+
+  describe("binding-pinned struct member additions", () => {
+    const LIMIT = "graphics.adapter_limits:member:max_storage_buffers_per_stage";
+    const FAMILY = "sys.interface_info:member:family";
+    const interfaceLines = (out: string, name: string): string[] => {
+      const lines = out.split("\n");
+      const start = lines.indexOf(`  interface ${name} {`);
+      if (start === -1) throw new Error(`no interface ${name}`);
+      return lines.slice(start, lines.indexOf("  }", start));
+    };
+
+    test("a member the binding pushes emits only where the evidence holds its key", () => {
+      const graphics = parseDefoldApiDoc(graphics114Doc);
+      expect(
+        interfaceLines(
+          emitDeclarations(graphics, { bindingEvidence: new Set([LIMIT]) }),
+          "adapter_limits",
+        ),
+      ).toContain("    max_storage_buffers_per_stage: number;");
+      expect(interfaceLines(emitDeclarations(graphics), "adapter_limits").join("\n")).not.toContain(
+        "max_storage_buffers_per_stage",
+      );
+    });
+
+    test("an optional addition keeps its literal type and its optionality", () => {
+      expect(
+        interfaceLines(
+          emitDeclarations(parseDefoldApiDoc(sys114Doc), { bindingEvidence: new Set([FAMILY]) }),
+          "interface_info",
+        ),
+      ).toContain('    family?: "ipv4" | "ipv6";');
+    });
+
+    test("an addition the struct already declares throws, evidence or not", () => {
+      const declared = {
+        ...graphics114Doc,
+        elements: graphics114Doc.elements.map((element) =>
+          element.name === "graphics.adapter_limits"
+            ? {
+                ...element,
+                members: [
+                  ...(element.members ?? []),
+                  { name: "max_storage_buffers_per_stage", doc: "", type: "integer" },
+                ],
+              }
+            : element,
+        ),
+      };
+      expect(() => emitDeclarations(parseDefoldApiDoc(declared))).toThrow(LIMIT);
+      expect(() =>
+        emitDeclarations(parseDefoldApiDoc(declared), { bindingEvidence: new Set([LIMIT]) }),
+      ).toThrow(LIMIT);
+    });
   });
 
   test("a nullable correction keeps each target's own base type", () => {

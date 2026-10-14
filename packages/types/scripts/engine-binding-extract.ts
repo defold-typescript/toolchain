@@ -2055,11 +2055,7 @@ export function cTokenKeys(source: string): string[] {
 
 const bindingFileCache = new Map<string, CFunction[]>();
 
-// The body tokens of the C function `cFunction` defined in `file` (relative to
-// the target's vendored `engine/` tree). A missing file or function, or a name
-// the file defines twice, throws: none of them is evidence either way.
-export function bindingFunctionTokens(targetId: string, file: string, cFunction: string): string[] {
-  const where = `${targetId}: ${file}:${cFunction}`;
+function bindingFileFunctions(targetId: string, file: string, where: string): CFunction[] {
   const cacheKey = `${targetId}\0${file}`;
   let functions = bindingFileCache.get(cacheKey);
   if (!functions) {
@@ -2073,6 +2069,23 @@ export function bindingFunctionTokens(targetId: string, file: string, cFunction:
     functions = loadSource(dir, file).functions;
     bindingFileCache.set(cacheKey, functions);
   }
+  return functions;
+}
+
+// Whether the vendored `file` defines `cFunction` at all. A missing file throws,
+// as for `bindingFunctionTokens`.
+export function bindingDefinesFunction(targetId: string, file: string, cFunction: string): boolean {
+  return bindingFileFunctions(targetId, file, `${targetId}: ${file}:${cFunction}`).some(
+    (fn) => fn.name === cFunction,
+  );
+}
+
+// The body tokens of the C function `cFunction` defined in `file` (relative to
+// the target's vendored `engine/` tree). A missing file or function, or a name
+// the file defines twice, throws: none of them is evidence either way.
+export function bindingFunctionTokens(targetId: string, file: string, cFunction: string): string[] {
+  const where = `${targetId}: ${file}:${cFunction}`;
+  const functions = bindingFileFunctions(targetId, file, where);
   const named = functions.filter((fn) => fn.name === cFunction);
   if (named.length === 0) throw new Error(`${where}: function is not defined in the file`);
   if (named.length > 1) {

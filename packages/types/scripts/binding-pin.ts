@@ -2,8 +2,11 @@ import {
   type BindingPin,
   RETURN_TYPE_CORRECTIONS,
   type ReturnTypeCorrection,
+  STRUCT_MEMBER_ADDITIONS,
+  type StructMemberAddition,
 } from "../src/emit-dts";
 import {
+  bindingDefinesFunction,
   bindingFunctionTokens,
   cTokenKeys,
   registeredConstantFqns,
@@ -43,10 +46,13 @@ export function bindingPinHolds(targetId: string, pin: BindingPin): boolean {
 }
 
 // The binding-pinned correction keys whose pin holds in the target's vendored
-// engine source; empty for a target with none (a ref-doc target).
+// engine source; empty for a target with none (a ref-doc target). A struct
+// member addition whose function the target does not define has no evidence
+// there: a release older than the function has neither the struct nor the push.
 export function bindingEvidenceFor(
   target: ApiTarget,
   entries: Iterable<readonly [string, ReturnTypeCorrection]> = RETURN_TYPE_CORRECTIONS,
+  additions: Iterable<readonly [string, StructMemberAddition]> = STRUCT_MEMBER_ADDITIONS,
 ): ReadonlySet<string> {
   const evidence = new Set<string>();
   if ((target.source ?? null) !== null) return evidence;
@@ -55,20 +61,29 @@ export function bindingEvidenceFor(
       evidence.add(key);
     }
   }
+  for (const [key, { binding }] of additions) {
+    if (
+      bindingDefinesFunction(target.id, binding.file, binding.cFunction) &&
+      bindingPinHolds(target.id, binding)
+    ) {
+      evidence.add(key);
+    }
+  }
   return evidence;
 }
 
 // What a target's own engine source decides for its emit: the constants it
-// registers and the binding-pinned return corrections whose pin holds there.
+// registers and the binding-pinned corrections whose pin holds there.
 // Every in-repo emit compared against a committed surface takes these, so a
 // fresh emit and `regen` can never disagree on either input.
 export function targetBindingOptions(
   target: ApiTarget,
   corrections?: Iterable<readonly [string, ReturnTypeCorrection]>,
+  additions?: Iterable<readonly [string, StructMemberAddition]>,
 ): Pick<GenerateOptions, "registeredConstants" | "bindingEvidence"> {
   const registeredConstants = registeredConstantFqns(target);
   return {
     ...(registeredConstants ? { registeredConstants } : {}),
-    bindingEvidence: bindingEvidenceFor(target, corrections),
+    bindingEvidence: bindingEvidenceFor(target, corrections, additions),
   };
 }

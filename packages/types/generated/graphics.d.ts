@@ -109,6 +109,10 @@ declare global {
        * Maximum bindable storage-buffer range in bytes.
        */
       max_storage_buffer_range: number;
+      /**
+       * Maximum number of storage buffers per shader stage.
+       */
+      max_storage_buffers_per_stage: number;
     }
     type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_COLOR1_BIT | typeof graphics.BUFFER_TYPE_COLOR2_BIT | typeof graphics.BUFFER_TYPE_COLOR3_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
     type State = typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_STENCIL_TEST | typeof graphics.STATE_BLEND | typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_POLYGON_OFFSET_FILL;

@@ -8387,9 +8387,10 @@ snippet — see [Verify against the real API surface](#verify-against-the-real-a
 
 A `.collectionfactory` component points at a `.collection`. Unlike `factory`,
 `collectionfactory.create(url, position?, rotation?, properties?, scale?)` returns
-a `LuaMap<Hash, Hash>` mapping each prototype id in the collection to the runtime
-id it was spawned as. Read one spawned object out of the map with
-`.get(prototypeId)`, keyed by the `/`-prefixed path the collection gives it.
+a `LuaTable<Hash, Hash>` mapping each prototype id in the collection to the runtime
+id it was spawned as. Read one spawned object out of the table with
+`.get(prototypeId)`, passing the hash or the `/`-prefixed path string the
+collection gives it; the engine hashes a string key for you.
 
 ```ts
 import { defineScript } from "@defold-typescript/types";
@@ -8397,8 +8398,8 @@ import { defineScript } from "@defold-typescript/types";
 export default defineScript({
   init() {
     const ids = collectionfactory.create("#levelfactory");
-    // Read one spawned object out of the map by its prototype id.
-    const player = ids.get(hash("/player"));
+    // Read one spawned object out of the table by its prototype path.
+    const player = ids.get("/player");
     return { player };
   },
 });
@@ -12410,7 +12411,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### collectionfactory
 
-- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash>;
+- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };
 - function get_status(url: string | Hash | Url): collectionfactory.STATUS;
 - function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
 - function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
@@ -12511,7 +12512,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
 - go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K] [through 1.13.1] [signature transition]
 - go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]
-- go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion
+- go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4
 - function get_id(path?: string): Hash;
 - function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;
 - function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;
@@ -12533,7 +12534,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.property(name: string, value: string): ScriptProperty<string>
 - go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void [through 1.13.1] [signature transition]
 - go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
-- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void
+- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[], options?: GoPropertyOptions): void
 - function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
 - function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
 - function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;
@@ -12787,7 +12788,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type TEXTURE_USAGE_FLAG = typeof graphics.TEXTURE_USAGE_FLAG_COLOR | typeof graphics.TEXTURE_USAGE_FLAG_INPUT | typeof graphics.TEXTURE_USAGE_FLAG_MEMORYLESS | typeof graphics.TEXTURE_USAGE_FLAG_SAMPLE | typeof graphics.TEXTURE_USAGE_FLAG_STORAGE [since 1.13.2]
 - type TEXTURE_WRAP = typeof graphics.TEXTURE_WRAP_CLAMP_TO_BORDER | typeof graphics.TEXTURE_WRAP_CLAMP_TO_EDGE | typeof graphics.TEXTURE_WRAP_MIRRORED_REPEAT | typeof graphics.TEXTURE_WRAP_REPEAT [since 1.13.2]
 - interface adapter_info { family: string; version_major: number; version_minor: number; limits: graphics.adapter_limits; extensions: string[]; features: graphics.CONTEXT_FEATURE[]; } [since 1.13.2]
-- interface adapter_limits { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number; } [since 1.13.2]
+- interface adapter_limits { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number; max_storage_buffers_per_stage: number; } [since 1.13.2]
 
 ### gui
 
@@ -12796,7 +12797,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function cancel_animations(node: Opaque<"node">, property?: string | Hash | gui.PROP): void;
 - function cancel_flipbook(node: Opaque<"node">): void;
 - function clone(node: Opaque<"node">): Opaque<"node">;
-- function clone_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">>;
+- function clone_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
 - function delete_node(node: Opaque<"node">): void;
 - function delete_texture(texture: string | Hash): void;
 - function get(node: Opaque<"node">, property: string | Hash | gui.PROP, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;
@@ -12844,7 +12845,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_text(node: Opaque<"node">): string;
 - function get_texture(node: Opaque<"node">): Hash;
 - function get_tracking(node: Opaque<"node">): number;
-- function get_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">>;
+- function get_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
 - function get_type(node: Opaque<"node">): LuaMultiReturn<[gui.TYPE, number | undefined]>;
 - function get_visible(node: Opaque<"node">): boolean;
 - function get_width(): number;
@@ -13241,7 +13242,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;
 - function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;
 - function get_shape(url: string | Hash | Url, shape: string | Hash): physics.shape_data;
-- function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.raycast_options): BuiltinMessages["ray_cast_response"][] | BuiltinMessages["ray_cast_response"] | undefined;
+- function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.raycast_options): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined;
 - function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;
 - function set_event_listener(callback?: (self: unknown, events: physics.event[]) => void): void;
 - function set_gravity(gravity: Vector3): void;
@@ -13607,10 +13608,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type REQUEST_STATUS = typeof sys.REQUEST_STATUS_ERROR_IO_ERROR | typeof sys.REQUEST_STATUS_ERROR_NOT_FOUND | typeof sys.REQUEST_STATUS_FINISHED [since 1.13.2]
 - interface application_info { installed: boolean; } [since 1.13.2]
 - interface engine_info { version: string; version_sha1: string; is_debug: boolean; } [since 1.13.2]
-- interface interface_info { name: string; address?: string; mac?: string; up: boolean; running: boolean; } [since 1.13.2]
+- interface interface_info { name: string; address?: string; mac?: string; up: boolean; running: boolean; family?: "ipv4" | "ipv6"; } [since 1.13.2]
 - interface load_buffer_result { status: sys.REQUEST_STATUS; buffer?: Opaque<"buffer">; } [since 1.13.2]
 - interface open_url_attributes { target?: string; } [since 1.13.2]
-- interface sys_info { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string; } [since 1.13.2]
+- interface sys_info { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string; } [since 1.13.2]
 - interface sys_info_options { ignore_secure?: boolean; } [since 1.13.2]
 
 ### tilemap

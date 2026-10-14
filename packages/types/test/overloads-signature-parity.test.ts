@@ -185,14 +185,24 @@ function renderParams(
   parameters: ts.NodeArray<ts.ParameterDeclaration>,
   sourceFile: ts.SourceFile,
 ): string {
-  return parameters.map((p) => p.getText(sourceFile)).join(", ");
+  return parameters
+    .map((p) =>
+      p.type === undefined
+        ? p.getText(sourceFile)
+        : `${p.dotDotDotToken ? "..." : ""}${p.name.getText(sourceFile)}${p.questionToken ? "?" : ""}: ${renderType(p.type, sourceFile)}`,
+    )
+    .join(", ");
 }
 
 // A curried overload returns a function type whose source span wraps across
 // lines and keeps a trailing comma, so rebuild it from its children instead of
-// reusing `getText()` verbatim.
+// reusing `getText()` verbatim. A union wrapped one member per line opens with a
+// `|` that is layout, not type, so it is rebuilt from its members too.
 function renderType(type: ts.TypeNode | undefined, sourceFile: ts.SourceFile): string {
   if (!type) return "void";
+  if (ts.isUnionTypeNode(type)) {
+    return type.types.map((member) => renderType(member, sourceFile)).join(" | ");
+  }
   if (ts.isFunctionTypeNode(type)) {
     return `${renderTypeParams(type.typeParameters, sourceFile)}(${renderParams(
       type.parameters,

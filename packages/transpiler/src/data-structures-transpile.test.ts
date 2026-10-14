@@ -59,6 +59,18 @@ describe("data-structures transpile", () => {
     expect(result.lua).toMatchSnapshot();
   });
 
+  test("lowers a string-keyed read on a hash-keyed id table to an index read", () => {
+    const source = [
+      'const ids = collectionfactory.create("#factory");',
+      'export const spawned = ids.get("/go");',
+      'export const root = gui.get_tree(gui.get_node("root")).get("box");',
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchSnapshot();
+  });
+
   test("rejects a regex match with the documented diagnostic", () => {
     const source = ['export const hit = "x".match(/b/);', ""].join("\n");
     const result = transpile(source);
