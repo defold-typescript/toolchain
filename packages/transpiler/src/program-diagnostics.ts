@@ -3,6 +3,7 @@ import * as tstl from "typescript-to-lua";
 import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
+import { physicsEventGuardLoweringPlugin } from "./physics-event-guard-lowering";
 import { timersLoweringPlugin } from "./timers-lowering";
 import { typeApplicationErasurePlugin } from "./type-application-erasure";
 import { windowEventGuardLoweringPlugin } from "./window-event-guard-lowering";
@@ -13,6 +14,7 @@ const LUA_PLUGINS: tstl.Plugin[] = [
   lifecycleErasurePlugin,
   messageGuardLoweringPlugin,
   windowEventGuardLoweringPlugin,
+  physicsEventGuardLoweringPlugin,
   messageDispatchLoweringPlugin,
   timersLoweringPlugin,
   typeApplicationErasurePlugin,

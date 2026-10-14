@@ -5,6 +5,7 @@ import "./src/custom-messages";
 import "./src/msg-overloads";
 import "./src/message-guard";
 import "./src/window-event-guard";
+import "./src/physics-event-guard";
 import "./src/message-dispatch";
 import "./src/scene-addresses";
 import "./src/engine-globals";

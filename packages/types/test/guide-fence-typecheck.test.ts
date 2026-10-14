@@ -51,6 +51,12 @@ const SELECTED: readonly FenceSelection[] = [
     kind: "script",
   },
   {
+    page: "typescript-gotchas.md",
+    lead: "**Typed alternative.** Use the provided `isPhysicsEvent` guard.",
+    nth: 0,
+    kind: "script",
+  },
+  {
     page: "typescript-vs-lua.md",
     lead: "### Engine indexes use Defold's base",
     nth: 0,
