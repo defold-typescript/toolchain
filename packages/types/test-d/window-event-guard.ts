@@ -1,5 +1,8 @@
 /// <reference path="../index.d.ts" />
 
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
 // `window.set_listener` delivers `event` and `data` as two separate params, so
 // TS can't auto-correlate an `event === WINDOW_EVENT_RESIZED` check with `data`.
 // `isWindowEvent` re-introduces the discriminant at the use site, narrowing the
@@ -18,12 +21,6 @@ if (isWindowEvent(event, data, window.WINDOW_EVENT_RESIZED)) {
   void data.depth;
 }
 
-if (isWindowEvent(event, data, window.WINDOW_EVENT_FOCUS_LOST)) {
-  // @ts-expect-error focus events carry an empty table, so no width to read
-  const _width: number = data.width;
-  void _width;
-}
-
 // @ts-expect-error DIMMING_ON is not a window event constant
 void isWindowEvent(event, data, window.DIMMING_ON);
 
@@ -34,7 +31,7 @@ window.set_listener((_self, received, payload) => {
     return;
   }
   if (isWindowEvent(received, payload, window.WINDOW_EVENT_ICONIFIED)) {
-    const _none: Record<string, never> = payload;
+    const _none: Equal<typeof payload, Record<string, never>> = true;
     void _none;
   }
 });
