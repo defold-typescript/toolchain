@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { type ApiTarget, loadApiTargets } from "./regen";
 import { bindingsDir } from "./sync-engine-bindings";
@@ -496,16 +496,18 @@ function listCpp(dir: string): string[] {
     .sort();
 }
 
+function loadSource(dir: string, file: string): SourceFile {
+  const tokens = preprocess(readFileSync(join(dir, file), "utf8"));
+  return {
+    file,
+    tokens,
+    functions: findFunctions(file, tokens),
+    tables: findTables(file, tokens),
+  };
+}
+
 function loadSources(dir: string): SourceFile[] {
-  return listCpp(dir).map((file) => {
-    const tokens = preprocess(readFileSync(join(dir, file), "utf8"));
-    return {
-      file,
-      tokens,
-      functions: findFunctions(file, tokens),
-      tables: findTables(file, tokens),
-    };
-  });
+  return listCpp(dir).map((file) => loadSource(dir, file));
 }
 
 class Index {
@@ -2039,6 +2041,44 @@ export function readBindingsForTarget(targetId: string): BindingExtraction {
   if (!target) throw new Error(`unknown API target ${targetId}`);
   if (target.source !== null) throw new Error(`target ${targetId} has no vendored engine bindings`);
   return extractBindings(join(bindingsDir(target), "engine"));
+}
+
+function tokenKey(token: Token): string {
+  return token.kind === "string" ? `"${token.value ?? ""}` : token.text;
+}
+
+// Snippet text tokenized and comment-stripped exactly as a vendored source is,
+// so comparing it with `bindingFunctionTokens` never turns on whitespace.
+export function cTokenKeys(source: string): string[] {
+  return preprocess(source).map(tokenKey);
+}
+
+const bindingFileCache = new Map<string, CFunction[]>();
+
+// The body tokens of the C function `cFunction` defined in `file` (relative to
+// the target's vendored `engine/` tree). A missing file or function, or a name
+// the file defines twice, throws: none of them is evidence either way.
+export function bindingFunctionTokens(targetId: string, file: string, cFunction: string): string[] {
+  const where = `${targetId}: ${file}:${cFunction}`;
+  const cacheKey = `${targetId}\0${file}`;
+  let functions = bindingFileCache.get(cacheKey);
+  if (!functions) {
+    const target = loadApiTargets().find((t) => t.id === targetId);
+    if (!target) throw new Error(`${where}: unknown API target`);
+    if ((target.source ?? null) !== null) {
+      throw new Error(`${where}: target has no vendored engine bindings`);
+    }
+    const dir = join(bindingsDir(target), "engine");
+    if (!existsSync(join(dir, file))) throw new Error(`${where}: file is not vendored`);
+    functions = loadSource(dir, file).functions;
+    bindingFileCache.set(cacheKey, functions);
+  }
+  const named = functions.filter((fn) => fn.name === cFunction);
+  if (named.length === 0) throw new Error(`${where}: function is not defined in the file`);
+  if (named.length > 1) {
+    throw new Error(`${where}: function name is ambiguous (${named.length} definitions)`);
+  }
+  return (named[0] as CFunction).body.map(tokenKey);
 }
 
 const registeredConstantCache = new Map<string, ReadonlySet<string>>();

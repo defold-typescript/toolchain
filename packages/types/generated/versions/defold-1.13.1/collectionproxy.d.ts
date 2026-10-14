@@ -86,7 +86,7 @@ declare global {
      * msg.post("/go#collectionproxy", "enable");
      * ```
      */
-    function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number]>;
+    function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;
   }
 }
 

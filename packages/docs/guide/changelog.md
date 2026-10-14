@@ -14,11 +14,17 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **Breaking: [two callback payloads](./typescript-gotchas.md) and `render.render_target`'s table are typed.**
+> - **Breaking: [five engine returns can be `undefined`](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil)**, so narrow them before use.
 
 ### Breaking
 
 - **[Two callback payloads](./typescript-gotchas.md#windowset_listener-hands-event-and-data-as-separate-params) are typed structs on Defold 1.13.2 and newer targets**: a `window.set_listener` callback receives `data` as `window.event_data`, and a `collectionproxy.load` callback receives `message` as `collectionproxy.load_data`. A callback that annotates either parameter as a record, or reads a key the engine never sends, stops compiling; drop the annotation or name the struct.
 - **`render.render_target` checks its table on Defold 1.13.2 and newer targets**, in both arities: each buffer needs a `format`, `width` and `height`, and a format constant other than depth or stencil needs [a nil check](./typescript-gotchas.md#texture-format-constants-can-be-undefined) first. To build the table ahead of the call, type it as `render.RenderTargetParams`, which every pinned target declares, as an open record on older pins.
+- **Five engine returns can be `undefined`, as the engine source shows**: `factory.create` when the spawn fails, `tilemap.get_tile`, `tilemap.get_tile_info` and `tilemap.get_tiles` for an unknown layer (the first two also for a cell out of range), and the second value of `collectionproxy.set_collection` when the change succeeds. Code that uses the result directly stops compiling; [narrow it](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil) with `!== undefined` first.
+
+### Fixed
+
+- **`image.get_astc_header` returns its header without `undefined`**: the engine raises on invalid data instead of returning nil.
 
 ## v0.50.1
 

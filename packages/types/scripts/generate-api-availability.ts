@@ -108,7 +108,11 @@ export function identityCorrections(): IdentityCorrections {
         element,
         {
           pins: correctionPins(correction),
-          replaces: union(correction.ts),
+          ...(correction.ts !== undefined
+            ? { replaces: union(correction.ts) }
+            : correction.nullable
+              ? { adds: ["nil"] }
+              : { removes: ["nil"] }),
           ...(correction.slot === undefined ? {} : { slot: correction.slot }),
         },
       ]),

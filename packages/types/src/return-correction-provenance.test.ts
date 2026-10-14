@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import { bindingEvidenceFor } from "../scripts/binding-pin";
 import { EXTENSION_GOLDEN_MANIFEST } from "../scripts/extension-goldens";
 import { loadApiTargets, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST } from "../scripts/regen";
+import { vendoredTargets } from "../scripts/sync-engine-bindings";
 import {
   MISFILED_DECLARATIONS,
   RETURN_FIELD_OPTIONALITY_CORRECTIONS,
@@ -273,6 +275,7 @@ describe("per-target provenance — mixed-version inputs", () => {
         sightedIn: ["new", "old"],
         neededBy: ["old"],
         resolvedIn: ["new"],
+        unboundIn: [],
         driftedIn: [],
         typeDrift: [],
       },
@@ -287,6 +290,7 @@ describe("per-target provenance — mixed-version inputs", () => {
         sightedIn: ["proseGone"],
         neededBy: [],
         resolvedIn: ["proseGone"],
+        unboundIn: [],
         driftedIn: [],
         typeDrift: [],
       },
@@ -301,6 +305,7 @@ describe("per-target provenance — mixed-version inputs", () => {
         sightedIn: ["retyped"],
         neededBy: [],
         resolvedIn: [],
+        unboundIn: [],
         driftedIn: ["retyped"],
         typeDrift: ["retyped: pinned b2Body, found b2BodyId"],
       },
@@ -315,6 +320,7 @@ describe("per-target provenance — mixed-version inputs", () => {
         sightedIn: ["retypedNew"],
         neededBy: [],
         resolvedIn: [],
+        unboundIn: [],
         driftedIn: ["retypedNew"],
         typeDrift: ["retypedNew: pinned b2Body, found b2BodyId"],
       },
@@ -329,6 +335,7 @@ describe("per-target provenance — mixed-version inputs", () => {
         sightedIn: ["retypedNil"],
         neededBy: [],
         resolvedIn: [],
+        unboundIn: [],
         driftedIn: ["retypedNil"],
         typeDrift: ["retypedNil: pinned b2Body, found b2BodyId|nil"],
       },
@@ -343,6 +350,7 @@ describe("per-target provenance — mixed-version inputs", () => {
         sightedIn: ["nilFirst"],
         neededBy: [],
         resolvedIn: ["nilFirst"],
+        unboundIn: [],
         driftedIn: [],
         typeDrift: [],
       },
@@ -360,6 +368,7 @@ describe("per-target provenance — mixed-version inputs", () => {
         sightedIn: ["mixed"],
         neededBy: [],
         resolvedIn: [],
+        unboundIn: [],
         driftedIn: ["mixed"],
         typeDrift: ["mixed: pinned b2Body, found b2BodyId"],
       },
@@ -397,6 +406,7 @@ describe("per-target provenance — mixed-version inputs", () => {
         sightedIn: [],
         neededBy: [],
         resolvedIn: [],
+        unboundIn: [],
         driftedIn: [],
         typeDrift: [],
       },
@@ -436,6 +446,114 @@ describe("slot-scoped return correction provenance", () => {
   });
 });
 
+describe("binding-pinned return correction provenance", () => {
+  const CREATE = "factory.create";
+  const BINDING = {
+    file: "gamesys/src/gamesys/scripts/script_factory.cpp",
+    cFunction: "FactoryComp_Create",
+    contains: "lua_pushnil(L);",
+  };
+  const entries: readonly [string, ReturnTypeCorrection][] = [
+    [
+      CREATE,
+      {
+        nullable: true,
+        upstream: ["hash"],
+        reason: "script_factory.cpp:FactoryComp_Create pushes nil when the spawn fails",
+        binding: BINDING,
+      },
+    ],
+  ];
+  const holds = new Map([["bound", new Set([CREATE])]]);
+
+  function create(types: readonly string[]): FakeElement {
+    return {
+      name: CREATE,
+      returnvalues: [{ name: "id", types, doc: "the id of the spawned game object" }],
+    };
+  }
+
+  test("needed where the pin holds and the tokens match, whatever the prose says", () => {
+    const bound = surface("bound", "factory", [create(["hash"])]);
+    expect(returnCorrectionProvenance(entries, [bound], holds)).toEqual([
+      {
+        key: CREATE,
+        sightedIn: ["bound"],
+        neededBy: ["bound"],
+        resolvedIn: [],
+        unboundIn: [],
+        driftedIn: [],
+        typeDrift: [],
+      },
+    ]);
+  });
+
+  test("drift where the tokens no longer match the pin", () => {
+    const retyped = surface("bound", "factory", [create(["number"])]);
+    expect(returnCorrectionProvenance(entries, [retyped], holds)[0]).toMatchObject({
+      neededBy: [],
+      driftedIn: ["bound"],
+      typeDrift: ["bound: pinned hash, found number"],
+    });
+  });
+
+  test("unbound where the target's binding does not show the pin", () => {
+    const bound = surface("bound", "factory", [create(["hash"])]);
+    const unpinned = surface("unpinned", "factory", [create(["hash"])]);
+    const evidence = new Map([...holds, ["unpinned", new Set<string>()]]);
+    expect(returnCorrectionProvenance(entries, [bound, unpinned], evidence)[0]).toMatchObject({
+      neededBy: ["bound"],
+      resolvedIn: [],
+      unboundIn: ["unpinned"],
+    });
+  });
+
+  test("a target with no evidence at all is unbound, never needed", () => {
+    const bound = surface("bound", "factory", [create(["hash"])]);
+    expect(returnCorrectionProvenance(entries, [bound])[0]).toMatchObject({
+      neededBy: [],
+      unboundIn: ["bound"],
+    });
+  });
+
+  test("resolved where upstream already declares the nil", () => {
+    const fixed = surface("bound", "factory", [create(["hash", "nil"])]);
+    expect(returnCorrectionProvenance(entries, [fixed], holds)[0]).toMatchObject({
+      neededBy: [],
+      resolvedIn: ["bound"],
+      unboundIn: [],
+    });
+  });
+
+  test("a non-nullable correction resolves once upstream drops the nil", () => {
+    const HEADER = "image.get_astc_header";
+    const header: readonly [string, ReturnTypeCorrection][] = [
+      [
+        HEADER,
+        {
+          nullable: false,
+          upstream: ["image.astc_header", "nil"],
+          reason: "raises instead of returning nil",
+          binding: {
+            file: "gamesys/src/gamesys/scripts/script_image.cpp",
+            cFunction: "Image_GetAstcHeader",
+            lacks: "lua_pushnil(L);",
+          },
+        },
+      ],
+    ];
+    const evidence = new Map([["t", new Set([HEADER])]]);
+    const returning = (types: readonly string[]) =>
+      surface("t", "image", [{ name: HEADER, returnvalues: [{ name: "header", types }] }]);
+    expect(
+      returnCorrectionProvenance(header, [returning(["image.astc_header", "nil"])], evidence)[0],
+    ).toMatchObject({ neededBy: ["t"], resolvedIn: [] });
+    expect(
+      returnCorrectionProvenance(header, [returning(["image.astc_header"])], evidence)[0],
+    ).toMatchObject({ neededBy: [], resolvedIn: ["t"] });
+  });
+});
+
 describe("misfiled declaration provenance", () => {
   const misfiled = {
     name: "b2d.body.get_world_center",
@@ -470,6 +588,12 @@ const SURFACES = retainedSurfaces(
   MODULE_MANIFEST,
   VERSIONED_MODULE_MANIFEST,
   EXTENSION_GOLDEN_MANIFEST,
+);
+
+// The binding-pinned keys whose pin holds in each vendored target's engine
+// source; a surface absent here shows no binding evidence.
+const BINDING_EVIDENCE = new Map(
+  vendoredTargets().map((target) => [target.id, bindingEvidenceFor(target)] as const),
 );
 
 // Corrections some retained target already documents correctly while an older
@@ -596,7 +720,7 @@ describe("return field-optionality correction provenance", () => {
 
 describe("return-type correction provenance", () => {
   const entries = [...RETURN_TYPE_CORRECTIONS.entries()];
-  const provenance = returnCorrectionProvenance(entries, SURFACES);
+  const provenance = returnCorrectionProvenance(entries, SURFACES, BINDING_EVIDENCE);
 
   test("the correction set is non-empty and every entry resolves to a real return", () => {
     expect(entries.length).toBeGreaterThan(0);
@@ -636,9 +760,10 @@ describe("return-type correction provenance", () => {
         (entry) =>
           entry.sightedIn.length > 0 && entry.neededBy.length === 0 && entry.driftedIn.length === 0,
       )
-      .map(
-        (entry) =>
-          `${entry.key}: every retained target (${entry.resolvedIn.join(", ")}) now documents it — delete the correction`,
+      .map((entry) =>
+        entry.unboundIn.length > 0
+          ? `${entry.key}: its binding pin holds on no retained target (${entry.unboundIn.join(", ")}) — re-verify against the binding`
+          : `${entry.key}: every retained target (${entry.resolvedIn.join(", ")}) now documents it — delete the correction`,
       );
     expect(redundant).toEqual([]);
   });

@@ -77,7 +77,9 @@ const LEGITIMATE_FORMS = [
   'msg.post(someString, "x");',
   'msg.post(msg.url("#sprite"), "x");',
   'const spawned = factory.create("#factory");',
-  'msg.post(spawned, "x");',
+  "if (spawned !== undefined) {",
+  '  msg.post(spawned, "x");',
+  "}",
   "",
 ].join("\n");
 

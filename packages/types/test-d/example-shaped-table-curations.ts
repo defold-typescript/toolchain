@@ -11,15 +11,17 @@ for (const _mount of liveupdate.get_mounts()) {
 }
 
 const _tile = tilemap.get_tile_info("/level.tilemap", "layer1", 0, 0);
-const _tileIndex: number = _tile.index;
-const _tileHFlip: boolean = _tile.h_flip;
-const _tileVFlip: boolean = _tile.v_flip;
-const _tileRotate90: boolean = _tile.rotate_90;
-void _tileIndex;
-void _tileHFlip;
-void _tileVFlip;
-void _tileRotate90;
+if (_tile !== undefined) {
+  const _tileIndex: number = _tile.index;
+  const _tileHFlip: boolean = _tile.h_flip;
+  const _tileVFlip: boolean = _tile.v_flip;
+  const _tileRotate90: boolean = _tile.rotate_90;
+  void _tileIndex;
+  void _tileHFlip;
+  void _tileVFlip;
+  void _tileRotate90;
 
-// @ts-expect-error tile index is a number, not a string
-const _badTileIndex: string = _tile.index;
-void _badTileIndex;
+  // @ts-expect-error tile index is a number, not a string
+  const _badTileIndex: string = _tile.index;
+  void _badTileIndex;
+}

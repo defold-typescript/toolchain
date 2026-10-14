@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import {
   type ApiTarget,
+  type GenerateOptions,
   generateBuiltinMessagesDeclaration,
   generateModuleDeclaration,
   generateVersionIndex,
@@ -91,6 +92,11 @@ export interface BuildVersionedSurfaceOptions {
   // Defaults to reading them from the types package on disk; a caller with no
   // filesystem (a Worker) supplies the bytes and gets an identical file map.
   readonly augmentations?: readonly VersionedSurfaceFile[];
+  // What the target's own engine source decides for its emit
+  // (`targetBindingOptions`). Only an in-repo caller rebuilding a vendored
+  // target's committed surface passes it; a published install vendors no engine
+  // source, and the ref-doc targets it materializes have none to read.
+  readonly emitOptions?: Pick<GenerateOptions, "registeredConstants" | "bindingEvidence">;
 }
 
 export interface MaterializeVersionedSurfaceOptions extends BuildVersionedSurfaceOptions {
@@ -148,7 +154,7 @@ export async function buildVersionedSurfaceFiles(
     (surface) =>
       surface.map((entry) => ({
         path: entry.outFile,
-        contents: generateModuleDeclaration(entry, { surface }).contents,
+        contents: generateModuleDeclaration(entry, { ...opts.emitOptions, surface }).contents,
       })),
   );
 
