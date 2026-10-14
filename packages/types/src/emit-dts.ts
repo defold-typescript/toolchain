@@ -2924,8 +2924,18 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
 // `http.request`'s response fields are the `<ul>` under "The response data.
 // Contains the fields:"; each is conditional ("if not saved on disc", "only if
 // option report_progress is true") except `status`, and `headers` is the same
-// string map the request sends. Its typed form is the same signature: the typed
-// reference names `http.response`, which the runtime surface withholds.
+// string map the request sends. The prose omits two fields the engine sets:
+// `url`, which every final response carries (script_http_util.h), and
+// `bytes_sent`, which a report_progress event carries beside `bytes_received`,
+// `bytes_total` and `url` (http_ddf.proto `HttpRequestProgress`). That event has
+// no `status`; typing it as its own shape needs a per-target authored overload,
+// so `status` stays required and the slot's `note` says how to tell the two
+// apart. Its typed form is the same signature: the typed reference names
+// `http.response`, which the runtime surface withholds.
+// `model.play_anim`'s completion callback receives self, the message id and the
+// message only: script_model.cpp calls it with `PCall(L, 3, 0)`, so both forms
+// drop the `sender` every reference lists and type the message as the typed
+// reference's `model_animation_done`.
 // `sprite.play_flipbook`'s message is the "Information about the completion"
 // list. Its typed form is the same signature: the typed reference names the
 // built-in `animation_done` message, which has this shape, and the inline form
@@ -2940,11 +2950,14 @@ export interface CallbackSignatureCuration {
   readonly untyped: string;
   /** Emitted for a typed `fun(...)` token; `null` emits the reference's own signature. */
   readonly typed: string | null;
+  /** Appended to the parameter's doc, for what the signature cannot express. */
+  readonly note?: string;
 }
 
-const onBothForms = (signature: string): CallbackSignatureCuration => ({
+const onBothForms = (signature: string, note?: string): CallbackSignatureCuration => ({
   untyped: signature,
   typed: signature,
+  ...(note === undefined ? {} : { note }),
 });
 
 export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, CallbackSignatureCuration> = new Map<
@@ -2965,7 +2978,14 @@ export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, CallbackSignature
   [
     "http.request:param:callback",
     onBothForms(
-      "(self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
+      "(self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
+      "With `report_progress` set, the callback also receives progress events carrying `bytes_sent`, `bytes_received`, `bytes_total` and `url` but no `status`; `response.bytes_received !== undefined` marks a progress event, since a final response never carries it.",
+    ),
+  ],
+  [
+    "model.play_anim:param:complete_function",
+    onBothForms(
+      '(self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void',
     ),
   ],
   [
@@ -5330,13 +5350,18 @@ function functionDocLines(
   baseNotes: IndexBaseNoteResolver,
   indent: string = INDENT,
 ): string[] {
-  const params = fn.parameters.map((p, index) => ({
-    name: emittedParamName(p, index),
-    doc: appendNotes(
-      translateProseFences(htmlToDocText(p.doc), fn.name, translations),
-      baseNotes(fn.name, "param", p.name),
-    ),
-  }));
+  const params = fn.parameters.map((p, index) => {
+    const curationNote = CALLBACK_SIGNATURE_CURATIONS.get(
+      tableSlotKey(fn.name, "param", p.name),
+    )?.note;
+    return {
+      name: emittedParamName(p, index),
+      doc: appendNotes(translateProseFences(htmlToDocText(p.doc), fn.name, translations), [
+        ...baseNotes(fn.name, "param", p.name),
+        ...(curationNote === undefined ? [] : [curationNote]),
+      ]),
+    };
+  });
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
   const notedReturns =
     multiReturnDoc(fn, translations, baseNotes) ?? overrideReturnDoc(fn, baseNotes);

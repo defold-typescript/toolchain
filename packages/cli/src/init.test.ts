@@ -1943,7 +1943,7 @@ describe("runInit (.vscode script snippets)", () => {
     expect(readFileSync(path.join(cwd, SNIPPETS_REL), "utf8")).toBe(garbage);
   });
 
-  test("script snippets emit every lifecycle hook; gui omits fixed/late_update; render omits only on_input", () => {
+  test("script snippets emit every lifecycle hook; gui omits fixed/late_update; render emits only the hooks the engine calls", () => {
     runInit({ cwd });
     const snippets = readSnippets();
 
@@ -1967,14 +1967,15 @@ describe("runInit (.vscode script snippets)", () => {
       expect(body).toContain("on_input(");
     }
 
+    const renderOmitted = new Set(["on_input", "final", "fixed_update", "late_update"]);
     for (const key of [
       "Defold render script (inferred self)",
       "Defold render script (typed self)",
     ]) {
       const body = snippetOf(snippets, key).body.join("\n");
       for (const hook of SCRIPT_HOOK_NAMES) {
-        if (hook === "on_input") {
-          expect(body).not.toContain("on_input");
+        if (renderOmitted.has(hook)) {
+          expect(body).not.toContain(`${hook}(`);
         } else {
           expect(body).toContain(`${hook}(`);
         }

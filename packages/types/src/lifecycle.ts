@@ -7,51 +7,51 @@ export interface InputTouch {
   /**
    * Identifier for the touch during its lifetime.
    */
-  id?: number;
+  id: number;
   /**
    * Whether the finger was pressed this frame.
    */
-  pressed?: boolean;
+  pressed: boolean;
   /**
    * Whether the finger was released this frame.
    */
-  released?: boolean;
+  released: boolean;
   /**
    * Number of taps, such as one for a single tap and two for a double tap.
    */
-  tap_count?: number;
+  tap_count: number;
   /**
    * Touch x-coordinate.
    */
-  x?: number;
+  x: number;
   /**
    * Touch y-coordinate.
    */
-  y?: number;
+  y: number;
   /**
    * Change in the touch x-coordinate.
    */
-  dx?: number;
+  dx: number;
   /**
    * Change in the touch y-coordinate.
    */
-  dy?: number;
+  dy: number;
   /**
    * Touch x-coordinate in screen space.
    */
-  screen_x?: number;
+  screen_x: number;
   /**
    * Touch y-coordinate in screen space.
    */
-  screen_y?: number;
+  screen_y: number;
   /**
    * Change in the touch x-coordinate in screen space.
    */
-  screen_dx?: number;
+  screen_dx: number;
   /**
    * Change in the touch y-coordinate in screen space.
    */
-  screen_dy?: number;
+  screen_dy: number;
 }
 
 // Fields and docs follow the go ref-doc's `on_input.action` STRUCT, whose keys are
@@ -363,7 +363,7 @@ export type GuiScriptHooks<TSelf, TInitState = TSelf> = Omit<
 
 export type RenderScriptHooks<TSelf, TInitState = TSelf> = Omit<
   ScriptHooks<TSelf, TInitState>,
-  "on_input"
+  "on_input" | "final" | "fixed_update" | "late_update"
 >;
 
 // The factory hook table plus the value-keyed `properties` field. `TProps` is
@@ -547,9 +547,9 @@ export function defineGuiScript<
  * {@link defineScript}, and is erased by the transpiler's `lifecycle-erasure`
  * pass into the flat Defold chunk shape.
  *
- * `RenderScriptHooks` is `Omit<ScriptHooks, "on_input">` — render scripts do not
- * receive input. It accepts the rest of the set, all optional: `init`,
- * `update`, `fixed_update`, `late_update`, `on_message`, `final`, `on_reload`.
+ * `RenderScriptHooks` is `Omit<ScriptHooks, "on_input" | "final" |
+ * "fixed_update" | "late_update">` — the engine calls only four render-script
+ * hooks, all optional: `init`, `update`, `on_message`, `on_reload`.
  *
  * Scaffold it with the `def-ts-defineRenderScript-inferred-self` / `def-ts-defineRenderScript-typed-self` VSCode snippets
  * from `defold-typescript init`.

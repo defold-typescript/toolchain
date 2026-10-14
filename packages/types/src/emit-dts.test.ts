@@ -30,6 +30,7 @@ import factory114Doc from "../fixtures/defold-1.14.0/factory_doc.json" with { ty
 import graphics114Doc from "../fixtures/defold-1.14.0/graphics_doc.json" with { type: "json" };
 import http114Doc from "../fixtures/defold-1.14.0/http_doc.json" with { type: "json" };
 import image114Doc from "../fixtures/defold-1.14.0/image_doc.json" with { type: "json" };
+import model114Doc from "../fixtures/defold-1.14.0/model_doc.json" with { type: "json" };
 import render114Doc from "../fixtures/defold-1.14.0/render_doc.json" with { type: "json" };
 import sprite114Doc from "../fixtures/defold-1.14.0/sprite_doc.json" with { type: "json" };
 import sys114Doc from "../fixtures/defold-1.14.0/sys_doc.json" with { type: "json" };
@@ -74,6 +75,7 @@ import {
   applyNestedFieldCurations,
   applyRequiredFieldCorrections,
   buildTableDocResolver,
+  CALLBACK_SIGNATURE_CURATIONS,
   CONSTANT_UNION_ALIASES,
   collectHandleMethodGroups,
   constantUnionAlias,
@@ -5436,7 +5438,29 @@ describe("signatures upstream documents in prose", () => {
 
   test("http.request's callback receives the documented response table and a Hash id", () => {
     expect(emittedLine(httpDoc, "function request(")).toContain(
-      "callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
+      "callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
+    );
+  });
+
+  test("http.request's callback doc carries its curation note", () => {
+    const note = CALLBACK_SIGNATURE_CURATIONS.get("http.request:param:callback")?.note;
+    if (note === undefined) throw new Error("the http.request callback curation carries no note");
+    const lines = emitDeclarations(parseDefoldApiDoc(http114Doc)).split("\n");
+    let from = lines.findIndex((line) => line.includes("function request("));
+    while (from >= 0 && !lines[from]?.includes("@param callback ")) from -= 1;
+    const to = lines.findIndex((line, index) => index > from && line.includes("@param "));
+    expect(lines.slice(from, to).join("\n")).toContain(note);
+  });
+
+  test("model.play_anim's complete_function receives self, the message id and the completion message", () => {
+    expect(emittedLine(model113Doc, "function play_anim(")).toContain(
+      'complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void',
+    );
+  });
+
+  test("model.play_anim's complete_function takes no sender where the reference types one", () => {
+    expect(emittedLine(model114Doc, "function play_anim(")).toContain(
+      'complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void',
     );
   });
 

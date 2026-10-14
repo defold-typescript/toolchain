@@ -13,14 +13,18 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **Breaking: [two callback payloads](./typescript-gotchas.md) and `render.render_target`'s table are typed.**
+> - **Breaking: [hooks and callbacks](./script-lifecycle.md) match what the engine calls and passes**, and `render.render_target`'s table is typed.
 > - **Breaking: [five engine returns can be `undefined`](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil)**, so narrow them before use, and `physics.raycast` results carry no `request_id`.
 > - **Breaking: [a vector's size is `v.length()` and `url.path` can be `undefined`](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined).**
 > - **Reads and writes match the engine**: id tables read by path, `go.get` reads `Matrix4`, `Url` fields are writable, and `sys.get_sys_info` always returns its strings.
 
 ### Breaking
 
-- **[Two callback payloads](./typescript-gotchas.md#windowset_listener-hands-event-and-data-as-separate-params) are typed structs on Defold 1.13.2 and newer targets**: a `window.set_listener` callback receives `data` as `window.event_data`, and a `collectionproxy.load` callback receives `message` as `collectionproxy.load_data`. A callback that annotates either parameter as a record, or reads a key the engine never sends, stops compiling; drop the annotation or name the struct.
+- **Hooks and callbacks match what the engine calls and passes**:
+  - **`window.set_listener` and `collectionproxy.load`** callbacks receive [typed payload structs](./typescript-gotchas.md#windowset_listener-hands-event-and-data-as-separate-params) on Defold 1.13.2 and newer targets, `window.event_data` and `collectionproxy.load_data`. A callback that annotates either parameter as a record, or reads a key the engine never sends, stops compiling; drop the annotation or name the struct.
+  - **`defineRenderScript`** accepts only `init`, `update`, `on_message` and `on_reload`; a render script's `final`, `fixed_update` or `late_update`, which the engine never calls, stops compiling.
+  - **`model.play_anim`**'s completion callback receives no `sender`, so a callback declaring a fourth parameter stops compiling.
+  - **`isWindowEvent`** narrows a non-resize event's `data` to `Record<string, never>`, the empty table the engine passes, not `undefined`.
 - **`render.render_target` checks its table on Defold 1.13.2 and newer targets**, in both arities: each buffer needs a `format`, `width` and `height`, and a format constant other than depth or stencil needs [a nil check](./typescript-gotchas.md#texture-format-constants-can-be-undefined) first. To build the table ahead of the call, type it as `render.RenderTargetParams`, which every pinned target declares, as an open record on older pins.
 - **Five engine returns can be `undefined`, as the engine source shows**: `factory.create` when the spawn fails, `tilemap.get_tile`, `tilemap.get_tile_info` and `tilemap.get_tiles` for an unknown layer (the first two also for a cell out of range), and the second value of `collectionproxy.set_collection` when the change succeeds. Code that uses the result directly stops compiling; [narrow it](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil) with `!== undefined` first.
 - **`physics.raycast` results carry no `request_id`**, and on Defold 1.12.4 to 1.13.1 targets the result is one hit or a list of hits, as on newer ones. Code that reads `request_id`, or indexes the result without an `Array.isArray` check, stops compiling.
@@ -33,11 +37,13 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **`Url` fields are writable and `Matrix4.mul` takes a number**, as the engine allows: assign `Url.socket`, `Url.path` or `Url.fragment` a `Hash` or a string, and scale a matrix with `m.mul(2)`.
 
-- **More returned tables and property reads match what the engine source pushes**:
+- **More returned tables, property reads and callback payloads match what the engine source pushes**:
   - **`graphics.adapter_limits`** declares `max_storage_buffers_per_stage` on Defold 1.14.0 targets.
   - **`sys.interface_info`** declares `family`, `"ipv4"` or `"ipv6"`, absent for any other interface, on Defold 1.13.2 and newer targets.
   - **`go.get` and `go.set`** read and write a `Matrix4` property.
   - **Id tables** from `collectionfactory.create`, `gui.get_tree` and `gui.clone_tree` read by path as well as by hash, as in `ids.get("/go")`.
+  - **`on_input` touch entries** declare all twelve fields as always present, so `touch.x` is a `number` with no `undefined` check.
+  - **`http.request`** responses declare `url`, and `report_progress` events declare `bytes_sent`.
 
 ### Fixed
 
