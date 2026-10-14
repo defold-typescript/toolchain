@@ -31,7 +31,11 @@ import {
 } from "../scripts/regen";
 import { EDITOR_VM_MANIFEST, extractFixtures, type ZipAccessor } from "../scripts/sync-api-docs";
 import { parseDefoldApiDoc } from "../src/api-doc";
-import { type ReturnTypeCorrection, routeTypeDeclarations } from "../src/emit-dts";
+import {
+  type ReturnTypeCorrection,
+  routeTypeDeclarations,
+  type StructMemberAddition,
+} from "../src/emit-dts";
 import { unexpressedFixtureNames } from "./declared-fqns";
 
 const GENERATED = resolve(import.meta.dir, "..", "generated");
@@ -1660,17 +1664,52 @@ describe("per-target binding evidence", () => {
     ],
     ["factory.prose", { ts: "Hash | undefined", upstream: ["hash"], reason: "or nil" }],
   ];
+  const STORAGE_LIMIT = {
+    file: "script/src/script_graphics.cpp",
+    cFunction: "Graphics_GetAdapterInfo",
+    contains: 'lua_setfield(L, -2, "max_storage_buffers_per_stage");',
+  };
+  const additions: readonly [string, StructMemberAddition][] = [
+    [
+      "graphics.adapter_limits:member:max_storage_buffers_per_stage",
+      { member: { type: "integer", isOptional: false, doc: "" }, binding: STORAGE_LIMIT },
+    ],
+  ];
 
   test("a vendored target's evidence holds exactly the binding-pinned keys whose pin holds", () => {
-    const options = targetBindingOptions(target("defold-1.14.0"), entries);
-    expect([...(options.bindingEvidence ?? [])]).toEqual(["factory.create"]);
+    const options = targetBindingOptions(target("defold-1.14.0"), entries, additions);
+    expect([...(options.bindingEvidence ?? [])]).toEqual([
+      "factory.create",
+      "graphics.adapter_limits:member:max_storage_buffers_per_stage",
+    ]);
     expect(options.registeredConstants?.size ?? 0).toBeGreaterThan(0);
+  });
+
+  test("a struct member addition has no evidence where the target lacks its function", () => {
+    // 1.13.1 binds the function without the push; 1.12.4 predates the function.
+    const evidenceOn = (id: string) => [
+      ...(targetBindingOptions(target(id), [], additions).bindingEvidence ?? ["missing"]),
+    ];
+    expect(evidenceOn("defold-1.13.1")).toEqual([]);
+    expect(evidenceOn("defold-1.12.4")).toEqual([]);
+  });
+
+  test("a return correction whose function the target lacks still throws", () => {
+    const missing: readonly [string, ReturnTypeCorrection][] = [
+      [
+        "graphics.get_adapter_info",
+        { nullable: true, upstream: ["table"], reason: "pins a function", binding: STORAGE_LIMIT },
+      ],
+    ];
+    expect(() => targetBindingOptions(target("defold-1.12.4"), missing, [])).toThrow(
+      /Graphics_GetAdapterInfo/,
+    );
   });
 
   test("an unvendored target gets an empty evidence set", () => {
     const refDoc = targets.find((candidate) => (candidate.source ?? null) !== null);
     if (!refDoc) throw new Error("api-targets.json: no ref-doc target");
-    const options = targetBindingOptions(refDoc, entries);
+    const options = targetBindingOptions(refDoc, entries, additions);
     expect([...(options.bindingEvidence ?? ["missing"])]).toEqual([]);
     expect(options.registeredConstants).toBeUndefined();
   });

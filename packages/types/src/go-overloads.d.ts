@@ -1,6 +1,6 @@
 /** @noSelfInFile */
 
-import type { Hash, Quaternion, Url, Vector3, Vector4 } from "./core-types";
+import type { Hash, Matrix4, Quaternion, Url, Vector3, Vector4 } from "./core-types";
 
 interface ScriptProperty<TValue> {
   readonly __defoldScriptProperty: TValue;
@@ -61,7 +61,7 @@ declare global {
       url: SceneAddress | Hash | Url,
       property: string | Hash,
       options?: GoPropertyOptions,
-    ): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion;
+    ): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4;
     /**
      * sets a named property of the specified game object or component, or a material constant
      *
@@ -97,7 +97,17 @@ declare global {
     function set(
       url: SceneAddress | Hash | Url,
       property: string | Hash,
-      value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[],
+      value:
+        | number
+        | boolean
+        | string
+        | Hash
+        | Url
+        | Vector3
+        | Vector4
+        | Quaternion
+        | Matrix4
+        | Vector4[],
       options?: GoPropertyOptions,
     ): void;
     /**

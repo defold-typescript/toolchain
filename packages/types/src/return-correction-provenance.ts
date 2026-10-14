@@ -270,8 +270,12 @@ const RETURN_VERDICT_RANK: Record<ReturnVerdict, number> = {
   resolved: 0,
 };
 
-// Whether the declared tokens already say what the correction does.
+// Whether the declared tokens already say what the correction does. Tokens can
+// state only the nil: a binding-pinned `ts` entry corrects what the binding sets
+// (a field it never pushes), so upstream fixing that shows as a retype, which is
+// drift, never as a resolution.
 function declaresCorrection(tokens: readonly string[], correction: ReturnTypeCorrection): boolean {
+  if (correction.nullable === undefined && correction.binding !== undefined) return false;
   return correction.nullable === false ? !tokens.includes("nil") : tokens.includes("nil");
 }
 

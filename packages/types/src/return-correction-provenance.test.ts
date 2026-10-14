@@ -569,6 +569,34 @@ describe("binding-pinned return correction provenance", () => {
       returnCorrectionProvenance(header, [returning(["image.astc_header"])], evidence)[0],
     ).toMatchObject({ neededBy: [], resolvedIn: ["t"] });
   });
+
+  test("a replacing correction stays needed where the pin holds, nil or not", () => {
+    const RAYCAST = "physics.raycast";
+    const raycast: readonly [string, ReturnTypeCorrection][] = [
+      [
+        RAYCAST,
+        {
+          ts: "{ group: Hash } | undefined",
+          upstream: ["table", "nil"],
+          reason: "pushes each hit without a request_id",
+          binding: {
+            file: "gamesys/src/gamesys/scripts/script_physics.cpp",
+            cFunction: "Physics_RayCast",
+            lacks: '"request_id"',
+          },
+        },
+      ],
+    ];
+    const evidence = new Map([["t", new Set([RAYCAST])]]);
+    const returning = (types: readonly string[]) =>
+      surface("t", "physics", [{ name: RAYCAST, returnvalues: [{ name: "result", types }] }]);
+    expect(
+      returnCorrectionProvenance(raycast, [returning(["table", "nil"])], evidence)[0],
+    ).toMatchObject({ neededBy: ["t"], resolvedIn: [], driftedIn: [] });
+    expect(
+      returnCorrectionProvenance(raycast, [returning(["physics.hit", "nil"])], evidence)[0],
+    ).toMatchObject({ neededBy: [], resolvedIn: [], driftedIn: ["t"] });
+  });
 });
 
 describe("misfiled declaration provenance", () => {
@@ -618,10 +646,6 @@ const BINDING_EVIDENCE = new Map(
 // in one target lands here instead of deleting a correction older targets still
 // pay for.
 const FIELD_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
-  "sys.get_sys_info:return:sys_info:device_model": ["defold-1.13.2", "defold-1.14.0"],
-  "sys.get_sys_info:return:sys_info:manufacturer": ["defold-1.13.2", "defold-1.14.0"],
-  "sys.get_sys_info:return:sys_info:device_ident": ["defold-1.13.2", "defold-1.14.0"],
-  "sys.get_sys_info:return:sys_info:user_agent": ["defold-1.13.2", "defold-1.14.0"],
   "sys.get_ifaddrs:return:ifaddrs:address": ["defold-1.13.2", "defold-1.14.0"],
   "sys.get_ifaddrs:return:ifaddrs:mac": ["defold-1.13.2", "defold-1.14.0"],
 };

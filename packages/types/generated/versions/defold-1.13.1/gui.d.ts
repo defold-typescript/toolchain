@@ -628,7 +628,7 @@ declare global {
      * @param node - root node to clone
      * @returns a table mapping node ids to the corresponding cloned nodes
      */
-    function clone_tree(node: Opaque<"node">): LuaMap<Hash, Opaque<"node">>;
+    function clone_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
     /**
      * Deletes the specified node. Any child nodes of the specified node will be
      * recursively deleted.
@@ -1144,7 +1144,7 @@ declare global {
      * @param node - root node to get node tree from
      * @returns a table mapping node ids to the corresponding nodes
      */
-    function get_tree(node: Opaque<"node">): LuaMap<Hash, Opaque<"node">>;
+    function get_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
     /**
      * gets the node type
      *

@@ -80,9 +80,10 @@ export interface EmitOptions {
   // `UNDOCUMENTED_CONSTANTS` back-fill. Absent for a surface with no vendored
   // bindings (a ref-doc target), where every entry the ref-doc omits is emitted.
   registeredConstants?: ReadonlySet<string>;
-  // The `RETURN_TYPE_CORRECTIONS` keys whose binding pin holds in the target's
-  // vendored engine source. A binding-pinned entry applies only when its key is
-  // here, so a surface with no vendored bindings (absent) applies none of them.
+  // The `RETURN_TYPE_CORRECTIONS` and `STRUCT_MEMBER_ADDITIONS` keys whose binding
+  // pin holds in the target's vendored engine source. A binding-pinned entry
+  // applies only when its key is here, so a surface with no vendored bindings
+  // (absent) applies none of them.
   bindingEvidence?: ReadonlySet<string>;
   // The functions a target's skip rules removed from the module, read only to
   // type an `OVERLOAD_SLOT_ALIASES` slot.
@@ -567,6 +568,68 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       },
     },
   ],
+  // `PushRayCastResponse` has two definitions; `Physics_RayCast` calls the one
+  // that takes the world, which sets every payload field but `request_id`.
+  [
+    "physics.raycast",
+    {
+      ts: 'Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined',
+      upstream: ["table", "nil"],
+      retypedUpstream: [
+        ["message.physics.ray_cast_response[]", "message.physics.ray_cast_response", "nil"],
+      ],
+      reason:
+        "script_physics.cpp:Physics_RayCast pushes each hit through PushRayCastResponse(L, world, hit), which sets no request_id",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_physics.cpp",
+        cFunction: "Physics_RayCast",
+        contains: "PushRayCastResponse(L, world, hits[i]);",
+        lacks: '"request_id"',
+      },
+    },
+  ],
+  ...(
+    [
+      [
+        "collectionfactory.create",
+        "Hash",
+        ["table<hash, hash>"],
+        "gamesys/src/gamesys/scripts/script_collection_factory.cpp",
+        "CollectionFactoryComp_Create",
+      ],
+      [
+        "gui.get_tree",
+        'Opaque<"node">',
+        ["table<hash, node>"],
+        "gui/src/gui_script.cpp",
+        "LuaGetTree",
+      ],
+      [
+        "gui.clone_tree",
+        'Opaque<"node">',
+        ["table<hash, node>"],
+        "gui/src/gui_script.cpp",
+        "LuaCloneTree",
+      ],
+    ] as const
+  ).map(
+    ([key, value, retyped, file, cFunction]) =>
+      [
+        key,
+        {
+          ts: `LuaTable<Hash, ${value}> & { get: LuaTableGetMethod<string, ${value}> }`,
+          upstream: ["table"],
+          retypedUpstream: [retyped],
+          reason: `${file.slice(file.lastIndexOf("/") + 1)}:${cFunction} sets HashTableIndex as the id table's __index, which hashes a string key`,
+          binding: {
+            file,
+            cFunction,
+            contains:
+              'lua_pushcfunction(L, HashTableIndex); lua_setfield(L, -2, "__index"); lua_setmetatable(L, -2);',
+          },
+        },
+      ] as const,
+  ),
 ]);
 
 // A parameter whose declared `types` disagree with what the same element's
@@ -2402,10 +2465,13 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   // buildTableDocResolver resolves only FUNCTION elements so the cross-ref
   // cannot fire (the message payload lives in messages_doc.json, not the
   // FUNCTION slot pool). The shape is curated directly from the message
-  // catalog (the six ray_cast_response payload fields). The doc declares a
+  // catalog: the ray_cast_response payload fields but `request_id`, which
+  // `Physics_RayCast` never sets. The doc declares a
   // `nil` branch ("If missed it returns <code>nil</code>"), so the existing
   // nil-aware emit already projects the curated array onto the
   // `array-object | nil` return type — no curation change needed there.
+  // Where its binding pin holds, the `physics.raycast` RETURN_TYPE_CORRECTIONS
+  // entry replaces the whole return.
   [
     "physics.raycast:return:result",
     {
@@ -2416,7 +2482,6 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
         { name: "normal", types: ["vector3"] },
         { name: "id", types: ["hash"] },
         { name: "group", types: ["hash"] },
-        { name: "request_id", types: ["number"] },
       ],
     },
   ],
@@ -3076,32 +3141,13 @@ export interface ReturnFieldOptionalityCorrection {
   readonly evidence: string;
 }
 
-// The platform-gate markers upstream renders as `<span class="icon-*">` decode
-// to `[ios]`, `[android]`, `[html5]` — `user_agent` states its gate through the
-// marker alone, with no availability sentence to pin.
+// A platform gate alone is not evidence: `sys.get_sys_info` gates four fields
+// on a platform, yet `Sys_GetSysInfo` pushes each from a zero-filled char array,
+// so off-platform they are empty strings, never nil.
 export const RETURN_FIELD_OPTIONALITY_CORRECTIONS: ReadonlyMap<
   string,
   ReturnFieldOptionalityCorrection
 > = new Map([
-  [
-    "sys.get_sys_info:return:sys_info:device_model",
-    { upstream: ["string"], evidence: "[ios][android] Only available on iOS and Android." },
-  ],
-  [
-    "sys.get_sys_info:return:sys_info:manufacturer",
-    { upstream: ["string"], evidence: "[ios][android] Only available on iOS and Android." },
-  ],
-  [
-    "sys.get_sys_info:return:sys_info:device_ident",
-    {
-      upstream: ["string"],
-      evidence: '[ios] "identifierForVendor" on iOS. [android] "android_id" on Android.',
-    },
-  ],
-  [
-    "sys.get_sys_info:return:sys_info:user_agent",
-    { upstream: ["string"], evidence: "[html5] The HTTP user agent" },
-  ],
   [
     "sys.get_ifaddrs:return:ifaddrs:address",
     { upstream: ["string"], evidence: "might be nil if not available." },
@@ -3152,8 +3198,10 @@ export function applyFieldOptionalityCorrections(
 // `<element>:param:<slot>:<field>`, the TABLE_FIELD_TYPE_OVERRIDES shape, with
 // `<field>.<member>` or `<field>[].<member>` one level down. A `STRUCT` member
 // is keyed `<struct>:member:<field>`, for a target whose slot names that struct
-// (`field-correction-coverage.ts` pairs the two). The value is the evidence: the
-// C++ binding, `<file>:<cFunction>`, and how it reads the field.
+// (`field-correction-coverage.ts` pairs the two), or for a returned struct whose
+// binding always sets a member upstream marks optional. The value is the
+// evidence: the C++ binding, `<file>:<cFunction>`, and how it reads or sets the
+// field.
 const CHECK_SHAPE_DEF = "CheckShapeDef reads the shape table with luaL_checkinteger(type)";
 const V2_FILTER_DATA =
   "v2/script_box2d_fixture_v2.cpp:CheckFilterData reads each with luaL_checkinteger";
@@ -3174,6 +3222,49 @@ export const OPTIONAL_MEMBER_CORRECTIONS: ReadonlyMap<string, string> = new Map(
   [
     "sound.stop_properties:member:play_id",
     "script_sound.cpp:Sound_Stop reads play_id with luaL_checknumber only when it is not nil",
+  ],
+]);
+
+// A `STRUCT` member the engine binding sets while the target's reference omits
+// it, keyed `<struct>:member:<field>`. It applies only where its binding pin
+// holds (the `EmitOptions.bindingEvidence` keys), and a struct that already
+// declares the member throws, so no entry outlives upstream's fix.
+export interface StructMemberAddition {
+  readonly member: Omit<ApiStructMember, "name">;
+  readonly binding: BindingPin;
+}
+
+export const STRUCT_MEMBER_ADDITIONS: ReadonlyMap<string, StructMemberAddition> = new Map([
+  [
+    memberCorrectionKey("graphics.adapter_limits", "max_storage_buffers_per_stage"),
+    {
+      member: {
+        type: "integer",
+        isOptional: false,
+        doc: "Maximum number of storage buffers per shader stage.",
+      },
+      binding: {
+        file: "script/src/script_graphics.cpp",
+        cFunction: "Graphics_GetAdapterInfo",
+        contains: 'lua_setfield(L, -2, "max_storage_buffers_per_stage");',
+      },
+    },
+  ],
+  [
+    memberCorrectionKey("sys.interface_info", "family"),
+    {
+      member: {
+        type: '"ipv4"|"ipv6"',
+        isOptional: true,
+        doc: "Address family, absent for an interface that is neither IPv4 nor IPv6.",
+      },
+      binding: {
+        file: "script/src/script_sys.cpp",
+        cFunction: "Sys_GetIfaddrs",
+        contains:
+          'lua_pushliteral(L, "ipv6"); } else { lua_pushnil(L); } lua_setfield(L, -2, "family");',
+      },
+    },
   ],
 ]);
 
@@ -3270,6 +3361,13 @@ export const REQUIRED_FIELD_CORRECTIONS: ReadonlyMap<string, string> = new Map<s
     "resource.sound_data_options:member:data",
     "script_resource.cpp:CreateSoundData reads the data with CheckBufferOrString",
   ],
+  ...(["device_model", "manufacturer", "device_ident", "user_agent"] as const).map(
+    (field) =>
+      [
+        `sys.sys_info:member:${field}`,
+        'script_sys.cpp:Sys_GetSysInfo pushes it with lua_pushstring from a zero-filled char array (user_agent falls back to "")',
+      ] as const,
+  ),
 ]);
 
 // Mark the fields REQUIRED_FIELD_CORRECTIONS names for this slot required,
@@ -3819,6 +3917,7 @@ function collectTypeDeclarations(
   skip: ReadonlySet<string>,
   rawMapType: (token: string) => string,
   mapType: DefoldTypeMapper,
+  bindingEvidence: ReadonlySet<string>,
 ): TypeDeclaration[] {
   const prefix = `${module.namespace}.`;
   const out: TypeDeclaration[] = [];
@@ -3842,7 +3941,7 @@ function collectTypeDeclarations(
   for (const struct of module.structs ?? []) {
     const local = localOf(struct.name);
     if (local === null || skip.has(local)) continue;
-    out.push(structDeclaration(struct, local, mapType, module.structs ?? []));
+    out.push(structDeclaration(struct, local, mapType, module.structs ?? [], bindingEvidence));
   }
   return out;
 }
@@ -3895,10 +3994,22 @@ function structDeclaration(
   path: string,
   mapType: DefoldTypeMapper,
   structs: readonly ApiStruct[],
+  bindingEvidence: ReadonlySet<string>,
 ): TypeDeclaration {
   const name = path.slice(path.lastIndexOf(".") + 1);
   const memberPrefix = memberCorrectionKey(struct.name, "");
   const declared = new Set(struct.members.map((member) => member.name));
+  const redundant = [...STRUCT_MEMBER_ADDITIONS.keys()].filter(
+    (key) => key.startsWith(memberPrefix) && declared.has(key.slice(memberPrefix.length)),
+  );
+  if (redundant.length > 0) {
+    throw new Error(
+      `struct member addition names a declared member: ${redundant.sort().join(", ")}`,
+    );
+  }
+  const added = [...STRUCT_MEMBER_ADDITIONS]
+    .filter(([key]) => key.startsWith(memberPrefix) && bindingEvidence.has(key))
+    .map(([key, addition]) => ({ ...addition.member, name: key.slice(memberPrefix.length) }));
   const stale = [
     ...REQUIRED_FIELD_CORRECTIONS.keys(),
     ...LIST_FIELD_CORRECTIONS.keys(),
@@ -3908,7 +4019,7 @@ function structDeclaration(
   if (stale.length > 0) {
     throw new Error(`member-keyed field correction names no member: ${stale.sort().join(", ")}`);
   }
-  const members = struct.members.map((member) => {
+  const members = [...struct.members, ...added].map((member) => {
     const key = memberCorrectionKey(struct.name, member.name);
     const list = LIST_FIELD_CORRECTIONS.get(key);
     const retyped = TABLE_FIELD_TYPE_OVERRIDES.get(key);
@@ -4169,7 +4280,13 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   // A typedef that also has colon methods is emitted as a method-bearing
   // interface below, not an opaque brand alias.
   const typeDeclarations = placeTypeDeclarations(
-    collectTypeDeclarations(module, new Set(handleGroups.keys()), rawMapType, mapType),
+    collectTypeDeclarations(
+      module,
+      new Set(handleGroups.keys()),
+      rawMapType,
+      mapType,
+      bindingEvidence,
+    ),
     nestedRoot,
   );
 
@@ -4640,6 +4757,7 @@ export function emitSymbolSignatures(
     new Set(handleGroups.keys()),
     rawMapType,
     mapType,
+    bindingEvidence,
   )) {
     out.push({
       identity: {

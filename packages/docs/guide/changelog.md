@@ -14,17 +14,28 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **Breaking: [two callback payloads](./typescript-gotchas.md) and `render.render_target`'s table are typed.**
-> - **Breaking: [five engine returns can be `undefined`](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil)**, so narrow them before use.
+> - **Breaking: [five engine returns can be `undefined`](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil)**, so narrow them before use, and `physics.raycast` results carry no `request_id`.
+> - **Engine reads match the engine source**: id tables read by path, `go.get` reads `Matrix4`, and `sys.get_sys_info` always returns its strings.
 
 ### Breaking
 
 - **[Two callback payloads](./typescript-gotchas.md#windowset_listener-hands-event-and-data-as-separate-params) are typed structs on Defold 1.13.2 and newer targets**: a `window.set_listener` callback receives `data` as `window.event_data`, and a `collectionproxy.load` callback receives `message` as `collectionproxy.load_data`. A callback that annotates either parameter as a record, or reads a key the engine never sends, stops compiling; drop the annotation or name the struct.
 - **`render.render_target` checks its table on Defold 1.13.2 and newer targets**, in both arities: each buffer needs a `format`, `width` and `height`, and a format constant other than depth or stencil needs [a nil check](./typescript-gotchas.md#texture-format-constants-can-be-undefined) first. To build the table ahead of the call, type it as `render.RenderTargetParams`, which every pinned target declares, as an open record on older pins.
 - **Five engine returns can be `undefined`, as the engine source shows**: `factory.create` when the spawn fails, `tilemap.get_tile`, `tilemap.get_tile_info` and `tilemap.get_tiles` for an unknown layer (the first two also for a cell out of range), and the second value of `collectionproxy.set_collection` when the change succeeds. Code that uses the result directly stops compiling; [narrow it](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil) with `!== undefined` first.
+- **`physics.raycast` results carry no `request_id`**, and on Defold 1.12.4 to 1.13.1 targets the result is one hit or a list of hits, as on newer ones. Code that reads `request_id`, or indexes the result without an `Array.isArray` check, stops compiling.
+
+### Improved
+
+- **More returned tables and property reads match what the engine source pushes**:
+  - **`graphics.adapter_limits`** declares `max_storage_buffers_per_stage` on Defold 1.14.0 targets.
+  - **`sys.interface_info`** declares `family`, `"ipv4"` or `"ipv6"`, absent for any other interface, on Defold 1.13.2 and newer targets.
+  - **`go.get` and `go.set`** read and write a `Matrix4` property.
+  - **Id tables** from `collectionfactory.create`, `gui.get_tree` and `gui.clone_tree` read by path as well as by hash, as in `ids.get("/go")`.
 
 ### Fixed
 
 - **`image.get_astc_header` returns its header without `undefined`**: the engine raises on invalid data instead of returning nil.
+- **`sys.get_sys_info` returns `device_model`, `manufacturer`, `device_ident` and `user_agent` as strings**: the engine always sets them, as an empty string where the platform has no value.
 
 ## v0.50.1
 

@@ -1,22 +1,17 @@
 /// <reference path="../index.d.ts" />
 
-// Upstream gates these four fields on a platform, so reading one without a
-// presence check is unsound; the siblings are documented unconditionally.
+// Upstream gates four of these fields on a platform, but the binding pushes
+// every field unconditionally: the platform-gated ones are empty strings where
+// the platform has no value, never nil.
 const _info = sys.get_sys_info();
 
 const _systemName: string = _info.system_name;
 const _gmtOffset: number = _info.gmt_offset;
 
-// @ts-expect-error device_model is only present on iOS and Android
 const _deviceModel: string = _info.device_model;
-// @ts-expect-error manufacturer is only present on iOS and Android
 const _manufacturer: string = _info.manufacturer;
-// @ts-expect-error device_ident is only present on iOS and Android
 const _deviceIdent: string = _info.device_ident;
-// @ts-expect-error user_agent is only present on HTML5
 const _userAgent: string = _info.user_agent;
-
-const _checkedModel: string = _info.device_model ?? "unknown";
 
 // `noUncheckedIndexedAccess` makes the index itself possibly-undefined, so the
 // proof narrows past the index and asserts the field, not the lookup.
@@ -45,4 +40,3 @@ void _deviceModel;
 void _manufacturer;
 void _deviceIdent;
 void _userAgent;
-void _checkedModel;
