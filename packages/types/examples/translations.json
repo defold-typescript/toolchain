@@ -1198,7 +1198,7 @@
   "physics.raycast": [
     {
       "sourceHash": "3e0c534d741f0120",
-      "ts": "function handle_result(hit: { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }) {\n  // act on the hit (see 'ray_cast_response')\n}\n\n// How to perform a ray cast synchronously:\nexport default defineScript({\n  init() {\n    return { groups: [hash(\"world\"), hash(\"enemy\")] };\n  },\n\n  update(self, dt) {\n    // request ray cast\n    const from = go.get_world_position();\n    const to = vmath.vector3(from.x, from.y - 100, from.z);\n    const results = physics.raycast(from, to, self.groups, { all: true });\n    if (results !== undefined) {\n      // with `all` set, the ray cast returns every hit as a list\n      for (const result of Array.isArray(results) ? results : [results]) {\n        handle_result(result);\n      }\n    }\n  },\n});"
+      "ts": "function handle_result(hit: { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash }) {\n  // act on the hit (see 'ray_cast_response')\n}\n\n// How to perform a ray cast synchronously:\nexport default defineScript({\n  init() {\n    return { groups: [hash(\"world\"), hash(\"enemy\")] };\n  },\n\n  update(self, dt) {\n    // request ray cast\n    const from = go.get_world_position();\n    const to = vmath.vector3(from.x, from.y - 100, from.z);\n    const results = physics.raycast(from, to, self.groups, { all: true });\n    if (results !== undefined) {\n      // with `all` set, the ray cast returns every hit as a list\n      for (const result of Array.isArray(results) ? results : [results]) {\n        handle_result(result);\n      }\n    }\n  },\n});"
     }
   ],
   "physics.raycast_async": [

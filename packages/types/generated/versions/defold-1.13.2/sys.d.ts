@@ -57,6 +57,10 @@ declare global {
        * Whether the interface is running.
        */
       running: boolean;
+      /**
+       * Address family, absent for an interface that is neither IPv4 nor IPv6.
+       */
+      family?: "ipv4" | "ipv6";
     }
     /**
      * Asynchronous buffer-load result
@@ -87,11 +91,11 @@ declare global {
       /**
        * Device model on iOS and Android.
        */
-      device_model?: string;
+      device_model: string;
       /**
        * Device manufacturer on iOS and Android.
        */
-      manufacturer?: string;
+      manufacturer: string;
       /**
        * Operating-system name.
        */
@@ -123,11 +127,11 @@ declare global {
       /**
        * Operating-system-protected device identifier.
        */
-      device_ident?: string;
+      device_ident: string;
       /**
        * HTTP user agent on HTML5.
        */
-      user_agent?: string;
+      user_agent: string;
     }
     /**
      * System-information options
