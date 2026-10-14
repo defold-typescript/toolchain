@@ -28,6 +28,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [Texture format constants can be `undefined`](#texture-format-constants-can-be-undefined) — the engine registers most formats only when the driver supports them; check the constant before a `render.render_target` or `resource.create_texture` table uses it.
 - [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
 - [URL addressing: same-world is relative, `socket:` crosses worlds](#url-addressing-same-world-objects-are-relative-socket-crosses-worlds) — a sibling instance is `"camera"` or `"/camera"`, a sibling component is `"#name"`; `socket:` names a target world by its collection `Name` and is reserved for crossing into a collection-proxy-loaded world.
+- [A vector's size is `v.length()`, and `url.path` can be `undefined`](#a-vectors-size-is-vlength-and-urlpath-can-be-undefined) — `v.length` raises at runtime; a socket-only URL has no `path`, so check it before use.
 - [npm packages do not resolve](#npm-packages-do-not-resolve--vendor-the-source-instead) — the build compiles only your `include`-matched files, so `node_modules` is never read; copy the source into `src/`[^src-root] and import it relatively.
 
 ## Unary minus on Vector3 / Vector4 silently produces `number`
@@ -543,6 +544,28 @@ msg.post("#health", "damage", { amount: 10 }); // sibling component on the same 
 **Typed alternative.** For anything in the **same world** (everything in your bootstrap collection) address it without a socket: `"camera"` (a sibling instance by id, relative to the current component), `"/camera"` (the same instance by id, absolute from the world root), or `"#health"` (a sibling component on the same game object). Reserve `socket:` for reaching into a **collection-proxy-loaded** world, and pass the *target* collection's `Name` — the collection-proxy manual's own cross-world example is `msg.post("mylevel:/myobject", "hello")`, where `mylevel` is the loaded collection's `Name`, not the proxy component's id. For `msg.url`, use one of the three typed overloads — `msg.url()` (the current message's url), `msg.url("main:/manager#controller")` (one string), or the three-position `msg.url(hash("level1"), hash("/door"), hash("script"))`, whose `socket` may be `undefined` for the current world — never the two-arg form.
 
 **How we pin this in the type tests.** `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads — `msg.url()` and `msg.url("main:/manager#controller")` type-check, while the two-arg `msg.url("main", "camera")` carries `@ts-expect-error` — so the runtime-invalid arity is rejected at compile time; widen the overloads to accept it and the expected error vanishes, failing the typecheck gate.
+
+## A vector's size is `v.length()`, and `url.path` can be `undefined`
+
+**Symptom.** Reading `v.length` on a `vmath.vector`, or passing `url.path` where a `Hash` is expected, fails to compile.
+
+```ts
+const v = vmath.vector([1, 2, 3]);
+const size: number = v.length(); // compiles to `#v`
+v[1] = 0.5; // 1-based, passed to Defold unchanged
+
+const url = msg.url("main:");
+const path = url.path; // Hash | undefined: a socket-only address has no path
+if (path !== undefined) {
+  print(hash_to_hex(path));
+}
+```
+
+**Why.** A `vmath.vector` and a URL are engine userdata, and their metatables decide what each access does. The vector's `__index` accepts only integer keys, so `v.length` raises at runtime; its size comes from the `__len` metamethod, which `v.length()` compiles to. Its index is 1-based, as in Lua, and the transpiler passes it through unchanged. A URL's `__index` returns `nil` for an unset `path` or `fragment`, and `msg.url("main:")` or the three-argument form with an `undefined` path leaves `path` unset. Every `msg.url` form resolves a socket, so `url.socket` is always a `Hash`.
+
+**Typed alternative.** Call `v.length()`, and check `url.path` and `url.fragment` against `undefined` before use. All three URL fields are writable: assign a `Hash` or a string, or `undefined` to clear `path` or `fragment`.
+
+**How we pin this in the type tests.** `packages/types/test-d/userdata-fields.ts` marks `v.length` as a field and `url.path` as a `Hash` with `@ts-expect-error`, and `packages/transpiler/src/vector-math-emit.test.ts` snapshots `v.length()` as `#v` and `v[1] = 2` with its index unchanged.
 
 ## npm packages do not resolve — vendor the source instead
 

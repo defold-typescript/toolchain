@@ -34,3 +34,49 @@ end
 return ____exports
 "
 `;
+
+exports[`userdata metamethod emit v.length() emits the Lua length operator 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.go()
+    local v = vmath.vector({1, 2, 3})
+    return #v
+end
+return ____exports
+"
+`;
+
+exports[`userdata metamethod emit m.mul(scalar) emits Lua * 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.go()
+    local m = vmath.matrix4()
+    return m * 2
+end
+return ____exports
+"
+`;
+
+exports[`userdata metamethod emit v[i] = x passes the 1-based index to Defold unchanged 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.go()
+    local v = vmath.vector({1, 2, 3})
+    v[1] = 2
+    return v
+end
+return ____exports
+"
+`;
+
+exports[`userdata metamethod emit url.path = x emits a plain field assignment 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.go()
+    local url = msg.url()
+    url.path = "go"
+    return url
+end
+return ____exports
+"
+`;

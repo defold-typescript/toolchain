@@ -168,9 +168,9 @@ describe("core-types", () => {
   });
 
   test("Vector indexed-access yields number", () => {
-    const v: Vector = Object.assign([1, 2, 3] as readonly number[], { length: 3 }) as Vector;
-    expect(v[0]).toBe(1);
-    expect(v.length).toBe(3);
+    const v = [1, 2, 3] as unknown as Vector;
+    const first: number | undefined = v[0];
+    expect(first).toBe(1);
   });
 
   test("Matrix4 carries m00..m33 fields", () => {
@@ -253,7 +253,7 @@ describe("core-types", () => {
       ["constant", 'Opaque<"constant">'],
       [
         "constant_buffer",
-        'Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }',
+        'Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }',
       ],
       ["buffer", 'Opaque<"buffer">'],
       [

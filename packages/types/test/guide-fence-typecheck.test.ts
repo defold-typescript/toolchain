@@ -45,6 +45,12 @@ const SELECTED: readonly FenceSelection[] = [
     kind: "render-script",
   },
   {
+    page: "typescript-gotchas.md",
+    lead: "**Symptom.** Reading `v.length` on a `vmath.vector`",
+    nth: 0,
+    kind: "script",
+  },
+  {
     page: "typescript-vs-lua.md",
     lead: "### Engine indexes use Defold's base",
     nth: 0,

@@ -1,11 +1,18 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 
 /**
- * A read-only numeric vector accessed by index; `length` is its component count.
+ * A numeric vector of any size, accessed by index for reads and writes;
+ * `v.length()` is its component count.
+ *
+ * @remarks
+ * The index is 1-based and passed to Defold unchanged: `v[1]` is the first
+ * component, and an index outside `1..v.length()` raises. `v.length()` compiles
+ * to the Lua length operator `#v`; reading `v.length` as a field raises, since
+ * the engine accepts only integer keys.
  */
 export interface Vector {
-  readonly [index: number]: number;
-  readonly length: number;
+  [index: number]: number;
+  length: LuaLengthMethod<number>;
 }
 
 /**
@@ -84,7 +91,22 @@ export interface Matrix4 {
   c1: Vector4;
   c2: Vector4;
   c3: Vector4;
-  mul: LuaMultiplicationMethod<Matrix4, Matrix4> & LuaMultiplicationMethod<Vector4, Vector4>;
+  mul: LuaMultiplicationMethod<Matrix4, Matrix4> &
+    LuaMultiplicationMethod<Vector4, Vector4> &
+    LuaMultiplicationMethod<number, Matrix4>;
+}
+
+/**
+ * An array constant read back from a constant buffer: the engine's 1-based
+ * proxy over the constant's slots, not a Lua table.
+ *
+ * @remarks
+ * `cb.lights[1]` reads the first slot and an index below 1 raises. The proxy
+ * has no length, so it does not support `#` or `.length`; assign a whole new
+ * array (`cb.lights = [a, b]`) to change how many slots the constant holds.
+ */
+export interface ConstantArray<T> {
+  [index: number]: T;
 }
 
 declare const HashBrand: unique symbol;
@@ -145,9 +167,12 @@ declare const OpaqueBrand: unique symbol;
  * types, and passing a texture where a node is expected is a compile error,
  * exactly as a wrong primitive would be. The brand is a phantom `unique symbol`
  * property that lives only in the type system and is erased at transpile — at
- * runtime the value is just the engine's userdata. Because the symbol is never
- * exported, your code cannot fabricate a handle or inspect or construct one; the
- * engine API is the only source.
+ * runtime the value is whatever the engine hands out: usually its userdata, but a
+ * plain number for render-target and texture handles (`render.render_target`,
+ * the `handle` field of `resource.get_texture_info`). The brand exists only at
+ * compile time either way. Because the symbol is never exported, your code
+ * cannot fabricate a handle or inspect or construct one; the engine API is the
+ * only source.
  *
  * The handle kinds modeled today:
  * - GUI & rendering: `Opaque<"node">`, `Opaque<"texture">`,
@@ -181,11 +206,21 @@ export interface Opaque<Name extends string> {
 
 /**
  * A message-passing address with `socket`, `path`, and `fragment` components.
+ *
+ * @remarks
+ * Each field is writable and takes a `Hash` or a string, which the engine
+ * hashes. Every `msg.url` form resolves a socket, so `socket` is always set.
+ * `path` and `fragment` read `undefined` when unset: a socket-only address
+ * (`msg.url("main:")`) has no `path`, so narrow it before use. Assigning
+ * `undefined` clears `path` or `fragment`.
  */
 export interface Url {
-  readonly socket: Hash;
-  readonly path: Hash;
-  readonly fragment: Hash | undefined;
+  get socket(): Hash;
+  set socket(value: Hash | string);
+  get path(): Hash | undefined;
+  set path(value: Hash | string | undefined);
+  get fragment(): Hash | undefined;
+  set fragment(value: Hash | string | undefined);
 }
 
 const BUFFER_TYPE = 'Opaque<"buffer">';
@@ -219,7 +254,7 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   render_target: 'Opaque<"render_target">',
   constant: 'Opaque<"constant">',
   constant_buffer:
-    'Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }',
+    'Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }',
   buffer: BUFFER_TYPE,
   bufferstream: BUFFERSTREAM_TYPE,
   userdata: 'Opaque<"userdata">',
