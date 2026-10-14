@@ -404,10 +404,6 @@ const renderHooks = defineRenderScript<RenderSelf>({
     void _message;
     void _sender;
   },
-  final(self) {
-    const _self: RenderSelf = self;
-    void _self;
-  },
   on_reload(self) {
     const _self: RenderSelf = self;
     void _self;
@@ -424,7 +420,8 @@ renderHooks.on_message?.(renderSelf, "set_parent", { anything: 1 }, _url);
 defineRenderScript<RenderSelf>({});
 
 // `defineRenderScript` infers `TSelf` from `init`'s return identically, and
-// still omits `on_input` from its hook surface.
+// still omits `on_input`, `final`, `fixed_update` and `late_update` from its hook
+// surface.
 const inferredRender = defineRenderScript({
   init: () => ({ frames: 0 }),
   update(self, dt) {

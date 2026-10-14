@@ -20,7 +20,7 @@ function fixtureFunction(namespace: string, fnName: string): ApiFunction {
 }
 
 // Pull the JSDoc block sitting directly above an interface member line. `call`
-// members read `<name>?(`, `prop` members read `<name>?:`. Mirrors
+// members read `<name>?(`, `prop` members read `<name>:` or `<name>?:`. Mirrors
 // `firstOverloadBlock` in facade-overload-docs.test.ts: walk up over blanks,
 // require the previous non-blank line to close a block, find its `/**` open,
 // then split the body into summary (lines before the first `@tag`) and the set
@@ -31,7 +31,7 @@ function memberBlock(
   kind: "call" | "prop" = "call",
 ): { summary: string; params: Set<string> } {
   const lines = source.split("\n");
-  const tail = kind === "call" ? "\\?\\(" : "\\?:";
+  const tail = kind === "call" ? "\\?\\(" : "\\??:";
   const memberRe = new RegExp(`^\\s*${memberName}${tail}`);
   const memberIdx = lines.findIndex((l) => memberRe.test(l));
   if (memberIdx === -1) throw new Error(`no member "${memberName}" found`);
@@ -144,10 +144,12 @@ function interfaceBraceSpan(source: string, name: string): string {
   throw new Error(`unterminated interface body for "${name}"`);
 }
 
-// Member names (`<name>?:`) declared directly in an interface brace span. JSDoc
-// body lines never match — they start with `*`, not a word char after indent.
+// Member names (`<name>:` or `<name>?:`) declared directly in an interface brace
+// span, read at the two-space member indent so a nested type literal's fields
+// are skipped. JSDoc body lines never match — they start with `*`, not a word
+// char after indent.
 function interfaceFieldNames(span: string): string[] {
-  return [...span.matchAll(/^\s*([A-Za-z_]\w*)\?:/gm)].map((m) => m[1] as string);
+  return [...span.matchAll(/^ {2}([A-Za-z_]\w*)\??:/gm)].map((m) => m[1] as string);
 }
 
 // The field docs of an `on_input` table, keyed by field: the go fixture's
@@ -211,7 +213,7 @@ describe("lifecycle hook-member docs", () => {
     // parse would silently make the per-field doc loop below vacuous.
     expect(fields.length).toBe(26);
     for (const f of fields) {
-      expect(memberHasPrecedingDoc(span, new RegExp(`^\\s*${f}\\?:`))).toBe(true);
+      expect(memberHasPrecedingDoc(span, new RegExp(`^\\s*${f}\\??:`))).toBe(true);
     }
   });
 
@@ -221,7 +223,7 @@ describe("lifecycle hook-member docs", () => {
     // InputTouch's documented field count — same partial-parse guard as InputAction.
     expect(fields.length).toBe(12);
     for (const f of fields) {
-      expect(memberHasPrecedingDoc(span, new RegExp(`^\\s*${f}\\?:`))).toBe(true);
+      expect(memberHasPrecedingDoc(span, new RegExp(`^\\s*${f}\\??:`))).toBe(true);
     }
   });
 

@@ -118,9 +118,12 @@ declare global {
      *     return { my_render_target: render.render_target("my_target", {}) };
      *   },
      *
-     *   final(self) {
-     *     // How to delete a render target:
-     *     render.delete_render_target(self.my_render_target);
+     *   // A render script has no final hook, so free the target on a message.
+     *   on_message(self, message_id) {
+     *     if (message_id === hash("release_target")) {
+     *       // How to delete a render target:
+     *       render.delete_render_target(self.my_render_target);
+     *     }
      *   },
      * });
      * ```

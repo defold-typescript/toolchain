@@ -1072,7 +1072,7 @@
   "model.play_anim": [
     {
       "sourceHash": "64d6b46054d23a1b",
-      "ts": "// The following examples assume that the model has id \"model\".\n// How to play the \"jump\" animation followed by the \"run\" animation:\nconst url = msg.url(\"#model\");\n\nfunction anim_done(self: unknown, message_id: unknown, message: unknown, sender: unknown) {\n  if (message_id === hash(\"model_animation_done\")) {\n    const { animation_id } = message as { animation_id: Hash };\n    if (animation_id === hash(\"jump\")) {\n      // open animation done, chain with \"run\"\n      const properties = { blend_duration: 0.2 };\n      model.play_anim(url, \"run\", go.PLAYBACK_LOOP_FORWARD, properties, anim_done);\n    }\n  }\n}\n\nexport default defineScript({\n  init(self) {\n    const play_properties = { blend_duration: 0.1 };\n    // first blend during 0.1 sec into the jump, then during 0.2 s into the run animation\n    model.play_anim(url, \"jump\", go.PLAYBACK_ONCE_FORWARD, play_properties, anim_done);\n  },\n});"
+      "ts": "// The following examples assume that the model has id \"model\".\n// How to play the \"jump\" animation followed by the \"run\" animation:\nconst url = msg.url(\"#model\");\n\nfunction anim_done(self: unknown, message_id: Hash, message: { animation_id: Hash }) {\n  if (message_id === hash(\"model_animation_done\")) {\n    if (message.animation_id === hash(\"jump\")) {\n      // open animation done, chain with \"run\"\n      const properties = { blend_duration: 0.2 };\n      model.play_anim(url, \"run\", go.PLAYBACK_LOOP_FORWARD, properties, anim_done);\n    }\n  }\n}\n\nexport default defineScript({\n  init(self) {\n    const play_properties = { blend_duration: 0.1 };\n    // first blend during 0.1 sec into the jump, then during 0.2 s into the run animation\n    model.play_anim(url, \"jump\", go.PLAYBACK_ONCE_FORWARD, play_properties, anim_done);\n  },\n});"
     }
   ],
   "model.reset_constant": [
@@ -1358,7 +1358,7 @@
   "render.delete_render_target": [
     {
       "sourceHash": "e535502af5d49877",
-      "ts": "export default defineRenderScript({\n  init() {\n    return { my_render_target: render.render_target(\"my_target\", {}) };\n  },\n\n  final(self) {\n    // How to delete a render target:\n    render.delete_render_target(self.my_render_target);\n  },\n});"
+      "ts": "export default defineRenderScript({\n  init() {\n    return { my_render_target: render.render_target(\"my_target\", {}) };\n  },\n\n  // A render script has no final hook, so free the target on a message.\n  on_message(self, message_id) {\n    if (message_id === hash(\"release_target\")) {\n      // How to delete a render target:\n      render.delete_render_target(self.my_render_target);\n    }\n  },\n});"
     }
   ],
   "render.disable_material": [

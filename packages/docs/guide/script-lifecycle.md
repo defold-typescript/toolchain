@@ -149,7 +149,7 @@ export default defineScript({
 
 Inside `init`, `self` is **only** the property values — reading a field that is neither a declared property nor yet returned is a compile error. The return is still the sole state channel, and every other hook sees the merged properties-plus-state `self`.
 
-Hovering `defineScript`, `defineGuiScript`, or `defineRenderScript` in the editor now shows the factory's purpose, the hooks each kind accepts (render scripts omit `on_input`), and a TypeScript example. Hovering an individual callback inside the hook table — `init`, `update`, `fixed_update`, `late_update`, `on_message`, `on_input`, `final`, `on_reload` — now shows that hook's Defold description and parameter docs as well. Hovering an `action` or `touch` field inside `on_input` — `action.value`, `action.pressed`, `touch.tap_count`, and the rest — shows that field's Defold description.
+Hovering `defineScript`, `defineGuiScript`, or `defineRenderScript` in the editor now shows the factory's purpose, the hooks each kind accepts (render scripts take only `init`, `update`, `on_message` and `on_reload`), and a TypeScript example. Hovering an individual callback inside the hook table — `init`, `update`, `fixed_update`, `late_update`, `on_message`, `on_input`, `final`, `on_reload` — now shows that hook's Defold description and parameter docs as well. Hovering an `action` or `touch` field inside `on_input` — `action.value`, `action.pressed`, `touch.tap_count`, and the rest — shows that field's Defold description.
 
 At runtime Defold owns `self` (a userdata-backed table) and a script can populate but not replace it, so the transpiler can't emit a returning `init` verbatim. It wraps the body in a builder and merges the returned table onto the engine `self`; a `nil`/stateless return merges nothing. When `init` takes a `self` parameter the builder receives the engine `self` (so a property read resolves to the real table), and the parameter keeps your name even if it is not literally `self`. The hooks you write stay in terms of a typed `self`.
 
@@ -157,9 +157,9 @@ At runtime Defold owns `self` (a userdata-backed table) and a script can populat
 
 - `action_id` is `Hash | undefined`; Defold uses `nil` for pointer movement. The `== null` the examples above test it with is the loose form that narrows both spellings — and `undefined`, not `null`, is what you pass back into an engine slot ([passing absence](./typescript-gotchas.md#passing-absence-write-undefined-never-null)).
 - `action` is `InputAction` with optional fields such as `value`, `pressed`, `released`, `x`, `y`, `text`, `marked_text`, and `touch`.
-- `action.touch` entries are `InputTouch` values with fields such as `id`, `pressed`, `tap_count`, `x`, and `acc_x`.
+- `action.touch` entries are `InputTouch` values. The engine sets all twelve fields on every entry, so `id`, `tap_count`, `pressed`, `released`, `x`, `y`, `screen_x`, `screen_y`, `dx`, `dy`, `screen_dx`, and `screen_dy` are never `undefined`.
 
-`defineRenderScript` intentionally has no `on_input` hook because Defold render scripts do not receive input callbacks.
+`defineRenderScript` accepts only `init`, `update`, `on_message`, and `on_reload`, the four hooks Defold calls on a render script. Writing `on_input`, `final`, `fixed_update`, or `late_update` there is a compile error, since the engine would never run it.
 
 ### Why not call `go.property` yourself
 

@@ -136,10 +136,9 @@ declare global {
      * // How to play the "jump" animation followed by the "run" animation:
      * const url = msg.url("#model");
      *
-     * function anim_done(self: unknown, message_id: unknown, message: unknown, sender: unknown) {
+     * function anim_done(self: unknown, message_id: Hash, message: { animation_id: Hash }) {
      *   if (message_id === hash("model_animation_done")) {
-     *     const { animation_id } = message as { animation_id: Hash };
-     *     if (animation_id === hash("jump")) {
+     *     if (message.animation_id === hash("jump")) {
      *       // open animation done, chain with "run"
      *       const properties = { blend_duration: 0.2 };
      *       model.play_anim(url, "run", go.PLAYBACK_LOOP_FORWARD, properties, anim_done);
@@ -156,7 +155,7 @@ declare global {
      * });
      * ```
      */
-    function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void;
+    function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
     /**
      * Enable or disable visibility of a mesh
      *
