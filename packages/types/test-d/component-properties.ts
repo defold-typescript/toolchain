@@ -1,6 +1,9 @@
 /// <reference path="../index.d.ts" />
 import type { Hash, Matrix4, Vector3 } from "../src/core-types";
 
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
 // The camera catalog: every member is typed `float` upstream, so before the
 // token was mapped all eight resolved to `unknown` and no annotated read
 // compiled without a cast.
@@ -87,12 +90,18 @@ void _bullet;
 go.set<physics.properties>()("#collisionobject", "bullet", true);
 
 const _meshMaterial: Hash = go.get<mesh.properties>()("#mesh", "material");
-const _meshTexture3: Hash = go.get<mesh.properties>()("#mesh", "texture3");
-const _meshTexture15: Hash = go.get<mesh.properties>()("#mesh", "texture15");
 void _meshMaterial;
-void _meshTexture3;
-void _meshTexture15;
-go.set<mesh.properties>()("#mesh", "texture3", hash("/main/t.texturec"));
+
+// comp_mesh.cpp binds texture units below dmRender::RenderObject::MAX_TEXTURE_COUNT (16).
+type MeshTextureKey =
+  `texture${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15}`;
+const _meshTextures: Equal<
+  Pick<mesh.properties, MeshTextureKey>,
+  Record<MeshTextureKey, Hash>
+> = true;
+void _meshTextures;
+const _meshTextureKey = null as unknown as MeshTextureKey;
+go.set<mesh.properties>()("#mesh", _meshTextureKey, hash("/main/t.texturec"));
 // @ts-expect-error the engine holds sixteen texture units, 0-15
 go.get<mesh.properties>()("#mesh", "texture16");
 
