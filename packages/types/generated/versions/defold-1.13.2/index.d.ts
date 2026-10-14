@@ -53,6 +53,7 @@ import "../../../src/engine-globals";
 import "../../../src/msg-overloads";
 import "../../../src/message-guard";
 import "../../../src/window-event-guard";
+import "../../../src/physics-event-guard";
 import "../../../src/scene-addresses";
 import "../../../src/go-overloads";
 import "../../../src/component-properties";
