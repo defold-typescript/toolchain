@@ -879,6 +879,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   { specifier: "../../src/msg-overloads" },
   { specifier: "../../src/message-guard" },
   { specifier: "../../src/window-event-guard" },
+  { specifier: "../../src/physics-event-guard" },
   { specifier: "../../src/scene-addresses" },
   { specifier: "../../src/go-overloads" },
   { specifier: "../../src/component-properties" },

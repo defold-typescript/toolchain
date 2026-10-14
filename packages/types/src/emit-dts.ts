@@ -3906,7 +3906,10 @@ function typedefAlias(
   const brand = `Opaque<"${typedef.name}">`;
   const aliasOf = typedef.aliasOf ?? [];
   if (aliasOf.length > 0 && !isHandleAlias(aliasOf)) {
-    return `type ${local} = ${unionFromTokens(aliasOf, mapType)};`;
+    const armType: DefoldTypeMapper = DISCRIMINATED_MESSAGE_UNIONS.has(typedef.name)
+      ? (token, position) => discriminatedMessageArm(token) ?? mapType(token, position)
+      : mapType;
+    return `type ${local} = ${unionFromTokens(aliasOf, armType)};`;
   }
   const mapped = rawMapType(typedef.name);
   if (mapped.startsWith(brand)) return `type ${local} = ${mapped};`;
@@ -6132,6 +6135,18 @@ function resolveDefoldLeaf(leaf: string): string | undefined {
   const name = message?.[1];
   if (name !== undefined && BUILTIN_MESSAGE_NAMES.has(name)) return `BuiltinMessages["${name}"]`;
   return undefined;
+}
+
+// The union typedefs whose message arms each carry the engine's message-name
+// hash in `type`: script_physics.cpp sets it on every `physics.set_event_listener`
+// event. The same message referenced anywhere else (`physics.raycast`) has none.
+const DISCRIMINATED_MESSAGE_UNIONS: ReadonlySet<string> = new Set(["physics.event"]);
+
+function discriminatedMessageArm(token: string): string | undefined {
+  const name = MESSAGE_REFERENCE.exec(token)?.[1];
+  const payload = resolveDefoldLeaf(token);
+  if (name === undefined || payload === undefined) return undefined;
+  return `${payload} & { type: Hash<"${name}"> }`;
 }
 
 // Whole-token lookup and callback recovery run first, so the grammar sees only

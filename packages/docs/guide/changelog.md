@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **Breaking: [five engine returns can be `undefined`](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil)**, so narrow them before use, and ray-cast results carry no `request_id` or `group`.
 > - **Breaking: [a vector's size is `v.length()` and `url.path` can be `undefined`](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined).**
 > - **Reads and writes match the engine**: id tables read by path, `go.get` reads `Matrix4`, `Url` fields are writable, and `sys.get_sys_info` always returns its strings.
-> - **[Built-in messages](./messages.md#the-message-type-surface) match the engine**: fields it defaults are optional, and `stop_sound`'s `play_id`, `pause_sound`, `set_pan` and collision `group` are declared.
+> - **[Built-in messages](./messages.md#the-message-type-surface) and physics events match the engine**: defaulted fields are optional, missing fields are declared, and [`isPhysicsEvent`](./typescript-gotchas.md#physics-listener-events-narrow-with-isphysicsevent-not-a-type-check) narrows a listener event.
 
 ### Breaking
 
@@ -46,7 +46,9 @@ What changed in each published `defold-typescript` toolchain release.
   - **`on_input` touch entries** declare all twelve fields as always present, so `touch.x` is a `number` with no `undefined` check.
   - **`http.request`** responses declare `url`, and `report_progress` events declare `bytes_sent`.
 
-- **Built-in messages declare what the engine handles and sends**: `play_sound` takes `pan` and `speed`, `play_animation` takes `offset` and `playback_rate`, `pause_sound` and `set_pan` are declared, and `collision_response`, `contact_point_response` and `trigger_response` carry `group`.
+- **Built-in messages declare what the engine handles and sends**: `play_sound` takes `pan` and `speed`, `play_animation` takes `offset` and `playback_rate`, `pause_sound` and `set_pan` are declared, `collision_response`, `contact_point_response` and `trigger_response` carry `group`, and the `a` and `b` bodies of `contact_point_event`, `collision_event` and `trigger_event` declare the fields the engine sets.
+
+- **Physics listener events [narrow with `isPhysicsEvent`](./typescript-gotchas.md#physics-listener-events-narrow-with-isphysicsevent-not-a-type-check)**: on Defold 1.13.2 and newer targets each `physics.set_event_listener` event carries its `type` hash, and `isPhysicsEvent(event, "collision_event")` narrows it to that one event.
 
 ### Fixed
 
