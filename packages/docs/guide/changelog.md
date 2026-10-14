@@ -14,9 +14,10 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **Breaking: [hooks and callbacks](./script-lifecycle.md) match what the engine calls and passes**, and `render.render_target`'s table is typed.
-> - **Breaking: [five engine returns can be `undefined`](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil)**, so narrow them before use, and `physics.raycast` results carry no `request_id`.
+> - **Breaking: [five engine returns can be `undefined`](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil)**, so narrow them before use, and ray-cast results carry no `request_id` or `group`.
 > - **Breaking: [a vector's size is `v.length()` and `url.path` can be `undefined`](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined).**
 > - **Reads and writes match the engine**: id tables read by path, `go.get` reads `Matrix4`, `Url` fields are writable, and `sys.get_sys_info` always returns its strings.
+> - **[Built-in messages](./messages.md#the-message-type-surface) match the engine**: fields it defaults are optional, and `stop_sound`'s `play_id`, `pause_sound`, `set_pan` and collision `group` are declared.
 
 ### Breaking
 
@@ -27,7 +28,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`isWindowEvent`** narrows a non-resize event's `data` to `Record<string, never>`, the empty table the engine passes, not `undefined`.
 - **`render.render_target` checks its table on Defold 1.13.2 and newer targets**, in both arities: each buffer needs a `format`, `width` and `height`, and a format constant other than depth or stencil needs [a nil check](./typescript-gotchas.md#texture-format-constants-can-be-undefined) first. To build the table ahead of the call, type it as `render.RenderTargetParams`, which every pinned target declares, as an open record on older pins.
 - **Five engine returns can be `undefined`, as the engine source shows**: `factory.create` when the spawn fails, `tilemap.get_tile`, `tilemap.get_tile_info` and `tilemap.get_tiles` for an unknown layer (the first two also for a cell out of range), and the second value of `collectionproxy.set_collection` when the change succeeds. Code that uses the result directly stops compiling; [narrow it](./typescript-gotchas.md#null-undefined-and--null-all-collapse-to-nil) with `!== undefined` first.
-- **`physics.raycast` results carry no `request_id`**, and on Defold 1.12.4 to 1.13.1 targets the result is one hit or a list of hits, as on newer ones. Code that reads `request_id`, or indexes the result without an `Array.isArray` check, stops compiling.
+- **Ray-cast results carry only what the engine sends**: `physics.raycast` results have no `request_id`, and on Defold 1.12.4 to 1.13.1 targets the result is one hit or a list of hits, as on newer ones; the `ray_cast_missed` message has no `group`. Code that reads either field, or indexes the result without an `Array.isArray` check, stops compiling.
 - **Three engine userdata types follow the metatables the engine registers**:
   - **`vmath.vector`** gives its size through `Vector.length`, called as `v.length()`, which compiles to `#v`; reading `v.length` as a field raises at runtime and stops compiling.
   - **`Url.path`** can be `undefined`, since a socket-only address such as `msg.url("main:")` has no path; [check it](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined) before use.
@@ -45,10 +46,13 @@ What changed in each published `defold-typescript` toolchain release.
   - **`on_input` touch entries** declare all twelve fields as always present, so `touch.x` is a `number` with no `undefined` check.
   - **`http.request`** responses declare `url`, and `report_progress` events declare `bytes_sent`.
 
+- **Built-in messages declare what the engine handles and sends**: `play_sound` takes `pan` and `speed`, `play_animation` takes `offset` and `playback_rate`, `pause_sound` and `set_pan` are declared, and `collision_response`, `contact_point_response` and `trigger_response` carry `group`.
+
 ### Fixed
 
 - **`image.get_astc_header` returns its header without `undefined`**: the engine raises on invalid data instead of returning nil.
 - **`sys.get_sys_info` returns `device_model`, `manufacturer`, `device_ident` and `user_agent` as strings**: the engine always sets them, as an empty string where the platform has no value.
+- **Built-in message payloads accept what the engine accepts**: `set_gain`'s `gain`, `set_camera`'s orthographic fields, `reboot`'s arguments and `start_record`'s `frame_period` and `fps` are optional, and `stop_sound` takes a `play_id` to stop one voice.
 
 ## v0.50.1
 

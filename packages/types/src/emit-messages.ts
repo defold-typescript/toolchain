@@ -137,6 +137,209 @@ export function applyMessageFieldCorrections(
   return { entries };
 }
 
+// What only the engine states about a message the catalog mirrors from the
+// reference: proto optionality, a field the handler reads or the sender fills,
+// or a message a component handles. `evidence` names `<path>:<symbol>` in the
+// 1.14.0 engine source. Each kind throws once the catalog already states its
+// fact, since that means upstream fixed the reference and the entry is deleted.
+export type MessageEngineCorrection = {
+  readonly origin: string;
+  readonly name: string;
+  readonly evidence: string;
+} & (
+  | { readonly kind: "optional" | "required"; readonly fields: readonly string[] }
+  | { readonly kind: "add-field"; readonly fields: readonly MessageField[] }
+  | {
+      readonly kind: "add-message";
+      readonly description: string;
+      readonly fields: readonly MessageField[];
+    }
+);
+
+const SCRIPT_DDF_DEFAULTS =
+  "script/src/script_ddf.cpp:DoLuaTableToDDF fills an omitted optional field with its default";
+const SOUND_EVENT =
+  "gamesys/src/gamesys/components/comp_sound.cpp:DispatchSoundEvent always sets play_id, and HandleEntryFinishedPlaying sends the event only for a play_sound that supplied one";
+
+function optionalField(name: string, types: string[], doc: string): MessageField {
+  return { name, types, optional: true, doc };
+}
+
+function otherGroupField(): MessageField {
+  return {
+    name: "group",
+    types: ["hash"],
+    optional: false,
+    doc: "Collision group of the other object, equal to other_group.",
+  };
+}
+
+export const MESSAGE_ENGINE_CORRECTIONS: readonly MessageEngineCorrection[] = [
+  {
+    kind: "optional",
+    origin: "camera",
+    name: "set_camera",
+    fields: ["orthographic_projection", "orthographic_zoom", "orthographic_mode"],
+    evidence: `gamesys/proto/gamesys/camera_ddf.proto:SetCamera declares them optional with defaults, CompCameraOnMessage handles it, and ${SCRIPT_DDF_DEFAULTS}`,
+  },
+  {
+    kind: "optional",
+    origin: "sys",
+    name: "reboot",
+    fields: ["arg1", "arg2", "arg3", "arg4", "arg5", "arg6"],
+    evidence: `script/src/script/sys_ddf.proto:Reboot declares every argument optional, engine/src/engine.cpp:Dispatch handles it, and ${SCRIPT_DDF_DEFAULTS}`,
+  },
+  {
+    kind: "optional",
+    origin: "sys",
+    name: "start_record",
+    fields: ["frame_period", "fps"],
+    evidence: `script/src/script/sys_ddf.proto:StartRecord declares both optional with defaults 2 and 30, engine/src/engine.cpp:Dispatch handles it, and ${SCRIPT_DDF_DEFAULTS}`,
+  },
+  {
+    kind: "optional",
+    origin: "sprite",
+    name: "play_animation",
+    fields: ["offset", "playback_rate"],
+    evidence: `gamesys/proto/gamesys/sprite_ddf.proto:PlayAnimation declares both optional with defaults 0 and 1, comp_sprite.cpp:CompSpriteOnMessage passes both to PlayAnimation, and ${SCRIPT_DDF_DEFAULTS}`,
+  },
+  {
+    kind: "required",
+    origin: "sound",
+    name: "sound_done",
+    fields: ["play_id"],
+    evidence: SOUND_EVENT,
+  },
+  {
+    kind: "required",
+    origin: "sound",
+    name: "sound_stopped",
+    fields: ["play_id"],
+    evidence: SOUND_EVENT,
+  },
+  {
+    kind: "add-field",
+    origin: "sound",
+    name: "play_sound",
+    fields: [
+      optionalField("pan", ["number"], "Pan between -1 and 1, added to the component's pan."),
+      optionalField("speed", ["number"], "Speed factor, multiplied with the component's speed."),
+    ],
+    evidence:
+      "gamesys/proto/gamesys/gamesys_ddf.proto:PlaySound declares pan and speed, and comp_sound.cpp:CompSoundOnMessage applies both to the voice",
+  },
+  {
+    kind: "add-field",
+    origin: "sound",
+    name: "stop_sound",
+    fields: [
+      optionalField(
+        "play_id",
+        ["number"],
+        "Id passed to play_sound; stops only that voice. Omit to stop every voice.",
+      ),
+    ],
+    evidence:
+      "gamesys/proto/gamesys/gamesys_ddf.proto:StopSound declares play_id, and comp_sound.cpp:CompSoundOnMessage stops only the voice that matches it",
+  },
+  {
+    kind: "add-message",
+    origin: "sound",
+    name: "pause_sound",
+    description: "Pause or resume every voice the receiving sound component plays.",
+    fields: [optionalField("pause", ["boolean"], "true (default) to pause, false to resume.")],
+    evidence:
+      "gamesys/proto/gamesys/gamesys_ddf.proto:PauseSound declares pause, and comp_sound.cpp:CompSoundOnMessage pauses every voice of the component",
+  },
+  {
+    kind: "add-message",
+    origin: "sound",
+    name: "set_pan",
+    description: "Set the pan on the receiving sound component.",
+    fields: [optionalField("pan", ["number"], "Pan between -1 and 1, default 0.")],
+    evidence:
+      "gamesys/proto/gamesys/gamesys_ddf.proto:SetPan declares pan, and comp_sound.cpp:CompSoundOnMessage sets the component's pan",
+  },
+  {
+    kind: "add-field",
+    origin: "physics",
+    name: "collision_response",
+    fields: [otherGroupField()],
+    evidence:
+      "gamesys/proto/gamesys/physics_ddf.proto:CollisionResponse declares a required group, and comp_collision_object.cpp:CollisionCallback sets it to the other object's group",
+  },
+  {
+    kind: "add-field",
+    origin: "physics",
+    name: "contact_point_response",
+    fields: [otherGroupField()],
+    evidence:
+      "gamesys/proto/gamesys/physics_ddf.proto:ContactPointResponse declares a required group, and comp_collision_object.cpp:ContactPointCallback sets it to the other object's group",
+  },
+  {
+    kind: "add-field",
+    origin: "physics",
+    name: "trigger_response",
+    fields: [otherGroupField()],
+    evidence:
+      "gamesys/proto/gamesys/physics_ddf.proto:TriggerResponse declares a required group, and comp_collision_object.cpp:TriggerEnteredCallback sets it to the other object's group",
+  },
+];
+
+export function applyMessageEngineCorrections(
+  catalog: MessageCatalog,
+  overlay: readonly MessageEngineCorrection[] = MESSAGE_ENGINE_CORRECTIONS,
+): MessageCatalog {
+  const entries = catalog.entries.map((entry) => ({
+    ...entry,
+    payload: entry.payload.map((field) => ({ ...field })),
+  }));
+  for (const correction of overlay) {
+    const identity = `(origin=${correction.origin}, name=${correction.name})`;
+    const stale = (fact: string) =>
+      new Error(
+        `applyMessageEngineCorrections: the catalog ${fact} for ${identity}; delete the correction`,
+      );
+    const entry = entries.find(
+      (candidate) => candidate.origin === correction.origin && candidate.name === correction.name,
+    );
+    if (correction.kind === "add-message") {
+      if (entry) throw stale("already declares message");
+      entries.push({
+        name: correction.name,
+        origin: correction.origin,
+        description: correction.description,
+        payload: correction.fields.map((field) => ({ ...field, types: [...field.types] })),
+      });
+      continue;
+    }
+    if (!entry) {
+      throw new Error(`applyMessageEngineCorrections: no catalog message matches ${identity}`);
+    }
+    if (correction.kind === "add-field") {
+      for (const field of correction.fields) {
+        if (entry.payload.some((candidate) => candidate.name === field.name)) {
+          throw stale(`already declares field ${field.name}`);
+        }
+        entry.payload.push({ ...field, types: [...field.types] });
+      }
+      continue;
+    }
+    const optional = correction.kind === "optional";
+    for (const name of correction.fields) {
+      const field = entry.payload.find((candidate) => candidate.name === name);
+      if (!field) {
+        throw new Error(
+          `applyMessageEngineCorrections: no catalog field matches ${identity} field=${name}`,
+        );
+      }
+      if (field.optional === optional) throw stale(`field ${name} is already ${correction.kind}`);
+      field.optional = optional;
+    }
+  }
+  return { entries };
+}
+
 const TS_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 const ENGINE_TYPES = [
   "Hash",

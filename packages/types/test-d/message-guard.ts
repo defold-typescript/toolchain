@@ -29,8 +29,11 @@ defineScript<Self>({
       void _otherGroup;
       void _ownGroup;
 
-      // @ts-expect-error contact_point_response has no `group` field (own_group/other_group only)
-      void message.group;
+      // The engine sets group equal to other_group.
+
+      const _group: Hash = message.group;
+
+      void _group;
     }
 
     if (isMessage(message_id, message, "set_parent")) {

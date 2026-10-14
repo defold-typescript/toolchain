@@ -17,9 +17,11 @@ import {
 } from "../src/emit-dts";
 import {
   applyMessageDeprecations,
+  applyMessageEngineCorrections,
   applyMessageFieldCorrections,
   type EmitBuiltinMessagesOptions,
   emitBuiltinMessages,
+  type MessageCatalog,
   parseMessagesDoc,
 } from "../src/emit-messages";
 import type { TranslationStore } from "../src/example-store";
@@ -400,21 +402,25 @@ export interface MessagesManifestEntry {
 
 // Unlike MODULE_MANIFEST, this surface is hand-maintained: Defold ships no
 // machine-readable export for built-in message ids, so refresh fixtures/
-// messages_doc.json by hand from the Defold API reference. The
-// message-payload-drift test guards the payload shapes against drift.
+// messages_doc.json by hand from the default target's API reference. The
+// message-payload-drift test holds its field names and optionality to that
+// reference; what only the engine states is MESSAGE_ENGINE_CORRECTIONS.
 export const MESSAGES_MANIFEST: MessagesManifestEntry = {
   doc: messagesDoc,
   outFile: "builtin-messages.d.ts",
 };
 
+export function builtinMessagesCatalog(entry: MessagesManifestEntry): MessageCatalog {
+  return applyMessageEngineCorrections(
+    applyMessageFieldCorrections(applyMessageDeprecations(parseMessagesDoc(entry.doc))),
+  );
+}
+
 export function generateBuiltinMessagesDeclaration(
   entry: MessagesManifestEntry,
   opts: EmitBuiltinMessagesOptions = {},
 ): string {
-  return emitBuiltinMessages(
-    applyMessageFieldCorrections(applyMessageDeprecations(parseMessagesDoc(entry.doc))),
-    opts,
-  );
+  return emitBuiltinMessages(builtinMessagesCatalog(entry), opts);
 }
 
 export interface GenerateResult {
