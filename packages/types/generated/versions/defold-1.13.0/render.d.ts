@@ -10,6 +10,7 @@ declare global {
     type render_target = Opaque<"render_target">;
     type texture = Opaque<"texture">;
     type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
+    type RenderTargetParams = Record<string | number, unknown>;
     /**
      * The rendering context was lost. Rendering is paused and all graphics resources become invalid. Passed to the `render.set_listener` callback.
      */

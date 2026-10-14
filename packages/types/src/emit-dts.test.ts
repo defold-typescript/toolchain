@@ -20,12 +20,14 @@ import graphicsDoc from "../fixtures/defold-1.13.1/graphics_doc.json" with { typ
 import gui113Doc from "../fixtures/defold-1.13.1/gui_doc.json" with { type: "json" };
 import materialDoc from "../fixtures/defold-1.13.1/material_doc.json" with { type: "json" };
 import model113Doc from "../fixtures/defold-1.13.1/model_doc.json" with { type: "json" };
+import render113Doc from "../fixtures/defold-1.13.1/render_doc.json" with { type: "json" };
 import sprite113Doc from "../fixtures/defold-1.13.1/sprite_doc.json" with { type: "json" };
 import bullet3d114Doc from "../fixtures/defold-1.14.0/bullet3d_doc.json" with { type: "json" };
 import collectionproxy114Doc from "../fixtures/defold-1.14.0/collectionproxy_doc.json" with {
   type: "json",
 };
 import http114Doc from "../fixtures/defold-1.14.0/http_doc.json" with { type: "json" };
+import render114Doc from "../fixtures/defold-1.14.0/render_doc.json" with { type: "json" };
 import sprite114Doc from "../fixtures/defold-1.14.0/sprite_doc.json" with { type: "json" };
 import window114Doc from "../fixtures/defold-1.14.0/window_doc.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
@@ -5272,6 +5274,29 @@ describe("library index base notes", () => {
     expect(docBlock(emitDeclarations(parseDefoldApiDoc(guiDoc)), "set")).toContain(
       "**⚠️ `index` is 1-based; passed to Defold unchanged.**",
     );
+  });
+});
+
+describe("overload slot aliases", () => {
+  const emittedLines = (doc: Parameters<typeof parseDefoldApiDoc>[0]): string[] =>
+    emitDeclarations(parseDefoldApiDoc(doc))
+      .split("\n")
+      .map((line) => line.trim());
+
+  test("render.RenderTargetParams is the reference's struct where the reference types the slot", () => {
+    expect(emittedLines(render114Doc)).toContain(
+      "type RenderTargetParams = render.render_target_params;",
+    );
+  });
+
+  test("render.RenderTargetParams is the bare record where the reference leaves the slot a table", () => {
+    expect(emittedLines(render113Doc)).toContain(
+      "type RenderTargetParams = Record<string | number, unknown>;",
+    );
+  });
+
+  test("a namespace without the aliased slot declares no alias", () => {
+    expect(emitDeclarations(parseDefoldApiDoc(sprite114Doc))).not.toContain("RenderTargetParams");
   });
 });
 
