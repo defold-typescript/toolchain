@@ -200,7 +200,7 @@ declare global {
      * @returns It returns a list. If missed it returns `nil`. See ray_cast_response for details on the returned values.
      * @example
      * ```ts
-     * function handle_result(hit: { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }) {
+     * function handle_result(hit: { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash }) {
      *   // act on the hit (see 'ray_cast_response')
      * }
      *
@@ -225,7 +225,7 @@ declare global {
      * });
      * ```
      */
-    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined;
+    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined;
     /**
      * Ray casts are used to test for intersections against collision objects in the physics world.
      * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects

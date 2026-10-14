@@ -2,10 +2,10 @@
 
 import type { Hash, Opaque, Vector3 } from "../src/core-types";
 
-// The three gui mapping-table returns are prose-only `a table mapping X to Y`
-// shapes the field parser cannot read; their key/value are hand-curated in
-// MAPPING_TABLE_SLOTS and emitted as `LuaMap<K, V>` — a branded `Hash` key is
-// illegal in a TS index signature. `.get(id)` yields the recovered value type.
+// The three gui mapping-table returns key by a branded `Hash`, which a TS index
+// signature cannot hold, so each emits a Lua table type (curated in
+// MAPPING_TABLE_SLOTS where the reference says only `table`). `.get(id)` yields
+// the recovered value type.
 
 declare const nodeId: Hash;
 

@@ -1229,9 +1229,10 @@ snippet — see [Verify against the real API surface](#verify-against-the-real-a
 
 A `.collectionfactory` component points at a `.collection`. Unlike `factory`,
 `collectionfactory.create(url, position?, rotation?, properties?, scale?)` returns
-a `LuaMap<Hash, Hash>` mapping each prototype id in the collection to the runtime
-id it was spawned as. Read one spawned object out of the map with
-`.get(prototypeId)`, keyed by the `/`-prefixed path the collection gives it.
+a `LuaTable<Hash, Hash>` mapping each prototype id in the collection to the runtime
+id it was spawned as. Read one spawned object out of the table with
+`.get(prototypeId)`, passing the hash or the `/`-prefixed path string the
+collection gives it; the engine hashes a string key for you.
 
 ```ts
 import { defineScript } from "@defold-typescript/types";
@@ -1239,8 +1240,8 @@ import { defineScript } from "@defold-typescript/types";
 export default defineScript({
   init() {
     const ids = collectionfactory.create("#levelfactory");
-    // Read one spawned object out of the map by its prototype id.
-    const player = ids.get(hash("/player"));
+    // Read one spawned object out of the table by its prototype path.
+    const player = ids.get("/player");
     return { player };
   },
 });

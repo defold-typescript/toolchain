@@ -545,11 +545,17 @@
     "annotated": "absent",
     "declared": "declared"
   },
+  "runtime:go.get:too-loose:return1": {
+    "verdict": "accepted",
+    "reason": "the only kind the annotation omits is matrix4: LuaPushVar (gameobject_props_lua.cpp) pushes a PROPERTY_TYPE_MATRIX4 property through dmScript::PushMatrix4",
+    "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
+    "declared": "boolean|hash|matrix4|number|quat|string|url|vector3|vector4"
+  },
   "runtime:go.get:too-narrow:return1": {
     "verdict": "accepted",
     "reason": "the only undeclared kind is userdata, the annotation's build-time resource_data marker; at runtime the property holds the hashed resource path (script_resource.cpp), which the declaration types as Hash",
     "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
-    "declared": "boolean|hash|number|quat|string|url|vector3|vector4"
+    "declared": "boolean|hash|matrix4|number|quat|string|url|vector3|vector4"
   },
   "runtime:go.init:missing-annotation": {
     "verdict": "accepted",
@@ -589,15 +595,15 @@
   },
   "runtime:go.set:too-loose:3": {
     "verdict": "accepted",
-    "reason": "Script_Set (gameobject_script.cpp) iterates a table at slot 3 with lua_istable and LuaToVar per element, so the declared Vector4[] array value is real",
+    "reason": "Script_Set (gameobject_script.cpp) iterates a table at slot 3 with lua_istable and LuaToVar per element, so the declared Vector4[] array value is real, and LuaToVar (gameobject_props_lua.cpp) takes a Matrix4 through dmScript::ToMatrix4",
     "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
-    "declared": "boolean|hash|number|quat|string|table|url|vector3|vector4"
+    "declared": "boolean|hash|matrix4|number|quat|string|table|url|vector3|vector4"
   },
   "runtime:go.set:too-narrow:3": {
     "verdict": "accepted",
     "reason": "the only undeclared kind is userdata, the annotation's build-time resource_data marker; at runtime the property holds the hashed resource path (script_resource.cpp), which the declaration types as Hash",
     "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
-    "declared": "boolean|hash|number|quat|string|table|url|vector3|vector4"
+    "declared": "boolean|hash|matrix4|number|quat|string|table|url|vector3|vector4"
   },
   "runtime:go.update:missing-annotation": {
     "verdict": "accepted",
