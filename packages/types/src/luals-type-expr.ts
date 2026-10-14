@@ -334,6 +334,11 @@ export function mapLualsExpression(
   return { ts: mapToken(token, walk), unknowns: walk.unknowns };
 }
 
+/** Whether a raw token is a typed LuaLS `fun(...)` expression rather than a bare `function(...)`. */
+export function isLualsFunctionToken(token: string): boolean {
+  return /^fun\s*\(/.test(token.trim());
+}
+
 /**
  * Map a `fun(...)` expression to a TypeScript **call signature** — the colon-return
  * form `(params): ret` an interface uses to become callable, not the `=>` arrow a
@@ -345,7 +350,7 @@ export function mapLualsCallSignatureExpression(
   position: LualsPosition = "output",
 ): LualsMapResult {
   const trimmed = token.trim();
-  if (!/^fun\s*\(/.test(trimmed)) {
+  if (!isLualsFunctionToken(trimmed)) {
     throw new Error(`mapLualsCallSignature: expected a "fun(...)" token, got "${token}".`);
   }
   const walk: Walk = { resolveLeaf, unknowns: [], position };
