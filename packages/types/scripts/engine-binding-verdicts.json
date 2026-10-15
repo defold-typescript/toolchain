@@ -217,7 +217,7 @@
   },
   "*:gui.set:manual:3": {
     "verdict": "manual",
-    "reason": "gui-overloads.d.ts types the value per form; gui_script.cpp:LuaSet picks the value check at run time from the property and target: nil only for the msg.url() textures form (:1126-1130), LuaToVar for the rest (:1167), then ToQuat for rotation (:1208), ToVector4 or ToVector3 for another vector (:1218, :1227) and lua_isnumber for a sub-key or scalar (:1241)"
+    "reason": "gui-overloads.d.ts types the value per form; gui_script.cpp:LuaSet picks the value check at run time from the property and target: nil only for the msg.url() textures form (:1126-1130), a branch 1.13.1 added, so gui-texture-removal.d.ts declares it only on 1.13.1 and later while 1.12.4's LuaToVar rejects nil (:897-902); LuaToVar for the rest (:1167), then ToQuat for rotation (:1208), ToVector4 or ToVector3 for another vector (:1218, :1227) and lua_isnumber for a sub-key or scalar (:1241)"
   },
   "*:gui.set:too-narrow:1": {
     "verdict": "accepted",

@@ -389,6 +389,81 @@ describe("committed API surfaces — overload-covered arity holds per target", (
   }
 });
 
+const GUI_TEXTURE_REMOVAL_PROOF = resolve(VERSIONS_DIR, "gui-texture-removal-proof.ts");
+const GUI_TEXTURE_REMOVAL_ABSENT_PROOF = resolve(
+  VERSIONS_DIR,
+  "gui-texture-removal-absent-proof.ts",
+);
+// The error `LuaSet` raises from its nil branch, as the vendored source spells it.
+const NIL_TEXTURE_BRANCH = 'only supports nil for gui.set(msg.url(), \\"textures\\"';
+
+// Whether the engine a committed surface was generated for removes a texture
+// mapping on nil. Read from the target's vendored `gui_script.cpp`, never from
+// the declarations' own gate, so the proof each surface compiles is independent
+// of the code under test.
+function engineAcceptsTextureRemoval(index: string): boolean {
+  const target = loadApiTargets().find((candidate) =>
+    index === "index.d.ts"
+      ? candidate.default === true
+      : `${candidate.generatedDir}/index.d.ts` === index,
+  );
+  if (!target) throw new Error(`no api-targets.json target generates ${index}`);
+  const source = resolve(
+    PACKAGE_ROOT,
+    target.fixturesDir,
+    "engine-bindings/engine/gui/src/gui_script.cpp",
+  );
+  if (!existsSync(source)) {
+    throw new Error(`${target.id} vendors no gui_script.cpp at ${source}`);
+  }
+  return readFileSync(source, "utf8").includes(NIL_TEXTURE_BRANCH);
+}
+
+describe("committed API surfaces — gui texture removal follows each target's engine", () => {
+  const indexes = committedSurfaceIndexes();
+
+  for (const index of indexes) {
+    const accepts = engineAcceptsTextureRemoval(index);
+    test(`${index} ${accepts ? "accepts" : "rejects"} gui.set(msg.url(), "textures", undefined, { key })`, () => {
+      const root = mkdtempSync(resolve(PACKAGE_ROOT, "gui-removal-wall-"));
+      try {
+        const tsconfigPath = resolve(root, "tsconfig.json");
+        writeFileSync(
+          tsconfigPath,
+          `${JSON.stringify(
+            {
+              extends: "../../../tsconfig.json",
+              compilerOptions: { noEmit: true, types: [] },
+              include: [
+                accepts ? GUI_TEXTURE_REMOVAL_PROOF : GUI_TEXTURE_REMOVAL_ABSENT_PROOF,
+                resolve(PACKAGE_ROOT, index),
+              ],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        const { exitCode, output } = typecheck(tsconfigPath);
+        if (exitCode !== 0) {
+          throw new Error(
+            `${index} proof failed — the texture removal form must compile exactly where ` +
+              `the target's engine has the nil branch:\n${output}`,
+          );
+        }
+        expect(exitCode).toBe(0);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
+
+  test("the committed targets split on the nil branch", () => {
+    const verdicts = indexes.map(engineAcceptsTextureRemoval);
+    expect(verdicts).toContain(true);
+    expect(verdicts).toContain(false);
+  });
+});
+
 const CLEAR_BUFFER_KEY_PROOF = resolve(VERSIONS_DIR, "clear-buffer-key-proof.ts");
 const RENDER_TARGET_PARAMS_PROOF = resolve(VERSIONS_DIR, "render-target-params-proof.ts");
 

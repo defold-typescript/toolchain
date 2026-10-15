@@ -53,6 +53,7 @@ import "../../../src/go-overloads";
 import "../../../src/component-properties";
 import "../../../src/render-overloads";
 import "../../../src/gui-overloads";
+import "../../../src/gui-texture-removal";
 import "../../../src/vmath-overloads";
 import "../../../src/sys-overloads";
 

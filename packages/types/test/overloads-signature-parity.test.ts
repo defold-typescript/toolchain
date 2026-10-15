@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import * as ts from "typescript";
+import { SRC_AUGMENTATION_GATES } from "../scripts/regen";
 import {
   GO_SIGNATURES_PATH,
   GUI_SIGNATURES_PATH,
@@ -14,18 +15,20 @@ import {
 
 // Source of truth for every `signatures/<namespace>.json` override: the shipped
 // generics live in these declaration files, dropped from auto-emit and
-// re-supplied at build time.
+// re-supplied at build time. A namespace whose arms span several files lists
+// them in the order the surface imports them, which is the store's arm order.
 function overloadsPath(file: string): string {
   return resolve(import.meta.dir, "..", "src", file);
 }
 
 interface OverloadNamespace {
   namespace: string;
-  declarationsPath: string;
+  declarationsPaths: readonly string[];
   storePath: string;
   fqns: readonly string[];
   // A one-line declaration reflowed across lines: the rendered signature must
   // not move, so a Biome reformat of the `.d.ts` cannot force a JSON re-author.
+  // Each fixture edits whichever listed file holds its `from` text.
   reflow: { from: string; to: string };
   driftSignature: { fqn: string; from: string; to: string };
   driftDoc: { fqn: string; from: string; to: string };
@@ -34,7 +37,7 @@ interface OverloadNamespace {
 const NAMESPACES: readonly OverloadNamespace[] = [
   {
     namespace: "vmath",
-    declarationsPath: overloadsPath("vmath-overloads.d.ts"),
+    declarationsPaths: [overloadsPath("vmath-overloads.d.ts")],
     storePath: VMATH_SIGNATURES_PATH,
     fqns: [
       "vmath.clamp",
@@ -62,7 +65,7 @@ const NAMESPACES: readonly OverloadNamespace[] = [
   },
   {
     namespace: "go",
-    declarationsPath: overloadsPath("go-overloads.d.ts"),
+    declarationsPaths: [overloadsPath("go-overloads.d.ts")],
     storePath: GO_SIGNATURES_PATH,
     fqns: ["go.get", "go.set", "go.property"],
     reflow: {
@@ -82,12 +85,15 @@ const NAMESPACES: readonly OverloadNamespace[] = [
   },
   {
     namespace: "gui",
-    declarationsPath: overloadsPath("gui-overloads.d.ts"),
+    declarationsPaths: [
+      overloadsPath("gui-overloads.d.ts"),
+      overloadsPath("gui-texture-removal.d.ts"),
+    ],
     storePath: GUI_SIGNATURES_PATH,
     fqns: ["gui.animate", "gui.get", "gui.set"],
     reflow: {
-      from: 'function set(\n      url: Url,\n      property: "textures",\n      value: undefined,\n      options: { key: string | Hash },\n    ): void;',
-      to: 'function set(url: Url, property: "textures", value: undefined, options: { key: string | Hash }): void;',
+      from: 'function set(\n      url: Url,\n      property: "material" | "materials" | "fonts" | "textures" | Hash,\n      value: Hash,\n      options?: gui.PropertyOptions,\n    ): void;',
+      to: 'function set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash, options?: gui.PropertyOptions): void;',
     },
     driftSignature: {
       fqn: "gui.set",
@@ -102,7 +108,7 @@ const NAMESPACES: readonly OverloadNamespace[] = [
   },
   {
     namespace: "msg",
-    declarationsPath: overloadsPath("msg-overloads.d.ts"),
+    declarationsPaths: [overloadsPath("msg-overloads.d.ts")],
     storePath: MSG_SIGNATURES_PATH,
     fqns: ["msg.post", "msg.url"],
     reflow: {
@@ -122,7 +128,7 @@ const NAMESPACES: readonly OverloadNamespace[] = [
   },
   {
     namespace: "render",
-    declarationsPath: overloadsPath("render-overloads.d.ts"),
+    declarationsPaths: [overloadsPath("render-overloads.d.ts")],
     storePath: RENDER_SIGNATURES_PATH,
     fqns: ["render.render_target"],
     reflow: {
@@ -142,7 +148,7 @@ const NAMESPACES: readonly OverloadNamespace[] = [
   },
   {
     namespace: "sys",
-    declarationsPath: overloadsPath("sys-overloads.d.ts"),
+    declarationsPaths: [overloadsPath("sys-overloads.d.ts")],
     storePath: SYS_SIGNATURES_PATH,
     fqns: ["sys.get_config_string", "sys.set_engine_throttle"],
     reflow: {
@@ -162,16 +168,49 @@ const NAMESPACES: readonly OverloadNamespace[] = [
   },
 ];
 
-function parseDeclarations(spec: OverloadNamespace, source?: string): ts.SourceFile {
-  const text = source ?? readFileSync(spec.declarationsPath, "utf8");
-  return ts.createSourceFile(spec.declarationsPath, text, ts.ScriptTarget.Latest, true);
+interface DeclarationSource {
+  path: string;
+  text: string;
 }
 
-// Walk the one `namespace <ns>` block and hand back every function declaration in
-// declared (source) order. All three files nest the namespace inside
-// `declare global`, and only `FunctionDeclaration` statements render — the
-// file-local `interface`/`type` helpers are skipped.
+function readDeclarations(spec: OverloadNamespace): DeclarationSource[] {
+  return spec.declarationsPaths.map((path) => ({ path, text: readFileSync(path, "utf8") }));
+}
+
+// The namespace's declaration files with one edit applied to the file that
+// holds `from`. A fixture whose text no listed file holds would edit nothing.
+function editDeclarations(
+  spec: OverloadNamespace,
+  edit: { from: string; to: string },
+): DeclarationSource[] {
+  const sources = readDeclarations(spec);
+  const holder = sources.find((source) => source.text.includes(edit.from));
+  if (!holder) throw new Error(`no ${spec.namespace} declaration file holds: ${edit.from}`);
+  return sources.map((source) =>
+    source === holder ? { ...source, text: source.text.replace(edit.from, edit.to) } : source,
+  );
+}
+
+function parseDeclarations(source: DeclarationSource): ts.SourceFile {
+  return ts.createSourceFile(source.path, source.text, ts.ScriptTarget.Latest, true);
+}
+
+// Walk each file's `namespace <ns>` block and hand back every function
+// declaration in declared (source) order, file by file. Every file nests the
+// namespace inside `declare global`, and only `FunctionDeclaration` statements
+// render — the file-local `interface`/`type` helpers are skipped.
 function forEachOverload(
+  spec: OverloadNamespace,
+  sources: readonly DeclarationSource[],
+  visitFn: (fn: ts.FunctionDeclaration, sourceFile: ts.SourceFile) => void,
+): void {
+  for (const source of sources) {
+    const sourceFile = parseDeclarations(source);
+    visitNamespace(spec, sourceFile, (fn) => visitFn(fn, sourceFile));
+  }
+}
+
+function visitNamespace(
   spec: OverloadNamespace,
   sourceFile: ts.SourceFile,
   visitFn: (fn: ts.FunctionDeclaration) => void,
@@ -244,12 +283,11 @@ function collapseWhitespace(text: string): string {
 // JSON drifts.
 function renderOverloadSignatures(
   spec: OverloadNamespace,
-  source?: string,
+  sources: readonly DeclarationSource[] = readDeclarations(spec),
 ): Record<string, string[]> {
-  const sourceFile = parseDeclarations(spec, source);
   const rendered: Record<string, string[]> = {};
 
-  forEachOverload(spec, sourceFile, (fn) => {
+  forEachOverload(spec, sources, (fn, sourceFile) => {
     if (!fn.name) return;
     const fqn = `${spec.namespace}.${fn.name.text}`;
     const signature = `${fqn}${renderTypeParams(fn.typeParameters, sourceFile)}(${renderParams(
@@ -290,12 +328,11 @@ function normalizeDoc(text: string): string | null {
 // JSON update drifts.
 function renderOverloadDescriptions(
   spec: OverloadNamespace,
-  source?: string,
+  sources: readonly DeclarationSource[] = readDeclarations(spec),
 ): Record<string, (string | null)[]> {
-  const sourceFile = parseDeclarations(spec, source);
   const rendered: Record<string, (string | null)[]> = {};
 
-  forEachOverload(spec, sourceFile, (fn) => {
+  forEachOverload(spec, sources, (fn) => {
     if (!fn.name) return;
     const fqn = `${spec.namespace}.${fn.name.text}`;
     let description: string | null = null;
@@ -313,6 +350,24 @@ function renderOverloadDescriptions(
     rendered[fqn] = forms;
   });
 
+  return rendered;
+}
+
+// The first version each declared arm reaches, grouped by FQN in declared order:
+// the `since` of the import entry that brings in the arm's file, or `null` for a
+// file every target imports.
+function renderOverloadGates(spec: OverloadNamespace): Record<string, (string | null)[]> {
+  const rendered: Record<string, (string | null)[]> = {};
+  for (const source of readDeclarations(spec)) {
+    const gate = SRC_AUGMENTATION_GATES[basename(source.path, ".d.ts")] ?? null;
+    visitNamespace(spec, parseDeclarations(source), (fn) => {
+      if (!fn.name) return;
+      const fqn = `${spec.namespace}.${fn.name.text}`;
+      const forms = rendered[fqn] ?? [];
+      forms.push(gate);
+      rendered[fqn] = forms;
+    });
+  }
   return rendered;
 }
 
@@ -341,6 +396,7 @@ describe.each(
 )("%s overloads signature parity", (namespace, spec) => {
   const rendered = renderOverloadSignatures(spec);
   const descriptions = renderOverloadDescriptions(spec);
+  const gates = renderOverloadGates(spec);
   const store = loadSignatureFile(spec.storePath);
 
   test(`signatures/${namespace}.json carries exactly the override-covered ${namespace} FQNs`, () => {
@@ -348,12 +404,17 @@ describe.each(
   });
 
   for (const fqn of spec.fqns) {
-    test(`${fqn} JSON signatures equal the rendered ${namespace}-overloads.d.ts declarations`, () => {
+    test(`${fqn} JSON signatures equal the rendered ${namespace} declarations`, () => {
       expect(store[fqn]?.signatures).toEqual(rendered[fqn] ?? []);
     });
 
-    test(`${fqn} JSON docs equal the rendered ${namespace}-overloads.d.ts JSDoc descriptions`, () => {
+    test(`${fqn} JSON docs equal the rendered ${namespace} JSDoc descriptions`, () => {
       expect(store[fqn]?.docs).toEqual(descriptions[fqn] ?? []);
+    });
+
+    test(`${fqn} JSON since equals, arm by arm, the import gate of the file declaring it`, () => {
+      const expected = gates[fqn] ?? [];
+      expect(store[fqn]?.since ?? expected.map(() => null)).toEqual(expected);
     });
 
     const expectedCount = OVERLOAD_COUNTS[fqn];
@@ -372,30 +433,20 @@ describe.each(
   });
 
   test("reflowing a declaration across lines renders byte-identical signatures", () => {
-    const original = readFileSync(spec.declarationsPath, "utf8");
-    expect(original).toContain(spec.reflow.from);
-    const reflowed = original.replace(spec.reflow.from, spec.reflow.to);
-    expect(reflowed).not.toBe(original);
+    const reflowed = editDeclarations(spec, spec.reflow);
+    expect(reflowed).not.toEqual(readDeclarations(spec));
     expect(renderOverloadSignatures(spec, reflowed)).toEqual(rendered);
   });
 
   test("drift simulation: an edited .d.ts signature no longer matches the committed JSON", () => {
-    const edited = readFileSync(spec.declarationsPath, "utf8").replace(
-      spec.driftSignature.from,
-      spec.driftSignature.to,
-    );
-    const drifted = renderOverloadSignatures(spec, edited);
+    const drifted = renderOverloadSignatures(spec, editDeclarations(spec, spec.driftSignature));
     expect(drifted[spec.driftSignature.fqn]).not.toEqual(
       store[spec.driftSignature.fqn]?.signatures,
     );
   });
 
   test("drift simulation: an edited .d.ts JSDoc description no longer matches the committed JSON", () => {
-    const edited = readFileSync(spec.declarationsPath, "utf8").replace(
-      spec.driftDoc.from,
-      spec.driftDoc.to,
-    );
-    const drifted = renderOverloadDescriptions(spec, edited);
+    const drifted = renderOverloadDescriptions(spec, editDeclarations(spec, spec.driftDoc));
     expect(drifted[spec.driftDoc.fqn]).not.toEqual(store[spec.driftDoc.fqn]?.docs);
   });
 });

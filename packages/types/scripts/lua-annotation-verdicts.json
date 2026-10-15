@@ -745,7 +745,7 @@
   },
   "runtime:gui.set:arity": {
     "verdict": "accepted",
-    "reason": "gui-overloads.d.ts takes 3..4, every form requiring `value`: gui_script.cpp:LuaSet reads argument 3 on every path, testing lua_isnil(L, 3) (:1126) and otherwise converting it with LuaToVar (:1167), which rejects an absent value",
+    "reason": "gui-overloads.d.ts and gui-texture-removal.d.ts take 3..4, every form requiring `value`: gui_script.cpp:LuaSet reads argument 3 on every path, testing lua_isnil(L, 3) (:1126), a branch 1.13.1 added and the removal file declares only from there, and otherwise converting it with LuaToVar (:1167), which rejects an absent value, as 1.12.4's LuaToVar does for nil (:897-902)",
     "annotated": "2..4",
     "declared": "3..4"
   },
