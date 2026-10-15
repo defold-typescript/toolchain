@@ -62,3 +62,14 @@ export function signatureArmsFor(override: SignatureOverride, version: string): 
     since: kept.map((index) => since[index] ?? null),
   };
 }
+
+// The store as one version declares it: each entry keeps only the arms whose
+// `since` the version meets, and an entry left with none is dropped.
+export function signatureStoreFor(store: SignatureStore, version: string): SignatureStore {
+  const scoped: SignatureStore = {};
+  for (const [fqn, override] of Object.entries(store)) {
+    const arms = signatureArmsFor(override, version);
+    if (arms.signatures.length > 0) scoped[fqn] = arms;
+  }
+  return scoped;
+}
