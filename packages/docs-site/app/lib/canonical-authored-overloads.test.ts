@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { SignatureStore } from "@defold-typescript/types";
+import { type SignatureStore, symbolIdentityKey } from "@defold-typescript/types";
 import { apiLinkify, apiPageMarkdown } from "./api-page-render";
 import { type ApiSymbol, splitCallForm } from "./api-surface";
 import { loadCombinedSurface, loadSignaturesArtifact } from "./api-surface-loader";
@@ -181,5 +181,42 @@ describe("canonical pages render every authored overload arm", () => {
     for (const arm of storeFor("render")?.["render.render_target"]?.signatures ?? []) {
       expect(headings).toContain(callForm(arm));
     }
+  });
+
+  it("dates exactly the arms a windowed page renders, for every window on the axis", () => {
+    const axis = combined.versions;
+    const artifact = loadSignaturesArtifact(REAL_TYPES_DIR);
+    const mismatched: string[] = [];
+    let droppedSomewhere = false;
+    for (const [newestIndex, to] of axis.entries()) {
+      for (const from of axis.slice(newestIndex)) {
+        const slice = new Set(axis.slice(newestIndex, axis.indexOf(from) + 1));
+        const windowed = windowCombinedSurface(combined, artifact, { from, to });
+        for (const ns of windowed.namespaces) {
+          for (const entry of ns.entries) {
+            if (entry.authoredArms === undefined) continue;
+            const fqn = entry.identity.name;
+            const arms = entry.authoredArms.map((arm) => arm.signature);
+            const stored = ns.signatureStore?.[fqn]?.signatures ?? [];
+            if (JSON.stringify(arms) !== JSON.stringify(stored)) {
+              mismatched.push(`${from}..${to} ${fqn}: arms ${arms.length}, store ${stored.length}`);
+            }
+            for (const arm of entry.authoredArms) {
+              if (!arm.availableIn.some((version) => slice.has(version))) {
+                mismatched.push(`${from}..${to} ${fqn}: arm outside window ${arm.signature}`);
+              }
+            }
+            const full = combined.namespaces
+              .find((n) => n.namespace === ns.namespace)
+              ?.entries.find(
+                (e) => symbolIdentityKey(e.identity) === symbolIdentityKey(entry.identity),
+              );
+            if ((full?.authoredArms?.length ?? 0) > arms.length) droppedSomewhere = true;
+          }
+        }
+      }
+    }
+    expect(mismatched).toEqual([]);
+    expect(droppedSomewhere).toBe(true);
   });
 });

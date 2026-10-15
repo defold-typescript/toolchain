@@ -108,7 +108,8 @@ export interface CombinedEntry {
   /**
    * Set only on a `FUNCTION` whose authoritative signature is an authored fold:
    * every arm any version folds for the FQN, the newest fold's in its order and
-   * then any arm only an older fold carries.
+   * then any arm only an older fold carries. A windowed surface keeps only the
+   * arms a version in its window folds, each with its absolute `availableIn`.
    */
   readonly authoredArms?: readonly AuthoredArm[];
   /**
