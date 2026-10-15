@@ -87,7 +87,8 @@ export interface EmitOptions {
   // (absent) applies none of them.
   bindingEvidence?: ReadonlySet<string>;
   // The functions a target's skip rules removed from the module, read only to
-  // type an `OVERLOAD_SLOT_ALIASES` slot.
+  // type an `OVERLOAD_SLOT_ALIASES` slot and to resolve a
+  // `CONSTANT_SLOT_RESOLUTIONS` borrow from their docs.
   withheldFunctions?: readonly ApiFunction[];
 }
 
@@ -259,6 +260,11 @@ export const OVERLOAD_COVERED_SKIPS = new Set([
   "go.get",
   "go.set",
   "go.property",
+  // gui-overloads.d.ts closes the node property names and types each value per
+  // name, with a hash form for material constants.
+  "gui.animate",
+  "gui.get",
+  "gui.set",
   // msg-overloads.d.ts supplies the typed msg.post shape.
   "msg.post",
   // msg-overloads.d.ts supplies the typed msg.url shape (0 / 1-string / 3-arg
@@ -334,13 +340,10 @@ export const MAPPING_TABLE_SLOTS: ReadonlyMap<string, { key: string; value: stri
 ]);
 
 // FQN-keyed return-type overrides for functions whose doc `returnvalues` are
-// empty yet the engine returns a value. `gui.get`'s doc lists no return, but it
-// yields the property value (a vmath.vector4 or a number); `unknown` is the
-// honest, ts-defold-matching shape. Per-FQN, not a blanket "empty returnvalues
-// -> unknown" rule: `gui.set` also has empty returnvalues and `void` is correct
-// there.
+// empty yet the engine returns a value. Per-FQN, not a blanket "empty
+// returnvalues -> unknown" rule: most functions with empty returnvalues return
+// nothing, and `void` is correct there.
 export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
-  ["gui.get", "unknown"],
   // Upstream documents the returned transaction step in prose only — its
   // `returnvalues` is empty while every sibling `editor.tx.*` builder declares
   // one, and `editor.transact()` takes exactly that.
@@ -879,15 +882,6 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     },
   ],
   [
-    "gui.set:param:value",
-    {
-      adds: "Matrix4 | Hash",
-      upstream: ["number", "vector4", "vector3", "quaternion"],
-      reason:
-        'example `gui.set(node, "light_matrix", vmath.matrix4())` ("matrix4 is also supported"); example `gui.set(msg.url(), "textures", atlas_id, {key = "runtime_texture"})` passes the hash `resource.create_atlas` returns',
-    },
-  ],
-  [
     "gui.set_rotation:param:rotation",
     {
       adds: "Vector3",
@@ -1238,13 +1232,6 @@ export const REQUIRED_SLOT_CORRECTIONS: ReadonlyMap<string, RequiredSlotCorrecti
     },
   ],
   [
-    "gui.set:param:value",
-    {
-      nil: true,
-      evidence: "gui_script.cpp:LuaSet converts argument 3 with LuaToVar unless lua_isnil(L, 3)",
-    },
-  ],
-  [
     "window.set_listener:param:callback",
     {
       nil: true,
@@ -1347,8 +1334,6 @@ export const CONSTANT_SLOT_RESOLUTIONS: ReadonlyMap<string, ConstantSlotResoluti
   string,
   ConstantSlotResolution
 >([
-  ["gui.get:param:property", { borrow: "gui.animate:param:property" }],
-  ["gui.set:param:property", { borrow: "gui.animate:param:property" }],
   ["gui.cancel_animations:param:property", { borrow: "gui.animate:param:property" }],
   [
     "buffer.set_metadata:param:value_type",
@@ -1801,9 +1786,14 @@ function constantSlotTokens(
   return documentedConstantTokens(entry.family, universe);
 }
 
-function slotDocLookup(module: ApiModule): SlotDocLookup {
+// A borrow reads the ref-doc, so a slot of a function the skip rules withheld
+// (`gui.animate`, which gui-overloads.d.ts declares) still lends its doc.
+function slotDocLookup(
+  module: ApiModule,
+  withheldFunctions: readonly ApiFunction[] = [],
+): SlotDocLookup {
   const docs = new Map<string, string>();
-  for (const fn of module.functions) {
+  for (const fn of [...module.functions, ...withheldFunctions]) {
     for (const p of fn.parameters) {
       const key = tableSlotKey(fn.name, "param", p.name);
       if (!docs.has(key)) docs.set(key, p.doc);
@@ -1823,8 +1813,9 @@ export function resolveConstantSlotTokens(
   module: ApiModule,
   slotKey: string,
   universe: ReadonlySet<string>,
+  withheldFunctions: readonly ApiFunction[] = [],
 ): string[] {
-  const lookupDoc = slotDocLookup(module);
+  const lookupDoc = slotDocLookup(module, withheldFunctions);
   return constantSlotTokens(lookupDoc(slotKey) ?? "", slotKey, lookupDoc, universe);
 }
 
@@ -1838,8 +1829,9 @@ type ConstantSlotTokens = (
 function constantSlotTokenResolver(
   module: ApiModule,
   universe: ReadonlySet<string>,
+  withheldFunctions: readonly ApiFunction[] = [],
 ): ConstantSlotTokens {
-  const lookupDoc = slotDocLookup(module);
+  const lookupDoc = slotDocLookup(module, withheldFunctions);
   return (elementName, slotKind, slotName, doc) =>
     constantSlotTokens(doc, tableSlotKey(elementName, slotKind, slotName), lookupDoc, universe);
 }
@@ -2082,25 +2074,6 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   string,
   TableSlotCuration
 >([
-  // gui_script.cpp:LuaGet and LuaSet read the `key` and `keys` options. On a
-  // prose `table` slot TABLE_SLOT_FIELD_ADDITIONS supplies them; 1.13.2 types the
-  // slots as an inline record and a struct that omit them.
-  ...(
-    [
-      ["gui.get:param:options", "{ index?:integer }"],
-      ["gui.set:param:options", "gui.set_options"],
-    ] as const
-  ).map(
-    ([key, retyped]) =>
-      [
-        key,
-        {
-          kind: "verbatim",
-          ts: "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-          retypedUpstream: [retyped],
-        },
-      ] as const,
-  ),
   // buffer.create's `declaration` is "a table where each entry (table) describes
   // a stream", and upstream's example passes a list of stream records whose
   // `type` is a buffer.VALUE_TYPE_* constant.
@@ -3064,11 +3037,11 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["resource.set_atlas:param:table:animations[].playback", "go.Playback"],
   ["resource.create_atlas:param:table:animations[].playback", "go.Playback"],
   ["resource.get_atlas:return:data:animations[].playback", "go.Playback"],
-  ["gui.set:param:options:key", "string | Hash"],
   ["render.set_render_target:param:options:transient", "graphics.BufferType[]"],
   ["resource.create_sound_data:param:options:data", 'string | Opaque<"buffer">'],
-  // The same two slots where 1.13.2 types the option bag as a STRUCT, whose
-  // members still carry the narrower upstream types.
+  // The option bags 1.13.2 types as a STRUCT, whose members still carry the
+  // narrower upstream types: `gui.set`'s (its slot is declared in
+  // gui-overloads.d.ts) and `resource.create_sound_data`'s.
   ["gui.set_options:member:key", "string | Hash"],
   ["resource.sound_data_options:member:data", 'string | Opaque<"buffer">'],
   // Bitmasks typed as their flag enum: the create_texture example passes
@@ -3102,13 +3075,6 @@ export interface TableFieldAddition {
   readonly evidence: readonly string[];
 }
 
-const PROPERTY_OPTION_KEYS: TableField = {
-  name: "keys",
-  types: ["table"],
-  optional: true,
-  tsType: "(Hash | string)[]",
-};
-
 export const TABLE_SLOT_FIELD_ADDITIONS: ReadonlyMap<string, TableFieldAddition> = new Map<
   string,
   TableFieldAddition
@@ -3120,24 +3086,6 @@ export const TABLE_SLOT_FIELD_ADDITIONS: ReadonlyMap<string, TableFieldAddition>
       evidence: [
         "the array-texture example on this element creates with `page_count = 5`",
         "resource.get_texture_info documents `page_count` as the texture array's page count",
-      ],
-    },
-  ],
-  [
-    "gui.get:param:options",
-    {
-      fields: [{ name: "key", types: ["string", "hash"], optional: true }, PROPERTY_OPTION_KEYS],
-      evidence: [
-        "gui_script.cpp:LuaGet reads its options through dmGameObject::LuaToPropertyOptions, which reads index, key and keys",
-      ],
-    },
-  ],
-  [
-    "gui.set:param:options",
-    {
-      fields: [PROPERTY_OPTION_KEYS],
-      evidence: [
-        "gui_script.cpp:LuaSet reads its options through dmGameObject::LuaToPropertyOptions, which reads index, key and keys",
       ],
     },
   ],
@@ -4253,6 +4201,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   const constantTokens = constantSlotTokenResolver(
     module,
     new Set([...constantsByFqn.keys(), ...(knownConstantFqns ?? [])]),
+    options?.withheldFunctions,
   );
 
   const constants = module.constants
@@ -4624,6 +4573,7 @@ export function emitSymbolSignatures(
   const constantTokens = constantSlotTokenResolver(
     module,
     new Set([...constantsByFqn.keys(), ...(knownConstantFqns ?? [])]),
+    options?.withheldFunctions,
   );
   const resolver = buildTableDocResolver(
     module.functions.map((fn) => ({

@@ -327,7 +327,6 @@
     "factory.unload:param:url",
     "gui.move_above:param:reference",
     "gui.move_below:param:reference",
-    "gui.set:param:value",
     "gui.set_parent:param:parent",
     "html5.set_interaction_listener:param:callback",
     "resource.create_buffer:param:table",
@@ -442,10 +441,6 @@
     "gui.screen_to_local:param:screen_position": { "pins": [["vector3"]], "adds": ["Vector4"] },
     "gui.set_rotation:param:rotation": { "pins": [["quaternion", "vector4"]], "adds": ["Vector3"] },
     "gui.set_screen_position:param:screen_position": { "pins": [["vector3"]], "adds": ["Vector4"] },
-    "gui.set:param:value": {
-      "pins": [["number", "vector4", "vector3", "quaternion"]],
-      "adds": ["Matrix4", "Hash"]
-    },
     "model.get_mesh_enabled:param:mesh_id": {
       "pins": [["string", "hash", "url"]],
       "removes": ["Url"]

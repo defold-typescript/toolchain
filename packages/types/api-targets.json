@@ -148,7 +148,8 @@
         {
           "namespace": "gui",
           "fixture": "gui_doc.json",
-          "outFile": "gui.d.ts"
+          "outFile": "gui.d.ts",
+          "skipFunctions": ["animate", "get", "set"]
         },
         {
           "namespace": "html5",
@@ -539,7 +540,8 @@
         {
           "namespace": "gui",
           "fixture": "gui_doc.json",
-          "outFile": "gui.d.ts"
+          "outFile": "gui.d.ts",
+          "skipFunctions": ["animate", "get", "set"]
         },
         {
           "namespace": "html5",
@@ -900,7 +902,8 @@
         {
           "namespace": "gui",
           "fixture": "gui_doc.json",
-          "outFile": "gui.d.ts"
+          "outFile": "gui.d.ts",
+          "skipFunctions": ["animate", "get", "set"]
         },
         {
           "namespace": "html5",
@@ -1260,7 +1263,8 @@
         {
           "namespace": "gui",
           "fixture": "gui_doc.json",
-          "outFile": "gui.d.ts"
+          "outFile": "gui.d.ts",
+          "skipFunctions": ["animate", "get", "set"]
         },
         {
           "namespace": "html5",
@@ -1563,7 +1567,8 @@
         {
           "namespace": "gui",
           "fixture": "gui_doc.json",
-          "outFile": "gui.d.ts"
+          "outFile": "gui.d.ts",
+          "skipFunctions": ["animate", "get", "set"]
         },
         {
           "namespace": "html5",
