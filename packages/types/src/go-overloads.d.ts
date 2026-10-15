@@ -50,17 +50,25 @@ declare global {
     function get<P>(): <K extends keyof P>(
       url: SceneAddress | Hash | Url,
       property: K,
-      options?: GoPropertyOptions,
+      ...options: [] | [GoPropertyOptions]
     ) => P[K];
     function get<K extends keyof go.properties>(
       url: SceneAddress | Hash | Url,
       property: K,
-      options?: GoPropertyOptions,
+    ): go.properties[K];
+    function get<K extends keyof go.properties>(
+      url: SceneAddress | Hash | Url,
+      property: K,
+      options: GoPropertyOptions,
     ): go.properties[K];
     function get(
       url: SceneAddress | Hash | Url,
       property: string | Hash,
-      options?: GoPropertyOptions,
+    ): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4;
+    function get(
+      url: SceneAddress | Hash | Url,
+      property: string | Hash,
+      options: GoPropertyOptions,
     ): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4;
     /**
      * sets a named property of the specified game object or component, or a material constant
@@ -86,13 +94,18 @@ declare global {
       url: SceneAddress | Hash | Url,
       property: K,
       value: P[K],
-      options?: GoPropertyOptions,
+      ...options: [] | [GoPropertyOptions]
     ) => void;
     function set<K extends keyof go.properties>(
       url: SceneAddress | Hash | Url,
       property: K,
       value: go.properties[K],
-      options?: GoPropertyOptions,
+    ): void;
+    function set<K extends keyof go.properties>(
+      url: SceneAddress | Hash | Url,
+      property: K,
+      value: go.properties[K],
+      options: GoPropertyOptions,
     ): void;
     function set(
       url: SceneAddress | Hash | Url,
@@ -108,7 +121,22 @@ declare global {
         | Quaternion
         | Matrix4
         | Vector4[],
-      options?: GoPropertyOptions,
+    ): void;
+    function set(
+      url: SceneAddress | Hash | Url,
+      property: string | Hash,
+      value:
+        | number
+        | boolean
+        | string
+        | Hash
+        | Url
+        | Vector3
+        | Vector4
+        | Quaternion
+        | Matrix4
+        | Vector4[],
+      options: GoPropertyOptions,
     ): void;
     /**
      * Registers a script property, which the Defold editor exposes on every game

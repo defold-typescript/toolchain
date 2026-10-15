@@ -14,18 +14,19 @@ const generations: ProbeGeneration[] = BOX2D_BACKENDS.map((backend) =>
 const [v2] = generations as [ProbeGeneration, ProbeGeneration];
 
 describe("witness generation", () => {
-  test("sprite.play_flipbook gets a required-slot call and one with every optional slot", () => {
+  test("sprite.play_flipbook gets a required-slot call and a full call per arm", () => {
     const calls = v2.calls.filter(
       (call) => call.name === "sprite.play_flipbook" && call.witness === undefined,
     );
     expect(calls.map((call) => [call.variant, call.call])).toEqual([
-      ["required", 'sprite.play_flipbook(SPRITE, hash("anim"))'],
-      ["optional", 'sprite.play_flipbook(SPRITE, hash("anim"), () => {}, {})'],
+      ["overload1-required", 'sprite.play_flipbook(SPRITE, hash("anim"))'],
+      ["overload1-optional", 'sprite.play_flipbook(SPRITE, hash("anim"), () => {})'],
+      ["overload2-required", 'sprite.play_flipbook(SPRITE, hash("anim"), () => {}, {})'],
     ]);
     const go = v2.files[PROBE_FILES.go] ?? "";
     expect(go).toContain('const SPRITE = msg.url("main:/probe#sprite");');
     expect(go).toContain(
-      'probe("sprite.play_flipbook", "required", () => sprite.play_flipbook(SPRITE, hash("anim")));',
+      'probe("sprite.play_flipbook", "overload1-required", () => sprite.play_flipbook(SPRITE, hash("anim")));',
     );
   });
 

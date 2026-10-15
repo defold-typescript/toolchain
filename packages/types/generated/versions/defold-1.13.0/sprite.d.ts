@@ -62,7 +62,64 @@ declare global {
      * });
      * ```
      */
-    function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
+    function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void): void;
+    /**
+     * Play an animation on a sprite component from its tile set
+     * An optional completion callback function can be provided that will be called when
+     * the animation has completed playing. If no function is provided,
+     * a animation_done message is sent to the script that started the animation.
+     *
+     * @param url - the sprite that should play the animation
+     * @param id - hashed id of the animation to play
+     * @param complete_function - function to call when the animation has completed.
+     *
+     * `self`
+     * object The current object.
+     * `message_id`
+     * hash The name of the completion message, `"animation_done"`.
+     * `message`
+     * table Information about the completion:
+     *
+     * - number `current_tile` - the current tile of the sprite.
+     * - hash `id` - id of the animation that was completed.
+     *
+     * `sender`
+     * url The invoker of the callback: the sprite component.
+     * @param play_properties - optional table with properties:
+     *
+     * `offset`
+     * number the normalized initial value of the animation cursor when the animation starts playing.
+     * `playback_rate`
+     * number the rate with which the animation will be played. Must be positive.
+     * @example
+     * The following examples assumes that the model has id "sprite".
+     * How to play the "jump" animation followed by the "run" animation:
+     * ```ts
+     * const url = msg.url("#sprite");
+     *
+     * function anim_done(self: unknown, message_id: Hash, message: { id: Hash }) {
+     *   if (message_id === hash("animation_done") && message.id === hash("jump")) {
+     *     // jump animation done, chain with "run"
+     *     sprite.play_flipbook(url, "run");
+     *   }
+     * }
+     * ```
+     * @example
+     * ```ts
+     * export default defineScript({
+     *   init() {
+     *     const url = msg.url("#sprite");
+     *     sprite.play_flipbook(url, "jump", (self, message_id, message) => {
+     *       if (message_id === hash("animation_done") && message.id === hash("jump")) {
+     *         // jump animation done, chain with "run"
+     *         sprite.play_flipbook(url, "run");
+     *       }
+     *     });
+     *   },
+     * });
+     * ```
+     */
+    function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function: ((self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void) | undefined, play_properties: { offset?: number; playback_rate?: number }): void;
     /**
      * Resets a shader constant for a sprite component.
      * The constant must be defined in the material assigned to the sprite.

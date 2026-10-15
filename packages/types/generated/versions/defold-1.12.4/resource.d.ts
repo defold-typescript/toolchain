@@ -844,7 +844,40 @@ declare global {
      * });
      * ```
      */
-    function get_text_metrics(url: Hash | string, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };
+    function get_text_metrics(url: Hash | string, text: string): { width: number; height: number; max_ascent: number; max_descent: number };
+    /**
+     * Gets the text metrics from a font
+     *
+     * @param url - the font to get the (unscaled) metrics from
+     * @param text - text to measure
+     * @param options - A table containing parameters for the text. Supported entries:
+     *
+     * `width`
+     * number The width of the text field. Not used if `line_break` is false.
+     * `leading`
+     * number The leading (default 1.0)
+     * `tracking`
+     * number The tracking (default 0.0)
+     * `line_break`
+     * boolean If the calculation should consider line breaks (default false)
+     * @returns a table with the following fields:
+     *
+     * - width
+     * - height
+     * - max_ascent
+     * - max_descent
+     * @example
+     * ```ts
+     * export default defineScript({
+     *   init() {
+     *     const font = go.get<label.properties>()("#label", "font");
+     *     const metrics = resource.get_text_metrics(font, "The quick brown fox\n jumps over the lazy dog");
+     *     pprint(metrics);
+     *   },
+     * });
+     * ```
+     */
+    function get_text_metrics(url: Hash | string, text: string, options: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };
     /**
      * Gets texture info from a texture resource path or a texture handle
      *

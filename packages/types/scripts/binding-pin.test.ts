@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import type { BindingPin } from "../src/emit-dts";
-import { bindingPinHolds } from "./binding-pin";
+import { bindingPinHolds, nilRaisingSlotsOf, targetBindingOptions } from "./binding-pin";
+import type { BindingFunction, BindingSlot } from "./engine-binding-extract";
+import { type ApiTarget, loadApiTargets } from "./regen";
 
 const TARGET = "defold-1.14.0";
 const FACTORY = "gamesys/src/gamesys/scripts/script_factory.cpp";
@@ -92,5 +94,63 @@ describe("bindingPinHolds", () => {
 
   test("a target with no vendored bindings throws", () => {
     expect(() => bindingPinHolds("defold-1.9.8", NIL_PUSH)).toThrow(/defold-1\.9\.8/);
+  });
+});
+
+function apiTarget(id: string): ApiTarget {
+  const found = loadApiTargets().find((candidate) => candidate.id === id);
+  if (!found) throw new Error(`api-targets.json: no target ${id}`);
+  return found;
+}
+
+function slot(index: number, extra: Partial<BindingSlot> = {}): BindingSlot {
+  return { index, kinds: ["number"], optional: false, fields: [], ...extra };
+}
+
+function bound(name: string, slots: BindingSlot[]): BindingFunction {
+  return {
+    namespace: "ns",
+    name,
+    cFunction: `Ns_${name}`,
+    file: "ns.cpp",
+    minArgs: 1,
+    maxArgs: slots.length,
+    slots,
+    returns: { count: 0, kinds: [] },
+    manual: [],
+  };
+}
+
+describe("nil-raising slots", () => {
+  test("a vendored target lists each omittable slot whose explicit nil raises", () => {
+    const slots = targetBindingOptions(apiTarget(TARGET)).nilRaisingSlots;
+    // gui_script.cpp:2276-2279 and :1548-1563, render_script.cpp:1931-1934.
+    expect(slots?.get("gui.new_texture")).toEqual([6]);
+    expect(slots?.get("gui.animate")).toEqual([6]);
+    expect(slots?.get("render.draw")).toEqual([2]);
+    // render_script.cpp:1431-1435 defaults a nil target; only the options raise.
+    expect(slots?.get("render.set_render_target")).toEqual([2]);
+  });
+
+  test("a target with no vendored bindings carries none", () => {
+    const refDoc = loadApiTargets().find((candidate) => (candidate.source ?? null) !== null);
+    if (!refDoc) throw new Error("api-targets.json: no ref-doc target");
+    expect(targetBindingOptions(refDoc).nilRaisingSlots).toBeUndefined();
+  });
+
+  test("a slot is listed only when every binding of the function raises there", () => {
+    const raising = bound("f", [slot(1), slot(2, { optional: true, nilRaises: true })]);
+    const accepting = bound("f", [slot(1), slot(2, { optional: true })]);
+    expect([...nilRaisingSlotsOf([raising, raising])]).toEqual([["ns.f", [2]]]);
+    expect([...nilRaisingSlotsOf([raising, accepting])]).toEqual([]);
+  });
+
+  test("several slots of one function are listed in ascending order", () => {
+    const fn = bound("g", [
+      slot(1),
+      slot(3, { optional: true, nilRaises: true }),
+      slot(2, { optional: true, nilRaises: true }),
+    ]);
+    expect([...nilRaisingSlotsOf([fn])]).toEqual([["ns.g", [2, 3]]]);
   });
 });

@@ -125,6 +125,28 @@ describe("mergeDeclaredParameterSlots — cross-surface merge", () => {
     expect(merged.get("m.f")?.get("b")).toMatchObject({ optional: false, requiredIn: ["a.d.ts"] });
   });
 
+  test("a sibling overload that ends before a required slot makes it omissible", () => {
+    const slots = surface(
+      "a.d.ts",
+      "declare namespace m { function f(a: number): void; function f(a: number, b: number, c?: number): void; }",
+    ).get("m.f");
+    expect(slots?.get("b")).toMatchObject({ optional: true, requiredIn: [] });
+    expect(slots?.get("a")).toMatchObject({ optional: false, requiredIn: ["a.d.ts"] });
+  });
+
+  test("a sibling ending earlier with other parameters or another return type vouches for nothing", () => {
+    const renamed = surface(
+      "a.d.ts",
+      "declare namespace m { function f(x: number): void; function f(a: number, b: number): void; }",
+    );
+    expect(renamed.get("m.f")?.get("b")?.optional).toBe(false);
+    const curried = surface(
+      "a.d.ts",
+      "declare namespace m { function f<P>(): (a: number) => P; function f(a: number): void; }",
+    );
+    expect(curried.get("m.f")?.get("a")?.optional).toBe(false);
+  });
+
   test("a reserved-name alias merges through the same rule", () => {
     const merged = mergeDeclaredParameterSlots([
       surface(

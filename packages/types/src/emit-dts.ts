@@ -86,6 +86,12 @@ export interface EmitOptions {
   // applies only when its key is here, so a surface with no vendored bindings
   // (absent) applies none of them.
   bindingEvidence?: ReadonlySet<string>;
+  // The 1-based parameter slots, keyed by function FQN, that the target's engine
+  // bindings let a call omit but raise on when passed nil. Each optional one
+  // splits its function into a call without the slot and a call requiring it,
+  // so a possibly-undefined value is a compile error. Absent for a surface with
+  // no vendored bindings (a ref-doc target), which keeps every `?`.
+  nilRaisingSlots?: ReadonlyMap<string, readonly number[]>;
   // The functions a target's skip rules removed from the module, read only to
   // type an `OVERLOAD_SLOT_ALIASES` slot and to resolve a
   // `CONSTANT_SLOT_RESOLUTIONS` borrow from their docs.
@@ -1318,6 +1324,33 @@ function firstSlotAlternative(
 ): PreparedFunction | null {
   const original = firstSlotAlternativeOf(prepared.original, namespace);
   return original === null ? null : { ...prepared, original };
+}
+
+// The calls a function splits into at its optional nil-raising slots
+// (`EmitOptions.nilRaisingSlots`): one ending before each such slot, then one
+// taking them all, every such slot before an arm's end declared required. A
+// required slot, or one a rest parameter folds in, splits nothing.
+function nilRaisingArms(
+  prepared: PreparedFunction,
+  nilRaisingSlots: ReadonlyMap<string, readonly number[]>,
+): PreparedFunction[] {
+  const { name, parameters } = prepared.original;
+  const firstVararg = parameters.findIndex(isVarargParameter);
+  const positional = firstVararg === -1 ? parameters.length : firstVararg;
+  const split = [...new Set(nilRaisingSlots.get(name) ?? [])]
+    .map((slot) => slot - 1)
+    .filter((index) => {
+      const p = parameters[index];
+      return index < positional && p !== undefined && isDocOptional(p, name);
+    })
+    .sort((a, b) => a - b);
+  if (split.length === 0) return [prepared];
+  const shorter = split.map((end, k) => ({
+    ...prepared,
+    original: { ...prepared.original, parameters: parameters.slice(0, end) },
+    required: new Set(split.slice(0, k)),
+  }));
+  return [...shorter, { ...prepared, required: new Set(split) }];
 }
 
 export type ConstantSlotResolution =
@@ -4196,6 +4229,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   const translations = options?.translations ?? {};
   const urlParameters = options?.urlParameters ?? [];
   const bindingEvidence = options?.bindingEvidence ?? new Set<string>();
+  const nilRaisingSlots = options?.nilRaisingSlots ?? new Map<string, readonly number[]>();
   const baseNotes = indexBaseNoteResolver(options?.indexBaseSource ?? "engine");
   const { rawMapType, mapType } = moduleTypeMappers(module, constantsByFqn, options);
   const constantTokens = constantSlotTokenResolver(
@@ -4334,18 +4368,20 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   for (const fn of functions) {
     const reserved = TS_RESERVED_NAMES.has(fn.name);
     const emitName = aliasName(fn.name, aliases);
-    for (const docLine of functionDocLines(fn.original, translations, baseNotes))
-      lines.push(docLine);
-    const line = emitFunction(
-      fn,
-      emitName,
-      mapType,
-      resolver,
-      constantTokens,
-      urlParameters,
-      bindingEvidence,
-    );
-    lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
+    for (const arm of nilRaisingArms(fn, nilRaisingSlots)) {
+      for (const docLine of functionDocLines(fn.original, translations, baseNotes))
+        lines.push(docLine);
+      const line = emitFunction(
+        arm,
+        emitName,
+        mapType,
+        resolver,
+        constantTokens,
+        urlParameters,
+        bindingEvidence,
+      );
+      lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
+    }
     const alternative = firstSlotAlternative(fn, module.namespace);
     if (alternative !== null) {
       // The overload documents its own parameters, so its hover names the base
@@ -4569,6 +4605,7 @@ export function emitSymbolSignatures(
   const knownConstantFqns = options?.knownConstantFqns;
   const urlParameters = options?.urlParameters ?? [];
   const bindingEvidence = options?.bindingEvidence ?? new Set<string>();
+  const nilRaisingSlots = options?.nilRaisingSlots ?? new Map<string, readonly number[]>();
   const { rawMapType, mapType } = moduleTypeMappers(module, constantsByFqn, options);
   const constantTokens = constantSlotTokenResolver(
     module,
@@ -4600,8 +4637,9 @@ export function emitSymbolSignatures(
     const prepared = prepareFunction(fn, prefix);
     if (prepared === null) continue;
     const slotTypes: Record<string, SlotType> = {};
+    const [first = prepared, ...later] = nilRaisingArms(prepared, nilRaisingSlots);
     const primary = emitFunction(
-      prepared,
+      first,
       emitName(prepared.name),
       mapType,
       resolver,
@@ -4611,18 +4649,18 @@ export function emitSymbolSignatures(
       slotTypes,
     );
     const alternative = firstSlotAlternative(prepared, module.namespace);
-    const tsSignature =
-      alternative === null
-        ? primary
-        : `${primary}\n${emitFunction(
-            alternative,
-            emitName(prepared.name),
-            mapType,
-            resolver,
-            constantTokens,
-            urlParameters,
-            bindingEvidence,
-          )}`;
+    const arms = [...later, ...(alternative === null ? [] : [alternative])].map((arm) =>
+      emitFunction(
+        arm,
+        emitName(prepared.name),
+        mapType,
+        resolver,
+        constantTokens,
+        urlParameters,
+        bindingEvidence,
+      ),
+    );
+    const tsSignature = [primary, ...arms].join("\n");
     out.push({ identity: fnIdentity(fn), tsSignature, slotTypes });
   }
 
@@ -4779,6 +4817,9 @@ interface PreparedConstant {
 interface PreparedFunction {
   name: string;
   original: ApiFunction;
+  // Parameter positions declared required whatever their doc says: the
+  // nil-raising slots an arm of `nilRaisingArms` takes.
+  required?: ReadonlySet<number>;
 }
 
 interface PreparedVariable {
@@ -5194,10 +5235,24 @@ function memberSignature(
 ): string {
   const original = prepared.original.parameters;
   const elementName = prepared.original.name;
-  const cutoff = trailingOptionalCutoff(original, elementName);
+  const required = prepared.required ?? new Set<number>();
+  const cutoff = Math.max(
+    trailingOptionalCutoff(original, elementName),
+    ...[...required].map((index) => index + 1),
+  );
   const varargIndex = original.findIndex(isVarargParameter);
   const positional = (varargIndex === -1 ? original : original.slice(0, varargIndex)).map((p, i) =>
-    emitParameter(p, i, i >= cutoff, mapType, resolver, constantTokens, elementName, urlParameters),
+    emitParameter(
+      p,
+      i,
+      i >= cutoff,
+      mapType,
+      resolver,
+      constantTokens,
+      elementName,
+      urlParameters,
+      required.has(i),
+    ),
   );
   const rest =
     varargIndex === -1
@@ -5611,6 +5666,7 @@ function emitParameter(
   constantTokens: ConstantSlotTokens,
   elementName: string,
   urlParameters: UrlParameterTable,
+  required = false,
 ): { text: string; type: string; optional: boolean } {
   const name = safeParamName(p.name, index);
   const ts = parameterType(p, mapType, resolver, constantTokens, elementName, urlParameters);
@@ -5619,7 +5675,7 @@ function emitParameter(
   // lowers `undefined` to `nil`, the faithful call. Trailing optionals keep the
   // `?` form; required params are untouched.
   const nilRequired = requiredSlotCorrection(p, elementName)?.nil === true;
-  const interiorOptional = !optional && (isDocOptional(p, elementName) || nilRequired);
+  const interiorOptional = !optional && !required && (isDocOptional(p, elementName) || nilRequired);
   // `(a) => void | undefined` reads as a function returning `void | undefined`.
   const operand = interiorOptional && isFunctionTypeText(ts) ? `(${ts})` : ts;
   const type = `${operand}${interiorOptional ? " | undefined" : ""}`;

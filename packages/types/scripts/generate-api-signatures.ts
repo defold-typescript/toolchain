@@ -5,11 +5,11 @@ import { signatureArmsFor } from "../src/signature-store";
 import { selectCompleteVersionSurfaces } from "./generate-api-availability";
 import {
   type ApiTarget,
-  type GenerateOptions,
   generateModuleSignatures,
   loadApiTargets,
   loadTargetModules,
   type ModuleManifestEntry,
+  type TargetBindingOptions,
 } from "./regen";
 import { loadSignatureFile } from "./signature-store-fs";
 import { versionOf } from "./target-version";
@@ -37,9 +37,7 @@ export interface BuildSignaturesOptions {
   // every target is emitted ungated and with no binding-pinned correction.
   // Supplied by the in-repo callers only: the vendored bindings it reads are not
   // published.
-  readonly emitOptionsOf?: (
-    target: ApiTarget,
-  ) => Pick<GenerateOptions, "registeredConstants" | "bindingEvidence">;
+  readonly emitOptionsOf?: (target: ApiTarget) => TargetBindingOptions;
 }
 
 // The authored replacement for a symbol the skip filter withheld, read from the

@@ -3047,8 +3047,15 @@ describe("grouped overload blocks (committed artifacts)", () => {
         block: block.slice(block.indexOf("</ol>")).includes("**Parameters**"),
       };
     };
-    expect(placement("go", "go.get")).toEqual({ forms: [false, true, true], block: false });
-    expect(placement("go", "go.set")).toEqual({ forms: [false, true, true], block: false });
+    // The table names the options argument, so it sits under the forms that take it.
+    expect(placement("go", "go.get")).toEqual({
+      forms: [false, false, true, false, true],
+      block: false,
+    });
+    expect(placement("go", "go.set")).toEqual({
+      forms: [false, false, true, false, true],
+      block: false,
+    });
     // 1.13.2 documents render_target(table) alone, so the table sits under both
     // hand-authored forms.
     expect(placement("render", "render.render_target")).toEqual({
@@ -3073,8 +3080,8 @@ describe("grouped overload blocks (committed artifacts)", () => {
     expect(params).not.toContain("Vector3</code>");
     const go = pageFor("go");
     const get = blockOf(render(go), overloadHeading(groupFor(go, "go.get")));
-    const typed = get.split('<li class="api-overload">')[2] ?? "";
-    expect(typed).toContain(`- \`options\`?:${G}${typeCode("GoPropertyOptions")}`);
+    const typed = get.split('<li class="api-overload">')[3] ?? "";
+    expect(typed).toContain(`- \`options\`:${G}${typeCode("GoPropertyOptions")}`);
     expect(typed).toContain(`${G}${typeCode("go.properties[K]")}`);
   });
 

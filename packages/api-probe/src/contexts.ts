@@ -219,7 +219,7 @@ export const FINAL_CALLS: ReadonlySet<string> = new Set([
   // A hash names no component, so the engine loads the object's first proxy:
   // the loader the `load` and `init` message probes load themselves.
   "collectionproxy.load:accepted-1-hash",
-  "go.delete:required",
+  "go.delete:overload1-required",
   // `go.delete(recursive)` deletes the calling object too.
   "go.delete:accepted-1-boolean",
 ]);
@@ -343,9 +343,11 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "gui.cancel_animations:2": '"position"',
   "gui.get:2": '"position"',
   "gui.get:overload2:2": 'hash("position")',
+  "gui.get:overload3:2": 'hash("position")',
   "gui.set:1": 'gui.get_node("box")',
   "gui.set:2": '"position"',
   "gui.set:overload2:2": 'hash("position")',
+  "gui.set:overload3:2": 'hash("position")',
   "gui.set:3": "vmath.vector3(1, 1, 1)",
   "gui.delete_node:1": 'gui.clone(gui.get_node("box"))',
   "gui.set_id:1": 'gui.clone(gui.get_node("box"))',
