@@ -13,7 +13,7 @@ const DEFAULT_TARGET = loadApiTargets().find((target) => target.default === true
 if (!DEFAULT_TARGET) throw new Error("api-targets.json: no default target");
 
 const program = surfaceProgram(DEFAULT_TARGET);
-const surface = readDeclaredSurface(program, ["go", "gui", "sprite", "types"]);
+const surface = readDeclaredSurface(program, ["go", "gui", "render", "sprite", "types", "vmath"]);
 
 function declared(name: string): DeclaredFunction {
   const fn = surface.functions.get(name);
@@ -55,6 +55,16 @@ describe("declared kinds on the default surface", () => {
   test("a function named after a keyword is read through its export alias", () => {
     expect(declared("go.delete").maxArgs).toBe(2);
     expect(slot("go.delete", 2)).toEqual({ kinds: ["boolean"], optional: true });
+  });
+
+  test("a slot absent from one overload is optional but accepts no nil", () => {
+    const found = declared("vmath.vector").slots.find((candidate) => candidate.index === 1);
+    expect(found).toMatchObject({ optional: true, acceptsNil: false });
+  });
+
+  test("a slot declared `?` accepts nil", () => {
+    const found = declared("render.set_render_target").slots.find((s) => s.index === 1);
+    expect(found).toMatchObject({ optional: true, acceptsNil: true });
   });
 
   test("a declared unknown maps to any", () => {

@@ -124,7 +124,14 @@ function annotated(overrides: Partial<AnnotatedFunction> = {}): AnnotatedFunctio
 }
 
 function dslot(index: number, overrides: Partial<DeclaredSlot> = {}): DeclaredSlot {
-  return { index, kinds: ["number"], optional: false, fields: null, ...overrides };
+  return {
+    index,
+    kinds: ["number"],
+    optional: false,
+    acceptsNil: false,
+    fields: null,
+    ...overrides,
+  };
 }
 
 function declared(overrides: Partial<DeclaredFunction> = {}): DeclaredFunction {
