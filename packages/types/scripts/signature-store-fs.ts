@@ -23,6 +23,7 @@ export const BASE_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures",
 export const SOCKET_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "socket.json");
 export const VMATH_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "vmath.json");
 export const GO_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "go.json");
+export const GUI_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "gui.json");
 export const MSG_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "msg.json");
 export const RENDER_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "render.json");
 export const SYS_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "sys.json");

@@ -445,6 +445,28 @@ go.get<EnemyProps>()("/enemy#controller", "missing");              // type error
 
 **How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts `label.properties["color"]` is assignable to `Vector4` and that a `string` annotation on the same member carries `@ts-expect-error`. `packages/types/test-d/go-property-accessors.ts` pins the typed `go.get`/`go.set`: narrow keys resolve to `Vector3`/`Quaternion`/`number | Vector3`, a wrong-typed `go.set` value and a wrong-typed `go.get` assignment carry `@ts-expect-error`, and the `Hash`/dynamic-string fallback still type-checks. `packages/types/test-d/go-property-access.ts` pins the caller-named-component generic: `go.get<sprite.properties>()("#sprite", "animation")` is `Hash`, a wrong key, a wrong value type and a write to the read-only `"animation"` carry `@ts-expect-error`, and the bare transform call still resolves; it also pins the cross-script channel — a `ScriptPropertiesOf<typeof enemyScript>`-named read is typed, a write is value-gated, and a wrong key or wrong value type carries `@ts-expect-error`. `packages/types/test-d/component-properties.ts` pins the member types the catalogs resolve to: the `camera` members read as `number`, `camera.projection` / `camera.view` as `Matrix4` and `sprite.frame_count` as `number`, with a `Hash` annotation on the last carrying `@ts-expect-error`; `model` `"texture0"` and `"texture7"`, sprite `"texture0"` and mesh `"vertices"` read as `Hash`, while the `"textureN"` placeholder, the out-of-range `"texture8"` and an undeclared mesh key carry `@ts-expect-error`. The same file pins the keys taken from the engine source at their kinds, including the `"position.x"`-style transform keys, and puts `@ts-expect-error` on a typed write to model `"animation"`, sprite `"texture0"` and each factory's `"prototype"`. `packages/types/test-d/lifecycle.ts` proves `ScriptPropertiesOf` extracts exactly the declared property shape (excess and wrong-typed fields carry `@ts-expect-error`), tying it to the `self` channel. If the property catalog is dropped, its member types change, or the overloads regress, one of these lines flips and the typecheck gate fails.
 
+## GUI node properties are a closed set
+
+**Symptom.** `gui.get(node, "positon")` and `gui.set(node, "colour", v)` are type errors. So is `gui.set(node, "tint", v)` for a material constant, and any `gui.get`, `gui.set` or `gui.animate` call whose property name is a `string` variable.
+
+**Why.** The engine looks a name up in a fixed table of node properties: `position`, `rotation`, `euler`, `scale`, `color`, `outline`, `shadow`, `size` and `slice9`, each with `.x` to `.w` sub-keys, plus the scalars `inner_radius`, `fill_angle`, `leading` and `tracking`. `gui.animate` raises for any other name. `gui.get` and `gui.set` try a material constant next, and raise if the node's material has none by that name. A string name must be one of the node properties, so a typo fails when you compile rather than when the script runs.
+
+**Typed alternative.** Each name reads and writes its own type. A vector property reads as a `Vector4` and takes a `Vector4` or a `Vector3`. `rotation` reads as a `Quaternion` and takes only a `Quaternion`; set `euler` to work in degrees. A sub-key or a scalar is a `number`. A `gui.PROP_*` constant works wherever its name does. Name a material constant, or a name you only know at run time, with `hash(...)`: that form takes an `options` table with `index` and returns the union of values a constant can hold. A material constant cannot be animated.
+
+```ts
+const node = gui.get_node("box");
+const position = gui.get(node, "position"); // Vector4, no cast
+gui.set(node, "position.x", position.x + 10);
+gui.set(node, "rotation", vmath.quat_rotation_z(math.rad(45)));
+gui.animate(node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 0), gui.EASING_LINEAR, 0.5);
+gui.set(node, hash("tint"), vmath.vector4(1, 0, 0, 1));
+gui.set(node, hash("tint_array"), vmath.vector4(0, 1, 0, 1), { index: 2 });
+```
+
+**The gui component's own resources.** `gui.set(msg.url(), property, value, options)` addresses the gui component instead of a node. It takes `"material"`, `"materials"`, `"fonts"` or `"textures"` with a resource hash; the last three name their entry with the `key` option. A property a native extension registers is named with `hash(...)`. Only `"textures"` accepts `undefined` as the value, which removes the runtime texture mapping `key` names and needs Defold 1.13.1 or later.
+
+**How we pin this in the type tests.** `packages/types/test-d/gui-property-values.ts` pins each read type (`"position"` is `Vector4`, `"rotation"` is `Quaternion`, a sub-key or scalar is `number`, and a `gui.PROP_*` constant reads as its name) and puts `@ts-expect-error` on a misspelled name, a material-constant string passed to `gui.animate`, a sub-key of a scalar, a vector written to `rotation`, a vector written to a sub-key, `undefined` for `"fonts"` and a node property on the `msg.url()` form. It also compiles the `hash(...)` forms and the `"textures"` removal. `packages/types/test-d/kinds/gui-script-proof.ts` proves the typed read reaches a gui script.
+
 ## Field-documented tables are typed object shapes, not opaque records
 
 **Symptom.** A `table` param or return whose Defold ref-doc spells out its fields, or whose official example proves a stable shape, is no longer the opaque `Record<string | number, unknown>` it once was. `sys.get_sys_info()` returns a concrete object — `system_name`, `gmt_offset`, and the rest are typed members you can read directly and that auto-complete; a misspelled field is a compile error, not silent `unknown`.

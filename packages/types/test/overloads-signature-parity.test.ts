@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import * as ts from "typescript";
 import {
   GO_SIGNATURES_PATH,
+  GUI_SIGNATURES_PATH,
   loadSignatureFile,
   MSG_SIGNATURES_PATH,
   RENDER_SIGNATURES_PATH,
@@ -77,6 +78,26 @@ const NAMESPACES: readonly OverloadNamespace[] = [
       fqn: "go.get",
       from: "gets a named property of the specified game object or component",
       to: "gets a named property of the specified game object",
+    },
+  },
+  {
+    namespace: "gui",
+    declarationsPath: overloadsPath("gui-overloads.d.ts"),
+    storePath: GUI_SIGNATURES_PATH,
+    fqns: ["gui.animate", "gui.get", "gui.set"],
+    reflow: {
+      from: 'function set(\n      url: Url,\n      property: "textures",\n      value: undefined,\n      options: { key: string | Hash },\n    ): void;',
+      to: 'function set(url: Url, property: "textures", value: undefined, options: { key: string | Hash }): void;',
+    },
+    driftSignature: {
+      fqn: "gui.set",
+      from: "value: NodePropertyWrite<NodePropertyName<K>>,",
+      to: "value: number | Vector4 | Vector3 | Quaternion,",
+    },
+    driftDoc: {
+      fqn: "gui.get",
+      from: 'Getting `"rotation"` returns a vmath.quat, another vector property a\n     * vmath.vector4',
+      to: 'Getting `"rotation"` returns a vmath.vector4, another vector property a\n     * vmath.vector4',
     },
   },
   {
@@ -304,6 +325,9 @@ const OVERLOAD_COUNTS: Record<string, number> = {
   // the descriptions-side pin for this one, and its rationale, live in the
   // "no JSDoc description" test below
   "go.property": 8,
+  "gui.animate": 1,
+  "gui.get": 2,
+  "gui.set": 4,
   "msg.post": 2,
   "msg.url": 6,
   "render.render_target": 2,

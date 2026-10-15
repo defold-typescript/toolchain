@@ -310,11 +310,6 @@ export const OPTIONALITY_EVIDENCE_EXEMPTIONS: ReadonlyMap<string, string> = new 
       "argument 4 to dmScript::CreateCallback, which raises unless it is a function.",
   ],
   [
-    "gui.set:param:value",
-    "gui_script.cpp:LuaSet reads argument 3 even when it is absent; REQUIRED_SLOT_CORRECTIONS " +
-      "keeps the documented nil as `value: T | undefined`.",
-  ],
-  [
     "resource.create_sound_data:param:options",
     "1.13.2 marks the options optional, but script_resource.cpp:CreateSoundData checks " +
       "luaL_checktype(L, 2, LUA_TTABLE); REQUIRED_SLOT_CORRECTIONS keeps it required.",

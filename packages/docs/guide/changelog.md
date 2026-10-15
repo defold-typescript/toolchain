@@ -9,11 +9,20 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.51.1
+## v0.52.0
 
 > Summary:
 >
+> - **[GUI node properties are typed](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)**; material constants take `hash`.
 > - **[`properties` is `defineScript`-only](./script-lifecycle.md).**
+
+### Breaking
+
+- **`gui.get`, `gui.set` and `gui.animate` take only the engine's node property names** as strings, sub-keys included, or a [`gui.PROP_*`](/api/gui) constant. Name a material constant or a `string`-typed name with `hash` (`gui.set(node, hash("tint"), v)`), set `"rotation"` with a `Quaternion`, and address the gui component with `msg.url` only for `"material"`, `"materials"`, `"fonts"` and `"textures"`; see [GUI node properties are a closed set](./typescript-gotchas.md#gui-node-properties-are-a-closed-set).
+
+### Improved
+
+- **`gui.get` returns each node property's type**: `"position"` reads as a `Vector4`, `"rotation"` as a `Quaternion`, and a sub-key or scalar as a `number`, so a read needs no cast.
 
 ### Fixed
 

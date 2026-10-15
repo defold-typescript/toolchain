@@ -1,0 +1,34 @@
+{
+  "gui.animate": {
+    "signatures": [
+      "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void"
+    ],
+    "docs": [
+      "This starts an animation of a node property according to the specified parameters. If the node property is already being animated, that animation will be canceled and replaced by the new one. Note however that several different node properties can be animated simultaneously. Use `gui.cancel_animations` to stop the animation before it has completed. Only the node properties gui.get lists can be animated; a material constant cannot. Composite properties of type vector3, vector4 or quaternion also expose their sub-components (x, y, z and w). You can address the components individually by suffixing the name with a dot '.' and the name of the component. For instance, `\"position.x\"` (the position x coordinate) or `\"color.w\"` (the color alpha value). If a `complete_function` (Lua function) is specified, that function will be called when the animation has completed. By starting a new animation in that function, several animations can be sequenced together. See the examples below for more information."
+    ]
+  },
+  "gui.get": {
+    "signatures": [
+      "gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]",
+      "gui.get(node: Opaque<\"node\">, property: Hash, options?: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]"
+    ],
+    "docs": [
+      "Instead of using specific getters such as gui.get_position or gui.get_scale, you can use gui.get instead and supply the property as a string or a `gui.PROP_*` constant. Only these node properties are supported:\n\n- `\"position\"`\n- `\"rotation\"`\n- `\"euler\"`\n- `\"scale\"`\n- `\"color\"`\n- `\"outline\"`\n- `\"shadow\"`\n- `\"size\"`\n- `\"fill_angle\"` (pie)\n- `\"inner_radius\"` (pie)\n- `\"leading\"` (text)\n- `\"tracking\"` (text)\n- `\"slice9\"` (slice9)\n\nEach property but the four scalars (`fill_angle`, `inner_radius`, `leading` and `tracking`) also exposes its components as `\"<name>.x\"` to `\"<name>.w\"`. Getting `\"rotation\"` returns a vmath.quat, another vector property a vmath.vector4, and a component or a scalar property a single number. To get a material constant, pass its name as a hash.",
+      "Gets a material constant of a node, or any property named by a hash. Pass the constant's name as a hash, such as `hash(\"tint\")`. Reading an array constant without `index` returns every element in a table."
+    ]
+  },
+  "gui.set": {
+    "signatures": [
+      "gui.set<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void",
+      "gui.set(node: Opaque<\"node\">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: gui.PropertyOptions): void",
+      "gui.set(url: Url, property: \"material\" | \"materials\" | \"fonts\" | \"textures\" | Hash, value: Hash, options?: gui.PropertyOptions): void",
+      "gui.set(url: Url, property: \"textures\", value: undefined, options: { key: string | Hash }): void"
+    ],
+    "docs": [
+      "Instead of using specific setters such as gui.set_position or gui.set_scale, you can use gui.set instead and supply the property as a string or a `gui.PROP_*` constant. Only the node properties gui.get lists are supported.\n\nThe value depends on the property name. Setting `\"rotation\"` takes a vmath.quat, which differs from gui.set_rotation; to set the rotation in degrees, set `\"euler\"` instead. The rotation and euler properties are linked, so changing one changes the other. Every other vector property takes a vmath.vector4 or a vmath.vector3, and a component such as `\"position.x\"` or one of the four scalar properties takes a single number.",
+      "Sets a material constant of a node, or any property named by a hash. If a material specifies a constant called `tint` in the .material file, set it with `gui.set(node, hash(\"tint\"), vmath.vector4(1, 0, 0, 1))`, or pass a vmath.matrix4 if the constant is a matrix. To set one element of an array constant, pass an options table with `index` set.",
+      "Sets a resource property of the gui component itself, addressed with `msg.url()`: `\"material\"`, or the `\"materials\"`, `\"fonts\"` or `\"textures\"` entry named by the `key` option. A property a native extension registers is named by a hash.",
+      "Removes the runtime texture mapping the `key` option names from the gui component itself. Needs Defold 1.13.1 or later."
+    ]
+  }
+}
