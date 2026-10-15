@@ -40,6 +40,98 @@ export function globalNamespacesIn(path: string, contents: string): string[] {
   return [...new Set(names)];
 }
 
+// The functions a namespace body declares, qualified the way a script calls
+// them. An `export { _delete as delete }` alias adds the name it exports.
+function pushNamespaceFunctions(
+  statements: readonly ts.Statement[],
+  prefix: string,
+  names: string[],
+): void {
+  for (const statement of statements) {
+    if (ts.isFunctionDeclaration(statement) && statement.name !== undefined) {
+      names.push(`${prefix}${statement.name.text}`);
+    } else if (ts.isModuleDeclaration(statement) && ts.isIdentifier(statement.name)) {
+      pushModuleFunctions(statement, prefix, names);
+    } else if (
+      ts.isExportDeclaration(statement) &&
+      statement.exportClause !== undefined &&
+      ts.isNamedExports(statement.exportClause)
+    ) {
+      for (const element of statement.exportClause.elements) {
+        if (element.propertyName !== undefined) names.push(`${prefix}${element.name.text}`);
+      }
+    }
+  }
+}
+
+function pushModuleFunctions(
+  declaration: ts.ModuleDeclaration,
+  prefix: string,
+  names: string[],
+): void {
+  const qualified = `${prefix}${declaration.name.text}.`;
+  const body = declaration.body;
+  if (body === undefined) return;
+  // `namespace a.b {}` parses as `a` holding `b`.
+  if (ts.isModuleDeclaration(body)) {
+    pushModuleFunctions(body, qualified, names);
+  } else if (ts.isModuleBlock(body)) {
+    pushNamespaceFunctions(body.statements, qualified, names);
+  }
+}
+
+// The functions one `.d.ts` puts in global scope, as `<namespace>.<name>` (bare
+// for a global function), read from the same global scope `globalNamespacesIn`
+// reads.
+export function globalFunctionsIn(path: string, contents: string): string[] {
+  const source = ts.createSourceFile(path, contents, ts.ScriptTarget.Latest, true);
+  const isModule = ts.isExternalModule(source);
+  const names: string[] = [];
+  for (const statement of source.statements) {
+    if (!ts.isModuleDeclaration(statement) || ts.isStringLiteral(statement.name)) continue;
+    if ((statement.flags & ts.NodeFlags.GlobalAugmentation) !== 0) {
+      if (statement.body !== undefined && ts.isModuleBlock(statement.body)) {
+        pushNamespaceFunctions(statement.body.statements, "", names);
+      }
+      continue;
+    }
+    if (!isModule) pushModuleFunctions(statement, "", names);
+  }
+  return [...new Set(names)];
+}
+
+// Cross-reference the functions each augmentation declares against the
+// functions that need a game-object instance, in both directions: a file
+// declaring one must carry the `requiresGoInstance` marker, so it rides no
+// render-script index, and a marked file must declare one, so a marker never
+// strips a file the render script could use.
+export function goInstanceMarkerViolations(
+  files: { path: string; contents: string }[],
+  marked: readonly string[],
+  needsGoInstance: ReadonlySet<string>,
+): string[] {
+  const violations: string[] = [];
+  for (const file of files) {
+    const name = file.path.replace(/\.d\.ts$/, "");
+    const needing = globalFunctionsIn(file.path, file.contents).filter((fn) =>
+      needsGoInstance.has(fn),
+    );
+    const isMarked = marked.includes(name);
+    if (!isMarked) {
+      for (const fn of needing) {
+        violations.push(
+          `src augmentation "${name}" declares ${fn}, which needs a game object, but carries no requiresGoInstance`,
+        );
+      }
+    } else if (needing.length === 0) {
+      violations.push(
+        `src augmentation "${name}" carries requiresGoInstance but declares no function that needs a game object`,
+      );
+    }
+  }
+  return violations;
+}
+
 // Cross-reference what each augmentation actually re-opens against the
 // `restrictedTo` markers `UNIVERSAL_EXTRA_IMPORTS` declares, in both
 // directions: a file re-opening a kind-restricted namespace must carry the

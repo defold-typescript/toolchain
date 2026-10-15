@@ -379,16 +379,22 @@ This bites harder in TypeScript than in Lua, because `init`'s **return value is*
 
 ## API availability by script kind
 
-Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a `.gui_script`, and `render.*` only inside a `.render_script`. Every other namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
+Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a `.gui_script`, and `render.*` only inside a `.render_script`. Every other namespace (`msg`, `vmath`, `sys`, `go`, …) is available in every kind, with one exception: a render script has no game object, so a function that needs one always raises "no instance could be found" there. The render-script entrypoint leaves those functions out:
+
+- every function in `sprite`, `factory`, `collectionfactory`, `collectionproxy`, `label`, `model`, `particlefx`, `physics` and `tilemap`;
+- most of `go`, such as `go.get_position`, `go.animate` and `go.property`, while its constants stay;
+- part of `b2d`, `bullet3d`, `resource` and `sound`: `b2d.get_world` and `sound.play` are out, `b2d.get_version` and `sound.get_groups` stay.
+
+The set is read from the engine source of the Defold version the surface is built for. A version whose engine source the package does not vendor keeps every function.
 
 The default `@defold-typescript/types` entrypoint aggregates *all* namespaces, so it never rejects a call the engine would allow at runtime — but it also can't catch a `gui.*` use in a plain `.script`. To get the engine's wall at compile time, pin the entrypoint matching the file's script kind in that file's `tsconfig`:
 
-| Script kind      | `types` entrypoint                        | Namespaces           |
-| ---------------- | ----------------------------------------- | -------------------- |
-| `.script`        | `@defold-typescript/types/script`         | universal only       |
-| `.gui_script`    | `@defold-typescript/types/gui-script`     | universal + `gui`    |
-| `.render_script` | `@defold-typescript/types/render-script`  | universal + `render` |
-| `.editor_script` | `@defold-typescript/types/editor-script`  | `editor` only        |
+| Script kind      | `types` entrypoint                       | Namespaces                                                          |
+| ---------------- | ---------------------------------------- | ------------------------------------------------------------------- |
+| `.script`        | `@defold-typescript/types/script`        | universal only                                                      |
+| `.gui_script`    | `@defold-typescript/types/gui-script`    | universal + `gui`                                                   |
+| `.render_script` | `@defold-typescript/types/render-script` | universal + `render`, without the functions that need a game object |
+| `.editor_script` | `@defold-typescript/types/editor-script` | `editor` only                                                       |
 
 `.editor_script` is not a runtime kind at all — it runs in the editor's Lua VM,
 so its entrypoint carries `editor.*` and none of the runtime namespaces. See

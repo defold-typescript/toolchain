@@ -11,7 +11,7 @@ import {
 import { resolve } from "node:path";
 import { selectCompleteVersionSurfaces } from "../scripts/generate-api-availability";
 import { materializeVersionedSurface } from "../scripts/materialize-version";
-import { loadApiTargets } from "../scripts/regen";
+import { KIND_MODULE_MANIFEST, loadApiTargets } from "../scripts/regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync-api-docs";
 import { OVERLOAD_COVERED_SKIPS } from "../src/emit-dts";
 import {
@@ -619,19 +619,44 @@ async function materializeStrictSurface(): Promise<{
   root: string;
   destDir: string;
   tsconfigPath: string;
+  goInstanceFreeTsconfigPaths: string[];
 }> {
   const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.12.4");
   if (!target) throw new Error("no defold-1.12.4 target");
   const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-strict-"));
-  const destDir = resolve(root, "versions", "defold-1.12.4");
+  const surface = "versions/defold-1.12.4";
+  const destDir = resolve(root, surface);
   await materializeVersionedSurface(target, { destDir });
-  const tsconfigPath = writeStrictSurfaceTsconfig({
+  const shared = {
     dir: root,
     extendsPath: "../../../tsconfig.json",
-    include: ["versions/defold-1.12.4/**/*.d.ts"],
+    include: [`${surface}/**/*.d.ts`],
     paths: { "@defold-typescript/types/*": ["../src/*"] },
+  };
+  // A kind with no game object reads filtered copies in place of the modules
+  // they copy, so a copy and its original are never one program: the surface
+  // is checked without the copies, then once per such kind with its copies
+  // standing in for their originals. That view leaves out the aggregate index,
+  // whose imports would pull the originals back in.
+  const freeDirs = KIND_MODULE_MANIFEST.flatMap((entry) =>
+    entry.goInstanceFreeDir === undefined ? [] : [entry.goInstanceFreeDir],
+  ).filter((dir) => existsSync(resolve(destDir, dir)));
+  const tsconfigPath = writeStrictSurfaceTsconfig({
+    ...shared,
+    exclude: freeDirs.map((dir) => `${surface}/${dir}/**`),
   });
-  return { root, destDir, tsconfigPath };
+  const goInstanceFreeTsconfigPaths = freeDirs.map((dir) =>
+    writeStrictSurfaceTsconfig({
+      ...shared,
+      fileName: `tsconfig.${dir}.json`,
+      exclude: [
+        `${surface}/index.d.ts`,
+        ...freeDirs.filter((other) => other !== dir).map((other) => `${surface}/${other}/**`),
+        ...readdirSync(resolve(destDir, dir)).map((file) => `${surface}/${file}`),
+      ],
+    }),
+  );
+  return { root, destDir, tsconfigPath, goInstanceFreeTsconfigPaths };
 }
 
 const GUARD_MUTATIONS = [
@@ -654,10 +679,14 @@ const GUARD_MUTATIONS = [
 
 describe("versioned API surface — strict resolution", () => {
   test("no declaration in a materialized surface references a name the surface does not resolve", async () => {
-    const { root, tsconfigPath } = await materializeStrictSurface();
+    const { root, tsconfigPath, goInstanceFreeTsconfigPaths } = await materializeStrictSurface();
     try {
       const { output } = typecheck(tsconfigPath);
       expect(unexpectedDiagnostics(output)).toEqual([]);
+      expect(goInstanceFreeTsconfigPaths.length).toBeGreaterThan(0);
+      for (const viewPath of goInstanceFreeTsconfigPaths) {
+        expect(unexpectedDiagnostics(typecheck(viewPath).output)).toEqual([]);
+      }
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

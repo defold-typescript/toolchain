@@ -33,7 +33,11 @@ export function typecheckSurface(tsconfigPath: string): { exitCode: number; outp
 
 export interface StrictSurfaceTsconfigOptions {
   readonly dir: string;
+  // Defaults to `tsconfig.json`; a caller checking several views of one
+  // surface names each.
+  readonly fileName?: string;
   readonly include: readonly string[];
+  readonly exclude?: readonly string[];
   readonly paths?: Readonly<Record<string, readonly string[]>>;
   // Callers whose scratch dir sits inside the repo pass a relative path; one in
   // the OS temp dir passes an absolute one. Either way the repo's own
@@ -43,7 +47,7 @@ export interface StrictSurfaceTsconfigOptions {
 }
 
 export function writeStrictSurfaceTsconfig(opts: StrictSurfaceTsconfigOptions): string {
-  const tsconfigPath = resolve(opts.dir, "tsconfig.json");
+  const tsconfigPath = resolve(opts.dir, opts.fileName ?? "tsconfig.json");
   writeFileSync(
     tsconfigPath,
     `${JSON.stringify(
@@ -61,6 +65,7 @@ export function writeStrictSurfaceTsconfig(opts: StrictSurfaceTsconfigOptions): 
           ...opts.compilerOptions,
         },
         include: opts.include,
+        ...(opts.exclude === undefined ? {} : { exclude: opts.exclude }),
       },
       null,
       2,

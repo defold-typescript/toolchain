@@ -793,6 +793,7 @@ describe("surface entry resolution", () => {
         virtualFiles: [{ path: entry, contents: entryContents }],
         modules: new Set<string>(),
         exports: { values: [], types: [] },
+        withheld: new Set<string>(),
       };
     };
 

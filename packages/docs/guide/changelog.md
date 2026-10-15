@@ -15,6 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **[GUI node properties are typed](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)**; material constants take `hash`.
 > - **[`properties` is `defineScript`-only](./script-lifecycle.md).**
+> - **[Render scripts lose what needs a game object](./script-lifecycle.md#api-availability-by-script-kind)**, such as `sprite` and most of `go`.
 
 ### Breaking
 
@@ -28,6 +29,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **`llms-full.txt` dates each overload of `go.get`, `go.set`, `go.property`, `render.render_target` and `sys.get_config_string` by its own availability**: their first form exists on every tracked version, so it carries no `[through 1.13.1] [signature transition]` tag.
 - **`defineGuiScript` and `defineRenderScript` reject a `properties` block**: Defold builds `go.property` only in `.script` files, so the field fails to compile and the transpiler refuses to emit the calls Defold's build would reject. A GUI or render script gets a per-object value from a sibling `defineScript`, which [declares the property](./script-lifecycle.md#script-properties-on-self) and sends its value with `msg.post` in `init`.
+- **The `@defold-typescript/types/render-script` entrypoint leaves out the functions that need a game object**, which always raise "no instance could be found" in a render script: every function in `sprite`, `factory`, `collectionfactory`, `collectionproxy`, `label`, `model`, `particlefx`, `physics` and `tilemap`, most of `go` (`go.get_position`, `go.animate`, `go.property`), and part of `b2d`, `bullet3d`, `resource` and `sound`; see [API availability by script kind](./script-lifecycle.md#api-availability-by-script-kind).
 
 ## v0.51.0
 
