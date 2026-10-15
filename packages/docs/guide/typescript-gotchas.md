@@ -376,7 +376,7 @@ Why `undefined` and not `null`? Lua's `nil` behaves like `undefined`, not like `
 
 **Symptom.** A value typed `T | undefined` does not compile in some arguments the reference calls optional, such as `delay` in `gui.animate` or the options table of `go.get`, `go.set` and `gui.set`, even though leaving the argument out compiles.
 
-**Why.** The engine checks these arguments whenever a call passes them, so an explicit `nil` raises at runtime where an omitted one works. TSTL passes `undefined` as `nil`, so each such function is declared twice: once without the argument and once requiring a value. Which arguments behave this way is read from the engine source of your [pinned Defold version](./pinning-defold-target.md).
+**Why.** The engine checks these arguments whenever a call passes them, so an explicit `nil` raises at runtime where an omitted one works. TSTL passes `undefined` as `nil`, so each such function is declared twice: once without the argument and once requiring a value. On a [pre-baked version](./pinning-defold-target.md#opting-into-a-pinned-surface), which arguments behave this way is read from that version's engine source. A surface generated on the fly from reference docs has no engine source to read, so its generated functions keep the reference's optional arguments and accept `undefined`; the types do not say whether that version raises. The `go.get`, `go.set`, `gui.get`, `gui.set` and `gui.animate` declarations are hand-written and take a value or nothing on every version.
 
 **Typed alternative.** Branch on the value, and leave the argument out when it is absent:
 
@@ -392,7 +392,7 @@ function fadeIn(delay: number | undefined): void {
 }
 ```
 
-**How we pin this in the type tests.** `packages/types/test-d/nil-raising-slots.ts` compiles calls to these functions with and without the argument and puts `@ts-expect-error` on a possibly-undefined value, and the engine binding gate reds when any declaration takes `undefined` in an argument whose `nil` raises.
+**How we pin this in the type tests.** `packages/types/test-d/nil-raising-slots.ts` compiles calls to these functions with and without the argument and puts `@ts-expect-error` on a possibly-undefined value, and the engine binding gate reds when any pre-baked version declares a function taking `undefined` in an argument whose `nil` raises.
 
 ## `===` and `==` compile to the same Lua — strictness is a convention, not a runtime guard
 
