@@ -3001,7 +3001,7 @@ describe("grouped overload blocks (committed artifacts)", () => {
 
   test("a function whose signature changed states its current form's example once", () => {
     let checked = 0;
-    let guiSet = false;
+    let addMount = false;
     for (const page of pages) {
       const md = render(page);
       const axis = page.availability?.versions ?? [];
@@ -3027,11 +3027,11 @@ describe("grouped overload blocks (committed artifacts)", () => {
           current: 1,
           replaced: replaced.map((example) => occurrences(current, example)),
         });
-        if (name === "gui.set") guiSet = true;
+        if (name === "liveupdate.add_mount") addMount = true;
         checked += 1;
       }
     }
-    expect(guiSet).toBe(true);
+    expect(addMount).toBe(true);
     expect(checked).toBeGreaterThan(0);
   });
 

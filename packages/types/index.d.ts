@@ -35,6 +35,7 @@ import "./src/go-overloads";
 import "./src/component-properties";
 import "./generated/graphics";
 import "./generated/gui";
+import "./src/gui-overloads";
 import "./generated/html5";
 import "./generated/http";
 import "./generated/image";

@@ -333,19 +333,19 @@ describe("emitDeclarations", () => {
     expect(out).toContain('function get_parent(node: Opaque<"node">): Opaque<"node">;');
   });
 
-  test("a return-type override forces unknown despite empty doc returnvalues", () => {
+  test("a return-type override supplies the return despite empty doc returnvalues", () => {
     const module: ApiModule = {
-      namespace: "gui",
+      namespace: "tilemap",
       brief: "",
       description: "",
       functions: [
         {
-          name: "gui.get",
+          name: "tilemap.set_tile",
           brief: "",
           description: "",
           parameters: [
-            { name: "node", doc: "", types: ["node"], isOptional: false },
-            { name: "property", doc: "", types: ["string"], isOptional: false },
+            { name: "url", doc: "", types: ["string"], isOptional: false },
+            { name: "layer", doc: "", types: ["string"], isOptional: false },
           ],
           returnValues: [],
         },
@@ -356,8 +356,8 @@ describe("emitDeclarations", () => {
       typedefs: [],
     };
     const out = emitDeclarations(module);
-    expect(out).toContain('function get(node: Opaque<"node">, property: string): unknown;');
-    expect(out).not.toContain('function get(node: Opaque<"node">, property: string): void;');
+    expect(out).toContain("function set_tile(url: string, layer: string): boolean;");
+    expect(out).not.toContain("function set_tile(url: string, layer: string): void;");
   });
 
   test("an empty-returnvalues function not in the override map still emits void", () => {
@@ -2399,11 +2399,14 @@ describe("recoverCallbackSignature", () => {
 });
 
 describe("OVERLOAD_COVERED_SKIPS", () => {
-  test("is exactly the FQNs served by the hand-written go/msg/render/sys/vmath overloads, in sort order", () => {
+  test("is exactly the FQNs served by the hand-written go/gui/msg/render/sys/vmath overloads, in sort order", () => {
     expect([...OVERLOAD_COVERED_SKIPS].sort()).toEqual([
       "go.get",
       "go.property",
       "go.set",
+      "gui.animate",
+      "gui.get",
+      "gui.set",
       "msg.post",
       "msg.url",
       "render.render_target",
@@ -2770,8 +2773,6 @@ describe("TABLE_SLOT_CURATIONS", () => {
     // spot-checked structurally below, one per curation kind the promoted 1.13.0
     // surface introduced.
     expect([...TABLE_SLOT_CURATIONS.keys()]).toEqual([
-      "gui.get:param:options",
-      "gui.set:param:options",
       "buffer.create:param:declaration",
       "collectionfactory.create:param:properties",
       "collectionfactory.create:return:ids",
@@ -4709,8 +4710,15 @@ describe("documented constant slot expansion", () => {
     expect(signatureLine(guiOut, "function cancel_animations(")).toBe(
       `function cancel_animations(node: Opaque<"node">, property?: string | ${props} | Hash): void;`,
     );
-    expect(signatureLine(guiOut, "function get(")).toContain(
-      `property: string | Hash | ${props}, options?:`,
+
+    // The lender's skip rule withholds its declaration, not its doc.
+    const withoutAnimate = emitDeclarations(
+      { ...gui, functions: gui.functions.filter((fn) => fn.name !== "gui.animate") },
+      { withheldFunctions: gui.functions.filter((fn) => fn.name === "gui.animate") },
+    );
+    expect(withoutAnimate).not.toContain("function animate(");
+    expect(signatureLine(withoutAnimate, "function cancel_animations(")).toBe(
+      `function cancel_animations(node: Opaque<"node">, property?: string | ${props} | Hash): void;`,
     );
   });
 
@@ -4981,11 +4989,7 @@ describe("TABLE_SLOT_FIELD_ADDITIONS", () => {
     // The exact ordered addition keys. Each entry's own evidence is pinned on
     // the entry; this guards that no addition is silently added, removed, or
     // reordered — the shape the sibling TABLE_SLOT_CURATIONS suite asserts.
-    expect([...TABLE_SLOT_FIELD_ADDITIONS.keys()]).toEqual([
-      "resource.create_texture:param:table",
-      "gui.get:param:options",
-      "gui.set:param:options",
-    ]);
+    expect([...TABLE_SLOT_FIELD_ADDITIONS.keys()]).toEqual(["resource.create_texture:param:table"]);
   });
 
   test("emits page_count beside the fields the ref-doc documents, addition last", () => {
@@ -5534,12 +5538,6 @@ describe("signatures upstream documents in prose", () => {
       "function newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T;",
     );
   });
-
-  test("gui.set's options.key accepts a property name string as well as a Hash", () => {
-    expect(emittedLine(guiDoc, "function set(")).toContain(
-      "options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-    );
-  });
 });
 
 describe("corrections the engine bindings demand", () => {
@@ -5596,9 +5594,6 @@ describe("corrections the engine bindings demand", () => {
   });
 
   test("a table field the binding reads is declared", () => {
-    expect(line(guiDoc, "function get(")).toContain(
-      "options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-    );
     expect(line(b2dWorldDoc, "function cast_shape(")).toContain(
       "radius: number; center1: Vector3; center2: Vector3 }",
     );
@@ -6697,22 +6692,6 @@ describe("upstream-pinned corrections", () => {
     };
     expect(signature(emitted("socket", skip), "skip")).toContain(
       "(d: number, ...args: unknown[]): LuaMultiReturn<unknown[]>;",
-    );
-  });
-
-  // Verbatim 1.13.2 slots (`gamesys-gui_script.cpp_doc.json`): LuaGet and LuaSet
-  // read the `key` and `keys` options neither spelling documents.
-  test.each([
-    ["get", ["{ index?:integer }"]],
-    ["set", ["gui.set_options"]],
-  ] as const)("gui.%s options keep the key options the engine reads", (local, types) => {
-    const element = {
-      type: "FUNCTION",
-      name: `gui.${local}`,
-      parameters: [{ name: "options", doc: "", types, is_optional: "True" }],
-    };
-    expect(signature(emitted("gui", element), local)).toContain(
-      "options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
     );
   });
 

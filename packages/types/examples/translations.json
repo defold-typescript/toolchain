@@ -708,7 +708,7 @@
     },
     {
       "sourceHash": "7234f15bfdc28abb",
-      "ts": "// How to start a sequenced animation where the node fades in to white during 0.5\n// seconds, stays visible for 2 seconds and then fades out:\nfunction on_animation_done(self: unknown, node: unknown) {\n  // fade out node, but wait 2 seconds before the animation starts\n  gui.animate(node as Opaque<\"node\">, gui.PROP_COLOR, vmath.vector4(0, 0, 0, 0), gui.EASING_OUTQUAD, 0.5, 2.0);\n}\n\nexport default defineGuiScript({\n  init(self) {\n    // fetch the node we want to animate\n    const my_node = gui.get_node(\"my_node\");\n    // node is initially set to fully transparent\n    gui.set_color(my_node, vmath.vector4(0, 0, 0, 0));\n    // animate the node immediately and call on_animation_done when the animation has completed\n    gui.animate(my_node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_INOUTQUAD, 0.5, 0.0, on_animation_done);\n  },\n});"
+      "ts": "// How to start a sequenced animation where the node fades in to white during 0.5\n// seconds, stays visible for 2 seconds and then fades out:\nfunction on_animation_done(self: unknown, node: Opaque<\"node\">) {\n  // fade out node, but wait 2 seconds before the animation starts\n  gui.animate(node, gui.PROP_COLOR, vmath.vector4(0, 0, 0, 0), gui.EASING_OUTQUAD, 0.5, 2.0);\n}\n\nexport default defineGuiScript({\n  init(self) {\n    // fetch the node we want to animate\n    const my_node = gui.get_node(\"my_node\");\n    // node is initially set to fully transparent\n    gui.set_color(my_node, vmath.vector4(0, 0, 0, 0));\n    // animate the node immediately and call on_animation_done when the animation has completed\n    gui.animate(my_node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_INOUTQUAD, 0.5, 0.0, on_animation_done);\n  },\n});"
     },
     {
       "sourceHash": "3d5dcef3260b5964",
@@ -820,7 +820,7 @@
   "gui.set": [
     {
       "sourceHash": "0b505e5f92fd4aff",
-      "ts": "const node = gui.get_node(\"my_box_node\");\nconst node_position = gui.get(node, \"position\") as Vector3;\ngui.set(node, \"position.x\", node_position.x + 128);"
+      "ts": "const node = gui.get_node(\"my_box_node\");\nconst node_position = gui.get(node, \"position\");\ngui.set(node, \"position.x\", node_position.x + 128);"
     },
     {
       "sourceHash": "8ed6f5c059ba2496",
@@ -828,7 +828,7 @@
     },
     {
       "sourceHash": "2a8317babd507565",
-      "ts": "const node = gui.get_node(\"my_box_node\");\ngui.set(node, \"tint\", vmath.vector4(1, 0, 0, 1));\n// matrix4 is also supported\ngui.set(node, \"light_matrix\", vmath.matrix4());\n// update a constant in an array at position 4. the array is specified in the shader as:\n// uniform vec4 tint_array[4]; // lua is 1 based, shader is 0 based\ngui.set(node, \"tint_array\", vmath.vector4(1, 0, 0, 1), { index: 4 });\n// update a matrix constant in an array at position 4. the array is specified in the shader as:\n// uniform mat4 light_matrix_array[4];\ngui.set(node, \"light_matrix_array\", vmath.matrix4(), { index: 4 });\n// update a sub-element in a constant\ngui.set(node, \"tint.x\", 1);\n// update a sub-element in an array constant at position 4\ngui.set(node, \"tint_array.x\", 1, { index: 4 });"
+      "ts": "const node = gui.get_node(\"my_box_node\");\ngui.set(node, hash(\"tint\"), vmath.vector4(1, 0, 0, 1));\n// matrix4 is also supported\ngui.set(node, hash(\"light_matrix\"), vmath.matrix4());\n// update a constant in an array at position 4. the array is specified in the shader as:\n// uniform vec4 tint_array[4]; // lua is 1 based, shader is 0 based\ngui.set(node, hash(\"tint_array\"), vmath.vector4(1, 0, 0, 1), { index: 4 });\n// update a matrix constant in an array at position 4. the array is specified in the shader as:\n// uniform mat4 light_matrix_array[4];\ngui.set(node, hash(\"light_matrix_array\"), vmath.matrix4(), { index: 4 });\n// update a sub-element in a constant\ngui.set(node, hash(\"tint.x\"), 1);\n// update a sub-element in an array constant at position 4\ngui.set(node, hash(\"tint_array.x\"), 1, { index: 4 });"
     },
     {
       "sourceHash": "b52d73e25b02e93f",

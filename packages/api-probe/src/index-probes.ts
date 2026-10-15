@@ -56,41 +56,48 @@ function returns(call: string, value: "undefined" | "false", what: string): stri
 
 const PAST = "the engine accepts the position one past the last";
 
+// The `tints` material constant: `gui` names a material constant by hash only.
+function tintsName(ns: "go" | "gui"): string {
+  return ns === "gui" ? 'hash("tints")' : '"tints"';
+}
+
 // `options.index` over the `tints[4]` constant, read back as a TypeScript
 // array. `go.set` passes its options through a variable, which the call must
 // leave as the caller wrote it.
 function optionsSet(ns: "go" | "gui", target: string, viaVariable: boolean): IndexContext {
+  const tints = tintsName(ns);
   return {
     count: "4",
     reaches: (i, _at, base) =>
       [
         viaVariable
-          ? `const options = { index: ${i} }; ${ns}.set(${target}, "tints", ${tint(i)}, options); if (options.index !== ${i}) error("the call changed the caller's options");`
-          : `${ns}.set(${target}, "tints", ${tint(i)}, { index: ${i} });`,
-        `const tints = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
+          ? `const options = { index: ${i} }; ${ns}.set(${target}, ${tints}, ${tint(i)}, options); if (options.index !== ${i}) error("the call changed the caller's options");`
+          : `${ns}.set(${target}, ${tints}, ${tint(i)}, { index: ${i} });`,
+        `const tints = ${ns}.get(${target}, ${tints}) as unknown as ${V4}[];`,
         `if (tints[${element(i, base)}] !== ${tint(i)}) error("{ index: i } missed its element");`,
       ].join(" "),
     // The binding accepts a write past the end; it must not land in the array.
     beyond: (past, count) =>
       [
-        `const before = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
-        `${ns}.set(${target}, "tints", vmath.vector4(0, 0, 0, 0), { index: ${past} });`,
-        `const after = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
+        `const before = ${ns}.get(${target}, ${tints}) as unknown as ${V4}[];`,
+        `${ns}.set(${target}, ${tints}, vmath.vector4(0, 0, 0, 0), { index: ${past} });`,
+        `const after = ${ns}.get(${target}, ${tints}) as unknown as ${V4}[];`,
         `for (let k = 0; k < ${count}; k++) if (after[k] !== before[k]) error("a write past the last element changed element k");`,
       ].join(" "),
   };
 }
 
 function optionsGet(ns: "go" | "gui", target: string): IndexContext {
+  const tints = tintsName(ns);
   return {
     count: "4",
     reaches: (i, _at, base) =>
       [
-        `${ns}.set(${target}, "tints", ${tint(i)}, { index: ${i} });`,
-        `const tints = ${ns}.get(${target}, "tints") as unknown as ${V4}[];`,
-        `if (${ns}.get(${target}, "tints", { index: ${i} }) !== tints[${element(i, base)}]) error("{ index: i } read another element");`,
+        `${ns}.set(${target}, ${tints}, ${tint(i)}, { index: ${i} });`,
+        `const tints = ${ns}.get(${target}, ${tints}) as unknown as ${V4}[];`,
+        `if (${ns}.get(${target}, ${tints}, { index: ${i} }) !== tints[${element(i, base)}]) error("{ index: i } read another element");`,
       ].join(" "),
-    beyond: (past) => raises(`${ns}.get(${target}, "tints", { index: ${past} })`, PAST),
+    beyond: (past) => raises(`${ns}.get(${target}, ${tints}, { index: ${past} })`, PAST),
   };
 }
 

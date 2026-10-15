@@ -159,6 +159,8 @@ export class NoWitness extends Error {}
 
 interface Scope {
   readonly fqn: string;
+  // The `overload<n>` label of the signature being witnessed, on a function with several.
+  readonly overload?: string | undefined;
   readonly slot: number;
   readonly context: ProbeContext;
   readonly checker: ts.TypeChecker;
@@ -439,7 +441,11 @@ function isTypeApplication(signature: ts.Signature): boolean {
 function slotWitness(param: Param, slot: number, scope: Omit<Scope, "slot">): string {
   const namespace = scope.fqn.slice(0, scope.fqn.lastIndexOf("."));
   const override =
-    WITNESS_OVERRIDES[`${scope.fqn}:${slot}`] ?? WITNESS_OVERRIDES[`${namespace}.*:${slot}`];
+    (scope.overload === undefined
+      ? undefined
+      : WITNESS_OVERRIDES[`${scope.fqn}:${scope.overload}:${slot}`]) ??
+    WITNESS_OVERRIDES[`${scope.fqn}:${slot}`] ??
+    WITNESS_OVERRIDES[`${namespace}.*:${slot}`];
   const full: Scope = { ...scope, slot };
   if (override !== undefined) {
     for (const id of Object.keys(PROBE_URLS)) {
@@ -594,7 +600,7 @@ function callsFor(
     const name = overload === undefined ? fqn : `${fqn}:${overload}`;
     if (overload !== undefined && PROBE_DENYLIST[name] !== undefined) return;
     const params = signatureParams(signature, checker);
-    const scope = { fqn, context, checker, constants, urls };
+    const scope = { fqn, overload, context, checker, constants, urls };
     const required = params.filter((param) => !param.optional).length;
     const variants: [string, number][] = [["required", required]];
     const present = params.filter((param) => !param.rest).length;

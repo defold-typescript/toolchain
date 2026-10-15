@@ -477,10 +477,10 @@ describe("options.index", () => {
         'go.set(url, "tint", tint, opts);',
         'go.set(url, "tint", tint, { ...base, index: 1 });',
         'go.set(url, "tint", tint, { index: maybe });',
-        'gui.get(node, "tint", { index: 0 });',
-        'gui.get(node, "tint", { index: 1 });',
-        'gui.get(node, "tint", { index: i });',
-        'gui.get(node, "tint", opts);',
+        'gui.get(node, hash("tint"), { index: 0 });',
+        'gui.get(node, hash("tint"), { index: 1 });',
+        'gui.get(node, hash("tint"), { index: i });',
+        'gui.get(node, hash("tint"), opts);',
       ]),
     ).toMatchInlineSnapshot(`
       "local ____lualib = require("lualib_bundle")
@@ -496,10 +496,26 @@ describe("options.index", () => {
           __TS__ObjectAssign({}, base, {index = 1})
       )
       go.set(url, "tint", tint, {index = maybe})
-      gui.get(node, "tint", {index = 0})
-      gui.get(node, "tint", {index = 1})
-      gui.get(node, "tint", {index = i})
-      gui.get(node, "tint", opts)"
+      gui.get(
+          node,
+          hash("tint"),
+          {index = 0}
+      )
+      gui.get(
+          node,
+          hash("tint"),
+          {index = 1}
+      )
+      gui.get(
+          node,
+          hash("tint"),
+          {index = i}
+      )
+      gui.get(
+          node,
+          hash("tint"),
+          opts
+      )"
     `);
   });
 
