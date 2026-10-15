@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import * as ts from "typescript";
 import { isFactoryOnlyImport } from "./lifecycle-erasure";
-import { transpile } from "./transpile";
+import { transpile, transpileProject } from "./transpile";
 
 describe("lifecycle erasure", () => {
   test("erases a void defineScript to flat top-level chunk functions", () => {
@@ -647,5 +647,47 @@ describe("lifecycle erasure", () => {
     expect(result.diagnostics).toEqual([]);
     expect(result.lua).toContain("init = function");
     expect(result.lua).not.toContain("function init(self)");
+  });
+});
+
+describe("properties on the gui and render factories", () => {
+  for (const factory of ["defineGuiScript", "defineRenderScript"]) {
+    test(`${factory} refuses a properties block instead of emitting go.property`, () => {
+      const source = [
+        `import { ${factory} } from "@defold-typescript/types";`,
+        "",
+        `${factory}({`,
+        "  // @ts-expect-error",
+        "  properties: { root: 1 },",
+        "  init() {},",
+        "});",
+        "",
+      ].join("\n");
+      const propertiesLine = source.slice(0, source.indexOf("properties:")).split("\n").length;
+      const result = transpileProject({ files: { "main.ts": source } });
+      expect(result.diagnostics).toHaveLength(1);
+      const [diagnostic] = result.diagnostics;
+      expect(diagnostic?.file).toBe("main.ts");
+      expect(diagnostic?.line).toBe(propertiesLine);
+      expect(diagnostic?.category).toBeUndefined();
+      expect(diagnostic?.message).toContain(factory);
+      expect(diagnostic?.message).toContain("go.property");
+      for (const lua of Object.values(result.lua)) {
+        expect(lua).not.toContain("go.property");
+      }
+    });
+  }
+
+  test("defineGuiScript with properties: undefined erases like the no-properties form", () => {
+    const body = ["  init() {},", "  update(self, dt) {},", "});", ""];
+    const header = [
+      'import { defineGuiScript } from "@defold-typescript/types";',
+      "",
+      "defineGuiScript({",
+    ];
+    const baseline = transpile([...header, ...body].join("\n"));
+    const result = transpile([...header, "  properties: undefined,", ...body].join("\n"));
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toBe(baseline.lua);
   });
 });
