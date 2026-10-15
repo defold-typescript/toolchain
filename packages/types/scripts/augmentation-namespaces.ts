@@ -101,31 +101,43 @@ export function globalFunctionsIn(path: string, contents: string): string[] {
 }
 
 // Cross-reference the functions each augmentation declares against the
-// functions that need a game-object instance, in both directions: a file
-// declaring one must carry the `requiresGoInstance` marker, so it rides no
-// render-script index, and a marked file must declare one, so a marker never
-// strips a file the render script could use.
+// functions that need a game-object instance. A file declaring one must carry
+// the `requiresGoInstance` marker, so it rides no render-script index. A marked
+// file must declare exactly the functions its marker lists, one of them at
+// least in the manifest, so dropping the file strips only those functions and a
+// marker never strips a file the render script could use.
 export function goInstanceMarkerViolations(
   files: { path: string; contents: string }[],
-  marked: readonly string[],
+  marked: Readonly<Record<string, readonly string[]>>,
   needsGoInstance: ReadonlySet<string>,
 ): string[] {
   const violations: string[] = [];
   for (const file of files) {
     const name = file.path.replace(/\.d\.ts$/, "");
-    const needing = globalFunctionsIn(file.path, file.contents).filter((fn) =>
-      needsGoInstance.has(fn),
-    );
-    const isMarked = marked.includes(name);
-    if (!isMarked) {
+    const declared = globalFunctionsIn(file.path, file.contents);
+    const needing = declared.filter((fn) => needsGoInstance.has(fn));
+    const listed = Object.hasOwn(marked, name) ? marked[name] : undefined;
+    if (listed === undefined) {
       for (const fn of needing) {
         violations.push(
           `src augmentation "${name}" declares ${fn}, which needs a game object, but carries no requiresGoInstance`,
         );
       }
-    } else if (needing.length === 0) {
+      continue;
+    }
+    if (needing.length === 0) {
       violations.push(
         `src augmentation "${name}" carries requiresGoInstance but declares no function that needs a game object`,
+      );
+    }
+    for (const fn of declared.filter((fn) => !listed.includes(fn))) {
+      violations.push(
+        `src augmentation "${name}" declares ${fn}, which its requiresGoInstance does not list, so render scripts would lose it`,
+      );
+    }
+    for (const fn of listed.filter((fn) => !declared.includes(fn))) {
+      violations.push(
+        `src augmentation "${name}" lists ${fn} in requiresGoInstance but does not declare it`,
       );
     }
   }

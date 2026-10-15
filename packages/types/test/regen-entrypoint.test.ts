@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import {
   assertSrcAugmentationScoping,
   committedFieldCorrectionTargets,
-  GO_INSTANCE_SRC_AUGMENTATIONS,
+  GO_INSTANCE_SRC_FUNCTIONS,
   RESTRICTED_SRC_AUGMENTATIONS,
   type RegenIo,
   regenerate,
@@ -23,14 +23,34 @@ const COVERAGE_CHECKED_PREFIX = "field correction coverage checked:";
 const declaresGlobal = (namespace: string, body = ""): string =>
   ["export {};", "declare global {", `  namespace ${namespace} {${body}}`, "}", ""].join("\n");
 
+// One stub per function, each grouped into the namespace it is qualified by.
+const declaresFunctions = (refs: readonly string[]): string => {
+  const byNamespace = new Map<string, string[]>();
+  for (const ref of refs) {
+    const dot = ref.lastIndexOf(".");
+    const namespace = ref.slice(0, dot);
+    byNamespace.set(namespace, [
+      ...(byNamespace.get(namespace) ?? []),
+      `function ${ref.slice(dot + 1)}(): void;`,
+    ]);
+  }
+  return [
+    "export {};",
+    "declare global {",
+    ...[...byNamespace].map(([namespace, fns]) => `  namespace ${namespace} { ${fns.join(" ")} }`),
+    "}",
+    "",
+  ].join("\n");
+};
+
 // What each augmentation's markers promise: a restricted one re-opens its
-// namespace, and one marked as needing a game object declares `go.get`.
+// namespace, and one marked as needing a game object declares exactly the
+// functions its marker lists.
 function satisfiedAugmentation(name: string): string {
   const restricted = RESTRICTED_SRC_AUGMENTATIONS[name];
   if (restricted !== undefined) return declaresGlobal(restricted);
-  if (GO_INSTANCE_SRC_AUGMENTATIONS.includes(name)) {
-    return declaresGlobal("go", " function get(): void; ");
-  }
+  const listed = GO_INSTANCE_SRC_FUNCTIONS[name];
+  if (listed !== undefined) return declaresFunctions(listed);
   return "export {};\n";
 }
 
@@ -106,7 +126,26 @@ describe("assertSrcAugmentationScoping", () => {
       }),
     );
     expect(error?.message).toContain('"go-overloads"');
-    expect(error?.message).toContain("requiresGoInstance");
+    expect(error?.message).toContain("declares no function that needs a game object");
+  });
+
+  test("a marked augmentation declaring a function its list omits rejects", async () => {
+    const listed = GO_INSTANCE_SRC_FUNCTIONS["go-overloads"] ?? [];
+    expect(listed.length).toBeGreaterThan(0);
+    const error = await scopingError(
+      syntheticRoot({ "go-overloads": declaresFunctions([...listed, "go.render_safe"]) }),
+    );
+    expect(error?.message).toContain('"go-overloads"');
+    expect(error?.message).toContain("go.render_safe");
+  });
+
+  test("a marked augmentation that does not declare a function its list names rejects", async () => {
+    const error = await scopingError(
+      syntheticRoot({ "go-overloads": declaresFunctions(["go.get", "go.set"]) }),
+    );
+    expect(error?.message).toContain('"go-overloads"');
+    expect(error?.message).toContain("go.property");
+    expect(error?.message).toContain("does not declare");
   });
 });
 
