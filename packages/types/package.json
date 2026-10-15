@@ -93,6 +93,7 @@
     "!scripts/example-typecheck.ts",
     "!scripts/example-variant-drift.ts",
     "!scripts/engine-binding-extract.ts",
+    "!scripts/go-instance-functions.ts",
     "!scripts/binding-pin.ts",
     "!scripts/sync-engine-bindings.ts",
     "!scripts/engine-binding-diff.ts",
