@@ -170,8 +170,11 @@ export interface DeclaredParameterSlot {
  *
  * Overloads merge conservatively: a slot counts omissible only when *every*
  * signature that names it makes it so, so one widened overload cannot vouch for
- * a sibling that stayed required. The same rule merges declaration copies across
- * files in {@link mergeDeclaredParameterSlots}. A reserved-name recovery
+ * a sibling that stayed required. A required slot is still omissible where a
+ * sibling overload with the same return type ends right before it on the same
+ * leading parameters: that is the call without it, the shape an arity split
+ * declares. The same rule merges declaration copies across files in
+ * {@link mergeDeclaredParameterSlots}. A reserved-name recovery
  * (`function _new(); export { _new as new }`) is recorded under both the
  * emitted and the aliased name.
  */
@@ -180,6 +183,7 @@ export function enumerateDeclaredParameterSlots(
   fileName = "surface.d.ts",
 ): Map<string, Map<string, DeclaredParameterSlot>> {
   const out = new Map<string, Map<string, DeclaredParameterSlot>>();
+  const overloads = new Map<string, ts.FunctionDeclaration[]>();
   const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true);
 
   const stack: string[] = [];
@@ -213,13 +217,24 @@ export function enumerateDeclaredParameterSlots(
     if (ts.isFunctionDeclaration(node)) {
       if (!node.name) return;
       const key = [...stack, node.name.text].join(".");
-      const slots = out.get(key) ?? new Map<string, DeclaredParameterSlot>();
-      for (const parameter of node.parameters) {
+      overloads.set(key, [...(overloads.get(key) ?? []), node]);
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(sourceFile);
+
+  for (const [key, declarations] of overloads) {
+    const slots = new Map<string, DeclaredParameterSlot>();
+    for (const node of declarations) {
+      for (const [index, parameter] of node.parameters.entries()) {
         if (!ts.isIdentifier(parameter.name)) continue;
         const typeText = parameter.type ? parameter.type.getText() : "any";
         const optional =
           parameter.questionToken !== undefined ||
-          (parameter.type !== undefined && annotationAdmitsUndefined(parameter.type));
+          (parameter.type !== undefined && annotationAdmitsUndefined(parameter.type)) ||
+          declarations.some((sibling) => endsBefore(sibling, node, index));
         const slot: DeclaredParameterSlot = {
           optional,
           typeText,
@@ -228,13 +243,9 @@ export function enumerateDeclaredParameterSlots(
         const previous = slots.get(parameter.name.text);
         slots.set(parameter.name.text, previous ? mergeParameterSlot(previous, slot) : slot);
       }
-      out.set(key, slots);
-      return;
     }
-    ts.forEachChild(node, visit);
-  };
-
-  visit(sourceFile);
+    out.set(key, slots);
+  }
 
   for (const alias of aliases) {
     const from = alias.prefix ? `${alias.prefix}.${alias.from}` : alias.from;
@@ -269,6 +280,23 @@ export function mergeDeclaredParameterSlots(
     }
   }
   return out;
+}
+
+// Whether `sibling` is `node`'s call without the parameter at `index` and every
+// one after it: the same leading parameter names, then nothing, returning the
+// same type.
+function endsBefore(
+  sibling: ts.FunctionDeclaration,
+  node: ts.FunctionDeclaration,
+  index: number,
+): boolean {
+  return (
+    sibling.parameters.length === index &&
+    sibling.type?.getText() === node.type?.getText() &&
+    sibling.parameters.every(
+      (parameter, i) => parameter.name.getText() === node.parameters[i]?.name.getText(),
+    )
+  );
 }
 
 function mergeParameterSlot(

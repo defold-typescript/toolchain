@@ -52,6 +52,12 @@ const SELECTED: readonly FenceSelection[] = [
   },
   {
     page: "typescript-gotchas.md",
+    lead: "**Typed alternative.** Branch on the value, and leave the argument out",
+    nth: 0,
+    kind: "gui-script",
+  },
+  {
+    page: "typescript-gotchas.md",
     lead: "**Symptom.** Reading `v.length` on a `vmath.vector`",
     nth: 0,
     kind: "script",

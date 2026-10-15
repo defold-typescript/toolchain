@@ -6,12 +6,15 @@ import {
   type StructMemberAddition,
 } from "../src/emit-dts";
 import {
+  type BindingFunction,
   bindingDefinesFunction,
   bindingFunctionTokens,
   cTokenKeys,
+  mergeBindings,
+  readBindingsForTarget,
   registeredConstantFqns,
 } from "./engine-binding-extract";
-import type { ApiTarget, GenerateOptions } from "./regen";
+import type { ApiTarget, TargetBindingOptions } from "./regen";
 
 function containsRun(body: readonly string[], run: readonly string[]): boolean {
   outer: for (let start = 0; start + run.length <= body.length; start++) {
@@ -72,18 +75,49 @@ export function bindingEvidenceFor(
   return evidence;
 }
 
+// The 1-based slots, keyed `<namespace>.<name>`, that a function may omit but
+// raises on when passed an explicit nil. A name bound more than once is listed
+// only where every binding raises, since one declaration serves them all.
+export function nilRaisingSlotsOf(
+  functions: readonly BindingFunction[],
+): ReadonlyMap<string, readonly number[]> {
+  const slots = new Map<string, readonly number[]>();
+  for (const fn of mergeBindings(functions)) {
+    const raising = fn.slots
+      .filter((slot) => slot.nilRaises)
+      .map((slot) => slot.index)
+      .sort((a, b) => a - b);
+    if (raising.length > 0) slots.set(`${fn.namespace}.${fn.name}`, raising);
+  }
+  return slots;
+}
+
+const nilRaisingSlotCache = new Map<string, ReadonlyMap<string, readonly number[]>>();
+
+function targetNilRaisingSlots(targetId: string): ReadonlyMap<string, readonly number[]> {
+  let slots = nilRaisingSlotCache.get(targetId);
+  if (!slots) {
+    slots = nilRaisingSlotsOf(readBindingsForTarget(targetId).functions);
+    nilRaisingSlotCache.set(targetId, slots);
+  }
+  return slots;
+}
+
 // What a target's own engine source decides for its emit: the constants it
-// registers and the binding-pinned corrections whose pin holds there.
+// registers, the binding-pinned corrections whose pin holds there, and the
+// slots its bindings raise on when passed nil.
 // Every in-repo emit compared against a committed surface takes these, so a
-// fresh emit and `regen` can never disagree on either input.
+// fresh emit and `regen` can never disagree on any of them.
 export function targetBindingOptions(
   target: ApiTarget,
   corrections?: Iterable<readonly [string, ReturnTypeCorrection]>,
   additions?: Iterable<readonly [string, StructMemberAddition]>,
-): Pick<GenerateOptions, "registeredConstants" | "bindingEvidence"> {
+): TargetBindingOptions {
   const registeredConstants = registeredConstantFqns(target);
+  const vendored = (target.source ?? null) === null;
   return {
     ...(registeredConstants ? { registeredConstants } : {}),
     bindingEvidence: bindingEvidenceFor(target, corrections, additions),
+    ...(vendored ? { nilRaisingSlots: targetNilRaisingSlots(target.id) } : {}),
   };
 }

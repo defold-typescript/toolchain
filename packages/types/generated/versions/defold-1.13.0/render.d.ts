@@ -325,7 +325,69 @@ declare global {
      * }
      * ```
      */
-    function draw(predicate: Opaque<"render_predicate">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }): void;
+    function draw(predicate: Opaque<"render_predicate">): void;
+    /**
+     * Draws all objects that match a specified predicate. An optional constant buffer can be
+     * provided to override the default constants. If no constants buffer is provided, a default
+     * system constants buffer is used containing constants as defined in materials and set through
+     * go.set (or particlefx.set_constant) on visual components.
+     *
+     * @param predicate - predicate to draw for
+     * @param options - optional table with properties:
+     *
+     * `frustum`
+     * matrix4 A frustum matrix used to cull renderable items. (E.g. `local frustum = proj * view`). default=nil
+     * `frustum_planes`
+     * int Determines which sides of the frustum will be used. Default is render.FRUSTUM_PLANES_SIDES.
+     *
+     * - render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
+     * - render.FRUSTUM_PLANES_ALL : All 6 sides of the frustum.
+     *
+     * `constants`
+     * constant_buffer optional constants to use while rendering
+     * `sort_order`
+     * int How to sort draw order for world-ordered entries. Default uses the renderer's preferred world sorting (back-to-front).
+     * @example
+     * ```ts
+     * export default defineRenderScript({
+     *   init() {
+     *     // define a predicate matching anything with material tag "my_tag"
+     *     return { my_pred: render.predicate([hash("my_tag")]) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // draw everything in the my_pred predicate
+     *     render.draw(self.my_pred);
+     *   },
+     * });
+     * ```
+     * @example
+     * Draw predicate with constants:
+     * ```ts
+     * function draw_tinted(self: { my_pred: Opaque<"render_predicate"> }) {
+     *   const constants = render.constant_buffer();
+     *   constants.tint = vmath.vector4(1, 1, 1, 1);
+     *   render.draw(self.my_pred, { constants });
+     * }
+     * ```
+     * @example
+     * Draw with predicate and frustum culling (without near+far planes):
+     * ```ts
+     * function draw_culled(self: { my_pred: Opaque<"render_predicate">; proj: Matrix4; view: Matrix4 }) {
+     *   const frustum = self.proj.mul(self.view);
+     *   render.draw(self.my_pred, { frustum });
+     * }
+     * ```
+     * @example
+     * Draw with predicate and frustum culling (with near+far planes):
+     * ```ts
+     * function draw_culled(self: { my_pred: Opaque<"render_predicate">; proj: Matrix4; view: Matrix4 }) {
+     *   const frustum = self.proj.mul(self.view);
+     *   render.draw(self.my_pred, { frustum, frustum_planes: render.FRUSTUM_PLANES_ALL });
+     * }
+     * ```
+     */
+    function draw(predicate: Opaque<"render_predicate">, options: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }): void;
     /**
      * Draws all 3d debug graphics such as lines drawn with "draw_line" messages and physics visualization.
      *
@@ -1043,7 +1105,82 @@ declare global {
      * });
      * ```
      */
-    function set_render_target(render_target?: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: graphics.BufferType[] }): void;
+    function set_render_target(render_target?: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT): void;
+    /**
+     * Sets a render target. Subsequent draw operations will be to the
+     * render target until it is replaced by a subsequent call to set_render_target.
+     * This function supports render targets created by a render script, or a render target resource.
+     *
+     * @param render_target - render target to set. render.RENDER_TARGET_DEFAULT to set the default render target
+     * @param options - optional table with behaviour parameters
+     *
+     * `transient`
+     * table Transient frame buffer types are only valid while the render target is active, i.e becomes undefined when a new target is set by a subsequent call to set_render_target.
+     * Default is all non-transient. Be aware that some hardware uses a combined depth stencil buffer and when this is the case both are considered non-transient if exclusively selected!
+     * A buffer type defined that doesn't exist in the render target is silently ignored.
+     *
+     * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     * - `graphics.BUFFER_TYPE_DEPTH_BIT`
+     * - `graphics.BUFFER_TYPE_STENCIL_BIT`
+     * @example
+     * How to set a render target and draw to it and then switch back to the default render target
+     * The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support
+     * ```ts
+     * // How to set a render target and draw to it and then switch back to the default render target
+     * // The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support
+     * export default defineRenderScript({
+     *   init() {
+     *     // the engine registers a texture format only when the driver supports it
+     *     const format = graphics.TEXTURE_FORMAT_RGBA;
+     *     if (format === undefined) return undefined;
+     *     const color_params = {
+     *       format,
+     *       width: render.get_window_width(),
+     *       height: render.get_window_height(),
+     *     };
+     *     return {
+     *       my_render_target: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),
+     *       my_pred: render.predicate([hash("my_tag")]),
+     *     };
+     *   },
+     *
+     *   update(self, dt) {
+     *     if (self === undefined) return;
+     *     // set render target so all drawing is done to it
+     *     render.set_render_target(self.my_render_target, {
+     *       transient: [graphics.BUFFER_TYPE_DEPTH_BIT, graphics.BUFFER_TYPE_STENCIL_BIT],
+     *     });
+     *
+     *     // draw a predicate to the render target
+     *     render.draw(self.my_pred);
+     *
+     *     // set default render target. This also invalidates the depth and stencil buffers of the current target (self.my_render_target)
+     *     //  which can be an optimisation on some hardware
+     *     render.set_render_target(render.RENDER_TARGET_DEFAULT);
+     *   },
+     * });
+     * ```
+     * @example
+     * ```ts
+     * export default defineRenderScript({
+     *   init() {
+     *     return { my_pred: render.predicate([hash("my_tag")]) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // set render target by a render target resource identifier
+     *     render.set_render_target("my_rt_resource");
+     *
+     *     // draw a predicate to the render target
+     *     render.draw(self.my_pred);
+     *
+     *     // reset the render target to the default backbuffer
+     *     render.set_render_target(render.RENDER_TARGET_DEFAULT);
+     *   },
+     * });
+     * ```
+     */
+    function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: { transient?: graphics.BufferType[] }): void;
     /**
      * Sets the render target size for a render target created from
      * either a render script, or from a render target resource.

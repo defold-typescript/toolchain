@@ -317,7 +317,27 @@ declare global {
      * }
      * ```
      */
-    function get_config_int(key: string, default_value?: number): number;
+    function get_config_int(key: string): number;
+    /**
+     * Get integer config value from the game.project configuration file with optional default value
+     *
+     * @param key - key to get value for. The syntax is SECTION.KEY
+     * @param default_value - (optional) default value to return if the value does not exist
+     * @returns config value as an integer. default_value if the config key does not exist. 0 if no default value was supplied.
+     * @example
+     * Get user config value
+     * ```ts
+     * const speed = sys.get_config_int("my_game.speed", 20); // with default value
+     * ```
+     * @example
+     * ```ts
+     * const testmode = sys.get_config_int("my_game.testmode"); // without default value
+     * if (testmode !== undefined) {
+     *   // do stuff
+     * }
+     * ```
+     */
+    function get_config_int(key: string, default_value: number): number;
     /**
      * Get number config value from the game.project configuration file with optional default value
      *
@@ -330,7 +350,20 @@ declare global {
      * const speed = sys.get_config_number("my_game.speed", 20.0);
      * ```
      */
-    function get_config_number(key: string, default_value?: number): number;
+    function get_config_number(key: string): number;
+    /**
+     * Get number config value from the game.project configuration file with optional default value
+     *
+     * @param key - key to get value for. The syntax is SECTION.KEY
+     * @param default_value - (optional) default value to return if the value does not exist
+     * @returns config value as an number. default_value if the config key does not exist. 0 if no default value was supplied.
+     * @example
+     * ```ts
+     * // Get user config value
+     * const speed = sys.get_config_number("my_game.speed", 20.0);
+     * ```
+     */
+    function get_config_number(key: string, default_value: number): number;
     /**
      * Returns the current network connectivity status
      * on mobile platforms.
@@ -443,7 +476,22 @@ declare global {
      * }
      * ```
      */
-    function get_sys_info(options?: sys.sys_info_options): sys.sys_info;
+    function get_sys_info(): sys.sys_info;
+    /**
+     * Returns a table with system information.
+     *
+     * @param options - optional system-information options
+     * @returns system information
+     * @example
+     * ```ts
+     * // How to get system information:
+     * const info = sys.get_sys_info();
+     * if (info.system_name === "HTML5") {
+     *   // We are running in a browser.
+     * }
+     * ```
+     */
+    function get_sys_info(options: sys.sys_info_options): sys.sys_info;
     /**
      * If the file exists, it must have been created by `sys.save` to be loaded.
      * This function will raise a Lua error if an error occurs while loading the file.
@@ -588,7 +636,23 @@ declare global {
      * }
      * ```
      */
-    function open_url(url: string, attributes?: sys.open_url_attributes): boolean;
+    function open_url(url: string): boolean;
+    /**
+     * Open URL in default application, typically a browser
+     *
+     * @param url - url to open
+     * @param attributes - optional URL opening attributes
+     * @returns a boolean indicating if the url could be opened or not
+     * @example
+     * ```ts
+     * // Open an URL:
+     * const success = sys.open_url("http://www.defold.com", { target: "_blank" });
+     * if (!success) {
+     *   // could not open the url...
+     * }
+     * ```
+     */
+    function open_url(url: string, attributes: sys.open_url_attributes): boolean;
     /**
      * Reboots the game engine with a specified set of arguments.
      * Arguments will be translated into command line arguments. Calling reboot

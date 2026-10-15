@@ -1172,7 +1172,66 @@ declare global {
      * }
      * ```
      */
-    function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): LuaMultiReturn<[boolean, number | undefined]>;
+    function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string): LuaMultiReturn<[boolean, number | undefined]>;
+    /**
+     * Dynamically create a new texture.
+     *
+     * @param texture_id - texture id
+     * @param width - texture width
+     * @param height - texture height
+     * @param type - texture type
+     *
+     * - `"rgb"` - RGB
+     * - `"rgba"` - RGBA
+     * - `"l"` - LUMINANCE
+     * - `"astc"` - ASTC compressed format
+     * @param buffer - texture data
+     * @param flip - flip texture vertically
+     * @example
+     * How to create a texture and apply it to a new box node:
+     * ```ts
+     * export default defineGuiScript({
+     *   init(self) {
+     *     const w = 200;
+     *     const h = 300;
+     *
+     *     // A nice orange. String with the RGB values.
+     *     const orange = String.fromCharCode(0xff, 0x80, 0x10);
+     *
+     *     // Create the texture. Repeat the color string for each pixel.
+     *     const [ok, reason] = gui.new_texture("orange_tx", w, h, "rgb", orange.repeat(w * h));
+     *     if (ok) {
+     *       // Create a box node and apply the texture to it.
+     *       const n = gui.new_box_node(vmath.vector3(200, 200, 0), vmath.vector3(w, h, 0));
+     *       gui.set_texture(n, "orange_tx");
+     *     } else {
+     *       // Could not create texture for some reason...
+     *       if (reason === gui.RESULT_TEXTURE_ALREADY_EXISTS) {
+     *         // ...
+     *       } else {
+     *         // ...
+     *       }
+     *     }
+     *   },
+     * });
+     * ```
+     * @example
+     * How to create a texture using .astc format
+     * ```ts
+     * const size = 4;
+     * const pos = vmath.vector3(200, 200, 0);
+     * const path = "/assets/images/logo_4x4.astc";
+     * const [data] = sys.load_resource(path);
+     * if (data !== undefined) {
+     *   const n = gui.new_box_node(pos, vmath.vector3(size, size, 0));
+     *   // size is read from the .astc buffer
+     *   // flip is not supported
+     *   gui.new_texture(path, 0, 0, "astc", data, false);
+     *   gui.set_texture(n, path);
+     * }
+     * ```
+     */
+    function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): LuaMultiReturn<[boolean, number | undefined]>;
     /**
      * This is a callback-function, which is called by the engine when user input is sent to the instance of the gui component.
      * It can be used to take action on the input, e.g. modify the gui according to the input.
@@ -1420,7 +1479,55 @@ declare global {
      * gui.play_flipbook(node, "button");
      * ```
      */
-    function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: unknown) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
+    function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: unknown) => void): void;
+    /**
+     * Play flipbook animation on a box or pie node.
+     * The current node texture must contain the animation.
+     * Use this function to set one-frame still images on the node.
+     *
+     * @param node - node to set animation for
+     * @param animation - animation id
+     * @param complete_function - optional function to call when the animation has completed
+     *
+     * `self`
+     *
+     * object The current object.
+     *
+     * `node`
+     *
+     * node The node that is animated.
+     * @param play_properties - optional table with properties
+     *
+     * `offset`
+     * number The normalized initial value of the animation cursor when the animation starts playing
+     * `playback_rate`
+     * number The rate with which the animation will be played. Must be positive
+     * @example
+     * Set the texture of a node to a flipbook animation from an atlas:
+     * ```ts
+     * function anim_callback(self: unknown, node: unknown) {
+     *   // Take action after animation has played.
+     * }
+     *
+     * export default defineGuiScript({
+     *   init(self) {
+     *     // Create a new node and set the texture to a flipbook animation
+     *     const node = gui.get_node("button_node");
+     *     gui.set_texture(node, "gui_sprites");
+     *     gui.play_flipbook(node, "animated_button");
+     *   },
+     * });
+     * ```
+     * @example
+     * Set the texture of a node to an image from an atlas:
+     * ```ts
+     * // Create a new node and set the texture to a "button.png" from atlas
+     * const node = gui.get_node("button_node");
+     * gui.set_texture(node, "gui_sprites");
+     * gui.play_flipbook(node, "button");
+     * ```
+     */
+    function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function: ((self: unknown, node: unknown) => void) | undefined, play_properties: { offset?: number; playback_rate?: number }): void;
     /**
      * Plays the paricle fx for a gui node
      *
@@ -1926,7 +2033,52 @@ declare global {
      * });
      * ```
      */
-    function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): boolean;
+    function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string): boolean;
+    /**
+     * Set the texture buffer data for a dynamically created texture.
+     *
+     * @param texture - texture id
+     * @param width - texture width
+     * @param height - texture height
+     * @param type - texture type
+     *
+     * - `"rgb"` - RGB
+     * - `"rgba"` - RGBA
+     * - `"l"` - LUMINANCE
+     * - `"astc"` - ASTC compressed format
+     * @param buffer - texture data
+     * @param flip - flip texture vertically
+     * @returns setting the data was successful
+     * @example
+     * ```ts
+     * export default defineGuiScript({
+     *   init(self) {
+     *     const w = 200;
+     *     const h = 300;
+     *
+     *     // Create a dynamic texture, all white.
+     *     if (gui.new_texture("dynamic_tx", w, h, "rgb", String.fromCharCode(0xff).repeat(w * h * 3))) {
+     *       // Create a box node and apply the texture to it.
+     *       const n = gui.new_box_node(vmath.vector3(200, 200, 0), vmath.vector3(w, h, 0));
+     *       gui.set_texture(n, "dynamic_tx");
+     *
+     *       // ...
+     *
+     *       // Change the data in the texture to a nice orange.
+     *       const orange = String.fromCharCode(0xff, 0x80, 0x10);
+     *       if (gui.set_texture_data("dynamic_tx", w, h, "rgb", orange.repeat(w * h))) {
+     *         // Go on and to more stuff
+     *         // ...
+     *       }
+     *     } else {
+     *       // Something went wrong
+     *       // ...
+     *     }
+     *   },
+     * });
+     * ```
+     */
+    function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): boolean;
     /**
      * Sets the tracking value of a text node. This value is used to
      * adjust the vertical spacing of characters in the text.
@@ -1987,7 +2139,16 @@ declare global {
      *
      * - boolean `clear`: instantly clear spawned particles
      */
-    function stop_particlefx(node: Opaque<"node">, options?: { clear?: boolean }): void;
+    function stop_particlefx(node: Opaque<"node">): void;
+    /**
+     * Stops the particle fx for a gui node
+     *
+     * @param node - node to stop particle fx for
+     * @param options - options when stopping the particle fx. Supported options:
+     *
+     * - boolean `clear`: instantly clear spawned particles
+     */
+    function stop_particlefx(node: Opaque<"node">, options: { clear?: boolean }): void;
     /**
      * This is a callback-function, which is called by the engine every frame to update the state of a gui component.
      * It can be used to perform any kind of gui related tasks, e.g. animating nodes.
