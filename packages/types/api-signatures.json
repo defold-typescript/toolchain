@@ -1067,14 +1067,14 @@
       "gui\u0000CONSTANT\u0000gui.TYPE_PIE\u0000": "const TYPE_PIE: number & { readonly __brand: \"gui.TYPE_PIE\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_TEXT\u0000": "const TYPE_TEXT: number & { readonly __brand: \"gui.TYPE_TEXT\" };",
       "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: unknown): void;",
-      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function animate(node: Opaque<\"node\">, property: string | Hash | gui.PROP, to: number | Vector3 | Vector4 | Quaternion, easing: gui.EASING | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.PLAYBACK): void;",
+      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | Hash | gui.PROP): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
-      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function get(node: Opaque<\"node\">, property: string | Hash | gui.PROP, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;",
+      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash, options?: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
       "gui\u0000FUNCTION\u0000gui.get_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_adjust_mode(node: Opaque<\"node\">): gui.ADJUST;",
       "gui\u0000FUNCTION\u0000gui.get_alpha\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_alpha(node: Opaque<\"node\">): number;",
       "gui\u0000FUNCTION\u0000gui.get_blend_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_blend_mode(node: Opaque<\"node\">): gui.BLEND;",
@@ -1141,7 +1141,7 @@
       "gui\u0000FUNCTION\u0000gui.reset_material\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function reset_material(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.reset_nodes\u0000[]->[]": "function reset_nodes(): void;",
       "gui\u0000FUNCTION\u0000gui.screen_to_local\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Vector3\",\"Vector4\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function screen_to_local(node: Opaque<\"node\">, screen_position: Vector3 | Vector4): Vector3;",
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set(node: Opaque<\"node\"> | Url, property: string | Hash | gui.PROP, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash | undefined, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): void;",
+      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.set<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void\ngui.set(node: Opaque<\"node\">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: gui.PropertyOptions): void\ngui.set(url: Url, property: \"material\" | \"materials\" | \"fonts\" | \"textures\" | Hash, value: Hash, options?: gui.PropertyOptions): void\ngui.set(url: Url, property: \"textures\", value: undefined, options: { key: string | Hash }): void",
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_adjust_mode(node: Opaque<\"node\">, adjust_mode: gui.ADJUST): void;",
       "gui\u0000FUNCTION\u0000gui.set_alpha\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_alpha(node: Opaque<\"node\">, alpha: number): void;",
       "gui\u0000FUNCTION\u0000gui.set_blend_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_mode(node: Opaque<\"node\">, blend_mode: gui.BLEND): void;",
@@ -2861,14 +2861,14 @@
       "gui\u0000CONSTANT\u0000gui.TYPE_PIE\u0000": "const TYPE_PIE: number & { readonly __brand: \"gui.TYPE_PIE\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_TEXT\u0000": "const TYPE_TEXT: number & { readonly __brand: \"gui.TYPE_TEXT\" };",
       "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: unknown): void;",
-      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function animate(node: Opaque<\"node\">, property: string | Hash | gui.PROP, to: number | Vector3 | Vector4 | Quaternion, easing: gui.EASING | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.PLAYBACK): void;",
+      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | Hash | gui.PROP): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
-      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function get(node: Opaque<\"node\">, property: string | Hash | gui.PROP, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;",
+      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash, options?: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
       "gui\u0000FUNCTION\u0000gui.get_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_adjust_mode(node: Opaque<\"node\">): gui.ADJUST;",
       "gui\u0000FUNCTION\u0000gui.get_alpha\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_alpha(node: Opaque<\"node\">): number;",
       "gui\u0000FUNCTION\u0000gui.get_blend_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_blend_mode(node: Opaque<\"node\">): gui.BLEND;",
@@ -2935,7 +2935,7 @@
       "gui\u0000FUNCTION\u0000gui.reset_material\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function reset_material(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.reset_nodes\u0000[]->[]": "function reset_nodes(): void;",
       "gui\u0000FUNCTION\u0000gui.screen_to_local\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Vector3\",\"Vector4\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function screen_to_local(node: Opaque<\"node\">, screen_position: Vector3 | Vector4): Vector3;",
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set(node: Opaque<\"node\"> | Url, property: string | Hash | gui.PROP, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash | undefined, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): void;",
+      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.set<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void\ngui.set(node: Opaque<\"node\">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: gui.PropertyOptions): void\ngui.set(url: Url, property: \"material\" | \"materials\" | \"fonts\" | \"textures\" | Hash, value: Hash, options?: gui.PropertyOptions): void\ngui.set(url: Url, property: \"textures\", value: undefined, options: { key: string | Hash }): void",
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_adjust_mode(node: Opaque<\"node\">, adjust_mode: gui.ADJUST): void;",
       "gui\u0000FUNCTION\u0000gui.set_alpha\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_alpha(node: Opaque<\"node\">, alpha: number): void;",
       "gui\u0000FUNCTION\u0000gui.set_blend_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_mode(node: Opaque<\"node\">, blend_mode: gui.BLEND): void;",
@@ -4347,14 +4347,14 @@
       "gui\u0000CONSTANT\u0000gui.TYPE_PIE\u0000": "const TYPE_PIE: number & { readonly __brand: \"gui.TYPE_PIE\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_TEXT\u0000": "const TYPE_TEXT: number & { readonly __brand: \"gui.TYPE_TEXT\" };",
       "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: Opaque<\"userdata\">): void;",
-      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function animate(node: Opaque<\"node\">, property: string | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: unknown) => void, playback?: gui.Playback): void;",
+      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
-      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function get(node: Opaque<\"node\">, property: string | Hash | gui.Property, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;",
+      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash, options?: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
       "gui\u0000FUNCTION\u0000gui.get_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_adjust_mode(node: Opaque<\"node\">): gui.AdjustMode;",
       "gui\u0000FUNCTION\u0000gui.get_alpha\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_alpha(node: Opaque<\"node\">): number;",
       "gui\u0000FUNCTION\u0000gui.get_blend_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_blend_mode(node: Opaque<\"node\">): gui.BlendMode;",
@@ -4420,7 +4420,7 @@
       "gui\u0000FUNCTION\u0000gui.reset_material\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function reset_material(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.reset_nodes\u0000[]->[]": "function reset_nodes(): void;",
       "gui\u0000FUNCTION\u0000gui.screen_to_local\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Vector3\",\"Vector4\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function screen_to_local(node: Opaque<\"node\">, screen_position: Vector3 | Vector4): Vector3;",
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set(node: Opaque<\"node\"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash | undefined, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): void;",
+      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.set<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void\ngui.set(node: Opaque<\"node\">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: gui.PropertyOptions): void\ngui.set(url: Url, property: \"material\" | \"materials\" | \"fonts\" | \"textures\" | Hash, value: Hash, options?: gui.PropertyOptions): void\ngui.set(url: Url, property: \"textures\", value: undefined, options: { key: string | Hash }): void",
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_adjust_mode(node: Opaque<\"node\">, adjust_mode: gui.AdjustMode): void;",
       "gui\u0000FUNCTION\u0000gui.set_alpha\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_alpha(node: Opaque<\"node\">, alpha: number): void;",
       "gui\u0000FUNCTION\u0000gui.set_blend_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_mode(node: Opaque<\"node\">, blend_mode: gui.BlendMode): void;",
@@ -5710,14 +5710,14 @@
       "gui\u0000CONSTANT\u0000gui.TYPE_PIE\u0000": "const TYPE_PIE: number & { readonly __brand: \"gui.TYPE_PIE\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_TEXT\u0000": "const TYPE_TEXT: number & { readonly __brand: \"gui.TYPE_TEXT\" };",
       "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: Opaque<\"userdata\">): void;",
-      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function animate(node: Opaque<\"node\">, property: string | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: unknown) => void, playback?: gui.Playback): void;",
+      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
-      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function get(node: Opaque<\"node\">, property: string | Hash | gui.Property, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;",
+      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash, options?: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
       "gui\u0000FUNCTION\u0000gui.get_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_adjust_mode(node: Opaque<\"node\">): gui.AdjustMode;",
       "gui\u0000FUNCTION\u0000gui.get_alpha\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_alpha(node: Opaque<\"node\">): number;",
       "gui\u0000FUNCTION\u0000gui.get_blend_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_blend_mode(node: Opaque<\"node\">): gui.BlendMode;",
@@ -5783,7 +5783,7 @@
       "gui\u0000FUNCTION\u0000gui.reset_material\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function reset_material(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.reset_nodes\u0000[]->[]": "function reset_nodes(): void;",
       "gui\u0000FUNCTION\u0000gui.screen_to_local\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Vector3\",\"Vector4\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function screen_to_local(node: Opaque<\"node\">, screen_position: Vector3 | Vector4): Vector3;",
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set(node: Opaque<\"node\"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): void;",
+      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.set<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void\ngui.set(node: Opaque<\"node\">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: gui.PropertyOptions): void\ngui.set(url: Url, property: \"material\" | \"materials\" | \"fonts\" | \"textures\" | Hash, value: Hash, options?: gui.PropertyOptions): void\ngui.set(url: Url, property: \"textures\", value: undefined, options: { key: string | Hash }): void",
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_adjust_mode(node: Opaque<\"node\">, adjust_mode: gui.AdjustMode): void;",
       "gui\u0000FUNCTION\u0000gui.set_alpha\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_alpha(node: Opaque<\"node\">, alpha: number): void;",
       "gui\u0000FUNCTION\u0000gui.set_blend_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_mode(node: Opaque<\"node\">, blend_mode: gui.BlendMode): void;",
@@ -6771,14 +6771,14 @@
       "gui\u0000CONSTANT\u0000gui.TYPE_PIE\u0000": "const TYPE_PIE: number & { readonly __brand: \"gui.TYPE_PIE\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_TEXT\u0000": "const TYPE_TEXT: number & { readonly __brand: \"gui.TYPE_TEXT\" };",
       "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: Opaque<\"userdata\">): void;",
-      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function animate(node: Opaque<\"node\">, property: string | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: unknown) => void, playback?: gui.Playback): void;",
+      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
-      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function get(node: Opaque<\"node\">, property: string | Hash | gui.Property, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;",
+      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash, options?: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
       "gui\u0000FUNCTION\u0000gui.get_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_adjust_mode(node: Opaque<\"node\">): gui.AdjustMode;",
       "gui\u0000FUNCTION\u0000gui.get_alpha\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_alpha(node: Opaque<\"node\">): number;",
       "gui\u0000FUNCTION\u0000gui.get_blend_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_blend_mode(node: Opaque<\"node\">): gui.BlendMode;",
@@ -6844,7 +6844,7 @@
       "gui\u0000FUNCTION\u0000gui.reset_material\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function reset_material(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.reset_nodes\u0000[]->[]": "function reset_nodes(): void;",
       "gui\u0000FUNCTION\u0000gui.screen_to_local\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Vector3\",\"Vector4\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function screen_to_local(node: Opaque<\"node\">, screen_position: Vector3 | Vector4): Vector3;",
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set(node: Opaque<\"node\"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): void;",
+      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.set<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void\ngui.set(node: Opaque<\"node\">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: gui.PropertyOptions): void\ngui.set(url: Url, property: \"material\" | \"materials\" | \"fonts\" | \"textures\" | Hash, value: Hash, options?: gui.PropertyOptions): void\ngui.set(url: Url, property: \"textures\", value: undefined, options: { key: string | Hash }): void",
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_adjust_mode(node: Opaque<\"node\">, adjust_mode: gui.AdjustMode): void;",
       "gui\u0000FUNCTION\u0000gui.set_alpha\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_alpha(node: Opaque<\"node\">, alpha: number): void;",
       "gui\u0000FUNCTION\u0000gui.set_blend_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_mode(node: Opaque<\"node\">, blend_mode: gui.BlendMode): void;",
@@ -10146,19 +10146,6 @@
       "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
         "param:0:self": { "type": "unknown", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.PROP", "optional": false },
-        "param:2:to": { "type": "number | Vector3 | Vector4 | Quaternion", "optional": false },
-        "param:3:easing": { "type": "gui.EASING | Vector", "optional": false },
-        "param:4:duration": { "type": "number", "optional": false },
-        "param:5:delay": { "type": "number", "optional": true },
-        "param:6:complete_function": {
-          "type": "(self: unknown, node: Opaque<\"node\">) => void",
-          "optional": true
-        },
-        "param:7:playback": { "type": "gui.PLAYBACK", "optional": true }
-      },
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:property": { "type": "string | Hash | gui.PROP", "optional": true }
@@ -10182,14 +10169,6 @@
       },
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:texture": { "type": "string | Hash", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.PROP", "optional": false },
-        "param:2:options": {
-          "type": "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-          "optional": true
-        }
       },
       "gui\u0000FUNCTION\u0000gui.get_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -10463,18 +10442,6 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:screen_position": { "type": "Vector3 | Vector4", "optional": false },
         "return:0:local_position": { "type": "Vector3", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\"> | Url", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.PROP", "optional": false },
-        "param:2:value": {
-          "type": "number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash | undefined",
-          "optional": false
-        },
-        "param:3:options": {
-          "type": "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-          "optional": true
-        }
       },
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -14980,19 +14947,6 @@
       "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
         "param:0:self": { "type": "unknown", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.PROP", "optional": false },
-        "param:2:to": { "type": "number | Vector3 | Vector4 | Quaternion", "optional": false },
-        "param:3:easing": { "type": "gui.EASING | Vector", "optional": false },
-        "param:4:duration": { "type": "number", "optional": false },
-        "param:5:delay": { "type": "number", "optional": true },
-        "param:6:complete_function": {
-          "type": "(self: unknown, node: Opaque<\"node\">) => void",
-          "optional": true
-        },
-        "param:7:playback": { "type": "gui.PLAYBACK", "optional": true }
-      },
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:property": { "type": "string | Hash | gui.PROP", "optional": true }
@@ -15016,14 +14970,6 @@
       },
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:texture": { "type": "string | Hash", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.PROP", "optional": false },
-        "param:2:options": {
-          "type": "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-          "optional": true
-        }
       },
       "gui\u0000FUNCTION\u0000gui.get_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -15297,18 +15243,6 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:screen_position": { "type": "Vector3 | Vector4", "optional": false },
         "return:0:local_position": { "type": "Vector3", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\"> | Url", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.PROP", "optional": false },
-        "param:2:value": {
-          "type": "number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash | undefined",
-          "optional": false
-        },
-        "param:3:options": {
-          "type": "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-          "optional": true
-        }
       },
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -18877,19 +18811,6 @@
       "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
         "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:property": { "type": "string | gui.Property | Hash", "optional": false },
-        "param:2:to": { "type": "number | Vector3 | Vector4 | Quaternion", "optional": false },
-        "param:3:easing": { "type": "gui.Easing | Vector", "optional": false },
-        "param:4:duration": { "type": "number", "optional": false },
-        "param:5:delay": { "type": "number", "optional": true },
-        "param:6:complete_function": {
-          "type": "(self: unknown, node: unknown) => void",
-          "optional": true
-        },
-        "param:7:playback": { "type": "gui.Playback", "optional": true }
-      },
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:property": { "type": "string | gui.Property | Hash", "optional": true }
@@ -18913,14 +18834,6 @@
       },
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:texture": { "type": "string | Hash", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.Property", "optional": false },
-        "param:2:options": {
-          "type": "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-          "optional": true
-        }
       },
       "gui\u0000FUNCTION\u0000gui.get_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -19193,18 +19106,6 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:screen_position": { "type": "Vector3 | Vector4", "optional": false },
         "return:0:local_position": { "type": "Vector3", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\"> | Url", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.Property", "optional": false },
-        "param:2:value": {
-          "type": "number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash | undefined",
-          "optional": false
-        },
-        "param:3:options": {
-          "type": "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-          "optional": true
-        }
       },
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -22832,19 +22733,6 @@
       "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
         "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:property": { "type": "string | gui.Property | Hash", "optional": false },
-        "param:2:to": { "type": "number | Vector3 | Vector4 | Quaternion", "optional": false },
-        "param:3:easing": { "type": "gui.Easing | Vector", "optional": false },
-        "param:4:duration": { "type": "number", "optional": false },
-        "param:5:delay": { "type": "number", "optional": true },
-        "param:6:complete_function": {
-          "type": "(self: unknown, node: unknown) => void",
-          "optional": true
-        },
-        "param:7:playback": { "type": "gui.Playback", "optional": true }
-      },
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:property": { "type": "string | gui.Property | Hash", "optional": true }
@@ -22868,14 +22756,6 @@
       },
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:texture": { "type": "string | Hash", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.Property", "optional": false },
-        "param:2:options": {
-          "type": "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-          "optional": true
-        }
       },
       "gui\u0000FUNCTION\u0000gui.get_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -23148,18 +23028,6 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:screen_position": { "type": "Vector3 | Vector4", "optional": false },
         "return:0:local_position": { "type": "Vector3", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\"> | Url", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.Property", "optional": false },
-        "param:2:value": {
-          "type": "number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash",
-          "optional": false
-        },
-        "param:3:options": {
-          "type": "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-          "optional": true
-        }
       },
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -25559,19 +25427,6 @@
       "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
         "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:property": { "type": "string | gui.Property | Hash", "optional": false },
-        "param:2:to": { "type": "number | Vector3 | Vector4 | Quaternion", "optional": false },
-        "param:3:easing": { "type": "gui.Easing | Vector", "optional": false },
-        "param:4:duration": { "type": "number", "optional": false },
-        "param:5:delay": { "type": "number", "optional": true },
-        "param:6:complete_function": {
-          "type": "(self: unknown, node: unknown) => void",
-          "optional": true
-        },
-        "param:7:playback": { "type": "gui.Playback", "optional": true }
-      },
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:property": { "type": "string | gui.Property | Hash", "optional": true }
@@ -25595,14 +25450,6 @@
       },
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:texture": { "type": "string | Hash", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.Property", "optional": false },
-        "param:2:options": {
-          "type": "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-          "optional": true
-        }
       },
       "gui\u0000FUNCTION\u0000gui.get_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -25875,18 +25722,6 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:screen_position": { "type": "Vector3 | Vector4", "optional": false },
         "return:0:local_position": { "type": "Vector3", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:node": { "type": "Opaque<\"node\"> | Url", "optional": false },
-        "param:1:property": { "type": "string | Hash | gui.Property", "optional": false },
-        "param:2:value": {
-          "type": "number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash",
-          "optional": false
-        },
-        "param:3:options": {
-          "type": "{ index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
-          "optional": true
-        }
       },
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },

@@ -4972,18 +4972,18 @@
         "namespace": "gui",
         "kind": "FUNCTION",
         "name": "gui.set",
-        "signature": "[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]"
+        "signature": "[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]"
       },
-      "availableIn": ["1.14.0", "1.13.2", "1.13.1"]
+      "availableIn": ["1.13.0", "1.12.4"]
     },
     {
       "identity": {
         "namespace": "gui",
         "kind": "FUNCTION",
         "name": "gui.set",
-        "signature": "[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Matrix4\",\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]"
+        "signature": "[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]"
       },
-      "availableIn": ["1.13.0", "1.12.4"]
+      "availableIn": ["1.14.0", "1.13.2", "1.13.1"]
     },
     {
       "identity": {

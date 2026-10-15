@@ -792,10 +792,12 @@ export function generateModuleSignatures(
     bindingEvidence,
     typeLeaves,
     declaredTypes,
+    withheldFunctions,
   } = prepareGeneratedModule(entry, options);
   return emitSymbolSignatures(module, {
     knownConstantFqns,
     urlParameters,
+    withheldFunctions,
     ...(registeredConstants ? { registeredConstants } : {}),
     ...(bindingEvidence ? { bindingEvidence } : {}),
     ...(typeLeaves ? { typeLeaves } : {}),
@@ -881,6 +883,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   { specifier: "../../src/go-overloads" },
   { specifier: "../../src/component-properties" },
   { specifier: "../../src/render-overloads", restrictedTo: "render" },
+  { specifier: "../../src/gui-overloads", restrictedTo: "gui" },
   { specifier: "../../src/vmath-overloads" },
   { specifier: "../../src/sys-overloads" },
 ];

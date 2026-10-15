@@ -48,9 +48,6 @@ const { computed, timings, entries, loose } = runGate(store, surfaces);
 const found = surfaces.find((surface) => surface.id === "defold-1.13.1/kinds/script");
 if (!found) throw new Error("the default script-kind surface is missing");
 const scriptSurface = found;
-const foundGui = surfaces.find((surface) => surface.id === "defold-1.13.1/kinds/gui-script");
-if (!foundGui) throw new Error("the default gui-script-kind surface is missing");
-const guiSurface = foundGui;
 
 const FIXED = ["render.clear", "zlib.inflate", "factory.create"] as const;
 
@@ -448,21 +445,13 @@ describe("the property and argument-type class", () => {
 
 describe("the unknown-value class", () => {
   const UNKNOWN_VALUE_SHAPES = [
-    [
-      "a read off a named unknown value",
-      'const p = gui.get(gui.get_node("box"), "position");\nconst x = p.x;',
-      18046,
-    ],
-    [
-      "a read off an unknown call result",
-      'const x = gui.get(gui.get_node("box"), "position").x;',
-      2571,
-    ],
+    ["a read off a named unknown value", 'const p = json.decode("{}");\nconst x = p.x;', 18046],
+    ["a read off an unknown call result", 'const x = json.decode("{}").x;', 2571],
   ] as const;
 
   test("a read of an unknown value compiles to a diagnostic the closure refuses", () => {
     for (const [shape, body, code] of UNKNOWN_VALUE_SHAPES) {
-      const diagnostics = diagnosticsFor(body, guiSurface);
+      const diagnostics = diagnosticsFor(body, currentScriptSurface);
       if (!unknownValueOffenders(diagnostics).some((d) => d.code === code)) {
         throw new Error(
           `${shape} compiles to no TS${code} the unknown-value closure refuses; the compiler reported ` +

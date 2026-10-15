@@ -28,6 +28,8 @@ interface Surface {
   readonly target: string;
   readonly entry: ModuleManifestEntry;
   readonly module: ApiModule;
+  // The functions the skip rules dropped, whose docs a borrow still reads.
+  readonly withheld: readonly ApiFunction[];
   readonly universe: ReadonlySet<string>;
   readonly contents: string;
   readonly signatures: ReadonlyMap<string, string>;
@@ -54,6 +56,7 @@ const surfaces: Surface[] = [
   const options = { knownConstantFqns, translations: {} };
   const { contents, dropped } = generateModuleDeclaration(entry, options);
   const module = parseDefoldApiDoc(entry.doc);
+  const withheld = module.functions.filter((fn) => dropped.includes(fn.name));
   module.functions = module.functions.filter((fn) => !dropped.includes(fn.name));
   const signatures = new Map(
     generateModuleSignatures(entry, options)
@@ -64,6 +67,7 @@ const surfaces: Surface[] = [
     target,
     entry,
     module,
+    withheld,
     universe: new Set([...knownConstantFqns, ...module.constants.map((c) => c.name)]),
     contents,
     signatures,
@@ -157,8 +161,8 @@ describe("documented constant slots reach both shipped surfaces", () => {
     const unresolved = slots
       .filter(
         ({ surface, key }) =>
-          resolveConstantSlotTokens(surface.module, key, surface.universe).length === 0 &&
-          !isResidual(key),
+          resolveConstantSlotTokens(surface.module, key, surface.universe, surface.withheld)
+            .length === 0 && !isResidual(key),
       )
       .map(({ surface, key }) => `${surface.target}: ${key} names no constant and has no entry`);
     expect(unresolved).toEqual([]);
@@ -176,7 +180,12 @@ describe("documented constant slots reach both shipped surfaces", () => {
         missing.push(`${surface.target}: ${key} ledger signature is not in the declaration`);
       }
       const branded = effectiveBrands(surface, signature);
-      for (const fqn of resolveConstantSlotTokens(surface.module, key, surface.universe)) {
+      for (const fqn of resolveConstantSlotTokens(
+        surface.module,
+        key,
+        surface.universe,
+        surface.withheld,
+      )) {
         if (!branded.has(fqn)) {
           missing.push(`${surface.target}: ${key} does not brand ${fqn}`);
         }
@@ -274,7 +283,12 @@ describe("documented constant slots reach both shipped surfaces", () => {
       for (const { surface } of slots.filter((slot) => slot.key === key)) {
         if ("borrow" in entry) {
           if (
-            resolveConstantSlotTokens(surface.module, entry.borrow, surface.universe).length === 0
+            resolveConstantSlotTokens(
+              surface.module,
+              entry.borrow,
+              surface.universe,
+              surface.withheld,
+            ).length === 0
           ) {
             problems.push(`${surface.target}: ${key} borrows ${entry.borrow}, which names none`);
           }

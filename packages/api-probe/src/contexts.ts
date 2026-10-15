@@ -327,8 +327,9 @@ const TEXTURE_BUFFER =
   'buffer.create(16 * 16, [{ name: hash("rgba"), type: buffer.VALUE_TYPE_UINT8, count: 4 }])';
 const CAPSULE = "{ center1: vmath.vector3(0, 0, 0), center2: vmath.vector3(0, 16, 0), radius: 4 }";
 
-// Slots whose witness must name a real resource: `<ns.fn>:<slot>` or
-// `<ns>.*:<slot>`, 1-based. Every expression names something that exists in
+// Slots whose witness must name a real resource: `<ns.fn>:<slot>`,
+// `<ns.fn>:overload<n>:<slot>` (one signature of several, which wins over the
+// function's own key) or `<ns>.*:<slot>`, 1-based. Every expression names something that exists in
 // `project/`, or a fresh id for a call that refuses an existing one.
 export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "sprite.play_flipbook:2": 'hash("anim")',
@@ -341,8 +342,10 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "gui.animate:2": '"position"',
   "gui.cancel_animations:2": '"position"',
   "gui.get:2": '"position"',
+  "gui.get:overload2:2": 'hash("position")',
   "gui.set:1": 'gui.get_node("box")',
   "gui.set:2": '"position"',
+  "gui.set:overload2:2": 'hash("position")',
   "gui.set:3": "vmath.vector3(1, 1, 1)",
   "gui.delete_node:1": 'gui.clone(gui.get_node("box"))',
   "gui.set_id:1": 'gui.clone(gui.get_node("box"))',

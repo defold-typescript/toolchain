@@ -40,6 +40,12 @@ const SELECTED: readonly FenceSelection[] = [
   { page: "typescript-gotchas.md", lead: "**Naming the enum.**", nth: 0, kind: "gui-script" },
   {
     page: "typescript-gotchas.md",
+    lead: "**Typed alternative.** Each name reads and writes its own type.",
+    nth: 0,
+    kind: "gui-script",
+  },
+  {
+    page: "typescript-gotchas.md",
     lead: "**Typed alternative.** Read the format constant into a local",
     nth: 0,
     kind: "render-script",

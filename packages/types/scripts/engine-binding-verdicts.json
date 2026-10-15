@@ -217,11 +217,11 @@
   },
   "*:gui.set:manual:3": {
     "verdict": "manual",
-    "reason": "lua_type switch"
+    "reason": "gui-overloads.d.ts types the value per form; gui_script.cpp:LuaSet picks the value check at run time from the property and target: nil only for the msg.url() textures form (:1126-1130), LuaToVar for the rest (:1167), then ToQuat for rotation (:1208), ToVector4 or ToVector3 for another vector (:1218, :1227) and lua_isnumber for a sub-key or scalar (:1241)"
   },
   "*:gui.set:too-narrow:1": {
     "verdict": "accepted",
-    "reason": "a string or hash reaches ResolveURL only on the texture-removal path, which also requires the calling GUI's own url; the declaration keeps url or node"
+    "reason": "gui-overloads.d.ts takes a node or a url: both of gui_script.cpp:LuaSet's ResolveURL calls (:1136, :1179) sit behind an IsURL(L, 1) check (:1128, :1174), so a string or hash never reaches them, and any other argument 1 is read as a node (:1200)"
   },
   "*:gui.update:missing-binding": {
     "verdict": "accepted",

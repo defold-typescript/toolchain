@@ -637,7 +637,7 @@
   },
   "runtime:gui.animate:too-narrow:2": {
     "verdict": "accepted",
-    "reason": "gui_script.cpp reads the property with CheckHashOrString(L, 2), which raises on a number; SETPROP pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
+    "reason": "gui-overloads.d.ts takes a node property name, a gui.PROP_* constant or a hash: gui_script.cpp:LuaAnimate reads the property with CheckHashOrString(L, 2) (:1491), which raises on a number, and SETPROP (:5173) pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
     "annotated": "hash|number|string",
     "declared": "hash|string"
   },
@@ -655,7 +655,7 @@
   },
   "runtime:gui.get:too-narrow:2": {
     "verdict": "accepted",
-    "reason": "gui_script.cpp reads the property with CheckHashOrString(L, 2), which raises on a number; SETPROP pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
+    "reason": "gui-overloads.d.ts takes a node property name, a gui.PROP_* constant or a hash: gui_script.cpp:LuaGet reads the property with CheckHashOrString(L, 2) (:915), which raises on a number, and SETPROP (:5173) pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
     "annotated": "hash|number|string",
     "declared": "hash|string"
   },
@@ -745,19 +745,19 @@
   },
   "runtime:gui.set:arity": {
     "verdict": "accepted",
-    "reason": "engine binding takes 3..4: slot 3 `value` is always read",
+    "reason": "gui-overloads.d.ts takes 3..4, every form requiring `value`: gui_script.cpp:LuaSet reads argument 3 on every path, testing lua_isnil(L, 3) (:1126) and otherwise converting it with LuaToVar (:1167), which rejects an absent value",
     "annotated": "2..4",
     "declared": "3..4"
   },
   "runtime:gui.set:too-loose:3": {
-    "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:gui.set:param:value",
+    "verdict": "accepted",
+    "reason": "gui-overloads.d.ts takes a matrix4 and a hash only on the hash and msg.url() forms: gui_script.cpp:LuaSet converts the value with LuaToVar (:1167), which reads both, then SetMaterialProperty (:1253) sets a matrix4 material constant and dmGameObject::SetProperty hands a hash resource to comp_gui.cpp:CompGuiSetProperty (:3634); the annotation lists only the node property values",
     "annotated": "number|quat|vector3|vector4",
     "declared": "hash|matrix4|number|quat|vector3|vector4"
   },
   "runtime:gui.set:too-narrow:2": {
     "verdict": "accepted",
-    "reason": "gui_script.cpp reads the property with CheckHashOrString(L, 2), which raises on a number; SETPROP pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
+    "reason": "gui-overloads.d.ts takes a node property name, a gui.PROP_* constant or a hash: gui_script.cpp:LuaSet reads the property with CheckHashOrString(L, 2) (:1116), which raises on a number, and SETPROP (:5173) pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
     "annotated": "hash|number|string",
     "declared": "hash|string"
   },
