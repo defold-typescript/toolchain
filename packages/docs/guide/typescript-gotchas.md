@@ -372,6 +372,28 @@ Why `undefined` and not `null`? Lua's `nil` behaves like `undefined`, not like `
 
 **How we pin this.** `packages/transpiler/src/gotchas-argument-sentinel.test.ts` reads every `ts` block above out of this page's own bytes, transpiles it against the shipped declarations, and asserts the omitted argument lowers to Lua `nil`. It then respells each `undefined` as `null` and asserts the compile fails — so a declaration that widened one of these slots to accept `null`, or narrowed one so `undefined` stops compiling, reds the gate instead of leaving this passage wrong.
 
+### Some optional arguments must be left out, not passed `undefined`
+
+**Symptom.** A value typed `T | undefined` does not compile in some arguments the reference calls optional, such as `delay` in `gui.animate` or the options table of `go.get`, `go.set` and `gui.set`, even though leaving the argument out compiles.
+
+**Why.** The engine checks these arguments whenever a call passes them, so an explicit `nil` raises at runtime where an omitted one works. TSTL passes `undefined` as `nil`, so each such function is declared twice: once without the argument and once requiring a value. Which arguments behave this way is read from the engine source of your [pinned Defold version](./pinning-defold-target.md).
+
+**Typed alternative.** Branch on the value, and leave the argument out when it is absent:
+
+```ts
+function fadeIn(delay: number | undefined): void {
+  const node = gui.get_node("box");
+  const white = vmath.vector4(1, 1, 1, 1);
+  if (delay === undefined) {
+    gui.animate(node, gui.PROP_COLOR, white, gui.EASING_LINEAR, 0.5);
+  } else {
+    gui.animate(node, gui.PROP_COLOR, white, gui.EASING_LINEAR, 0.5, delay);
+  }
+}
+```
+
+**How we pin this in the type tests.** `packages/types/test-d/nil-raising-slots.ts` compiles calls to these functions with and without the argument and puts `@ts-expect-error` on a possibly-undefined value, and the engine binding gate reds when any declaration takes `undefined` in an argument whose `nil` raises.
+
 ## `===` and `==` compile to the same Lua — strictness is a convention, not a runtime guard
 
 **Symptom.** Coming from JavaScript you might assume `==` performs loose equality — coercing its operands before comparing — and reach for `===` to avoid it. In this toolchain the two operators are indistinguishable in the output, so the coercion `===` guards against never happens.

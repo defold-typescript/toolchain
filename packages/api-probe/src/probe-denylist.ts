@@ -26,9 +26,11 @@ export const PROBE_DENYLIST: Readonly<Record<string, string>> = {
     "crashes the engine's command parse when no compute program is set, and the probe project has none",
   "b2d.body.create_fixture:overload2":
     "the b2Shape handle form documents C++ b2Body::CreateFixture, which neither Lua binding implements",
-  "gui.set:overload3":
-    "the msg.url() form needs a hash naming a loaded material, font or texture-set resource, which no witness supplies",
   "gui.set:overload4":
+    "the msg.url() form needs a hash naming a loaded material, font or texture-set resource, which no witness supplies",
+  "gui.set:overload5":
+    "the msg.url() form needs a hash naming a loaded material, font or texture-set resource, which no witness supplies",
+  "gui.set:overload6":
     "the msg.url() texture removal needs a key that a prior textures set added, which no witness call makes",
   "go.property": "a build-time declaration bob rejects anywhere but a script's top level",
   "resource.atlas": PROPERTY_DEFAULT,

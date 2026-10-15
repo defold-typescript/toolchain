@@ -2289,18 +2289,17 @@ describe("apiModuleSymbols", () => {
     expect(rows.map((s) => s.signature)).toEqual(store["msg.url"]?.signatures ?? []);
   });
 
-  test("go.get renders 3 rows and its undocumented overloads fall back to the fixture prose", () => {
+  test("go.get renders 5 rows and its undocumented overloads fall back to the fixture prose", () => {
     const store = committedStore("go");
     const page = fixturePage("go");
     const fixtureGetDoc =
       apiModuleSymbols(page, {}, {}).find((s) => s.name === "go.get")?.docMarkdown ?? "";
     const rows = apiModuleSymbols(page, {}, store).filter((s) => s.name === "go.get");
 
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(5);
     expect(rows.map((s) => s.signature)).toEqual(store["go.get"]?.signatures ?? []);
     expect(rows[0]?.signature).toContain("<K extends keyof P>");
-    expect(rows[1]?.docMarkdown).toBe(fixtureGetDoc);
-    expect(rows[2]?.docMarkdown).toBe(fixtureGetDoc);
+    for (const row of rows.slice(1)) expect(row.docMarkdown).toBe(fixtureGetDoc);
   });
 
   test("go.set and go.property rows carry exactly the committed store signatures", () => {
@@ -2503,14 +2502,16 @@ describe("apiModuleSymbols", () => {
       ["go.set", ["url", "property", "value", "options"]],
     ] as const) {
       const rows = symbols.filter((s) => s.name === fqn);
-      expect(rows).toHaveLength(3);
+      expect(rows).toHaveLength(5);
       expect(rows[0]?.parameters).toEqual([]);
       expect(rows[0]?.returnValues).toEqual([]);
-      expect(rows[1]?.parameters.map((p) => p.name)).toEqual([...params]);
-      expect(rows[2]?.parameters).toEqual([]);
+      expect(rows[1]?.parameters).toEqual([]);
+      expect(rows[2]?.parameters.map((p) => p.name)).toEqual([...params]);
+      expect(rows[3]?.parameters).toEqual([]);
+      expect(rows[4]?.parameters).toEqual([]);
     }
     // the `value` return row moves with the parameter table it belongs to
-    expect(symbols.filter((s) => s.name === "go.get")[1]?.returnValues.map((r) => r.name)).toEqual([
+    expect(symbols.filter((s) => s.name === "go.get")[2]?.returnValues.map((r) => r.name)).toEqual([
       "value",
     ]);
   });

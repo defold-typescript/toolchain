@@ -1165,6 +1165,28 @@ Why `undefined` and not `null`? Lua's `nil` behaves like `undefined`, not like `
 
 **How we pin this.** `packages/transpiler/src/gotchas-argument-sentinel.test.ts` reads every `ts` block above out of this page's own bytes, transpiles it against the shipped declarations, and asserts the omitted argument lowers to Lua `nil`. It then respells each `undefined` as `null` and asserts the compile fails — so a declaration that widened one of these slots to accept `null`, or narrowed one so `undefined` stops compiling, reds the gate instead of leaving this passage wrong.
 
+##### Some optional arguments must be left out, not passed `undefined`
+
+**Symptom.** A value typed `T | undefined` does not compile in some arguments the reference calls optional, such as `delay` in `gui.animate` or the options table of `go.get`, `go.set` and `gui.set`, even though leaving the argument out compiles.
+
+**Why.** The engine checks these arguments whenever a call passes them, so an explicit `nil` raises at runtime where an omitted one works. TSTL passes `undefined` as `nil`, so each such function is declared twice: once without the argument and once requiring a value. Which arguments behave this way is read from the engine source of your [pinned Defold version](./pinning-defold-target.md).
+
+**Typed alternative.** Branch on the value, and leave the argument out when it is absent:
+
+```ts
+function fadeIn(delay: number | undefined): void {
+  const node = gui.get_node("box");
+  const white = vmath.vector4(1, 1, 1, 1);
+  if (delay === undefined) {
+    gui.animate(node, gui.PROP_COLOR, white, gui.EASING_LINEAR, 0.5);
+  } else {
+    gui.animate(node, gui.PROP_COLOR, white, gui.EASING_LINEAR, 0.5, delay);
+  }
+}
+```
+
+**How we pin this in the type tests.** `packages/types/test-d/nil-raising-slots.ts` compiles calls to these functions with and without the argument and puts `@ts-expect-error` on a possibly-undefined value, and the engine binding gate reds when any declaration takes `undefined` in an argument whose `nil` raises.
+
 #### `===` and `==` compile to the same Lua — strictness is a convention, not a runtime guard
 
 **Symptom.** Coming from JavaScript you might assume `==` performs loose equality — coercing its operands before comparing — and reach for `===` to avoid it. In this toolchain the two operators are indistinguishable in the output, so the coercion `===` guards against never happens.
@@ -12598,14 +12620,19 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function final(self: unknown): void;
 - function fixed_update(self: unknown, dt: number): void;
-- function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay?: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void;
+- function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number): void;
+- function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void;
 - function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;
-- function _delete(id?: SceneGameObjectAddress | Hash | Url | (string | Hash | Url)[] | boolean, recursive?: boolean): void;
+- function _delete(id?: SceneGameObjectAddress | Hash | Url | (string | Hash | Url)[] | boolean): void;
+- function _delete(id: SceneGameObjectAddress | Hash | Url | (string | Hash | Url)[] | boolean | undefined, recursive: boolean): void;
 - function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
-- go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]
-- go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]
-- go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4
-- function get_id(path?: string): Hash;
+- go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, ...options: [] | [GoPropertyOptions]) => P[K]
+- go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K): go.properties[K]
+- go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options: GoPropertyOptions): go.properties[K]
+- go.get(url: SceneAddress | Hash | Url, property: string | Hash): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4
+- go.get(url: SceneAddress | Hash | Url, property: string | Hash, options: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4
+- function get_id(): Hash;
+- function get_id(path: string): Hash;
 - function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;
 - function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;
 - function get_rotation(id?: SceneGameObjectAddress | Hash | Url): Quaternion;
@@ -12624,9 +12651,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.property(name: string, value: Vector4): ScriptProperty<Vector4>
 - go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
 - go.property(name: string, value: string): ScriptProperty<string>
-- go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void
-- go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
-- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[], options?: GoPropertyOptions): void
+- go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], ...options: [] | [GoPropertyOptions]) => void
+- go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K]): void
+- go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options: GoPropertyOptions): void
+- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[]): void
+- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[], options: GoPropertyOptions): void
 - function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
 - function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
 - function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;
@@ -12885,7 +12914,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### gui
 
 - function final(self: unknown): void;
-- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.Playback): void
+- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void
+- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.Playback): void
 - function cancel_animations(node: Opaque<"node">, property?: string | Hash | gui.PROP): void;
 - function cancel_flipbook(node: Opaque<"node">): void;
 - function clone(node: Opaque<"node">): Opaque<"node">;
@@ -12893,7 +12923,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function delete_node(node: Opaque<"node">): void;
 - function delete_texture(texture: string | Hash): void;
 - gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<"node">, property: K): gui.node_properties[NodePropertyName<K>]
-- gui.get(node: Opaque<"node">, property: Hash, options?: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
+- gui.get(node: Opaque<"node">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
+- gui.get(node: Opaque<"node">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
 - function get_adjust_mode(node: Opaque<"node">): gui.ADJUST;
 - function get_alpha(node: Opaque<"node">): number;
 - function get_blend_mode(node: Opaque<"node">): gui.BLEND;
@@ -12952,18 +12983,23 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function new_particlefx_node(pos: Vector3 | Vector4, particlefx: Hash | string): Opaque<"node">;
 - function new_pie_node(pos: Vector3 | Vector4, size: Vector3): Opaque<"node">;
 - function new_text_node(pos: Vector3 | Vector4, text: string): Opaque<"node">;
-- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): LuaMultiReturn<[boolean, number | undefined]>; [through 1.13.1] [signature transition]
-- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string, flip?: boolean): LuaMultiReturn<[boolean, gui.RESULT | undefined]>; [since 1.13.2] [signature transition]
+- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string): LuaMultiReturn<[boolean, number | undefined]>; [through 1.13.1] [signature transition]
+- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): LuaMultiReturn<[boolean, number | undefined]>;
+- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string): LuaMultiReturn<[boolean, gui.RESULT | undefined]>; [since 1.13.2] [signature transition]
+- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string, flip: boolean): LuaMultiReturn<[boolean, gui.RESULT | undefined]>;
 - function pick_node(node: Opaque<"node">, x: number, y: number): boolean;
-- function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: Opaque<"node">) => void, play_properties?: gui.play_properties): void;
+- function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: Opaque<"node">) => void): void;
+- function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function: ((self: unknown, node: Opaque<"node">) => void) | undefined, play_properties: gui.play_properties): void;
 - function play_particlefx(node: Opaque<"node">, emitter_state_function?: (self: unknown, node: Opaque<"node"> | undefined, emitter: Hash, state: particlefx.EMITTER_STATE) => void): void;
 - function reset_keyboard(): void;
 - function reset_material(node: Opaque<"node">): void;
 - function reset_nodes(): void;
 - function screen_to_local(node: Opaque<"node">, screen_position: Vector3 | Vector4): Vector3;
 - gui.set<K extends keyof gui.node_properties | gui.Property>(node: Opaque<"node">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void
-- gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: gui.PropertyOptions): void
-- gui.set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash, options?: gui.PropertyOptions): void
+- gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash): void
+- gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options: gui.PropertyOptions): void
+- gui.set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash): void
+- gui.set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash, options: gui.PropertyOptions): void
 - gui.set(url: Url, property: "textures", value: undefined, options: { key: string | Hash }): void [since 1.13.1]
 - function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.ADJUST): void;
 - function set_alpha(node: Opaque<"node">, alpha: number): void;
@@ -13004,14 +13040,17 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_slice9(node: Opaque<"node">, values: Vector4): void;
 - function set_text(node: Opaque<"node">, text: string | number): void;
 - function set_texture(node: Opaque<"node">, texture: string | Hash): void;
-- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): boolean; [through 1.13.1] [signature transition]
-- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string, flip?: boolean): boolean; [since 1.13.2] [signature transition]
+- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string): boolean; [through 1.13.1] [signature transition]
+- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): boolean;
+- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string): boolean; [since 1.13.2] [signature transition]
+- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string, flip: boolean): boolean;
 - function set_tracking(node: Opaque<"node">, tracking: number): void;
 - function set_visible(node: Opaque<"node">, visible: boolean): void;
 - function set_xanchor(node: Opaque<"node">, anchor: gui.ANCHOR): void;
 - function set_yanchor(node: Opaque<"node">, anchor: gui.ANCHOR): void;
 - function show_keyboard(type: gui.KEYBOARD_TYPE, autoclose: boolean): void;
-- function stop_particlefx(node: Opaque<"node">, options?: particlefx.stop_options): void;
+- function stop_particlefx(node: Opaque<"node">): void;
+- function stop_particlefx(node: Opaque<"node">, options: particlefx.stop_options): void;
 - function init(self: unknown): void;
 - function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined; [through 1.13.1] [signature transition]
 - function on_input(self: unknown, action_id: Hash | undefined, action: go.on_input.action): boolean | undefined; [since 1.13.2] [signature transition]
@@ -13173,10 +13212,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### image
 
 - function get_astc_header(buffer: string): image.astc_header;
-- function load(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined; [through 1.13.1] [signature transition]
-- function load(buffer: string, options?: boolean | image.load_options): image.load_result | undefined; [since 1.13.2] [signature transition]
-- function load_buffer(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined; [through 1.13.1] [signature transition]
-- function load_buffer(buffer: string, options?: boolean | image.load_options): image.load_buffer_result | undefined; [since 1.13.2] [signature transition]
+- function load(buffer: string): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined; [through 1.13.1] [signature transition]
+- function load(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined;
+- function load(buffer: string): image.load_result | undefined; [since 1.13.2] [signature transition]
+- function load(buffer: string, options: boolean | image.load_options): image.load_result | undefined;
+- function load_buffer(buffer: string): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined; [through 1.13.1] [signature transition]
+- function load_buffer(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined;
+- function load_buffer(buffer: string): image.load_buffer_result | undefined; [since 1.13.2] [signature transition]
+- function load_buffer(buffer: string, options: boolean | image.load_options): image.load_buffer_result | undefined;
 - image.TYPE_LUMINANCE: string & { readonly __brand: "image.TYPE_LUMINANCE" }
 - image.TYPE_LUMINANCE_ALPHA: string & { readonly __brand: "image.TYPE_LUMINANCE_ALPHA" }
 - image.TYPE_RGB: string & { readonly __brand: "image.TYPE_RGB" }
@@ -13315,7 +13358,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: Hash, emitter: Hash, state: particlefx.EMITTER_STATE) => void): void;
 - function reset_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash): void;
 - function set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4 | Matrix4): void;
-- function stop(url: string | Hash | Url, options?: particlefx.stop_options): void;
+- function stop(url: string | Hash | Url): void;
+- function stop(url: string | Hash | Url, options: particlefx.stop_options): void;
 - particlefx.EMITTER_STATE_POSTSPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_POSTSPAWN" }
 - particlefx.EMITTER_STATE_PRESPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_PRESPAWN" }
 - particlefx.EMITTER_STATE_SLEEPING: number & { readonly __brand: "particlefx.EMITTER_STATE_SLEEPING" }
@@ -13338,7 +13382,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;
 - function get_shape(url: string | Hash | Url, shape: string | Hash): physics.shape_data;
 - function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.raycast_options): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined;
-- function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;
+- function raycast_async(from: Vector3, to: Vector3, groups: Hash[]): void;
+- function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;
 - function set_event_listener(callback?: (self: unknown, events: physics.event[]) => void): void;
 - function set_gravity(gravity: Vector3): void;
 - function set_group(url: string | Hash | Url, group: string | Hash): void;
@@ -13411,7 +13456,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function disable_state(state: graphics.STATE): void;
 - function disable_texture(binding: Opaque<"texture"> | string | Hash | number): void;
 - function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;
-- function draw(predicate: Opaque<"render_predicate">, options?: render.draw_options): void;
+- function draw(predicate: Opaque<"render_predicate">): void;
+- function draw(predicate: Opaque<"render_predicate">, options: render.draw_options): void;
 - function draw_debug3d(options?: render.debug_draw_options): void;
 - function enable_material(material_id: string | Hash): void;
 - function enable_state(state: graphics.STATE): void;
@@ -13437,7 +13483,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_listener(callback?: (self: unknown, event_type: render.CONTEXT_EVENT) => void): void;
 - function set_polygon_offset(factor: number, units: number): void;
 - function set_projection(matrix: Matrix4): void;
-- function set_render_target(render_target?: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: render.set_render_target_options): void;
+- function set_render_target(render_target?: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT): void;
+- function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: render.set_render_target_options): void;
 - function set_render_target_size(render_target: Opaque<"render_target"> | string | Hash, width: number, height: number): void;
 - function set_stencil_func(func: graphics.COMPARE_FUNC, ref: number, mask: number): void;
 - function set_stencil_mask(mask: number): void;
@@ -13483,7 +13530,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_atlas(path: Hash | string): resource.atlas_data;
 - function get_buffer(path: Hash | string): Opaque<"buffer">;
 - function get_render_target_info(path: Hash | string | Opaque<"render_target"> | number): resource.render_target_info;
-- function get_text_metrics(url: Hash | string, text: string, options?: resource.text_metrics_options): resource.text_metrics;
+- function get_text_metrics(url: Hash | string, text: string): resource.text_metrics;
+- function get_text_metrics(url: Hash | string, text: string, options: resource.text_metrics_options): resource.text_metrics;
 - function get_texture_info(path: Hash | string | Opaque<"texture"> | number): resource.texture_info;
 - function load(path: string): Opaque<"buffer">;
 - function material(path?: string): Hash;
@@ -13644,7 +13692,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### sprite
 
-- function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void, play_properties?: sprite.play_properties): void;
+- function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void): void;
+- function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function: ((self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void) | undefined, play_properties: sprite.play_properties): void;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
 - function set_hflip(url: string | Hash | Url, flip: boolean): void;
 - function set_vflip(url: string | Hash | Url, flip: boolean): void;
@@ -13667,8 +13716,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_application_info(app_string: string): sys.application_info;
 - function get_application_path(): string;
 - function get_config_boolean(key: string, default_value?: boolean): boolean;
-- function get_config_int(key: string, default_value?: number): number;
-- function get_config_number(key: string, default_value?: number): number;
+- function get_config_int(key: string): number;
+- function get_config_int(key: string, default_value: number): number;
+- function get_config_number(key: string): number;
+- function get_config_number(key: string, default_value: number): number;
 - sys.get_config_string(key: string): string | undefined
 - sys.get_config_string(key: string, default_value: string): string
 - function get_connectivity(): sys.NETWORK;
@@ -13676,12 +13727,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_host_path(filename: string): string;
 - function get_ifaddrs(): sys.interface_info[];
 - function get_save_file(application_id: string, file_name: string): string;
-- function get_sys_info(options?: sys.sys_info_options): sys.sys_info;
+- function get_sys_info(): sys.sys_info;
+- function get_sys_info(options: sys.sys_info_options): sys.sys_info;
 - function load(filename: string): LuaTable<AnyNotNil, unknown>;
 - function load_buffer(path: string): Opaque<"buffer">;
 - function load_buffer_async(path: string, status_callback: (self: unknown, request_id: number, result: sys.load_buffer_result) => void): number;
 - function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;
-- function open_url(url: string, attributes?: sys.open_url_attributes): boolean;
+- function open_url(url: string): boolean;
+- function open_url(url: string, attributes: sys.open_url_attributes): boolean;
 - function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;
 - function save(filename: string, table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): boolean;
 - function serialize(table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): string;

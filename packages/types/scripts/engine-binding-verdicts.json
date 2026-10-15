@@ -115,14 +115,6 @@
     "verdict": "manual",
     "reason": "lua_type switch"
   },
-  "*:go.animate:nil-raises:7": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
-  "*:go.delete:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
   "*:go.final:missing-binding": {
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
@@ -130,14 +122,6 @@
   "*:go.fixed_update:missing-binding": {
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:go.get_id:nil-raises:1": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
-  "*:go.get:nil-raises:3": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
   },
   "*:go.init:missing-binding": {
     "verdict": "accepted",
@@ -183,17 +167,9 @@
     "verdict": "manual",
     "reason": "lua_type switch"
   },
-  "*:go.set:nil-raises:4": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
   "*:go.update:missing-binding": {
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:gui.animate:nil-raises:6": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
   },
   "*:gui.clone_tree:optional-as-required:1": {
     "verdict": "accepted",
@@ -223,17 +199,9 @@
     "verdict": "accepted",
     "reason": "the binding also takes nil for the whole scene, which the ref-doc does not document; the declaration keeps the documented node argument"
   },
-  "*:gui.get:nil-raises:3": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
   "*:gui.init:missing-binding": {
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:gui.new_texture:nil-raises:6": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
   },
   "*:gui.on_input:missing-binding": {
     "verdict": "accepted",
@@ -247,29 +215,13 @@
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
-  "*:gui.play_flipbook:nil-raises:4": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
-  "*:gui.set_texture_data:nil-raises:6": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
   "*:gui.set:manual:3": {
     "verdict": "manual",
     "reason": "gui-overloads.d.ts types the value per form; gui_script.cpp:LuaSet picks the value check at run time from the property and target: nil only for the msg.url() textures form (:1126-1130), a branch 1.13.1 added, so gui-texture-removal.d.ts declares it only on 1.13.1 and later while 1.12.4's LuaToVar rejects nil (:897-902); LuaToVar for the rest (:1167), then ToQuat for rotation (:1208), ToVector4 or ToVector3 for another vector (:1218, :1227) and lua_isnumber for a sub-key or scalar (:1241)"
   },
-  "*:gui.set:nil-raises:4": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
   "*:gui.set:too-narrow:1": {
     "verdict": "accepted",
     "reason": "gui-overloads.d.ts takes a node or a url: both of gui_script.cpp:LuaSet's ResolveURL calls (:1136, :1179) sit behind an IsURL(L, 1) check (:1128, :1174), so a string or hash never reaches them, and any other argument 1 is read as a node (:1200)"
-  },
-  "*:gui.stop_particlefx:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
   },
   "*:gui.update:missing-binding": {
     "verdict": "accepted",
@@ -278,14 +230,6 @@
   "*:http.request:manual:3": {
     "verdict": "manual",
     "reason": "lua_type switch"
-  },
-  "*:image.load_buffer:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
-  "*:image.load:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
   },
   "*:json.decode:arity": {
     "verdict": "accepted",
@@ -323,10 +267,6 @@
     "verdict": "accepted",
     "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a particle fx component; the declaration keeps the url required"
   },
-  "*:particlefx.stop:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
   "*:particlefx.stop:optional-as-required:1": {
     "verdict": "accepted",
     "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a particle fx component; the declaration keeps the url required"
@@ -338,10 +278,6 @@
   "*:physics.create_joint:manual:7": {
     "verdict": "manual",
     "reason": "lua_type switch"
-  },
-  "*:physics.raycast_async:nil-raises:4": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
   },
   "*:physics.set_event_listener:arity": {
     "verdict": "accepted",
@@ -427,10 +363,6 @@
     "verdict": "accepted",
     "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
-  "*:render.set_render_target:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
   "*:render.set_render_target:too-loose:1": {
     "verdict": "accepted",
     "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
@@ -462,10 +394,6 @@
   "*:resource.font:missing-binding": {
     "verdict": "accepted",
     "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
-  },
-  "*:resource.get_text_metrics:nil-raises:3": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
   },
   "*:resource.material:missing-binding": {
     "verdict": "accepted",
@@ -507,29 +435,9 @@
     "verdict": "manual",
     "reason": "lua_type switch"
   },
-  "*:sprite.play_flipbook:nil-raises:4": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
   "*:sprite.set_scale:missing-declaration": {
     "verdict": "accepted",
     "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
-  },
-  "*:sys.get_config_int:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
-  "*:sys.get_config_number:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
-  "*:sys.get_sys_info:nil-raises:1": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
-  "*:sys.open_url:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
   },
   "*:sys.set_debugger_lightweight_hook:missing-declaration": {
     "verdict": "accepted",
@@ -1535,10 +1443,6 @@
     "verdict": "manual",
     "reason": "no kind check"
   },
-  "defold-1.13.0:render.draw:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
   "defold-1.13.0:render.draw:too-narrow:2": {
     "verdict": "accepted",
     "reason": "the binding still takes a constant buffer in place of the options table (deprecated); the declaration types the documented options table"
@@ -1778,10 +1682,6 @@
   "defold-1.13.1:msg.post:too-loose:2": {
     "verdict": "accepted",
     "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
-  },
-  "defold-1.13.1:render.draw:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
   },
   "defold-1.13.1:render.draw:too-narrow:2": {
     "verdict": "accepted",
@@ -2127,10 +2027,6 @@
     "verdict": "accepted",
     "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
   },
-  "defold-1.13.2:render.draw:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
-  },
   "defold-1.13.2:render.set_blend_equation_separate:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
@@ -2450,10 +2346,6 @@
   "defold-1.14.0:collectionproxy.load:manual:3": {
     "verdict": "manual",
     "reason": "lua_type switch"
-  },
-  "defold-1.14.0:render.draw:nil-raises:2": {
-    "verdict": "accepted",
-    "reason": "the binding checks the slot whenever it is present, so an explicit nil raises where omitting it works; the declaration keeps `?` until the slot is split into arity overloads"
   },
   "defold-1.14.0:render.set_blend_equation_separate:manual": {
     "verdict": "manual",

@@ -671,7 +671,28 @@ declare global {
      * });
      * ```
      */
-    function get_text_metrics(url: Hash | string, text: string, options?: resource.text_metrics_options): resource.text_metrics;
+    function get_text_metrics(url: Hash | string, text: string): resource.text_metrics;
+    /**
+     * Gets the text metrics from a font. Rich text markup is measured using its
+     * visible text and font sizes. If markup cannot be parsed, the text is measured literally.
+     * Inline sprites reserve their specified dimensions, or one em by default.
+     *
+     * @param url - the font to get the (unscaled) metrics from
+     * @param text - text to measure
+     * @param options - optional text-metric options
+     * @returns measured text metrics
+     * @example
+     * ```ts
+     * export default defineScript({
+     *   init() {
+     *     const font = go.get<label.properties>()("#label", "font");
+     *     const metrics = resource.get_text_metrics(font, "The quick brown fox\n jumps over the lazy dog");
+     *     pprint(metrics);
+     *   },
+     * });
+     * ```
+     */
+    function get_text_metrics(url: Hash | string, text: string, options: resource.text_metrics_options): resource.text_metrics;
     /**
      * Gets texture info from a texture resource path or a texture handle
      *

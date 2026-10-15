@@ -77,7 +77,40 @@ declare global {
      * });
      * ```
      */
-    function load(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined;
+    function load(buffer: string): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined;
+    /**
+     * Load image (PNG or JPEG) from buffer.
+     *
+     * @param buffer - image data buffer
+     * @param options - An optional table containing parameters for loading the image. Supported entries:
+     *
+     * `premultiply_alpha`
+     * boolean True if alpha should be premultiplied into the color components. Defaults to `false`.
+     * `flip_vertically`
+     * boolean True if the image contents should be flipped vertically. Defaults to `false`.
+     * @returns object or `nil` if loading fails. The object is a table with the following fields:
+     *
+     * - number `width`: image width
+     * - number `height`: image height
+     * - constant `type`: image type
+     *   - `image.TYPE_RGB`
+     *   - `image.TYPE_RGBA`
+     *   - `image.TYPE_LUMINANCE`
+     *   - `image.TYPE_LUMINANCE_ALPHA`
+     * - string `buffer`: the raw image data
+     * @example
+     * ```ts
+     * // How to load an image from an URL and create a GUI texture from it:
+     * const imgurl = "http://www.site.com/image.png";
+     * http.request(imgurl, "GET", (self, id, response) => {
+     *   const img = response.response !== undefined ? image.load(response.response) : undefined;
+     *   if (img !== undefined) {
+     *     const tx = gui.new_texture("image_node", img.width, img.height, img.type, img.buffer);
+     *   }
+     * });
+     * ```
+     */
+    function load(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined;
     /**
      * Load image (PNG or JPEG) from a string buffer.
      *
@@ -124,7 +157,54 @@ declare global {
      * });
      * ```
      */
-    function load_buffer(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined;
+    function load_buffer(buffer: string): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined;
+    /**
+     * Load image (PNG or JPEG) from a string buffer.
+     *
+     * @param buffer - image data buffer
+     * @param options - An optional table containing parameters for loading the image. Supported entries:
+     *
+     * `premultiply_alpha`
+     * boolean True if alpha should be premultiplied into the color components. Defaults to `false`.
+     * `flip_vertically`
+     * boolean True if the image contents should be flipped vertically. Defaults to `false`.
+     * @returns object or `nil` if loading fails. The object is a table with the following fields:
+     *
+     * - number `width`: image width
+     * - number `height`: image height
+     * - constant `type`: image type
+     *   - `image.TYPE_RGB`
+     *   - `image.TYPE_RGBA`
+     *   - `image.TYPE_LUMINANCE`
+     *   - `image.TYPE_LUMINANCE_ALPHA`
+     * - buffer `buffer`: the script buffer that holds the decompressed image data. See buffer.create how to use the buffer.
+     * @example
+     * ```ts
+     * // Load an image from an URL as a buffer and create a texture resource from it:
+     * const imgurl = "http://www.site.com/image.png";
+     * http.request(imgurl, "GET", (self, id, response) => {
+     *   const img =
+     *     response.response !== undefined
+     *       ? image.load_buffer(response.response, { flip_vertically: true })
+     *       : undefined;
+     *   // the engine registers a texture format only when the driver supports it
+     *   const format = graphics.TEXTURE_FORMAT_RGBA;
+     *   if (img !== undefined && format !== undefined) {
+     *     const tparams = {
+     *       width: img.width,
+     *       height: img.height,
+     *       type: graphics.TEXTURE_TYPE_2D,
+     *       format,
+     *     };
+     *
+     *     const my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams, img.buffer);
+     *     // Apply the texture to a model
+     *     go.set("/go1#model", "texture0", my_texture_id);
+     *   }
+     * });
+     * ```
+     */
+    function load_buffer(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined;
   }
 }
 

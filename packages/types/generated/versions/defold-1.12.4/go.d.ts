@@ -259,7 +259,65 @@ declare global {
      * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);
      * ```
      */
-    export function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
+    export function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number): void;
+    /**
+     * This is only supported for numerical properties. If the node property is already being
+     * animated, that animation will be canceled and replaced by the new one.
+     * If a `complete_function` (lua function) is specified, that function will be called when the animation has completed.
+     * By starting a new animation in that function, several animations can be sequenced together. See the examples for more information.
+     * If you call `go.animate()` from a game object's `final()` function,
+     * any passed `complete_function` will be ignored and never called upon animation completion.
+     * See the properties guide for which properties can be animated and the animation guide for how
+     * them.
+     *
+     * @param url - url of the game object or component having the property
+     * @param property - id of the property to animate
+     * @param playback - playback mode of the animation
+     *
+     * - `go.PLAYBACK_ONCE_FORWARD`
+     * - `go.PLAYBACK_ONCE_BACKWARD`
+     * - `go.PLAYBACK_ONCE_PINGPONG`
+     * - `go.PLAYBACK_LOOP_FORWARD`
+     * - `go.PLAYBACK_LOOP_BACKWARD`
+     * - `go.PLAYBACK_LOOP_PINGPONG`
+     * @param to - target property value
+     * @param easing - easing to use during animation. Either specify a constant, see the animation guide for a complete list, or a vmath.vector with a curve
+     * @param duration - duration of the animation in seconds
+     * @param delay - delay before the animation starts in seconds
+     * @param complete_function - optional function to call when the animation has completed
+     *
+     * `self`
+     *
+     * object The current object.
+     *
+     * `url`
+     *
+     * url The game object or component instance for which the property is animated.
+     *
+     * `property`
+     *
+     * hash The id of the animated property.
+     * @example
+     * Animate the position of a game object to x = 10 during 1 second, then y = 20 during 1 second:
+     * ```ts
+     * go.animate(go.get_id(), "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1, 0, () => {
+     *   go.animate(go.get_id(), "position.y", go.PLAYBACK_ONCE_FORWARD, 20, go.EASING_LINEAR, 1);
+     * });
+     * ```
+     * @example
+     * Animate the y position of a game object using a crazy custom easing curve:
+     * ```ts
+     * const values = [
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     * ];
+     * const vec = vmath.vector(values);
+     * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);
+     * ```
+     */
+    export function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
     /**
      * By calling this function, all or specified stored property animations of the game object or component will be canceled.
      * See the properties guide for which properties can be animated and the animation guide for how to animate them.
@@ -318,7 +376,43 @@ declare global {
      * go.delete(ids, true);
      * ```
      */
-    function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean, recursive?: boolean): void;
+    function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean): void;
+    /**
+     * Delete one or more game objects identified by id. Deletion is asynchronous meaning that
+     * the game object(s) are scheduled for deletion which will happen at the end of the current
+     * frame. Note that game objects scheduled for deletion will be counted against
+     * `max_instances` in "game.project" until they are actually removed.
+     * Deleting a game object containing a particle FX component emitting particles will not immediately stop the particle FX from emitting particles. You need to manually stop the particle FX using `particlefx.stop()`.
+     * Deleting a game object containing a sound component that is playing will not immediately stop the sound from playing. You need to manually stop the sound using `sound.stop()`.
+     *
+     * @param id - optional id or table of id's of the instance(s) to delete, the instance of the calling script is deleted by default
+     * @param recursive - optional boolean, set to true to recursively delete child hiearchy in child to parent order
+     * @example
+     * This example demonstrates how to delete game objects
+     * ```ts
+     * // Delete the script's own game object.
+     * go.delete();
+     * // Delete a game object with the id "my_game_object".
+     * const id = go.get_id("my_game_object"); // retrieve the id of the game object to be deleted
+     * go.delete(id);
+     * // Delete a list of game objects.
+     * const ids = [hash("/my_object_1"), hash("/my_object_2"), hash("/my_object_3")];
+     * go.delete(ids);
+     * ```
+     * @example
+     * This example demonstrates how to delete a game objects and their children (child to parent order)
+     * ```ts
+     * // Delete the script's own game object and its children.
+     * go.delete(true);
+     * // Delete a game object with the id "my_game_object" and its children.
+     * const id = go.get_id("my_game_object"); // retrieve the id of the game object to be deleted
+     * go.delete(id, true);
+     * // Delete a list of game objects and their children.
+     * const ids = [hash("/my_object_1"), hash("/my_object_2"), hash("/my_object_3")];
+     * go.delete(ids, true);
+     * ```
+     */
+    function _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean | undefined, recursive: boolean): void;
     /**
      * This function can check for game objects in any collection by specifying
      * the collection name in the URL.
@@ -391,7 +485,31 @@ declare global {
      * print(id3); // => hash: [/my_sub_collection/my_instance]
      * ```
      */
-    export function get_id(path?: string): Hash;
+    export function get_id(): Hash;
+    /**
+     * Returns or constructs an instance identifier. The instance id is a hash
+     * of the absolute path to the instance.
+     *
+     * - If `path` is specified, it can either be absolute or relative to the instance of the calling script.
+     * - If `path` is not specified, the id of the game object instance the script is attached to will be returned.
+     *
+     * @param path - path of the instance for which to return the id
+     * @returns instance id
+     * @example
+     * ```ts
+     * // For the instance with path /my_sub_collection/my_instance, the following calls
+     * // are equivalent:
+     * const id = go.get_id(); // no path, defaults to the instance containing the calling script
+     * print(id); // => hash: [/my_sub_collection/my_instance]
+     *
+     * const id2 = go.get_id("/my_sub_collection/my_instance"); // absolute path
+     * print(id2); // => hash: [/my_sub_collection/my_instance]
+     *
+     * const id3 = go.get_id("my_instance"); // relative path
+     * print(id3); // => hash: [/my_sub_collection/my_instance]
+     * ```
+     */
+    export function get_id(path: string): Hash;
     /**
      * Get the parent for a game object instance.
      *

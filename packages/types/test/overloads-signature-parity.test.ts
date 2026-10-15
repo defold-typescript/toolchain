@@ -92,8 +92,8 @@ const NAMESPACES: readonly OverloadNamespace[] = [
     storePath: GUI_SIGNATURES_PATH,
     fqns: ["gui.animate", "gui.get", "gui.set"],
     reflow: {
-      from: 'function set(\n      url: Url,\n      property: "material" | "materials" | "fonts" | "textures" | Hash,\n      value: Hash,\n      options?: gui.PropertyOptions,\n    ): void;',
-      to: 'function set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash, options?: gui.PropertyOptions): void;',
+      from: 'function set(\n      url: Url,\n      property: "material" | "materials" | "fonts" | "textures" | Hash,\n      value: Hash,\n      options: gui.PropertyOptions,\n    ): void;',
+      to: 'function set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash, options: gui.PropertyOptions): void;',
     },
     driftSignature: {
       fqn: "gui.set",
@@ -375,14 +375,14 @@ function renderOverloadGates(spec: OverloadNamespace): Record<string, (string | 
 // store must agree on it, so the number is asserted against both sides below. Changing an
 // entry is a deliberate declaration that the overload set itself changed.
 const OVERLOAD_COUNTS: Record<string, number> = {
-  "go.get": 3,
-  "go.set": 3,
+  "go.get": 5,
+  "go.set": 5,
   // the descriptions-side pin for this one, and its rationale, live in the
   // "no JSDoc description" test below
   "go.property": 8,
-  "gui.animate": 1,
-  "gui.get": 2,
-  "gui.set": 4,
+  "gui.animate": 2,
+  "gui.get": 3,
+  "gui.set": 6,
   "msg.post": 2,
   "msg.url": 6,
   "render.render_target": 2,
@@ -462,21 +462,21 @@ describe("curried and multi-paragraph overload rendering", () => {
 
   test("go.get's curried overload renders as a one-line function return type", () => {
     expect(goSignatures["go.get"]?.[0]).toBe(
-      "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]",
+      "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, ...options: [] | [GoPropertyOptions]) => P[K]",
     );
   });
 
   test("go.set's curried overload renders as a one-line function return type", () => {
     expect(goSignatures["go.set"]?.[0]).toBe(
-      "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void",
+      "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], ...options: [] | [GoPropertyOptions]) => void",
     );
   });
 
   test("an overload with no JSDoc description maps to null, not an empty string", () => {
     const get = goDescriptions["go.get"] ?? [];
-    expect(get).toHaveLength(3);
+    expect(get).toHaveLength(5);
     expect(typeof get[0]).toBe("string");
-    expect(get.slice(1)).toEqual([null, null]);
+    expect(get.slice(1)).toEqual([null, null, null, null]);
 
     const property = goDescriptions["go.property"] ?? [];
     // 8 is the published overload count for `go.property` (one documented plus the

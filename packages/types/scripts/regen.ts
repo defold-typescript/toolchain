@@ -462,11 +462,18 @@ export interface GenerateOptions {
   urlParameters?: UrlParameterTable;
   registeredConstants?: ReadonlySet<string>;
   bindingEvidence?: ReadonlySet<string>;
+  nilRaisingSlots?: ReadonlyMap<string, readonly number[]>;
   // The modules the entry is emitted beside, the entry among them. Routing
   // reads this set instead of looking the entry up in a committed manifest, so
   // a surface built with its own import root still routes as a whole.
   surface?: readonly ModuleManifestEntry[];
 }
+
+// What a target's own engine source decides for its emit (`targetBindingOptions`).
+export type TargetBindingOptions = Pick<
+  GenerateOptions,
+  "registeredConstants" | "bindingEvidence" | "nilRaisingSlots"
+>;
 
 interface PreparedGeneratedModule {
   module: ApiModule;
@@ -475,6 +482,7 @@ interface PreparedGeneratedModule {
   urlParameters: UrlParameterTable;
   registeredConstants: ReadonlySet<string> | undefined;
   bindingEvidence: ReadonlySet<string> | undefined;
+  nilRaisingSlots: ReadonlyMap<string, readonly number[]> | undefined;
   typeLeaves: Readonly<Record<string, string>> | undefined;
   declaredTypes: ReadonlyMap<string, string> | undefined;
   dropped: string[];
@@ -501,6 +509,7 @@ function prepareGeneratedModule(
     urlParameters,
     registeredConstants: options?.registeredConstants,
     bindingEvidence: options?.bindingEvidence,
+    nilRaisingSlots: options?.nilRaisingSlots,
     typeLeaves: entry.typeLeaves,
     declaredTypes: routed?.declaredTypes,
     dropped,
@@ -754,6 +763,7 @@ export function generateModuleDeclaration(
     urlParameters,
     registeredConstants,
     bindingEvidence,
+    nilRaisingSlots,
     typeLeaves,
     declaredTypes,
     dropped,
@@ -766,6 +776,7 @@ export function generateModuleDeclaration(
     withheldFunctions,
     ...(registeredConstants ? { registeredConstants } : {}),
     ...(bindingEvidence ? { bindingEvidence } : {}),
+    ...(nilRaisingSlots ? { nilRaisingSlots } : {}),
     ...(typeLeaves ? { typeLeaves } : {}),
     ...(declaredTypes ? { declaredTypes } : {}),
     ...(entry.indexBaseSource ? { indexBaseSource: entry.indexBaseSource } : {}),
@@ -791,6 +802,7 @@ export function generateModuleSignatures(
     urlParameters,
     registeredConstants,
     bindingEvidence,
+    nilRaisingSlots,
     typeLeaves,
     declaredTypes,
     withheldFunctions,
@@ -801,6 +813,7 @@ export function generateModuleSignatures(
     withheldFunctions,
     ...(registeredConstants ? { registeredConstants } : {}),
     ...(bindingEvidence ? { bindingEvidence } : {}),
+    ...(nilRaisingSlots ? { nilRaisingSlots } : {}),
     ...(typeLeaves ? { typeLeaves } : {}),
     ...(declaredTypes ? { declaredTypes } : {}),
   });

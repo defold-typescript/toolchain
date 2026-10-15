@@ -360,6 +360,16 @@ describe("engine binding verdict gate", () => {
     expect(open).toEqual([]);
   });
 
+  test("declares no slot whose explicit nil raises as taking nil", () => {
+    // Such a slot splits into a call without it and a call requiring it: by
+    // `targetBindingOptions` in a generated module, by hand in an authored one.
+    // Accepting the mismatch would ship a `?` that TSTL fills with nil.
+    const nilRaising = [...new Set([...mismatches.keys(), ...Object.keys(verdicts)])].filter(
+      (key) => key.includes(":nil-raises:"),
+    );
+    expect(nilRaising).toEqual([]);
+  });
+
   test("accepted and manual verdicts name a reason", () => {
     const bare = Object.entries(verdicts)
       .filter(([, v]) => v.verdict !== "open" && !(v.reason ?? "").trim())
