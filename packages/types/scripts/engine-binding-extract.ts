@@ -42,6 +42,11 @@ export interface BindingReturns {
   readonly manual?: { readonly position: number; readonly reason: string }[];
 }
 
+// Raise when the calling script holds no game object of the kind they need:
+// `CheckGOInstance` in a render script, `ScriptInstance_Check` outside a
+// `.script` instance.
+export type InstanceCheck = "CheckGOInstance" | "ScriptInstance_Check";
+
 export interface BindingFunction {
   readonly namespace: string;
   readonly name: string;
@@ -55,6 +60,9 @@ export interface BindingFunction {
   readonly slots: BindingSlot[];
   readonly returns: BindingReturns;
   readonly manual: string[];
+  // The instance checks every path through the binding reaches, or absent when
+  // it reaches none.
+  readonly instanceChecks?: InstanceCheck[];
 }
 
 export interface BindingExtraction {
@@ -1714,6 +1722,91 @@ function analyzeReturns(fn: CFunction, index: Index): BindingReturns {
   return { count, kinds: positions, ...(manual.length > 0 ? { manual } : {}) };
 }
 
+// The file defining each check, so a same-named helper elsewhere never counts.
+const INSTANCE_CHECK_FILES: ReadonlyMap<InstanceCheck, string> = new Map<InstanceCheck, string>([
+  ["CheckGOInstance", "gamesys/src/gamesys/gamesys_script.cpp"],
+  ["ScriptInstance_Check", "gameobject/src/gameobject/gameobject_script.cpp"],
+]);
+
+function instanceCheckOf(fn: CFunction): InstanceCheck | undefined {
+  for (const [check, file] of INSTANCE_CHECK_FILES) {
+    if (fn.name === check && fn.file === file) return check;
+  }
+  return undefined;
+}
+
+// What a call settles for the path it runs on: it raises, or it reaches checks.
+type Settles = "raises" | ReadonlySet<InstanceCheck>;
+
+interface Passed {
+  readonly guards: readonly Guard[];
+  readonly settles: Settles;
+}
+
+// A callee name can resolve to several definitions; the call reaches a check
+// only when every one of them does.
+function callSettles(
+  call: Call,
+  fn: CFunction,
+  index: Index,
+  depth: number,
+  visiting: ReadonlySet<CFunction>,
+): Settles {
+  const name = baseName(call.callee);
+  if (ERROR_CALLS.has(name)) return "raises";
+  const named = index.functionsNamed(name, fn.file).filter((f) => f.takesLuaState);
+  const sameArity = named.filter((f) => f.params.length === call.args.length);
+  const candidates = sameArity.length > 0 ? sameArity : named;
+  const reaches = candidates.map((candidate) => {
+    const check = instanceCheckOf(candidate);
+    if (check) return new Set([check]);
+    if (depth >= MAX_HELPER_DEPTH || visiting.has(candidate)) return new Set<InstanceCheck>();
+    return instanceChecksOf(candidate, index, depth + 1, new Set([...visiting, candidate]));
+  });
+  return new Set([...(reaches[0] ?? [])].filter((check) => reaches.every((set) => set.has(check))));
+}
+
+function guardsPrefix(outer: readonly Guard[], inner: readonly Guard[]): boolean {
+  return outer.length <= inner.length && outer.every((guard, i) => inner[i] === guard);
+}
+
+// A check is reached on every path only when each way out of the function
+// passes it or raises first: falling off the end needs an unguarded call, and
+// a `return` needs a call in its own block or an enclosing one, ahead of it or
+// in its value. A call behind a guard proves nothing about the paths that skip
+// it.
+function instanceChecksOf(
+  fn: CFunction,
+  index: Index,
+  depth: number,
+  visiting: ReadonlySet<CFunction>,
+): Set<InstanceCheck> {
+  const passed: Passed[] = [];
+  const exits: Passed[][] = [];
+  for (const event of eventsOf(fn)) {
+    if (event.type === "call") {
+      passed.push({
+        guards: event.call.guards,
+        settles: callSettles(event.call, fn, index, depth, visiting),
+      });
+      continue;
+    }
+    const own: Event[] = [];
+    scanExpression(event.value, event.guards, own);
+    const value = own.flatMap((e) =>
+      e.type === "call" && e.call.guards === event.guards
+        ? [{ guards: event.guards, settles: callSettles(e.call, fn, index, depth, visiting) }]
+        : [],
+    );
+    exits.push([...passed.filter((p) => guardsPrefix(p.guards, event.guards)), ...value]);
+  }
+  exits.push(passed.filter((p) => p.guards.length === 0));
+  const covers = (exit: readonly Passed[], check: InstanceCheck) =>
+    exit.some((p) => p.settles === "raises" || p.settles.has(check));
+  const reached = new Set(passed.flatMap((p) => (p.settles === "raises" ? [] : [...p.settles])));
+  return new Set([...reached].filter((check) => exits.every((exit) => covers(exit, check))));
+}
+
 // A binding whose whole body is `return Other(L);` reads and returns what the
 // function it forwards to does.
 function forwardedTarget(fn: CFunction, index: Index): CFunction | undefined {
@@ -1803,6 +1896,7 @@ function analyzeFunction(
     ? Math.max(arities[0] as number, analysis.errorMinArgs)
     : Math.max(0, ...required);
   const manual = [...analysis.variadic];
+  const instanceChecks = [...instanceChecksOf(fn, index, 0, new Set([fn]))].sort();
   return {
     namespace,
     name,
@@ -1814,6 +1908,7 @@ function analyzeFunction(
     slots,
     returns: analyzeReturns(fn, index),
     manual,
+    ...(instanceChecks.length > 0 ? { instanceChecks } : {}),
   };
 }
 

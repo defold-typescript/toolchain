@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import {
   type BindingFunction,
+  extractBindings,
   readBindingsForTarget,
   UNBOUND_NAMESPACES,
 } from "./engine-binding-extract";
@@ -273,6 +277,139 @@ describe("older engine sources", () => {
     );
     expect(load?.minArgs).toBe(2);
     expect(load?.slots.find((s) => s.index === 2)).toMatchObject({ kinds: ["function"] });
+  });
+});
+
+describe("game-object instance checks", () => {
+  const current = readBindingsForTarget("defold-1.14.0");
+
+  function checksOf(namespace: string, name: string) {
+    const found = current.functions.filter((f) => f.namespace === namespace && f.name === name);
+    expect(found).toHaveLength(1);
+    return (found[0] as BindingFunction).instanceChecks;
+  }
+
+  // gamesys_script.cpp:569-571: `dmGameSystem::CheckGoInstance` forwards to
+  // `dmScript::CheckGOInstance`.
+  test("sprite.play_flipbook reaches CheckGOInstance through the CheckGoInstance forwarder", () => {
+    expect(checksOf("sprite", "play_flipbook")).toEqual(["CheckGOInstance"]);
+  });
+
+  // script_factory.cpp:80 passes six arguments, which name the dmScript overload
+  // (gamesys_script.cpp:86); the 7-argument dmGameObject one checks no instance.
+  test("factory.get_status reaches CheckGOInstance through the 6-argument GetComponentFromLua", () => {
+    expect(checksOf("factory", "get_status")).toEqual(["CheckGOInstance"]);
+  });
+
+  test("go.get_position reaches ScriptInstance_Check through ResolveInstance", () => {
+    expect(checksOf("go", "get_position")).toEqual(["ScriptInstance_Check"]);
+  });
+
+  test("an early `return luaL_error(...)` does not guard the go.exists check after it", () => {
+    expect(checksOf("go", "exists")).toEqual(["ScriptInstance_Check"]);
+  });
+
+  // gameobject_script.cpp:2177-2186: a table argument returns early through
+  // DeleteGOTable, which checks the instance before anything else.
+  test("go.delete's early table return passes its own check first", () => {
+    expect(checksOf("go", "delete")).toEqual(["ScriptInstance_Check"]);
+  });
+
+  test("functions that resolve no instance report none", () => {
+    expect(checksOf("vmath", "vector3")).toBeUndefined();
+    expect(checksOf("msg", "post")).toBeUndefined();
+    expect(checksOf("render", "draw")).toBeUndefined();
+    expect(checksOf("go", "property")).toBeUndefined();
+  });
+
+  test("a check counts only when unguarded and defined in the sink's own file", () => {
+    const dir = mkdtempSync(join(tmpdir(), "instance-checks-"));
+    try {
+      const write = (file: string, source: string) => {
+        mkdirSync(join(dir, dirname(file)), { recursive: true });
+        writeFileSync(join(dir, file), source);
+      };
+      write(
+        "gamesys/src/gamesys/gamesys_script.cpp",
+        `namespace dmScript {
+          dmGameObject::HGameObject CheckGOInstance(lua_State* L) { return 0; }
+        }
+        static int Probe_Always(lua_State* L) {
+          dmScript::CheckGOInstance(L);
+          return 0;
+        }
+        static int Probe_Guarded(lua_State* L) {
+          if (lua_isfunction(L, 2)) {
+            dmScript::CheckGOInstance(L);
+          }
+          return 0;
+        }
+        static int Probe_Escapes(lua_State* L) {
+          if (lua_gettop(L) != 0) {
+            if (lua_istable(L, 1)) {
+              lua_pushnil(L);
+              return 1;
+            }
+          }
+          dmScript::CheckGOInstance(L);
+          return 0;
+        }
+        static int Probe_RaisesFirst(lua_State* L) {
+          if (lua_gettop(L) != 0) {
+            if (lua_istable(L, 1)) {
+              luaL_error(L, "no tables");
+              return 0;
+            }
+          }
+          dmScript::CheckGOInstance(L);
+          return 0;
+        }
+        static const luaL_reg PROBE_FUNCTIONS[] = {
+          {"always", Probe_Always},
+          {"guarded", Probe_Guarded},
+          {"escapes", Probe_Escapes},
+          {"raises_first", Probe_RaisesFirst},
+          {0, 0}
+        };
+        void ScriptProbeRegister(lua_State* L) {
+          luaL_register(L, "probe", PROBE_FUNCTIONS);
+          lua_pop(L, 1);
+        }`,
+      );
+      write(
+        "other/src/other_script.cpp",
+        `static int CheckGOInstance(lua_State* L) { return 0; }
+        static int Decoy_Call(lua_State* L) {
+          CheckGOInstance(L);
+          return 0;
+        }
+        static const luaL_reg DECOY_FUNCTIONS[] = {
+          {"call", Decoy_Call},
+          {0, 0}
+        };
+        void ScriptDecoyRegister(lua_State* L) {
+          luaL_register(L, "decoy", DECOY_FUNCTIONS);
+          lua_pop(L, 1);
+        }`,
+      );
+      const checks = new Map(
+        extractBindings(dir).functions.map((f) => [`${f.namespace}.${f.name}`, f.instanceChecks]),
+      );
+      expect([...checks.keys()].sort()).toEqual([
+        "decoy.call",
+        "probe.always",
+        "probe.escapes",
+        "probe.guarded",
+        "probe.raises_first",
+      ]);
+      expect(checks.get("probe.always")).toEqual(["CheckGOInstance"]);
+      expect(checks.get("probe.guarded")).toBeUndefined();
+      expect(checks.get("probe.escapes")).toBeUndefined();
+      expect(checks.get("probe.raises_first")).toEqual(["CheckGOInstance"]);
+      expect(checks.get("decoy.call")).toBeUndefined();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 
