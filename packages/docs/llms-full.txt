@@ -12592,7 +12592,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;
 - function _delete(id?: SceneGameObjectAddress | Hash | Url | (string | Hash | Url)[] | boolean, recursive?: boolean): void;
 - function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
-- go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K] [through 1.13.1] [signature transition]
+- go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]
 - go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]
 - go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4
 - function get_id(path?: string): Hash;
@@ -12606,7 +12606,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_world_scale(id?: SceneGameObjectAddress | Hash | Url): Vector3;
 - function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;
 - function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;
-- go.property(name: string, value: number): ScriptProperty<number> [through 1.13.1] [signature transition]
+- go.property(name: string, value: number): ScriptProperty<number>
 - go.property(name: string, value: boolean): ScriptProperty<boolean>
 - go.property(name: string, value: Hash): ScriptProperty<Hash>
 - go.property(name: string, value: Url): ScriptProperty<Url>
@@ -12614,7 +12614,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.property(name: string, value: Vector4): ScriptProperty<Vector4>
 - go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
 - go.property(name: string, value: string): ScriptProperty<string>
-- go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void [through 1.13.1] [signature transition]
+- go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void
 - go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
 - go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[], options?: GoPropertyOptions): void
 - function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
@@ -12951,10 +12951,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_material(node: Opaque<"node">): void;
 - function reset_nodes(): void;
 - function screen_to_local(node: Opaque<"node">, screen_position: Vector3 | Vector4): Vector3;
-- gui.set<K extends keyof gui.node_properties | gui.Property>(node: Opaque<"node">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void [through 1.13.0] [signature transition]
+- gui.set<K extends keyof gui.node_properties | gui.Property>(node: Opaque<"node">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void
 - gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: gui.PropertyOptions): void
 - gui.set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash, options?: gui.PropertyOptions): void
-- gui.set(url: Url, property: "textures", value: undefined, options: { key: string | Hash }): void
+- gui.set(url: Url, property: "textures", value: undefined, options: { key: string | Hash }): void [since 1.13.1]
 - function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.ADJUST): void;
 - function set_alpha(node: Opaque<"node">, alpha: number): void;
 - function set_blend_mode(node: Opaque<"node">, blend_mode: gui.BLEND): void;
@@ -13413,7 +13413,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_window_height(): number;
 - function get_window_width(): number;
 - function predicate(tags: (string | Hash)[]): Opaque<"render_predicate">;
-- render.render_target(parameters: render.RenderTargetParams): Opaque<"render_target"> [through 1.13.1] [signature transition]
+- render.render_target(parameters: render.RenderTargetParams): Opaque<"render_target">
 - render.render_target(name: string, parameters: render.RenderTargetParams): Opaque<"render_target">
 - function set_blend_equation_separate(equation_color: graphics.BLEND_EQUATION, equation_alpha: graphics.BLEND_EQUATION): void; [since 1.13.0]
 - function set_blend_func(source_factor: graphics.BLEND_FACTOR, destination_factor: graphics.BLEND_FACTOR): void;
@@ -13659,7 +13659,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_config_boolean(key: string, default_value?: boolean): boolean;
 - function get_config_int(key: string, default_value?: number): number;
 - function get_config_number(key: string, default_value?: number): number;
-- sys.get_config_string(key: string): string | undefined [through 1.13.1] [signature transition]
+- sys.get_config_string(key: string): string | undefined
 - sys.get_config_string(key: string, default_value: string): string
 - function get_connectivity(): sys.NETWORK;
 - function get_engine_info(): sys.engine_info;

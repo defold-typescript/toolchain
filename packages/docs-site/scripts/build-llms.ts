@@ -3,7 +3,11 @@ import { join } from "node:path";
 import { type ApiPage, apiModuleSymbols } from "../app/lib/api-surface";
 import { loadApiSurface, loadCombinedSurface } from "../app/lib/api-surface-loader";
 import { withBase } from "../app/lib/base";
-import { compactAvailability, llmsSignaturesForEntry } from "../app/lib/combined-surface";
+import {
+  compactArmAvailability,
+  compactAvailability,
+  llmsSignaturesForEntry,
+} from "../app/lib/combined-surface";
 import { parseFrontmatter } from "../app/lib/frontmatter";
 import type { GuidePage } from "../app/lib/guide";
 import { expandGuideDirectives } from "../app/lib/guide-directives";
@@ -315,13 +319,20 @@ export function buildLlmsFull(target: LlmsTarget = SITE_TARGET): string {
     // set is emitted for the first identity that reaches it and skipped after.
     const armsEmitted = new Set<string>();
     for (const entry of ns.entries) {
+      if (entry.authoredArms) {
+        const armKey = `${ns.namespace}::${entry.identity.name}`;
+        if (armsEmitted.has(armKey)) continue;
+        armsEmitted.add(armKey);
+        // Each authored arm carries its own span, so a tag applies to the line
+        // it follows.
+        for (const arm of entry.authoredArms) {
+          const tag = compactArmAvailability(entry, arm);
+          lines.push(tag ? `- ${arm.signature} ${tag}` : `- ${arm.signature}`);
+        }
+        continue;
+      }
       if (entry.authoritativeSignature) {
         const signatures = llmsSignaturesForEntry(entry);
-        if (signatures.length > 1) {
-          const armKey = `${ns.namespace}::${entry.identity.name}`;
-          if (armsEmitted.has(armKey)) continue;
-          armsEmitted.add(armKey);
-        }
         const tag = compactAvailability(entry);
         // The availability span is a fact about the symbol, so it rides the
         // first arm rather than repeating on each.

@@ -83,6 +83,19 @@ export interface BuildCombinedSurfaceInput {
 }
 
 /**
+ * One arm of an authored overload fold: its rendered call form, the versions
+ * whose `api-signatures.json` fold for the FQN declares it, and the label of that
+ * span. An arm is dated by the folds alone, never by a ref-doc identity: the
+ * authored arms replace every identity of the FQN, so an identity's span says
+ * nothing about any one arm.
+ */
+export interface AuthoredArm {
+  readonly signature: string;
+  readonly availableIn: readonly string[];
+  readonly label: AvailabilityLabel;
+}
+
+/**
  * A single union symbol on the Combined surface: its node-free identity, the
  * authoritative signature for its newest version present, the recomputed
  * `availableIn` span and friendly label, whether it is one arm of a signature
@@ -92,6 +105,12 @@ export interface BuildCombinedSurfaceInput {
 export interface CombinedEntry {
   readonly identity: ApiSymbolIdentity;
   readonly authoritativeSignature: string;
+  /**
+   * Set only on a `FUNCTION` whose authoritative signature is an authored fold:
+   * every arm any version folds for the FQN, the newest fold's in its order and
+   * then any arm only an older fold carries.
+   */
+  readonly authoredArms?: readonly AuthoredArm[];
   /**
    * The slot types emitted alongside {@link authoritativeSignature}, resolved
    * from the same version it was. Absent when the artifact records none.
@@ -164,7 +183,26 @@ export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
     authoritativeSignatures: combinedAuthoritativeSignatures(ns),
     authoritativeSlotTypes: combinedAuthoritativeSlotTypes(ns),
     authoritativeArms: combinedAuthoritativeArms(ns),
+    authoredArmSpans: combinedAuthoredArmSpans(ns),
   };
+}
+
+/**
+ * Each authored arm's span, keyed by FQN and then by the arm's text, which is
+ * the text the page renders for that store row.
+ */
+export function combinedAuthoredArmSpans(
+  ns: CombinedNamespace,
+): ReadonlyMap<string, ReadonlyMap<string, readonly string[]>> {
+  const map = new Map<string, ReadonlyMap<string, readonly string[]>>();
+  for (const entry of ns.entries) {
+    if (entry.authoredArms === undefined || map.has(entry.identity.name)) continue;
+    map.set(
+      entry.identity.name,
+      new Map(entry.authoredArms.map((arm) => [arm.signature, arm.availableIn])),
+    );
+  }
+  return map;
 }
 
 // Validates that a keyword/`;`-stripped member declaration is a well-formed
@@ -200,11 +238,7 @@ function innerRenderSignature(identity: ApiSymbolIdentity, declaration: string):
       // returning it keeps the map one-signature-per-identity while the render
       // layer sources arms 1..n from the store itself.
       if (!decl.startsWith("function ")) {
-        const first = decl.split("\n")[0]?.trim() ?? "";
-        const after = first.slice(identity.name.length);
-        return first.startsWith(identity.name) && (after.startsWith("(") || after.startsWith("<"))
-          ? first
-          : "";
+        return isAuthoredFold(identity.name, decl) ? (decl.split("\n")[0]?.trim() ?? "") : "";
       }
       // A generated multi-arm declaration carries one arm per line; the map
       // keeps arm 0, and `combinedAuthoritativeArms` carries the rest.
@@ -224,6 +258,18 @@ function innerRenderSignature(identity: ApiSymbolIdentity, declaration: string):
     default:
       return "";
   }
+}
+
+/**
+ * Whether a function's declaration is an authored fold: the store's arms are
+ * folded in namespace-qualified inner form, so the first line opens with the
+ * FQN. A generated declaration opens with `function `, and a generated method
+ * (`close(): void;` for `client:close`) with its bare name.
+ */
+function isAuthoredFold(name: string, declaration: string): boolean {
+  const first = declaration.trim().split("\n")[0]?.trim() ?? "";
+  const after = first.slice(name.length);
+  return first.startsWith(name) && (after.startsWith("(") || after.startsWith("<"));
 }
 
 function innerFunctionArm(identity: ApiSymbolIdentity, arm: string): string {
@@ -366,13 +412,30 @@ function spanTag(label: AvailabilityLabel): string {
  * version, no lifecycle caveat".
  */
 export function compactAvailability(entry: CombinedEntry): string {
+  return availabilityTail(entry.label, entry.transition, entry);
+}
+
+/**
+ * The same tail for one authored arm of `entry`: the arm's own span, then the
+ * entry's curated facts. Never `[signature transition]`, which describes a
+ * generated declaration changing shape rather than an authored arm.
+ */
+export function compactArmAvailability(entry: CombinedEntry, arm: AuthoredArm): string {
+  return availabilityTail(arm.label, false, entry);
+}
+
+function availabilityTail(
+  label: AvailabilityLabel,
+  transition: boolean,
+  facts: Pick<CombinedEntry, "deprecatedSince" | "replacement" | "box2d">,
+): string {
   const tags: string[] = [];
-  const span = spanTag(entry.label);
+  const span = spanTag(label);
   if (span) tags.push(span);
-  if (entry.transition) tags.push("[signature transition]");
-  if (entry.deprecatedSince) tags.push(`[deprecated since ${entry.deprecatedSince}]`);
-  if (entry.replacement) tags.push(`[replaced by ${entry.replacement.name}]`);
-  if (entry.box2d && entry.box2d.length > 0) tags.push(`[Box2D: ${entry.box2d.join(", ")}]`);
+  if (transition) tags.push("[signature transition]");
+  if (facts.deprecatedSince) tags.push(`[deprecated since ${facts.deprecatedSince}]`);
+  if (facts.replacement) tags.push(`[replaced by ${facts.replacement.name}]`);
+  if (facts.box2d && facts.box2d.length > 0) tags.push(`[Box2D: ${facts.box2d.join(", ")}]`);
   return tags.join(" ");
 }
 
@@ -668,6 +731,37 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
   }
   const transitionNames = signatureTransitionNames(nonUniversal, versions);
 
+  // Each authored fold's lines per version, keyed by namespace and FQN so every
+  // identity of a function reads the same arm set.
+  const authoredFolds = new Map<string, Map<string, Set<string>>>();
+  for (const version of versions) {
+    for (const [key, declaration] of Object.entries(input.signatures.versions[version] ?? {})) {
+      const [namespace, kind, name = ""] = key.split("\u0000");
+      if (kind !== "FUNCTION" || !isAuthoredFold(name, declaration)) continue;
+      const fqnKey = `${namespace}\u0000${name}`;
+      const perVersion = authoredFolds.get(fqnKey) ?? new Map<string, Set<string>>();
+      const lines = perVersion.get(version) ?? new Set<string>();
+      for (const line of declaration.split("\n")) if (line.trim() !== "") lines.add(line);
+      perVersion.set(version, lines);
+      authoredFolds.set(fqnKey, perVersion);
+    }
+  }
+  const authoredArmsByFqn = new Map<string, readonly AuthoredArm[]>();
+  const authoredArmsFor = (identity: ApiSymbolIdentity): readonly AuthoredArm[] | undefined => {
+    const fqnKey = `${identity.namespace}\u0000${identity.name}`;
+    const cached = authoredArmsByFqn.get(fqnKey);
+    if (cached) return cached;
+    const perVersion = authoredFolds.get(fqnKey);
+    if (!perVersion) return undefined;
+    const order = new Set(versions.flatMap((version) => [...(perVersion.get(version) ?? [])]));
+    const arms = [...order].map((signature): AuthoredArm => {
+      const availableIn = versions.filter((version) => perVersion.get(version)?.has(signature));
+      return { signature, availableIn, label: availabilityLabel(availableIn, versions) };
+    });
+    authoredArmsByFqn.set(fqnKey, arms);
+    return arms;
+  };
+
   const oldestIndex = (key: string): number =>
     (presence.get(key)?.availableIn ?? []).reduce(
       (max, version) => Math.max(max, versions.indexOf(version)),
@@ -704,9 +798,15 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
       "";
     const transition = transitionNames.has(symbolNameKey(identity));
     const slotTypes = input.signatures.slotTypes?.[newest]?.[key];
+    const authoritativeSignature = input.signatures.versions[newest]?.[key] ?? "";
+    const authoredArms =
+      identity.kind === "FUNCTION" && isAuthoredFold(identity.name, authoritativeSignature)
+        ? authoredArmsFor(identity)
+        : undefined;
     return {
       identity,
-      authoritativeSignature: input.signatures.versions[newest]?.[key] ?? "",
+      authoritativeSignature,
+      ...(authoredArms ? { authoredArms } : {}),
       ...(slotTypes ? { slotTypes } : {}),
       availableIn,
       label: availabilityLabel(availableIn, versions, { transition }),

@@ -482,6 +482,13 @@ export interface ApiPage {
    */
   authoritativeArms?: ReadonlyMap<string, readonly string[]>;
   /**
+   * The versions each authored overload arm exists in, keyed by FQN and then by
+   * the arm's text. Present only on Combined pages, where the store renders
+   * every arm whatever the version; a store row whose arm some version lacks
+   * takes this span.
+   */
+  authoredArmSpans?: ReadonlyMap<string, ReadonlyMap<string, readonly string[]>>;
+  /**
    * `engine` for Defold-engine namespaces emitted from `api-targets.json` `modules`
    * and the synthetic globals page; `lua-stdlib` for pure-Lua / LuaJIT surfaces
    * (currently `base`, `bit`) sourced from `target.luaStdlib` and rendered under
@@ -1353,6 +1360,7 @@ type ApiModuleMarkdownPage = Pick<
   | "authoritativeSignatures"
   | "authoritativeSlotTypes"
   | "authoritativeArms"
+  | "authoredArmSpans"
 > &
   Partial<Pick<ApiPage, "signatures">>;
 
@@ -1636,6 +1644,7 @@ export function apiModuleSymbols(
     | "authoritativeSignatures"
     | "authoritativeSlotTypes"
     | "authoritativeArms"
+    | "authoredArmSpans"
   >,
   translations: TranslationStore = {},
   signatures: SignatureStore = {},
@@ -1798,11 +1807,31 @@ export function apiModuleSymbols(
             })
             .map((id) => availabilityForIdentity(page.availability, id))
             .filter((record) => record !== undefined);
-    const av =
+    const groupAv =
       ov === null || collapsed
         ? availabilityForIdentity(page.availability, identity)
-        : (formAvailability(primarySignature, fn.name, overrideRecords, versions) ??
-          mergedAvailability(overrideRecords, versions));
+        : mergedAvailability(overrideRecords, versions);
+    // A Combined page dates an authored arm some targets lack by the folds that
+    // declare it, which no ref-doc identity it collapses over can say. An arm
+    // every target declares keeps the reading below, which can still narrow it
+    // to the ref-doc signatures that admit it (`go.property`'s string form).
+    const armSpans = ov === null ? undefined : page.authoredArmSpans?.get(fn.name);
+    const armAvailability = (signature: string): ApiAvailability | undefined => {
+      const availableIn = armSpans?.get(signature);
+      if (availableIn === undefined || availableIn.length === versions.length) return undefined;
+      const identityOf = {
+        namespace: m.namespace,
+        kind: "FUNCTION",
+        name: fn.name,
+        signature: normalizedFunctionSignature(fn),
+      };
+      return { ...(groupAv ?? { identity: identityOf }), availableIn };
+    };
+    const av =
+      armAvailability(primarySignature) ??
+      (ov === null || collapsed
+        ? groupAv
+        : (formAvailability(primarySignature, fn.name, overrideRecords, versions) ?? groupAv));
     if (av) symbol.availability = av;
     symbols.push(symbol);
     if (primarySlots !== undefined) artifactBacked.add(symbol);
@@ -1859,7 +1888,9 @@ export function apiModuleSymbols(
       for (const [k, signature] of ov.signatures.slice(1).entries()) {
         const entry = rowEntry(k + 1);
         const example = rowExample(k + 1);
-        const formAv = formAvailability(signature, fn.name, overrideRecords, versions);
+        const formAv =
+          armAvailability(signature) ??
+          formAvailability(signature, fn.name, overrideRecords, versions);
         symbols.push({
           kind: "function",
           name: fn.name,

@@ -11,6 +11,7 @@ import {
   symbolIdentityKey,
   type TranslationStore,
 } from "@defold-typescript/types";
+import { OVERLOAD_COVERED_SKIPS } from "../../../types/src/emit-dts";
 import { type AvailabilityLookup, apiModuleSymbols, badgeCategoryFromLabel } from "./api-surface";
 import {
   loadCombinedSurface,
@@ -20,11 +21,13 @@ import {
 import {
   buildBadgeCountTable,
   buildCombinedSurface,
+  type CombinedEntry,
   type CombinedNamespace,
   type CombinedVersionSurface,
   combinedAuthoritativeSignatures,
   combinedNamespaceToApiPage,
   compactAvailability,
+  compareSemverDesc,
   namespaceBadgeCounts,
   reachableBadgeCounts,
   type SignaturesArtifact,
@@ -1045,6 +1048,83 @@ describe("Combined example-translation store", () => {
     expect(Object.keys(surface.translationStore ?? {}).length).toBeGreaterThan(0);
     for (const ns of surface.namespaces) {
       expect(Object.keys(combinedNamespaceToApiPage(ns).translations).length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("authored overload arms carry their own availability (committed artifacts)", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const signatures = loadSignaturesArtifact(REAL_TYPES_DIR);
+  // Every line any identity of `fqn` folds in `version`, read straight from
+  // `api-signatures.json` so the spans below are checked against the artifact
+  // rather than against the projection that derives them.
+  const foldLines = (version: string, namespace: string, fqn: string): Set<string> => {
+    const lines = new Set<string>();
+    for (const [key, declaration] of Object.entries(signatures.versions[version] ?? {})) {
+      const [ns, kind, name] = key.split("\u0000");
+      if (ns !== namespace || kind !== "FUNCTION" || name !== fqn) continue;
+      for (const line of declaration.split("\n")) lines.add(line);
+    }
+    return lines;
+  };
+  // The withheld names `src/*-overloads.d.ts` declares are the ones the
+  // signatures artifact folds from the authored store.
+  const isAuthored = (entry: CombinedEntry): boolean =>
+    entry.identity.kind === "FUNCTION" && OVERLOAD_COVERED_SKIPS.has(entry.identity.name);
+  const allEntries = surface.namespaces.flatMap((ns) => ns.entries);
+  const authoredEntries = allEntries.filter(isAuthored);
+
+  test("only the authored folds carry arms", () => {
+    expect(allEntries.filter((entry) => entry.authoredArms && !isAuthored(entry))).toEqual([]);
+  });
+
+  test("each authored arm spans the versions whose fold declares it", () => {
+    expect(authoredEntries.length).toBeGreaterThan(0);
+    for (const entry of authoredEntries) {
+      const { namespace, name } = entry.identity;
+      const arms = entry.authoredArms ?? [];
+      const folded = surface.versions.map((version) => foldLines(version, namespace, name));
+      expect({ name, arms: arms.map((arm) => arm.signature).sort() }).toEqual({
+        name,
+        arms: [...new Set(folded.flatMap((lines) => [...lines]))].sort(),
+      });
+      for (const arm of arms) {
+        expect({ name, arm: arm.signature, availableIn: arm.availableIn }).toEqual({
+          name,
+          arm: arm.signature,
+          availableIn: surface.versions.filter((_, index) => folded[index]?.has(arm.signature)),
+        });
+      }
+    }
+    expect(
+      authoredEntries.some((entry) =>
+        entry.authoredArms?.some((arm) => arm.availableIn.length < surface.versions.length),
+      ),
+    ).toBe(true);
+  });
+
+  test("gui.set's removal arm spans its store since, and its other arms every version", () => {
+    const store = surface.signatureStore?.["gui.set"];
+    const gate = store?.since?.findIndex((since) => since !== null) ?? -1;
+    const since = store?.since?.[gate] as string;
+    const removal = store?.signatures[gate] as string;
+    expect(removal).toContain("value: undefined");
+    const entries = authoredEntries.filter((entry) => entry.identity.name === "gui.set");
+    expect(entries.length).toBeGreaterThan(0);
+    for (const entry of entries) {
+      expect(entry.authoredArms?.map((arm) => arm.signature)).toEqual(store?.signatures);
+      for (const arm of entry.authoredArms ?? []) {
+        const expected =
+          arm.signature === removal
+            ? surface.versions.filter((version) => compareSemverDesc(version, since) <= 0)
+            : surface.versions;
+        expect({ arm: arm.signature, availableIn: arm.availableIn }).toEqual({
+          arm: arm.signature,
+          availableIn: expected,
+        });
+      }
+      const label = entry.authoredArms?.find((arm) => arm.signature === removal)?.label;
+      expect(label).toEqual({ kind: "since", label: `Since Defold ${since}`, from: since });
     }
   });
 });
