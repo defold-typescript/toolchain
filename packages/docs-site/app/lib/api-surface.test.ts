@@ -17,7 +17,7 @@ import {
   type TranslationStore,
 } from "@defold-typescript/types";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
-import { canonicalApiPages } from "./api-content";
+import { canonicalApiPages, windowedApiPages } from "./api-content";
 import { apiSignatureSymbolLinks } from "./api-page-render";
 import {
   type ApiPage,
@@ -4840,6 +4840,31 @@ describe("authored arm availability on the API pages (committed artifacts)", () 
         removal: atOrAfterSince(bare),
       });
       seen.add(atOrAfterSince(bare));
+    }
+    expect([...seen].sort()).toEqual([false, true]);
+  });
+
+  test("a versioned gui route lists the removal row only from its store since", () => {
+    const axis = combined.versions;
+    const oldest = axis[axis.length - 1] as string;
+    const shared = (store?.signatures ?? []).filter((_, index) => store?.since?.[index] == null);
+    expect(shared.length).toBeGreaterThan(0);
+    const seen = new Set<boolean>();
+    for (const to of axis) {
+      const page = windowedApiPages({ from: oldest, to }, REAL_TYPES_DIR).find(
+        (p) => p.namespace === "gui",
+      );
+      const rows = guiSetRows(page).map((row) => row.signature);
+      expect({
+        to,
+        removal: rows.includes(removal),
+        shared: shared.filter((arm) => !rows.includes(arm)),
+      }).toEqual({
+        to,
+        removal: atOrAfterSince(to),
+        shared: [],
+      });
+      seen.add(atOrAfterSince(to));
     }
     expect([...seen].sort()).toEqual([false, true]);
   });

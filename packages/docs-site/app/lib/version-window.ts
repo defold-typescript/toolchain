@@ -1,4 +1,9 @@
-import { type ApiFunction, symbolIdentityKey } from "@defold-typescript/types";
+import {
+  type ApiFunction,
+  type SignatureStore,
+  signatureStoreFor,
+  symbolIdentityKey,
+} from "@defold-typescript/types";
 import {
   type CombinedEntry,
   type CombinedNamespace,
@@ -105,10 +110,23 @@ function windowedSignature(
   };
 }
 
+// An entry's authored arms that a window version folds; each keeps its absolute
+// `availableIn`, like every other label on a windowed surface.
+function armsInWindow(
+  entry: CombinedEntry,
+  inSlice: ReadonlySet<string>,
+): Pick<CombinedEntry, "authoredArms"> {
+  const arms = entry.authoredArms?.filter((arm) =>
+    arm.availableIn.some((version) => inSlice.has(version)),
+  );
+  return arms?.length ? { authoredArms: arms } : {};
+}
+
 function windowNamespace(
   ns: CombinedNamespace,
   signatures: SignaturesArtifact,
   inSlice: ReadonlySet<string>,
+  scopeStore: (store: SignatureStore) => SignatureStore,
 ): CombinedNamespace | null {
   const survivors = ns.entries.filter((entry) =>
     entry.availableIn.some((version) => inSlice.has(version)),
@@ -142,10 +160,14 @@ function windowNamespace(
       transitions: ns.availability.transitions,
     },
     entries: survivors.map((entry) => {
-      const { slotTypes: _dropped, ...rest } = entry;
-      return { ...rest, ...windowedSignature(entry, signatures, inSlice) };
+      const { slotTypes: _dropped, authoredArms: _narrowed, ...rest } = entry;
+      return {
+        ...rest,
+        ...armsInWindow(entry, inSlice),
+        ...windowedSignature(entry, signatures, inSlice),
+      };
     }),
-    ...(ns.signatureStore ? { signatureStore: ns.signatureStore } : {}),
+    ...(ns.signatureStore ? { signatureStore: scopeStore(ns.signatureStore) } : {}),
     ...(ns.translationStore ? { translationStore: ns.translationStore } : {}),
   };
 }
@@ -157,11 +179,14 @@ function windowNamespace(
  * alone excludes a symbol added after the target; `from` alone excludes one whose
  * span ended before the reader cares.
  *
- * Membership is the only thing that narrows. The returned `versions` and every
- * namespace's `availability.versions` stay the full tracked axis, so labels
- * remain absolute; the bounds ride along on {@link CombinedSurface.window}
- * instead. Pure — the input surface is memoized process-wide and is never
- * mutated.
+ * Membership narrows, and so do the authored overload arms: every signature
+ * store is scoped to the arms `to` declares, and an entry keeps the
+ * `authoredArms` a window version folds. An arm's `since` has no end, so it meets
+ * the window exactly when it exists at `to`, and the two narrowings agree. The
+ * returned `versions` and every namespace's `availability.versions` stay the
+ * full tracked axis, so labels remain absolute; the bounds ride along on
+ * {@link CombinedSurface.window} instead. Pure — the input surface is memoized
+ * process-wide and is never mutated.
  */
 export function windowCombinedSurface(
   combined: CombinedSurface,
@@ -169,16 +194,24 @@ export function windowCombinedSurface(
   window: VersionWindow,
 ): CombinedSurface {
   const inSlice = new Set(windowSlice(combined.versions, window));
+  // Every namespace carries the same merged store; scoping it once keeps them
+  // sharing one scoped store.
+  const scopedStores = new Map<SignatureStore, SignatureStore>();
+  const scopeStore = (store: SignatureStore): SignatureStore => {
+    const scoped = scopedStores.get(store) ?? signatureStoreFor(store, window.to);
+    scopedStores.set(store, scoped);
+    return scoped;
+  };
   const namespaces: CombinedNamespace[] = [];
   for (const ns of combined.namespaces) {
-    const windowed = windowNamespace(ns, signatures, inSlice);
+    const windowed = windowNamespace(ns, signatures, inSlice, scopeStore);
     if (windowed) namespaces.push(windowed);
   }
   return {
     versions: combined.versions,
     namespaces,
     window,
-    ...(combined.signatureStore ? { signatureStore: combined.signatureStore } : {}),
+    ...(combined.signatureStore ? { signatureStore: scopeStore(combined.signatureStore) } : {}),
     ...(combined.translationStore ? { translationStore: combined.translationStore } : {}),
   };
 }
