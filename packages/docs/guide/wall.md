@@ -11,7 +11,11 @@ namespaces instead of narrowing one, see [`resolve`](./resolve.md).
 
 Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a
 `.gui_script`, and `render.*` only inside a `.render_script`. Every other
-namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
+namespace (`msg`, `vmath`, `sys`, `go`, …) is available in every kind, except
+that a render script has no game object, so it cannot call a function that
+needs one: all of `sprite`, `factory`, `physics` and their kin, and most of `go`.
+See [API availability by script kind](./script-lifecycle.md#api-availability-by-script-kind)
+for the full list.
 
 By default `defold-typescript` gives you the **full** `@defold-typescript/types`
 surface everywhere. `init`, `build`, and `watch` never change this: they scaffold
@@ -25,12 +29,12 @@ at compile time, opt in with `wall`.
 A wall is a composite `tsconfig.json` written into a single-kind source directory
 that narrows `compilerOptions.types` to that kind's subpath:
 
-| Script kind      | `types` entrypoint                        | Namespaces           |
-| ---------------- | ----------------------------------------- | -------------------- |
-| `.script`        | `@defold-typescript/types/script`         | universal only       |
-| `.gui_script`    | `@defold-typescript/types/gui-script`     | universal + `gui`    |
-| `.render_script` | `@defold-typescript/types/render-script`  | universal + `render` |
-| `.editor_script` | `@defold-typescript/types/editor-script`  | `editor` only        |
+| Script kind      | `types` entrypoint                       | Namespaces                                                          |
+| ---------------- | ---------------------------------------- | ------------------------------------------------------------------- |
+| `.script`        | `@defold-typescript/types/script`        | universal only                                                      |
+| `.gui_script`    | `@defold-typescript/types/gui-script`    | universal + `gui`                                                   |
+| `.render_script` | `@defold-typescript/types/render-script` | universal + `render`, without the functions that need a game object |
+| `.editor_script` | `@defold-typescript/types/editor-script` | `editor` only                                                       |
 
 `.editor_script` is the odd one out: it runs in the editor's own Lua VM, so its
 surface is disjoint from the runtime kinds rather than a narrowing of them — no
