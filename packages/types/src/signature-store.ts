@@ -27,3 +27,38 @@ export type SignatureStore = Record<string, SignatureOverride>;
 export function lookupSignature(store: SignatureStore, fqn: string): SignatureOverride | null {
   return store[fqn] ?? null;
 }
+
+function versionParts(version: string): number[] {
+  return version.split(".").map((part) => Number.parseInt(part, 10));
+}
+
+function versionAtLeast(version: string, since: string): boolean {
+  const [have, need] = [versionParts(version), versionParts(since)];
+  for (let index = 0; index < Math.max(have.length, need.length); index += 1) {
+    const diff = (have[index] ?? 0) - (need[index] ?? 0);
+    if (diff !== 0) return diff > 0;
+  }
+  return true;
+}
+
+// The override as a target at `version` declares it: only the rows whose `since`
+// is absent, `null`, or at most `version`, with `docs` and `since` kept parallel.
+export function signatureArmsFor(override: SignatureOverride, version: string): SignatureOverride {
+  const since = override.since;
+  if (since === undefined) return override;
+  const kept = override.signatures
+    .map((_, index) => index)
+    .filter((index) => {
+      const first = since[index];
+      return first == null || versionAtLeast(version, first);
+    });
+  if (kept.length === override.signatures.length) return override;
+  const docs = override.docs;
+  return {
+    signatures: kept.map((index) => override.signatures[index] as string),
+    ...(docs === undefined
+      ? {}
+      : { docs: kept.filter((index) => index < docs.length).map((index) => docs[index] ?? null) }),
+    since: kept.map((index) => since[index] ?? null),
+  };
+}

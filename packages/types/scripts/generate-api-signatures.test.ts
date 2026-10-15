@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import committed from "../api-signatures.json" with { type: "json" };
 import { OVERLOAD_COVERED_SKIPS } from "../src/emit-dts";
 import { splitTopLevel } from "../src/luals-type-expr";
+import { signatureArmsFor } from "../src/signature-store";
 import { targetBindingOptions } from "./binding-pin";
 import { selectCompleteVersionSurfaces } from "./generate-api-availability";
 import {
@@ -13,6 +14,8 @@ import {
   withheldSymbols,
 } from "./generate-api-signatures";
 import { loadApiTargets, loadTargetModules } from "./regen";
+import { loadSignatureFile } from "./signature-store-fs";
+import { compareVersions } from "./target-version";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const SIGNATURES_PATH = resolve(PACKAGE_ROOT, "api-signatures.json");
@@ -198,6 +201,45 @@ describe("hand-authored symbols survive the skip filter", () => {
       expect(present.has("render.not_a_real_function")).toBe(false);
     });
   }
+
+  test("each target folds exactly the store arms its version declares", () => {
+    let withheldArms = 0;
+    let gatedArms = 0;
+    for (const target of COMPLETE_TARGETS) {
+      const version = target.id.replace(/^defold-/, "");
+      const perSymbol = artifact.versions[version] ?? {};
+      for (const entry of loadTargetModules(target, PACKAGE_ROOT)) {
+        const store = loadSignatureFile(
+          resolve(PACKAGE_ROOT, "signatures", `${entry.namespace}.json`),
+        );
+        for (const { key, fqn } of withheldSymbols(entry)) {
+          const override = store[fqn];
+          if (override === undefined) continue;
+          const lines = perSymbol[key]?.split("\n") ?? [];
+          expect({ version, fqn, lines }).toEqual({
+            version,
+            fqn,
+            lines: signatureArmsFor(override, version).signatures,
+          });
+          withheldArms += override.signatures.length - lines.length;
+          // The import gate's own comparison, so an arm folds on exactly the
+          // targets whose surface imports the file declaring it.
+          for (const [index, since] of (override.since ?? []).entries()) {
+            if (since === null) continue;
+            gatedArms++;
+            const arm = override.signatures[index] as string;
+            expect({ version, arm, folded: lines.includes(arm) }).toEqual({
+              version,
+              arm,
+              folded: compareVersions(version, since) >= 0,
+            });
+          }
+        }
+      }
+    }
+    expect(gatedArms).toBeGreaterThan(0);
+    expect(withheldArms).toBeGreaterThan(0);
+  });
 });
 
 describe("per-slot rendered types travel with the signature", () => {

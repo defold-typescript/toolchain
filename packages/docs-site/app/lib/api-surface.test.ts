@@ -54,7 +54,11 @@ import {
   loadCombinedSurface,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
-import { combinedNamespaceToApiPage } from "./combined-surface";
+import {
+  combinedApiPages,
+  combinedNamespaceToApiPage,
+  compareSemverDesc,
+} from "./combined-surface";
 import { pageHeadings, slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 import { versionLabel } from "./version-switch";
@@ -4787,5 +4791,56 @@ describe("functionOverviewCards over overload groups", () => {
     expect(functionAnchorText([one])).toBe(one.signature);
     expect(functionAnchorText(group)).toBe(overloadHeading(group));
     expect(overloadHeading(group)).toBe("go.get_position(...): vector3");
+  });
+});
+
+describe("authored arm availability on the API pages (committed artifacts)", () => {
+  const combined = loadCombinedSurface(REAL_TYPES_DIR);
+  const store = combined.signatureStore?.["gui.set"];
+  const gate = store?.since?.findIndex((since) => since !== null) ?? -1;
+  const since = store?.since?.[gate] as string;
+  const removal = store?.signatures[gate] as string;
+  const atOrAfterSince = (version: string): boolean => compareSemverDesc(version, since) <= 0;
+  const guiSetRows = (page: ApiPage | undefined): ApiSymbol[] =>
+    page
+      ? apiModuleSymbols(page, page.translations, page.signatures).filter(
+          (symbol) => symbol.kind === "function" && symbol.name === "gui.set",
+        )
+      : [];
+
+  test("the Combined gui page dates the gui.set removal row from its store since", () => {
+    expect(removal).toContain("value: undefined");
+    const page = combinedApiPages(combined).find((p) => p.namespace === "gui");
+    const rows = guiSetRows(page);
+    expect(rows.map((row) => row.signature)).toEqual(store?.signatures ?? []);
+    for (const row of rows) {
+      // A row with no record is present on the whole axis, as the page renders it.
+      const presentIn = row.availability?.availableIn?.length
+        ? row.availability.availableIn
+        : combined.versions;
+      expect({ row: row.signature, presentIn }).toEqual({
+        row: row.signature,
+        presentIn:
+          row.signature === removal ? combined.versions.filter(atOrAfterSince) : combined.versions,
+      });
+    }
+  });
+
+  test("an exact-version gui page lists the removal row only from its store since", () => {
+    const seen = new Set<boolean>();
+    for (const version of versionsWithDiskFixtures(REAL_TYPES_DIR)) {
+      const bare = version.id.replace(/^defold-/, "");
+      const page = loadApiSurfaceForVersion(REAL_TYPES_DIR, version.id).find(
+        (p) => p.namespace === "gui",
+      );
+      const rows = guiSetRows(page).map((row) => row.signature);
+      expect(rows.length).toBeGreaterThan(0);
+      expect({ version: bare, removal: rows.includes(removal) }).toEqual({
+        version: bare,
+        removal: atOrAfterSince(bare),
+      });
+      seen.add(atOrAfterSince(bare));
+    }
+    expect([...seen].sort()).toEqual([false, true]);
   });
 });

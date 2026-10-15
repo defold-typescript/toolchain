@@ -136,6 +136,7 @@ export {
   lookupSignature,
   type SignatureOverride,
   type SignatureStore,
+  signatureArmsFor,
 } from "./signature-store";
 export {
   classifyUrlParameter,
