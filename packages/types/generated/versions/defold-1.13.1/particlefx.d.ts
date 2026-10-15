@@ -134,7 +134,28 @@ declare global {
      * });
      * ```
      */
-    function stop(url: string | Hash | Url, options?: { clear?: boolean }): void;
+    function stop(url: string | Hash | Url): void;
+    /**
+     * Stops a particle FX component from playing.
+     * Stopping a particle FX does not remove already spawned particles.
+     * Which particle FX to stop is identified by the URL.
+     *
+     * @param url - the particle fx that should stop playing
+     * @param options - Options when stopping the particle fx. Supported options:
+     *
+     * - boolean `clear`: instantly clear spawned particles
+     * @example
+     * ```ts
+     * // How to stop a particle fx when a game object is deleted and immediately also
+     * // clear any spawned particles:
+     * export default defineScript({
+     *   final(self) {
+     *     particlefx.stop("#particlefx", { clear: true });
+     *   },
+     * });
+     * ```
+     */
+    function stop(url: string | Hash | Url, options: { clear?: boolean }): void;
     interface properties {
       /**
        * The animation used during rendering by an emitter in a particle FX component.

@@ -271,7 +271,51 @@ declare global {
      * });
      * ```
      */
-    function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;
+    function raycast_async(from: Vector3, to: Vector3, groups: Hash[]): void;
+    /**
+     * Ray casts are used to test for intersections against collision objects in the physics world.
+     * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects
+     * do not intersect with ray casts.
+     * Which collision objects to hit is filtered by their collision groups and can be configured
+     * through `groups`.
+     * The actual ray cast will be performed during the physics-update.
+     *
+     * - If an object is hit, the result will be reported via a ray_cast_response message.
+     * - If there is no object hit, the result will be reported via a ray_cast_missed message.
+     *
+     * NOTE: Ray casts will ignore collision objects that contain the starting point of the ray. This is a limitation in Box2D.
+     *
+     * @param from - the world position of the start of the ray
+     * @param to - the world position of the end of the ray
+     * @param groups - a lua table containing the hashed groups for which to test collisions against
+     * @param request_id - a number in range [0,255]. It will be sent back in the response for identification, 0 by default
+     * @example
+     * ```ts
+     * // How to perform a ray cast asynchronously:
+     * export default defineScript({
+     *   init() {
+     *     return { my_groups: [hash("my_group1"), hash("my_group2")] };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // request ray cast
+     *     const my_start = go.get_world_position();
+     *     const my_end = vmath.vector3(my_start.x, my_start.y - 100, my_start.z);
+     *     physics.raycast_async(my_start, my_end, self.my_groups);
+     *   },
+     *
+     *   on_message(self, message_id, message, sender) {
+     *     // check for the response
+     *     if (message_id === hash("ray_cast_response")) {
+     *       // act on the hit
+     *     } else if (message_id === hash("ray_cast_missed")) {
+     *       // act on the miss
+     *     }
+     *   },
+     * });
+     * ```
+     */
+    function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;
     /**
      * Only one physics world event listener can be set at a time.
      *

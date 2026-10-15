@@ -3,6 +3,7 @@ import {
   type BindingFunction,
   type BindingSlot,
   type LuaKind,
+  mergeBindings,
   readBindingsForTarget,
   UNBOUND_NAMESPACES,
 } from "./engine-binding-extract";
@@ -16,7 +17,7 @@ import {
 } from "./lua-kind";
 import { type ApiTarget, loadApiTargets } from "./regen";
 
-export { readVerdicts, VERDICTS_FILE, type Verdict };
+export { mergeBindings, readVerdicts, VERDICTS_FILE, type Verdict };
 
 // Targets whose engine bindings are vendored, and the on-demand ref-doc targets
 // whose bindings are not.
@@ -64,57 +65,6 @@ export function comparedNamespaces(target: ApiTarget): string[] {
 
 function union<T>(values: Iterable<T>): T[] {
   return [...new Set(values)];
-}
-
-// A variant that never reads the slot ignores a nil there, so a merged slot
-// raises on nil only when every variant's does.
-function mergeSlot(a: BindingSlot | undefined, b: BindingSlot | undefined): BindingSlot {
-  if (!a || !b) {
-    const { nilRaises: _, ...only } = (a ?? b) as BindingSlot;
-    return { ...only, optional: true };
-  }
-  const manual = a.manual ?? b.manual;
-  return {
-    index: a.index,
-    kinds: union([...a.kinds, ...b.kinds]).sort() as LuaKind[],
-    optional: a.optional || b.optional,
-    fields: union([...a.fields, ...b.fields]).sort(),
-    ...(manual === undefined ? {} : { manual }),
-    ...(a.minusOne || b.minusOne ? { minusOne: true as const } : {}),
-    ...(a.unchecked && b.unchecked ? { unchecked: true as const } : {}),
-    ...(a.nilRaises && b.nilRaises ? { nilRaises: true as const } : {}),
-  };
-}
-
-// The Box2D v2 and v3 sources, and platform variants such as `http.request`,
-// bind one Lua name more than once. A declaration serves every variant, so it
-// is compared against what any of them accepts.
-export function mergeBindings(functions: readonly BindingFunction[]): BindingFunction[] {
-  const merged = new Map<string, BindingFunction>();
-  for (const fn of functions) {
-    const key = `${fn.namespace}.${fn.name}`;
-    const prior = merged.get(key);
-    if (!prior) {
-      merged.set(key, fn);
-      continue;
-    }
-    const length = Math.max(prior.slots.length, fn.slots.length);
-    const slots = Array.from({ length }, (_, i) => mergeSlot(prior.slots[i], fn.slots[i]));
-    const count =
-      prior.returns.count === fn.returns.count ? prior.returns.count : ("dynamic" as const);
-    merged.set(key, {
-      ...prior,
-      minArgs: Math.min(prior.minArgs, fn.minArgs),
-      maxArgs:
-        prior.maxArgs === "variadic" || fn.maxArgs === "variadic"
-          ? "variadic"
-          : Math.max(prior.maxArgs, fn.maxArgs),
-      slots,
-      returns: { ...prior.returns, count },
-      manual: union([...prior.manual, ...fn.manual]),
-    });
-  }
-  return [...merged.values()];
 }
 
 function arityText(min: number, max: number | "variadic"): string {

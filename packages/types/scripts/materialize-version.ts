@@ -2,7 +2,6 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import {
   type ApiTarget,
-  type GenerateOptions,
   GO_INSTANCE_SRC_AUGMENTATIONS,
   generateBuiltinMessagesDeclaration,
   generateModuleDeclaration,
@@ -19,6 +18,7 @@ import {
   type ModuleManifestEntry,
   type ResolveTargetOptions,
   resolveTargetModules,
+  type TargetBindingOptions,
 } from "./regen";
 
 export {
@@ -116,7 +116,7 @@ export interface BuildVersionedSurfaceOptions {
   // (`targetBindingOptions`). Only an in-repo caller rebuilding a vendored
   // target's committed surface passes it; a published install vendors no engine
   // source, and the ref-doc targets it materializes have none to read.
-  readonly emitOptions?: Pick<GenerateOptions, "registeredConstants" | "bindingEvidence">;
+  readonly emitOptions?: TargetBindingOptions;
 }
 
 export interface MaterializeVersionedSurfaceOptions extends BuildVersionedSurfaceOptions {

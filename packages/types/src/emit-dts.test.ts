@@ -5217,6 +5217,93 @@ describe("the body, shape_index alternative arity", () => {
   });
 });
 
+describe("a slot whose explicit nil raises", () => {
+  const fn: ApiFunction = {
+    name: "ns.f",
+    brief: "Does f.",
+    description: "",
+    parameters: [
+      { name: "a", doc: "first", types: ["number"], isOptional: false },
+      { name: "b", doc: "second", types: ["hash"], isOptional: true },
+      { name: "c", doc: "third", types: ["boolean"], isOptional: true },
+    ],
+    returnValues: [],
+  };
+  const module: ApiModule = {
+    namespace: "ns",
+    brief: "",
+    description: "",
+    functions: [fn],
+    variables: [],
+    constants: [],
+    properties: [],
+    typedefs: [],
+  };
+  const emit = (slots?: readonly number[]): string =>
+    emitDeclarations(
+      module,
+      slots === undefined ? undefined : { nilRaisingSlots: new Map([["ns.f", slots]]) },
+    );
+  const signaturesOf = (out: string): string[] =>
+    out
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("function f("));
+
+  test("a raising slot splits into the call without it and the call with it required", () => {
+    expect(signaturesOf(emit([2]))).toEqual([
+      "function f(a: number): void;",
+      "function f(a: number, b: Hash, c?: boolean): void;",
+    ]);
+  });
+
+  test("an earlier optional slot in the longer call takes undefined in its place", () => {
+    expect(signaturesOf(emit([3]))).toEqual([
+      "function f(a: number, b?: Hash): void;",
+      "function f(a: number, b: Hash | undefined, c: boolean): void;",
+    ]);
+  });
+
+  test("two raising slots yield one call per omittable arity", () => {
+    expect(signaturesOf(emit([2, 3]))).toEqual([
+      "function f(a: number): void;",
+      "function f(a: number, b: Hash): void;",
+      "function f(a: number, b: Hash, c: boolean): void;",
+    ]);
+  });
+
+  test("a listed required slot, and no listing, leave the declaration unchanged", () => {
+    const plain = emit();
+    expect(signaturesOf(plain)).toEqual(["function f(a: number, b?: Hash, c?: boolean): void;"]);
+    expect(emit([1])).toBe(plain);
+  });
+
+  test("every call carries the function's doc", () => {
+    const lines = emit([2]).split("\n");
+    const signatureRows = lines.flatMap((line, i) =>
+      line.trim().startsWith("function f(") ? [i] : [],
+    );
+    expect(signatureRows).toHaveLength(2);
+    for (const row of signatureRows) {
+      expect(lines[row - 1]?.trim()).toBe("*/");
+      expect(
+        lines
+          .slice(0, row)
+          .reverse()
+          .find((line) => line.includes("Does f.")),
+      ).toBeDefined();
+    }
+    expect(lines.filter((line) => line.includes("Does f."))).toHaveLength(2);
+  });
+
+  test("the signature entry lists each call in declaration order, typed by the first", () => {
+    const options = { nilRaisingSlots: new Map([["ns.f", [3]]]) };
+    const [entry] = emitSymbolSignatures(module, options);
+    expect(entry?.tsSignature.split("\n")).toEqual(signaturesOf(emitDeclarations(module, options)));
+    expect(Object.keys(entry?.slotTypes ?? {})).toEqual(["param:0:a", "param:1:b"]);
+  });
+});
+
 describe("a nested table field's type override", () => {
   test("an override keyed to a field inside a table-array slot types that field only", () => {
     const parsed: TableField[] = [

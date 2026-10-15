@@ -183,7 +183,27 @@ declare global {
      * }
      * ```
      */
-    function get_config_int(key: string, default_value?: number): number;
+    function get_config_int(key: string): number;
+    /**
+     * Get integer config value from the game.project configuration file with optional default value
+     *
+     * @param key - key to get value for. The syntax is SECTION.KEY
+     * @param default_value - (optional) default value to return if the value does not exist
+     * @returns config value as an integer. default_value if the config key does not exist. 0 if no default value was supplied.
+     * @example
+     * Get user config value
+     * ```ts
+     * const speed = sys.get_config_int("my_game.speed", 20); // with default value
+     * ```
+     * @example
+     * ```ts
+     * const testmode = sys.get_config_int("my_game.testmode"); // without default value
+     * if (testmode !== undefined) {
+     *   // do stuff
+     * }
+     * ```
+     */
+    function get_config_int(key: string, default_value: number): number;
     /**
      * Get number config value from the game.project configuration file with optional default value
      *
@@ -196,7 +216,20 @@ declare global {
      * const speed = sys.get_config_number("my_game.speed", 20.0);
      * ```
      */
-    function get_config_number(key: string, default_value?: number): number;
+    function get_config_number(key: string): number;
+    /**
+     * Get number config value from the game.project configuration file with optional default value
+     *
+     * @param key - key to get value for. The syntax is SECTION.KEY
+     * @param default_value - (optional) default value to return if the value does not exist
+     * @returns config value as an number. default_value if the config key does not exist. 0 if no default value was supplied.
+     * @example
+     * ```ts
+     * // Get user config value
+     * const speed = sys.get_config_number("my_game.speed", 20.0);
+     * ```
+     */
+    function get_config_number(key: string, default_value: number): number;
     /**
      * Returns the current network connectivity status
      * on mobile platforms.
@@ -355,7 +388,46 @@ declare global {
      * }
      * ```
      */
-    function get_sys_info(options?: { ignore_secure?: boolean }): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };
+    function get_sys_info(): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };
+    /**
+     * Returns a table with system information.
+     *
+     * @param options - optional options table
+     * - ignore_secure boolean this flag ignores values might be secured by OS e.g. `device_ident`
+     * @returns table with system information in the following fields:
+     *
+     * `device_model`
+     * string Only available on iOS and Android.
+     * `manufacturer`
+     * string Only available on iOS and Android.
+     * `system_name`
+     * string The system name: "Darwin", "Linux", "Windows", "HTML5", "Android" or "iPhone OS"
+     * `system_version`
+     * string The system OS version.
+     * `api_version`
+     * string The API version on the system.
+     * `language`
+     * string Two character ISO-639 format, i.e. "en".
+     * `device_language`
+     * string Two character ISO-639 format (i.e. "sr") and, if applicable, followed by a dash (-) and an ISO 15924 script code (i.e. "sr-Cyrl" or "sr-Latn"). Reflects the device preferred language.
+     * `territory`
+     * string Two character ISO-3166 format, i.e. "US".
+     * `gmt_offset`
+     * number The current offset from GMT (Greenwich Mean Time), in minutes.
+     * `device_ident`
+     * string This value secured by OS. "identifierForVendor" on iOS. "android_id" on Android. On Android, you need to add `READ_PHONE_STATE` permission to be able to get this data. We don't use this permission in Defold.
+     * `user_agent`
+     * string The HTTP user agent, i.e. "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8"
+     * @example
+     * ```ts
+     * // How to get system information:
+     * const info = sys.get_sys_info();
+     * if (info.system_name === "HTML5") {
+     *   // We are running in a browser.
+     * }
+     * ```
+     */
+    function get_sys_info(options: { ignore_secure?: boolean }): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };
     /**
      * If the file exists, it must have been created by `sys.save` to be loaded.
      * This function will raise a Lua error if an error occurs while loading the file.
@@ -519,7 +591,30 @@ declare global {
      * }
      * ```
      */
-    function open_url(url: string, attributes?: { target?: string }): boolean;
+    function open_url(url: string): boolean;
+    /**
+     * Open URL in default application, typically a browser
+     *
+     * @param url - url to open
+     * @param attributes - table with attributes
+     * `target`
+     * - string : Optional. Specifies the target attribute or the name of the window. The following values are supported:
+     * - `_self` - (default value) URL replaces the current page.
+     * - `_blank` - URL is loaded into a new window, or tab.
+     * - `_parent` - URL is loaded into the parent frame.
+     * - `_top` - URL replaces any framesets that may be loaded.
+     * - `name` - The name of the window (Note: the name does not specify the title of the new window).
+     * @returns a boolean indicating if the url could be opened or not
+     * @example
+     * ```ts
+     * // Open an URL:
+     * const success = sys.open_url("http://www.defold.com", { target: "_blank" });
+     * if (!success) {
+     *   // could not open the url...
+     * }
+     * ```
+     */
+    function open_url(url: string, attributes: { target?: string }): boolean;
     /**
      * Reboots the game engine with a specified set of arguments.
      * Arguments will be translated into command line arguments. Calling reboot

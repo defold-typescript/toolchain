@@ -113,7 +113,30 @@ declare global {
     function get(
       node: Opaque<"node">,
       property: Hash,
-      options?: gui.PropertyOptions,
+    ): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[];
+    /**
+     * Gets a material constant of a node, or any property named by a hash. Pass
+     * the constant's name as a hash, such as `hash("tint")`. Reading an array
+     * constant without `index` returns every element in a table.
+     *
+     * @param node - node to get the property for
+     * @param property - the property to retrieve, as a hash
+     * @param options - optional options table (only applicable for material constants)
+     * - `index` integer index into array property (1 based)
+     *
+     * **⚠️ `index` is 1-based; passed to Defold unchanged.**
+     * @returns the property value
+     * @example
+     * ```ts
+     * const node = gui.get_node("my_box_node");
+     * const tint = gui.get(node, hash("tint"));
+     * const second = gui.get(node, hash("tint_array"), { index: 2 });
+     * ```
+     */
+    function get(
+      node: Opaque<"node">,
+      property: Hash,
+      options: gui.PropertyOptions,
     ): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[];
     /**
      * Instead of using specific setters such as gui.set_position or gui.set_scale,
@@ -189,7 +212,42 @@ declare global {
       node: Opaque<"node">,
       property: Hash,
       value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash,
-      options?: gui.PropertyOptions,
+    ): void;
+    /**
+     * Sets a material constant of a node, or any property named by a hash. If a
+     * material specifies a constant called `tint` in the .material file, set it
+     * with `gui.set(node, hash("tint"), vmath.vector4(1, 0, 0, 1))`, or pass a
+     * vmath.matrix4 if the constant is a matrix. To set one element of an array
+     * constant, pass an options table with `index` set.
+     *
+     * @param node - node to set the property for
+     * @param property - the property to set, as a hash
+     * @param value - the value to set
+     * @param options - optional material-constant options. **⚠️ `index` is 1-based; passed to Defold unchanged.**
+     * @example
+     * Sets various material constants for a node:
+     * ```ts
+     * const node = gui.get_node("my_box_node");
+     * gui.set(node, hash("tint"), vmath.vector4(1, 0, 0, 1));
+     * // matrix4 is also supported
+     * gui.set(node, hash("light_matrix"), vmath.matrix4());
+     * // update a constant in an array at position 4. the array is specified in the shader as:
+     * // uniform vec4 tint_array[4]; // lua is 1 based, shader is 0 based
+     * gui.set(node, hash("tint_array"), vmath.vector4(1, 0, 0, 1), { index: 4 });
+     * // update a matrix constant in an array at position 4. the array is specified in the shader as:
+     * // uniform mat4 light_matrix_array[4];
+     * gui.set(node, hash("light_matrix_array"), vmath.matrix4(), { index: 4 });
+     * // update a sub-element in a constant
+     * gui.set(node, hash("tint.x"), 1);
+     * // update a sub-element in an array constant at position 4
+     * gui.set(node, hash("tint_array.x"), 1, { index: 4 });
+     * ```
+     */
+    function set(
+      node: Opaque<"node">,
+      property: Hash,
+      value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash,
+      options: gui.PropertyOptions,
     ): void;
     /**
      * Sets a resource property of the gui component itself, addressed with
@@ -222,7 +280,39 @@ declare global {
       url: Url,
       property: "material" | "materials" | "fonts" | "textures" | Hash,
       value: Hash,
-      options?: gui.PropertyOptions,
+    ): void;
+    /**
+     * Sets a resource property of the gui component itself, addressed with
+     * `msg.url()`: `"material"`, or the `"materials"`, `"fonts"` or `"textures"`
+     * entry named by the `key` option. A property a native extension registers is
+     * named by a hash.
+     *
+     * @param url - msg.url() to the gui itself
+     * @param property - the property to set
+     * @param value - the resource to set
+     * @param options - options table; `key` names the entry to set
+     * @example
+     * Set a named property
+     * ```ts
+     * export default defineGuiScript({
+     *   on_message(self, message_id, message) {
+     *     if (message_id === hash("set_font") && types.is_hash(message.font)) {
+     *       gui.set(msg.url(), "fonts", message.font, { key: "my_font_name" });
+     *       gui.set_font(gui.get_node("text"), "my_font_name");
+     *     } else if (message_id === hash("set_texture") && types.is_hash(message.texture)) {
+     *       gui.set(msg.url(), "textures", message.texture, { key: "my_texture" });
+     *       gui.set_texture(gui.get_node("box"), "my_texture");
+     *       gui.play_flipbook(gui.get_node("box"), "logo_256");
+     *     }
+     *   },
+     * });
+     * ```
+     */
+    function set(
+      url: Url,
+      property: "material" | "materials" | "fonts" | "textures" | Hash,
+      value: Hash,
+      options: gui.PropertyOptions,
     ): void;
     /**
      * This starts an animation of a node property according to the specified parameters.
@@ -307,7 +397,91 @@ declare global {
       to: number | Vector3 | Vector4 | Quaternion,
       easing: gui.Easing | Vector,
       duration: number,
-      delay?: number,
+    ): void;
+    /**
+     * This starts an animation of a node property according to the specified parameters.
+     * If the node property is already being animated, that animation will be canceled and
+     * replaced by the new one. Note however that several different node properties
+     * can be animated simultaneously. Use `gui.cancel_animations` to stop the animation
+     * before it has completed.
+     * Only the node properties gui.get lists can be animated; a material constant
+     * cannot. Composite properties of type vector3, vector4 or quaternion
+     * also expose their sub-components (x, y, z and w).
+     * You can address the components individually by suffixing the name with a dot '.'
+     * and the name of the component.
+     * For instance, `"position.x"` (the position x coordinate) or `"color.w"`
+     * (the color alpha value).
+     * If a `complete_function` (Lua function) is specified, that function will be called
+     * when the animation has completed.
+     * By starting a new animation in that function, several animations can be sequenced
+     * together. See the examples below for more information.
+     *
+     * @param node - node to animate
+     * @param property - property to animate; each `gui.PROP_*` constant equals its corresponding property name string
+     * @param to - target property value
+     * @param easing - easing to use during animation.
+     * Either specify one of the `gui.EASING_*` constants or provide a
+     * vector with a custom curve. See the animation guide for more information.
+     * @param duration - duration of the animation in seconds.
+     * @param delay - delay before the animation starts in seconds.
+     * @param complete_function - function to call when the
+     * animation has completed
+     * @param playback - playback mode
+     * @example
+     * How to start a simple color animation, where the node fades in to white during 0.5 seconds:
+     * ```ts
+     * // How to start a simple color animation, where the node fades in to white during 0.5 seconds:
+     * const node = gui.get_node("my_node");
+     * gui.set_color(node, vmath.vector4(0, 0, 0, 0)); // node is fully transparent
+     * gui.animate(node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_INOUTQUAD, 0.5); // start animation
+     * ```
+     * @example
+     * How to start a sequenced animation where the node fades in to white during 0.5 seconds, stays visible for 2 seconds and then fades out:
+     * ```ts
+     * // How to start a sequenced animation where the node fades in to white during 0.5
+     * // seconds, stays visible for 2 seconds and then fades out:
+     * function on_animation_done(self: unknown, node: Opaque<"node">) {
+     *   // fade out node, but wait 2 seconds before the animation starts
+     *   gui.animate(node, gui.PROP_COLOR, vmath.vector4(0, 0, 0, 0), gui.EASING_OUTQUAD, 0.5, 2.0);
+     * }
+     *
+     * export default defineGuiScript({
+     *   init(self) {
+     *     // fetch the node we want to animate
+     *     const my_node = gui.get_node("my_node");
+     *     // node is initially set to fully transparent
+     *     gui.set_color(my_node, vmath.vector4(0, 0, 0, 0));
+     *     // animate the node immediately and call on_animation_done when the animation has completed
+     *     gui.animate(my_node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_INOUTQUAD, 0.5, 0.0, on_animation_done);
+     *   },
+     * });
+     * ```
+     * @example
+     * How to animate a node's y position using a crazy custom easing curve:
+     * ```ts
+     * // How to animate a node's y position using a crazy custom easing curve:
+     * export default defineGuiScript({
+     *   init(self) {
+     *     const values = [
+     *       0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *       0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *       0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *       0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *     ];
+     *     const vec = vmath.vector(values);
+     *     const node = gui.get_node("box");
+     *     gui.animate(node, "position.y", 100, vec, 4.0, 0, undefined, gui.PLAYBACK_LOOP_PINGPONG);
+     *   },
+     * });
+     * ```
+     */
+    function animate(
+      node: Opaque<"node">,
+      property: keyof gui.node_properties | gui.Property | Hash,
+      to: number | Vector3 | Vector4 | Quaternion,
+      easing: gui.Easing | Vector,
+      duration: number,
+      delay: number,
       complete_function?: (self: unknown, node: Opaque<"node">) => void,
       playback?: gui.Playback,
     ): void;
