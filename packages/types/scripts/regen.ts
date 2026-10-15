@@ -869,14 +869,15 @@ export function kindStdlibReferences(entry: KindManifestEntry): string {
 // added without one, by reading the namespaces each file really re-opens.
 // `since` is the first Defold release, a bare semver, whose engine has what the
 // augmentation declares; a surface generated for an older target omits it.
-// `requiresGoInstance` marks an augmentation declaring a function that needs a
-// game object, so it rides no index of a kind without one; the same guard
-// checks this marker against the functions the file declares.
+// `requiresGoInstance` lists the exact functions an augmentation declares that
+// need a game object, so it rides no index of a kind without one; the same
+// guard checks this list against the functions the file declares, in both
+// directions.
 interface UniversalExtraImport {
   readonly specifier: string;
   readonly restrictedTo?: string;
   readonly since?: string;
-  readonly requiresGoInstance?: true;
+  readonly requiresGoInstance?: readonly string[];
 }
 
 const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
@@ -888,9 +889,13 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   { specifier: "../../src/window-event-guard" },
   { specifier: "../../src/physics-event-guard" },
   { specifier: "../../src/scene-addresses" },
-  // Its `go.property` leaves with `go.get` and `go.set`: `GetScript` finds no
-  // `.script` instance in a render script, so the call raises there too.
-  { specifier: "../../src/go-overloads", requiresGoInstance: true },
+  // `go.property` is listed by hand: `GetScript` finds no `.script` instance in
+  // a render script and returns null rather than raising, and `Script_Property`
+  // raises on that null itself, a check the bindings manifest does not record.
+  {
+    specifier: "../../src/go-overloads",
+    requiresGoInstance: ["go.get", "go.set", "go.property"],
+  },
   { specifier: "../../src/component-properties" },
   { specifier: "../../src/render-overloads", restrictedTo: "render" },
   { specifier: "../../src/gui-overloads", restrictedTo: "gui" },
@@ -918,11 +923,23 @@ export const RESTRICTED_SRC_AUGMENTATIONS: Readonly<Record<string, string>> = Ob
 );
 
 // The `src/*` augmentations that declare a function needing a game object, as
-// module names. Exported so the materialized kind indexes drop them the same
-// way the in-repo ones do.
-export const GO_INSTANCE_SRC_AUGMENTATIONS: readonly string[] = UNIVERSAL_EXTRA_IMPORTS.filter(
-  (entry) => entry.requiresGoInstance === true && entry.specifier.startsWith(SRC_IMPORT_PREFIX),
-).map((entry) => entry.specifier.slice(SRC_IMPORT_PREFIX.length));
+// `<module name> -> <the functions it declares that need one>`. Exported so the
+// scoping guard and the wall probe read the same list.
+export const GO_INSTANCE_SRC_FUNCTIONS: Readonly<Record<string, readonly string[]>> =
+  Object.fromEntries(
+    UNIVERSAL_EXTRA_IMPORTS.filter(
+      (entry) =>
+        entry.requiresGoInstance !== undefined && entry.specifier.startsWith(SRC_IMPORT_PREFIX),
+    ).map((entry) => [
+      entry.specifier.slice(SRC_IMPORT_PREFIX.length),
+      entry.requiresGoInstance as readonly string[],
+    ]),
+  );
+
+// The same augmentations as module names. Exported so the materialized kind
+// indexes drop them the same way the in-repo ones do.
+export const GO_INSTANCE_SRC_AUGMENTATIONS: readonly string[] =
+  Object.keys(GO_INSTANCE_SRC_FUNCTIONS);
 
 // The `src/*` augmentations gated to a release, as `<module name> -> <since>`.
 export const SRC_AUGMENTATION_GATES: Readonly<Record<string, string>> = Object.fromEntries(
@@ -1143,7 +1160,7 @@ export function generateKindIndex(kind: string, target: ApiTarget = DEFAULT_TARG
   const extraImports = UNIVERSAL_EXTRA_IMPORTS.filter(
     (extra) =>
       (extra.restrictedTo === undefined || extra.restrictedTo === entry.restricted) &&
-      (needsGoInstance === null || extra.requiresGoInstance !== true) &&
+      (needsGoInstance === null || extra.requiresGoInstance === undefined) &&
       admitsTarget(extra, target),
   ).map((extra) => extra.specifier);
   const modules = (
@@ -1230,7 +1247,7 @@ export function targetKindManifest(target: ApiTarget): readonly KindManifestEntr
 // `restrictedTo` marker, and every marker names a namespace its file re-opens.
 // Likewise `requiresGoInstance` sits on exactly the files declaring a function
 // the default target's manifest lists, read from this package whatever root the
-// files come from.
+// files come from, and lists exactly the functions its file declares.
 // Exported so a test can reach the guard the entry point runs; never called on
 // import, so the dynamic import below stays unreached from an installed package.
 export async function assertSrcAugmentationScoping(
@@ -1246,7 +1263,7 @@ export async function assertSrcAugmentationScoping(
     ...srcAugmentationScopingViolations(files, RESTRICTED_SRC_AUGMENTATIONS, RESTRICTED_NAMESPACES),
     ...goInstanceMarkerViolations(
       files,
-      GO_INSTANCE_SRC_AUGMENTATIONS,
+      GO_INSTANCE_SRC_FUNCTIONS,
       new Set(Object.keys(loadGoInstanceFunctions(DEFAULT_TARGET) ?? {})),
     ),
   ];
