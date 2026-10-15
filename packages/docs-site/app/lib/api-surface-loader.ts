@@ -6,6 +6,7 @@ import {
   routeTypeDeclarations,
   type SignatureStore,
   type SkipOverloadRule,
+  signatureArmsFor,
   signatureTransitionNames,
   symbolIdentityKey,
   type TranslationStore,
@@ -56,6 +57,17 @@ function loadSignatureStore(typesDir: string): SignatureStore {
     .filter((file) => file.endsWith(".json"))
     .map((file) => JSON.parse(readFileSync(join(dir, file), "utf8")) as SignatureStore);
   return Object.assign({}, ...stores);
+}
+
+// The store as one version declares it: each entry keeps only the arms whose
+// `since` the version meets, and an entry left with none is dropped.
+function signatureStoreFor(store: SignatureStore, version: string): SignatureStore {
+  const scoped: SignatureStore = {};
+  for (const [fqn, override] of Object.entries(store)) {
+    const arms = signatureArmsFor(override, version);
+    if (arms.signatures.length > 0) scoped[fqn] = arms;
+  }
+  return scoped;
 }
 
 // The committed `api-availability.json` (the N-version presence matrix plus the
@@ -801,7 +813,7 @@ function sortApiPages(pages: ApiPage[]): ApiPage[] {
 // {@link loadVersionIndependentPages}.
 function loadEnginePages(typesDir: string, target: ApiTarget, routePrefix: string): ApiPage[] {
   const translations = loadTranslationStore(typesDir);
-  const signatures = loadSignatureStore(typesDir);
+  const signatures = signatureStoreFor(loadSignatureStore(typesDir), bareVersion(target.id));
   // A namespace a Defold extension page now owns (`iap`) leaves every engine
   // surface, so its only page is the one under Libraries.
   const defoldPages = defoldExtensionDocs(siblingLibraryTypesDir(typesDir));

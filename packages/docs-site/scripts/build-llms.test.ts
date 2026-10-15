@@ -1,8 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadCombinedSurface, versionsWithDiskFixtures } from "../app/lib/api-surface-loader";
+import { availabilityLabel } from "@defold-typescript/types";
+import { OVERLOAD_COVERED_SKIPS } from "../../types/src/emit-dts";
+import {
+  loadCombinedSurface,
+  loadSignaturesArtifact,
+  versionsWithDiskFixtures,
+} from "../app/lib/api-surface-loader";
 import { withBase } from "../app/lib/base";
+import { compactAvailability } from "../app/lib/combined-surface";
 import { listGuidePages } from "../app/lib/guide-loader";
 import { SRC_ROOT_FOOTNOTE_ID, SRC_ROOT_FOOTNOTE_LINE } from "../app/lib/src-root-note";
 import {
@@ -515,5 +522,57 @@ describe("llms-full.txt withholds the overloads the declarations withhold", () =
       expect(line).not.toContain('Opaque<"b2Shape">, density');
       expect(line).not.toContain('data: Opaque<"b2MassData">');
     }
+  });
+});
+
+describe("llms-full.txt tags each authored arm with its own availability", () => {
+  const api = section(buildLlmsFull(PACKAGE_TARGET), "## API").split("\n");
+  const combined = loadCombinedSurface(TYPES_DIR);
+  const signatures = loadSignaturesArtifact(TYPES_DIR);
+  // Each authored arm and the versions whose `api-signatures.json` fold declares
+  // it, read from the artifact rather than from the projection the corpus uses.
+  // An authored arm opens with its FQN, so its text names one function.
+  const armVersions = new Map<string, { fqn: string; versions: string[] }>();
+  for (const version of combined.versions) {
+    for (const [key, declaration] of Object.entries(signatures.versions[version] ?? {})) {
+      const [, kind, fqn = ""] = key.split("\u0000");
+      if (kind !== "FUNCTION" || !OVERLOAD_COVERED_SKIPS.has(fqn)) continue;
+      for (const arm of declaration.split("\n")) {
+        const seen = armVersions.get(arm) ?? { fqn, versions: [] };
+        if (!seen.versions.includes(version)) seen.versions.push(version);
+        armVersions.set(arm, seen);
+      }
+    }
+  }
+  const entryFor = (fqn: string) =>
+    combined.namespaces
+      .flatMap((ns) => ns.entries)
+      .find((entry) => entry.identity.kind === "FUNCTION" && entry.identity.name === fqn);
+
+  test("each authored arm line ends with its own span tag, or none when universal", () => {
+    expect(armVersions.size).toBeGreaterThan(0);
+    for (const [arm, { fqn, versions }] of armVersions) {
+      const entry = entryFor(fqn);
+      if (entry === undefined) throw new Error(`no Combined entry for ${fqn}`);
+      const tag = compactAvailability({
+        ...entry,
+        label: availabilityLabel(versions, combined.versions),
+        transition: false,
+      });
+      const lines = api.filter((line) => line === `- ${arm}` || line.startsWith(`- ${arm} [`));
+      expect({ arm, lines }).toEqual({ arm, lines: [tag ? `- ${arm} ${tag}` : `- ${arm}`] });
+      expect(lines[0]).not.toContain("[signature transition]");
+    }
+    expect(
+      [...armVersions.values()].some((arm) => arm.versions.length < combined.versions.length),
+    ).toBe(true);
+  });
+
+  test("the gui.set removal arm reads [since <its store since>]", () => {
+    const store = combined.signatureStore?.["gui.set"];
+    const gate = store?.since?.findIndex((since) => since !== null) ?? -1;
+    const removal = store?.signatures[gate] as string;
+    expect(removal).toContain("value: undefined");
+    expect(api).toContain(`- ${removal} [since ${store?.since?.[gate]}]`);
   });
 });

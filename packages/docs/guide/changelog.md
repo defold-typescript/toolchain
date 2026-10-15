@@ -18,7 +18,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Breaking
 
-- **`gui.get`, `gui.set` and `gui.animate` take only the engine's node property names** as strings, sub-keys included, or a [`gui.PROP_*`](/api/gui) constant. Name a material constant or a `string`-typed name with `hash` (`gui.set(node, hash("tint"), v)`), set `"rotation"` with a `Quaternion`, and address the gui component with `msg.url` only for `"material"`, `"materials"`, `"fonts"` and `"textures"`, where only `"textures"` takes `undefined`, removing the mapping, on Defold 1.13.1 and later; see [GUI node properties are a closed set](./typescript-gotchas.md#gui-node-properties-are-a-closed-set).
+- **`gui.get`, `gui.set` and `gui.animate` take only the engine's node property names** as strings, sub-keys included, or a [`gui.PROP_*`](/api/gui) constant. Name a material constant or a `string`-typed name with `hash` (`gui.set(node, hash("tint"), v)`), set `"rotation"` with a `Quaternion`, and address the gui component with `msg.url` only for `"material"`, `"materials"`, `"fonts"` and `"textures"`, where `"textures"` with `undefined` removes the mapping on Defold 1.13.1 and later, the version the API reference and `llms-full.txt` date that form from; see [GUI node properties are a closed set](./typescript-gotchas.md#gui-node-properties-are-a-closed-set).
 
 ### Improved
 
@@ -26,6 +26,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
+- **`llms-full.txt` dates each overload of `go.get`, `go.set`, `go.property`, `render.render_target` and `sys.get_config_string` by its own availability**: their first form exists on every tracked version, so it carries no `[through 1.13.1] [signature transition]` tag.
 - **`defineGuiScript` and `defineRenderScript` reject a `properties` block**: Defold builds `go.property` only in `.script` files, so the field fails to compile and the transpiler refuses to emit the calls Defold's build would reject. A GUI or render script gets a per-object value from a sibling `defineScript`, which [declares the property](./script-lifecycle.md#script-properties-on-self) and sends its value with `msg.post` in `init`.
 
 ## v0.51.0
