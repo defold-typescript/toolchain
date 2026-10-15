@@ -33,6 +33,7 @@ export type MismatchRule =
   | "too-narrow"
   | "optional-as-required"
   | "required-as-optional"
+  | "nil-raises"
   | "field-unread"
   | "field-undeclared"
   | "return-count"
@@ -65,9 +66,13 @@ function union<T>(values: Iterable<T>): T[] {
   return [...new Set(values)];
 }
 
+// A variant that never reads the slot ignores a nil there, so a merged slot
+// raises on nil only when every variant's does.
 function mergeSlot(a: BindingSlot | undefined, b: BindingSlot | undefined): BindingSlot {
-  if (!a) return { ...(b as BindingSlot), optional: true };
-  if (!b) return { ...a, optional: true };
+  if (!a || !b) {
+    const { nilRaises: _, ...only } = (a ?? b) as BindingSlot;
+    return { ...only, optional: true };
+  }
   const manual = a.manual ?? b.manual;
   return {
     index: a.index,
@@ -77,6 +82,7 @@ function mergeSlot(a: BindingSlot | undefined, b: BindingSlot | undefined): Bind
     ...(manual === undefined ? {} : { manual }),
     ...(a.minusOne || b.minusOne ? { minusOne: true as const } : {}),
     ...(a.unchecked && b.unchecked ? { unchecked: true as const } : {}),
+    ...(a.nilRaises && b.nilRaises ? { nilRaises: true as const } : {}),
   };
 }
 
@@ -200,6 +206,15 @@ export function diffFunction(binding: BindingFunction, declared: DeclaredFunctio
         slot: index,
         extracted: "required",
         declared: "optional",
+      });
+    }
+    if (slot.nilRaises && target.acceptsNil) {
+      out.push({
+        name,
+        rule: "nil-raises",
+        slot: index,
+        extracted: "absent only",
+        declared: "nil",
       });
     }
     // A binding that reads no named field walks or forwards the table, so only

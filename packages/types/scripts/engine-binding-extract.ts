@@ -32,6 +32,8 @@ export interface BindingSlot {
   // Every read returns a value for any argument (`lua_toboolean`,
   // `lua_tonumber`, `dmScript::ToVector3`) instead of raising: no kind is wrong.
   readonly unchecked?: true;
+  // Omittable, but an explicit nil raises: `f(a)` runs where `f(a, nil)` does not.
+  readonly nilRaises?: true;
 }
 
 export interface BindingReturns {
@@ -865,6 +867,15 @@ const OPTIONAL_CHECKS = new Set([
   "luaL_optlstring",
 ]);
 
+// Checks that raise on nil: the kinds above less the readers that convert it
+// and the ones that substitute a default. `CheckBufferNoError` returns null.
+const NIL_REFUSING_CHECKS = new Set(
+  [...CHECK_KINDS.keys()].filter(
+    (name) =>
+      !UNCHECKED_READS.has(name) && !OPTIONAL_CHECKS.has(name) && name !== "CheckBufferNoError",
+  ),
+);
+
 const TYPE_CONSTANTS: ReadonlyMap<string, LuaKind> = new Map<string, LuaKind>([
   ["LUA_TNUMBER", "number"],
   ["LUA_TSTRING", "string"],
@@ -990,6 +1001,11 @@ interface SlotRead {
   readonly probe?: true;
   // Accepts nil but not an absent argument: `lua_isnil` is false past the top.
   readonly nilable?: true;
+  // Handles an explicit nil: `luaL_opt*`, or a `lua_isnil` / `lua_isnoneornil`
+  // test of the slot. An argument-count test or `lua_isnone` admits only absence.
+  readonly admitsNil?: true;
+  // A check that raises on nil, reached when the slot is passed as nil.
+  readonly raisesOnNil?: true;
 }
 
 const NUMERIC_CHECKS = new Set([
@@ -1054,6 +1070,8 @@ interface Analysis {
   // which one refuses the call.
   readonly nilRejected: Set<number>;
   errorMinArgs: number;
+  // Slots whose explicit nil leads to an error call.
+  readonly nilRaising: Set<number>;
 }
 
 // A conjunct of a guard condition with its polarity applied.
@@ -1097,6 +1115,15 @@ const FLIP: Record<string, string> = {
   "<=": ">",
   "==": "!=",
   "!=": "==",
+};
+
+const COMPARE: Record<string, (top: number, value: number) => boolean> = {
+  ">": (top, value) => top > value,
+  ">=": (top, value) => top >= value,
+  "<": (top, value) => top < value,
+  "<=": (top, value) => top <= value,
+  "==": (top, value) => top === value,
+  "!=": (top, value) => top !== value,
 };
 
 function countComparison(
@@ -1148,6 +1175,7 @@ function guardedCall(atom: Atom): { name: string; args: Token[][] } | null {
 interface SlotFacts {
   readonly optional: boolean;
   readonly nilable: boolean;
+  readonly admitsNil: boolean;
   readonly kinds: LuaKind[];
 }
 
@@ -1161,6 +1189,7 @@ function recordErrorGuard(
   analysis: Analysis,
 ): void {
   for (const slot of rejectedByProbes(guards, env)) analysis.nilRejected.add(slot);
+  for (const slot of nilRaisedByError(guards, env, topAliases)) analysis.nilRaising.add(slot);
   if (guards.length !== 1) return;
   const atoms = atomsOf(guards[0] as Guard);
   if (atoms.length !== 1) return;
@@ -1226,6 +1255,7 @@ function guardFacts(
 ): SlotFacts {
   let optional = false;
   let nilable = false;
+  let admitsNil = false;
   const kinds: LuaKind[] = [];
   for (const guard of guards) {
     for (const atom of atomsOf(guard)) {
@@ -1246,11 +1276,95 @@ function guardFacts(
       if (slotOf(call.args[1] as Token[], env) !== slot) continue;
       if (call.name === "lua_isnil") nilable = true;
       else if (NIL_GUARDS.has(call.name)) optional = true;
+      if (call.name === "lua_isnil" || call.name === "lua_isnoneornil") admitsNil = true;
       const kind = IS_GUARDS.get(call.name);
       if (kind && atom.positive) kinds.push(kind);
     }
   }
-  return { optional, nilable, kinds };
+  return { optional, nilable, admitsNil, kinds };
+}
+
+// What a condition evaluates to when argument `slot` is passed as nil and is
+// the last argument, or `undefined` when it turns on something else.
+function valueWithNil(
+  tokens: Token[],
+  slot: number,
+  env: Env,
+  topAliases: ReadonlySet<string>,
+): boolean | undefined {
+  while (tokens[0]?.text === "(" && matchClose(tokens, 0) === tokens.length - 1) {
+    tokens = tokens.slice(1, -1);
+  }
+  for (const [joiner, decides] of [
+    ["||", true],
+    ["&&", false],
+  ] as const) {
+    const parts = splitTopLevel(tokens, joiner);
+    if (parts.length < 2) continue;
+    const values = parts.map((part) => valueWithNil(part, slot, env, topAliases));
+    if (values.includes(decides)) return decides;
+    return values.every((v) => v === !decides) ? !decides : undefined;
+  }
+  if (tokens[0]?.text === "!") {
+    const inner = valueWithNil(tokens.slice(1), slot, env, topAliases);
+    return inner === undefined ? undefined : !inner;
+  }
+  const cmp = countComparison({ tokens, positive: true }, topAliases, env);
+  if (cmp) return COMPARE[cmp.op]?.(slot, cmp.value);
+  const call = guardedCall({ tokens, positive: true });
+  if (!call || call.args.length < 2 || slotOf(call.args[1] as Token[], env) !== slot) {
+    return undefined;
+  }
+  if (call.name === "lua_isnil" || call.name === "lua_isnoneornil") return true;
+  if (call.name === "lua_isnone" || IS_GUARDS.has(call.name)) return false;
+  return undefined;
+}
+
+// Whether a statement under `guards` runs when `slot` is passed as nil: no
+// guard is known to fail.
+function nilReaches(
+  slot: number,
+  guards: readonly Guard[],
+  env: Env,
+  topAliases: ReadonlySet<string>,
+): boolean {
+  return guards.every((guard) => {
+    const value = valueWithNil(guard.condition, slot, env, topAliases);
+    return value === undefined || value === guard.positive;
+  });
+}
+
+// The slots a type or nil probe in `tokens` names.
+function probedSlots(tokens: readonly Token[], env: Env): number[] {
+  const slots: number[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i] as Token;
+    if (!IS_GUARDS.has(t.text) && !NIL_GUARDS.has(t.text)) continue;
+    if (tokens[i + 1]?.text !== "(") continue;
+    const close = matchClose(tokens as Token[], i + 1);
+    const slot = slotOf(splitTopLevel(tokens.slice(i + 2, close), ",")[1] ?? [], env);
+    if (typeof slot === "number") slots.push(slot);
+  }
+  return slots;
+}
+
+// The slots whose explicit nil leads to an error call, as in `if
+// (lua_isnumber(L, 6)) ... else if (!lua_isnone(L, 6)) luaL_typerror(...)`: a
+// probe of the slot sits in a guard nil makes hold, and no guard fails.
+function nilRaisedByError(
+  guards: readonly Guard[],
+  env: Env,
+  topAliases: ReadonlySet<string>,
+): number[] {
+  const probed = guards.map((guard) => probedSlots(guard.condition, env));
+  return union(probed.flat()).filter((slot) => {
+    if (!nilReaches(slot, guards, env, topAliases)) return false;
+    return guards.some(
+      (guard, i) =>
+        probed[i]?.includes(slot) &&
+        valueWithNil(guard.condition, slot, env, topAliases) === guard.positive,
+    );
+  });
 }
 
 function exactCounts(
@@ -1397,6 +1511,9 @@ function analyzeSlots(
       // A read behind a positive type probe of its own slot runs only when the
       // argument is present, so it says nothing about omitting it.
       const probed = facts.kinds.length > 0 ? { probe: true as const } : {};
+      const refusesNil =
+        NIL_REFUSING_CHECKS.has(name) ||
+        (name === "luaL_checktype" && kinds.length > 0 && !kinds.includes("nil"));
       analysis.reads.push({
         slot,
         kinds: [...kinds, ...facts.kinds],
@@ -1404,6 +1521,12 @@ function analyzeSlots(
         ...extra,
         optional: OPTIONAL_CHECKS.has(name) || facts.optional || extra.optional === true,
         ...(facts.nilable || extra.nilable ? { nilable: true as const } : {}),
+        ...(OPTIONAL_CHECKS.has(name) || facts.admitsNil || extra.admitsNil
+          ? { admitsNil: true as const }
+          : {}),
+        ...(refusesNil && nilReaches(slot, guards, env, aliases)
+          ? { raisesOnNil: true as const }
+          : {}),
       });
       if (exact === undefined && depth === 0) {
         analysis.unguardedMax = Math.max(analysis.unguardedMax, slot);
@@ -1464,7 +1587,14 @@ function analyzeSlots(
       continue;
     }
     if (NIL_GUARDS.has(name)) {
-      record([], name === "lua_isnil" ? { nilable: true } : { optional: true });
+      record(
+        [],
+        name === "lua_isnil"
+          ? { nilable: true, admitsNil: true }
+          : name === "lua_isnoneornil"
+            ? { optional: true, admitsNil: true }
+            : { optional: true },
+      );
       continue;
     }
     // A probe that picks a branch names a kind the binding handles; one whose
@@ -1837,6 +1967,7 @@ function analyzeFunction(
     unguardedMax: 0,
     nilRejected: new Set(),
     errorMinArgs: 0,
+    nilRaising: new Set(),
   };
   const env = new Map<string, number>();
   analyzeSlots(fn, index, env, [], 0, analysis, new Set());
@@ -1854,6 +1985,8 @@ function analyzeFunction(
 
   const slots: BindingSlot[] = [];
   const nilOnly = new Set<number>();
+  // Slots no read lets nil through and nil reaches a raising check or error in.
+  const raisesOnNil = new Set<number>();
   for (let slot = 1; slot <= maxSlot; slot++) {
     const reads = bySlot.get(slot) ?? [];
     const manual = reads.find((r) => r.manual)?.manual;
@@ -1868,6 +2001,12 @@ function analyzeFunction(
     const refused = analysis.nilRejected.has(slot) || slot <= analysis.errorMinArgs;
     const optional = !refused && (byArity || omittable || nilAccepted);
     if (optional && !byArity && !omittable) nilOnly.add(slot);
+    if (
+      !reads.some((r) => r.admitsNil) &&
+      (reads.some((r) => r.raisesOnNil) || analysis.nilRaising.has(slot))
+    ) {
+      raisesOnNil.add(slot);
+    }
     const fields = union(reads.flatMap((r) => (r.field ? [r.field] : []))).sort();
     const noRead = reads.length === 0 ? "no read of this slot" : undefined;
     const settled =
@@ -1889,6 +2028,11 @@ function analyzeFunction(
     const later = slots[slot + 1];
     if (later && !later.optional && current.optional) {
       slots[slot] = { ...current, optional: false };
+    }
+  }
+  for (const [i, current] of slots.entries()) {
+    if (current.optional && raisesOnNil.has(current.index)) {
+      slots[i] = { ...current, nilRaises: true };
     }
   }
   const required = slots.filter((s) => !s.optional || nilOnly.has(s.index)).map((s) => s.index);

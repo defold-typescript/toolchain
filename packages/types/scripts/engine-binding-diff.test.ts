@@ -35,7 +35,14 @@ function binding(overrides: Partial<BindingFunction> = {}): BindingFunction {
 }
 
 function dslot(index: number, overrides: Partial<DeclaredSlot> = {}): DeclaredSlot {
-  return { index, kinds: ["number"], optional: false, fields: null, ...overrides };
+  return {
+    index,
+    kinds: ["number"],
+    optional: false,
+    acceptsNil: false,
+    fields: null,
+    ...overrides,
+  };
 }
 
 function declared(overrides: Partial<DeclaredFunction> = {}): DeclaredFunction {
@@ -182,6 +189,33 @@ describe("diffFunction", () => {
     ]);
   });
 
+  test("an omittable slot that raises on nil, declared to accept nil, is a mismatch", () => {
+    const found = diffFunction(
+      binding({ slots: [bslot(1), bslot(2, { optional: true, nilRaises: true })] }),
+      declared({ slots: [dslot(1), dslot(2, { optional: true, acceptsNil: true })] }),
+    );
+    expect(found).toEqual([
+      { name: "test.fn", rule: "nil-raises", slot: "2", extracted: "absent only", declared: "nil" },
+    ]);
+    expect(rules(found)).toEqual(["test.fn:nil-raises:2"]);
+  });
+
+  test("an omittable slot that raises on nil, declared absent but never nil, agrees", () => {
+    const found = diffFunction(
+      binding({ slots: [bslot(1), bslot(2, { optional: true, nilRaises: true })] }),
+      declared({ slots: [dslot(1), dslot(2, { optional: true, acceptsNil: false })] }),
+    );
+    expect(found).toEqual([]);
+  });
+
+  test("a declared nil agrees with a slot that does not raise on nil", () => {
+    const found = diffFunction(
+      binding({ slots: [bslot(1), bslot(2, { optional: true })] }),
+      declared({ slots: [dslot(1), dslot(2, { optional: true, acceptsNil: true })] }),
+    );
+    expect(found).toEqual([]);
+  });
+
   test("a manual slot is recorded once and never compared", () => {
     const found = diffFunction(
       binding({ slots: [bslot(1, { kinds: ["hash"], manual: "lua_type switch" })] }),
@@ -257,6 +291,21 @@ describe("diffTarget", () => {
       expect(merged[0]?.maxArgs).toBe(2);
     }
     expect(forward[0]?.slots).toEqual(backward[0]?.slots);
+  });
+
+  test("a merged slot raises on nil only when every variant's does", () => {
+    const raising = binding({ slots: [bslot(1), bslot(2, { optional: true, nilRaises: true })] });
+    const accepting = binding({ slots: [bslot(1), bslot(2, { optional: true })] });
+    const shorter = binding({ slots: [bslot(1)] });
+    expect(mergeBindings([raising, raising])[0]?.slots[1]?.nilRaises).toBe(true);
+    for (const pair of [
+      [raising, accepting],
+      [accepting, raising],
+      [raising, shorter],
+      [shorter, raising],
+    ]) {
+      expect(mergeBindings(pair)[0]?.slots[1]?.nilRaises).toBeUndefined();
+    }
   });
 
   test("duplicate variants taking one or two arguments differ from a declaration requiring two", () => {

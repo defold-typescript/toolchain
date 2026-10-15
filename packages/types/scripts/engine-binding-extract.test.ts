@@ -268,6 +268,140 @@ describe("unchecked reads", () => {
   });
 });
 
+describe("nil-raising slots", () => {
+  const current = readBindingsForTarget("defold-1.14.0");
+
+  function currentSlot(namespace: string, name: string, index: number) {
+    const found = current.functions.filter((f) => f.namespace === namespace && f.name === name);
+    expect(found).toHaveLength(1);
+    return slot(found[0] as BindingFunction, index);
+  }
+
+  test.each([
+    ["gui", "new_texture", 6, "gui_script.cpp:2276-2278: `top > 5` then luaL_checktype"],
+    ["gui", "set_texture_data", 6, "gui_script.cpp:2406-2407: `top > 5` then luaL_checktype"],
+    ["gui", "play_flipbook", 4, "gui_script.cpp:2120-2122: `top > 3` then luaL_checktype"],
+    ["gui", "stop_particlefx", 2, "gui_script.cpp:4813-4814: `!lua_isnone` then luaL_checktype"],
+    [
+      "gui",
+      "animate",
+      6,
+      "gui_script.cpp:1548-1562: `lua_isnumber` else `!lua_isnone` then luaL_typerror",
+    ],
+    [
+      "render",
+      "draw",
+      2,
+      "render_script.cpp:1930-1933: `lua_gettop(L) >= 2 && !has_options_table` then luaL_error",
+    ],
+    [
+      "render",
+      "set_render_target",
+      2,
+      "render_script.cpp:1440-1442: `lua_gettop(L) > 1` then luaL_checktype",
+    ],
+    [
+      "resource",
+      "get_text_metrics",
+      3,
+      "script_resource.cpp:3395-3398: `top >= 3` then luaL_checktype",
+    ],
+  ] as const)("%s.%s slot %d may be omitted but raises on nil (%s)", (namespace, name, index) => {
+    expect(currentSlot(namespace, name, index)).toMatchObject({ optional: true, nilRaises: true });
+  });
+
+  test.each([
+    ["render", "set_render_target", 1, "render_script.cpp:1431-1434: `!lua_isnil` keeps a default"],
+    ["gui", "play_flipbook", 3, "gui_script.cpp:2109-2111: read only behind `lua_isfunction`"],
+    ["gui", "animate", 7, "gui_script.cpp:1551-1553: read only behind `lua_isfunction`"],
+    ["gui", "animate", 8, "gui_script.cpp:1566-1567: read only behind `lua_isnumber`"],
+  ] as const)("%s.%s slot %d accepts nil (%s)", (namespace, name, index) => {
+    const found = currentSlot(namespace, name, index);
+    expect(found?.optional).toBe(true);
+    expect(found?.nilRaises).toBeUndefined();
+  });
+
+  test("an omittable slot raises on nil only when nil reaches a raising read", () => {
+    const dir = mkdtempSync(join(tmpdir(), "nil-raising-"));
+    try {
+      writeFileSync(
+        join(dir, "probe_script.cpp"),
+        `static int Probe_CountGuard(lua_State* L) {
+          luaL_checknumber(L, 1);
+          if (lua_gettop(L) > 1) luaL_checktype(L, 2, LUA_TTABLE);
+          return 0;
+        }
+        static int Probe_TopAlias(lua_State* L) {
+          int top = lua_gettop(L);
+          luaL_checknumber(L, 1);
+          if (top >= 2) {
+            luaL_checknumber(L, 2);
+          }
+          return 0;
+        }
+        static int Probe_IsNone(lua_State* L) {
+          luaL_checknumber(L, 1);
+          if (!lua_isnone(L, 2)) luaL_checktype(L, 2, LUA_TTABLE);
+          return 0;
+        }
+        static int Probe_IsNoneOrNil(lua_State* L) {
+          luaL_checknumber(L, 1);
+          if (!lua_isnoneornil(L, 2)) luaL_checktype(L, 2, LUA_TTABLE);
+          return 0;
+        }
+        static int Probe_Opt(lua_State* L) {
+          luaL_checknumber(L, 1);
+          lua_Number value = luaL_optnumber(L, 2, 0);
+          return 0;
+        }
+        static int Probe_Unchecked(lua_State* L) {
+          int top = lua_gettop(L);
+          luaL_checknumber(L, 1);
+          bool flag = false;
+          if (top > 1) flag = lua_toboolean(L, 2);
+          return 0;
+        }
+        static int Probe_CountAndNil(lua_State* L) {
+          luaL_checknumber(L, 1);
+          if (lua_gettop(L) > 1 && !lua_isnil(L, 2)) luaL_checktype(L, 2, LUA_TTABLE);
+          return 0;
+        }
+        static const luaL_reg PROBE_FUNCTIONS[] = {
+          {"count_guard", Probe_CountGuard},
+          {"top_alias", Probe_TopAlias},
+          {"is_none", Probe_IsNone},
+          {"is_none_or_nil", Probe_IsNoneOrNil},
+          {"opt", Probe_Opt},
+          {"unchecked", Probe_Unchecked},
+          {"count_and_nil", Probe_CountAndNil},
+          {0, 0}
+        };
+        void ScriptProbeRegister(lua_State* L) {
+          luaL_register(L, "probe", PROBE_FUNCTIONS);
+          lua_pop(L, 1);
+        }`,
+      );
+      const second = new Map(
+        extractBindings(dir).functions.map((f) => [f.name, slot(f, 2)] as const),
+      );
+      expect([...second.keys()].sort()).toEqual([
+        "count_and_nil",
+        "count_guard",
+        "is_none",
+        "is_none_or_nil",
+        "opt",
+        "top_alias",
+        "unchecked",
+      ]);
+      for (const name of second.keys()) expect(second.get(name)?.optional).toBe(true);
+      const marked = [...second].filter(([, s]) => s?.nilRaises).map(([name]) => name);
+      expect(marked.sort()).toEqual(["count_guard", "is_none", "top_alias"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("older engine sources", () => {
   const older = readBindingsForTarget("defold-1.12.4");
 
