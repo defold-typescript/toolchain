@@ -44,6 +44,7 @@ import { loadTranslations } from "./example-store-io";
 import { synthesizeProseConstants } from "./prose-constants";
 import { restoreSharedHandleMethods } from "./shared-handle-methods";
 import { groupDocsByNamespace, mergeApiDocs, type readZip } from "./sync-api-docs";
+import { compareVersions, versionOf } from "./target-version";
 
 export interface ApiTargetModule {
   readonly namespace: string;
@@ -866,9 +867,12 @@ export function kindStdlibReferences(entry: KindManifestEntry): string {
 // `generateKindIndex` stays pure; `srcAugmentationScopingViolations` in
 // `./augmentation-namespaces` is what catches a future restricted augmentation
 // added without one, by reading the namespaces each file really re-opens.
+// `since` is the first Defold release, a bare semver, whose engine has what the
+// augmentation declares; a surface generated for an older target omits it.
 interface UniversalExtraImport {
   readonly specifier: string;
   readonly restrictedTo?: string;
+  readonly since?: string;
 }
 
 const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
@@ -884,6 +888,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   { specifier: "../../src/component-properties" },
   { specifier: "../../src/render-overloads", restrictedTo: "render" },
   { specifier: "../../src/gui-overloads", restrictedTo: "gui" },
+  { specifier: "../../src/gui-texture-removal", restrictedTo: "gui", since: "1.13.1" },
   { specifier: "../../src/vmath-overloads" },
   { specifier: "../../src/sys-overloads" },
 ];
@@ -906,14 +911,38 @@ export const RESTRICTED_SRC_AUGMENTATIONS: Readonly<Record<string, string>> = Ob
   ).map((entry) => [entry.specifier.slice(SRC_IMPORT_PREFIX.length), entry.restrictedTo as string]),
 );
 
-// Read those augmentations as surface-root files. Mirrors
-// `loadTargetEditorModules`: a missing file throws with its path rather than
-// filtering silently, so a renamed augmentation fails loud instead of vanishing
-// from every materialized surface.
+// The `src/*` augmentations gated to a release, as `<module name> -> <since>`.
+export const SRC_AUGMENTATION_GATES: Readonly<Record<string, string>> = Object.fromEntries(
+  UNIVERSAL_EXTRA_IMPORTS.filter(
+    (entry) => entry.since !== undefined && entry.specifier.startsWith(SRC_IMPORT_PREFIX),
+  ).map((entry) => [entry.specifier.slice(SRC_IMPORT_PREFIX.length), entry.since as string]),
+);
+
+function admitsTarget(entry: UniversalExtraImport, target: ApiTarget): boolean {
+  return entry.since === undefined || compareVersions(versionOf(target), entry.since) >= 0;
+}
+
+// The `src/*` augmentations a surface generated for `target` carries: those
+// whose gate the target's version meets. Every surface writer reads this one
+// filter, so the committed indexes, the kind indexes and both materializers
+// agree on which arms a target declares.
+export function srcAugmentationModulesFor(target: ApiTarget): readonly string[] {
+  return UNIVERSAL_EXTRA_IMPORTS.filter(
+    (entry) => entry.specifier.startsWith(SRC_IMPORT_PREFIX) && admitsTarget(entry, target),
+  ).map((entry) => entry.specifier.slice(SRC_IMPORT_PREFIX.length));
+}
+
+// Read those augmentations as surface-root files, narrowed to `target`'s set
+// when one is given. Mirrors `loadTargetEditorModules`: a missing file throws
+// with its path rather than filtering silently, so a renamed augmentation fails
+// loud instead of vanishing from every materialized surface.
 export function loadSrcAugmentations(
   packageRoot: string = PACKAGE_ROOT,
+  target?: ApiTarget,
 ): { path: string; contents: string }[] {
-  return SRC_AUGMENTATION_MODULES.map((name) => {
+  const modules =
+    target === undefined ? SRC_AUGMENTATION_MODULES : srcAugmentationModulesFor(target);
+  return modules.map((name) => {
     const from = resolve(packageRoot, "src", `${name}.d.ts`);
     let contents: string;
     try {
@@ -1006,9 +1035,12 @@ export function generateKindIndex(kind: string, target: ApiTarget = DEFAULT_TARG
     (m) => !Object.hasOwn(RESTRICTED_NAMESPACES, m.namespace),
   ).map((m) => `../${m.outFile.replace(/\.d\.ts$/, "")}`);
   // An augmentation bound to a restricted namespace rides only that namespace's
-  // kind index; every unmarked entry stays universal.
+  // kind index; every unmarked entry stays universal. A gated entry rides only a
+  // target its gate admits.
   const extraImports = UNIVERSAL_EXTRA_IMPORTS.filter(
-    (extra) => extra.restrictedTo === undefined || extra.restrictedTo === entry.restricted,
+    (extra) =>
+      (extra.restrictedTo === undefined || extra.restrictedTo === entry.restricted) &&
+      admitsTarget(extra, target),
   ).map((extra) => extra.specifier);
   const modules = (
     entry.only === undefined
@@ -1057,11 +1089,11 @@ export function generateVersionIndex(
 // The authored augmentations a committed per-version index imports, addressed
 // back into the package's `src/`. The in-repo surface has no copies beside its
 // modules, so a skipped symbol would otherwise be declared on no versioned
-// surface at all. Derived from `SRC_AUGMENTATION_MODULES`, so a new augmentation
+// surface at all. Derived from `srcAugmentationModulesFor`, so a new augmentation
 // reaches the pinned surfaces on the same edit that reaches the materialized ones.
 export function versionSrcAugmentationImports(target: ApiTarget): string[] {
   const srcPrefix = target.coreTypesImport.slice(0, -"core-types".length);
-  return SRC_AUGMENTATION_MODULES.map((name) => `${srcPrefix}${name}`);
+  return srcAugmentationModulesFor(target).map((name) => `${srcPrefix}${name}`);
 }
 
 // The `src/`-relative prefix a kind index living in `<generatedDir>/kinds/` needs

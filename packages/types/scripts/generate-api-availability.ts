@@ -28,35 +28,15 @@ import {
 } from "../src/emit-dts";
 import { splitTopLevel } from "../src/luals-type-expr";
 import { type ApiTarget, loadApiTargets, loadTargetModules } from "./regen";
+import { compareVersions, versionOf } from "./target-version";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const MIGRATIONS_PATH = resolve(PACKAGE_ROOT, "api-migrations.json");
 const AVAILABILITY_PATH = resolve(PACKAGE_ROOT, "api-availability.json");
 
-const VERSION_FROM_ID = /^defold-(\d+\.\d+\.\d+)$/;
-
 export interface AvailabilityArtifact {
   readonly versions: readonly string[];
   readonly records: readonly ApiAvailability[];
-}
-
-export function versionOf(target: ApiTarget): string {
-  const match = VERSION_FROM_ID.exec(target.id);
-  if (!match?.[1]) throw new Error(`cannot derive a release version from target id "${target.id}"`);
-  return match[1];
-}
-
-function versionTuple(version: string): number[] {
-  return version.split(".").map((part) => Number.parseInt(part, 10));
-}
-
-function compareVersions(a: string, b: string): number {
-  const [ta, tb] = [versionTuple(a), versionTuple(b)];
-  for (let index = 0; index < Math.max(ta.length, tb.length); index += 1) {
-    const diff = (ta[index] ?? 0) - (tb[index] ?? 0);
-    if (diff !== 0) return diff;
-  }
-  return 0;
 }
 
 // Every complete committed surface, newest first. The committed targets are the

@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { symbolIdentityKey } from "../src/api-availability";
 import type { SlotTypes } from "../src/emit-dts";
-import { selectCompleteVersionSurfaces, versionOf } from "./generate-api-availability";
+import { selectCompleteVersionSurfaces } from "./generate-api-availability";
 import {
   type ApiTarget,
   type GenerateOptions,
@@ -11,6 +11,7 @@ import {
   type ModuleManifestEntry,
 } from "./regen";
 import { loadSignatureFile } from "./signature-store-fs";
+import { versionOf } from "./target-version";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const SIGNATURES_PATH = resolve(PACKAGE_ROOT, "api-signatures.json");

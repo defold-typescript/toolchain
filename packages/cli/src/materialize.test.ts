@@ -1648,12 +1648,91 @@ describe("materialized surface identity", () => {
   });
 });
 
+describe("materializeApiSurface pinned committed surface — gui texture removal", () => {
+  const pkgRoot = path.resolve(import.meta.dir, "..", "..", "types");
+  const absentProof = path.join(
+    pkgRoot,
+    "test-d",
+    "versions",
+    "gui-texture-removal-absent-proof.ts",
+  );
+
+  test("a defold-1.13.0 surface carries no texture removal, and a consumer cannot call it", () => {
+    const { materializedDir } = materializeApiSurface({
+      cwd,
+      surface: PINNED,
+      sourceGeneratedDir: path.join(pkgRoot, "generated", "versions", "defold-1.13.0"),
+    });
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.13.0")}`);
+    const dir = path.join(cwd, materializedDir as string);
+    expect(existsSync(path.join(dir, "gui-overloads.d.ts"))).toBe(true);
+    expect(existsSync(path.join(dir, "gui-texture-removal.d.ts"))).toBe(false);
+
+    mkdirSync(path.join(cwd, "node_modules", "@defold-typescript"), { recursive: true });
+    symlinkSync(pkgRoot, path.join(cwd, "node_modules", "@defold-typescript", "types"));
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify(
+        {
+          compilerOptions: {
+            strict: true,
+            module: "ESNext",
+            moduleResolution: "bundler",
+            lib: ["ES2022"],
+            skipLibCheck: true,
+            noEmit: true,
+            typeRoots: [".defold-types"],
+            types: [surfaceDir("defold-1.13.0")],
+          },
+          include: ["proof.ts"],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    writeFileSync(path.join(cwd, "proof.ts"), readFileSync(absentProof, "utf8"));
+
+    const { exitCode, output } = typecheck(path.join(cwd, "tsconfig.json"));
+    if (exitCode !== 0) {
+      throw new Error(
+        `a defold-1.13.0 consumer must keep every other gui form and reject texture removal:\n${output}`,
+      );
+    }
+    expect(exitCode).toBe(0);
+  });
+
+  test("a defold-1.13.1 surface carries the texture removal", () => {
+    const { materializedDir } = materializeApiSurface({
+      cwd,
+      surface: { surfaceId: "defold-1.13.1", available: true },
+      sourceGeneratedDir: path.join(pkgRoot, "generated", "versions", "defold-1.13.1"),
+    });
+    const dir = path.join(cwd, materializedDir as string);
+    expect(existsSync(path.join(dir, "gui-texture-removal.d.ts"))).toBe(true);
+    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toContain(
+      'import "./gui-texture-removal";',
+    );
+  });
+});
+
 describe("materialization parity across both writers", () => {
-  test("parity guard: both materialization paths carry the same augmentation set", async () => {
+  test("parity guard: each materialization path carries the augmentation set of the target it copied", async () => {
     const pkgRoot = path.resolve(import.meta.dir, "..", "..", "types");
-    const { SRC_AUGMENTATION_MODULES } = (await import(
+    const { SRC_AUGMENTATION_MODULES, loadApiTargets, srcAugmentationModulesFor } = (await import(
       path.join(pkgRoot, "scripts", "regen.ts")
-    )) as { SRC_AUGMENTATION_MODULES: readonly string[] };
+    )) as {
+      SRC_AUGMENTATION_MODULES: readonly string[];
+      loadApiTargets: () => readonly { id: string; default?: boolean }[];
+      srcAugmentationModulesFor: (target: unknown) => readonly string[];
+    };
+    const targets = loadApiTargets();
+    const targetOf = (pick: (target: { id: string; default?: boolean }) => boolean) => {
+      const found = targets.find(pick);
+      if (!found) throw new Error("api-targets.json lacks a target this guard copies");
+      return found;
+    };
+    const currentTarget = targetOf((target) => target.default === true);
+    const refDocTarget = targetOf((target) => target.id === "defold-1.9.8");
 
     materializeApiSurface({
       cwd,
@@ -1673,8 +1752,10 @@ describe("materialization parity across both writers", () => {
           existsSync(path.join(dir, `${name}.d.ts`)),
         ).sort();
 
-      expect(carried(packagedDir).length).toBe(SRC_AUGMENTATION_MODULES.length);
-      expect(carried(pinnedDir)).toEqual(carried(packagedDir));
+      // The packaged writer copied the current `generated/`, the ref-doc writer
+      // generated defold-1.9.8; each carries exactly its own target's gated set.
+      expect(carried(packagedDir)).toEqual([...srcAugmentationModulesFor(currentTarget)].sort());
+      expect(carried(pinnedDir)).toEqual([...srcAugmentationModulesFor(refDocTarget)].sort());
       expect(readFileSync(path.join(pinnedDir, "core-types.d.ts"), "utf8")).toBe(
         readFileSync(path.join(packagedDir, "core-types.d.ts"), "utf8"),
       );

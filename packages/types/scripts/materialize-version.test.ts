@@ -27,6 +27,7 @@ import {
   MESSAGES_MANIFEST,
   resolveTargetModules,
   SRC_AUGMENTATION_MODULES,
+  srcAugmentationModulesFor,
 } from "./regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "./sync-api-docs";
 
@@ -120,19 +121,20 @@ function multiKindTarget(): ApiTarget {
   };
 }
 
-// The surface-root files a materialized surface carries beside its modules,
-// derived from the production sets rather than restated here.
-const SURFACE_ROOT_PATHS = [
-  ...SRC_AUGMENTATION_MODULES.map((name) => `${name}.d.ts`),
-  "core-types.d.ts",
-  MESSAGES_MANIFEST.outFile,
-];
+// The surface-root files a materialized surface for `target` carries beside its
+// modules, derived from the production sets rather than restated here.
+function surfaceRootPaths(target: ApiTarget): string[] {
+  return [
+    ...srcAugmentationModulesFor(target).map((name) => `${name}.d.ts`),
+    "core-types.d.ts",
+    MESSAGES_MANIFEST.outFile,
+  ];
+}
 
 // The bare names the aggregate index imports after the modules, in emit order.
-const SURFACE_EXTRA_IMPORTS = [
-  MESSAGES_MANIFEST.outFile.replace(/\.d\.ts$/, ""),
-  ...SRC_AUGMENTATION_MODULES,
-];
+function surfaceExtraImports(target: ApiTarget): string[] {
+  return [MESSAGES_MANIFEST.outFile.replace(/\.d\.ts$/, ""), ...srcAugmentationModulesFor(target)];
+}
 
 describe("renderMaterializedKindIndex", () => {
   test("gui-script imports the universal modules plus the restricted gui, never render", () => {
@@ -214,7 +216,7 @@ describe("materializeVersionedSurface", () => {
     expect(readFileSync(resolve(destDir, "index.d.ts"), "utf8")).toBe(
       `${LUA_STDLIB_REFERENCES}${[
         'import "./label";',
-        ...SURFACE_EXTRA_IMPORTS.map((n) => `import "./${n}";`),
+        ...surfaceExtraImports(defold198Target()).map((n) => `import "./${n}";`),
       ].join("\n")}\n\nexport {};\n`,
     );
 
@@ -291,7 +293,7 @@ describe("buildVersionedSurfaceFiles", () => {
     const modules = await resolveTargetModules(target, resolveOpts);
     const expectedPaths = [
       ...modules.map((entry) => entry.outFile),
-      ...SURFACE_ROOT_PATHS,
+      ...surfaceRootPaths(target),
       "index.d.ts",
       "package.json",
     ];
@@ -306,7 +308,7 @@ describe("buildVersionedSurfaceFiles", () => {
 
     const versioned = modules.map((entry) => ({ ...entry, versionId: target.id }));
     expect(files.find((f) => f.path === "index.d.ts")?.contents).toBe(
-      generateVersionIndex(target.id, versioned, SURFACE_EXTRA_IMPORTS),
+      generateVersionIndex(target.id, versioned, surfaceExtraImports(target)),
     );
   });
 
@@ -374,7 +376,7 @@ describe("buildVersionedSurfaceFiles", () => {
     const modules = await resolveTargetModules(target, resolveOpts);
     expect(files.map((file) => file.path)).toEqual([
       ...modules.map((entry) => entry.outFile),
-      ...SURFACE_ROOT_PATHS,
+      ...surfaceRootPaths(target),
       "index.d.ts",
       "package.json",
     ]);
@@ -499,25 +501,30 @@ describe("buildVersionedSurfaceFiles src augmentation carry", () => {
     expect([...SRC_AUGMENTATION_MODULES].sort()).toEqual(fromKindIndexes);
   });
 
-  test("carries every src augmentation the kind manifest names", async () => {
-    const files = await buildVersionedSurfaceFiles(committedTarget("defold-1.12.4"));
+  test("carries every src augmentation the target's gate admits, and no other", async () => {
+    const target = committedTarget("defold-1.12.4");
+    const files = await buildVersionedSurfaceFiles(target);
+    const admitted = srcAugmentationModulesFor(target);
 
     for (const name of SRC_AUGMENTATION_MODULES) {
       const file = files.find((f) => f.path === `${name}.d.ts`);
-      expect(`${name}: ${file === undefined ? "absent" : "present"}`).toBe(`${name}: present`);
-      expect(file?.contents).toBe(
-        readFileSync(resolve(PACKAGE_ROOT, "src", `${name}.d.ts`), "utf8"),
-      );
+      const expected = admitted.includes(name) ? "present" : "absent";
+      expect(`${name}: ${file === undefined ? "absent" : "present"}`).toBe(`${name}: ${expected}`);
+      if (file !== undefined) {
+        expect(file.contents).toBe(
+          readFileSync(resolve(PACKAGE_ROOT, "src", `${name}.d.ts`), "utf8"),
+        );
+      }
     }
     expect(files.find((f) => f.path === "core-types.d.ts")?.contents).toBe(CORE_TYPES_REEXPORT);
   });
 
-  test("the aggregate index imports each augmentation", async () => {
+  test("the aggregate index imports each augmentation the target's gate admits", async () => {
     const target = committedTarget("defold-1.12.4");
     const files = await buildVersionedSurfaceFiles(target);
     const index = files.find((f) => f.path === "index.d.ts")?.contents ?? "";
 
-    for (const name of SRC_AUGMENTATION_MODULES) {
+    for (const name of srcAugmentationModulesFor(target)) {
       expect(index).toContain(`import "./${name}";`);
     }
     for (const module of target.modules) {
@@ -566,7 +573,7 @@ describe("buildVersionedSurfaceFiles src augmentation carry", () => {
     });
 
     const paths = files.map((f) => f.path);
-    for (const name of SRC_AUGMENTATION_MODULES) {
+    for (const name of srcAugmentationModulesFor(defold198Target())) {
       expect(paths).toContain(`${name}.d.ts`);
     }
     expect(paths).toContain("core-types.d.ts");

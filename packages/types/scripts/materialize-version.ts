@@ -89,8 +89,9 @@ export interface BuildVersionedSurfaceOptions {
   // script kind without the generator knowing what a script kind is.
   readonly excludeModules?: readonly string[];
   // The hand-authored `src/*` augmentations to carry beside the modules.
-  // Defaults to reading them from the types package on disk; a caller with no
-  // filesystem (a Worker) supplies the bytes and gets an identical file map.
+  // Defaults to reading the target's set (`srcAugmentationModulesFor`) from the
+  // types package on disk; a caller with no filesystem (a Worker) supplies the
+  // same bytes and gets an identical file map.
   readonly augmentations?: readonly VersionedSurfaceFile[];
   // What the target's own engine source decides for its emit
   // (`targetBindingOptions`). Only an in-repo caller rebuilding a vendored
@@ -142,7 +143,7 @@ export async function buildVersionedSurfaceFiles(
   ).filter((entry) => kept(entry.outFile));
 
   const augmentations = (
-    opts.augmentations ?? loadSrcAugmentations(opts.resolveOpts?.packageRoot ?? undefined)
+    opts.augmentations ?? loadSrcAugmentations(opts.resolveOpts?.packageRoot ?? undefined, target)
   ).filter((file) => kept(file.path));
 
   // Re-rooting an entry makes it a new object no committed manifest holds, so

@@ -225,37 +225,6 @@ declare global {
       options?: gui.PropertyOptions,
     ): void;
     /**
-     * Removes the runtime texture mapping the `key` option names from the gui
-     * component itself. Needs Defold 1.13.1 or later.
-     *
-     * @param url - msg.url() to the gui itself
-     * @param property - the textures property
-     * @param value - nil, to remove the mapping
-     * @param options - options table; `key` names the texture to remove
-     * @example
-     * Remove a named runtime texture resource mapping:
-     * ```ts
-     * const atlas_params = {
-     *   texture: "/runtime.texturec",
-     *   animations: [{ id: "runtime", width: 1, height: 1, frames: [1] }],
-     *   geometries: [{ vertices: [0, 0, 0, 1, 1, 1, 1, 0], uvs: [0, 0, 0, 1, 1, 1, 1, 0], indices: [0, 1, 2, 0, 2, 3] }],
-     * } satisfies Parameters<typeof resource.create_atlas>[1];
-     * const atlas_id = resource.create_atlas("/runtime.texturesetc", atlas_params);
-     * gui.set(msg.url(), "textures", atlas_id, { key: "runtime_texture" });
-     * gui.set_texture(gui.get_node("box"), "runtime_texture");
-     *
-     * // Later, remove the GUI mapping before releasing the atlas resource.
-     * gui.set(msg.url(), "textures", undefined, { key: "runtime_texture" });
-     * resource.release(atlas_id);
-     * ```
-     */
-    function set(
-      url: Url,
-      property: "textures",
-      value: undefined,
-      options: { key: string | Hash },
-    ): void;
-    /**
      * This starts an animation of a node property according to the specified parameters.
      * If the node property is already being animated, that animation will be canceled and
      * replaced by the new one. Note however that several different node properties

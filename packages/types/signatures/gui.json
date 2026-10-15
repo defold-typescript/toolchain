@@ -29,6 +29,7 @@
       "Sets a material constant of a node, or any property named by a hash. If a material specifies a constant called `tint` in the .material file, set it with `gui.set(node, hash(\"tint\"), vmath.vector4(1, 0, 0, 1))`, or pass a vmath.matrix4 if the constant is a matrix. To set one element of an array constant, pass an options table with `index` set.",
       "Sets a resource property of the gui component itself, addressed with `msg.url()`: `\"material\"`, or the `\"materials\"`, `\"fonts\"` or `\"textures\"` entry named by the `key` option. A property a native extension registers is named by a hash.",
       "Removes the runtime texture mapping the `key` option names from the gui component itself. Needs Defold 1.13.1 or later."
-    ]
+    ],
+    "since": [null, null, null, "1.13.1"]
   }
 }

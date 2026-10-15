@@ -555,7 +555,25 @@ export function materializeApiSurface(
           ),
         ].filter((file) => file !== "engine-globals.d.ts")
       : ["msg-overloads.d.ts", "message-guard.d.ts", "go-overloads.d.ts"];
-  const overloads = derivedOverloads.filter((file) => existsSync(path.join(srcDir, file)));
+  // A committed `index.d.ts` beside the modules is the augmentation gate's
+  // output for its own target, so a pinned surface keeps only what that index
+  // imports: the current kind indexes may carry an augmentation the pinned
+  // engine lacks. The unpinned current surface commits no such index.
+  const committedIndex = path.join(sourceGeneratedDir, "index.d.ts");
+  const committedAugmentations = existsSync(committedIndex)
+    ? new Set(
+        [
+          ...readFileSync(committedIndex, "utf8").matchAll(
+            /^import "\.\.\/\.\.\/\.\.\/src\/([^"]+)";$/gm,
+          ),
+        ].map((match) => `${match[1]}.d.ts`),
+      )
+    : null;
+  const overloads = derivedOverloads.filter(
+    (file) =>
+      existsSync(path.join(srcDir, file)) &&
+      (committedAugmentations === null || committedAugmentations.has(file)),
+  );
   const coreTypesSrc = path.join(srcDir, "core-types.ts");
   const includeCoreTypes = overloads.length > 0 && existsSync(coreTypesSrc);
   const engineGlobalsSrc = path.join(srcDir, "engine-globals.d.ts");

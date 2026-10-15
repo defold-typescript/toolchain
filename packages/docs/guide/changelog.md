@@ -18,7 +18,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Breaking
 
-- **`gui.get`, `gui.set` and `gui.animate` take only the engine's node property names** as strings, sub-keys included, or a [`gui.PROP_*`](/api/gui) constant. Name a material constant or a `string`-typed name with `hash` (`gui.set(node, hash("tint"), v)`), set `"rotation"` with a `Quaternion`, and address the gui component with `msg.url` only for `"material"`, `"materials"`, `"fonts"` and `"textures"`; see [GUI node properties are a closed set](./typescript-gotchas.md#gui-node-properties-are-a-closed-set).
+- **`gui.get`, `gui.set` and `gui.animate` take only the engine's node property names** as strings, sub-keys included, or a [`gui.PROP_*`](/api/gui) constant. Name a material constant or a `string`-typed name with `hash` (`gui.set(node, hash("tint"), v)`), set `"rotation"` with a `Quaternion`, and address the gui component with `msg.url` only for `"material"`, `"materials"`, `"fonts"` and `"textures"`, where only `"textures"` takes `undefined`, removing the mapping, on Defold 1.13.1 and later; see [GUI node properties are a closed set](./typescript-gotchas.md#gui-node-properties-are-a-closed-set).
 
 ### Improved
 

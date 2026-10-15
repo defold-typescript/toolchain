@@ -9,6 +9,10 @@ export interface SignatureOverride {
   // than `signatures` keeps the ref-doc fixture description for those rows. Every
   // existing override omits `docs` and renders exactly as before.
   docs?: (string | null)[];
+  // Optional per-overload first release, parallel to `signatures`: entry `i` is
+  // the bare semver from which row `i` exists, or `null` for a row every target
+  // declares. An absent array means every row is ungated.
+  since?: (string | null)[];
 }
 
 // An FQN (`io.open`, `file:read`, …) maps to one override. An element with
