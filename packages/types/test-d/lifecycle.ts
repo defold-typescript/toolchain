@@ -221,28 +221,65 @@ defineScript({
   },
 });
 
-// The `properties` field is available on the gui/render factories too.
+// `properties` is `defineScript`-only: Defold builds `go.property` only in
+// `.script` files, so the gui/render factories reject the field.
 defineGuiScript({
+  // @ts-expect-error a gui script cannot declare properties
   properties: { root: _hash },
   init: () => ({ frames: 0 }),
+});
+
+defineRenderScript({
+  // @ts-expect-error a render script cannot declare properties
+  properties: { layers: 0 },
+  init: () => ({ frames: 0 }),
+});
+
+// The member is `undefined`, not `never`: an explicit `properties: undefined`
+// still compiles under `exactOptionalPropertyTypes`.
+defineGuiScript({
+  properties: undefined,
+  init: () => ({ n: 0 }),
   update(self) {
-    const _root: Hash = self.root;
-    const _frames: number = self.frames;
-    void _root;
-    void _frames;
+    const _n: number = self.n;
+    void _n;
   },
 });
 
 defineRenderScript({
-  properties: { layers: 0 },
-  init: () => ({ frames: 0 }),
+  properties: undefined,
+  init: () => ({ n: 0 }),
   update(self) {
-    const _layers: number = self.layers;
-    const _frames: number = self.frames;
-    void _layers;
-    void _frames;
+    const _n: number = self.n;
+    void _n;
   },
 });
+
+// All three type parameters keep their position and meaning.
+type FactoryMessages = { ping: { n: number } };
+
+defineGuiScript<Record<never, never>, GuiSelf, FactoryMessages>({
+  init: () => ({ root: _hash }),
+  update(self) {
+    const _self: GuiSelf = self;
+    void _self;
+  },
+});
+
+defineRenderScript<Record<never, never>, RenderSelf, FactoryMessages>({
+  init: () => ({ tile_pred: null }),
+  update(self) {
+    const _self: RenderSelf = self;
+    void _self;
+  },
+});
+
+// A hook table spread from a `properties`-free const still satisfies both.
+const sharedHooks = {
+  on_reload() {},
+};
+defineGuiScript({ ...sharedHooks, init: () => ({ n: 0 }) });
+defineRenderScript({ ...sharedHooks, init: () => ({ n: 0 }) });
 
 // `init(self)` reads the declared `properties` at init time: `self` is the
 // property channel (`TProps`, the values Defold applies before `init` runs),
@@ -271,25 +308,6 @@ defineScript({
   init(self) {
     void self;
     return { c: 0 };
-  },
-});
-
-// `defineGuiScript` / `defineRenderScript` expose the same `init(self: TProps)`.
-defineGuiScript({
-  properties: { root: _hash },
-  init(self) {
-    const _root: Hash = self.root;
-    void _root;
-    return { frames: 0 };
-  },
-});
-
-defineRenderScript({
-  properties: { layers: 0 },
-  init(self) {
-    const _layers: number = self.layers;
-    void _layers;
-    return { frames: 0 };
   },
 });
 

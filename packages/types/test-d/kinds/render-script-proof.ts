@@ -1,4 +1,4 @@
-export {};
+import { defineRenderScript } from "../../generated/kinds/render-script";
 
 vmath.vector3(1, 2, 3);
 const _w: number = render.get_width();
@@ -12,3 +12,16 @@ render.set_render_target(render.render_target("rt", {}));
 
 // @ts-expect-error gui.* is absent on the render-script surface
 gui.get_width();
+
+defineRenderScript({
+  init: () => ({ frames: 0 }),
+  update(self) {
+    const _frames: number = self.frames;
+    void _frames;
+  },
+});
+
+defineRenderScript({
+  // @ts-expect-error a render script cannot declare properties
+  properties: { speed: 1 },
+});

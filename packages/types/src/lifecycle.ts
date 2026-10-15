@@ -370,7 +370,10 @@ export type RenderScriptHooks<TSelf, TInitState = TSelf> = Omit<
 // the property channel (raw default values), `TSelf` the merged `self` the
 // callbacks see (`NoInfer`-wrapped inside the hook set), and `TInitState` what
 // `init` returns. `ScriptHooks` itself stays callback-only so the
-// `SCRIPT_HOOK_NAMES` drift pin remains valid.
+// `SCRIPT_HOOK_NAMES` drift pin remains valid. Only `defineScript` takes
+// `properties`: the GUI and render variants keep the same three type parameters
+// but type the field `undefined`, because Defold builds `go.property` only in
+// `.script` files.
 //
 // `init` is overridden to receive `self: NoInfer<TProps>` — Defold applies the
 // declared property values to `self` before `init` runs, so init-time setup can
@@ -402,17 +405,20 @@ export type GuiScriptHooksWithProperties<TProps, TSelf, TInitState> = Omit<
   "init"
 > & {
   /**
-   * Receives `self` pre-populated with the declared `properties` before the
-   * engine runs init, so init-time setup can read those default values. The
-   * returned object still seeds the inferred script state.
+   * Receives `self` typed by the first type argument, which stays empty unless
+   * given explicitly, since a GUI script declares no properties. The
+   * returned object seeds the inferred script state.
    */
   init?(self: NoInfer<TProps>): TInitState;
   /**
-   * Value-keyed editor properties: each key is a property name and its value
-   * the default, so the value's type threads onto `self` alongside init's
-   * returned state.
+   * Not available: Defold builds `go.property` only in `.script` files, so a
+   * GUI script cannot declare properties. Declare the property on a game
+   * object's {@link defineScript} and `msg.post` its value to the GUI
+   * script from that script's `init`; `go.get` does not work for this from a
+   * GUI script, since the engine's `go.get` accepts only a game-object
+   * script instance.
    */
-  properties?: TProps;
+  properties?: undefined;
 };
 
 export type RenderScriptHooksWithProperties<TProps, TSelf, TInitState> = Omit<
@@ -420,17 +426,20 @@ export type RenderScriptHooksWithProperties<TProps, TSelf, TInitState> = Omit<
   "init"
 > & {
   /**
-   * Receives `self` pre-populated with the declared `properties` before the
-   * engine runs init, so init-time setup can read those default values. The
-   * returned object still seeds the inferred script state.
+   * Receives `self` typed by the first type argument, which stays empty unless
+   * given explicitly, since a render script declares no properties. The
+   * returned object seeds the inferred script state.
    */
   init?(self: NoInfer<TProps>): TInitState;
   /**
-   * Value-keyed editor properties: each key is a property name and its value
-   * the default, so the value's type threads onto `self` alongside init's
-   * returned state.
+   * Not available: Defold builds `go.property` only in `.script` files, so a
+   * render script cannot declare properties. Declare the property on a game
+   * object's {@link defineScript} and `msg.post` its value to the render
+   * script from that script's `init`; `go.get` does not work for this from a
+   * render script, since the engine's `go.get` accepts only a game-object
+   * script instance.
    */
-  properties?: TProps;
+  properties?: undefined;
 };
 
 // The script-local message map an `onMessage` dispatcher carries, lifted onto
@@ -502,9 +511,9 @@ export function defineScript<
 /**
  * Type a `.gui_script` component's hook table. Like {@link defineScript} it is
  * an identity function at runtime, infers `TSelf` from `init`'s return by
- * default, accepts the same value-keyed `properties` field as
- * {@link defineScript}, and is erased by the transpiler's `lifecycle-erasure`
- * pass into the flat Defold chunk shape.
+ * default, and is erased by the transpiler's `lifecycle-erasure` pass into the
+ * flat Defold chunk shape. The `properties` field is {@link defineScript}-only:
+ * Defold builds `go.property` only in `.script` files.
  *
  * `GuiScriptHooks` is `Omit<ScriptHooks, "fixed_update" | "late_update">` — gui
  * scripts are not driven by the fixed-timestep or late-update passes. It accepts
@@ -543,9 +552,9 @@ export function defineGuiScript<
 /**
  * Type a `.render_script` component's hook table. Like {@link defineScript} it
  * is an identity function at runtime, infers `TSelf` from `init`'s return by
- * default, accepts the same value-keyed `properties` field as
- * {@link defineScript}, and is erased by the transpiler's `lifecycle-erasure`
- * pass into the flat Defold chunk shape.
+ * default, and is erased by the transpiler's `lifecycle-erasure` pass into the
+ * flat Defold chunk shape. The `properties` field is {@link defineScript}-only:
+ * Defold builds `go.property` only in `.script` files.
  *
  * `RenderScriptHooks` is `Omit<ScriptHooks, "on_input" | "final" |
  * "fixed_update" | "late_update">` — the engine calls only four render-script
