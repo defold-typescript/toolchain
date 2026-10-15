@@ -13,7 +13,39 @@ import {
   STRING_SIGNATURES_PATH,
   TABLE_SIGNATURES_PATH,
 } from "../scripts/signature-store-fs";
-import { lookupSignature, type SignatureOverride, type SignatureStore } from "./signature-store";
+import {
+  lookupSignature,
+  type SignatureOverride,
+  type SignatureStore,
+  signatureArmsFor,
+} from "./signature-store";
+
+describe("signatureArmsFor", () => {
+  const override: SignatureOverride = {
+    signatures: ["f(a: number): void", "f(a: string): void", "f(a: Hash): void"],
+    docs: ["number arm", null, "hash arm"],
+    since: [null, "1.9.0", "1.13.1"],
+  };
+
+  test("keeps the arms whose since the version meets, with their docs", () => {
+    expect(signatureArmsFor(override, "1.13.0")).toEqual({
+      signatures: ["f(a: number): void", "f(a: string): void"],
+      docs: ["number arm", null],
+      since: [null, "1.9.0"],
+    });
+    expect(signatureArmsFor(override, "1.13.1")).toEqual(override);
+    expect(signatureArmsFor(override, "1.8.10")).toEqual({
+      signatures: ["f(a: number): void"],
+      docs: ["number arm"],
+      since: [null],
+    });
+  });
+
+  test("an override with no since keeps every arm", () => {
+    const ungated: SignatureOverride = { signatures: ["g(): void", "g(a: number): void"] };
+    expect(signatureArmsFor(ungated, "1.0.0")).toEqual(ungated);
+  });
+});
 
 describe("lookupSignature", () => {
   const ioOpen: SignatureOverride = {

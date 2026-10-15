@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { symbolIdentityKey } from "../src/api-availability";
 import type { SlotTypes } from "../src/emit-dts";
+import { signatureArmsFor } from "../src/signature-store";
 import { selectCompleteVersionSurfaces } from "./generate-api-availability";
 import {
   type ApiTarget,
@@ -46,9 +47,16 @@ export interface BuildSignaturesOptions {
 // One seam keeps all three artifacts consistent: `overloads-signature-parity`
 // pins the store to the `src/*-overloads.d.ts` declarations, so folding the
 // store in cannot drift from the surface a consumer actually compiles against.
-function authoredSignature(packageRoot: string, namespace: string, fqn: string): string | null {
+// Only the arms the target's version declares are folded.
+function authoredSignature(
+  packageRoot: string,
+  namespace: string,
+  fqn: string,
+  version: string,
+): string | null {
   const store = loadSignatureFile(resolve(packageRoot, "signatures", `${namespace}.json`));
-  const forms = store[fqn]?.signatures ?? [];
+  const override = store[fqn];
+  const forms = override ? signatureArmsFor(override, version).signatures : [];
   return forms.length > 0 ? forms.join("\n") : null;
 }
 
@@ -98,7 +106,7 @@ export function buildSignaturesArtifact(options: BuildSignaturesOptions = {}): S
       // An authored fold replaces the declaration text wholesale, so whatever
       // slots the generated emit had recorded no longer describe it.
       for (const { key, fqn } of withheldSymbols(entry)) {
-        const authored = authoredSignature(packageRoot, entry.namespace, fqn);
+        const authored = authoredSignature(packageRoot, entry.namespace, fqn, version);
         if (authored !== null) {
           perSymbol[key] = authored;
           delete perSymbolSlots[key];
