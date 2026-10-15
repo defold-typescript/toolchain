@@ -119,6 +119,9 @@ export interface DeclaredSlot {
   readonly index: number;
   readonly kinds: DeclaredKinds;
   readonly optional: boolean;
+  // Some signature lets a caller pass nil here: the slot is `?` or has a nil
+  // member. A slot only some overloads omit is optional without accepting nil.
+  readonly acceptsNil: boolean;
   // Named properties of the slot's object members, or `null` when no member
   // names any (a `Record`, `LuaMap` or array reads whatever it is given).
   readonly fields: string[] | null;
@@ -262,6 +265,7 @@ function withoutNilKinds(kinds: Set<LuaKind> | "any"): DeclaredKinds {
 interface SlotAccumulator {
   kinds: Set<LuaKind> | "any";
   optional: boolean;
+  acceptsNil: boolean;
   fields: Set<string> | null;
 }
 
@@ -305,10 +309,17 @@ function readFunction(
         paramType = checker.getTypeArguments(paramType as ts.TypeReference)[0] ?? paramType;
       }
       const kinds = mappedKinds(paramType, checker, unmapped, `${name} slot ${i + 1}`);
-      const slot = slots.get(i + 1) ?? { kinds: new Set<LuaKind>(), optional: false, fields: null };
+      const slot = slots.get(i + 1) ?? {
+        kinds: new Set<LuaKind>(),
+        optional: false,
+        acceptsNil: false,
+        fields: null,
+      };
       if (kinds === "any") slot.kinds = "any";
       else if (slot.kinds !== "any") for (const kind of kinds) slot.kinds.add(kind);
-      if (optional || (kinds !== "any" && kinds.includes("nil"))) slot.optional = true;
+      const nilMember = kinds !== "any" && kinds.includes("nil");
+      if (optional || nilMember) slot.optional = true;
+      if ((optional && !rest) || nilMember) slot.acceptsNil = true;
       const fields = objectFields(checker.getNonNullableType(paramType), checker);
       if (fields) {
         slot.fields ??= new Set();
@@ -336,6 +347,7 @@ function readFunction(
         index,
         kinds: withoutNilKinds(slot.kinds),
         optional: slot.optional || absentSomewhere,
+        acceptsNil: slot.acceptsNil,
         fields: slot.fields ? [...slot.fields].sort() : null,
       };
     });
