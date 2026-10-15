@@ -14,14 +14,14 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[GUI node properties are typed](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)**; material constants take `hash`.
-> - **[Optional arguments whose `nil` raises reject `undefined`](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined)**; leave them out instead.
+> - **[Optional arguments whose `nil` raises reject `undefined`](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined)** on pre-baked versions; leave them out instead.
 > - **[`properties` is `defineScript`-only](./script-lifecycle.md).**
 > - **[Render scripts lose what needs a game object](./script-lifecycle.md#api-availability-by-script-kind)**, such as `sprite` and most of `go`.
 
 ### Breaking
 
 - **`gui.get`, `gui.set` and `gui.animate` take only the engine's node property names** as strings, sub-keys included, or a [`gui.PROP_*`](/api/gui) constant. Name a material constant or a `string`-typed name with `hash` (`gui.set(node, hash("tint"), v)`), set `"rotation"` with a `Quaternion`, and address the gui component with `msg.url` only for `"material"`, `"materials"`, `"fonts"` and `"textures"`, where `"textures"` with `undefined` removes the mapping on Defold 1.13.1 and later, the version from which the API reference and `llms-full.txt` list that form; see [GUI node properties are a closed set](./typescript-gotchas.md#gui-node-properties-are-a-closed-set).
-- **Optional arguments the engine raises on when passed `nil` take a value or nothing**: each such function is declared once without the argument and once requiring it, so a value typed `T | undefined` there stops compiling; [leave the argument out](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined) instead. The arguments are:
+- **Optional arguments the engine raises on when passed `nil` take a value or nothing on every [pre-baked Defold version](./pinning-defold-target.md#opting-into-a-pinned-surface)**: each such function is declared once without the argument and once requiring it, so a value typed `T | undefined` there stops compiling; [leave the argument out](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined) instead. A surface generated from reference docs keeps the reference's optional arguments, except in `go.get`, `go.set`, `gui.get`, `gui.set` and `gui.animate`, which take a value or nothing on every version. The arguments are:
   - **Options tables** of `go.get`, `go.set`, `gui.get`, `gui.set`, `gui.play_flipbook`, `gui.stop_particlefx`, `sprite.play_flipbook`, `particlefx.stop`, `image.load`, `image.load_buffer`, `render.set_render_target`, `render.draw` (Defold 1.13.0 and later), `resource.get_text_metrics`, `sys.get_sys_info` and `sys.open_url`.
   - **`delay`** of `gui.animate` and `go.animate`, and `flip` of `gui.new_texture` and `gui.set_texture_data`.
   - **`default_value`** of `sys.get_config_int` and `sys.get_config_number`, `recursive` of `go.delete`, `path` of `go.get_id` and `request_id` of `physics.raycast_async`.
