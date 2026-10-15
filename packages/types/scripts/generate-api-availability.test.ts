@@ -8,9 +8,9 @@ import {
   buildAvailabilityArtifact,
   selectCompleteVersionSurfaces,
   serializeAvailabilityArtifact,
-  versionOf,
 } from "./generate-api-availability";
 import { loadApiTargets } from "./regen";
+import { versionOf } from "./target-version";
 
 const AVAILABILITY_PATH = resolve(import.meta.dir, "..", "api-availability.json");
 
