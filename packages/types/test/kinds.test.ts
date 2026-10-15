@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { globalFunctionsIn } from "../scripts/augmentation-namespaces";
 import {
   type ApiTarget,
-  GO_INSTANCE_SRC_AUGMENTATIONS,
+  GO_INSTANCE_SRC_FUNCTIONS,
   loadApiTargets,
   loadGoInstanceFunctions,
 } from "../scripts/regen";
@@ -130,6 +130,10 @@ function declaredFunctions(target: ApiTarget): { namespace: string; ref: string 
   return [...seen.values()].sort((a, b) => a.ref.localeCompare(b.ref));
 }
 
+function uniqueByRef<T extends { ref: string }>(entries: readonly T[]): T[] {
+  return [...new Map(entries.map((entry) => [entry.ref, entry])).values()];
+}
+
 // Type-check one `typeof <ref>` line per function against a kind's committed
 // entrypoint alone. A line whose function must be absent carries
 // `@ts-expect-error`, so a function the kind still declares reds as an unused
@@ -172,20 +176,32 @@ describe("render-script game-object wall", () => {
   const target = loadApiTargets().find((t) => t.default === true) as ApiTarget;
   const manifest = new Set(Object.keys(loadGoInstanceFunctions(target) ?? {}));
   const declared = declaredFunctions(target);
-  const walled = declared.filter(({ ref }) => manifest.has(ref));
+  // A marked augmentation rides no render-script index, so each function its
+  // marker lists (`go.property`) leaves with it, read from the marker itself
+  // rather than from the shipped signatures.
+  const listed = new Set(Object.values(GO_INSTANCE_SRC_FUNCTIONS).flat());
+  const asRef = (ref: string) => ({ namespace: ref.slice(0, ref.lastIndexOf(".")), ref });
+  const walled = uniqueByRef([
+    ...declared.filter(({ ref }) => manifest.has(ref)),
+    ...[...listed].map(asRef),
+  ]);
   const walledNamespaces = new Set(walled.map(({ namespace }) => namespace));
-  // A marked augmentation rides no render-script index, so a function only it
-  // declares (`go.property`) leaves with it rather than staying.
-  const markedFunctions = new Set(
-    GO_INSTANCE_SRC_AUGMENTATIONS.flatMap((name) => {
-      const path = resolve(PACKAGE_ROOT, "src", `${name}.d.ts`);
-      return globalFunctionsIn(path, readFileSync(path, "utf8"));
-    }),
-  );
-  const kept = declared.filter(
-    ({ namespace, ref }) =>
-      walledNamespaces.has(namespace) && !manifest.has(ref) && !markedFunctions.has(ref),
-  );
+  // A function a marked file declares beyond its list must stay on the
+  // render-script kind. The scoping guard rejects such a file, so this is empty
+  // unless the guard stops doing so.
+  const unlisted = Object.entries(GO_INSTANCE_SRC_FUNCTIONS).flatMap(([name, fns]) => {
+    const path = resolve(PACKAGE_ROOT, "src", `${name}.d.ts`);
+    return globalFunctionsIn(path, readFileSync(path, "utf8"))
+      .filter((fn) => !fns.includes(fn))
+      .map(asRef);
+  });
+  const kept = uniqueByRef([
+    ...declared.filter(
+      ({ namespace, ref }) =>
+        walledNamespaces.has(namespace) && !manifest.has(ref) && !listed.has(ref),
+    ),
+    ...unlisted,
+  ]);
 
   test("the render-script kind omits every function that needs a game object and keeps the rest of its namespace", () => {
     expect(walled.length).toBeGreaterThan(0);
