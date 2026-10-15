@@ -1092,6 +1092,77 @@ describe("materializeRefDocSurface per-kind subpaths", () => {
   });
 });
 
+describe("materializeRefDocSurface game-object wall", () => {
+  // Type-check one statement against a single kind subpath of the surface.
+  function kindProgram(dir: string, kind: string, statement: string) {
+    writeFileSync(path.join(cwd, "proof.ts"), `export {};\n${statement}\n`);
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify(
+        {
+          compilerOptions: {
+            strict: true,
+            module: "ESNext",
+            moduleResolution: "bundler",
+            lib: ["ES2022"],
+            skipLibCheck: true,
+            noEmit: true,
+            types: [],
+          },
+          files: ["proof.ts", path.join(dir, "kinds", `${kind}.d.ts`)],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    return typecheck(path.join(cwd, "tsconfig.json"));
+  }
+
+  test("a vendored target's render-script subpath rejects a function that needs a game object", async () => {
+    const { materializedDir } = await materializeRefDocSurface({
+      cwd,
+      surfaceId: "defold-1.13.2",
+    });
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.13.2")}`);
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.13.2"));
+
+    const flipbook = 'sprite.play_flipbook("#sprite", "run");';
+    const onScript = kindProgram(dir, "script", flipbook);
+    if (onScript.exitCode !== 0) {
+      throw new Error(`the script subpath must keep sprite.play_flipbook:\n${onScript.output}`);
+    }
+    // Every `sprite` function needs a game object, so the namespace keeps only
+    // its types and the call fails on `sprite` itself.
+    const onRender = kindProgram(dir, "render-script", flipbook);
+    expect(onRender.exitCode).not.toBe(0);
+    expect(onRender.output).toMatch(/proof\.ts\(2,\d+\): error TS\d+: .*'sprite'/);
+
+    const draw = kindProgram(dir, "render-script", 'render.draw(render.predicate(["tile"]));');
+    if (draw.exitCode !== 0) {
+      throw new Error(`the render-script subpath must keep render.draw:\n${draw.output}`);
+    }
+    expect(draw.exitCode).toBe(0);
+  });
+
+  test("a target with no manifest keeps its render-script index and writes no copies", async () => {
+    const resolveOpts = multiKindRefDocResolveOpts();
+    await materializeRefDocSurface({
+      cwd,
+      surfaceId: "defold-1.9.8",
+      resolveOpts,
+      registry: [multiKindRefDocTarget()],
+    });
+
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
+    expect(existsSync(path.join(dir, "render-script-modules"))).toBe(false);
+    const render = readFileSync(path.join(dir, "kinds", "render-script.d.ts"), "utf8");
+    expect(render).toContain('import "../sprite";');
+    expect(render).toContain('import "../go-overloads";');
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+});
+
 describe("materializeRefDocSurface consumer proof", () => {
   test("a generated .defold-types/<id>/ surface type-checks via tsc", async () => {
     const resolveOpts = labelRefDocResolveOpts();

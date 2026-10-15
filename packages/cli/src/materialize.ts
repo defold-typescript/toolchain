@@ -834,6 +834,7 @@ interface KindManifestEntry {
   readonly restricted?: string;
   readonly factory: string;
   readonly only?: readonly string[];
+  readonly goInstanceFreeDir?: string;
 }
 
 interface MaterializeVersionedSurfaceModule {
@@ -851,6 +852,7 @@ interface MaterializeVersionedSurfaceModule {
     restrictedModule: string | null;
     restrictedAugmentations?: readonly string[];
     editorModules?: readonly string[];
+    goInstanceFreeModules?: readonly string[];
   }) => string;
   readonly RUNTIME_KIND_MANIFEST: readonly KindManifestEntry[];
   readonly targetKindManifest: (target: unknown) => readonly KindManifestEntry[];
@@ -955,6 +957,15 @@ export async function materializeRefDocSurface(
     for (const entry of kinds) {
       const restrictedModule =
         entry.restricted && surfaceModules.includes(entry.restricted) ? entry.restricted : null;
+      // The generator writes the copies a kind with no game object imports only
+      // for a target whose engine source records what needs one, so their
+      // directory is what says the kind is walled.
+      const freeDir =
+        entry.goInstanceFreeDir === undefined ? null : path.join(absDir, entry.goInstanceFreeDir);
+      const goInstanceFreeModules =
+        freeDir !== null && existsSync(freeDir)
+          ? listDts(freeDir).map((file) => file.replace(/\.d\.ts$/, ""))
+          : undefined;
       writeFileSync(
         path.join(kindsDir, `${entry.kind}.d.ts`),
         mod.renderMaterializedKindIndex({
@@ -968,6 +979,7 @@ export async function materializeRefDocSurface(
               restrictedAugmentations[base] === entry.restricted,
           ),
           editorModules: [...editorModules, ...EDITOR_HAND_AUTHORED],
+          ...(goInstanceFreeModules ? { goInstanceFreeModules } : {}),
         }),
       );
     }

@@ -5,6 +5,8 @@ import { resolve } from "node:path";
 import {
   assertSrcAugmentationScoping,
   committedFieldCorrectionTargets,
+  GO_INSTANCE_SRC_AUGMENTATIONS,
+  RESTRICTED_SRC_AUGMENTATIONS,
   type RegenIo,
   regenerate,
   SRC_AUGMENTATION_MODULES,
@@ -18,13 +20,31 @@ const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const SCOPING_CHECKED_PREFIX = "src augmentation scoping checked:";
 const COVERAGE_CHECKED_PREFIX = "field correction coverage checked:";
 
+const declaresGlobal = (namespace: string, body = ""): string =>
+  ["export {};", "declare global {", `  namespace ${namespace} {${body}}`, "}", ""].join("\n");
+
+// What each augmentation's markers promise: a restricted one re-opens its
+// namespace, and one marked as needing a game object declares `go.get`.
+function satisfiedAugmentation(name: string): string {
+  const restricted = RESTRICTED_SRC_AUGMENTATIONS[name];
+  if (restricted !== undefined) return declaresGlobal(restricted);
+  if (GO_INSTANCE_SRC_AUGMENTATIONS.includes(name)) {
+    return declaresGlobal("go", " function get(): void; ");
+  }
+  return "export {};\n";
+}
+
 // A surface root the production loader accepts: every name it will look for
-// exists, and only the one under test re-opens anything.
+// exists and keeps its markers' promises, so only the override under test can
+// violate the guard.
 function syntheticRoot(overrides: Record<string, string>): string {
   const root = mkdtempSync(resolve(tmpdir(), "regen-entrypoint-"));
   mkdirSync(resolve(root, "src"), { recursive: true });
   for (const name of SRC_AUGMENTATION_MODULES) {
-    writeFileSync(resolve(root, "src", `${name}.d.ts`), overrides[name] ?? "export {};\n");
+    writeFileSync(
+      resolve(root, "src", `${name}.d.ts`),
+      overrides[name] ?? satisfiedAugmentation(name),
+    );
   }
   return root;
 }
@@ -50,6 +70,43 @@ describe("assertSrcAugmentationScoping", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  async function scopingError(root: string): Promise<Error | undefined> {
+    try {
+      const error = await assertSrcAugmentationScoping(root).then(
+        () => undefined,
+        (reason: unknown) => reason,
+      );
+      if (error !== undefined) expect(error).toBeInstanceOf(Error);
+      return error as Error | undefined;
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+
+  test("a root whose augmentations keep their markers' promises passes", async () => {
+    expect(await scopingError(syntheticRoot({}))).toBeUndefined();
+  });
+
+  test("an unmarked augmentation declaring a function that needs a game object rejects", async () => {
+    const error = await scopingError(
+      syntheticRoot({
+        "msg-overloads": declaresGlobal("sprite", " function play_flipbook(): void; "),
+      }),
+    );
+    expect(error?.message).toContain('"msg-overloads"');
+    expect(error?.message).toContain("sprite.play_flipbook");
+  });
+
+  test("a marked augmentation that declares no function needing a game object rejects", async () => {
+    const error = await scopingError(
+      syntheticRoot({
+        "go-overloads": declaresGlobal("go", " function property(name: string): void; "),
+      }),
+    );
+    expect(error?.message).toContain('"go-overloads"');
+    expect(error?.message).toContain("requiresGoInstance");
   });
 });
 

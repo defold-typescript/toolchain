@@ -3,12 +3,16 @@ import { dirname, resolve } from "node:path";
 import {
   type ApiTarget,
   type GenerateOptions,
+  GO_INSTANCE_SRC_AUGMENTATIONS,
   generateBuiltinMessagesDeclaration,
   generateModuleDeclaration,
   generateVersionIndex,
+  goInstanceFreeSurface,
+  goInstanceWalls,
   KIND_MODULE_MANIFEST,
   type KindManifestEntry,
   kindStdlibReferences,
+  loadGoInstanceFunctions,
   loadSrcAugmentations,
   loadTargetEditorModules,
   MESSAGES_MANIFEST,
@@ -41,6 +45,11 @@ export interface RenderMaterializedKindIndexOptions {
   // the universal set outright — an editor kind is disjoint from the runtime
   // surface, not a narrowing of it.
   readonly editorModules?: readonly string[];
+  // The universal modules the surface also carries as copies without the
+  // functions that need a game object, set when the target records which those
+  // are. A kind with no game object imports the copies instead and drops the
+  // augmentations marked as needing one; every other kind ignores it.
+  readonly goInstanceFreeModules?: readonly string[];
 }
 
 // The installed subpath a materialized kind re-exports its factory from: the
@@ -57,11 +66,21 @@ function installedFactoryModule(entry: KindManifestEntry): string {
 export function renderMaterializedKindIndex(opts: RenderMaterializedKindIndexOptions): string {
   const entry = KIND_MODULE_MANIFEST.find((e) => e.kind === opts.kind);
   if (!entry) throw new Error(`unknown script kind: ${opts.kind}`);
+  const freeDir = entry.goInstanceFreeDir;
+  const copied =
+    freeDir === undefined || opts.goInstanceFreeModules === undefined
+      ? null
+      : new Set(opts.goInstanceFreeModules);
+  const universal = opts.universalModules.filter(
+    (mod) => copied === null || !GO_INSTANCE_SRC_AUGMENTATIONS.includes(mod),
+  );
   const modules =
     entry.only === undefined
-      ? [...new Set(["engine-globals", ...opts.universalModules])].sort()
+      ? [...new Set(["engine-globals", ...universal])].sort()
       : [...(opts.editorModules ?? [])];
-  const lines = modules.map((mod) => `import "../${mod}";`);
+  const lines = modules.map((mod) =>
+    copied?.has(mod) ? `import "../${freeDir}/${mod}";` : `import "../${mod}";`,
+  );
   if (entry.only === undefined && opts.restrictedModule) {
     lines.push(`import "../${opts.restrictedModule}";`);
   }
@@ -158,6 +177,27 @@ export async function buildVersionedSurfaceFiles(
         contents: generateModuleDeclaration(entry, { ...opts.emitOptions, surface }).contents,
       })),
   );
+
+  // A target whose engine source records the functions that need a game object
+  // carries, for each kind without one, copies of the modules declaring them
+  // with those functions withheld. Nothing else differs, so a target with no
+  // record writes no copy.
+  const walls = goInstanceWalls(
+    modules,
+    loadGoInstanceFunctions(target, opts.resolveOpts?.packageRoot ?? undefined),
+  );
+  for (const kind of KIND_MODULE_MANIFEST) {
+    const dir = kind.goInstanceFreeDir;
+    if (dir === undefined || walls.size === 0) continue;
+    const surface = rerooted(goInstanceFreeSurface(modules, walls, dir).surface);
+    for (const entry of surface) {
+      if (!entry.outFile.startsWith(`${dir}/`)) continue;
+      files.push({
+        path: entry.outFile,
+        contents: generateModuleDeclaration(entry, { ...opts.emitOptions, surface }).contents,
+      });
+    }
+  }
 
   files.push(...augmentations);
   files.push({ path: "core-types.d.ts", contents: CORE_TYPES_REEXPORT });

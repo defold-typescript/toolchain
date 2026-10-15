@@ -407,6 +407,48 @@ function committedTarget(id: string): ApiTarget {
   return target;
 }
 
+describe("game-object wall on a materialized surface", () => {
+  test("a target with a manifest writes copies without the walled functions, and only the render-script index imports them", async () => {
+    const target = committedTarget("defold-1.13.2");
+    const destDir = mkdtempSync(resolve(tmpdir(), "materialized-"));
+    await materializeVersionedSurface(target, {
+      destDir,
+      emitOptions: targetBindingOptions(target),
+    });
+
+    const root = readFileSync(resolve(destDir, "sprite.d.ts"), "utf8");
+    const copy = readFileSync(resolve(destDir, "render-script-modules", "sprite.d.ts"), "utf8");
+    expect(root).toContain("function play_flipbook(");
+    expect(copy).toContain("namespace sprite");
+    expect(copy).not.toContain("function play_flipbook(");
+
+    const copied = readdirSync(resolve(destDir, "render-script-modules")).map((file) =>
+      file.replace(/\.d\.ts$/, ""),
+    );
+    const universalModules = ["go-overloads", "msg", "sprite"];
+    const render = renderMaterializedKindIndex({
+      kind: "render-script",
+      universalModules,
+      restrictedModule: "render",
+      goInstanceFreeModules: copied,
+    });
+    expect(render).toContain('import "../render-script-modules/sprite";');
+    expect(render).not.toContain('import "../sprite";');
+    expect(render).not.toContain('import "../go-overloads";');
+    expect(render).toContain('import "../msg";');
+
+    const script = renderMaterializedKindIndex({
+      kind: "script",
+      universalModules,
+      restrictedModule: null,
+      goInstanceFreeModules: copied,
+    });
+    expect(script).toContain('import "../sprite";');
+    expect(script).toContain('import "../go-overloads";');
+    expect(script).not.toContain("render-script-modules");
+  });
+});
+
 describe("buildVersionedSurfaceFiles graphics semantic types", () => {
   const semanticNames = (contents: string) =>
     [...contents.matchAll(/const (SEMANTIC_TYPE_\w+)/g)].map((m) => m[1]).sort();
