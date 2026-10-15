@@ -95,6 +95,8 @@ export default defineScript({
 
 Property-backed fields are present on `self` before `init` runs, so they need not appear in `init`'s return. The state `init` returns is still checked on its own — an omitted state field remains a compile error, while omitted property-backed fields are correct.
 
+Only `defineScript` takes `properties`. Defold builds `go.property` only in `.script` files, so `defineGuiScript` and `defineRenderScript` reject the field at compile time and the transpiler refuses to emit it. A GUI or render script that needs a per-object value gets it from a sibling `defineScript`, which declares the property and sends its value with `msg.post` in `init`.
+
 ### Text properties
 
 A string default declares a text property, which the editor shows as a multi-line text field. Defold supports text script properties from 1.13.2:

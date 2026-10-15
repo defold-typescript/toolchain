@@ -35,22 +35,29 @@ const FACTORY_SPECIFIERS = new Set([
   `${FACTORY_MODULE}/render-script`,
 ]);
 
-export function resolvesToFactoryExport(callee: ts.Expression, checker: ts.TypeChecker): boolean {
+// The lifecycle factory a callee resolves to, aliases followed, or `undefined`
+// when it is not one of this package's factory exports.
+function factoryExportName(callee: ts.Expression, checker: ts.TypeChecker): string | undefined {
   let symbol = checker.getSymbolAtLocation(callee);
   if (symbol === undefined) {
-    return false;
+    return undefined;
   }
   if (symbol.flags & ts.SymbolFlags.Alias) {
     symbol = checker.getAliasedSymbol(symbol);
   }
-  if (!FACTORY_NAMES.has(symbol.getName())) {
-    return false;
+  const name = symbol.getName();
+  if (!FACTORY_NAMES.has(name)) {
+    return undefined;
   }
   const declaration = symbol.valueDeclaration ?? symbol.declarations?.[0];
   if (declaration === undefined) {
-    return false;
+    return undefined;
   }
-  return declaration.getSourceFile().fileName.includes(FACTORY_MODULE);
+  return declaration.getSourceFile().fileName.includes(FACTORY_MODULE) ? name : undefined;
+}
+
+export function resolvesToFactoryExport(callee: ts.Expression, checker: ts.TypeChecker): boolean {
+  return factoryExportName(callee, checker) !== undefined;
 }
 
 function isThisParameter(param: ts.ParameterDeclaration): boolean {
@@ -275,14 +282,33 @@ function emitPropertyRegistrations(
   );
 }
 
+// Defold builds `go.property` only in `.script` files, so a GUI or render
+// script's `properties` block has nothing it could lower to.
+function scriptOnlyProperties(
+  property: ts.ObjectLiteralElementLike,
+  factory: string,
+): ts.Diagnostic {
+  const file = property.getSourceFile();
+  const start = property.getStart(file);
+  return {
+    file,
+    start,
+    length: property.getEnd() - start,
+    category: ts.DiagnosticCategory.Error,
+    code: 0,
+    messageText: `\`${factory}\` cannot declare \`properties\`: Defold builds \`go.property\` only in \`.script\` files. Declare the property in a \`defineScript\` and send its value with \`msg.post\`.`,
+  };
+}
+
 function eraseFactoryCall(
   expression: ts.Expression,
   context: TransformationContext,
 ): Statement[] | undefined {
   const hooks = factoryHooks(expression, context.checker);
-  if (hooks === undefined) {
+  if (hooks === undefined || !ts.isCallExpression(expression)) {
     return undefined;
   }
+  const factory = factoryExportName(expression.expression, context.checker);
   const registrations: Statement[] = [];
   const statements: Statement[] = [];
   for (const property of hooks.properties) {
@@ -291,7 +317,11 @@ function eraseFactoryCall(
       continue;
     }
     if (name === "properties") {
-      registrations.push(...emitPropertyRegistrations(property, context));
+      if (factory === "defineScript") {
+        registrations.push(...emitPropertyRegistrations(property, context));
+      } else if (factory !== undefined && propertyMembers(property).length > 0) {
+        context.diagnostics.push(scriptOnlyProperties(property, factory));
+      }
       continue;
     }
     const fn = hookFunction(property);
