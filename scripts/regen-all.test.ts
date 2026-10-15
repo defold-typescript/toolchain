@@ -11,8 +11,9 @@ import {
 } from "./regen-all.ts";
 
 describe("REGEN_UNITS", () => {
-  test("exposes exactly the four artifact units by stable id", () => {
+  test("exposes exactly the five artifact units by stable id", () => {
     expect(REGEN_UNITS.map((u) => u.id)).toEqual([
+      "instance-wall",
       "declarations",
       "availability",
       "signatures",
@@ -25,6 +26,11 @@ describe("REGEN_UNITS", () => {
       expect(unit.command.length).toBeGreaterThan(0);
       expect(unit.command[0]).toBe("bun");
     }
+  });
+
+  test("instance-wall runs first, before the declarations that read it", () => {
+    expect(REGEN_UNITS[0]?.id).toBe("instance-wall");
+    expect(REGEN_UNITS[0]?.command).toContain("--write");
   });
 
   test("declarations run before availability and signatures", () => {
@@ -53,7 +59,7 @@ describe("REGEN_UNITS", () => {
 });
 
 describe("plan", () => {
-  test("lists the four unit commands without executing them", () => {
+  test("lists the five unit commands without executing them", () => {
     const p = plan();
     expect(p.map((u) => u.id)).toEqual(REGEN_UNITS.map((u) => u.id));
     for (let i = 0; i < REGEN_UNITS.length; i++) {
@@ -69,9 +75,15 @@ describe("runRegenSequence", () => {
       ran.push(unit.id);
       return true;
     });
-    expect(ran).toEqual(["declarations", "availability", "signatures", "llms"]);
+    expect(ran).toEqual(["instance-wall", "declarations", "availability", "signatures", "llms"]);
     expect(summary.ok).toBe(true);
-    expect(summary.ran).toEqual(["declarations", "availability", "signatures", "llms"]);
+    expect(summary.ran).toEqual([
+      "instance-wall",
+      "declarations",
+      "availability",
+      "signatures",
+      "llms",
+    ]);
     expect(summary.failed).toBeUndefined();
   });
 
@@ -81,10 +93,10 @@ describe("runRegenSequence", () => {
       ran.push(unit.id);
       return unit.id !== "availability";
     });
-    expect(ran).toEqual(["declarations", "availability"]);
+    expect(ran).toEqual(["instance-wall", "declarations", "availability"]);
     expect(summary.ok).toBe(false);
     expect(summary.failed).toBe("availability");
-    expect(summary.ran).toEqual(["declarations"]);
+    expect(summary.ran).toEqual(["instance-wall", "declarations"]);
   });
 });
 
@@ -121,7 +133,7 @@ describe("runRegenCli", () => {
     expect(lines(out())).toHaveLength(1);
     expect(JSON.parse(out().trim())).toEqual({
       ok: true,
-      ran: ["declarations", "availability", "signatures", "llms"],
+      ran: ["instance-wall", "declarations", "availability", "signatures", "llms"],
     });
     expect(err()).toContain("$ ");
     expect(err()).toContain("child output for");
@@ -136,7 +148,7 @@ describe("runRegenCli", () => {
     expect(lines(out())).toHaveLength(1);
     expect(JSON.parse(out().trim())).toEqual({
       ok: false,
-      ran: ["declarations"],
+      ran: ["instance-wall", "declarations"],
       failed: "availability",
     });
   });
@@ -156,7 +168,7 @@ describe("runRegenCli", () => {
     const code = runRegenCli([], passAll, io);
     expect(code).toBe(0);
     expect(out()).toContain("$ ");
-    expect(out()).toContain("regen:all — regenerated 4 artifact set(s)");
+    expect(out()).toContain("regen:all — regenerated 5 artifact set(s)");
   });
 
   test("normal failure: FAILED line on stderr, no summary on stdout, code 1", () => {
