@@ -7,6 +7,7 @@ import {
   exampleIdentity,
   exampleSurfaces,
   factoryBoundOwnership,
+  goInstanceBoundOwnership,
   kindFactoryNames,
   moduleBoundOwnership,
   moduleKey,
@@ -261,6 +262,54 @@ describe("factory-bound ownership", () => {
         }
       }
     }
+  });
+});
+
+describe("game-object-bound ownership", () => {
+  const runtimeKinds = ["script", "gui-script", "render-script"]
+    .map((kind) => `${DEFAULT}/kinds/${kind}`)
+    .sort();
+  const withGameObject = runtimeKinds.filter((id) => !id.endsWith("/render-script"));
+
+  const surfaceOf = (id: string) => {
+    const surface = surfaces.find((candidate) => candidate.id === id);
+    if (!surface) throw new Error(`no surface ${id}`);
+    return surface;
+  };
+
+  function bindSynthetic(ts: string): string[] {
+    const synthetic: TranslationStore = { "synthetic.body": [{ sourceHash: "deadbeef", ts }] };
+    const identity = exampleIdentity("synthetic.body", "deadbeef");
+    const bound = goInstanceBoundOwnership(
+      synthetic,
+      new Map([[identity, runtimeKinds]]),
+      surfaces,
+    );
+    return (bound.get(identity) ?? []).sort();
+  }
+
+  test("only the render-script kind withholds, including what its dropped augmentation declares", () => {
+    const render = surfaceOf(`${DEFAULT}/kinds/render-script`).withheld;
+    expect(render.has("go.get_position")).toBe(true);
+    expect(render.has("go.property")).toBe(true);
+    expect(render.has("vmath.vector3")).toBe(false);
+    for (const id of withGameObject) expect(surfaceOf(id).withheld.size).toBe(0);
+  });
+
+  test("a body calling a withheld function leaves only the surfaces declaring it", () => {
+    expect(bindSynthetic("const p = go.get_position();")).toEqual(withGameObject);
+  });
+
+  test("a body calling only what every kind declares keeps every kind", () => {
+    expect(bindSynthetic("const v = vmath.vector3(1, 2, 3);")).toEqual(runtimeKinds);
+  });
+
+  test("a misspelled function narrows nothing, so it still reds as an unpinned diagnostic", () => {
+    expect(bindSynthetic("go.get_positon();")).toEqual(runtimeKinds);
+  });
+
+  test("a function named in a string narrows nothing", () => {
+    expect(bindSynthetic('print("go.get_position()");')).toEqual(runtimeKinds);
   });
 });
 

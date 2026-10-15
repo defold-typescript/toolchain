@@ -8,6 +8,7 @@ import {
   EDITOR_MODULE_MANIFEST,
   EDITOR_SKIP_FUNCTIONS,
   EDITOR_VM_MODULE_MANIFEST,
+  GO_INSTANCE_SRC_AUGMENTATIONS,
   generateBuiltinMessagesDeclaration,
   generateKindIndex,
   generateModuleDeclaration,
@@ -1600,18 +1601,24 @@ describe("restricted src augmentation scoping", () => {
     }
   });
 
-  test("an augmentation of no restricted namespace still reaches every runtime kind", () => {
+  // A marked augmentation declares a function that needs a game object, so it
+  // skips the kind that has none; the default target records what those are.
+  test("an augmentation of no restricted namespace reaches every runtime kind it can run in", () => {
     const universal = augmentations.filter(
       (a) => !a.namespaces.some((ns) => Object.hasOwn(RESTRICTED_NAMESPACES, ns)),
     );
     expect(universal.length).toBeGreaterThan(0);
+    expect(GO_INSTANCE_SRC_AUGMENTATIONS.length).toBeGreaterThan(0);
     for (const augmentation of universal) {
       for (const entry of RUNTIME_KIND_MANIFEST) {
+        const runs =
+          entry.goInstanceFreeDir === undefined ||
+          !GO_INSTANCE_SRC_AUGMENTATIONS.includes(augmentation.name);
         expect({
           kind: entry.kind,
           augmentation: augmentation.name,
           imported: importsAugmentation(entry.kind, augmentation.name),
-        }).toEqual({ kind: entry.kind, augmentation: augmentation.name, imported: true });
+        }).toEqual({ kind: entry.kind, augmentation: augmentation.name, imported: runs });
       }
     }
   });

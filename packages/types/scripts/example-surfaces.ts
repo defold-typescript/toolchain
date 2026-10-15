@@ -13,18 +13,22 @@
  * inferred from hash recency, because the same body legitimately ships in a
  * current target and a versioned one at the same time.
  */
+import { readFileSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 import ts from "typescript";
 import { parseDefoldApiDoc } from "../src/api-doc";
 import { splitExampleSources } from "../src/doc-comment";
 import { hashExampleSource, proseLuaFences, type TranslationStore } from "../src/example-store";
+import { globalFunctionsIn } from "./augmentation-namespaces";
 import { targetBindingOptions } from "./binding-pin";
 import { buildVersionedSurfaceFiles, renderMaterializedKindIndex } from "./materialize-version";
 import {
   type ApiTarget,
+  GO_INSTANCE_SRC_AUGMENTATIONS,
   KIND_MODULE_MANIFEST,
   type KindManifestEntry,
   loadApiTargets,
+  loadGoInstanceFunctions,
   loadTargetEditorModules,
   loadTargetModules,
   type ModuleManifestEntry,
@@ -67,6 +71,12 @@ export interface ExampleSurface {
    * compiled without them is judged against a surface nobody consumes.
    */
   readonly exports: SurfaceExports;
+  /**
+   * The `<namespace>.<name>` functions this entrypoint omits although it
+   * carries their module: on a kind with no game object, the functions that
+   * need one. Empty for every other surface.
+   */
+  readonly withheld: ReadonlySet<string>;
 }
 
 export interface SurfaceExports {
@@ -75,6 +85,25 @@ export interface SurfaceExports {
 }
 
 const NO_EXPORTS: SurfaceExports = { values: [], types: [] };
+
+const NOTHING_WITHHELD: ReadonlySet<string> = new Set();
+
+/**
+ * What a kind's entrypoint omits for want of a game object: every function
+ * the target's manifest lists, and every function the augmentations that
+ * index drops declare (`go.property` leaves with `go.get`). Read from the same
+ * manifest and marker the kind index is rendered from.
+ */
+function goInstanceWithheld(target: ApiTarget, entry: KindManifestEntry): ReadonlySet<string> {
+  if (entry.goInstanceFreeDir === undefined) return NOTHING_WITHHELD;
+  const manifest = loadGoInstanceFunctions(target);
+  if (manifest === null) return NOTHING_WITHHELD;
+  const marked = GO_INSTANCE_SRC_AUGMENTATIONS.flatMap((name) => {
+    const path = resolve(PACKAGE_ROOT, "src", `${name}.d.ts`);
+    return globalFunctionsIn(path, readFileSync(path, "utf8"));
+  });
+  return new Set([...Object.keys(manifest), ...marked]);
+}
 
 /**
  * The package root's export set. `index.d.ts` ends in `export * from
@@ -218,6 +247,11 @@ async function materializedRuntimeKindFiles(
   const kinds: { entry: KindManifestEntry; path: string }[] = [];
   for (const entry of targetKindManifest(target)) {
     if (entry.only !== undefined) continue;
+    const freeDir =
+      entry.goInstanceFreeDir === undefined ? null : resolve(virtualRoot, entry.goInstanceFreeDir);
+    const copied = files
+      .filter((file) => freeDir !== null && dirname(file.path) === freeDir)
+      .map((file) => basename(file.path).replace(/\.d\.ts$/, ""));
     const path = resolve(virtualRoot, "kinds", `${entry.kind}.d.ts`);
     files.push({
       path,
@@ -232,6 +266,7 @@ async function materializedRuntimeKindFiles(
             entry.restricted !== undefined &&
             RESTRICTED_SRC_AUGMENTATIONS[base] === entry.restricted,
         ),
+        ...(copied.length > 0 ? { goInstanceFreeModules: copied } : {}),
       }),
     });
     kinds.push({ entry, path });
@@ -278,6 +313,7 @@ export async function exampleSurfaces(
       virtualFiles: [],
       modules: rootModules,
       exports: isDefault ? defaultRootExports(manifest) : NO_EXPORTS,
+      withheld: NOTHING_WITHHELD,
     });
 
     const materialized = isDefault
@@ -297,6 +333,7 @@ export async function exampleSurfaces(
         virtualFiles: rendered ? (materialized?.files ?? []) : [],
         modules,
         exports: kindExports(entry),
+        withheld: goInstanceWithheld(target, entry),
       });
     }
   }
@@ -596,19 +633,81 @@ export function moduleBoundOwnership(
 }
 
 /**
+ * The `<namespace>.<name>` members a body reads, parsed the way
+ * `referencedNamespaces` parses: a member is the name accessed directly on a
+ * receiver that is itself a known namespace.
+ */
+export function referencedMembers(source: string, known: ReadonlySet<string>): readonly string[] {
+  const parsed = ts.createSourceFile("body.ts", source, ts.ScriptTarget.Latest, true);
+  const found = new Set<string>();
+  const visit = (node: ts.Node): void => {
+    if (ts.isPropertyAccessExpression(node)) {
+      const chain = dottedChain(node.expression);
+      if (chain !== undefined && longestKnownNamespace(chain, known) === chain) {
+        found.add(`${chain}.${node.name.text}`);
+        return;
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(parsed);
+  return [...found].sort();
+}
+
+/**
+ * `moduleBoundOwnership`'s result narrowed once more, to the surfaces that
+ * declare every member the body reads. A render-script kind carries `go` but
+ * withholds `go.get_position`, which needs a game object, so a body calling it
+ * is game-object script code and `Property 'get_position' does not exist` there
+ * is a fact about the surface. Only a surface's own `withheld` set narrows: a
+ * misspelled member is withheld nowhere and stays judged everywhere.
+ */
+export function goInstanceBoundOwnership(
+  store: TranslationStore,
+  owners: ReadonlyMap<string, readonly string[]>,
+  surfaces: readonly ExampleSurface[],
+): Map<string, string[]> {
+  const known = moduleNamespaces(surfaces);
+  const withheldById = new Map(surfaces.map((surface) => [surface.id, surface.withheld] as const));
+  const bound = new Map<string, string[]>();
+  for (const [identity, ids] of owners) bound.set(identity, [...ids]);
+  for (const [fqn, entries] of Object.entries(store)) {
+    for (const entry of entries) {
+      const identity = exampleIdentity(fqn, entry.sourceHash);
+      const ids = bound.get(identity);
+      if (ids === undefined) continue;
+      const members = referencedMembers(entry.ts, known);
+      bound.set(
+        identity,
+        ids.filter((id) => {
+          const withheld = withheldById.get(id);
+          return withheld !== undefined && !members.some((member) => withheld.has(member));
+        }),
+      );
+    }
+  }
+  return bound;
+}
+
+/**
  * The one ownership composition the gate runs: documentation ownership narrowed
- * by the factory a body calls, then by the namespaces it reads. Extracted so the
- * no-empty-owner invariant can be asserted against the order and membership
- * production actually uses, rather than against a re-composition in a test.
+ * by the factory a body calls, then by the namespaces it reads, then by the
+ * members a surface withholds. Extracted so the no-empty-owner invariant can be
+ * asserted against the order and membership production actually uses, rather
+ * than against a re-composition in a test.
  */
 export function boundOwnership(
   store: TranslationStore,
   surfaces: readonly ExampleSurface[],
   targets: readonly ApiTarget[] = loadApiTargets(),
 ): Map<string, string[]> {
-  return moduleBoundOwnership(
+  return goInstanceBoundOwnership(
     store,
-    factoryBoundOwnership(store, translationOwnership(store, surfaces, targets), surfaces),
+    moduleBoundOwnership(
+      store,
+      factoryBoundOwnership(store, translationOwnership(store, surfaces, targets), surfaces),
+      surfaces,
+    ),
     surfaces,
   );
 }

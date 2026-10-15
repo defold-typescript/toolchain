@@ -869,10 +869,14 @@ export function kindStdlibReferences(entry: KindManifestEntry): string {
 // added without one, by reading the namespaces each file really re-opens.
 // `since` is the first Defold release, a bare semver, whose engine has what the
 // augmentation declares; a surface generated for an older target omits it.
+// `requiresGoInstance` marks an augmentation declaring a function that needs a
+// game object, so it rides no index of a kind without one; the same guard
+// checks this marker against the functions the file declares.
 interface UniversalExtraImport {
   readonly specifier: string;
   readonly restrictedTo?: string;
   readonly since?: string;
+  readonly requiresGoInstance?: true;
 }
 
 const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
@@ -884,7 +888,9 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   { specifier: "../../src/window-event-guard" },
   { specifier: "../../src/physics-event-guard" },
   { specifier: "../../src/scene-addresses" },
-  { specifier: "../../src/go-overloads" },
+  // Its `go.property` leaves with `go.get` and `go.set`: `GetScript` finds no
+  // `.script` instance in a render script, so the call raises there too.
+  { specifier: "../../src/go-overloads", requiresGoInstance: true },
   { specifier: "../../src/component-properties" },
   { specifier: "../../src/render-overloads", restrictedTo: "render" },
   { specifier: "../../src/gui-overloads", restrictedTo: "gui" },
@@ -910,6 +916,13 @@ export const RESTRICTED_SRC_AUGMENTATIONS: Readonly<Record<string, string>> = Ob
     (entry) => entry.restrictedTo !== undefined && entry.specifier.startsWith(SRC_IMPORT_PREFIX),
   ).map((entry) => [entry.specifier.slice(SRC_IMPORT_PREFIX.length), entry.restrictedTo as string]),
 );
+
+// The `src/*` augmentations that declare a function needing a game object, as
+// module names. Exported so the materialized kind indexes drop them the same
+// way the in-repo ones do.
+export const GO_INSTANCE_SRC_AUGMENTATIONS: readonly string[] = UNIVERSAL_EXTRA_IMPORTS.filter(
+  (entry) => entry.requiresGoInstance === true && entry.specifier.startsWith(SRC_IMPORT_PREFIX),
+).map((entry) => entry.specifier.slice(SRC_IMPORT_PREFIX.length));
 
 // The `src/*` augmentations gated to a release, as `<module name> -> <since>`.
 export const SRC_AUGMENTATION_GATES: Readonly<Record<string, string>> = Object.fromEntries(
@@ -954,6 +967,76 @@ export function loadSrcAugmentations(
   });
 }
 
+export const GO_INSTANCE_FUNCTIONS_FILE = "go-instance-functions.json";
+
+export type GoInstanceFunctions = Readonly<Record<string, readonly string[]>>;
+
+// The functions that need a game-object instance on `target`, keyed by fqn,
+// read from the manifest `go-instance-functions.ts` commits beside the target's
+// fixtures. `null` for a target with no vendored engine source to derive it
+// from, whose surfaces keep every function.
+export function loadGoInstanceFunctions(
+  target: ApiTarget,
+  packageRoot: string = PACKAGE_ROOT,
+): GoInstanceFunctions | null {
+  const path = resolve(packageRoot, target.fixturesDir, GO_INSTANCE_FUNCTIONS_FILE);
+  if (!existsSync(path)) return null;
+  return JSON.parse(readFileSync(path, "utf8")) as GoInstanceFunctions;
+}
+
+// The functions a kind with no game object omits, by the bare name of the
+// module declaring them: `<module> -> <local names>`. A module declaring none,
+// or declaring only names its skip rules already withhold, has no entry.
+export function goInstanceWalls(
+  modules: readonly ModuleManifestEntry[],
+  needsGoInstance: GoInstanceFunctions | null,
+): Map<string, string[]> {
+  const walls = new Map<string, string[]>();
+  if (needsGoInstance === null) return walls;
+  const fqns = Object.keys(needsGoInstance);
+  for (const entry of modules) {
+    const prefix = `${entry.namespace}.`;
+    const localOf = (name: string): string =>
+      name.startsWith(prefix) ? name.slice(prefix.length) : name;
+    const declared = new Set(parseDefoldApiDoc(entry.doc).functions.map((fn) => localOf(fn.name)));
+    const rules = entry.skipFunctions ?? [];
+    const skipped = (local: string): boolean =>
+      rules.some((rule) => (rule.endsWith(".") ? local.startsWith(rule) : local === rule));
+    const walled = fqns
+      .filter((fqn) => fqn.startsWith(prefix))
+      .map(localOf)
+      .filter((local) => !local.includes(".") && declared.has(local) && !skipped(local))
+      .sort();
+    if (walled.length > 0) walls.set(entry.outFile.replace(/\.d\.ts$/, ""), walled);
+  }
+  return walls;
+}
+
+// The modules a kind with no game object is emitted from: each walled module is
+// replaced by a copy that withholds the functions needing one and lands in
+// `dir`, one level below the surface root. The surface is returned whole
+// because a copy routes its types across its siblings, never alone.
+export function goInstanceFreeSurface(
+  modules: readonly ModuleManifestEntry[],
+  walls: ReadonlyMap<string, readonly string[]>,
+  dir: string,
+): { surface: ModuleManifestEntry[]; copies: ModuleManifestEntry[] } {
+  const copies: ModuleManifestEntry[] = [];
+  const surface = modules.map((entry) => {
+    const walled = walls.get(entry.outFile.replace(/\.d\.ts$/, ""));
+    if (walled === undefined) return entry;
+    const copy: ModuleManifestEntry = {
+      ...entry,
+      outFile: `${dir}/${entry.outFile}`,
+      importsFrom: oneLevelDeeper(entry.importsFrom ?? "../src/core-types"),
+      skipFunctions: [...(entry.skipFunctions ?? []), ...walled],
+    };
+    copies.push(copy);
+    return copy;
+  });
+  return { surface, copies };
+}
+
 const DEFAULT_FACTORY_MODULE = "../../src/lifecycle";
 
 export interface KindManifestEntry {
@@ -979,12 +1062,23 @@ export interface KindManifestEntry {
   readonly propertyTypes?: boolean;
   // Whether the kind's VM is LuaJIT. The editor runs plain Lua 5.1.
   readonly jit?: boolean;
+  // Set for a kind whose script has no game object: the directory, beside the
+  // surface root, holding copies of the modules that declare a function needing
+  // one, with those functions withheld. Its index imports the copies instead.
+  readonly goInstanceFreeDir?: string;
 }
 
 export const KIND_MODULE_MANIFEST: readonly KindManifestEntry[] = [
   { kind: "script", factory: "defineScript" },
   { kind: "gui-script", restricted: "gui", factory: "defineGuiScript" },
-  { kind: "render-script", restricted: "render", factory: "defineRenderScript" },
+  {
+    kind: "render-script",
+    restricted: "render",
+    factory: "defineRenderScript",
+    // Only the GUI component registers a game-object resolver
+    // (`comp_gui.cpp`), so every `CheckGOInstance` raises in a render script.
+    goInstanceFreeDir: "render-script-modules",
+  },
   {
     kind: "editor-script",
     // Empty on purpose: the emitted namespaces come from the declaring target's
@@ -1031,20 +1125,30 @@ export function generateKindIndex(kind: string, target: ApiTarget = DEFAULT_TARG
   const entry = KIND_MODULE_MANIFEST.find((e) => e.kind === kind);
   if (!entry) throw new Error(`unknown script kind: ${kind}`);
   const srcPrefix = targetSrcPrefix(target);
+  // A kind with no game object loses what needs one, on a target whose engine
+  // source records what that is; a module declaring such a function is
+  // imported from its filtered copy.
+  const freeDir = entry.goInstanceFreeDir;
+  const needsGoInstance = freeDir === undefined ? null : loadGoInstanceFunctions(target);
+  const walls = goInstanceWalls(MODULE_MANIFEST, needsGoInstance);
   const universalNamespaces = MODULE_MANIFEST.filter(
     (m) => !Object.hasOwn(RESTRICTED_NAMESPACES, m.namespace),
-  ).map((m) => `../${m.outFile.replace(/\.d\.ts$/, "")}`);
+  )
+    .map((m) => m.outFile.replace(/\.d\.ts$/, ""))
+    .sort()
+    .map((base) => (walls.has(base) ? `../${freeDir}/${base}` : `../${base}`));
   // An augmentation bound to a restricted namespace rides only that namespace's
   // kind index; every unmarked entry stays universal. A gated entry rides only a
-  // target its gate admits.
+  // target its gate admits, and a marked one only a kind with a game object.
   const extraImports = UNIVERSAL_EXTRA_IMPORTS.filter(
     (extra) =>
       (extra.restrictedTo === undefined || extra.restrictedTo === entry.restricted) &&
+      (needsGoInstance === null || extra.requiresGoInstance !== true) &&
       admitsTarget(extra, target),
   ).map((extra) => extra.specifier);
   const modules = (
     entry.only === undefined
-      ? [...new Set([...universalNamespaces.sort(), ...extraImports.sort()])]
+      ? [...new Set([...universalNamespaces, ...extraImports.sort()])]
       : [...editorKindModules(target), ...(entry.extraModules ?? [])]
   ).map((path) => retargetSrcPath(path, srcPrefix));
   const lines = modules.map((path) => `import "${path}";`);
@@ -1124,6 +1228,9 @@ export function targetKindManifest(target: ApiTarget): readonly KindManifestEntr
 
 // Every `src/*` augmentation bound to a kind-restricted namespace carries its
 // `restrictedTo` marker, and every marker names a namespace its file re-opens.
+// Likewise `requiresGoInstance` sits on exactly the files declaring a function
+// the default target's manifest lists, read from this package whatever root the
+// files come from.
 // Exported so a test can reach the guard the entry point runs; never called on
 // import, so the dynamic import below stays unreached from an installed package.
 export async function assertSrcAugmentationScoping(
@@ -1131,13 +1238,18 @@ export async function assertSrcAugmentationScoping(
 ): Promise<number> {
   // Imported here rather than at module scope: it imports the devDependency
   // `typescript`, and `resolve` loads this module from an installed package.
-  const { srcAugmentationScopingViolations } = await import("./augmentation-namespaces");
-  const files = loadSrcAugmentations(packageRoot);
-  const violations = srcAugmentationScopingViolations(
-    files,
-    RESTRICTED_SRC_AUGMENTATIONS,
-    RESTRICTED_NAMESPACES,
+  const { goInstanceMarkerViolations, srcAugmentationScopingViolations } = await import(
+    "./augmentation-namespaces"
   );
+  const files = loadSrcAugmentations(packageRoot);
+  const violations = [
+    ...srcAugmentationScopingViolations(files, RESTRICTED_SRC_AUGMENTATIONS, RESTRICTED_NAMESPACES),
+    ...goInstanceMarkerViolations(
+      files,
+      GO_INSTANCE_SRC_AUGMENTATIONS,
+      new Set(Object.keys(loadGoInstanceFunctions(DEFAULT_TARGET) ?? {})),
+    ),
+  ];
   if (violations.length > 0) {
     throw new Error(`src augmentation scoping violations:\n${violations.join("\n")}`);
   }
@@ -1270,6 +1382,24 @@ export async function regenerate(
     for (const entry of editorKinds) {
       const out = resolve(versionKindsDir, `${entry.kind}.d.ts`);
       io.write(out, generateKindIndex(entry.kind, target));
+      io.log(`wrote ${out}`);
+    }
+  }
+
+  // The copies a kind with no game object imports instead of the modules that
+  // declare a function needing one; `generateKindIndex` routes to this same set.
+  const defaultWalls = goInstanceWalls(MODULE_MANIFEST, loadGoInstanceFunctions(DEFAULT_TARGET));
+  for (const entry of KIND_MODULE_MANIFEST) {
+    if (entry.goInstanceFreeDir === undefined) continue;
+    const { surface, copies } = goInstanceFreeSurface(
+      MODULE_MANIFEST,
+      defaultWalls,
+      entry.goInstanceFreeDir,
+    );
+    io.mkdir(resolve(generated, entry.goInstanceFreeDir));
+    for (const copy of copies) {
+      const out = resolve(generated, copy.outFile);
+      io.write(out, generateModuleDeclaration(copy, { ...defaultBinding, surface }).contents);
       io.log(`wrote ${out}`);
     }
   }
