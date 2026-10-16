@@ -408,6 +408,31 @@ export function retargetSourceRoot(
     path.posix.dirname(toPosix(scriptRel)),
     path.posix.dirname(toPosix(sourceRel)),
   );
+  return withSourceRoot(map, sourceRoot);
+}
+
+/**
+ * Points an hsm module's map at the `.ts` it was compiled from, which sits in
+ * `sourceDir` outside the output tree: the workspace source, or the copy under
+ * `node_modules`. The root is taken between absolute paths, since a cwd-relative
+ * path that climbs out of the project resolves against the process's directory.
+ * The map comes back unchanged when no relative root reaches the source (another
+ * drive on Windows): the Local Lua Debugger joins `sourceRoot` after the map's
+ * folder, so it cannot name one.
+ */
+export function retargetHsmSourceMap(
+  cwd: string,
+  moduleRel: string,
+  map: string | undefined,
+  sourceDir: string,
+): string | undefined {
+  if (map === undefined) return undefined;
+  const sourceRoot = path.relative(path.dirname(path.join(cwd, moduleRel)), sourceDir);
+  if (path.isAbsolute(sourceRoot)) return map;
+  return withSourceRoot(map, toPosix(sourceRoot));
+}
+
+function withSourceRoot(map: string, sourceRoot: string): string {
   if (sourceRoot === "") return map;
   let parsed: unknown;
   try {

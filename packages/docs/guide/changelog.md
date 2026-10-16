@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[Declarations follow the engine bindings](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined)**: optional arguments whose `nil` raises reject `undefined` on pre-baked versions, `Url.socket` can be `undefined`, and `hash` takes a `Hash`.
 > - **[Script kinds keep only what they support](./script-lifecycle.md#api-availability-by-script-kind)**: `properties` is `defineScript`-only, and render scripts lose what needs a game object.
 > - **[`wall --check` type-checks walls](./wall.md#flags)**, helpers they import included; re-run `wall <dirs>` to rewrite existing walls.
-> - **[The build's own Lua moves to `lib/defold_typescript/`](./build.md#the-runtime-folder)**, movable with `runtime-dir`; hand-authored Lua that requires the old root names must switch.
+> - **[The build's own Lua moves to `lib/defold_typescript/`](./build.md#the-runtime-folder)**, movable with `runtime-dir`, and [state machine](./state-machines.md#import-it) modules carry source maps; hand-authored Lua that requires the old root names must switch.
 
 ### Breaking
 
@@ -38,6 +38,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **`gui.get` returns each node property's type**: `"position"` reads as a `Vector4`, `"rotation"` as a `Quaternion`, and a sub-key or scalar as a `number`, so a read needs no cast.
+- **Each [state machine](./state-machines.md#import-it) module is written with a source map to the library's `.ts`**: a debugger frame inside the library opens TypeScript, and `watch` and `reload` console lines name that file when a local install keeps it inside the project.
 
 ### Fixed
 
