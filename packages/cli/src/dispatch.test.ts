@@ -6,6 +6,7 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import * as os from "node:os";
@@ -171,7 +172,7 @@ afterEach(() => {
 function expectedWallTsconfig(typesEntrypoint: string): unknown {
   return {
     extends: "../../tsconfig.json",
-    compilerOptions: { composite: true, typeRoots: null, types: [typesEntrypoint] },
+    compilerOptions: { typeRoots: null, types: [typesEntrypoint] },
     include: ["**/*.ts"],
     exclude: [],
   };
@@ -2512,14 +2513,12 @@ describe("dispatch", () => {
       path.join(cwd, "src", "ui", "hud.ts"),
       'import { defineGuiScript } from "@defold-typescript/types/gui-script";\nexport default defineGuiScript({});\n',
     );
-    // A manually-written wall: root tsconfig carries references/exclude/files and
-    // src/ui has its own composite tsconfig. A build must leave all of it intact.
+    // A manually-written wall: root tsconfig carries the exclude and src/ui has
+    // its own standalone tsconfig. A build must leave all of it intact.
     const rootTsconfig = {
       compilerOptions: { strict: true, types: ["@defold-typescript/types"] },
       include: ["src/**/*.ts"],
       exclude: ["src/ui"],
-      files: [],
-      references: [{ path: "src/ui" }],
     };
     writeFileSync(path.join(cwd, "tsconfig.json"), `${JSON.stringify(rootTsconfig, null, 2)}\n`);
     const wallTsconfig = expectedWallTsconfig("@defold-typescript/types/gui-script");
@@ -2542,12 +2541,10 @@ describe("dispatch", () => {
     expect(code).toBe(0);
     const root = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
       exclude?: string[];
-      files?: string[];
-      references?: { path: string }[];
+      include?: string[];
     };
-    expect(root.references).toEqual([{ path: "src/ui" }]);
     expect(root.exclude).toEqual(["src/ui"]);
-    expect(root.files).toEqual([]);
+    expect(root.include).toEqual(["src/**/*.ts"]);
     expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual(
       wallTsconfig,
     );
@@ -3448,7 +3445,7 @@ describe("dispatch wall command", () => {
     );
   }
 
-  function readRoot(): { exclude?: string[]; references?: { path: string }[] } {
+  function readRoot(): { exclude?: string[] } {
     return JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"));
   }
 
@@ -3468,7 +3465,7 @@ describe("dispatch wall command", () => {
     ]);
     expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(true);
     expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(true);
-    expect(readRoot().references).toEqual([{ path: "src/render" }, { path: "src/ui" }]);
+    expect(readRoot().exclude).toEqual(["src/render", "src/ui"]);
   });
 
   test("wall --remove drops that wall and leaves others intact", async () => {
@@ -3483,7 +3480,7 @@ describe("dispatch wall command", () => {
     const parsed = JSON.parse(out()) as { directoryWalls: { dir: string; kind: string }[] };
     expect(parsed.directoryWalls).toEqual([{ dir: "src/render", kind: "render-script" }]);
     expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
-    expect(readRoot().references).toEqual([{ path: "src/render" }]);
+    expect(readRoot().exclude).toEqual(["src/render"]);
   });
 
   test("wall --list --json reports current and eligible walls and writes nothing", async () => {
@@ -3586,7 +3583,7 @@ describe("dispatch wall command", () => {
     expect(code).toBe(1);
     expect(err()).toContain("single-kind source directory");
     expect(existsSync(path.join(cwd, "src/mix/tsconfig.json"))).toBe(false);
-    expect("references" in readRoot()).toBe(false);
+    expect("exclude" in readRoot()).toBe(false);
   });
 
   test("bare wall on a TTY without --json runs the injected menu", async () => {
@@ -3602,7 +3599,7 @@ describe("dispatch wall command", () => {
     expect(code).toBe(0);
     expect(out()).toContain("src/ui");
     expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(true);
-    expect(readRoot().references).toEqual([{ path: "src/ui" }]);
+    expect(readRoot().exclude).toEqual(["src/ui"]);
   });
 
   test("bare wall --json on a TTY does not prompt — it errors like the non-TTY path", async () => {
@@ -3615,6 +3612,85 @@ describe("dispatch wall command", () => {
     expect(out()).toBe("");
     expect(err()).toContain("no directory given");
     expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
+  });
+
+  // A render wall whose imported helper calls a function that needs a game object.
+  async function scaffoldRenderHelperViolation(): Promise<void> {
+    const scope = path.join(cwd, "node_modules", "@defold-typescript");
+    mkdirSync(scope, { recursive: true });
+    symlinkSync(
+      path.resolve(import.meta.dir, "..", "..", "types"),
+      path.join(scope, "types"),
+      "dir",
+    );
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify(
+        {
+          compilerOptions: {
+            module: "ESNext",
+            moduleResolution: "bundler",
+            lib: ["ES2022"],
+            skipLibCheck: true,
+            strict: true,
+            noEmit: true,
+            types: ["@defold-typescript/types"],
+          },
+          include: ["src/**/*.ts"],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    mkdirSync(path.join(cwd, "src", "rendering"), { recursive: true });
+    mkdirSync(path.join(cwd, "src", "shared"), { recursive: true });
+    writeFileSync(
+      path.join(cwd, "src", "rendering", "camera.ts"),
+      'import { defineRenderScript } from "@defold-typescript/types/render-script";\nimport { pos } from "../shared/pos";\nexport default defineRenderScript({ update() { pos(); } });\n',
+    );
+    writeFileSync(
+      path.join(cwd, "src", "shared", "pos.ts"),
+      "export function pos(): void {\n  void go.get_position();\n}\n",
+    );
+    const { io } = captureStreams();
+    expect(await dispatch(["wall", "src/rendering"], io, { cwd })).toBe(0);
+  }
+
+  test("wall --check --json exits 1 and carries the helper's diagnostic under its wall", async () => {
+    await scaffoldRenderHelperViolation();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["wall", "--check", "--json"], io, { cwd });
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out()) as {
+      ok: boolean;
+      error: string;
+      wallCheck: {
+        programs: {
+          dir: string;
+          kind: string;
+          diagnostics: { file: string; line: number; column: number; message: string }[];
+        }[];
+      };
+    };
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error).toBe("1 type error(s)");
+    const rendering = parsed.wallCheck.programs.find((p) => p.dir === "src/rendering");
+    expect(rendering?.kind).toBe("render-script");
+    expect(rendering?.diagnostics.map((d) => [d.file, d.line])).toEqual([["src/shared/pos.ts", 2]]);
+    expect(rendering?.diagnostics[0]?.message).toContain("get_position");
+  });
+
+  test("wall --check prints each diagnostic with its program and exits 1", async () => {
+    await scaffoldRenderHelperViolation();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["wall", "--check"], io, { cwd });
+
+    expect(code).toBe(1);
+    expect(out()).toMatch(/^src\/rendering: src\/shared\/pos\.ts:2:\d+: .*get_position/m);
+    expect(out()).toContain("1 type error(s)");
   });
 });
 

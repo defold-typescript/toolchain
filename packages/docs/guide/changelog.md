@@ -15,8 +15,8 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **[GUI node properties are typed](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)**; material constants take `hash`.
 > - **[Optional arguments whose `nil` raises reject `undefined`](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined)** on pre-baked versions; leave them out instead.
-> - **[`properties` is `defineScript`-only](./script-lifecycle.md).**
-> - **[Render scripts lose what needs a game object](./script-lifecycle.md#api-availability-by-script-kind)**, such as `sprite` and most of `go`.
+> - **[Script kinds keep only what they support](./script-lifecycle.md#api-availability-by-script-kind)**: `properties` is `defineScript`-only, and render scripts lose what needs a game object, such as `sprite` and most of `go`.
+> - **[`wall --check` type-checks walls](./wall.md#flags)**, helpers they import included; re-run `wall <dirs>` to rewrite existing walls.
 > - **[Declarations follow the engine bindings](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined)**: `Url.socket` can be `undefined`, `vmath.dot` takes one vector type, a buffer has `buf.length()`, and `go.delete` takes the ids `collectionfactory.create` returns.
 
 ### Breaking
@@ -32,6 +32,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`Url.socket`** reads as `Hash | undefined`: the `sender` of an engine message posted with no sender, such as `ray_cast_response` or `window_resized`, has no socket, so check it before use; see [A vector's size is `v.length()`](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined).
   - **`vmath.dot`** takes two vectors of the same type, since a `Vector3` paired with a `Vector4` raises.
   - **Buffers** are typed `Opaque<"buffer"> & { length: LuaLengthMethod<number> }`, so a value annotated as a bare `Opaque<"buffer">` does not pass to a buffer parameter; annotate it as `ReturnType<typeof buffer.create>` instead.
+- **[Walls](./wall.md#what-a-wall-is) are standalone `tsconfig.json` files the root config excludes but does not reference, so [`wall --check`](./wall.md#flags) replaces `tsc -b --noEmit` as the command that type-checks them.** It checks each wall's program, the helpers it imports included, plus the root program; re-run `wall <dirs>` to rewrite walls an earlier release wrote, which `wall --check` reports until you do.
 
 ### Improved
 
@@ -53,6 +54,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`Url.socket`** takes `undefined`, which clears the socket.
 - **`llms-full.txt` dates each overload of `go.get`, `go.set`, `go.property`, `render.render_target` and `sys.get_config_string` by its own availability**: their first form exists on every tracked version, so it carries no `[through 1.13.1] [signature transition]` tag.
 - **`defineGuiScript` and `defineRenderScript` reject a `properties` block**: Defold builds `go.property` only in `.script` files, so the field fails to compile and the transpiler refuses to emit the calls Defold's build would reject. A GUI or render script gets a per-object value from a sibling `defineScript`, which [declares the property](./script-lifecycle.md#script-properties-on-self) and sends its value with `msg.post` in `init`.
+- **A partly walled project, and a wall that imports a helper from outside it, type-check**: each wall checks a helper it imports against its own kind, and a helper no wall imports keeps the full surface; see [Kind-neutral helpers](./wall.md#what-a-wall-is).
 - **The `@defold-typescript/types/render-script` entrypoint leaves out the functions that need a game object**, which always raise "no instance could be found" in a render script: every function in `sprite`, `factory`, `collectionfactory`, `collectionproxy`, `label`, `model`, `particlefx`, `physics` and `tilemap`, most of `go` (`go.get_position`, `go.animate`, `go.property`), and part of `b2d`, `bullet3d`, `resource` and `sound`; see [API availability by script kind](./script-lifecycle.md#api-availability-by-script-kind).
 
 ## v0.51.0

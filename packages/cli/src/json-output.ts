@@ -2,6 +2,7 @@ import type { CompileOutcome, EditorIssue, RunOutcome } from "./editor-attach";
 import type { CompileIssue } from "./editor-compile";
 import type { InitOperation } from "./init";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
+import type { WallCheckResult } from "./wall-check";
 
 export type CliCommand =
   | "init"
@@ -60,6 +61,7 @@ export interface RenderResultInput {
     readonly declaredIn: string;
     readonly origin: "declared" | "inherited";
   }[];
+  readonly wallCheck?: WallCheckResult;
   // `scene-types` reports the declaration's path on every run and `written` for
   // whether this run actually rewrote it; an unchanged project reports the path
   // with an empty `written`.
@@ -168,8 +170,10 @@ export function renderResult(input: RenderResultInput): string {
   const withEligible = "eligible" in input ? { ...withWalls, eligible: input.eligible } : withWalls;
   const withResolved =
     "resolved" in input ? { ...withEligible, resolved: input.resolved } : withEligible;
+  const withWallCheck =
+    "wallCheck" in input ? { ...withResolved, wallCheck: input.wallCheck } : withResolved;
   const withDeclaration =
-    "declaration" in input ? { ...withResolved, declaration: input.declaration } : withResolved;
+    "declaration" in input ? { ...withWallCheck, declaration: input.declaration } : withWallCheck;
   const withLibrary =
     "library" in input ? { ...withDeclaration, library: input.library } : withDeclaration;
   const withLibraryVersion =

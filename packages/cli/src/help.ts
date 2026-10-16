@@ -142,6 +142,7 @@ const COMMANDS: readonly HelpCommand[] = [
     flags: [
       { flag: "--list", desc: "list existing walls instead of writing" },
       { flag: "--remove", desc: "remove walls instead of writing" },
+      { flag: "--check", desc: "type-check every wall and the root program" },
     ],
   },
   {

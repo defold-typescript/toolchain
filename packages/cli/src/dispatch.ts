@@ -340,6 +340,7 @@ function dispatchCommand(
   const suppressInstallReminder = head.includes("--suppress-install-reminder");
   const wallRemove = head.includes("--remove");
   const wallList = head.includes("--list");
+  const wallCheck = head.includes("--check");
   const frozen = head.includes("--frozen");
   const failOnDrift = head.includes("--fail-on-drift");
   const noUpdateCheck =
@@ -374,6 +375,7 @@ function dispatchCommand(
       a !== "--suppress-install-reminder" &&
       a !== "--remove" &&
       a !== "--list" &&
+      a !== "--check" &&
       a !== "--frozen" &&
       a !== "--fail-on-drift" &&
       a !== "--no-update-check" &&
@@ -1399,6 +1401,33 @@ function dispatchCommand(
             );
           }
         };
+
+        if (wallCheck) {
+          const { runWallCheck } = await import("./wall-check");
+          const result = runWallCheck(wallCwd);
+          const count = result.programs.reduce((n, p) => n + p.diagnostics.length, 0);
+          if (json) {
+            io.stdout.write(
+              renderResult({
+                command: "wall",
+                wallCheck: result,
+                ...(count > 0 ? { error: `${count} type error(s)` } : {}),
+              }),
+            );
+          } else {
+            for (const program of result.programs) {
+              for (const d of program.diagnostics) {
+                io.stdout.write(`${program.dir}: ${d.file}:${d.line}:${d.column}: ${d.message}\n`);
+              }
+            }
+            io.stdout.write(
+              count > 0
+                ? `defold-typescript wall --check: ${count} type error(s)\n`
+                : `defold-typescript wall --check: ${result.programs.length} program(s) clean\n`,
+            );
+          }
+          return count > 0 ? 1 : 0;
+        }
 
         if (wallList) {
           const current = currentWalledDirs(wallCwd);
