@@ -81,7 +81,7 @@
   },
   "*:buffer.get_bytes:arity": {
     "verdict": "accepted",
-    "reason": "the binding never reads the stream_name the ref-doc documents and returns the whole buffer, so the extra argument is ignored"
+    "reason": "script_buffer.cpp:GetBytes reads only argument 1 with CheckBufferUnpack and returns every byte of the buffer; the declaration keeps stream_name as an optional argument the engine ignores, so calls that pass it keep compiling"
   },
   "*:camera.set_aspect_ratio:required-as-optional:1": {
     "verdict": "accepted",
@@ -171,10 +171,6 @@
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
-  "*:gui.clone_tree:optional-as-required:1": {
-    "verdict": "accepted",
-    "reason": "the binding also takes nil for the whole scene, which the ref-doc does not document; the declaration keeps the documented node argument"
-  },
   "*:gui.EASING_IN:constant-missing-declaration": {
     "verdict": "accepted",
     "reason": "a legacy alias of EASING_INCUBIC, EASING_INOUTCUBIC, EASING_LINEAR or EASING_OUTCUBIC the engine keeps for old scripts; the ref-doc documents only the current names"
@@ -194,10 +190,6 @@
   "*:gui.final:missing-binding": {
     "verdict": "accepted",
     "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:gui.get_tree:optional-as-required:1": {
-    "verdict": "accepted",
-    "reason": "the binding also takes nil for the whole scene, which the ref-doc does not document; the declaration keeps the documented node argument"
   },
   "*:gui.init:missing-binding": {
     "verdict": "accepted",
@@ -238,10 +230,6 @@
   "*:json.encode:arity": {
     "verdict": "accepted",
     "reason": "the value and options are read by the lua_cjson library, which is not among the vendored binding sources"
-  },
-  "*:liveupdate.LIVEUPDATE_NOT_INITIALIZED:constant-missing-declaration": {
-    "verdict": "accepted",
-    "reason": "registered, but no ref-doc element or prose names it; the declarations cover the documented result codes"
   },
   "*:model.cancel:arity": {
     "verdict": "accepted",
@@ -300,10 +288,6 @@
     "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.delete_render_target:too-narrow:1": {
-    "verdict": "accepted",
-    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
-  },
-  "*:render.disable_texture:too-loose:1": {
     "verdict": "accepted",
     "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },

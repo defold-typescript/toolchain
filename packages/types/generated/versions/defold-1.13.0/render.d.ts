@@ -212,7 +212,7 @@ declare global {
      * });
      * ```
      */
-    function disable_texture(binding: Opaque<"texture"> | string | Hash | number): void;
+    function disable_texture(binding: string | Hash | number): void;
     /**
      * Dispatches the currently enabled compute program. The dispatch call takes three arguments x,y,z which constitutes
      * the 'global working group' of the compute dispatch. Together with the 'local working group' specified in the compute shader

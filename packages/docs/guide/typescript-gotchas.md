@@ -358,6 +358,13 @@ factory.create("#enemyfactory", undefined, undefined, { health: 100 });
 collectionproxy.load("#proxy", undefined, () => {});
 ```
 
+**Some slots must be passed, even as `undefined`.** A slot declared `node: T | undefined`, with no `?`, takes `undefined` but cannot be left out. `gui.clone_tree` and `gui.get_tree` read `nil` as the whole scene, while a call with no argument raises in the engine, so the declaration makes you write the `undefined`.
+
+```ts
+// Clone every node in the scene; `gui.clone_tree()` raises.
+const scene = gui.clone_tree(undefined);
+```
+
 **Normalize at the boundary.** A `T | null` that comes from outside the Defold surface — decoded JSON is the realistic source — takes `?? undefined` at the point it enters your code, so the `null` never reaches an engine slot.
 
 ```ts

@@ -513,10 +513,10 @@ declare global {
      * Make a clone instance of a node and all its children.
      * Use gui.clone to clone a node excluding its children.
      *
-     * @param node - root node to clone
+     * @param node - root node to clone, or `nil` to clone the whole scene; leaving the argument out raises an error
      * @returns a table mapping node ids to the corresponding cloned nodes
      */
-    function clone_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
+    function clone_tree(node: Opaque<"node"> | undefined): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
     /**
      * Deletes the specified node. Any child nodes of the specified node will be
      * recursively deleted.
@@ -991,10 +991,10 @@ declare global {
     /**
      * Get a node and all its children as a Lua table.
      *
-     * @param node - root node to get node tree from
+     * @param node - root node to get node tree from, or `nil` to get the whole scene; leaving the argument out raises an error
      * @returns a table mapping node ids to the corresponding nodes
      */
-    function get_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
+    function get_tree(node: Opaque<"node"> | undefined): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
     /**
      * gets the node type
      *
