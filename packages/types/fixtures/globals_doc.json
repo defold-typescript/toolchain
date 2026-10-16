@@ -11,7 +11,13 @@
       "name": "hash",
       "brief": "hash a string into a hash value",
       "description": "Hashes a string into a hash value. The hash can be used to reference resources and identifiers in the Defold engine without carrying the original string around.",
-      "parameters": [{ "name": "s", "doc": "the string to hash", "types": ["string"] }],
+      "parameters": [
+        {
+          "name": "s",
+          "doc": "the string to hash, or a hash value, which is returned unchanged",
+          "types": ["string", "hash"]
+        }
+      ],
       "returnvalues": [{ "name": "hash", "doc": "the hash value", "types": ["hash"] }]
     },
     {

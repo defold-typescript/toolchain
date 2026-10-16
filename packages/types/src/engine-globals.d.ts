@@ -10,6 +10,8 @@ declare global {
   type Hash<S extends string = string> = Core.Hash<S>;
   /** Hash a string into the engine's `Hash` handle. */
   function hash<S extends string>(s: S): Core.Hash<S>;
+  /** Return a `Hash` unchanged. */
+  function hash<S extends string>(h: Core.Hash<S>): Core.Hash<S>;
   /** Render a `Hash` handle as its hexadecimal string. */
   function hash_to_hex(h: Core.Hash): string;
   /** Pretty-print any values to the console for debugging. */

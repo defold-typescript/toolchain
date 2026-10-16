@@ -1426,12 +1426,15 @@ msg.post("#health", "damage", { amount: 10 }); // sibling component on the same 
 
 #### A vector's size is `v.length()`, and `url.path` can be `undefined`
 
-**Symptom.** Reading `v.length` on a `vmath.vector`, or passing `url.path` where a `Hash` is expected, fails to compile.
+**Symptom.** Reading `v.length` on a `vmath.vector` or `buf.length` on a buffer, or passing `url.path` or `url.socket` where a `Hash` is expected, fails to compile.
 
 ```ts
 const v = vmath.vector([1, 2, 3]);
 const size: number = v.length(); // compiles to `#v`
 v[1] = 0.5; // 1-based, passed to Defold unchanged
+
+const buf = buffer.create(4, [{ name: hash("rgb"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
+const count: number = buf.length(); // compiles to `#buf`, the element count
 
 const url = msg.url("main:");
 const path = url.path; // Hash | undefined: a socket-only address has no path
@@ -1440,11 +1443,11 @@ if (path !== undefined) {
 }
 ```
 
-**Why.** A `vmath.vector` and a URL are engine userdata, and their metatables decide what each access does. The vector's `__index` accepts only integer keys, so `v.length` raises at runtime; its size comes from the `__len` metamethod, which `v.length()` compiles to. Its index is 1-based, as in Lua, and the transpiler passes it through unchanged. A URL's `__index` returns `nil` for an unset `path` or `fragment`, and `msg.url("main:")` or the three-argument form with an `undefined` path leaves `path` unset. Every `msg.url` form resolves a socket, so `url.socket` is always a `Hash`.
+**Why.** A `vmath.vector`, a buffer and a URL are engine userdata, and their metatables decide what each access does. The vector's `__index` accepts only integer keys, so `v.length` raises at runtime; its size comes from the `__len` metamethod, which `v.length()` compiles to. Its index is 1-based, as in Lua, and the transpiler passes it through unchanged. A buffer's `__len` returns its element count, which `buf.length()` compiles to. A URL's `__index` returns `nil` for any unset field. `msg.url("main:")` or the three-argument form with an `undefined` path leaves `path` unset. `socket` is unset on the `sender` of an engine message posted with no sender, such as `ray_cast_response` and `ray_cast_missed` from `physics.raycast_async`, `animation_done` from a `model.play_anim` with no callback, and `window_resized` in a render script, and after `url.socket = undefined`.
 
-**Typed alternative.** Call `v.length()`, and check `url.path` and `url.fragment` against `undefined` before use. All three URL fields are writable: assign a `Hash` or a string, or `undefined` to clear `path` or `fragment`.
+**Typed alternative.** Call `v.length()` and `buf.length()`, and check `url.socket`, `url.path` and `url.fragment` against `undefined` before use. All three URL fields are writable: assign a `Hash` or a string, or `undefined` to clear the field.
 
-**How we pin this in the type tests.** `packages/types/test-d/userdata-fields.ts` marks `v.length` as a field and `url.path` as a `Hash` with `@ts-expect-error`, and `packages/transpiler/src/vector-math-emit.test.ts` snapshots `v.length()` as `#v` and `v[1] = 2` with its index unchanged.
+**How we pin this in the type tests.** `packages/types/test-d/userdata-fields.ts` marks `v.length` and `buf.length` as fields and `url.path` and `url.socket` as a `Hash` with `@ts-expect-error`, and compiles `buf.length()` and `url.socket = undefined`. `packages/transpiler/src/vector-math-emit.test.ts` snapshots `v.length()` as `#v` and `v[1] = 2` with its index unchanged.
 
 #### npm packages do not resolve — vendor the source instead
 
@@ -12224,13 +12227,13 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### buffer
 
-- function copy_buffer(dst: Opaque<"buffer">, dstoffset: number, src: Opaque<"buffer">, srcoffset: number, count: number): void;
+- function copy_buffer(dst: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
 - function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
-- function create(element_count: number, declaration: ({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]): Opaque<"buffer">;
-- function get_bytes(buffer: Opaque<"buffer">, stream_name?: Hash | string): string;
-- function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.VALUE_TYPE | undefined]>;
-- function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
-- function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: buffer.VALUE_TYPE): void;
+- function create(element_count: number, declaration: ({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
+- function get_bytes(buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, stream_name?: Hash | string): string;
+- function get_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.VALUE_TYPE | undefined]>;
+- function get_stream(buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
+- function set_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string, values: number[], value_type: buffer.VALUE_TYPE): void;
 - buffer.VALUE_TYPE_FLOAT32: number & { readonly __brand: "buffer.VALUE_TYPE_FLOAT32" }
 - buffer.VALUE_TYPE_INT16: number & { readonly __brand: "buffer.VALUE_TYPE_INT16" }
 - buffer.VALUE_TYPE_INT32: number & { readonly __brand: "buffer.VALUE_TYPE_INT32" }
@@ -12240,7 +12243,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - buffer.VALUE_TYPE_UINT32: number & { readonly __brand: "buffer.VALUE_TYPE_UINT32" }
 - buffer.VALUE_TYPE_UINT64: number & { readonly __brand: "buffer.VALUE_TYPE_UINT64" }
 - buffer.VALUE_TYPE_UINT8: number & { readonly __brand: "buffer.VALUE_TYPE_UINT8" }
-- type buffer_data = Opaque<"buffer"> [since 1.13.2]
+- type buffer_data = Opaque<"buffer"> & { length: LuaLengthMethod<number> } [since 1.13.2]
 - type buffer_stream = Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> } [since 1.13.2]
 - type VALUE_TYPE = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8 [since 1.13.2]
 - type ValueType = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8
@@ -13225,8 +13228,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function load(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined;
 - function load(buffer: string): image.load_result | undefined; [since 1.13.2] [signature transition]
 - function load(buffer: string, options: boolean | image.load_options): image.load_result | undefined;
-- function load_buffer(buffer: string): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined; [through 1.13.1] [signature transition]
-- function load_buffer(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined;
+- function load_buffer(buffer: string): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } } | undefined; [through 1.13.1] [signature transition]
+- function load_buffer(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } } | undefined;
 - function load_buffer(buffer: string): image.load_buffer_result | undefined; [since 1.13.2] [signature transition]
 - function load_buffer(buffer: string, options: boolean | image.load_options): image.load_buffer_result | undefined;
 - image.TYPE_LUMINANCE: string & { readonly __brand: "image.TYPE_LUMINANCE" }
@@ -13235,7 +13238,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - image.TYPE_RGBA: string & { readonly __brand: "image.TYPE_RGBA" }
 - type TYPE = typeof image.TYPE_RGB | typeof image.TYPE_RGBA | typeof image.TYPE_LUMINANCE | typeof image.TYPE_LUMINANCE_ALPHA [since 1.13.2]
 - interface astc_header { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number; } [since 1.13.2]
-- interface load_buffer_result { width: number; height: number; type: image.TYPE; buffer: Opaque<"buffer">; } [since 1.13.2]
+- interface load_buffer_result { width: number; height: number; type: image.TYPE; buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; } [since 1.13.2]
 - interface load_options { premultiply_alpha?: boolean; flip_vertically?: boolean; } [since 1.13.2]
 - interface load_result { width: number; height: number; type: image.TYPE; buffer: string; } [since 1.13.2]
 
@@ -13533,24 +13536,24 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function create_atlas(path: string, table: resource.atlas): Hash;
 - function create_buffer(path: string, table: resource.buffer_creation_params): Hash;
 - function create_sound_data(path: string, options: resource.sound_data_options): Hash;
-- function create_texture(path: string, table: resource.texture_creation_params, buffer?: Opaque<"buffer">): Hash;
-- function create_texture_async(path: string, table: resource.texture_creation_params, buffer: Opaque<"buffer"> | undefined, callback: (self: unknown, request_id: number, result: resource.texture_creation_result) => void): LuaMultiReturn<[Hash, number]>;
+- function create_texture(path: string, table: resource.texture_creation_params, buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): Hash;
+- function create_texture_async(path: string, table: resource.texture_creation_params, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } | undefined, callback: (self: unknown, request_id: number, result: resource.texture_creation_result) => void): LuaMultiReturn<[Hash, number]>;
 - function font(path?: string): Hash;
 - function get_atlas(path: Hash | string): resource.atlas_data;
-- function get_buffer(path: Hash | string): Opaque<"buffer">;
+- function get_buffer(path: Hash | string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
 - function get_render_target_info(path: Hash | string | Opaque<"render_target"> | number): resource.render_target_info;
 - function get_text_metrics(url: Hash | string, text: string): resource.text_metrics;
 - function get_text_metrics(url: Hash | string, text: string, options: resource.text_metrics_options): resource.text_metrics;
 - function get_texture_info(path: Hash | string | Opaque<"texture"> | number): resource.texture_info;
-- function load(path: string): Opaque<"buffer">;
+- function load(path: string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
 - function material(path?: string): Hash;
 - function release(path: Hash | string): void;
 - function render_target(path?: string): Hash;
-- function set(path: string | Hash, buffer: Opaque<"buffer">): void;
+- function set(path: string | Hash, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
 - function set_atlas(path: Hash | string, table: resource.atlas): void;
-- function set_buffer(path: Hash | string, buffer: Opaque<"buffer">, table?: resource.buffer_update_options): void;
+- function set_buffer(path: Hash | string, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, table?: resource.buffer_update_options): void;
 - function set_sound(path: Hash | string, buffer: string): void;
-- function set_texture(path: Hash | string, table: resource.texture_update_params, buffer: Opaque<"buffer">): void;
+- function set_texture(path: Hash | string, table: resource.texture_update_params, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
 - function texture(path?: string): Hash;
 - function tile_source(path?: string): Hash;
 - type resource_data = Hash [since 1.13.2]
@@ -13558,7 +13561,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - interface animation_data { id: string; width: number; height: number; frames: number[]; playback: go.PLAYBACK; fps: number; flip_vertical: boolean; flip_horizontal: boolean; } [since 1.13.2]
 - interface atlas { texture: string | Hash; animations: [Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...(Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [resource.geometry, ...resource.geometry[]]; } [since 1.13.2]
 - interface atlas_data { texture: string | Hash; animations: resource.animation_data[]; geometries: resource.geometry_data[]; } [since 1.13.2]
-- interface buffer_creation_params { buffer: Opaque<"buffer">; transfer_ownership?: boolean; } [since 1.13.2]
+- interface buffer_creation_params { buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; transfer_ownership?: boolean; } [since 1.13.2]
 - interface buffer_update_options { transfer_ownership?: boolean; } [since 1.13.2]
 - interface geometry { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[]; } [since 1.13.2]
 - interface geometry_data { width: number; height: number; pivot_x: number; pivot_y: number; rotated: boolean; vertices: number[]; uvs: number[]; indices: number[]; } [since 1.13.2]
@@ -13739,7 +13742,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_sys_info(): sys.sys_info;
 - function get_sys_info(options: sys.sys_info_options): sys.sys_info;
 - function load(filename: string): LuaTable<AnyNotNil, unknown>;
-- function load_buffer(path: string): Opaque<"buffer">;
+- function load_buffer(path: string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
 - function load_buffer_async(path: string, status_callback: (self: unknown, request_id: number, result: sys.load_buffer_result) => void): number;
 - function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;
 - function open_url(url: string): boolean;
@@ -13766,7 +13769,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - interface application_info { installed: boolean; } [since 1.13.2]
 - interface engine_info { version: string; version_sha1: string; is_debug: boolean; } [since 1.13.2]
 - interface interface_info { name: string; address?: string; mac?: string; up: boolean; running: boolean; family?: "ipv4" | "ipv6"; } [since 1.13.2]
-- interface load_buffer_result { status: sys.REQUEST_STATUS; buffer?: Opaque<"buffer">; } [since 1.13.2]
+- interface load_buffer_result { status: sys.REQUEST_STATUS; buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; } [since 1.13.2]
 - interface open_url_attributes { target?: string; } [since 1.13.2]
 - interface sys_info { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string; } [since 1.13.2]
 - interface sys_info_options { ignore_secure?: boolean; } [since 1.13.2]
@@ -13814,7 +13817,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - vmath.clamp<T extends number | Vector3 | Vector4>(value: T, min: number | T, max: number | T): T
 - function conj(q1: Quaternion): Quaternion;
 - function cross(v1: Vector3, v2: Vector3): Vector3;
-- function dot(v1: Vector3 | Vector4, v2: Vector3 | Vector4): number;
+- vmath.dot<T extends Vector3 | Vector4>(v1: T, v2: T): number
 - vmath.euler_to_quat(v: Vector3): Quaternion
 - vmath.euler_to_quat(x: number, y: number, z: number): Quaternion
 - function inv(m1: Matrix4): Matrix4;
@@ -13930,10 +13933,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - m31: number
 - m32: number
 - m33: number
-- c0: Vector4
-- c1: Vector4
-- c2: Vector4
-- c3: Vector4
+- c0: Readonly<Vector4>
+- c1: Readonly<Vector4>
+- c2: Readonly<Vector4>
+- c3: Readonly<Vector4>
 
 ### Opaque
 
@@ -13948,7 +13951,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### Url
 
-- socket: Hash
+- socket: Hash | undefined
 - path: Hash | undefined
 - fragment: Hash | undefined
 

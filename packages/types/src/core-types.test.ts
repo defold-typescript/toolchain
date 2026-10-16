@@ -255,7 +255,7 @@ describe("core-types", () => {
         "constant_buffer",
         'Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }',
       ],
-      ["buffer", 'Opaque<"buffer">'],
+      ["buffer", 'Opaque<"buffer"> & { length: LuaLengthMethod<number> }'],
       [
         "bufferstream",
         'Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }',

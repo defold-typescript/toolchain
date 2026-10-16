@@ -277,7 +277,7 @@ declare global {
      * });
      * ```
      */
-    function create_buffer(path: string, table: { buffer: Opaque<"buffer">; transfer_ownership?: boolean }): Hash;
+    function create_buffer(path: string, table: { buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; transfer_ownership?: boolean }): Hash;
     /**
      * Creates a sound data resource
      * Supported formats are .oggc, .opusc and .wavc
@@ -496,7 +496,7 @@ declare global {
      * }
      * ```
      */
-    function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer">): Hash;
+    function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): Hash;
     /**
      * Creates a new texture resource that can be used in the same way as any texture created during build time.
      * The path used for creating the texture must be unique, trying to create a resource at a path that is already
@@ -666,7 +666,7 @@ declare global {
      * });
      * ```
      */
-    function create_texture_async(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer"> | undefined, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
+    function create_texture_async(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } | undefined, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
     /**
      * Constructor-like function with two purposes:
      *
@@ -745,7 +745,7 @@ declare global {
      * });
      * ```
      */
-    function get_buffer(path: Hash | string): Opaque<"buffer">;
+    function get_buffer(path: Hash | string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     /**
      * Gets render target info from a render target resource path or a render target handle
      *
@@ -976,7 +976,7 @@ declare global {
      * // custom_resources = resources/,assets/level_data.json
      * ```
      */
-    function load(path: string): Opaque<"buffer">;
+    function load(path: string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     /**
      * Constructor-like function with two purposes:
      *
@@ -1063,7 +1063,7 @@ declare global {
      * resource.set(go.get<sprite.properties>()("#sprite", "texture0"), buffer);
      * ```
      */
-    function set(path: string | Hash, buffer: Opaque<"buffer">): void;
+    function set(path: string | Hash, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
     /**
      * Sets the data for a specific atlas resource. Setting new atlas data is specified by passing in
      * a texture path for the backing texture of the atlas, a list of geometries and a list of animations
@@ -1242,7 +1242,7 @@ declare global {
      * });
      * ```
      */
-    function set_buffer(path: Hash | string, buffer: Opaque<"buffer">, table?: { transfer_ownership?: boolean }): void;
+    function set_buffer(path: Hash | string, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, table?: { transfer_ownership?: boolean }): void;
     /**
      * Update internal sound resource (wavc/oggc/opusc) with new data
      *
@@ -1495,7 +1495,7 @@ declare global {
      * }
      * ```
      */
-    function set_texture(path: Hash | string, table: { type: number; width: number; height: number; format: number; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: number }, buffer: Opaque<"buffer">): void;
+    function set_texture(path: Hash | string, table: { type: number; width: number; height: number; format: number; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: number }, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
     /**
      * Constructor-like function with two purposes:
      *

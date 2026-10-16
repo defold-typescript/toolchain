@@ -39,6 +39,13 @@ const _mulV3NotV4: Vector4 = vmath.mul_per_elem(v3a, v3b);
 // @ts-expect-error mul_per_elem requires both vectors the same dimension
 const _mulMismatch = vmath.mul_per_elem(v3a, v4a);
 
+// dot: the binding raises unless both vectors have the same type.
+const _dotV3: number = vmath.dot(v3a, v3b);
+const _dotV4: number = vmath.dot(v4a, v4b);
+const _dotUnion: number = vmath.dot(vU, vU);
+// @ts-expect-error dot requires both vectors the same dimension
+const _dotMismatch = vmath.dot(v3a, v4a);
+
 // normalize: concrete input yields the same concrete type.
 const _normV3: Vector3 = vmath.normalize(v3a);
 const _normV4: Vector4 = vmath.normalize(v4a);
