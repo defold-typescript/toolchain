@@ -59,3 +59,32 @@ b2d.body.set_mass_data(body, massHandle);
 b2d.body.create_fixture(body, shapeHandle, 1);
 b2d.body.set_mass_data(body, { mass: 1, center: vmath.vector3(), inertia: 1 });
 b2d.body.create_fixture(body, { shape: box, density: 1 });
+
+// RenderScript_DisableTexture reads a number as a texture unit and anything else
+// with CheckHashOrString, so a texture handle, a number at runtime, picks a unit.
+declare const tex: Opaque<"texture">;
+render.disable_texture(0);
+render.disable_texture("albedo");
+render.disable_texture(hash("albedo"));
+// @ts-expect-error
+render.disable_texture(tex);
+
+// GetBytes reads only argument 1 and returns every byte of the buffer.
+const bytes: string = buffer.get_bytes(soundBuffer);
+void bytes;
+buffer.get_bytes(soundBuffer, hash("position"));
+
+// LuaCloneTree and LuaGetTree push their result table before testing argument 1
+// with lua_isnil, so nil selects the whole scene and an absent argument raises.
+gui.clone_tree(undefined);
+gui.get_tree(undefined);
+// @ts-expect-error
+gui.clone_tree();
+// @ts-expect-error
+gui.get_tree();
+
+// AddMountAsync and RemoveMountSync return NOT_INITIALIZED while live update is disabled.
+const notInitialized: liveupdate.LIVEUPDATE = liveupdate.LIVEUPDATE_NOT_INITIALIZED;
+void notInitialized;
+const unmounted = liveupdate.remove_mount("pack") === liveupdate.LIVEUPDATE_NOT_INITIALIZED;
+void unmounted;

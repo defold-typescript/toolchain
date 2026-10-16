@@ -310,6 +310,8 @@ function withDocCorrections(fn: ApiFunction): ApiFunction {
   };
   return {
     ...fn,
+    brief: correctedDoc(docCorrectionKey(fn.name, "brief"), fn.brief),
+    description: correctedDoc(docCorrectionKey(fn.name, "description"), fn.description),
     parameters: fn.parameters.map(correct("param")),
     returnValues: fn.returnValues.map(correct("return")),
   };

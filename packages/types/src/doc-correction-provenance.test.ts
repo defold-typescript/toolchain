@@ -24,6 +24,7 @@ interface RefDocSlot {
 interface RefDocElement {
   readonly type?: string;
   readonly name?: string;
+  readonly brief?: string;
   readonly description?: string;
   readonly parameters?: readonly RefDocSlot[];
   readonly returnvalues?: readonly RefDocSlot[];
@@ -35,14 +36,38 @@ interface Sighting {
   readonly doc: string;
 }
 
+type Slot = "param" | "return" | "property" | "brief" | "description";
+
+interface SlotKey {
+  readonly owner: string;
+  readonly slot: Slot;
+  readonly slotName: string;
+}
+
+// A function's own `brief` and `description` are keyed without a slot name.
+function slotKey(key: string): SlotKey | undefined {
+  const whole = /^(.+)#(brief|description)$/.exec(key);
+  if (whole) {
+    const [, owner, slot] = whole as unknown as [string, string, "brief" | "description"];
+    return { owner, slot, slotName: "" };
+  }
+  const match = /^(.+)#(param|return|property):(.+)$/.exec(key);
+  if (!match) return undefined;
+  const [, owner, slot, slotName] = match as unknown as [string, string, Slot, string];
+  return { owner, slot, slotName };
+}
+
+const isWholeFunctionSlot = (slot: Slot): slot is "brief" | "description" =>
+  slot === "brief" || slot === "description";
+
 // Every vendored ref-doc the generators read that documents the corrected slot,
 // so an entry is pinned against the release it ships from and every older one
 // still in `api-targets.json`. A property slot is keyed by its namespace, since
 // the ref-doc names a `PROPERTY` element bare.
 function sightings(key: string): Sighting[] {
-  const match = /^(.+)#(param|return|property):(.+)$/.exec(key);
-  if (!match) return [];
-  const [, owner, slot, slotName] = match as unknown as [string, string, string, string];
+  const parsed = slotKey(key);
+  if (!parsed) return [];
+  const { owner, slot, slotName } = parsed;
   const out: Sighting[] = [];
   for (const target of TARGETS) {
     for (const module of target.modules) {
@@ -61,6 +86,10 @@ function sightings(key: string): Sighting[] {
           continue;
         }
         if (element.type !== "FUNCTION" || element.name !== owner) continue;
+        if (isWholeFunctionSlot(slot)) {
+          out.push({ target: target.id, path, doc: element[slot] ?? "" });
+          continue;
+        }
         const slots = slot === "param" ? element.parameters : element.returnvalues;
         for (const s of slots ?? []) {
           if (s.name === slotName) out.push({ target: target.id, path, doc: s.doc ?? "" });
@@ -113,8 +142,7 @@ describe("doc correction provenance", () => {
   test("the parse applies every correction in place of the upstream doc", () => {
     const missed: string[] = [];
     for (const [key, correction] of entries) {
-      const [owner, slotKey] = key.split("#") as [string, string];
-      const [slot, slotName] = slotKey.split(":") as [string, string];
+      const { owner, slot, slotName } = slotKey(key) as SlotKey;
       for (const sighting of sightings(key)) {
         if (resolvedIn(key, sighting)) continue;
         const module = parseDefoldApiDoc(JSON.parse(readFileSync(sighting.path, "utf8")));
@@ -123,8 +151,12 @@ describe("doc correction provenance", () => {
           doc = module.properties.find((p) => p.name === slotName)?.description;
         } else {
           const fn = module.functions.find((f) => f.name === owner);
-          const slots = slot === "param" ? fn?.parameters : fn?.returnValues;
-          doc = slots?.find((p) => p.name === slotName)?.doc;
+          if (isWholeFunctionSlot(slot)) {
+            doc = fn?.[slot];
+          } else {
+            const slots = slot === "param" ? fn?.parameters : fn?.returnValues;
+            doc = slots?.find((p) => p.name === slotName)?.doc;
+          }
         }
         if (doc !== correction.html) missed.push(`${key} in ${sighting.target}`);
       }

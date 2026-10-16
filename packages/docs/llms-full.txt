@@ -1151,6 +1151,13 @@ factory.create("#enemyfactory", undefined, undefined, { health: 100 });
 collectionproxy.load("#proxy", undefined, () => {});
 ```
 
+**Some slots must be passed, even as `undefined`.** A slot declared `node: T | undefined`, with no `?`, takes `undefined` but cannot be left out. `gui.clone_tree` and `gui.get_tree` read `nil` as the whole scene, while a call with no argument raises in the engine, so the declaration makes you write the `undefined`.
+
+```ts
+// Clone every node in the scene; `gui.clone_tree()` raises.
+const scene = gui.clone_tree(undefined);
+```
+
 **Normalize at the boundary.** A `T | null` that comes from outside the Defold surface — decoded JSON is the realistic source — takes `?? undefined` at the point it enters your code, so the `null` never reaches an engine slot.
 
 ```ts
@@ -12218,7 +12225,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function copy_buffer(dst: Opaque<"buffer">, dstoffset: number, src: Opaque<"buffer">, srcoffset: number, count: number): void;
 - function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
 - function create(element_count: number, declaration: ({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]): Opaque<"buffer">;
-- function get_bytes(buffer: Opaque<"buffer">, stream_name: Hash | string): string;
+- function get_bytes(buffer: Opaque<"buffer">, stream_name?: Hash | string): string;
 - function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.VALUE_TYPE | undefined]>;
 - function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
 - function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: buffer.VALUE_TYPE): void;
@@ -12919,7 +12926,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function cancel_animations(node: Opaque<"node">, property?: string | Hash | gui.PROP): void;
 - function cancel_flipbook(node: Opaque<"node">): void;
 - function clone(node: Opaque<"node">): Opaque<"node">;
-- function clone_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
+- function clone_tree(node: Opaque<"node"> | undefined): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
 - function delete_node(node: Opaque<"node">): void;
 - function delete_texture(texture: string | Hash): void;
 - gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<"node">, property: K): gui.node_properties[NodePropertyName<K>]
@@ -12969,7 +12976,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_text(node: Opaque<"node">): string;
 - function get_texture(node: Opaque<"node">): Hash;
 - function get_tracking(node: Opaque<"node">): number;
-- function get_tree(node: Opaque<"node">): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
+- function get_tree(node: Opaque<"node"> | undefined): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
 - function get_type(node: Opaque<"node">): LuaMultiReturn<[gui.TYPE, number | undefined]>;
 - function get_visible(node: Opaque<"node">): boolean;
 - function get_width(): number;
@@ -13279,7 +13286,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH" }
 - liveupdate.LIVEUPDATE_UNKNOWN: number & { readonly __brand: "liveupdate.LIVEUPDATE_UNKNOWN" }
 - liveupdate.LIVEUPDATE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_VERSION_MISMATCH" }
-- type LIVEUPDATE = typeof liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH | typeof liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_FORMAT_ERROR | typeof liveupdate.LIVEUPDATE_INVAL | typeof liveupdate.LIVEUPDATE_INVALID_HEADER | typeof liveupdate.LIVEUPDATE_INVALID_RESOURCE | typeof liveupdate.LIVEUPDATE_IO_ERROR | typeof liveupdate.LIVEUPDATE_MEM_ERROR | typeof liveupdate.LIVEUPDATE_OK | typeof liveupdate.LIVEUPDATE_SCHEME_MISMATCH | typeof liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH | typeof liveupdate.LIVEUPDATE_UNKNOWN | typeof liveupdate.LIVEUPDATE_VERSION_MISMATCH [since 1.13.2]
+- type LIVEUPDATE = typeof liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH | typeof liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_FORMAT_ERROR | typeof liveupdate.LIVEUPDATE_INVAL | typeof liveupdate.LIVEUPDATE_INVALID_HEADER | typeof liveupdate.LIVEUPDATE_INVALID_RESOURCE | typeof liveupdate.LIVEUPDATE_IO_ERROR | typeof liveupdate.LIVEUPDATE_MEM_ERROR | typeof liveupdate.LIVEUPDATE_OK | typeof liveupdate.LIVEUPDATE_SCHEME_MISMATCH | typeof liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH | typeof liveupdate.LIVEUPDATE_UNKNOWN | typeof liveupdate.LIVEUPDATE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_NOT_INITIALIZED [since 1.13.2]
 
 ### material
 
@@ -13454,7 +13461,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function delete_render_target(render_target: Opaque<"render_target">): void;
 - function disable_material(): void;
 - function disable_state(state: graphics.STATE): void;
-- function disable_texture(binding: Opaque<"texture"> | string | Hash | number): void;
+- function disable_texture(binding: string | Hash | number): void;
 - function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;
 - function draw(predicate: Opaque<"render_predicate">): void;
 - function draw(predicate: Opaque<"render_predicate">, options: render.draw_options): void;

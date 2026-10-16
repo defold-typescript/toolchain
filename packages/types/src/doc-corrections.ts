@@ -2,14 +2,15 @@ import { fnv1a64 } from "./fnv1a";
 
 // A function slot whose upstream doc HTML is malformed badly enough to misread,
 // replaced wholesale with authored HTML that keeps upstream's wording, or a
-// property description that contradicts what the engine does. Each
+// function or property doc that contradicts what the engine does. Each
 // entry is pinned by the FNV-1a hash of the exact upstream HTML it replaces: the
 // parse applies it only while the vendored doc still hashes to that value, so a
 // fixed or reworded upstream doc wins by itself, and
 // `doc-correction-provenance.test.ts` reds until the stale entry is deleted.
 //
-// Keyed `<function>#param:<name>`, `<function>#return:<name>`, or
-// `<namespace>#property:<name>` (the ref-doc `PROPERTY` element's bare name).
+// Keyed `<function>#param:<name>`, `<function>#return:<name>`, `<function>#brief`,
+// `<function>#description`, or `<namespace>#property:<name>` (the ref-doc
+// `PROPERTY` element's bare name).
 export interface DocCorrection {
   readonly upstreamHash: string;
   readonly html: string;
@@ -18,6 +19,9 @@ export interface DocCorrection {
 
 const li = (name: string, type: string, doc: string) =>
   `<li><code>${name}</code> <span class="type">${type}</span> ${doc}</li>`;
+
+const GET_BYTES_REASON =
+  "script_buffer.cpp:GetBytes reads only argument 1 with CheckBufferUnpack and pushes every byte of the buffer, so no stream is selected";
 
 export const DOC_CORRECTIONS: ReadonlyMap<string, DocCorrection> = new Map([
   [
@@ -90,14 +94,58 @@ export const DOC_CORRECTIONS: ReadonlyMap<string, DocCorrection> = new Map([
       html: "The scale of the label. <code>go.get</code> returns and <code>go.set</code> takes a vector3; <code>go.animate</code> also takes a number, which sets a uniform scale.",
     },
   ],
+  [
+    "buffer.get_bytes#brief",
+    {
+      upstreamHash: "e30a9df6b7f4f67d",
+      reason: GET_BYTES_REASON,
+      html: "gets all the bytes of a buffer",
+    },
+  ],
+  [
+    "buffer.get_bytes#description",
+    {
+      upstreamHash: "0f16f8e9dce4eb3a",
+      reason: GET_BYTES_REASON,
+      html: "Get a copy of all the bytes of the buffer, every stream included, as a Lua string.",
+    },
+  ],
+  [
+    "buffer.get_bytes#param:stream_name",
+    {
+      upstreamHash: "cfd40e4525c59409",
+      reason: GET_BYTES_REASON,
+      html: "the name of the stream; the engine ignores it and returns every byte of the buffer",
+    },
+  ],
+  [
+    "gui.clone_tree#param:node",
+    {
+      upstreamHash: "5c72743d24931629",
+      reason:
+        "gui_script.cpp:LuaCloneTree tests argument 1 with lua_isnil after pushing its result table, so nil selects the whole scene and an absent argument raises",
+      html: "root node to clone, or <code>nil</code> to clone the whole scene; leaving the argument out raises an error",
+    },
+  ],
+  [
+    "gui.get_tree#param:node",
+    {
+      upstreamHash: "47ef2cdd6bf46434",
+      reason:
+        "gui_script.cpp:LuaGetTree tests argument 1 with lua_isnil after pushing its result table, so nil selects the whole scene and an absent argument raises",
+      html: "root node to get node tree from, or <code>nil</code> to get the whole scene; leaving the argument out raises an error",
+    },
+  ],
 ]);
 
+export function docCorrectionKey(owner: string, slot: "brief" | "description"): string;
 export function docCorrectionKey(
   owner: string,
   slot: "param" | "return" | "property",
   name: string,
-): string {
-  return `${owner}#${slot}:${name}`;
+): string;
+export function docCorrectionKey(owner: string, slot: string, name?: string): string {
+  return name === undefined ? `${owner}#${slot}` : `${owner}#${slot}:${name}`;
 }
 
 // The slot's doc with its correction applied, or `doc` itself when the slot has
