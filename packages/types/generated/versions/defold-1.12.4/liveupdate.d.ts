@@ -37,6 +37,10 @@ declare global {
      */
     const LIVEUPDATE_MEM_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_MEM_ERROR" };
     /**
+     * Live update is not initialized. `liveupdate.add_mount` and `liveupdate.remove_mount` return it while live update is disabled.
+     */
+    const LIVEUPDATE_NOT_INITIALIZED: number & { readonly __brand: "liveupdate.LIVEUPDATE_NOT_INITIALIZED" };
+    /**
      * LIVEUPDATE_OK
      */
     const LIVEUPDATE_OK: number & { readonly __brand: "liveupdate.LIVEUPDATE_OK" };

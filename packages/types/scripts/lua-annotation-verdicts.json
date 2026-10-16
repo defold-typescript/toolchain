@@ -257,6 +257,18 @@
     "annotated": "boolean",
     "declared": "boolean|table"
   },
+  "runtime:buffer.get_bytes:arity": {
+    "verdict": "accepted",
+    "reason": "engine binding takes 1..1: script_buffer.cpp:GetBytes reads only argument 1 with CheckBufferUnpack and returns every byte of the buffer; the declaration keeps stream_name as an optional argument the engine ignores (OPTIONAL_SLOT_CORRECTIONS `buffer.get_bytes:param:stream_name`), so calls that pass it keep compiling",
+    "annotated": "2..2",
+    "declared": "1..2"
+  },
+  "runtime:buffer.get_bytes:required-as-optional:2": {
+    "verdict": "corrected",
+    "correction": "OPTIONAL_SLOT_CORRECTIONS:buffer.get_bytes:param:stream_name",
+    "annotated": "required",
+    "declared": "optional"
+  },
   "runtime:buffer.get_bytes:too-loose:2": {
     "verdict": "corrected",
     "correction": "PARAM_TYPE_CORRECTIONS:buffer.get_bytes:param:stream_name",
@@ -647,11 +659,23 @@
     "annotated": "hash|number|string",
     "declared": "hash|string"
   },
+  "runtime:gui.clone_tree:required-as-optional:1": {
+    "verdict": "accepted",
+    "reason": "gui_script.cpp:LuaCloneTree tests argument 1 with lua_isnil after pushing its result table, so nil selects the whole scene and an absent argument reaches LuaCheckNodeInternal and raises; the declaration takes `node: Opaque<\"node\"> | undefined` without `?` (PARAM_TYPE_CORRECTIONS `gui.clone_tree:param:node`), so the slot accepts undefined but must be passed",
+    "annotated": "required",
+    "declared": "optional"
+  },
   "runtime:gui.final:missing-annotation": {
     "verdict": "accepted",
     "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
     "annotated": "absent",
     "declared": "declared"
+  },
+  "runtime:gui.get_tree:required-as-optional:1": {
+    "verdict": "accepted",
+    "reason": "gui_script.cpp:LuaGetTree tests argument 1 with lua_isnil after pushing its result table, so nil selects the whole scene and an absent argument reaches LuaCheckNodeInternal and raises; the declaration takes `node: Opaque<\"node\"> | undefined` without `?` (PARAM_TYPE_CORRECTIONS `gui.get_tree:param:node`), so the slot accepts undefined but must be passed",
+    "annotated": "required",
+    "declared": "optional"
   },
   "runtime:gui.get:too-narrow:2": {
     "verdict": "accepted",
@@ -820,12 +844,6 @@
     "reason": "RenderScript_RenderTarget (render_script.cpp) pushes the render target as a number asset handle, and CheckRenderTarget / RenderScript_DeleteRenderTarget read it with lua_isnumber; the declaration keeps the Opaque<\"render_target\"> brand so a render target is never passed where a plain number or another handle is expected",
     "annotated": "number",
     "declared": "userdata"
-  },
-  "runtime:render.disable_texture:too-loose:1": {
-    "verdict": "corrected",
-    "correction": "PARAM_TYPE_CORRECTIONS:render.disable_texture:param:binding",
-    "annotated": "hash|number|string",
-    "declared": "hash|number|string|userdata"
   },
   "runtime:render.enable_texture:too-loose:2": {
     "verdict": "corrected",
