@@ -14,8 +14,8 @@
       "parameters": [
         {
           "name": "s",
-          "doc": "the string to hash",
-          "types": ["string"]
+          "doc": "the string to hash, or a hash value, which is returned unchanged",
+          "types": ["string", "hash"]
         }
       ],
       "returnvalues": [

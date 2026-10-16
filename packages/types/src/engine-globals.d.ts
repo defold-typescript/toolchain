@@ -4,7 +4,9 @@ import type * as Core from "./core-types";
 // Hand-maintained surface: Defold ships no machine-readable export for the
 // prefixless globals, so add or remove entries here from the Defold API
 // reference and mirror the change in fixtures/globals_doc.json — the
-// engine-globals test fails if the two fall out of sync.
+// engine-globals test fails if the two fall out of sync. That canonical file
+// seeds each new target on release import; also mirror the change into every
+// committed fixtures/defold-*/globals_doc.json, which the API reference reads.
 declare global {
   /** An opaque, branded handle to a hashed name; see {@link Core.Hash}. */
   type Hash<S extends string = string> = Core.Hash<S>;
