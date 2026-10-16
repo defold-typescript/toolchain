@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[Optional arguments whose `nil` raises reject `undefined`](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined)** on pre-baked versions; leave them out instead.
 > - **[`properties` is `defineScript`-only](./script-lifecycle.md).**
 > - **[Render scripts lose what needs a game object](./script-lifecycle.md#api-availability-by-script-kind)**, such as `sprite` and most of `go`.
-> - **Declarations follow the engine bindings**: `go.delete` takes the ids `collectionfactory.create` returns, `msg.url` takes a `Hash`, and `render.disable_texture` rejects a texture handle.
+> - **[Declarations follow the engine bindings](./typescript-gotchas.md#url-addressing-same-world-objects-are-relative-socket-crosses-worlds)**: `go.delete` takes the ids `collectionfactory.create` returns, `msg.url` takes a `Hash`, and `render.disable_texture` rejects a texture handle.
 
 ### Breaking
 
@@ -40,7 +40,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`go.get`** of an array material constant without `index` returns every element, and the result casts to `Vector4[]` in one step.
   - **`gui.clone_tree` and `gui.get_tree`** take `undefined` for the whole scene, but the argument cannot be left out, since a call without it raises; see [Passing absence](./typescript-gotchas.md#passing-absence-write-undefined-never-null).
   - **`http.request`** passes its response callback the sender url as a fourth argument.
-  - **Label and sprite vector properties** take their `.x` to `.w` sub-keys and a `.xy` key on a `Vector3`, so `go.get<label.properties>()("#label", "color.w")` is a `number`; see [Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace).
+  - **Label and sprite vector properties** take one sub-key per component: a `Vector3` property (label and sprite `scale` and `size`) takes `.x` to `.z` and a `.xy` key that is a `Vector3`, and a `Vector4` property (label `color`, `outline` and `shadow`; sprite `slice`) takes `.x` to `.w`. So `go.get<label.properties>()("#label", "color.w")` is a `number`; see [Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace).
   - **`liveupdate.LIVEUPDATE_NOT_INITIALIZED`** is declared and is a member of `liveupdate.LIVEUPDATE`, which `liveupdate.add_mount` and `liveupdate.remove_mount` return while live update is disabled.
   - **`msg.url`** takes a `Hash` or a `Url` as its one argument, and its three-argument form takes `undefined` for `path` and `fragment` as well as `socket`.
 - **`llms-full.txt` dates each overload of `go.get`, `go.set`, `go.property`, `render.render_target` and `sys.get_config_string` by its own availability**: their first form exists on every tracked version, so it carries no `[through 1.13.1] [signature transition]` tag.
