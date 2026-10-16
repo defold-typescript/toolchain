@@ -134,13 +134,13 @@ declare global {
      */
     function create(element_count: number, declaration: ({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]): Opaque<"buffer">;
     /**
-     * Get a copy of all the bytes from a specified stream as a Lua string.
+     * Get a copy of all the bytes of the buffer, every stream included, as a Lua string.
      *
      * @param buffer - the source buffer
-     * @param stream_name - the name of the stream
+     * @param stream_name - the name of the stream; the engine ignores it and returns every byte of the buffer
      * @returns the buffer data as a Lua string
      */
-    function get_bytes(buffer: Opaque<"buffer">, stream_name: Hash | string): string;
+    function get_bytes(buffer: Opaque<"buffer">, stream_name?: Hash | string): string;
     /**
      * Get a named metadata entry from a buffer along with its type.
      *

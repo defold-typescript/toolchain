@@ -766,6 +766,22 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
         },
       ] as const,
   ),
+  ...(
+    [
+      ["clone_tree", "LuaCloneTree"],
+      ["get_tree", "LuaGetTree"],
+    ] as const
+  ).map(
+    ([name, cFunction]) =>
+      [
+        `gui.${name}:param:node`,
+        {
+          adds: "undefined",
+          upstream: ["node"],
+          reason: `gui_script.cpp:${cFunction} pushes its result table before testing argument 1 with lua_isnil, so nil selects the whole scene and an absent argument reaches LuaCheckNodeInternal and raises`,
+        },
+      ] as const,
+  ),
   [
     "sound.get_group_name:param:group",
     {
@@ -844,9 +860,10 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     "render.disable_texture:param:binding",
     {
       adds: "number",
+      removes: ['Opaque<"texture">'],
       upstream: ["texture", "string", "hash"],
       reason:
-        '"texture binding, either by texture unit, string or hash"; example `render.disable_texture(0)`',
+        "render_script.cpp:RenderScript_DisableTexture reads a number as a texture unit with lua_isnumber and anything else with CheckHashOrString; a texture handle is a number, so it is read as a unit",
     },
   ],
   [
@@ -1094,6 +1111,10 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
   [
     "render.set_render_target:param:render_target",
     "render_script.cpp:RenderScript_SetRenderTarget sets the default target when lua_gettop(L) == 0",
+  ],
+  [
+    "buffer.get_bytes:param:stream_name",
+    "script_buffer.cpp:GetBytes reads only argument 1 with CheckBufferUnpack and returns every byte of the buffer",
   ],
   ["socket.newtry:param:finalizer", "socket.protect's example `local try = socket.newtry()`"],
   ...(
@@ -5103,10 +5124,13 @@ export const NIL_CONSTANTS: ReadonlyMap<string, string> = new Map([
 // `undocumented-constant-provenance.test.ts` reds an entry no committed target
 // still needs. `sameValueAs` names the documented constant the engine registers
 // with the same value; where the surface declares it, the back-fill takes its
-// type, so a value compares equal to either spelling.
+// type, so a value compares equal to either spelling. `memberOf` names the
+// ref-doc `ENUM` the engine returns the constant through; the back-fill joins it
+// only on a surface whose ref-doc declares that enum, so an older surface
+// without one keeps a plain constant.
 export const UNDOCUMENTED_CONSTANTS: ReadonlyMap<
   string,
-  { readonly doc: string; readonly sameValueAs?: string }
+  { readonly doc: string; readonly sameValueAs?: string; readonly memberOf?: string }
 > = new Map([
   [
     "render.CONTEXT_EVENT_CONTEXT_LOST",
@@ -5127,6 +5151,13 @@ export const UNDOCUMENTED_CONSTANTS: ReadonlyMap<
       sameValueAs: "window.WINDOW_EVENT_ICONIFIED",
     },
   ],
+  [
+    "liveupdate.LIVEUPDATE_NOT_INITIALIZED",
+    {
+      doc: "Live update is not initialized. `liveupdate.add_mount` and `liveupdate.remove_mount` return it while live update is disabled.",
+      memberOf: "liveupdate.LIVEUPDATE",
+    },
+  ],
 ]);
 
 function withUndocumentedConstants(
@@ -5136,7 +5167,8 @@ function withUndocumentedConstants(
   const prefix = `${module.namespace}.`;
   const documented = new Set(module.constants.map((c) => c.name));
   const backfill: ApiConstant[] = [];
-  for (const [fqn, { doc, sameValueAs }] of UNDOCUMENTED_CONSTANTS) {
+  const joined = new Map<string, string[]>();
+  for (const [fqn, { doc, sameValueAs, memberOf }] of UNDOCUMENTED_CONSTANTS) {
     if (!fqn.startsWith(prefix) || fqn.slice(prefix.length).includes(".")) continue;
     if (documented.has(fqn)) continue;
     if (registered !== undefined && !registered.has(fqn)) continue;
@@ -5148,10 +5180,18 @@ function withUndocumentedConstants(
       description: "",
       ...(aliasOf === undefined ? {} : { aliasOf }),
     });
+    if (memberOf !== undefined) joined.set(memberOf, [...(joined.get(memberOf) ?? []), fqn]);
   }
-  return backfill.length === 0
-    ? module
-    : { ...module, constants: [...module.constants, ...backfill] };
+  if (backfill.length === 0) return module;
+  const enums = module.enums?.map((e) => {
+    const members = joined.get(e.name);
+    return members === undefined ? e : { ...e, members: [...e.members, ...members] };
+  });
+  return {
+    ...module,
+    constants: [...module.constants, ...backfill],
+    ...(enums === undefined ? {} : { enums }),
+  };
 }
 
 // `constant` is the module's own element for `fqn`, absent for a constant another

@@ -297,6 +297,7 @@
     "b2d.joint.create_wheel:param:definition",
     "b2d.shape.ray_cast:param:max_fraction",
     "b2d.shape.set_shape:param:update_mass",
+    "buffer.get_bytes:param:stream_name",
     "go.cancel_animations:param:url",
     "go.world_to_local_position:param:url",
     "go.world_to_local_transform:param:url",
@@ -438,6 +439,8 @@
       "pins": [["nil", "string", "constant"]],
       "adds": ["Hash"]
     },
+    "gui.clone_tree:param:node": { "pins": [["node"]], "adds": ["undefined"] },
+    "gui.get_tree:param:node": { "pins": [["node"]], "adds": ["undefined"] },
     "gui.screen_to_local:param:screen_position": { "pins": [["vector3"]], "adds": ["Vector4"] },
     "gui.set_rotation:param:rotation": { "pins": [["quaternion", "vector4"]], "adds": ["Vector3"] },
     "gui.set_screen_position:param:screen_position": { "pins": [["vector3"]], "adds": ["Vector4"] },
@@ -455,7 +458,8 @@
     "physics.set_maskbit:param:group": { "pins": [["string"]], "adds": ["Hash"] },
     "render.disable_texture:param:binding": {
       "pins": [["texture", "string", "hash"]],
-      "adds": ["number"]
+      "adds": ["number"],
+      "removes": ["Opaque<\"texture\">"]
     },
     "render.draw:param:predicate": {
       "pins": [["number"], ["render_predicate"]],

@@ -349,7 +349,7 @@
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false}]": "function create(element_count: number, declaration: ({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]): Opaque<\"buffer\">;",
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash | string): string;",
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name?: Hash | string): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.VALUE_TYPE | undefined]>;",
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string, values: number[], value_type: buffer.VALUE_TYPE): void;",
@@ -1071,7 +1071,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | Hash | gui.PROP): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]\ngui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
@@ -1119,7 +1119,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.TYPE, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -1273,6 +1273,7 @@
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_INVALID_RESOURCE\u0000": "const LIVEUPDATE_INVALID_RESOURCE: number & { readonly __brand: \"liveupdate.LIVEUPDATE_INVALID_RESOURCE\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_IO_ERROR\u0000": "const LIVEUPDATE_IO_ERROR: number & { readonly __brand: \"liveupdate.LIVEUPDATE_IO_ERROR\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_MEM_ERROR\u0000": "const LIVEUPDATE_MEM_ERROR: number & { readonly __brand: \"liveupdate.LIVEUPDATE_MEM_ERROR\" };",
+      "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_NOT_INITIALIZED\u0000": "const LIVEUPDATE_NOT_INITIALIZED: number & { readonly __brand: \"liveupdate.LIVEUPDATE_NOT_INITIALIZED\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_OK\u0000": "const LIVEUPDATE_OK: number & { readonly __brand: \"liveupdate.LIVEUPDATE_OK\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SCHEME_MISMATCH\u0000": "const LIVEUPDATE_SCHEME_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SCHEME_MISMATCH\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\u0000": "const LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\" };",
@@ -1282,7 +1283,7 @@
       "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mounts(): ({ name: Hash; uri: string; priority: number })[];",
       "liveupdate\u0000FUNCTION\u0000liveupdate.is_built_with_excluded_files\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_built_with_excluded_files(): boolean;",
       "liveupdate\u0000FUNCTION\u0000liveupdate.remove_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function remove_mount(name: string | Hash): liveupdate.LIVEUPDATE;",
-      "liveupdate\u0000TYPEDEF\u0000LIVEUPDATE\u0000": "type LIVEUPDATE = typeof liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH | typeof liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_FORMAT_ERROR | typeof liveupdate.LIVEUPDATE_INVAL | typeof liveupdate.LIVEUPDATE_INVALID_HEADER | typeof liveupdate.LIVEUPDATE_INVALID_RESOURCE | typeof liveupdate.LIVEUPDATE_IO_ERROR | typeof liveupdate.LIVEUPDATE_MEM_ERROR | typeof liveupdate.LIVEUPDATE_OK | typeof liveupdate.LIVEUPDATE_SCHEME_MISMATCH | typeof liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH | typeof liveupdate.LIVEUPDATE_UNKNOWN | typeof liveupdate.LIVEUPDATE_VERSION_MISMATCH;",
+      "liveupdate\u0000TYPEDEF\u0000LIVEUPDATE\u0000": "type LIVEUPDATE = typeof liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH | typeof liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_FORMAT_ERROR | typeof liveupdate.LIVEUPDATE_INVAL | typeof liveupdate.LIVEUPDATE_INVALID_HEADER | typeof liveupdate.LIVEUPDATE_INVALID_RESOURCE | typeof liveupdate.LIVEUPDATE_IO_ERROR | typeof liveupdate.LIVEUPDATE_MEM_ERROR | typeof liveupdate.LIVEUPDATE_OK | typeof liveupdate.LIVEUPDATE_SCHEME_MISMATCH | typeof liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH | typeof liveupdate.LIVEUPDATE_UNKNOWN | typeof liveupdate.LIVEUPDATE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_NOT_INITIALIZED;",
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_NORMAL\u0000": "const CONSTANT_TYPE_NORMAL: number & { readonly __brand: \"material.CONSTANT_TYPE_NORMAL\" };",
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_PROJECTION\u0000": "const CONSTANT_TYPE_PROJECTION: number & { readonly __brand: \"material.CONSTANT_TYPE_PROJECTION\" };",
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_PROJECTION_INVERSE\u0000": "const CONSTANT_TYPE_PROJECTION_INVERSE: number & { readonly __brand: \"material.CONSTANT_TYPE_PROJECTION_INVERSE\" };",
@@ -1438,7 +1439,7 @@
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.STATE): void;",
-      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash | number): void;",
+      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">): void;\nfunction draw(predicate: Opaque<\"render_predicate\">, options: render.draw_options): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: render.debug_draw_options): void;",
@@ -2151,7 +2152,7 @@
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false}]": "function create(element_count: number, declaration: ({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]): Opaque<\"buffer\">;",
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash | string): string;",
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name?: Hash | string): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.VALUE_TYPE | undefined]>;",
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string, values: number[], value_type: buffer.VALUE_TYPE): void;",
@@ -2865,7 +2866,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | Hash | gui.PROP): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]\ngui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
@@ -2913,7 +2914,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.TYPE, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -3067,6 +3068,7 @@
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_INVALID_RESOURCE\u0000": "const LIVEUPDATE_INVALID_RESOURCE: number & { readonly __brand: \"liveupdate.LIVEUPDATE_INVALID_RESOURCE\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_IO_ERROR\u0000": "const LIVEUPDATE_IO_ERROR: number & { readonly __brand: \"liveupdate.LIVEUPDATE_IO_ERROR\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_MEM_ERROR\u0000": "const LIVEUPDATE_MEM_ERROR: number & { readonly __brand: \"liveupdate.LIVEUPDATE_MEM_ERROR\" };",
+      "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_NOT_INITIALIZED\u0000": "const LIVEUPDATE_NOT_INITIALIZED: number & { readonly __brand: \"liveupdate.LIVEUPDATE_NOT_INITIALIZED\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_OK\u0000": "const LIVEUPDATE_OK: number & { readonly __brand: \"liveupdate.LIVEUPDATE_OK\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SCHEME_MISMATCH\u0000": "const LIVEUPDATE_SCHEME_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SCHEME_MISMATCH\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\u0000": "const LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\" };",
@@ -3076,7 +3078,7 @@
       "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mounts(): ({ name: Hash; uri: string; priority: number })[];",
       "liveupdate\u0000FUNCTION\u0000liveupdate.is_built_with_excluded_files\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_built_with_excluded_files(): boolean;",
       "liveupdate\u0000FUNCTION\u0000liveupdate.remove_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function remove_mount(name: string | Hash): liveupdate.LIVEUPDATE;",
-      "liveupdate\u0000TYPEDEF\u0000LIVEUPDATE\u0000": "type LIVEUPDATE = typeof liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH | typeof liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_FORMAT_ERROR | typeof liveupdate.LIVEUPDATE_INVAL | typeof liveupdate.LIVEUPDATE_INVALID_HEADER | typeof liveupdate.LIVEUPDATE_INVALID_RESOURCE | typeof liveupdate.LIVEUPDATE_IO_ERROR | typeof liveupdate.LIVEUPDATE_MEM_ERROR | typeof liveupdate.LIVEUPDATE_OK | typeof liveupdate.LIVEUPDATE_SCHEME_MISMATCH | typeof liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH | typeof liveupdate.LIVEUPDATE_UNKNOWN | typeof liveupdate.LIVEUPDATE_VERSION_MISMATCH;",
+      "liveupdate\u0000TYPEDEF\u0000LIVEUPDATE\u0000": "type LIVEUPDATE = typeof liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH | typeof liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_FORMAT_ERROR | typeof liveupdate.LIVEUPDATE_INVAL | typeof liveupdate.LIVEUPDATE_INVALID_HEADER | typeof liveupdate.LIVEUPDATE_INVALID_RESOURCE | typeof liveupdate.LIVEUPDATE_IO_ERROR | typeof liveupdate.LIVEUPDATE_MEM_ERROR | typeof liveupdate.LIVEUPDATE_OK | typeof liveupdate.LIVEUPDATE_SCHEME_MISMATCH | typeof liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH | typeof liveupdate.LIVEUPDATE_UNKNOWN | typeof liveupdate.LIVEUPDATE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_NOT_INITIALIZED;",
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_NORMAL\u0000": "const CONSTANT_TYPE_NORMAL: number & { readonly __brand: \"material.CONSTANT_TYPE_NORMAL\" };",
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_PROJECTION\u0000": "const CONSTANT_TYPE_PROJECTION: number & { readonly __brand: \"material.CONSTANT_TYPE_PROJECTION\" };",
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_PROJECTION_INVERSE\u0000": "const CONSTANT_TYPE_PROJECTION_INVERSE: number & { readonly __brand: \"material.CONSTANT_TYPE_PROJECTION_INVERSE\" };",
@@ -3232,7 +3234,7 @@
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.STATE): void;",
-      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash | number): void;",
+      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">): void;\nfunction draw(predicate: Opaque<\"render_predicate\">, options: render.draw_options): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: render.debug_draw_options): void;",
@@ -3909,7 +3911,7 @@
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type: buffer.ValueType; count?: number }[]): Opaque<\"buffer\">;",
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash | string): string;",
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name?: Hash | string): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;",
@@ -4351,7 +4353,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]\ngui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
@@ -4398,7 +4400,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.NodeType, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -4523,6 +4525,7 @@
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_INVALID_RESOURCE\u0000": "const LIVEUPDATE_INVALID_RESOURCE: number & { readonly __brand: \"liveupdate.LIVEUPDATE_INVALID_RESOURCE\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_IO_ERROR\u0000": "const LIVEUPDATE_IO_ERROR: number & { readonly __brand: \"liveupdate.LIVEUPDATE_IO_ERROR\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_MEM_ERROR\u0000": "const LIVEUPDATE_MEM_ERROR: number & { readonly __brand: \"liveupdate.LIVEUPDATE_MEM_ERROR\" };",
+      "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_NOT_INITIALIZED\u0000": "const LIVEUPDATE_NOT_INITIALIZED: number & { readonly __brand: \"liveupdate.LIVEUPDATE_NOT_INITIALIZED\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_OK\u0000": "const LIVEUPDATE_OK: number & { readonly __brand: \"liveupdate.LIVEUPDATE_OK\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SCHEME_MISMATCH\u0000": "const LIVEUPDATE_SCHEME_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SCHEME_MISMATCH\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\u0000": "const LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\" };",
@@ -4657,7 +4660,7 @@
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
-      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash | number): void;",
+      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">): void;\nfunction draw(predicate: Opaque<\"render_predicate\">, options: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
@@ -5274,7 +5277,7 @@
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type: buffer.ValueType; count?: number }[]): Opaque<\"buffer\">;",
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash | string): string;",
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name?: Hash | string): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;",
@@ -5714,7 +5717,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]\ngui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
@@ -5761,7 +5764,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.NodeType, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -5886,6 +5889,7 @@
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_INVALID_RESOURCE\u0000": "const LIVEUPDATE_INVALID_RESOURCE: number & { readonly __brand: \"liveupdate.LIVEUPDATE_INVALID_RESOURCE\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_IO_ERROR\u0000": "const LIVEUPDATE_IO_ERROR: number & { readonly __brand: \"liveupdate.LIVEUPDATE_IO_ERROR\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_MEM_ERROR\u0000": "const LIVEUPDATE_MEM_ERROR: number & { readonly __brand: \"liveupdate.LIVEUPDATE_MEM_ERROR\" };",
+      "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_NOT_INITIALIZED\u0000": "const LIVEUPDATE_NOT_INITIALIZED: number & { readonly __brand: \"liveupdate.LIVEUPDATE_NOT_INITIALIZED\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_OK\u0000": "const LIVEUPDATE_OK: number & { readonly __brand: \"liveupdate.LIVEUPDATE_OK\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SCHEME_MISMATCH\u0000": "const LIVEUPDATE_SCHEME_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SCHEME_MISMATCH\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\u0000": "const LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\" };",
@@ -6020,7 +6024,7 @@
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
-      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash | number): void;",
+      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">): void;\nfunction draw(predicate: Opaque<\"render_predicate\">, options: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
@@ -6388,7 +6392,7 @@
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type: buffer.ValueType; count?: number }[]): Opaque<\"buffer\">;",
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash | string): string;",
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name?: Hash | string): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"bufferstream\\\"> & { [index: number]: number; length: LuaLengthMethod<number> }\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;",
@@ -6775,7 +6779,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]\ngui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
@@ -6822,7 +6826,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\">): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.NodeType, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -6947,6 +6951,7 @@
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_INVALID_RESOURCE\u0000": "const LIVEUPDATE_INVALID_RESOURCE: number & { readonly __brand: \"liveupdate.LIVEUPDATE_INVALID_RESOURCE\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_IO_ERROR\u0000": "const LIVEUPDATE_IO_ERROR: number & { readonly __brand: \"liveupdate.LIVEUPDATE_IO_ERROR\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_MEM_ERROR\u0000": "const LIVEUPDATE_MEM_ERROR: number & { readonly __brand: \"liveupdate.LIVEUPDATE_MEM_ERROR\" };",
+      "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_NOT_INITIALIZED\u0000": "const LIVEUPDATE_NOT_INITIALIZED: number & { readonly __brand: \"liveupdate.LIVEUPDATE_NOT_INITIALIZED\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_OK\u0000": "const LIVEUPDATE_OK: number & { readonly __brand: \"liveupdate.LIVEUPDATE_OK\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SCHEME_MISMATCH\u0000": "const LIVEUPDATE_SCHEME_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SCHEME_MISMATCH\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\u0000": "const LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\" };",
@@ -7053,7 +7058,7 @@
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
-      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash | number): void;",
+      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
@@ -8542,9 +8547,9 @@
         },
         "return:0:buffer": { "type": "Opaque<\"buffer\">", "optional": false }
       },
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "Opaque<\"buffer\">", "optional": false },
-        "param:1:stream_name": { "type": "Hash | string", "optional": false },
+        "param:1:stream_name": { "type": "Hash | string", "optional": true },
         "return:0:data": { "type": "string", "optional": false }
       },
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
@@ -10150,8 +10155,8 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "return:0:clone": { "type": "Opaque<\"node\">", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+        "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
           "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
           "optional": false
@@ -10336,8 +10341,8 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "return:0:tracking": { "type": "number", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+        "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
           "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
           "optional": false
@@ -10994,10 +10999,7 @@
         "param:0:state": { "type": "graphics.STATE", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
-        "param:0:binding": {
-          "type": "Opaque<\"texture\"> | string | Hash | number",
-          "optional": false
-        }
+        "param:0:binding": { "type": "string | Hash | number", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:x": { "type": "number", "optional": false },
@@ -13327,9 +13329,9 @@
         },
         "return:0:buffer": { "type": "Opaque<\"buffer\">", "optional": false }
       },
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "Opaque<\"buffer\">", "optional": false },
-        "param:1:stream_name": { "type": "Hash | string", "optional": false },
+        "param:1:stream_name": { "type": "Hash | string", "optional": true },
         "return:0:data": { "type": "string", "optional": false }
       },
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
@@ -14928,8 +14930,8 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "return:0:clone": { "type": "Opaque<\"node\">", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+        "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
           "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
           "optional": false
@@ -15114,8 +15116,8 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "return:0:tracking": { "type": "number", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+        "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
           "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
           "optional": false
@@ -15772,10 +15774,7 @@
         "param:0:state": { "type": "graphics.STATE", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
-        "param:0:binding": {
-          "type": "Opaque<\"texture\"> | string | Hash | number",
-          "optional": false
-        }
+        "param:0:binding": { "type": "string | Hash | number", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:x": { "type": "number", "optional": false },
@@ -18311,9 +18310,9 @@
         },
         "return:0:buffer": { "type": "Opaque<\"buffer\">", "optional": false }
       },
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "Opaque<\"buffer\">", "optional": false },
-        "param:1:stream_name": { "type": "Hash | string", "optional": false },
+        "param:1:stream_name": { "type": "Hash | string", "optional": true },
         "return:0:data": { "type": "string", "optional": false }
       },
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
@@ -18769,8 +18768,8 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "return:0:clone": { "type": "Opaque<\"node\">", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+        "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
           "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
           "optional": false
@@ -18951,8 +18950,8 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "return:0:tracking": { "type": "number", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+        "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
           "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
           "optional": false
@@ -19640,10 +19639,7 @@
         "param:0:state": { "type": "graphics.State", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
-        "param:0:binding": {
-          "type": "Opaque<\"texture\"> | string | Hash | number",
-          "optional": false
-        }
+        "param:0:binding": { "type": "string | Hash | number", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:x": { "type": "number", "optional": false },
@@ -22203,9 +22199,9 @@
         },
         "return:0:buffer": { "type": "Opaque<\"buffer\">", "optional": false }
       },
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "Opaque<\"buffer\">", "optional": false },
-        "param:1:stream_name": { "type": "Hash | string", "optional": false },
+        "param:1:stream_name": { "type": "Hash | string", "optional": true },
         "return:0:data": { "type": "string", "optional": false }
       },
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
@@ -22650,8 +22646,8 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "return:0:clone": { "type": "Opaque<\"node\">", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+        "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
           "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
           "optional": false
@@ -22832,8 +22828,8 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "return:0:tracking": { "type": "number", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+        "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
           "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
           "optional": false
@@ -23521,10 +23517,7 @@
         "param:0:state": { "type": "graphics.State", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
-        "param:0:binding": {
-          "type": "Opaque<\"texture\"> | string | Hash | number",
-          "optional": false
-        }
+        "param:0:binding": { "type": "string | Hash | number", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:x": { "type": "number", "optional": false },
@@ -24911,9 +24904,9 @@
         },
         "return:0:buffer": { "type": "Opaque<\"buffer\">", "optional": false }
       },
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "Opaque<\"buffer\">", "optional": false },
-        "param:1:stream_name": { "type": "Hash | string", "optional": false },
+        "param:1:stream_name": { "type": "Hash | string", "optional": true },
         "return:0:data": { "type": "string", "optional": false }
       },
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"Opaque<\\\"buffer\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
@@ -25303,8 +25296,8 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "return:0:clone": { "type": "Opaque<\"node\">", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+        "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
           "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
           "optional": false
@@ -25485,8 +25478,8 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "return:0:tracking": { "type": "number", "optional": false }
       },
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
+        "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
           "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
           "optional": false
@@ -26100,10 +26093,7 @@
         "param:0:state": { "type": "graphics.State", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
-        "param:0:binding": {
-          "type": "Opaque<\"texture\"> | string | Hash | number",
-          "optional": false
-        }
+        "param:0:binding": { "type": "string | Hash | number", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:x": { "type": "number", "optional": false },

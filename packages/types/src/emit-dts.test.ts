@@ -6,6 +6,7 @@ import b2dDoc from "../fixtures/b2d_doc.json" with { type: "json" };
 import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
 import collectionproxyDoc from "../fixtures/collectionproxy_doc.json" with { type: "json" };
+import liveupdate1124Doc from "../fixtures/defold-1.12.4/liveupdate_doc.json" with { type: "json" };
 import b2dBody113Doc from "../fixtures/defold-1.13.1/b2d_body_doc.json" with { type: "json" };
 import b2dFixture113Doc from "../fixtures/defold-1.13.1/b2d_fixture_doc.json" with { type: "json" };
 import b2dShapeDoc from "../fixtures/defold-1.13.1/b2d_shape_doc.json" with { type: "json" };
@@ -30,6 +31,7 @@ import factory114Doc from "../fixtures/defold-1.14.0/factory_doc.json" with { ty
 import graphics114Doc from "../fixtures/defold-1.14.0/graphics_doc.json" with { type: "json" };
 import http114Doc from "../fixtures/defold-1.14.0/http_doc.json" with { type: "json" };
 import image114Doc from "../fixtures/defold-1.14.0/image_doc.json" with { type: "json" };
+import liveupdate114Doc from "../fixtures/defold-1.14.0/liveupdate_doc.json" with { type: "json" };
 import model114Doc from "../fixtures/defold-1.14.0/model_doc.json" with { type: "json" };
 import physics114Doc from "../fixtures/defold-1.14.0/physics_doc.json" with { type: "json" };
 import render114Doc from "../fixtures/defold-1.14.0/render_doc.json" with { type: "json" };
@@ -6868,6 +6870,43 @@ describe("UNDOCUMENTED_CONSTANTS back-fill", () => {
       registeredConstants: new Set([LOST]),
     });
     expect(signatures.filter((s) => s.identity.name === LOST)).toHaveLength(1);
+  });
+
+  describe("a member of a documented enum", () => {
+    const NOT_INITIALIZED = "liveupdate.LIVEUPDATE_NOT_INITIALIZED";
+    const NOT_INITIALIZED_DECL = "const LIVEUPDATE_NOT_INITIALIZED:";
+    const MEMBER = `typeof ${NOT_INITIALIZED}`;
+    const resultAlias = (out: string): string | undefined =>
+      out.split("\n").find((line) => line.includes("type LIVEUPDATE ="));
+    const registeredWithDocumented = (module: ApiModule): Set<string> =>
+      new Set([...module.constants.map((c) => c.name), NOT_INITIALIZED]);
+
+    test("joins the enum where the target's ref-doc declares it", () => {
+      const module = parseDefoldApiDoc(liveupdate114Doc);
+      const out = emitDeclarations(module, {
+        registeredConstants: registeredWithDocumented(module),
+      });
+      expect(count(out, NOT_INITIALIZED_DECL)).toBe(1);
+      expect(count(resultAlias(out) ?? "", MEMBER)).toBe(1);
+    });
+
+    test("is emitted without an enum where the target's ref-doc declares none", () => {
+      const module = parseDefoldApiDoc(liveupdate1124Doc);
+      const out = emitDeclarations(module, {
+        registeredConstants: registeredWithDocumented(module),
+      });
+      expect(count(out, NOT_INITIALIZED_DECL)).toBe(1);
+      expect(resultAlias(out)).toBeUndefined();
+    });
+
+    test("an unregistered member is neither declared nor joined", () => {
+      const out = emitDeclarations(parseDefoldApiDoc(liveupdate114Doc), {
+        registeredConstants: new Set(),
+      });
+      expect(resultAlias(out)).toBeDefined();
+      expect(out).not.toContain(NOT_INITIALIZED_DECL);
+      expect(out).not.toContain(MEMBER);
+    });
   });
 
   test("every committed target's render surface declares each context event exactly once", () => {
