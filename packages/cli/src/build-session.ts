@@ -21,6 +21,7 @@ import {
   lualibBundleRel,
   outputRelsForSource,
   pruneAlternativeOutputs,
+  pruneLegacyRuntimeOutputs,
   readBuildConfig,
   retargetSourceRoot,
   TIMERS_RUNTIME_LABEL,
@@ -38,8 +39,11 @@ import {
   runtimeArtifactClaimant,
 } from "./output-claims";
 import {
+  type RuntimeArtifactRels,
   requireRewrites,
   rewriteAll,
+  runtimeRequireNames,
+  throwOnRuntimeRequireShadowing,
   throwOnUnaddressableArtifacts,
   throwOnUnresolvedRequires,
 } from "./require-resolution";
@@ -208,12 +212,15 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     // reason: an incremental rebuild writes companions and generated runtimes
     // that the resolution check never scans.
     const hsmRels = hsmModuleRels(config, Object.keys(result.hsmModules ?? {}));
-    const rewrites = requireRewrites({
-      sources: outputs,
-      companions: companionBySource,
+    const runtimeRels: RuntimeArtifactRels = {
       ...(result.lualib !== undefined ? { lualibRel: lualibBundleRel(config) } : {}),
       ...(result.timersRuntime !== undefined ? { timersRel: timersModuleRel(config) } : {}),
       hsmRels,
+    };
+    const rewrites = requireRewrites({
+      sources: outputs,
+      companions: companionBySource,
+      ...runtimeRels,
     });
     const luaBySource = rewriteAll(result.lua, rewrites);
     const companionLuaBySource = rewriteAll(result.companions ?? {}, rewrites);
@@ -253,6 +260,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
           : []),
         ...Object.values(hsmRels).map((outputRel) => ({ label: HSM_LIBRARY_LABEL, outputRel })),
       ]);
+      throwOnRuntimeRequireShadowing([...sourceTexts.keys()], runtimeRequireNames(runtimeRels));
     }
 
     // Outside the clean-program check, for the reason `runBuild` gates there: a
@@ -383,6 +391,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       heldSources.add(rel);
     }
     const built = writeOutputs(result, sources, true);
+    pruneLegacyRuntimeOutputs(cwd, config, sources);
     const reachability = scanReachability();
     const crossWorld = scanCrossWorld();
     return {

@@ -43,9 +43,9 @@ export function readDefoldTargetPin(pkg: unknown): string | undefined {
 }
 
 // The only keys the readers consume: `defold-target` here, `extensions` in
-// extension-version.ts. Anything else in the namespace is inert, so it is
-// diagnosed rather than silently dropped.
-export const RECOGNIZED_NAMESPACE_KEYS = ["defold-target", "extensions"] as const;
+// extension-version.ts, `runtime-dir` in build-output.ts. Anything else in the
+// namespace is inert, so it is diagnosed rather than silently dropped.
+export const RECOGNIZED_NAMESPACE_KEYS = ["defold-target", "extensions", "runtime-dir"] as const;
 
 // The spellings that predate `defold-target`. The flag surface already hard-
 // rejects them (dispatch.ts) — the pin surface points at the same replacement.
@@ -60,7 +60,8 @@ export function diagnoseDefoldNamespace(pkg: unknown): readonly string[] {
   if (namespace === undefined) {
     return [];
   }
-  const recognized = RECOGNIZED_NAMESPACE_KEYS.map((key) => `"${key}"`).join(" and ");
+  const quoted = RECOGNIZED_NAMESPACE_KEYS.map((key) => `"${key}"`);
+  const recognized = `${quoted.slice(0, -1).join(", ")} and ${quoted.at(-1)}`;
   return Object.keys(namespace)
     .filter((key) => !isKeyOf(RECOGNIZED_NAMESPACE_KEYS, key))
     .sort()

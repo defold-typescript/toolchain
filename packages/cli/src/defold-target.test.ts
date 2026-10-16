@@ -98,6 +98,14 @@ describe("diagnoseDefoldNamespace", () => {
     ).toEqual([]);
   });
 
+  test("runtime-dir beside defold-target is recognized and produces no diagnostics", () => {
+    expect(
+      diagnoseDefoldNamespace({
+        "defold-typescript": { "defold-target": "1.13.0", "runtime-dir": "vendor/rt" },
+      }),
+    ).toEqual([]);
+  });
+
   test("the legacy defold-version key is named and points at defold-target", () => {
     const diagnostics = diagnoseDefoldNamespace({
       "defold-typescript": { "defold-version": "1.12.4" },

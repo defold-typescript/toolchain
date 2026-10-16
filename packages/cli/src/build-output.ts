@@ -1,7 +1,6 @@
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import {
-  type BuildConfig,
   computeOutputRel,
   HSM_REQUIRE_ROOT,
   hsmModules,
@@ -10,10 +9,19 @@ import {
   type SourceOutputKind,
   stripIncludeBase,
   type TranspileDiagnostic,
+  type BuildConfig as TsconfigBuildConfig,
 } from "@defold-typescript/transpiler";
 
-export type { BuildConfig, SourceOutputKind };
+export type { SourceOutputKind };
 export { computeOutputRel, parseBuildConfig, stripIncludeBase };
+
+/**
+ * The output layout `tsconfig.json` decides, plus the folder `package.json`
+ * picks for the Lua the build writes on its own behalf.
+ */
+export interface BuildConfig extends TsconfigBuildConfig {
+  readonly runtimeDir?: string;
+}
 
 export const PROJECT_BUCKET = "<project>";
 
@@ -27,6 +35,45 @@ export function isTranspilerSource(rel: string): boolean {
   return TRANSPILER_SOURCE_RE.test(toPosix(rel));
 }
 
+export const RUNTIME_DEFAULT_DIR = "lib/defold_typescript";
+
+// A dot is rejected in every folder name, not only `..`: Lua reads a dot in a
+// require name as a folder separator, so a dotted folder is written where no
+// require can reach it.
+function isValidRuntimeDir(value: string): boolean {
+  if (value.startsWith("/") || /[\\:]/.test(value)) {
+    return false;
+  }
+  return value.split("/").every((segment) => segment !== "" && !segment.includes("."));
+}
+
+/**
+ * The `package.json` `"defold-typescript"."runtime-dir"` setting, or undefined
+ * when there is no `package.json`, it does not parse, or it sets no folder.
+ */
+export function readRuntimeDir(cwd: string): string | undefined {
+  let pkg: unknown;
+  try {
+    pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+  } catch {
+    return undefined;
+  }
+  if (typeof pkg !== "object" || pkg === null) {
+    return undefined;
+  }
+  const namespace = (pkg as Record<string, unknown>)["defold-typescript"];
+  if (typeof namespace !== "object" || namespace === null || !("runtime-dir" in namespace)) {
+    return undefined;
+  }
+  const value = (namespace as Record<string, unknown>)["runtime-dir"];
+  if (typeof value !== "string" || !isValidRuntimeDir(value)) {
+    throw new Error(
+      `defold-typescript: package.json "defold-typescript"."runtime-dir" is ${JSON.stringify(value)}; it must be a folder under the output root with no leading slash, no "..", and no dot in any folder name, because Lua reads a dot in a require name as a folder separator.`,
+    );
+  }
+  return value;
+}
+
 export function readBuildConfig(cwd: string): BuildConfig {
   const tsconfigPath = path.join(cwd, "tsconfig.json");
   let raw: string;
@@ -38,7 +85,8 @@ export function readBuildConfig(cwd: string): BuildConfig {
     );
   }
 
-  return parseBuildConfig(raw);
+  const runtimeDir = readRuntimeDir(cwd);
+  return { ...parseBuildConfig(raw), ...(runtimeDir !== undefined ? { runtimeDir } : {}) };
 }
 
 function globToRegex(pattern: string): RegExp {
@@ -113,38 +161,32 @@ export const LUALIB_BUNDLE_LABEL = "the TypeScript standard-library bundle";
 export const TIMERS_RUNTIME_LABEL = "the timers polyfill runtime";
 export const HSM_LIBRARY_LABEL = "the hsm state machine library";
 
-// Defold resolves `require("lualib_bundle")` to `lualib_bundle.lua` at the
-// project/output root, so the synthesized bundle lands once there regardless of
-// which subfolder a script lives in.
+// Every file the build writes on its own behalf sits in one folder under the
+// output root, so the project root holds none of them and one ignore line
+// covers them all. The transpiler emits each artifact's internal require name;
+// the build respells every require to the path joined here.
+function runtimeRel(config: BuildConfig, file: string): string {
+  const { outDir } = config;
+  const root = outDir === undefined || outDir === "" || outDir === "." ? "" : outDir;
+  return path.posix.join(root, config.runtimeDir ?? RUNTIME_DEFAULT_DIR, file);
+}
+
+// The synthesized lualib bundle lands once in the runtime folder, so every
+// script reaches the same copy whichever subfolder it lives in.
 export function lualibBundleRel(config: BuildConfig): string {
-  const { outDir } = config;
-  if (outDir === undefined || outDir === "" || outDir === ".") {
-    return "lualib_bundle.lua";
-  }
-  return path.posix.join(outDir, "lualib_bundle.lua");
+  return runtimeRel(config, "lualib_bundle.lua");
 }
 
-// The timers polyfill runtime lands once at the project/output root next to
-// `lualib_bundle.lua`, so `require("defold_typescript_timers")` resolves in
-// Defold regardless of which subfolder a script lives in.
+// The timers polyfill runtime lands once in the runtime folder next to the
+// lualib bundle, which it requires.
 export function timersModuleRel(config: BuildConfig): string {
-  const { outDir } = config;
-  if (outDir === undefined || outDir === "" || outDir === ".") {
-    return "defold_typescript_timers.lua";
-  }
-  return path.posix.join(outDir, "defold_typescript_timers.lua");
+  return runtimeRel(config, "timers.lua");
 }
 
-// Each hsm module lands at `defold_typescript_hsm/<module>.lua` under the
-// project/output root, the path `require("defold_typescript_hsm.<module>")`
-// opens, so it resolves regardless of which subfolder a script lives in.
+// Each hsm module lands at `hsm/<module>.lua` in the runtime folder, beside the
+// bundle `async` requires.
 export function hsmModuleRel(config: BuildConfig, name: string): string {
-  const rel = `${HSM_REQUIRE_ROOT}/${name}.lua`;
-  const { outDir } = config;
-  if (outDir === undefined || outDir === "" || outDir === ".") {
-    return rel;
-  }
-  return path.posix.join(outDir, rel);
+  return runtimeRel(config, `hsm/${name}.lua`);
 }
 
 /** Where each named hsm module lands, keyed by module name. */
@@ -190,6 +232,62 @@ export function outputRelsForSource(rel: string, config: BuildConfig): string[] 
 // end-of-file), so the banner precedes it. The orphan scan matches the banner
 // on any line, so its position never matters to detection.
 export const GENERATED_BANNER = "--# defold-typescript:generated";
+
+export function hasGeneratedBanner(cwd: string, rel: string): boolean {
+  let content: string;
+  try {
+    content = readFileSync(path.join(cwd, rel), "utf8");
+  } catch {
+    return false;
+  }
+  return content.split("\n").some((line) => line.trim() === GENERATED_BANNER);
+}
+
+// The output-root paths earlier releases wrote the build's own Lua to, each
+// named after the artifact's internal require name.
+function legacyRuntimeRels(config: BuildConfig): string[] {
+  const { outDir } = config;
+  const root = outDir === undefined || outDir === "" || outDir === "." ? "" : outDir;
+  return [
+    "lualib_bundle.lua",
+    "defold_typescript_timers.lua",
+    ...hsmModules().map(({ name }) => `${HSM_REQUIRE_ROOT}/${name}.lua`),
+  ].map((rel) => path.posix.join(root, rel));
+}
+
+/**
+ * Remove the runtime files an earlier build wrote at the output root, so an
+ * upgraded project keeps one copy of each, in the runtime folder. A file goes
+ * only when it carries the generated banner and nothing this build writes —
+ * a runtime file or a live source's output — lands on it; the old hsm folder
+ * goes only once that leaves it empty.
+ */
+export function pruneLegacyRuntimeOutputs(
+  cwd: string,
+  config: BuildConfig,
+  liveSources: readonly string[],
+): void {
+  const live = new Set([
+    ...builtinRuntimeRels(config),
+    ...liveSources.flatMap((rel) => outputRelsForSource(rel, config)),
+  ]);
+  for (const rel of legacyRuntimeRels(config)) {
+    if (live.has(rel) || !hasGeneratedBanner(cwd, rel)) {
+      continue;
+    }
+    rmSync(path.join(cwd, rel), { force: true });
+    rmSync(path.join(cwd, `${rel}.map`), { force: true });
+  }
+  const { outDir } = config;
+  const hsmDir = path.join(cwd, outDir ?? "", HSM_REQUIRE_ROOT);
+  try {
+    if (readdirSync(hsmDir).length === 0) {
+      rmdirSync(hsmDir);
+    }
+  } catch {
+    // No old hsm folder: nothing to remove.
+  }
+}
 
 // Delete every output a source could have produced except the ones it currently
 // does (each `keep` rel and its `.map`). With a source on disk, its non-current

@@ -15,6 +15,7 @@ import {
   LUALIB_BUNDLE_LABEL,
   lualibBundleRel,
   pruneAlternativeOutputs,
+  pruneLegacyRuntimeOutputs,
   readBuildConfig,
   retargetSourceRoot,
   TIMERS_RUNTIME_LABEL,
@@ -32,8 +33,11 @@ import {
   runtimeArtifactClaimant,
 } from "./output-claims";
 import {
+  type RuntimeArtifactRels,
   requireRewrites,
   rewriteAll,
+  runtimeRequireNames,
+  throwOnRuntimeRequireShadowing,
   throwOnUnaddressableArtifacts,
   throwOnUnresolvedRequires,
 } from "./require-resolution";
@@ -149,12 +153,15 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   // before the resolution check reads it: a require the map does not cover keeps
   // its source-rooted spelling, so the check still catches it.
   const hsmRels = hsmModuleRels(config, Object.keys(result.hsmModules ?? {}));
-  const rewrites = requireRewrites({
-    sources: outputBySource,
-    companions: companionBySource,
+  const runtimeRels: RuntimeArtifactRels = {
     ...(result.lualib !== undefined ? { lualibRel: lualibBundleRel(config) } : {}),
     ...(result.timersRuntime !== undefined ? { timersRel: timersModuleRel(config) } : {}),
     hsmRels,
+  };
+  const rewrites = requireRewrites({
+    sources: outputBySource,
+    companions: companionBySource,
+    ...runtimeRels,
   });
   const luaBySource = rewriteAll(result.lua, rewrites);
   const companionLuaBySource = rewriteAll(result.companions ?? {}, rewrites);
@@ -199,6 +206,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
         : []),
       ...Object.values(hsmRels).map((outputRel) => ({ label: HSM_LIBRARY_LABEL, outputRel })),
     ]);
+    throwOnRuntimeRequireShadowing(sources, runtimeRequireNames(runtimeRels));
   }
 
   // Outside the clean-program check, so a script the target cannot load is never
@@ -291,6 +299,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
       written.push(moduleRel);
     }
   }
+  pruneLegacyRuntimeOutputs(cwd, config, sources);
 
   throwIfFailures(failures);
   const program = session.getProgram();

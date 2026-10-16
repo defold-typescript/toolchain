@@ -728,10 +728,12 @@ target like `beta` is pinned or passed via `--defold-target`). If `ok` is
 output in the Defold project tree — a script component or a `<name>.lua` module,
 per the table above. `import` is rewritten to `require("<module>")` resolving
 against the emitted `.lua`, so a shared module must be built for its require to
-resolve at runtime. Two runtime modules are synthesized at the output root on
-demand: `lualib_bundle.lua` (when a source uses a TS runtime helper like
-`Object.keys` or spread, or when timers are used, since the timer runtime
-requires it) and `defold_typescript_timers.lua` (when timers are used).
+resolve at runtime. The build's own runtime modules are synthesized on demand in
+the [runtime folder](./build.md#the-runtime-folder) (`lib/defold_typescript/` by
+default, moved by `package.json` `runtime-dir`): `lualib_bundle.lua` (when a
+source uses a TS runtime helper like `Object.keys` or spread, or when timers or
+`hsm/async` are used, since those require it), `timers.lua` (when timers are
+used) and `hsm/<module>.lua` (per imported `hsm` module).
 
 Who creates these: [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
 produces the Lua *content* in memory; the CLI writes the *files*, choosing the
