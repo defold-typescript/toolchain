@@ -130,7 +130,7 @@ declare global {
       /**
        * Buffer to bind to the resource.
        */
-      buffer: Opaque<"buffer">;
+      buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> };
       /**
        * Whether the resource takes ownership of the buffer. The default is true.
        */
@@ -836,7 +836,7 @@ declare global {
      * }
      * ```
      */
-    function create_texture(path: string, table: resource.texture_creation_params, buffer?: Opaque<"buffer">): Hash;
+    function create_texture(path: string, table: resource.texture_creation_params, buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): Hash;
     /**
      * Creates a new texture resource that can be used in the same way as any texture created during build time.
      * The path used for creating the texture must be unique, trying to create a resource at a path that is already
@@ -955,7 +955,7 @@ declare global {
      * });
      * ```
      */
-    function create_texture_async(path: string, table: resource.texture_creation_params, buffer: Opaque<"buffer"> | undefined, callback: (self: unknown, request_id: number, result: resource.texture_creation_result) => void): LuaMultiReturn<[Hash, number]>;
+    function create_texture_async(path: string, table: resource.texture_creation_params, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } | undefined, callback: (self: unknown, request_id: number, result: resource.texture_creation_result) => void): LuaMultiReturn<[Hash, number]>;
     /**
      * Constructor-like function with two purposes:
      *
@@ -1024,7 +1024,7 @@ declare global {
      * });
      * ```
      */
-    function get_buffer(path: Hash | string): Opaque<"buffer">;
+    function get_buffer(path: Hash | string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     /**
      * Gets render target info from a render target resource path or a render target handle
      *
@@ -1176,7 +1176,7 @@ declare global {
      * // custom_resources = resources/,assets/level_data.json
      * ```
      */
-    function load(path: string): Opaque<"buffer">;
+    function load(path: string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     /**
      * Constructor-like function with two purposes:
      *
@@ -1263,7 +1263,7 @@ declare global {
      * resource.set(go.get<sprite.properties>()("#sprite", "texture0"), buffer);
      * ```
      */
-    function set(path: string | Hash, buffer: Opaque<"buffer">): void;
+    function set(path: string | Hash, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
     /**
      * Sets the data for a specific atlas resource. Setting new atlas data is specified by passing in
      * a texture path for the backing texture of the atlas, a list of geometries and a list of animations
@@ -1392,7 +1392,7 @@ declare global {
      * });
      * ```
      */
-    function set_buffer(path: Hash | string, buffer: Opaque<"buffer">, table?: resource.buffer_update_options): void;
+    function set_buffer(path: Hash | string, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, table?: resource.buffer_update_options): void;
     /**
      * Update internal sound resource (wavc/oggc/opusc) with new data
      *
@@ -1592,7 +1592,7 @@ declare global {
      * }
      * ```
      */
-    function set_texture(path: Hash | string, table: resource.texture_update_params, buffer: Opaque<"buffer">): void;
+    function set_texture(path: Hash | string, table: resource.texture_update_params, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
     /**
      * Constructor-like function with two purposes:
      *

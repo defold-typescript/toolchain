@@ -130,7 +130,7 @@ declare global {
       /**
        * Buffer to bind to the resource.
        */
-      buffer: Opaque<"buffer">;
+      buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> };
       /**
        * Whether the resource takes ownership of the buffer. The default is true.
        */
@@ -615,7 +615,7 @@ declare global {
      * });
      * ```
      */
-    function get_buffer(path: Hash | string): Opaque<"buffer">;
+    function get_buffer(path: Hash | string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     /**
      * Gets render target info from a render target resource path or a render target handle
      *
@@ -767,7 +767,7 @@ declare global {
      * // custom_resources = resources/,assets/level_data.json
      * ```
      */
-    function load(path: string): Opaque<"buffer">;
+    function load(path: string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     /**
      * Constructor-like function with two purposes:
      *
@@ -847,7 +847,7 @@ declare global {
      * resource.set(go.get<sprite.properties>()("#sprite", "texture0"), buffer);
      * ```
      */
-    function set(path: string | Hash, buffer: Opaque<"buffer">): void;
+    function set(path: string | Hash, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
     /**
      * Sets the data for a specific atlas resource. Setting new atlas data is specified by passing in
      * a texture path for the backing texture of the atlas, a list of geometries and a list of animations
@@ -976,7 +976,7 @@ declare global {
      * });
      * ```
      */
-    function set_buffer(path: Hash | string, buffer: Opaque<"buffer">, table?: resource.buffer_update_options): void;
+    function set_buffer(path: Hash | string, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, table?: resource.buffer_update_options): void;
     /**
      * Update internal sound resource (wavc/oggc/opusc) with new data
      *
@@ -1176,7 +1176,7 @@ declare global {
      * }
      * ```
      */
-    function set_texture(path: Hash | string, table: resource.texture_update_params, buffer: Opaque<"buffer">): void;
+    function set_texture(path: Hash | string, table: resource.texture_update_params, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
     /**
      * Constructor-like function with two purposes:
      *

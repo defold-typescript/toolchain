@@ -2151,7 +2151,7 @@
   "sys.load_buffer_async": [
     {
       "sourceHash": "91d84e7dc569ae20",
-      "ts": "function my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { status, buf } = result as { status: number; buf: Opaque<\"buffer\"> };\n  if (status === sys.REQUEST_STATUS_FINISHED) {\n    resource.set_texture(\"/my_texture\", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format: graphics.TEXTURE_FORMAT_RGBA }, buf);\n  }\n}\n\nconst my_request = sys.load_buffer_async(\"/assets/my_level_data.bin\", my_callback);"
+      "ts": "function my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { status, buf } = result as { status: number; buf: ReturnType<typeof sys.load_buffer> };\n  if (status === sys.REQUEST_STATUS_FINISHED) {\n    resource.set_texture(\"/my_texture\", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format: graphics.TEXTURE_FORMAT_RGBA }, buf);\n  }\n}\n\nconst my_request = sys.load_buffer_async(\"/assets/my_level_data.bin\", my_callback);"
     },
     {
       "sourceHash": "5545b8901e6ec4c5",

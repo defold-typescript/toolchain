@@ -7,7 +7,7 @@ import type { Opaque } from "../src/core-types";
 // it required. What matters here is that the omitted call a user would copy out
 // of the Defold docs actually compiles against the shipped declarations.
 
-declare const buf: Opaque<"buffer">;
+declare const buf: ReturnType<typeof buffer.create>;
 declare const body: Opaque<"b2Body">;
 declare const shapeId: Opaque<"b2Shape">;
 declare const jointA: Opaque<"b2Joint">;

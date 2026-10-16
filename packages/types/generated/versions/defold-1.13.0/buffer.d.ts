@@ -68,7 +68,7 @@ declare global {
      * buffer.copy_buffer(dstbuffer, 0, srcbuffer, element_count - 10, 10);
      * ```
      */
-    function copy_buffer(dst: Opaque<"buffer">, dstoffset: number, src: Opaque<"buffer">, srcoffset: number, count: number): void;
+    function copy_buffer(dst: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
     /**
      * Copy a specified amount of data from one stream to another.
      * The value type and size must match between source and destination streams.
@@ -129,7 +129,7 @@ declare global {
      * });
      * ```
      */
-    function create(element_count: number, declaration: { name?: Hash | string; type: buffer.ValueType; count?: number }[]): Opaque<"buffer">;
+    function create(element_count: number, declaration: { name?: Hash | string; type: buffer.ValueType; count?: number }[]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     /**
      * Get a copy of all the bytes of the buffer, every stream included, as a Lua string.
      *
@@ -137,7 +137,7 @@ declare global {
      * @param stream_name - the name of the stream; the engine ignores it and returns every byte of the buffer
      * @returns the buffer data as a Lua string
      */
-    function get_bytes(buffer: Opaque<"buffer">, stream_name?: Hash | string): string;
+    function get_bytes(buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, stream_name?: Hash | string): string;
     /**
      * Get a named metadata entry from a buffer along with its type.
      *
@@ -153,7 +153,7 @@ declare global {
      * if (values) print(`${values.length} values in 'somefloats'`);
      * ```
      */
-    function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;
+    function get_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;
     /**
      * Get a specified stream from a buffer.
      *
@@ -161,7 +161,7 @@ declare global {
      * @param stream_name - the stream name
      * @returns the data stream
      */
-    function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
+    function get_stream(buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
     /**
      * Creates or updates a metadata array entry on a buffer.
      * The value type and count given when updating the entry should match those used when first creating it.
@@ -182,7 +182,7 @@ declare global {
      * buffer.set_metadata(buf, hash("somefloats"), [-2.5, 10.0, 32.2], buffer.VALUE_TYPE_FLOAT32);
      * ```
      */
-    function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;
+    function set_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;
   }
 }
 

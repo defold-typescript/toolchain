@@ -51,6 +51,12 @@
       "Normalizes a vector, i.e. returns a new vector with the same direction as the input vector, but with length 1. The length of the vector must be above 0, otherwise a division-by-zero will occur."
     ]
   },
+  "vmath.dot": {
+    "signatures": ["vmath.dot<T extends Vector3 | Vector4>(v1: T, v2: T): number"],
+    "docs": [
+      "The returned value is a scalar defined as: `P ⋅ Q = |P| |Q| cos θ` where θ is the angle between the vectors P and Q.\n\n- If the dot product is positive then the angle between the vectors is below 90 degrees.\n- If the dot product is zero the vectors are perpendicular (at right-angles to each other).\n- If the dot product is negative then the angle between the vectors is more than 90 degrees.\n\nBoth vectors must have the same type: a vector3 paired with a vector4 raises."
+    ]
+  },
   "vmath.vector": {
     "signatures": ["vmath.vector(): Vector", "vmath.vector(t: number[]): Vector"],
     "docs": [
