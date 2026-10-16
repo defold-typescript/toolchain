@@ -157,7 +157,7 @@ declare global {
      * });
      * ```
      */
-    function load_buffer(buffer: string): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined;
+    function load_buffer(buffer: string): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } } | undefined;
     /**
      * Load image (PNG or JPEG) from a string buffer.
      *
@@ -204,7 +204,7 @@ declare global {
      * });
      * ```
      */
-    function load_buffer(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined;
+    function load_buffer(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } } | undefined;
   }
 }
 

@@ -68,7 +68,12 @@ export interface Quaternion {
  */
 export interface Matrix4 {
   m00: number;
-  c0: Vector4;
+  /**
+   * The first column. A read returns a new \`Vector4\`, so writing one of its
+   * fields changes nothing; assigning a whole \`Vector4\` sets the column.
+   */
+  get c0(): Readonly<Vector4>;
+  set c0(value: Vector4);
   mul: LuaMultiplicationMethod<Matrix4, Matrix4> &
     LuaMultiplicationMethod<Vector4, Vector4> &
     LuaMultiplicationMethod<number, Matrix4>;
@@ -136,8 +141,8 @@ export interface Opaque<Name extends string> {
  * A message-passing address with \`socket\`, \`path\`, and \`fragment\` components.
  */
 export interface Url {
-  get socket(): Hash;
-  set socket(value: Hash | string);
+  get socket(): Hash | undefined;
+  set socket(value: Hash | string | undefined);
   get path(): Hash | undefined;
   set path(value: Hash | string | undefined);
   get fragment(): Hash | undefined;
@@ -275,6 +280,14 @@ describe("parseGlobalTypes", () => {
     ]);
   });
 
+  test("Matrix4 reads a column from its documented getter as a read-only Vector4", () => {
+    const matrix = pageNamed("Matrix4");
+    expect(matrix.module.properties.map((p) => [p.name, p.types])).toEqual([
+      ["m00", ["number"]],
+      ["c0", ["Readonly<Vector4>"]],
+    ]);
+  });
+
   test("Hash is an opaque branded handle with no inspectable members", () => {
     const hash = pageNamed("Hash");
     expect(hash.module.properties).toEqual([]);
@@ -316,10 +329,10 @@ describe("parseGlobalTypes", () => {
     expect(opaque.brief.toLowerCase()).toContain("never");
   });
 
-  test("Url reads socket/path/fragment from their getters, with path and fragment optional", () => {
+  test("Url reads socket/path/fragment from their getters, each optional", () => {
     const url = pageNamed("Url");
     expect(url.module.properties.map((p) => [p.name, p.types])).toEqual([
-      ["socket", ["Hash"]],
+      ["socket", ["Hash", "undefined"]],
       ["path", ["Hash", "undefined"]],
       ["fragment", ["Hash", "undefined"]],
     ]);

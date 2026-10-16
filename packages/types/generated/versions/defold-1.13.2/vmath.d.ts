@@ -70,30 +70,6 @@ declare global {
      */
     function cross(v1: Vector3, v2: Vector3): Vector3;
     /**
-     * The returned value is a scalar defined as:
-     * `P ⋅ Q = |P| |Q| cos θ`
-     * where θ is the angle between the vectors P and Q.
-     *
-     * - If the dot product is positive then the angle between the vectors is below 90 degrees.
-     * - If the dot product is zero the vectors are perpendicular (at right-angles to each other).
-     * - If the dot product is negative then the angle between the vectors is more than 90 degrees.
-     *
-     * @param v1 - first vector
-     * @param v2 - second vector
-     * @returns dot product
-     * @example
-     * ```ts
-     * const vector1 = vmath.vector3(1, 0, 0);
-     * const vector2 = vmath.vector3(0, 1, 0);
-     *
-     * if (vmath.dot(vector1, vector2) === 0) {
-     *   // The two vectors are perpendicular (at right-angles to each other)
-     *   // ...
-     * }
-     * ```
-     */
-    function dot(v1: Vector3 | Vector4, v2: Vector3 | Vector4): number;
-    /**
      * The resulting matrix is the inverse of the supplied matrix.
      * For ortho-normal matrices, e.g. regular object transformation,
      * use `vmath.ortho_inv()` instead.

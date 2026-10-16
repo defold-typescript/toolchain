@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[Optional arguments whose `nil` raises reject `undefined`](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined)** on pre-baked versions; leave them out instead.
 > - **[`properties` is `defineScript`-only](./script-lifecycle.md).**
 > - **[Render scripts lose what needs a game object](./script-lifecycle.md#api-availability-by-script-kind)**, such as `sprite` and most of `go`.
-> - **[Declarations follow the engine bindings](./typescript-gotchas.md#url-addressing-same-world-objects-are-relative-socket-crosses-worlds)**: `go.delete` takes the ids `collectionfactory.create` returns, `msg.url` takes a `Hash`, and `render.disable_texture` rejects a texture handle.
+> - **[Declarations follow the engine bindings](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined)**: `Url.socket` can be `undefined`, `vmath.dot` takes one vector type, a buffer has `buf.length()`, and `go.delete` takes the ids `collectionfactory.create` returns.
 
 ### Breaking
 
@@ -26,7 +26,12 @@ What changed in each published `defold-typescript` toolchain release.
   - **Options tables** of `go.get`, `go.set`, `gui.get`, `gui.set`, `gui.play_flipbook`, `gui.stop_particlefx`, `sprite.play_flipbook`, `particlefx.stop`, `image.load`, `image.load_buffer`, `render.set_render_target`, `render.draw` (Defold 1.13.0 and later), `resource.get_text_metrics`, `sys.get_sys_info` and `sys.open_url`.
   - **`delay`** of `gui.animate` and `go.animate`, and `flip` of `gui.new_texture` and `gui.set_texture_data`.
   - **`default_value`** of `sys.get_config_int` and `sys.get_config_number`, `recursive` of `go.delete`, `path` of `go.get_id` and `request_id` of `physics.raycast_async`.
-- **`render.disable_texture` rejects a texture handle**: the engine reads any number as a texture unit, so a handle disables the wrong unit. Pass a unit number or a sampler name.
+- **Declarations reject what the engine bindings raise on or ignore:**
+  - **`Matrix4`** columns `c0` to `c3` read as a `Readonly<Vector4>`: a read is a copy, so `m.c0.x = 5` does not compile, since it changes nothing. Assign a whole `Vector4` (`m.c0 = v`) to set a column.
+  - **`render.disable_texture`** rejects a texture handle: the engine reads any number as a texture unit, so a handle disables the wrong unit. Pass a unit number or a sampler name.
+  - **`Url.socket`** reads as `Hash | undefined`: the `sender` of an engine message posted with no sender, such as `ray_cast_response` or `window_resized`, has no socket, so check it before use; see [A vector's size is `v.length()`](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined).
+  - **`vmath.dot`** takes two vectors of the same type, since a `Vector3` paired with a `Vector4` raises.
+  - **Buffers** are typed `Opaque<"buffer"> & { length: LuaLengthMethod<number> }`, so a value annotated as a bare `Opaque<"buffer">` does not pass to a buffer parameter; annotate it as `ReturnType<typeof buffer.create>` instead.
 
 ### Improved
 
@@ -36,13 +41,16 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **Declarations the engine bindings contradict follow the engine:**
   - **`buffer.get_bytes`** takes just the buffer and is documented as returning every byte of it; `stream_name` is optional and ignored.
+  - **Buffers** have `buf.length()`, which compiles to `#buf` and returns the element count.
   - **`go.delete`** takes any table whose values are ids, so `go.delete(ids)` deletes everything a `collectionfactory.create` call spawned.
   - **`go.get`** of an array material constant without `index` returns every element, and the result casts to `Vector4[]` in one step.
   - **`gui.clone_tree` and `gui.get_tree`** take `undefined` for the whole scene, but the argument cannot be left out, since a call without it raises; see [Passing absence](./typescript-gotchas.md#passing-absence-write-undefined-never-null).
+  - **`hash`** takes a `Hash` and returns it unchanged.
   - **`http.request`** passes its response callback the sender url as a fourth argument.
   - **Label and sprite vector properties** take one sub-key per component: a `Vector3` property (label and sprite `scale` and `size`) takes `.x` to `.z` and a `.xy` key that is a `Vector3`, and a `Vector4` property (label `color`, `outline` and `shadow`; sprite `slice`) takes `.x` to `.w`. So `go.get<label.properties>()("#label", "color.w")` is a `number`; see [Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace).
   - **`liveupdate.LIVEUPDATE_NOT_INITIALIZED`** is declared and is a member of `liveupdate.LIVEUPDATE`, which `liveupdate.add_mount` and `liveupdate.remove_mount` return while live update is disabled.
   - **`msg.url`** takes a `Hash` or a `Url` as its one argument, and its three-argument form takes `undefined` for `path` and `fragment` as well as `socket`.
+  - **`Url.socket`** takes `undefined`, which clears the socket.
 - **`llms-full.txt` dates each overload of `go.get`, `go.set`, `go.property`, `render.render_target` and `sys.get_config_string` by its own availability**: their first form exists on every tracked version, so it carries no `[through 1.13.1] [signature transition]` tag.
 - **`defineGuiScript` and `defineRenderScript` reject a `properties` block**: Defold builds `go.property` only in `.script` files, so the field fails to compile and the transpiler refuses to emit the calls Defold's build would reject. A GUI or render script gets a per-object value from a sibling `defineScript`, which [declares the property](./script-lifecycle.md#script-properties-on-self) and sends its value with `msg.post` in `init`.
 - **The `@defold-typescript/types/render-script` entrypoint leaves out the functions that need a game object**, which always raise "no instance could be found" in a render script: every function in `sprite`, `factory`, `collectionfactory`, `collectionproxy`, `label`, `model`, `particlefx`, `physics` and `tilemap`, most of `go` (`go.get_position`, `go.animate`, `go.property`), and part of `b2d`, `bullet3d`, `resource` and `sound`; see [API availability by script kind](./script-lifecycle.md#api-availability-by-script-kind).

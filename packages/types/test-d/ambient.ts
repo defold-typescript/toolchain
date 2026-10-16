@@ -278,3 +278,13 @@ const _badType: string = types.is_hash(hash("x"));
 void _isV3;
 void _isHashV;
 void _badType;
+
+// hash returns a Hash argument unchanged.
+const _rehashed: Hash = hash(hash("x"));
+const _sourced: Hash<"#sprite"> = hash(hash("#sprite"));
+
+// @ts-expect-error hash takes a string or a Hash, not a number
+hash(42);
+
+void _rehashed;
+void _sourced;

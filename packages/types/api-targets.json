@@ -271,6 +271,7 @@
             "slerp",
             "mul_per_elem",
             "normalize",
+            "dot",
             "vector"
           ]
         },
@@ -663,6 +664,7 @@
             "slerp",
             "mul_per_elem",
             "normalize",
+            "dot",
             "vector"
           ]
         },
@@ -1024,6 +1026,7 @@
             "slerp",
             "mul_per_elem",
             "normalize",
+            "dot",
             "vector"
           ]
         },
@@ -1385,6 +1388,7 @@
             "slerp",
             "mul_per_elem",
             "normalize",
+            "dot",
             "vector"
           ]
         },
@@ -1684,6 +1688,7 @@
             "slerp",
             "mul_per_elem",
             "normalize",
+            "dot",
             "vector"
           ]
         },

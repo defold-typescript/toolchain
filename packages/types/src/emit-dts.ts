@@ -289,6 +289,7 @@ export const OVERLOAD_COVERED_SKIPS = new Set([
   "vmath.slerp",
   "vmath.mul_per_elem",
   "vmath.normalize",
+  "vmath.dot",
   // sys-overloads.d.ts supplies the disabling form and the form that takes the
   // cooldown the engine requires when enabling.
   "sys.set_engine_throttle",

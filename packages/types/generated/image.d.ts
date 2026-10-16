@@ -54,7 +54,7 @@ declare global {
       /**
        * Script buffer containing the decompressed image data.
        */
-      buffer: Opaque<"buffer">;
+      buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     }
     /**
      * Image loading options

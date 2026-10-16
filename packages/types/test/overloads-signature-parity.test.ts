@@ -46,6 +46,7 @@ const NAMESPACES: readonly OverloadNamespace[] = [
       "vmath.slerp",
       "vmath.mul_per_elem",
       "vmath.normalize",
+      "vmath.dot",
       "vmath.vector",
     ],
     reflow: {
@@ -496,10 +497,12 @@ describe("curried and multi-paragraph overload rendering", () => {
     expect(primary).toContain("There is a 2 kilobyte limit");
   });
 
-  test("the paragraph-preserving normalizer is a no-op for every vmath description", () => {
+  test("the paragraph-preserving normalizer joins every wrapped vmath line", () => {
     const descriptions = renderOverloadDescriptions(vmathSpec);
     for (const forms of Object.values(descriptions)) {
-      for (const form of forms) expect(form).not.toContain("\n");
+      for (const form of forms) {
+        expect((form ?? "").replaceAll("\n\n", "").replaceAll("\n- ", "")).not.toContain("\n");
+      }
     }
   });
 });

@@ -86,6 +86,32 @@ declare global {
      */
     function mul_per_elem<T extends Vector3 | Vector4>(v1: T, v2: T): T;
     /**
+     * The returned value is a scalar defined as:
+     * `P ⋅ Q = |P| |Q| cos θ`
+     * where θ is the angle between the vectors P and Q.
+     *
+     * - If the dot product is positive then the angle between the vectors is below 90 degrees.
+     * - If the dot product is zero the vectors are perpendicular (at right-angles to each other).
+     * - If the dot product is negative then the angle between the vectors is more than 90 degrees.
+     *
+     * Both vectors must have the same type: a vector3 paired with a vector4 raises.
+     *
+     * @param v1 - first vector
+     * @param v2 - second vector
+     * @returns dot product
+     * @example
+     * ```ts
+     * const vector1 = vmath.vector3(1, 0, 0);
+     * const vector2 = vmath.vector3(0, 1, 0);
+     *
+     * if (vmath.dot(vector1, vector2) === 0) {
+     *   // The two vectors are perpendicular (at right-angles to each other)
+     *   // ...
+     * }
+     * ```
+     */
+    function dot<T extends Vector3 | Vector4>(v1: T, v2: T): number;
+    /**
      * Normalizes a vector, i.e. returns a new vector with the same
      * direction as the input vector, but with length 1.
      * The length of the vector must be above 0, otherwise a
