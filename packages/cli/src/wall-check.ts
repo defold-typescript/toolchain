@@ -59,8 +59,9 @@ function isUserSource(cwd: string, program: ts.Program, sourceFile: ts.SourceFil
 // Every file in a wall's program shares its ambient namespaces, so one import of
 // the main entry or another kind's subpath anywhere in the program, a helper
 // included, loads that surface into the whole wall and the narrowing no longer
-// holds. The type checker cannot see this: the widened program checks clean.
-function wideningImports(
+// holds. A `/// <reference types>` directive naming one loads it the same way.
+// The type checker cannot see this: the widened program checks clean.
+function wideningReferences(
   cwd: string,
   program: ts.Program,
   wall: WallConfig,
@@ -76,7 +77,12 @@ function wideningImports(
     if (!isUserSource(cwd, program, sourceFile)) {
       continue;
     }
-    for (const ref of ts.preProcessFile(sourceFile.text).importedFiles) {
+    const { typeReferenceDirectives, importedFiles } = ts.preProcessFile(sourceFile.text);
+    const refs = [
+      ...typeReferenceDirectives.map((ref) => ({ ref, verb: "references" })),
+      ...importedFiles.map((ref) => ({ ref, verb: "imports" })),
+    ];
+    for (const { ref, verb } of refs) {
       if (!widening.has(ref.fileName)) {
         continue;
       }
@@ -86,7 +92,7 @@ function wideningImports(
         line: line + 1,
         column: character + 1,
         code: 0,
-        message: `imports "${ref.fileName}", which loads more namespaces into the ${wall.kind} wall ${wall.dir}; import from "${TYPES_PACKAGE}/${wall.kind}" instead`,
+        message: `${verb} "${ref.fileName}", which loads more namespaces into the ${wall.kind} wall ${wall.dir}; import from "${TYPES_PACKAGE}/${wall.kind}" instead`,
       });
     }
   }
@@ -185,7 +191,9 @@ export function runWallCheck(cwd: string): WallCheckResult {
       dir: wall.dir,
       kind: wall.kind,
       diagnostics:
-        program === null ? diagnostics : [...diagnostics, ...wideningImports(cwd, program, wall)],
+        program === null
+          ? diagnostics
+          : [...diagnostics, ...wideningReferences(cwd, program, wall)],
     });
   }
   if (

@@ -248,6 +248,49 @@ describe("wall --check over standalone walls", () => {
       expect(found[0]?.message).toContain("@defold-typescript/types/render-script");
     });
   });
+
+  test("a wall naming the main entry in a reference directive reports the directive", () => {
+    inProject((cwd) => {
+      touch(
+        cwd,
+        "src/ui/hud.ts",
+        guiScript("    render.set_depth_mask(true);", [
+          '/// <reference types="@defold-typescript/types" />',
+        ]),
+      );
+      applyWallSelection(cwd, ["src/ui"]);
+
+      const result = runWallCheck(cwd);
+      const found = diagnosticsOf(result);
+
+      expect(found.map((d) => [d.program, d.file, d.code])).toEqual([
+        ["src/ui", "src/ui/hud.ts", 0],
+      ]);
+      expect(found[0]?.message).toContain('references "@defold-typescript/types"');
+      const diagnostic = result.programs[0]?.diagnostics[0];
+      expect([diagnostic?.line, diagnostic?.column]).toEqual([1, 23]);
+    });
+  });
+
+  test("a wall naming another kind's subpath in a reference directive reports the directive", () => {
+    inProject((cwd) => {
+      touch(
+        cwd,
+        "src/ui/hud.ts",
+        guiScript("    render.set_depth_mask(true);", [
+          '/// <reference types="@defold-typescript/types/render-script" />',
+        ]),
+      );
+      applyWallSelection(cwd, ["src/ui"]);
+
+      const found = diagnosticsOf(runWallCheck(cwd));
+
+      expect(found.map((d) => [d.program, d.file, d.code])).toEqual([
+        ["src/ui", "src/ui/hud.ts", 0],
+      ]);
+      expect(found[0]?.message).toContain('references "@defold-typescript/types/render-script"');
+    });
+  });
 });
 
 describe("wall --check reports a wall's own config errors", () => {
