@@ -1,7 +1,7 @@
 // The importable polyfill specifier (matched by the type checker and the
 // lowering pass) and the flat Lua require name the import is rewritten to. The
-// CLI writes the runtime to `<require name>.lua` at the output root, mirroring
-// `lualib_bundle`, so `require("defold_typescript_timers")` resolves in Defold.
+// CLI writes the runtime into its runtime folder beside `lualib_bundle` and
+// respells every `require("defold_typescript_timers")` to that path.
 export const TIMERS_MODULE_SPECIFIER = "@defold-typescript/types/timers";
 export const TIMERS_REQUIRE_NAME = "defold_typescript_timers";
 

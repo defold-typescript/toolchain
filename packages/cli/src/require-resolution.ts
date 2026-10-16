@@ -119,6 +119,50 @@ export function requireRewrites(input: RequireRewritesInput): Map<string, string
   return rewrites;
 }
 
+/** Where each runtime artifact this build writes lands. */
+export type RuntimeArtifactRels = Pick<RequireRewritesInput, "lualibRel" | "timersRel" | "hsmRels">;
+
+/** The internal require names `requireRewrites` respells for these artifacts. */
+export function runtimeRequireNames(runtime: RuntimeArtifactRels): Set<string> {
+  const names = new Set<string>();
+  if (runtime.lualibRel !== undefined) {
+    names.add(LUALIB_REQUIRE_NAME);
+  }
+  if (runtime.timersRel !== undefined) {
+    names.add(TIMERS_REQUIRE_NAME);
+  }
+  for (const name of Object.keys(runtime.hsmRels ?? {})) {
+    names.add(hsmRequireName(name));
+  }
+  return names;
+}
+
+/**
+ * Fail the build on a source whose require name is the internal name of a
+ * runtime artifact the build writes. The rewrite map has one entry per name, so
+ * an import of that source would be respelled to the runtime file and load it
+ * instead, with nothing to say so.
+ */
+export function throwOnRuntimeRequireShadowing(
+  sourceRels: readonly string[],
+  requireNames: ReadonlySet<string>,
+): void {
+  const entries = sourceRels
+    .filter((rel) => requireNames.has(requirePathForRel(rel)))
+    .map((rel) => ({
+      file: rel,
+      message: `is required as "${requirePathForRel(rel)}", the name the build gives its own runtime Lua, so an import of it would load that runtime file instead — rename or move the source`,
+    }));
+  if (entries.length === 0) {
+    return;
+  }
+  const formatted = entries.map(({ file, message }) => `  ${file}: ${message}`).join("\n");
+  throw new BuildFailureError(
+    `defold-typescript build: ${entries.length} source(s) shadow a runtime require:\n${formatted}`,
+    entries,
+  );
+}
+
 /** Every chunk in a per-source map, rewritten against the same map. */
 export function rewriteAll(
   chunks: Readonly<Record<string, string>>,

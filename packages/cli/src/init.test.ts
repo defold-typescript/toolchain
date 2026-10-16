@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -53,12 +54,7 @@ const DEFOLD_ARTIFACT_IGNORE_LINES = [
   ".DS_Store",
   "Thumbs.db",
 ];
-const ROOT_TSTL_BUNDLE_IGNORE_LINES = [
-  "/lualib_bundle.lua",
-  "/lualib_bundle.lua.map",
-  "/defold_typescript_timers.lua",
-  "/defold_typescript_timers.lua.map",
-];
+const RUNTIME_FOLDER_IGNORE_LINES = ["/lib/defold_typescript/"];
 const PRE_DEFOLD_ARTIFACT_GITIGNORE = [
   "node_modules",
   ".vscode/dmengine*",
@@ -487,30 +483,63 @@ describe("runInit (add-TS mode)", () => {
     }
   });
 
-  test("new-project .gitignore ignores root TSTL runtime bundles", () => {
+  test("new-project .gitignore ignores the runtime folder", () => {
     runInit({ cwd });
 
     const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
-    for (const line of ROOT_TSTL_BUNDLE_IGNORE_LINES) {
+    for (const line of RUNTIME_FOLDER_IGNORE_LINES) {
       expect(gitignore).toMatch(new RegExp(`^${line.replaceAll(".", "\\.")}$`, "m"));
     }
   });
 
-  test("init --force backfills Defold and root bundle ignore lines", () => {
+  // Judged by git's own matcher rather than by reading the lines back. A commit
+  // hook exports `GIT_DIR`, which would point every spawned git at this repo.
+  function gitIgnores(rel: string): boolean {
+    const env = Object.fromEntries(
+      Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")),
+    );
+    const init = spawnSync("git", ["init", "-q"], { cwd, env });
+    expect(init.status).toBe(0);
+    const check = spawnSync("git", ["check-ignore", "-q", "--", rel], { cwd, env });
+    expect([0, 1]).toContain(check.status ?? -1);
+    return check.status === 0;
+  }
+
+  test("the .gitignore init writes ignores the runtime folder and nothing else under lib/", () => {
+    runInit({ cwd });
+
+    expect(gitIgnores("lib/defold_typescript/lualib_bundle.lua")).toBe(true);
+    expect(gitIgnores("lib/defold_typescript/hsm/index.lua")).toBe(true);
+    expect(gitIgnores("lib/util.lua")).toBe(false);
+  });
+
+  test("the .gitignore init writes follows a runtime-dir package.json already sets", () => {
+    touch("game.project", "[project]\n");
+    touch(
+      "package.json",
+      JSON.stringify({ name: "game", "defold-typescript": { "runtime-dir": "vendor/rt" } }),
+    );
+
+    runInit({ cwd });
+
+    expect(gitIgnores("vendor/rt/timers.lua")).toBe(true);
+  });
+
+  test("init --force backfills Defold and runtime folder ignore lines", () => {
     touch("game.project", "[project]\n");
     touch(".gitignore", `${PRE_DEFOLD_ARTIFACT_GITIGNORE}\n`);
 
     runInit({ cwd, force: true });
 
     const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
-    for (const line of [...DEFOLD_ARTIFACT_IGNORE_LINES, ...ROOT_TSTL_BUNDLE_IGNORE_LINES]) {
+    for (const line of [...DEFOLD_ARTIFACT_IGNORE_LINES, ...RUNTIME_FOLDER_IGNORE_LINES]) {
       expect(gitignore).toContain(line);
     }
     expect(gitignore).toContain("node_modules");
     expect(gitignore).toContain(".vscode/dmengine*");
   });
 
-  test("gitignore backfill is idempotent for Defold and root bundle lines", () => {
+  test("gitignore backfill is idempotent for Defold and runtime folder lines", () => {
     runInit({ cwd });
     const afterFirst = readFileSync(path.join(cwd, ".gitignore"), "utf8");
 
@@ -521,7 +550,7 @@ describe("runInit (add-TS mode)", () => {
       runInit({ cwd: second });
       const afterSecond = readFileSync(path.join(second, ".gitignore"), "utf8");
       const lines = afterSecond.trim().split("\n");
-      for (const line of [...DEFOLD_ARTIFACT_IGNORE_LINES, ...ROOT_TSTL_BUNDLE_IGNORE_LINES]) {
+      for (const line of [...DEFOLD_ARTIFACT_IGNORE_LINES, ...RUNTIME_FOLDER_IGNORE_LINES]) {
         expect(lines.filter((candidate) => candidate === line)).toHaveLength(1);
       }
     } finally {

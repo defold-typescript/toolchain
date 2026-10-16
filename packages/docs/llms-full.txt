@@ -1360,7 +1360,7 @@ export async function main(): Promise<void> {
 - `await x` is lowered to `__TS__Await(x)`, which yields the value through the body's Lua coroutine. The awaiter wraps the yielded value as `Promise.resolve(x)`, registers a continuation, and `coroutine.resume`s the body with the result once that promise settles.
 - `__TS__Promise` is TSTL's own Lua class with `then`/`catch`/`finally`/`all`/`resolve`/`reject`. Resolution is callback-based and synchronous: a callback registered on an already-settled promise fires immediately; otherwise it is stored until `resolve()`/`reject()` is called.
 
-These helpers ship in `lualib_bundle.lua`, which the build writes to the output root; the emitted module requires it by the path it lands at — `require("lualib_bundle")` alongside the sources, or the `outDir`-rooted spelling under a configured `outDir`. No setup or polyfill is needed.
+These helpers ship in `lualib_bundle.lua`, which the build writes to its [runtime folder](./build.md#the-runtime-folder); the emitted module requires it by the path it lands at, `require("lib.defold_typescript.lualib_bundle")` by default. No setup or polyfill is needed.
 
 The consequences are where it bites:
 
@@ -1395,7 +1395,7 @@ export async function main(): Promise<void> {
 }
 ```
 
-These are not ambient globals: each script is an isolated Lua chunk with no shared scope, so the import lowers to a `require` of the timer runtime the build writes to the output root. That runtime requires `lualib_bundle` in turn, so a timers import brings both files with it. Because there is no global, a bare `setTimeout(...)`/`setInterval(...)` (the muscle-memory web form) is a **compile error** — `TS2304: Cannot find name 'setTimeout'` — under the scaffolded `lib: ["ES2022"]` surface (no DOM/Node globals). That error is the warning: add the `import { setTimeout, … } from "@defold-typescript/types/timers"` line and it resolves. Your editor does this for you — tsserver lists the timers module in autocomplete and offers an *Add import from "@defold-typescript/types/timers"* quick-fix on the `TS2304` squiggle, so the fix is one keystroke (works in any tsserver-backed editor; no extension needed). Do not "fix" it by widening `lib` to `"DOM"` or adding `@types/node` — that would restore a global `setTimeout` declaration that type-checks but has no runtime behind it in Defold, turning the honest compile error into a silent forever-suspended `await`.
+These are not ambient globals: each script is an isolated Lua chunk with no shared scope, so the import lowers to a `require` of the timer runtime the build writes to its [runtime folder](./build.md#the-runtime-folder). That runtime requires `lualib_bundle` in turn, so a timers import brings both files with it. Because there is no global, a bare `setTimeout(...)`/`setInterval(...)` (the muscle-memory web form) is a **compile error** — `TS2304: Cannot find name 'setTimeout'` — under the scaffolded `lib: ["ES2022"]` surface (no DOM/Node globals). That error is the warning: add the `import { setTimeout, … } from "@defold-typescript/types/timers"` line and it resolves. Your editor does this for you — tsserver lists the timers module in autocomplete and offers an *Add import from "@defold-typescript/types/timers"* quick-fix on the `TS2304` squiggle, so the fix is one keystroke (works in any tsserver-backed editor; no extension needed). Do not "fix" it by widening `lib` to `"DOM"` or adding `@types/node` — that would restore a global `setTimeout` declaration that type-checks but has no runtime behind it in Defold, turning the honest compile error into a silent forever-suspended `await`.
 
 **Caveats.** The polyfills are timer-backed, not a drop-in `setTimeout`. Four differences bite:
 
@@ -1488,7 +1488,7 @@ For Defold engine features and third-party Defold libraries, do not look on npm 
 
 ### Data structures: what's built in
 
-TypeScript ships a richer set of containers than Lua's single `table`, and the toolchain lowers each one to code Defold's Lua 5.1 VM runs. Most of them lower to a plain Lua table; the ones with behaviour (`Map`, `Set`, `class`, spread) lean on runtime helpers that TypeScriptToLua emits into `lualib_bundle`. That bundle is pure Lua 5.1 the CLI writes to the output root, pay-for-use: a container that needs a helper pulls it in, the rest cost nothing. Every container below runs unchanged on Defold's VM (LuaJIT on native and desktop, a 5.1 VM on HTML5).
+TypeScript ships a richer set of containers than Lua's single `table`, and the toolchain lowers each one to code Defold's Lua 5.1 VM runs. Most of them lower to a plain Lua table; the ones with behaviour (`Map`, `Set`, `class`, spread) lean on runtime helpers that TypeScriptToLua emits into `lualib_bundle`. That bundle is pure Lua 5.1 the CLI writes to its [runtime folder](./build.md#the-runtime-folder), pay-for-use: a container that needs a helper pulls it in, the rest cost nothing. Every container below runs unchanged on Defold's VM (LuaJIT on native and desktop, a 5.1 VM on HTML5).
 
 This page is the full availability map. For the Lua-to-TypeScript container translation at cheat-sheet depth — which `table` shape becomes which TypeScript type — see [TypeScript vs Lua](./typescript-vs-lua.md#tables-vs-objects-arrays-and-maps).
 
@@ -1533,7 +1533,7 @@ export const c = new Counter();
 ```
 
 ```lua
-local ____lualib = require("lualib_bundle")
+local ____lualib = require("lib.defold_typescript.lualib_bundle")
 local __TS__Class = ____lualib.__TS__Class
 local __TS__New = ____lualib.__TS__New
 local ____exports = {}
@@ -1550,7 +1550,7 @@ ____exports.c = __TS__New(____exports.Counter)
 return ____exports
 ```
 
-The `require("lualib_bundle")` only resolves at runtime because the CLI writes `lualib_bundle.lua` to the output root when any feature pulls it in; under a configured `outDir` the same require carries the `outDir`-rooted path instead. You never manage that file by hand.
+The require names the path the CLI writes `lualib_bundle.lua` to when any feature pulls it in: `lib/defold_typescript/` by default, inside `outDir` when one is configured, or the folder [`runtime-dir`](./build.md#the-runtime-folder) names. You never manage that file by hand.
 
 #### Lower-overhead containers: the Lua table extensions
 
@@ -2924,15 +2924,15 @@ import { messageEvents } from "@defold-typescript/types/hsm/defold";
 
 | Module | Holds | Written to |
 | --- | --- | --- |
-| `@defold-typescript/types/hsm` | the machine | `defold_typescript_hsm/index.lua` |
-| `@defold-typescript/types/hsm/defold` | the [message bridge](#the-message-bridge) | `defold_typescript_hsm/defold.lua` |
-| `@defold-typescript/types/hsm/debug` | the [debug inspector](#debug-a-machine) | `defold_typescript_hsm/debug.lua` |
-| `@defold-typescript/types/hsm/async` | [scripted sequences](#scripted-sequences) | `defold_typescript_hsm/async.lua`, and `lualib_bundle.lua` for its promises |
+| `@defold-typescript/types/hsm` | the machine | `lib/defold_typescript/hsm/index.lua` |
+| `@defold-typescript/types/hsm/defold` | the [message bridge](#the-message-bridge) | `lib/defold_typescript/hsm/defold.lua` |
+| `@defold-typescript/types/hsm/debug` | the [debug inspector](#debug-a-machine) | `lib/defold_typescript/hsm/debug.lua` |
+| `@defold-typescript/types/hsm/async` | [scripted sequences](#scripted-sequences) | `lib/defold_typescript/hsm/async.lua`, and `lib/defold_typescript/lualib_bundle.lua` for its promises |
 
-- `build` and `watch` write each module your code uses to the project root, or under `outDir` when one is set. A module nothing uses, or only uses for its types, is not written.
+- `build` and `watch` write each module your code uses to the [runtime folder](./build.md#the-runtime-folder) (`lib/defold_typescript/hsm/` by default), inside `outDir` when one is set. A module nothing uses, or only uses for its types, is not written.
 - A source of your own that would compile to one of those paths fails the build.
-- The library upgrades with the CLI, and a project scaffolded by `init` gitignores `defold_typescript_hsm/`.
-- The library Lua ships with no source map: an error or a debugger frame inside it names `defold_typescript_hsm/<module>.lua`, not a TypeScript line.
+- The library upgrades with the CLI, and a project scaffolded by `init` gitignores the runtime folder.
+- The library Lua ships with no source map: an error or a debugger frame inside it names `lib/defold_typescript/hsm/<module>.lua`, not a TypeScript line.
 
 #### States and paths
 
@@ -5762,14 +5762,12 @@ rebuild rejected, instead of quietly replacing a module nothing touched. The
 existing file stays as it is, and the watch [keeps running](./watch.md#hot-reload),
 picking the fix up on the next save.
 
-The two runtime artifacts the build writes for itself — `lualib_bundle.lua` and
-`defold_typescript_timers.lua`, both at the output root — are inside the same
-contract. A hand-authored file at either path fails the build with its bytes
-intact, and must be renamed; so must a source of your own that compiles to one of
-those names. A bundle an earlier build wrote carries the generated banner and is
-replaced as usual. Upgrading a project that already has a `lualib_bundle.lua` from
-another toolchain is the case you are most likely to meet this in: that file
-carries no banner, so the first build after the upgrade stops and names it.
+The Lua the build writes for itself, in the
+[runtime folder](#the-runtime-folder), is inside the same contract. A
+hand-authored file at one of its paths fails the build with its bytes intact, and
+must be renamed; so must a source of your own that compiles to one of those
+paths. A file an earlier build wrote carries the generated banner and is replaced
+as usual.
 
 If a Defold editor is open on this project, `build` names it on stderr
 (`attached to Defold editor at http://localhost:<port>`) and moves on. It is a
@@ -5783,12 +5781,11 @@ The probe is time-bounded: an editor that does not answer promptly is treated as
 absent and the build carries on, so a stale port file can never hold it up.
 
 When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`,
-object spread, and similar), the build also writes a `lualib_bundle.lua` at the
-output root automatically, and the generated Lua requires it by the path it lands
-at — `require("lualib_bundle")` alongside the sources, or the `outDir`-rooted
-spelling under a configured `outDir`. Importing the
-[timers module](./typescript-gotchas.md) writes it too, because the timer runtime
-that import pulls in requires the bundle itself.
+object spread, and similar), the build also writes `lualib_bundle.lua` to the
+[runtime folder](#the-runtime-folder) automatically, and the generated Lua
+requires it by the path it lands at — `require("lib.defold_typescript.lualib_bundle")`
+by default. Importing the [timers module](./typescript-gotchas.md) writes it too,
+because the timer runtime that import pulls in requires the bundle itself.
 
 Because the output kind is the factory a source calls, adding or removing a
 factory switches the artifact (`src/main.lua` becomes `src/main.ts.script`, or the
@@ -5876,6 +5873,53 @@ The everyday commands carry no version tag: inside an installed project `bunx`
 resolves the `@defold-typescript/cli` that `init` pinned, so the build runs the
 version locked alongside your `@defold-typescript/types`. Reserve `@latest` for
 `init` and the deliberate upgrade path (see [code editor setup](./editor-setup.md)).
+
+#### The runtime folder
+
+The build writes its own Lua into one folder under the output root, and only the
+files your program uses:
+
+| File | Written when a source |
+| --- | --- |
+| `lib/defold_typescript/lualib_bundle.lua` | uses a TypeScript runtime helper, or imports timers or `hsm/async` |
+| `lib/defold_typescript/timers.lua` | imports [`@defold-typescript/types/timers`](./typescript-gotchas.md) |
+| `lib/defold_typescript/hsm/<module>.lua` | imports that [`hsm`](./state-machines.md) module |
+
+Under a configured `outDir` the folder sits inside it
+(`out/lua/lib/defold_typescript/`). Every generated `require` names the path its
+file lands at, so the requires are never yours to edit.
+
+To put the folder somewhere else, set `runtime-dir` in `package.json`:
+
+```json
+{
+  "defold-typescript": {
+    "defold-target": "stable",
+    "runtime-dir": "vendor/rt"
+  }
+}
+```
+
+The value is a folder under the output root: folder names joined with `/`, with
+no leading slash, no `..`, no `\` or `:`, and no dot in any folder name, because
+Lua reads a dot in a `require` name as a folder separator. A value that breaks a
+rule fails the build, naming the setting, before anything is written. A source
+whose own module name is one the build uses internally for these files
+(`lualib_bundle`, `defold_typescript_timers`, `defold_typescript_hsm.<module>`)
+fails the build too, since an import of it would load the runtime file instead.
+
+`init` and [`upgrade`](./upgrade.md) add `/lib/defold_typescript/` (or
+`/<runtime-dir>/`) to `.gitignore`, and keep the lines an earlier version added.
+
+A project built by an earlier version has `lualib_bundle.lua`,
+`defold_typescript_timers.lua` and `defold_typescript_hsm/` at the output root.
+The next `build` or `watch` deletes each of those files that carries the
+generated banner and that no source of yours writes, then deletes
+`defold_typescript_hsm/` once it is empty. A file without the banner, such as
+another toolchain's `lualib_bundle.lua`, stays. Hand-authored Lua that required
+the old names (`require("lualib_bundle")`, `require("defold_typescript_timers")`,
+`require("defold_typescript_hsm.<module>")`) must switch to the new paths, such
+as `require("lib.defold_typescript.lualib_bundle")`.
 
 #### Flags
 
@@ -8041,10 +8085,12 @@ target like `beta` is pinned or passed via `--defold-target`). If `ok` is
 output in the Defold project tree — a script component or a `<name>.lua` module,
 per the table above. `import` is rewritten to `require("<module>")` resolving
 against the emitted `.lua`, so a shared module must be built for its require to
-resolve at runtime. Two runtime modules are synthesized at the output root on
-demand: `lualib_bundle.lua` (when a source uses a TS runtime helper like
-`Object.keys` or spread, or when timers are used, since the timer runtime
-requires it) and `defold_typescript_timers.lua` (when timers are used).
+resolve at runtime. The build's own runtime modules are synthesized on demand in
+the [runtime folder](./build.md#the-runtime-folder) (`lib/defold_typescript/` by
+default, moved by `package.json` `runtime-dir`): `lualib_bundle.lua` (when a
+source uses a TS runtime helper like `Object.keys` or spread, or when timers or
+`hsm/async` are used, since those require it), `timers.lua` (when timers are
+used) and `hsm/<module>.lua` (per imported `hsm` module).
 
 Who creates these: [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
 produces the Lua *content* in memory; the CLI writes the *files*, choosing the
@@ -9176,8 +9222,9 @@ pinned writes nothing. It does not materialize a surface or repoint
   valid `defold-target` are present, `defold-target` wins and the legacy key is
   dropped.
 
-The namespace recognizes exactly two keys — `defold-target` and `extensions`.
-Any other key is inert: it pins nothing. Rather than swallow it, every
+The namespace recognizes exactly three keys — `defold-target`, `extensions` and
+[`runtime-dir`](./build.md#the-runtime-folder). Any other key is inert: it pins
+nothing. Rather than swallow it, every
 target-resolving command warns and names both the offending key and the
 recognized ones, on stderr for a normal run and in the `warnings` array under
 `--json`. It is a warning, never an error — the command still runs, and the

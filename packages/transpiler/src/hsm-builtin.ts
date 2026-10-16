@@ -7,8 +7,8 @@ import { scanEmittedRequires } from "./lua-require-scan";
 
 // `@defold-typescript/types/hsm` is the `index` module; every other module is a
 // subpath of it. Each lowers to a require of `defold_typescript_hsm.<module>`,
-// which the CLI writes under the output root the way it writes the timers
-// runtime.
+// which the CLI respells to the module's place in its runtime folder, the way it
+// handles the timers runtime.
 export const HSM_MODULE_SPECIFIER = "@defold-typescript/types/hsm";
 export const HSM_REQUIRE_ROOT = "defold_typescript_hsm";
 

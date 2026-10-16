@@ -63,20 +63,20 @@ export interface TranspileProjectResult {
   // TSTL synthesizes this bundle (no user source) whenever a lualib feature is
   // registered — either by a user source using one (`Object.keys`, spread,
   // `__TS__TypeOf`, ...) or by the timers import lowering, whose generated
-  // runtime requires the bundle. The emitted `require("lualib_bundle")` only
-  // resolves in Defold if the CLI writes it to the output root. Absent when
+  // runtime requires the bundle. The emitted `require("lualib_bundle")` is an
+  // internal name the CLI respells to where it writes the bundle. Absent when
   // neither trigger fires.
   readonly lualib?: string;
   // Hand-authored runtime Lua for the `@defold-typescript/types/timers`
   // polyfills (`setTimeout`/`wait`/...). Unlike `defineScript`, the import is
-  // not erased — it lowers to `require("defold_typescript_timers")`, so the CLI
-  // must write this to the output root. Present only when a user file imports
-  // the module (pay-for-use).
+  // not erased — it lowers to `require("defold_typescript_timers")`, an
+  // internal name the CLI respells to where it writes this. Present only when
+  // a user file imports the module (pay-for-use).
   readonly timersRuntime?: string;
   // The compiled `hsm` modules the program requires, keyed by module name
   // (`index`, `defold`, ...). An hsm import lowers to
-  // `require("defold_typescript_hsm.<module>")`, so the CLI must write each one
-  // under the output root. Present only when some chunk requires one
+  // `require("defold_typescript_hsm.<module>")`, an internal name the CLI
+  // respells to where it writes each one. Present only when some chunk requires one
   // (pay-for-use); never carries a source map, since the `.ts` it would point
   // at is not in the user's project.
   readonly hsmModules?: Readonly<Record<string, string>>;

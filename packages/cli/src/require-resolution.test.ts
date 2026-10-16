@@ -339,21 +339,21 @@ describe("requireRewrites", () => {
       rewrites({ "src/main.ts": "export const ks = Object.keys({ a: 1 });\n" }, OUTDIR).get(
         "lualib_bundle",
       ),
-    ).toBe("build.lua.lualib_bundle");
+    ).toBe("build.lua.lib.defold_typescript.lualib_bundle");
   });
 
   test("the timers runtime is mapped to the path the build writes it to", () => {
     const map = rewrites({ "src/main.ts": TIMERS_AND_LUALIB }, OUTDIR);
 
-    expect(map.get("defold_typescript_timers")).toBe("build.lua.defold_typescript_timers");
-    expect(map.get("lualib_bundle")).toBe("build.lua.lualib_bundle");
+    expect(map.get("defold_typescript_timers")).toBe("build.lua.lib.defold_typescript.timers");
+    expect(map.get("lualib_bundle")).toBe("build.lua.lib.defold_typescript.lualib_bundle");
   });
 
   test("a timers-only program maps both runtime artifacts", () => {
     const map = rewrites({ "src/main.ts": TIMERS_ONLY }, OUTDIR);
 
-    expect(map.get("defold_typescript_timers")).toBe("build.lua.defold_typescript_timers");
-    expect(map.get("lualib_bundle")).toBe("build.lua.lualib_bundle");
+    expect(map.get("defold_typescript_timers")).toBe("build.lua.lib.defold_typescript.timers");
+    expect(map.get("lualib_bundle")).toBe("build.lua.lib.defold_typescript.lualib_bundle");
   });
 
   test("a dotted outDir leaves both runtime artifacts unmapped", () => {
@@ -364,7 +364,7 @@ describe("requireRewrites", () => {
     expect(rewrites({ "src/door.ts": HSM_IMPORT }, OUTDIR)).toEqual(
       new Map([
         ["src.door", "build.lua.door"],
-        ["defold_typescript_hsm.index", "build.lua.defold_typescript_hsm.index"],
+        ["defold_typescript_hsm.index", "build.lua.lib.defold_typescript.hsm.index"],
       ]),
     );
   });
@@ -374,7 +374,7 @@ describe("requireRewrites", () => {
     const lua = transpileProject({ files }).lua["src/door.ts"] ?? "";
     expect(findEmittedRequires(lua)).toEqual([]);
     const rewritten = rewriteEmittedRequires(lua, rewrites(files, OUTDIR));
-    expect(rewritten).toContain('require("build.lua.defold_typescript_hsm.index")');
+    expect(rewritten).toContain('require("build.lua.lib.defold_typescript.hsm.index")');
     expect(
       findUnresolvedRequires({
         lua: { "src/door.ts": rewritten },

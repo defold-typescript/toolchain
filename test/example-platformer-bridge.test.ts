@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
+import { RUNTIME_DEFAULT_DIR } from "../packages/cli/src/build-output";
 import { hsmModules } from "../packages/transpiler/src/hsm-builtin";
 
 const repoRoot = join(import.meta.dir, "..");
@@ -60,7 +61,7 @@ describe("platformer example bridge", () => {
     }
     expect(existsSync(join(exampleDir, "src/vendor"))).toBe(false);
     const gitignore = readFileSync(join(exampleDir, ".gitignore"), "utf8");
-    expect(gitignore.split("\n")).toContain("/defold_typescript_hsm/");
+    expect(gitignore.split("\n")).toContain(`/${RUNTIME_DEFAULT_DIR}/`);
   });
 
   test("mise.toml runs the working-tree CLI, not the published bunx form", () => {

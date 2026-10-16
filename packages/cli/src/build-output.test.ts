@@ -9,10 +9,13 @@ import {
   computeOutputRel,
   detectSourceOutputKind,
   GENERATED_BANNER,
+  hsmModuleRel,
   isFileIncluded,
   isTranspilerSource,
+  lualibBundleRel,
   outputRelsForSource,
   pruneAlternativeOutputs,
+  readBuildConfig,
   retargetSourceRoot,
   throwIfFailures,
   timersModuleRel,
@@ -20,17 +23,84 @@ import {
   writeScriptFile,
 } from "./build-output";
 
-describe("timersModuleRel", () => {
-  test("resolves to the output root when no outDir is configured", () => {
-    expect(timersModuleRel({ outDir: undefined, include: [] })).toBe(
-      "defold_typescript_timers.lua",
-    );
+describe("readBuildConfig runtime-dir", () => {
+  let cwd: string;
+
+  beforeEach(() => {
+    cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-runtime-dir-"));
+    writeFileSync(path.join(cwd, "tsconfig.json"), JSON.stringify({ include: ["src/**/*.ts"] }));
   });
 
-  test("resolves under a configured outDir", () => {
-    expect(timersModuleRel({ outDir: "out/lua", include: [] })).toBe(
-      "out/lua/defold_typescript_timers.lua",
+  afterEach(() => {
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
+  function writePackageJson(namespace: Record<string, unknown>): void {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      JSON.stringify({ name: "game", "defold-typescript": namespace }),
     );
+  }
+
+  test("reads the folder a package.json sets", () => {
+    writePackageJson({ "defold-target": "stable", "runtime-dir": "vendor/rt" });
+
+    const config = readBuildConfig(cwd);
+
+    expect(config.runtimeDir).toBe("vendor/rt");
+    expect(lualibBundleRel(config)).toBe("vendor/rt/lualib_bundle.lua");
+  });
+
+  test("places every runtime file under lib/defold_typescript with no package.json", () => {
+    const config = readBuildConfig(cwd);
+
+    expect(lualibBundleRel(config)).toBe("lib/defold_typescript/lualib_bundle.lua");
+    expect(timersModuleRel(config)).toBe("lib/defold_typescript/timers.lua");
+    expect(hsmModuleRel(config, "index")).toBe("lib/defold_typescript/hsm/index.lua");
+  });
+
+  test("places every runtime file under lib/defold_typescript when the key is absent", () => {
+    writePackageJson({ "defold-target": "stable" });
+
+    const config = readBuildConfig(cwd);
+
+    expect(lualibBundleRel(config)).toBe("lib/defold_typescript/lualib_bundle.lua");
+    expect(timersModuleRel(config)).toBe("lib/defold_typescript/timers.lua");
+    expect(hsmModuleRel(config, "index")).toBe("lib/defold_typescript/hsm/index.lua");
+  });
+
+  test("joins the folder under a configured outDir", () => {
+    const config = { outDir: "out/lua", include: [], runtimeDir: "vendor/rt" };
+
+    expect(timersModuleRel(config)).toBe("out/lua/vendor/rt/timers.lua");
+    expect(hsmModuleRel(config, "async")).toBe("out/lua/vendor/rt/hsm/async.lua");
+  });
+
+  test.each([
+    "lib/rt.v2",
+    ".rt",
+    "../rt",
+    "a/../b",
+    "/abs/rt",
+    "C:/rt",
+    "a\\b",
+    "a//b",
+    "lib/",
+    "",
+  ])("rejects %p, naming the setting and the value", (value) => {
+    writePackageJson({ "runtime-dir": value });
+
+    let thrown: unknown;
+    try {
+      readBuildConfig(cwd);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(Error);
+    const message = (thrown as Error).message;
+    expect(message).toContain('"defold-typescript"."runtime-dir"');
+    expect(message).toContain(JSON.stringify(value));
   });
 });
 
