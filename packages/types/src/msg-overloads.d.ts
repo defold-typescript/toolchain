@@ -100,17 +100,24 @@ declare global {
      * Only the following arities are supported at runtime:
      *
      * - `msg.url()` — no-arg.
-     * - `msg.url("[socket:][path][#fragment]")` — one string, the full URL.
-     * - `msg.url(socket, path, fragment)` — three required args.
+     * - `msg.url(urlstring)` — one argument: a `"[socket:][path][#fragment]"`
+     *   string, a `Hash`, or a `Url`.
+     * - `msg.url(socket, path, fragment)` — three positions, each of which may
+     *   be `undefined` (Lua `nil`).
      *
      * The two-arg form `msg.url(socket, path)` is a runtime error.
      *
-     * `socket` may be `undefined` (Lua `nil`), which addresses the current
-     * game world, exactly as the runtime's own examples do.
+     * In the one-argument form, a `Hash` is a path in the current world with no
+     * fragment, and a `Url` is copied. `undefined` is equivalent to `msg.url()`
+     * — the URL of the current script.
      *
-     * The one-argument form's `urlstring` may likewise be `undefined` (Lua
-     * `nil`), which the ref-doc calls equivalent to `msg.url()` — the URL of the
-     * current script.
+     * In the three-argument form, an `undefined` `socket` addresses the current
+     * game world, exactly as the runtime's own examples do. An `undefined`
+     * `path` with an `undefined` socket is the current path. An `undefined`
+     * `fragment` is no fragment, unless `socket` and `path` are both
+     * `undefined`, which keeps the current fragment. A `socket` and `fragment`
+     * with an `undefined` `path` raise "Can't resolve id with specified socket
+     * and fragment."
      *
      * In the same world, address a sibling **relatively** — by bare id
      * (`msg.url("camera")`), absolute path (`msg.url("/camera")`), or
@@ -139,6 +146,9 @@ declare global {
      * // A component on a sibling.
      * const comp: Url = msg.url("camera#script");
      *
+     * // A hashed path in the current world.
+     * const door: Url = msg.url(hash("/door"));
+     *
      * // Crossing into a proxy-loaded world — `socket` is the world name.
      * const proxied: Url = msg.url(hash("level1"), hash("/door"), hash("script"));
      *
@@ -147,18 +157,20 @@ declare global {
      * ```
      */
     function url(): Url;
-    function url(urlstring: SceneAddress | undefined): Url;
+    function url(urlstring: SceneAddress | Hash | Url | undefined): Url;
     function url(
       socket: string | Hash | undefined,
-      path: string | Hash,
-      fragment: string | Hash,
+      path: string | Hash | undefined,
+      fragment: string | Hash | undefined,
     ): Url;
     function url<M extends object>(): ReceiverUrl<M>;
-    function url<M extends object>(urlstring: SceneAddress | undefined): ReceiverUrl<M>;
+    function url<M extends object>(
+      urlstring: SceneAddress | Hash | Url | undefined,
+    ): ReceiverUrl<M>;
     function url<M extends object>(
       socket: string | Hash | undefined,
-      path: string | Hash,
-      fragment: string | Hash,
+      path: string | Hash | undefined,
+      fragment: string | Hash | undefined,
     ): ReceiverUrl<M>;
   }
 }
