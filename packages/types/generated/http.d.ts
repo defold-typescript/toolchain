@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash } from "../src/core-types";
+import type { Hash, Url } from "../src/core-types";
 
 declare global {
   /**
@@ -78,7 +78,7 @@ declare global {
      * });
      * ```
      */
-    function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: http.request_options): void;
+    function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: http.request_options): void;
   }
 }
 

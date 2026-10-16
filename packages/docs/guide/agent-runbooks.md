@@ -1232,7 +1232,8 @@ A `.collectionfactory` component points at a `.collection`. Unlike `factory`,
 a `LuaTable<Hash, Hash>` mapping each prototype id in the collection to the runtime
 id it was spawned as. Read one spawned object out of the table with
 `.get(prototypeId)`, passing the hash or the `/`-prefixed path string the
-collection gives it; the engine hashes a string key for you.
+collection gives it; the engine hashes a string key for you. `go.delete(ids)`
+deletes every object the call spawned.
 
 ```ts
 import { defineScript } from "@defold-typescript/types";

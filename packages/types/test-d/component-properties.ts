@@ -136,3 +136,18 @@ const _scaleZ: number = go.get(".", "scale.z");
 const _scaleXY: Vector3 = go.get(".", "scale.xy");
 void [_positionX, _positionY, _positionZ, _rotationX, _rotationY, _rotationZ, _rotationW];
 void [_eulerX, _eulerY, _eulerZ, _scaleX, _scaleY, _scaleZ, _scaleXY];
+
+// Label and sprite vector properties take the sub-keys `DM_GAMESYS_PROP_VECTOR3`
+// and `DM_GAMESYS_PROP_VECTOR4` register: one float per component, and a
+// vector3 for `.xy` on a vector3 property.
+const _labelColorW: number = go.get<label.properties>()("#label", "color.w");
+const _labelScaleXY: Vector3 = go.get<label.properties>()("#label", "scale.xy");
+go.set<label.properties>()("#label", "outline.x", 0.5);
+const _spriteSliceW: number = go.get<sprite.properties>()("#sprite", "slice.w");
+const _spriteSizeXY: Vector3 = go.get<sprite.properties>()("#sprite", "size.xy");
+void [_labelColorW, _labelScaleXY, _spriteSliceW, _spriteSizeXY];
+
+// @ts-expect-error a vector3 property registers no `.w`
+go.get<label.properties>()("#label", "scale.w");
+// @ts-expect-error a vector4 property registers no `.xy`
+go.get<sprite.properties>()("#sprite", "slice.xy");

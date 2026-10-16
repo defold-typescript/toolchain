@@ -1912,8 +1912,7 @@ export const TYPE_PREDICATES: ReadonlyMap<string, string> = new Map([
 // Element names whose `table` slot is a prose-only `array/list/table of <T>` shape
 // the field-list parser cannot read, but whose element type a human curated from
 // the doc. The value is a single element token (`T[]`) or a token list when the
-// element is itself a union — `go.delete`'s "table of id's" is the id union
-// `string | hash | url`, emitted `(string | Hash | Url)[]`. Emitted as a plain
+// element is itself a union, emitted `(A | B)[]`. Emitted as a plain
 // array, never `LuaMap`: an array element carries no illegal-index-key problem so
 // no TSTL wiring is needed. The audit consults this map too, so the gate and the
 // emitted surface stay coupled; a slot not curated here still surfaces under
@@ -1928,7 +1927,6 @@ export const HOMOGENEOUS_ARRAY_SLOTS: ReadonlyMap<string, string | readonly stri
   ["vmath.vector", "number"],
   ["sound.get_groups", "hash"],
   ["iap.list", "string"],
-  ["go.delete", ["string", "hash", "url"]],
   // push.register's `notifications` is a prose-only array of push.NOTIFICATION_*
   // bitmask constants (the ref example sums NOTIFICATION_BADGE/SOUND/ALERT). The
   // vendored push_doc.json fixture declares no NOTIFICATION_* constant elements, so
@@ -1951,7 +1949,11 @@ export type NestedMapping = { key: string; value: string };
 // for `collectionfactory.create`'s properties.
 export type TableSlotCuration = (
   | { kind: "mapping"; key: string; value: string | readonly TableField[] | NestedMapping }
-  | { kind: "array"; element: string | readonly string[] }
+  // `pairs` also admits any table whose values are the element, for a binding
+  // that walks the table with lua_next and reads only its values. The extra arm
+  // is `LuaPairsIterable`, which is covariant in its value; `LuaTable` is
+  // invariant through `set`, so it would reject a `LuaTable<Hash, Hash>`.
+  | { kind: "array"; element: string | readonly string[]; pairs?: true }
   | { kind: "object"; fields: readonly TableField[] }
   | { kind: "array-object"; fields: readonly TableField[] }
   // A `<key> -> <args table>` slot: the doc's `<dl>` describes the *value* shape,
@@ -2155,6 +2157,19 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
     },
   ],
   ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
+  // go.delete's "table of id's": gameobject_script.cpp:DeleteGOTable walks any
+  // table with lua_next and resolves each value with ResolveURL, so the id table
+  // collectionfactory.create returns deletes as it is. 1.13.2 retypes the slot
+  // to an id array, which still rejects that table.
+  [
+    "go.delete:param:id",
+    {
+      kind: "array",
+      element: ["string", "hash", "url"],
+      pairs: true,
+      retypedUpstream: ["(string|hash|url)[]"],
+    },
+  ],
   // font.get_info's `info` return is a `<dl>` with `path: hash` and a nested
   // `fonts` field whose `<dd>` is itself a `<dl>` (`path: string`, `path_hash:
   // hash`). parseTableFields flattens the inner `<dl>` to the top level, which
@@ -2959,7 +2974,9 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
 // no `status`; typing it as its own shape needs a per-target authored overload,
 // so `status` stays required and the slot's `note` says how to tell the two
 // apart. Its typed form is the same signature: the typed reference names
-// `http.response`, which the runtime surface withholds.
+// `http.response`, which the runtime surface withholds. Both forms add the
+// `sender` no reference lists: comp_script.cpp delivers the response as a
+// message, with `PushURL(L, message->m_Sender)` then `PCall(L, 4, 0)`.
 // `model.play_anim`'s completion callback receives self, the message id and the
 // message only: script_model.cpp calls it with `PCall(L, 3, 0)`, so both forms
 // drop the `sender` every reference lists and type the message as the typed
@@ -3006,7 +3023,7 @@ export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, CallbackSignature
   [
     "http.request:param:callback",
     onBothForms(
-      "(self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
+      "(self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void",
       "With `report_progress` set, the callback also receives progress events carrying `bytes_sent`, `bytes_received`, `bytes_total` and `url` but no `status`; `response.bytes_received !== undefined` marks a progress event, since a final response never carries it.",
     ),
   ],
@@ -5964,6 +5981,10 @@ function mapSlotUnion(
         }
       } else if (element !== undefined) {
         ts = arrayTypeFromTokens(element, mapType);
+        if (curation?.kind === "array" && curation.pairs === true) {
+          const tokens = typeof element === "string" ? [element] : element;
+          ts = `${ts} | LuaPairsIterable<AnyNotNil, ${unionFromTokens(tokens, mapType)}>`;
+        }
       } else if (curation?.kind === "verbatim") {
         ts = curation.ts;
       } else if (curation?.kind === "object" || curation?.kind === "array-object") {

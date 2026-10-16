@@ -245,7 +245,7 @@
   },
   "*:msg.url:arity": {
     "verdict": "accepted",
-    "reason": "the binding branches on the argument count (none or one resolves an address string, three build one from parts); the overloads mirror exactly those forms"
+    "reason": "script_msg.cpp:URL_new branches on the argument count: none or one goes through ResolveURL, which copies a url (:712-714), parses a string and reads a hash as a path in the current world (:808-812); three build one from parts, each of which may be nil (:416-475); two raise (:482); the overloads mirror exactly those forms"
   },
   "*:msg.url:manual:1": {
     "verdict": "manual",
