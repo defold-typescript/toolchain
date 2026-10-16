@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { applyWallSelection } from "./wall";
 import type { CheckboxPrompt } from "./wall-interactive";
 import { buildWallChoices, runWallInteractive } from "./wall-interactive";
 
@@ -25,17 +26,18 @@ function writeRootTsconfig(value: unknown): void {
   writeFileSync(path.join(cwd, "tsconfig.json"), `${JSON.stringify(value, null, 2)}\n`);
 }
 
-function readRefs(): { path: string }[] {
-  return JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).references ?? [];
+function readRootExclude(): string[] {
+  return JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).exclude ?? [];
 }
 
 describe("buildWallChoices", () => {
   test("single-kind dirs are selectable, checked iff currently walled; mixed dirs disabled", () => {
-    writeRootTsconfig({ include: ["src/**/*.ts"], references: [{ path: "src/ui" }] });
+    writeRootTsconfig({ include: ["src/**/*.ts"] });
     touch("src/ui/hud.ts", "export default defineGuiScript({});");
     touch("src/render/cam.ts", "export default defineRenderScript({});");
     touch("src/mix/a.ts", "export default defineScript({});");
     touch("src/mix/b.ts", "export default defineGuiScript({});");
+    applyWallSelection(cwd, ["src/ui"]);
 
     expect(buildWallChoices(cwd)).toEqual([
       { value: "src", name: "src", disabled: "mixed: gui-script, render-script, script" },
@@ -65,8 +67,9 @@ describe("buildWallChoices", () => {
   });
 
   test("a directory governed by an ancestor's wall is annotated, not pre-checked", () => {
-    writeRootTsconfig({ include: ["src/**/*.ts"], references: [{ path: "src/gui" }] });
+    writeRootTsconfig({ include: ["src/**/*.ts"] });
     touch("src/gui/hud/a.ts", "export default defineGuiScript({});");
+    applyWallSelection(cwd, ["src/gui"]);
 
     expect(buildWallChoices(cwd)).toEqual([
       { value: "src", name: "src (gui-script)", checked: false },
@@ -105,7 +108,7 @@ describe("runWallInteractive", () => {
 
     expect(applied.map((w) => w.dir)).toEqual(["src/ui"]);
     expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(true);
-    expect(readRefs()).toEqual([{ path: "src/ui" }]);
+    expect(readRootExclude()).toEqual(["src/ui"]);
   });
 
   test("an empty selection removes every existing wall", async () => {
@@ -117,7 +120,7 @@ describe("runWallInteractive", () => {
     expect(applied).toEqual([]);
     expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
     expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(false);
-    expect(readRefs()).toEqual([]);
+    expect(readRootExclude()).toEqual([]);
   });
 
   test("passes the eligible choices to the injected checkbox", async () => {
