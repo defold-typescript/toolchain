@@ -112,13 +112,13 @@ const NAMESPACES: readonly OverloadNamespace[] = [
     storePath: MSG_SIGNATURES_PATH,
     fqns: ["msg.post", "msg.url"],
     reflow: {
-      from: "function url(\n      socket: string | Hash | undefined,\n      path: string | Hash,\n      fragment: string | Hash,\n    ): Url;",
-      to: "function url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): Url;",
+      from: "function url(\n      socket: string | Hash | undefined,\n      path: string | Hash | undefined,\n      fragment: string | Hash | undefined,\n    ): Url;",
+      to: "function url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url;",
     },
     driftSignature: {
       fqn: "msg.url",
-      from: "function url(urlstring: SceneAddress | undefined): Url;",
-      to: "function url(urlstring: SceneAddress): Url;",
+      from: "function url(urlstring: SceneAddress | Hash | Url | undefined): Url;",
+      to: "function url(urlstring: SceneAddress | undefined): Url;",
     },
     driftDoc: {
       fqn: "msg.url",

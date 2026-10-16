@@ -2778,6 +2778,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "buffer.create:param:declaration",
       "collectionfactory.create:param:properties",
       "collectionfactory.create:return:ids",
+      "go.delete:param:id",
       "font.get_info:return:info",
       "iap.finish:param:transaction",
       "iap.acknowledge:param:transaction",
@@ -3567,18 +3568,17 @@ describe("NESTED_FIELD_CURATIONS", () => {
 });
 
 describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
-  test("maps the four primitive slots unchanged, the two id-array slots, and the push.register constant array", () => {
+  test("maps the four primitive slots unchanged, the id-array slots, and the push.register constant array", () => {
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("buffer.set_metadata")).toBe("number");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("buffer.get_metadata")).toBe("number");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("vmath.vector")).toBe("number");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("sound.get_groups")).toBe("hash");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("iap.list")).toBe("string");
-    expect(HOMOGENEOUS_ARRAY_SLOTS.get("go.delete")).toEqual(["string", "hash", "url"]);
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("push.register")).toBe("number");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("camera.get_cameras")).toBe("url");
     // The gets above name every slot in the map; the size is what makes that an
-    // exhaustive enumeration — a `.get` check cannot see an added ninth slot.
-    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(8);
+    // exhaustive enumeration — a `.get` check cannot see an added eighth slot.
+    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(7);
   });
 
   function moduleOf(namespace: string, functions: ApiFunction[]): ApiModule {
@@ -3694,27 +3694,35 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
     expect(out).toContain("ids: string[]");
   });
 
-  test("go.delete emits the table union member as (string | Hash | Url)[]", () => {
-    const out = emitDeclarations(
-      moduleOf("go", [
-        {
-          name: "go.delete",
-          brief: "",
-          description: "",
-          parameters: [
-            {
-              name: "id",
-              doc: "optional id or table of id's of the instance(s) to delete",
-              types: ["string", "hash", "url", "table"],
-              isOptional: true,
-            },
-          ],
-          returnValues: [],
-        },
-      ]),
-    );
-    expect(out).toContain("string | Hash | Url | (string | Hash | Url)[]");
-  });
+  // DeleteGOTable walks any table's values, so both upstream spellings of the
+  // id list (the prose `table` and 1.13.2's typed array) reach the same arm.
+  for (const listToken of ["table", "(string|hash|url)[]"]) {
+    test(`go.delete's ${listToken} id list emits an id array or any table of ids`, () => {
+      const out = emitDeclarations(
+        moduleOf("go", [
+          {
+            name: "go.delete",
+            brief: "",
+            description: "",
+            parameters: [
+              {
+                name: "id",
+                doc: "optional id or table of id's of the instance(s) to delete",
+                types: ["string", "hash", "url", listToken],
+                isOptional: true,
+              },
+            ],
+            returnValues: [],
+          },
+        ]),
+        { urlParameters: urlParameterTable as UrlParameterTable },
+      );
+      // The committed table classifies the slot `game-object`, and both arms follow it.
+      expect(out).toContain(
+        "(SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url>",
+      );
+    });
+  }
 
   test("a table slot on an element absent from HOMOGENEOUS_ARRAY_SLOTS still emits Record", () => {
     const out = emitDeclarations(
@@ -5549,9 +5557,9 @@ describe("signatures upstream documents in prose", () => {
     return line;
   }
 
-  test("http.request's callback receives the documented response table and a Hash id", () => {
+  test("http.request's callback receives the documented response table, a Hash id and the sender", () => {
     expect(emittedLine(httpDoc, "function request(")).toContain(
-      "callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
+      "callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void",
     );
   });
 
@@ -6631,7 +6639,12 @@ describe("upstream-pinned corrections", () => {
     ],
     ["render", "draw", draw, 'draw(predicate: Opaque<"render_predicate">,'],
     ["render", "predicate", predicate, '): Opaque<"render_predicate">;'],
-    ["go", "_delete", goDelete, "id?: string | Hash | Url | (string | Hash | Url)[] | boolean,"],
+    [
+      "go",
+      "_delete",
+      goDelete,
+      "id?: string | Hash | Url | (string | Hash | Url)[] | LuaPairsIterable<AnyNotNil, string | Hash | Url> | boolean,",
+    ],
     [
       "sys",
       "save",

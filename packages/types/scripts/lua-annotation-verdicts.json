@@ -559,15 +559,15 @@
   },
   "runtime:go.get:too-loose:return1": {
     "verdict": "accepted",
-    "reason": "the only kind the annotation omits is matrix4: LuaPushVar (gameobject_props_lua.cpp) pushes a PROPERTY_TYPE_MATRIX4 property through dmScript::PushMatrix4",
+    "reason": "the annotation omits matrix4 and table: LuaPushVar (gameobject_props_lua.cpp) pushes a PROPERTY_TYPE_MATRIX4 property through dmScript::PushMatrix4, and gameobject_script.cpp:Script_Get reads an array property without `index` into a table it fills with lua_newtable and lua_rawseti from 1 (:866-885), which the declaration types as Vector4[]",
     "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
-    "declared": "boolean|hash|matrix4|number|quat|string|url|vector3|vector4"
+    "declared": "boolean|hash|matrix4|number|quat|string|table|url|vector3|vector4"
   },
   "runtime:go.get:too-narrow:return1": {
     "verdict": "accepted",
     "reason": "the only undeclared kind is userdata, the annotation's build-time resource_data marker; at runtime the property holds the hashed resource path (script_resource.cpp), which the declaration types as Hash",
     "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
-    "declared": "boolean|hash|matrix4|number|quat|string|url|vector3|vector4"
+    "declared": "boolean|hash|matrix4|number|quat|string|table|url|vector3|vector4"
   },
   "runtime:go.init:missing-annotation": {
     "verdict": "accepted",
@@ -808,6 +808,12 @@
     "correction": "PARAM_TYPE_CORRECTIONS:model.set_mesh_enabled:param:mesh_id",
     "annotated": "hash|string|url",
     "declared": "hash|string"
+  },
+  "runtime:msg.url:too-loose:1": {
+    "verdict": "accepted",
+    "reason": "script_msg.cpp:URL_new resolves a single argument through ResolveURL, which copies a url userdata (:712-714) as well as parsing a string and reading a hash as a path in the current world (:808-812)",
+    "annotated": "hash|string",
+    "declared": "hash|string|url"
   },
   "runtime:particlefx.set_constant:too-loose:4": {
     "verdict": "corrected",

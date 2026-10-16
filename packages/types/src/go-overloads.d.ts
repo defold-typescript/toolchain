@@ -39,6 +39,8 @@ declare global {
      * - keys array of hashes or strings identifying internal component resources (e.g. a particle fx emitter, see examples below)
      * @returns the value of the specified property
      * A `string` value is a text property, which needs Defold 1.13.2 or later.
+     * An array material constant read without `index` returns every element as a
+     * `Vector4[]`.
      * @example
      * ```ts
      * const position = go.get("#sprite", "position");
@@ -64,12 +66,32 @@ declare global {
     function get(
       url: SceneAddress | Hash | Url,
       property: string | Hash,
-    ): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4;
+    ):
+      | number
+      | boolean
+      | string
+      | Hash
+      | Url
+      | Vector3
+      | Vector4
+      | Quaternion
+      | Matrix4
+      | Vector4[];
     function get(
       url: SceneAddress | Hash | Url,
       property: string | Hash,
       options: GoPropertyOptions,
-    ): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4;
+    ):
+      | number
+      | boolean
+      | string
+      | Hash
+      | Url
+      | Vector3
+      | Vector4
+      | Quaternion
+      | Matrix4
+      | Vector4[];
     /**
      * sets a named property of the specified game object or component, or a material constant
      *

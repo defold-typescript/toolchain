@@ -1,5 +1,5 @@
 /// <reference path="../index.d.ts" />
-import type { Hash, Vector3 } from "../src/core-types";
+import type { Hash, Vector3, Vector4 } from "../src/core-types";
 import { defineScript, type ScriptPropertiesOf } from "../src/lifecycle";
 
 // Caller-named component: the explicit `P` generic keys go.get/go.set to that
@@ -38,6 +38,13 @@ go.set<sprite.properties>()("#sprite", "cursor", hash("x"));
 go.set<sprite.properties>()("#sprite", "animation", hash("x"));
 const _animation: Hash = go.get<sprite.properties>()("#sprite", "animation");
 void _animation;
+
+// An array material constant read without `index` returns every element, so
+// one cast reaches the array `go.set` already takes.
+const _tints = go.get("#model", "tints") as Vector4[];
+const _keyedTints = go.get("#model", "tints", { key: "tint" }) as Vector4[];
+go.set("#model", "tints", _tints);
+void _keyedTints;
 
 // Cross-script script properties: a script declares its editor properties via
 // `defineScript({ properties })`; that module exports its declared shape with
