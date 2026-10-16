@@ -15,6 +15,7 @@ import {
   type BuildConfig,
   computeOutputRel,
   requirePathForRel,
+  resolveHsmSourceDir,
   type SceneComponentIndex,
   scanEmittedRequires,
 } from "@defold-typescript/transpiler";
@@ -28,6 +29,7 @@ import {
   lualibBundleRel,
   timersModuleRel,
 } from "./build-output";
+import { decodeMappings } from "./console-source-map";
 import { dispatch } from "./dispatch";
 import type { CompileAnswer, EditorIssue, RunAnswer } from "./editor-attach";
 import { runInit } from "./init";
@@ -494,7 +496,7 @@ describe("runBuild", () => {
     "",
   ].join("\n");
 
-  test("writes each hsm module a source imports in the runtime folder, with no map", () => {
+  test("writes each hsm module a source imports in the runtime folder, each with its map", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/door.ts", HSM_SCRIPT);
 
@@ -504,10 +506,9 @@ describe("runBuild", () => {
       const rel = hsmModuleRel({ outDir: undefined, include: ["src/**/*.ts"] }, name);
       expect(rel).toBe(`lib/defold_typescript/hsm/${name}.lua`);
       expect(result.written).toContain(rel);
-      const lua = readFileSync(path.join(cwd, rel), "utf8");
-      expect(lua.split("\n")).toContain(GENERATED_BANNER);
-      expect(lua).not.toContain("sourceMappingURL");
-      expect(existsSync(path.join(cwd, `${rel}.map`))).toBe(false);
+      expect(existsSync(path.join(cwd, `${rel}.map`))).toBe(true);
+      const lines = readFileSync(path.join(cwd, rel), "utf8").trimEnd().split("\n");
+      expect(lines.slice(-2)).toEqual([GENERATED_BANNER, `--# sourceMappingURL=${name}.lua.map`]);
     }
     const script = readFileSync(path.join(cwd, "src/door.ts.script"), "utf8");
     expect(script).toContain('require("lib.defold_typescript.hsm.index")');
@@ -1023,6 +1024,56 @@ describe("runBuild runtime folder", () => {
     for (const rel of runtimeRels) {
       expect([...required]).toContain(requirePathForRel(rel));
     }
+  });
+
+  test.each([
+    { outDir: undefined, runtimeDir: undefined, folder: "lib/defold_typescript" },
+    { outDir: "out/lua", runtimeDir: "a/b/c/rt", folder: "out/lua/a/b/c/rt" },
+  ])("each hsm map in $folder opens the hsm source the module was compiled from", ({
+    outDir,
+    runtimeDir,
+    folder,
+  }) => {
+    writeRuntimeProject(outDir, runtimeDir);
+
+    runBuild({ cwd });
+
+    const sourceDir = resolveHsmSourceDir();
+    expect(sourceDir).not.toBeNull();
+    for (const name of ["index", "defold", "async"]) {
+      const mapAbs = path.join(cwd, folder, "hsm", `${name}.lua.map`);
+      const map = JSON.parse(readFileSync(mapAbs, "utf8"));
+      // The Local Lua Debugger's rule: the map's folder, then `sourceRoot`, then the source.
+      const source = path.resolve(path.dirname(mapAbs), map.sourceRoot || ".", map.sources[0]);
+      expect(source).toBe(path.join(sourceDir ?? "", `${name}.ts`));
+      expect(existsSync(source)).toBe(true);
+    }
+  });
+
+  test("a line of the written async module maps to the hsm source line it came from", () => {
+    writeRuntimeProject(undefined, undefined);
+
+    runBuild({ cwd });
+
+    const rel = "lib/defold_typescript/hsm/async.lua";
+    const lines = readFileSync(path.join(cwd, rel), "utf8").split("\n");
+    expect(lines).toContain('local ____lualib = require("lib.defold_typescript.lualib_bundle")');
+    const generatedLine = lines.findIndex((line) =>
+      line.startsWith("function ____exports.sequence("),
+    );
+    expect(generatedLine).toBeGreaterThanOrEqual(0);
+    const map = JSON.parse(readFileSync(path.join(cwd, `${rel}.map`), "utf8"));
+    const [segment] = decodeMappings(map.mappings)[generatedLine] ?? [];
+    expect(segment).toBeDefined();
+    const [, sourceIndex, sourceLine] = segment ?? [];
+    const source = path.resolve(
+      path.join(cwd, path.dirname(rel)),
+      map.sourceRoot || ".",
+      map.sources[sourceIndex ?? 0],
+    );
+    expect(readFileSync(source, "utf8").split("\n")[sourceLine ?? -1]).toContain(
+      "function sequence",
+    );
   });
 
   test("a runtime-dir with a dot in a folder name fails the build before writing anything", () => {
