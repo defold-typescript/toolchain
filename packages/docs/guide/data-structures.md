@@ -3,7 +3,7 @@ toc-title: Data structures
 ---
 # Data structures: what's built in
 
-TypeScript ships a richer set of containers than Lua's single `table`, and the toolchain lowers each one to code Defold's Lua 5.1 VM runs. Most of them lower to a plain Lua table; the ones with behaviour (`Map`, `Set`, `class`, spread) lean on runtime helpers that TypeScriptToLua emits into `lualib_bundle`. That bundle is pure Lua 5.1 the CLI writes to the output root, pay-for-use: a container that needs a helper pulls it in, the rest cost nothing. Every container below runs unchanged on Defold's VM (LuaJIT on native and desktop, a 5.1 VM on HTML5).
+TypeScript ships a richer set of containers than Lua's single `table`, and the toolchain lowers each one to code Defold's Lua 5.1 VM runs. Most of them lower to a plain Lua table; the ones with behaviour (`Map`, `Set`, `class`, spread) lean on runtime helpers that TypeScriptToLua emits into `lualib_bundle`. That bundle is pure Lua 5.1 the CLI writes to its [runtime folder](./build.md#the-runtime-folder), pay-for-use: a container that needs a helper pulls it in, the rest cost nothing. Every container below runs unchanged on Defold's VM (LuaJIT on native and desktop, a 5.1 VM on HTML5).
 
 This page is the full availability map. For the Lua-to-TypeScript container translation at cheat-sheet depth — which `table` shape becomes which TypeScript type — see [TypeScript vs Lua](./typescript-vs-lua.md#tables-vs-objects-arrays-and-maps).
 
@@ -48,7 +48,7 @@ export const c = new Counter();
 ```
 
 ```lua
-local ____lualib = require("lualib_bundle")
+local ____lualib = require("lib.defold_typescript.lualib_bundle")
 local __TS__Class = ____lualib.__TS__Class
 local __TS__New = ____lualib.__TS__New
 local ____exports = {}
@@ -65,7 +65,7 @@ ____exports.c = __TS__New(____exports.Counter)
 return ____exports
 ```
 
-The `require("lualib_bundle")` only resolves at runtime because the CLI writes `lualib_bundle.lua` to the output root when any feature pulls it in; under a configured `outDir` the same require carries the `outDir`-rooted path instead. You never manage that file by hand.
+The require names the path the CLI writes `lualib_bundle.lua` to when any feature pulls it in: `lib/defold_typescript/` by default, inside `outDir` when one is configured, or the folder [`runtime-dir`](./build.md#the-runtime-folder) names. You never manage that file by hand.
 
 ## Lower-overhead containers: the Lua table extensions
 

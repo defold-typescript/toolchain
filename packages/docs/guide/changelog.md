@@ -14,10 +14,10 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[GUI node properties are typed](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)**; material constants take `hash`.
-> - **[Optional arguments whose `nil` raises reject `undefined`](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined)** on pre-baked versions; leave them out instead.
-> - **[Script kinds keep only what they support](./script-lifecycle.md#api-availability-by-script-kind)**: `properties` is `defineScript`-only, and render scripts lose what needs a game object, such as `sprite` and most of `go`.
+> - **[Declarations follow the engine bindings](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined)**: optional arguments whose `nil` raises reject `undefined` on pre-baked versions, `Url.socket` can be `undefined`, and `hash` takes a `Hash`.
+> - **[Script kinds keep only what they support](./script-lifecycle.md#api-availability-by-script-kind)**: `properties` is `defineScript`-only, and render scripts lose what needs a game object.
 > - **[`wall --check` type-checks walls](./wall.md#flags)**, helpers they import included; re-run `wall <dirs>` to rewrite existing walls.
-> - **[Declarations follow the engine bindings](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined)**: `Url.socket` can be `undefined`, `vmath.dot` takes one vector type, `hash` takes a `Hash`, a buffer has `buf.length()`, and `go.delete` takes the ids `collectionfactory.create` returns.
+> - **[The build's own Lua moves to `lib/defold_typescript/`](./build.md#the-runtime-folder)**, movable with `runtime-dir`; hand-authored Lua that requires the old root names must switch.
 
 ### Breaking
 
@@ -33,6 +33,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`vmath.dot`** takes two vectors of the same type, since a `Vector3` paired with a `Vector4` raises.
   - **Buffers** are typed `Opaque<"buffer"> & { length: LuaLengthMethod<number> }`, so a value annotated as a bare `Opaque<"buffer">` does not pass to a buffer parameter; annotate it as `ReturnType<typeof buffer.create>` instead.
 - **[Walls](./wall.md#what-a-wall-is) are standalone `tsconfig.json` files the root config excludes but does not reference, so [`wall --check`](./wall.md#flags) replaces `tsc -b --noEmit` as the command that type-checks them.** It checks each wall's program, the helpers it imports included, plus the root program; re-run `wall <dirs>` to rewrite walls an earlier release wrote, which `wall --check` reports until you do.
+- **The build writes its own Lua to a [runtime folder](./build.md#the-runtime-folder), `lib/defold_typescript/` under the output root or the folder `package.json` `"defold-typescript"."runtime-dir"` names**: `lualib_bundle.lua`, `timers.lua` and `hsm/<module>.lua` land there, the next build deletes the generated root `lualib_bundle.lua`, `defold_typescript_timers.lua` and `defold_typescript_hsm/`, and `init` ignores the new folder. Hand-authored Lua that requires `lualib_bundle`, `defold_typescript_timers` or `defold_typescript_hsm.<module>` must require the new path, such as `require("lib.defold_typescript.lualib_bundle")`.
 
 ### Improved
 

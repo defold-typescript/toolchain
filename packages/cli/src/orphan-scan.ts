@@ -1,9 +1,7 @@
-import { readFileSync } from "node:fs";
-import * as path from "node:path";
 import {
   type BuildConfig,
   builtinRuntimeRels,
-  GENERATED_BANNER,
+  hasGeneratedBanner,
   outputRelsForSource,
   stripIncludeBase,
 } from "./build-output";
@@ -35,16 +33,6 @@ function outputScanRoots(config: BuildConfig): string[] {
     roots.add(stripIncludeBase(pattern));
   }
   return [...roots];
-}
-
-export function hasGeneratedBanner(cwd: string, rel: string): boolean {
-  let content: string;
-  try {
-    content = readFileSync(path.join(cwd, rel), "utf8");
-  } catch {
-    return false;
-  }
-  return content.split("\n").some((line) => line.trim() === GENERATED_BANNER);
 }
 
 // The source whose absence orphaned this output, used in the restore hint.

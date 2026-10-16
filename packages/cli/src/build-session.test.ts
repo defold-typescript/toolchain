@@ -20,9 +20,11 @@ import {
 import { runBuild } from "./build";
 import {
   BuildFailureError,
+  builtinRuntimeRels,
   GENERATED_BANNER,
   hsmModuleRel,
   lualibBundleRel,
+  readBuildConfig,
   timersModuleRel,
 } from "./build-output";
 import { createBuildSession } from "./build-session";
@@ -142,14 +144,16 @@ describe("createBuildSession", () => {
 
     const result = createBuildSession({ cwd }).buildAll();
 
-    const runtimePath = path.join(cwd, "defold_typescript_timers.lua");
+    const runtimePath = path.join(cwd, "lib/defold_typescript/timers.lua");
     expect(existsSync(runtimePath)).toBe(true);
     expect(readFileSync(runtimePath, "utf8")).toContain("timer.delay");
-    expect(result.written).toContain("defold_typescript_timers.lua");
+    expect(result.written).toContain("lib/defold_typescript/timers.lua");
 
-    expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(true);
-    expect(result.written).toContain("lualib_bundle.lua");
-    expect(readFileSync(runtimePath, "utf8")).toContain('require("lualib_bundle")');
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/lualib_bundle.lua"))).toBe(true);
+    expect(result.written).toContain("lib/defold_typescript/lualib_bundle.lua");
+    expect(readFileSync(runtimePath, "utf8")).toContain(
+      'require("lib.defold_typescript.lualib_bundle")',
+    );
   });
 
   test("hsm outputs stay current across rebuilds and are never read as orphans", () => {
@@ -851,7 +855,7 @@ describe("BuildSession.isOwnOutput", () => {
     expect(session.isOwnOutput("main/hero.ts.script")).toBe(true);
     expect(session.isOwnOutput("main/hero.ts.script.map")).toBe(true);
     expect(session.isOwnOutput("lib/util.lua")).toBe(true);
-    expect(session.isOwnOutput("lualib_bundle.lua")).toBe(true);
+    expect(session.isOwnOutput("lib/defold_typescript/lualib_bundle.lua")).toBe(true);
     expect(session.isOwnOutput("lib/other.lua")).toBe(false);
     expect(session.isOwnOutput("main/main.collection")).toBe(false);
   });
@@ -889,5 +893,93 @@ describe("BuildSession.isOwnOutput", () => {
     expect(session.isOwnOutput(lualibBundleRel(OUTDIR_CONFIG))).toBe(true);
     expect(session.isOwnOutput(`${timersModuleRel(OUTDIR_CONFIG)}.map`)).toBe(true);
     expect(session.isOwnOutput("src/util.lua")).toBe(false);
+  });
+
+  const RUNTIME_SCRIPT = [
+    'import { defineScript } from "@defold-typescript/types";',
+    'import { defineMachine } from "@defold-typescript/types/hsm";',
+    'import { sequence } from "@defold-typescript/types/hsm/async";',
+    'import { messageEvents } from "@defold-typescript/types/hsm/defold";',
+    'import { setTimeout } from "@defold-typescript/types/timers";',
+    "",
+    'const events = messageEvents(["trigger_response"]);',
+    'const door = defineMachine<{}, { type: "trigger_response"; enter: boolean }>()({',
+    '  initial: "/opening",',
+    "  states: {",
+    "    opening: {",
+    "      task: sequence((_ctx, signal) => signal.wait(0.5)),",
+    '      on: { trigger_response: "/open" },',
+    "    },",
+    "    open: {},",
+    "  },",
+    "});",
+    "",
+    "export default defineScript({",
+    "  init() {",
+    "    door.start({});",
+    "    setTimeout(() => print(Object.keys({ a: 1 }).length), 250);",
+    "  },",
+    "  on_message(_self, message_id, message, sender) {",
+    "    events.toEvent(message_id, message, sender);",
+    "  },",
+    "});",
+    "",
+  ].join("\n");
+
+  test("the runtime folder under lib/ is the session's, while authored and stale Lua beside it is not", () => {
+    writeIn(
+      cwd,
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: { strict: true },
+        include: ["src/**/*.ts", "lib/**/*.ts"],
+      }),
+    );
+    writeIn(cwd, "src/door.ts", RUNTIME_SCRIPT);
+    writeIn(cwd, "lib/util.lua", "return {}\n");
+    writeIn(cwd, "lib/stale.lua", `return {}\n${GENERATED_BANNER}\n`);
+    const session = createBuildSession({ cwd });
+
+    const result = session.buildAll();
+
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toContain("stale output lib/stale.lua ");
+    const runtimeRels = builtinRuntimeRels(readBuildConfig(cwd));
+    expect(runtimeRels.length).toBeGreaterThan(2);
+    for (const rel of runtimeRels) {
+      expect(rel.startsWith("lib/defold_typescript/")).toBe(true);
+      expect(session.isOwnOutput(rel)).toBe(true);
+    }
+    expect(session.isOwnOutput("lib/util.lua")).toBe(false);
+  });
+
+  test("runtime-dir moves what reads as the session's runtime", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(
+      cwd,
+      "package.json",
+      JSON.stringify({ "defold-typescript": { "runtime-dir": "vendor/rt" } }),
+    );
+    writeIn(cwd, "src/door.ts", RUNTIME_SCRIPT);
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+
+    expect(session.isOwnOutput("vendor/rt/timers.lua")).toBe(true);
+    expect(session.isOwnOutput("lib/defold_typescript/timers.lua")).toBe(false);
+  });
+
+  test("buildAll removes the runtime files an earlier build wrote at the output root", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/door.ts", RUNTIME_SCRIPT);
+    writeIn(cwd, "lualib_bundle.lua", `return {}\n${GENERATED_BANNER}\n`);
+    writeIn(cwd, "defold_typescript_timers.lua", `return {}\n${GENERATED_BANNER}\n`);
+    writeIn(cwd, "defold_typescript_hsm/index.lua", `return {}\n${GENERATED_BANNER}\n`);
+
+    createBuildSession({ cwd }).buildAll();
+
+    expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(false);
+    expect(existsSync(path.join(cwd, "defold_typescript_timers.lua"))).toBe(false);
+    expect(existsSync(path.join(cwd, "defold_typescript_hsm"))).toBe(false);
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/hsm/index.lua"))).toBe(true);
   });
 });

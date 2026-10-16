@@ -16,6 +16,7 @@ import {
   computeOutputRel,
   requirePathForRel,
   type SceneComponentIndex,
+  scanEmittedRequires,
 } from "@defold-typescript/transpiler";
 import { type RunBuildResult, runBuild } from "./build";
 import {
@@ -23,6 +24,7 @@ import {
   GENERATED_BANNER,
   HSM_LIBRARY_LABEL,
   hsmModuleRel,
+  LUALIB_BUNDLE_LABEL,
   lualibBundleRel,
   timersModuleRel,
 } from "./build-output";
@@ -346,19 +348,21 @@ describe("runBuild", () => {
     expect(existsSync(path.join(cwd, "src/menu.lua"))).toBe(false);
   });
 
-  test("writes lualib_bundle.lua at the output root when a source uses a lualib feature", () => {
+  test("writes lualib_bundle.lua in the runtime folder when a source uses a lualib feature", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/main.ts", "export const ks = Object.keys({ a: 1, b: 2 });\n");
 
     const result = runBuild({ cwd });
 
-    const bundlePath = path.join(cwd, "lualib_bundle.lua");
+    const bundlePath = path.join(cwd, "lib/defold_typescript/lualib_bundle.lua");
     expect(existsSync(bundlePath)).toBe(true);
     expect(readFileSync(bundlePath, "utf8")).toContain("__TS__ObjectKeys");
-    expect(result.written).toContain("lualib_bundle.lua");
+    expect(result.written).toContain("lib/defold_typescript/lualib_bundle.lua");
+    expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(false);
 
     const lua = readFileSync(path.join(cwd, "src/main.lua"), "utf8");
-    expect(lua).toContain('require("lualib_bundle")');
+    expect(lua).toContain('require("lib.defold_typescript.lualib_bundle")');
+    expect(lua).not.toContain('require("lualib_bundle")');
   });
 
   test("writes lualib_bundle.lua under outDir when one is configured", () => {
@@ -374,12 +378,15 @@ describe("runBuild", () => {
 
     const result = runBuild({ cwd });
 
-    expect(existsSync(path.join(cwd, "out/lua/lualib_bundle.lua"))).toBe(true);
+    expect(existsSync(path.join(cwd, "out/lua/lib/defold_typescript/lualib_bundle.lua"))).toBe(
+      true,
+    );
+    expect(existsSync(path.join(cwd, "out/lua/lualib_bundle.lua"))).toBe(false);
     expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(false);
-    expect(result.written).toContain("out/lua/lualib_bundle.lua");
+    expect(result.written).toContain("out/lua/lib/defold_typescript/lualib_bundle.lua");
 
     const lua = readFileSync(path.join(cwd, "out/lua/main.lua"), "utf8");
-    expect(lua).toContain(`require("${requirePathForRel("out/lua/lualib_bundle.lua")}")`);
+    expect(lua).toContain('require("out.lua.lib.defold_typescript.lualib_bundle")');
     expect(lua).not.toContain('require("lualib_bundle")');
   });
 
@@ -389,10 +396,10 @@ describe("runBuild", () => {
 
     runBuild({ cwd });
 
-    expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(false);
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/lualib_bundle.lua"))).toBe(false);
   });
 
-  test("writes the timers runtime at the output root when a source imports it", () => {
+  test("writes the timers runtime in the runtime folder when a source imports it", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile(
       "src/main.ts",
@@ -401,20 +408,24 @@ describe("runBuild", () => {
 
     const result = runBuild({ cwd });
 
-    const runtimePath = path.join(cwd, "defold_typescript_timers.lua");
+    const runtimePath = path.join(cwd, "lib/defold_typescript/timers.lua");
     expect(existsSync(runtimePath)).toBe(true);
     expect(readFileSync(runtimePath, "utf8")).toContain("timer.delay");
-    expect(result.written).toContain("defold_typescript_timers.lua");
+    expect(result.written).toContain("lib/defold_typescript/timers.lua");
 
     const lua = readFileSync(path.join(cwd, "src/main.lua"), "utf8");
-    expect(lua).toContain('require("defold_typescript_timers")');
+    expect(lua).toContain('require("lib.defold_typescript.timers")');
 
     // The runtime requires the bundle, so the timers import alone must write it.
-    const bundlePath = path.join(cwd, "lualib_bundle.lua");
+    const bundlePath = path.join(cwd, "lib/defold_typescript/lualib_bundle.lua");
     expect(existsSync(bundlePath)).toBe(true);
-    expect(result.written).toContain("lualib_bundle.lua");
-    // Alongside the sources the bare name already resolves, so it is left alone.
-    expect(readFileSync(runtimePath, "utf8")).toContain('require("lualib_bundle")');
+    expect(result.written).toContain("lib/defold_typescript/lualib_bundle.lua");
+    // The bare name no longer reaches the bundle, so the runtime's own require
+    // is respelled even with no outDir.
+    expect(readFileSync(runtimePath, "utf8")).toContain(
+      'require("lib.defold_typescript.lualib_bundle")',
+    );
+    expect(readFileSync(runtimePath, "utf8")).not.toContain('require("lualib_bundle")');
   });
 
   test("writes the timers runtime under outDir when one is configured", () => {
@@ -433,22 +444,22 @@ describe("runBuild", () => {
 
     const result = runBuild({ cwd });
 
-    expect(existsSync(path.join(cwd, "out/lua/defold_typescript_timers.lua"))).toBe(true);
-    expect(existsSync(path.join(cwd, "defold_typescript_timers.lua"))).toBe(false);
-    expect(result.written).toContain("out/lua/defold_typescript_timers.lua");
+    const runtimeRel = "out/lua/lib/defold_typescript/timers.lua";
+    const bundleRel = "out/lua/lib/defold_typescript/lualib_bundle.lua";
+    expect(existsSync(path.join(cwd, runtimeRel))).toBe(true);
+    expect(existsSync(path.join(cwd, "out/lua/defold_typescript_timers.lua"))).toBe(false);
+    expect(result.written).toContain(runtimeRel);
 
     const lua = readFileSync(path.join(cwd, "out/lua/main.lua"), "utf8");
-    expect(lua).toContain(
-      `require("${requirePathForRel("out/lua/defold_typescript_timers.lua")}")`,
-    );
+    expect(lua).toContain(`require("${requirePathForRel(runtimeRel)}")`);
     expect(lua).not.toContain('require("defold_typescript_timers")');
 
-    expect(existsSync(path.join(cwd, "out/lua/lualib_bundle.lua"))).toBe(true);
-    expect(result.written).toContain("out/lua/lualib_bundle.lua");
+    expect(existsSync(path.join(cwd, bundleRel))).toBe(true);
+    expect(result.written).toContain(bundleRel);
 
     // Under an outDir the runtime's own bundle require must be relocated too.
-    const runtime = readFileSync(path.join(cwd, "out/lua/defold_typescript_timers.lua"), "utf8");
-    expect(runtime).toContain(`require("${requirePathForRel("out/lua/lualib_bundle.lua")}")`);
+    const runtime = readFileSync(path.join(cwd, runtimeRel), "utf8");
+    expect(runtime).toContain(`require("${requirePathForRel(bundleRel)}")`);
     expect(runtime).not.toContain('require("lualib_bundle")');
   });
 
@@ -458,7 +469,7 @@ describe("runBuild", () => {
 
     runBuild({ cwd });
 
-    expect(existsSync(path.join(cwd, "defold_typescript_timers.lua"))).toBe(false);
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/timers.lua"))).toBe(false);
   });
 
   const HSM_SCRIPT = [
@@ -483,7 +494,7 @@ describe("runBuild", () => {
     "",
   ].join("\n");
 
-  test("writes each hsm module a source imports under the output root, with no map", () => {
+  test("writes each hsm module a source imports in the runtime folder, with no map", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/door.ts", HSM_SCRIPT);
 
@@ -491,7 +502,7 @@ describe("runBuild", () => {
 
     for (const name of ["index", "defold"]) {
       const rel = hsmModuleRel({ outDir: undefined, include: ["src/**/*.ts"] }, name);
-      expect(rel).toBe(`defold_typescript_hsm/${name}.lua`);
+      expect(rel).toBe(`lib/defold_typescript/hsm/${name}.lua`);
       expect(result.written).toContain(rel);
       const lua = readFileSync(path.join(cwd, rel), "utf8");
       expect(lua.split("\n")).toContain(GENERATED_BANNER);
@@ -499,8 +510,9 @@ describe("runBuild", () => {
       expect(existsSync(path.join(cwd, `${rel}.map`))).toBe(false);
     }
     const script = readFileSync(path.join(cwd, "src/door.ts.script"), "utf8");
-    expect(script).toContain('require("defold_typescript_hsm.index")');
-    expect(script).toContain('require("defold_typescript_hsm.defold")');
+    expect(script).toContain('require("lib.defold_typescript.hsm.index")');
+    expect(script).toContain('require("lib.defold_typescript.hsm.defold")');
+    expect(script).not.toContain('require("defold_typescript_hsm.index")');
   });
 
   test("writes the hsm modules under outDir and respells the requires", () => {
@@ -518,14 +530,14 @@ describe("runBuild", () => {
 
     const config: BuildConfig = { outDir: "out/lua", include: ["src/**/*.ts"] };
     const indexRel = hsmModuleRel(config, "index");
-    expect(indexRel).toBe("out/lua/defold_typescript_hsm/index.lua");
+    expect(indexRel).toBe("out/lua/lib/defold_typescript/hsm/index.lua");
     expect(result.written).toContain(indexRel);
     expect(result.written).toContain(hsmModuleRel(config, "defold"));
-    expect(existsSync(path.join(cwd, "defold_typescript_hsm"))).toBe(false);
+    expect(existsSync(path.join(cwd, "lib"))).toBe(false);
 
     const script = readFileSync(path.join(cwd, "out/lua/door.ts.script"), "utf8");
     expect(script).toContain(`require("${requirePathForRel(indexRel)}")`);
-    expect(requirePathForRel(indexRel)).toBe("out.lua.defold_typescript_hsm.index");
+    expect(requirePathForRel(indexRel)).toBe("out.lua.lib.defold_typescript.hsm.index");
     expect(script).not.toContain('require("defold_typescript_hsm.index")');
   });
 
@@ -535,7 +547,7 @@ describe("runBuild", () => {
 
     runBuild({ cwd });
 
-    expect(existsSync(path.join(cwd, "defold_typescript_hsm"))).toBe(false);
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/hsm"))).toBe(false);
   });
 
   test("fails, writing nothing over it, when a source lands on an hsm output path", () => {
@@ -548,7 +560,7 @@ describe("runBuild", () => {
       ),
     );
     writeFile("src/door.ts", HSM_SCRIPT);
-    writeFile("src/defold_typescript_hsm/index.ts", "export const mine = 1;\n");
+    writeFile("src/lib/defold_typescript/hsm/index.ts", "export const mine = 1;\n");
 
     let failure: unknown;
     try {
@@ -560,7 +572,45 @@ describe("runBuild", () => {
     expect(failure).toBeInstanceOf(BuildFailureError);
     const entries = (failure as BuildFailureError).entries;
     expect(entries.map((entry) => entry.message).join("\n")).toContain(HSM_LIBRARY_LABEL);
-    expect(existsSync(path.join(cwd, "out/lua/defold_typescript_hsm/index.lua"))).toBe(false);
+    expect(existsSync(path.join(cwd, "out/lua/lib/defold_typescript/hsm/index.lua"))).toBe(false);
+  });
+
+  test("with runtime-dir set, a source landing on the chosen folder fails and the default folder is free", () => {
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify(
+        { compilerOptions: { outDir: "out/lua", strict: true }, include: ["src/**/*.ts"] },
+        null,
+        2,
+      ),
+    );
+    writeFile(
+      "package.json",
+      JSON.stringify({ "defold-typescript": { "runtime-dir": "vendor/rt" } }),
+    );
+    writeFile("src/main.ts", "export const ks = Object.keys({ a: 1 });\n");
+    writeFile("src/vendor/rt/lualib_bundle.ts", "export const mine = 1;\n");
+
+    let failure: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(BuildFailureError);
+    const messages = (failure as BuildFailureError).entries.map((entry) => entry.message);
+    expect(messages.join("\n")).toContain(LUALIB_BUNDLE_LABEL);
+    expect(existsSync(path.join(cwd, "out/lua/vendor/rt/lualib_bundle.lua"))).toBe(false);
+
+    rmSync(path.join(cwd, "src/vendor"), { recursive: true });
+    writeFile("src/door.ts", HSM_SCRIPT);
+    writeFile("src/lib/defold_typescript/hsm/index.ts", "export const mine = 1;\n");
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("out/lua/lib/defold_typescript/hsm/index.lua");
+    expect(result.written).toContain("out/lua/vendor/rt/hsm/index.lua");
   });
 
   test("aggregates diagnostics across multiple broken files", () => {
@@ -674,8 +724,8 @@ describe("runBuild", () => {
 
     const result = runBuild({ cwd });
 
-    expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(true);
-    expect(existsSync(path.join(cwd, "defold_typescript_timers.lua"))).toBe(true);
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/lualib_bundle.lua"))).toBe(true);
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/timers.lua"))).toBe(true);
     expect(result.warnings).toEqual([]);
   });
 });
@@ -713,23 +763,23 @@ describe("runBuild outDir tree mirroring", () => {
     }
   });
 
-  test("lualib bundle and timers runtime, when emitted, land at the outDir root", () => {
+  test("lualib bundle and timers runtime, when emitted, land in the outDir runtime folder", () => {
     writeFile("tsconfig.json", OUTDIR_TSCONFIG);
     writeFile("src/world/player.ts", NESTED_SCRIPT);
 
     const result = runBuild({ cwd });
 
     for (const rootFile of [
-      "build/lua/lualib_bundle.lua",
-      "build/lua/defold_typescript_timers.lua",
+      "build/lua/lib/defold_typescript/lualib_bundle.lua",
+      "build/lua/lib/defold_typescript/timers.lua",
     ]) {
       if (result.written.includes(rootFile)) {
         expect(existsSync(path.join(cwd, rootFile))).toBe(true);
       }
     }
     // Never re-rooted under the source subtree.
-    expect(result.written).not.toContain("build/lua/world/lualib_bundle.lua");
-    expect(result.written).not.toContain("build/lua/world/defold_typescript_timers.lua");
+    expect(result.written).not.toContain("build/lua/world/lib/defold_typescript/lualib_bundle.lua");
+    expect(result.written).not.toContain("build/lua/world/lib/defold_typescript/timers.lua");
   });
 
   // The only cover these two chunk kinds get: the resolution check reads
@@ -840,8 +890,8 @@ describe("runBuild unaddressable runtime artifacts", () => {
 
     expect(thrown).toBeInstanceOf(BuildFailureError);
     const message = (thrown as BuildFailureError).message;
-    expect(message).toContain("build.out/lualib_bundle.lua");
-    expect(message).toContain("build_out.lualib_bundle");
+    expect(message).toContain("build.out/lib/defold_typescript/lualib_bundle.lua");
+    expect(message).toContain("build_out.lib.defold_typescript.lualib_bundle");
     expect(existsSync(path.join(cwd, "build.out"))).toBe(false);
   });
 
@@ -861,9 +911,257 @@ describe("runBuild unaddressable runtime artifacts", () => {
 
     expect(thrown).toBeInstanceOf(BuildFailureError);
     const message = (thrown as BuildFailureError).message;
-    expect(message).toContain("build.out/defold_typescript_timers.lua");
-    expect(message).toContain("build_out.defold_typescript_timers");
+    expect(message).toContain("build.out/lib/defold_typescript/timers.lua");
+    expect(message).toContain("build_out.lib.defold_typescript.timers");
     expect(existsSync(path.join(cwd, "build.out"))).toBe(false);
+  });
+});
+
+describe("runBuild runtime folder", () => {
+  const RUNTIME_SCRIPT = [
+    'import { defineScript } from "@defold-typescript/types";',
+    'import { defineMachine } from "@defold-typescript/types/hsm";',
+    'import { sequence } from "@defold-typescript/types/hsm/async";',
+    'import { messageEvents } from "@defold-typescript/types/hsm/defold";',
+    'import { setTimeout } from "@defold-typescript/types/timers";',
+    'import { keyCount } from "./util";',
+    "",
+    'const events = messageEvents(["trigger_response"]);',
+    'const door = defineMachine<{}, { type: "trigger_response"; enter: boolean }>()({',
+    '  initial: "/opening",',
+    "  states: {",
+    "    opening: {",
+    "      task: sequence((_ctx, signal) => signal.wait(0.5)),",
+    '      on: { trigger_response: "/open" },',
+    "    },",
+    "    open: {},",
+    "  },",
+    "});",
+    "",
+    "export default defineScript({",
+    "  init() {",
+    "    door.start({});",
+    "    setTimeout(() => print(keyCount({ a: 1 })), 250);",
+    "  },",
+    "  on_message(_self, message_id, message, sender) {",
+    "    events.toEvent(message_id, message, sender);",
+    "  },",
+    "});",
+    "",
+  ].join("\n");
+  const UTIL_MODULE = "export const keyCount = (o: object): number => Object.keys(o).length;\n";
+
+  function writeRuntimeProject(outDir: string | undefined, runtimeDir: string | undefined): void {
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: { strict: true, ...(outDir !== undefined ? { outDir } : {}) },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    if (runtimeDir !== undefined) {
+      writeFile(
+        "package.json",
+        JSON.stringify({ "defold-typescript": { "runtime-dir": runtimeDir } }),
+      );
+    }
+    writeFile("src/door.ts", RUNTIME_SCRIPT);
+    writeFile("src/util.ts", UTIL_MODULE);
+  }
+
+  test.each([
+    { outDir: undefined, runtimeDir: undefined, folder: "lib/defold_typescript" },
+    { outDir: "out/lua", runtimeDir: undefined, folder: "out/lua/lib/defold_typescript" },
+    { outDir: "out/lua", runtimeDir: "vendor/rt", folder: "out/lua/vendor/rt" },
+  ])("writes every runtime file in $folder, and every require loads a written file", ({
+    outDir,
+    runtimeDir,
+    folder,
+  }) => {
+    writeRuntimeProject(outDir, runtimeDir);
+
+    const result = runBuild({ cwd });
+
+    const runtimeRels = [
+      `${folder}/lualib_bundle.lua`,
+      `${folder}/timers.lua`,
+      `${folder}/hsm/index.lua`,
+      `${folder}/hsm/defold.lua`,
+      `${folder}/hsm/async.lua`,
+    ];
+    for (const rel of runtimeRels) {
+      expect(result.written).toContain(rel);
+    }
+    const outputRoot = outDir ?? "";
+    for (const legacy of [
+      "lualib_bundle.lua",
+      "defold_typescript_timers.lua",
+      "defold_typescript_hsm",
+    ]) {
+      expect(existsSync(path.join(cwd, outputRoot, legacy))).toBe(false);
+    }
+
+    // Lua's loader turns every dot in a require name into a folder separator,
+    // so each require must name a file the build wrote under cwd.
+    const required = new Set<string>();
+    for (const rel of result.written) {
+      if (!rel.endsWith(".lua") && !rel.endsWith(".ts.script")) {
+        continue;
+      }
+      for (const { path: requirePath } of scanEmittedRequires(
+        readFileSync(path.join(cwd, rel), "utf8"),
+      )) {
+        required.add(requirePath);
+        const loadPath = `${requirePath.replace(/\./g, "/")}.lua`;
+        expect({ rel, requirePath, loads: existsSync(path.join(cwd, loadPath)) }).toEqual({
+          rel,
+          requirePath,
+          loads: true,
+        });
+      }
+    }
+    for (const rel of runtimeRels) {
+      expect([...required]).toContain(requirePathForRel(rel));
+    }
+  });
+
+  test("a runtime-dir with a dot in a folder name fails the build before writing anything", () => {
+    writeRuntimeProject("out/lua", "lib/rt.v2");
+
+    expect(() => runBuild({ cwd })).toThrow(/"defold-typescript"\."runtime-dir".*"lib\/rt\.v2"/);
+    expect(existsSync(path.join(cwd, "out"))).toBe(false);
+  });
+
+  const LEGACY_RUNTIME_RELS = [
+    "lualib_bundle.lua",
+    "defold_typescript_timers.lua",
+    "defold_typescript_hsm/index.lua",
+  ];
+  const HSM_MODULE = [
+    'import { defineMachine } from "@defold-typescript/types/hsm";',
+    'export const door = defineMachine<{}, { type: "GO" }>()({',
+    '  initial: "/idle",',
+    '  states: { idle: { on: { GO: "/done" } }, done: {} },',
+    "});",
+    "",
+  ].join("\n");
+
+  function writeLegacyRuntime(): void {
+    for (const rel of LEGACY_RUNTIME_RELS) {
+      writeFile(rel, `return {}\n${GENERATED_BANNER}\n`);
+    }
+  }
+
+  test("an upgraded project loses the runtime files an earlier build wrote at the output root", () => {
+    writeLegacyRuntime();
+    writeRuntimeProject(undefined, undefined);
+
+    const result = runBuild({ cwd });
+
+    for (const rel of LEGACY_RUNTIME_RELS) {
+      expect(existsSync(path.join(cwd, rel))).toBe(false);
+    }
+    expect(existsSync(path.join(cwd, "defold_typescript_hsm"))).toBe(false);
+    for (const rel of [
+      "lib/defold_typescript/lualib_bundle.lua",
+      "lib/defold_typescript/timers.lua",
+      "lib/defold_typescript/hsm/index.lua",
+    ]) {
+      expect(result.written).toContain(rel);
+      expect(existsSync(path.join(cwd, rel))).toBe(true);
+    }
+  });
+
+  test("the old runtime files go even when the program needs none of them", () => {
+    writeLegacyRuntime();
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", MAIN_SCRIPT);
+
+    runBuild({ cwd });
+
+    for (const rel of LEGACY_RUNTIME_RELS) {
+      expect(existsSync(path.join(cwd, rel))).toBe(false);
+    }
+    expect(existsSync(path.join(cwd, "defold_typescript_hsm"))).toBe(false);
+  });
+
+  test("cleanup keeps root files the build did not write", () => {
+    const foreign = "-- another toolchain's bundle\nreturn {}\n";
+    const notes = "kept by hand\n";
+    writeFile("lualib_bundle.lua", foreign);
+    writeFile("defold_typescript_hsm/debug.lua", foreign);
+    writeFile("defold_typescript_hsm/notes.txt", notes);
+    writeRuntimeProject(undefined, undefined);
+
+    runBuild({ cwd });
+
+    expect(readFileSync(path.join(cwd, "lualib_bundle.lua"), "utf8")).toBe(foreign);
+    expect(readFileSync(path.join(cwd, "defold_typescript_hsm/debug.lua"), "utf8")).toBe(foreign);
+    expect(readFileSync(path.join(cwd, "defold_typescript_hsm/notes.txt"), "utf8")).toBe(notes);
+  });
+
+  test("cleanup keeps a live source's output on an old runtime path", () => {
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: { strict: true, outDir: "out" },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    writeFile("src/door.ts", HSM_MODULE);
+    writeFile("src/defold_typescript_hsm/index.ts", "export const mine = 1;\n");
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("out/defold_typescript_hsm/index.lua");
+    const lua = readFileSync(path.join(cwd, "out/defold_typescript_hsm/index.lua"), "utf8");
+    expect(lua).toContain("mine");
+    expect(lua.split("\n")).toContain(GENERATED_BANNER);
+  });
+
+  test("a source whose require name is the hsm library's fails the build", () => {
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: { strict: true },
+        include: ["src/**/*.ts", "defold_typescript_hsm/**/*.ts"],
+      }),
+    );
+    writeFile("src/door.ts", HSM_MODULE);
+    writeFile("defold_typescript_hsm/index.ts", "export const mine = 1;\n");
+
+    let failure: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(BuildFailureError);
+    const files = (failure as BuildFailureError).entries.map((entry) => entry.file);
+    expect(files).toContain("defold_typescript_hsm/index.ts");
+  });
+
+  test("a root lualib_bundle source builds until the program needs the bundle", () => {
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["**/*.ts"] }),
+    );
+    writeFile("lualib_bundle.ts", "export const mine = 1;\n");
+    writeFile("main.ts", MAIN_SCRIPT);
+
+    expect(runBuild({ cwd }).written).toContain("lualib_bundle.lua");
+
+    writeFile("keys.ts", "export const ks = Object.keys({ a: 1 });\n");
+    let failure: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(BuildFailureError);
+    expect((failure as BuildFailureError).message).toContain("lualib_bundle.ts");
   });
 });
 

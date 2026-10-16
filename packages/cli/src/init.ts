@@ -10,14 +10,18 @@ import {
   SCAFFOLDED_DEFIGNORE_LINES,
 } from "@defold-typescript/transpiler";
 import type { RenderScriptHooks, ScriptHookName } from "@defold-typescript/types";
-import { isFileIncluded } from "./build-output";
+import {
+  hasGeneratedBanner,
+  isFileIncluded,
+  RUNTIME_DEFAULT_DIR,
+  readRuntimeDir,
+} from "./build-output";
 
 import { repairDefoldNamespace } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { formatJsonLikeBiome } from "./format-json";
 import { runInitAgents } from "./init-agents";
 import { mergeMiseToml } from "./mise-scaffold";
-import { hasGeneratedBanner } from "./orphan-scan";
 import TSCONFIG_COMPILER_OPTIONS from "./scaffold-tsconfig.json";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
@@ -73,12 +77,13 @@ const GITIGNORE_LINES = [
   "builtins/",
   ".DS_Store",
   "Thumbs.db",
-  "/lualib_bundle.lua",
-  "/lualib_bundle.lua.map",
-  "/defold_typescript_timers.lua",
-  "/defold_typescript_timers.lua.map",
-  "/defold_typescript_hsm/",
 ];
+
+// The runtime folder comes from the reader the build uses, so a project that
+// moves it with `runtime-dir` ignores the folder the build actually writes.
+function gitignoreLines(cwd: string): string[] {
+  return [...GITIGNORE_LINES, `/${readRuntimeDir(cwd) ?? RUNTIME_DEFAULT_DIR}/`];
+}
 
 // The Defold editor's empty-template `.gitattributes` verbatim: linguist-language
 // overrides so GitHub renders and classifies Defold's protobuf-text assets, JSON
@@ -589,6 +594,7 @@ function carriesRetiredSet(present: ReadonlySet<string>, retired: readonly strin
 
 function writeGitignore(cwd: string): void {
   const gitignorePath = path.join(cwd, ".gitignore");
+  const managed = gitignoreLines(cwd);
   if (existsSync(gitignorePath)) {
     const existing = readFileSync(gitignorePath, "utf8");
     let lines = existing.split("\n");
@@ -599,7 +605,7 @@ function writeGitignore(cwd: string): void {
       lines = lines.filter((line) => !retired.has(line.trim()));
     }
     const kept = new Set(lines.map((line) => line.trim()));
-    const missing = GITIGNORE_LINES.filter((line) => !kept.has(line));
+    const missing = managed.filter((line) => !kept.has(line));
     if (!retiring && missing.length === 0) {
       return;
     }
@@ -610,7 +616,7 @@ function writeGitignore(cwd: string): void {
       missing.length === 0 ? body : `${body}${prefix}${missing.join("\n")}\n`,
     );
   } else {
-    writeFileSync(gitignorePath, `${GITIGNORE_LINES.join("\n")}\n`);
+    writeFileSync(gitignorePath, `${managed.join("\n")}\n`);
   }
 }
 

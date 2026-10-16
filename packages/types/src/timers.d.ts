@@ -3,7 +3,8 @@
 // as an isolated Lua chunk with no shared global scope and no JS event loop, so
 // these are named module exports (lowered to a `require`), not ambient globals:
 // pay-for-use and explicit. The transpiler emits the runtime and the CLI writes
-// it to the output root; the import lowers to `require("defold_typescript_timers")`.
+// it to `lib/defold_typescript/timers.lua` (moved by `runtime-dir`), respelling
+// the import's `require` to that path.
 declare module "@defold-typescript/types/timers" {
   /**
    * Run `callback` once after `delayMs` milliseconds, backed by Defold's
