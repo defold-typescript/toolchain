@@ -2415,6 +2415,7 @@ describe("OVERLOAD_COVERED_SKIPS", () => {
       "sys.get_config_string",
       "sys.set_engine_throttle",
       "vmath.clamp",
+      "vmath.dot",
       "vmath.euler_to_quat",
       "vmath.lerp",
       "vmath.mul_per_elem",
@@ -3028,7 +3029,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       functions: [requireFunction(module, "buffer.create")],
     });
     expect(out).toContain(
-      'function create(element_count: number, declaration: { name?: Hash | string; type: buffer.ValueType; count?: number }[]): Opaque<"buffer">;',
+      'function create(element_count: number, declaration: { name?: Hash | string; type: buffer.ValueType; count?: number }[]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };',
     );
   });
 
@@ -5005,7 +5006,7 @@ describe("TABLE_SLOT_FIELD_ADDITIONS", () => {
   test("emits page_count beside the fields the ref-doc documents, addition last", () => {
     const out = emitDeclarations(parseDefoldApiDoc(resourceDoc));
     expect(out).toContain(
-      'function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer">): Hash;',
+      'function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): Hash;',
     );
   });
 
@@ -5704,7 +5705,9 @@ describe("defaultMapType LuaLS fallback", () => {
     expect(
       defaultMapType("fun(self:script_instance, handle:timer_handle, time_elapsed:number)"),
     ).toBe("(self: unknown, handle: number, time_elapsed: number) => void");
-    expect(defaultMapType("buffer_data")).toBe('Opaque<"buffer">');
+    expect(defaultMapType("buffer_data")).toBe(
+      'Opaque<"buffer"> & { length: LuaLengthMethod<number> }',
+    );
     expect(defaultMapType("socket_client")).toBe("client");
     expect(defaultMapType("message.physics.collision_event")).toBe(
       'BuiltinMessages["collision_event"]',

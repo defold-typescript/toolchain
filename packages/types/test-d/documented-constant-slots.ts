@@ -9,7 +9,7 @@ import type { Opaque, Url } from "../src/core-types";
 
 declare const node: Opaque<"node">;
 declare const url: Url;
-declare const buf: Opaque<"buffer">;
+declare const buf: ReturnType<typeof buffer.create>;
 
 // gui — the page's own animate example, every documented setter, the property
 // slots that borrow animate's constants, and getter-to-setter round-trips.

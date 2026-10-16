@@ -633,12 +633,15 @@ msg.post("#health", "damage", { amount: 10 }); // sibling component on the same 
 
 ## A vector's size is `v.length()`, and `url.path` can be `undefined`
 
-**Symptom.** Reading `v.length` on a `vmath.vector`, or passing `url.path` where a `Hash` is expected, fails to compile.
+**Symptom.** Reading `v.length` on a `vmath.vector` or `buf.length` on a buffer, or passing `url.path` or `url.socket` where a `Hash` is expected, fails to compile.
 
 ```ts
 const v = vmath.vector([1, 2, 3]);
 const size: number = v.length(); // compiles to `#v`
 v[1] = 0.5; // 1-based, passed to Defold unchanged
+
+const buf = buffer.create(4, [{ name: hash("rgb"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
+const count: number = buf.length(); // compiles to `#buf`, the element count
 
 const url = msg.url("main:");
 const path = url.path; // Hash | undefined: a socket-only address has no path
@@ -647,11 +650,11 @@ if (path !== undefined) {
 }
 ```
 
-**Why.** A `vmath.vector` and a URL are engine userdata, and their metatables decide what each access does. The vector's `__index` accepts only integer keys, so `v.length` raises at runtime; its size comes from the `__len` metamethod, which `v.length()` compiles to. Its index is 1-based, as in Lua, and the transpiler passes it through unchanged. A URL's `__index` returns `nil` for an unset `path` or `fragment`, and `msg.url("main:")` or the three-argument form with an `undefined` path leaves `path` unset. Every `msg.url` form resolves a socket, so `url.socket` is always a `Hash`.
+**Why.** A `vmath.vector`, a buffer and a URL are engine userdata, and their metatables decide what each access does. The vector's `__index` accepts only integer keys, so `v.length` raises at runtime; its size comes from the `__len` metamethod, which `v.length()` compiles to. Its index is 1-based, as in Lua, and the transpiler passes it through unchanged. A buffer's `__len` returns its element count, which `buf.length()` compiles to. A URL's `__index` returns `nil` for any unset field. `msg.url("main:")` or the three-argument form with an `undefined` path leaves `path` unset. `socket` is unset on the `sender` of an engine message posted with no sender, such as `ray_cast_response` and `ray_cast_missed` from `physics.raycast_async`, `animation_done` from a `model.play_anim` with no callback, and `window_resized` in a render script, and after `url.socket = undefined`.
 
-**Typed alternative.** Call `v.length()`, and check `url.path` and `url.fragment` against `undefined` before use. All three URL fields are writable: assign a `Hash` or a string, or `undefined` to clear `path` or `fragment`.
+**Typed alternative.** Call `v.length()` and `buf.length()`, and check `url.socket`, `url.path` and `url.fragment` against `undefined` before use. All three URL fields are writable: assign a `Hash` or a string, or `undefined` to clear the field.
 
-**How we pin this in the type tests.** `packages/types/test-d/userdata-fields.ts` marks `v.length` as a field and `url.path` as a `Hash` with `@ts-expect-error`, and `packages/transpiler/src/vector-math-emit.test.ts` snapshots `v.length()` as `#v` and `v[1] = 2` with its index unchanged.
+**How we pin this in the type tests.** `packages/types/test-d/userdata-fields.ts` marks `v.length` and `buf.length` as fields and `url.path` and `url.socket` as a `Hash` with `@ts-expect-error`, and compiles `buf.length()` and `url.socket = undefined`. `packages/transpiler/src/vector-math-emit.test.ts` snapshots `v.length()` as `#v` and `v[1] = 2` with its index unchanged.
 
 ## npm packages do not resolve — vendor the source instead
 

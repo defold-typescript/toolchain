@@ -73,7 +73,7 @@ declare global {
       /**
        * Loaded payload for a successful request.
        */
-      buffer?: Opaque<"buffer">;
+      buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     }
     /**
      * URL opening attributes
@@ -537,7 +537,7 @@ declare global {
      * const asset_2 = sys.load_buffer("/my/absolute/path");
      * ```
      */
-    function load_buffer(path: string): Opaque<"buffer">;
+    function load_buffer(path: string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     /**
      * The sys.load_buffer function will first try to load the resource
      * from any of the mounted resource locations and return the data if

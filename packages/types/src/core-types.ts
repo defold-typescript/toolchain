@@ -87,10 +87,30 @@ export interface Matrix4 {
   m31: number;
   m32: number;
   m33: number;
-  c0: Vector4;
-  c1: Vector4;
-  c2: Vector4;
-  c3: Vector4;
+  /**
+   * The first column. A read returns a new `Vector4`, so writing one of its
+   * fields changes nothing; assigning a whole `Vector4` sets the column.
+   */
+  get c0(): Readonly<Vector4>;
+  set c0(value: Vector4);
+  /**
+   * The second column. A read returns a new `Vector4`, so writing one of its
+   * fields changes nothing; assigning a whole `Vector4` sets the column.
+   */
+  get c1(): Readonly<Vector4>;
+  set c1(value: Vector4);
+  /**
+   * The third column. A read returns a new `Vector4`, so writing one of its
+   * fields changes nothing; assigning a whole `Vector4` sets the column.
+   */
+  get c2(): Readonly<Vector4>;
+  set c2(value: Vector4);
+  /**
+   * The fourth column. A read returns a new `Vector4`, so writing one of its
+   * fields changes nothing; assigning a whole `Vector4` sets the column.
+   */
+  get c3(): Readonly<Vector4>;
+  set c3(value: Vector4);
   mul: LuaMultiplicationMethod<Matrix4, Matrix4> &
     LuaMultiplicationMethod<Vector4, Vector4> &
     LuaMultiplicationMethod<number, Matrix4>;
@@ -183,6 +203,8 @@ declare const OpaqueBrand: unique symbol;
  * - Box2D physics: `Opaque<"b2Body">`, `Opaque<"b2World">`
  * - Generic: `Opaque<"userdata">`
  *
+ * A buffer's `buf.length()` compiles to `#buf` and returns its element count.
+ *
  * @example
  * Handles always come back from the engine — for instance:
  * ```ts
@@ -209,21 +231,24 @@ export interface Opaque<Name extends string> {
  *
  * @remarks
  * Each field is writable and takes a `Hash` or a string, which the engine
- * hashes. Every `msg.url` form resolves a socket, so `socket` is always set.
- * `path` and `fragment` read `undefined` when unset: a socket-only address
- * (`msg.url("main:")`) has no `path`, so narrow it before use. Assigning
- * `undefined` clears `path` or `fragment`.
+ * hashes. Every field reads `undefined` when unset, so narrow it before use. A
+ * socket-only address (`msg.url("main:")`) has no `path`. `socket` is unset on
+ * the `sender` of an engine message posted with no sender, such as
+ * `ray_cast_response` and `ray_cast_missed` from `physics.raycast_async`,
+ * `animation_done` from a `model.play_anim` with no callback, and
+ * `window_resized` in a render script, and after `url.socket = undefined`.
+ * Assigning `undefined` clears any of the three fields.
  */
 export interface Url {
-  get socket(): Hash;
-  set socket(value: Hash | string);
+  get socket(): Hash | undefined;
+  set socket(value: Hash | string | undefined);
   get path(): Hash | undefined;
   set path(value: Hash | string | undefined);
   get fragment(): Hash | undefined;
   set fragment(value: Hash | string | undefined);
 }
 
-const BUFFER_TYPE = 'Opaque<"buffer">';
+const BUFFER_TYPE = 'Opaque<"buffer"> & { length: LuaLengthMethod<number> }';
 const BUFFERSTREAM_TYPE =
   'Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }';
 

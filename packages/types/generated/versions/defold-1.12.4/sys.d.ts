@@ -473,7 +473,7 @@ declare global {
      * const asset_2 = sys.load_buffer("/my/absolute/path");
      * ```
      */
-    function load_buffer(path: string): Opaque<"buffer">;
+    function load_buffer(path: string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     /**
      * The sys.load_buffer function will first try to load the resource
      * from any of the mounted resource locations and return the data if
@@ -506,7 +506,7 @@ declare global {
      * Load binary data from a custom project resource and update a texture resource:
      * ```ts
      * function my_callback(self: unknown, request_id: unknown, result: unknown) {
-     *   const { status, buf } = result as { status: number; buf: Opaque<"buffer"> };
+     *   const { status, buf } = result as { status: number; buf: ReturnType<typeof sys.load_buffer> };
      *   if (status === sys.REQUEST_STATUS_FINISHED) {
      *     resource.set_texture("/my_texture", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format: graphics.TEXTURE_FORMAT_RGBA }, buf);
      *   }
