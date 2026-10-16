@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[Optional arguments whose `nil` raises reject `undefined`](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined)** on pre-baked versions; leave them out instead.
 > - **[Script kinds keep only what they support](./script-lifecycle.md#api-availability-by-script-kind)**: `properties` is `defineScript`-only, and render scripts lose what needs a game object, such as `sprite` and most of `go`.
 > - **[`wall --check` type-checks walls](./wall.md#flags)**, helpers they import included; re-run `wall <dirs>` to rewrite existing walls.
-> - **[Declarations follow the engine bindings](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined)**: `Url.socket` can be `undefined`, `vmath.dot` takes one vector type, a buffer has `buf.length()`, and `go.delete` takes the ids `collectionfactory.create` returns.
+> - **[Declarations follow the engine bindings](./typescript-gotchas.md#a-vectors-size-is-vlength-and-urlpath-can-be-undefined)**: `Url.socket` can be `undefined`, `vmath.dot` takes one vector type, `hash` takes a `Hash`, a buffer has `buf.length()`, and `go.delete` takes the ids `collectionfactory.create` returns.
 
 ### Breaking
 
@@ -46,7 +46,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`go.delete`** takes any table whose values are ids, so `go.delete(ids)` deletes everything a `collectionfactory.create` call spawned.
   - **`go.get`** of an array material constant without `index` returns every element, and the result casts to `Vector4[]` in one step.
   - **`gui.clone_tree` and `gui.get_tree`** take `undefined` for the whole scene, but the argument cannot be left out, since a call without it raises; see [Passing absence](./typescript-gotchas.md#passing-absence-write-undefined-never-null).
-  - **`hash`** takes a `Hash` and returns it unchanged.
+  - **`hash`** takes a `Hash` and returns it unchanged, and the API reference and `llms-full.txt` list both forms for every Defold version.
   - **`http.request`** passes its response callback the sender url as a fourth argument.
   - **Label and sprite vector properties** take one sub-key per component: a `Vector3` property (label and sprite `scale` and `size`) takes `.x` to `.z` and a `.xy` key that is a `Vector3`, and a `Vector4` property (label `color`, `outline` and `shadow`; sprite `slice`) takes `.x` to `.w`. So `go.get<label.properties>()("#label", "color.w")` is a `number`; see [Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace).
   - **`liveupdate.LIVEUPDATE_NOT_INITIALIZED`** is declared and is a member of `liveupdate.LIVEUPDATE`, which `liveupdate.add_mount` and `liveupdate.remove_mount` return while live update is disabled.
