@@ -46,6 +46,7 @@ export {
   readGameProjectDependencies,
   readLibrarySceneDocuments,
 } from "./library-dependencies";
+export { scanEmittedRequires } from "./lua-require-scan";
 export { findMainEntryFactoryImports } from "./main-entry-factory-imports";
 export type { BuildConfig, ScriptKind, SourceOutputKind } from "./output-paths";
 export {

@@ -68,14 +68,12 @@ rebuild rejected, instead of quietly replacing a module nothing touched. The
 existing file stays as it is, and the watch [keeps running](./watch.md#hot-reload),
 picking the fix up on the next save.
 
-The two runtime artifacts the build writes for itself — `lualib_bundle.lua` and
-`defold_typescript_timers.lua`, both at the output root — are inside the same
-contract. A hand-authored file at either path fails the build with its bytes
-intact, and must be renamed; so must a source of your own that compiles to one of
-those names. A bundle an earlier build wrote carries the generated banner and is
-replaced as usual. Upgrading a project that already has a `lualib_bundle.lua` from
-another toolchain is the case you are most likely to meet this in: that file
-carries no banner, so the first build after the upgrade stops and names it.
+The Lua the build writes for itself, in the
+[runtime folder](#the-runtime-folder), is inside the same contract. A
+hand-authored file at one of its paths fails the build with its bytes intact, and
+must be renamed; so must a source of your own that compiles to one of those
+paths. A file an earlier build wrote carries the generated banner and is replaced
+as usual.
 
 If a Defold editor is open on this project, `build` names it on stderr
 (`attached to Defold editor at http://localhost:<port>`) and moves on. It is a
@@ -89,12 +87,11 @@ The probe is time-bounded: an editor that does not answer promptly is treated as
 absent and the build carries on, so a stale port file can never hold it up.
 
 When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`,
-object spread, and similar), the build also writes a `lualib_bundle.lua` at the
-output root automatically, and the generated Lua requires it by the path it lands
-at — `require("lualib_bundle")` alongside the sources, or the `outDir`-rooted
-spelling under a configured `outDir`. Importing the
-[timers module](./typescript-gotchas.md) writes it too, because the timer runtime
-that import pulls in requires the bundle itself.
+object spread, and similar), the build also writes `lualib_bundle.lua` to the
+[runtime folder](#the-runtime-folder) automatically, and the generated Lua
+requires it by the path it lands at — `require("lib.defold_typescript.lualib_bundle")`
+by default. Importing the [timers module](./typescript-gotchas.md) writes it too,
+because the timer runtime that import pulls in requires the bundle itself.
 
 Because the output kind is the factory a source calls, adding or removing a
 factory switches the artifact (`src/main.lua` becomes `src/main.ts.script`, or the
@@ -182,6 +179,53 @@ The everyday commands carry no version tag: inside an installed project `bunx`
 resolves the `@defold-typescript/cli` that `init` pinned, so the build runs the
 version locked alongside your `@defold-typescript/types`. Reserve `@latest` for
 `init` and the deliberate upgrade path (see [code editor setup](./editor-setup.md)).
+
+## The runtime folder
+
+The build writes its own Lua into one folder under the output root, and only the
+files your program uses:
+
+| File | Written when a source |
+| --- | --- |
+| `lib/defold_typescript/lualib_bundle.lua` | uses a TypeScript runtime helper, or imports timers or `hsm/async` |
+| `lib/defold_typescript/timers.lua` | imports [`@defold-typescript/types/timers`](./typescript-gotchas.md) |
+| `lib/defold_typescript/hsm/<module>.lua` | imports that [`hsm`](./state-machines.md) module |
+
+Under a configured `outDir` the folder sits inside it
+(`out/lua/lib/defold_typescript/`). Every generated `require` names the path its
+file lands at, so the requires are never yours to edit.
+
+To put the folder somewhere else, set `runtime-dir` in `package.json`:
+
+```json
+{
+  "defold-typescript": {
+    "defold-target": "stable",
+    "runtime-dir": "vendor/rt"
+  }
+}
+```
+
+The value is a folder under the output root: folder names joined with `/`, with
+no leading slash, no `..`, no `\` or `:`, and no dot in any folder name, because
+Lua reads a dot in a `require` name as a folder separator. A value that breaks a
+rule fails the build, naming the setting, before anything is written. A source
+whose own module name is one the build uses internally for these files
+(`lualib_bundle`, `defold_typescript_timers`, `defold_typescript_hsm.<module>`)
+fails the build too, since an import of it would load the runtime file instead.
+
+`init` and [`upgrade`](./upgrade.md) add `/lib/defold_typescript/` (or
+`/<runtime-dir>/`) to `.gitignore`, and keep the lines an earlier version added.
+
+A project built by an earlier version has `lualib_bundle.lua`,
+`defold_typescript_timers.lua` and `defold_typescript_hsm/` at the output root.
+The next `build` or `watch` deletes each of those files that carries the
+generated banner and that no source of yours writes, then deletes
+`defold_typescript_hsm/` once it is empty. A file without the banner, such as
+another toolchain's `lualib_bundle.lua`, stays. Hand-authored Lua that required
+the old names (`require("lualib_bundle")`, `require("defold_typescript_timers")`,
+`require("defold_typescript_hsm.<module>")`) must switch to the new paths, such
+as `require("lib.defold_typescript.lualib_bundle")`.
 
 ## Flags
 

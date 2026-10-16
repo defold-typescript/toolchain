@@ -219,8 +219,9 @@ pinned writes nothing. It does not materialize a surface or repoint
   valid `defold-target` are present, `defold-target` wins and the legacy key is
   dropped.
 
-The namespace recognizes exactly two keys — `defold-target` and `extensions`.
-Any other key is inert: it pins nothing. Rather than swallow it, every
+The namespace recognizes exactly three keys — `defold-target`, `extensions` and
+[`runtime-dir`](./build.md#the-runtime-folder). Any other key is inert: it pins
+nothing. Rather than swallow it, every
 target-resolving command warns and names both the offending key and the
 recognized ones, on stderr for a normal run and in the `warnings` array under
 `--json`. It is a warning, never an error — the command still runs, and the

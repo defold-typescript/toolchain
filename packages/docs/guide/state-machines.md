@@ -16,15 +16,15 @@ import { messageEvents } from "@defold-typescript/types/hsm/defold";
 
 | Module | Holds | Written to |
 | --- | --- | --- |
-| `@defold-typescript/types/hsm` | the machine | `defold_typescript_hsm/index.lua` |
-| `@defold-typescript/types/hsm/defold` | the [message bridge](#the-message-bridge) | `defold_typescript_hsm/defold.lua` |
-| `@defold-typescript/types/hsm/debug` | the [debug inspector](#debug-a-machine) | `defold_typescript_hsm/debug.lua` |
-| `@defold-typescript/types/hsm/async` | [scripted sequences](#scripted-sequences) | `defold_typescript_hsm/async.lua`, and `lualib_bundle.lua` for its promises |
+| `@defold-typescript/types/hsm` | the machine | `lib/defold_typescript/hsm/index.lua` |
+| `@defold-typescript/types/hsm/defold` | the [message bridge](#the-message-bridge) | `lib/defold_typescript/hsm/defold.lua` |
+| `@defold-typescript/types/hsm/debug` | the [debug inspector](#debug-a-machine) | `lib/defold_typescript/hsm/debug.lua` |
+| `@defold-typescript/types/hsm/async` | [scripted sequences](#scripted-sequences) | `lib/defold_typescript/hsm/async.lua`, and `lib/defold_typescript/lualib_bundle.lua` for its promises |
 
-- `build` and `watch` write each module your code uses to the project root, or under `outDir` when one is set. A module nothing uses, or only uses for its types, is not written.
+- `build` and `watch` write each module your code uses to the [runtime folder](./build.md#the-runtime-folder) (`lib/defold_typescript/hsm/` by default), inside `outDir` when one is set. A module nothing uses, or only uses for its types, is not written.
 - A source of your own that would compile to one of those paths fails the build.
-- The library upgrades with the CLI, and a project scaffolded by `init` gitignores `defold_typescript_hsm/`.
-- The library Lua ships with no source map: an error or a debugger frame inside it names `defold_typescript_hsm/<module>.lua`, not a TypeScript line.
+- The library upgrades with the CLI, and a project scaffolded by `init` gitignores the runtime folder.
+- The library Lua ships with no source map: an error or a debugger frame inside it names `lib/defold_typescript/hsm/<module>.lua`, not a TypeScript line.
 
 ## States and paths
 

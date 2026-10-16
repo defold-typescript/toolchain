@@ -84,7 +84,7 @@ describe("mapCompileIssues", () => {
     writeProjectFile("src/main.ts", MARKER_SOURCE);
     runBuild({ cwd });
     const collection = issueAt("/main/main.collection", 3);
-    const lualib = issueAt("/lualib_bundle.lua", 0);
+    const lualib = issueAt("/lib/defold_typescript/lualib_bundle.lua", 0);
     const rangeless: EditorIssue = {
       message: "Build failed",
       severity: "error",
