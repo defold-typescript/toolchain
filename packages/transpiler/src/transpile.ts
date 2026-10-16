@@ -77,9 +77,13 @@ export interface TranspileProjectResult {
   // (`index`, `defold`, ...). An hsm import lowers to
   // `require("defold_typescript_hsm.<module>")`, an internal name the CLI
   // respells to where it writes each one. Present only when some chunk requires one
-  // (pay-for-use); never carries a source map, since the `.ts` it would point
-  // at is not in the user's project.
+  // (pay-for-use).
   readonly hsmModules?: Readonly<Record<string, string>>;
+  // The source map of each module in `hsmModules`, under the same keys. Its
+  // `sources` names `<module>.ts` with an empty `sourceRoot`: only the CLI knows
+  // where the module is written and where the hsm source sits, so it sets the
+  // root that joins them.
+  readonly hsmSourceMaps?: Readonly<Record<string, string>>;
 }
 
 function flattenDiagnosticMessage(
@@ -313,6 +317,7 @@ export function collectOutputs(
   }
 
   const hsm = hsmClosure([...Object.values(lua), ...Object.values(companions)], compileHsmModules);
+  const hsmSourceMaps = hsm === undefined ? undefined : selectHsmSourceMaps(Object.keys(hsm));
 
   return {
     lua,
@@ -322,7 +327,20 @@ export function collectOutputs(
     ...(lualib !== undefined ? { lualib } : {}),
     ...(timersImported ? { timersRuntime: TIMERS_RUNTIME } : {}),
     ...(hsm !== undefined ? { hsmModules: hsm } : {}),
+    ...(hsmSourceMaps !== undefined ? { hsmSourceMaps } : {}),
   };
+}
+
+function selectHsmSourceMaps(names: readonly string[]): Record<string, string> {
+  const maps = compileHsmSourceMaps();
+  const selected: Record<string, string> = {};
+  for (const name of names) {
+    const map = maps[name];
+    if (map !== undefined) {
+      selected[name] = map;
+    }
+  }
+  return selected;
 }
 
 function transpileVirtual(
@@ -382,7 +400,12 @@ export function transpileProject(input: TranspileProjectInput): TranspileProject
   );
 }
 
-let compiledHsm: Readonly<Record<string, string>> | undefined;
+interface CompiledHsm {
+  readonly lua: Readonly<Record<string, string>>;
+  readonly sourceMaps: Readonly<Record<string, string>>;
+}
+
+let compiledHsm: CompiledHsm | undefined;
 
 function requiresLualib(lua: string): boolean {
   return scanEmittedRequires(lua).some(({ path: requirePath }) => requirePath === "lualib_bundle");
@@ -398,6 +421,15 @@ function requiresLualib(lua: string): boolean {
  * lualib bundle.
  */
 export function compileHsmModules(): Readonly<Record<string, string>> {
+  return compileHsm().lua;
+}
+
+/** The source map of every module `compileHsmModules` returns, under the same keys. */
+export function compileHsmSourceMaps(): Readonly<Record<string, string>> {
+  return compileHsm().sourceMaps;
+}
+
+function compileHsm(): CompiledHsm {
   if (compiledHsm !== undefined) {
     return compiledHsm;
   }
@@ -417,6 +449,7 @@ export function compileHsmModules(): Readonly<Record<string, string>> {
     (d) => `${d.file?.fileName ?? "(project)"}: ${flattenDiagnosticMessage(d.messageText)}`,
   );
   const lua: Record<string, string> = {};
+  const sourceMaps: Record<string, string> = {};
   for (const file of result.transpiledFiles) {
     if (isLualibBundle(file)) {
       continue;
@@ -430,14 +463,17 @@ export function compileHsmModules(): Readonly<Record<string, string>> {
       problems.push(`the compiled ${name} module requires lualib_bundle`);
     }
     lua[name] = file.lua;
+    if (typeof file.luaSourceMap === "string") {
+      sourceMaps[name] = file.luaSourceMap;
+    }
   }
   if (problems.length > 0) {
     throw new Error(
       `@defold-typescript/transpiler: the hsm library does not compile:\n  ${problems.join("\n  ")}`,
     );
   }
-  compiledHsm = lua;
-  return lua;
+  compiledHsm = { lua, sourceMaps };
+  return compiledHsm;
 }
 
 export function transpile(source: string): TranspileResult {

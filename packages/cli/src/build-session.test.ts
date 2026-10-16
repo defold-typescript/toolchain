@@ -192,6 +192,7 @@ describe("createBuildSession", () => {
     writeIn(cwd, "src/door.ts", "export const door = 1;\n");
     session.applyEvents(["src/door.ts"], []);
     expect(existsSync(path.join(cwd, indexRel))).toBe(true);
+    expect(existsSync(path.join(cwd, `${indexRel}.map`))).toBe(true);
     expect(scanOrphanOutputs(cwd, ["src/door.ts"], config)).toEqual([]);
   });
 
