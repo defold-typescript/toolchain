@@ -4,8 +4,8 @@
       "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, ...options: [] | [GoPropertyOptions]) => P[K]",
       "go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K): go.properties[K]",
       "go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options: GoPropertyOptions): go.properties[K]",
-      "go.get(url: SceneAddress | Hash | Url, property: string | Hash): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4",
-      "go.get(url: SceneAddress | Hash | Url, property: string | Hash, options: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4"
+      "go.get(url: SceneAddress | Hash | Url, property: string | Hash): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[]",
+      "go.get(url: SceneAddress | Hash | Url, property: string | Hash, options: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[]"
     ],
     "docs": [
       "gets a named property of the specified game object or component",

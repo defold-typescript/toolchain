@@ -44,8 +44,97 @@ declare global {
     }
   }
 
+  namespace label {
+    interface properties {
+      /** The scale's x component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "scale.x": number;
+      /** The scale's y component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "scale.y": number;
+      /** The scale's z component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "scale.z": number;
+      /**
+       * The scale's x and y components. `comp_label.cpp` reads it through
+       * `comp_private.cpp:GetProperty`, which returns the whole vector3. `go.set`
+       * also takes a number, which it applies to both x and y, as `go`'s
+       * `"scale.xy"` does.
+       */
+      "scale.xy": Vector3;
+      /** The size's x component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "size.x": number;
+      /** The size's y component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "size.y": number;
+      /** The size's z component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "size.z": number;
+      /**
+       * The size's x and y components. `comp_label.cpp` reads it through
+       * `comp_private.cpp:GetProperty`, which returns the whole vector3. `go.set`
+       * also takes a number, which it applies to both x and y, as `go`'s
+       * `"scale.xy"` does.
+       */
+      "size.xy": Vector3;
+      /** The color's x component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "color.x": number;
+      /** The color's y component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "color.y": number;
+      /** The color's z component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "color.z": number;
+      /** The color's w component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "color.w": number;
+      /** The outline color's x component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "outline.x": number;
+      /** The outline color's y component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "outline.y": number;
+      /** The outline color's z component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "outline.z": number;
+      /** The outline color's w component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "outline.w": number;
+      /** The shadow color's x component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "shadow.x": number;
+      /** The shadow color's y component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "shadow.y": number;
+      /** The shadow color's z component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "shadow.z": number;
+      /** The shadow color's w component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
+      "shadow.w": number;
+    }
+  }
+
   namespace sprite {
     interface properties {
+      /** The scale's x component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
+      "scale.x": number;
+      /** The scale's y component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
+      "scale.y": number;
+      /** The scale's z component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
+      "scale.z": number;
+      /**
+       * The scale's x and y components. `comp_sprite.cpp` reads it through
+       * `comp_private.cpp:GetProperty`, which returns the whole vector3. `go.set`
+       * also takes a number, which it applies to both x and y, as `go`'s
+       * `"scale.xy"` does.
+       */
+      "scale.xy": Vector3;
+      /** The size's x component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
+      "size.x": number;
+      /** The size's y component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
+      "size.y": number;
+      /** The size's z component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
+      "size.z": number;
+      /**
+       * The size's x and y components. `comp_sprite.cpp` reads it through
+       * `comp_private.cpp:GetProperty`, which returns the whole vector3. `go.set`
+       * also takes a number, which it applies to both x and y, as `go`'s
+       * `"scale.xy"` does.
+       */
+      "size.xy": Vector3;
+      /** The slice-9 border's x component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
+      "slice.x": number;
+      /** The slice-9 border's y component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
+      "slice.y": number;
+      /** The slice-9 border's z component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
+      "slice.z": number;
+      /** The slice-9 border's w component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
+      "slice.w": number;
       /**
        * The texture bound to the sprite's first sampler. Not in the sprite
        * ref-doc; `resource.set`'s example reads it with

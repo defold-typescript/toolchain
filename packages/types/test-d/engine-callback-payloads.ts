@@ -75,6 +75,12 @@ http.request("http://example.com", "GET", (_self, _id, response) => {
   void [url, sent];
 });
 
+// comp_script.cpp delivers the response like a message, so the sender url follows it.
+http.request("http://example.com", "GET", (_self, _id, _response, sender) => {
+  const from: Url = sender;
+  void from;
+});
+
 // script_window.cpp passes an empty table for every event but resize.
 const event = null as unknown;
 const data = null as unknown;
