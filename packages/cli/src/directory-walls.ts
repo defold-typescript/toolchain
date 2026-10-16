@@ -217,7 +217,6 @@ export function resolveSourceWalls(
 interface WallTsconfig {
   readonly extends: string;
   readonly compilerOptions: {
-    readonly composite: true;
     readonly typeRoots: null | string[];
     readonly types: string[];
     readonly paths?: Record<string, string[]>;
@@ -388,7 +387,7 @@ export function directoryWallTsconfig(
   if (pinnedSurface === null || !surfaceKinds.includes(wall.kind)) {
     return {
       extends: `${"../".repeat(depth)}tsconfig.json`,
-      compilerOptions: { composite: true, typeRoots: null, types: [wall.typesEntrypoint] },
+      compilerOptions: { typeRoots: null, types: [wall.typesEntrypoint] },
       include: ["**/*.ts"],
       exclude,
     };
@@ -396,7 +395,6 @@ export function directoryWallTsconfig(
   return {
     extends: `${"../".repeat(depth)}tsconfig.json`,
     compilerOptions: {
-      composite: true,
       typeRoots: [`${"../".repeat(depth)}${MATERIALIZED_ROOT}`],
       types: [`${pinnedSurface}/${wall.kind}`],
       paths: pinnedKindIndexPaths(depth, pinnedSurface, wall.kind, rootAliases),
@@ -463,7 +461,7 @@ function isInsideAnyDir(rel: string, dirs: readonly string[]): boolean {
   return dirs.some((dir) => rel === dir || rel.startsWith(`${dir}/`));
 }
 
-function hasRootOwnedTranspilerSources(cwd: string, wallDirs: readonly string[]): boolean {
+export function hasRootOwnedTranspilerSources(cwd: string, wallDirs: readonly string[]): boolean {
   const seen = new Set<string>();
   for (const pattern of readBuildConfig(cwd).include) {
     for (const match of scanFilesSync(cwd, pattern)) {
@@ -480,22 +478,30 @@ function hasRootOwnedTranspilerSources(cwd: string, wallDirs: readonly string[])
   return false;
 }
 
-export function wireWallReferences(cwd: string, walls: readonly DirectoryWall[]): void {
+// The root config keeps its own program and only excludes the walls, which are
+// standalone configs it never references: a reference requires a composite wall,
+// whose fixed file list cannot follow an import out of its directory (TS6307),
+// and a root that owns files rejects references to projects that do not emit
+// (TS6310). `previousDirs` names the walls this rewrite replaces, so their
+// `exclude` entries go and every other entry, the user's, stays. The `references`
+// naming a wall and the empty `files` an earlier release wrote are dropped.
+export function wireWallRoot(
+  cwd: string,
+  previousDirs: readonly string[],
+  walls: readonly DirectoryWall[],
+): void {
   const rootPath = path.join(cwd, "tsconfig.json");
   const current = JSON.parse(readFileSync(rootPath, "utf8")) as RootTsconfig;
   const wallDirs = sortedWallDirs(walls);
-  const previousReferences = current.references ?? [];
-  const previousManaged = new Set(previousReferences.map((ref) => ref.path));
+  const managed = new Set([...previousDirs, ...wallDirs]);
   const nextExclude = [
-    ...new Set([
-      ...(current.exclude ?? []).filter((entry) => !previousManaged.has(entry)),
-      ...wallDirs,
-    ]),
+    ...new Set([...(current.exclude ?? []).filter((entry) => !managed.has(entry)), ...wallDirs]),
   ];
+  const references = (current.references ?? []).filter((ref) => !managed.has(ref.path));
   const next: RootTsconfig = { ...current };
 
-  if (wallDirs.length > 0) {
-    next.references = wallDirs.map((dir) => ({ path: dir }));
+  if (references.length > 0) {
+    next.references = references;
   } else {
     delete next.references;
   }
@@ -506,9 +512,7 @@ export function wireWallReferences(cwd: string, walls: readonly DirectoryWall[])
     delete next.exclude;
   }
 
-  if (wallDirs.length > 0 && !hasRootOwnedTranspilerSources(cwd, wallDirs)) {
-    next.files = [];
-  } else if (previousReferences.length > 0 && JSON.stringify(next.files) === JSON.stringify([])) {
+  if (JSON.stringify(next.files) === JSON.stringify([])) {
     delete next.files;
   }
 
@@ -565,9 +569,12 @@ export function writeDirectoryWallTsconfigs(
       // churned to JSON.stringify's layout on every build. The comparison is
       // against the *merged* object, not the managed entry alone, or a wall
       // whose mirrors are already in place is rewritten on every build.
+      // A `composite` key is the earlier release's wall shape: it fixes the
+      // program's file list, so the wall could not follow an import out of its
+      // directory. Its presence alone forces the rewrite that drops it.
       const alreadyNarrowed =
         current.extends === desired.extends &&
-        options.composite === desired.compilerOptions.composite &&
+        !Object.hasOwn(options, "composite") &&
         JSON.stringify(options.typeRoots) === JSON.stringify(desired.compilerOptions.typeRoots) &&
         JSON.stringify(options.types) === JSON.stringify(desired.compilerOptions.types) &&
         JSON.stringify(options.paths ?? null) === JSON.stringify(mergedPaths ?? null) &&
@@ -576,10 +583,10 @@ export function writeDirectoryWallTsconfigs(
       if (!alreadyNarrowed) {
         const nextOptions: Record<string, unknown> = {
           ...options,
-          composite: desired.compilerOptions.composite,
           typeRoots: desired.compilerOptions.typeRoots,
           types: desired.compilerOptions.types,
         };
+        delete nextOptions.composite;
         if (mergedPaths === undefined) {
           delete nextOptions.paths;
         } else {

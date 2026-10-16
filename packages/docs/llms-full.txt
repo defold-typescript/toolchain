@@ -2139,7 +2139,7 @@ so its entrypoint carries `editor.*` and none of the runtime namespaces. See
 
 Under that config `gui.*` and the universal namespaces type-check while `render.*` is a compile error. The default `@defold-typescript/types` keeps every namespace, so the full surface is what you get everywhere until you opt in to a wall.
 
-`init`, `build`, and `watch` never narrow the surface for you: they scaffold and build against whatever entrypoint your `tsconfig` names — the full `@defold-typescript/types` by default — and never add, remove, or prune a wall. Narrowing is **opt-in**, managed by the `wall` command: it narrows a single-kind source directory to its kind subpath with a composite `tsconfig.json` that `tsc -b --noEmit` enforces. See [Wall](wall.md) for the interactive menu, the flag forms, and the one constraint that makes a wall actually hold (import the lifecycle factory from the kind subpath, not the main entry).
+`init`, `build`, and `watch` never narrow the surface for you: they scaffold and build against whatever entrypoint your `tsconfig` names — the full `@defold-typescript/types` by default — and never add, remove, or prune a wall. Narrowing is **opt-in**, managed by the `wall` command: it narrows a single-kind source directory to its kind subpath with a standalone `tsconfig.json`, and `wall --check` type-checks every wall and the rest of the project. See [Wall](wall.md) for the interactive menu, the flag forms, and the one constraint that makes a wall actually hold (import the lifecycle factory from the kind subpath, not the main entry).
 
 ### Typed messages
 
@@ -6279,8 +6279,9 @@ at compile time, opt in with `wall`.
 
 #### What a wall is
 
-A wall is a composite `tsconfig.json` written into a single-kind source directory
-that narrows `compilerOptions.types` to that kind's subpath:
+A wall is a standalone `tsconfig.json` written into a single-kind source
+directory. It extends the root config and narrows `compilerOptions.types` to that
+kind's subpath:
 
 | Script kind      | `types` entrypoint                       | Namespaces                                                          |
 | ---------------- | ---------------------------------------- | ------------------------------------------------------------------- |
@@ -6319,10 +6320,11 @@ mapping a wall manages: mappings you declare in the wall's own `tsconfig.json`
 and in the root config keep resolving inside the walled directory, and dropping
 the pin removes only what walling added.
 
-The root `tsconfig.json` references each walled directory and excludes it from the
-root program, so `tsc -b --noEmit` builds every walled directory against only its
-narrowed surface — a `render.*` use inside a gui-walled directory becomes a compile
-error, while the rest of the project stays full-surface.
+The root `tsconfig.json` excludes each walled directory from its own program, and
+`wall --check` type-checks every wall against only its narrowed surface — a
+`render.*` use inside a gui-walled directory becomes a compile error, while the
+rest of the project stays full-surface. Your editor reads the same configs: a file
+inside a wall uses that wall's surface, and every other file uses the root's.
 
 A directory is **eligible** to be walled only when every `.ts` source **in its
 whole subtree** is one kind; a directory whose subtree mixes kinds cannot be
@@ -6342,9 +6344,21 @@ inject their namespaces there, letting `gui.*` type-check inside a `script` wall
 
 **Kind-neutral helpers.** A `.ts` with no lifecycle factory declares no kind, so
 it never makes a directory eligible and never blocks an ancestor from rolling up
-to a single kind. But a helper *inside* a walled subtree still compiles in that
-wall's narrowed program — so a helper shared across kinds belongs outside every
-walled subtree.
+to a single kind. A helper runs in the script that calls it, so `wall --check`
+checks it against each kind that imports it:
+
+- Put a helper shared across kinds outside every wall, for example in
+  `src/shared/`. A helper inside a wall belongs to that wall's kind alone.
+- Each wall that imports the helper checks it against that wall's kind. A render
+  wall importing a helper that calls `go.get_position` fails, with the error
+  reported in the helper under the render wall; a gui wall importing a helper
+  that calls `gui.set_text` passes.
+- A helper that no wall imports keeps the root's full surface.
+- Your editor checks the helper only against the root's full surface, so a
+  helper's wall errors show up only in `wall --check`.
+- A file in a wall's program that imports the main `@defold-typescript/types`
+  entry or another kind's subpath, a helper included, is reported: that import
+  loads more namespaces into the whole wall.
 
 #### Interactive
 
@@ -6378,7 +6392,22 @@ bunx @defold-typescript/cli wall --remove src/ui
 # List current and eligible walls (writes nothing)
 bunx @defold-typescript/cli wall --list
 bunx @defold-typescript/cli wall --list --json
+
+# Type-check every wall and the root program (writes nothing)
+bunx @defold-typescript/cli wall --check
+bunx @defold-typescript/cli wall --check --json
 ```
+
+`wall --check` builds one program per wall, plus the root program when any source
+lies outside the walls, and prints each error as
+`<program>: <file>:<line>:<column>: <message>`, where `<program>` is the wall
+directory, or `.` for the root. It exits 1 on any error. `--json` carries the same
+errors in `wallCheck.programs`, one entry per program with its `dir`, its `kind`
+(`full` for the root) and its `diagnostics` (`file`, `line`, `column`, `code` and
+`message`; `code` is `0` for a widening import). Walls written by an earlier
+release are composite projects the root references; `wall --check` reports them
+without checking anything, and re-running `wall <dirs>` on the same directories
+rewrites them.
 
 `--json` emits the resulting `directoryWalls` (and, for `--list`, the `eligible`
 set) for machine consumption. `--json` is machine-driven intent, so a bare

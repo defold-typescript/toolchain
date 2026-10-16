@@ -1,10 +1,11 @@
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import * as path from "node:path";
 import {
   type DirectoryWall,
+  PINNED_KIND_SUBPATHS,
   planSourceDirectoryWalls,
   resolveActivePinnedSurface,
-  wireWallReferences,
+  wireWallRoot,
   writeDirectoryWallTsconfigs,
 } from "./directory-walls";
 
@@ -12,23 +13,66 @@ function sortDirs<T extends { dir: string }>(items: T[]): T[] {
   return items.sort((a, b) => (a.dir < b.dir ? -1 : a.dir > b.dir ? 1 : 0));
 }
 
-// The directories the root tsconfig currently walls — its managed `references`
-// set, which `wireWallReferences` keeps in lockstep with the walls on disk.
-export function currentWalledDirs(cwd: string): string[] {
-  const rootPath = path.join(cwd, "tsconfig.json");
-  if (!existsSync(rootPath)) {
-    return [];
-  }
+export interface WallConfig {
+  readonly dir: string;
+  readonly kind: string;
+  // True when the wall still carries the earlier release's composite shape.
+  readonly composite: boolean;
+}
+
+function readWallConfig(cwd: string, dir: string): WallConfig | null {
+  let parsed: { extends?: unknown; compilerOptions?: { types?: unknown; composite?: unknown } };
   try {
-    const parsed = JSON.parse(readFileSync(rootPath, "utf8")) as {
-      references?: Array<{ path: string }>;
-    };
-    return (parsed.references ?? [])
-      .map((ref) => ref.path)
-      .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+    parsed = JSON.parse(readFileSync(path.join(cwd, dir, "tsconfig.json"), "utf8"));
   } catch {
+    return null;
+  }
+  const depth = dir.split("/").length;
+  if (parsed.extends !== `${"../".repeat(depth)}tsconfig.json`) {
+    return null;
+  }
+  const types = parsed.compilerOptions?.types;
+  if (!Array.isArray(types) || types.length !== 1 || typeof types[0] !== "string") {
+    return null;
+  }
+  const entry = types[0];
+  const kind = PINNED_KIND_SUBPATHS.find((candidate) => entry.endsWith(`/${candidate}`));
+  if (kind === undefined) {
+    return null;
+  }
+  return { dir, kind, composite: parsed.compilerOptions?.composite === true };
+}
+
+// The walls are the wall files on disk, with no second record to drift from: a
+// `<dir>/tsconfig.json` that extends the root config at its depth and narrows
+// `types` to one kind entry. A user config without a kind entry is never a wall,
+// so `--remove` never deletes it.
+export function currentWallConfigs(cwd: string): WallConfig[] {
+  if (!existsSync(path.join(cwd, "tsconfig.json"))) {
     return [];
   }
+  const walls: WallConfig[] = [];
+  const visit = (rel: string): void => {
+    for (const entry of readdirSync(path.join(cwd, rel), { withFileTypes: true })) {
+      if (!entry.isDirectory() || entry.name.startsWith(".") || entry.name === "node_modules") {
+        continue;
+      }
+      const dir = rel === "." ? entry.name : `${rel}/${entry.name}`;
+      if (existsSync(path.join(cwd, dir, "tsconfig.json"))) {
+        const wall = readWallConfig(cwd, dir);
+        if (wall !== null) {
+          walls.push(wall);
+        }
+      }
+      visit(dir);
+    }
+  };
+  visit(".");
+  return sortDirs(walls);
+}
+
+export function currentWalledDirs(cwd: string): string[] {
+  return currentWallConfigs(cwd).map((wall) => wall.dir);
 }
 
 // The single-kind source directories that can be walled, each with its detected
@@ -37,11 +81,11 @@ export function eligibleWalls(cwd: string): DirectoryWall[] {
   return planSourceDirectoryWalls(cwd);
 }
 
-// Reconcile the on-disk wall set to `desiredDirs`: write a composite tsconfig for
-// each desired wall, delete the child tsconfig of every currently-walled dir not
-// desired, and re-wire the root references/exclude/files to exactly the desired
-// set. Idempotent and total — the same engine backs `wall <dir...>`,
-// `wall --remove <dir...>`, and the interactive checkbox.
+// Reconcile the on-disk wall set to `desiredDirs`: write a standalone tsconfig
+// for each desired wall, delete the wall file of every currently-walled dir not
+// desired, and rewrite the root exclude to exactly the desired set. Idempotent
+// and total — the same engine backs `wall <dir...>`, `wall --remove <dir...>`,
+// and the interactive checkbox.
 export function applyWallSelection(cwd: string, desiredDirs: readonly string[]): DirectoryWall[] {
   const byDir = new Map(eligibleWalls(cwd).map((wall) => [wall.dir, wall]));
   const desired: DirectoryWall[] = [];
@@ -60,13 +104,14 @@ export function applyWallSelection(cwd: string, desiredDirs: readonly string[]):
     desiredSet.add(dir);
   }
 
-  for (const dir of currentWalledDirs(cwd)) {
+  const previous = currentWalledDirs(cwd);
+  for (const dir of previous) {
     if (!desiredSet.has(dir)) {
       rmSync(path.join(cwd, dir, "tsconfig.json"), { force: true });
     }
   }
 
   writeDirectoryWallTsconfigs(cwd, desired, resolveActivePinnedSurface(cwd));
-  wireWallReferences(cwd, desired);
+  wireWallRoot(cwd, previous, desired);
   return sortDirs(desired);
 }
