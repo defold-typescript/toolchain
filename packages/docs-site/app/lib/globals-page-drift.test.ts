@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import {
   loadApiSurfaceForVersion,
   loadCombinedSurface,
@@ -23,6 +24,17 @@ function committedVersionIds(): string[] {
   return versionsWithDiskFixtures(TYPES_DIR)
     .map((v) => v.id)
     .filter((id) => committed.has(id));
+}
+
+const globalsPages = new Map<string, ApiPage | undefined>();
+function globalsPageFor(id: string): ApiPage | undefined {
+  if (!globalsPages.has(id)) {
+    globalsPages.set(
+      id,
+      loadApiSurfaceForVersion(TYPES_DIR, id).find((p) => p.namespace === GLOBALS_NAMESPACE),
+    );
+  }
+  return globalsPages.get(id);
 }
 
 function defaultBareVersion(): string {
@@ -48,8 +60,28 @@ describe("globals page drift guard", () => {
     const ids = committedVersionIds();
     expect(ids.length).toBeGreaterThan(0);
     for (const id of ids) {
-      const namespaces = loadApiSurfaceForVersion(TYPES_DIR, id).map((p) => p.namespace);
-      expect(namespaces).toContain(GLOBALS_NAMESPACE);
+      expect(globalsPageFor(id)?.namespace).toBe(GLOBALS_NAMESPACE);
     }
+  });
+
+  test("every committed version renders hash taking a string or a Hash", () => {
+    const ids = committedVersionIds();
+    expect(ids.length).toBeGreaterThan(0);
+    const offenders: string[] = [];
+    for (const id of ids) {
+      const page = globalsPageFor(id);
+      const types = new Set<string>();
+      if (page) {
+        for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
+          if (symbol.kind !== "function" || symbol.name !== "hash") continue;
+          for (const type of symbol.parameters[0]?.types ?? []) types.add(type);
+        }
+      }
+      if (types.size === 0) offenders.push(`${id}: no hash row`);
+      else if (!types.has("string") || !types.has("Hash")) {
+        offenders.push(`${id}: ${[...types].join(" | ")}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });
