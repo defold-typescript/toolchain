@@ -102,6 +102,8 @@ describe("createTranspileSession", () => {
     expect(sessionResult.lua).toEqual(projectResult.lua);
     expect(Object.keys(sessionResult.hsmModules ?? {})).toEqual(["index"]);
     expect(sessionResult.hsmModules).toEqual(projectResult.hsmModules);
+    expect(Object.keys(sessionResult.hsmSourceMaps ?? {})).toEqual(["index"]);
+    expect(sessionResult.hsmSourceMaps).toEqual(projectResult.hsmSourceMaps);
   });
 
   test("surfaces the lualib bundle on the incremental update path", () => {

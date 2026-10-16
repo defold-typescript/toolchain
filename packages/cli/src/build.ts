@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
   createTranspileSession,
+  requireHsmSourceDir,
   rewriteEmittedRequires,
   type SceneComponentIndex,
   type SceneObjectComponents,
@@ -17,6 +18,7 @@ import {
   pruneAlternativeOutputs,
   pruneLegacyRuntimeOutputs,
   readBuildConfig,
+  retargetHsmSourceMap,
   retargetSourceRoot,
   TIMERS_RUNTIME_LABEL,
   throwIfFailures,
@@ -290,12 +292,17 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     writeScriptFile(cwd, runtimeRel, timersRuntime, undefined);
     written.push(runtimeRel);
   }
-  // No map: the `.ts` it would point at is not in the user's project, so a
-  // trace names the generated Lua instead.
+  // Each map points at the hsm `.ts` the module was compiled from, so a debugger
+  // steps through the library's TypeScript.
   for (const [name, lua] of Object.entries(hsmLua)) {
     const moduleRel = hsmRels[name];
     if (moduleRel !== undefined) {
-      writeScriptFile(cwd, moduleRel, lua, undefined);
+      writeScriptFile(
+        cwd,
+        moduleRel,
+        lua,
+        retargetHsmSourceMap(cwd, moduleRel, result.hsmSourceMaps?.[name], requireHsmSourceDir()),
+      );
       written.push(moduleRel);
     }
   }

@@ -121,10 +121,25 @@ describe("hsm as a built-in import", () => {
     expect(result.lualib).toBeUndefined();
   });
 
+  test("each selected module carries a v3 map naming its own source, and only those", () => {
+    const result = transpileProject({ files: { "door.ts": MACHINE, "events.ts": BRIDGE } });
+    expect(result.diagnostics).toEqual([]);
+    const names = Object.keys(result.hsmModules ?? {});
+    expect(names).toEqual(["defold", "index"]);
+    expect(Object.keys(result.hsmSourceMaps ?? {}).sort()).toEqual(names);
+    for (const name of names) {
+      const map = JSON.parse(result.hsmSourceMaps?.[name] ?? "");
+      expect(map.version).toBe(3);
+      expect(map.sources).toEqual([`${name}.ts`]);
+      expect(typeof map.mappings).toBe("string");
+    }
+  });
+
   test("a program with no hsm import selects nothing", () => {
     const result = transpileProject({ files: { "plain.ts": "export const n = 1;\n" } });
     expect(result.diagnostics).toEqual([]);
     expect(result.hsmModules).toBeUndefined();
+    expect(result.hsmSourceMaps).toBeUndefined();
   });
 
   test("a type-only import selects nothing", () => {
