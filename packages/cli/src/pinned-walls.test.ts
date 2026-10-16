@@ -7,7 +7,7 @@ import {
   materializedSurfaceKinds,
   planSourceDirectoryWalls,
   resolveActivePinnedSurface,
-  wireWallReferences,
+  wireWallRoot,
   writeDirectoryWallTsconfigs,
 } from "./directory-walls";
 import {
@@ -17,6 +17,7 @@ import {
   surfaceDirName,
 } from "./materialize";
 import { multiKindRefDocResolveOpts, multiKindRefDocTarget } from "./ref-doc-test-fixture";
+import { runWallCheck } from "./wall-check";
 
 // The materialized surface directory carries the generating toolchain version;
 // these tests defend other behavior, so they derive the name from production
@@ -26,7 +27,6 @@ function surfaceDir(surfaceId: string): string {
 }
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
-const BIN_DIR = path.join(REPO_ROOT, "node_modules", ".bin");
 const TYPES_PKG = path.join(REPO_ROOT, "packages", "types");
 
 let cwd: string;
@@ -46,7 +46,7 @@ function touch(rel: string, contents = ""): void {
 }
 
 // Symlink the materialized ref-doc surface as the consumer-side `@defold-typescript/types`
-// entrypoint. Distinct from `composite-walls.test.ts`'s installed-package symlink:
+// entrypoint. Distinct from `wall-check.test.ts`'s installed-package symlink:
 // this project has no installed package — the materialized surface itself plays
 // that role via its `exports` map (`./gui-script` -> `./kinds/gui-script.d.ts`).
 function linkMaterializedSurface(): void {
@@ -109,19 +109,16 @@ function scaffoldSources(guiBody: string, renderBody: string): void {
   );
 }
 
-// `force` defeats the composite build's up-to-date cache, which otherwise
-// survives an edit to a wall's own `tsconfig.json` and replays the prior result.
-function typecheckBuild(cwd: string, force = false): { code: number; output: string } {
-  const proc = Bun.spawnSync(
-    [path.join(BIN_DIR, "tsc"), "-b", "--noEmit", ...(force ? ["--force"] : [])],
-    {
-      cwd,
-      stdout: "pipe",
-      stderr: "pipe",
-      timeout: 60_000,
-    },
+// Each check builds fresh in-process programs with no build cache, so an edit to
+// a wall's own `tsconfig.json` is read by the next check. Diagnostics are laid
+// out as `error TS<code>: <message>` so the assertions below read like tsc output.
+function checkWalls(cwd: string): { code: number; output: string } {
+  const lines = runWallCheck(cwd).programs.flatMap((program) =>
+    program.diagnostics.map(
+      (d) => `${program.dir}: ${d.file}:${d.line}:${d.column} - error TS${d.code}: ${d.message}`,
+    ),
   );
-  return { code: proc.exitCode, output: `${proc.stdout.toString()}${proc.stderr.toString()}` };
+  return { code: lines.length > 0 ? 1 : 0, output: lines.join("\n") };
 }
 
 async function materializPinnedMultiKind(): Promise<void> {
@@ -139,8 +136,8 @@ async function materializPinnedMultiKind(): Promise<void> {
   rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
 }
 
-describe("composite directory walls under a pinned ref-doc surface", () => {
-  test("tsc -b accepts a gui wall using the per-kind subpath factory and gui namespace", async () => {
+describe("directory walls under a pinned ref-doc surface", () => {
+  test("wall --check accepts a gui wall using the per-kind subpath factory and gui namespace", async () => {
     // Order matters: write the user-side root tsconfig FIRST so
     // `ensureMaterializedReference` (called inside `materializPinnedMultiKind`)
     // repoints it with `typeRoots: [".defold-types"]` and `types: ["defold-1.9.8"]`.
@@ -157,18 +154,16 @@ describe("composite directory walls under a pinned ref-doc surface", () => {
 
     const walls = planSourceDirectoryWalls(cwd);
     writeDirectoryWallTsconfigs(cwd, walls, pinned);
-    wireWallReferences(cwd, walls);
+    wireWallRoot(cwd, [], walls);
 
-    const { code, output } = typecheckBuild(cwd);
+    const { code, output } = checkWalls(cwd);
     if (code !== 0) {
-      throw new Error(
-        `expected clean composite type-check under a pinned surface, got:\n${output}`,
-      );
+      throw new Error(`expected a clean wall check under a pinned surface, got:\n${output}`);
     }
     expect(code).toBe(0);
   });
 
-  test("tsc -b rejects render namespace access inside a gui wall under a pinned surface", async () => {
+  test("wall --check rejects render namespace access inside a gui wall under a pinned surface", async () => {
     writeRootTsconfig();
     await materializPinnedMultiKind();
     linkMaterializedSurface();
@@ -179,9 +174,9 @@ describe("composite directory walls under a pinned ref-doc surface", () => {
 
     const walls = planSourceDirectoryWalls(cwd);
     writeDirectoryWallTsconfigs(cwd, walls, pinned);
-    wireWallReferences(cwd, walls);
+    wireWallRoot(cwd, [], walls);
 
-    const { code, output } = typecheckBuild(cwd);
+    const { code, output } = checkWalls(cwd);
     expect(code).not.toBe(0);
     expect(output).toContain("render");
   });
@@ -190,7 +185,7 @@ describe("composite directory walls under a pinned ref-doc surface", () => {
 // A committed target goes through `materializeApiSurface`, and only its editor
 // kind is ever carried: `regen` emits only `only`-kinds per versioned target, so
 // a runtime sibling wall must keep the installed entrypoint.
-describe("composite directory walls under a pinned committed surface", () => {
+describe("directory walls under a pinned committed surface", () => {
   const COMMITTED = "defold-1.13.0";
 
   function linkTypesPackage(): void {
@@ -249,7 +244,7 @@ describe("composite directory walls under a pinned committed surface", () => {
     const pinned = resolveActivePinnedSurface(cwd);
     const walls = planSourceDirectoryWalls(cwd);
     writeDirectoryWallTsconfigs(cwd, walls, pinned);
-    wireWallReferences(cwd, walls);
+    wireWallRoot(cwd, [], walls);
     return { pinned, walls };
   }
 
@@ -287,13 +282,13 @@ describe("composite directory walls under a pinned committed surface", () => {
     });
   });
 
-  // A `.d.ts` alias target is required: a `.ts` one outside the wall directory
-  // draws TS6307 from the composite program, an unrelated constraint.
+  // A `.ts` alias target outside the wall directory joins the wall's program, the
+  // same as a helper reached by a relative import.
   test("a root import alias still resolves inside a walled directory, pinned and un-pinned", () => {
     writeRootTsconfig({ paths: { "@shared/*": ["./shared/*"] } });
     materializeCommitted();
     linkTypesPackage();
-    touch("shared/labels.d.ts", "export declare const BUNDLE_LABEL: string;\n");
+    touch("shared/labels.ts", 'export const BUNDLE_LABEL = "bundle";\n');
     touch("src/game/logic.script");
     touch(
       "src/game/logic.ts",
@@ -322,28 +317,28 @@ describe("composite directory walls under a pinned committed surface", () => {
 
     const { pinned, walls } = wallUnderPin();
     expect(pinned).toBe(surfaceDir(COMMITTED));
-    const pinnedBuild = typecheckBuild(cwd);
+    const pinnedBuild = checkWalls(cwd);
     if (pinnedBuild.code !== 0) {
       throw new Error(`expected the root alias to resolve inside a pinned wall, got:
 ${pinnedBuild.output}`);
     }
 
     writeDirectoryWallTsconfigs(cwd, walls, null);
-    const unpinnedBuild = typecheckBuild(cwd);
+    const unpinnedBuild = checkWalls(cwd);
     if (unpinnedBuild.code !== 0) {
       throw new Error(`expected the root alias to keep resolving after un-pinning, got:
 ${unpinnedBuild.output}`);
     }
   });
 
-  test("tsc -b accepts an editor wall reading the carried editor VM declarations", () => {
+  test("wall --check accepts an editor wall reading the carried editor VM declarations", () => {
     writeRootTsconfig();
     materializeCommitted();
     linkTypesPackage();
     scaffoldEditorAndRuntime();
     wallUnderPin();
 
-    const { code, output } = typecheckBuild(cwd);
+    const { code, output } = checkWalls(cwd);
     if (code !== 0) {
       throw new Error(
         `expected clean type-check under a pinned committed surface, got:\n${output}`,
@@ -382,7 +377,7 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
     const pinned = resolveActivePinnedSurface(cwd);
     const walls = planSourceDirectoryWalls(cwd);
     writeDirectoryWallTsconfigs(cwd, walls, pinned);
-    wireWallReferences(cwd, walls);
+    wireWallRoot(cwd, [], walls);
     return pinned;
   }
 
@@ -395,7 +390,7 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
   // TS reports the missing property as TS2339, or TS2551 when it can suggest a
   // near-miss from the pinned surface; both are the same rejection.
   function expectOnlyPinnedSurface(declaredByPin: string, installedOnly: string): void {
-    const { code, output } = typecheckBuild(cwd);
+    const { code, output } = checkWalls(cwd);
     expect(code).not.toBe(0);
     expect(output).toMatch(
       new RegExp(`error TS2(339|551): Property '${installedOnly}' does not exist`),
@@ -433,7 +428,7 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
       delete config.compilerOptions.paths;
     }
     writeFileSync(configPath, JSON.stringify(config, null, 2));
-    return typecheckBuild(cwd, true);
+    return checkWalls(cwd);
   }
 
   // Without this, `expectOnlyPinnedSurface` passes just as well when no second
@@ -529,7 +524,7 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
     );
 
     expect(wallUnderPin()).toBe(surfaceDir(COMMITTED));
-    const { code, output } = typecheckBuild(cwd);
+    const { code, output } = checkWalls(cwd);
     expect(code).not.toBe(0);
     expect(output).toMatch(/error TS2304: Cannot find name 'image'/);
 
