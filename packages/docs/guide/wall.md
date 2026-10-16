@@ -104,8 +104,9 @@ checks it against each kind that imports it:
 - Your editor checks the helper only against the root's full surface, so a
   helper's wall errors show up only in `wall --check`.
 - A file in a wall's program that imports the main `@defold-typescript/types`
-  entry or another kind's subpath, a helper included, is reported: that import
-  loads more namespaces into the whole wall.
+  entry or another kind's subpath, or names one in a `/// <reference types>`
+  directive, a helper included, is reported: that import or directive loads more
+  namespaces into the whole wall.
 
 ## Interactive
 
@@ -151,7 +152,8 @@ lies outside the walls, and prints each error as
 directory, or `.` for the root. It exits 1 on any error. `--json` carries the same
 errors in `wallCheck.programs`, one entry per program with its `dir`, its `kind`
 (`full` for the root) and its `diagnostics` (`file`, `line`, `column`, `code` and
-`message`; `code` is `0` for a widening import). Walls written by an earlier
+`message`; `code` is `0` for a widening import or `/// <reference types>`
+directive). Walls written by an earlier
 release are composite projects the root references; `wall --check` reports them
 without checking anything, and re-running `wall <dirs>` on the same directories
 rewrites them.
