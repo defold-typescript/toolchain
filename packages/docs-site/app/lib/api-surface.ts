@@ -482,6 +482,13 @@ export interface ApiPage {
    */
   authoritativeArms?: ReadonlyMap<string, readonly string[]>;
   /**
+   * The ref-doc element each arm of a declaration several elements share was
+   * emitted from (the Box2D backend forms of a `b2d.world` query), arm 0 first,
+   * keyed like {@link authoritativeArms}. Present only on Combined pages; an arm
+   * with an element renders that element's prose and tables.
+   */
+  authoritativeArmElements?: ReadonlyMap<string, readonly ApiFunction[]>;
+  /**
    * The versions each authored overload arm exists in, keyed by FQN and then by
    * the arm's text. Present only on Combined pages, where the store renders
    * every arm whatever the version; a store row whose arm some version lacks
@@ -1360,6 +1367,7 @@ type ApiModuleMarkdownPage = Pick<
   | "authoritativeSignatures"
   | "authoritativeSlotTypes"
   | "authoritativeArms"
+  | "authoritativeArmElements"
   | "authoredArmSpans"
 > &
   Partial<Pick<ApiPage, "signatures">>;
@@ -1453,12 +1461,14 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
     // The page's own rows own the signature precedence (authoritative, authored
     // override, token render); each declaration heads the rows it renders, so an
     // override-collapsed later entry contributes its prose under the rows above.
+    // Rows that share an identity (the arms of a declaration several ref-doc
+    // elements share) all list under it.
     const rowSignatures = new Map<string, string[]>();
     let current: string[] | undefined;
     for (const symbol of apiModuleSymbols(page, translations, page.signatures)) {
       if (symbol.kind !== "function") continue;
       if (symbol.declarationIdentity !== undefined) {
-        current = [];
+        current = rowSignatures.get(symbol.declarationIdentity) ?? [];
         rowSignatures.set(symbol.declarationIdentity, current);
       }
       current?.push(symbol.signature);
@@ -1644,6 +1654,7 @@ export function apiModuleSymbols(
     | "authoritativeSignatures"
     | "authoritativeSlotTypes"
     | "authoritativeArms"
+    | "authoritativeArmElements"
     | "authoredArmSpans"
   >,
   translations: TranslationStore = {},
@@ -1843,12 +1854,39 @@ export function apiModuleSymbols(
     // A generated declaration's further arms render as their own rows: shared
     // prose, the declaration's own availability, and no tables unless a curated
     // first-slot alternative names the arm's leading arguments. The arguments
-    // after them are the primary's, so they keep its emitted slot types.
+    // after them are the primary's, so they keep its emitted slot types. An arm
+    // emitted from a ref-doc element of its own renders that element's prose,
+    // tables and example. The artifact keeps only the slots every arm of such a
+    // declaration shares, so the arm's tables take them as the primary's do.
     if (ov === null && authSig !== undefined) {
       const alternative = firstSlotAlternativeOf(fn, m.namespace);
       const leading = (alternative?.parameters.length ?? 0) - (fn.parameters.length - 1);
       const alternativeHead = `${fn.name}(${alternative?.parameters[0]?.name}:`;
-      for (const signature of page.authoritativeArms?.get(identity) ?? []) {
+      const armElements = page.authoritativeArmElements?.get(identity);
+      for (const [index, signature] of (page.authoritativeArms?.get(identity) ?? []).entries()) {
+        const element = armElements?.[index + 1];
+        if (element !== undefined) {
+          const project = (list: ApiParameter[], kind: "param" | "return") =>
+            projectParams(list, mapType, primarySlots, kind, fn.name, translations, libraryPage);
+          const example = exampleMarkdownFor(element, translations);
+          const arm: ApiSymbol = {
+            kind: "function",
+            name: fn.name,
+            signature,
+            declarationIdentity: identity,
+            docMarkdown: proseDocText(element.description || element.brief, fn.name, translations),
+            parameters: project(element.parameters, "param"),
+            returnValues: project(element.returnValues, "return"),
+            ...(example ? { exampleMarkdown: example } : {}),
+            ...(av ? { availability: av } : {}),
+            ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
+            ...(fn.global ? { global: true } : {}),
+            ...(fn.docSource ? { docSource: fn.docSource } : {}),
+          };
+          symbols.push(arm);
+          if (primarySlots !== undefined) artifactBacked.add(arm);
+          continue;
+        }
         const armAlternative = signature.startsWith(alternativeHead) ? alternative : null;
         symbols.push({
           kind: "function",
