@@ -2,7 +2,6 @@
 // each with the reason: the call ends or corrupts the run, reaches outside the
 // machine, needs a platform the desktop engine is not, or takes a handle
 // nothing can produce.
-const LIFECYCLE = "a lifecycle hook the script defines, not an engine function";
 const NO_BULLET3D = "the probe project runs 2D physics, so no bullet3d world or object exists";
 const PROPERTY_DEFAULT =
   "a go.property default bob reads at build time; the runtime does not define it";
@@ -40,20 +39,6 @@ export const PROBE_DENYLIST: Readonly<Record<string, string>> = {
   "resource.render_target": PROPERTY_DEFAULT,
   "resource.texture": PROPERTY_DEFAULT,
   "resource.tile_source": PROPERTY_DEFAULT,
-  "go.init": LIFECYCLE,
-  "go.final": LIFECYCLE,
-  "go.update": LIFECYCLE,
-  "go.fixed_update": LIFECYCLE,
-  "go.late_update": LIFECYCLE,
-  "go.on_input": LIFECYCLE,
-  "go.on_message": LIFECYCLE,
-  "go.on_reload": LIFECYCLE,
-  "gui.init": LIFECYCLE,
-  "gui.final": LIFECYCLE,
-  "gui.update": LIFECYCLE,
-  "gui.on_input": LIFECYCLE,
-  "gui.on_message": LIFECYCLE,
-  "gui.on_reload": LIFECYCLE,
 };
 
 // Catalog members the probe never reads or writes, keyed `<ns>.<member>`.

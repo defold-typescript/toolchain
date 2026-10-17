@@ -149,7 +149,9 @@ export function scanIndexSlots(
   const module = parseDefoldApiDoc(doc);
   const hits: IndexSlotHit[] = [];
   const structs = structIndex(module.structs);
-  for (const fn of module.functions) scanFunction(fn, hits, structs);
+  for (const fn of [...module.functions, ...(module.scriptHooks ?? [])]) {
+    scanFunction(fn, hits, structs);
+  }
   for (const typedef of module.typedefs) {
     for (const fn of typedef.functions ?? []) scanFunction(fn, hits, structs);
   }
@@ -290,7 +292,7 @@ export function refDocSlotKeys(doc: unknown): string[] {
     for (const slot of fn.parameters) addSlot(`${fn.name}:param:${slot.name}`, slot, new Set());
     for (const slot of fn.returnValues) addSlot(`${fn.name}:return:${slot.name}`, slot, new Set());
   };
-  for (const fn of module.functions) addFunction(fn);
+  for (const fn of [...module.functions, ...(module.scriptHooks ?? [])]) addFunction(fn);
   for (const typedef of module.typedefs) for (const fn of typedef.functions ?? []) addFunction(fn);
   return keys;
 }

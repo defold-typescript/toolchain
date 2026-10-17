@@ -3,9 +3,15 @@ import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import { parseDefoldApiDoc } from "./api-doc";
 import { SCRIPT_HOOK_NAMES } from "./lifecycle";
 
+// A hook the parser does not know stays a bare-named function, so the set reads
+// both lists: an upstream hook missing from SCRIPT_HOOK_NAMES still shows here.
 function deriveScriptCallbacks(): Set<string> {
   const module = parseDefoldApiDoc(goDoc);
-  return new Set(module.functions.map((fn) => fn.name).filter((name) => !name.includes(".")));
+  return new Set(
+    [...(module.scriptHooks ?? []), ...module.functions]
+      .map((fn) => fn.name)
+      .filter((name) => !name.includes(".")),
+  );
 }
 
 describe("lifecycle hook drift guard", () => {

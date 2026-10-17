@@ -186,14 +186,12 @@ export const ARBITRARY_TABLE_SLOTS = new Set([
   // runtime-owned passthrough: the table is filled by user code at runtime, never
   // by Defold's API contract. factory.create/collectionfactory.create `properties`
   // are spawn-time overrides keyed by the spawned object's own script-property
-  // names; bare `on_message`'s receive `message` is the pre-hashed, user-routed
-  // payload (mitigated for authored code by isMessage/onMessage). No static shape
-  // exists, so `Record<string | number, unknown>` is faithful, not a loss.
-  // collectionfactory.create curates the instance-id layer of `properties` as a
-  // mapping; each per-instance property table stays that faithful `Record`.
+  // names. No static shape exists, so `Record<string | number, unknown>` is
+  // faithful, not a loss. collectionfactory.create curates the instance-id layer
+  // of `properties` as a mapping; each per-instance property table stays that
+  // faithful `Record`.
   "factory.create",
   "collectionfactory.create",
-  "on_message",
   // engine-formatted blob: the engine produces the value at runtime and no
   // field list is documented, so the whole-slot `Record` is faithful, not a
   // loss. crash.get_backtrace is "table containing the backtrace",
@@ -2426,62 +2424,6 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       kind: "mapping",
       key: "graphics.BUFFER_TYPE_COLOR0_BIT | graphics.BUFFER_TYPE_DEPTH_BIT | graphics.BUFFER_TYPE_STENCIL_BIT",
       value: "number | vector4",
-    },
-  ],
-  // go.on_input and gui.on_input share the same well-known InputAction shape
-  // (the on_input function description lists the well-known fields: value,
-  // pressed, released, repeated, x/y/screen_x/screen_y/dx/dy/screen_dx/screen_dy,
-  // plus gamepad/touch/text multi-touch fields). The doc markup carries no
-  // field list of its own, so the shape is curated verbatim from the prose.
-  // Param-side optional fields: each input kind (mouse/key/text/gamepad) sets a
-  // different subset, so the call site always sees an `?` on every field.
-  // `touch` stays `table` (the nested multi-touch table has no machine-readable
-  // field list; mirrors the render.set_render_target.transient recursive case).
-  // The element is the bare `on_input` script hook (no namespace prefix), the
-  // same form the `on_message` arbitrary-table entry uses. The doc carries a
-  // well-formed touch input table, so `touch` is curated as a nested
-  // array-of-touch-records (the field has its own `<table>` listing id,
-  // pressed, released, tap_count, x, y, dx, dy, acc_x/y/z).
-  [
-    "on_input:param:action",
-    {
-      kind: "object",
-      fields: [
-        { name: "value", types: ["number"], optional: true },
-        { name: "pressed", types: ["boolean"], optional: true },
-        { name: "released", types: ["boolean"], optional: true },
-        { name: "repeated", types: ["boolean"], optional: true },
-        { name: "x", types: ["number"], optional: true },
-        { name: "y", types: ["number"], optional: true },
-        { name: "screen_x", types: ["number"], optional: true },
-        { name: "screen_y", types: ["number"], optional: true },
-        { name: "dx", types: ["number"], optional: true },
-        { name: "dy", types: ["number"], optional: true },
-        { name: "screen_dx", types: ["number"], optional: true },
-        { name: "screen_dy", types: ["number"], optional: true },
-        { name: "gamepad", types: ["number"], optional: true },
-        { name: "gamepad_axis", types: ["vector3"], optional: true },
-        {
-          name: "touch",
-          types: ["table"],
-          optional: true,
-          isList: true,
-          fields: [
-            { name: "id", types: ["number"] },
-            { name: "pressed", types: ["boolean"] },
-            { name: "released", types: ["boolean"] },
-            { name: "tap_count", types: ["number"] },
-            { name: "x", types: ["number"] },
-            { name: "y", types: ["number"] },
-            { name: "dx", types: ["number"] },
-            { name: "dy", types: ["number"] },
-            { name: "acc_x", types: ["number"] },
-            { name: "acc_y", types: ["number"] },
-            { name: "acc_z", types: ["number"] },
-          ],
-        },
-        { name: "text", types: ["string"], optional: true },
-      ],
     },
   ],
   // physics.create_joint and physics.set_joint_properties both declare

@@ -72,6 +72,16 @@ describe("scanIndexSlots over the defold-1.13.1 ref-doc", () => {
   });
 });
 
+describe("scanIndexSlots over the lifecycle hooks", () => {
+  test("reads the hooks the parser files apart from module functions", () => {
+    const doc = JSON.parse(
+      readFileSync(join(import.meta.dir, "..", "fixtures", "defold-1.14.0", "go_doc.json"), "utf8"),
+    );
+    const keys = scanIndexSlots(doc, "go").map((hit) => hit.key);
+    expect(keys).toContain("on_input:param:action:gamepad");
+  });
+});
+
 describe("scanIndexSlots over a ref-doc STRUCT", () => {
   const label = JSON.parse(
     readFileSync(join(FIXTURES, "..", "defold-1.13.2", "label_doc.json"), "utf8"),

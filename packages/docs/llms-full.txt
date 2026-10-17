@@ -1792,6 +1792,8 @@ export default defineGuiScript<MenuSelf>({
 
 With an explicit type argument (`defineGuiScript<MenuSelf>`), `init`'s return is checked against `MenuSelf` rather than inferred from it. That single argument is one of three routes to a typed `self`, and it is the one that stops working the moment you also declare `properties` — see [Three ways to type `self`](#three-ways-to-type-self) for the other two and for what inference costs you.
 
+The hooks are members of the table `defineScript`, `defineGuiScript` and `defineRenderScript` take, not functions you call. The Defold reference lists them under `go` and `gui`, but the engine binds no `go.init` or `gui.update`, so neither is declared; to type a standalone handler, use `ScriptHooks` or `InputAction` rather than `typeof go.on_input`.
+
 > [!NOTE]
 > The samples import `Hash` for the sake of being copy-pasteable, but the engine value types — `Hash`, `Vector3`, `Vector4`, `Quaternion`, and the rest — are also declared globally, so a source file that imports nothing can still annotate with them. There is no need to recover one as `ReturnType<typeof hash>`.
 
@@ -10154,6 +10156,13 @@ The engine reference re-documents these symbols, so the API catalog records a ne
 signature, but the TypeScript declarations you compile against are unchanged. No
 action is needed.
 
+The reference also re-documents two [lifecycle hooks](./script-lifecycle.md),
+which are typed as members of the `defineScript` and `defineGuiScript` tables
+rather than as `go` or `gui` functions. `on_input` documents `action_id` as `nil`
+for pointer movement, which the typed hook already declares `Hash | undefined`,
+and the GUI `on_message` documents its `sender` argument, which the typed hook
+already passes.
+
 ###### b2d.body.get_contact_list
 
 The 1.13.2 reference no longer documents `b2d.body.get_contact_list`. The typed
@@ -10180,20 +10189,6 @@ are unchanged.
 
 The reference lists `string` among the default values `go.property` accepts. The
 typed overloads are unchanged.
-
-###### go.on_input
-
-The reference documents `action_id` as `nil` for pointer movement. The typed hook
-already declares it `Hash | undefined`.
-
-###### gui.on_input
-
-Same change as `go.on_input`.
-
-###### gui.on_message
-
-The reference now documents the `sender` argument of the GUI hook. The typed hook
-already passes it.
 
 ###### render.render_target
 
@@ -12708,8 +12703,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### go
 
-- function final(self: unknown): void;
-- function fixed_update(self: unknown, dt: number): void;
 - function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number): void;
 - function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void;
 - function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;
@@ -12754,13 +12747,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function update_world_transform(id?: SceneGameObjectAddress | Hash | Url): void;
 - function world_to_local_position(position: Vector3, url?: SceneGameObjectAddress | Hash | Url): Vector3;
 - function world_to_local_transform(transformation: Matrix4, url?: SceneGameObjectAddress | Hash | Url): Matrix4;
-- function init(self: unknown): void;
-- function late_update(self: unknown, dt: number): void;
-- function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined; [through 1.13.1] [signature transition]
-- function on_input(self: unknown, action_id: Hash | undefined, action: go.on_input.action): boolean | undefined; [since 1.13.2] [signature transition]
-- function on_message(self: unknown, message_id: Hash, message: LuaMap<AnyNotNil, unknown> | Record<string, unknown>, sender: Url): void;
-- function on_reload(self: unknown): void;
-- function update(self: unknown, dt: number): void;
 - go.EASING_INBACK: number & { readonly __brand: "go.EASING_INBACK" }
 - go.EASING_INBOUNCE: number & { readonly __brand: "go.EASING_INBOUNCE" }
 - go.EASING_INCIRC: number & { readonly __brand: "go.EASING_INCIRC" }
@@ -13003,7 +12989,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### gui
 
-- function final(self: unknown): void;
 - gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void
 - gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.Playback): void
 - function cancel_animations(node: Opaque<"node">, property?: string | Hash | gui.PROP): void;
@@ -13141,13 +13126,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function show_keyboard(type: gui.KEYBOARD_TYPE, autoclose: boolean): void;
 - function stop_particlefx(node: Opaque<"node">): void;
 - function stop_particlefx(node: Opaque<"node">, options: particlefx.stop_options): void;
-- function init(self: unknown): void;
-- function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined; [through 1.13.1] [signature transition]
-- function on_input(self: unknown, action_id: Hash | undefined, action: go.on_input.action): boolean | undefined; [since 1.13.2] [signature transition]
-- function on_message(self: Opaque<"userdata">, message_id: Hash, message: Record<string | number, unknown>): void; [through 1.13.1] [signature transition]
-- function on_message(self: unknown, message_id: Hash, message: LuaMap<AnyNotNil, unknown> | Record<string, unknown>, sender: Url): void; [since 1.13.2] [signature transition]
-- function on_reload(self: unknown): void;
-- function update(self: unknown, dt: number): void;
 - gui.ADJUST_FIT: number & { readonly __brand: "gui.ADJUST_FIT" }
 - gui.ADJUST_STRETCH: number & { readonly __brand: "gui.ADJUST_STRETCH" }
 - gui.ADJUST_ZOOM: number & { readonly __brand: "gui.ADJUST_ZOOM" }

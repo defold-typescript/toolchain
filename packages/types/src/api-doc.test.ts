@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import vmathDoc from "../fixtures/vmath_doc.json" with { type: "json" };
 import { type ApiFunction, type ApiModule, parseDefoldApiDoc } from "./api-doc";
+import { SCRIPT_HOOK_NAMES } from "./lifecycle";
 
 describe("parseDefoldApiDoc", () => {
   test("parses the vmath fixture and exposes the namespace", () => {
@@ -685,5 +686,68 @@ describe("parseDefoldApiDoc STRUCT and TYPEDEF elements", () => {
       elements: [{ type: "CONSTANT", name: "ns.A" }],
     });
     expect(module.structs).toEqual([]);
+  });
+});
+
+describe("parseDefoldApiDoc lifecycle hooks", () => {
+  const fn = (name: string, parameters: unknown[] = []) => ({
+    type: "FUNCTION",
+    name,
+    brief: `${name} brief`,
+    description: "",
+    parameters,
+    returnvalues: [],
+  });
+  const names = (fns: readonly ApiFunction[] | undefined) => (fns ?? []).map((f) => f.name);
+
+  test("a bare hook name under go is a hook entry, not a module function", () => {
+    const module = parseDefoldApiDoc({
+      info: { namespace: "go" },
+      elements: [fn("init"), fn("go.get_position")],
+    });
+    expect(names(module.functions)).toEqual(["go.get_position"]);
+    expect(names(module.scriptHooks)).toEqual(["init"]);
+  });
+
+  test("every lifecycle hook name under go is a hook entry", () => {
+    const module = parseDefoldApiDoc({
+      info: { namespace: "go" },
+      elements: SCRIPT_HOOK_NAMES.map((name) => fn(name)),
+    });
+    expect(module.functions).toEqual([]);
+    expect(names(module.scriptHooks)).toEqual([...SCRIPT_HOOK_NAMES]);
+  });
+
+  test("a bare hook name under gui is a hook entry with its parameters parsed", () => {
+    const module = parseDefoldApiDoc({
+      info: { namespace: "gui" },
+      elements: [
+        fn("on_input", [
+          { name: "self", doc: "script state", types: ["userdata"], is_optional: "False" },
+          { name: "action_id", doc: "input action id", types: ["hash"], is_optional: "False" },
+          { name: "action", doc: "input data", types: ["table"], is_optional: "False" },
+        ]),
+      ],
+    });
+    expect(module.functions).toEqual([]);
+    expect(module.scriptHooks?.map((hook) => hook.parameters.map((p) => p.name))).toEqual([
+      ["self", "action_id", "action"],
+    ]);
+    expect(module.scriptHooks?.[0]?.parameters[1]?.types).toEqual(["hash"]);
+  });
+
+  test("a bare name outside go and gui stays a module function", () => {
+    const render = parseDefoldApiDoc({ info: { namespace: "render" }, elements: [fn("init")] });
+    const globals = parseDefoldApiDoc({ info: { namespace: "globals" }, elements: [fn("hash")] });
+    expect(names(render.functions)).toEqual(["init"]);
+    expect(names(render.scriptHooks)).toEqual([]);
+    expect(names(globals.functions)).toEqual(["hash"]);
+    expect(names(globals.scriptHooks)).toEqual([]);
+  });
+
+  test("a bare non-hook name under go stays a module function", () => {
+    const module = parseDefoldApiDoc({ info: { namespace: "go" }, elements: [fn("spawn")] });
+    expect(names(module.functions)).toEqual(["spawn"]);
+    expect(names(module.scriptHooks)).toEqual([]);
   });
 });

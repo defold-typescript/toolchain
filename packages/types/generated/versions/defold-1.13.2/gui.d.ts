@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Opaque, Quaternion, Url, Vector3, Vector4 } from "../../../src/core-types";
+import type { Hash, Opaque, Quaternion, Vector3, Vector4 } from "../../../src/core-types";
 
 declare global {
   /**
@@ -627,28 +627,6 @@ declare global {
      */
     function delete_texture(texture: string | Hash): void;
     /**
-     * This is a callback-function, which is called by the engine when a gui component is finalized (destroyed). It can
-     * be used to e.g. take some last action, report the finalization to other game object instances
-     * or release user input focus (see `release_input_focus`). There is no use in starting any animations or similar
-     * from this function since the gui component is about to be destroyed.
-     *
-     * @param self - script instance used for storing state
-     * @example
-     * ```ts
-     * export default defineScript({
-     *   init() {
-     *     return { some_value: 0 };
-     *   },
-     *
-     *   final(self) {
-     *     // report finalization
-     *     msg.post("my_friend_instance", "im_dead", { my_stats: self.some_value });
-     *   },
-     * });
-     * ```
-     */
-    function final(self: unknown): void;
-    /**
      * Returns the adjust mode of a node.
      * The adjust mode defines how the node will adjust itself to screen
      * resolutions that differs from the one in the project settings.
@@ -1110,22 +1088,6 @@ declare global {
      */
     function hide_keyboard(): void;
     /**
-     * This is a callback-function, which is called by the engine when a gui component is initialized. It can be used
-     * to set the initial state of the script and gui scene.
-     *
-     * @param self - script instance used for storing state
-     * @example
-     * ```ts
-     * export default defineScript({
-     *   init() {
-     *     // set up useful data
-     *     return { my_value: 1 };
-     *   },
-     * });
-     * ```
-     */
-    function init(self: unknown): void;
-    /**
      * Returns `true` if a node is enabled and `false` if it's not.
      * Disabled nodes are not rendered and animations acting on them are not evaluated.
      *
@@ -1302,75 +1264,6 @@ declare global {
      * ```
      */
     function new_texture(texture_id: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string, flip: boolean): LuaMultiReturn<[boolean, gui.RESULT | undefined]>;
-    /**
-     * This is a callback-function, which is called by the engine when user input is sent to the instance of the gui component.
-     * It can be used to take action on the input, e.g. modify the gui according to the input.
-     * For an instance to obtain user input, it must first acquire input
-     * focus through the message `acquire_input_focus`.
-     * Any instance that has obtained input will be put on top of an
-     * input stack. Input is sent to all listeners on the stack until the
-     * end of stack is reached, or a listener returns `true`
-     * to signal that it wants input to be consumed.
-     * See the documentation of acquire_input_focus for more
-     * information.
-     *
-     * @param self - script instance used for storing state
-     * @param action_id - id of the received input action, as mapped in the input_binding-file, or `nil` for mouse movement
-     * @param action - input data for the action. **0️⃣ `gamepad` is 0-based; passed to Defold unchanged.**
-     * @returns optional boolean to signal if the input should be consumed (not passed on to others) or not, default is false
-     * @example
-     * ```ts
-     * export default defineGuiScript({
-     *   init(): { my_value: number | undefined } {
-     *     return { my_value: undefined };
-     *   },
-     *
-     *   on_input(self, action_id, action) {
-     *     // check for input
-     *     if (action_id === hash("my_action")) {
-     *       // take appropriate action
-     *       self.my_value = action.value;
-     *     }
-     *     // consume input
-     *     return true;
-     *   },
-     * });
-     * ```
-     */
-    function on_input(self: unknown, action_id: Hash | undefined, action: go.on_input.action): boolean | undefined;
-    /**
-     * This is a callback-function, which is called by the engine whenever a message has been sent to the gui component.
-     * It can be used to take action on the message, e.g. update the gui or send a response back to the sender of the message.
-     * The `message` parameter is a table containing the message data. If the message is sent from the engine, the
-     * documentation of the message specifies which data is supplied.
-     * See the update function for examples on how to use this callback-function.
-     *
-     * @param self - script instance used for storing state
-     * @param message_id - id of the received message
-     * @param message - a table containing the message data
-     * @param sender - address of the sender
-     */
-    function on_message(self: unknown, message_id: Hash, message: LuaMap<AnyNotNil, unknown> | Record<string, unknown>, sender: Url): void;
-    /**
-     * This is a callback-function, which is called by the engine when the gui script is reloaded, e.g. from the editor.
-     * It can be used for live development, e.g. to tweak constants or set up the state properly for the script.
-     *
-     * @param self - script instance used for storing state
-     * @example
-     * ```ts
-     * export default defineGuiScript({
-     *   init() {
-     *     return { my_original_color: gui.get_color(gui.get_node("my_node")) };
-     *   },
-     *
-     *   on_reload(self) {
-     *     // restore some color (or similar)
-     *     gui.set_color(gui.get_node("my_node"), self.my_original_color);
-     *   },
-     * });
-     * ```
-     */
-    function on_reload(self: unknown): void;
     /**
      * Tests whether a coordinate is within the bounding box of a
      * node.
@@ -2069,55 +1962,6 @@ declare global {
      * @param options - options used when stopping the particle fx
      */
     function stop_particlefx(node: Opaque<"node">, options: particlefx.stop_options): void;
-    /**
-     * This is a callback-function, which is called by the engine every frame to update the state of a gui component.
-     * It can be used to perform any kind of gui related tasks, e.g. animating nodes.
-     *
-     * @param self - script instance used for storing state
-     * @param dt - the time-step of the frame update
-     * @example
-     * ```ts
-     * // This example demonstrates how to update a text node that displays game score
-     * // in a counting fashion. It is assumed that the gui component receives messages
-     * // from the game when a new score is to be shown.
-     * export default defineGuiScript({
-     *   init() {
-     *     return {
-     *       // fetch the score text node for later use (assumes it is called "score")
-     *       score_node: gui.get_node("score"),
-     *       // keep track of the current score counted up so far
-     *       current_score: 0,
-     *       // keep track of the target score we should count up to
-     *       target_score: 0,
-     *       // how fast we will update the score, in score/second
-     *       score_update_speed: 1,
-     *     };
-     *   },
-     *
-     *   update(self, dt) {
-     *     // check if target score is more than current score
-     *     if (self.current_score < self.target_score) {
-     *       // increment current score according to the speed
-     *       self.current_score = self.current_score + dt * self.score_update_speed;
-     *       // check if we went past the target score, clamp current score in that case
-     *       if (self.current_score > self.target_score) {
-     *         self.current_score = self.target_score;
-     *       }
-     *       // update the score text node
-     *       gui.set_text(self.score_node, "" + math.floor(self.current_score));
-     *     }
-     *   },
-     *
-     *   on_message(self, message_id, message) {
-     *     // check the message
-     *     if (message_id === hash("set_score") && typeof message.score === "number") {
-     *       self.target_score = message.score;
-     *     }
-     *   },
-     * });
-     * ```
-     */
-    function update(self: unknown, dt: number): void;
     interface properties {
       /**
        * The fonts used in the gui. The type of the property is hash.
