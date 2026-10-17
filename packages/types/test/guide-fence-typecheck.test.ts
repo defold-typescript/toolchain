@@ -52,6 +52,12 @@ const SELECTED: readonly FenceSelection[] = [
   },
   {
     page: "typescript-gotchas.md",
+    lead: '**Typed alternative.** Pass `<"v3">` to pick the v3 form',
+    nth: 0,
+    kind: "script",
+  },
+  {
+    page: "typescript-gotchas.md",
     lead: "**Typed alternative.** Branch on the value, and leave the argument out",
     nth: 0,
     kind: "gui-script",

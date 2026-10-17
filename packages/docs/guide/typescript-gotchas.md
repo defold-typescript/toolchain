@@ -27,6 +27,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [`as` is not a runtime check](#as-is-a-compile-time-assertion-not-a-runtime-check) — a cast erases to nothing; the value is unverified at runtime.
 - [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.properties["color"]`, not off the namespace object.
 - [Texture format constants can be `undefined`](#texture-format-constants-can-be-undefined) — the engine registers most formats only when the driver supports them; check the constant before a `render.render_target` or `resource.create_texture` table uses it.
+- [Box2D v3 query hits need the `"v3"` type argument](#box2d-v3-query-hits-need-the-v3-type-argument) — with no type argument, `b2d.world.cast_ray` and the other world queries return v2 fixture hits; on the v3 backend write `b2d.world.cast_ray<"v3">(…)`.
 - [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
 - [URL addressing: same-world is relative, `socket:` crosses worlds](#url-addressing-same-world-objects-are-relative-socket-crosses-worlds) — a sibling instance is `"camera"` or `"/camera"`, a sibling component is `"#name"`; `socket:` names a target world by its collection `Name` and is reserved for crossing into a collection-proxy-loaded world.
 - [A vector's size is `v.length()`, and `url.path` can be `undefined`](#a-vectors-size-is-vlength-and-urlpath-can-be-undefined) — `v.length` raises at runtime; a socket-only URL has no `path`, so check it before use.
@@ -545,6 +546,38 @@ if (format !== undefined) {
 The check runs at runtime too, so a device without the format takes your fallback instead of handing the engine a `nil` format. When a render script's `init` builds the target, return `undefined` from `init` if the format is missing, and open each other callback that reads `self` with `if (self === undefined) return;`. A depth or stencil buffer needs no check.
 
 **How we pin this in the type tests.** `packages/types/test-d/engine-arity-overloads.ts` passes a depth-only table and a checked RGBA table to both `render.render_target` arities, and puts `@ts-expect-error` on an unguarded format, a buffer with no `width`, a wrap mode given a filter constant, and an open record.
+
+## Box2D v3 query hits need the `"v3"` type argument
+
+**Symptom.** In a project built with the Box2D v3 backend, a `b2d.world.cast_ray` hit type-checks as a v2 fixture hit. `hit.fixture.index` compiles and fails at runtime, while `hit.shape.shape_id` is rejected:
+
+```ts
+const [hits] = b2d.world.cast_ray(world, origin, translation);
+for (const hit of hits) {
+  hit.shape.shape_id; // TS error: a v2 hit's shape is a fixture table
+}
+```
+
+**Why.** The typings declare both Box2D backends at once, and a call cannot tell which one the project builds with. `b2d.world.cast_ray`, `b2d.world.cast_ray_closest`, `b2d.world.cast_shape`, `b2d.world.overlap_aabb` and `b2d.world.overlap_shape` take the same arguments on both backends but return different tables. A v2 hit sets `fixture` and `shape` to one fixture table; a v3 hit has no `fixture`, and its `shape` is a shape table with a `shape_id`. The overlaps return fixture tables on v2 and shape tables on v3. A call with no type argument returns the v2 tables.
+
+**Typed alternative.** Pass `<"v3">` to pick the v3 form of each of the five queries:
+
+```ts
+// a project built with the Box2D v3 backend
+const world = b2d.get_world();
+if (world !== undefined) {
+  const origin = vmath.vector3(0, 0, 0);
+  const translation = vmath.vector3(100, 0, 0);
+  const [hits] = b2d.world.cast_ray<"v3">(world, origin, translation);
+  for (const hit of hits) {
+    print(hit.shape.shape_id, hit.point, hit.fraction);
+  }
+}
+```
+
+The type argument exists on Defold 1.13.2 and later targets, and `<"v2">` names the default. It changes only the types: the Lua is the same call.
+
+**How we pin this in the type tests.** `packages/types/test-d/b2d-backend-query-hits.ts` reads the v3 fields through `<"v3">` on all five queries and puts `@ts-expect-error` on `fixture`. It reads the v2 fields with no type argument and with `<"v2">`, puts `@ts-expect-error` on `shape_id`, and rejects `<"v4">`. `packages/types/test/overload-reachability.test.ts` fails when any generated declaration has two forms that take the same arguments, since a call could never reach the second.
 
 ## `async`/`await` work but there is no event loop
 
