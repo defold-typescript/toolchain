@@ -217,6 +217,8 @@ declare global {
      * - `graphics.TEXTURE_USAGE_FLAG_STORAGE`
      * - `graphics.TEXTURE_USAGE_FLAG_INPUT`
      * - `graphics.TEXTURE_USAGE_FLAG_COLOR`
+     *
+     * Keyed by sampler slot from 1; a slot with no texture has no entry, so iterate with `for (const [slot, info] of textures)`.
      * @example
      * ```ts
      * // Get the textures from a material specified as a resource property
@@ -231,7 +233,7 @@ declare global {
      * });
      * ```
      */
-    function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];
+    function get_textures(path: Hash | string): LuaMap<number, { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }>;
     /**
      * Returns a table of all the vertex attributes in the material. This function will return all the vertex attributes
      * that are used in the vertex shader of the material.

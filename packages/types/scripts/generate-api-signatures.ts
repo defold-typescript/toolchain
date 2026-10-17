@@ -58,16 +58,46 @@ function authoredSignature(
   return forms.length > 0 ? forms.join("\n") : null;
 }
 
+interface UnfilteredSurface {
+  readonly entries: readonly ModuleManifestEntry[];
+  readonly of: ReadonlyMap<ModuleManifestEntry, ModuleManifestEntry>;
+}
+
+const unfilteredSurfaces = new WeakMap<readonly ModuleManifestEntry[], UnfilteredSurface>();
+
+// The surface with every member's `skipFunctions` cleared, built once per
+// surface: dropping functions moves no type declaration, so it routes exactly
+// as the filtered one does.
+function unfilteredSurfaceOf(surface: readonly ModuleManifestEntry[]): UnfilteredSurface {
+  let unfiltered = unfilteredSurfaces.get(surface);
+  if (unfiltered === undefined) {
+    const of = new Map(surface.map((member) => [member, { ...member, skipFunctions: [] }]));
+    unfiltered = { entries: [...of.values()], of };
+    unfilteredSurfaces.set(surface, unfiltered);
+  }
+  return unfiltered;
+}
+
 // The symbols `skipFunctions` removed from this module, as the difference
 // between the unfiltered and filtered signature emits. Derived rather than
 // re-matched so the withholding rules stay owned by `prepareGeneratedModule`.
-export function withheldSymbols(entry: ModuleManifestEntry): { key: string; fqn: string }[] {
+// Both emits route in `surface`, the modules the entry is emitted beside, so a
+// slot naming a sibling's type resolves in the unfiltered emit too.
+export function withheldSymbols(
+  entry: ModuleManifestEntry,
+  surface: readonly ModuleManifestEntry[],
+): { key: string; fqn: string }[] {
   if ((entry.skipFunctions ?? []).length === 0) return [];
   const kept = new Set(
-    generateModuleSignatures(entry).map(({ identity }) => symbolIdentityKey(identity)),
+    generateModuleSignatures(entry, { surface }).map(({ identity }) => symbolIdentityKey(identity)),
   );
+  const unfiltered = unfilteredSurfaceOf(surface);
+  const self = unfiltered.of.get(entry);
+  if (self === undefined) {
+    throw new Error(`module "${entry.namespace}" is not a member of the surface it is emitted in`);
+  }
   const withheld: { key: string; fqn: string }[] = [];
-  for (const { identity } of generateModuleSignatures({ ...entry, skipFunctions: [] })) {
+  for (const { identity } of generateModuleSignatures(self, { surface: unfiltered.entries })) {
     const key = symbolIdentityKey(identity);
     if (kept.has(key)) continue;
     const fqn = key.split("\0")[2] as string;
@@ -105,7 +135,8 @@ export function buildSignaturesArtifact(options: BuildSignaturesOptions = {}): S
     const perSymbol: Record<string, string> = {};
     const perSymbolSlots: Record<string, SlotTypes> = {};
     const emitOptions = options.emitOptionsOf?.(target);
-    for (const entry of loadTargetModules(target, packageRoot)) {
+    const surface = loadTargetModules(target, packageRoot);
+    for (const entry of surface) {
       for (const signature of generateModuleSignatures(entry, emitOptions)) {
         const key = symbolIdentityKey(signature.identity);
         // Two ref-doc elements can normalize to one identity (the Box2D backend
@@ -126,7 +157,7 @@ export function buildSignaturesArtifact(options: BuildSignaturesOptions = {}): S
       }
       // An authored fold replaces the declaration text wholesale, so whatever
       // slots the generated emit had recorded no longer describe it.
-      for (const { key, fqn } of withheldSymbols(entry)) {
+      for (const { key, fqn } of withheldSymbols(entry, surface)) {
         const authored = authoredSignature(packageRoot, entry.namespace, fqn, version);
         if (authored !== null) {
           perSymbol[key] = authored;

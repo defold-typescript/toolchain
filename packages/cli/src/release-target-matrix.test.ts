@@ -483,7 +483,7 @@ describe("runMatrixCommand drives the CLI seams offline", () => {
       "b2d.world.cast_ray(world, vmath.vector3(), vmath.vector3(), { category_bits: 1, mask_bits: 1 }, 4);",
       "const info = graphics.get_adapter_info();",
       "void info.family;",
-      "render.set_blend_func_separate(1, 1, 1, 1);",
+      "render.set_blend_func_separate(graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE);",
       "void camera.get_orthographic_auto_zoom();",
       "void liveupdate.is_built_with_excluded_files();",
       'sprite.reset_constant("#sprite", "tint");',

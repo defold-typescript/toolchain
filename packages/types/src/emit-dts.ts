@@ -471,8 +471,8 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       slot: "code",
     },
   ],
-  // 1.13.2 declares `render_predicate`, whose TYPEDEF aliases `userdata`, and
-  // that still emits `number`.
+  // 1.13.2 retypes the return to `render_predicate`, whose TYPEDEF aliases
+  // `userdata`; its type mapping emits the same brand.
   [
     "render.predicate",
     {
@@ -884,11 +884,42 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       adds: 'Opaque<"render_predicate">',
       removes: ["number"],
       upstream: ["number"],
-      retypedUpstream: [["render_predicate"]],
       reason:
-        "render_script.cpp:RenderScript_Draw reads the predicate with RenderScriptPredicate_Check, the userdata render.predicate returns; 1.13.2's `render_predicate` still emits `number`",
+        "render_script.cpp:RenderScript_Draw reads the predicate with RenderScriptPredicate_Check, the userdata render.predicate returns; 1.13.2 types the slot `render_predicate`, whose type mapping is that brand",
     },
   ],
+  ...(["enable_state", "disable_state"] as const).map(
+    (name) =>
+      [
+        `render.${name}:param:state`,
+        {
+          adds: "graphics.State",
+          removes: ["graphics.STATE"],
+          upstream: ["graphics.STATE"],
+          reason: `render_script.cpp:RenderScript_${name === "enable_state" ? "Enable" : "Disable"}State raises "Invalid state" on any state but the six it lists, so graphics.STATE_SCISSOR_TEST and graphics.STATE_ALPHA_TEST_SUPPORTED are rejected`,
+        },
+      ] as const,
+  ),
+  ...(
+    [
+      "source_factor_color",
+      "destination_factor_color",
+      "source_factor_alpha",
+      "destination_factor_alpha",
+    ] as const
+  ).map(
+    (slot) =>
+      [
+        `render.set_blend_func_separate:param:${slot}`,
+        {
+          adds: "graphics.BlendFactor",
+          removes: ["number"],
+          upstream: ["number"],
+          reason:
+            'render_script.cpp:RenderScript_SetBlendFuncSeparate raises "Invalid blend factor" on any value CheckBlendFactor does not list',
+        },
+      ] as const,
+  ),
   [
     "go.delete:param:id",
     {
@@ -1519,6 +1550,29 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
       "go.PLAYBACK_LOOP_PINGPONG",
     ],
   },
+  // The factors render_script.cpp:CheckBlendFactor accepts, in its order. Every
+  // target defines the constants; only the newer ones name the union.
+  {
+    home: "graphics",
+    name: "BlendFactor",
+    members: [
+      "graphics.BLEND_FACTOR_ZERO",
+      "graphics.BLEND_FACTOR_ONE",
+      "graphics.BLEND_FACTOR_SRC_COLOR",
+      "graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR",
+      "graphics.BLEND_FACTOR_DST_COLOR",
+      "graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR",
+      "graphics.BLEND_FACTOR_SRC_ALPHA",
+      "graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA",
+      "graphics.BLEND_FACTOR_DST_ALPHA",
+      "graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA",
+      "graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE",
+      "graphics.BLEND_FACTOR_CONSTANT_COLOR",
+      "graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR",
+      "graphics.BLEND_FACTOR_CONSTANT_ALPHA",
+      "graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA",
+    ],
+  },
   {
     home: "graphics",
     name: "BufferType",
@@ -1731,6 +1785,12 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
       "graphics.BUFFER_TYPE_DEPTH_BIT",
       "graphics.BUFFER_TYPE_STENCIL_BIT",
     ],
+  },
+  // The render-target creator raises on any other texture type.
+  {
+    home: "render",
+    name: "RenderTargetTextureType",
+    members: ["graphics.TEXTURE_TYPE_2D", "graphics.TEXTURE_TYPE_CUBE_MAP"],
   },
   {
     home: "sys",
@@ -3108,6 +3168,11 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
     ] as const
   ).map((struct) => [`${struct}:member:flags`, "graphics.TEXTURE_USAGE_FLAG | number"] as const),
   ["render.render_target_buffer_params:member:flags", "render.RENDER_TARGET_FLAG | number"],
+  // gamesys_script.cpp:PushSampler, behind both get_samplers, pushes the raw
+  // texture type; NormalizeBindableTextureType never runs there. A separate
+  // sampler reports TEXTURE_TYPE_SAMPLER (6) and a separate texture binding one
+  // of the four TEXTURE_TYPE_TEXTURE_* (7-10), none of which has a Lua constant.
+  ["material.sampler_info:member:type", "graphics.TEXTURE_TYPE | 6 | 7 | 8 | 9 | 10"],
 ]);
 
 // A field the engine accepts on an option bag whose `<dl>` upstream otherwise
@@ -3890,6 +3955,31 @@ function groupFlattenedTableFields(fields: readonly TableField[]): TableField[] 
   return grouped;
 }
 
+// A TYPEDEF whose aliased type the engine binding contradicts, replaced verbatim.
+// Member overrides reach only a STRUCT, and these alias an inline LuaLS table.
+// Each applies only while the typedef still aliases exactly its `upstream` token,
+// so a changed upstream typedef is emitted as written rather than shadowed;
+// `typedef-correction-provenance.test.ts` pins every entry against the retained
+// ref-docs. Keyed by the typedef's ref-doc name.
+export interface TypedefAliasCorrection {
+  readonly upstream: string;
+  readonly ts: string;
+  readonly reason: string;
+}
+
+export const TYPEDEF_ALIAS_CORRECTIONS: ReadonlyMap<string, TypedefAliasCorrection> = new Map([
+  [
+    "render.render_target_params",
+    {
+      upstream:
+        "{ type?:graphics.TEXTURE_TYPE, sample_count?:integer, [graphics.BUFFER_TYPE]:render.render_target_buffer_params }",
+      ts: "{ type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.render_target_buffer_params }",
+      reason:
+        'render_script.cpp:RenderScript_RenderTarget raises "Invalid render target texture type" on any `type` but graphics.TEXTURE_TYPE_2D and graphics.TEXTURE_TYPE_CUBE_MAP',
+    },
+  ],
+]);
+
 // A handle the type map widens (`constant_buffer` takes named constants) keeps
 // that shape, so annotating with the alias loses nothing the handle-returning
 // function yields.
@@ -3906,6 +3996,10 @@ function typedefAlias(
 ): string {
   const brand = `Opaque<"${typedef.name}">`;
   const aliasOf = typedef.aliasOf ?? [];
+  const correction = TYPEDEF_ALIAS_CORRECTIONS.get(typedef.name);
+  if (correction !== undefined && aliasOf.length === 1 && aliasOf[0] === correction.upstream) {
+    return `type ${local} = ${correction.ts};`;
+  }
   if (aliasOf.length > 0 && !isHandleAlias(aliasOf)) {
     const armType: DefoldTypeMapper = DISCRIMINATED_MESSAGE_UNIONS.has(typedef.name)
       ? (token, position) => discriminatedMessageArm(token) ?? mapType(token, position)
@@ -5410,6 +5504,7 @@ function functionDocLines(
     };
   });
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
+  const sparseNote = SPARSE_ARRAY_RETURNS.get(fn.name)?.note;
   const notedReturns =
     multiReturnDoc(fn, translations, baseNotes) ?? overrideReturnDoc(fn, baseNotes);
   const lua = htmlToCodeText(fn.examples ?? "");
@@ -5442,7 +5537,10 @@ function functionDocLines(
       ? {
           returns: appendNotes(
             translateProseFences(htmlToDocText(onlyReturn.doc), fn.name, translations),
-            baseNotes(fn.name, "return", onlyReturn.name),
+            [
+              ...baseNotes(fn.name, "return", onlyReturn.name),
+              ...(sparseNote === undefined ? [] : [sparseNote]),
+            ],
           ),
         }
       : notedReturns !== undefined
@@ -5882,6 +5980,48 @@ function emitPropertyMembers(
   return keys.map((key) => `${modifier}${key}: ${ts};`);
 }
 
+// A function whose returned table the engine binding keys by a sparse integer,
+// so the sequence its reference declares is a map with holes: `ipairs` stops at
+// the first hole, and `#t` may return any border. Keyed by function name, since the return slot is named
+// `table` in 1.13.0/1.13.1 and `textures` from 1.13.2. The return's `T[]` member
+// emits as `LuaMap<number, T>`, which `for...of` lowers to `pairs`, and `note`
+// joins its `@returns`.
+export const SPARSE_ARRAY_RETURNS: ReadonlyMap<string, { note: string; reason: string }> = new Map([
+  [
+    "material.get_textures",
+    {
+      note: "Keyed by sampler slot from 1; a slot with no texture has no entry, so iterate with `for (const [slot, info] of textures)`.",
+      reason:
+        "script_material.cpp:Material_GetTextures pushes key i+1 only for a slot that has a texture, unlike Compute_GetTextures, which packs its keys",
+    },
+  ],
+]);
+
+function sparseArrayMap(ts: string, elementName: string): string {
+  const members = unionMembers(ts);
+  const arrays = members.filter((member) => member.endsWith("[]"));
+  if (arrays.length === 0) {
+    throw new Error(`SPARSE_ARRAY_RETURNS ${elementName}: the return emits no array (${ts})`);
+  }
+  return members
+    .map((member) => {
+      if (!member.endsWith("[]")) return member;
+      const element = member.slice(0, -2);
+      return `LuaMap<number, ${wrappedInParens(element) ? element.slice(1, -1) : element}>`;
+    })
+    .join(" | ");
+}
+
+function wrappedInParens(text: string): boolean {
+  if (!text.startsWith("(")) return false;
+  let depth = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "(") depth++;
+    else if (text[i] === ")" && --depth === 0) return i === text.length - 1;
+  }
+  return false;
+}
+
 // Like `unionFromTokens`, but a `table` token whose slot doc carries a parseable
 // `<dl>` field list emits an inline object type instead of the opaque `Record`
 // fallback. Other tokens in the union map unchanged. `optionalFields` marks the
@@ -6039,8 +6179,10 @@ function mapSlotUnion(
   // A genuine `unknown` member (an `any` slot, including `any | nil`) absorbs
   // every other union member, so collapse to exactly `unknown` rather than emit
   // a redundant `T | unknown` or `unknown | undefined`.
-  if (mapped.includes("unknown")) return "unknown";
-  return joinUnionArms(mapped);
+  const joined = mapped.includes("unknown") ? "unknown" : joinUnionArms(mapped);
+  return slotKind === "return" && SPARSE_ARRAY_RETURNS.has(elementName)
+    ? sparseArrayMap(joined, elementName)
+    : joined;
 }
 
 function tableSlotKey(elementName: string, slotKind: "param" | "return", slotName: string): string {

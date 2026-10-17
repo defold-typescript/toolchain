@@ -312,15 +312,17 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   any: "unknown",
   // 1.13.2 renames of the leaves above, same slots. Upstream declares each only as
   // a `userdata`/`number` handle TYPEDEF, so each keeps its 1.13.1 mapping, with
-  // two exceptions: `script_instance` is the untyped `self` a callback recovery
-  // emits, and `resource_data` (1.13.1 `resource`, only in the hand-authored
-  // `go.get`/`go.set`/`go.property` slots) is a path hash.
+  // three exceptions: `script_instance` is the untyped `self` a callback recovery
+  // emits, `resource_data` (1.13.1 `resource`, only in the hand-authored
+  // `go.get`/`go.set`/`go.property` slots) is a path hash, and `render_predicate`
+  // (1.13.1 `number`) is the userdata `render.predicate` returns and
+  // render_script.cpp:RenderScriptPredicate_Check reads.
   buffer_data: BUFFER_TYPE,
   buffer_stream: BUFFERSTREAM_TYPE,
   script_instance: "unknown",
   resource_data: "Hash",
   timer_handle: "number",
-  render_predicate: "number",
+  render_predicate: 'Opaque<"render_predicate">',
   socket_client: "client",
   socket_connected: "connected",
   socket_master: "master",

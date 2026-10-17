@@ -3893,7 +3893,7 @@ describe("slot-level array-of-object recovery", () => {
     );
   });
 
-  test("material records-collection getters emit arrays of records", () => {
+  test("material records-collection getters emit arrays of records, textures a slot-keyed map", () => {
     const module = parseDefoldApiDoc(materialDoc);
     const out = emitDeclarations({
       ...module,
@@ -3911,10 +3911,18 @@ describe("slot-level array-of-object recovery", () => {
       "function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[];",
     );
     expect(out).toContain(
-      "function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];",
+      "function get_textures(path: Hash | string): LuaMap<number, { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }>;",
     );
     expect(out).toContain(
       "function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number }[];",
+    );
+    const lines = out.split("\n");
+    const at = lines.findIndex((line) => line.includes("function get_textures("));
+    let start = at;
+    while (start > 0 && lines[start]?.trim() !== "/**") start -= 1;
+    const doc = lines.slice(start, at).join("\n");
+    expect(doc.slice(doc.indexOf("@returns"))).toContain(
+      "Keyed by sampler slot from 1; a slot with no texture has no entry, so iterate with `for (const [slot, info] of textures)`.",
     );
   });
 
@@ -5504,8 +5512,11 @@ describe("library index base notes", () => {
 });
 
 describe("overload slot aliases", () => {
+  // Regen resolves the graphics enum the state corrections narrow; a lone
+  // render doc needs it declared.
+  const declaredTypes = new Map([["graphics.STATE", "graphics.STATE"]]);
   const emittedLines = (doc: Parameters<typeof parseDefoldApiDoc>[0]): string[] =>
-    emitDeclarations(parseDefoldApiDoc(doc))
+    emitDeclarations(parseDefoldApiDoc(doc), { declaredTypes })
       .split("\n")
       .map((line) => line.trim());
 
@@ -6199,6 +6210,67 @@ describe("STRUCT and TYPEDEF declarations", () => {
     );
     expect(aliasLine(out, "btTypedConstraint")).toBe(
       'type btTypedConstraint = Opaque<"btTypedConstraint">;',
+    );
+  });
+
+  // Verbatim from the Defold 1.14.0 ref-doc (`render_doc.json`), prose and the
+  // struct's other members elided; 1.13.2 declares the same typedef without `type`.
+  const renderTargetParams = (aliased: string) => ({
+    type: "TYPEDEF",
+    name: "render.render_target_params",
+    brief: "Render-target parameters",
+    parameters: [
+      {
+        name: "value",
+        doc: "Attachments keyed by buffer type, with optional texture type and multisample count.",
+        types: [aliased],
+        is_optional: "False",
+      },
+    ],
+    members: [],
+  });
+  const renderTargetBufferParams = {
+    type: "STRUCT",
+    name: "render.render_target_buffer_params",
+    brief: "Render-target attachment parameters",
+    parameters: [],
+    members: [
+      { name: "width", doc: "Attachment width.", type: "integer" },
+      {
+        name: "flags?",
+        doc: "Attachment creation flags, applicable only to depth and stencil buffers.",
+        type: "render.RENDER_TARGET_FLAG",
+      },
+    ],
+  };
+  const renderTargetParamsLine = (aliased: string): string | undefined =>
+    aliasLine(
+      emitDeclarations(
+        parseDefoldApiDoc({
+          info: { namespace: "render" },
+          elements: [renderTargetBufferParams, renderTargetParams(aliased)],
+        }),
+      ),
+      "render_target_params",
+    );
+
+  test("the 1.14.0 render-target params typedef takes only the texture types the engine accepts", () => {
+    expect(
+      renderTargetParamsLine(
+        "{ type?:graphics.TEXTURE_TYPE, sample_count?:integer, [graphics.BUFFER_TYPE]:render.render_target_buffer_params }",
+      ),
+    ).toBe(
+      "type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.render_target_buffer_params };",
+    );
+  });
+
+  test("a render-target params typedef with another token keeps its own emit", () => {
+    expect(
+      renderTargetParamsLine(
+        "{ sample_count?:integer, [graphics.BUFFER_TYPE]:render.render_target_buffer_params }",
+      ),
+    ).toBe(
+      "type render_target_params = { sample_count?: number } & { [key: number]: render.render_target_buffer_params };",
     );
   });
 
