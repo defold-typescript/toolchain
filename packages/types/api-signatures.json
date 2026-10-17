@@ -409,7 +409,7 @@
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_awake\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_awake(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_ghost_object\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_ghost_object(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_kinematic\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_kinematic(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
-      "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_rigid_body\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_rigid_body(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
+      "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_rigid_body\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_rigid_body(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): object is Opaque<\"btRigidBody\">;",
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_static\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_static(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_static_or_kinematic\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_static_or_kinematic(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_valid\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_valid(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
@@ -435,13 +435,13 @@
       "bullet3d.constraint\u0000CONSTANT\u0000bullet3d.constraint.CONSTRAINT_TYPE_POINT_TO_POINT\u0000": "const CONSTRAINT_TYPE_POINT_TO_POINT: number & { readonly __brand: \"bullet3d.constraint.CONSTRAINT_TYPE_POINT_TO_POINT\" };",
       "bullet3d.constraint\u0000CONSTANT\u0000bullet3d.constraint.CONSTRAINT_TYPE_SLIDER\u0000": "const CONSTRAINT_TYPE_SLIDER: number & { readonly __brand: \"bullet3d.constraint.CONSTRAINT_TYPE_SLIDER\" };",
       "bullet3d.constraint\u0000CONSTANT\u0000bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL\u0000": "const CONSTRAINT_TYPE_UNIVERSAL: number & { readonly __brand: \"bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL\" };",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_cone_twist\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_cone_twist(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.cone_twist_params): bullet3d.constraint.btTypedConstraint;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_generic_6dof\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_generic_6dof(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.generic_6dof_params): bullet3d.constraint.btTypedConstraint;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_cone_twist\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_cone_twist(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.cone_twist_params & Required<Pick<bullet3d.constraint.cone_twist_params, \"frame_b_position\" | \"frame_b_rotation\">>): bullet3d.constraint.btTypedConstraint;\nfunction create_cone_twist(body_a: Opaque<\"btRigidBody\">, body_b: undefined, params: bullet3d.constraint.cone_twist_params): bullet3d.constraint.btTypedConstraint;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_generic_6dof\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_generic_6dof(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.generic_6dof_params & Required<Pick<bullet3d.constraint.generic_6dof_params, \"frame_b_position\" | \"frame_b_rotation\">>): bullet3d.constraint.btTypedConstraint;\nfunction create_generic_6dof(body_a: Opaque<\"btRigidBody\">, body_b: undefined, params: bullet3d.constraint.generic_6dof_params): bullet3d.constraint.btTypedConstraint;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_generic_6dof_spring\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_generic_6dof_spring(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\">, params: bullet3d.constraint.generic_6dof_spring_params): bullet3d.constraint.btTypedConstraint;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_hinge\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_hinge(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.hinge_params): bullet3d.constraint.btTypedConstraint;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_hinge\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_hinge(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.hinge_params & Required<Pick<bullet3d.constraint.hinge_params, \"frame_b_position\" | \"frame_b_rotation\">>): bullet3d.constraint.btTypedConstraint;\nfunction create_hinge(body_a: Opaque<\"btRigidBody\">, body_b: undefined, params: bullet3d.constraint.hinge_params): bullet3d.constraint.btTypedConstraint;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_hinge2\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_hinge2(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\">, params: bullet3d.constraint.anchor_axes_params): bullet3d.constraint.btTypedConstraint;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_point_to_point\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_point_to_point(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.point_to_point_params): bullet3d.constraint.btTypedConstraint;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_slider\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_slider(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.slider_params): bullet3d.constraint.btTypedConstraint;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_point_to_point\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_point_to_point(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.point_to_point_params & Required<Pick<bullet3d.constraint.point_to_point_params, \"pivot_b\">>): bullet3d.constraint.btTypedConstraint;\nfunction create_point_to_point(body_a: Opaque<\"btRigidBody\">, body_b: undefined, params: bullet3d.constraint.point_to_point_params): bullet3d.constraint.btTypedConstraint;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_slider\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_slider(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.slider_params & Required<Pick<bullet3d.constraint.slider_params, \"frame_b_position\" | \"frame_b_rotation\">>): bullet3d.constraint.btTypedConstraint;\nfunction create_slider(body_a: Opaque<\"btRigidBody\">, body_b: undefined, params: bullet3d.constraint.slider_params): bullet3d.constraint.btTypedConstraint;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_universal\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_universal(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\">, params: bullet3d.constraint.anchor_axes_params): bullet3d.constraint.btTypedConstraint;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.destroy\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[]": "function destroy(constraint: bullet3d.constraint.btTypedConstraint): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.enable_cone_twist_motor\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function enable_cone_twist_motor(constraint: bullet3d.constraint.btTypedConstraint, enabled: boolean): void;",
@@ -465,7 +465,7 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_limit\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_limit(constraint: bullet3d.constraint.btTypedConstraint, axis: number): LuaMultiReturn<[number, number]>;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_pivots\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_pivots(constraint: bullet3d.constraint.btTypedConstraint): LuaMultiReturn<[Vector3, Vector3]>;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_slider_limits\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_slider_limits(constraint: bullet3d.constraint.btTypedConstraint): LuaMultiReturn<[number, number, number, number]>;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_slider_motor\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: string): LuaMultiReturn<[boolean, number, number]>;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_slider_motor\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: \"linear\" | \"angular\"): LuaMultiReturn<[boolean, number, number]>;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_slider_position\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_slider_position(constraint: bullet3d.constraint.btTypedConstraint): number;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_twist_angle\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_twist_angle(constraint: bullet3d.constraint.btTypedConstraint): number;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_type\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_type(constraint: bullet3d.constraint.btTypedConstraint): bullet3d.constraint.CONSTRAINT_TYPE;",
@@ -490,7 +490,7 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_limit\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_limit(constraint: bullet3d.constraint.btTypedConstraint, axis: number, lower: number, upper: number): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_pivots\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_pivots(constraint: bullet3d.constraint.btTypedConstraint, pivot_a: Vector3, pivot_b: Vector3): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_slider_limits\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_slider_limits(constraint: bullet3d.constraint.btTypedConstraint, lower_linear: number, upper_linear: number, lower_angular: number, upper_angular: number): void;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_slider_motor\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: string, enabled: boolean, target_velocity: number, max_force: number): void;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_slider_motor\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: \"linear\" | \"angular\", enabled: boolean, target_velocity: number, max_force: number): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_spring_damping\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_spring_damping(constraint: bullet3d.constraint.btTypedConstraint, axis: number, damping: number): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_spring_equilibrium_point\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function set_spring_equilibrium_point(constraint: bullet3d.constraint.btTypedConstraint, axis?: number, value?: number): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_spring_stiffness\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_spring_stiffness(constraint: bullet3d.constraint.btTypedConstraint, axis: number, stiffness: number): void;",
@@ -561,14 +561,14 @@
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_collision_object\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]": "function get_collision_object(shape: bullet3d.shape.btCollisionShape): Opaque<\"btCollisionObject\" | \"btRigidBody\">;",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_index\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_index(shape: bullet3d.shape.btCollisionShape): number;",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_local_transform\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Quaternion\"],\"isOptional\":false}]": "function get_local_transform(shape: bullet3d.shape.btCollisionShape): LuaMultiReturn<[Vector3, Quaternion]>;",
-      "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_shape\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.definition;",
+      "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_shape\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH };",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_type\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_type(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.SHAPE_TYPE;",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.is_valid\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_valid(shape: bullet3d.shape.btCollisionShape): boolean;",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.set_local_transform\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Quaternion\"],\"isOptional\":false}]->[]": "function set_local_transform(shape: bullet3d.shape.btCollisionShape, position: Vector3, rotation: Quaternion): void;",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.set_shape\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_shape(shape: bullet3d.shape.btCollisionShape, data: bullet3d.shape.definition): void;",
       "bullet3d.shape\u0000TYPEDEF\u0000SHAPE_TYPE\u0000": "type SHAPE_TYPE = typeof bullet3d.shape.SHAPE_TYPE_BOX | typeof bullet3d.shape.SHAPE_TYPE_CAPSULE | typeof bullet3d.shape.SHAPE_TYPE_HULL | typeof bullet3d.shape.SHAPE_TYPE_MESH | typeof bullet3d.shape.SHAPE_TYPE_SPHERE;",
       "bullet3d.shape\u0000TYPEDEF\u0000btCollisionShape\u0000": "type btCollisionShape = Opaque<\"btCollisionShape\">;",
-      "bullet3d.shape\u0000TYPEDEF\u0000definition\u0000": "type definition = { type: bullet3d.shape.SHAPE_TYPE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion };",
+      "bullet3d.shape\u0000TYPEDEF\u0000definition\u0000": "type definition = { type: typeof bullet3d.shape.SHAPE_TYPE_SPHERE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_BOX; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_CAPSULE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_HULL; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion };",
       "bullet3d.world\u0000FUNCTION\u0000bullet3d.world.cast_ray\u0000[{\"types\":[\"btDiscreteDynamicsWorld\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function cast_ray(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.query_filter, max_results?: number): bullet3d.world.cast_result[];",
       "bullet3d.world\u0000FUNCTION\u0000bullet3d.world.cast_ray_async\u0000[{\"types\":[\"btDiscreteDynamicsWorld\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function cast_ray_async(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, callback: (self: unknown, hits: bullet3d.world.cast_result[]) => void, filter?: bullet3d.world.query_filter, max_results?: number): void;",
       "bullet3d.world\u0000FUNCTION\u0000bullet3d.world.cast_ray_closest\u0000[{\"types\":[\"btDiscreteDynamicsWorld\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function cast_ray_closest(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.query_filter): bullet3d.world.cast_result | undefined;",
@@ -2199,7 +2199,7 @@
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_awake\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_awake(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_ghost_object\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_ghost_object(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_kinematic\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_kinematic(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
-      "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_rigid_body\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_rigid_body(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
+      "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_rigid_body\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_rigid_body(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): object is Opaque<\"btRigidBody\">;",
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_static\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_static(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_static_or_kinematic\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_static_or_kinematic(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_valid\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_valid(object: Opaque<\"btCollisionObject\" | \"btRigidBody\">): boolean;",
@@ -2225,13 +2225,13 @@
       "bullet3d.constraint\u0000CONSTANT\u0000bullet3d.constraint.CONSTRAINT_TYPE_POINT_TO_POINT\u0000": "const CONSTRAINT_TYPE_POINT_TO_POINT: number & { readonly __brand: \"bullet3d.constraint.CONSTRAINT_TYPE_POINT_TO_POINT\" };",
       "bullet3d.constraint\u0000CONSTANT\u0000bullet3d.constraint.CONSTRAINT_TYPE_SLIDER\u0000": "const CONSTRAINT_TYPE_SLIDER: number & { readonly __brand: \"bullet3d.constraint.CONSTRAINT_TYPE_SLIDER\" };",
       "bullet3d.constraint\u0000CONSTANT\u0000bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL\u0000": "const CONSTRAINT_TYPE_UNIVERSAL: number & { readonly __brand: \"bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL\" };",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_cone_twist\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_cone_twist(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.cone_twist_params): bullet3d.constraint.btTypedConstraint;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_generic_6dof\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_generic_6dof(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.generic_6dof_params): bullet3d.constraint.btTypedConstraint;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_cone_twist\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_cone_twist(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.cone_twist_params & Required<Pick<bullet3d.constraint.cone_twist_params, \"frame_b_position\" | \"frame_b_rotation\">>): bullet3d.constraint.btTypedConstraint;\nfunction create_cone_twist(body_a: Opaque<\"btRigidBody\">, body_b: undefined, params: bullet3d.constraint.cone_twist_params): bullet3d.constraint.btTypedConstraint;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_generic_6dof\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_generic_6dof(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.generic_6dof_params & Required<Pick<bullet3d.constraint.generic_6dof_params, \"frame_b_position\" | \"frame_b_rotation\">>): bullet3d.constraint.btTypedConstraint;\nfunction create_generic_6dof(body_a: Opaque<\"btRigidBody\">, body_b: undefined, params: bullet3d.constraint.generic_6dof_params): bullet3d.constraint.btTypedConstraint;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_generic_6dof_spring\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_generic_6dof_spring(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\">, params: bullet3d.constraint.generic_6dof_spring_params): bullet3d.constraint.btTypedConstraint;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_hinge\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_hinge(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.hinge_params): bullet3d.constraint.btTypedConstraint;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_hinge\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_hinge(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.hinge_params & Required<Pick<bullet3d.constraint.hinge_params, \"frame_b_position\" | \"frame_b_rotation\">>): bullet3d.constraint.btTypedConstraint;\nfunction create_hinge(body_a: Opaque<\"btRigidBody\">, body_b: undefined, params: bullet3d.constraint.hinge_params): bullet3d.constraint.btTypedConstraint;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_hinge2\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_hinge2(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\">, params: bullet3d.constraint.anchor_axes_params): bullet3d.constraint.btTypedConstraint;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_point_to_point\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_point_to_point(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.point_to_point_params): bullet3d.constraint.btTypedConstraint;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_slider\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_slider(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.slider_params): bullet3d.constraint.btTypedConstraint;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_point_to_point\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_point_to_point(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.point_to_point_params & Required<Pick<bullet3d.constraint.point_to_point_params, \"pivot_b\">>): bullet3d.constraint.btTypedConstraint;\nfunction create_point_to_point(body_a: Opaque<\"btRigidBody\">, body_b: undefined, params: bullet3d.constraint.point_to_point_params): bullet3d.constraint.btTypedConstraint;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_slider\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_slider(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\"> | undefined, params: bullet3d.constraint.slider_params & Required<Pick<bullet3d.constraint.slider_params, \"frame_b_position\" | \"frame_b_rotation\">>): bullet3d.constraint.btTypedConstraint;\nfunction create_slider(body_a: Opaque<\"btRigidBody\">, body_b: undefined, params: bullet3d.constraint.slider_params): bullet3d.constraint.btTypedConstraint;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_universal\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": "function create_universal(body_a: Opaque<\"btRigidBody\">, body_b: Opaque<\"btRigidBody\">, params: bullet3d.constraint.anchor_axes_params): bullet3d.constraint.btTypedConstraint;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.destroy\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[]": "function destroy(constraint: bullet3d.constraint.btTypedConstraint): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.enable_cone_twist_motor\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function enable_cone_twist_motor(constraint: bullet3d.constraint.btTypedConstraint, enabled: boolean): void;",
@@ -2255,7 +2255,7 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_limit\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_limit(constraint: bullet3d.constraint.btTypedConstraint, axis: number): LuaMultiReturn<[number, number]>;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_pivots\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_pivots(constraint: bullet3d.constraint.btTypedConstraint): LuaMultiReturn<[Vector3, Vector3]>;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_slider_limits\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_slider_limits(constraint: bullet3d.constraint.btTypedConstraint): LuaMultiReturn<[number, number, number, number]>;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_slider_motor\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: string): LuaMultiReturn<[boolean, number, number]>;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_slider_motor\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: \"linear\" | \"angular\"): LuaMultiReturn<[boolean, number, number]>;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_slider_position\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_slider_position(constraint: bullet3d.constraint.btTypedConstraint): number;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_twist_angle\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_twist_angle(constraint: bullet3d.constraint.btTypedConstraint): number;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.get_type\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_type(constraint: bullet3d.constraint.btTypedConstraint): bullet3d.constraint.CONSTRAINT_TYPE;",
@@ -2280,7 +2280,7 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_limit\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_limit(constraint: bullet3d.constraint.btTypedConstraint, axis: number, lower: number, upper: number): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_pivots\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_pivots(constraint: bullet3d.constraint.btTypedConstraint, pivot_a: Vector3, pivot_b: Vector3): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_slider_limits\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_slider_limits(constraint: bullet3d.constraint.btTypedConstraint, lower_linear: number, upper_linear: number, lower_angular: number, upper_angular: number): void;",
-      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_slider_motor\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: string, enabled: boolean, target_velocity: number, max_force: number): void;",
+      "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_slider_motor\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: \"linear\" | \"angular\", enabled: boolean, target_velocity: number, max_force: number): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_spring_damping\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_spring_damping(constraint: bullet3d.constraint.btTypedConstraint, axis: number, damping: number): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_spring_equilibrium_point\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function set_spring_equilibrium_point(constraint: bullet3d.constraint.btTypedConstraint, axis?: number, value?: number): void;",
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.set_spring_stiffness\u0000[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_spring_stiffness(constraint: bullet3d.constraint.btTypedConstraint, axis: number, stiffness: number): void;",
@@ -2351,14 +2351,14 @@
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_collision_object\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]": "function get_collision_object(shape: bullet3d.shape.btCollisionShape): Opaque<\"btCollisionObject\" | \"btRigidBody\">;",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_index\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_index(shape: bullet3d.shape.btCollisionShape): number;",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_local_transform\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Quaternion\"],\"isOptional\":false}]": "function get_local_transform(shape: bullet3d.shape.btCollisionShape): LuaMultiReturn<[Vector3, Quaternion]>;",
-      "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_shape\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.definition;",
+      "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_shape\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH };",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_type\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_type(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.SHAPE_TYPE;",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.is_valid\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_valid(shape: bullet3d.shape.btCollisionShape): boolean;",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.set_local_transform\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Quaternion\"],\"isOptional\":false}]->[]": "function set_local_transform(shape: bullet3d.shape.btCollisionShape, position: Vector3, rotation: Quaternion): void;",
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.set_shape\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_shape(shape: bullet3d.shape.btCollisionShape, data: bullet3d.shape.definition): void;",
       "bullet3d.shape\u0000TYPEDEF\u0000SHAPE_TYPE\u0000": "type SHAPE_TYPE = typeof bullet3d.shape.SHAPE_TYPE_BOX | typeof bullet3d.shape.SHAPE_TYPE_CAPSULE | typeof bullet3d.shape.SHAPE_TYPE_HULL | typeof bullet3d.shape.SHAPE_TYPE_MESH | typeof bullet3d.shape.SHAPE_TYPE_SPHERE;",
       "bullet3d.shape\u0000TYPEDEF\u0000btCollisionShape\u0000": "type btCollisionShape = Opaque<\"btCollisionShape\">;",
-      "bullet3d.shape\u0000TYPEDEF\u0000definition\u0000": "type definition = { type: bullet3d.shape.SHAPE_TYPE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion };",
+      "bullet3d.shape\u0000TYPEDEF\u0000definition\u0000": "type definition = { type: typeof bullet3d.shape.SHAPE_TYPE_SPHERE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_BOX; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_CAPSULE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_HULL; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion };",
       "bullet3d.world\u0000FUNCTION\u0000bullet3d.world.cast_ray\u0000[{\"types\":[\"btDiscreteDynamicsWorld\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function cast_ray(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.query_filter, max_results?: number): bullet3d.world.cast_result[];",
       "bullet3d.world\u0000FUNCTION\u0000bullet3d.world.cast_ray_async\u0000[{\"types\":[\"btDiscreteDynamicsWorld\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function cast_ray_async(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, callback: (self: unknown, hits: bullet3d.world.cast_result[]) => void, filter?: bullet3d.world.query_filter, max_results?: number): void;",
       "bullet3d.world\u0000FUNCTION\u0000bullet3d.world.cast_ray_closest\u0000[{\"types\":[\"btDiscreteDynamicsWorld\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function cast_ray_closest(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.query_filter): bullet3d.world.cast_result | undefined;",
@@ -8740,8 +8740,7 @@
         "param:0:object": {
           "type": "Opaque<\"btCollisionObject\" | \"btRigidBody\">",
           "optional": false
-        },
-        "return:0:result": { "type": "boolean", "optional": false }
+        }
       },
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_static\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
         "param:0:object": {
@@ -8845,7 +8844,10 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_cone_twist\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": {
         "param:0:body_a": { "type": "Opaque<\"btRigidBody\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"btRigidBody\"> | undefined", "optional": false },
-        "param:2:params": { "type": "bullet3d.constraint.cone_twist_params", "optional": false },
+        "param:2:params": {
+          "type": "bullet3d.constraint.cone_twist_params & Required<Pick<bullet3d.constraint.cone_twist_params, \"frame_b_position\" | \"frame_b_rotation\">>",
+          "optional": false
+        },
         "return:0:constraint": {
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
@@ -8854,7 +8856,10 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_generic_6dof\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": {
         "param:0:body_a": { "type": "Opaque<\"btRigidBody\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"btRigidBody\"> | undefined", "optional": false },
-        "param:2:params": { "type": "bullet3d.constraint.generic_6dof_params", "optional": false },
+        "param:2:params": {
+          "type": "bullet3d.constraint.generic_6dof_params & Required<Pick<bullet3d.constraint.generic_6dof_params, \"frame_b_position\" | \"frame_b_rotation\">>",
+          "optional": false
+        },
         "return:0:constraint": {
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
@@ -8875,7 +8880,10 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_hinge\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": {
         "param:0:body_a": { "type": "Opaque<\"btRigidBody\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"btRigidBody\"> | undefined", "optional": false },
-        "param:2:params": { "type": "bullet3d.constraint.hinge_params", "optional": false },
+        "param:2:params": {
+          "type": "bullet3d.constraint.hinge_params & Required<Pick<bullet3d.constraint.hinge_params, \"frame_b_position\" | \"frame_b_rotation\">>",
+          "optional": false
+        },
         "return:0:constraint": {
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
@@ -8894,7 +8902,7 @@
         "param:0:body_a": { "type": "Opaque<\"btRigidBody\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"btRigidBody\"> | undefined", "optional": false },
         "param:2:params": {
-          "type": "bullet3d.constraint.point_to_point_params",
+          "type": "bullet3d.constraint.point_to_point_params & Required<Pick<bullet3d.constraint.point_to_point_params, \"pivot_b\">>",
           "optional": false
         },
         "return:0:constraint": {
@@ -8905,7 +8913,10 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_slider\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": {
         "param:0:body_a": { "type": "Opaque<\"btRigidBody\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"btRigidBody\"> | undefined", "optional": false },
-        "param:2:params": { "type": "bullet3d.constraint.slider_params", "optional": false },
+        "param:2:params": {
+          "type": "bullet3d.constraint.slider_params & Required<Pick<bullet3d.constraint.slider_params, \"frame_b_position\" | \"frame_b_rotation\">>",
+          "optional": false
+        },
         "return:0:constraint": {
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
@@ -9099,7 +9110,7 @@
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
         },
-        "param:1:motor": { "type": "string", "optional": false },
+        "param:1:motor": { "type": "\"linear\" | \"angular\"", "optional": false },
         "return:0:enabled": { "type": "boolean", "optional": false },
         "return:1:target_velocity": { "type": "number", "optional": false },
         "return:2:max_force": { "type": "number", "optional": false }
@@ -9302,7 +9313,7 @@
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
         },
-        "param:1:motor": { "type": "string", "optional": false },
+        "param:1:motor": { "type": "\"linear\" | \"angular\"", "optional": false },
         "param:2:enabled": { "type": "boolean", "optional": false },
         "param:3:target_velocity": { "type": "number", "optional": false },
         "param:4:max_force": { "type": "number", "optional": false }
@@ -9540,7 +9551,10 @@
       },
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_shape\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:shape": { "type": "bullet3d.shape.btCollisionShape", "optional": false },
-        "return:0:data": { "type": "bullet3d.shape.definition", "optional": false }
+        "return:0:data": {
+          "type": "bullet3d.shape.definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH }",
+          "optional": false
+        }
       },
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_type\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:shape": { "type": "bullet3d.shape.btCollisionShape", "optional": false },
@@ -13486,8 +13500,7 @@
         "param:0:object": {
           "type": "Opaque<\"btCollisionObject\" | \"btRigidBody\">",
           "optional": false
-        },
-        "return:0:result": { "type": "boolean", "optional": false }
+        }
       },
       "bullet3d.collision_object\u0000FUNCTION\u0000bullet3d.collision_object.is_static\u0000[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
         "param:0:object": {
@@ -13591,7 +13604,10 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_cone_twist\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": {
         "param:0:body_a": { "type": "Opaque<\"btRigidBody\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"btRigidBody\"> | undefined", "optional": false },
-        "param:2:params": { "type": "bullet3d.constraint.cone_twist_params", "optional": false },
+        "param:2:params": {
+          "type": "bullet3d.constraint.cone_twist_params & Required<Pick<bullet3d.constraint.cone_twist_params, \"frame_b_position\" | \"frame_b_rotation\">>",
+          "optional": false
+        },
         "return:0:constraint": {
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
@@ -13600,7 +13616,10 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_generic_6dof\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": {
         "param:0:body_a": { "type": "Opaque<\"btRigidBody\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"btRigidBody\"> | undefined", "optional": false },
-        "param:2:params": { "type": "bullet3d.constraint.generic_6dof_params", "optional": false },
+        "param:2:params": {
+          "type": "bullet3d.constraint.generic_6dof_params & Required<Pick<bullet3d.constraint.generic_6dof_params, \"frame_b_position\" | \"frame_b_rotation\">>",
+          "optional": false
+        },
         "return:0:constraint": {
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
@@ -13621,7 +13640,10 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_hinge\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": {
         "param:0:body_a": { "type": "Opaque<\"btRigidBody\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"btRigidBody\"> | undefined", "optional": false },
-        "param:2:params": { "type": "bullet3d.constraint.hinge_params", "optional": false },
+        "param:2:params": {
+          "type": "bullet3d.constraint.hinge_params & Required<Pick<bullet3d.constraint.hinge_params, \"frame_b_position\" | \"frame_b_rotation\">>",
+          "optional": false
+        },
         "return:0:constraint": {
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
@@ -13640,7 +13662,7 @@
         "param:0:body_a": { "type": "Opaque<\"btRigidBody\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"btRigidBody\"> | undefined", "optional": false },
         "param:2:params": {
-          "type": "bullet3d.constraint.point_to_point_params",
+          "type": "bullet3d.constraint.point_to_point_params & Required<Pick<bullet3d.constraint.point_to_point_params, \"pivot_b\">>",
           "optional": false
         },
         "return:0:constraint": {
@@ -13651,7 +13673,10 @@
       "bullet3d.constraint\u0000FUNCTION\u0000bullet3d.constraint.create_slider\u0000[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"btRigidBody\\\">\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"btTypedConstraint\"],\"isOptional\":false}]": {
         "param:0:body_a": { "type": "Opaque<\"btRigidBody\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"btRigidBody\"> | undefined", "optional": false },
-        "param:2:params": { "type": "bullet3d.constraint.slider_params", "optional": false },
+        "param:2:params": {
+          "type": "bullet3d.constraint.slider_params & Required<Pick<bullet3d.constraint.slider_params, \"frame_b_position\" | \"frame_b_rotation\">>",
+          "optional": false
+        },
         "return:0:constraint": {
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
@@ -13845,7 +13870,7 @@
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
         },
-        "param:1:motor": { "type": "string", "optional": false },
+        "param:1:motor": { "type": "\"linear\" | \"angular\"", "optional": false },
         "return:0:enabled": { "type": "boolean", "optional": false },
         "return:1:target_velocity": { "type": "number", "optional": false },
         "return:2:max_force": { "type": "number", "optional": false }
@@ -14048,7 +14073,7 @@
           "type": "bullet3d.constraint.btTypedConstraint",
           "optional": false
         },
-        "param:1:motor": { "type": "string", "optional": false },
+        "param:1:motor": { "type": "\"linear\" | \"angular\"", "optional": false },
         "param:2:enabled": { "type": "boolean", "optional": false },
         "param:3:target_velocity": { "type": "number", "optional": false },
         "param:4:max_force": { "type": "number", "optional": false }
@@ -14286,7 +14311,10 @@
       },
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_shape\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:shape": { "type": "bullet3d.shape.btCollisionShape", "optional": false },
-        "return:0:data": { "type": "bullet3d.shape.definition", "optional": false }
+        "return:0:data": {
+          "type": "bullet3d.shape.definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH }",
+          "optional": false
+        }
       },
       "bullet3d.shape\u0000FUNCTION\u0000bullet3d.shape.get_type\u0000[{\"types\":[\"btCollisionShape\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:shape": { "type": "bullet3d.shape.btCollisionShape", "optional": false },
