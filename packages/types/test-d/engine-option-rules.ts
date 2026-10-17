@@ -9,6 +9,7 @@ declare const ids: Hash[];
 declare const path: string;
 declare const data: string;
 declare const url: Url;
+declare const partial: boolean;
 
 // go.delete (gameobject_script.cpp:Script_Delete)
 go.delete();
@@ -27,6 +28,9 @@ resource.create_sound_data(path, { data, partial: false });
 resource.create_sound_data(path, { data, partial: true, filesize: 1 });
 // @ts-expect-error a partial chunk reads filesize with no default
 resource.create_sound_data(path, { data, partial: true });
+resource.create_sound_data(path, { data, partial, filesize: 1 });
+// @ts-expect-error a partial that may be true reads filesize with no default
+resource.create_sound_data(path, { data, partial });
 
 // buffer.create (script_buffer.cpp:Create)
 const decl = { name: hash("position"), type: buffer.VALUE_TYPE_FLOAT32, count: 3 };
