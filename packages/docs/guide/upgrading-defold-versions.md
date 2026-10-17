@@ -531,6 +531,13 @@ The engine reference re-documents these symbols, so the API catalog records a ne
 signature, but the TypeScript declarations you compile against are unchanged. No
 action is needed.
 
+The reference also re-documents two [lifecycle hooks](./script-lifecycle.md),
+which are typed as members of the `defineScript` and `defineGuiScript` tables
+rather than as `go` or `gui` functions. `on_input` documents `action_id` as `nil`
+for pointer movement, which the typed hook already declares `Hash | undefined`,
+and the GUI `on_message` documents its `sender` argument, which the typed hook
+already passes.
+
 #### b2d.body.get_contact_list
 
 The 1.13.2 reference no longer documents `b2d.body.get_contact_list`. The typed
@@ -557,20 +564,6 @@ are unchanged.
 
 The reference lists `string` among the default values `go.property` accepts. The
 typed overloads are unchanged.
-
-#### go.on_input
-
-The reference documents `action_id` as `nil` for pointer movement. The typed hook
-already declares it `Hash | undefined`.
-
-#### gui.on_input
-
-Same change as `go.on_input`.
-
-#### gui.on_message
-
-The reference now documents the `sender` argument of the GUI hook. The typed hook
-already passes it.
 
 #### render.render_target
 

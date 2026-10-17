@@ -363,12 +363,6 @@
       "ts": "// How to unload resources of a factory prototype loaded with factory.load:\nfactory.unload(\"#factory\");"
     }
   ],
-  "final": [
-    {
-      "sourceHash": "ebc3cae218af001a",
-      "ts": "export default defineScript({\n  init() {\n    return { some_value: 0 };\n  },\n\n  final(self) {\n    // report finalization\n    msg.post(\"my_friend_instance\", \"im_dead\", { my_stats: self.some_value });\n  },\n});"
-    }
-  ],
   "font.add_font": [
     {
       "sourceHash": "eb23e196a4edbd74",
@@ -903,12 +897,6 @@
       "ts": "// Load an image from an URL as a buffer and create a texture resource from it:\nconst imgurl = \"http://www.site.com/image.png\";\nhttp.request(imgurl, \"GET\", (self, id, response) => {\n  const img =\n    response.response !== undefined\n      ? image.load_buffer(response.response, { flip_vertically: true })\n      : undefined;\n  // the engine registers a texture format only when the driver supports it\n  const format = graphics.TEXTURE_FORMAT_RGBA;\n  if (img !== undefined && format !== undefined) {\n    const tparams = {\n      width: img.width,\n      height: img.height,\n      type: graphics.TEXTURE_TYPE_2D,\n      format,\n    };\n\n    const my_texture_id = resource.create_texture(\"/my_custom_texture.texturec\", tparams, img.buffer);\n    // Apply the texture to a model\n    go.set(\"/go1#model\", \"texture0\", my_texture_id);\n  }\n});"
     }
   ],
-  "init": [
-    {
-      "sourceHash": "70267e467e6e247e",
-      "ts": "export default defineScript({\n  init() {\n    // set up useful data\n    return { my_value: 1 };\n  },\n});"
-    }
-  ],
   "json.decode": [
     {
       "sourceHash": "8dcdd6f81ef65528",
@@ -1115,36 +1103,6 @@
     {
       "sourceHash": "ceb19017beed7eef",
       "ts": "const my_url = msg.url(\"#my_component\");\nprint(my_url); // => url: [current_collection:/my_instance#my_component]\n\nconst my_collection_url = msg.url(\"my_collection:/my_sub_collection/my_instance#my_component\");\nprint(my_collection_url); // => url: [my_collection:/my_sub_collection/my_instance#my_component]\n\nconst my_socket_url = msg.url(\"my_socket:\");\nprint(my_socket_url); // => url: [my_collection:]"
-    }
-  ],
-  "on_input": [
-    {
-      "sourceHash": "86c70cf4ccb7381e",
-      "ts": "// This example demonstrates how a game object instance can be moved as a response to user input.\nexport default defineScript({\n  init() {\n    // acquire input focus\n    msg.post(\".\", \"acquire_input_focus\");\n    return {\n      // maximum speed the instance can be moved\n      max_speed: 2,\n      // velocity of the instance, initially zero\n      velocity: vmath.vector3(),\n    };\n  },\n\n  update(self, dt) {\n    // move the instance\n    go.set_position(go.get_position().add(self.velocity.mul(dt)));\n  },\n\n  on_input(self, action_id, action) {\n    // check for movement input\n    if (action_id === hash(\"right\")) {\n      if (action.released) {\n        // reset velocity if input was released\n        self.velocity = vmath.vector3();\n      } else {\n        // update velocity\n        self.velocity = vmath.vector3((action.value ?? 0) * self.max_speed, 0, 0);\n      }\n    }\n  },\n});"
-    },
-    {
-      "sourceHash": "cc835ea429adc693",
-      "ts": "export default defineGuiScript({\n  init(): { my_value: number | undefined } {\n    return { my_value: undefined };\n  },\n\n  on_input(self, action_id, action) {\n    // check for input\n    if (action_id === hash(\"my_action\")) {\n      // take appropriate action\n      self.my_value = action.value;\n    }\n    // consume input\n    return true;\n  },\n});"
-    }
-  ],
-  "on_message": [
-    {
-      "sourceHash": "d5850f2009394171",
-      "ts": "// This example demonstrates how a game object instance, called \"a\", can communicate with another instance, called \"b\". It\n// is assumed that both script components of the instances has id \"script\".\n\n// a.script — Script of instance \"a\":\nexport default defineScript({\n  init() {\n    // let b know about some important data\n    msg.post(\"b#script\", \"my_data\", { important_value: 1 });\n  },\n});"
-    },
-    {
-      "sourceHash": "9f37896589565629",
-      "ts": "// b.script — Script of instance \"b\":\nexport default defineScript({\n  init() {\n    // store the url of instance \"a\" for later use, by specifying undefined as socket we\n    // automatically use our own socket\n    return { a_url: msg.url(undefined, go.get_id(\"a\"), \"script\"), important_value: 0 };\n  },\n\n  on_message(self, message_id, message, sender) {\n    // check message and sender\n    if (message_id === hash(\"my_data\") && sender === self.a_url && typeof message.important_value === \"number\") {\n      // use the data in some way\n      self.important_value = message.important_value;\n    }\n  },\n});"
-    }
-  ],
-  "on_reload": [
-    {
-      "sourceHash": "ba39c0b0d5170ccb",
-      "ts": "// This example demonstrates how to tweak the speed of a game object instance that is moved on user input.\nexport default defineScript({\n  init() {\n    // acquire input focus\n    msg.post(\".\", \"acquire_input_focus\");\n    return {\n      // maximum speed the instance can be moved, this value is tweaked in the on_reload function below\n      max_speed: 2,\n      // velocity of the instance, initially zero\n      velocity: vmath.vector3(),\n    };\n  },\n\n  update(self, dt) {\n    // move the instance\n    go.set_position(go.get_position().add(self.velocity.mul(dt)));\n  },\n\n  on_input(self, action_id, action) {\n    // check for movement input\n    if (action_id === hash(\"right\")) {\n      if (action.released) {\n        // reset velocity if input was released\n        self.velocity = vmath.vector3();\n      } else {\n        // update velocity\n        self.velocity = vmath.vector3((action.value ?? 0) * self.max_speed, 0, 0);\n      }\n    }\n  },\n\n  on_reload(self) {\n    // edit this value and reload the script component\n    self.max_speed = 100;\n  },\n});"
-    },
-    {
-      "sourceHash": "e89fe0d0bd51ed98",
-      "ts": "export default defineGuiScript({\n  init() {\n    return { my_original_color: gui.get_color(gui.get_node(\"my_node\")) };\n  },\n\n  on_reload(self) {\n    // restore some color (or similar)\n    gui.set_color(gui.get_node(\"my_node\"), self.my_original_color);\n  },\n});"
     }
   ],
   "particlefx.play": [
@@ -2316,16 +2274,6 @@
     {
       "sourceHash": "96cf34367a47da0b",
       "ts": "function trigger_ticking(self: { handle: number }) {\n  self.handle = timer.delay(1, true, () => print(\"print every second or manually by timer.trigger\"));\n  // ...\n  const triggered = timer.trigger(self.handle);\n  if (!triggered) {\n    print(\"the timer is already cancelled or complete\");\n  }\n}"
-    }
-  ],
-  "update": [
-    {
-      "sourceHash": "1019c7620d797753",
-      "ts": "// This example demonstrates how to move a game object instance through the script component:\nexport default defineScript({\n  init() {\n    // set initial velocity to be 1 along world x-axis\n    return { my_velocity: vmath.vector3(1, 0, 0) };\n  },\n\n  update(self, dt) {\n    // move the game object instance\n    go.set_position(go.get_position().add(self.my_velocity.mul(dt)));\n  },\n});"
-    },
-    {
-      "sourceHash": "f4f87939dbdd5fc3",
-      "ts": "// This example demonstrates how to update a text node that displays game score\n// in a counting fashion. It is assumed that the gui component receives messages\n// from the game when a new score is to be shown.\nexport default defineGuiScript({\n  init() {\n    return {\n      // fetch the score text node for later use (assumes it is called \"score\")\n      score_node: gui.get_node(\"score\"),\n      // keep track of the current score counted up so far\n      current_score: 0,\n      // keep track of the target score we should count up to\n      target_score: 0,\n      // how fast we will update the score, in score/second\n      score_update_speed: 1,\n    };\n  },\n\n  update(self, dt) {\n    // check if target score is more than current score\n    if (self.current_score < self.target_score) {\n      // increment current score according to the speed\n      self.current_score = self.current_score + dt * self.score_update_speed;\n      // check if we went past the target score, clamp current score in that case\n      if (self.current_score > self.target_score) {\n        self.current_score = self.target_score;\n      }\n      // update the score text node\n      gui.set_text(self.score_node, \"\" + math.floor(self.current_score));\n    }\n  },\n\n  on_message(self, message_id, message) {\n    // check the message\n    if (message_id === hash(\"set_score\") && typeof message.score === \"number\") {\n      self.target_score = message.score;\n    }\n  },\n});"
     }
   ],
   "vmath.clamp": [

@@ -1,4 +1,5 @@
 import { correctedDoc, docCorrectionKey } from "./doc-corrections";
+import { SCRIPT_HOOK_NAMES } from "./lifecycle";
 
 export interface ApiModule {
   namespace: string;
@@ -16,6 +17,12 @@ export interface ApiModule {
   enums?: ApiEnum[];
   /** Each ref-doc `STRUCT`. Absent on a hand-built module, read as an empty list. */
   structs?: ApiStruct[];
+  /**
+   * Each lifecycle hook the reference documents as a bare-named `FUNCTION` under
+   * `go` or `gui`. The engine calls it as a script global and binds nothing under
+   * the name. Absent on a hand-built module.
+   */
+  scriptHooks?: ApiFunction[];
 }
 
 /** A ref-doc `STRUCT`: a named table shape. */
@@ -193,6 +200,17 @@ export const FUNCTION_NAME_CORRECTIONS: ReadonlyMap<string, FunctionNameCorrecti
   ],
 ]);
 
+// The engine reads each hook a script defines with `lua_getglobal` over
+// `SCRIPT_FUNCTION_NAMES` (`gameobject_script.cpp`, and `gui.cpp` for GUI
+// scripts) and registers no module function under the name, yet the reference
+// documents the hooks as bare-named `go` and `gui` functions.
+const SCRIPT_HOOK_NAMESPACES: ReadonlySet<string> = new Set(["go", "gui"]);
+const SCRIPT_HOOK_NAME_SET: ReadonlySet<string> = new Set(SCRIPT_HOOK_NAMES);
+
+function isScriptHook(namespace: string, name: string): boolean {
+  return SCRIPT_HOOK_NAMESPACES.has(namespace) && SCRIPT_HOOK_NAME_SET.has(name);
+}
+
 export function parseDefoldApiDoc(input: unknown): ApiModule {
   if (!isRecord(input)) {
     throw new Error(`parseDefoldApiDoc: expected object, got ${describeKind(input)}`);
@@ -218,12 +236,17 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
   const typedefs: ApiTypedef[] = [];
   const enums: ApiEnum[] = [];
   const structs: ApiStruct[] = [];
+  const scriptHooks: ApiFunction[] = [];
 
   for (const element of elements) {
     if (!isRecord(element)) continue;
     const type = element.type;
     if (type === "FUNCTION") {
       const fn = withDocCorrections(parseFunction(element));
+      if (isScriptHook(namespace, fn.name)) {
+        scriptHooks.push(fn);
+        continue;
+      }
       const corrected = FUNCTION_NAME_CORRECTIONS.get(fn.name);
       functions.push(corrected === undefined ? fn : { ...fn, name: corrected.name });
     } else if (type === "VARIABLE") {
@@ -264,6 +287,7 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
     typedefs,
     enums,
     structs,
+    scriptHooks,
   };
 }
 

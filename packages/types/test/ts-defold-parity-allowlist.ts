@@ -95,6 +95,29 @@ export const PARITY_ALLOWLIST: ParityAllowEntry[] = [
     reason:
       "the engine registers the function as sys.set_render_enabled, which the surface declares; the documented name is nil at runtime.",
   },
+  ...[
+    "go.init",
+    "go.final",
+    "go.update",
+    "go.fixed_update",
+    "go.late_update",
+    "go.on_message",
+    "go.on_input",
+    "go.on_reload",
+    "gui.init",
+    "gui.final",
+    "gui.update",
+    "gui.on_message",
+    "gui.on_input",
+    "gui.on_reload",
+  ].map(
+    (pattern): ParityAllowEntry => ({
+      pattern,
+      category: "intentional",
+      reason:
+        "a lifecycle hook, typed as a defineScript, defineGuiScript or defineRenderScript member; the engine reads it as a script global and binds nothing under this name, so the call is nil at runtime.",
+    }),
+  ),
 ];
 
 /** A `<ns>.*` pattern matches the namespace itself and any dotted descendant; any other pattern is an exact key. */
