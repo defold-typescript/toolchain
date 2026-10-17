@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[GUI node properties are typed](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)**; material constants take `hash`.
+> - **[GUI node properties are typed](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)** and material constants take `hash`; the Box2D world queries [take `<"v3">`](./typescript-gotchas.md#box2d-v3-query-hits-need-the-v3-type-argument) to return v3 hits.
 > - **[Declarations follow the engine bindings](./typescript-gotchas.md#some-optional-arguments-must-be-left-out-not-passed-undefined)**: optional arguments whose `nil` raises reject `undefined` on pre-baked versions, `go` and `gui` declare no [lifecycle hooks](./script-lifecycle.md), [resource markers](./script-lifecycle.md#resource-properties) compile only as property defaults in the one form Defold's build reads, and `Url.socket` can be `undefined`.
 > - **[Script kinds keep only what they support](./script-lifecycle.md#api-availability-by-script-kind)**: `properties` is `defineScript`-only, and render scripts lose what needs a game object.
 > - **[`wall --check` type-checks walls](./wall.md#flags)**, helpers they import included; re-run `wall <dirs>` to rewrite existing walls.
@@ -41,6 +41,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **`gui.get` returns each node property's type**: `"position"` reads as a `Vector4`, `"rotation"` as a `Quaternion`, and a sub-key or scalar as a `number`, so a read needs no cast.
 - **Each [state machine](./state-machines.md#import-it) module is written with a source map to the library's `.ts`**: a debugger frame inside the library opens TypeScript, and `watch` and `reload` console lines name that file when a local install keeps it inside the project.
+- **The Box2D world queries take a `"v3"` type argument on Defold 1.13.2 and later**: `b2d.world.cast_ray`, `b2d.world.cast_ray_closest`, `b2d.world.cast_shape`, `b2d.world.overlap_aabb` and `b2d.world.overlap_shape` return the v3 hits and shape tables when called as `b2d.world.cast_ray<"v3">(…)`, and the v2 ones with no type argument; see [Box2D v3 query hits](./typescript-gotchas.md#box2d-v3-query-hits-need-the-v3-type-argument).
 
 ### Fixed
 
