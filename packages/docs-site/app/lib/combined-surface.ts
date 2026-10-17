@@ -113,6 +113,13 @@ export interface CombinedEntry {
    */
   readonly authoredArms?: readonly AuthoredArm[];
   /**
+   * Set only on a `FUNCTION` whose identity several ref-doc elements share in the
+   * version its signature resolved from (the Box2D backend forms of a
+   * `b2d.world` query): those elements in fixture order, the order the joined
+   * declaration lists their arms in.
+   */
+  readonly armElements?: readonly ApiFunction[];
+  /**
    * The slot types emitted alongside {@link authoritativeSignature}, resolved
    * from the same version it was. Absent when the artifact records none.
    */
@@ -184,6 +191,7 @@ export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
     authoritativeSignatures: combinedAuthoritativeSignatures(ns),
     authoritativeSlotTypes: combinedAuthoritativeSlotTypes(ns),
     authoritativeArms: combinedAuthoritativeArms(ns),
+    authoritativeArmElements: combinedAuthoritativeArmElements(ns),
     authoredArmSpans: combinedAuthoredArmSpans(ns),
   };
 }
@@ -217,8 +225,9 @@ const memberInnerFormShape = /^[A-Za-z_$][\w$]*\s*:/;
  * form the `/api` render layer emits, dispatching on the symbol's kind:
  *
  * - `FUNCTION` (`function get_constants(…): …;`) drops `function `/`;` and
- *   splices the namespace-qualified `identity.name` before the first `(`, so
- *   both arms of a signature transition re-qualify to their own overload.
+ *   splices the namespace-qualified `identity.name` before the first `(`, or
+ *   before the type-parameter list ahead of it, so both arms of a signature
+ *   transition re-qualify to their own overload.
  * - `CONSTANT`/`VARIABLE` (`const NAME: T;`, `const _mangled: T;`) and
  *   `PROPERTY` (`name: T;`) drop an optional binding keyword and `;`, then
  *   splice the namespace-qualified public `identity.name` before the type
@@ -280,7 +289,9 @@ function innerFunctionArm(identity: ApiSymbolIdentity, arm: string): string {
     .replace(/;\s*$/, "");
   const paren = body.indexOf("(");
   if (paren === -1) return "";
-  return `${identity.name}${body.slice(paren)}`;
+  // A type-parameter list is part of the form (`cast_ray<Backend extends "v3">`).
+  const generic = body.indexOf("<");
+  return `${identity.name}${body.slice(generic !== -1 && generic < paren ? generic : paren)}`;
 }
 
 /**
@@ -303,6 +314,26 @@ export function combinedAuthoritativeArms(
       .map((arm) => innerFunctionArm(entry.identity, arm))
       .filter((arm) => arm !== "");
     if (arms.length > 0) map.set(symbolIdentityKey(entry.identity), arms);
+  }
+  return map;
+}
+
+/**
+ * The ref-doc element each arm of a joined declaration was emitted from, arm 0
+ * first, keyed by the same exact identity as {@link combinedAuthoritativeArms}.
+ * Present only where the declaration lists one arm per element, so a row never
+ * takes the prose of an element that emitted a different arm.
+ */
+export function combinedAuthoritativeArmElements(
+  ns: CombinedNamespace,
+): ReadonlyMap<string, readonly ApiFunction[]> {
+  const map = new Map<string, readonly ApiFunction[]>();
+  for (const entry of ns.entries) {
+    if (entry.armElements === undefined) continue;
+    const arms = entry.authoritativeSignature.split("\n").filter((arm) => arm.trim() !== "");
+    if (arms.length === entry.armElements.length) {
+      map.set(symbolIdentityKey(entry.identity), entry.armElements);
+    }
   }
   return map;
 }
@@ -658,6 +689,8 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
   // Per-identity presence (newest-first, mirroring the canonical version axis)
   // plus the newest concrete definition object seen for each identity.
   const presence = new Map<string, PresenceRecord>();
+  // Every ref-doc element of each function identity, per version, in fixture order.
+  const elements = new Map<string, Map<string, ApiFunction[]>>();
   const namespaces = new Map<string, NamespaceAccumulator>();
   const accumFor = (module: ApiModule): NamespaceAccumulator => {
     let accum = namespaces.get(module.namespace);
@@ -690,6 +723,9 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
       for (const fn of module.functions) {
         const key = seePresence(funcIdentity(module.namespace, fn), surface.version);
         if (!accum.functions.has(key)) accum.functions.set(key, fn);
+        const perVersion = elements.get(key) ?? new Map<string, ApiFunction[]>();
+        perVersion.set(surface.version, [...(perVersion.get(surface.version) ?? []), fn]);
+        elements.set(key, perVersion);
       }
       for (const variable of module.variables) {
         const key = seePresence(
@@ -804,10 +840,12 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
       identity.kind === "FUNCTION" && isAuthoredFold(identity.name, authoritativeSignature)
         ? authoredArmsFor(identity)
         : undefined;
+    const armElements = identity.kind === "FUNCTION" ? elements.get(key)?.get(newest) : undefined;
     return {
       identity,
       authoritativeSignature,
       ...(authoredArms ? { authoredArms } : {}),
+      ...(armElements && armElements.length > 1 ? { armElements } : {}),
       ...(slotTypes ? { slotTypes } : {}),
       availableIn,
       label: availabilityLabel(availableIn, versions, { transition }),

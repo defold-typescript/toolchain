@@ -41,7 +41,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **`gui.get` returns each node property's type**: `"position"` reads as a `Vector4`, `"rotation"` as a `Quaternion`, and a sub-key or scalar as a `number`, so a read needs no cast.
 - **Each [state machine](./state-machines.md#import-it) module is written with a source map to the library's `.ts`**: a debugger frame inside the library opens TypeScript, and `watch` and `reload` console lines name that file when a local install keeps it inside the project.
-- **The Box2D world queries take a `"v3"` type argument on Defold 1.13.2 and later**: `b2d.world.cast_ray`, `b2d.world.cast_ray_closest`, `b2d.world.cast_shape`, `b2d.world.overlap_aabb` and `b2d.world.overlap_shape` return the v3 hits and shape tables when called as `b2d.world.cast_ray<"v3">(…)`, and the v2 ones with no type argument; see [Box2D v3 query hits](./typescript-gotchas.md#box2d-v3-query-hits-need-the-v3-type-argument).
+- **The Box2D world queries take a `"v3"` type argument on Defold 1.13.2 and later**: `b2d.world.cast_ray`, `b2d.world.cast_ray_closest`, `b2d.world.cast_shape`, `b2d.world.overlap_aabb` and `b2d.world.overlap_shape` return the v3 hits and shape tables when called as `b2d.world.cast_ray<"v3">(…)`, and the v2 ones with no type argument. The API reference and `llms-full.txt` list both forms of each query with its own return type and description; see [Box2D v3 query hits](./typescript-gotchas.md#box2d-v3-query-hits-need-the-v3-type-argument).
 
 ### Fixed
 

@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { symbolIdentityKey } from "../src/api-availability";
-import type { SlotTypes } from "../src/emit-dts";
+import type { SlotType, SlotTypes } from "../src/emit-dts";
 import { signatureArmsFor } from "../src/signature-store";
 import { selectCompleteVersionSurfaces } from "./generate-api-availability";
 import {
@@ -76,6 +76,18 @@ export function withheldSymbols(entry: ModuleManifestEntry): { key: string; fqn:
   return withheld;
 }
 
+// The slots two arms record identically. One ledger cannot describe arms whose
+// types differ at a slot, so that slot is dropped and its row falls back to the
+// ref-doc token.
+function commonSlots(a: SlotTypes, b: SlotTypes): SlotTypes {
+  const common: Record<string, SlotType> = {};
+  for (const [slot, record] of Object.entries(a)) {
+    const other = b[slot];
+    if (other?.type === record.type && other.optional === record.optional) common[slot] = record;
+  }
+  return common;
+}
+
 function sortObjectKeys<T>(record: Record<string, T>): Record<string, T> {
   const sorted: Record<string, T> = {};
   for (const key of Object.keys(record).sort()) sorted[key] = record[key] as T;
@@ -96,6 +108,17 @@ export function buildSignaturesArtifact(options: BuildSignaturesOptions = {}): S
     for (const entry of loadTargetModules(target, packageRoot)) {
       for (const signature of generateModuleSignatures(entry, emitOptions)) {
         const key = symbolIdentityKey(signature.identity);
+        // Two ref-doc elements can normalize to one identity (the Box2D backend
+        // forms of a `b2d.world` query), so each keeps its arms in fixture order
+        // and the key keeps only the slots every arm shares.
+        const earlier = perSymbol[key];
+        if (earlier !== undefined) {
+          perSymbol[key] = `${earlier}\n${signature.tsSignature}`;
+          const common = commonSlots(perSymbolSlots[key] ?? {}, signature.slotTypes);
+          if (Object.keys(common).length > 0) perSymbolSlots[key] = common;
+          else delete perSymbolSlots[key];
+          continue;
+        }
         perSymbol[key] = signature.tsSignature;
         if (Object.keys(signature.slotTypes).length > 0) {
           perSymbolSlots[key] = sortObjectKeys({ ...signature.slotTypes });
