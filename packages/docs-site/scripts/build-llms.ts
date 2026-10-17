@@ -333,11 +333,14 @@ export function buildLlmsFull(target: LlmsTarget = SITE_TARGET): string {
       }
       if (entry.authoritativeSignature) {
         const signatures = llmsSignaturesForEntry(entry);
-        const tag = compactAvailability(entry);
+        const entryTag = compactAvailability(entry);
         // The availability span is a fact about the symbol, so it rides the
-        // first arm rather than repeating on each.
+        // first arm rather than repeating on each — except where each arm was
+        // emitted from a ref-doc element of its own, which carries its own span.
         for (const [index, signature] of signatures.entries()) {
-          lines.push(tag && index === 0 ? `- ${signature} ${tag}` : `- ${signature}`);
+          const arm = entry.elementArms?.find((candidate) => candidate.signature === signature);
+          const tag = arm ? compactArmAvailability(entry, arm) : index === 0 ? entryTag : "";
+          lines.push(tag ? `- ${signature} ${tag}` : `- ${signature}`);
         }
         continue;
       }

@@ -496,6 +496,13 @@ export interface ApiPage {
    */
   authoredArmSpans?: ReadonlyMap<string, ReadonlyMap<string, readonly string[]>>;
   /**
+   * The versions each arm of a declaration several ref-doc elements share
+   * exists in, keyed like {@link authoritativeArms} and then by the arm's text.
+   * Present only on Combined pages, where the shared identity can span versions
+   * whose declaration held other lines; each of those arm rows takes this span.
+   */
+  authoritativeArmSpans?: ReadonlyMap<string, ReadonlyMap<string, readonly string[]>>;
+  /**
    * `engine` for Defold-engine namespaces emitted from `api-targets.json` `modules`
    * and the synthetic globals page; `lua-stdlib` for pure-Lua / LuaJIT surfaces
    * (currently `base`, `bit`) sourced from `target.luaStdlib` and rendered under
@@ -1369,6 +1376,7 @@ type ApiModuleMarkdownPage = Pick<
   | "authoritativeArms"
   | "authoritativeArmElements"
   | "authoredArmSpans"
+  | "authoritativeArmSpans"
 > &
   Partial<Pick<ApiPage, "signatures">>;
 
@@ -1463,15 +1471,15 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
     // override-collapsed later entry contributes its prose under the rows above.
     // Rows that share an identity (the arms of a declaration several ref-doc
     // elements share) all list under it.
-    const rowSignatures = new Map<string, string[]>();
-    let current: string[] | undefined;
+    const identityRows = new Map<string, ApiSymbol[]>();
+    let current: ApiSymbol[] | undefined;
     for (const symbol of apiModuleSymbols(page, translations, page.signatures)) {
       if (symbol.kind !== "function") continue;
       if (symbol.declarationIdentity !== undefined) {
-        current = rowSignatures.get(symbol.declarationIdentity) ?? [];
-        rowSignatures.set(symbol.declarationIdentity, current);
+        current = identityRows.get(symbol.declarationIdentity) ?? [];
+        identityRows.set(symbol.declarationIdentity, current);
       }
-      current?.push(symbol.signature);
+      current?.push(symbol);
     }
     for (const fn of m.functions) {
       lines = section("function", fn.name);
@@ -1481,8 +1489,9 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
         name: fn.name,
         signature: normalizedFunctionSignature(fn),
       });
-      for (const signature of rowSignatures.get(identity) ?? []) {
-        lines.push(`### \`${signature}\``, "");
+      const rows = identityRows.get(identity) ?? [];
+      for (const row of rows) {
+        lines.push(`### \`${row.signature}\``, "");
       }
       const doc = translateProseFences(
         htmlToDocText(fn.description || fn.brief),
@@ -1491,15 +1500,22 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
         KEEP_SOURCE,
       );
       if (doc) lines.push(doc, "");
+      // Arms dated by their own lines state the span they cover together, not
+      // the shared identity's.
       pushAvailabilityProse(
         lines,
-        joinAvailability(
-          page.availability,
-          m.namespace,
-          "FUNCTION",
-          fn.name,
-          normalizedFunctionSignature(fn),
-        ),
+        page.authoritativeArmSpans?.has(identity)
+          ? mergedAvailability(
+              rows.flatMap((row) => row.availability ?? []),
+              page.availability?.versions ?? [],
+            )
+          : joinAvailability(
+              page.availability,
+              m.namespace,
+              "FUNCTION",
+              fn.name,
+              normalizedFunctionSignature(fn),
+            ),
         page.availability,
       );
       const example = exampleMarkdownFor(fn, translations);
@@ -1656,6 +1672,7 @@ export function apiModuleSymbols(
     | "authoritativeArms"
     | "authoritativeArmElements"
     | "authoredArmSpans"
+    | "authoritativeArmSpans"
   >,
   translations: TranslationStore = {},
   signatures: SignatureStore = {},
@@ -1825,8 +1842,11 @@ export function apiModuleSymbols(
     // A Combined page dates an authored arm some targets lack by the folds that
     // declare it, which no ref-doc identity it collapses over can say. An arm
     // every target declares keeps the reading below, which can still narrow it
-    // to the ref-doc signatures that admit it (`go.property`'s string form).
-    const armSpans = ov === null ? undefined : page.authoredArmSpans?.get(fn.name);
+    // to the ref-doc signatures that admit it (`go.property`'s string form). An
+    // arm of a declaration several ref-doc elements share is dated the same way,
+    // by the values that declare its line rather than by the shared identity.
+    const armSpans =
+      ov === null ? page.authoritativeArmSpans?.get(identity) : page.authoredArmSpans?.get(fn.name);
     const armAvailability = (signature: string): ApiAvailability | undefined => {
       const availableIn = armSpans?.get(signature);
       if (availableIn === undefined || availableIn.length === versions.length) return undefined;
@@ -1865,6 +1885,7 @@ export function apiModuleSymbols(
       const armElements = page.authoritativeArmElements?.get(identity);
       for (const [index, signature] of (page.authoritativeArms?.get(identity) ?? []).entries()) {
         const element = armElements?.[index + 1];
+        const armAv = armAvailability(signature) ?? av;
         if (element !== undefined) {
           const project = (list: ApiParameter[], kind: "param" | "return") =>
             projectParams(list, mapType, primarySlots, kind, fn.name, translations, libraryPage);
@@ -1878,7 +1899,7 @@ export function apiModuleSymbols(
             parameters: project(element.parameters, "param"),
             returnValues: project(element.returnValues, "return"),
             ...(example ? { exampleMarkdown: example } : {}),
-            ...(av ? { availability: av } : {}),
+            ...(armAv ? { availability: armAv } : {}),
             ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
             ...(fn.global ? { global: true } : {}),
             ...(fn.docSource ? { docSource: fn.docSource } : {}),
@@ -1908,7 +1929,7 @@ export function apiModuleSymbols(
               ]
             : [],
           returnValues: armAlternative ? symbol.returnValues : [],
-          ...(av ? { availability: av } : {}),
+          ...(armAv ? { availability: armAv } : {}),
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
           ...(fn.global ? { global: true } : {}),
           ...(fn.docSource ? { docSource: fn.docSource } : {}),
