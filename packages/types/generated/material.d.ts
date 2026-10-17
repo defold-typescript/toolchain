@@ -78,7 +78,7 @@ declare global {
       /**
        * Sampler texture type.
        */
-      type: graphics.TEXTURE_TYPE;
+      type: graphics.TEXTURE_TYPE | 6 | 7 | 8 | 9 | 10;
       /**
        * Horizontal wrap mode.
        */
@@ -348,7 +348,7 @@ declare global {
      * Returns a table of all the textures from the material.
      *
      * @param path - The path to the resource
-     * @returns material texture information
+     * @returns material texture information. Keyed by sampler slot from 1; a slot with no texture has no entry, so iterate with `for (const [slot, info] of textures)`.
      * @example
      * ```ts
      * // Get the textures from a material specified as a resource property
@@ -363,7 +363,7 @@ declare global {
      * });
      * ```
      */
-    function get_textures(path: Hash | string): material.texture_info[];
+    function get_textures(path: Hash | string): LuaMap<number, material.texture_info>;
     /**
      * Returns a table of all the vertex attributes in the material. This function will return all the vertex attributes
      * that are used in the vertex shader of the material.

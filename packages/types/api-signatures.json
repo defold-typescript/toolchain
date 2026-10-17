@@ -935,6 +935,7 @@
       "graphics\u0000TYPEDEF\u0000BLEND_EQUATION\u0000": "type BLEND_EQUATION = typeof graphics.BLEND_EQUATION_ADD | typeof graphics.BLEND_EQUATION_MAX | typeof graphics.BLEND_EQUATION_MIN | typeof graphics.BLEND_EQUATION_REVERSE_SUBTRACT | typeof graphics.BLEND_EQUATION_SUBTRACT;",
       "graphics\u0000TYPEDEF\u0000BLEND_FACTOR\u0000": "type BLEND_FACTOR = typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ZERO;",
       "graphics\u0000TYPEDEF\u0000BUFFER_TYPE\u0000": "type BUFFER_TYPE = typeof graphics.BUFFER_TYPE_COLOR0_BIT | NonNullable<typeof graphics.BUFFER_TYPE_COLOR1_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR2_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR3_BIT> | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
+      "graphics\u0000TYPEDEF\u0000BlendFactor\u0000": "type BlendFactor = typeof graphics.BLEND_FACTOR_ZERO | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;",
       "graphics\u0000TYPEDEF\u0000BufferType\u0000": "type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_COLOR1_BIT | typeof graphics.BUFFER_TYPE_COLOR2_BIT | typeof graphics.BUFFER_TYPE_COLOR3_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
       "graphics\u0000TYPEDEF\u0000COMPARE_FUNC\u0000": "type COMPARE_FUNC = typeof graphics.COMPARE_FUNC_ALWAYS | typeof graphics.COMPARE_FUNC_EQUAL | typeof graphics.COMPARE_FUNC_GEQUAL | typeof graphics.COMPARE_FUNC_GREATER | typeof graphics.COMPARE_FUNC_LEQUAL | typeof graphics.COMPARE_FUNC_LESS | typeof graphics.COMPARE_FUNC_NEVER | typeof graphics.COMPARE_FUNC_NOTEQUAL;",
       "graphics\u0000TYPEDEF\u0000COMPRESSION_TYPE\u0000": "type COMPRESSION_TYPE = typeof graphics.COMPRESSION_TYPE_BASIS_ETC1S | typeof graphics.COMPRESSION_TYPE_BASIS_UASTC | typeof graphics.COMPRESSION_TYPE_DEFAULT | typeof graphics.COMPRESSION_TYPE_WEBP | typeof graphics.COMPRESSION_TYPE_WEBP_LOSSY;",
@@ -1290,7 +1291,7 @@
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_WORLD_INVERSE\u0000": "const CONSTANT_TYPE_WORLD_INVERSE: number & { readonly __brand: \"material.CONSTANT_TYPE_WORLD_INVERSE\" };",
       "material\u0000FUNCTION\u0000material.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_constants(path: Hash | string): material.constant_info[];",
       "material\u0000FUNCTION\u0000material.get_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_samplers(path: Hash | string): material.sampler_info[];",
-      "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): material.texture_info[];",
+      "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): LuaMap<number, material.texture_info>;",
       "material\u0000FUNCTION\u0000material.get_vertex_attributes\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_vertex_attributes(path: Hash | string): material.vertex_attribute_info[];",
       "material\u0000FUNCTION\u0000material.set_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.constant_options> | Record<string, material.constant_options>): void;",
       "material\u0000FUNCTION\u0000material.set_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.sampler_options> | Record<string, material.sampler_options>): void;",
@@ -1302,7 +1303,7 @@
       "material\u0000TYPEDEF\u0000constant_options\u0000": "interface constant_options { type?: material.CONSTANT_TYPE; value?: material.constant_value; }",
       "material\u0000TYPEDEF\u0000constant_value\u0000": "type constant_value = number | Vector3 | Vector4 | Matrix4 | (number | Vector3 | Vector4 | Matrix4)[];",
       "material\u0000TYPEDEF\u0000named_vertex_attribute_options\u0000": "interface named_vertex_attribute_options { name: string | Hash; value?: material.vertex_attribute_value; normalize?: boolean; data_type?: graphics.DATA_TYPE; coordinate_space?: graphics.COORDINATE_SPACE; semantic_type?: graphics.SEMANTIC_TYPE; }",
-      "material\u0000TYPEDEF\u0000sampler_info\u0000": "interface sampler_info { name: Hash; type: graphics.TEXTURE_TYPE; u_wrap: graphics.TEXTURE_WRAP; v_wrap: graphics.TEXTURE_WRAP; w_wrap: graphics.TEXTURE_WRAP; min_filter: graphics.TEXTURE_FILTER; mag_filter: graphics.TEXTURE_FILTER; max_anisotropy: number; }",
+      "material\u0000TYPEDEF\u0000sampler_info\u0000": "interface sampler_info { name: Hash; type: graphics.TEXTURE_TYPE | 6 | 7 | 8 | 9 | 10; u_wrap: graphics.TEXTURE_WRAP; v_wrap: graphics.TEXTURE_WRAP; w_wrap: graphics.TEXTURE_WRAP; min_filter: graphics.TEXTURE_FILTER; mag_filter: graphics.TEXTURE_FILTER; max_anisotropy: number; }",
       "material\u0000TYPEDEF\u0000sampler_options\u0000": "interface sampler_options { u_wrap?: graphics.TEXTURE_WRAP; v_wrap?: graphics.TEXTURE_WRAP; w_wrap?: graphics.TEXTURE_WRAP; min_filter?: graphics.TEXTURE_FILTER; mag_filter?: graphics.TEXTURE_FILTER; max_anisotropy?: number; }",
       "material\u0000TYPEDEF\u0000texture_info\u0000": "interface texture_info { path?: Hash; handle: Opaque<\"texture\">; width: number; height: number; depth: number; page_count: number; mipmaps: number; type: graphics.TEXTURE_TYPE; flags: graphics.TEXTURE_USAGE_FLAG | number; }",
       "material\u0000TYPEDEF\u0000vertex_attribute_info\u0000": "interface vertex_attribute_info { name: Hash; value: material.vertex_attribute_value; normalize: boolean; data_type: graphics.DATA_TYPE; coordinate_space: graphics.COORDINATE_SPACE; semantic_type: graphics.SEMANTIC_TYPE; }",
@@ -1424,13 +1425,13 @@
       "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
-      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.STATE): void;",
+      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">): void;\nfunction draw(predicate: Opaque<\"render_predicate\">, options: render.draw_options): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: render.debug_draw_options): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
-      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.STATE): void;",
+      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number, buffer_type?: graphics.BUFFER_TYPE): void;",
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_height(): number;",
       "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;",
@@ -1442,7 +1443,7 @@
       "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.RenderTargetParams): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.RenderTargetParams): Opaque<\"render_target\">",
       "render\u0000FUNCTION\u0000render.set_blend_equation_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_equation_separate(equation_color: graphics.BLEND_EQUATION, equation_alpha: graphics.BLEND_EQUATION): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: graphics.BLEND_FACTOR, destination_factor: graphics.BLEND_FACTOR): void;",
-      "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void;",
+      "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void;",
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"Hash\",\"Url\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_camera(camera?: Url | number | string | Hash, options?: render.camera_options): void;",
       "render\u0000FUNCTION\u0000render.set_color_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;",
       "render\u0000FUNCTION\u0000render.set_compute\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function set_compute(compute?: string | Hash): void;",
@@ -1463,16 +1464,17 @@
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
       "render\u0000TYPEDEF\u0000FRUSTUM_PLANES\u0000": "type FRUSTUM_PLANES = typeof render.FRUSTUM_PLANES_ALL | typeof render.FRUSTUM_PLANES_SIDES;",
       "render\u0000TYPEDEF\u0000RENDER_TARGET_FLAG\u0000": "type RENDER_TARGET_FLAG = typeof render.TEXTURE_BIT;",
+      "render\u0000TYPEDEF\u0000RenderTargetTextureType\u0000": "type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;",
       "render\u0000TYPEDEF\u0000SORT\u0000": "type SORT = typeof render.SORT_BACK_TO_FRONT | typeof render.SORT_FRONT_TO_BACK | typeof render.SORT_NONE;",
       "render\u0000TYPEDEF\u0000camera_options\u0000": "interface camera_options { use_frustum?: boolean; }",
       "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000debug_draw_options\u0000": "interface debug_draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; }",
       "render\u0000TYPEDEF\u0000dispatch_options\u0000": "interface dispatch_options { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; }",
       "render\u0000TYPEDEF\u0000draw_options\u0000": "interface draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: render.SORT; }",
-      "render\u0000TYPEDEF\u0000render_predicate\u0000": "type render_predicate = number;",
+      "render\u0000TYPEDEF\u0000render_predicate\u0000": "type render_predicate = Opaque<\"render_predicate\">;",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000render_target_buffer_params\u0000": "interface render_target_buffer_params { format: graphics.TEXTURE_FORMAT; width: number; height: number; min_filter?: graphics.TEXTURE_FILTER; mag_filter?: graphics.TEXTURE_FILTER; u_wrap?: graphics.TEXTURE_WRAP; v_wrap?: graphics.TEXTURE_WRAP; w_wrap?: graphics.TEXTURE_WRAP; flags?: render.RENDER_TARGET_FLAG | number; }",
-      "render\u0000TYPEDEF\u0000render_target_params\u0000": "type render_target_params = { type?: graphics.TEXTURE_TYPE; sample_count?: number } & { [key: number]: render.render_target_buffer_params };",
+      "render\u0000TYPEDEF\u0000render_target_params\u0000": "type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.render_target_buffer_params };",
       "render\u0000TYPEDEF\u0000set_render_target_options\u0000": "interface set_render_target_options { transient?: graphics.BUFFER_TYPE[]; face?: graphics.CUBEMAP_FACE; }",
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
@@ -2717,6 +2719,7 @@
       "graphics\u0000TYPEDEF\u0000BLEND_EQUATION\u0000": "type BLEND_EQUATION = typeof graphics.BLEND_EQUATION_ADD | typeof graphics.BLEND_EQUATION_MAX | typeof graphics.BLEND_EQUATION_MIN | typeof graphics.BLEND_EQUATION_REVERSE_SUBTRACT | typeof graphics.BLEND_EQUATION_SUBTRACT;",
       "graphics\u0000TYPEDEF\u0000BLEND_FACTOR\u0000": "type BLEND_FACTOR = typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ZERO;",
       "graphics\u0000TYPEDEF\u0000BUFFER_TYPE\u0000": "type BUFFER_TYPE = typeof graphics.BUFFER_TYPE_COLOR0_BIT | NonNullable<typeof graphics.BUFFER_TYPE_COLOR1_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR2_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR3_BIT> | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
+      "graphics\u0000TYPEDEF\u0000BlendFactor\u0000": "type BlendFactor = typeof graphics.BLEND_FACTOR_ZERO | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;",
       "graphics\u0000TYPEDEF\u0000BufferType\u0000": "type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_COLOR1_BIT | typeof graphics.BUFFER_TYPE_COLOR2_BIT | typeof graphics.BUFFER_TYPE_COLOR3_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
       "graphics\u0000TYPEDEF\u0000COMPARE_FUNC\u0000": "type COMPARE_FUNC = typeof graphics.COMPARE_FUNC_ALWAYS | typeof graphics.COMPARE_FUNC_EQUAL | typeof graphics.COMPARE_FUNC_GEQUAL | typeof graphics.COMPARE_FUNC_GREATER | typeof graphics.COMPARE_FUNC_LEQUAL | typeof graphics.COMPARE_FUNC_LESS | typeof graphics.COMPARE_FUNC_NEVER | typeof graphics.COMPARE_FUNC_NOTEQUAL;",
       "graphics\u0000TYPEDEF\u0000COMPRESSION_TYPE\u0000": "type COMPRESSION_TYPE = typeof graphics.COMPRESSION_TYPE_BASIS_ETC1S | typeof graphics.COMPRESSION_TYPE_BASIS_UASTC | typeof graphics.COMPRESSION_TYPE_DEFAULT | typeof graphics.COMPRESSION_TYPE_WEBP | typeof graphics.COMPRESSION_TYPE_WEBP_LOSSY;",
@@ -3071,7 +3074,7 @@
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_WORLD_INVERSE\u0000": "const CONSTANT_TYPE_WORLD_INVERSE: number & { readonly __brand: \"material.CONSTANT_TYPE_WORLD_INVERSE\" };",
       "material\u0000FUNCTION\u0000material.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_constants(path: Hash | string): material.constant_info[];",
       "material\u0000FUNCTION\u0000material.get_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_samplers(path: Hash | string): material.sampler_info[];",
-      "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): material.texture_info[];",
+      "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): LuaMap<number, material.texture_info>;",
       "material\u0000FUNCTION\u0000material.get_vertex_attributes\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_vertex_attributes(path: Hash | string): material.vertex_attribute_info[];",
       "material\u0000FUNCTION\u0000material.set_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.constant_options> | Record<string, material.constant_options>): void;",
       "material\u0000FUNCTION\u0000material.set_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.sampler_options> | Record<string, material.sampler_options>): void;",
@@ -3083,7 +3086,7 @@
       "material\u0000TYPEDEF\u0000constant_options\u0000": "interface constant_options { type?: material.CONSTANT_TYPE; value?: material.constant_value; }",
       "material\u0000TYPEDEF\u0000constant_value\u0000": "type constant_value = number | Vector3 | Vector4 | Matrix4 | (number | Vector3 | Vector4 | Matrix4)[];",
       "material\u0000TYPEDEF\u0000named_vertex_attribute_options\u0000": "interface named_vertex_attribute_options { name: string | Hash; value?: material.vertex_attribute_value; normalize?: boolean; data_type?: graphics.DATA_TYPE; coordinate_space?: graphics.COORDINATE_SPACE; semantic_type?: graphics.SEMANTIC_TYPE; }",
-      "material\u0000TYPEDEF\u0000sampler_info\u0000": "interface sampler_info { name: Hash; type: graphics.TEXTURE_TYPE; u_wrap: graphics.TEXTURE_WRAP; v_wrap: graphics.TEXTURE_WRAP; w_wrap: graphics.TEXTURE_WRAP; min_filter: graphics.TEXTURE_FILTER; mag_filter: graphics.TEXTURE_FILTER; max_anisotropy: number; }",
+      "material\u0000TYPEDEF\u0000sampler_info\u0000": "interface sampler_info { name: Hash; type: graphics.TEXTURE_TYPE | 6 | 7 | 8 | 9 | 10; u_wrap: graphics.TEXTURE_WRAP; v_wrap: graphics.TEXTURE_WRAP; w_wrap: graphics.TEXTURE_WRAP; min_filter: graphics.TEXTURE_FILTER; mag_filter: graphics.TEXTURE_FILTER; max_anisotropy: number; }",
       "material\u0000TYPEDEF\u0000sampler_options\u0000": "interface sampler_options { u_wrap?: graphics.TEXTURE_WRAP; v_wrap?: graphics.TEXTURE_WRAP; w_wrap?: graphics.TEXTURE_WRAP; min_filter?: graphics.TEXTURE_FILTER; mag_filter?: graphics.TEXTURE_FILTER; max_anisotropy?: number; }",
       "material\u0000TYPEDEF\u0000texture_info\u0000": "interface texture_info { path?: Hash; handle: Opaque<\"texture\">; width: number; height: number; depth: number; page_count: number; mipmaps: number; type: graphics.TEXTURE_TYPE; flags: graphics.TEXTURE_USAGE_FLAG | number; }",
       "material\u0000TYPEDEF\u0000vertex_attribute_info\u0000": "interface vertex_attribute_info { name: Hash; value: material.vertex_attribute_value; normalize: boolean; data_type: graphics.DATA_TYPE; coordinate_space: graphics.COORDINATE_SPACE; semantic_type: graphics.SEMANTIC_TYPE; }",
@@ -3205,13 +3208,13 @@
       "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
-      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.STATE): void;",
+      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">): void;\nfunction draw(predicate: Opaque<\"render_predicate\">, options: render.draw_options): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: render.debug_draw_options): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
-      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.STATE): void;",
+      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number, buffer_type?: graphics.BUFFER_TYPE): void;",
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_height(): number;",
       "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;",
@@ -3223,7 +3226,7 @@
       "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.RenderTargetParams): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.RenderTargetParams): Opaque<\"render_target\">",
       "render\u0000FUNCTION\u0000render.set_blend_equation_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_equation_separate(equation_color: graphics.BLEND_EQUATION, equation_alpha: graphics.BLEND_EQUATION): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: graphics.BLEND_FACTOR, destination_factor: graphics.BLEND_FACTOR): void;",
-      "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void;",
+      "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void;",
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"Hash\",\"Url\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_camera(camera?: Url | number | string | Hash, options?: render.camera_options): void;",
       "render\u0000FUNCTION\u0000render.set_color_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;",
       "render\u0000FUNCTION\u0000render.set_compute\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function set_compute(compute?: string | Hash): void;",
@@ -3244,13 +3247,14 @@
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
       "render\u0000TYPEDEF\u0000FRUSTUM_PLANES\u0000": "type FRUSTUM_PLANES = typeof render.FRUSTUM_PLANES_ALL | typeof render.FRUSTUM_PLANES_SIDES;",
       "render\u0000TYPEDEF\u0000RENDER_TARGET_FLAG\u0000": "type RENDER_TARGET_FLAG = typeof render.TEXTURE_BIT;",
+      "render\u0000TYPEDEF\u0000RenderTargetTextureType\u0000": "type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;",
       "render\u0000TYPEDEF\u0000SORT\u0000": "type SORT = typeof render.SORT_BACK_TO_FRONT | typeof render.SORT_FRONT_TO_BACK | typeof render.SORT_NONE;",
       "render\u0000TYPEDEF\u0000camera_options\u0000": "interface camera_options { use_frustum?: boolean; }",
       "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000debug_draw_options\u0000": "interface debug_draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; }",
       "render\u0000TYPEDEF\u0000dispatch_options\u0000": "interface dispatch_options { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; }",
       "render\u0000TYPEDEF\u0000draw_options\u0000": "interface draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: render.SORT; }",
-      "render\u0000TYPEDEF\u0000render_predicate\u0000": "type render_predicate = number;",
+      "render\u0000TYPEDEF\u0000render_predicate\u0000": "type render_predicate = Opaque<\"render_predicate\">;",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000render_target_buffer_params\u0000": "interface render_target_buffer_params { format: graphics.TEXTURE_FORMAT; width: number; height: number; min_filter?: graphics.TEXTURE_FILTER; mag_filter?: graphics.TEXTURE_FILTER; u_wrap?: graphics.TEXTURE_WRAP; v_wrap?: graphics.TEXTURE_WRAP; w_wrap?: graphics.TEXTURE_WRAP; flags?: render.RENDER_TARGET_FLAG | number; }",
       "render\u0000TYPEDEF\u0000render_target_params\u0000": "type render_target_params = { sample_count?: number } & { [key: number]: render.render_target_buffer_params };",
@@ -4206,6 +4210,7 @@
       "graphics\u0000CONSTANT\u0000graphics.TEXTURE_WRAP_REPEAT\u0000": "const TEXTURE_WRAP_REPEAT: number & { readonly __brand: \"graphics.TEXTURE_WRAP_REPEAT\" };",
       "graphics\u0000FUNCTION\u0000graphics.get_adapter_info\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_adapter_info(): { family: string; version_major: number; version_minor: number; limits: { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number }; extensions: string[]; features: number[] };",
       "graphics\u0000FUNCTION\u0000graphics.get_engine_adapters\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_engine_adapters(): string[];",
+      "graphics\u0000TYPEDEF\u0000BlendFactor\u0000": "type BlendFactor = typeof graphics.BLEND_FACTOR_ZERO | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;",
       "graphics\u0000TYPEDEF\u0000BufferType\u0000": "type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_COLOR1_BIT | typeof graphics.BUFFER_TYPE_COLOR2_BIT | typeof graphics.BUFFER_TYPE_COLOR3_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
       "graphics\u0000TYPEDEF\u0000State\u0000": "type State = typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_STENCIL_TEST | typeof graphics.STATE_BLEND | typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_POLYGON_OFFSET_FILL;",
       "gui\u0000CONSTANT\u0000gui.ADJUST_FIT\u0000": "const ADJUST_FIT: number & { readonly __brand: \"gui.ADJUST_FIT\" };",
@@ -4512,7 +4517,7 @@
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_WORLD_INVERSE\u0000": "const CONSTANT_TYPE_WORLD_INVERSE: number & { readonly __brand: \"material.CONSTANT_TYPE_WORLD_INVERSE\" };",
       "material\u0000FUNCTION\u0000material.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];",
       "material\u0000FUNCTION\u0000material.get_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[];",
-      "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];",
+      "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): LuaMap<number, { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }>;",
       "material\u0000FUNCTION\u0000material.get_vertex_attributes\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number }[];",
       "material\u0000FUNCTION\u0000material.set_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void;",
       "material\u0000FUNCTION\u0000material.set_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void;",
@@ -4635,7 +4640,7 @@
       "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.RenderTargetParams): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.RenderTargetParams): Opaque<\"render_target\">",
       "render\u0000FUNCTION\u0000render.set_blend_equation_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_equation_separate(equation_color: number, equation_alpha: number): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: number, destination_factor: number): void;",
-      "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void;",
+      "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void;",
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"Hash\",\"Url\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_camera(camera?: Url | number | string | Hash, options?: { use_frustum?: boolean }): void;",
       "render\u0000FUNCTION\u0000render.set_color_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;",
       "render\u0000FUNCTION\u0000render.set_compute\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function set_compute(compute?: string | Hash): void;",
@@ -4653,6 +4658,7 @@
       "render\u0000FUNCTION\u0000render.set_view\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false}]->[]": "function set_view(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_viewport\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_viewport(x: number, y: number, width: number, height: number): void;",
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
+      "render\u0000TYPEDEF\u0000RenderTargetTextureType\u0000": "type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;",
       "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
@@ -5556,6 +5562,7 @@
       "graphics\u0000CONSTANT\u0000graphics.TEXTURE_WRAP_REPEAT\u0000": "const TEXTURE_WRAP_REPEAT: number & { readonly __brand: \"graphics.TEXTURE_WRAP_REPEAT\" };",
       "graphics\u0000FUNCTION\u0000graphics.get_adapter_info\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_adapter_info(): { family: string; version_major: number; version_minor: number; limits: { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number }; extensions: string[]; features: number[] };",
       "graphics\u0000FUNCTION\u0000graphics.get_engine_adapters\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_engine_adapters(): string[];",
+      "graphics\u0000TYPEDEF\u0000BlendFactor\u0000": "type BlendFactor = typeof graphics.BLEND_FACTOR_ZERO | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;",
       "graphics\u0000TYPEDEF\u0000BufferType\u0000": "type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_COLOR1_BIT | typeof graphics.BUFFER_TYPE_COLOR2_BIT | typeof graphics.BUFFER_TYPE_COLOR3_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
       "graphics\u0000TYPEDEF\u0000State\u0000": "type State = typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_STENCIL_TEST | typeof graphics.STATE_BLEND | typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_POLYGON_OFFSET_FILL;",
       "gui\u0000CONSTANT\u0000gui.ADJUST_FIT\u0000": "const ADJUST_FIT: number & { readonly __brand: \"gui.ADJUST_FIT\" };",
@@ -5862,7 +5869,7 @@
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_WORLD_INVERSE\u0000": "const CONSTANT_TYPE_WORLD_INVERSE: number & { readonly __brand: \"material.CONSTANT_TYPE_WORLD_INVERSE\" };",
       "material\u0000FUNCTION\u0000material.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];",
       "material\u0000FUNCTION\u0000material.get_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[];",
-      "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];",
+      "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): LuaMap<number, { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }>;",
       "material\u0000FUNCTION\u0000material.get_vertex_attributes\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number }[];",
       "material\u0000FUNCTION\u0000material.set_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void;",
       "material\u0000FUNCTION\u0000material.set_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void;",
@@ -5985,7 +5992,7 @@
       "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.RenderTargetParams): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.RenderTargetParams): Opaque<\"render_target\">",
       "render\u0000FUNCTION\u0000render.set_blend_equation_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_equation_separate(equation_color: number, equation_alpha: number): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: number, destination_factor: number): void;",
-      "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void;",
+      "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void;",
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"Hash\",\"Url\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_camera(camera?: Url | number | string | Hash, options?: { use_frustum?: boolean }): void;",
       "render\u0000FUNCTION\u0000render.set_color_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;",
       "render\u0000FUNCTION\u0000render.set_compute\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function set_compute(compute?: string | Hash): void;",
@@ -6003,6 +6010,7 @@
       "render\u0000FUNCTION\u0000render.set_view\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false}]->[]": "function set_view(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_viewport\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_viewport(x: number, y: number, width: number, height: number): void;",
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
+      "render\u0000TYPEDEF\u0000RenderTargetTextureType\u0000": "type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;",
       "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
@@ -6604,6 +6612,7 @@
       "graphics\u0000CONSTANT\u0000graphics.TEXTURE_WRAP_CLAMP_TO_EDGE\u0000": "const TEXTURE_WRAP_CLAMP_TO_EDGE: number & { readonly __brand: \"graphics.TEXTURE_WRAP_CLAMP_TO_EDGE\" };",
       "graphics\u0000CONSTANT\u0000graphics.TEXTURE_WRAP_MIRRORED_REPEAT\u0000": "const TEXTURE_WRAP_MIRRORED_REPEAT: number & { readonly __brand: \"graphics.TEXTURE_WRAP_MIRRORED_REPEAT\" };",
       "graphics\u0000CONSTANT\u0000graphics.TEXTURE_WRAP_REPEAT\u0000": "const TEXTURE_WRAP_REPEAT: number & { readonly __brand: \"graphics.TEXTURE_WRAP_REPEAT\" };",
+      "graphics\u0000TYPEDEF\u0000BlendFactor\u0000": "type BlendFactor = typeof graphics.BLEND_FACTOR_ZERO | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;",
       "graphics\u0000TYPEDEF\u0000BufferType\u0000": "type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_COLOR1_BIT | typeof graphics.BUFFER_TYPE_COLOR2_BIT | typeof graphics.BUFFER_TYPE_COLOR3_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
       "graphics\u0000TYPEDEF\u0000State\u0000": "type State = typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_STENCIL_TEST | typeof graphics.STATE_BLEND | typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_POLYGON_OFFSET_FILL;",
       "gui\u0000CONSTANT\u0000gui.ADJUST_FIT\u0000": "const ADJUST_FIT: number & { readonly __brand: \"gui.ADJUST_FIT\" };",
@@ -7021,6 +7030,7 @@
       "render\u0000FUNCTION\u0000render.set_view\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false}]->[]": "function set_view(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_viewport\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_viewport(x: number, y: number, width: number, height: number): void;",
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
+      "render\u0000TYPEDEF\u0000RenderTargetTextureType\u0000": "type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;",
       "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
@@ -10620,7 +10630,7 @@
       },
       "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
-        "return:0:textures": { "type": "material.texture_info[]", "optional": false }
+        "return:0:textures": { "type": "LuaMap<number, material.texture_info>", "optional": false }
       },
       "material\u0000FUNCTION\u0000material.get_vertex_attributes\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
@@ -10878,7 +10888,7 @@
         "param:0:render_target": { "type": "Opaque<\"render_target\">", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.STATE", "optional": false }
+        "param:0:state": { "type": "graphics.State", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:binding": { "type": "string | Hash | number", "optional": false }
@@ -10899,7 +10909,7 @@
         "param:0:material_id": { "type": "string | Hash", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.STATE", "optional": false }
+        "param:0:state": { "type": "graphics.State", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
         "param:0:binding": { "type": "number | string | Hash", "optional": false },
@@ -10950,10 +10960,10 @@
         "param:1:destination_factor": { "type": "graphics.BLEND_FACTOR", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:source_factor_color": { "type": "number", "optional": false },
-        "param:1:destination_factor_color": { "type": "number", "optional": false },
-        "param:2:source_factor_alpha": { "type": "number", "optional": false },
-        "param:3:destination_factor_alpha": { "type": "number", "optional": false }
+        "param:0:source_factor_color": { "type": "graphics.BlendFactor", "optional": false },
+        "param:1:destination_factor_color": { "type": "graphics.BlendFactor", "optional": false },
+        "param:2:source_factor_alpha": { "type": "graphics.BlendFactor", "optional": false },
+        "param:3:destination_factor_alpha": { "type": "graphics.BlendFactor", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"Hash\",\"Url\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:camera": { "type": "Url | number | string | Hash", "optional": true },
@@ -15366,7 +15376,7 @@
       },
       "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
-        "return:0:textures": { "type": "material.texture_info[]", "optional": false }
+        "return:0:textures": { "type": "LuaMap<number, material.texture_info>", "optional": false }
       },
       "material\u0000FUNCTION\u0000material.get_vertex_attributes\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
@@ -15624,7 +15634,7 @@
         "param:0:render_target": { "type": "Opaque<\"render_target\">", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.STATE", "optional": false }
+        "param:0:state": { "type": "graphics.State", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:binding": { "type": "string | Hash | number", "optional": false }
@@ -15645,7 +15655,7 @@
         "param:0:material_id": { "type": "string | Hash", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.STATE", "optional": false }
+        "param:0:state": { "type": "graphics.State", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
         "param:0:binding": { "type": "number | string | Hash", "optional": false },
@@ -15696,10 +15706,10 @@
         "param:1:destination_factor": { "type": "graphics.BLEND_FACTOR", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:source_factor_color": { "type": "number", "optional": false },
-        "param:1:destination_factor_color": { "type": "number", "optional": false },
-        "param:2:source_factor_alpha": { "type": "number", "optional": false },
-        "param:3:destination_factor_alpha": { "type": "number", "optional": false }
+        "param:0:source_factor_color": { "type": "graphics.BlendFactor", "optional": false },
+        "param:1:destination_factor_color": { "type": "graphics.BlendFactor", "optional": false },
+        "param:2:source_factor_alpha": { "type": "graphics.BlendFactor", "optional": false },
+        "param:3:destination_factor_alpha": { "type": "graphics.BlendFactor", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"Hash\",\"Url\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:camera": { "type": "Url | number | string | Hash", "optional": true },
@@ -19194,7 +19204,7 @@
       "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
         "return:0:table": {
-          "type": "{ path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[]",
+          "type": "LuaMap<number, { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }>",
           "optional": false
         }
       },
@@ -19544,10 +19554,10 @@
         "param:1:destination_factor": { "type": "number", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:source_factor_color": { "type": "number", "optional": false },
-        "param:1:destination_factor_color": { "type": "number", "optional": false },
-        "param:2:source_factor_alpha": { "type": "number", "optional": false },
-        "param:3:destination_factor_alpha": { "type": "number", "optional": false }
+        "param:0:source_factor_color": { "type": "graphics.BlendFactor", "optional": false },
+        "param:1:destination_factor_color": { "type": "graphics.BlendFactor", "optional": false },
+        "param:2:source_factor_alpha": { "type": "graphics.BlendFactor", "optional": false },
+        "param:3:destination_factor_alpha": { "type": "graphics.BlendFactor", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"Hash\",\"Url\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:camera": { "type": "Url | number | string | Hash", "optional": true },
@@ -23049,7 +23059,7 @@
       "material\u0000FUNCTION\u0000material.get_textures\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
         "return:0:table": {
-          "type": "{ path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[]",
+          "type": "LuaMap<number, { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }>",
           "optional": false
         }
       },
@@ -23399,10 +23409,10 @@
         "param:1:destination_factor": { "type": "number", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:source_factor_color": { "type": "number", "optional": false },
-        "param:1:destination_factor_color": { "type": "number", "optional": false },
-        "param:2:source_factor_alpha": { "type": "number", "optional": false },
-        "param:3:destination_factor_alpha": { "type": "number", "optional": false }
+        "param:0:source_factor_color": { "type": "graphics.BlendFactor", "optional": false },
+        "param:1:destination_factor_color": { "type": "graphics.BlendFactor", "optional": false },
+        "param:2:source_factor_alpha": { "type": "graphics.BlendFactor", "optional": false },
+        "param:3:destination_factor_alpha": { "type": "graphics.BlendFactor", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"Hash\",\"Url\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:camera": { "type": "Url | number | string | Hash", "optional": true },
