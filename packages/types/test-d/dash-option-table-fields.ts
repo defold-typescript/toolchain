@@ -16,7 +16,7 @@ gui.set(node, hash("tint"), value, { index: 1, key });
 // @ts-expect-error bogus is not a recovered field of the gui.set options table
 gui.set(node, hash("tint"), value, { bogus: true });
 
-const _position: Vector3 = go.get(url, "position", { index: 1, key });
+const _position: Vector3 = go.get(url, "position", { key });
 void _position;
 
 // @ts-expect-error bogus is not a recovered field of the go.get options table

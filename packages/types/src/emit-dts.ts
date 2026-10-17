@@ -40,6 +40,7 @@ import {
   type LualsPosition,
   mapLualsExpression,
   needsArrayParens,
+  splitTopLevel,
 } from "./luals-type-expr";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
@@ -1520,14 +1521,221 @@ function presenceArms(
   return [strict, absent];
 }
 
+// A rule an engine binding enforces on one parameter that no ref-doc token
+// states, keyed `<fqn>:param:<name>`. Each rewrites the slot's mapped type, so
+// one entry holds on every target whatever token spelling produced that type.
+export type EngineSlotRule =
+  // `E[]` becomes `[E, ...E[]]`: the binding raises on an empty list.
+  | { readonly kind: "non-empty"; readonly reason: string }
+  // The constants the binding raises on leave the slot's type.
+  | { readonly kind: "excludes"; readonly constants: readonly string[]; readonly reason: string }
+  // With `flag` true the table must carry `fields`, which the binding then reads
+  // without a default.
+  | {
+      readonly kind: "flag-requires";
+      readonly flag: string;
+      readonly fields: readonly string[];
+      readonly reason: string;
+    }
+  // In each call that requires `slot`, this slot is required too and its
+  // top-level union loses `drops`.
+  | {
+      readonly kind: "alongside";
+      readonly slot: string;
+      readonly drops: readonly string[];
+      readonly reason: string;
+    };
+
+export const ENGINE_SLOT_RULES: ReadonlyMap<string, EngineSlotRule> = new Map<
+  string,
+  EngineSlotRule
+>([
+  [
+    "buffer.create:param:declaration",
+    {
+      kind: "non-empty",
+      reason:
+        'script_buffer.cpp:Create raises "You must specify at least one stream declaration" when the list holds fewer than one entry',
+    },
+  ],
+  [
+    "buffer.set_metadata:param:values",
+    {
+      kind: "non-empty",
+      reason:
+        'script_buffer.cpp:SetMetadata raises "invalid metadata" when lua_objlen of values is 0',
+    },
+  ],
+  [
+    "buffer.set_metadata:param:value_type",
+    {
+      kind: "excludes",
+      constants: ["buffer.VALUE_TYPE_INT64", "buffer.VALUE_TYPE_UINT64"],
+      reason:
+        'script_buffer.cpp:SetMetadata raises "64 bit integer metadata are not supported." on VALUE_TYPE_UINT64 and VALUE_TYPE_INT64',
+    },
+  ],
+  [
+    "resource.create_sound_data:param:options",
+    {
+      kind: "flag-requires",
+      flag: "partial",
+      fields: ["filesize"],
+      reason:
+        "script_resource.cpp:CreateSoundData reads filesize with the no-default CheckFieldValue<int> when partial is true, and CheckValue<int> raises on a non-number",
+    },
+  ],
+  [
+    "go.delete:param:id",
+    {
+      kind: "alongside",
+      slot: "recursive",
+      drops: ["boolean"],
+      reason:
+        "gameobject_script.cpp:Script_Delete raises on a boolean id with a second argument, and on a nil id once recursive is popped",
+    },
+  ],
+]);
+
+// `prepared` with `rewrite` applied after any rewrite it already makes at `index`.
+function withRetype(
+  prepared: PreparedFunction,
+  index: number,
+  rewrite: (type: string) => string,
+): PreparedFunction {
+  const retype = new Map(prepared.retype);
+  const prior = retype.get(index);
+  retype.set(index, prior === undefined ? rewrite : (type) => rewrite(prior(type)));
+  return { ...prepared, retype };
+}
+
+// `E[]` as `[E, ...E[]]`; the element keeps its own parentheses.
+function nonEmptyList(type: string, key: string): string {
+  const element = type.endsWith("[]") ? type.slice(0, -2) : "";
+  const single =
+    splitTopLevel(type, "|").length === 1 &&
+    splitTopLevel(type, "&").length === 1 &&
+    !isFunctionTypeText(type);
+  if (element === "" || !single) {
+    throw new Error(`engine slot rule ${key}: ${type} is not one array`);
+  }
+  return `[${element}, ...${element}[]]`;
+}
+
+function withoutMembers(type: string, drops: readonly string[], key: string): string {
+  const members = splitTopLevel(type, "|").map((member) => member.trim());
+  const missing = drops.filter((drop) => !members.includes(drop));
+  if (missing.length > 0) {
+    throw new Error(`engine slot rule ${key}: ${type} has no ${missing.join(", ")} to drop`);
+  }
+  return members.filter((member) => !drops.includes(member)).join(" | ");
+}
+
+// The field names a table slot declares: its STRUCT's members, else the fields
+// parsed from its own doc.
+function slotFieldNames(parameter: ApiParameter, structs: readonly ApiStruct[]): string[] {
+  const struct = structs.find((s) => parameter.types.includes(s.name));
+  if (struct !== undefined) return struct.members.map((member) => member.name);
+  const fields = parameter.fields ?? parseTableFields(parameter.doc) ?? [];
+  return fields.map((field) => field.name);
+}
+
+function engineSlotRuleArms(
+  prepared: PreparedFunction,
+  arms: readonly PreparedFunction[],
+  key: string,
+  rule: EngineSlotRule,
+  index: number,
+  structs: readonly ApiStruct[],
+  bindingsRead: boolean,
+): PreparedFunction[] {
+  const { name, parameters } = prepared.original;
+  const takes = (arm: PreparedFunction): boolean => index < arm.original.parameters.length;
+  const rewriteEach = (rewrite: (type: string) => string): PreparedFunction[] =>
+    arms.map((arm) => (takes(arm) ? withRetype(arm, index, rewrite) : arm));
+  switch (rule.kind) {
+    case "non-empty":
+      return rewriteEach((type) => nonEmptyList(type, key));
+    case "excludes": {
+      const excluded = rule.constants.map((constant) => `typeof ${constant}`).join(" | ");
+      return rewriteEach((type) => `Exclude<${type}, ${excluded}>`);
+    }
+    case "flag-requires": {
+      const declared = slotFieldNames(parameters[index] as ApiParameter, structs);
+      const missing = [rule.flag, ...rule.fields].filter((field) => !declared.includes(field));
+      if (missing.length > 0) {
+        throw new Error(`engine slot rule ${key}: the table declares no ${missing.join(", ")}`);
+      }
+      const picked = rule.fields.map((field) => `"${field}"`).join(" | ");
+      return rewriteEach((type) => {
+        const operand =
+          splitTopLevel(type, "|").length > 1 || isFunctionTypeText(type) ? `(${type})` : type;
+        return `${operand} & ({ ${rule.flag}?: false } | ({ ${rule.flag}: true } & Required<Pick<${type}, ${picked}>>))`;
+      });
+    }
+    case "alongside": {
+      const partner = parameters.findIndex((p) => p.name === rule.slot);
+      const partnerParameter = parameters[partner];
+      const requires = (arm: PreparedFunction): boolean =>
+        partnerParameter !== undefined &&
+        partner < arm.original.parameters.length &&
+        (arm.required?.has(partner) === true || !isDocOptional(partnerParameter, name));
+      if (!arms.some(requires)) {
+        // Without the target's nil-raising slots no call was split out to
+        // require the partner, so there is no binding to have stopped marking it.
+        if (!bindingsRead) return [...arms];
+        throw new Error(
+          partnerParameter === undefined
+            ? `engine slot rule ${key}: ${name} has no ${rule.slot} parameter`
+            : `engine slot rule ${key}: no call of ${name} requires ${rule.slot}`,
+        );
+      }
+      return arms.map((arm) =>
+        requires(arm)
+          ? {
+              ...withRetype(arm, index, (type) => withoutMembers(type, rule.drops, key)),
+              required: new Set([...(arm.required ?? []), index]),
+            }
+          : arm,
+      );
+    }
+  }
+}
+
+// `arms` with every ENGINE_SLOT_RULES entry keyed to `prepared` applied.
+// `bindingsRead` says the emit was given the target's nil-raising slots.
+function applyEngineSlotRules(
+  prepared: PreparedFunction,
+  arms: readonly PreparedFunction[],
+  structs: readonly ApiStruct[],
+  bindingsRead: boolean,
+): PreparedFunction[] {
+  const { name, parameters } = prepared.original;
+  const prefix = `${name}:param:`;
+  let ruled = [...arms];
+  for (const [key, rule] of ENGINE_SLOT_RULES) {
+    if (!key.startsWith(prefix)) continue;
+    const slot = key.slice(prefix.length);
+    const index = parameters.findIndex((p) => p.name === slot);
+    if (index === -1) {
+      throw new Error(`engine slot rule ${key}: ${name} has no ${slot} parameter`);
+    }
+    ruled = engineSlotRuleArms(prepared, ruled, key, rule, index, structs, bindingsRead);
+  }
+  return ruled;
+}
+
 // Every call a function declares, in order: its nil-raising arms, each split
-// at its presence-required fields.
+// at its presence-required fields, then narrowed by its engine slot rules.
 function callArms(
   prepared: PreparedFunction,
-  nilRaisingSlots: ReadonlyMap<string, readonly number[]>,
+  nilRaisingSlots: ReadonlyMap<string, readonly number[]> | undefined,
   structs: readonly ApiStruct[],
 ): PreparedFunction[] {
-  return nilRaisingArms(prepared, nilRaisingSlots).flatMap((arm) => presenceArms(arm, structs));
+  const arms = nilRaisingArms(prepared, nilRaisingSlots ?? new Map()).flatMap((arm) =>
+    presenceArms(arm, structs),
+  );
+  return applyEngineSlotRules(prepared, arms, structs, nilRaisingSlots !== undefined);
 }
 
 export type ConstantSlotResolution =
@@ -4497,7 +4705,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   const translations = options?.translations ?? {};
   const urlParameters = options?.urlParameters ?? [];
   const bindingEvidence = options?.bindingEvidence ?? new Set<string>();
-  const nilRaisingSlots = options?.nilRaisingSlots ?? new Map<string, readonly number[]>();
+  const nilRaisingSlots = options?.nilRaisingSlots;
   const baseNotes = indexBaseNoteResolver(options?.indexBaseSource ?? "engine");
   const { rawMapType, mapType } = moduleTypeMappers(module, constantsByFqn, options);
   const constantTokens = constantSlotTokenResolver(
@@ -4873,7 +5081,7 @@ export function emitSymbolSignatures(
   const knownConstantFqns = options?.knownConstantFqns;
   const urlParameters = options?.urlParameters ?? [];
   const bindingEvidence = options?.bindingEvidence ?? new Set<string>();
-  const nilRaisingSlots = options?.nilRaisingSlots ?? new Map<string, readonly number[]>();
+  const nilRaisingSlots = options?.nilRaisingSlots;
   const { rawMapType, mapType } = moduleTypeMappers(module, constantsByFqn, options);
   const constantTokens = constantSlotTokenResolver(
     module,

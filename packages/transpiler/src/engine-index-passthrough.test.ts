@@ -470,7 +470,7 @@ describe("options.index", () => {
         "declare const i: number;",
         "declare const maybe: number | undefined;",
         "declare const opts: go.GoPropertyOptions;",
-        "declare const base: { key: Hash };",
+        "declare const base: { index: number };",
         'go.set(url, "tint", tint, { index: 0 });',
         'go.set(url, "tint", tint, { index: 1 });',
         'go.set(url, "tint", tint, { index: i });',
