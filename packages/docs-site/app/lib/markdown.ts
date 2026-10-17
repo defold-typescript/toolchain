@@ -20,6 +20,7 @@ import { imageMaxWidthStyle } from "./image-style";
 import { phosphorDuotone } from "./phosphor";
 import { type Glyph, PLATFORM_MARKER, platformIcon } from "./platform-icons";
 import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
+import { signatureEmphasis } from "./signature-emphasis";
 
 /**
  * Two Shiki themes paired to the page's light/dark data-theme. Shiki emits
@@ -692,23 +693,24 @@ export async function renderMarkdown(
   // one wrapping line. A `prefix` is tokenized ahead of `content` and left out of
   // the output, so a fragment such as `(shape_id: number)` colors as it does in
   // its full signature; `replace` emits its `html` in place of that character
-  // range of `content`.
+  // range of `content`. The names `signatureEmphasis` picks out of the full
+  // signature carry a bold weight on their spans, so they stay bold through the
+  // brand-link split, which re-emits each span with its style.
   const signatureCodeHtml = (
     content: string,
-    opts?: { prefix?: string; replace?: { start: number; end: number; html: string } },
+    opts: {
+      prefix?: string;
+      replace?: { start: number; end: number; html: string } | undefined;
+    } = {},
   ): string => {
     const themes = { light: LIGHT_THEME, dark: DARK_THEME };
-    if (!opts) {
-      const spans = highlighter.codeToHtml(content, {
-        lang: "ts",
-        themes,
-        defaultColor: false,
-        structure: "inline",
-      });
-      return `<code class="api-signature shiki">${spans}</code>`;
-    }
     const prefix = opts.prefix ?? "";
     const { replace } = opts;
+    const emphasis = signatureEmphasis(prefix + content).map(({ start, end }) => ({
+      start: start - prefix.length,
+      end: end - prefix.length,
+    }));
+    const edges = emphasis.flatMap(({ start, end }) => [start, end]);
     const { tokens } = highlighter.codeToTokens(prefix + content, {
       lang: "ts",
       themes,
@@ -738,13 +740,20 @@ export async function renderMarkdown(
       const emit = (from: number, to: number) => {
         const a = Math.max(from, start, 0);
         const b = Math.min(to, end);
-        // Escaped as Shiki's own HTML output escapes text, so both paths emit
-        // the same bytes for the same token.
-        const text = token.content
-          .slice(a - start, b - start)
-          .replace(/&/g, "&#x26;")
-          .replace(/</g, "&#x3C;");
-        if (a < b) spans += `<span style="${style}">${text}</span>`;
+        const cuts = [a, ...edges.filter((edge) => edge > a && edge < b), b];
+        for (let k = 0; k + 1 < cuts.length; k++) {
+          const x = cuts[k] ?? 0;
+          const y = cuts[k + 1] ?? 0;
+          if (x >= y) continue;
+          // Escaped as Shiki's own HTML output escapes text.
+          const text = token.content
+            .slice(x - start, y - start)
+            .replace(/&/g, "&#x26;")
+            .replace(/</g, "&#x3C;");
+          const bold = emphasis.some((range) => range.start <= x && y <= range.end);
+          const weighted = bold ? [style, "font-weight:600"].filter(Boolean).join(";") : style;
+          spans += `<span style="${weighted}">${text}</span>`;
+        }
       };
       if (!replace) {
         emit(0, end);
@@ -821,7 +830,7 @@ export async function renderMarkdown(
         name = signatureName(child.content);
         const replace = spliceOverloadBadge(children, idx);
         const replacement = new state.Token("html_inline", "", 0);
-        replacement.content = signatureCodeHtml(child.content, replace && { replace });
+        replacement.content = signatureCodeHtml(child.content, { replace });
         children[idx] = replacement;
       }
     });
@@ -852,7 +861,7 @@ export async function renderMarkdown(
           const replacement = new state.Token("html_inline", "", 0);
           replacement.content = signatureCodeHtml(
             code.content,
-            parent === null ? replace && { replace } : { prefix: parent },
+            parent === null ? { replace } : { prefix: parent },
           );
           children[i + 1] = replacement;
         }
