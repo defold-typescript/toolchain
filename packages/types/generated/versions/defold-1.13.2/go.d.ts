@@ -429,7 +429,7 @@ declare global {
      * go.delete(ids, true);
      * ```
      */
-    function _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean | undefined, recursive: boolean): void;
+    function _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url>, recursive: boolean): void;
     /**
      * This function can check for game objects in any collection by specifying
      * the collection name in the URL.

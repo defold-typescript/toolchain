@@ -87,7 +87,7 @@ describe("facade overload docs — drift guard for the skipped-and-replaced trio
       const file = resolve(import.meta.dir, "..", "src", target.file);
       const source = await Bun.file(file).text();
 
-      // `go-overloads`'s `interface GoPropertyOptions` closing brace pops the
+      // `go-overloads`'s `type GoPropertyOptions` object closing braces pop the
       // `go` frame in `extractSurface`, so `get`/`set` key bare; `msg.post`
       // keeps its namespace. Look up under either form.
       const symbols = extractSurface(source);

@@ -132,7 +132,7 @@ declare global {
      * });
      * ```
      */
-    function create(element_count: number, declaration: ({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
+    function create(element_count: number, declaration: [({ name: Hash | string; type: buffer.VALUE_TYPE; count: number }), ...({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     /**
      * Get a copy of all the bytes of the buffer, every stream included, as a Lua string.
      *
@@ -185,7 +185,7 @@ declare global {
      * buffer.set_metadata(buf, hash("somefloats"), [-2.5, 10.0, 32.2], buffer.VALUE_TYPE_FLOAT32);
      * ```
      */
-    function set_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string, values: number[], value_type: buffer.VALUE_TYPE): void;
+    function set_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string, values: [number, ...number[]], value_type: Exclude<buffer.VALUE_TYPE, typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_UINT64>): void;
   }
 }
 
