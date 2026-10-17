@@ -330,6 +330,22 @@ function outermostWrapper(node: ts.Expression): ts.Expression {
   return current;
 }
 
+// The inverse of `outermostWrapper`: the expression a run of parentheses and
+// type-only forms wraps, which TSTL emits in place of the whole run.
+function innermostExpression(node: ts.Expression): ts.Expression {
+  let current = node;
+  while (
+    ts.isParenthesizedExpression(current) ||
+    ts.isAsExpression(current) ||
+    ts.isSatisfiesExpression(current) ||
+    ts.isNonNullExpression(current) ||
+    ts.isTypeAssertionExpression(current)
+  ) {
+    current = current.expression;
+  }
+  return current;
+}
+
 // Keyed by the declaration's fully qualified name: only a symbol declared in an
 // ambient `declare global` block carries the `global.` prefix, so a project's
 // own `resource` never matches.
@@ -387,6 +403,44 @@ function misplacedMarker(node: ts.Expression, marker: string): ts.Diagnostic {
     category: ts.DiagnosticCategory.Error,
     code: 0,
     messageText: `\`${marker}\` is a build-time marker: Defold's build reads it only in a \`go.property\` default, and the engine binds no such function. Use it as a \`defineScript\` \`properties\` default.`,
+  };
+}
+
+// Bob reads a default as a marker only when the emitted text is
+// `resource.<kind>("<path>")` or `resource.<kind>()`: the object token must be
+// `resource` with a dot `NAME` key, and the first argument a string literal or
+// absent (`LuaScanner.java:801-822`, `:923-933` and `:493-510` at defold
+// `a81dbb04`). The receiver test is textual like bob's; the marker resolution
+// has already excluded a project's own `resource`.
+function readsAsMarker(call: ts.CallExpression): boolean {
+  const callee = innermostExpression(call.expression);
+  if (ts.isOptionalChain(call) || ts.isOptionalChain(callee)) {
+    return false;
+  }
+  if (
+    !ts.isPropertyAccessExpression(callee) &&
+    !(ts.isElementAccessExpression(callee) && ts.isStringLiteralLike(callee.argumentExpression))
+  ) {
+    return false;
+  }
+  const receiver = innermostExpression(callee.expression);
+  if (!ts.isIdentifier(receiver) || receiver.text !== "resource") {
+    return false;
+  }
+  const [path] = call.arguments;
+  return path === undefined || ts.isStringLiteralLike(innermostExpression(path));
+}
+
+function unreadableMarker(node: ts.CallExpression, marker: string): ts.Diagnostic {
+  const file = node.getSourceFile();
+  const start = node.getStart(file);
+  return {
+    file,
+    start,
+    length: node.getEnd() - start,
+    category: ts.DiagnosticCategory.Error,
+    code: 0,
+    messageText: `\`${marker}\` in a property default must be written \`${marker}("<path>")\`, with a string literal path: Defold's build reads no other form.`,
   };
 }
 
@@ -503,18 +557,30 @@ export const lifecycleErasurePlugin: Plugin = {
     // no parent and no source span; only parsed nodes are checked.
     [ts.SyntaxKind.CallExpression]: (node, context) => {
       const marker = node.parent === undefined ? undefined : calledGlobal(node, context.checker);
-      if (
-        marker !== undefined &&
-        RESOURCE_PROPERTY_MARKERS.has(marker) &&
-        !isPropertyDefault(node, context.checker)
-      ) {
-        context.diagnostics.push(misplacedMarker(node, marker));
+      if (marker !== undefined && RESOURCE_PROPERTY_MARKERS.has(marker)) {
+        if (!isPropertyDefault(node, context.checker)) {
+          context.diagnostics.push(misplacedMarker(node, marker));
+        } else if (!readsAsMarker(node)) {
+          context.diagnostics.push(unreadableMarker(node, marker));
+        }
       }
       return context.superTransformExpression(node);
     },
     [ts.SyntaxKind.PropertyAccessExpression]: (node, context) => {
       if (node.parent !== undefined && !isCallee(node)) {
         const marker = globalName(context.checker.getSymbolAtLocation(node.name), context.checker);
+        if (marker !== undefined && RESOURCE_PROPERTY_MARKERS.has(marker)) {
+          context.diagnostics.push(misplacedMarker(node, marker));
+        }
+      }
+      return context.superTransformExpression(node);
+    },
+    [ts.SyntaxKind.ElementAccessExpression]: (node, context) => {
+      if (node.parent !== undefined && !isCallee(node)) {
+        const marker = globalName(
+          context.checker.getSymbolAtLocation(node.argumentExpression),
+          context.checker,
+        );
         if (marker !== undefined && RESOURCE_PROPERTY_MARKERS.has(marker)) {
           context.diagnostics.push(misplacedMarker(node, marker));
         }
