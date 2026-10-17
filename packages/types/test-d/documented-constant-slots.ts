@@ -95,9 +95,9 @@ void _online;
 void _factoryLoaded;
 void _collectionLoaded;
 
-// buffer — the set_metadata example, and the getter's type fed back in.
+// buffer — the set_metadata example, and the getter's type, which also names the
+// 64-bit value types set_metadata raises on, so it reads back as the family.
 buffer.set_metadata(buf, hash("somefloats"), [1.5, 3.2, 7.9], buffer.VALUE_TYPE_FLOAT32);
-const [values, valueType] = buffer.get_metadata(buf, hash("somefloats"));
-if (values !== undefined && valueType !== undefined) {
-  buffer.set_metadata(buf, hash("somefloats"), values, valueType);
-}
+const [, valueType] = buffer.get_metadata(buf, hash("somefloats"));
+const _valueType: buffer.VALUE_TYPE | undefined = valueType;
+void _valueType;

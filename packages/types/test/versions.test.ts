@@ -430,6 +430,41 @@ describe("committed API surfaces — overload-covered arity holds per target", (
   }
 });
 
+const ENGINE_OPTION_RULES_PROOF = resolve(VERSIONS_DIR, "engine-option-rules-proof.ts");
+
+describe("committed API surfaces — engine option rules hold per target", () => {
+  for (const index of committedSurfaceIndexes()) {
+    test(`${index} takes the calls the bindings accept and rejects the ones they raise on`, () => {
+      const root = mkdtempSync(resolve(PACKAGE_ROOT, "option-rules-"));
+      try {
+        const tsconfigPath = resolve(root, "tsconfig.json");
+        writeFileSync(
+          tsconfigPath,
+          `${JSON.stringify(
+            {
+              extends: "../../../tsconfig.json",
+              compilerOptions: { noEmit: true, types: [] },
+              include: [ENGINE_OPTION_RULES_PROOF, resolve(PACKAGE_ROOT, index)],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        const { exitCode, output } = typecheck(tsconfigPath);
+        if (exitCode !== 0) {
+          throw new Error(
+            `${index} proof failed — this surface accepts a call its engine binding raises ` +
+              `on, or rejects one it takes:\n${output}`,
+          );
+        }
+        expect(exitCode).toBe(0);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
 const LIFECYCLE_HOOKS_PROOF = resolve(VERSIONS_DIR, "lifecycle-hooks-not-callable-proof.ts");
 
 // Every slot the parser routes as a lifecycle hook, not only the ones a surface

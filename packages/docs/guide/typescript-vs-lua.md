@@ -148,7 +148,9 @@ go.set(url, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 1 });
 ```
 
 `{ index: i }` emits `{index = i}`. An options variable, a spread and an `index`
-that may be `undefined` pass through as written.
+that may be `undefined` pass through as written. For `go.get` and `go.set` the
+options table names at most one of `index`, `key` and `keys`, since the engine
+raises on two.
 
 ## Modules: `require` vs `import`
 
