@@ -1,5 +1,9 @@
 import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
-import { type ApiSymbolIdentity, normalizedFunctionSignature } from "./api-availability";
+import {
+  type ApiSymbolIdentity,
+  type Box2dBackend,
+  normalizedFunctionSignature,
+} from "./api-availability";
 import type {
   ApiConstant,
   ApiFunction,
@@ -1907,6 +1911,40 @@ export const TYPE_PREDICATES: ReadonlyMap<string, string> = new Map([
   ["types.is_vector3", "vector3"],
   ["types.is_vector4", "vector4"],
 ]);
+
+// The merged ref-doc gives each Box2D backend's form of these queries one
+// parameter list, so the first (v2) arm always wins and a v3 hit is unreachable.
+// A type parameter tells them apart: v2/script_box2d_world_v2.cpp:PushCastHit
+// sets `fixture` and `shape` to one PushFixtureInfo table, while
+// v3/script_box2d_world_v3.cpp:PushCastHit sets `shape` alone from
+// PushShapeInfoForShape. The v2 arm is declared first, so a call with no type
+// argument keeps the v2 hits; its `= "v2"` default only states that. Keyed by
+// `box2dBackendArmKey`.
+export const BOX2D_BACKEND_ARMS: ReadonlyMap<string, Box2dBackend> = new Map<string, Box2dBackend>([
+  ["b2d.world.cast_ray:b2d.fixture_cast_hit[]", "v2"],
+  ["b2d.world.cast_ray:b2d.shape_cast_hit[]", "v3"],
+  ["b2d.world.cast_ray_closest:b2d.fixture_cast_hit", "v2"],
+  ["b2d.world.cast_ray_closest:b2d.shape_cast_hit", "v3"],
+  ["b2d.world.cast_shape:b2d.fixture_cast_hit[]", "v2"],
+  ["b2d.world.cast_shape:b2d.shape_cast_hit[]", "v3"],
+  ["b2d.world.overlap_aabb:b2d.fixture_info[]", "v2"],
+  ["b2d.world.overlap_aabb:b2d.shape_info[]", "v3"],
+  ["b2d.world.overlap_shape:b2d.fixture_info[]", "v2"],
+  ["b2d.world.overlap_shape:b2d.shape_info[]", "v3"],
+]);
+
+// `<fqn>:<first non-nil type of the first return>`: the two arms of each
+// `BOX2D_BACKEND_ARMS` query share every parameter and differ only there.
+export function box2dBackendArmKey(fn: ApiFunction): string {
+  const first = fn.returnValues[0]?.types.find((type) => type !== "nil") ?? "";
+  return `${fn.name}:${first}`;
+}
+
+function box2dBackendTypeParameters(fn: ApiFunction): string {
+  const backend = BOX2D_BACKEND_ARMS.get(box2dBackendArmKey(fn));
+  if (backend === undefined) return "";
+  return backend === "v2" ? '<Backend extends "v2" = "v2">' : '<Backend extends "v3">';
+}
 
 // Element names whose `table` slot is a prose-only `array/list/table of <T>` shape
 // the field-list parser cannot read, but whose element type a human curated from
@@ -5301,7 +5339,7 @@ function memberSignature(
   if (isPredicate && soleParam !== undefined && predicateToken !== undefined) {
     return `${name}(${params}): ${safeParamName(soleParam.name, 0)} is ${mapType(predicateToken)};`;
   }
-  return `${name}(${params}): ${ret.type};${ret.trailing}`;
+  return `${name}${box2dBackendTypeParameters(prepared.original)}(${params}): ${ret.type};${ret.trailing}`;
 }
 
 function emitFunction(
