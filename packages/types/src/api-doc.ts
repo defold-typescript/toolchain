@@ -204,7 +204,7 @@ export const FUNCTION_NAME_CORRECTIONS: ReadonlyMap<string, FunctionNameCorrecti
 // `SCRIPT_FUNCTION_NAMES` (`gameobject_script.cpp`, and `gui.cpp` for GUI
 // scripts) and registers no module function under the name, yet the reference
 // documents the hooks as bare-named `go` and `gui` functions.
-const SCRIPT_HOOK_NAMESPACES: ReadonlySet<string> = new Set(["go", "gui"]);
+export const SCRIPT_HOOK_NAMESPACES: ReadonlySet<string> = new Set(["go", "gui"]);
 const SCRIPT_HOOK_NAME_SET: ReadonlySet<string> = new Set(SCRIPT_HOOK_NAMES);
 
 function isScriptHook(namespace: string, name: string): boolean {
