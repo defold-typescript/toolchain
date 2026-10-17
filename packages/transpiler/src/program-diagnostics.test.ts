@@ -105,6 +105,20 @@ describe("getProgramDiagnostics", () => {
     expect(diagnostics[0]?.start).toBe(source.indexOf("resource.tile_source("));
   });
 
+  test.each([
+    ['const f = resource["material"];\n\ndefineScript({});\n', 'resource["material"]'],
+    [
+      'const r = resource;\n\ndefineScript({ properties: { a: r.atlas("/a.atlas") } });\n',
+      "r.atlas(",
+    ],
+  ])("squiggles a marker form Defold's build cannot read", (body, needle) => {
+    const source = `import { defineScript } from "@defold-typescript/types";\n\n${body}`;
+    const program = programFor(source);
+    const diagnostics = getProgramDiagnostics(program, program.getSourceFile("main.ts"));
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]?.start).toBe(source.indexOf(needle));
+  });
+
   test("DOM-only globals are excluded on both paths", () => {
     const editorMessages = createTranspileSession()
       .update({ "main.ts": DOM_ONLY_SOURCE })
