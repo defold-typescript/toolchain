@@ -740,8 +740,6 @@
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_BACKWARD\u0000": "const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_BACKWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_FORWARD\u0000": "const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_FORWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_PINGPONG\u0000": "const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: \"go.PLAYBACK_ONCE_PINGPONG\" };",
-      "go\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: unknown): void;",
-      "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function fixed_update(self: unknown, dt: number): void;",
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number): void;\nfunction animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void;",
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean): void;\nfunction _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean | undefined, recursive: boolean): void;",
@@ -768,12 +766,6 @@
       "go\u0000FUNCTION\u0000go.update_world_transform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function update_world_transform(id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.world_to_local_position\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function world_to_local_position(position: Vector3, url?: SceneGameObjectAddress | Hash | Url): Vector3;",
       "go\u0000FUNCTION\u0000go.world_to_local_transform\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Matrix4\"],\"isOptional\":false}]": "function world_to_local_transform(transformation: Matrix4, url?: SceneGameObjectAddress | Hash | Url): Matrix4;",
-      "go\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function init(self: unknown): void;",
-      "go\u0000FUNCTION\u0000late_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function late_update(self: unknown, dt: number): void;",
-      "go\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": "function on_input(self: unknown, action_id: Hash | undefined, action: go.on_input.action): boolean | undefined;",
-      "go\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": "function on_message(self: unknown, message_id: Hash, message: LuaMap<AnyNotNil, unknown> | Record<string, unknown>, sender: Url): void;",
-      "go\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function on_reload(self: unknown): void;",
-      "go\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function update(self: unknown, dt: number): void;",
       "go\u0000PROPERTY\u0000euler\u0000": "euler: Vector3;",
       "go\u0000PROPERTY\u0000position\u0000": "position: Vector3;",
       "go\u0000PROPERTY\u0000rotation\u0000": "rotation: Quaternion;",
@@ -1066,7 +1058,6 @@
       "gui\u0000CONSTANT\u0000gui.TYPE_PARTICLEFX\u0000": "const TYPE_PARTICLEFX: number & { readonly __brand: \"gui.TYPE_PARTICLEFX\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_PIE\u0000": "const TYPE_PIE: number & { readonly __brand: \"gui.TYPE_PIE\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_TEXT\u0000": "const TYPE_TEXT: number & { readonly __brand: \"gui.TYPE_TEXT\" };",
-      "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: unknown): void;",
       "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void\ngui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | Hash | gui.PROP): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
@@ -1188,11 +1179,6 @@
       "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_yanchor(node: Opaque<\"node\">, anchor: gui.ANCHOR): void;",
       "gui\u0000FUNCTION\u0000gui.show_keyboard\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function show_keyboard(type: gui.KEYBOARD_TYPE, autoclose: boolean): void;",
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function stop_particlefx(node: Opaque<\"node\">): void;\nfunction stop_particlefx(node: Opaque<\"node\">, options: particlefx.stop_options): void;",
-      "gui\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function init(self: unknown): void;",
-      "gui\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": "function on_input(self: unknown, action_id: Hash | undefined, action: go.on_input.action): boolean | undefined;",
-      "gui\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": "function on_message(self: unknown, message_id: Hash, message: LuaMap<AnyNotNil, unknown> | Record<string, unknown>, sender: Url): void;",
-      "gui\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function on_reload(self: unknown): void;",
-      "gui\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function update(self: unknown, dt: number): void;",
       "gui\u0000PROPERTY\u0000fonts\u0000": "fonts: Hash;",
       "gui\u0000PROPERTY\u0000material\u0000": "material: Hash;",
       "gui\u0000PROPERTY\u0000materials\u0000": "materials: Hash;",
@@ -2542,8 +2528,6 @@
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_BACKWARD\u0000": "const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_BACKWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_FORWARD\u0000": "const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_FORWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_PINGPONG\u0000": "const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: \"go.PLAYBACK_ONCE_PINGPONG\" };",
-      "go\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: unknown): void;",
-      "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function fixed_update(self: unknown, dt: number): void;",
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number): void;\nfunction animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void;",
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean): void;\nfunction _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean | undefined, recursive: boolean): void;",
@@ -2570,12 +2554,6 @@
       "go\u0000FUNCTION\u0000go.update_world_transform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function update_world_transform(id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.world_to_local_position\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function world_to_local_position(position: Vector3, url?: SceneGameObjectAddress | Hash | Url): Vector3;",
       "go\u0000FUNCTION\u0000go.world_to_local_transform\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Matrix4\"],\"isOptional\":false}]": "function world_to_local_transform(transformation: Matrix4, url?: SceneGameObjectAddress | Hash | Url): Matrix4;",
-      "go\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function init(self: unknown): void;",
-      "go\u0000FUNCTION\u0000late_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function late_update(self: unknown, dt: number): void;",
-      "go\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": "function on_input(self: unknown, action_id: Hash | undefined, action: go.on_input.action): boolean | undefined;",
-      "go\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": "function on_message(self: unknown, message_id: Hash, message: LuaMap<AnyNotNil, unknown> | Record<string, unknown>, sender: Url): void;",
-      "go\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function on_reload(self: unknown): void;",
-      "go\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function update(self: unknown, dt: number): void;",
       "go\u0000PROPERTY\u0000euler\u0000": "euler: Vector3;",
       "go\u0000PROPERTY\u0000position\u0000": "position: Vector3;",
       "go\u0000PROPERTY\u0000rotation\u0000": "rotation: Quaternion;",
@@ -2861,7 +2839,6 @@
       "gui\u0000CONSTANT\u0000gui.TYPE_PARTICLEFX\u0000": "const TYPE_PARTICLEFX: number & { readonly __brand: \"gui.TYPE_PARTICLEFX\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_PIE\u0000": "const TYPE_PIE: number & { readonly __brand: \"gui.TYPE_PIE\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_TEXT\u0000": "const TYPE_TEXT: number & { readonly __brand: \"gui.TYPE_TEXT\" };",
-      "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: unknown): void;",
       "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void\ngui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | Hash | gui.PROP): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
@@ -2983,11 +2960,6 @@
       "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_yanchor(node: Opaque<\"node\">, anchor: gui.ANCHOR): void;",
       "gui\u0000FUNCTION\u0000gui.show_keyboard\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function show_keyboard(type: gui.KEYBOARD_TYPE, autoclose: boolean): void;",
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function stop_particlefx(node: Opaque<\"node\">): void;\nfunction stop_particlefx(node: Opaque<\"node\">, options: particlefx.stop_options): void;",
-      "gui\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function init(self: unknown): void;",
-      "gui\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": "function on_input(self: unknown, action_id: Hash | undefined, action: go.on_input.action): boolean | undefined;",
-      "gui\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": "function on_message(self: unknown, message_id: Hash, message: LuaMap<AnyNotNil, unknown> | Record<string, unknown>, sender: Url): void;",
-      "gui\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function on_reload(self: unknown): void;",
-      "gui\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function update(self: unknown, dt: number): void;",
       "gui\u0000PROPERTY\u0000fonts\u0000": "fonts: Hash;",
       "gui\u0000PROPERTY\u0000material\u0000": "material: Hash;",
       "gui\u0000PROPERTY\u0000materials\u0000": "materials: Hash;",
@@ -4055,8 +4027,6 @@
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_BACKWARD\u0000": "const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_BACKWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_FORWARD\u0000": "const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_FORWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_PINGPONG\u0000": "const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: \"go.PLAYBACK_ONCE_PINGPONG\" };",
-      "go\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: Opaque<\"userdata\">): void;",
-      "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function fixed_update(self: Opaque<\"userdata\">, dt: number): void;",
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number): void;\nfunction animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean): void;\nfunction _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean | undefined, recursive: boolean): void;",
@@ -4083,12 +4053,6 @@
       "go\u0000FUNCTION\u0000go.update_world_transform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function update_world_transform(id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.world_to_local_position\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function world_to_local_position(position: Vector3, url?: SceneGameObjectAddress | Hash | Url): Vector3;",
       "go\u0000FUNCTION\u0000go.world_to_local_transform\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Matrix4\"],\"isOptional\":false}]": "function world_to_local_transform(transformation: Matrix4, url?: SceneGameObjectAddress | Hash | Url): Matrix4;",
-      "go\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function init(self: Opaque<\"userdata\">): void;",
-      "go\u0000FUNCTION\u0000late_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function late_update(self: Opaque<\"userdata\">, dt: number): void;",
-      "go\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": "function on_input(self: Opaque<\"userdata\">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;",
-      "go\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": "function on_message(self: Opaque<\"userdata\">, message_id: Hash, message: Record<string | number, unknown>, sender: Url): void;",
-      "go\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function on_reload(self: Opaque<\"userdata\">): void;",
-      "go\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function update(self: Opaque<\"userdata\">, dt: number): void;",
       "go\u0000PROPERTY\u0000euler\u0000": "euler: Vector3;",
       "go\u0000PROPERTY\u0000position\u0000": "position: Vector3;",
       "go\u0000PROPERTY\u0000rotation\u0000": "rotation: Quaternion;",
@@ -4348,7 +4312,6 @@
       "gui\u0000CONSTANT\u0000gui.TYPE_PARTICLEFX\u0000": "const TYPE_PARTICLEFX: number & { readonly __brand: \"gui.TYPE_PARTICLEFX\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_PIE\u0000": "const TYPE_PIE: number & { readonly __brand: \"gui.TYPE_PIE\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_TEXT\u0000": "const TYPE_TEXT: number & { readonly __brand: \"gui.TYPE_TEXT\" };",
-      "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: Opaque<\"userdata\">): void;",
       "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void\ngui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
@@ -4469,11 +4432,6 @@
       "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_yanchor(node: Opaque<\"node\">, anchor: gui.YAnchor): void;",
       "gui\u0000FUNCTION\u0000gui.show_keyboard\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function show_keyboard(type: gui.KeyboardType, autoclose: boolean): void;",
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function stop_particlefx(node: Opaque<\"node\">): void;\nfunction stop_particlefx(node: Opaque<\"node\">, options: { clear?: boolean }): void;",
-      "gui\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function init(self: Opaque<\"userdata\">): void;",
-      "gui\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": "function on_input(self: Opaque<\"userdata\">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;",
-      "gui\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function on_message(self: Opaque<\"userdata\">, message_id: Hash, message: Record<string | number, unknown>): void;",
-      "gui\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function on_reload(self: Opaque<\"userdata\">): void;",
-      "gui\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function update(self: Opaque<\"userdata\">, dt: number): void;",
       "gui\u0000PROPERTY\u0000fonts\u0000": "fonts: Hash;",
       "gui\u0000PROPERTY\u0000material\u0000": "material: Hash;",
       "gui\u0000PROPERTY\u0000materials\u0000": "materials: Hash;",
@@ -5420,8 +5378,6 @@
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_BACKWARD\u0000": "const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_BACKWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_FORWARD\u0000": "const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_FORWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_PINGPONG\u0000": "const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: \"go.PLAYBACK_ONCE_PINGPONG\" };",
-      "go\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: Opaque<\"userdata\">): void;",
-      "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function fixed_update(self: Opaque<\"userdata\">, dt: number): void;",
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number): void;\nfunction animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean): void;\nfunction _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean | undefined, recursive: boolean): void;",
@@ -5448,12 +5404,6 @@
       "go\u0000FUNCTION\u0000go.update_world_transform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function update_world_transform(id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.world_to_local_position\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function world_to_local_position(position: Vector3, url?: SceneGameObjectAddress | Hash | Url): Vector3;",
       "go\u0000FUNCTION\u0000go.world_to_local_transform\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Matrix4\"],\"isOptional\":false}]": "function world_to_local_transform(transformation: Matrix4, url?: SceneGameObjectAddress | Hash | Url): Matrix4;",
-      "go\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function init(self: Opaque<\"userdata\">): void;",
-      "go\u0000FUNCTION\u0000late_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function late_update(self: Opaque<\"userdata\">, dt: number): void;",
-      "go\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": "function on_input(self: Opaque<\"userdata\">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;",
-      "go\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": "function on_message(self: Opaque<\"userdata\">, message_id: Hash, message: Record<string | number, unknown>, sender: Url): void;",
-      "go\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function on_reload(self: Opaque<\"userdata\">): void;",
-      "go\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function update(self: Opaque<\"userdata\">, dt: number): void;",
       "go\u0000PROPERTY\u0000euler\u0000": "euler: Vector3;",
       "go\u0000PROPERTY\u0000position\u0000": "position: Vector3;",
       "go\u0000PROPERTY\u0000rotation\u0000": "rotation: Quaternion;",
@@ -5712,7 +5662,6 @@
       "gui\u0000CONSTANT\u0000gui.TYPE_PARTICLEFX\u0000": "const TYPE_PARTICLEFX: number & { readonly __brand: \"gui.TYPE_PARTICLEFX\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_PIE\u0000": "const TYPE_PIE: number & { readonly __brand: \"gui.TYPE_PIE\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_TEXT\u0000": "const TYPE_TEXT: number & { readonly __brand: \"gui.TYPE_TEXT\" };",
-      "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: Opaque<\"userdata\">): void;",
       "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void\ngui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
@@ -5833,11 +5782,6 @@
       "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_yanchor(node: Opaque<\"node\">, anchor: gui.YAnchor): void;",
       "gui\u0000FUNCTION\u0000gui.show_keyboard\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function show_keyboard(type: gui.KeyboardType, autoclose: boolean): void;",
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function stop_particlefx(node: Opaque<\"node\">): void;\nfunction stop_particlefx(node: Opaque<\"node\">, options: { clear?: boolean }): void;",
-      "gui\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function init(self: Opaque<\"userdata\">): void;",
-      "gui\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": "function on_input(self: Opaque<\"userdata\">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;",
-      "gui\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function on_message(self: Opaque<\"userdata\">, message_id: Hash, message: Record<string | number, unknown>): void;",
-      "gui\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function on_reload(self: Opaque<\"userdata\">): void;",
-      "gui\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function update(self: Opaque<\"userdata\">, dt: number): void;",
       "gui\u0000PROPERTY\u0000fonts\u0000": "fonts: Hash;",
       "gui\u0000PROPERTY\u0000material\u0000": "material: Hash;",
       "gui\u0000PROPERTY\u0000materials\u0000": "materials: Hash;",
@@ -6520,8 +6464,6 @@
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_BACKWARD\u0000": "const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_BACKWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_FORWARD\u0000": "const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_FORWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_PINGPONG\u0000": "const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: \"go.PLAYBACK_ONCE_PINGPONG\" };",
-      "go\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: Opaque<\"userdata\">): void;",
-      "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function fixed_update(self: Opaque<\"userdata\">, dt: number): void;",
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number): void;\nfunction animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean): void;\nfunction _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean | undefined, recursive: boolean): void;",
@@ -6548,12 +6490,6 @@
       "go\u0000FUNCTION\u0000go.update_world_transform\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[]": "function update_world_transform(id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.world_to_local_position\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function world_to_local_position(position: Vector3, url?: SceneGameObjectAddress | Hash | Url): Vector3;",
       "go\u0000FUNCTION\u0000go.world_to_local_transform\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Matrix4\"],\"isOptional\":false}]": "function world_to_local_transform(transformation: Matrix4, url?: SceneGameObjectAddress | Hash | Url): Matrix4;",
-      "go\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function init(self: Opaque<\"userdata\">): void;",
-      "go\u0000FUNCTION\u0000late_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function late_update(self: Opaque<\"userdata\">, dt: number): void;",
-      "go\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": "function on_input(self: Opaque<\"userdata\">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;",
-      "go\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": "function on_message(self: Opaque<\"userdata\">, message_id: Hash, message: Record<string | number, unknown>, sender: Url): void;",
-      "go\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function on_reload(self: Opaque<\"userdata\">): void;",
-      "go\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function update(self: Opaque<\"userdata\">, dt: number): void;",
       "go\u0000PROPERTY\u0000euler\u0000": "euler: Vector3;",
       "go\u0000PROPERTY\u0000position\u0000": "position: Vector3;",
       "go\u0000PROPERTY\u0000rotation\u0000": "rotation: Quaternion;",
@@ -6774,7 +6710,6 @@
       "gui\u0000CONSTANT\u0000gui.TYPE_PARTICLEFX\u0000": "const TYPE_PARTICLEFX: number & { readonly __brand: \"gui.TYPE_PARTICLEFX\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_PIE\u0000": "const TYPE_PIE: number & { readonly __brand: \"gui.TYPE_PIE\" };",
       "gui\u0000CONSTANT\u0000gui.TYPE_TEXT\u0000": "const TYPE_TEXT: number & { readonly __brand: \"gui.TYPE_TEXT\" };",
-      "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function final(self: Opaque<\"userdata\">): void;",
       "gui\u0000FUNCTION\u0000gui.animate\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void\ngui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: string | gui.Property | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
@@ -6895,11 +6830,6 @@
       "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_yanchor(node: Opaque<\"node\">, anchor: gui.YAnchor): void;",
       "gui\u0000FUNCTION\u0000gui.show_keyboard\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function show_keyboard(type: gui.KeyboardType, autoclose: boolean): void;",
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function stop_particlefx(node: Opaque<\"node\">): void;\nfunction stop_particlefx(node: Opaque<\"node\">, options: { clear?: boolean }): void;",
-      "gui\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function init(self: Opaque<\"userdata\">): void;",
-      "gui\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": "function on_input(self: Opaque<\"userdata\">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;",
-      "gui\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function on_message(self: Opaque<\"userdata\">, message_id: Hash, message: Record<string | number, unknown>): void;",
-      "gui\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": "function on_reload(self: Opaque<\"userdata\">): void;",
-      "gui\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function update(self: Opaque<\"userdata\">, dt: number): void;",
       "gui\u0000PROPERTY\u0000fonts\u0000": "fonts: Hash;",
       "gui\u0000PROPERTY\u0000material\u0000": "material: Hash;",
       "gui\u0000PROPERTY\u0000materials\u0000": "materials: Hash;",
@@ -10021,13 +9951,6 @@
         "param:1:name": { "type": "string", "optional": false },
         "param:2:style": { "type": "string", "optional": false }
       },
-      "go\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "SceneAddress | Hash | Url", "optional": false },
         "param:1:property": { "type": "string | Hash", "optional": false },
@@ -10127,43 +10050,11 @@
         "param:1:url": { "type": "SceneGameObjectAddress | Hash | Url", "optional": true },
         "return:0:converted_transform": { "type": "Matrix4", "optional": false }
       },
-      "go\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000late_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:action_id": { "type": "Hash | undefined", "optional": false },
-        "param:2:action": { "type": "go.on_input.action", "optional": false },
-        "return:0:consume": { "type": "boolean | undefined", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:message_id": { "type": "Hash", "optional": false },
-        "param:2:message": {
-          "type": "LuaMap<AnyNotNil, unknown> | Record<string, unknown>",
-          "optional": false
-        },
-        "param:3:sender": { "type": "Url", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
       "graphics\u0000FUNCTION\u0000graphics.get_adapter_info\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:info": { "type": "graphics.adapter_info", "optional": false }
       },
       "graphics\u0000FUNCTION\u0000graphics.get_engine_adapters\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:adapters": { "type": "string[]", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
       },
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -10645,31 +10536,6 @@
       },
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:action_id": { "type": "Hash | undefined", "optional": false },
-        "param:2:action": { "type": "go.on_input.action", "optional": false },
-        "return:0:consume": { "type": "boolean | undefined", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:message_id": { "type": "Hash", "optional": false },
-        "param:2:message": {
-          "type": "LuaMap<AnyNotNil, unknown> | Record<string, unknown>",
-          "optional": false
-        },
-        "param:3:sender": { "type": "Url", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
       },
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:code": { "type": "string", "optional": false },
@@ -14836,13 +14702,6 @@
         "param:1:name": { "type": "string", "optional": false },
         "param:2:style": { "type": "string", "optional": false }
       },
-      "go\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "SceneAddress | Hash | Url", "optional": false },
         "param:1:property": { "type": "string | Hash", "optional": false },
@@ -14942,43 +14801,11 @@
         "param:1:url": { "type": "SceneGameObjectAddress | Hash | Url", "optional": true },
         "return:0:converted_transform": { "type": "Matrix4", "optional": false }
       },
-      "go\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000late_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:action_id": { "type": "Hash | undefined", "optional": false },
-        "param:2:action": { "type": "go.on_input.action", "optional": false },
-        "return:0:consume": { "type": "boolean | undefined", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:message_id": { "type": "Hash", "optional": false },
-        "param:2:message": {
-          "type": "LuaMap<AnyNotNil, unknown> | Record<string, unknown>",
-          "optional": false
-        },
-        "param:3:sender": { "type": "Url", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
       "graphics\u0000FUNCTION\u0000graphics.get_adapter_info\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:info": { "type": "graphics.adapter_info", "optional": false }
       },
       "graphics\u0000FUNCTION\u0000graphics.get_engine_adapters\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:adapters": { "type": "string[]", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
       },
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -15460,31 +15287,6 @@
       },
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:action_id": { "type": "Hash | undefined", "optional": false },
-        "param:2:action": { "type": "go.on_input.action", "optional": false },
-        "return:0:consume": { "type": "boolean | undefined", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:message_id": { "type": "Hash", "optional": false },
-        "param:2:message": {
-          "type": "LuaMap<AnyNotNil, unknown> | Record<string, unknown>",
-          "optional": false
-        },
-        "param:3:sender": { "type": "Url", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "unknown", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
       },
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:code": { "type": "string", "optional": false },
@@ -18711,13 +18513,6 @@
         "param:0:fontc": { "type": "string | Hash", "optional": false },
         "param:1:ttf": { "type": "string | Hash", "optional": false }
       },
-      "go\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "SceneAddress | Hash | Url", "optional": false },
         "param:1:property": { "type": "string | Hash", "optional": false },
@@ -18817,35 +18612,6 @@
         "param:1:url": { "type": "SceneGameObjectAddress | Hash | Url", "optional": true },
         "return:0:converted_transform": { "type": "Matrix4", "optional": false }
       },
-      "go\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000late_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:action_id": { "type": "Hash", "optional": false },
-        "param:2:action": {
-          "type": "{ value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }",
-          "optional": false
-        },
-        "return:0:consume": { "type": "boolean | undefined", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:message_id": { "type": "Hash", "optional": false },
-        "param:2:message": { "type": "Record<string | number, unknown>", "optional": false },
-        "param:3:sender": { "type": "Url", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
       "graphics\u0000FUNCTION\u0000graphics.get_adapter_info\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:info": {
           "type": "{ family: string; version_major: number; version_minor: number; limits: { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number }; extensions: string[]; features: number[] }",
@@ -18854,9 +18620,6 @@
       },
       "graphics\u0000FUNCTION\u0000graphics.get_engine_adapters\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:adapters": { "type": "string[]", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
       },
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -19334,30 +19097,6 @@
       },
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:action_id": { "type": "Hash", "optional": false },
-        "param:2:action": {
-          "type": "{ value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }",
-          "optional": false
-        },
-        "return:0:consume": { "type": "boolean | undefined", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:message_id": { "type": "Hash", "optional": false },
-        "param:2:message": { "type": "Record<string | number, unknown>", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
       },
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:code": { "type": "string", "optional": false },
@@ -22629,13 +22368,6 @@
         "param:0:fontc": { "type": "string | Hash", "optional": false },
         "param:1:ttf": { "type": "string | Hash", "optional": false }
       },
-      "go\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "SceneAddress | Hash | Url", "optional": false },
         "param:1:property": { "type": "string | Hash", "optional": false },
@@ -22735,35 +22467,6 @@
         "param:1:url": { "type": "SceneGameObjectAddress | Hash | Url", "optional": true },
         "return:0:converted_transform": { "type": "Matrix4", "optional": false }
       },
-      "go\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000late_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:action_id": { "type": "Hash", "optional": false },
-        "param:2:action": {
-          "type": "{ value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }",
-          "optional": false
-        },
-        "return:0:consume": { "type": "boolean | undefined", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:message_id": { "type": "Hash", "optional": false },
-        "param:2:message": { "type": "Record<string | number, unknown>", "optional": false },
-        "param:3:sender": { "type": "Url", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
       "graphics\u0000FUNCTION\u0000graphics.get_adapter_info\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:info": {
           "type": "{ family: string; version_major: number; version_minor: number; limits: { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number }; extensions: string[]; features: number[] }",
@@ -22772,9 +22475,6 @@
       },
       "graphics\u0000FUNCTION\u0000graphics.get_engine_adapters\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:adapters": { "type": "string[]", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
       },
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -23252,30 +22952,6 @@
       },
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:action_id": { "type": "Hash", "optional": false },
-        "param:2:action": {
-          "type": "{ value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }",
-          "optional": false
-        },
-        "return:0:consume": { "type": "boolean | undefined", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:message_id": { "type": "Hash", "optional": false },
-        "param:2:message": { "type": "Record<string | number, unknown>", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
       },
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:code": { "type": "string", "optional": false },
@@ -25328,13 +25004,6 @@
         "param:0:fontc": { "type": "string | Hash", "optional": false },
         "param:1:ttf": { "type": "string | Hash", "optional": false }
       },
-      "go\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "SceneAddress | Hash | Url", "optional": false },
         "param:1:property": { "type": "string | Hash", "optional": false },
@@ -25433,38 +25102,6 @@
         "param:0:transformation": { "type": "Matrix4", "optional": false },
         "param:1:url": { "type": "SceneGameObjectAddress | Hash | Url", "optional": true },
         "return:0:converted_transform": { "type": "Matrix4", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000late_update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:action_id": { "type": "Hash", "optional": false },
-        "param:2:action": {
-          "type": "{ value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }",
-          "optional": false
-        },
-        "return:0:consume": { "type": "boolean | undefined", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:message_id": { "type": "Hash", "optional": false },
-        "param:2:message": { "type": "Record<string | number, unknown>", "optional": false },
-        "param:3:sender": { "type": "Url", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "go\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000final\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
       },
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -25942,30 +25579,6 @@
       },
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000init\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_input\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:action_id": { "type": "Hash", "optional": false },
-        "param:2:action": {
-          "type": "{ value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }",
-          "optional": false
-        },
-        "return:0:consume": { "type": "boolean | undefined", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_message\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:message_id": { "type": "Hash", "optional": false },
-        "param:2:message": { "type": "Record<string | number, unknown>", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000on_reload\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false }
-      },
-      "gui\u0000FUNCTION\u0000update\u0000[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:self": { "type": "Opaque<\"userdata\">", "optional": false },
-        "param:1:dt": { "type": "number", "optional": false }
       },
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:code": { "type": "string", "optional": false },

@@ -2437,7 +2437,6 @@ describe("ARBITRARY_TABLE_SLOTS", () => {
       "iac.set_listener",
       "json.decode",
       "json.encode",
-      "on_message",
       "push.get_all_scheduled",
       "push.get_scheduled",
       "render.set_render_target",
@@ -2803,7 +2802,6 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "collectionproxy.get_resources:return:resources",
       "render.predicate:param:tags",
       "render.clear:param:buffers",
-      "on_input:param:action",
       "physics.create_joint:param:properties",
       "physics.set_joint_properties:param:properties",
       "physics.raycast:return:result",
@@ -3291,28 +3289,6 @@ describe("TABLE_SLOT_CURATIONS", () => {
     });
     expect(out).toContain("textures: LuaMap<string, Hash>");
     expect(out).not.toContain("LuaMap<string |");
-  });
-
-  test("go.on_input and gui.on_input recover the shared InputAction object (all fields optional)", () => {
-    // The doc carries a well-formed touch input table, so `touch` is curated
-    // as a nested array-of-touch-records (each record lists id, pressed,
-    // released, tap_count, x, y, dx, dy, acc_x/y/z). The nested fields inherit
-    // the parent's `?` via inlineTableType, which is the same trade-off every
-    // object curation makes.
-    const inputAction =
-      "action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }";
-    const goModule = parseDefoldApiDoc(goDoc);
-    const goOut = emitDeclarations({
-      ...goModule,
-      functions: [requireFunction(goModule, "on_input")],
-    });
-    expect(goOut).toContain(inputAction);
-    const guiModule = parseDefoldApiDoc(guiDoc);
-    const guiOut = emitDeclarations({
-      ...guiModule,
-      functions: [requireFunction(guiModule, "on_input")],
-    });
-    expect(guiOut).toContain(inputAction);
   });
 
   test("physics create_joint and set_joint_properties recover the universal collide_connected field", () => {

@@ -4492,24 +4492,6 @@
     },
     {
       "identity": {
-        "namespace": "go",
-        "kind": "FUNCTION",
-        "name": "on_input",
-        "signature": "[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]"
-      },
-      "availableIn": ["1.13.1", "1.13.0", "1.12.4"]
-    },
-    {
-      "identity": {
-        "namespace": "go",
-        "kind": "FUNCTION",
-        "name": "on_input",
-        "signature": "[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]"
-      },
-      "availableIn": ["1.14.0", "1.13.2"]
-    },
-    {
-      "identity": {
         "namespace": "graphics",
         "kind": "CONSTANT",
         "name": "graphics.BLEND_EQUATION_ADD",
@@ -4984,42 +4966,6 @@
         "signature": "[{\"types\":[\"Opaque<\\\"node\\\">\",\"Url\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]"
       },
       "availableIn": ["1.14.0", "1.13.2", "1.13.1"]
-    },
-    {
-      "identity": {
-        "namespace": "gui",
-        "kind": "FUNCTION",
-        "name": "on_input",
-        "signature": "[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]"
-      },
-      "availableIn": ["1.13.1", "1.13.0", "1.12.4"]
-    },
-    {
-      "identity": {
-        "namespace": "gui",
-        "kind": "FUNCTION",
-        "name": "on_input",
-        "signature": "[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"boolean\",\"nil\"],\"isOptional\":false}]"
-      },
-      "availableIn": ["1.14.0", "1.13.2"]
-    },
-    {
-      "identity": {
-        "namespace": "gui",
-        "kind": "FUNCTION",
-        "name": "on_message",
-        "signature": "[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Url\"],\"isOptional\":false}]->[]"
-      },
-      "availableIn": ["1.14.0", "1.13.2"]
-    },
-    {
-      "identity": {
-        "namespace": "gui",
-        "kind": "FUNCTION",
-        "name": "on_message",
-        "signature": "[{\"types\":[\"Opaque<\\\"userdata\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
-      },
-      "availableIn": ["1.13.1", "1.13.0", "1.12.4"]
     },
     {
       "identity": { "namespace": "gui", "kind": "TYPEDEF", "name": "node", "signature": "" },

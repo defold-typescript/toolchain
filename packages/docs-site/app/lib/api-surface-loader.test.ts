@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
 import { apiModuleSymbols } from "./api-surface";
 import {
   defoldListingsFromManifest,
@@ -16,6 +17,7 @@ import {
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
+import { combinedNamespaceToApiPage } from "./combined-surface";
 import { type LibraryListing, libraryOwnerGroups } from "./nav";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
@@ -938,6 +940,38 @@ describe("engine pages route a function to the namespace that owns it", () => {
       expect(entry?.authoritativeSignature).not.toBe("");
       expect(shape?.module.functions.map((fn) => fn.name) ?? []).not.toContain(name);
       expect(shape?.entries.map((e) => e.identity.name) ?? []).not.toContain(name);
+    }
+  });
+});
+
+describe("lifecycle hooks are not listed as go or gui functions", () => {
+  const CONTROLS = { go: "go.get_position", gui: "gui.get_node" } as const;
+  const isHook = (namespace: string, name: string): boolean =>
+    SCRIPT_HOOK_NAMES.some((hook) => name === hook || name === `${namespace}.${hook}`);
+  const functionNames = (page: Parameters<typeof apiModuleSymbols>[0]): string[] =>
+    apiModuleSymbols(page)
+      .filter((symbol) => symbol.kind === "function")
+      .map((symbol) => symbol.name);
+
+  test("the go and gui pages list no hook", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    for (const [namespace, control] of Object.entries(CONTROLS)) {
+      const page = pages.find((p) => p.category === "engine" && p.namespace === namespace);
+      if (!page) throw new Error(`${namespace} page missing`);
+      const names = functionNames(page);
+      expect(names).toContain(control);
+      expect(names.filter((name) => isHook(namespace, name))).toEqual([]);
+    }
+  });
+
+  test("the combined go and gui pages list no hook", () => {
+    const combined = loadCombinedSurface(REAL_TYPES_DIR);
+    for (const [namespace, control] of Object.entries(CONTROLS)) {
+      const ns = combined.namespaces.find((n) => n.namespace === namespace);
+      if (!ns) throw new Error(`combined ${namespace} namespace missing`);
+      const names = functionNames(combinedNamespaceToApiPage(ns));
+      expect(names).toContain(control);
+      expect(names.filter((name) => isHook(namespace, name))).toEqual([]);
     }
   });
 });

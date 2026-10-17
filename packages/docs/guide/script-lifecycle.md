@@ -64,6 +64,8 @@ export default defineGuiScript<MenuSelf>({
 
 With an explicit type argument (`defineGuiScript<MenuSelf>`), `init`'s return is checked against `MenuSelf` rather than inferred from it. That single argument is one of three routes to a typed `self`, and it is the one that stops working the moment you also declare `properties` — see [Three ways to type `self`](#three-ways-to-type-self) for the other two and for what inference costs you.
 
+The hooks are members of the table `defineScript`, `defineGuiScript` and `defineRenderScript` take, not functions you call. The Defold reference lists them under `go` and `gui`, but the engine binds no `go.init` or `gui.update`, so neither is declared; to type a standalone handler, use `ScriptHooks` or `InputAction` rather than `typeof go.on_input`.
+
 > [!NOTE]
 > The samples import `Hash` for the sake of being copy-pasteable, but the engine value types — `Hash`, `Vector3`, `Vector4`, `Quaternion`, and the rest — are also declared globally, so a source file that imports nothing can still annotate with them. There is no need to recover one as `ReturnType<typeof hash>`.
 

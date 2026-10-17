@@ -389,6 +389,41 @@ describe("committed API surfaces — overload-covered arity holds per target", (
   }
 });
 
+const LIFECYCLE_HOOKS_PROOF = resolve(VERSIONS_DIR, "lifecycle-hooks-not-callable-proof.ts");
+
+describe("committed API surfaces — lifecycle hooks are not module functions", () => {
+  for (const index of committedSurfaceIndexes()) {
+    test(`${index} declares no go or gui lifecycle hook`, () => {
+      const root = mkdtempSync(resolve(PACKAGE_ROOT, "hooks-wall-"));
+      try {
+        const tsconfigPath = resolve(root, "tsconfig.json");
+        writeFileSync(
+          tsconfigPath,
+          `${JSON.stringify(
+            {
+              extends: "../../../tsconfig.json",
+              compilerOptions: { noEmit: true, types: [] },
+              include: [LIFECYCLE_HOOKS_PROOF, resolve(PACKAGE_ROOT, index)],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        const { exitCode, output } = typecheck(tsconfigPath);
+        if (exitCode !== 0) {
+          throw new Error(
+            `${index} proof failed — a lifecycle hook is declared as a go or gui function, ` +
+              `or a positive control no longer resolves:\n${output}`,
+          );
+        }
+        expect(exitCode).toBe(0);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
 const GUI_TEXTURE_REMOVAL_PROOF = resolve(VERSIONS_DIR, "gui-texture-removal-proof.ts");
 const GUI_TEXTURE_REMOVAL_ABSENT_PROOF = resolve(
   VERSIONS_DIR,

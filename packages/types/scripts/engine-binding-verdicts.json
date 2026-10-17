@@ -115,34 +115,6 @@
     "verdict": "manual",
     "reason": "lua_type switch"
   },
-  "*:go.final:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:go.fixed_update:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:go.init:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:go.late_update:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:go.on_input:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:go.on_message:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:go.on_reload:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
   "*:go.property:return-count": {
     "verdict": "accepted",
     "reason": "the declaration returns a ScriptProperty handle so a script's properties table is typed from its defaults; the engine returns nothing"
@@ -167,10 +139,6 @@
     "verdict": "manual",
     "reason": "lua_type switch"
   },
-  "*:go.update:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
   "*:gui.EASING_IN:constant-missing-declaration": {
     "verdict": "accepted",
     "reason": "a legacy alias of EASING_INCUBIC, EASING_INOUTCUBIC, EASING_LINEAR or EASING_OUTCUBIC the engine keeps for old scripts; the ref-doc documents only the current names"
@@ -187,26 +155,6 @@
     "verdict": "accepted",
     "reason": "a legacy alias of EASING_INCUBIC, EASING_INOUTCUBIC, EASING_LINEAR or EASING_OUTCUBIC the engine keeps for old scripts; the ref-doc documents only the current names"
   },
-  "*:gui.final:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:gui.init:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:gui.on_input:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:gui.on_message:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
-  "*:gui.on_reload:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
-  },
   "*:gui.set:manual:3": {
     "verdict": "manual",
     "reason": "gui-overloads.d.ts types the value per form; gui_script.cpp:LuaSet picks the value check at run time from the property and target: nil only for the msg.url() textures form (:1126-1130), a branch 1.13.1 added, so gui-texture-removal.d.ts declares it only on 1.13.1 and later while 1.12.4's LuaToVar rejects nil (:897-902); LuaToVar for the rest (:1167), then ToQuat for rotation (:1208), ToVector4 or ToVector3 for another vector (:1218, :1227) and lua_isnumber for a sub-key or scalar (:1241)"
@@ -214,10 +162,6 @@
   "*:gui.set:too-narrow:1": {
     "verdict": "accepted",
     "reason": "gui-overloads.d.ts takes a node or a url: both of gui_script.cpp:LuaSet's ResolveURL calls (:1136, :1179) sit behind an IsURL(L, 1) check (:1128, :1174), so a string or hash never reaches them, and any other argument 1 is read as a node (:1200)"
-  },
-  "*:gui.update:missing-binding": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
   "*:http.request:manual:3": {
     "verdict": "manual",
