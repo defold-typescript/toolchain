@@ -80,6 +80,24 @@ function armsOf(headings: string[], fqn: string): string[] {
   });
 }
 
+// Each live form of the overload block headed `<fqn>(...)`: the code its form
+// line lists and the text under it.
+function overloadForms(markdown: string, fqn: string): { code: string; body: string }[] {
+  const lines = markdown.split("\n");
+  const start = lines.findIndex((line) => line.startsWith(`### \`${fqn}(...)`));
+  if (start < 0) return [];
+  const next = lines.findIndex((line, index) => index > start && line.startsWith("### "));
+  const block = lines.slice(start + 1, next < 0 ? undefined : next);
+  const forms: { code: string; body: string }[] = [];
+  for (const [index, line] of block.entries()) {
+    if (line !== '<li class="api-overload">') continue;
+    const item = block.slice(index + 2, block.indexOf("</li>", index));
+    const code = item[0]?.match(/^`(.+?)`(?: .*)?$/)?.[1] ?? "";
+    forms.push({ code, body: item.slice(1).join("\n").trim() });
+  }
+  return forms;
+}
+
 function namespaceByName(name: string): CombinedNamespace {
   const ns = combined.namespaces.find((n) => n.namespace === name);
   if (!ns) throw new Error(`no Combined namespace ${name}`);
@@ -160,6 +178,40 @@ describe("canonical pages render every authored overload arm", () => {
     const lerpArms = storeFor("vmath")?.["vmath.lerp"]?.signatures ?? [];
     expect(lerpArms.length).toBe(3);
     expect(armsOf(vmath, "vmath.lerp")).toEqual(lerpArms.map(callForm));
+  });
+
+  it("renders each Box2D backend form of a world query with its own return and prose", () => {
+    const markdown = markdownFor(namespaceByName("b2d.world"));
+    const multi = (hit: string, info: string) => [
+      `LuaMultiReturn<[b2d.${hit}[], b2d.tree_stats]>`,
+      `LuaMultiReturn<[b2d.${info}[], b2d.tree_stats]>`,
+    ];
+    const queries: [string, string[]][] = [
+      ["b2d.world.cast_ray", multi("fixture_cast_hit", "shape_cast_hit")],
+      [
+        "b2d.world.cast_ray_closest",
+        ["b2d.fixture_cast_hit | undefined", "b2d.shape_cast_hit | undefined"],
+      ],
+      ["b2d.world.cast_shape", multi("fixture_cast_hit", "shape_cast_hit")],
+      ["b2d.world.overlap_aabb", multi("fixture_info", "shape_info")],
+      ["b2d.world.overlap_shape", multi("fixture_info", "shape_info")],
+    ];
+    for (const [fqn, [v2Return, v3Return]] of queries) {
+      const forms = overloadForms(markdown, fqn);
+      expect({ fqn, count: forms.length }).toEqual({ fqn, count: 2 });
+      const [v2, v3] = forms;
+      expect(v2?.code).toStartWith('<Backend extends "v2" = "v2">(');
+      expect(v2?.code).toEndWith(`): ${v2Return}`);
+      expect(v3?.code).toStartWith('<Backend extends "v3">(');
+      expect(v3?.code).toEndWith(`): ${v3Return}`);
+      expect(v2?.body).not.toBe("");
+      expect(v3?.body).not.toBe("");
+      expect(v3?.body).not.toContain("Same description as form");
+      expect(v2?.body).not.toBe(v3?.body);
+    }
+    const [castV2, castV3] = overloadForms(markdown, "b2d.world.cast_ray");
+    expect(castV2?.body).toStartWith("Cast a ray.");
+    expect(castV3?.body).toStartWith("The translation is the ray displacement");
   });
 
   it("leaves a generated symbol on the same page untouched", () => {

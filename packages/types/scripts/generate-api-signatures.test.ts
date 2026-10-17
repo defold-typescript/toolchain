@@ -332,6 +332,33 @@ describe("per-slot rendered types travel with the signature", () => {
     expect(compared).toBeGreaterThan(1000);
   });
 
+  test("a key two ref-doc elements share lists both arms and keeps only their common slots", () => {
+    const backendVersions = COMPLETE_TARGETS.map((t) => t.id.replace(/^defold-/, "")).filter(
+      (version) => compareVersions(version, "1.13.2") >= 0,
+    );
+    expect(backendVersions.length).toBeGreaterThan(0);
+    for (const version of backendVersions) {
+      const key = functionKey(version, "b2d.world", "b2d.world.cast_ray");
+      const [v2 = "", v3 = "", ...rest] = (artifact.versions[version]?.[key] ?? "").split("\n");
+      expect({ version, rest }).toEqual({ version, rest: [] });
+      expect(v2).toStartWith('function cast_ray<Backend extends "v2" = "v2">(');
+      expect(v2).toEndWith("): LuaMultiReturn<[b2d.fixture_cast_hit[], b2d.tree_stats]>;");
+      expect(v3).toStartWith('function cast_ray<Backend extends "v3">(');
+      expect(v3).toEndWith("): LuaMultiReturn<[b2d.shape_cast_hit[], b2d.tree_stats]>;");
+      const slots = artifact.slotTypes[version]?.[key];
+      expect(slots?.["param:3:filter"]).toEqual({ type: "b2d.query_filter", optional: true });
+      expect(slots?.["return:1:stats"]).toEqual({ type: "b2d.tree_stats", optional: false });
+      expect(slots?.["return:0:hits"]).toBeUndefined();
+
+      const mover = functionKey(version, "b2d.world", "b2d.world.cast_mover");
+      expect(artifact.versions[version]?.[mover]?.split("\n")).toHaveLength(1);
+      expect(artifact.slotTypes[version]?.[mover]?.["param:1:capsule"]).toEqual({
+        type: "b2d.mover_capsule",
+        optional: false,
+      });
+    }
+  });
+
   test("an authored-fold symbol records no slots, so the render falls back", () => {
     for (const target of COMPLETE_TARGETS) {
       const version = target.id.replace(/^defold-/, "");
