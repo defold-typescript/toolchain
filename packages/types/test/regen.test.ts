@@ -302,7 +302,7 @@ describe("surface-wide type routing", () => {
       "function get_constants(path: Hash | string): material.constant_info[];",
     );
     expect(emitted("b2d.world")).toMatch(
-      /function cast_ray\([^)]*\): LuaMultiReturn<\[b2d\.fixture_cast_hit\[\], b2d\.tree_stats\]>;/,
+      /function cast_ray<Backend extends "v2" = "v2">\([^)]*\): LuaMultiReturn<\[b2d\.fixture_cast_hit\[\], b2d\.tree_stats\]>;/,
     );
   });
 
