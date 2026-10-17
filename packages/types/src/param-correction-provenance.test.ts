@@ -124,6 +124,7 @@ const PARAM_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
   "render.get_render_target_width:param:render_target": ["defold-1.13.2", "defold-1.14.0"],
   "render.get_render_target_height:param:render_target": ["defold-1.13.2", "defold-1.14.0"],
   "render.set_render_target_size:param:render_target": ["defold-1.13.2", "defold-1.14.0"],
+  "render.draw:param:predicate": ["defold-1.13.2", "defold-1.14.0"],
   // Older targets type these `number`; 1.13.2 retypes the handle to an opaque
   // type that no longer admits the number the binding reads.
   "resource.get_texture_info:param:path": ["defold-1.12.4", "defold-1.13.0", "defold-1.13.1"],
@@ -132,6 +133,10 @@ const PARAM_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
   // pair); 1.13.2 retypes them to an enum that is too narrow and too wide.
   "tilemap.set_tile:param:transform_bitmask": ["defold-1.12.4", "defold-1.13.0", "defold-1.13.1"],
   "window.set_dim_mode:param:mode": ["defold-1.12.4", "defold-1.13.0", "defold-1.13.1"],
+  // Older targets type these `constant` and list the six states the binding takes;
+  // 1.13.2 types them as the whole enum, which also holds two it raises on.
+  "render.enable_state:param:state": ["defold-1.12.4", "defold-1.13.0", "defold-1.13.1"],
+  "render.disable_state:param:state": ["defold-1.12.4", "defold-1.13.0", "defold-1.13.1"],
 };
 
 describe("parameter-type correction provenance", () => {

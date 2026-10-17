@@ -193,7 +193,7 @@ describe("rendered slot types agree with the signature above them", () => {
     expect(clear?.parameters[0]?.types[0]).not.toContain("Record<string | number, unknown>");
 
     const enableState = symbols.find((s) => s.name === "render.enable_state");
-    expect(enableState?.parameters[0]?.types[0]).toBe("graphics.STATE");
+    expect(enableState?.parameters[0]?.types[0]).toBe("graphics.State");
     expect(enableState?.parameters[0]?.types[0]).not.toContain('Opaque<"constant">');
 
     // The alias each of them names is a symbol on its home page, so neither row

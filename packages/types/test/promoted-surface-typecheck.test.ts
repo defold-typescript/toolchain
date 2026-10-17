@@ -89,11 +89,12 @@ const POSITIVE_FILES: Record<string, string> = {
     'material.set_vertex_attributes("/m.materialc", { position: { normalize: true } });',
     // The value field's documented array branch (a table of numbers).
     'material.set_vertex_attributes("/m.materialc", { color: { value: [1, 0, 0, 1] } });',
-    // The getters return arrays of records — index and iterate every one.
+    // The getters return arrays of records — index and iterate every one —
+    // except the textures, keyed by sampler slot.
     'const mc = material.get_constants("/m.materialc");',
     "const mcName: Hash = mc[0].name;",
     'for (const s of material.get_samplers("/m.materialc")) { const nm: Hash = s.name; }',
-    'const mt: number = material.get_textures("/m.materialc")[0].width;',
+    'const mt: number | undefined = material.get_textures("/m.materialc").get(1)?.width;',
     'const norm: boolean = material.get_vertex_attributes("/m.materialc")[0].normalize;',
     "void mcName;",
     "void mt;",

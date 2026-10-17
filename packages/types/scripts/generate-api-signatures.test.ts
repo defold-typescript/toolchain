@@ -65,8 +65,9 @@ describe("authoritative signature artifact", () => {
   // `overloads-signature-parity` is what pins that store to its declarations.
   const foldedKeysFor = (target: (typeof COMPLETE_TARGETS)[number]): Set<string> => {
     const keys = new Set<string>();
-    for (const entry of loadTargetModules(target, PACKAGE_ROOT)) {
-      for (const { key } of withheldSymbols(entry)) keys.add(key);
+    const surface = loadTargetModules(target, PACKAGE_ROOT);
+    for (const entry of surface) {
+      for (const { key } of withheldSymbols(entry, surface)) keys.add(key);
     }
     return keys;
   };
@@ -141,7 +142,7 @@ describe("authoritative signature artifact", () => {
     expect(find("material", "material.set_vertex_attributes")).toContain(
       "Record<string, material.vertex_attribute_options>",
     );
-    // The 7 compute/material getters render as arrays of records, inline or the
+    // The 6 compute/material getters render as arrays of records, inline or the
     // named `material.*_info` structs 1.13.2 declares.
     for (const [ns, name] of [
       ["compute", "compute.get_constants"],
@@ -149,11 +150,14 @@ describe("authoritative signature artifact", () => {
       ["compute", "compute.get_textures"],
       ["material", "material.get_constants"],
       ["material", "material.get_samplers"],
-      ["material", "material.get_textures"],
       ["material", "material.get_vertex_attributes"],
     ] as const) {
       expect(find(ns, name)).toMatch(/(\}|\bmaterial\.\w+_info)\[\];$/);
     }
+    // The material's textures are keyed by sampler slot, with holes.
+    expect(find("material", "material.get_textures")).toMatch(
+      /: LuaMap<number, material\.texture_info>;$/,
+    );
   });
 });
 
@@ -208,11 +212,12 @@ describe("hand-authored symbols survive the skip filter", () => {
     for (const target of COMPLETE_TARGETS) {
       const version = target.id.replace(/^defold-/, "");
       const perSymbol = artifact.versions[version] ?? {};
-      for (const entry of loadTargetModules(target, PACKAGE_ROOT)) {
+      const surface = loadTargetModules(target, PACKAGE_ROOT);
+      for (const entry of surface) {
         const store = loadSignatureFile(
           resolve(PACKAGE_ROOT, "signatures", `${entry.namespace}.json`),
         );
-        for (const { key, fqn } of withheldSymbols(entry)) {
+        for (const { key, fqn } of withheldSymbols(entry, surface)) {
           const override = store[fqn];
           if (override === undefined) continue;
           const lines = perSymbol[key]?.split("\n") ?? [];
@@ -266,7 +271,7 @@ describe("per-slot rendered types travel with the signature", () => {
 
     const stateKey = functionKey(CURRENT_VERSION, "render", "render.enable_state");
     const state = artifact.slotTypes[CURRENT_VERSION]?.[stateKey]?.["param:0:state"]?.type;
-    expect(state).toBe("graphics.STATE");
+    expect(state).toBe("graphics.State");
     expect(state).not.toContain('Opaque<"constant">');
   });
 
@@ -362,8 +367,9 @@ describe("per-slot rendered types travel with the signature", () => {
   test("an authored-fold symbol records no slots, so the render falls back", () => {
     for (const target of COMPLETE_TARGETS) {
       const version = target.id.replace(/^defold-/, "");
-      for (const entry of loadTargetModules(target, PACKAGE_ROOT)) {
-        for (const { key } of withheldSymbols(entry)) {
+      const surface = loadTargetModules(target, PACKAGE_ROOT);
+      for (const entry of surface) {
+        for (const { key } of withheldSymbols(entry, surface)) {
           expect(artifact.slotTypes[version]?.[key]).toBeUndefined();
         }
       }

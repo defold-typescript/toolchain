@@ -20,9 +20,9 @@ let materialSampler: Hash | undefined;
 for (const s of material.get_samplers("/main/material.materialc")) {
   materialSampler = s.name;
 }
-const materialTextureWidth: number | undefined = material.get_textures(
-  "/main/material.materialc",
-)[0]?.width;
+const materialTextureWidth: number | undefined = material
+  .get_textures("/main/material.materialc")
+  .get(1)?.width;
 const materialAttrNormalize: boolean | undefined = material.get_vertex_attributes(
   "/main/material.materialc",
 )[0]?.normalize;
@@ -30,7 +30,12 @@ const weights = model.get_blend_weights("#model");
 const zoom = camera.get_orthographic_auto_zoom();
 const excluded = liveupdate.is_built_with_excluded_files();
 
-render.set_blend_func_separate(1, 1, 1, 1);
+render.set_blend_func_separate(
+  graphics.BLEND_FACTOR_SRC_ALPHA,
+  graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+  graphics.BLEND_FACTOR_ONE,
+  graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+);
 compute.set_constants("/main/compute.computec", {
   tint: { type: material.CONSTANT_TYPE_USER, value: 1 },
 });

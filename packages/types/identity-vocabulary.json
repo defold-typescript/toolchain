@@ -152,6 +152,7 @@
     "go.PLAYBACK": "number",
     "graphics.BLEND_EQUATION": "number",
     "graphics.BLEND_FACTOR": "number",
+    "graphics.BlendFactor": "number",
     "graphics.BUFFER_TYPE": "number",
     "graphics.BufferType": "number",
     "graphics.COMPARE_FUNC": "number",
@@ -212,6 +213,7 @@
     "render.CONTEXT_EVENT": "number",
     "render.FRUSTUM_PLANES": "number",
     "render.RENDER_TARGET_FLAG": "number",
+    "render.RenderTargetTextureType": "number",
     "render.SORT": "number",
     "sys.NETWORK": "number",
     "sys.NetworkConnectivity": "number",
@@ -456,15 +458,25 @@
     "physics.get_maskbit:param:group": { "pins": [["string"]], "adds": ["Hash"] },
     "physics.set_group:param:group": { "pins": [["string"]], "adds": ["Hash"] },
     "physics.set_maskbit:param:group": { "pins": [["string"]], "adds": ["Hash"] },
+    "render.disable_state:param:state": {
+      "pins": [["graphics.STATE"]],
+      "adds": ["graphics.State"],
+      "removes": ["graphics.STATE"]
+    },
     "render.disable_texture:param:binding": {
       "pins": [["texture", "string", "hash"]],
       "adds": ["number"],
       "removes": ["Opaque<\"texture\">"]
     },
     "render.draw:param:predicate": {
-      "pins": [["number"], ["render_predicate"]],
+      "pins": [["number"]],
       "adds": ["Opaque<\"render_predicate\">"],
       "removes": ["number"]
+    },
+    "render.enable_state:param:state": {
+      "pins": [["graphics.STATE"]],
+      "adds": ["graphics.State"],
+      "removes": ["graphics.STATE"]
     },
     "render.enable_texture:param:handle_or_name": {
       "pins": [["texture", "string", "hash"]],
@@ -477,6 +489,26 @@
     "render.get_render_target_width:param:render_target": {
       "pins": [["render_target"]],
       "adds": ["string", "Hash"]
+    },
+    "render.set_blend_func_separate:param:destination_factor_alpha": {
+      "pins": [["number"]],
+      "adds": ["graphics.BlendFactor"],
+      "removes": ["number"]
+    },
+    "render.set_blend_func_separate:param:destination_factor_color": {
+      "pins": [["number"]],
+      "adds": ["graphics.BlendFactor"],
+      "removes": ["number"]
+    },
+    "render.set_blend_func_separate:param:source_factor_alpha": {
+      "pins": [["number"]],
+      "adds": ["graphics.BlendFactor"],
+      "removes": ["number"]
+    },
+    "render.set_blend_func_separate:param:source_factor_color": {
+      "pins": [["number"]],
+      "adds": ["graphics.BlendFactor"],
+      "removes": ["number"]
     },
     "render.set_camera:param:camera": {
       "pins": [["url", "number", "nil"]],

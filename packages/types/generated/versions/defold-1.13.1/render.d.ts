@@ -10,6 +10,7 @@ declare global {
     type render_target = Opaque<"render_target">;
     type texture = Opaque<"texture">;
     type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
+    type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;
     type RenderTargetParams = Record<string | number, unknown>;
     /**
      * The rendering context was lost. Rendering is paused and all graphics resources become invalid. Passed to the `render.set_listener` callback.
@@ -824,7 +825,7 @@ declare global {
      * render.set_blend_func_separate(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
      * ```
      */
-    function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void;
+    function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void;
     /**
      * Sets the current render camera to be used for rendering. If a render camera
      * has been set by the render script, the renderer will be using its projection and view matrix
