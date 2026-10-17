@@ -806,7 +806,7 @@ New to TypeScript from Lua? Start with [TypeScript vs Lua](./typescript-vs-lua.m
 The one-line version of every trap on this page. Skim it once; jump to the full entry when one bites.
 
 - [Unary minus on a vector yields `number`](#unary-minus-on-vector3--vector4-silently-produces-number) — `-v3` infers `number`, not `Vector3`; use `v.unm()`.
-- [Enum constants are branded numbers](#enum-constants-are-branded-numbers--a-bare-number-wont-do) — a bare magic number won't satisfy an enum parameter; pass the named `go.PLAYBACK_*` constant.
+- [Enum constants are branded numbers](#enum-constants-are-branded-numbers--a-bare-number-wont-do) — a bare magic number won't satisfy an enum parameter; pass the named `go.PLAYBACK_*` constant. Comparing a field to one does not narrow a union; check a field instead.
 - [Engine handles are opaque](#engine-handles-are-opaque--you-cannot-fabricate-or-cast-across-kinds) — a `node` is not a `texture`; obtain each handle from the API that returns it, never fabricate or cross-cast.
 - [Callback parameters are `unknown`](#callback-parameters-type-check-as-functions-not-unknown) — match the documented arity; narrow each param before use.
 - [Some slots are `unknown` on purpose](#some-slots-are-unknown-on-purpose--the-any-wildcard) — `socket.skip` and friends accept anything and force a narrow on the way out.
@@ -882,6 +882,22 @@ render.get_render_target_width(rt, 0);                                // TS erro
 ```
 
 `packages/types/test-d/graphics-render-buffer-types.ts` pins this: the real `graphics` constant type-checks and a bare number carries `@ts-expect-error`.
+
+**Comparing a field to a constant does not narrow a union.** TypeScript narrows a union on a property only when some arm types that property as a literal, and a branded number is not a literal. `bullet3d.shape.get_shape` returns one arm per shape, each keyed by its own `bullet3d.shape.SHAPE_TYPE_*` constant, plus a `{ type }` arm for a triangle mesh. After `data.type === bullet3d.shape.SHAPE_TYPE_BOX`, `data` is still that whole union, so passing it to `bullet3d.shape.set_shape` is a TS error. Check the field the shape carries instead:
+
+```ts
+const object = bullet3d.get_collision_object("#collisionobject");
+if (object !== undefined) {
+  const shape = bullet3d.collision_object.get_shape(object, 1);
+  const data = bullet3d.shape.get_shape(shape);
+  if ("dimensions" in data) {
+    data.dimensions = data.dimensions.mul(2);
+    bullet3d.shape.set_shape(shape, data);
+  }
+}
+```
+
+`packages/types/test-d/bullet3d-engine-rules.ts` pins this: `set_shape` rejects the unchecked result and accepts it inside the `"dimensions" in data` check.
 
 **A slot the reference types as a bare `constant` takes the constants its documentation names.** Many parameters and getter returns (`gui.set_pivot`, `gui.animate`'s easing and playback, `render.enable_state`, `window.set_dim_mode`, `sys.get_connectivity`, …) carry no constant list in their ref-doc type, only in their prose — a `gui.PIVOT_*` list, or "one of the `gui.EASING_*` constants". The generated typings read that prose, so each such slot is the union of the named constants' brands. A constant from another family, or a generic `Opaque<"constant">`, is rejected:
 
@@ -12404,7 +12420,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function is_awake(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean; [since 1.13.2]
 - function is_ghost_object(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean; [since 1.13.2]
 - function is_kinematic(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean; [since 1.13.2]
-- function is_rigid_body(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean; [since 1.13.2]
+- function is_rigid_body(object: Opaque<"btCollisionObject" | "btRigidBody">): object is Opaque<"btRigidBody">; [since 1.13.2]
 - function is_static(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean; [since 1.13.2]
 - function is_static_or_kinematic(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean; [since 1.13.2]
 - function is_valid(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean; [since 1.13.2]
@@ -12443,13 +12459,18 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### bullet3d.constraint
 
-- function create_cone_twist(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.cone_twist_params): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
-- function create_generic_6dof(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.generic_6dof_params): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_cone_twist(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.cone_twist_params & Required<Pick<bullet3d.constraint.cone_twist_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_cone_twist(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.cone_twist_params): bullet3d.constraint.btTypedConstraint;
+- function create_generic_6dof(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.generic_6dof_params & Required<Pick<bullet3d.constraint.generic_6dof_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_generic_6dof(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.generic_6dof_params): bullet3d.constraint.btTypedConstraint;
 - function create_generic_6dof_spring(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.generic_6dof_spring_params): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
-- function create_hinge(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.hinge_params): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_hinge(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.hinge_params & Required<Pick<bullet3d.constraint.hinge_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_hinge(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.hinge_params): bullet3d.constraint.btTypedConstraint;
 - function create_hinge2(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.anchor_axes_params): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
-- function create_point_to_point(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.point_to_point_params): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
-- function create_slider(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.slider_params): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_point_to_point(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.point_to_point_params & Required<Pick<bullet3d.constraint.point_to_point_params, "pivot_b">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_point_to_point(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.point_to_point_params): bullet3d.constraint.btTypedConstraint;
+- function create_slider(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.slider_params & Required<Pick<bullet3d.constraint.slider_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_slider(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.slider_params): bullet3d.constraint.btTypedConstraint;
 - function create_universal(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.anchor_axes_params): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
 - function destroy(constraint: bullet3d.constraint.btTypedConstraint): void; [since 1.13.2]
 - function enable_cone_twist_motor(constraint: bullet3d.constraint.btTypedConstraint, enabled: boolean): void; [since 1.13.2]
@@ -12473,7 +12494,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_limit(constraint: bullet3d.constraint.btTypedConstraint, axis: number): LuaMultiReturn<[number, number]>; [since 1.13.2]
 - function get_pivots(constraint: bullet3d.constraint.btTypedConstraint): LuaMultiReturn<[Vector3, Vector3]>; [since 1.13.2]
 - function get_slider_limits(constraint: bullet3d.constraint.btTypedConstraint): LuaMultiReturn<[number, number, number, number]>; [since 1.13.2]
-- function get_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: string): LuaMultiReturn<[boolean, number, number]>; [since 1.13.2]
+- function get_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: "linear" | "angular"): LuaMultiReturn<[boolean, number, number]>; [since 1.13.2]
 - function get_slider_position(constraint: bullet3d.constraint.btTypedConstraint): number; [since 1.13.2]
 - function get_twist_angle(constraint: bullet3d.constraint.btTypedConstraint): number; [since 1.13.2]
 - function get_type(constraint: bullet3d.constraint.btTypedConstraint): bullet3d.constraint.CONSTRAINT_TYPE; [since 1.13.2]
@@ -12498,7 +12519,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_limit(constraint: bullet3d.constraint.btTypedConstraint, axis: number, lower: number, upper: number): void; [since 1.13.2]
 - function set_pivots(constraint: bullet3d.constraint.btTypedConstraint, pivot_a: Vector3, pivot_b: Vector3): void; [since 1.13.2]
 - function set_slider_limits(constraint: bullet3d.constraint.btTypedConstraint, lower_linear: number, upper_linear: number, lower_angular: number, upper_angular: number): void; [since 1.13.2]
-- function set_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: string, enabled: boolean, target_velocity: number, max_force: number): void; [since 1.13.2]
+- function set_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: "linear" | "angular", enabled: boolean, target_velocity: number, max_force: number): void; [since 1.13.2]
 - function set_spring_damping(constraint: bullet3d.constraint.btTypedConstraint, axis: number, damping: number): void; [since 1.13.2]
 - function set_spring_equilibrium_point(constraint: bullet3d.constraint.btTypedConstraint, axis?: number, value?: number): void; [since 1.13.2]
 - function set_spring_stiffness(constraint: bullet3d.constraint.btTypedConstraint, axis: number, stiffness: number): void; [since 1.13.2]
@@ -12578,7 +12599,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_collision_object(shape: bullet3d.shape.btCollisionShape): Opaque<"btCollisionObject" | "btRigidBody">; [since 1.13.2]
 - function get_index(shape: bullet3d.shape.btCollisionShape): number; [since 1.13.2]
 - function get_local_transform(shape: bullet3d.shape.btCollisionShape): LuaMultiReturn<[Vector3, Quaternion]>; [since 1.13.2]
-- function get_shape(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.definition; [since 1.13.2]
+- function get_shape(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH }; [since 1.13.2]
 - function get_type(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.SHAPE_TYPE; [since 1.13.2]
 - function is_valid(shape: bullet3d.shape.btCollisionShape): boolean; [since 1.13.2]
 - function set_local_transform(shape: bullet3d.shape.btCollisionShape, position: Vector3, rotation: Quaternion): void; [since 1.13.2]
@@ -12590,7 +12611,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - bullet3d.shape.SHAPE_TYPE_SPHERE: number & { readonly __brand: "bullet3d.shape.SHAPE_TYPE_SPHERE" } [since 1.13.2]
 - type btCollisionShape = Opaque<"btCollisionShape"> [since 1.13.2]
 - type SHAPE_TYPE = typeof bullet3d.shape.SHAPE_TYPE_BOX | typeof bullet3d.shape.SHAPE_TYPE_CAPSULE | typeof bullet3d.shape.SHAPE_TYPE_HULL | typeof bullet3d.shape.SHAPE_TYPE_MESH | typeof bullet3d.shape.SHAPE_TYPE_SPHERE [since 1.13.2]
-- type definition = { type: bullet3d.shape.SHAPE_TYPE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } [since 1.13.2]
+- type definition = { type: typeof bullet3d.shape.SHAPE_TYPE_SPHERE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_BOX; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_CAPSULE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_HULL; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } [since 1.13.2]
 
 ### bullet3d.world
 

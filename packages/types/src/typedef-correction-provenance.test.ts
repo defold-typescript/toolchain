@@ -29,21 +29,24 @@ describe("typedef alias correction provenance", () => {
     expect(entries.length).toBeGreaterThan(0);
   });
 
-  test("every correction's pinned token is a typedef some retained target still declares", () => {
+  test("every correction's pinned token list is a typedef some retained target still declares", () => {
     // A red here means every retained target changed that typedef, so the
     // correction is inert: delete it if upstream fixed the slot, or re-author it
-    // against the new token it still gets wrong. Never re-pin it to pass.
+    // against the new tokens it still gets wrong. Never re-pin it to pass.
     const stale = entries
       .filter(
         ([name, correction]) =>
           !DECLARED_ALIASES.some(
             (typedef) =>
               typedef.name === name &&
-              typedef.aliasOf.length === 1 &&
-              typedef.aliasOf[0] === correction.upstream,
+              typedef.aliasOf.length === correction.upstream.length &&
+              typedef.aliasOf.every((token, i) => token === correction.upstream[i]),
           ),
       )
-      .map(([name, correction]) => `${name}: no retained target declares ${correction.upstream}`);
+      .map(
+        ([name, correction]) =>
+          `${name}: no retained target declares ${correction.upstream.join(" | ")}`,
+      );
     expect(stale).toEqual([]);
   });
 });
