@@ -13,7 +13,9 @@ import { selectCompleteVersionSurfaces } from "../scripts/generate-api-availabil
 import { materializeVersionedSurface } from "../scripts/materialize-version";
 import { KIND_MODULE_MANIFEST, loadApiTargets } from "../scripts/regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync-api-docs";
+import { SCRIPT_HOOK_NAMESPACES } from "../src/api-doc";
 import { OVERLOAD_COVERED_SKIPS } from "../src/emit-dts";
+import { SCRIPT_HOOK_NAMES } from "../src/lifecycle";
 import {
   ABSENCE_PROOF,
   absenceDirectiveLine,
@@ -391,6 +393,74 @@ describe("committed API surfaces — overload-covered arity holds per target", (
 
 const LIFECYCLE_HOOKS_PROOF = resolve(VERSIONS_DIR, "lifecycle-hooks-not-callable-proof.ts");
 
+// Every slot the parser routes as a lifecycle hook, not only the ones a surface
+// documents, so a namespace or hook added to the routing needs a proof line.
+const LIFECYCLE_HOOK_SLOTS = [...SCRIPT_HOOK_NAMESPACES].flatMap((namespace) =>
+  SCRIPT_HOOK_NAMES.map((hook) => ({ namespace, hook })),
+);
+
+// The proof's own source decides which line guards which hook, so a proof
+// rewritten without a slot's directive takes these assertions down with it. The
+// directive must sit on the access it names: a label above another hook's line
+// would let a restored hook through while every directive still goes unused.
+function hookDirectiveLine(namespace: string, hook: string): number {
+  const directive = `// @ts-expect-error ${namespace}.${hook} is not a module function`;
+  const lines = readFileSync(LIFECYCLE_HOOKS_PROOF, "utf8").split("\n");
+  const at = lines.indexOf(directive);
+  if (at < 0) {
+    throw new Error(
+      `${LIFECYCLE_HOOKS_PROOF} has no @ts-expect-error directive for ${namespace}.${hook}`,
+    );
+  }
+  if (lines[at + 1] !== `void ${namespace}.${hook};`) {
+    throw new Error(
+      `${LIFECYCLE_HOOKS_PROOF}:${at + 1} names ${namespace}.${hook} but guards ` +
+        `${JSON.stringify(lines[at + 1])}`,
+    );
+  }
+  return at + 1;
+}
+
+const byLine = (a: number, b: number): number => a - b;
+
+// The shapes surfaces declared before the hooks were removed: a userdata
+// receiver throughout, and `on_message` with three parameters on some targets
+// and four on others. Alternating the arity by position covers both.
+function restoredHooksStub(position: number): string {
+  const receiver = 'self: Opaque<"userdata">';
+  const message = "message_id: Hash, message: Record<string | number, unknown>";
+  const sender = position % 2 === 1 ? ", sender: Url" : "";
+  const params = (hook: string): string =>
+    hook === "on_message" ? `${receiver}, ${message}${sender}` : receiver;
+  const namespaces = [...SCRIPT_HOOK_NAMESPACES].map(
+    (namespace) =>
+      `  namespace ${namespace} {\n${SCRIPT_HOOK_NAMES.map(
+        (hook) => `    function ${hook}(${params(hook)}): void;\n`,
+      ).join("")}  }\n`,
+  );
+  return (
+    'import type { Hash, Opaque, Url } from "../src/core-types";\n\n' +
+    `declare global {\n${namespaces.join("")}}\n`
+  );
+}
+
+function writeHooksProofTsconfig(root: string, index: string, stub: string): string {
+  const tsconfigPath = resolve(root, "tsconfig.json");
+  writeFileSync(
+    tsconfigPath,
+    `${JSON.stringify(
+      {
+        extends: "../../../tsconfig.json",
+        compilerOptions: { noEmit: true, types: [] },
+        include: [LIFECYCLE_HOOKS_PROOF, resolve(PACKAGE_ROOT, index), stub],
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  return tsconfigPath;
+}
+
 describe("committed API surfaces — lifecycle hooks are not module functions", () => {
   for (const index of committedSurfaceIndexes()) {
     test(`${index} declares no go or gui lifecycle hook`, () => {
@@ -422,6 +492,58 @@ describe("committed API surfaces — lifecycle hooks are not module functions", 
       }
     });
   }
+});
+
+// The wall above exits 0 only while every directive is used. A proof line that
+// a restored declaration still rejects, by its receiver type or its arity, stays
+// used and lets the hook through, so each case restores the hooks in the shapes
+// surfaces once declared them and demands that every directive go unused.
+describe("committed API surfaces — a restored lifecycle hook still fails the wall", () => {
+  committedSurfaceIndexes().forEach((index, position) => {
+    test(`${index} proof reacts to every restored go and gui hook`, () => {
+      const root = mkdtempSync(resolve(PACKAGE_ROOT, "hooks-restored-"));
+      try {
+        const stub = resolve(root, "restored-hooks.ts");
+        writeFileSync(stub, restoredHooksStub(position));
+        const { exitCode, output } = typecheck(writeHooksProofTsconfig(root, index, stub));
+        expect(exitCode).not.toBe(0);
+        expect(
+          unexpectedDiagnostics(output).filter((line) => !line.includes("error TS2578:")),
+        ).toEqual([]);
+        expect(unusedDirectiveLines(output, LIFECYCLE_HOOKS_PROOF).sort(byLine)).toEqual(
+          LIFECYCLE_HOOK_SLOTS.map(({ namespace, hook }) =>
+            hookDirectiveLine(namespace, hook),
+          ).sort(byLine),
+        );
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  });
+
+  // The default surface keeps `go.on_input` as a type-only namespace for its
+  // `action` table, so a restored hook merges with it rather than replacing it.
+  test("index.d.ts proof reacts to a go.on_input merged with its action namespace", () => {
+    const root = mkdtempSync(resolve(PACKAGE_ROOT, "hooks-merged-"));
+    try {
+      const stub = resolve(root, "restored-hooks.ts");
+      writeFileSync(
+        stub,
+        'import type { Hash, Opaque } from "../src/core-types";\n\n' +
+          "declare global {\n  namespace go {\n" +
+          '    function on_input(self: Opaque<"userdata">, action_id: Hash, action: go.on_input.action): boolean | undefined;\n' +
+          "  }\n}\n",
+      );
+      const { exitCode, output } = typecheck(writeHooksProofTsconfig(root, "index.d.ts", stub));
+      expect(exitCode).not.toBe(0);
+      expect(unexpectedDiagnostics(output)).toHaveLength(1);
+      expect(unusedDirectiveLines(output, LIFECYCLE_HOOKS_PROOF)).toEqual([
+        hookDirectiveLine("go", "on_input"),
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
 
 const GUI_TEXTURE_REMOVAL_PROOF = resolve(VERSIONS_DIR, "gui-texture-removal-proof.ts");

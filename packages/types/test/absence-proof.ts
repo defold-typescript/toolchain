@@ -34,8 +34,8 @@ export function absenceDirectiveLine(namespace: string): number {
 }
 
 // TS2578 lines tsc reported against the proof file itself, as line numbers.
-export function unusedDirectiveLines(output: string): number[] {
-  const inProof = new RegExp(`${basename(ABSENCE_PROOF).replace(/\./g, "\\.")}\\((\\d+),\\d+\\)`);
+export function unusedDirectiveLines(output: string, proof: string = ABSENCE_PROOF): number[] {
+  const inProof = new RegExp(`${basename(proof).replace(/\./g, "\\.")}\\((\\d+),\\d+\\)`);
   return unexpectedDiagnostics(output)
     .filter((line) => line.includes("error TS2578:"))
     .flatMap((line) => {
