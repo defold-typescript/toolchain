@@ -21,12 +21,17 @@ type WritableKey<P> = {
 
 declare global {
   namespace go {
-    interface GoPropertyOptions {
-      /** **⚠️ 1-based index into an array property; passed to Defold unchanged.** */
-      index?: number;
-      key?: Hash | string;
-      keys?: (Hash | string)[];
-    }
+    // LuaToPropertyOptions raises when more than one of the three is non-nil, and
+    // reads a nil one as absent.
+    type GoPropertyOptions =
+      | {
+          /** **⚠️ 1-based index into an array property; passed to Defold unchanged.** */
+          index?: number;
+          key?: undefined;
+          keys?: undefined;
+        }
+      | { index?: undefined; key?: Hash | string; keys?: undefined }
+      | { index?: undefined; key?: undefined; keys?: (Hash | string)[] };
 
     /**
      * gets a named property of the specified game object or component

@@ -23,6 +23,7 @@ import materialDoc from "../fixtures/defold-1.13.1/material_doc.json" with { typ
 import model113Doc from "../fixtures/defold-1.13.1/model_doc.json" with { type: "json" };
 import render113Doc from "../fixtures/defold-1.13.1/render_doc.json" with { type: "json" };
 import sprite113Doc from "../fixtures/defold-1.13.1/sprite_doc.json" with { type: "json" };
+import buffer114Doc from "../fixtures/defold-1.14.0/buffer_doc.json" with { type: "json" };
 import bullet3d114Doc from "../fixtures/defold-1.14.0/bullet3d_doc.json" with { type: "json" };
 import collectionproxy114Doc from "../fixtures/defold-1.14.0/collectionproxy_doc.json" with {
   type: "json",
@@ -35,6 +36,7 @@ import liveupdate114Doc from "../fixtures/defold-1.14.0/liveupdate_doc.json" wit
 import model114Doc from "../fixtures/defold-1.14.0/model_doc.json" with { type: "json" };
 import physics114Doc from "../fixtures/defold-1.14.0/physics_doc.json" with { type: "json" };
 import render114Doc from "../fixtures/defold-1.14.0/render_doc.json" with { type: "json" };
+import resource114Doc from "../fixtures/defold-1.14.0/resource_doc.json" with { type: "json" };
 import sprite114Doc from "../fixtures/defold-1.14.0/sprite_doc.json" with { type: "json" };
 import sys114Doc from "../fixtures/defold-1.14.0/sys_doc.json" with { type: "json" };
 import window114Doc from "../fixtures/defold-1.14.0/window_doc.json" with { type: "json" };
@@ -1492,7 +1494,7 @@ describe("emitDeclarations", () => {
           name: "go.delete",
           brief: "",
           description: "",
-          parameters: [{ name: "target", doc: "", types: ["string"], isOptional: true }],
+          parameters: [{ name: "id", doc: "", types: ["string"], isOptional: true }],
           returnValues: [],
         },
       ],
@@ -1502,7 +1504,7 @@ describe("emitDeclarations", () => {
       typedefs: [],
     };
     const out = emitDeclarations(module);
-    expect(out).toContain("function _delete(target?: string): void;");
+    expect(out).toContain("function _delete(id?: string): void;");
     expect(out).toContain("export { _delete as delete };");
     expect(out).not.toContain("function delete(");
   });
@@ -3029,7 +3031,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       functions: [requireFunction(module, "buffer.create")],
     });
     expect(out).toContain(
-      'function create(element_count: number, declaration: { name?: Hash | string; type: buffer.ValueType; count?: number }[]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };',
+      'function create(element_count: number, declaration: [{ name?: Hash | string; type: buffer.ValueType; count?: number }, ...{ name?: Hash | string; type: buffer.ValueType; count?: number }[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };',
     );
   });
 
@@ -3573,7 +3575,7 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
     };
   }
 
-  test("set_metadata param and vmath.vector param emit number[]; get_groups return emits Hash[]", () => {
+  test("set_metadata values emit a non-empty number list, vmath.vector emits number[], get_groups returns Hash[]", () => {
     const out = emitDeclarations(
       moduleOf("buffer", [
         {
@@ -3587,12 +3589,13 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
               types: ["table"],
               isOptional: false,
             },
+            { name: "value_type", doc: "", types: ["number"], isOptional: false },
           ],
           returnValues: [],
         },
       ]),
     );
-    expect(out).toContain("function set_metadata(values: number[]): void;");
+    expect(out).toContain("function set_metadata(values: [number, ...number[]], value_type: ");
 
     const vmathOut = emitDeclarations(
       moduleOf("vmath", [
@@ -4749,7 +4752,7 @@ describe("documented constant slot expansion", () => {
       out,
     );
     expect(signatureLine(out, "function set_metadata(")).toEndWith(
-      `value_type: ${valueTypes}): void;`,
+      `value_type: Exclude<${valueTypes}, typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_UINT64>): void;`,
     );
     expect(signatureLine(out, "function get_metadata(")).toEndWith(
       `LuaMultiReturn<[number[] | undefined, ${valueTypes} | undefined]>;`,
@@ -5368,6 +5371,136 @@ describe("table fields a present argument requires", () => {
     expect(() => emitDeclarations(moduleWith(frameMembers.slice(0, 3)))).toThrow(
       /create_hinge.*frame_b_rotation/,
     );
+  });
+});
+
+describe("engine slot rules", () => {
+  const only = (doc: unknown, name: string): ApiModule => {
+    const module = parseDefoldApiDoc(doc);
+    return { ...module, functions: [requireFunction(module, name)] };
+  };
+  const renamed = (module: ApiModule, from: string, to: string): ApiModule => ({
+    ...module,
+    functions: module.functions.map((fn) => ({
+      ...fn,
+      parameters: fn.parameters.map((p) => (p.name === from ? { ...p, name: to } : p)),
+    })),
+  });
+  const retyped = (module: ApiModule, name: string, types: string[]): ApiModule => ({
+    ...module,
+    functions: module.functions.map((fn) => ({
+      ...fn,
+      parameters: fn.parameters.map((p) => (p.name === name ? { ...p, types } : p)),
+    })),
+  });
+  const signaturesOf = (out: string, marker: string): string[] =>
+    out
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith(marker));
+  const signatureLine = (out: string, marker: string): string => {
+    const [line] = signaturesOf(out, marker);
+    if (line === undefined) throw new Error(`no emitted line starts with ${marker}`);
+    return line;
+  };
+
+  test("a non-empty slot turns its array into a tuple of one or more elements", () => {
+    const record = "{ name?: Hash | string; type: buffer.ValueType; count?: number }";
+    expect(
+      signatureLine(emitDeclarations(only(bufferDoc, "buffer.create")), "function create("),
+    ).toContain(`declaration: [${record}, ...${record}[]]`);
+    const struct = "({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })";
+    expect(
+      signatureLine(emitDeclarations(only(buffer114Doc, "buffer.create")), "function create("),
+    ).toContain(`declaration: [${struct}, ...${struct}[]]`);
+    expect(
+      signatureLine(
+        emitDeclarations(only(buffer114Doc, "buffer.set_metadata")),
+        "function set_metadata(",
+      ),
+    ).toContain("values: [number, ...number[]], ");
+  });
+
+  test("an excludes slot drops the named constants from its type", () => {
+    expect(
+      signatureLine(
+        emitDeclarations(only(buffer114Doc, "buffer.set_metadata")),
+        "function set_metadata(",
+      ),
+    ).toEndWith(
+      "value_type: Exclude<buffer.VALUE_TYPE, typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_UINT64>): void;",
+    );
+  });
+
+  test("a flag-requires slot demands its fields once the flag is true", () => {
+    const struct = "resource.sound_data_options";
+    expect(
+      signatureLine(
+        emitDeclarations(only(resource114Doc, "resource.create_sound_data")),
+        "function create_sound_data(",
+      ),
+    ).toContain(
+      `options: ${struct} & ({ partial?: false } | ({ partial: true } & Required<Pick<${struct}, "filesize">>))): Hash;`,
+    );
+    const table = '{ data: string | Opaque<"buffer">; filesize?: number; partial?: boolean }';
+    expect(
+      signatureLine(
+        emitDeclarations(only(resourceDoc, "resource.create_sound_data")),
+        "function create_sound_data(",
+      ),
+    ).toContain(
+      `options: ${table} & ({ partial?: false } | ({ partial: true } & Required<Pick<${table}, "filesize">>))): Hash;`,
+    );
+  });
+
+  test("an alongside slot is required and narrowed only in the call that requires its partner", () => {
+    const out = emitDeclarations(only(goDoc, "go.delete"), {
+      nilRaisingSlots: new Map([["go.delete", [2]]]),
+    });
+    const [shorter, longer, ...rest] = signaturesOf(out, "function _delete(");
+    expect(rest).toEqual([]);
+    const id = /^function _delete\(id\?: (.+)\): void;$/.exec(shorter ?? "")?.[1] ?? "";
+    expect(id).toEndWith(" | boolean");
+    expect(longer).toBe(
+      `function _delete(id: ${id.slice(0, -" | boolean".length)}, recursive: boolean): void;`,
+    );
+  });
+
+  test("an emit with no binding slots leaves an alongside slot's single call alone", () => {
+    const [line, ...rest] = signaturesOf(
+      emitDeclarations(only(goDoc, "go.delete")),
+      "function _delete(",
+    );
+    expect(rest).toEqual([]);
+    expect(line).toEndWith(" | boolean, recursive?: boolean): void;");
+  });
+
+  test("a keyed function emitted without the keyed parameter throws, naming the key", () => {
+    expect(() =>
+      emitDeclarations(
+        renamed(only(resource114Doc, "resource.create_sound_data"), "options", "opts"),
+      ),
+    ).toThrow(/resource\.create_sound_data:param:options/);
+  });
+
+  test("a non-empty slot whose type is not one array throws, naming the key", () => {
+    expect(() =>
+      emitDeclarations(retyped(only(buffer114Doc, "buffer.create"), "declaration", ["string"])),
+    ).toThrow(/buffer\.create:param:declaration/);
+  });
+
+  test("an alongside drop the union lacks throws, naming the key and the drop", () => {
+    expect(() =>
+      emitDeclarations(retyped(only(goDoc, "go.delete"), "id", ["string", "hash", "url"]), {
+        nilRaisingSlots: new Map([["go.delete", [2]]]),
+      }),
+    ).toThrow(/go\.delete:param:id.*boolean/);
+  });
+
+  test("an alongside slot no call requires throws once binding slots are read", () => {
+    expect(() =>
+      emitDeclarations(only(goDoc, "go.delete"), { nilRaisingSlots: new Map() }),
+    ).toThrow(/go\.delete:param:id.*recursive/);
   });
 });
 

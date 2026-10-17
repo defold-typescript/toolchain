@@ -310,7 +310,7 @@ declare global {
      * });
      * ```
      */
-    function create_sound_data(path: string, options: { data: string | Opaque<"buffer">; filesize?: number; partial?: boolean }): Hash;
+    function create_sound_data(path: string, options: { data: string | Opaque<"buffer">; filesize?: number; partial?: boolean } & ({ partial?: false } | ({ partial: true } & Required<Pick<{ data: string | Opaque<"buffer">; filesize?: number; partial?: boolean }, "filesize">>))): Hash;
     /**
      * Creates a new texture resource that can be used in the same way as any texture created during build time.
      * The path used for creating the texture must be unique, trying to create a resource at a path that is already

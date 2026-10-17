@@ -655,7 +655,9 @@ go.set(url, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 1 });
 ```
 
 `{ index: i }` emits `{index = i}`. An options variable, a spread and an `index`
-that may be `undefined` pass through as written.
+that may be `undefined` pass through as written. For `go.get` and `go.set` the
+options table names at most one of `index`, `key` and `keys`, since the engine
+raises on two.
 
 #### Modules: `require` vs `import`
 
@@ -12362,11 +12364,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function copy_buffer(dst: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
 - function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
-- function create(element_count: number, declaration: ({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
+- function create(element_count: number, declaration: [({ name: Hash | string; type: buffer.VALUE_TYPE; count: number }), ...({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
 - function get_bytes(buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, stream_name?: Hash | string): string;
 - function get_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.VALUE_TYPE | undefined]>;
 - function get_stream(buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
-- function set_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string, values: number[], value_type: buffer.VALUE_TYPE): void;
+- function set_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string, values: [number, ...number[]], value_type: Exclude<buffer.VALUE_TYPE, typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_UINT64>): void;
 - buffer.VALUE_TYPE_FLOAT32: number & { readonly __brand: "buffer.VALUE_TYPE_FLOAT32" }
 - buffer.VALUE_TYPE_INT16: number & { readonly __brand: "buffer.VALUE_TYPE_INT16" }
 - buffer.VALUE_TYPE_INT32: number & { readonly __brand: "buffer.VALUE_TYPE_INT32" }
@@ -12772,7 +12774,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void;
 - function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;
 - function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean): void;
-- function _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean | undefined, recursive: boolean): void;
+- function _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url>, recursive: boolean): void;
 - function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
 - go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, ...options: [] | [GoPropertyOptions]) => P[K]
 - go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K): go.properties[K]
@@ -13658,7 +13660,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function buffer(path?: string): Hash;
 - function create_atlas(path: string, table: resource.atlas): Hash;
 - function create_buffer(path: string, table: resource.buffer_creation_params): Hash;
-- function create_sound_data(path: string, options: resource.sound_data_options): Hash;
+- function create_sound_data(path: string, options: resource.sound_data_options & ({ partial?: false } | ({ partial: true } & Required<Pick<resource.sound_data_options, "filesize">>))): Hash;
 - function create_texture(path: string, table: resource.texture_creation_params, buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): Hash;
 - function create_texture_async(path: string, table: resource.texture_creation_params, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } | undefined, callback: (self: unknown, request_id: number, result: resource.texture_creation_result) => void): LuaMultiReturn<[Hash, number]>;
 - function font(path?: string): Hash;
