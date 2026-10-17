@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { availabilityLabel } from "@defold-typescript/types";
+import { availabilityLabel, symbolIdentityKey } from "@defold-typescript/types";
 import { OVERLOAD_COVERED_SKIPS } from "../../types/src/emit-dts";
 import {
   loadCombinedSurface,
@@ -574,5 +574,61 @@ describe("llms-full.txt tags each authored arm with its own availability", () =>
     const removal = store?.signatures[gate] as string;
     expect(removal).toContain("value: undefined");
     expect(api).toContain(`- ${removal} [since ${store?.since?.[gate]}]`);
+  });
+});
+
+describe("llms-full.txt tags each Box2D backend form with its own availability", () => {
+  const api = section(buildLlmsFull(PACKAGE_TARGET), "## API").split("\n");
+  const combined = loadCombinedSurface(TYPES_DIR);
+  const signatures = loadSignaturesArtifact(TYPES_DIR);
+  const entries = combined.namespaces.flatMap((ns) => ns.entries);
+  const backendEntries = entries.filter((entry) => entry.armElements !== undefined);
+  const backendFqns = new Set(backendEntries.map((entry) => entry.identity.name));
+  // The tagged list items carrying one declaration line.
+  const itemsFor = (line: string) =>
+    api.filter((item) => item === `- ${line}` || item.startsWith(`- ${line} [`));
+
+  test("each backend line ends with the span of the versions declaring it", () => {
+    expect(backendEntries.length).toBe(5);
+    let narrower = false;
+    for (const entry of backendEntries) {
+      const key = symbolIdentityKey(entry.identity);
+      for (const line of entry.authoritativeSignature.split("\n")) {
+        if (line.trim() === "") continue;
+        // Read straight from the artifact, not from the projection the corpus uses.
+        const armVersions = combined.versions.filter((version) =>
+          signatures.versions[version]?.[key]?.split("\n").includes(line),
+        );
+        if (armVersions.length < entry.availableIn.length) narrower = true;
+        const tag = compactAvailability({
+          ...entry,
+          label: availabilityLabel(armVersions, combined.versions),
+          transition: false,
+        });
+        expect({ line, items: itemsFor(line) }).toEqual({
+          line,
+          items: [tag ? `- ${line} ${tag}` : `- ${line}`],
+        });
+      }
+    }
+    expect(narrower).toBe(true);
+  });
+
+  test("every other identity of those queries keeps its own tag", () => {
+    const others = entries.filter(
+      (entry) => backendFqns.has(entry.identity.name) && entry.armElements === undefined,
+    );
+    expect(others.length).toBeGreaterThan(0);
+    for (const entry of others) {
+      const [line = "", ...rest] = entry.authoritativeSignature
+        .split("\n")
+        .filter((arm) => arm.trim() !== "");
+      expect(rest).toEqual([]);
+      const tag = compactAvailability(entry);
+      expect({ line, items: itemsFor(line) }).toEqual({
+        line,
+        items: [tag ? `- ${line} ${tag}` : `- ${line}`],
+      });
+    }
   });
 });

@@ -83,11 +83,13 @@ export interface BuildCombinedSurfaceInput {
 }
 
 /**
- * One arm of an authored overload fold: its rendered call form, the versions
- * whose `api-signatures.json` fold for the FQN declares it, and the label of that
- * span. An arm is dated by the folds alone, never by a ref-doc identity: the
- * authored arms replace every identity of the FQN, so an identity's span says
- * nothing about any one arm.
+ * One arm of an authored overload fold, or one line of a generated declaration
+ * several ref-doc elements share: its text, the versions whose
+ * `api-signatures.json` value declares that line, and the label of that span. An
+ * arm is dated by those values alone, never by a ref-doc identity: authored arms
+ * replace every identity of the FQN, and a shared identity can reach versions
+ * whose declaration held other lines, so an identity's span says nothing about
+ * any one arm.
  */
 export interface AuthoredArm {
   readonly signature: string;
@@ -119,6 +121,12 @@ export interface CombinedEntry {
    * declaration lists their arms in.
    */
   readonly armElements?: readonly ApiFunction[];
+  /**
+   * Set alongside {@link armElements}: one arm per line of
+   * {@link authoritativeSignature}, in its order, each dated by the versions
+   * whose value for this identity declares that exact line.
+   */
+  readonly elementArms?: readonly AuthoredArm[];
   /**
    * The slot types emitted alongside {@link authoritativeSignature}, resolved
    * from the same version it was. Absent when the artifact records none.
@@ -193,7 +201,31 @@ export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
     authoritativeArms: combinedAuthoritativeArms(ns),
     authoritativeArmElements: combinedAuthoritativeArmElements(ns),
     authoredArmSpans: combinedAuthoredArmSpans(ns),
+    authoritativeArmSpans: combinedAuthoritativeArmSpans(ns),
   };
+}
+
+/**
+ * Each element arm's span, keyed by exact identity and then by the arm's inner
+ * render form, which is the text the page renders for that row.
+ */
+export function combinedAuthoritativeArmSpans(
+  ns: CombinedNamespace,
+): ReadonlyMap<string, ReadonlyMap<string, readonly string[]>> {
+  const map = new Map<string, ReadonlyMap<string, readonly string[]>>();
+  for (const entry of ns.entries) {
+    if (entry.elementArms === undefined) continue;
+    map.set(
+      symbolIdentityKey(entry.identity),
+      new Map(
+        entry.elementArms.map((arm) => [
+          innerFunctionArm(entry.identity, arm.signature),
+          arm.availableIn,
+        ]),
+      ),
+    );
+  }
+  return map;
 }
 
 /**
@@ -448,9 +480,9 @@ export function compactAvailability(entry: CombinedEntry): string {
 }
 
 /**
- * The same tail for one authored arm of `entry`: the arm's own span, then the
- * entry's curated facts. Never `[signature transition]`, which describes a
- * generated declaration changing shape rather than an authored arm.
+ * The same tail for one authored or element arm of `entry`: the arm's own span,
+ * then the entry's curated facts. Never `[signature transition]`, which
+ * describes a declaration changing shape rather than one of its arms.
  */
 export function compactArmAvailability(entry: CombinedEntry, arm: AuthoredArm): string {
   return availabilityTail(arm.label, false, entry);
@@ -841,11 +873,23 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
         ? authoredArmsFor(identity)
         : undefined;
     const armElements = identity.kind === "FUNCTION" ? elements.get(key)?.get(newest) : undefined;
+    const elementArms =
+      armElements && armElements.length > 1
+        ? authoritativeSignature
+            .split("\n")
+            .filter((line) => line.trim() !== "")
+            .map((signature): AuthoredArm => {
+              const armIn = versions.filter((version) =>
+                input.signatures.versions[version]?.[key]?.split("\n").includes(signature),
+              );
+              return { signature, availableIn: armIn, label: availabilityLabel(armIn, versions) };
+            })
+        : undefined;
     return {
       identity,
       authoritativeSignature,
       ...(authoredArms ? { authoredArms } : {}),
-      ...(armElements && armElements.length > 1 ? { armElements } : {}),
+      ...(armElements && elementArms ? { armElements, elementArms } : {}),
       ...(slotTypes ? { slotTypes } : {}),
       availableIn,
       label: availabilityLabel(availableIn, versions, { transition }),

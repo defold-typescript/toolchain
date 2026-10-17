@@ -1,9 +1,13 @@
 import { describe, expect, it } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { type SignatureStore, symbolIdentityKey } from "@defold-typescript/types";
+import {
+  availabilityLabel,
+  type SignatureStore,
+  symbolIdentityKey,
+} from "@defold-typescript/types";
 import { apiLinkify, apiPageMarkdown } from "./api-page-render";
-import { type ApiSymbol, splitCallForm } from "./api-surface";
+import { type ApiSymbol, apiModuleSections, apiModuleSymbols, splitCallForm } from "./api-surface";
 import { loadCombinedSurface, loadSignaturesArtifact } from "./api-surface-loader";
 import {
   type CombinedNamespace,
@@ -212,6 +216,56 @@ describe("canonical pages render every authored overload arm", () => {
     const [castV2, castV3] = overloadForms(markdown, "b2d.world.cast_ray");
     expect(castV2?.body).toStartWith("Cast a ray.");
     expect(castV3?.body).toStartWith("The translation is the ray displacement");
+  });
+
+  it("dates each Box2D backend form of a world query by the versions declaring it", () => {
+    const ns = namespaceByName("b2d.world");
+    const page = combinedNamespaceToApiPage(ns);
+    const artifact = loadSignaturesArtifact(REAL_TYPES_DIR);
+    const rows = apiModuleSymbols(page, page.translations, page.signatures);
+    const markdown = markdownFor(ns).split("\n");
+    const sections = apiModuleSections(page).sections;
+    const fqns = [
+      "b2d.world.cast_ray",
+      "b2d.world.cast_ray_closest",
+      "b2d.world.cast_shape",
+      "b2d.world.overlap_aabb",
+      "b2d.world.overlap_shape",
+    ];
+    for (const fqn of fqns) {
+      const entry = ns.entries.find((e) => e.identity.name === fqn && e.armElements !== undefined);
+      if (entry === undefined) throw new Error(`no backend-arm entry for ${fqn}`);
+      const key = symbolIdentityKey(entry.identity);
+      const start = markdown.findIndex((line) => line.startsWith(`### \`${fqn}(...)`));
+      const next = markdown.findIndex((line, index) => index > start && line.startsWith("### "));
+      const block = markdown.slice(start, next < 0 ? undefined : next).join("\n");
+      expect({ fqn, block: start >= 0 }).toEqual({ fqn, block: true });
+      const lines = entry.authoritativeSignature.split("\n").filter((line) => line.trim() !== "");
+      expect({ fqn, arms: lines.length }).toEqual({ fqn, arms: 2 });
+      for (const line of lines) {
+        const armVersions = combined.versions.filter((version) =>
+          artifact.versions[version]?.[key]?.split("\n").includes(line),
+        );
+        expect(armVersions.length).toBeGreaterThan(0);
+        expect(armVersions.length).toBeLessThan(entry.availableIn.length);
+        const typeParams = /^function [\w.]+(<[^(]*>)\(/.exec(line)?.[1] ?? "";
+        expect(typeParams).toStartWith("<Backend extends ");
+        const head = `${fqn}${typeParams}(`;
+        const row = rows.find((symbol) => symbol.signature.startsWith(head));
+        expect({ head, availableIn: row?.availability?.availableIn }).toEqual({
+          head,
+          availableIn: armVersions,
+        });
+        const armLabel = availabilityLabel(armVersions, combined.versions).label;
+        expect(block).toContain(armLabel);
+        expect(block).not.toContain(entry.label.label);
+        const section = sections.find(
+          (s) => s.kind === "function" && s.markdown.includes(`### \`${head}`),
+        );
+        expect(section?.markdown).toContain(`${armLabel}.`);
+        expect(section?.markdown).not.toContain(`${entry.label.label}.`);
+      }
+    }
   });
 
   it("leaves a generated symbol on the same page untouched", () => {
