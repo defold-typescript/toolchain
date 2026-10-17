@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { API_TYPE_CODE_CLOSE, API_TYPE_CODE_OPEN, linkApiTypeTokens } from "./api-type-links";
+import {
+  API_NAME_CLOSE,
+  API_NAME_OPEN,
+  API_TYPE_CODE_CLOSE,
+  API_TYPE_CODE_OPEN,
+  linkApiTypeTokens,
+} from "./api-type-links";
 
 function typeCode(inner: string): string {
   return `${API_TYPE_CODE_OPEN}${inner}${API_TYPE_CODE_CLOSE}`;
@@ -15,6 +21,19 @@ describe("linkApiTypeTokens", () => {
     const html = linkApiTypeTokens(typeCode("gui.Easing | Vector"), LINKS);
     expect(html).toBe(
       `${API_TYPE_CODE_OPEN}<a class="api-type-link" href="/api/gui#type-easing">gui.Easing</a> | Vector${API_TYPE_CODE_CLOSE}`,
+    );
+  });
+
+  test("a run holding bold parameter names still links its tokens and keeps the names", () => {
+    const name = (text: string) => `${API_NAME_OPEN}${text}${API_NAME_CLOSE}`;
+    const html = linkApiTypeTokens(
+      typeCode(`(${name("easing")}: gui.Easing, ${name("...rest")}: graphics.State[]) =&gt; void`),
+      LINKS,
+    );
+    expect(html).toBe(
+      typeCode(
+        `(${name("easing")}: <a class="api-type-link" href="/api/gui#type-easing">gui.Easing</a>, ${name("...rest")}: <a class="api-type-link" href="/api/graphics#type-state">graphics.State</a>[]) =&gt; void`,
+      ),
     );
   });
 

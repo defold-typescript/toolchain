@@ -35,11 +35,17 @@ import {
 } from "./api-surface";
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import type { BadgeCountTable } from "./api-surface-pref";
-import { API_TYPE_CODE_CLOSE, API_TYPE_CODE_OPEN } from "./api-type-links";
+import {
+  API_NAME_CLOSE,
+  API_NAME_OPEN,
+  API_TYPE_CODE_CLOSE,
+  API_TYPE_CODE_OPEN,
+} from "./api-type-links";
 import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
 import type { LibraryListing } from "./nav";
 import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
+import { functionTypeEmphasis } from "./signature-emphasis";
 import { buildSymbolIndex } from "./symbol-index";
 import { symbolLinkifier } from "./symbol-linkify";
 import { symbolNote } from "./symbol-notes";
@@ -61,7 +67,9 @@ const NAME_TYPE_GAP = "\u2002";
 // The `` `name`?:<gap>`type` `` label shared by parameter, return, and field
 // bullets, so name/type separation is uniform everywhere. An anonymous slot (an
 // unnamed return value) is just its `` `type` `` with no colon; a typeless named
-// slot is the name alone.
+// slot is the name alone. With `emphasize` (top-level parameter and return
+// bullets only) the name is bold, and so are the parameter names of a slot whose
+// whole type is a function type, by the rule the signature heading uses.
 //
 // The type half is raw `<code class="api-type">` rather than a markdown code
 // span, because `linkApiTypeTokens` needs a class to find it by — a markdown
@@ -69,12 +77,29 @@ const NAME_TYPE_GAP = "\u2002";
 // inline code on the page. Emitting HTML means escaping here: the span's inner
 // text is the only thing markdown-it will not escape for us, and a raw `<` in a
 // type (`Opaque<"node">`) would otherwise split the element.
-function nameTypeLabel(name: string, isOptional: boolean, types: string): string {
+function nameTypeLabel(
+  name: string,
+  isOptional: boolean,
+  types: readonly string[],
+  emphasize = false,
+): string {
   const optional = isOptional ? "?" : "";
-  const typeCode = types ? `${API_TYPE_CODE_OPEN}${escapeAttr(types)}${API_TYPE_CODE_CLOSE}` : "";
+  const joined = types.join(" | ");
+  // Joined union members read as one function type (`(a) => void | undefined`),
+  // so only a lone member is asked whether it is one.
+  const ranges = emphasize && types.length === 1 ? functionTypeEmphasis(joined) : [];
+  let typeText = "";
+  let last = 0;
+  for (const { start, end } of ranges) {
+    typeText += `${escapeAttr(joined.slice(last, start))}${API_NAME_OPEN}${escapeAttr(joined.slice(start, end))}${API_NAME_CLOSE}`;
+    last = end;
+  }
+  typeText += escapeAttr(joined.slice(last));
+  const typeCode = joined ? `${API_TYPE_CODE_OPEN}${typeText}${API_TYPE_CODE_CLOSE}` : "";
   if (!name) return typeCode;
-  if (!types) return `\`${name}\`${optional}`;
-  return `\`${name}\`${optional}:${NAME_TYPE_GAP}${typeCode}`;
+  const nameCode = emphasize ? `${API_NAME_OPEN}\`${name}\`${API_NAME_CLOSE}` : `\`${name}\``;
+  if (!joined) return `${nameCode}${optional}`;
+  return `${nameCode}${optional}:${NAME_TYPE_GAP}${typeCode}`;
 }
 
 // A multi-line slot doc (a list of constants) indents every continuation line to
@@ -91,7 +116,7 @@ function fieldBullets(fields: ApiSymbolParam[], depth: number): string[] {
   const indent = "  ".repeat(depth + 1);
   const out: string[] = [];
   for (const f of fields) {
-    let bullet = `${indent}- ${nameTypeLabel(f.name, f.isOptional, f.types.join(" | "))}`;
+    let bullet = `${indent}- ${nameTypeLabel(f.name, f.isOptional, f.types)}`;
     if (f.doc) bullet += ` — ${underBullet(f.doc, `${indent}  `)}`;
     out.push(bullet);
     if (f.fields && f.fields.length > 0) out.push(...fieldBullets(f.fields, depth + 1));
@@ -100,7 +125,7 @@ function fieldBullets(fields: ApiSymbolParam[], depth: number): string[] {
 }
 
 function paramBullet(p: ApiSymbolParam): string {
-  let bullet = `- ${nameTypeLabel(p.name, p.isOptional, p.types.join(" | "))}`;
+  let bullet = `- ${nameTypeLabel(p.name, p.isOptional, p.types, true)}`;
   if (p.doc) bullet += ` — ${underBullet(p.doc, "  ")}`;
   if (p.fields && p.fields.length > 0) {
     return [bullet, ...fieldBullets(p.fields, 0)].join("\n");
@@ -108,8 +133,10 @@ function paramBullet(p: ApiSymbolParam): string {
   return bullet;
 }
 
+// The `Parameters`/`Returns` label is set apart by color and case, not weight,
+// so bold inside a symbol block marks names only.
 function paramSection(label: string, params: ApiSymbolParam[]): string {
-  return [`**${label}**`, "", ...params.map(paramBullet)].join("\n");
+  return [`<p class="api-slot-label">${label}</p>`, "", ...params.map(paramBullet)].join("\n");
 }
 
 // A table moved onto a form it did not land on takes every slot's type and

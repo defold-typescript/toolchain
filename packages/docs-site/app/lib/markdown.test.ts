@@ -1101,3 +1101,82 @@ describe("overload block headings and form lines (committed artifacts)", () => {
     expect(plain).toBeGreaterThan(10);
   });
 });
+
+// The bold names of rendered signature code: each run of adjacent Shiki spans
+// whose style carries the name weight, so `...` and `rest` read as one name.
+function weightedRuns(html: string): string[] {
+  const runs: string[] = [];
+  let open = false;
+  for (const match of html.matchAll(/<span style="([^"]*)">([^<]*)<\/span>/g)) {
+    const weighted = (match[1] ?? "").split(";").includes("font-weight:600");
+    const text = coloredChars(match[0]).text;
+    if (weighted && open) runs[runs.length - 1] += text;
+    else if (weighted) runs.push(text);
+    open = weighted;
+  }
+  return runs;
+}
+
+describe("signature name emphasis", () => {
+  const NEWTRY =
+    "socket.newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T";
+  const codesIn = (html: string) => [...html.matchAll(SIGNATURE_CODE_RE)].map((m) => m[1] ?? "");
+  const h3 = (html: string) => html.slice(html.indexOf("<h3"), html.indexOf("</h3>"));
+
+  test("a heading keeps its text and bolds exactly the member and parameter names", async () => {
+    const html = await renderMarkdown(`### \`${NEWTRY}\`\n`, { highlightSignatureHeadings: true });
+    const [code = ""] = codesIn(h3(html));
+    expect(coloredChars(code).text).toBe(NEWTRY);
+    expect(weightedRuns(code)).toEqual(["newtry", "finalizer", "value", "...rest"]);
+  });
+
+  test("an overview link bolds the same names as its heading", async () => {
+    const html = await renderMarkdown(`- [\`${NEWTRY}\`](#a)\n`, {
+      highlightSignatureHeadings: true,
+    });
+    const [code = ""] = codesIn(html);
+    expect(coloredChars(code).text).toBe(NEWTRY);
+    expect(weightedRuns(code)).toEqual(["newtry", "finalizer", "value", "...rest"]);
+  });
+
+  test("an overload form line bolds its parameters and nothing from the name it is read after", async () => {
+    const markdown = [
+      '### `b2d.shape.fn(...)` <span class="api-overload-count">2 overloads</span>',
+      "",
+      '<div class="api-symbol-body">',
+      "",
+      '<ol class="api-overloads">',
+      '<li class="api-overload">',
+      "",
+      "`(shape_id: number): void`",
+      "",
+      "</li>",
+      "</ol>",
+      "",
+      "</div>",
+      "",
+    ].join("\n");
+    const html = await renderMarkdown(markdown, { highlightSignatureHeadings: true });
+    const [heading = ""] = codesIn(h3(html));
+    expect(weightedRuns(heading)).toEqual(["fn"]);
+    const form = html.slice(html.indexOf('<li class="api-overload">'));
+    const [line = ""] = codesIn(form);
+    expect(coloredChars(line).text).toBe("(shape_id: number): void");
+    expect(weightedRuns(line)).toEqual(["shape_id"]);
+  });
+
+  test("a heading split around a brand link keeps its weighted names", async () => {
+    const signature = 'gui.set_id(node: Opaque<"node">, id: string): void';
+    const html = await renderMarkdown(`### \`${signature}\`\n`, {
+      highlightSignatureHeadings: true,
+      signatureSymbolLinks: new Map([["Opaque", "/api/Opaque"]]),
+    });
+    const heading = h3(html);
+    expect(heading).toContain('class="signature-split"');
+    expect(heading).toContain('class="signature-symbol-link"');
+    const codes = codesIn(heading);
+    expect(codes.length).toBeGreaterThan(1);
+    expect(coloredChars(codes.join("")).text).toBe(signature);
+    expect(weightedRuns(codes.join(""))).toEqual(["set_id", "node", "id"]);
+  });
+});
