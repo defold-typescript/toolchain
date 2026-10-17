@@ -298,7 +298,7 @@ declare global {
      * @param object - collision object
      * @returns rigid body state
      */
-    function is_rigid_body(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean;
+    function is_rigid_body(object: Opaque<"btCollisionObject" | "btRigidBody">): object is Opaque<"btRigidBody">;
     /**
      * Test whether the object is static
      *

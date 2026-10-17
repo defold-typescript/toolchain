@@ -934,7 +934,9 @@ describe("emitDeclarations", () => {
 
   describe("a PARAM_TYPE_CORRECTIONS entry that removes members", () => {
     const [correctedKey, correction] =
-      [...PARAM_TYPE_CORRECTIONS.entries()].find(([, entry]) => entry.removes !== undefined) ?? [];
+      [...PARAM_TYPE_CORRECTIONS.entries()].find(
+        ([, entry]) => entry.removes !== undefined && entry.adds === undefined,
+      ) ?? [];
     if (correctedKey === undefined || correction?.removes === undefined) {
       throw new Error("PARAM_TYPE_CORRECTIONS removes nothing");
     }
@@ -5299,6 +5301,76 @@ describe("a slot whose explicit nil raises", () => {
   });
 });
 
+describe("table fields a present argument requires", () => {
+  const hingeParams = (members: readonly (readonly [string, string])[]) => ({
+    type: "STRUCT",
+    name: "bullet3d.constraint.hinge_params",
+    brief: "Hinge constraint parameters",
+    parameters: [],
+    members: members.map(([name, type]) => ({ name, doc: "", type })),
+  });
+  const frameMembers = [
+    ["frame_a_position", "vector3"],
+    ["frame_a_rotation", "quaternion"],
+    ["frame_b_position?", "vector3"],
+    ["frame_b_rotation?", "quaternion"],
+  ] as const;
+  // The 1.14.0 ref-doc's `create_hinge` parameters, prose elided.
+  const createHinge = {
+    type: "FUNCTION",
+    name: "bullet3d.constraint.create_hinge",
+    brief: "Create a hinge constraint",
+    parameters: [
+      { name: "body_a", doc: "first body", types: ["btRigidBody"], is_optional: "False" },
+      {
+        name: "body_b",
+        doc: "second body or world",
+        types: ["btRigidBody", "nil"],
+        is_optional: "False",
+      },
+      {
+        name: "params",
+        doc: "local frames and options",
+        types: ["bullet3d.constraint.hinge_params"],
+        is_optional: "False",
+      },
+    ],
+    returnvalues: [],
+  };
+  const moduleWith = (members: readonly (readonly [string, string])[]): ApiModule =>
+    parseDefoldApiDoc({
+      info: { namespace: "bullet3d.constraint" },
+      elements: [hingeParams(members), createHinge],
+    });
+  const signaturesOf = (out: string): string[] =>
+    out
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("function create_hinge("));
+
+  test("a curated creator requires the fields with the argument, then takes the call without it", () => {
+    expect(signaturesOf(emitDeclarations(moduleWith(frameMembers)))).toEqual([
+      'function create_hinge(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.hinge_params & Required<Pick<bullet3d.constraint.hinge_params, "frame_b_position" | "frame_b_rotation">>): void;',
+      'function create_hinge(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.hinge_params): void;',
+    ]);
+  });
+
+  test("the signature entry lists both calls, typed by the strict one", () => {
+    const module = moduleWith(frameMembers);
+    const entry = emitSymbolSignatures(module).find(
+      (candidate) => candidate.identity.name === "bullet3d.constraint.create_hinge",
+    );
+    expect(entry?.tsSignature.split("\n")).toEqual(signaturesOf(emitDeclarations(module)));
+    expect(entry?.slotTypes["param:1:body_b"]?.type).toBe('Opaque<"btRigidBody"> | undefined');
+  });
+
+  test("a curated field the table does not declare throws, naming the function", () => {
+    expect(() => emitDeclarations(moduleWith(frameMembers.slice(0, 3)))).toThrow(
+      /create_hinge.*frame_b_rotation/,
+    );
+  });
+});
+
 describe("a nested table field's type override", () => {
   test("an override keyed to a field inside a table-array slot types that field only", () => {
     const parsed: TableField[] = [
@@ -6271,6 +6343,79 @@ describe("STRUCT and TYPEDEF declarations", () => {
       ),
     ).toBe(
       "type render_target_params = { sample_count?: number } & { [key: number]: render.render_target_buffer_params };",
+    );
+  });
+
+  // Verbatim from the Defold 1.14.0 ref-doc (`bullet3d_shape_doc.json`), prose
+  // elided; 1.13.2 declares the same tokens.
+  const shapeDefinitionTokens = [
+    "{ type:bullet3d.shape.SHAPE_TYPE, diameter:number, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }",
+    "{ type:bullet3d.shape.SHAPE_TYPE, dimensions:vector3, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }",
+    "{ type:bullet3d.shape.SHAPE_TYPE, diameter:number, height:number, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }",
+    "{ type:bullet3d.shape.SHAPE_TYPE, vertices:vector3[], position?:vector3, rotation?:quaternion, target_rotation?:quaternion }",
+  ];
+  const bulletShapeType = {
+    type: "ENUM",
+    name: "bullet3d.shape.SHAPE_TYPE",
+    brief: "Collision shape types",
+    parameters: [],
+    members: ["BOX", "CAPSULE", "HULL", "MESH", "SPHERE"].map((kind) => ({
+      name: `bullet3d.shape.SHAPE_TYPE_${kind}`,
+      doc: "",
+      type: "",
+    })),
+  };
+  const shapeDefinitionLine = (tokens: readonly string[]): string | undefined =>
+    aliasLine(
+      emitDeclarations(
+        parseDefoldApiDoc({
+          info: { namespace: "bullet3d.shape" },
+          elements: [
+            bulletShapeType,
+            {
+              type: "TYPEDEF",
+              name: "bullet3d.shape.definition",
+              brief: "Bullet collision shape definition",
+              parameters: [
+                {
+                  name: "value",
+                  doc: "collision shape definition",
+                  types: tokens,
+                  is_optional: "False",
+                },
+              ],
+              members: [],
+            },
+          ],
+        }),
+      ),
+      "definition",
+    );
+  const shapeArmFields = "position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion";
+
+  test("the Bullet3D shape definition gives each arm its own shape type", () => {
+    expect(shapeDefinitionLine(shapeDefinitionTokens)).toBe(
+      `type definition = ${[
+        `{ type: typeof bullet3d.shape.SHAPE_TYPE_SPHERE; diameter: number; ${shapeArmFields} }`,
+        `{ type: typeof bullet3d.shape.SHAPE_TYPE_BOX; dimensions: Vector3; ${shapeArmFields} }`,
+        `{ type: typeof bullet3d.shape.SHAPE_TYPE_CAPSULE; diameter: number; height: number; ${shapeArmFields} }`,
+        `{ type: typeof bullet3d.shape.SHAPE_TYPE_HULL; vertices: Vector3[]; ${shapeArmFields} }`,
+      ].join(" | ")};`,
+    );
+  });
+
+  test("a shape definition with another token list keeps upstream's union", () => {
+    const changed = [
+      ...shapeDefinitionTokens.slice(0, 3),
+      "{ type:bullet3d.shape.SHAPE_TYPE, vertices:vector3[] }",
+    ];
+    expect(shapeDefinitionLine(changed)).toBe(
+      `type definition = ${[
+        `{ type: bullet3d.shape.SHAPE_TYPE; diameter: number; ${shapeArmFields} }`,
+        `{ type: bullet3d.shape.SHAPE_TYPE; dimensions: Vector3; ${shapeArmFields} }`,
+        `{ type: bullet3d.shape.SHAPE_TYPE; diameter: number; height: number; ${shapeArmFields} }`,
+        "{ type: bullet3d.shape.SHAPE_TYPE; vertices: Vector3[] }",
+      ].join(" | ")};`,
     );
   });
 

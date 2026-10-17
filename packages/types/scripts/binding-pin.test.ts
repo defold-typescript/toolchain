@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import type { BindingPin } from "../src/emit-dts";
-import { bindingPinHolds, nilRaisingSlotsOf, targetBindingOptions } from "./binding-pin";
+import type { BindingPin, ReturnTypeCorrection } from "../src/emit-dts";
+import {
+  bindingEvidenceFor,
+  bindingPinHolds,
+  nilRaisingSlotsOf,
+  targetBindingOptions,
+} from "./binding-pin";
 import type { BindingFunction, BindingSlot } from "./engine-binding-extract";
 import { type ApiTarget, loadApiTargets } from "./regen";
 
@@ -120,6 +125,32 @@ function bound(name: string, slots: BindingSlot[]): BindingFunction {
     manual: [],
   };
 }
+
+describe("bindingEvidenceFor", () => {
+  const meshCase: readonly [string, ReturnTypeCorrection] = [
+    "bullet3d.shape.get_shape",
+    {
+      ts: "unknown",
+      upstream: ["bullet3d.shape.definition"],
+      reason: "",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_shape.cpp",
+        cFunction: "Shape_GetShape",
+        contains: "case GIMPACT_SHAPE_PROXYTYPE: break;",
+      },
+    },
+  ];
+
+  test("a return correction's pin is evidence where the target's binding shows it", () => {
+    expect([...bindingEvidenceFor(apiTarget("defold-1.14.0"), [meshCase], [])]).toEqual([
+      "bullet3d.shape.get_shape",
+    ]);
+  });
+
+  test("a release that does not ship the pinned file shows no evidence", () => {
+    expect([...bindingEvidenceFor(apiTarget("defold-1.13.1"), [meshCase], [])]).toEqual([]);
+  });
+});
 
 describe("nil-raising slots", () => {
   test("a vendored target lists each omittable slot whose explicit nil raises", () => {

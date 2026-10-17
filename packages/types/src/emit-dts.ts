@@ -551,6 +551,20 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
     },
   ],
   [
+    "bullet3d.shape.get_shape",
+    {
+      ts: "bullet3d.shape.definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH }",
+      upstream: ["bullet3d.shape.definition"],
+      reason:
+        "script_bullet3d_shape.cpp:Shape_GetShape sets only `type` for a triangle mesh, which no shape definition arm matches",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_shape.cpp",
+        cFunction: "Shape_GetShape",
+        contains: "case TRIANGLE_MESH_SHAPE_PROXYTYPE: case GIMPACT_SHAPE_PROXYTYPE: break;",
+      },
+    },
+  ],
+  [
     "collectionproxy.set_collection",
     {
       nullable: true,
@@ -782,6 +796,19 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
           adds: "undefined",
           upstream: ["node"],
           reason: `gui_script.cpp:${cFunction} pushes its result table before testing argument 1 with lua_isnil, so nil selects the whole scene and an absent argument reaches LuaCheckNodeInternal and raises`,
+        },
+      ] as const,
+  ),
+  ...(["get_slider_motor", "set_slider_motor"] as const).map(
+    (name) =>
+      [
+        `bullet3d.constraint.${name}:param:motor`,
+        {
+          adds: '"linear" | "angular"',
+          removes: ["string"],
+          upstream: ["string"],
+          reason:
+            "script_bullet3d_constraint.cpp:CheckSliderMotorAxis raises \"motor must be 'linear' or 'angular'\" on any other string",
         },
       ] as const,
   ),
@@ -1408,6 +1435,101 @@ function nilRaisingArms(
   return [...shorter, { ...prepared, required: new Set(split) }];
 }
 
+// Table fields a binding reads as required only when `argument` is non-nil,
+// keyed by FQN. A curated function splits into a call whose `table` slot requires
+// `fields`, with `argument` as declared, then a call whose `argument` is nil, so
+// a possibly-nil argument must carry them.
+export interface PresenceRequiredFields {
+  readonly argument: string;
+  readonly table: string;
+  readonly fields: readonly string[];
+  readonly reason: string;
+}
+
+const FRAME_B_FIELDS = ["frame_b_position", "frame_b_rotation"] as const;
+
+export const PRESENCE_REQUIRED_FIELDS: ReadonlyMap<string, PresenceRequiredFields> = new Map<
+  string,
+  PresenceRequiredFields
+>([
+  [
+    "bullet3d.constraint.create_point_to_point",
+    {
+      argument: "body_b",
+      table: "params",
+      fields: ["pivot_b"],
+      reason:
+        "script_bullet3d_constraint.cpp:Constraint_CreatePointToPoint reads pivot_b as required when input.m_BodyB != 0",
+    },
+  ],
+  ...(
+    [
+      ["create_hinge", "Constraint_CreateHinge"],
+      ["create_cone_twist", "Constraint_CreateConeTwist"],
+      ["create_generic_6dof", "Constraint_CreateGeneric6Dof"],
+      ["create_slider", "Constraint_CreateSlider"],
+    ] as const
+  ).map(
+    ([name, cFunction]) =>
+      [
+        `bullet3d.constraint.${name}`,
+        {
+          argument: "body_b",
+          table: "params",
+          fields: FRAME_B_FIELDS,
+          reason: `script_bullet3d_constraint.cpp:${cFunction} reads frame B as required under if (input.m_BodyB)`,
+        },
+      ] as const,
+  ),
+]);
+
+// The calls PRESENCE_REQUIRED_FIELDS splits `prepared` into: the declared one
+// with its fields required, then the one whose argument is nil.
+function presenceArms(
+  prepared: PreparedFunction,
+  structs: readonly ApiStruct[],
+): PreparedFunction[] {
+  const { name, parameters } = prepared.original;
+  const entry = PRESENCE_REQUIRED_FIELDS.get(name);
+  if (entry === undefined) return [prepared];
+  const argument = parameters.findIndex((p) => p.name === entry.argument);
+  const table = parameters.findIndex((p) => p.name === entry.table);
+  const struct = structs.find((s) => parameters[table]?.types.includes(s.name));
+  if (argument === -1 || struct === undefined) {
+    throw new Error(
+      `presence-required fields ${name}: no ${entry.argument} parameter or ${entry.table} table`,
+    );
+  }
+  const missing = entry.fields.filter((field) => !struct.members.some((m) => m.name === field));
+  if (missing.length > 0) {
+    throw new Error(`presence-required fields ${name}: ${struct.name} lacks ${missing.join(", ")}`);
+  }
+  const picked = entry.fields.map((field) => `"${field}"`).join(" | ");
+  const requireFields = (type: string): string => {
+    const operand = /^[\w$.]+$/.test(type) ? type : `(${type})`;
+    return `${operand} & Required<Pick<${operand}, ${picked}>>`;
+  };
+  const strict: PreparedFunction = { ...prepared, retype: new Map([[table, requireFields]]) };
+  // Declared required, the nil argument emits as `undefined` alone rather than
+  // gaining the `| undefined` of an interior optional slot.
+  const absent: PreparedFunction = {
+    ...prepared,
+    required: new Set([...(prepared.required ?? []), argument]),
+    retype: new Map([[argument, () => "undefined"]]),
+  };
+  return [strict, absent];
+}
+
+// Every call a function declares, in order: its nil-raising arms, each split
+// at its presence-required fields.
+function callArms(
+  prepared: PreparedFunction,
+  nilRaisingSlots: ReadonlyMap<string, readonly number[]>,
+  structs: readonly ApiStruct[],
+): PreparedFunction[] {
+  return nilRaisingArms(prepared, nilRaisingSlots).flatMap((arm) => presenceArms(arm, structs));
+}
+
 export type ConstantSlotResolution =
   | { readonly borrow: string }
   | { readonly family: string; readonly evidence: string }
@@ -1953,15 +2075,16 @@ function constantSlotTokenResolver(
     constantSlotTokens(doc, tableSlotKey(elementName, slotKind, slotName), lookupDoc, universe);
 }
 
-// FQN-keyed allowlist of the `types.is_*` checks that genuinely narrow their
-// argument, mapped to the `DEFOLD_TYPE_MAP` token whose interface they prove.
-// Emitting these as user-defined type guards (`var_ is Vector3`) is the only way
-// to narrow an engine userdata value, which `typeof` cannot. An allowlist, not a
-// blanket `is_*` match: `b2d.body.is_active`, `gui.is_enabled`,
-// `sound.is_music_playing`, `go.exists`, `sys.exists` are runtime-state /
-// existence checks on already-typed arguments and must stay `boolean`. An
-// unlisted future `types.is_*` also stays a visible `boolean` until curated here,
-// matching the ARBITRARY_TABLE_SLOTS deliberate-opt-in precedent.
+// FQN-keyed allowlist of the checks that genuinely narrow their argument, mapped
+// to the `DEFOLD_TYPE_MAP` token whose type they prove: the `types.is_*` checks,
+// and `bullet3d.collision_object.is_rigid_body`, whose binding is a
+// `btRigidBody::upcast` test. Emitting these as user-defined type guards
+// (`var_ is Vector3`) is the only way to narrow an engine userdata value, which
+// `typeof` cannot. An allowlist, not a blanket `is_*` match: `b2d.body.is_active`,
+// `gui.is_enabled`, `sound.is_music_playing`, `go.exists`, `sys.exists` are
+// runtime-state / existence checks on already-typed arguments and must stay
+// `boolean`. An unlisted future `types.is_*` also stays a visible `boolean` until
+// curated here, matching the ARBITRARY_TABLE_SLOTS deliberate-opt-in precedent.
 export const TYPE_PREDICATES: ReadonlyMap<string, string> = new Map([
   ["types.is_hash", "hash"],
   ["types.is_matrix4", "matrix4"],
@@ -1970,6 +2093,7 @@ export const TYPE_PREDICATES: ReadonlyMap<string, string> = new Map([
   ["types.is_vector", "vector"],
   ["types.is_vector3", "vector3"],
   ["types.is_vector4", "vector4"],
+  ["bullet3d.collision_object.is_rigid_body", "btRigidBody"],
 ]);
 
 // The merged ref-doc gives each Box2D backend's form of these queries one
@@ -3956,26 +4080,53 @@ function groupFlattenedTableFields(fields: readonly TableField[]): TableField[] 
 }
 
 // A TYPEDEF whose aliased type the engine binding contradicts, replaced verbatim.
-// Member overrides reach only a STRUCT, and these alias an inline LuaLS table.
-// Each applies only while the typedef still aliases exactly its `upstream` token,
-// so a changed upstream typedef is emitted as written rather than shadowed;
-// `typedef-correction-provenance.test.ts` pins every entry against the retained
-// ref-docs. Keyed by the typedef's ref-doc name.
+// Member overrides reach only a STRUCT, and these alias inline LuaLS tables.
+// Each applies only while the typedef still aliases exactly its `upstream` tokens,
+// in order, so a changed upstream typedef is emitted as written rather than
+// shadowed; `typedef-correction-provenance.test.ts` pins every entry against the
+// retained ref-docs. Keyed by the typedef's ref-doc name.
 export interface TypedefAliasCorrection {
-  readonly upstream: string;
+  readonly upstream: readonly string[];
   readonly ts: string;
   readonly reason: string;
 }
+
+// One arm per shape a script can build, in upstream's order, each keyed by its
+// own shape-type constant.
+const BULLET3D_SHAPE_ARMS = [
+  ["SPHERE", "diameter: number"],
+  ["BOX", "dimensions: Vector3"],
+  ["CAPSULE", "diameter: number; height: number"],
+  ["HULL", "vertices: Vector3[]"],
+] as const;
 
 export const TYPEDEF_ALIAS_CORRECTIONS: ReadonlyMap<string, TypedefAliasCorrection> = new Map([
   [
     "render.render_target_params",
     {
-      upstream:
+      upstream: [
         "{ type?:graphics.TEXTURE_TYPE, sample_count?:integer, [graphics.BUFFER_TYPE]:render.render_target_buffer_params }",
+      ],
       ts: "{ type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.render_target_buffer_params }",
       reason:
         'render_script.cpp:RenderScript_RenderTarget raises "Invalid render target texture type" on any `type` but graphics.TEXTURE_TYPE_2D and graphics.TEXTURE_TYPE_CUBE_MAP',
+    },
+  ],
+  [
+    "bullet3d.shape.definition",
+    {
+      upstream: [
+        "{ type:bullet3d.shape.SHAPE_TYPE, diameter:number, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }",
+        "{ type:bullet3d.shape.SHAPE_TYPE, dimensions:vector3, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }",
+        "{ type:bullet3d.shape.SHAPE_TYPE, diameter:number, height:number, position?:vector3, rotation?:quaternion, target_rotation?:quaternion }",
+        "{ type:bullet3d.shape.SHAPE_TYPE, vertices:vector3[], position?:vector3, rotation?:quaternion, target_rotation?:quaternion }",
+      ],
+      ts: BULLET3D_SHAPE_ARMS.map(
+        ([kind, fields]) =>
+          `{ type: typeof bullet3d.shape.SHAPE_TYPE_${kind}; ${fields}; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion }`,
+      ).join(" | "),
+      reason:
+        'script_bullet3d_shape.cpp:CheckBullet3DShapeDef reads only the fields of the table\'s own `type` and raises "Unsupported shape type" on any other, a mesh included',
     },
   ],
 ]);
@@ -3997,7 +4148,11 @@ function typedefAlias(
   const brand = `Opaque<"${typedef.name}">`;
   const aliasOf = typedef.aliasOf ?? [];
   const correction = TYPEDEF_ALIAS_CORRECTIONS.get(typedef.name);
-  if (correction !== undefined && aliasOf.length === 1 && aliasOf[0] === correction.upstream) {
+  if (
+    correction !== undefined &&
+    aliasOf.length === correction.upstream.length &&
+    aliasOf.every((token, i) => token === correction.upstream[i])
+  ) {
     return `type ${local} = ${correction.ts};`;
   }
   if (aliasOf.length > 0 && !isHandleAlias(aliasOf)) {
@@ -4481,7 +4636,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   for (const fn of functions) {
     const reserved = TS_RESERVED_NAMES.has(fn.name);
     const emitName = aliasName(fn.name, aliases);
-    for (const arm of nilRaisingArms(fn, nilRaisingSlots)) {
+    for (const arm of callArms(fn, nilRaisingSlots, module.structs ?? [])) {
       for (const docLine of functionDocLines(fn.original, translations, baseNotes))
         lines.push(docLine);
       const line = emitFunction(
@@ -4750,7 +4905,7 @@ export function emitSymbolSignatures(
     const prepared = prepareFunction(fn, prefix);
     if (prepared === null) continue;
     const slotTypes: Record<string, SlotType> = {};
-    const [first = prepared, ...later] = nilRaisingArms(prepared, nilRaisingSlots);
+    const [first = prepared, ...later] = callArms(prepared, nilRaisingSlots, module.structs ?? []);
     const primary = emitFunction(
       first,
       emitName(prepared.name),
@@ -4933,6 +5088,9 @@ interface PreparedFunction {
   // Parameter positions declared required whatever their doc says: the
   // nil-raising slots an arm of `nilRaisingArms` takes.
   required?: ReadonlySet<number>;
+  // A rewrite of the mapped type at a parameter position: the fields an arm of
+  // `presenceArms` requires.
+  retype?: ReadonlyMap<number, (type: string) => string>;
 }
 
 interface PreparedVariable {
@@ -5384,6 +5542,7 @@ function memberSignature(
       elementName,
       urlParameters,
       required.has(i),
+      prepared.retype?.get(i),
     ),
   );
   const rest =
@@ -5803,9 +5962,12 @@ function emitParameter(
   elementName: string,
   urlParameters: UrlParameterTable,
   required = false,
+  retype: (type: string) => string = (type) => type,
 ): { text: string; type: string; optional: boolean } {
   const name = safeParamName(p.name, index);
-  const ts = parameterType(p, mapType, resolver, constantTokens, elementName, urlParameters);
+  const ts = retype(
+    parameterType(p, mapType, resolver, constantTokens, elementName, urlParameters),
+  );
   // An interior doc-optional param (a required param follows, so the trailing-`?`
   // projection cannot mark it) keeps its optionality as `| undefined` — TSTL
   // lowers `undefined` to `nil`, the faithful call. Trailing optionals keep the
