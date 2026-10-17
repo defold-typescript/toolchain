@@ -230,6 +230,45 @@ describe("versioned API surface — consumer tsconfig proof", () => {
     }
   });
 
+  test("defold-1.13.0 takes the blend factors its engine checks and yields its textures keyed by slot", async () => {
+    const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.13.0");
+    if (!target) throw new Error("no defold-1.13.0 target");
+    const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-proof-"));
+    try {
+      await materializeVersionedSurface(target, {
+        destDir: resolve(root, "versions", "defold-1.13.0"),
+      });
+      const tsconfigPath = writeProofConfig(
+        root,
+        [
+          "export {};",
+          "render.set_blend_func_separate(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);",
+          "// @ts-expect-error a bare number is not a blend-factor constant",
+          "render.set_blend_func_separate(1, 0, 1, 0);",
+          "declare const m: Hash;",
+          "for (const [slot, info] of material.get_textures(m)) {",
+          "  const _slot: number = slot;",
+          "  const _path: Hash = info.path;",
+          "  void _slot;",
+          "  void _path;",
+          "  // @ts-expect-error each value is the texture's info record",
+          "  const _widthText: string = info.width;",
+          "  void _widthText;",
+          "}",
+          "// @ts-expect-error the textures table is keyed by slot, not a sequence",
+          "void material.get_textures(m).length;",
+          "",
+        ].join("\n"),
+        "defold-1.13.0",
+      );
+      const { exitCode, output } = typecheck(tsconfigPath);
+      if (exitCode !== 0) throw new Error(`defold-1.13.0 proof failed:\n${output}`);
+      expect(exitCode).toBe(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("the current surface declares morph target weights", async () => {
     const target = loadApiTargets().find((candidate) => candidate.default === true);
     if (!target) throw new Error("no default target");

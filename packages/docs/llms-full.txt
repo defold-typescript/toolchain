@@ -13011,6 +13011,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type BLEND_EQUATION = typeof graphics.BLEND_EQUATION_ADD | typeof graphics.BLEND_EQUATION_MAX | typeof graphics.BLEND_EQUATION_MIN | typeof graphics.BLEND_EQUATION_REVERSE_SUBTRACT | typeof graphics.BLEND_EQUATION_SUBTRACT [since 1.13.2]
 - type BLEND_FACTOR = typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ZERO [since 1.13.2]
 - type BUFFER_TYPE = typeof graphics.BUFFER_TYPE_COLOR0_BIT | NonNullable<typeof graphics.BUFFER_TYPE_COLOR1_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR2_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR3_BIT> | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT [since 1.13.2]
+- type BlendFactor = typeof graphics.BLEND_FACTOR_ZERO | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA
 - type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_COLOR1_BIT | typeof graphics.BUFFER_TYPE_COLOR2_BIT | typeof graphics.BUFFER_TYPE_COLOR3_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT
 - type COMPARE_FUNC = typeof graphics.COMPARE_FUNC_ALWAYS | typeof graphics.COMPARE_FUNC_EQUAL | typeof graphics.COMPARE_FUNC_GEQUAL | typeof graphics.COMPARE_FUNC_GREATER | typeof graphics.COMPARE_FUNC_LEQUAL | typeof graphics.COMPARE_FUNC_LESS | typeof graphics.COMPARE_FUNC_NEVER | typeof graphics.COMPARE_FUNC_NOTEQUAL [since 1.13.2]
 - type COMPRESSION_TYPE = typeof graphics.COMPRESSION_TYPE_BASIS_ETC1S | typeof graphics.COMPRESSION_TYPE_BASIS_UASTC | typeof graphics.COMPRESSION_TYPE_DEFAULT | typeof graphics.COMPRESSION_TYPE_WEBP | typeof graphics.COMPRESSION_TYPE_WEBP_LOSSY [since 1.13.2]
@@ -13397,7 +13398,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function get_constants(path: Hash | string): material.constant_info[]; [since 1.13.0]
 - function get_samplers(path: Hash | string): material.sampler_info[]; [since 1.13.0]
-- function get_textures(path: Hash | string): material.texture_info[]; [since 1.13.0]
+- function get_textures(path: Hash | string): LuaMap<number, material.texture_info>; [since 1.13.0]
 - function get_vertex_attributes(path: Hash | string): material.vertex_attribute_info[]; [since 1.13.0]
 - function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.constant_options> | Record<string, material.constant_options>): void; [since 1.13.0]
 - function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.sampler_options> | Record<string, material.sampler_options>): void; [since 1.13.0]
@@ -13427,7 +13428,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - interface constant_options { type?: material.CONSTANT_TYPE; value?: material.constant_value; } [since 1.13.2]
 - type constant_value = number | Vector3 | Vector4 | Matrix4 | (number | Vector3 | Vector4 | Matrix4)[] [since 1.13.2]
 - interface named_vertex_attribute_options { name: string | Hash; value?: material.vertex_attribute_value; normalize?: boolean; data_type?: graphics.DATA_TYPE; coordinate_space?: graphics.COORDINATE_SPACE; semantic_type?: graphics.SEMANTIC_TYPE; } [since 1.13.2]
-- interface sampler_info { name: Hash; type: graphics.TEXTURE_TYPE; u_wrap: graphics.TEXTURE_WRAP; v_wrap: graphics.TEXTURE_WRAP; w_wrap: graphics.TEXTURE_WRAP; min_filter: graphics.TEXTURE_FILTER; mag_filter: graphics.TEXTURE_FILTER; max_anisotropy: number; } [since 1.13.2]
+- interface sampler_info { name: Hash; type: graphics.TEXTURE_TYPE | 6 | 7 | 8 | 9 | 10; u_wrap: graphics.TEXTURE_WRAP; v_wrap: graphics.TEXTURE_WRAP; w_wrap: graphics.TEXTURE_WRAP; min_filter: graphics.TEXTURE_FILTER; mag_filter: graphics.TEXTURE_FILTER; max_anisotropy: number; } [since 1.13.2]
 - interface sampler_options { u_wrap?: graphics.TEXTURE_WRAP; v_wrap?: graphics.TEXTURE_WRAP; w_wrap?: graphics.TEXTURE_WRAP; min_filter?: graphics.TEXTURE_FILTER; mag_filter?: graphics.TEXTURE_FILTER; max_anisotropy?: number; } [since 1.13.2]
 - interface texture_info { path?: Hash; handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; type: graphics.TEXTURE_TYPE; flags: graphics.TEXTURE_USAGE_FLAG | number; } [since 1.13.2]
 - interface vertex_attribute_info { name: Hash; value: material.vertex_attribute_value; normalize: boolean; data_type: graphics.DATA_TYPE; coordinate_space: graphics.COORDINATE_SPACE; semantic_type: graphics.SEMANTIC_TYPE; } [since 1.13.2]
@@ -13565,14 +13566,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function constant_buffer(): Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };
 - function delete_render_target(render_target: Opaque<"render_target">): void;
 - function disable_material(): void;
-- function disable_state(state: graphics.STATE): void;
+- function disable_state(state: graphics.State): void;
 - function disable_texture(binding: string | Hash | number): void;
 - function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;
 - function draw(predicate: Opaque<"render_predicate">): void;
 - function draw(predicate: Opaque<"render_predicate">, options: render.draw_options): void;
 - function draw_debug3d(options?: render.debug_draw_options): void;
 - function enable_material(material_id: string | Hash): void;
-- function enable_state(state: graphics.STATE): void;
+- function enable_state(state: graphics.State): void;
 - function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BUFFER_TYPE): void;
 - function get_height(): number;
 - function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
@@ -13585,7 +13586,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - render.render_target(name: string, parameters: render.RenderTargetParams): Opaque<"render_target">
 - function set_blend_equation_separate(equation_color: graphics.BLEND_EQUATION, equation_alpha: graphics.BLEND_EQUATION): void; [since 1.13.0]
 - function set_blend_func(source_factor: graphics.BLEND_FACTOR, destination_factor: graphics.BLEND_FACTOR): void;
-- function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void; [since 1.13.0]
+- function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void; [since 1.13.0]
 - function set_camera(camera?: Url | number | string | Hash, options?: render.camera_options): void;
 - function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;
 - function set_compute(compute?: string | Hash): void;
@@ -13613,20 +13614,21 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - render.SORT_NONE: number & { readonly __brand: "render.SORT_NONE" }
 - render.TEXTURE_BIT: number & { readonly __brand: "render.TEXTURE_BIT" } [since 1.13.2]
 - type constant_buffer = Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }
-- type render_predicate = number [since 1.13.2]
+- type render_predicate = Opaque<"render_predicate"> [since 1.13.2]
 - type render_target = Opaque<"render_target">
 - type texture = Opaque<"texture">
 - type CONTEXT_EVENT = typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED [since 1.13.2]
 - type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT
 - type FRUSTUM_PLANES = typeof render.FRUSTUM_PLANES_ALL | typeof render.FRUSTUM_PLANES_SIDES [since 1.13.2]
 - type RENDER_TARGET_FLAG = typeof render.TEXTURE_BIT [since 1.13.2]
+- type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP
 - type SORT = typeof render.SORT_BACK_TO_FRONT | typeof render.SORT_FRONT_TO_BACK | typeof render.SORT_NONE [since 1.13.2]
 - interface camera_options { use_frustum?: boolean; } [since 1.13.2]
 - interface debug_draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; } [since 1.13.2]
 - interface dispatch_options { constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; } [since 1.13.2]
 - interface draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: render.SORT; } [since 1.13.2]
 - interface render_target_buffer_params { format: graphics.TEXTURE_FORMAT; width: number; height: number; min_filter?: graphics.TEXTURE_FILTER; mag_filter?: graphics.TEXTURE_FILTER; u_wrap?: graphics.TEXTURE_WRAP; v_wrap?: graphics.TEXTURE_WRAP; w_wrap?: graphics.TEXTURE_WRAP; flags?: render.RENDER_TARGET_FLAG | number; } [since 1.13.2]
-- type render_target_params = { type?: graphics.TEXTURE_TYPE; sample_count?: number } & { [key: number]: render.render_target_buffer_params } [since 1.13.2]
+- type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.render_target_buffer_params } [since 1.13.2]
 - interface set_render_target_options { transient?: graphics.BUFFER_TYPE[]; face?: graphics.CUBEMAP_FACE; } [since 1.13.2]
 
 ### resource

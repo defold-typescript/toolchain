@@ -59,7 +59,7 @@ declare global {
        */
       sort_order?: render.SORT;
     }
-    type render_predicate = number;
+    type render_predicate = Opaque<"render_predicate">;
     type render_target = Opaque<"render_target">;
     /**
      * Render-target attachment parameters
@@ -102,7 +102,7 @@ declare global {
        */
       flags?: render.RENDER_TARGET_FLAG | number;
     }
-    type render_target_params = { type?: graphics.TEXTURE_TYPE; sample_count?: number } & { [key: number]: render.render_target_buffer_params };
+    type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.render_target_buffer_params };
     /**
      * Render-target activation options
      */
@@ -118,6 +118,7 @@ declare global {
     }
     type texture = Opaque<"texture">;
     type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
+    type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;
     type RenderTargetParams = render.render_target_params;
     type CONTEXT_EVENT = typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED;
     type FRUSTUM_PLANES = typeof render.FRUSTUM_PLANES_ALL | typeof render.FRUSTUM_PLANES_SIDES;
@@ -295,7 +296,7 @@ declare global {
      * });
      * ```
      */
-    function disable_state(state: graphics.STATE): void;
+    function disable_state(state: graphics.State): void;
     /**
      * Disables a texture that has previourly been enabled.
      *
@@ -543,7 +544,7 @@ declare global {
      * });
      * ```
      */
-    function enable_state(state: graphics.STATE): void;
+    function enable_state(state: graphics.State): void;
     /**
      * Sets the specified texture handle for a render target attachment or a regular texture
      * that should be used for rendering. The texture can be bound to either a texture unit
@@ -840,7 +841,7 @@ declare global {
      * render.set_blend_func_separate(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
      * ```
      */
-    function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void;
+    function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void;
     /**
      * Sets the current render camera to be used for rendering. If a render camera
      * has been set by the render script, the renderer will be using its projection and view matrix
