@@ -215,6 +215,20 @@ function emitInitMerge(
   return [builderDecl, createAssignmentStatement(createIdentifier("init"), initFn, property)];
 }
 
+// Build-time markers, never engine functions: bob reads `resource.<kind>("path")`
+// only as a `go.property` default (`LuaScanner.java:923-933` at defold
+// `a81dbb04`), and the engine's `resource` table registers none of them
+// (`script_resource.cpp:3447-3463` in 1.14.0). Called anywhere else, each is nil.
+export const RESOURCE_PROPERTY_MARKERS: ReadonlySet<string> = new Set([
+  "resource.atlas",
+  "resource.buffer",
+  "resource.font",
+  "resource.material",
+  "resource.render_target",
+  "resource.texture",
+  "resource.tile_source",
+]);
+
 export interface PropertyMember {
   readonly name: string;
   readonly initializer: ts.Expression;
@@ -298,6 +312,87 @@ function scriptOnlyProperties(
     code: 0,
     messageText: `\`${factory}\` cannot declare \`properties\`: Defold builds \`go.property\` only in \`.script\` files. Declare the property in a \`defineScript\` and send its value with \`msg.post\`.`,
   };
+}
+
+// The outermost expression that only wraps `node` in parentheses or a type-only
+// form, so `(resource.atlas("/a.atlas") as Hash)` sits where the bare call would.
+function outermostWrapper(node: ts.Expression): ts.Expression {
+  let current = node;
+  while (
+    ts.isParenthesizedExpression(current.parent) ||
+    ts.isAsExpression(current.parent) ||
+    ts.isSatisfiesExpression(current.parent) ||
+    ts.isNonNullExpression(current.parent) ||
+    ts.isTypeAssertionExpression(current.parent)
+  ) {
+    current = current.parent;
+  }
+  return current;
+}
+
+// Keyed by the declaration's fully qualified name: only a symbol declared in an
+// ambient `declare global` block carries the `global.` prefix, so a project's
+// own `resource` never matches.
+function globalName(symbol: ts.Symbol | undefined, checker: ts.TypeChecker): string | undefined {
+  if (symbol === undefined) {
+    return undefined;
+  }
+  const fqn = checker.getFullyQualifiedName(symbol);
+  return fqn.startsWith("global.") ? fqn.slice("global.".length) : undefined;
+}
+
+function calledGlobal(call: ts.CallExpression, checker: ts.TypeChecker): string | undefined {
+  const declaration = checker.getResolvedSignature(call)?.declaration;
+  if (
+    declaration === undefined ||
+    !ts.isFunctionDeclaration(declaration) ||
+    declaration.name === undefined
+  ) {
+    return undefined;
+  }
+  return globalName(checker.getSymbolAtLocation(declaration.name), checker);
+}
+
+// A `properties` default of a factory call, or the default argument of a
+// direct `go.property` call: the two places bob reads a marker.
+function isPropertyDefault(call: ts.CallExpression, checker: ts.TypeChecker): boolean {
+  const value = outermostWrapper(call);
+  const parent = value.parent;
+  if (ts.isCallExpression(parent)) {
+    return parent.arguments[1] === value && calledGlobal(parent, checker) === "go.property";
+  }
+  const properties = parent?.parent?.parent;
+  if (
+    properties === undefined ||
+    !ts.isPropertyAssignment(properties) ||
+    !isPropertiesHook(properties)
+  ) {
+    return false;
+  }
+  const hooks = properties.parent;
+  return (
+    ts.isObjectLiteralExpression(hooks) &&
+    factoryHooks(hooks.parent as ts.Expression, checker) === hooks &&
+    propertyMembers(properties).some((member) => member.initializer === value)
+  );
+}
+
+function misplacedMarker(node: ts.Expression, marker: string): ts.Diagnostic {
+  const file = node.getSourceFile();
+  const start = node.getStart(file);
+  return {
+    file,
+    start,
+    length: node.getEnd() - start,
+    category: ts.DiagnosticCategory.Error,
+    code: 0,
+    messageText: `\`${marker}\` is a build-time marker: Defold's build reads it only in a \`go.property\` default, and the engine binds no such function. Use it as a \`defineScript\` \`properties\` default.`,
+  };
+}
+
+function isCallee(node: ts.Expression): boolean {
+  const callee = outermostWrapper(node);
+  return ts.isCallExpression(callee.parent) && callee.parent.expression === callee;
 }
 
 function eraseFactoryCall(
@@ -404,5 +499,27 @@ export const lifecycleErasurePlugin: Plugin = {
     },
     [ts.SyntaxKind.ImportDeclaration]: (node, context) =>
       isFactoryOnlyImport(node) ? [] : context.superTransformStatements(node),
+    // TSTL's optional-chain lowering also visits nodes it synthesizes, which have
+    // no parent and no source span; only parsed nodes are checked.
+    [ts.SyntaxKind.CallExpression]: (node, context) => {
+      const marker = node.parent === undefined ? undefined : calledGlobal(node, context.checker);
+      if (
+        marker !== undefined &&
+        RESOURCE_PROPERTY_MARKERS.has(marker) &&
+        !isPropertyDefault(node, context.checker)
+      ) {
+        context.diagnostics.push(misplacedMarker(node, marker));
+      }
+      return context.superTransformExpression(node);
+    },
+    [ts.SyntaxKind.PropertyAccessExpression]: (node, context) => {
+      if (node.parent !== undefined && !isCallee(node)) {
+        const marker = globalName(context.checker.getSymbolAtLocation(node.name), context.checker);
+        if (marker !== undefined && RESOURCE_PROPERTY_MARKERS.has(marker)) {
+          context.diagnostics.push(misplacedMarker(node, marker));
+        }
+      }
+      return context.superTransformExpression(node);
+    },
   },
 };
