@@ -1224,6 +1224,30 @@
     margin-top: 0;
   }
 
+  /* A signature reads at normal weight even inside its `h3`; only its names are
+     bold, through the `font-weight` their Shiki spans carry inline (see
+     signature-emphasis.ts). */
+  .prose .api-signature {
+    font-weight: 400;
+  }
+
+  /* `Parameters` and `Returns` are set apart by color and case rather than
+     weight, so bold inside a symbol block marks names only. */
+  .prose .api-slot-label {
+    font-size: 0.85em;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* Bold in doc text (descriptions, slot docs, the index-base notes) renders at
+     the surrounding weight; a bold slot name is `.api-name`. Mirrored unlayered
+     in critical.css, whose unlayered `.prose strong` beats this layered copy. */
+  .prose .api-symbol-body strong:not(.api-name) {
+    font-weight: inherit;
+  }
+
   /* Availability category layer — one compact labeled chip per active category
    * on a symbol heading, carrying a visible `N`/`C`/`D` glyph so the category is
    * legible without color, additive over the accessible `aria-label`/`title`.
