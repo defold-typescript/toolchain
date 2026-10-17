@@ -305,11 +305,11 @@
   },
   "*:resource.atlas:missing-binding": {
     "verdict": "accepted",
-    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
+    "reason": "a build-time marker, not an engine function: bob reads resource.<kind>(path) only as a go.property default (LuaScanner.java:923-933 at defold a81dbb04), and the resource Module_methods table registers no such function in any target (script_resource.cpp:3447-3463 in 1.14.0); the transpiler rejects a call or reference outside a properties default"
   },
   "*:resource.buffer:missing-binding": {
     "verdict": "accepted",
-    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
+    "reason": "a build-time marker, not an engine function: bob reads resource.<kind>(path) only as a go.property default (LuaScanner.java:923-933 at defold a81dbb04), and the resource Module_methods table registers no such function in any target (script_resource.cpp:3447-3463 in 1.14.0); the transpiler rejects a call or reference outside a properties default"
   },
   "*:resource.create_atlas:field-unread:2.texture": {
     "verdict": "accepted",
@@ -321,23 +321,23 @@
   },
   "*:resource.font:missing-binding": {
     "verdict": "accepted",
-    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
+    "reason": "a build-time marker, not an engine function: bob reads resource.<kind>(path) only as a go.property default (LuaScanner.java:923-933 at defold a81dbb04), and the resource Module_methods table registers no such function in any target (script_resource.cpp:3447-3463 in 1.14.0); the transpiler rejects a call or reference outside a properties default"
   },
   "*:resource.material:missing-binding": {
     "verdict": "accepted",
-    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
+    "reason": "a build-time marker, not an engine function: bob reads resource.<kind>(path) only as a go.property default (LuaScanner.java:923-933 at defold a81dbb04), and the resource Module_methods table registers no such function in any target (script_resource.cpp:3447-3463 in 1.14.0); the transpiler rejects a call or reference outside a properties default"
   },
   "*:resource.render_target:missing-binding": {
     "verdict": "accepted",
-    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
+    "reason": "a build-time marker, not an engine function: bob reads resource.<kind>(path) only as a go.property default (LuaScanner.java:923-933 at defold a81dbb04), and the resource Module_methods table registers no such function in any target (script_resource.cpp:3447-3463 in 1.14.0); the transpiler rejects a call or reference outside a properties default"
   },
   "*:resource.texture:missing-binding": {
     "verdict": "accepted",
-    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
+    "reason": "a build-time marker, not an engine function: bob reads resource.<kind>(path) only as a go.property default (LuaScanner.java:923-933 at defold a81dbb04), and the resource Module_methods table registers no such function in any target (script_resource.cpp:3447-3463 in 1.14.0); the transpiler rejects a call or reference outside a properties default"
   },
   "*:resource.tile_source:missing-binding": {
     "verdict": "accepted",
-    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
+    "reason": "a build-time marker, not an engine function: bob reads resource.<kind>(path) only as a go.property default (LuaScanner.java:923-933 at defold a81dbb04), and the resource Module_methods table registers no such function in any target (script_resource.cpp:3447-3463 in 1.14.0); the transpiler rejects a call or reference outside a properties default"
   },
   "*:sound.play:arity": {
     "verdict": "accepted",

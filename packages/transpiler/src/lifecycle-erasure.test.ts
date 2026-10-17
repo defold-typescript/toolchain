@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import * as path from "node:path";
 import * as ts from "typescript";
-import { isFactoryOnlyImport } from "./lifecycle-erasure";
+import { isFactoryOnlyImport, RESOURCE_PROPERTY_MARKERS } from "./lifecycle-erasure";
 import { transpile, transpileProject } from "./transpile";
 
 describe("lifecycle erasure", () => {
@@ -689,5 +692,151 @@ describe("properties on the gui and render factories", () => {
     const result = transpile([...header, "  properties: undefined,", ...body].join("\n"));
     expect(result.diagnostics).toEqual([]);
     expect(result.lua).toBe(baseline.lua);
+  });
+});
+
+describe("resource property markers", () => {
+  const IMPORT = 'import { defineScript } from "@defold-typescript/types";';
+  const lineOf = (source: string, needle: string): number =>
+    source.slice(0, source.indexOf(needle)).split("\n").length;
+
+  test("a properties default compiles and emits its go.property registration", () => {
+    const source = [
+      IMPORT,
+      "",
+      "defineScript({",
+      '  properties: { a: resource.atlas("/a.atlas"), rt: resource.render_target("/r.render_target") },',
+      "});",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      go.property(
+          "a",
+          resource.atlas("/a.atlas")
+      )
+      go.property(
+          "rt",
+          resource.render_target("/r.render_target")
+      )
+      return ____exports
+      "
+    `);
+  });
+
+  test("a call inside a hook fails the build on the call's line", () => {
+    const source = [
+      IMPORT,
+      "",
+      "defineScript({",
+      "  init() {",
+      '    resource.font("/f.font");',
+      "  },",
+      "});",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(1);
+    const [diagnostic] = result.diagnostics;
+    expect(diagnostic?.file).toBe("main.ts");
+    expect(diagnostic?.line).toBe(lineOf(source, "resource.font("));
+    expect(diagnostic?.category).toBeUndefined();
+    expect(diagnostic?.message).toContain("resource.font");
+    expect(diagnostic?.message).toContain("properties");
+  });
+
+  test("a module const used as a properties default fails on the const", () => {
+    const source = [
+      IMPORT,
+      "",
+      'const A = resource.texture("/t.png");',
+      "",
+      "defineScript({",
+      "  properties: { a: A },",
+      "});",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.line).toBe(lineOf(source, "const A"));
+    expect(result.diagnostics[0]?.category).toBeUndefined();
+  });
+
+  test("a reference to a marker fails the build", () => {
+    const source = [IMPORT, "", "const f = resource.material;", "", "defineScript({});", ""].join(
+      "\n",
+    );
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.line).toBe(lineOf(source, "const f"));
+    expect(result.diagnostics[0]?.category).toBeUndefined();
+    expect(result.diagnostics[0]?.message).toContain("resource.material");
+  });
+
+  test("a direct go.property default reports only the deprecation warning", () => {
+    const source = [
+      IMPORT,
+      "",
+      'go.property("a", resource.atlas("/a.atlas"));',
+      "",
+      "defineScript({});",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.category).toBe("warning");
+  });
+
+  test("a project's own resource object is not a marker", () => {
+    const source = [
+      IMPORT,
+      "",
+      "const resource = { atlas: (p: string) => p };",
+      "",
+      "defineScript({",
+      "  init() {",
+      '    resource.atlas("x");',
+      "  },",
+      "});",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  test("an optional chain, which TSTL lowers through synthesized nodes, transpiles", () => {
+    const source = [
+      IMPORT,
+      "",
+      "declare const cfg: { a?: { b: number } };",
+      "",
+      "defineScript({",
+      "  init() {",
+      "    print(cfg.a?.b);",
+      "  },",
+      "});",
+      "",
+    ].join("\n");
+    expect(transpile(source).diagnostics).toEqual([]);
+  });
+
+  test("the marker set is every resource function the binding gate records as unbound", () => {
+    const typesRoot = path.dirname(
+      createRequire(import.meta.url).resolve("@defold-typescript/types/package.json"),
+    );
+    const verdicts = JSON.parse(
+      readFileSync(path.join(typesRoot, "scripts/engine-binding-verdicts.json"), "utf8"),
+    ) as Record<string, unknown>;
+    const unbound = new Set<string>();
+    for (const key of Object.keys(verdicts)) {
+      const match = /^[^:]+:(resource\.[a-z_]+):missing-binding$/.exec(key);
+      if (match?.[1] !== undefined) {
+        unbound.add(match[1]);
+      }
+    }
+    expect([...RESOURCE_PROPERTY_MARKERS].sort()).toEqual([...unbound].sort());
   });
 });
