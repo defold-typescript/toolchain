@@ -776,15 +776,11 @@ describe("resource property markers", () => {
     expect(result.diagnostics[0]?.message).toContain("resource.material");
   });
 
-  test("a computed reference to a marker fails the build", () => {
-    const source = [
-      IMPORT,
-      "",
-      'const f = resource["material"];',
-      "",
-      "defineScript({});",
-      "",
-    ].join("\n");
+  test.each([
+    'resource["material"]',
+    'resource[("material" as const)]',
+  ])("a computed reference %s to a marker fails the build", (reference) => {
+    const source = [IMPORT, "", `const f = ${reference};`, "", "defineScript({});", ""].join("\n");
     const result = transpileProject({ files: { "main.ts": source } });
     expect(result.diagnostics).toHaveLength(1);
     expect(result.diagnostics[0]?.line).toBe(lineOf(source, "const f"));
@@ -844,6 +840,7 @@ describe("resource property markers", () => {
       "    b: (resource).font(`/f.font`)!,",
       '    c: (resource.texture)("/t.png"),',
       '    m: resource["material"]("/m.material"),',
+      '    k: resource[("material" as const)]("/k.material"),',
       "    d: resource.buffer(),",
       '    t: resource.tile_source(("/t.tilesource" as string)),',
       "  },",
@@ -870,6 +867,10 @@ describe("resource property markers", () => {
       go.property(
           "m",
           resource.material("/m.material")
+      )
+      go.property(
+          "k",
+          resource.material("/k.material")
       )
       go.property(
           "d",
@@ -922,6 +923,7 @@ describe("resource property markers", () => {
       "",
       "const resource = { atlas: (p: string) => p };",
       'const g = resource["atlas"];',
+      'const h = resource[("atlas")];',
       "",
       "defineScript({",
       "  init() {",
