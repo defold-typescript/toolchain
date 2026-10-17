@@ -776,6 +776,114 @@ describe("resource property markers", () => {
     expect(result.diagnostics[0]?.message).toContain("resource.material");
   });
 
+  test("a computed reference to a marker fails the build", () => {
+    const source = [
+      IMPORT,
+      "",
+      'const f = resource["material"];',
+      "",
+      "defineScript({});",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.line).toBe(lineOf(source, "const f"));
+    expect(result.diagnostics[0]?.category).toBeUndefined();
+    expect(result.diagnostics[0]?.message).toContain("resource.material");
+  });
+
+  test("a computed marker call inside a hook reports once", () => {
+    const source = [
+      IMPORT,
+      "",
+      "defineScript({",
+      "  init() {",
+      '    resource["font"]("/f.font");',
+      "  },",
+      "});",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.message).toContain("resource.font");
+  });
+
+  test.each([
+    ["an alias", "const r = resource;", 'r.atlas("/a.atlas")'],
+    ["a destructured marker", "const { atlas } = resource;", 'atlas("/a.atlas")'],
+    ["an optional receiver", "", 'resource?.atlas("/a.atlas")'],
+    ["an optional call", "", 'resource.atlas?.("/a.atlas")'],
+    ["a parenthesized optional callee", "", '(resource?.atlas)("/a.atlas")'],
+    ["a key held in a variable", 'const K = "atlas";', 'resource[K]("/a.atlas")'],
+    ["a path held in a variable", 'const P = "/a.atlas";', "resource.atlas(P)"],
+  ])("a properties default through %s fails the build", (_label, setup, value) => {
+    const source = [
+      IMPORT,
+      "",
+      setup,
+      "",
+      "defineScript({",
+      `  properties: { a: ${value} },`,
+      "});",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.line).toBe(lineOf(source, "properties:"));
+    expect(result.diagnostics[0]?.category).toBeUndefined();
+    expect(result.diagnostics[0]?.message).toContain("resource.atlas");
+  });
+
+  test("every default form bob reads compiles to its marker call", () => {
+    const source = [
+      IMPORT,
+      "",
+      "defineScript({",
+      "  properties: {",
+      '    a: (resource.atlas("/a.atlas") as Hash),',
+      "    b: (resource).font(`/f.font`)!,",
+      '    c: (resource.texture)("/t.png"),',
+      '    m: resource["material"]("/m.material"),',
+      "    d: resource.buffer(),",
+      '    t: resource.tile_source(("/t.tilesource" as string)),',
+      "  },",
+      "});",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      go.property(
+          "a",
+          resource.atlas("/a.atlas")
+      )
+      go.property(
+          "b",
+          resource.font("/f.font")
+      )
+      go.property(
+          "c",
+          resource.texture("/t.png")
+      )
+      go.property(
+          "m",
+          resource.material("/m.material")
+      )
+      go.property(
+          "d",
+          resource.buffer()
+      )
+      go.property(
+          "t",
+          resource.tile_source("/t.tilesource")
+      )
+      return ____exports
+      "
+    `);
+  });
+
   test("a direct go.property default reports only the deprecation warning", () => {
     const source = [
       IMPORT,
@@ -790,15 +898,35 @@ describe("resource property markers", () => {
     expect(result.diagnostics[0]?.category).toBe("warning");
   });
 
+  test("a direct go.property default through an alias fails the build", () => {
+    const source = [
+      IMPORT,
+      "",
+      "const r = resource;",
+      'go.property("a", r.atlas("/a.atlas"));',
+      "",
+      "defineScript({});",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(2);
+    expect(result.diagnostics.filter((d) => d.category === "warning")).toHaveLength(1);
+    const fatal = result.diagnostics.filter((d) => d.category === undefined);
+    expect(fatal).toHaveLength(1);
+    expect(fatal[0]?.message).toContain("resource.atlas");
+  });
+
   test("a project's own resource object is not a marker", () => {
     const source = [
       IMPORT,
       "",
       "const resource = { atlas: (p: string) => p };",
+      'const g = resource["atlas"];',
       "",
       "defineScript({",
       "  init() {",
       '    resource.atlas("x");',
+      '    resource["atlas"]("y");',
       "  },",
       "});",
       "",
@@ -816,6 +944,7 @@ describe("resource property markers", () => {
       "defineScript({",
       "  init() {",
       "    print(cfg.a?.b);",
+      '    print(cfg.a?.["b"]);',
       "  },",
       "});",
       "",
