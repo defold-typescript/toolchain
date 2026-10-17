@@ -88,6 +88,23 @@ describe("getProgramDiagnostics", () => {
     expect(diagnostics).toEqual([]);
   });
 
+  test("squiggles a resource marker called outside a properties default", () => {
+    const source = [
+      'import { defineScript } from "@defold-typescript/types";',
+      "",
+      "defineScript({",
+      "  update(self, dt) {",
+      '    resource.tile_source("/t.tilesource");',
+      "  },",
+      "});",
+      "",
+    ].join("\n");
+    const program = programFor(source);
+    const diagnostics = getProgramDiagnostics(program, program.getSourceFile("main.ts"));
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]?.start).toBe(source.indexOf("resource.tile_source("));
+  });
+
   test("DOM-only globals are excluded on both paths", () => {
     const editorMessages = createTranspileSession()
       .update({ "main.ts": DOM_ONLY_SOURCE })
