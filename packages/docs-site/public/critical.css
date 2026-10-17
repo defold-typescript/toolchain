@@ -245,6 +245,17 @@ header.topbar-critical .logo-mark {
   font-weight: 600;
   color: var(--color-text);
 }
+/* Bold in API doc text renders at the surrounding weight; only a slot name
+   (`.api-name`) stays bold. Mirrors app/styles.css; unlayered here so it beats
+   the unlayered `.prose strong` rule above by specificity. */
+.prose .api-symbol-body strong:not(.api-name) {
+  font-weight: inherit;
+}
+/* A signature reads at normal weight inside its `h3` from the first paint; its
+   names carry their own inline weight. Mirrors app/styles.css. */
+.prose .api-signature {
+  font-weight: 400;
+}
 .prose code {
   font-family: var(--font-mono);
   font-size: var(--prose-code-size);

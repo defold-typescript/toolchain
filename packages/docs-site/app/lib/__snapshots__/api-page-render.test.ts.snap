@@ -19,13 +19,13 @@ Camera module fixture.
 
 Returns the projection matrix.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`camera\`: <code class="api-type">Url</code> — camera id
+- <strong class="api-name">\`camera\`</strong>: <code class="api-type">Url</code> — camera id
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
-- \`projection\`: <code class="api-type">Matrix4</code> — the matrix
+- <strong class="api-name">\`projection\`</strong>: <code class="api-type">Matrix4</code> — the matrix
 
 </div>
 "
@@ -74,12 +74,12 @@ Create a new Druid instance and adjust the Druid settings here.
 
 Create a new Druid instance for creating GUI components.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`context\`: <code class="api-type">LuaTable</code> — The Druid context. Usually, this is the self of the gui_script. It is passed into all Druid callbacks.
-- \`style\`?: <code class="api-type">LuaTable | undefined</code> — The Druid style table to override style parameters for this Druid instance.
+- <strong class="api-name">\`context\`</strong>: <code class="api-type">LuaTable</code> — The Druid context. Usually, this is the self of the gui_script. It is passed into all Druid callbacks.
+- <strong class="api-name">\`style\`</strong>?: <code class="api-type">LuaTable | undefined</code> — The Druid style table to override style parameters for this Druid instance.
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_instance</code> — The new Druid instance
 
@@ -95,10 +95,10 @@ For example, if you register a component called "my_component", you can create i
 This can be useful if you have your own "basic" components that you don't want to require in every file.
 The default way to create component is \`druid_instance:new(component_class, ...)\`.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`name\`: <code class="api-type">string</code> — Module name
-- \`module\`: <code class="api-type">LuaTable</code> — Lua table with component
+- <strong class="api-name">\`name\`</strong>: <code class="api-type">string</code> — Module name
+- <strong class="api-name">\`module\`</strong>: <code class="api-type">LuaTable</code> — Lua table with component
 
 </div>
 
@@ -108,9 +108,9 @@ The default way to create component is \`druid_instance:new(component_class, ...
 
 Set the default style for all Druid instances.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`style\`: <code class="api-type">LuaTable</code> — Default style
+- <strong class="api-name">\`style\`</strong>: <code class="api-type">LuaTable</code> — Default style
 
 </div>
 
@@ -120,9 +120,9 @@ Set the default style for all Druid instances.
 
 Set the text function for the LangText component.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`callback\`: <code class="api-type">(text_id: string) =&gt; string</code> — Get localized text function
+- <strong class="api-name">\`callback\`</strong>: <code class="api-type">(<strong class="api-name">text_id</strong>: string) =&gt; string</code> — Get localized text function
 
 </div>
 
@@ -132,9 +132,9 @@ Set the text function for the LangText component.
 
 Set the sound function to able components to play sounds.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`callback\`: <code class="api-type">(sound_id: string) =&gt; void</code> — Sound play callback
+- <strong class="api-name">\`callback\`</strong>: <code class="api-type">(<strong class="api-name">sound_id</strong>: string) =&gt; void</code> — Sound play callback
 
 </div>
 
@@ -153,9 +153,9 @@ window listener, so if you have one, you should call M.on_window_callback manual
 
 Set the window callback to enable Druid window events.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`window_event\`: <code class="api-type">Opaque&lt;&quot;constant&quot;&gt;</code> — Event param from window listener
+- <strong class="api-name">\`window_event\`</strong>: <code class="api-type">Opaque&lt;&quot;constant&quot;&gt;</code> — Event param from window listener
 
 </div>
 
@@ -178,11 +178,11 @@ so from a game object script you should only use its plain functions, not the GU
 local instance = <a href="/api/druid#get_druidgui_url-url--string--undefined-druid_instance--undefined" class="symbol-xref">druid.get_druid</a>("gui_widget")
 instance:set_style(my_style) -- Should be set before creating widgets
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`gui_url\`?: <code class="api-type">Url | string | undefined</code> — GUI url or string of component name near current script
+- <strong class="api-name">\`gui_url\`</strong>?: <code class="api-type">Url | string | undefined</code> — GUI url or string of component name near current script
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_instance | undefined</code> — The registered Druid instance or nil if not registered
 
@@ -199,14 +199,14 @@ Widget class here is your lua file for the GUI scene (widgets in Druid)
 <a href="/api/defold-1.14.0/msg#msgurl" class="symbol-xref">msg.url</a>(nil, nil, "gui_widget") -- current game object
 <a href="/api/defold-1.14.0/msg#msgurl" class="symbol-xref">msg.url</a>(nil, object_url, "gui_widget") -- other game object
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`widget_class\`: <code class="api-type">T</code> — The class of the widget to return
-- \`gui_url\`: <code class="api-type">Url | string</code> — GUI url or string of component name near current script
-- \`params\`?: <code class="api-type">unknown | undefined</code> — Additional parameters to pass to the widget's init function
-- \`template\`?: <code class="api-type">string | undefined</code> — The GUI template name used by the widget nodes
+- <strong class="api-name">\`widget_class\`</strong>: <code class="api-type">T</code> — The class of the widget to return
+- <strong class="api-name">\`gui_url\`</strong>: <code class="api-type">Url | string</code> — GUI url or string of component name near current script
+- <strong class="api-name">\`params\`</strong>?: <code class="api-type">unknown | undefined</code> — Additional parameters to pass to the widget's init function
+- <strong class="api-name">\`template\`</strong>?: <code class="api-type">string | undefined</code> — The GUI template name used by the widget nodes
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">T</code> — The new created widget,
 
@@ -220,9 +220,9 @@ Bind a Druid GUI instance to the current game object.
 This instance now can produce widgets from \`druid.get_widget()\` function.
 Only one widget can be set per game object.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`druid\`: <code class="api-type">druid_instance</code> — The druid instance to register
+- <strong class="api-name">\`druid\`</strong>: <code class="api-type">druid_instance</code> — The druid instance to register
 
 </div>
 
@@ -238,9 +238,9 @@ Should be called on final, where druid instance is destroyed.
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`logger_instance\`?: <code class="api-type">druid_logger | LuaTable | undefined</code>
+- <strong class="api-name">\`logger_instance\`</strong>?: <code class="api-type">druid_logger | LuaTable | undefined</code>
 
 </div>
 
@@ -248,12 +248,12 @@ Should be called on final, where druid instance is destroyed.
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`name\`?: <code class="api-type">string | undefined</code>
-- \`level\`?: <code class="api-type">string | undefined</code>
+- <strong class="api-name">\`name\`</strong>?: <code class="api-type">string | undefined</code>
+- <strong class="api-name">\`level\`</strong>?: <code class="api-type">string | undefined</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_logger</code>
 
@@ -267,10 +267,10 @@ Should be called on final, where druid instance is destroyed.
 
 The Back Handler constructor
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — The callback to call when the back handler is triggered
-- \`params\`?: <code class="api-type">unknown | undefined</code> — Custom args to pass in the callback
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — The callback to call when the back handler is triggered
+- <strong class="api-name">\`params\`</strong>?: <code class="api-type">unknown | undefined</code> — Custom args to pass in the callback
 
 </div>
 
@@ -298,9 +298,9 @@ Custom args to pass in the callback
 
 The Blocker constructor
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — The node to use as a blocker
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — The node to use as a blocker
 
 </div>
 
@@ -310,11 +310,11 @@ The Blocker constructor
 
 Set blocker enabled state
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`state\`: <code class="api-type">boolean</code> — The new enabled state
+- <strong class="api-name">\`state\`</strong>: <code class="api-type">boolean</code> — The new enabled state
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_blocker</code> — The blocker instance
 
@@ -326,7 +326,7 @@ Set blocker enabled state
 
 Get blocker enabled state
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — True if the blocker is enabled
 
@@ -466,12 +466,12 @@ Cursor on button mouse hover (defos cursor). Default: nil
 
 The constructor for the button component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node_or_node_id\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — Node name or GUI Node itself
-- \`callback\`?: <code class="api-type">((self: unknown, custom_args: unknown, button_instance: druid_button) =&gt; void) | undefined</code> — Callback on button click
-- \`custom_args\`?: <code class="api-type">unknown | undefined</code> — Custom args for any Button event, will be passed to callbacks
-- \`anim_node\`?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Node to animate instead of trigger node, useful for animating small icons on big panels
+- <strong class="api-name">\`node_or_node_id\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — Node name or GUI Node itself
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((self: unknown, custom_args: unknown, button_instance: druid_button) =&gt; void) | undefined</code> — Callback on button click
+- <strong class="api-name">\`custom_args\`</strong>?: <code class="api-type">unknown | undefined</code> — Custom args for any Button event, will be passed to callbacks
+- <strong class="api-name">\`anim_node\`</strong>?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Node to animate instead of trigger node, useful for animating small icons on big panels
 
 </div>
 
@@ -481,7 +481,7 @@ The constructor for the button component
 
 Remove default button style animations
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_button</code> — The current button instance
 
@@ -495,11 +495,11 @@ Set button enabled state.
 The style.on_set_enabled will be triggered.
 Disabled button is not clickable.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`state\`?: <code class="api-type">boolean | undefined</code> — Enabled state
+- <strong class="api-name">\`state\`</strong>?: <code class="api-type">boolean | undefined</code> — Enabled state
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_button</code> — The current button instance
 
@@ -512,7 +512,7 @@ Disabled button is not clickable.
 Get button enabled state.
 By default all Buttons are enabled on creating.
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — True, if button is enabled now, False otherwise
 
@@ -526,11 +526,11 @@ Set additional button click area.
 Useful to restrict click outside of stencil node or scrollable content.
 If button node placed inside stencil node, it will be automatically set to this stencil node.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`zone\`?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Gui node
+- <strong class="api-name">\`zone\`</strong>?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Gui node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_button</code> — The current button instance
 
@@ -542,11 +542,11 @@ If button node placed inside stencil node, it will be automatically set to this 
 
 Set key name to trigger this button by keyboard.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`key\`: <code class="api-type">Hash | string</code> — The action_id of the input key. Example: "key_space"
+- <strong class="api-name">\`key\`</strong>: <code class="api-type">Hash | string</code> — The action_id of the input key. Example: "key_space"
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_button</code> — The current button instance
 
@@ -558,7 +558,7 @@ Set key name to trigger this button by keyboard.
 
 Get current key name to trigger this button.
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Hash</code> — The action_id of the input key
 
@@ -570,12 +570,12 @@ Get current key name to trigger this button.
 
 Set function for additional check for button click availability.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`check_function\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Should return true or false. If true - button can be pressed.
-- \`failure_callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Function will be called on button click, if check function returns false
+- <strong class="api-name">\`check_function\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Should return true or false. If true - button can be pressed.
+- <strong class="api-name">\`failure_callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Function will be called on button click, if check function returns false
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_button</code> — The current button instance
 
@@ -592,11 +592,11 @@ The HTML5 button doesn't call any events except on_click event.
 
 If the game is not HTML, html mode will be not enabled
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_web_mode\`?: <code class="api-type">boolean | undefined</code> — If true - button will be called inside html5 callback
+- <strong class="api-name">\`is_web_mode\`</strong>?: <code class="api-type">boolean | undefined</code> — If true - button will be called inside html5 callback
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_button</code> — The current button instance
 
@@ -606,11 +606,11 @@ If the game is not HTML, html mode will be not enabled
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`action_id\`: <code class="api-type">Hash</code> — The action id
+- <strong class="api-name">\`action_id\`</strong>: <code class="api-type">Hash</code> — The action id
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — True if the input matches the button
 
@@ -622,9 +622,9 @@ If the game is not HTML, html mode will be not enabled
 
 Call button style on_hover callback
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`hover_state\`: <code class="api-type">boolean</code> — True if the hover state is active
+- <strong class="api-name">\`hover_state\`</strong>: <code class="api-type">boolean</code> — True if the hover state is active
 
 </div>
 
@@ -634,9 +634,9 @@ Call button style on_hover callback
 
 Call button style on_hover callback
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`hover_state\`: <code class="api-type">boolean</code> — True if the hover state is active
+- <strong class="api-name">\`hover_state\`</strong>: <code class="api-type">boolean</code> — True if the hover state is active
 
 </div>
 
@@ -678,9 +678,9 @@ Call button double click callback
 
 Call button hold callback
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`press_time\`: <code class="api-type">number</code> — Amount of time the button was held
+- <strong class="api-name">\`press_time\`</strong>: <code class="api-type">number</code> — Amount of time the button was held
 
 </div>
 
@@ -872,10 +872,10 @@ Cursor on node mouse hover (defos cursor). Default: nil
 
 The constructor for Drag component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node_or_node_id\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — The node to subscribe to drag events over
-- \`on_drag_callback\`: <code class="api-type">(self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) =&gt; void</code> — The callback to call when a drag occurs
+- <strong class="api-name">\`node_or_node_id\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — The node to subscribe to drag events over
+- <strong class="api-name">\`on_drag_callback\`</strong>: <code class="api-type">(<strong class="api-name">self</strong>: unknown, <strong class="api-name">dx</strong>: number, <strong class="api-name">dy</strong>: number, <strong class="api-name">x</strong>: number, <strong class="api-name">y</strong>: number, <strong class="api-name">touch</strong>: touch) =&gt; void</code> — The callback to call when a drag occurs
 
 </div>
 
@@ -886,9 +886,9 @@ The constructor for Drag component
 Enable or disable drag cursors from the Drag style. No-op without defos or without cursors in style. Hover is created on first enable.
 The cursors are not shown while the Drag is disabled.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_enabled\`: <code class="api-type">boolean</code> — True if Drag cursors are enabled
+- <strong class="api-name">\`is_enabled\`</strong>: <code class="api-type">boolean</code> — True if Drag cursors are enabled
 
 </div>
 
@@ -898,11 +898,11 @@ The cursors are not shown while the Drag is disabled.
 
 Set Drag click zone
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Node or node id
+- <strong class="api-name">\`node\`</strong>?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Node or node id
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_drag</code> — Current instance
 
@@ -914,11 +914,11 @@ Set Drag click zone
 
 Set Drag component enabled state.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_enabled\`: <code class="api-type">boolean</code>
+- <strong class="api-name">\`is_enabled\`</strong>: <code class="api-type">boolean</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_drag</code> — Current instance
 
@@ -930,7 +930,7 @@ Set Drag component enabled state.
 
 Check if Drag component is capture input
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — True if Drag component is enabled
 
@@ -945,11 +945,11 @@ By default only touch and multitouch actions are allowed.
 Useful to drag with the middle or right mouse button on desktop.
 The action should provide the pointer position, key actions are ignored.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`action_id\`: <code class="api-type">Hash</code> — The action id to allow for dragging
+- <strong class="api-name">\`action_id\`</strong>: <code class="api-type">Hash</code> — The action id to allow for dragging
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_drag</code> — Current instance
 
@@ -961,11 +961,11 @@ The action should provide the pointer position, key actions are ignored.
 
 Remove an additional input action from the allowed drag actions
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`action_id\`: <code class="api-type">Hash</code> — The action id to disallow for dragging
+- <strong class="api-name">\`action_id\`</strong>: <code class="api-type">Hash</code> — The action id to disallow for dragging
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_drag</code> — Current instance
 
@@ -977,9 +977,9 @@ Remove an additional input action from the allowed drag actions
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`touch\`?: <code class="api-type">touch | undefined</code>
+- <strong class="api-name">\`touch\`</strong>?: <code class="api-type">touch | undefined</code>
 
 </div>
 
@@ -987,9 +987,9 @@ Remove an additional input action from the allowed drag actions
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`touch\`: <code class="api-type">touch</code> — Touch action
+- <strong class="api-name">\`touch\`</strong>: <code class="api-type">touch</code> — Touch action
 
 </div>
 
@@ -1000,13 +1000,13 @@ Remove an additional input action from the allowed drag actions
 Return current touch action from action input data
 If touch_id stored - return exact this touch action
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`action_id\`: <code class="api-type">Hash</code> — Action id from on_input
-- \`action\`: <code class="api-type">LuaTable</code> — Action from on_input
-- \`touch_id\`: <code class="api-type">number</code> — Touch id
+- <strong class="api-name">\`action_id\`</strong>: <code class="api-type">Hash</code> — Action id from on_input
+- <strong class="api-name">\`action\`</strong>: <code class="api-type">LuaTable</code> — Action from on_input
+- <strong class="api-name">\`touch_id\`</strong>: <code class="api-type">number</code> — Touch id
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">LuaTable | undefined</code> — Touch action
 
@@ -1019,10 +1019,10 @@ If touch_id stored - return exact this touch action
 Process on touch release. We should to find, if any other
 touches exists to switch to another touch.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`action\`: <code class="api-type">LuaTable</code> — Action from on_input
-- \`touch\`: <code class="api-type">LuaTable</code> — Touch action
+- <strong class="api-name">\`action\`</strong>: <code class="api-type">LuaTable</code> — Action from on_input
+- <strong class="api-name">\`touch\`</strong>: <code class="api-type">LuaTable</code> — Touch action
 
 </div>
 
@@ -1220,11 +1220,11 @@ Mouse hover style on node mouse hover
 
 The constructor for the hover component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — Gui node
-- \`on_hover_callback\`: <code class="api-type">(...args: any[]) =&gt; unknown</code> — Hover callback
-- \`on_mouse_hover\`: <code class="api-type">(...args: any[]) =&gt; unknown</code> — On mouse hover callback
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — Gui node
+- <strong class="api-name">\`on_hover_callback\`</strong>: <code class="api-type">(<strong class="api-name">...args</strong>: any[]) =&gt; unknown</code> — Hover callback
+- <strong class="api-name">\`on_mouse_hover\`</strong>: <code class="api-type">(<strong class="api-name">...args</strong>: any[]) =&gt; unknown</code> — On mouse hover callback
 
 </div>
 
@@ -1234,9 +1234,9 @@ The constructor for the hover component
 
 Set hover state
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`state\`?: <code class="api-type">boolean | undefined</code> — The hover state
+- <strong class="api-name">\`state\`</strong>?: <code class="api-type">boolean | undefined</code> — The hover state
 
 </div>
 
@@ -1246,7 +1246,7 @@ Set hover state
 
 Return current hover state. True if touch action was on the node at current time
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — The current hovered state
 
@@ -1258,9 +1258,9 @@ Return current hover state. True if touch action was on the node at current time
 
 Set mouse hover state
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`state\`?: <code class="api-type">boolean | undefined</code> — The mouse hover state
+- <strong class="api-name">\`state\`</strong>?: <code class="api-type">boolean | undefined</code> — The mouse hover state
 
 </div>
 
@@ -1270,7 +1270,7 @@ Set mouse hover state
 
 Return current hover state. True if nil action_id (usually desktop mouse) was on the node at current time
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — The current hovered state
 
@@ -1282,9 +1282,9 @@ Return current hover state. True if nil action_id (usually desktop mouse) was on
 
 Strict hover click area. Useful for no click events outside stencil node
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`zone\`?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Gui node
+- <strong class="api-name">\`zone\`</strong>?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Gui node
 
 </div>
 
@@ -1296,9 +1296,9 @@ Set enable state of hover component.
 If hover is not enabled, it will not generate
 any hover events
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`state\`?: <code class="api-type">boolean | undefined</code> — The hover enabled state
+- <strong class="api-name">\`state\`</strong>?: <code class="api-type">boolean | undefined</code> — The hover enabled state
 
 </div>
 
@@ -1308,7 +1308,7 @@ any hover events
 
 Return current hover enabled state
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — The hover enabled state
 
@@ -1476,10 +1476,10 @@ Cursor on scroll mouse hover (defos cursor), only while content is scrollable. D
 
 The Scroll constructor
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`view_node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — GUI view scroll node - the static part that captures user input
-- \`content_node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — GUI content scroll node - the dynamic part that will change position
+- <strong class="api-name">\`view_node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — GUI view scroll node - the static part that captures user input
+- <strong class="api-name">\`content_node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — GUI content scroll node - the dynamic part that will change position
 
 </div>
 
@@ -1489,10 +1489,10 @@ The Scroll constructor
 
 Start scroll to target point.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`point\`: <code class="api-type">Vector3</code> — Target point
-- \`is_instant\`?: <code class="api-type">boolean | undefined</code> — Instant scroll flag
+- <strong class="api-name">\`point\`</strong>: <code class="api-type">Vector3</code> — Target point
+- <strong class="api-name">\`is_instant\`</strong>?: <code class="api-type">boolean | undefined</code> — Instant scroll flag
 
 </div>
 
@@ -1502,10 +1502,10 @@ Start scroll to target point.
 
 Scroll to the node, if node is not visible in scroll view
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — The node to make visible
-- \`is_instant\`?: <code class="api-type">boolean | undefined</code> — Instant scroll flag
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — The node to make visible
+- <strong class="api-name">\`is_instant\`</strong>?: <code class="api-type">boolean | undefined</code> — Instant scroll flag
 
 </div>
 
@@ -1515,11 +1515,11 @@ Scroll to the node, if node is not visible in scroll view
 
 Scroll to item in scroll by point index.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`index\`: <code class="api-type">number</code> — Point index. **⚠️ 1-based; passed to \`druid\` unchanged.**
-- \`is_silent\`?: <code class="api-type">boolean | undefined</code> — If true, skip the point callback
-- \`is_instant\`?: <code class="api-type">boolean | undefined</code> — Instant scroll flag
+- <strong class="api-name">\`index\`</strong>: <code class="api-type">number</code> — Point index. **⚠️ 1-based; passed to \`druid\` unchanged.**
+- <strong class="api-name">\`is_silent\`</strong>?: <code class="api-type">boolean | undefined</code> — If true, skip the point callback
+- <strong class="api-name">\`is_instant\`</strong>?: <code class="api-type">boolean | undefined</code> — Instant scroll flag
 
 </div>
 
@@ -1529,10 +1529,10 @@ Scroll to item in scroll by point index.
 
 Start scroll to target scroll percent
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`percent\`: <code class="api-type">Vector3</code> — target percent
-- \`is_instant\`?: <code class="api-type">boolean | undefined</code> — instant scroll flag
+- <strong class="api-name">\`percent\`</strong>: <code class="api-type">Vector3</code> — target percent
+- <strong class="api-name">\`is_instant\`</strong>?: <code class="api-type">boolean | undefined</code> — instant scroll flag
 
 </div>
 
@@ -1542,7 +1542,7 @@ Start scroll to target scroll percent
 
 Return current scroll progress status.
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3</code> — New vector with scroll progress values
 
@@ -1554,12 +1554,12 @@ Return current scroll progress status.
 
 Set scroll content size.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`size\`: <code class="api-type">Vector3</code> — The new size for content node
-- \`offset\`?: <code class="api-type">Vector3 | undefined</code> — Offset value to set, where content is starts
+- <strong class="api-name">\`size\`</strong>: <code class="api-type">Vector3</code> — The new size for content node
+- <strong class="api-name">\`offset\`</strong>?: <code class="api-type">Vector3 | undefined</code> — Offset value to set, where content is starts
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_scroll</code> — Current scroll instance
 
@@ -1571,11 +1571,11 @@ Set scroll content size.
 
 Set new scroll view size in case the node size was changed.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`size\`: <code class="api-type">Vector3</code> — The new size for view node
+- <strong class="api-name">\`size\`</strong>: <code class="api-type">Vector3</code> — The new size for view node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_scroll</code> — Current scroll instance
 
@@ -1587,7 +1587,7 @@ Set new scroll view size in case the node size was changed.
 
 Refresh scroll view size, used when view node size is changed
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_scroll</code> — Current scroll instance
 
@@ -1599,11 +1599,11 @@ Refresh scroll view size, used when view node size is changed
 
 Enable or disable scroll inert
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`state\`: <code class="api-type">boolean</code> — Inert scroll state
+- <strong class="api-name">\`state\`</strong>: <code class="api-type">boolean</code> — Inert scroll state
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_scroll</code> — Current scroll instance
 
@@ -1615,7 +1615,7 @@ Enable or disable scroll inert
 
 Return if scroll have inertion
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — If scroll have inertion
 
@@ -1627,11 +1627,11 @@ Return if scroll have inertion
 
 Set extra size for scroll stretching
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`stretch_size\`?: <code class="api-type">number | undefined</code> — Size in pixels of additional scroll area
+- <strong class="api-name">\`stretch_size\`</strong>?: <code class="api-type">number | undefined</code> — Size in pixels of additional scroll area
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_scroll</code> — Current scroll instance
 
@@ -1643,7 +1643,7 @@ Set extra size for scroll stretching
 
 Return vector of scroll size with width and height.
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3</code> — Available scroll size
 
@@ -1655,11 +1655,11 @@ Return vector of scroll size with width and height.
 
 Set points of interest.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`points\`: <code class="api-type">LuaTable</code> — Array of vector3 points
+- <strong class="api-name">\`points\`</strong>: <code class="api-type">LuaTable</code> — Array of vector3 points
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_scroll</code> — Current scroll instance
 
@@ -1671,11 +1671,11 @@ Set points of interest.
 
 Lock or unlock horizontal scroll
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`state\`: <code class="api-type">boolean</code> — True, if horizontal scroll is enabled
+- <strong class="api-name">\`state\`</strong>: <code class="api-type">boolean</code> — True, if horizontal scroll is enabled
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_scroll</code> — Current scroll instance
 
@@ -1687,11 +1687,11 @@ Lock or unlock horizontal scroll
 
 Lock or unlock vertical scroll
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`state\`: <code class="api-type">boolean</code> — True, if vertical scroll is enabled
+- <strong class="api-name">\`state\`</strong>: <code class="api-type">boolean</code> — True, if vertical scroll is enabled
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_scroll</code> — Current scroll instance
 
@@ -1703,11 +1703,11 @@ Lock or unlock vertical scroll
 
 Check node if it visible now on scroll.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — The node to check
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — The node to check
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — True if node in visible scroll area
 
@@ -1719,11 +1719,11 @@ Check node if it visible now on scroll.
 
 Bind the grid component (Static or Dynamic) to recalculate
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`grid\`?: <code class="api-type">druid_grid | undefined</code> — Druid grid component
+- <strong class="api-name">\`grid\`</strong>?: <code class="api-type">druid_grid | undefined</code> — Druid grid component
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_scroll</code> — Current scroll instance
 
@@ -1735,11 +1735,11 @@ Bind the grid component (Static or Dynamic) to recalculate
 
 Bind the layout component to recalculate
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`layout\`?: <code class="api-type">druid_layout | undefined</code> — Druid layout component
+- <strong class="api-name">\`layout\`</strong>?: <code class="api-type">druid_layout | undefined</code> — Druid layout component
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_scroll</code> — Current scroll instance
 
@@ -1751,9 +1751,9 @@ Bind the layout component to recalculate
 
 Strict drag scroll area. Useful for
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — Gui node
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — Gui node
 
 </div>
 
@@ -1797,12 +1797,12 @@ Update vector with next conditions:
 Field x have to <= field z
 Field y have to <= field w
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`vector\`: <code class="api-type">Vector4</code>
-- \`offset\`: <code class="api-type">Vector3</code>
+- <strong class="api-name">\`vector\`</strong>: <code class="api-type">Vector4</code>
+- <strong class="api-name">\`offset\`</strong>: <code class="api-type">Vector3</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector4</code>
 
@@ -1814,11 +1814,11 @@ Field y have to <= field w
 
 Return size from scroll border vector4
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`vector\`: <code class="api-type">Vector4</code>
+- <strong class="api-name">\`vector\`</strong>: <code class="api-type">Vector4</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3</code>
 
@@ -1986,11 +1986,11 @@ If true, always align last row of the grid as grid pivot sets. Default: false
 
 The constructor for the grid component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`parent\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The GUI Node container, where grid's items will be placed
-- \`element\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — Element prefab. Need to get it size
-- \`in_row\`?: <code class="api-type">number | undefined</code> — How many nodes in row can be placed. By default 1
+- <strong class="api-name">\`parent\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The GUI Node container, where grid's items will be placed
+- <strong class="api-name">\`element\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — Element prefab. Need to get it size
+- <strong class="api-name">\`in_row\`</strong>?: <code class="api-type">number | undefined</code> — How many nodes in row can be placed. By default 1
 
 </div>
 
@@ -2000,11 +2000,11 @@ The constructor for the grid component
 
 Return pos for grid node index
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`index\`: <code class="api-type">number</code> — The grid element index. **⚠️ 1-based; passed to \`druid\` unchanged.**
+- <strong class="api-name">\`index\`</strong>: <code class="api-type">number</code> — The grid element index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3</code> — Node position
 
@@ -2016,12 +2016,12 @@ Return pos for grid node index
 
 Return grid index by content-local x, y. Inverse of get_pos + _get_dynamic_offset.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`x\`: <code class="api-type">number</code>
-- \`y\`: <code class="api-type">number</code>
+- <strong class="api-name">\`x\`</strong>: <code class="api-type">number</code>
+- <strong class="api-name">\`y\`</strong>: <code class="api-type">number</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number</code> — The node index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
@@ -2033,11 +2033,11 @@ Return grid index by content-local x, y. Inverse of get_pos + _get_dynamic_offse
 
 Return grid index by position. Inverse of get_pos + _get_dynamic_offset.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`pos\`: <code class="api-type">Vector3</code> — The node position in the grid
+- <strong class="api-name">\`pos\`</strong>: <code class="api-type">Vector3</code> — The node position in the grid
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number</code> — The node index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
@@ -2049,11 +2049,11 @@ Return grid index by position. Inverse of get_pos + _get_dynamic_offset.
 
 Return grid index by node
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — The gui node in the grid
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — The gui node in the grid
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number | undefined</code> — The node index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
@@ -2065,9 +2065,9 @@ Return grid index by node
 
 Set grid anchor. Default anchor is equal to anchor of grid parent node
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`anchor\`: <code class="api-type">Vector3</code> — Anchor
+- <strong class="api-name">\`anchor\`</strong>: <code class="api-type">Vector3</code> — Anchor
 
 </div>
 
@@ -2077,7 +2077,7 @@ Set grid anchor. Default anchor is equal to anchor of grid parent node
 
 Instantly update the grid content
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_grid</code> — Current grid instance
 
@@ -2089,11 +2089,11 @@ Instantly update the grid content
 
 Set grid pivot
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`pivot\`: <code class="api-type">Opaque&lt;&quot;constant&quot;&gt;</code> — The new pivot
+- <strong class="api-name">\`pivot\`</strong>: <code class="api-type">Opaque&lt;&quot;constant&quot;&gt;</code> — The new pivot
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_grid</code> — Current grid instance
 
@@ -2105,14 +2105,14 @@ Set grid pivot
 
 Add new item to the grid
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`item\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — GUI node
-- \`index\`?: <code class="api-type">number | undefined</code> — The item position. By default add as last item. **⚠️ 1-based; passed to \`druid\` unchanged.**
-- \`shift_policy\`?: <code class="api-type">number | undefined</code> — How shift nodes, if required. Default: const.SHIFT.RIGHT
-- \`is_instant\`?: <code class="api-type">boolean | undefined</code> — If true, update node positions instantly
+- <strong class="api-name">\`item\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — GUI node
+- <strong class="api-name">\`index\`</strong>?: <code class="api-type">number | undefined</code> — The item position. By default add as last item. **⚠️ 1-based; passed to \`druid\` unchanged.**
+- <strong class="api-name">\`shift_policy\`</strong>?: <code class="api-type">number | undefined</code> — How shift nodes, if required. Default: const.SHIFT.RIGHT
+- <strong class="api-name">\`is_instant\`</strong>?: <code class="api-type">boolean | undefined</code> — If true, update node positions instantly
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_grid</code> — Current grid instance
 
@@ -2124,12 +2124,12 @@ Add new item to the grid
 
 Set new items to the grid. All previous items will be removed
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`nodes\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;[]</code> — The new grid nodes
-- \`is_instant\`?: <code class="api-type">boolean | undefined</code> — If true, update node positions instantly
+- <strong class="api-name">\`nodes\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;[]</code> — The new grid nodes
+- <strong class="api-name">\`is_instant\`</strong>?: <code class="api-type">boolean | undefined</code> — If true, update node positions instantly
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_grid</code> — Current grid instance
 
@@ -2141,13 +2141,13 @@ Set new items to the grid. All previous items will be removed
 
 Remove the item from the grid. Note that gui node will be not deleted
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`index\`: <code class="api-type">number</code> — The grid node index to remove. **⚠️ 1-based; passed to \`druid\` unchanged.**
-- \`shift_policy\`?: <code class="api-type">number | undefined</code> — How shift nodes, if required. Default: const.SHIFT.RIGHT
-- \`is_instant\`?: <code class="api-type">boolean | undefined</code> — If true, update node positions instantly
+- <strong class="api-name">\`index\`</strong>: <code class="api-type">number</code> — The grid node index to remove. **⚠️ 1-based; passed to \`druid\` unchanged.**
+- <strong class="api-name">\`shift_policy\`</strong>?: <code class="api-type">number | undefined</code> — How shift nodes, if required. Default: const.SHIFT.RIGHT
+- <strong class="api-name">\`is_instant\`</strong>?: <code class="api-type">boolean | undefined</code> — If true, update node positions instantly
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — The deleted gui node from grid
 
@@ -2159,7 +2159,7 @@ Remove the item from the grid. Note that gui node will be not deleted
 
 Return items count in grid
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number</code> — The items count in grid
 
@@ -2171,7 +2171,7 @@ Return items count in grid
 
 Return grid content size
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3</code> — The grid content size
 
@@ -2183,11 +2183,11 @@ Return grid content size
 
 Return grid content size for given count of nodes
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`count\`: <code class="api-type">number</code> — The count of nodes
+- <strong class="api-name">\`count\`</strong>: <code class="api-type">number</code> — The count of nodes
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3</code> — The grid content size
 
@@ -2199,7 +2199,7 @@ Return grid content size for given count of nodes
 
 Return grid content borders
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector4</code> — The grid content borders
 
@@ -2211,7 +2211,7 @@ Return grid content borders
 
 Return array of all node positions
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3[]</code> — All grid node positions
 
@@ -2223,11 +2223,11 @@ Return array of all node positions
 
 Change set position function for grid nodes. It will call on
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`callback\`: <code class="api-type">(...args: any[]) =&gt; unknown</code> — Function on node set position
+- <strong class="api-name">\`callback\`</strong>: <code class="api-type">(<strong class="api-name">...args</strong>: any[]) =&gt; unknown</code> — Function on node set position
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_grid</code> — Current grid instance
 
@@ -2239,7 +2239,7 @@ Change set position function for grid nodes. It will call on
 
 Clear grid nodes array. GUI nodes will be not deleted!
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_grid</code> — Current grid instance
 
@@ -2251,7 +2251,7 @@ Clear grid nodes array. GUI nodes will be not deleted!
 
 Return StaticGrid offset, where StaticGrid content starts.
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3</code> — The StaticGrid offset
 
@@ -2263,11 +2263,11 @@ Return StaticGrid offset, where StaticGrid content starts.
 
 Set new in_row elements for grid
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`in_row\`: <code class="api-type">number</code> — The new in_row value
+- <strong class="api-name">\`in_row\`</strong>: <code class="api-type">number</code> — The new in_row value
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_grid</code> — Current grid instance
 
@@ -2279,12 +2279,12 @@ Set new in_row elements for grid
 
 Set new node size for grid
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`width\`?: <code class="api-type">number | undefined</code> — The new node width
-- \`height\`?: <code class="api-type">number | undefined</code> — The new node height
+- <strong class="api-name">\`width\`</strong>?: <code class="api-type">number | undefined</code> — The new node width
+- <strong class="api-name">\`height\`</strong>?: <code class="api-type">number | undefined</code> — The new node height
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_grid</code> — Current grid instance
 
@@ -2296,11 +2296,11 @@ Set new node size for grid
 
 Sort grid nodes by custom comparator function
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`comparator\`: <code class="api-type">(...args: any[]) =&gt; unknown</code> — The comparator function. (a, b) -> boolean
+- <strong class="api-name">\`comparator\`</strong>: <code class="api-type">(<strong class="api-name">...args</strong>: any[]) =&gt; unknown</code> — The comparator function. (a, b) -> boolean
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_grid</code> — Current grid instance
 
@@ -2310,12 +2310,12 @@ Sort grid nodes by custom comparator function
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`border\`: <code class="api-type">Vector4</code> — Will be updated with new border values
-- \`pos\`: <code class="api-type">Vector3</code>
-- \`size\`: <code class="api-type">Vector3</code>
-- \`pivot\`: <code class="api-type">Vector3</code>
+- <strong class="api-name">\`border\`</strong>: <code class="api-type">Vector4</code> — Will be updated with new border values
+- <strong class="api-name">\`pos\`</strong>: <code class="api-type">Vector3</code>
+- <strong class="api-name">\`size\`</strong>: <code class="api-type">Vector3</code>
+- <strong class="api-name">\`pivot\`</strong>: <code class="api-type">Vector3</code>
 
 </div>
 
@@ -2481,11 +2481,11 @@ Scale step on each height adjust step. Default: 0.02
 
 The Text constructor
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Node name or GUI Text Node itself
-- \`value\`?: <code class="api-type">string | undefined</code> — Initial text. Default value is node text from GUI scene. Default: nil
-- \`adjust_type\`?: <code class="api-type">druid_text_adjust_type | undefined</code> — Adjust type for text. By default is "downscale". Options: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Node name or GUI Text Node itself
+- <strong class="api-name">\`value\`</strong>?: <code class="api-type">string | undefined</code> — Initial text. Default value is node text from GUI scene. Default: nil
+- <strong class="api-name">\`adjust_type\`</strong>?: <code class="api-type">druid_text_adjust_type | undefined</code> — Adjust type for text. By default is "downscale". Options: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"
 
 </div>
 
@@ -2495,11 +2495,11 @@ The Text constructor
 
 Calculate text width with font with respect to trailing space
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`text\`?: <code class="api-type">string | undefined</code> — The text to calculate the size of, if nil - use current text
+- <strong class="api-name">\`text\`</strong>?: <code class="api-type">string | undefined</code> — The text to calculate the size of, if nil - use current text
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number</code> — The text width
 - <code class="api-type">number</code> — The text height
@@ -2512,11 +2512,11 @@ Calculate text width with font with respect to trailing space
 
 Get chars count by width
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`width\`: <code class="api-type">number</code> — The width to get the chars count of
+- <strong class="api-name">\`width\`</strong>: <code class="api-type">number</code> — The width to get the chars count of
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number</code> — The chars count
 
@@ -2528,11 +2528,11 @@ Get chars count by width
 
 Set text to text field
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`new_text\`: <code class="api-type">string</code> — Text for node
+- <strong class="api-name">\`new_text\`</strong>: <code class="api-type">string</code> — Text for node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_text</code> — Current text instance
 
@@ -2550,11 +2550,11 @@ Set text to text field
 
 Set text to text field
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`set_to\`: <code class="api-type">string</code> — Text for node
+- <strong class="api-name">\`set_to\`</strong>: <code class="api-type">string</code> — Text for node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_text</code> — Current text instance
 
@@ -2568,11 +2568,11 @@ Set text to text field
 
 Set text area size
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`size\`: <code class="api-type">Vector3</code> — The new text area size
+- <strong class="api-name">\`size\`</strong>: <code class="api-type">Vector3</code> — The new text area size
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_text</code> — Current text instance
 
@@ -2584,11 +2584,11 @@ Set text area size
 
 Set color
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`color\`: <code class="api-type">Vector4</code> — Color for node
+- <strong class="api-name">\`color\`</strong>: <code class="api-type">Vector4</code> — Color for node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_text</code> — Current text instance
 
@@ -2600,11 +2600,11 @@ Set color
 
 Set alpha
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`alpha\`: <code class="api-type">number</code> — Alpha for node
+- <strong class="api-name">\`alpha\`</strong>: <code class="api-type">number</code> — Alpha for node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_text</code> — Current text instance
 
@@ -2616,11 +2616,11 @@ Set alpha
 
 Set scale
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`scale\`: <code class="api-type">Vector3</code> — Scale for node
+- <strong class="api-name">\`scale\`</strong>: <code class="api-type">Vector3</code> — Scale for node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_text</code> — Current text instance
 
@@ -2632,11 +2632,11 @@ Set scale
 
 Set text pivot. Text will re-anchor inside text area
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`pivot\`: <code class="api-type">number</code> — The gui.PIVOT_* constant
+- <strong class="api-name">\`pivot\`</strong>: <code class="api-type">number</code> — The gui.PIVOT_* constant
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_text</code> — Current text instance
 
@@ -2648,7 +2648,7 @@ Set text pivot. Text will re-anchor inside text area
 
 Return true, if text with line break
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — Is text node with line break
 
@@ -2660,12 +2660,12 @@ Return true, if text with line break
 
 Set text adjust, refresh the current text visuals, if needed
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`adjust_type\`?: <code class="api-type">druid_text_adjust_type | undefined</code> — The adjust type to set, values: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"
-- \`minimal_scale\`?: <code class="api-type">number | undefined</code> — To remove minimal scale, use \`text:set_minimal_scale(nil)\`, if pass nil - not change minimal scale
+- <strong class="api-name">\`adjust_type\`</strong>?: <code class="api-type">druid_text_adjust_type | undefined</code> — The adjust type to set, values: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"
+- <strong class="api-name">\`minimal_scale\`</strong>?: <code class="api-type">number | undefined</code> — To remove minimal scale, use \`text:set_minimal_scale(nil)\`, if pass nil - not change minimal scale
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_text</code> — Current text instance
 
@@ -2677,11 +2677,11 @@ Set text adjust, refresh the current text visuals, if needed
 
 Set minimal scale for "downscale_limited" or "scale_then_scroll" adjust types
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`minimal_scale\`: <code class="api-type">number</code> — If pass nil - not use minimal scale
+- <strong class="api-name">\`minimal_scale\`</strong>: <code class="api-type">number</code> — If pass nil - not use minimal scale
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_text</code> — Current text instance
 
@@ -2693,7 +2693,7 @@ Set minimal scale for "downscale_limited" or "scale_then_scroll" adjust types
 
 Return current text adjust type
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">string</code> — The current text adjust type
 
@@ -2811,12 +2811,12 @@ Input filter for the component subtree, set by \`druid:set_whitelist\` / \`druid
 
 Set component style. Pass nil to clear style
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`self\`: <code class="api-type">T</code>
-- \`druid_style\`?: <code class="api-type">LuaTable | undefined</code>
+- <strong class="api-name">\`self\`</strong>: <code class="api-type">T</code>
+- <strong class="api-name">\`druid_style\`</strong>?: <code class="api-type">LuaTable | undefined</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">T</code> — The component itself for chaining
 
@@ -2830,12 +2830,12 @@ Set component template name. Pass nil to clear template.
 This template id used to access nodes inside the template on GUI scene.
 Parent template will be added automatically if exist.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`self\`: <code class="api-type">T</code>
-- \`template\`?: <code class="api-type">string | undefined</code>
+- <strong class="api-name">\`self\`</strong>: <code class="api-type">T</code>
+- <strong class="api-name">\`template\`</strong>?: <code class="api-type">string | undefined</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">T</code> — The component itself for chaining
 
@@ -2847,7 +2847,7 @@ Parent template will be added automatically if exist.
 
 Get full template name.
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">string</code>
 
@@ -2859,11 +2859,11 @@ Get full template name.
 
 Set current component nodes, returned from \`gui.clone_tree\` function.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`nodes\`?: <code class="api-type">LuaMap&lt;Hash, Opaque&lt;&quot;node&quot;&gt;&gt; | Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — The nodes table from <a href="/api/defold-1.14.0/gui#guiclone_treenode-opaquenode-tablehash-node" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
+- <strong class="api-name">\`nodes\`</strong>?: <code class="api-type">LuaMap&lt;Hash, Opaque&lt;&quot;node&quot;&gt;&gt; | Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — The nodes table from <a href="/api/defold-1.14.0/gui#guiclone_treenode-opaquenode-tablehash-node" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_component</code>
 
@@ -2875,11 +2875,11 @@ Set current component nodes, returned from \`gui.clone_tree\` function.
 
 Get component node by node_id. Respect to current template and nodes.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node_id\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code>
+- <strong class="api-name">\`node_id\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code>
 
@@ -2891,7 +2891,7 @@ Get component node by node_id. Respect to current template and nodes.
 
 Get component name
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">string</code> — The component name + uid
 
@@ -2903,7 +2903,7 @@ Get component name
 
 Get component input priority, the bigger number processed first. Default value: 10
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number</code>
 
@@ -2915,12 +2915,12 @@ Get component input priority, the bigger number processed first. Default value: 
 
 Set component input priority, the bigger number processed first. Default value: 10
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`value\`: <code class="api-type">number</code>
-- \`is_temporary\`?: <code class="api-type">boolean | undefined</code> — If true, the reset input priority will return to previous value
+- <strong class="api-name">\`value\`</strong>: <code class="api-type">number</code>
+- <strong class="api-name">\`is_temporary\`</strong>?: <code class="api-type">boolean | undefined</code> — If true, the reset input priority will return to previous value
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_component</code> — The component itself for chaining
 
@@ -2933,7 +2933,7 @@ Set component input priority, the bigger number processed first. Default value: 
 Reset component input priority to it's default value, that was set in \`create\` function or \`set_input_priority\`
 Each component in the subtree returns to it's own default value, not to the parent one
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_component</code> — The component itself for chaining
 
@@ -2947,11 +2947,11 @@ Set component input state. By default it's enabled.
 If input is disabled, the component will not receive input events.
 Recursive for all children components.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`state\`: <code class="api-type">boolean</code>
+- <strong class="api-name">\`state\`</strong>: <code class="api-type">boolean</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_component</code> — The component itself for chaining
 
@@ -2963,7 +2963,7 @@ Recursive for all children components.
 
 Get component input state. By default it's enabled. Can be disabled by \`set_input_enabled\` function.
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code>
 
@@ -2975,7 +2975,7 @@ Get component input state. By default it's enabled. Can be disabled by \`set_inp
 
 Get parent component
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_component | undefined</code> — The parent component if exist or nil
 
@@ -2987,10 +2987,10 @@ Get parent component
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`template\`: <code class="api-type">string</code> — The template string name
-- \`nodes\`: <code class="api-type">LuaTable</code> — Nodes table from <a href="/api/defold-1.14.0/gui#guiclone_treenode-opaquenode-tablehash-node" class="symbol-xref">gui.clone_tree</a>
+- <strong class="api-name">\`template\`</strong>: <code class="api-type">string</code> — The template string name
+- <strong class="api-name">\`nodes\`</strong>: <code class="api-type">LuaTable</code> — Nodes table from <a href="/api/defold-1.14.0/gui#guiclone_treenode-opaquenode-tablehash-node" class="symbol-xref">gui.clone_tree</a>
 
 </div>
 
@@ -3000,11 +3000,11 @@ Get parent component
 
 Set placeholder text
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`placeholder_text\`: <code class="api-type">string</code> — The placeholder text
+- <strong class="api-name">\`placeholder_text\`</strong>: <code class="api-type">string</code> — The placeholder text
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_input</code> — Current instance
 
@@ -3016,7 +3016,7 @@ Set placeholder text
 
 Select input field
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_input</code> — Current instance
 
@@ -3028,11 +3028,11 @@ Select input field
 
 Set input field text
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`text\`: <code class="api-type">string</code> — The input text
+- <strong class="api-name">\`text\`</strong>: <code class="api-type">string</code> — The input text
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_input</code> — Current instance
 
@@ -3044,11 +3044,11 @@ Set input field text
 
 Set input field font
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`font\`: <code class="api-type">Hash</code> — The font hash
+- <strong class="api-name">\`font\`</strong>: <code class="api-type">Hash</code> — The font hash
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_input</code> — Current instance
 
@@ -3068,11 +3068,11 @@ Set input field text
 
 Set allowed charaters for input field.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`characters\`: <code class="api-type">string</code> — Regular expression for validate user input
+- <strong class="api-name">\`characters\`</strong>: <code class="api-type">string</code> — Regular expression for validate user input
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_input</code> — Current instance
 
@@ -3258,10 +3258,10 @@ Width to the last visible glyph of a text word
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`text_node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — The text node to make Rich Text
-- \`value\`?: <code class="api-type">string | undefined</code> — The initial text value. Default will be <a href="/api/defold-1.14.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
+- <strong class="api-name">\`text_node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — The text node to make Rich Text
+- <strong class="api-name">\`value\`</strong>?: <code class="api-type">string | undefined</code> — The initial text value. Default will be <a href="/api/defold-1.14.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
 
 </div>
 
@@ -3298,11 +3298,11 @@ rich_text:set_text("＜img=texture:image＞Display image")
 rich_text:set_text("＜img=texture:image,size＞Display image with size")
 rich_text:set_text("＜img=texture:image,width,height＞Display image with width and height")
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`text\`?: <code class="api-type">string | undefined</code> — The text to set
+- <strong class="api-name">\`text\`</strong>?: <code class="api-type">string | undefined</code> — The text to set
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_text_word[]</code>
 - <code class="api-type">druid_rich_text_lines_metrics</code>
@@ -3315,7 +3315,7 @@ rich_text:set_text("＜img=texture:image,width,height＞Display image with width
 
 Get the current text of the rich text
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">string</code> — The current text of the rich text
 
@@ -3327,11 +3327,11 @@ Get the current text of the rich text
 
 Set pivot and keep the content in place (anchor). After this, resizing the root will keep the anchor fixed.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`pivot\`: <code class="api-type">number</code> — GUI pivot constant
+- <strong class="api-name">\`pivot\`</strong>: <code class="api-type">number</code> — GUI pivot constant
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_text</code>
 
@@ -3351,11 +3351,11 @@ Clear all created words.
 
 Get all words, which has a passed tag.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`tag\`: <code class="api-type">string</code> — The tag to get the words for
+- <strong class="api-name">\`tag\`</strong>: <code class="api-type">string</code> — The tag to get the words for
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_text_word[]</code> — The words with the passed tag
 
@@ -3367,11 +3367,11 @@ Get all words, which has a passed tag.
 
 Set if the rich text should split to characters, not words
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`value\`: <code class="api-type">boolean</code>
+- <strong class="api-name">\`value\`</strong>: <code class="api-type">boolean</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_text</code>
 
@@ -3383,7 +3383,7 @@ Set if the rich text should split to characters, not words
 
 Get all current created words, each word is a table that contains the information about the word
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_text_word[]</code>
 
@@ -3395,7 +3395,7 @@ Get all current created words, each word is a table that contains the informatio
 
 Get the current line metrics
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_text_lines_metrics</code> — The line metrics of the rich text
 
@@ -3408,11 +3408,11 @@ Get the current line metrics
 Spread words on each line to the root width, same idea as layout:set_justify.
 A line with one word is left as-is. Extra gap is inserted between words.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_justify\`: <code class="api-type">boolean</code>
+- <strong class="api-name">\`is_justify\`</strong>: <code class="api-type">boolean</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_text</code>
 
@@ -3424,11 +3424,11 @@ A line with one word is left as-is. Extra gap is inserted between words.
 
 Set the width of the rich text, not affects the size of current spawned words
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`width\`: <code class="api-type">number</code>
+- <strong class="api-name">\`width\`</strong>: <code class="api-type">number</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_text</code>
 
@@ -3440,11 +3440,11 @@ Set the width of the rich text, not affects the size of current spawned words
 
 Set the height of the rich text, not affects the size of current spawned words
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`height\`: <code class="api-type">number</code>
+- <strong class="api-name">\`height\`</strong>: <code class="api-type">number</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_text</code>
 
@@ -3500,11 +3500,11 @@ Color of debug draggable corners
 
 The Container constructor
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — Gui node
-- \`mode\`: <code class="api-type">string</code> — Layout mode
-- \`callback\`?: <code class="api-type">((self: druid_container, size: Vector3) =&gt; void) | undefined</code> — Callback on size changed
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — Gui node
+- <strong class="api-name">\`mode\`</strong>: <code class="api-type">string</code> — Layout mode
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((self: druid_container, size: Vector3) =&gt; void) | undefined</code> — Callback on size changed
 
 </div>
 
@@ -3522,9 +3522,9 @@ Refresh the origins of the container, origins is the size and position of the co
 
 Set the pivot of the container
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`pivot\`: <code class="api-type">Opaque&lt;&quot;constant&quot;&gt;</code> — The pivot to set
+- <strong class="api-name">\`pivot\`</strong>: <code class="api-type">Opaque&lt;&quot;constant&quot;&gt;</code> — The pivot to set
 
 </div>
 
@@ -3534,13 +3534,13 @@ Set the pivot of the container
 
 Set new size of layout node
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`width\`?: <code class="api-type">number | undefined</code> — The width to set
-- \`height\`?: <code class="api-type">number | undefined</code> — The height to set
-- \`anchor_pivot\`?: <code class="api-type">Opaque&lt;&quot;constant&quot;&gt; | undefined</code> — If set will keep the corner position relative to the new size
+- <strong class="api-name">\`width\`</strong>?: <code class="api-type">number | undefined</code> — The width to set
+- <strong class="api-name">\`height\`</strong>?: <code class="api-type">number | undefined</code> — The height to set
+- <strong class="api-name">\`anchor_pivot\`</strong>?: <code class="api-type">Opaque&lt;&quot;constant&quot;&gt; | undefined</code> — If set will keep the corner position relative to the new size
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_container</code> — Container
 
@@ -3552,7 +3552,7 @@ Set new size of layout node
 
 Get the position of the container
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3</code> — The position of the container
 
@@ -3564,10 +3564,10 @@ Get the position of the container
 
 Set the position of the container
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`pos_x\`: <code class="api-type">number</code> — The x position to set
-- \`pos_y\`: <code class="api-type">number</code> — The y position to set
+- <strong class="api-name">\`pos_x\`</strong>: <code class="api-type">number</code> — The x position to set
+- <strong class="api-name">\`pos_y\`</strong>: <code class="api-type">number</code> — The y position to set
 
 </div>
 
@@ -3577,7 +3577,7 @@ Set the position of the container
 
 Get the current size of the layout node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3</code> — The current size of the layout node
 
@@ -3589,7 +3589,7 @@ Get the current size of the layout node
 
 Get the current scale of the layout node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3</code> — The current scale of the layout node
 
@@ -3601,11 +3601,11 @@ Get the current scale of the layout node
 
 Set size for layout node to fit inside it
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`target_size\`: <code class="api-type">Vector3</code> — The target size to fit into
+- <strong class="api-name">\`target_size\`</strong>: <code class="api-type">Vector3</code> — The target size to fit into
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_container</code> — Current container instance
 
@@ -3617,7 +3617,7 @@ Set size for layout node to fit inside it
 
 Set current size for layout node to fit inside it
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_container</code> — Current container instance
 
@@ -3627,13 +3627,13 @@ Set current size for layout node to fit inside it
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node_or_container\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | druid_container | LuaTable</code> — The node or container to add
-- \`mode\`?: <code class="api-type">druid_container_mode | undefined</code> — stretch, fit, stretch_x, stretch_y. Default: Pick from node, "fit" or "stretch"
-- \`on_resize_callback\`?: <code class="api-type">((self: Opaque&lt;&quot;userdata&quot;&gt;, size: Vector3) =&gt; void) | undefined</code>
+- <strong class="api-name">\`node_or_container\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | druid_container | LuaTable</code> — The node or container to add
+- <strong class="api-name">\`mode\`</strong>?: <code class="api-type">druid_container_mode | undefined</code> — stretch, fit, stretch_x, stretch_y. Default: Pick from node, "fit" or "stretch"
+- <strong class="api-name">\`on_resize_callback\`</strong>?: <code class="api-type">((self: Opaque&lt;&quot;userdata&quot;&gt;, size: Vector3) =&gt; void) | undefined</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_container</code> — Container New created layout instance
 
@@ -3643,7 +3643,7 @@ Set current size for layout node to fit inside it
 
 <div class="api-symbol-body">
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_container | undefined</code>
 
@@ -3653,9 +3653,9 @@ Set current size for layout node to fit inside it
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`parent_container\`?: <code class="api-type">druid_container | undefined</code>
+- <strong class="api-name">\`parent_container\`</strong>?: <code class="api-type">druid_container | undefined</code>
 
 </div>
 
@@ -3669,7 +3669,7 @@ Set current size for layout node to fit inside it
 
 <div class="api-symbol-body">
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_container</code> — Current container instance
 
@@ -3679,7 +3679,7 @@ Set current size for layout node to fit inside it
 
 <div class="api-symbol-body">
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_container</code> — Current container instance
 
@@ -3693,11 +3693,11 @@ Set current size for layout node to fit inside it
 
 Set node for layout node to fit inside it. Pass nil to reset
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_container</code> — Current container instance
 
@@ -3709,12 +3709,12 @@ Set node for layout node to fit inside it. Pass nil to reset
 
 Set the minimum size of the container
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`min_size_x\`?: <code class="api-type">number | undefined</code> — The minimum size x
-- \`min_size_y\`?: <code class="api-type">number | undefined</code> — The minimum size y
+- <strong class="api-name">\`min_size_x\`</strong>?: <code class="api-type">number | undefined</code> — The minimum size x
+- <strong class="api-name">\`min_size_y\`</strong>?: <code class="api-type">number | undefined</code> — The minimum size y
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_container</code> — Current container instance
 
@@ -3726,12 +3726,12 @@ Set the minimum size of the container
 
 Set the maximum size of the container
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`max_size_x\`?: <code class="api-type">number | undefined</code> — The maximum size x
-- \`max_size_y\`?: <code class="api-type">number | undefined</code> — The maximum size y
+- <strong class="api-name">\`max_size_x\`</strong>?: <code class="api-type">number | undefined</code> — The maximum size x
+- <strong class="api-name">\`max_size_y\`</strong>?: <code class="api-type">number | undefined</code> — The maximum size y
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_container</code> — Current container instance
 
@@ -3897,11 +3897,11 @@ The draggable corners
 
 The DataList constructor
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`scroll\`: <code class="api-type">druid_scroll</code> — The Scroll instance for Data List component
-- \`grid\`: <code class="api-type">druid_grid</code> — The StaticGrid instance for Data List component
-- \`create_function\`: <code class="api-type">(...args: any[]) =&gt; unknown</code> — The create function callback(self, data, index, data_list). Function should return (node, [component])
+- <strong class="api-name">\`scroll\`</strong>: <code class="api-type">druid_scroll</code> — The Scroll instance for Data List component
+- <strong class="api-name">\`grid\`</strong>: <code class="api-type">druid_grid</code> — The StaticGrid instance for Data List component
+- <strong class="api-name">\`create_function\`</strong>: <code class="api-type">(<strong class="api-name">...args</strong>: any[]) =&gt; unknown</code> — The create function callback(self, data, index, data_list). Function should return (node, [component])
 
 </div>
 
@@ -3911,11 +3911,11 @@ The DataList constructor
 
 Set use cache version of DataList. Requires make setup of components in on_element_add callback and clean in on_element_remove
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_use_cache\`: <code class="api-type">boolean</code> — Use cache version of DataList
+- <strong class="api-name">\`is_use_cache\`</strong>: <code class="api-type">boolean</code> — Use cache version of DataList
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_data_list</code> — Current DataList instance
 
@@ -3927,11 +3927,11 @@ Set use cache version of DataList. Requires make setup of components in on_eleme
 
 Set new data set for DataList component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`data\`: <code class="api-type">LuaTable</code> — The new data array
+- <strong class="api-name">\`data\`</strong>: <code class="api-type">LuaTable</code> — The new data array
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_data_list</code> — Current DataList instance
 
@@ -3943,7 +3943,7 @@ Set new data set for DataList component
 
 Return current data from DataList component
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">LuaTable</code> — The current data array
 
@@ -3955,13 +3955,13 @@ Return current data from DataList component
 
 Add element to DataList
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`data\`: <code class="api-type">LuaTable</code> — The data to add
-- \`index\`?: <code class="api-type">number | undefined</code> — The index to add the data at. **⚠️ 1-based; passed to \`druid\` unchanged.**
-- \`shift_policy\`?: <code class="api-type">number | undefined</code> — The constant from const.SHIFT.*
+- <strong class="api-name">\`data\`</strong>: <code class="api-type">LuaTable</code> — The data to add
+- <strong class="api-name">\`index\`</strong>?: <code class="api-type">number | undefined</code> — The index to add the data at. **⚠️ 1-based; passed to \`druid\` unchanged.**
+- <strong class="api-name">\`shift_policy\`</strong>?: <code class="api-type">number | undefined</code> — The constant from const.SHIFT.*
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_data_list</code> — Current DataList instance
 
@@ -3973,12 +3973,12 @@ Add element to DataList
 
 Remove element from DataList
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`index\`?: <code class="api-type">number | undefined</code> — The index to remove the data at. **⚠️ 1-based; passed to \`druid\` unchanged.**
-- \`shift_policy\`?: <code class="api-type">number | undefined</code> — The constant from const.SHIFT.*
+- <strong class="api-name">\`index\`</strong>?: <code class="api-type">number | undefined</code> — The index to remove the data at. **⚠️ 1-based; passed to \`druid\` unchanged.**
+- <strong class="api-name">\`shift_policy\`</strong>?: <code class="api-type">number | undefined</code> — The constant from const.SHIFT.*
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_data_list</code> — Current DataList instance
 
@@ -3990,12 +3990,12 @@ Remove element from DataList
 
 Remove element from DataList by data value
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`data\`: <code class="api-type">LuaTable</code> — The data to remove
-- \`shift_policy\`?: <code class="api-type">number | undefined</code> — The constant from const.SHIFT.*
+- <strong class="api-name">\`data\`</strong>: <code class="api-type">LuaTable</code> — The data to remove
+- <strong class="api-name">\`shift_policy\`</strong>?: <code class="api-type">number | undefined</code> — The constant from const.SHIFT.*
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_data_list</code> — Current DataList instance
 
@@ -4007,7 +4007,7 @@ Remove element from DataList by data value
 
 Clear the DataList and refresh visuals
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_data_list</code> — Current DataList instance
 
@@ -4019,9 +4019,9 @@ Clear the DataList and refresh visuals
 
 Return index for data value
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`data\`: <code class="api-type">LuaTable</code>
+- <strong class="api-name">\`data\`</strong>: <code class="api-type">LuaTable</code>
 
 </div>
 
@@ -4031,7 +4031,7 @@ Return index for data value
 
 Return all currently created nodes in DataList
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Opaque&lt;&quot;node&quot;&gt;[]</code> — List of created nodes
 
@@ -4043,7 +4043,7 @@ Return all currently created nodes in DataList
 
 Return all currently created components in DataList
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_component[]</code> — List of created components
 
@@ -4055,9 +4055,9 @@ Return all currently created components in DataList
 
 Instant scroll to element with passed index
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`index\`: <code class="api-type">number</code> — The index to scroll to. **⚠️ 1-based; passed to \`druid\` unchanged.**
+- <strong class="api-name">\`index\`</strong>: <code class="api-type">number</code> — The index to scroll to. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 </div>
 
@@ -4069,7 +4069,7 @@ Rebuild the scroll content size and refresh the visible elements.
 The DataList refreshes itself on the data change, so this is only needed when
 something outside of the data changed, like the grid item size at runtime
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_data_list</code> — Current DataList instance
 
@@ -4165,11 +4165,11 @@ Time in seconds to keep modificator active after release
 
 The Hotkey constructor
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`keys\`: <code class="api-type">string[] | string</code> — The keys to be pressed for trigger callback. Should contains one key and any modificator keys
-- \`callback\`: <code class="api-type">(...args: any[]) =&gt; unknown</code> — The callback function
-- \`callback_argument\`?: <code class="api-type">unknown | undefined</code> — The argument to pass into the callback function
+- <strong class="api-name">\`keys\`</strong>: <code class="api-type">string[] | string</code> — The keys to be pressed for trigger callback. Should contains one key and any modificator keys
+- <strong class="api-name">\`callback\`</strong>: <code class="api-type">(<strong class="api-name">...args</strong>: any[]) =&gt; unknown</code> — The callback function
+- <strong class="api-name">\`callback_argument\`</strong>?: <code class="api-type">unknown | undefined</code> — The argument to pass into the callback function
 
 </div>
 
@@ -4179,12 +4179,12 @@ The Hotkey constructor
 
 Add hotkey for component callback
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`keys\`: <code class="api-type">string[] | Hash[] | string | Hash</code> — that have to be pressed before key pressed to activate
-- \`callback_argument\`?: <code class="api-type">unknown | undefined</code> — The argument to pass into the callback function
+- <strong class="api-name">\`keys\`</strong>: <code class="api-type">string[] | Hash[] | string | Hash</code> — that have to be pressed before key pressed to activate
+- <strong class="api-name">\`callback_argument\`</strong>?: <code class="api-type">unknown | undefined</code> — The argument to pass into the callback function
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_hotkey</code> — Current instance
 
@@ -4198,11 +4198,11 @@ Add hotkey for component callback
 
 If true, the callback will be triggered on action.repeated
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_enabled_repeated\`: <code class="api-type">boolean</code> — The flag value
+- <strong class="api-name">\`is_enabled_repeated\`</strong>: <code class="api-type">boolean</code> — The flag value
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_hotkey</code> — Current instance
 
@@ -4214,11 +4214,11 @@ If true, the callback will be triggered on action.repeated
 
 If node is provided, the hotkey can be disabled, if the node is disabled
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | undefined</code> — The node to bind the hotkey to. Nil to unbind the node
+- <strong class="api-name">\`node\`</strong>?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | undefined</code> — The node to bind the hotkey to. Nil to unbind the node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_hotkey</code> — Current instance
 
@@ -4328,11 +4328,11 @@ Callback on wrong user input
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`click_node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — Node to enabled input component
-- \`text_node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | druid_text</code> — Text node what will be changed on user input. You can pass text component instead of text node name Text
-- \`keyboard_type\`?: <code class="api-type">Opaque&lt;&quot;constant&quot;&gt; | undefined</code> — Gui keyboard type for input field
+- <strong class="api-name">\`click_node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — Node to enabled input component
+- <strong class="api-name">\`text_node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | druid_text</code> — Text node what will be changed on user input. You can pass text component instead of text node name Text
+- <strong class="api-name">\`keyboard_type\`</strong>?: <code class="api-type">Opaque&lt;&quot;constant&quot;&gt; | undefined</code> — Gui keyboard type for input field
 
 </div>
 
@@ -4344,11 +4344,11 @@ Callback on wrong user input
 
 Replace selected text with new text
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`text\`: <code class="api-type">string</code> — The text to replace selected text
+- <strong class="api-name">\`text\`</strong>: <code class="api-type">string</code> — The text to replace selected text
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">string</code> — New input text
 
@@ -4360,9 +4360,9 @@ Replace selected text with new text
 
 Set text for input field
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`input_text\`?: <code class="api-type">string | undefined</code> — The string to apply for input field, if nil - will be set to empty string
+- <strong class="api-name">\`input_text\`</strong>?: <code class="api-type">string | undefined</code> — The string to apply for input field, if nil - will be set to empty string
 
 </div>
 
@@ -4389,7 +4389,7 @@ Remove selection from input. It will hide the keyboard and trigger on_unselect e
 Return the text currently displayed on the text node.
 Can differ from \`get_text\` if the text adjust mode trims the value.
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">string</code> — The visible input field text
 
@@ -4401,7 +4401,7 @@ Can differ from \`get_text\` if the text adjust mode trims the value.
 
 Return current input field text
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">string</code> — The current input field text
 
@@ -4414,11 +4414,11 @@ Return current input field text
 Set maximum length for input field.
 Pass nil to make input field unliminted (by default)
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`max_length\`: <code class="api-type">number</code> — Maximum length for input text field
+- <strong class="api-name">\`max_length\`</strong>: <code class="api-type">number</code> — Maximum length for input text field
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_input</code> — Current input instance
 
@@ -4434,11 +4434,11 @@ ex: [%a%d] for alpha and numeric
 ex: [abcdef] to allow only these characters
 ex: [^%s] to allow only non-space characters
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`characters\`: <code class="api-type">string</code> — Regular expression for validate user input
+- <strong class="api-name">\`characters\`</strong>: <code class="api-type">string</code> — Regular expression for validate user input
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_input</code> — Current input instance
 
@@ -4450,7 +4450,7 @@ ex: [^%s] to allow only non-space characters
 
 Reset current input selection and return previous value
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_input</code> — Current input instance
 
@@ -4462,13 +4462,13 @@ Reset current input selection and return previous value
 
 Set cursor position in input field
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`cursor_index\`?: <code class="api-type">number | undefined</code> — Cursor index for cursor position, if nil - will be set to the end of the text. **0️⃣ 0-based; passed to \`druid\` unchanged.**
-- \`start_index\`?: <code class="api-type">number | undefined</code> — Start index for cursor position, if nil - will be set to the end of the text. **0️⃣ 0-based; passed to \`druid\` unchanged.**
-- \`end_index\`?: <code class="api-type">number | undefined</code> — End index for cursor position, if nil - will be set to the start_index. **0️⃣ 0-based; passed to \`druid\` unchanged.**
+- <strong class="api-name">\`cursor_index\`</strong>?: <code class="api-type">number | undefined</code> — Cursor index for cursor position, if nil - will be set to the end of the text. **0️⃣ 0-based; passed to \`druid\` unchanged.**
+- <strong class="api-name">\`start_index\`</strong>?: <code class="api-type">number | undefined</code> — Start index for cursor position, if nil - will be set to the end of the text. **0️⃣ 0-based; passed to \`druid\` unchanged.**
+- <strong class="api-name">\`end_index\`</strong>?: <code class="api-type">number | undefined</code> — End index for cursor position, if nil - will be set to the start_index. **0️⃣ 0-based; passed to \`druid\` unchanged.**
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_input</code> — Current input instance
 
@@ -4480,13 +4480,13 @@ Set cursor position in input field
 
 Change cursor position by delta
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`delta\`: <code class="api-type">number</code> — side for cursor position, -1 for left, 1 for right
-- \`is_add_to_selection\`: <code class="api-type">boolean</code> — (Shift key)
-- \`is_move_to_end\`: <code class="api-type">boolean</code> — (Ctrl key)
+- <strong class="api-name">\`delta\`</strong>: <code class="api-type">number</code> — side for cursor position, -1 for left, 1 for right
+- <strong class="api-name">\`is_add_to_selection\`</strong>: <code class="api-type">boolean</code> — (Shift key)
+- <strong class="api-name">\`is_move_to_end\`</strong>: <code class="api-type">boolean</code> — (Ctrl key)
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_input</code> — Current input instance
 
@@ -4562,11 +4562,11 @@ The style of the input component
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`locale_id\`?: <code class="api-type">string | undefined</code> — Default locale id or text from node as default. If not provided, will use text from the node
-- \`adjust_type\`?: <code class="api-type">string | undefined</code> — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- <strong class="api-name">\`locale_id\`</strong>?: <code class="api-type">string | undefined</code> — Default locale id or text from node as default. If not provided, will use text from the node
+- <strong class="api-name">\`adjust_type\`</strong>?: <code class="api-type">string | undefined</code> — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
 
 </div>
 
@@ -4576,11 +4576,11 @@ The style of the input component
 
 Setup raw text to lang_text component. This will clear any locale settings.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`text\`: <code class="api-type">string</code> — Text for text node
+- <strong class="api-name">\`text\`</strong>: <code class="api-type">string</code> — Text for text node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_lang_text</code> — Current instance
 
@@ -4598,11 +4598,11 @@ Setup raw text to lang_text component. This will clear any locale settings.
 
 Setup raw text to lang_text component. This will clear any locale settings.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`text\`: <code class="api-type">string</code> — Text for text node
+- <strong class="api-name">\`text\`</strong>: <code class="api-type">string</code> — Text for text node
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_lang_text</code> — Current instance
 
@@ -4614,12 +4614,12 @@ Setup raw text to lang_text component. This will clear any locale settings.
 
 Translate the text by locale_id. The text will be automatically updated when locale changes.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`locale_id\`: <code class="api-type">string</code> — Locale id to get text from
-- \`...args\`: <code class="api-type">string</code> — Optional params for <a href="/api/string#stringformatformatstring-string-args-any-string" class="symbol-xref">string.format</a>
+- <strong class="api-name">\`locale_id\`</strong>: <code class="api-type">string</code> — Locale id to get text from
+- <strong class="api-name">\`...args\`</strong>: <code class="api-type">string</code> — Optional params for <a href="/api/string#stringformatformatstring-string-args-any-string" class="symbol-xref">string.format</a>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_lang_text</code> — Current instance
 
@@ -4631,11 +4631,11 @@ Translate the text by locale_id. The text will be automatically updated when loc
 
 Format string with new text params on localized text. Keeps the current locale but updates the format parameters.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`...args\`: <code class="api-type">string</code> — Optional params for <a href="/api/string#stringformatformatstring-string-args-any-string" class="symbol-xref">string.format</a>
+- <strong class="api-name">\`...args\`</strong>: <code class="api-type">string</code> — Optional params for <a href="/api/string#stringformatformatstring-string-args-any-string" class="symbol-xref">string.format</a>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_lang_text</code> — Current instance
 
@@ -4691,10 +4691,10 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node_or_node_id\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — The node to manage the layout of
-- \`layout_type\`: <code class="api-type">druid_layout_type</code> — The type of layout (horizontal, vertical, horizontal_wrap)
+- <strong class="api-name">\`node_or_node_id\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — The node to manage the layout of
+- <strong class="api-name">\`layout_type\`</strong>: <code class="api-type">druid_layout_type</code> — The type of layout (horizontal, vertical, horizontal_wrap)
 
 </div>
 
@@ -4706,7 +4706,7 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 <div class="api-symbol-body">
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Opaque&lt;&quot;node&quot;&gt;[]</code> — The entities to manage the layout of
 
@@ -4716,7 +4716,7 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 <div class="api-symbol-body">
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number</code> — The count of entities in layout
 
@@ -4726,12 +4726,12 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — The node to set the index of
-- \`index\`: <code class="api-type">number</code> — The index to set the node to. **⚠️ 1-based; passed to \`druid\` unchanged.**
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — The node to set the index of
+- <strong class="api-name">\`index\`</strong>: <code class="api-type">number</code> — The index to set the node to. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — for chaining
 
@@ -4743,12 +4743,12 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 Set the margin of the layout
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`margin_x\`?: <code class="api-type">number | undefined</code> — The margin x
-- \`margin_y\`?: <code class="api-type">number | undefined</code> — The margin y
+- <strong class="api-name">\`margin_x\`</strong>?: <code class="api-type">number | undefined</code> — The margin x
+- <strong class="api-name">\`margin_y\`</strong>?: <code class="api-type">number | undefined</code> — The margin y
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — Current layout instance
 
@@ -4758,14 +4758,14 @@ Set the margin of the layout
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`padding_x\`?: <code class="api-type">number | undefined</code> — From Left
-- \`padding_y\`?: <code class="api-type">number | undefined</code> — From Top
-- \`padding_z\`?: <code class="api-type">number | undefined</code> — From Right
-- \`padding_w\`?: <code class="api-type">number | undefined</code> — From Bottom
+- <strong class="api-name">\`padding_x\`</strong>?: <code class="api-type">number | undefined</code> — From Left
+- <strong class="api-name">\`padding_y\`</strong>?: <code class="api-type">number | undefined</code> — From Top
+- <strong class="api-name">\`padding_z\`</strong>?: <code class="api-type">number | undefined</code> — From Right
+- <strong class="api-name">\`padding_w\`</strong>?: <code class="api-type">number | undefined</code> — From Bottom
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — Current layout instance
 
@@ -4775,7 +4775,7 @@ Set the margin of the layout
 
 <div class="api-symbol-body">
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — Current layout instance
 
@@ -4785,11 +4785,11 @@ Set the margin of the layout
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_justify\`: <code class="api-type">boolean</code>
+- <strong class="api-name">\`is_justify\`</strong>: <code class="api-type">boolean</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — Current layout instance
 
@@ -4799,11 +4799,11 @@ Set the margin of the layout
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`layout_type\`: <code class="api-type">druid_layout_type</code>
+- <strong class="api-name">\`layout_type\`</strong>: <code class="api-type">druid_layout_type</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — Current layout instance
 
@@ -4813,12 +4813,12 @@ Set the margin of the layout
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_hug_width\`: <code class="api-type">boolean</code>
-- \`is_hug_height\`: <code class="api-type">boolean</code>
+- <strong class="api-name">\`is_hug_width\`</strong>: <code class="api-type">boolean</code>
+- <strong class="api-name">\`is_hug_height\`</strong>: <code class="api-type">boolean</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — Current layout instance
 
@@ -4830,11 +4830,11 @@ Set the margin of the layout
 
 Add node to layout
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node_or_node_id\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — node_or_node_id
+- <strong class="api-name">\`node_or_node_id\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — node_or_node_id
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — Current layout instance
 
@@ -4846,11 +4846,11 @@ Add node to layout
 
 Remove node from layout
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node_or_node_id\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — node_or_node_id
+- <strong class="api-name">\`node_or_node_id\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code> — node_or_node_id
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — for chaining
 
@@ -4860,7 +4860,7 @@ Remove node from layout
 
 <div class="api-symbol-body">
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Vector3</code>
 
@@ -4870,7 +4870,7 @@ Remove node from layout
 
 <div class="api-symbol-body">
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number</code>
 - <code class="api-type">number</code>
@@ -4881,11 +4881,11 @@ Remove node from layout
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_instant\`?: <code class="api-type">boolean | undefined</code> — If true, node position update instantly, otherwise with set_position_function callback
+- <strong class="api-name">\`is_instant\`</strong>?: <code class="api-type">boolean | undefined</code> — If true, node position update instantly, otherwise with set_position_function callback
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — Current layout instance
 
@@ -4895,7 +4895,7 @@ Remove node from layout
 
 <div class="api-symbol-body">
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — Current layout instance
 
@@ -4905,11 +4905,11 @@ Remove node from layout
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code>
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number</code> — The width of the node
 - <code class="api-type">number</code> — The height of the node
@@ -4920,13 +4920,13 @@ Remove node from layout
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code>
-- \`x\`: <code class="api-type">number</code>
-- \`y\`: <code class="api-type">number</code>
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code>
+- <strong class="api-name">\`x\`</strong>: <code class="api-type">number</code>
+- <strong class="api-name">\`y\`</strong>: <code class="api-type">number</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code>
 
@@ -4938,11 +4938,11 @@ Remove node from layout
 
 Set custom position function for layout nodes. It will call on update poses on layout elements. Default: <a href="/api/defold-1.14.0/gui#guiset_positionnode-opaquenode-position-vector3--vector4" class="symbol-xref">gui.set_position</a>
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`callback\`: <code class="api-type">(...args: any[]) =&gt; unknown</code>
+- <strong class="api-name">\`callback\`</strong>: <code class="api-type">(<strong class="api-name">...args</strong>: any[]) =&gt; unknown</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — Current layout instance
 
@@ -5060,11 +5060,11 @@ Minimum step to fill progress bar. Default: 0.005
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Node name or GUI Node itself.
-- \`key\`: <code class="api-type">string</code> — Progress bar direction: "x" or "y"
-- \`init_value\`?: <code class="api-type">number | undefined</code> — Initial value of progress bar (0 to 1). Default: 1
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Node name or GUI Node itself.
+- <strong class="api-name">\`key\`</strong>: <code class="api-type">string</code> — Progress bar direction: "x" or "y"
+- <strong class="api-name">\`init_value\`</strong>?: <code class="api-type">number | undefined</code> — Initial value of progress bar (0 to 1). Default: 1
 
 </div>
 
@@ -5072,9 +5072,9 @@ Minimum step to fill progress bar. Default: 0.005
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`dt\`: <code class="api-type">number</code> — Delta time
+- <strong class="api-name">\`dt\`</strong>: <code class="api-type">number</code> — Delta time
 
 </div>
 
@@ -5084,7 +5084,7 @@ Minimum step to fill progress bar. Default: 0.005
 
 Fill the progress bar
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_progress</code> — Current progress instance
 
@@ -5096,7 +5096,7 @@ Fill the progress bar
 
 Empty the progress bar
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_progress</code> — Current progress instance
 
@@ -5108,11 +5108,11 @@ Empty the progress bar
 
 Instant fill progress bar to value
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`to\`: <code class="api-type">number</code> — Progress bar value, from 0 to 1
+- <strong class="api-name">\`to\`</strong>: <code class="api-type">number</code> — Progress bar value, from 0 to 1
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_progress</code> — Current progress instance
 
@@ -5130,11 +5130,11 @@ Instant fill progress bar to value
 
 Instant fill progress bar to value
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`to\`: <code class="api-type">number</code> — Progress bar value, from 0 to 1
+- <strong class="api-name">\`to\`</strong>: <code class="api-type">number</code> — Progress bar value, from 0 to 1
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_progress</code> — Current progress instance
 
@@ -5146,7 +5146,7 @@ Instant fill progress bar to value
 
 Return the current value of the progress bar
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number</code> — The current value of the progress bar
 
@@ -5158,7 +5158,7 @@ Return the current value of the progress bar
 
 Return the current value of the progress bar
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">number</code> — The current value of the progress bar
 
@@ -5170,12 +5170,12 @@ Return the current value of the progress bar
 
 Set points on progress bar to fire the callback
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`steps\`: <code class="api-type">number[]</code> — Array of progress bar values
-- \`callback\`: <code class="api-type">(...args: any[]) =&gt; unknown</code> — Callback on intersect step value
+- <strong class="api-name">\`steps\`</strong>: <code class="api-type">number[]</code> — Array of progress bar values
+- <strong class="api-name">\`callback\`</strong>: <code class="api-type">(<strong class="api-name">...args</strong>: any[]) =&gt; unknown</code> — Callback on intersect step value
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_progress</code> — Current progress instance
 
@@ -5187,12 +5187,12 @@ Set points on progress bar to fire the callback
 
 Start animation of a progress bar
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`to\`: <code class="api-type">number</code> — value between 0..1
-- \`callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Callback on animation ends
+- <strong class="api-name">\`to\`</strong>: <code class="api-type">number</code> — value between 0..1
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Callback on animation ends
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_progress</code> — Current progress instance
 
@@ -5204,11 +5204,11 @@ Start animation of a progress bar
 
 Set progress bar max node size
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`max_size\`: <code class="api-type">Vector3</code> — The new node maximum (full) size
+- <strong class="api-name">\`max_size\`</strong>: <code class="api-type">Vector3</code> — The new node maximum (full) size
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_progress</code> — Current progress instance
 
@@ -5288,11 +5288,11 @@ Cursor on slider mouse hover (defos cursor). Default: nil
 
 The Slider constructor
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — GUI node to drag as a slider
-- \`end_pos\`: <code class="api-type">Vector3</code> — The end position of slider, should be on the same axis as the node
-- \`callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — On slider change callback
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — GUI node to drag as a slider
+- <strong class="api-name">\`end_pos\`</strong>: <code class="api-type">Vector3</code> — The end position of slider, should be on the same axis as the node
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — On slider change callback
 
 </div>
 
@@ -5302,12 +5302,12 @@ The Slider constructor
 
 Set value for slider
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`value\`: <code class="api-type">number</code> — Value from 0 to 1
-- \`is_silent\`?: <code class="api-type">boolean | undefined</code> — Don't trigger event if true
+- <strong class="api-name">\`value\`</strong>: <code class="api-type">number</code> — Value from 0 to 1
+- <strong class="api-name">\`is_silent\`</strong>?: <code class="api-type">boolean | undefined</code> — Don't trigger event if true
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_slider</code> — Current slider instance
 
@@ -5320,11 +5320,11 @@ Set value for slider
 Set slider steps. Pin node will
 apply closest step position
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`steps\`: <code class="api-type">number[]</code> — Array of steps
+- <strong class="api-name">\`steps\`</strong>: <code class="api-type">number[]</code> — Array of steps
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_slider</code> — Current slider instance
 
@@ -5336,11 +5336,11 @@ apply closest step position
 
 Adjust the end position of the slider
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`end_pos\`: <code class="api-type">Vector3</code> — The end position of the slider
+- <strong class="api-name">\`end_pos\`</strong>: <code class="api-type">Vector3</code> — The end position of the slider
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_slider</code> — Current slider instance
 
@@ -5355,11 +5355,11 @@ User can touch any place of node, pin instantly will
 move at this position and node drag will start.
 This function require the Defold version 1.3.0+
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`input_node\`?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code>
+- <strong class="api-name">\`input_node\`</strong>?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_slider</code> — Current slider instance
 
@@ -5371,11 +5371,11 @@ This function require the Defold version 1.3.0+
 
 Set Slider input enabled or disabled
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_enabled\`: <code class="api-type">boolean</code> — True if slider is enabled
+- <strong class="api-name">\`is_enabled\`</strong>: <code class="api-type">boolean</code> — True if slider is enabled
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_slider</code> — Current slider instance
 
@@ -5387,7 +5387,7 @@ Set Slider input enabled or disabled
 
 Check if Slider component is enabled
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — True if slider is enabled
 
@@ -5457,10 +5457,10 @@ If true, trigger on swipe moving, not only release action. Default: false
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node_or_node_id\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code>
-- \`on_swipe_callback\`: <code class="api-type">(...args: any[]) =&gt; unknown</code>
+- <strong class="api-name">\`node_or_node_id\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string</code>
+- <strong class="api-name">\`on_swipe_callback\`</strong>: <code class="api-type">(<strong class="api-name">...args</strong>: any[]) =&gt; unknown</code>
 
 </div>
 
@@ -5470,9 +5470,9 @@ If true, trigger on swipe moving, not only release action. Default: false
 
 Set the click zone for the swipe, useful for restricting events outside stencil node
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`zone\`?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Gui node
+- <strong class="api-name">\`zone\`</strong>?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Gui node
 
 </div>
 
@@ -5482,11 +5482,11 @@ Set the click zone for the swipe, useful for restricting events outside stencil 
 
 Set swipe enabled state
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_enabled\`: <code class="api-type">boolean</code>
+- <strong class="api-name">\`is_enabled\`</strong>: <code class="api-type">boolean</code>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_swipe</code>
 
@@ -5498,7 +5498,7 @@ Set swipe enabled state
 
 Return current swipe enabled state
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code>
 
@@ -5510,9 +5510,9 @@ Return current swipe enabled state
 
 Start swipe event
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`action\`: <code class="api-type">action</code> — The action table
+- <strong class="api-name">\`action\`</strong>: <code class="api-type">action</code> — The action table
 
 </div>
 
@@ -5530,10 +5530,10 @@ Reset swipe event
 
 Check swipe event
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`self\`: <code class="api-type">druid_swipe</code>
-- \`action\`: <code class="api-type">action</code>
+- <strong class="api-name">\`self\`</strong>: <code class="api-type">druid_swipe</code>
+- <strong class="api-name">\`action\`</strong>: <code class="api-type">action</code>
 
 </div>
 
@@ -5575,12 +5575,12 @@ The click zone of the swipe
 
 <div class="api-symbol-body">
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — Gui text node
-- \`seconds_from\`?: <code class="api-type">number | undefined</code> — Start timer value in seconds
-- \`seconds_to\`?: <code class="api-type">number | undefined</code> — End timer value in seconds
-- \`callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Function that triggers when timer value equals to seconds_to
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code> — Gui text node
+- <strong class="api-name">\`seconds_from\`</strong>?: <code class="api-type">number | undefined</code> — Start timer value in seconds
+- <strong class="api-name">\`seconds_to\`</strong>?: <code class="api-type">number | undefined</code> — End timer value in seconds
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Function that triggers when timer value equals to seconds_to
 
 </div>
 
@@ -5590,11 +5590,11 @@ The click zone of the swipe
 
 Set the timer to a specific value
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`value\`: <code class="api-type">number</code> — Value in seconds
+- <strong class="api-name">\`value\`</strong>: <code class="api-type">number</code> — Value in seconds
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_timer</code> — Current timer instance
 
@@ -5612,11 +5612,11 @@ Set the timer to a specific value
 
 Set the timer to a specific value
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`set_to\`: <code class="api-type">number</code> — Value in seconds
+- <strong class="api-name">\`set_to\`</strong>: <code class="api-type">number</code> — Value in seconds
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_timer</code> — Current timer instance
 
@@ -5628,11 +5628,11 @@ Set the timer to a specific value
 
 Set the timer to a specific value
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`is_on\`?: <code class="api-type">boolean | undefined</code> — Timer enable state
+- <strong class="api-name">\`is_on\`</strong>?: <code class="api-type">boolean | undefined</code> — Timer enable state
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_timer</code> — Current timer instance
 
@@ -5644,12 +5644,12 @@ Set the timer to a specific value
 
 Set the timer interval
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`from\`: <code class="api-type">number</code> — Start time in seconds
-- \`to\`: <code class="api-type">number</code> — Target time in seconds
+- <strong class="api-name">\`from\`</strong>: <code class="api-type">number</code> — Start time in seconds
+- <strong class="api-name">\`to\`</strong>: <code class="api-type">number</code> — Target time in seconds
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_timer</code> — Current timer instance
 
@@ -6075,11 +6075,11 @@ Deny-list: nil and empty table both deny nobody
 
 Check the input filters for the component: the instance one and the ones from its parents
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`component\`: <code class="api-type">druid_component</code> — The component to check
+- <strong class="api-name">\`component\`</strong>: <code class="api-type">druid_component</code> — The component to check
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — True if component can be processed on input step
 
@@ -6091,12 +6091,12 @@ Check the input filters for the component: the instance one and the ones from it
 
 Create new Druid component instance
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`component\`: <code class="api-type">T</code> — The component class to create
-- \`...args\`: <code class="api-type">unknown</code> — Additional arguments to pass to the component's init function
+- <strong class="api-name">\`component\`</strong>: <code class="api-type">T</code> — The component class to create
+- <strong class="api-name">\`...args\`</strong>: <code class="api-type">unknown</code> — Additional arguments to pass to the component's init function
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">T</code> — The new ready to use component
 
@@ -6118,11 +6118,11 @@ Remove created component from Druid instance.
 
 Component \`on_remove\` function will be invoked, if exist.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`component\`: <code class="api-type">T</code> — Component instance
+- <strong class="api-name">\`component\`</strong>: <code class="api-type">T</code> — Component instance
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — True if component was removed
 
@@ -6135,11 +6135,11 @@ Component \`on_remove\` function will be invoked, if exist.
 Set a style of Druid instance. Pass nil to reset to the default style.
 The style is applied to the components created after this call, already created components keep their style.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`style\`?: <code class="api-type">LuaTable | undefined</code> — The Druid style table
+- <strong class="api-name">\`style\`</strong>?: <code class="api-type">LuaTable | undefined</code> — The Druid style table
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_instance</code> — The Druid instance itself for chaining
 
@@ -6151,9 +6151,9 @@ The style is applied to the components created after this call, already created 
 
 Call this in gui_script update function.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`dt\`: <code class="api-type">number</code> — Delta time
+- <strong class="api-name">\`dt\`</strong>: <code class="api-type">number</code> — Delta time
 
 </div>
 
@@ -6163,12 +6163,12 @@ Call this in gui_script update function.
 
 Call this in gui_script on_input function.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`action_id\`: <code class="api-type">Hash</code> — Action_id from on_input
-- \`action\`: <code class="api-type">LuaTable</code> — Action from on_input
+- <strong class="api-name">\`action_id\`</strong>: <code class="api-type">Hash</code> — Action_id from on_input
+- <strong class="api-name">\`action\`</strong>: <code class="api-type">LuaTable</code> — Action from on_input
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">boolean</code> — The boolean value is input was consumed
 
@@ -6180,11 +6180,11 @@ Call this in gui_script on_input function.
 
 Call this in gui_script on_message function.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`message_id\`: <code class="api-type">Hash</code> — Message_id from on_message
-- \`message\`: <code class="api-type">LuaTable</code> — Message from on_message
-- \`sender\`: <code class="api-type">Url</code> — Sender from on_message
+- <strong class="api-name">\`message_id\`</strong>: <code class="api-type">Hash</code> — Message_id from on_message
+- <strong class="api-name">\`message\`</strong>: <code class="api-type">LuaTable</code> — Message from on_message
+- <strong class="api-name">\`sender\`</strong>: <code class="api-type">Url</code> — Sender from on_message
 
 </div>
 
@@ -6194,9 +6194,9 @@ Call this in gui_script on_message function.
 
 Called when the window event occurs
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`window_event\`: <code class="api-type">number</code> — The window event
+- <strong class="api-name">\`window_event\`</strong>: <code class="api-type">number</code> — The window event
 
 </div>
 
@@ -6214,11 +6214,11 @@ on the \`self.druid\` inside a component it affects this component subtree only.
 The filter owner is not affected by its own filter, so a widget can restrict its children
 and keep its own \`on_input\` working.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`whitelist_components\`?: <code class="api-type">LuaTable | druid_component[] | undefined</code> — The array of component to whitelist, nil to clear it
+- <strong class="api-name">\`whitelist_components\`</strong>?: <code class="api-type">LuaTable | druid_component[] | undefined</code> — The array of component to whitelist, nil to clear it
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_instance</code> — The Druid instance
 
@@ -6238,11 +6238,11 @@ on the \`self.druid\` inside a component it affects this component subtree only.
 The filter owner is not affected by its own filter, to filter a widget itself
 set the filter from the outside: the gui script or the parent widget.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`blacklist_components\`?: <code class="api-type">LuaTable | druid_component[] | undefined</code> — The array of component to blacklist, nil to clear it
+- <strong class="api-name">\`blacklist_components\`</strong>?: <code class="api-type">LuaTable | druid_component[] | undefined</code> — The array of component to blacklist, nil to clear it
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_instance</code> — The Druid instance
 
@@ -6254,14 +6254,14 @@ set the filter from the outside: the gui script or the parent widget.
 
 Create new Druid widget instance
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`widget\`: <code class="api-type">T</code> — The widget class to create
-- \`template\`?: <code class="api-type">string | undefined</code> — The template name used by widget
-- \`nodes\`?: <code class="api-type">LuaMap&lt;Hash, Opaque&lt;&quot;node&quot;&gt;&gt; | Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — The nodes table from <a href="/api/defold-1.14.0/gui#guiclone_treenode-opaquenode-tablehash-node" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
-- \`...args\`: <code class="api-type">unknown</code> — Additional arguments to pass to the widget's init function
+- <strong class="api-name">\`widget\`</strong>: <code class="api-type">T</code> — The widget class to create
+- <strong class="api-name">\`template\`</strong>?: <code class="api-type">string | undefined</code> — The template name used by widget
+- <strong class="api-name">\`nodes\`</strong>?: <code class="api-type">LuaMap&lt;Hash, Opaque&lt;&quot;node&quot;&gt;&gt; | Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — The nodes table from <a href="/api/defold-1.14.0/gui#guiclone_treenode-opaquenode-tablehash-node" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
+- <strong class="api-name">\`...args\`</strong>: <code class="api-type">unknown</code> — Additional arguments to pass to the widget's init function
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">T</code> — The new ready to use widget
 
@@ -6273,14 +6273,14 @@ Create new Druid widget instance
 
 Create Button component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | event | undefined</code> — Button callback
-- \`params\`?: <code class="api-type">unknown | undefined</code> — Button callback params
-- \`anim_node\`?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Button anim node (node, if not provided)
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | event | undefined</code> — Button callback
+- <strong class="api-name">\`params\`</strong>?: <code class="api-type">unknown | undefined</code> — Button callback params
+- <strong class="api-name">\`anim_node\`</strong>?: <code class="api-type">Opaque&lt;&quot;node&quot;&gt; | string | undefined</code> — Button anim node (node, if not provided)
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_button</code> — The new button component
 
@@ -6292,11 +6292,11 @@ Create Button component
 
 Create Blocker component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_blocker</code> — The new blocker component
 
@@ -6308,12 +6308,12 @@ Create Blocker component
 
 Create BackHandler component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | event | undefined</code> — The callback(self, custom_args) to call on back event
-- \`params\`?: <code class="api-type">unknown | undefined</code> — Callback argument
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | event | undefined</code> — The callback(self, custom_args) to call on back event
+- <strong class="api-name">\`params\`</strong>?: <code class="api-type">unknown | undefined</code> — Callback argument
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_back_handler</code> — The new back handler component
 
@@ -6325,13 +6325,13 @@ Create BackHandler component
 
 Create Hover component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`on_hover_callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Hover callback
-- \`on_mouse_hover_callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Mouse hover callback
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- <strong class="api-name">\`on_hover_callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Hover callback
+- <strong class="api-name">\`on_mouse_hover_callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Mouse hover callback
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_hover</code> — The new hover component
 
@@ -6343,13 +6343,13 @@ Create Hover component
 
 Create Text component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt; | druid_text</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`value\`?: <code class="api-type">string | undefined</code> — Initial text. Default value is node text from GUI scene.
-- \`adjust_type\`?: <code class="api-type">string | undefined</code> — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt; | druid_text</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- <strong class="api-name">\`value\`</strong>?: <code class="api-type">string | undefined</code> — Initial text. Default value is node text from GUI scene.
+- <strong class="api-name">\`adjust_type\`</strong>?: <code class="api-type">string | undefined</code> — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_text</code> — The new text component
 
@@ -6361,13 +6361,13 @@ Create Text component
 
 Create Grid component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`parent_node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Parent of all Grid items.
-- \`item\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Item prefab. Required to get grid's item size. Can be adjusted separately.
-- \`in_row\`?: <code class="api-type">number | undefined</code> — How many nodes can be placed in a row
+- <strong class="api-name">\`parent_node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Parent of all Grid items.
+- <strong class="api-name">\`item\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Item prefab. Required to get grid's item size. Can be adjusted separately.
+- <strong class="api-name">\`in_row\`</strong>?: <code class="api-type">number | undefined</code> — How many nodes can be placed in a row
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_grid</code> — The new grid component
 
@@ -6379,12 +6379,12 @@ Create Grid component
 
 Create Scroll component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`view_node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
-- \`content_node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as scrollable node inside view_node.
+- <strong class="api-name">\`view_node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
+- <strong class="api-name">\`content_node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as scrollable node inside view_node.
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_scroll</code> — The new scroll component
 
@@ -6396,12 +6396,12 @@ Create Scroll component
 
 Create Drag component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
-- \`on_drag_callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Callback for on_drag_event(self, dx, dy)
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
+- <strong class="api-name">\`on_drag_callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Callback for on_drag_event(self, dx, dy)
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_drag</code> — The new drag component
 
@@ -6413,12 +6413,12 @@ Create Drag component
 
 Create Swipe component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
-- \`on_swipe_callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Swipe callback for on_swipe_end event
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
+- <strong class="api-name">\`on_swipe_callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Swipe callback for on_swipe_end event
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_swipe</code> — The new swipe component
 
@@ -6430,13 +6430,13 @@ Create Swipe component
 
 Create LangText component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`locale_id\`?: <code class="api-type">string | undefined</code> — Default locale id or text from node as default
-- \`adjust_type\`?: <code class="api-type">string | undefined</code> — Adjust type for text node. Default: "downscale"
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- <strong class="api-name">\`locale_id\`</strong>?: <code class="api-type">string | undefined</code> — Default locale id or text from node as default
+- <strong class="api-name">\`adjust_type\`</strong>?: <code class="api-type">string | undefined</code> — Adjust type for text node. Default: "downscale"
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_lang_text</code> — The new lang text component
 
@@ -6448,13 +6448,13 @@ Create LangText component
 
 Create Slider component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`pin_node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
-- \`end_pos\`: <code class="api-type">Vector3</code> — The end position of slider
-- \`callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — On slider change callback
+- <strong class="api-name">\`pin_node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
+- <strong class="api-name">\`end_pos\`</strong>: <code class="api-type">Vector3</code> — The end position of slider
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — On slider change callback
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_slider</code> — The new slider component
 
@@ -6466,13 +6466,13 @@ Create Slider component
 
 Create Input component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`click_node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Button node to enable input component
-- \`text_node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt; | druid_text</code> — Text node that will be changed on user input
-- \`keyboard_type\`?: <code class="api-type">number | undefined</code> — Gui keyboard type for input field
+- <strong class="api-name">\`click_node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Button node to enable input component
+- <strong class="api-name">\`text_node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt; | druid_text</code> — Text node that will be changed on user input
+- <strong class="api-name">\`keyboard_type\`</strong>?: <code class="api-type">number | undefined</code> — Gui keyboard type for input field
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_input</code> — The new input component
 
@@ -6484,13 +6484,13 @@ Create Input component
 
 Create DataList component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`druid_scroll\`: <code class="api-type">druid_scroll</code> — The Scroll instance for Data List component
-- \`druid_grid\`: <code class="api-type">druid_grid</code> — The Grid instance for Data List component
-- \`create_function\`: <code class="api-type">(...args: any[]) =&gt; unknown</code> — The create function callback(self, data, index, data_list). Function should return (node, [component])
+- <strong class="api-name">\`druid_scroll\`</strong>: <code class="api-type">druid_scroll</code> — The Scroll instance for Data List component
+- <strong class="api-name">\`druid_grid\`</strong>: <code class="api-type">druid_grid</code> — The Grid instance for Data List component
+- <strong class="api-name">\`create_function\`</strong>: <code class="api-type">(<strong class="api-name">...args</strong>: any[]) =&gt; unknown</code> — The create function callback(self, data, index, data_list). Function should return (node, [component])
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_data_list</code> — The new data list component
 
@@ -6502,14 +6502,14 @@ Create DataList component
 
 Create Timer component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Gui text node
-- \`seconds_from\`?: <code class="api-type">number | undefined</code> — Start timer value in seconds
-- \`seconds_to\`?: <code class="api-type">number | undefined</code> — End timer value in seconds
-- \`callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Function on timer end
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Gui text node
+- <strong class="api-name">\`seconds_from\`</strong>?: <code class="api-type">number | undefined</code> — Start timer value in seconds
+- <strong class="api-name">\`seconds_to\`</strong>?: <code class="api-type">number | undefined</code> — End timer value in seconds
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | undefined</code> — Function on timer end
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_timer</code> — The new timer component
 
@@ -6521,13 +6521,13 @@ Create Timer component
 
 Create Progress component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Progress bar fill node or node name
-- \`key\`: <code class="api-type">string</code> — Progress bar direction: "x" or "y"
-- \`init_value\`?: <code class="api-type">number | undefined</code> — Initial value of progress bar. Default: 1
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — Progress bar fill node or node name
+- <strong class="api-name">\`key\`</strong>: <code class="api-type">string</code> — Progress bar direction: "x" or "y"
+- <strong class="api-name">\`init_value\`</strong>?: <code class="api-type">number | undefined</code> — Initial value of progress bar. Default: 1
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_progress</code> — The new progress component
 
@@ -6539,12 +6539,12 @@ Create Progress component
 
 Create Layout component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
-- \`mode\`?: <code class="api-type">string | undefined</code> — vertical|horizontal|horizontal_wrap. Default: horizontal
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
+- <strong class="api-name">\`mode\`</strong>?: <code class="api-type">string | undefined</code> — vertical|horizontal|horizontal_wrap. Default: horizontal
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_layout</code> — The new layout component
 
@@ -6556,13 +6556,13 @@ Create Layout component
 
 Create Container component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
-- \`mode\`?: <code class="api-type">druid_container_mode | undefined</code> — Layout mode. Default Fit or Stretch depends from node adjust mode from GUI scene
-- \`callback\`?: <code class="api-type">((self: druid_container, size: Vector3) =&gt; void) | undefined</code> — Callback on size changed
+- <strong class="api-name">\`node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The node_id or <a href="/api/defold-1.14.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
+- <strong class="api-name">\`mode\`</strong>?: <code class="api-type">druid_container_mode | undefined</code> — Layout mode. Default Fit or Stretch depends from node adjust mode from GUI scene
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((self: druid_container, size: Vector3) =&gt; void) | undefined</code> — Callback on size changed
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_container</code> — The new container component
 
@@ -6574,13 +6574,13 @@ Create Container component
 
 Create Hotkey component
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`keys_array\`: <code class="api-type">string | string[]</code> — Keys for trigger action. Should contains one action key and any amount of modificator keys
-- \`callback\`?: <code class="api-type">((...args: any[]) =&gt; unknown) | event | undefined</code> — The callback function
-- \`callback_argument\`?: <code class="api-type">unknown | undefined</code> — The argument to pass into the callback function
+- <strong class="api-name">\`keys_array\`</strong>: <code class="api-type">string | string[]</code> — Keys for trigger action. Should contains one action key and any amount of modificator keys
+- <strong class="api-name">\`callback\`</strong>?: <code class="api-type">((...args: any[]) =&gt; unknown) | event | undefined</code> — The callback function
+- <strong class="api-name">\`callback_argument\`</strong>?: <code class="api-type">unknown | undefined</code> — The argument to pass into the callback function
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_hotkey</code> — The new hotkey component
 
@@ -6592,12 +6592,12 @@ Create Hotkey component
 
 Create RichText component.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`text_node\`: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The text node to make Rich Text
-- \`value\`?: <code class="api-type">string | undefined</code> — The initial text value. Default will be <a href="/api/defold-1.14.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
+- <strong class="api-name">\`text_node\`</strong>: <code class="api-type">string | Opaque&lt;&quot;node&quot;&gt;</code> — The text node to make Rich Text
+- <strong class="api-name">\`value\`</strong>?: <code class="api-type">string | undefined</code> — The initial text value. Default will be <a href="/api/defold-1.14.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_text</code> — The new rich text component
 
@@ -6610,12 +6610,12 @@ Create RichText component.
 Create RichInput component.
 As a template please check rich_input.gui layout.
 
-**Parameters**
+<p class="api-slot-label">Parameters</p>
 
-- \`template\`: <code class="api-type">string</code> — The template string name
-- \`nodes\`?: <code class="api-type">LuaTable | undefined</code> — Nodes table from <a href="/api/defold-1.14.0/gui#guiclone_treenode-opaquenode-tablehash-node" class="symbol-xref">gui.clone_tree</a>
+- <strong class="api-name">\`template\`</strong>: <code class="api-type">string</code> — The template string name
+- <strong class="api-name">\`nodes\`</strong>?: <code class="api-type">LuaTable | undefined</code> — Nodes table from <a href="/api/defold-1.14.0/gui#guiclone_treenode-opaquenode-tablehash-node" class="symbol-xref">gui.clone_tree</a>
 
-**Returns**
+<p class="api-slot-label">Returns</p>
 
 - <code class="api-type">druid_rich_input</code> — The new rich input component
 

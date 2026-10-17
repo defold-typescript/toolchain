@@ -46,7 +46,12 @@ import {
   loadCombinedSurface,
 } from "./api-surface-loader";
 import type { BadgeCountTable } from "./api-surface-pref";
-import { API_TYPE_CODE_CLOSE, API_TYPE_CODE_OPEN } from "./api-type-links";
+import {
+  API_NAME_CLOSE,
+  API_NAME_OPEN,
+  API_TYPE_CODE_CLOSE,
+  API_TYPE_CODE_OPEN,
+} from "./api-type-links";
 import {
   buildCombinedSurface,
   combinedNamespaceToApiPage,
@@ -67,6 +72,15 @@ import type { VersionWindow } from "./version-window";
 function typeCode(types: string): string {
   return `${API_TYPE_CODE_OPEN}${escapeAttr(types)}${API_TYPE_CODE_CLOSE}`;
 }
+
+// The name half of a top-level parameter or return bullet: its code span set in
+// bold. Nested field bullets keep the bare code span.
+function nameCode(name: string): string {
+  return `${API_NAME_OPEN}\`${name}\`${API_NAME_CLOSE}`;
+}
+
+const PARAMETERS_LABEL = '<p class="api-slot-label">Parameters</p>';
+const RETURNS_LABEL = '<p class="api-slot-label">Returns</p>';
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const MISSING_VERSION_FIXTURE_DIR = join(
@@ -414,7 +428,7 @@ describe("apiPageMarkdown", () => {
     expect(md).not.toContain("## Types");
     expect(md).toContain("### `LoggerInstance.info(message: string)`");
     expect(md).toContain("Writes an info message.");
-    expect(md).toContain(`- \`message\`: ${typeCode("string")} — message text`);
+    expect(md).toContain(`- ${nameCode("message")}: ${typeCode("string")} — message text`);
     expect(md).toContain("### `LoggerInstance.level: number`");
     expect(md).toContain("Current log level.");
   });
@@ -441,7 +455,7 @@ describe("apiPageMarkdown field tree", () => {
   test("renders a parameter's fields as an indented nested list, one indent per depth", () => {
     const md = apiPageMarkdown(fieldsPage(), (t) => t);
     expect(md).toContain(
-      `- \`options\`?:${G}${typeCode("{ lerp?: number; nested?: { deep?: boolean; }; }")} — the options`,
+      `- ${nameCode("options")}?:${G}${typeCode("{ lerp?: number; nested?: { deep?: boolean; }; }")} — the options`,
     );
     expect(md).toContain(`  - \`lerp\`?:${G}${typeCode("number")} — Lerp factor.`);
     expect(md).toContain(`  - \`nested\`?:${G}${typeCode("{ deep?: boolean; }")} — Nested config.`);
@@ -483,7 +497,9 @@ describe("Defold library page callback arguments", () => {
 
   test("apiPageMarkdown renders message_id as a bullet indented under callback", () => {
     const md = apiPageMarkdown(admob as ApiPage, (t) => t);
-    expect(md).toMatch(/^- `callback`.*\n(?: {2}- .*\n)* {2}- `message_id`/m);
+    expect(md).toMatch(
+      /^- <strong class="api-name">`callback`.*\n(?: {2}- .*\n)* {2}- `message_id`/m,
+    );
   });
 
   const librarySymbols = (namespace: string) => {
@@ -2777,7 +2793,9 @@ describe("constant union alias links in parameter, return and field types", () =
     const pages = surface();
     const html = await renderAliasSurface(pages, pages[0] as ApiPage);
     const easing = slotBullet(html, "easing");
-    expect(easing).toContain(`<code>easing</code>:${NAME_TYPE_GAP}`);
+    expect(easing).toContain(
+      `${API_NAME_OPEN}<code>easing</code>${API_NAME_CLOSE}:${NAME_TYPE_GAP}`,
+    );
     expect(easing).toContain(" | Vector");
     expect(easing).not.toContain(">Vector</a>");
     expect(nestedAnchor(html)).toBe(false);
@@ -2967,8 +2985,8 @@ describe("grouped overload blocks (committed artifacts)", () => {
     expect(returnType).not.toBe("");
     expect(overloadHeading(group).endsWith(returnType)).toBe(true);
     // Once above the shared Returns table: in the heading, never on a form line.
-    expect(block).toContain("**Returns**");
-    expect(occurrences(block.slice(0, block.indexOf("**Returns**")), returnType)).toBe(1);
+    expect(block).toContain(RETURNS_LABEL);
+    expect(occurrences(block.slice(0, block.indexOf(RETURNS_LABEL)), returnType)).toBe(1);
   });
 
   test("forms whose parameters differ each list their own full Parameters table", () => {
@@ -2979,14 +2997,14 @@ describe("grouped overload blocks (committed artifacts)", () => {
       .split('<li class="api-overload">')
       .slice(1)
       .map((item) => {
-        const params = item.slice(item.indexOf("**Parameters**")).split("\n");
-        return params.flatMap((l) => l.match(/^- `(\w+)`/)?.[1] ?? []);
+        const params = item.slice(item.indexOf(PARAMETERS_LABEL)).split("\n");
+        return params.flatMap((l) => l.match(/^- <strong class="api-name">`(\w+)`/)?.[1] ?? []);
       });
     expect(tables).toEqual([
       ["shape_id", "definition", "update_mass"],
       ["body", "shape_index", "definition", "update_mass"],
     ]);
-    expect(block.slice(block.indexOf("</ol>"))).not.toContain("**Parameters**");
+    expect(block.slice(block.indexOf("</ol>"))).not.toContain(PARAMETERS_LABEL);
   });
 
   test("msg.url keeps each form's own description exactly once", () => {
@@ -3043,8 +3061,8 @@ describe("grouped overload blocks (committed artifacts)", () => {
         forms: block
           .split('<li class="api-overload">')
           .slice(1)
-          .map((item) => item.includes("**Parameters**")),
-        block: block.slice(block.indexOf("</ol>")).includes("**Parameters**"),
+          .map((item) => item.includes(PARAMETERS_LABEL)),
+        block: block.slice(block.indexOf("</ol>")).includes(PARAMETERS_LABEL),
       };
     };
     // The table names the options argument, so it sits under the forms that take it.
@@ -3073,15 +3091,15 @@ describe("grouped overload blocks (committed artifacts)", () => {
     const page = pageFor("vmath");
     const block = blockOf(render(page), overloadHeading(groupFor(page, "vmath.euler_to_quat")));
     const xyz = block.split('<li class="api-overload">')[2] ?? "";
-    const params = xyz.slice(xyz.indexOf("**Parameters**"), xyz.indexOf("**Returns**"));
+    const params = xyz.slice(xyz.indexOf(PARAMETERS_LABEL), xyz.indexOf(RETURNS_LABEL));
     for (const name of ["x", "y", "z"]) {
-      expect(params).toContain(`- \`${name}\`:${G}${typeCode("number")}`);
+      expect(params).toContain(`- ${nameCode(name)}:${G}${typeCode("number")}`);
     }
     expect(params).not.toContain("Vector3</code>");
     const go = pageFor("go");
     const get = blockOf(render(go), overloadHeading(groupFor(go, "go.get")));
     const typed = get.split('<li class="api-overload">')[3] ?? "";
-    expect(typed).toContain(`- \`options\`:${G}${typeCode("GoPropertyOptions")}`);
+    expect(typed).toContain(`- ${nameCode("options")}:${G}${typeCode("GoPropertyOptions")}`);
     expect(typed).toContain(`${G}${typeCode("go.properties[K]")}`);
   });
 
@@ -3215,7 +3233,7 @@ describe("grouped overload blocks (committed artifacts)", () => {
         expect({
           name: head.name,
           list: list > -1,
-          tables: lead.includes("**Parameters**") || lead.includes("**Returns**"),
+          tables: lead.includes(PARAMETERS_LABEL) || lead.includes(RETURNS_LABEL),
           // A fence quoted inside the authored note is the note's own sample.
           example: /^```/m.test(lead),
         }).toEqual({ name: head.name, list: true, tables: false, example: false });
@@ -3223,8 +3241,8 @@ describe("grouped overload blocks (committed artifacts)", () => {
         const tail = block.slice(block.indexOf("</ol>"));
         const example = tail.search(/^```/m);
         const lastTable = Math.max(
-          tail.lastIndexOf("**Parameters**"),
-          tail.lastIndexOf("**Returns**"),
+          tail.lastIndexOf(PARAMETERS_LABEL),
+          tail.lastIndexOf(RETURNS_LABEL),
         );
         if (example > -1) {
           expect({ name: head.name, tableAfterExample: lastTable > example }).toEqual({
@@ -3571,5 +3589,55 @@ describe("overload added/removed summary", () => {
     expect(heading).toBeDefined();
     expect(heading?.text.startsWith(overloadHeading(group))).toBe(true);
     expect(heading?.text ?? "").not.toMatch(SUMMARY);
+  });
+});
+
+describe("slot name emphasis", () => {
+  const NEWTRY =
+    "socket.newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T";
+  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const render = (namespace: string): string => {
+    const page = pages.find((p) => p.namespace === namespace);
+    if (!page) throw new Error(`namespace ${namespace} missing from the canonical surface`);
+    return apiPageMarkdown(page, (t) => t, { combinedMarkers: true });
+  };
+  const names = (html: string) =>
+    [...html.matchAll(new RegExp(`${API_NAME_OPEN}([^<]*)${API_NAME_CLOSE}`, "g"))].map(
+      (m) => m[1],
+    );
+
+  test("a parameter bullet bolds its name", () => {
+    expect(blockOf(render("socket"), NEWTRY)).toContain(`- ${nameCode("finalizer")}?:`);
+  });
+
+  test("a function-typed return bolds its name and its type's parameter names, nothing else", () => {
+    const block = blockOf(render("socket"), NEWTRY);
+    const line = block.split("\n").find((l) => l.startsWith(`- ${nameCode("try")}:`)) ?? "";
+    const open = line.indexOf(API_TYPE_CODE_OPEN);
+    expect(open).toBeGreaterThan(-1);
+    const type = line.slice(
+      open,
+      line.indexOf(API_TYPE_CODE_CLOSE, open) + API_TYPE_CODE_CLOSE.length,
+    );
+    expect(names(type)).toEqual(["value", "...rest"]);
+    expect(type.replaceAll(API_NAME_OPEN, "").replaceAll(API_NAME_CLOSE, "")).toBe(
+      typeCode(NEWTRY.slice(NEWTRY.indexOf("): ") + "): ".length)),
+    );
+  });
+
+  test("a nested field bullet carries no name emphasis", () => {
+    const md = render("admob");
+    const nested = md.split("\n").filter((l) => /^ {2,}- `/.test(l));
+    expect(nested.length).toBeGreaterThan(0);
+    expect(nested.filter((l) => l.includes(API_NAME_OPEN))).toEqual([]);
+    expect(md).toMatch(/^- <strong class="api-name">`callback`<\/strong>/m);
+  });
+
+  test("Parameters and Returns are slot labels, never bold text", () => {
+    const md = render("socket");
+    expect(md).toContain(PARAMETERS_LABEL);
+    expect(md).toContain(RETURNS_LABEL);
+    expect(md).not.toContain("**Parameters**");
+    expect(md).not.toContain("**Returns**");
   });
 });
