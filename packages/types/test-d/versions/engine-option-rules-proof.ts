@@ -6,6 +6,7 @@ export {};
 declare const id: ReturnType<typeof go.get_id>;
 declare const decl: Parameters<typeof buffer.create>[1][number];
 declare const buf: ReturnType<typeof buffer.create>;
+declare const partial: boolean;
 
 go.delete(id, true);
 // @ts-expect-error a boolean id takes no second argument
@@ -16,6 +17,9 @@ go.delete(undefined, true);
 resource.create_sound_data("/a.wavc", { data: "", partial: true, filesize: 1 });
 // @ts-expect-error a partial chunk reads filesize with no default
 resource.create_sound_data("/a.wavc", { data: "", partial: true });
+resource.create_sound_data("/a.wavc", { data: "", partial, filesize: 1 });
+// @ts-expect-error a partial that may be true reads filesize with no default
+resource.create_sound_data("/a.wavc", { data: "", partial });
 
 buffer.create(1, [decl]);
 // @ts-expect-error the binding raises on an empty declaration list
