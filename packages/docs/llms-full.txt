@@ -1831,7 +1831,7 @@ Only `defineScript` takes `properties`. Defold builds `go.property` only in `.sc
 
 A resource property takes one of seven markers as its default: `resource.atlas`, `resource.buffer`, `resource.font`, `resource.material`, `resource.render_target`, `resource.texture` or `resource.tile_source`, as in `properties: { hero: resource.atlas("/main/hero.atlas") }`, which types `self.hero` as a `Hash`. Defold's build reads a marker only in a property default, and the engine binds no function by that name. A call or a reference anywhere else, including a module `const` used as the default, fails the build.
 
-The default itself must be written `resource.<kind>("<path>")` with a string literal path, or `resource.<kind>()` with no path. An alias such as `const r = resource`, an optional call such as `resource?.atlas("/a.atlas")`, or a path held in a variable also fails the build, because Defold's build reads no other form.
+The default itself must be written `resource.<kind>("<path>")` with a string literal path, or `resource.<kind>()` with no path. Parentheses, type assertions and a literal key such as `["material"]` compile to that form and are accepted. An alias such as `const r = resource`, an optional call such as `resource?.atlas("/a.atlas")`, or a key or path held in a variable also fails the build, because Defold's build reads no other form.
 
 ##### Text properties
 

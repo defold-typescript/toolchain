@@ -419,7 +419,10 @@ function readsAsMarker(call: ts.CallExpression): boolean {
   }
   if (
     !ts.isPropertyAccessExpression(callee) &&
-    !(ts.isElementAccessExpression(callee) && ts.isStringLiteralLike(callee.argumentExpression))
+    !(
+      ts.isElementAccessExpression(callee) &&
+      ts.isStringLiteralLike(innermostExpression(callee.argumentExpression))
+    )
   ) {
     return false;
   }
@@ -577,10 +580,19 @@ export const lifecycleErasurePlugin: Plugin = {
     },
     [ts.SyntaxKind.ElementAccessExpression]: (node, context) => {
       if (node.parent !== undefined && !isCallee(node)) {
-        const marker = globalName(
-          context.checker.getSymbolAtLocation(node.argumentExpression),
-          context.checker,
-        );
+        // The checker resolves a string key only when it is the direct argument,
+        // so a wrapped key is looked up by name on the receiver's type, as the
+        // checker does for a direct one.
+        const key = innermostExpression(node.argumentExpression);
+        const marker = ts.isStringLiteralLike(key)
+          ? globalName(
+              context.checker.getPropertyOfType(
+                context.checker.getTypeAtLocation(node.expression),
+                key.text,
+              ),
+              context.checker,
+            )
+          : undefined;
         if (marker !== undefined && RESOURCE_PROPERTY_MARKERS.has(marker)) {
           context.diagnostics.push(misplacedMarker(node, marker));
         }
