@@ -13,7 +13,7 @@ New to TypeScript from Lua? Start with [TypeScript vs Lua](./typescript-vs-lua.m
 The one-line version of every trap on this page. Skim it once; jump to the full entry when one bites.
 
 - [Unary minus on a vector yields `number`](#unary-minus-on-vector3--vector4-silently-produces-number) — `-v3` infers `number`, not `Vector3`; use `v.unm()`.
-- [Enum constants are branded numbers](#enum-constants-are-branded-numbers--a-bare-number-wont-do) — a bare magic number won't satisfy an enum parameter; pass the named `go.PLAYBACK_*` constant.
+- [Enum constants are branded numbers](#enum-constants-are-branded-numbers--a-bare-number-wont-do) — a bare magic number won't satisfy an enum parameter; pass the named `go.PLAYBACK_*` constant. Comparing a field to one does not narrow a union; check a field instead.
 - [Engine handles are opaque](#engine-handles-are-opaque--you-cannot-fabricate-or-cast-across-kinds) — a `node` is not a `texture`; obtain each handle from the API that returns it, never fabricate or cross-cast.
 - [Callback parameters are `unknown`](#callback-parameters-type-check-as-functions-not-unknown) — match the documented arity; narrow each param before use.
 - [Some slots are `unknown` on purpose](#some-slots-are-unknown-on-purpose--the-any-wildcard) — `socket.skip` and friends accept anything and force a narrow on the way out.
@@ -89,6 +89,22 @@ render.get_render_target_width(rt, 0);                                // TS erro
 ```
 
 `packages/types/test-d/graphics-render-buffer-types.ts` pins this: the real `graphics` constant type-checks and a bare number carries `@ts-expect-error`.
+
+**Comparing a field to a constant does not narrow a union.** TypeScript narrows a union on a property only when some arm types that property as a literal, and a branded number is not a literal. `bullet3d.shape.get_shape` returns one arm per shape, each keyed by its own `bullet3d.shape.SHAPE_TYPE_*` constant, plus a `{ type }` arm for a triangle mesh. After `data.type === bullet3d.shape.SHAPE_TYPE_BOX`, `data` is still that whole union, so passing it to `bullet3d.shape.set_shape` is a TS error. Check the field the shape carries instead:
+
+```ts
+const object = bullet3d.get_collision_object("#collisionobject");
+if (object !== undefined) {
+  const shape = bullet3d.collision_object.get_shape(object, 1);
+  const data = bullet3d.shape.get_shape(shape);
+  if ("dimensions" in data) {
+    data.dimensions = data.dimensions.mul(2);
+    bullet3d.shape.set_shape(shape, data);
+  }
+}
+```
+
+`packages/types/test-d/bullet3d-engine-rules.ts` pins this: `set_shape` rejects the unchecked result and accepts it inside the `"dimensions" in data` check.
 
 **A slot the reference types as a bare `constant` takes the constants its documentation names.** Many parameters and getter returns (`gui.set_pivot`, `gui.animate`'s easing and playback, `render.enable_state`, `window.set_dim_mode`, `sys.get_connectivity`, …) carry no constant list in their ref-doc type, only in their prose — a `gui.PIVOT_*` list, or "one of the `gui.EASING_*` constants". The generated typings read that prose, so each such slot is the union of the named constants' brands. A constant from another family, or a generic `Opaque<"constant">`, is rejected:
 

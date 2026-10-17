@@ -2311,6 +2311,15 @@ function bindingFileFunctions(targetId: string, file: string, where: string): CF
   return functions;
 }
 
+// Whether the target vendors `file`. Every binding source a release ships is
+// vendored, so a missing one is a file that release does not have, as the
+// `bullet3d` sources before 1.13.2.
+export function bindingVendorsFile(targetId: string, file: string): boolean {
+  const target = loadApiTargets().find((t) => t.id === targetId);
+  if (!target) throw new Error(`${targetId}: ${file}: unknown API target`);
+  return (target.source ?? null) === null && existsSync(join(bindingsDir(target), "engine", file));
+}
+
 // Whether the vendored `file` defines `cFunction` at all. A missing file throws,
 // as for `bindingFunctionTokens`.
 export function bindingDefinesFunction(targetId: string, file: string, cFunction: string): boolean {

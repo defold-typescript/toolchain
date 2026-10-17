@@ -9,6 +9,7 @@ import {
   type BindingFunction,
   bindingDefinesFunction,
   bindingFunctionTokens,
+  bindingVendorsFile,
   cTokenKeys,
   mergeBindings,
   readBindingsForTarget,
@@ -52,6 +53,8 @@ export function bindingPinHolds(targetId: string, pin: BindingPin): boolean {
 // engine source; empty for a target with none (a ref-doc target). A struct
 // member addition whose function the target does not define has no evidence
 // there: a release older than the function has neither the struct nor the push.
+// Likewise a return correction whose file the target does not vendor: a release
+// older than the module declares no function for it to correct.
 export function bindingEvidenceFor(
   target: ApiTarget,
   entries: Iterable<readonly [string, ReturnTypeCorrection]> = RETURN_TYPE_CORRECTIONS,
@@ -59,8 +62,12 @@ export function bindingEvidenceFor(
 ): ReadonlySet<string> {
   const evidence = new Set<string>();
   if ((target.source ?? null) !== null) return evidence;
-  for (const [key, correction] of entries) {
-    if (correction.binding !== undefined && bindingPinHolds(target.id, correction.binding)) {
+  for (const [key, { binding }] of entries) {
+    if (
+      binding !== undefined &&
+      bindingVendorsFile(target.id, binding.file) &&
+      bindingPinHolds(target.id, binding)
+    ) {
       evidence.add(key);
     }
   }

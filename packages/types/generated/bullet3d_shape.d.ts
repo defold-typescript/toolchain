@@ -11,7 +11,7 @@ declare global {
    */
   namespace bullet3d.shape {
     type btCollisionShape = Opaque<"btCollisionShape">;
-    type definition = { type: bullet3d.shape.SHAPE_TYPE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: bullet3d.shape.SHAPE_TYPE; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion };
+    type definition = { type: typeof bullet3d.shape.SHAPE_TYPE_SPHERE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_BOX; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_CAPSULE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_HULL; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion };
     type SHAPE_TYPE = typeof bullet3d.shape.SHAPE_TYPE_BOX | typeof bullet3d.shape.SHAPE_TYPE_CAPSULE | typeof bullet3d.shape.SHAPE_TYPE_HULL | typeof bullet3d.shape.SHAPE_TYPE_MESH | typeof bullet3d.shape.SHAPE_TYPE_SPHERE;
     /**
      * Box shape type Value `1`. Shape data contains positive vector3 `dimensions` in Defold units.
@@ -66,7 +66,7 @@ declare global {
      * @param shape - shape handle
      * @returns typed shape geometry in Defold units
      */
-    function get_shape(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.definition;
+    function get_shape(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH };
     /**
      * Get the normalized Defold shape type.
      *
