@@ -952,6 +952,16 @@ describe("runBuild runtime folder", () => {
   ].join("\n");
   const UTIL_MODULE = "export const keyCount = (o: object): number => Object.keys(o).length;\n";
 
+  // A map reaches the hsm source through a relative `sourceRoot`, which cannot
+  // cross drives on Windows (a checkout on D:, the temp folder on C:), so the
+  // project sits on the source's drive.
+  beforeEach(() => {
+    const root = path.parse(resolveHsmSourceDir() ?? cwd).root;
+    if (path.parse(cwd).root.toLowerCase() === root.toLowerCase()) return;
+    rmSync(cwd, { recursive: true, force: true });
+    cwd = mkdtempSync(path.join(root, "defold-typescript-build-"));
+  });
+
   function writeRuntimeProject(outDir: string | undefined, runtimeDir: string | undefined): void {
     writeFile(
       "tsconfig.json",
