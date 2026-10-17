@@ -14,8 +14,8 @@ const lifecycleSource = await Bun.file(lifecycleFile).text();
 function fixtureFunction(namespace: string, fnName: string): ApiFunction {
   const entry = MODULE_MANIFEST.find((m) => m.namespace === namespace);
   if (!entry) throw new Error(`no MODULE_MANIFEST entry for namespace "${namespace}"`);
-  const fn = parseDefoldApiDoc(entry.doc).functions.find((f) => f.name === fnName);
-  if (!fn) throw new Error(`fixture for "${namespace}" has no function "${fnName}"`);
+  const fn = parseDefoldApiDoc(entry.doc).scriptHooks?.find((f) => f.name === fnName);
+  if (!fn) throw new Error(`fixture for "${namespace}" has no hook "${fnName}"`);
   return fn;
 }
 

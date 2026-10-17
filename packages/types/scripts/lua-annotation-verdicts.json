@@ -545,18 +545,6 @@
     "annotated": "hash|string|table|url",
     "declared": "boolean|hash|string|table|url"
   },
-  "runtime:go.final:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
-    "annotated": "absent",
-    "declared": "declared"
-  },
-  "runtime:go.fixed_update:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
-    "annotated": "absent",
-    "declared": "declared"
-  },
   "runtime:go.get:too-loose:return1": {
     "verdict": "accepted",
     "reason": "the annotation omits matrix4 and table: LuaPushVar (gameobject_props_lua.cpp) pushes a PROPERTY_TYPE_MATRIX4 property through dmScript::PushMatrix4, and gameobject_script.cpp:Script_Get reads an array property without `index` into a table it fills with lua_newtable and lua_rawseti from 1 (:866-885), which the declaration types as Vector4[]",
@@ -568,36 +556,6 @@
     "reason": "the only undeclared kind is userdata, the annotation's build-time resource_data marker; at runtime the property holds the hashed resource path (script_resource.cpp), which the declaration types as Hash",
     "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
     "declared": "boolean|hash|matrix4|number|quat|string|table|url|vector3|vector4"
-  },
-  "runtime:go.init:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
-    "annotated": "absent",
-    "declared": "declared"
-  },
-  "runtime:go.late_update:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
-    "annotated": "absent",
-    "declared": "declared"
-  },
-  "runtime:go.on_input:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
-    "annotated": "absent",
-    "declared": "declared"
-  },
-  "runtime:go.on_message:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
-    "annotated": "absent",
-    "declared": "declared"
-  },
-  "runtime:go.on_reload:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
-    "annotated": "absent",
-    "declared": "declared"
   },
   "runtime:go.property:too-narrow:2": {
     "verdict": "accepted",
@@ -616,12 +574,6 @@
     "reason": "the only undeclared kind is userdata, the annotation's build-time resource_data marker; at runtime the property holds the hashed resource path (script_resource.cpp), which the declaration types as Hash",
     "annotated": "boolean|hash|number|quat|string|url|userdata|vector3|vector4",
     "declared": "boolean|hash|matrix4|number|quat|string|table|url|vector3|vector4"
-  },
-  "runtime:go.update:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a script lifecycle callback, not a namespace function: the engine reads it as a script global (gameobject_script.cpp SCRIPT_FUNCTION_NAMES via lua_getglobal) and registers no such name on the go table; the declaration keeps it under the namespace only to carry the ref-doc entry and its defineScript example",
-    "annotated": "absent",
-    "declared": "declared"
   },
   "runtime:go.world_to_local_position:arity": {
     "verdict": "accepted",
@@ -665,12 +617,6 @@
     "annotated": "required",
     "declared": "optional"
   },
-  "runtime:gui.final:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
-    "annotated": "absent",
-    "declared": "declared"
-  },
   "runtime:gui.get_tree:required-as-optional:1": {
     "verdict": "accepted",
     "reason": "gui_script.cpp:LuaGetTree tests argument 1 with lua_isnil after pushing its result table, so nil selects the whole scene and an absent argument reaches LuaCheckNodeInternal and raises; the declaration takes `node: Opaque<\"node\"> | undefined` without `?` (PARAM_TYPE_CORRECTIONS `gui.get_tree:param:node`), so the slot accepts undefined but must be passed",
@@ -682,12 +628,6 @@
     "reason": "gui-overloads.d.ts takes a node property name, a gui.PROP_* constant or a hash: gui_script.cpp:LuaGet reads the property with CheckHashOrString(L, 2) (:915), which raises on a number, and SETPROP (:5173) pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
     "annotated": "hash|number|string",
     "declared": "hash|string"
-  },
-  "runtime:gui.init:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
-    "annotated": "absent",
-    "declared": "declared"
   },
   "runtime:gui.move_above:arity": {
     "verdict": "accepted",
@@ -712,24 +652,6 @@
     "correction": "OPTIONAL_SLOT_CORRECTIONS:gui.new_texture:param:flip",
     "annotated": "required",
     "declared": "optional"
-  },
-  "runtime:gui.on_input:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
-    "annotated": "absent",
-    "declared": "declared"
-  },
-  "runtime:gui.on_message:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
-    "annotated": "absent",
-    "declared": "declared"
-  },
-  "runtime:gui.on_reload:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
-    "annotated": "absent",
-    "declared": "declared"
   },
   "runtime:gui.screen_to_local:too-loose:2": {
     "verdict": "corrected",
@@ -784,12 +706,6 @@
     "reason": "gui-overloads.d.ts takes a node property name, a gui.PROP_* constant or a hash: gui_script.cpp:LuaSet reads the property with CheckHashOrString(L, 2) (:1116), which raises on a number, and SETPROP (:5173) pushes each gui.PROP_* with lua_pushliteral, a string, so the annotation's integer enum is the generator default",
     "annotated": "hash|number|string",
     "declared": "hash|string"
-  },
-  "runtime:gui.update:missing-annotation": {
-    "verdict": "accepted",
-    "reason": "a gui script lifecycle callback, not a namespace function: gui_script.cpp documents it with a global `function <name>(self, ...)` example and Gui_methods registers no such name on the gui table; the declaration keeps it under the namespace only to carry the ref-doc entry and its script example",
-    "annotated": "absent",
-    "declared": "declared"
   },
   "runtime:html5.set_interaction_listener:arity": {
     "verdict": "accepted",
