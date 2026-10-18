@@ -13,12 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`upgrade` reads versions correctly](./upgrade.md#what-it-does)**: the prior one, and distinct prereleases.
+> - **[`upgrade` reads versions correctly](./upgrade.md#what-it-does)**: the project's prior one, and any two distinct prereleases.
 
 ### Fixed
 
 - **`upgrade` reports the version the project had before the run** — its installed `@defold-typescript/cli`, else its `package.json` pin — in the summary line and the `--json` `from` field, so `bunx @defold-typescript/cli@latest upgrade` no longer claims "already latest" after moving the project to a newer release. When neither names a version, the line reads `none -> <to>` and `from` is left out.
-- **`upgrade` tells prereleases such as `1.3.0-1alpha` and `1.3.0-1beta` apart**, so a CLI on the older one hands off to the newer one instead of re-scaffolding from its own templates and calling the project already latest.
+- **`upgrade` tells distinct prereleases apart** — digit-led ones such as `1.3.0-1alpha` and `1.3.0-1beta`, and very long numeric ones such as `1.3.0-9007199254740992` and `1.3.0-9007199254740993` — so a CLI on the older one hands off to the newer one instead of re-scaffolding from its own templates and calling the project already latest.
 
 ## v0.52.0
 
