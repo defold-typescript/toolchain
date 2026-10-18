@@ -18,11 +18,18 @@ bunx @defold-typescript/cli run -- --verbose     # forward engine args after --
 ```
 
 The optional `[path]` is the project directory; it defaults to the current
-directory. When the tree is not launchable, `run` reports one of three distinct
+directory. When the tree is not launchable, `run` reports one of four distinct
 resolver errors and exits `1` without launching:
 
 - **no compiled project** — `build/default/game.projectc` is missing:
   `no compiled project at build/default; run "bob build" (or "bob run") first`.
+- **no build engine for a native extension** — the project holds an
+  `ext.manifest` (outside `build/`, `.internal/`, `node_modules/`,
+  `.defold-types/` and the folders `.defignore` lists) but no build engine:
+  `<folder>/ext.manifest declares a native extension, but there is no build
+  engine at build/<platform>/dmengine, and the stock engine cannot run it`.
+  The stock engine has no extension code, so `run` stops here even when a
+  cached stock engine exists.
 - **no engine** — the `.projectc` is present but no engine is:
   `no engine for <platform>; run "bob run" to download and cache one`. A plain
   project built with `bob build` alone lands here, because only `bob run`
@@ -48,7 +55,10 @@ launches it without consulting either marker.
 native-extension build engine (`build/<platform>/dmengine`) when a native build
 produced one, otherwise the stock engine that a prior `bob run` fetched and
 cached for the resolved SHA. Either way it points the engine at
-`build/default/game.projectc`.
+`build/default/game.projectc`. On macOS the build folder is bob's
+`<arch>-osx` (`build/arm64-osx/dmengine`), not the `<arch>-macos` name the
+stock engine download uses. A project with an `ext.manifest` and no build
+engine stops with an error instead of launching the stock engine.
 
 The game streams live to your terminal. The engine's exit code becomes the
 command's exit code, so a crash or a non-zero quit propagates to whatever ran
@@ -89,7 +99,7 @@ captured, so the game still streams live to the terminal; a single envelope
 prints on exit:
 
 ```json
-{ "command": "run", "ok": true, "enginePath": "build/arm64-macos/dmengine", "projectc": "build/default/game.projectc", "exitCode": 0 }
+{ "command": "run", "ok": true, "enginePath": "build/arm64-osx/dmengine", "projectc": "build/default/game.projectc", "exitCode": 0 }
 ```
 
 The envelope carries `enginePath`, `projectc`, and `exitCode`, plus a `warnings`

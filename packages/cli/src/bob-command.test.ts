@@ -10,7 +10,7 @@ import {
   reportBobStatus,
   runBobCommand,
 } from "./bob-command";
-import { engineDownloadUrl } from "./debug-launcher";
+import { engineDownloadUrl, targetPlatform } from "./debug-launcher";
 import type { DefoldTarget } from "./defold-target";
 import { readBuildMarker, readEngineMarker } from "./engine-launch";
 
@@ -418,7 +418,12 @@ describe("prepareBobRun", () => {
   const RUN_CWD = "/proj";
   const jar = bobCachePath({ sha1: SHA, cacheDir: "/c" });
   const projectc = join(RUN_CWD, "build", "default", "game.projectc");
-  const buildEngine = join(RUN_CWD, "build", "arm64-macos", "dmengine");
+  const buildEngine = join(
+    RUN_CWD,
+    "build",
+    targetPlatform("darwin", "arm64").buildFolder,
+    "dmengine",
+  );
   const engineCache = engineCachePath({
     sha: SHA,
     enginePlatform: "arm64-macos",
@@ -491,6 +496,37 @@ describe("prepareBobRun", () => {
     expect(markerWrites).toEqual([{ cwd: RUN_CWD, enginePath: engineCache }]);
     expect(result.ok).toBe(true);
     expect(result.runnable?.enginePath).toBe(engineCache);
+  });
+
+  test("a native-extension project with no build engine stops before any download or marker", async () => {
+    const downloaded: Array<{ url: string; dest: string }> = [];
+    const markerWrites: Array<{ cwd: string; enginePath: string }> = [];
+    const result = await prepareBobRun({
+      cwd: RUN_CWD,
+      head: HEAD,
+      io: {
+        cacheDir: "/c",
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => p === projectc || p === jar,
+        javaProbe: () => true,
+        spawn: async () => ({ exitCode: 0 }),
+        download: async (url, dest) => {
+          downloaded.push({ url, dest });
+        },
+      },
+      writeMarker: async (cwd, enginePath) => {
+        markerWrites.push({ cwd, enginePath });
+      },
+      writeBuildMarker: NO_BUILD_MARKER,
+      findNativeExtension: () => "drawpixels",
+    });
+    expect(result).toMatchObject({ ok: false, buildExitCode: 0 });
+    expect(result.runnable).toBeUndefined();
+    expect(result.error).toStartWith("defold-typescript bob run:");
+    expect(result.error).toContain("drawpixels/ext.manifest");
+    expect(downloaded).toEqual([]);
+    expect(markerWrites).toEqual([]);
   });
 
   test("a build failure returns the bob exit code with no runnable, download, or marker", async () => {

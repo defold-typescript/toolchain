@@ -1140,7 +1140,7 @@ captured, its output streams to the terminal even under `--json`; the composite
 envelope prints on exit:
 
 ```json
-{ "command": "bob", "subcommand": "run", "ok": true, "build": { "exitCode": 0 }, "launch": { "enginePath": "build/arm64-macos/dmengine", "exitCode": 0 } }
+{ "command": "bob", "subcommand": "run", "ok": true, "build": { "exitCode": 0 }, "launch": { "enginePath": "build/arm64-osx/dmengine", "exitCode": 0 } }
 ```
 
 **Launch an existing build with `run`:** once `build/default` holds a compiled
@@ -1161,7 +1161,7 @@ The engine's exit code becomes the command's exit code, and `Ctrl-C`
 capturable — and prints one envelope on exit:
 
 ```json
-{ "command": "run", "ok": true, "enginePath": "build/arm64-macos/dmengine", "projectc": "build/default/game.projectc", "exitCode": 0 }
+{ "command": "run", "ok": true, "enginePath": "build/arm64-osx/dmengine", "projectc": "build/default/game.projectc", "exitCode": 0 }
 ```
 
 On a missing build or engine, `run --json` emits `{ "command": "run", "ok":

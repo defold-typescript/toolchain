@@ -6,6 +6,7 @@ import {
   nativeExtensionRuntimeWarnings,
   targetPlatform,
 } from "./debug-launcher";
+import { findNativeExtensionManifest } from "./project-resource-paths";
 
 export const ENGINE_MARKER_REL = "build/.defold-typescript-engine";
 export const BUILD_MARKER_REL = "build/.defold-typescript-build";
@@ -39,6 +40,7 @@ export interface ResolveRunnableOptions {
   readonly probe: (candidate: string) => boolean;
   readonly readEngineMarker?: (cwd: string) => EngineMarker | null;
   readonly readBuildMarker?: (cwd: string) => BuildMarker | null;
+  readonly findNativeExtension?: (cwd: string) => string | null;
 }
 
 function readMarkerFile(cwd: string, rel: string): string | null {
@@ -114,6 +116,22 @@ function describeHead(head: { sha: string; version: string | null }): string {
   return head.version ?? head.sha.slice(0, 7);
 }
 
+// Why a native-extension project cannot fall back to the stock engine, or null
+// when nothing in the project declares one. The stock engine has no extension
+// code linked in, so launching it fails only once a script calls the extension.
+export function nativeBuildEngineGap(opts: {
+  readonly cwd: string;
+  readonly target: EngineTarget;
+  readonly findNativeExtension?: (cwd: string) => string | null;
+}): string | null {
+  const dir = (opts.findNativeExtension ?? findNativeExtensionManifest)(opts.cwd);
+  if (dir === null) {
+    return null;
+  }
+  const buildEngine = path.join("build", opts.target.buildFolder, opts.target.executable);
+  return `${dir}/ext.manifest declares a native extension, but there is no build engine at ${buildEngine}, and the stock engine cannot run it.`;
+}
+
 // Pure resolver shared by `run` and `bob run`: answer which engine + compiled
 // project to launch, or throw an actionable error. No spawn, download, or write.
 export function resolveRunnable(opts: ResolveRunnableOptions): Runnable {
@@ -135,6 +153,17 @@ export function resolveRunnable(opts: ResolveRunnableOptions): Runnable {
   if (probe(buildEnginePath)) {
     const warnings = nativeExtensionRuntimeWarnings({ target, buildFolder, exists: probe });
     return { enginePath: buildEnginePath, projectcPath, target, warnings };
+  }
+
+  const gap = nativeBuildEngineGap({
+    cwd,
+    target,
+    ...(opts.findNativeExtension !== undefined
+      ? { findNativeExtension: opts.findNativeExtension }
+      : {}),
+  });
+  if (gap !== null) {
+    throw new Error(`defold-typescript run: ${gap} Build it with "bob build" or "bob run".`);
   }
 
   const marker = readMarker(cwd);
