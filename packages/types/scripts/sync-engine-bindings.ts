@@ -21,13 +21,25 @@ const PLATFORM_STUB = /_(null|android)\.cpp$/;
 const LUA_SOURCE =
   /\bluaL_register\s*\(|\bluaL_[rR]eg\s+\w+\s*\[\s*\]|\b\w+\s*\(\s*(?:struct\s+)?lua_State\s*\*/;
 
-export interface EngineBindingFile {
+export interface EngineBlobId {
   readonly path: string;
   readonly blobSha: string;
+}
+
+export interface EngineBindingFile extends EngineBlobId {
   readonly sha256: string;
 }
 
 export interface EngineBindingManifest {
+  readonly tag: string;
+  readonly commit: string;
+  readonly files: readonly EngineBindingFile[];
+  // The tree's blob id for each evidence path, recorded so `--evidence` can
+  // authenticate a download without a GitHub API call.
+  readonly evidence: readonly EngineBlobId[];
+}
+
+export interface EngineEvidenceManifest {
   readonly tag: string;
   readonly commit: string;
   readonly files: readonly EngineBindingFile[];
@@ -74,6 +86,40 @@ export function engineEvidencePaths(
     for (const pin of range.engine?.pins ?? []) paths.add(`engine/${pin.file}`);
   }
   return [...paths].sort();
+}
+
+export function evidenceBlobIds(
+  treeBlobs: ReadonlyMap<string, string>,
+  paths: readonly string[] = engineEvidencePaths(),
+): EngineBlobId[] {
+  return [...paths].sort().map((path) => {
+    const blobSha = treeBlobs.get(path);
+    if (blobSha === undefined) throw new Error(`${path}: no blob in the engine tree`);
+    return { path, blobSha };
+  });
+}
+
+// The blob id the bindings commit's tree records for `path`, when `bytes` hash
+// to it; anything else is a file from another commit or an edited copy.
+export function authenticateEvidence(
+  target: ApiTarget,
+  bindings: EngineBindingManifest,
+  path: string,
+  bytes: Uint8Array,
+): string {
+  const recorded = bindings.evidence?.find((file) => file.path === path)?.blobSha;
+  if (recorded === undefined) {
+    throw new Error(
+      `${target.id}: ${path}: no blob id recorded at ${bindings.commit}; run the sync without --evidence`,
+    );
+  }
+  const actual = gitBlobSha(bytes);
+  if (actual !== recorded) {
+    throw new Error(
+      `${target.id}: ${path}: blob ${actual} is not ${recorded} at ${bindings.commit}`,
+    );
+  }
+  return recorded;
 }
 
 export function vendoredTargets(targets: readonly ApiTarget[] = loadApiTargets()): ApiTarget[] {
@@ -131,6 +177,7 @@ export async function syncTarget(
   const blobs = new Map(
     tree.tree.filter((e) => e.type === "blob").map((e) => [e.path, e.sha] as const),
   );
+  const evidence = evidenceBlobIds(blobs);
 
   const dir = bindingsDir(target);
   rmSync(dir, { recursive: true, force: true });
@@ -145,37 +192,43 @@ export async function syncTarget(
     writeFileSync(out, source);
     files.push({ path, blobSha: blobs.get(path) as string, sha256: sha256(source) });
   }
-  const manifest: EngineBindingManifest = { tag, commit, files };
+  const manifest: EngineBindingManifest = { tag, commit, files, evidence };
   writeFileSync(resolve(dir, "manifest.json"), biomeFormatJson(JSON.stringify(manifest)));
   return manifest;
 }
 
 // Fetches the pinned engine files at the commit the target's bindings were
-// synced from, so the evidence and the bindings describe one engine.
-export async function syncEvidence(target: ApiTarget): Promise<EngineBindingManifest> {
+// synced from, so the evidence and the bindings describe one engine. Every
+// file is authenticated against the bindings commit's tree before any write.
+export async function syncEvidence(
+  target: ApiTarget,
+  packageRoot: string = PACKAGE_ROOT,
+): Promise<EngineEvidenceManifest> {
   const tag = targetTag(target);
-  const { commit } = JSON.parse(
-    readFileSync(resolve(bindingsDir(target), "manifest.json"), "utf8"),
+  const bindings = JSON.parse(
+    readFileSync(resolve(bindingsDir(target, packageRoot), "manifest.json"), "utf8"),
   ) as EngineBindingManifest;
-  const fetched: { path: string; bytes: Uint8Array }[] = [];
+  const { commit } = bindings;
+  const fetched: { path: string; bytes: Uint8Array; blobSha: string }[] = [];
   for (const path of engineEvidencePaths()) {
     const url = `https://raw.githubusercontent.com/defold/defold/${commit}/${path}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`${target.id}: ${path}: GET ${url} failed: ${res.status}`);
-    fetched.push({ path, bytes: new Uint8Array(await res.arrayBuffer()) });
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    fetched.push({ path, bytes, blobSha: authenticateEvidence(target, bindings, path, bytes) });
   }
 
-  const dir = evidenceDir(target);
+  const dir = evidenceDir(target, packageRoot);
   rmSync(dir, { recursive: true, force: true });
   const files: EngineBindingFile[] = [];
-  for (const { path, bytes } of fetched) {
+  for (const { path, bytes, blobSha } of fetched) {
     const out = resolve(dir, path);
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, bytes);
-    files.push({ path, blobSha: gitBlobSha(bytes), sha256: sha256(bytes) });
+    files.push({ path, blobSha, sha256: sha256(bytes) });
   }
   mkdirSync(dir, { recursive: true });
-  const manifest: EngineBindingManifest = { tag, commit, files };
+  const manifest: EngineEvidenceManifest = { tag, commit, files };
   writeFileSync(resolve(dir, "manifest.json"), biomeFormatJson(JSON.stringify(manifest)));
   return manifest;
 }
