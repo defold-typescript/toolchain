@@ -63,7 +63,7 @@ import {
 import { runSetTarget } from "./set-target";
 import { runSetupDebug } from "./setup-debug";
 import { colorEnabled, severityLine } from "./terminal-style";
-import { runUpgrade, type UpgradeIo } from "./upgrade";
+import { compareSemver, runUpgrade, type UpgradeIo } from "./upgrade";
 import {
   readUpstreamCache,
   refreshUpstreamCache,
@@ -1970,7 +1970,7 @@ function dispatchCommand(
               renderResult({
                 command: "upgrade",
                 written: outcome.written,
-                from: outcome.from,
+                ...(outcome.from !== undefined ? { from: outcome.from } : {}),
                 to: outcome.to,
                 handedOff: outcome.handedOff,
                 ...(upgradeNotices.length > 0 ? { warnings: upgradeNotices } : {}),
@@ -1988,9 +1988,12 @@ function dispatchCommand(
             if (outcome.error !== undefined) {
               writeError(outcome.error);
             } else {
+              const from = outcome.from ?? "none";
+              const alreadyLatest =
+                outcome.from !== undefined && compareSemver(outcome.from, outcome.to) === 0;
               io.stdout.write(
-                `defold-typescript upgrade: ${outcome.from} -> ${outcome.to}${
-                  outcome.handedOff ? "" : " (already latest; re-scaffolded managed files)"
+                `defold-typescript upgrade: ${from} -> ${outcome.to}${
+                  alreadyLatest ? " (already latest; re-scaffolded managed files)" : ""
                 }\n`,
               );
             }
