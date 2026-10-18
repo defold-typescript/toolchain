@@ -60,6 +60,8 @@ The target must be a configured production source, not merely a path an `include
 
 The bootstrap stays in exactly one script: a stale managed block in any other configured source is stripped on each run.
 
+The entry script may [export runtime values](./script-state.md#exporting-a-value-from-a-script-itself) like any other script. The component runs the block's gated `lldebugger.start()` before it loads the module those exports compile into, so the debugger is attached before any of them is built.
+
 ### Re-running it
 
 `setup-debug` is idempotent, and every `.vscode` file merges additively into what you already have — your own launch configurations, recommendations and an edited `defold-debug.ts` all survive.
@@ -115,7 +117,9 @@ macOS and Linux declare no native-extension runtime libraries and resolve OpenAL
 
 ### Building from the editor instead
 
-The CLI build loop above is the primary path and needs no editor. If you prefer, you can still produce `build/default/game.projectc` (and any native-extension engine) by building from the Defold editor before launching from VS Code — the launcher runs whatever is already under `build/` either way.
+The CLI build loop above is the primary path and needs no editor. If you prefer, you can still produce `build/default/game.projectc` (and any native-extension engine) by building from the Defold editor before launching from VS Code.
+
+Either way, the launcher never builds for you. It stops when `build/default/game.projectc` does not exist yet. When a generated script, a generated `.lua` module or `game.project` is newer than its compiled copy under `build/default`, it names up to three of them, warns that the game runs the old code so breakpoints may not bind, and launches anyway.
 
 ## Manual setup
 

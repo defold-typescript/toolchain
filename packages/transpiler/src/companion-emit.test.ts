@@ -1,7 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { lauxlib, lua, lualib } from "lua-wasm-bindings/dist/lua.51";
 import { COMPANION_INTERNAL_FIELD } from "./companion-closure";
+import { DEBUG_MANAGED_BLOCK } from "./debug-bootstrap";
 import { findEmittedRequires } from "./emitted-requires";
 import { scanEmittedRequires } from "./lua-require-scan";
+import { requirePathForRel } from "./output-paths";
 import { createTranspileSession } from "./session";
 import type { TranspileProjectResult } from "./transpile";
 
@@ -512,5 +515,86 @@ describe("companion emit — sources that are left alone", () => {
     const lua = chunkFor(result, "game/lib/rates.ts");
     expect(lua).toContain("____exports.RATE = 2");
     expect(findEmittedRequires(lua)).toEqual([]);
+  });
+});
+
+describe("companion emit — the setup-debug managed block", () => {
+  const LUA_OK = 0;
+  const ENTRY_REL = "game/main.ts";
+  const SOURCES = {
+    "game/lldebugger.debug.d.ts": lines(
+      "/** @noResolution */",
+      'declare module "lldebugger.debug" {',
+      "  export function start(): void;",
+      "}",
+    ),
+    [ENTRY_REL]: lines(
+      DEBUG_MANAGED_BLOCK,
+      "",
+      FACTORY_IMPORT,
+      "",
+      "declare function record(tag: string): number;",
+      'export const SPEED = record("companion");',
+      "",
+      "defineScript({",
+      "  init() {",
+      "    print(SPEED);",
+      "  },",
+      "});",
+    ),
+  };
+
+  // Loads the script chunk the way the engine loads a component: every module it
+  // requires is preloaded, and `record` logs the order top-level code runs in.
+  function runScriptChunk(result: TranspileProjectResult, isDebug: boolean): string[] {
+    const modules: Record<string, string> = {
+      [requirePathForRel(ENTRY_REL)]: companionFor(result, ENTRY_REL),
+      "lldebugger.debug": 'return { start = function() record("start") end }',
+    };
+    if (result.lualib !== undefined) {
+      modules.lualib_bundle = result.lualib;
+    }
+    const L = lauxlib.luaL_newstate();
+    try {
+      lualib.luaL_openlibs(L);
+      lua.lua_getglobal(L, "package");
+      lua.lua_getfield(L, -1, "preload");
+      for (const [module, source] of Object.entries(modules)) {
+        const status = lauxlib.luaL_loadbuffer(L, source, Buffer.byteLength(source), `=${module}`);
+        if (status !== LUA_OK) {
+          throw new Error(`Lua failed to load ${module}: ${lua.lua_tostring(L, -1)}`);
+        }
+        lua.lua_setfield(L, -2, module);
+      }
+      lua.lua_settop(L, 0);
+      const harness = [
+        "____log = {}",
+        "function record(tag) ____log[#____log + 1] = tag return #____log end",
+        `sys = { get_engine_info = function() return { is_debug = ${isDebug} } end }`,
+      ].join("\n");
+      if (lauxlib.luaL_dostring(L, harness) !== LUA_OK) {
+        throw new Error(`Lua harness failed: ${lua.lua_tostring(L, -1)}`);
+      }
+      const script = chunkFor(result, ENTRY_REL);
+      const loaded = lauxlib.luaL_loadbuffer(L, script, Buffer.byteLength(script), "=script");
+      if (loaded !== LUA_OK || lua.lua_pcall(L, 0, 0, 0) !== LUA_OK) {
+        throw new Error(`Lua error in the script chunk: ${lua.lua_tostring(L, -1)}`);
+      }
+      if (lauxlib.luaL_dostring(L, 'return table.concat(____log, ",")') !== LUA_OK) {
+        throw new Error(`Lua failed to read the log: ${lua.lua_tostring(L, -1)}`);
+      }
+      const log = lua.lua_tostring(L, -1);
+      return log === "" ? [] : log.split(",");
+    } finally {
+      lua.lua_close(L);
+    }
+  }
+
+  test("a debug engine starts the debugger before the companion's top-level code", () => {
+    expect(runScriptChunk(emit(SOURCES), true)).toEqual(["start", "companion"]);
+  });
+
+  test("a release engine skips the debugger and still loads the companion", () => {
+    expect(runScriptChunk(emit(SOURCES), false)).toEqual(["companion"]);
   });
 });

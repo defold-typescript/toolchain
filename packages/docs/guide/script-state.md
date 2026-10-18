@@ -139,6 +139,8 @@ The error names `count` and both lines that reach it. A companion cannot carry t
 
 The other rejected shape is an effectful top-level statement — a call rather than a literal — with any exported declaration, or anything one of them reaches, below it. Move it below them all, or into `init`.
 
+The block [`setup-debug`](./debugging.md) writes is the one exception. The component runs its gated `lldebugger.start()` before it loads the companion, so the debugger is attached before any exported value is built. Once you edit that block, it counts as ordinary top-level work again, and the error says to run `defold-typescript setup-debug`, which restores it.
+
 ## Truly global variables: `declare global`
 
 The widest tier is a bare Lua global, shared across the entire VM — every script, no import. You reach it from TypeScript with `declare global`. The declaration itself emits no Lua; the first assignment creates the global at runtime:

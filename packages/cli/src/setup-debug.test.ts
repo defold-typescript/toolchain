@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { runBuild } from "./build";
 import { DEBUG_LAUNCHER_REL, debugLaunchConfig } from "./debug-launcher";
 import {
   AMBIENT_DECLARATION,
@@ -1327,6 +1328,36 @@ describe("setup-debug wired project type-checks (Bug 08 regression)", () => {
         throw new Error(`wired project failed to compile:\n${output}`);
       }
       expect(code).toBe(0);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("an entry script that exports runtime values builds once wired", async () => {
+    const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-setup-debug-exports-"));
+    try {
+      writeGuardProject(cwd);
+      writeFileSync(
+        path.join(cwd, "src", "player.ts"),
+        `import { defineScript } from "@defold-typescript/types";
+
+export const SPEED = 3;
+
+export default defineScript({
+  init() {
+    print(SPEED);
+  },
+});
+`,
+      );
+      const result = await runSetupDebug({ cwd, script: "src/player.ts" });
+      expect(result.ok).toBe(true);
+      const build = runBuild({ cwd });
+      expect(build.written).toContain("src/player.ts.script");
+      expect(build.written).toContain("src/player.lua");
+      expect(readFileSync(path.join(cwd, "src", "player.ts.script"), "utf8")).toContain(
+        "lldebugger.start()",
+      );
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }

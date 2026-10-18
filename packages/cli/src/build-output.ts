@@ -446,6 +446,22 @@ function withSourceRoot(map: string, sourceRoot: string): string {
   return JSON.stringify({ ...(parsed as Record<string, unknown>), sourceRoot });
 }
 
+// An output's modification time moves only with its content: the debug
+// launcher reads a compiled copy older than its output as a stale engine build.
+// A direct write rather than a temp-file rename, which would briefly put a
+// `.tmp` file in the game's resource folders.
+function writeIfChanged(abs: string, text: string): void {
+  let current: string | undefined;
+  try {
+    current = readFileSync(abs, "utf8");
+  } catch {
+    current = undefined;
+  }
+  if (current !== text) {
+    writeFileSync(abs, text);
+  }
+}
+
 export function writeScriptFile(
   cwd: string,
   scriptRel: string,
@@ -456,12 +472,12 @@ export function writeScriptFile(
   mkdirSync(path.dirname(scriptAbs), { recursive: true });
   if (map) {
     const mapBasename = `${path.posix.basename(scriptRel)}.map`;
-    writeFileSync(`${scriptAbs}.map`, map);
+    writeIfChanged(`${scriptAbs}.map`, map);
     // The sourceMappingURL directive must stay the file's last line: the Local
     // Lua Debugger only honors it at end-of-file (its matcher anchors `%s*$`),
     // so the banner is appended before it, not after.
-    writeFileSync(scriptAbs, `${lua}\n${GENERATED_BANNER}\n--# sourceMappingURL=${mapBasename}\n`);
+    writeIfChanged(scriptAbs, `${lua}\n${GENERATED_BANNER}\n--# sourceMappingURL=${mapBasename}\n`);
   } else {
-    writeFileSync(scriptAbs, `${lua}\n${GENERATED_BANNER}\n`);
+    writeIfChanged(scriptAbs, `${lua}\n${GENERATED_BANNER}\n`);
   }
 }

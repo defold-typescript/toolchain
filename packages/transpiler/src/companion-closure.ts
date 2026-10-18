@@ -1,4 +1,5 @@
 import * as ts from "typescript";
+import { findManagedBootstrap } from "./debug-bootstrap";
 import { resolvesToFactoryExport } from "./lifecycle-erasure";
 
 /**
@@ -49,6 +50,13 @@ export interface CompanionClosure {
    * companion takes its own `require` of the same module instead.
    */
   readonly importBindings: readonly string[];
+  /**
+   * The unedited `setup-debug` managed block's statements, in source order, or
+   * empty. They are exempt from the order rule because the emit runs them ahead
+   * of the companion's `require`, so the debugger starts before anything the
+   * companion loads.
+   */
+  readonly bootstrap: readonly ts.Statement[];
   /** Shapes a split cannot preserve. Empty means the source is splittable. */
   readonly violations: readonly ClosureViolation[];
 }
@@ -717,11 +725,20 @@ export function computeCompanionClosure(
     });
   }
 
+  const managed = findManagedBootstrap(sourceFile);
+  const bootstrap = managed?.canonical === true ? managed.statements : [];
+  const editedBlock = new Set(managed?.canonical === false ? managed.statements : []);
+  const exempt = new Set(bootstrap);
+
   // The companion loads as a unit, so the constraint is pairwise: any effectful
   // script statement with any closure declaration below it is reordered by the
   // split, whatever the first member's position.
   for (const statement of sourceFile.statements) {
-    if (closureStatements.has(statement) || isEffectFreeStatement(statement, checker)) {
+    if (
+      closureStatements.has(statement) ||
+      exempt.has(statement) ||
+      isEffectFreeStatement(statement, checker)
+    ) {
       continue;
     }
     const start = statement.getStart(sourceFile);
@@ -735,14 +752,18 @@ export function computeCompanionClosure(
       siteOf(statement, "runs in the script"),
       siteOf(hoisted.declaration.node, "moves into the companion"),
     ];
+    const name = hoisted.declaration.name;
     violations.push({
       kind: "initialization-order",
-      member: hoisted.declaration.name,
+      member: name,
       sites,
-      message:
-        `top-level work precedes "${hoisted.declaration.name}", which the companion would run first, ` +
-        `reversing their order (${formatSites(sites)}). ` +
-        "Move that work below the companion's declarations, or into a lifecycle hook.",
+      message: editedBlock.has(statement)
+        ? `the setup-debug managed block was edited and now runs top-level work before "${name}", ` +
+          `which the companion would run first (${formatSites(sites)}). ` +
+          "Run `defold-typescript setup-debug` to restore the block."
+        : `top-level work precedes "${name}", which the companion would run first, ` +
+          `reversing their order (${formatSites(sites)}). ` +
+          "Move that work below the companion's declarations, or into a lifecycle hook.",
     });
   }
 
@@ -756,6 +777,7 @@ export function computeCompanionClosure(
     internals: ordered
       .filter(({ symbol }) => !exportSet.has(symbol) && scriptReferences.has(symbol))
       .map(({ declaration }) => declaration.name),
+    bootstrap,
     violations,
   };
 }
