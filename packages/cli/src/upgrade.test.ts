@@ -479,6 +479,96 @@ describe("runUpgrade", () => {
     expect(outcome.output).toBe("hand-off boom");
     expect(spawned).toHaveLength(1);
   });
+
+  describe("from is the project's version before the run", () => {
+    const seedInstalled = (version: string): void => {
+      const dir = path.join(cwd, "node_modules", "@defold-typescript", "cli");
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(path.join(dir, "package.json"), JSON.stringify({ version }));
+    };
+    const seedPin = (spec: string): void => {
+      writeFileSync(
+        path.join(cwd, "package.json"),
+        JSON.stringify({ devDependencies: { "@defold-typescript/cli": spec } }),
+      );
+    };
+
+    test("the installed copy wins over the running latest binary", async () => {
+      seedInstalled("1.2.0");
+
+      const outcome = await runUpgrade({
+        cwd,
+        running: "1.3.0",
+        io: upgradeIo({ latest: "1.3.0" }).io,
+      });
+
+      expect(outcome).toMatchObject({ from: "1.2.0", to: "1.3.0", handedOff: false });
+    });
+
+    test("with nothing installed, the pin is read before the re-init re-pins it", async () => {
+      seedPin("^1.1.0");
+
+      const outcome = await runUpgrade({
+        cwd,
+        running: "1.3.0",
+        io: upgradeIo({ latest: "1.3.0" }).io,
+      });
+
+      expect(outcome.from).toBe("1.1.0");
+    });
+
+    test("an installed copy outranks the pin", async () => {
+      seedInstalled("1.2.4");
+      seedPin("^1.2.0");
+
+      const outcome = await runUpgrade({
+        cwd,
+        running: "1.3.0",
+        io: upgradeIo({ latest: "1.3.0" }).io,
+      });
+
+      expect(outcome.from).toBe("1.2.4");
+    });
+
+    test("a pin that names no concrete version, or no package.json, leaves from out", async () => {
+      for (const spec of ["latest", "workspace:*"]) {
+        const dir = mkdtempSync(path.join(os.tmpdir(), "defold-ts-upgrade-pin-"));
+        try {
+          writeFileSync(
+            path.join(dir, "package.json"),
+            JSON.stringify({ devDependencies: { "@defold-typescript/cli": spec } }),
+          );
+          const outcome = await runUpgrade({
+            cwd: dir,
+            running: "1.3.0",
+            io: upgradeIo({ latest: "1.3.0" }).io,
+          });
+          expect("from" in outcome).toBe(false);
+        } finally {
+          rmSync(dir, { recursive: true, force: true });
+        }
+      }
+
+      const outcome = await runUpgrade({
+        cwd,
+        running: "1.3.0",
+        io: upgradeIo({ latest: "1.3.0" }).io,
+      });
+      expect("from" in outcome).toBe(false);
+    });
+
+    test("the hand-off path reports the installed version, not the running one", async () => {
+      seedInstalled("1.1.0");
+
+      const outcome = await runUpgrade({
+        cwd,
+        running: "1.2.0",
+        io: upgradeIo({ latest: "1.3.0" }).io,
+      });
+
+      expect(outcome).toMatchObject({ from: "1.1.0", to: "1.3.0", handedOff: true });
+    });
+  });
 });
 
 // The injected seam is what hid this bug, so this asserts against the real spawn.

@@ -5938,6 +5938,12 @@ describe("dispatch upgrade", () => {
   const delegatedInit = (written: readonly string[]): string =>
     `${JSON.stringify({ command: "init", ok: true, written })}\n`;
 
+  const seedInstalledCli = (version: string): void => {
+    const dir = path.join(cwd, "node_modules", "@defold-typescript", "cli");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(path.join(dir, "package.json"), JSON.stringify({ version }));
+  };
+
   const handOffs = (spawned: { argv: string[] }[]): string[][] =>
     spawned
       .map((s) => s.argv)
@@ -6056,6 +6062,7 @@ describe("dispatch upgrade", () => {
 
   test("a successful hand-off is followed by the install command and reports from -> to", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    seedInstalledCli("1.1.0");
     const { io, out } = captureStreams();
     const { internals, spawned } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
 
@@ -6063,8 +6070,38 @@ describe("dispatch upgrade", () => {
 
     expect(code).toBe(0);
     expect(spawned.map((s) => s.argv).at(-1)).toEqual(["bun", "install"]);
-    expect(out()).toContain("1.2.0");
-    expect(out()).toContain("1.3.0");
+    expect(out()).toBe("defold-typescript upgrade: 1.1.0 -> 1.3.0\n");
+  });
+
+  test("the summary line names the project's prior version, under the latest binary", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    seedInstalledCli("1.2.0");
+    const { io, out } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.3.0", latest: "1.3.0" });
+
+    expect(await dispatch(["upgrade", cwd], io, internals)).toBe(0);
+    expect(out()).toBe("defold-typescript upgrade: 1.2.0 -> 1.3.0\n");
+  });
+
+  test("the summary line claims already latest only when the project was", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    seedInstalledCli("1.3.0");
+    const { io, out } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.3.0", latest: "1.3.0" });
+
+    expect(await dispatch(["upgrade", cwd], io, internals)).toBe(0);
+    expect(out()).toBe(
+      "defold-typescript upgrade: 1.3.0 -> 1.3.0 (already latest; re-scaffolded managed files)\n",
+    );
+  });
+
+  test("the summary line reads none when no earlier version is found", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.3.0", latest: "1.3.0" });
+
+    expect(await dispatch(["upgrade", cwd], io, internals)).toBe(0);
+    expect(out()).toBe("defold-typescript upgrade: none -> 1.3.0\n");
   });
 
   test("the install command follows the detected package manager", async () => {
@@ -6156,6 +6193,7 @@ describe("dispatch upgrade", () => {
 
   test("--json carries ok, from/to and handedOff, and writes nothing to stderr", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    seedInstalledCli("1.1.0");
     const { io, out, err } = captureStreams();
     const { internals, spawned } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
 
@@ -6177,11 +6215,22 @@ describe("dispatch upgrade", () => {
     expect(parsed).toMatchObject({
       command: "upgrade",
       ok: true,
-      from: "1.2.0",
+      from: "1.1.0",
       to: "1.3.0",
       handedOff: true,
     });
     expect(err()).toBe("");
+  });
+
+  test("--json leaves from out when the project had no earlier version", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+
+    expect(await dispatch(["upgrade", cwd, "--json"], io, internals)).toBe(0);
+    const parsed = JSON.parse(out().trim()) as object;
+    expect(parsed).toMatchObject({ ok: true, to: "1.3.0", handedOff: true });
+    expect("from" in parsed).toBe(false);
   });
 
   test("upgrade warns on stderr when the detected editor drifts from a version pin", async () => {

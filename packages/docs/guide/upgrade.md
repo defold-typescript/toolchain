@@ -29,6 +29,12 @@ copy already installed in it. The re-scaffold is `init --force`, and the verb
 finishes by running your package manager's install so the refreshed pins are
 actually on disk.
 
+The summary line reads `<from> -> <to>`, where `<from>` is the
+`@defold-typescript/cli` version the project had before the run and `<to>` is the
+resolved latest. It adds `(already latest; re-scaffolded managed files)` only when
+the project was already on `<to>`, and reads `none -> <to>` when no earlier version
+is found.
+
 ## What it refreshes, and what it never touches
 
 The re-scaffold refreshes the **managed** files: it re-pins the managed
@@ -86,9 +92,10 @@ bunx @defold-typescript/cli@latest upgrade --json
 }
 ```
 
-`from` and `to` are the running and the resolved-latest CLI versions, and
-`handedOff` says whether the newer CLI did the re-scaffold. When `from` and `to`
-are equal, `handedOff` is `false` and the project was re-scaffolded in place.
+`from` is the `@defold-typescript/cli` version the project had before the
+upgrade — the installed copy in `node_modules`, else the version in its
+`package.json` pin — and is absent when neither exists. `to` is the resolved
+latest, and `handedOff` says whether a newer CLI did the re-scaffold.
 
 `written` lists the managed files the re-scaffold touched. When `handedOff` is
 `true` it is the list the **newer CLI reports** for the re-scaffold it performed,
