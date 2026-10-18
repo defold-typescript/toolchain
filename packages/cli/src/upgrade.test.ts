@@ -37,6 +37,21 @@ describe("compareSemver", () => {
   test("a prerelease still sorts below a higher release", () => {
     expect(compareSemver("1.3.0-beta.1", "1.4.0")).toBeLessThan(0);
   });
+
+  test("digit-led identifiers are alphanumeric, so distinct ones never compare equal", () => {
+    expect(compareSemver("1.3.0-1alpha", "1.3.0-1beta")).toBeLessThan(0);
+    expect(compareSemver("1.3.0-1beta", "1.3.0-1alpha")).toBeGreaterThan(0);
+  });
+
+  test("a numeric identifier ranks below an alphanumeric one, digit-led or not", () => {
+    expect(compareSemver("1.3.0-2", "1.3.0-1alpha")).toBeLessThan(0);
+    expect(compareSemver("1.3.0-1alpha", "1.3.0-2")).toBeGreaterThan(0);
+    expect(compareSemver("1.3.0-1", "1.3.0-alpha")).toBeLessThan(0);
+  });
+
+  test("numeric identifiers compare as numbers, not text", () => {
+    expect(compareSemver("1.3.0-beta.9", "1.3.0-beta.10")).toBeLessThan(0);
+  });
 });
 
 describe("planUpgrade", () => {
@@ -73,6 +88,13 @@ describe("planUpgrade", () => {
     expect(planUpgrade({ running: "1.3.0-beta.1", latest: "1.3.0" })).toEqual({
       action: "hand-off",
       target: "1.3.0",
+    });
+  });
+
+  test("a digit-led prerelease hands off to a distinct later one", () => {
+    expect(planUpgrade({ running: "1.3.0-1alpha", latest: "1.3.0-1beta" })).toEqual({
+      action: "hand-off",
+      target: "1.3.0-1beta",
     });
   });
 });
