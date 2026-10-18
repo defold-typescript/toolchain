@@ -1,4 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { type BuildConfig, computeOutputRel } from "@defold-typescript/transpiler";
 import { isFileIncluded } from "./build-output";
@@ -17,19 +19,19 @@ import {
 const DEFAULT_CONFIG: BuildConfig = { outDir: undefined, include: ["src/**/*.ts"] };
 
 describe("targetPlatform", () => {
-  test("maps Apple Silicon macOS to the arm64-macos engine", () => {
+  test("maps Apple Silicon macOS to the arm64-macos engine and bob's arm64-osx build folder", () => {
     expect(targetPlatform("darwin", "arm64")).toEqual({
       enginePlatform: "arm64-macos",
-      buildFolder: "arm64-macos",
+      buildFolder: "arm64-osx",
       executable: "dmengine",
       nativeExtensions: [],
     });
   });
 
-  test("maps Intel macOS to the x86_64-macos engine", () => {
+  test("maps Intel macOS to the x86_64-macos engine and bob's x86_64-osx build folder", () => {
     expect(targetPlatform("darwin", "x64")).toEqual({
       enginePlatform: "x86_64-macos",
-      buildFolder: "x86_64-macos",
+      buildFolder: "x86_64-osx",
       executable: "dmengine",
       nativeExtensions: [],
     });
@@ -291,4 +293,54 @@ describe("debugLaunchConfig / scaffolded artifacts", () => {
     expect(DEBUG_LAUNCHER_SOURCE).toMatch(/by hand|manually|place/i);
     expect(DEBUG_LAUNCHER_SOURCE).toContain("defold/defold#11860");
   });
+});
+
+describe("generated launcher", () => {
+  const host = targetPlatform(process.platform, process.arch);
+  let project = "";
+
+  beforeEach(() => {
+    project = mkdtempSync(path.join(os.tmpdir(), "dt-debug-launcher-"));
+    mkdirSync(path.join(project, ".vscode"));
+    writeFileSync(path.join(project, DEBUG_LAUNCHER_REL), DEBUG_LAUNCHER_SOURCE);
+    mkdirSync(path.join(project, "build", "default"), { recursive: true });
+    writeFileSync(path.join(project, "build", "default", "game.projectc"), "");
+    mkdirSync(path.join(project, "extensions", "drawpixels"), { recursive: true });
+    writeFileSync(path.join(project, "extensions", "drawpixels", "ext.manifest"), "name: pixels\n");
+  });
+
+  afterEach(() => {
+    rmSync(project, { recursive: true, force: true });
+  });
+
+  function runLauncher(): { exitCode: number; stdout: string; stderr: string } {
+    const proc = Bun.spawnSync([process.execPath, DEBUG_LAUNCHER_REL], { cwd: project });
+    return {
+      exitCode: proc.exitCode,
+      stdout: proc.stdout.toString(),
+      stderr: proc.stderr.toString(),
+    };
+  }
+
+  test("stops before fetching the stock engine for a native extension with no build engine", () => {
+    const result = runLauncher();
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("extensions/drawpixels/ext.manifest");
+    expect(result.stderr).toContain(path.join("build", host.buildFolder, host.executable));
+    expect(existsSync(path.join(project, ".vscode", host.executable))).toBe(false);
+  });
+
+  // The launcher places the stock engine beside itself via `import.meta.url`,
+  // which only lands on `.vscode/<executable>` as a plain path on POSIX.
+  test.skipIf(process.platform === "win32")(
+    "skips an ext.manifest under a .defignore folder and launches the stock engine",
+    () => {
+      writeFileSync(path.join(project, ".defignore"), "/extensions\n");
+      writeFileSync(path.join(project, ".vscode", host.executable), "#!/bin/sh\nexit 0\n");
+      const result = runLauncher();
+      expect(result.stderr).not.toContain("ext.manifest");
+      expect(result.stdout).toContain("Launching");
+      expect(result.exitCode).toBe(0);
+    },
+  );
 });

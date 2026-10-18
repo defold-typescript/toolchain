@@ -16,6 +16,12 @@ import {
 
 const cwd = "/proj";
 const projectc = path.join(cwd, "build/default/game.projectc");
+const macBuildEngine = path.join(
+  cwd,
+  "build",
+  targetPlatform("darwin", "arm64").buildFolder,
+  "dmengine",
+);
 
 const engineMarker = (
   enginePath: string,
@@ -29,7 +35,7 @@ const engineMarker = (
 
 describe("resolveRunnable", () => {
   test("prefers the native-extension build engine when it exists", () => {
-    const buildEngine = path.join(cwd, "build/arm64-macos/dmengine");
+    const buildEngine = macBuildEngine;
     const probe = (p: string) => p === projectc || p === buildEngine;
     const runnable = resolveRunnable({ cwd, platform: "darwin", arch: "arm64", probe });
     expect(runnable.enginePath).toBe(buildEngine);
@@ -49,6 +55,44 @@ describe("resolveRunnable", () => {
     });
     expect(runnable.enginePath).toBe(marker);
     expect(runnable.projectcPath).toBe(projectc);
+  });
+
+  test("refuses the marker engine for a native-extension project with no build engine", () => {
+    const marker = "/cache/stock/dmengine";
+    const probe = (p: string) => p === projectc || p === marker;
+    const { buildFolder } = targetPlatform("darwin", "arm64");
+    let message = "";
+    try {
+      resolveRunnable({
+        cwd,
+        platform: "darwin",
+        arch: "arm64",
+        probe,
+        readEngineMarker: () => engineMarker(marker, null, null),
+        findNativeExtension: () => "drawpixels",
+      });
+    } catch (err) {
+      message = (err as Error).message;
+    }
+    expect(message).toContain("drawpixels/ext.manifest");
+    expect(message).toContain(path.join("build", buildFolder, "dmengine"));
+  });
+
+  test("returns the build engine without walking for a native extension", () => {
+    let walked = false;
+    const probe = (p: string) => p === projectc || p === macBuildEngine;
+    const runnable = resolveRunnable({
+      cwd,
+      platform: "darwin",
+      arch: "arm64",
+      probe,
+      findNativeExtension: () => {
+        walked = true;
+        return "drawpixels";
+      },
+    });
+    expect(runnable.enginePath).toBe(macBuildEngine);
+    expect(walked).toBe(false);
   });
 
   test("throws an actionable error when the compiled project is missing", () => {
@@ -173,7 +217,7 @@ describe("resolveRunnable", () => {
   });
 
   test("exempts a native-extension build engine from the agreement check", () => {
-    const buildEngine = path.join(cwd, "build/arm64-macos/dmengine");
+    const buildEngine = macBuildEngine;
     const probe = (p: string) => p === projectc || p === buildEngine;
     const runnable = resolveRunnable({
       cwd,
@@ -197,7 +241,7 @@ describe("resolveRunnable", () => {
 });
 
 const runnable: Runnable = {
-  enginePath: path.join(cwd, "build/arm64-macos/dmengine"),
+  enginePath: macBuildEngine,
   projectcPath: projectc,
   target: targetPlatform("darwin", "arm64"),
   warnings: [],

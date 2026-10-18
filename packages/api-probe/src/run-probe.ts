@@ -112,17 +112,15 @@ export async function stockEngine(head: EngineHead): Promise<string> {
   return enginePath;
 }
 
-// bob writes a custom engine under the host's build folder; on macOS that
-// folder is `<arch>-osx`, not the `<arch>-macos` the engine archive uses.
+// bob writes a custom engine under the host's build folder; `targetPlatform`
+// carries bob's name for it, which on macOS is `<arch>-osx`, not the
+// `<arch>-macos` the engine archive uses.
 function builtEngine(cwd: string): string {
   const platform = targetPlatform(process.platform, process.arch);
-  const folders = [platform.buildFolder, platform.buildFolder.replace(/-macos$/, "-osx")];
-  for (const folder of folders) {
-    const enginePath = join(cwd, "build", folder, platform.executable);
-    if (existsSync(enginePath)) return enginePath;
-  }
+  const enginePath = join(cwd, "build", platform.buildFolder, platform.executable);
+  if (existsSync(enginePath)) return enginePath;
   throw new Error(
-    `api-probe: bob built no engine under ${join(cwd, "build")} (${folders.join(", ")})`,
+    `api-probe: bob built no engine under ${join(cwd, "build", platform.buildFolder)}`,
   );
 }
 
