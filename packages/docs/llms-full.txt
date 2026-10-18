@@ -8895,8 +8895,11 @@ bump reports each one as a manual review point rather than deciding silently.
   The sync re-reads every vendored target. A changed `commit` under an older
   target means upstream moved that release tag; check that no binding file
   changed with it. It also fetches `engine-evidence/`, the engine files a
-  `PROPERTY_KEY_RANGES` `engine` pin names, at the bindings commit;
-  `--evidence` refreshes only those, with no GitHub API call.
+  `PROPERTY_KEY_RANGES` `engine` pin names, at the bindings commit. The sync
+  records each evidence file's blob id from that commit's tree in the bindings
+  manifest and rejects a download whose bytes hash to another id. `--evidence`
+  refreshes only those files, with no GitHub API call; a pin on a file the
+  bindings manifest records no id for needs the full sync first.
 - **Curate `api-migrations.json`** for the `<from> -> <to>` transition — the
   deprecation list is never auto-edited.
 - **Re-confirm `import-manifest.json`** — verify the imported release tag matches
