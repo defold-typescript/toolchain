@@ -101,7 +101,9 @@ To debug-build and launch in one step, outside the editor debugger, `bunx @defol
 
 ### Which engine the launcher runs
 
-It prefers the native-extension build engine at `build/<platform>/dmengine` when that exists. Otherwise it downloads a stock engine from `d.defold.com` next to the launcher, at `.vscode/dmengine`. The download is a one-time fetch per platform, and the scaffolded `.gitignore` keeps the binary out of version control.
+It prefers the native-extension build engine at `build/<platform>/dmengine` when that exists; on macOS that folder is bob's `<arch>-osx`, such as `build/arm64-osx/dmengine`. Otherwise it downloads a stock engine from `d.defold.com` next to the launcher, at `.vscode/dmengine`. The download is a one-time fetch per platform, and the scaffolded `.gitignore` keeps the binary out of version control. A project with an `ext.manifest` outside its ignored folders and no build engine stops with an error instead of launching the stock engine, which cannot run the extension.
+
+`setup-debug` never overwrites an existing `.vscode/defold-debug.ts`. To get the current launcher in a project that already has one, delete that file and run `setup-debug` again.
 
 ### Native-extension runtime libraries
 

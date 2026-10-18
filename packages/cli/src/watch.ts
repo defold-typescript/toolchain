@@ -1,8 +1,6 @@
-import { existsSync, watch as fsWatch, readFileSync } from "node:fs";
+import { existsSync, watch as fsWatch } from "node:fs";
 import * as path from "node:path";
 import {
-  isDefignoredPath,
-  parseDefignore,
   SCRIPT_SUFFIX_BY_KIND,
   type SceneComponentIndex,
   type SceneObjectComponents,
@@ -39,6 +37,7 @@ import {
 } from "./editor-attach";
 import { editorCompileReport } from "./editor-compile";
 import { renderWatchEvent } from "./json-output";
+import { isNonResourcePath, readDefignoreLines } from "./project-resource-paths";
 import { isComponentPath, isScenePath, isSkipped } from "./script-kind";
 import { colorConsoleTag, severityLine } from "./terminal-style";
 
@@ -224,19 +223,6 @@ function formatFailureLine(entry: {
 }
 
 const CONSOLE_PREFIX = "defold-typescript watch: editor: ";
-
-// Tool state, not project resources: the build tree the editor writes, its own
-// port file, and version control.
-const NON_RESOURCE_ROOTS = new Set(["build", ".internal", ".git"]);
-const NON_RESOURCE_SEGMENTS = ["node_modules", ".defold-types"];
-
-function readDefignoreLines(cwd: string): string[] {
-  try {
-    return parseDefignore(readFileSync(path.join(cwd, ".defignore"), "utf8"));
-  } catch {
-    return [];
-  }
-}
 
 function rewrapInitError(err: unknown): Error {
   const message = err instanceof Error ? err.message : String(err);
@@ -774,10 +760,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
    * session knows which `.lua` it wrote: an authored one sits beside them.
    */
   function changeTriggersCompile(rel: string): boolean {
-    const segments = rel.split("/");
-    if (NON_RESOURCE_ROOTS.has(segments[0] ?? "")) return false;
-    if (NON_RESOURCE_SEGMENTS.some((segment) => segments.includes(segment))) return false;
-    if (isDefignoredPath(rel, defignoreLines)) return false;
+    if (isNonResourcePath(rel, defignoreLines)) return false;
     return !session.isOwnOutput(rel);
   }
 

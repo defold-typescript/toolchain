@@ -16,6 +16,7 @@ import {
   type BuildMarker,
   ENGINE_MARKER_REL,
   type EngineMarker,
+  nativeBuildEngineGap,
   type Runnable,
   resolveRunnable,
 } from "./engine-launch";
@@ -169,9 +170,10 @@ async function writeBuildMarker(
 // `bob run` composite (Bob has no native run): debug-build, ensure a
 // target-matched engine exists — a native-extension build engine, else the stock
 // engine fetched by the resolved sha — and resolve the same Runnable `run`
-// launches. A build failure short-circuits with Bob's exit code. No interactive
-// spawn here; the dispatch branch drives `launchEngine` so exit-code/signal
-// semantics match top-level run.
+// launches. A build failure short-circuits with Bob's exit code, and a project
+// declaring a native extension with no build engine stops before any download.
+// No interactive spawn here; the dispatch branch drives `launchEngine` so
+// exit-code/signal semantics match top-level run.
 export async function prepareBobRun(opts: {
   cwd: string;
   head: { readonly version: string; readonly channel: string | null; readonly sha: string };
@@ -189,9 +191,12 @@ export async function prepareBobRun(opts: {
   ) => Promise<void>;
   readEngineMarker?: (cwd: string) => EngineMarker | null;
   readBuildMarker?: (cwd: string) => BuildMarker | null;
+  findNativeExtension?: (cwd: string) => string | null;
 }): Promise<PrepareBobRunResult> {
   const { cwd, head, io } = opts;
   const writeMarker = opts.writeMarker ?? writeEngineMarker;
+  const findNativeExtension =
+    opts.findNativeExtension !== undefined ? { findNativeExtension: opts.findNativeExtension } : {};
 
   const build = await runBobCommand({
     cwd,
@@ -209,6 +214,14 @@ export async function prepareBobRun(opts: {
   const target = targetPlatform(io.platform, io.arch);
   const buildEnginePath = join(cwd, "build", target.buildFolder, target.executable);
   if (!io.probe(buildEnginePath)) {
+    const gap = nativeBuildEngineGap({ cwd, target, ...findNativeExtension });
+    if (gap !== null) {
+      return {
+        ok: false,
+        buildExitCode: build.exitCode,
+        error: `defold-typescript bob run: ${gap}`,
+      };
+    }
     // The engine cache is a sibling of the injected bob cacheDir, so tests reach
     // it through the same seam and stay offline.
     const enginePath = engineCachePath({
@@ -243,6 +256,7 @@ export async function prepareBobRun(opts: {
       probe: io.probe,
       ...(opts.readEngineMarker !== undefined ? { readEngineMarker: opts.readEngineMarker } : {}),
       ...(opts.readBuildMarker !== undefined ? { readBuildMarker: opts.readBuildMarker } : {}),
+      ...findNativeExtension,
     });
     return { ok: true, buildExitCode: build.exitCode, runnable };
   } catch (err) {

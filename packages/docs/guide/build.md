@@ -350,12 +350,14 @@ sibling engine cache (`$DEFOLD_TYPESCRIPT_CACHE/engine`, else
 `$XDG_CACHE_HOME/defold-typescript/engine`, else `~/.cache/defold-typescript/engine`)
 and records it so a later `run` reuses it. `--java`/`--build-server` thread into
 the build exactly as for `bob build`; a cache hit skips the engine download, and
-an offline download reports an actionable error. A failed build short-circuits
-with Bob's exit code and never launches. Under `--json` the composite emits one
-envelope:
+an offline download reports an actionable error. A project with an
+`ext.manifest` outside its ignored folders and no build engine stops with an
+error instead of launching the stock engine, which cannot run the extension.
+A failed build short-circuits with Bob's exit code and never launches. Under
+`--json` the composite emits one envelope:
 
 ```json
-{ "command": "bob", "subcommand": "run", "ok": true, "build": { "exitCode": 0 }, "launch": { "enginePath": "build/arm64-macos/dmengine", "exitCode": 0 } }
+{ "command": "bob", "subcommand": "run", "ok": true, "build": { "exitCode": 0 }, "launch": { "enginePath": "build/arm64-osx/dmengine", "exitCode": 0 } }
 ```
 
 ## Run an existing build (no Bob)
@@ -381,7 +383,7 @@ Under `--json` the game still streams live to the terminal (a running game is no
 capturable); a single envelope prints on exit:
 
 ```json
-{ "command": "run", "ok": true, "enginePath": "build/arm64-macos/dmengine", "projectc": "build/default/game.projectc", "exitCode": 0 }
+{ "command": "run", "ok": true, "enginePath": "build/arm64-osx/dmengine", "projectc": "build/default/game.projectc", "exitCode": 0 }
 ```
 
 [^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.
