@@ -24,6 +24,7 @@ import { CURRENT_STABLE_SURFACE_ID } from "./api-surface";
 import type { DefoldIo } from "./bob-command";
 import { GENERATED_BANNER } from "./build-output";
 import { readCliVersion } from "./cli-version";
+import { targetPlatform } from "./debug-launcher";
 import { describeDetectedPinMismatch } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { dispatch } from "./dispatch";
@@ -60,6 +61,10 @@ import type {
 function surfaceDir(surfaceId: string): string {
   return surfaceDirName(surfaceId, readCliVersion());
 }
+
+// The folder bob writes an Apple Silicon build engine to; only
+// debug-launcher.test.ts pins its name.
+const MAC_BUILD_FOLDER = targetPlatform("darwin", "arm64").buildFolder;
 
 function captureStreams(): {
   io: { stdout: NodeJS.WritableStream; stderr: NodeJS.WritableStream };
@@ -4138,7 +4143,7 @@ describe("dispatch bob", () => {
       build: { exitCode: 0 },
       launch: { exitCode: 0 },
     });
-    expect(parsed.launch.enginePath).toBe(path.join(cwd, "build", "arm64-macos", "dmengine"));
+    expect(parsed.launch.enginePath).toBe(path.join(cwd, "build", MAC_BUILD_FOLDER, "dmengine"));
   });
 
   test("bob run with a failing build returns the bob exit code and never launches", async () => {
@@ -5342,7 +5347,7 @@ describe("dispatch init --template", () => {
 
   test("run propagates the engine exit code", async () => {
     const projectc = path.join(cwd, "build/default/game.projectc");
-    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const engine = path.join(cwd, "build", MAC_BUILD_FOLDER, "dmengine");
     const { io, err } = captureStreams();
 
     const code = await dispatch(["run", cwd], io, {
@@ -5544,7 +5549,7 @@ describe("dispatch init --template", () => {
       `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
     );
     const projectc = path.join(cwd, "build/default/game.projectc");
-    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const engine = path.join(cwd, "build", MAC_BUILD_FOLDER, "dmengine");
     const { io, err } = captureStreams();
 
     const code = await dispatch(["run", cwd], io, {
@@ -5572,7 +5577,7 @@ describe("dispatch init --template", () => {
       `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
     );
     const projectc = path.join(cwd, "build/default/game.projectc");
-    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const engine = path.join(cwd, "build", MAC_BUILD_FOLDER, "dmengine");
     const { io, out } = captureStreams();
 
     const code = await dispatch(["run", cwd, "--json"], io, {
@@ -5608,7 +5613,7 @@ describe("dispatch init --template", () => {
       `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
     );
     const projectc = path.join(cwd, "build/default/game.projectc");
-    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const engine = path.join(cwd, "build", MAC_BUILD_FOLDER, "dmengine");
     const { io, err } = captureStreams();
 
     const code = await dispatch(["run", cwd, "--fail-on-drift"], io, {
@@ -5633,7 +5638,7 @@ describe("dispatch init --template", () => {
       `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
     );
     const projectc = path.join(cwd, "build/default/game.projectc");
-    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const engine = path.join(cwd, "build", MAC_BUILD_FOLDER, "dmengine");
     const { io } = captureStreams();
 
     const code = await dispatch(["run", cwd, "--fail-on-drift"], io, {
@@ -5657,7 +5662,7 @@ describe("dispatch init --template", () => {
       `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
     );
     const projectc = path.join(cwd, "build/default/game.projectc");
-    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const engine = path.join(cwd, "build", MAC_BUILD_FOLDER, "dmengine");
     const spawnedArgs: string[][] = [];
     const { io } = captureStreams();
 
@@ -5687,7 +5692,7 @@ describe("dispatch init --template", () => {
       `${JSON.stringify({ "defold-typescript": { "defold-target": UNREGISTERED_TARGET } }, null, 2)}\n`,
     );
     const projectc = path.join(cwd, "build/default/game.projectc");
-    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const engine = path.join(cwd, "build", MAC_BUILD_FOLDER, "dmengine");
     const runInternals = {
       platform: "darwin" as const,
       arch: "arm64" as const,
@@ -5726,7 +5731,7 @@ describe("dispatch init --template", () => {
 
   test("run stays silent when the editor matches the pin or the pin is a channel", async () => {
     const projectc = path.join(cwd, "build/default/game.projectc");
-    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const engine = path.join(cwd, "build", MAC_BUILD_FOLDER, "dmengine");
     const runInternals = {
       platform: "darwin" as const,
       arch: "arm64" as const,
@@ -5774,7 +5779,7 @@ describe("dispatch init --template", () => {
     process.chdir(cwd);
     const resolved = process.cwd();
     const projectc = path.join(resolved, "build/default/game.projectc");
-    const engine = path.join(resolved, "build/arm64-macos/dmengine");
+    const engine = path.join(resolved, "build", MAC_BUILD_FOLDER, "dmengine");
     try {
       const code = await dispatch(["run", "--", "--windowed"], io, {
         detectEditorVersion: () => "1.13.0",
@@ -5813,7 +5818,7 @@ describe("dispatch init --template", () => {
     process.chdir(cwd);
     const resolved = process.cwd();
     const projectc = path.join(resolved, "build/default/game.projectc");
-    const engine = path.join(resolved, "build/arm64-macos/dmengine");
+    const engine = path.join(resolved, "build", MAC_BUILD_FOLDER, "dmengine");
     try {
       const code = await dispatch(["run", "--json", "--", "--windowed"], io, {
         detectEditorVersion: () => "1.13.0",
@@ -5853,7 +5858,7 @@ describe("dispatch init --template", () => {
       `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
     );
     const projectc = path.join(cwd, "build/default/game.projectc");
-    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const engine = path.join(cwd, "build", MAC_BUILD_FOLDER, "dmengine");
     const spawned: string[][] = [];
     const { io, out } = captureStreams();
 
@@ -8373,7 +8378,7 @@ describe("upstream release notice", () => {
     scaffoldPinned();
     seedCache(NEWER);
     const projectc = path.join(cwd, "build/default/game.projectc");
-    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const engine = path.join(cwd, "build", MAC_BUILD_FOLDER, "dmengine");
     const spawned: string[][] = [];
     const { io } = captureStreams();
     const { internals } = upstreamInternals({

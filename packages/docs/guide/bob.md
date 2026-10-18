@@ -47,9 +47,11 @@ bob, your typings, and the running engine agree:
    cache and records it, so a later [`run`](./run.md) reuses it,
 4. launch the game.
 
-A failed build short-circuits with Bob's exit code and never launches. Once
-`build/default` and an engine exist, [`run`](./run.md) relaunches directly —
-no rebuild, no Bob, no download.
+A failed build short-circuits with Bob's exit code and never launches. A
+project with an `ext.manifest` outside its ignored folders and no build engine
+stops with an error instead of fetching the stock engine, which cannot run the
+extension. Once `build/default` and an engine exist, [`run`](./run.md)
+relaunches directly — no rebuild, no Bob, no download.
 
 A successful `bob build` records the Defold head it compiled with beside the
 compiled tree. On the stock-engine lane `bob run` records the same head beside

@@ -4,6 +4,7 @@ import {
   projectRelativeBase,
   SCRIPT_SUFFIX_BY_KIND,
 } from "@defold-typescript/transpiler";
+import { NON_RESOURCE_ROOTS, NON_RESOURCE_SEGMENTS } from "./project-resource-paths";
 
 // One native extension whose build engine links platform runtime libraries the
 // Defold build server does not (yet) ship. `tracking` is the upstream note/URL
@@ -27,21 +28,21 @@ export interface EngineTarget {
 
 const OPENAL_TRACKING = "defold/defold#11860 (https://github.com/defold/defold/issues/11860)";
 
-// `enginePlatform` keys the d.defold.com download path; `buildFolder` keys the
-// native-extension build output. Current Defold uses the same `-macos` identifier
-// for both, but they are tracked separately so a future divergence stays local.
+// `enginePlatform` keys the d.defold.com download path, and `buildFolder` keys
+// the folder bob writes a native-extension build engine to. They differ on
+// macOS: downloads use `<arch>-macos`, bob's build output uses `<arch>-osx`.
 // Keyed by `${process.platform}-${process.arch}` because Apple Silicon and Intel
 // resolve to different engine archives (`arm64-macos` vs `x86_64-macos`).
 const PLATFORM_TARGETS: Record<string, EngineTarget> = {
   "darwin-arm64": {
     enginePlatform: "arm64-macos",
-    buildFolder: "arm64-macos",
+    buildFolder: "arm64-osx",
     executable: "dmengine",
     nativeExtensions: [],
   },
   "darwin-x64": {
     enginePlatform: "x86_64-macos",
-    buildFolder: "x86_64-macos",
+    buildFolder: "x86_64-osx",
     executable: "dmengine",
     nativeExtensions: [],
   },
@@ -233,13 +234,24 @@ export function vscodeLaunchContent(config: BuildConfig) {
 }
 
 // The scaffolded launcher embeds the same platform table and archive endpoints
-// the helpers above use, so the self-contained `.vscode/defold-debug.ts` and the
+// the helpers above use, and the folder rules `findNativeExtensionManifest`
+// walks with, so the self-contained `.vscode/defold-debug.ts` and the
 // unit-tested logic stay in lockstep. It is a Bun script: `process.platform` for
 // the OS, `fetch` for the engine download, `Bun.spawn` with inherited stdio for
 // the run (the pipe Local Lua Debugger attaches over). No shell, no Git Bash.
 function renderDebugLauncher(): string {
   const targets = JSON.stringify(PLATFORM_TARGETS, null, 2);
-  return `import { chmodSync, copyFileSync, existsSync, mkdirSync } from "node:fs";
+  const nonResourceRoots = JSON.stringify(NON_RESOURCE_ROOTS);
+  const nonResourceSegments = JSON.stringify(NON_RESOURCE_SEGMENTS);
+  return `import {
+  chmodSync,
+  copyFileSync,
+  type Dirent,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+} from "node:fs";
 import * as path from "node:path";
 
 interface NativeExtensionRuntime {
@@ -260,6 +272,56 @@ const PLATFORM_TARGETS: Record<string, EngineTarget> = ${targets};
 const ENGINE_INFO_URL = "${ENGINE_INFO_URL}";
 const ENGINE_ARCHIVE_BASE = "${ENGINE_ARCHIVE_BASE}";
 
+// Folders that hold no project resources, skipped when looking for a native
+// extension the same way the CLI's \`run\` skips them.
+const NON_RESOURCE_ROOTS: string[] = ${nonResourceRoots};
+const NON_RESOURCE_SEGMENTS: string[] = ${nonResourceSegments};
+
+function readDefignoreLines(): string[] {
+  try {
+    return readFileSync(".defignore", "utf8")
+      .split("\\n")
+      .map((line) => line.trim())
+      .filter((line) => line !== "")
+      .map((line) => (line.startsWith("/") ? line : \`/\${line}\`));
+  } catch {
+    return [];
+  }
+}
+
+function isNonResourcePath(rel: string, defignoreLines: string[]): boolean {
+  const segments = rel.split("/");
+  if (NON_RESOURCE_ROOTS.includes(segments[0] ?? "")) return true;
+  if (NON_RESOURCE_SEGMENTS.some((segment) => segments.includes(segment))) return true;
+  const rooted = \`/\${rel}\`;
+  return defignoreLines.some((line) => rooted === line || rooted.startsWith(\`\${line}/\`));
+}
+
+function findNativeExtensionManifest(): string | null {
+  const defignoreLines = readDefignoreLines();
+  const visit = (rel: string): string | null => {
+    let entries: Dirent[];
+    try {
+      entries = readdirSync(rel === "" ? "." : rel, { withFileTypes: true });
+    } catch {
+      return null;
+    }
+    entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    if (entries.some((entry) => entry.isFile() && entry.name === "ext.manifest")) {
+      return rel === "" ? "." : rel;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const child = rel === "" ? entry.name : \`\${rel}/\${entry.name}\`;
+      if (isNonResourcePath(child, defignoreLines)) continue;
+      const found = visit(child);
+      if (found !== null) return found;
+    }
+    return null;
+  };
+  return visit("");
+}
+
 const target = PLATFORM_TARGETS[\`\${process.platform}-\${process.arch}\`];
 if (!target) {
   console.error(\`Unsupported platform: \${process.platform}-\${process.arch}\`);
@@ -268,21 +330,32 @@ if (!target) {
 
 const here = path.dirname(new URL(import.meta.url).pathname);
 const stockEnginePath = path.join(here, target.executable);
-
-if (!existsSync(stockEnginePath)) {
-  const info = (await (await fetch(ENGINE_INFO_URL)).json()) as { sha1: string };
-  const url = \`\${ENGINE_ARCHIVE_BASE}/\${info.sha1}/engine/\${target.enginePlatform}/\${target.executable}\`;
-  console.log(\`Fetching \${url}\`);
-  const res = await fetch(url);
-  if (!res.ok) {
-    console.error(\`Engine download failed: \${res.status} \${res.statusText}\`);
-    process.exit(1);
-  }
-  await Bun.write(stockEnginePath, res);
-}
-
 const buildFolder = path.join("build", target.buildFolder);
 const buildEnginePath = path.join(buildFolder, target.executable);
+
+if (!existsSync(buildEnginePath)) {
+  // The stock engine has no native extension code linked in, so a project that
+  // declares one needs its build engine.
+  const extensionDir = findNativeExtensionManifest();
+  if (extensionDir !== null) {
+    console.error(
+      \`\${extensionDir}/ext.manifest declares a native extension, but there is no build engine at \${buildEnginePath}, and the stock engine cannot run it. Build it with "defold-typescript bob build".\`,
+    );
+    process.exit(1);
+  }
+  if (!existsSync(stockEnginePath)) {
+    const info = (await (await fetch(ENGINE_INFO_URL)).json()) as { sha1: string };
+    const url = \`\${ENGINE_ARCHIVE_BASE}/\${info.sha1}/engine/\${target.enginePlatform}/\${target.executable}\`;
+    console.log(\`Fetching \${url}\`);
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(\`Engine download failed: \${res.status} \${res.statusText}\`);
+      process.exit(1);
+    }
+    await Bun.write(stockEnginePath, res);
+  }
+}
+
 let enginePath = existsSync(buildEnginePath) ? buildEnginePath : stockEnginePath;
 
 // A build engine links each declared native extension's runtime libraries, but
