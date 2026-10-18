@@ -87,9 +87,10 @@ export interface EmitOptions {
   // bindings (a ref-doc target), where every entry the ref-doc omits is emitted.
   registeredConstants?: ReadonlySet<string>;
   // The `RETURN_TYPE_CORRECTIONS` and `STRUCT_MEMBER_ADDITIONS` keys whose binding
-  // pin holds in the target's vendored engine source. A binding-pinned entry
-  // applies only when its key is here, so a surface with no vendored bindings
-  // (absent) applies none of them.
+  // pin holds in the target's vendored engine source, and the
+  // `PROPERTY_KEY_RANGES` keys whose `engine` pins all hold there. A pinned
+  // entry applies only when its key is here, so a surface with no vendored
+  // bindings (absent) applies none of them.
   bindingEvidence?: ReadonlySet<string>;
   // The 1-based parameter slots, keyed by function FQN, that the target's engine
   // bindings let a call omit but raise on when passed nil. Each optional one
@@ -1100,16 +1101,70 @@ export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrecti
 // saying it, or when the phrase stops stating `first-last`. Curated rather than
 // matched on a trailing `N`, so each new upstream placeholder is a deliberate
 // addition.
+//
+// `engine.last` replaces `last` on a target whose vendored engine source shows
+// every one of `engine.pins` (the `EmitOptions.bindingEvidence` keys); every
+// other surface, including one generated from a ref-doc alone, keeps the range
+// `evidence` states.
 export interface PropertyKeyRange {
   readonly prefix: string;
   readonly first: number;
   readonly last: number;
   readonly evidence: string;
+  readonly engine?: { readonly last: number; readonly pins: readonly EngineSourcePin[] };
 }
 
-// Keyed `<namespace>.<property>`, mirroring PROPERTY_TYPE_CORRECTIONS.
+// A token snippet the target's vendored engine evidence must contain. With
+// `cFunction` it is matched in that function's body, without it anywhere in
+// the file.
+export interface EngineSourcePin {
+  // Relative to the target's vendored `engine/` tree, as `BindingPin.file` is.
+  readonly file: string;
+  readonly cFunction?: string;
+  readonly contains: string;
+}
+
+const MODEL_TEXTURE_LOOP =
+  "for (uint32_t i = 0; i < dmRender::RenderObject::MAX_TEXTURE_COUNT; ++i) { if (params.m_PropertyId == PROP_TEXTURE[i])";
+
+// Keyed `<namespace>.<property>`, mirroring PROPERTY_TYPE_CORRECTIONS; a key
+// with an `engine` field is also an `EmitOptions.bindingEvidence` key.
 export const PROPERTY_KEY_RANGES: ReadonlyMap<string, PropertyKeyRange> = new Map([
-  ["model.textureN", { prefix: "texture", first: 0, last: 7, evidence: "textureN where N is 0-7" }],
+  [
+    "model.textureN",
+    {
+      prefix: "texture",
+      first: 0,
+      last: 7,
+      evidence: "textureN where N is 0-7",
+      engine: {
+        last: 15,
+        pins: [
+          {
+            file: "render/src/dmsdk/render/render.h",
+            contains: "static const uint32_t MAX_TEXTURE_COUNT = 16;",
+          },
+          {
+            file: "gamesys/src/gamesys/gamesys.cpp",
+            contains: `const dmhash_t PROP_TEXTURE[dmRender::RenderObject::MAX_TEXTURE_COUNT] = { ${Array.from(
+              { length: 16 },
+              (_, unit) => `dmHashString64("texture${unit}"),`,
+            ).join(" ")} };`,
+          },
+          {
+            file: "gamesys/src/gamesys/components/comp_model.cpp",
+            cFunction: "CompModelGetProperty",
+            contains: MODEL_TEXTURE_LOOP,
+          },
+          {
+            file: "gamesys/src/gamesys/components/comp_model.cpp",
+            cFunction: "CompModelSetProperty",
+            contains: MODEL_TEXTURE_LOOP,
+          },
+        ],
+      },
+    },
+  ],
 ]);
 
 // A parameter the ref-doc metadata marks required while the same element's prose
@@ -4964,7 +5019,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
     const members = [...module.properties].sort((a, b) => a.name.localeCompare(b.name));
     lines.push(`${INDENT}${decl}interface properties {`);
     for (const p of members) {
-      for (const member of emitPropertyMembers(p, mapType, module.namespace)) {
+      for (const member of emitPropertyMembers(p, mapType, module.namespace, bindingEvidence)) {
         for (const docLine of summaryDocLines(p.brief, p.description, `${INDENT}${INDENT}`)) {
           lines.push(docLine);
         }
@@ -5230,7 +5285,7 @@ export function emitSymbolSignatures(
   // carries the first, which is verbatim in the `.d.ts` and is what the `/api`
   // render layer reduces to `<placeholder>: <type>`.
   for (const p of module.properties) {
-    const [firstMember = ""] = emitPropertyMembers(p, mapType, module.namespace);
+    const [firstMember = ""] = emitPropertyMembers(p, mapType, module.namespace, bindingEvidence);
     out.push({
       identity: { namespace: module.namespace, kind: "PROPERTY", name: p.name, signature: "" },
       tsSignature: firstMember,
@@ -6323,12 +6378,17 @@ function emitPropertyMembers(
   p: ApiProperty,
   mapType: DefoldTypeMapper,
   namespace: string,
+  bindingEvidence: ReadonlySet<string>,
 ): readonly string[] {
-  const keyRange = PROPERTY_KEY_RANGES.get(`${namespace}.${p.name}`);
+  const rangeKey = `${namespace}.${p.name}`;
+  const keyRange = PROPERTY_KEY_RANGES.get(rangeKey);
   const keys: string[] = [];
   if (keyRange !== undefined) {
-    for (let unit = keyRange.first; unit <= keyRange.last; unit++)
-      keys.push(`${keyRange.prefix}${unit}`);
+    const last =
+      keyRange.engine !== undefined && bindingEvidence.has(rangeKey)
+        ? keyRange.engine.last
+        : keyRange.last;
+    for (let unit = keyRange.first; unit <= last; unit++) keys.push(`${keyRange.prefix}${unit}`);
   } else {
     keys.push(TS_IDENTIFIER.test(p.name) ? p.name : JSON.stringify(p.name));
   }
