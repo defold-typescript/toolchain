@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { type BuildConfig, computeOutputRel } from "@defold-typescript/transpiler";
@@ -343,4 +343,64 @@ describe("generated launcher", () => {
       expect(result.exitCode).toBe(0);
     },
   );
+
+  describe.skipIf(process.platform === "win32")("engine build freshness", () => {
+    const OLD = new Date("2020-01-01T00:00:00Z");
+    const NEW = new Date("2021-01-01T00:00:00Z");
+    const PROJECTC = path.join("build", "default", "game.projectc");
+
+    beforeEach(() => {
+      writeFileSync(path.join(project, ".defignore"), "/extensions\n");
+      writeFileSync(
+        path.join(project, ".vscode", host.executable),
+        "#!/bin/sh\ntouch ran\nexit 0\n",
+      );
+    });
+
+    function put(rel: string, at: Date): void {
+      const abs = path.join(project, rel);
+      mkdirSync(path.dirname(abs), { recursive: true });
+      writeFileSync(abs, "");
+      utimesSync(abs, at, at);
+    }
+
+    test("stops without launching when there is no engine build", () => {
+      rmSync(path.join(project, PROJECTC));
+      const result = runLauncher();
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain(PROJECTC);
+      expect(result.stderr).toContain("defold-typescript bob build");
+      expect(existsSync(path.join(project, "ran"))).toBe(false);
+    });
+
+    test("warns about a script newer than its compiled copy and launches anyway", () => {
+      put("main/main.ts.script", NEW);
+      put("build/default/main/main.ts.scriptc", OLD);
+      const result = runLauncher();
+      expect(result.stderr).toContain("main/main.ts.script");
+      expect(result.stdout).toContain("Launching");
+      expect(result.exitCode).toBe(0);
+    });
+
+    test("warns about a game.project newer than game.projectc and launches anyway", () => {
+      put("game.project", NEW);
+      put(PROJECTC, OLD);
+      const result = runLauncher();
+      expect(result.stderr).toContain("game.project");
+      expect(result.stdout).toContain("Launching");
+      expect(existsSync(path.join(project, "ran"))).toBe(true);
+    });
+
+    test("says nothing when every compiled copy is newer and an uncompiled module has none", () => {
+      put("main/main.ts.script", OLD);
+      put("build/default/main/main.ts.scriptc", NEW);
+      put("game.project", OLD);
+      put(PROJECTC, NEW);
+      put("main/machine.lua", NEW);
+      const result = runLauncher();
+      expect(result.stderr.trim()).toBe("");
+      expect(result.stdout).toContain("Launching");
+      expect(result.exitCode).toBe(0);
+    });
+  });
 });

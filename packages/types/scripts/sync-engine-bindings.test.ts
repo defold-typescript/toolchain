@@ -299,7 +299,10 @@ describe("syncTarget", () => {
     } finally {
       spy.mockRestore();
     }
-    const expected = { commit, evidence: paths.map((path) => ({ path, blobSha: ids.get(path) })) };
+    const expected = {
+      commit,
+      evidence: paths.map((path) => ({ path, blobSha: ids.get(path) as string })),
+    };
     const written = JSON.parse(
       readFileSync(join(bindingsDir(target, root), "manifest.json"), "utf8"),
     ) as EngineBindingManifest;
