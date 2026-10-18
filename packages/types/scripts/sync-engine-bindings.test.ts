@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative, resolve, sep } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { PROPERTY_KEY_RANGES, type PropertyKeyRange } from "../src/emit-dts";
 import { enginePinHolds } from "./binding-pin";
 import {
@@ -17,6 +17,7 @@ import {
   selectBindingPaths,
   sha256,
   syncEvidence,
+  syncTarget,
   targetTag,
   vendoredTargets,
 } from "./sync-engine-bindings";
@@ -29,10 +30,21 @@ const TREE_FIXTURE = resolve(
   "defold-1.13.1-engine-cpp-tree.txt",
 );
 
+const RAW = "https://raw.githubusercontent.com/defold/defold";
+
 function listFiles(dir: string): string[] {
   return readdirSync(dir, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
     .map((entry) => relative(dir, join(entry.parentPath, entry.name)).split(sep).join("/"));
+}
+
+function stubFetch(byUrl: ReadonlyMap<string, string | Uint8Array>, requested: string[] = []) {
+  return spyOn(globalThis, "fetch").mockImplementation((async (input: string | URL | Request) => {
+    const href = input instanceof Request ? input.url : String(input);
+    requested.push(href);
+    const body = byUrl.get(href);
+    return body !== undefined ? new Response(body) : new Response("not found", { status: 404 });
+  }) as typeof fetch);
 }
 
 describe("selectBindingPaths", () => {
@@ -111,7 +123,6 @@ describe("vendored engine evidence", () => {
 });
 
 describe("syncEvidence", () => {
-  const RAW = "https://raw.githubusercontent.com/defold/defold";
   const SENTINEL = '{ "sentinel": true }\n';
   const paths = engineEvidencePaths();
   const targets = vendoredTargets();
@@ -156,12 +167,7 @@ describe("syncEvidence", () => {
     mkdirSync(evidenceDir(target, root), { recursive: true });
     writeFileSync(join(evidenceDir(target, root), "manifest.json"), SENTINEL);
     const byUrl = new Map([...served].map(([path, bytes]) => [url(path), bytes] as const));
-    return spyOn(globalThis, "fetch").mockImplementation((async (input: string | URL | Request) => {
-      const href = input instanceof Request ? input.url : String(input);
-      requested.push(href);
-      const bytes = byUrl.get(href);
-      return bytes ? new Response(bytes) : new Response("not found", { status: 404 });
-    }) as typeof fetch);
+    return stubFetch(byUrl, requested);
   };
 
   const expectUntouched = () => {
@@ -244,6 +250,86 @@ describe("syncEvidence", () => {
       spy.mockRestore();
     }
     expectUntouched();
+  });
+});
+
+describe("syncTarget", () => {
+  const API = "https://api.github.com/repos/defold/defold";
+  const BINDING = "engine/fixture/src/script_fixture.cpp";
+  const SOURCE = "static const luaL_reg Fixture_methods[] = {{0, 0}};\n";
+  const target = vendoredTargets()[0];
+  if (!target) throw new Error("no vendored target");
+  const tag = targetTag(target);
+  const commit = gitBlobSha("commit");
+  const paths = engineEvidencePaths();
+  if (paths.length < 2) throw new Error("swapping evidence ids needs two pinned paths");
+  const ids = new Map(paths.map((path, i) => [path, gitBlobSha(`evidence ${i}`)] as const));
+  const tree = [
+    { path: "engine/fixture", type: "tree", sha: gitBlobSha("directory") },
+    { path: BINDING, type: "blob", sha: gitBlobSha("binding") },
+    ...[...paths].reverse().map((path) => ({ path, type: "blob", sha: ids.get(path) as string })),
+  ];
+  const routes = (entries: readonly { path: string; type: string }[]) =>
+    new Map<string, string>([
+      [`${API}/commits/${tag}`, JSON.stringify({ sha: commit })],
+      [
+        `${API}/git/trees/${commit}?recursive=1`,
+        JSON.stringify({ truncated: false, tree: entries }),
+      ],
+      ...entries
+        .filter((entry) => entry.type === "blob")
+        .map((entry) => [`${RAW}/${commit}/${entry.path}`, SOURCE] as const),
+    ]);
+
+  let root: string;
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), "sync-target-"));
+  });
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  test("records each evidence path with the id the commit tree lists for it", async () => {
+    const spy = stubFetch(routes(tree));
+    let manifest: EngineBindingManifest;
+    try {
+      manifest = await syncTarget(target, "token", root);
+    } finally {
+      spy.mockRestore();
+    }
+    const expected = { commit, evidence: paths.map((path) => ({ path, blobSha: ids.get(path) })) };
+    const written = JSON.parse(
+      readFileSync(join(bindingsDir(target, root), "manifest.json"), "utf8"),
+    ) as EngineBindingManifest;
+    expect({ commit: written.commit, evidence: written.evidence }).toEqual(expected);
+    expect({ commit: manifest.commit, evidence: manifest.evidence }).toEqual(expected);
+  });
+
+  test("rejects a tree missing a pinned path before removing the bindings directory", async () => {
+    const missing = paths[paths.length - 1] as string;
+    const dir = bindingsDir(target, root);
+    const seeded = new Map([
+      ["manifest.json", '{ "seeded": true }\n'],
+      [BINDING, "seeded\n"],
+    ]);
+    for (const [path, contents] of seeded) {
+      mkdirSync(dirname(join(dir, path)), { recursive: true });
+      writeFileSync(join(dir, path), contents);
+    }
+    const spy = stubFetch(routes(tree.filter((entry) => entry.path !== missing)));
+    try {
+      await expect(syncTarget(target, "token", root)).rejects.toThrow(
+        `${missing}: no blob in the engine tree`,
+      );
+    } finally {
+      spy.mockRestore();
+    }
+    expect(listFiles(dir).sort()).toEqual([...seeded.keys()].sort());
+    for (const [path, contents] of seeded) {
+      expect({ path, contents: readFileSync(join(dir, path), "utf8") }).toEqual({ path, contents });
+    }
   });
 });
 

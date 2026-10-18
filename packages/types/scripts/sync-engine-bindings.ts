@@ -165,6 +165,7 @@ function biomeFormatJson(raw: string): string {
 export async function syncTarget(
   target: ApiTarget,
   token: string | undefined = process.env.GITHUB_TOKEN,
+  packageRoot: string = PACKAGE_ROOT,
 ): Promise<EngineBindingManifest> {
   const tag = targetTag(target);
   const api = "https://api.github.com/repos/defold/defold";
@@ -179,7 +180,7 @@ export async function syncTarget(
   );
   const evidence = evidenceBlobIds(blobs);
 
-  const dir = bindingsDir(target);
+  const dir = bindingsDir(target, packageRoot);
   rmSync(dir, { recursive: true, force: true });
   const files: EngineBindingFile[] = [];
   for (const path of selectBindingPaths([...blobs.keys()])) {
