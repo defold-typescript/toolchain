@@ -6095,6 +6095,16 @@ describe("dispatch upgrade", () => {
     );
   });
 
+  test("the summary line tells distinct digit-led prereleases apart", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    seedInstalledCli("1.3.0-1alpha");
+    const { io, out } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.3.0-1beta", latest: "1.3.0-1beta" });
+
+    expect(await dispatch(["upgrade", cwd], io, internals)).toBe(0);
+    expect(out()).toBe("defold-typescript upgrade: 1.3.0-1alpha -> 1.3.0-1beta\n");
+  });
+
   test("the summary line reads none when no earlier version is found", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     const { io, out } = captureStreams();
