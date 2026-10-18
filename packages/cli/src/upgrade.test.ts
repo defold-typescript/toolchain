@@ -52,6 +52,17 @@ describe("compareSemver", () => {
   test("numeric identifiers compare as numbers, not text", () => {
     expect(compareSemver("1.3.0-beta.9", "1.3.0-beta.10")).toBeLessThan(0);
   });
+
+  test("numeric identifiers past the safe-integer range compare by exact value", () => {
+    expect(compareSemver("1.3.0-9007199254740992", "1.3.0-9007199254740993")).toBeLessThan(0);
+    expect(compareSemver("1.3.0-9007199254740993", "1.3.0-9007199254740992")).toBeGreaterThan(0);
+    expect(
+      compareSemver("1.3.0-beta.99999999999999999", "1.3.0-beta.100000000000000000"),
+    ).toBeLessThan(0);
+    expect(
+      compareSemver("1.3.0-beta.100000000000000000", "1.3.0-beta.99999999999999999"),
+    ).toBeGreaterThan(0);
+  });
 });
 
 describe("planUpgrade", () => {
@@ -96,6 +107,12 @@ describe("planUpgrade", () => {
       action: "hand-off",
       target: "1.3.0-1beta",
     });
+  });
+
+  test("a prerelease past the safe-integer range hands off to the next one", () => {
+    expect(
+      planUpgrade({ running: "1.3.0-9007199254740992", latest: "1.3.0-9007199254740993" }),
+    ).toEqual({ action: "hand-off", target: "1.3.0-9007199254740993" });
   });
 });
 

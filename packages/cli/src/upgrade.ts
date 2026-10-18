@@ -16,6 +16,13 @@ function numericSegments(core: string): number[] {
 
 const NUMERIC_IDENTIFIER = /^\d+$/;
 
+// `Number` rounds identifiers past 2^53 - 1, so distinct ones could compare equal.
+function compareNumericIdentifier(a: string, b: string): number {
+  const left = BigInt(a);
+  const right = BigInt(b);
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 function comparePrerelease(a: string, b: string): number {
   if (a === b) {
     return 0;
@@ -44,7 +51,7 @@ function comparePrerelease(a: string, b: string): number {
       // Explicit, because the lexical fallback would rank `2` above `1alpha`.
       return lNumeric ? -1 : 1;
     }
-    const cmp = lNumeric ? Number(l) - Number(r) : l.localeCompare(r);
+    const cmp = lNumeric ? compareNumericIdentifier(l, r) : l.localeCompare(r);
     if (cmp !== 0) {
       return cmp;
     }
