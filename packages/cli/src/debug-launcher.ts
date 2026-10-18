@@ -243,6 +243,7 @@ function renderDebugLauncher(): string {
   const targets = JSON.stringify(PLATFORM_TARGETS, null, 2);
   const nonResourceRoots = JSON.stringify(NON_RESOURCE_ROOTS);
   const nonResourceSegments = JSON.stringify(NON_RESOURCE_SEGMENTS);
+  const breakpointableSuffixes = JSON.stringify(BREAKPOINTABLE_SUFFIXES);
   return `import {
   chmodSync,
   copyFileSync,
@@ -251,6 +252,7 @@ function renderDebugLauncher(): string {
   mkdirSync,
   readdirSync,
   readFileSync,
+  statSync,
 } from "node:fs";
 import * as path from "node:path";
 
@@ -276,6 +278,9 @@ const ENGINE_ARCHIVE_BASE = "${ENGINE_ARCHIVE_BASE}";
 // extension the same way the CLI's \`run\` skips them.
 const NON_RESOURCE_ROOTS: string[] = ${nonResourceRoots};
 const NON_RESOURCE_SEGMENTS: string[] = ${nonResourceSegments};
+
+// The generated Lua the debugger can bind breakpoints in.
+const BREAKPOINTABLE_SUFFIXES: string[] = ${breakpointableSuffixes};
 
 function readDefignoreLines(): string[] {
   try {
@@ -322,10 +327,71 @@ function findNativeExtensionManifest(): string | null {
   return visit("");
 }
 
+function isNewer(source: string, compiled: string): boolean {
+  try {
+    return statSync(source).mtimeMs > statSync(compiled).mtimeMs;
+  } catch {
+    return false;
+  }
+}
+
+// Bob writes each compiled resource at its source path plus \`c\`, so a compiled
+// copy older than the file it came from is an engine build that predates the
+// current Lua. Generated Lua nothing requires has no compiled copy and is never
+// reached by this walk.
+function staleEngineBuildSources(buildRoot: string, projectc: string): string[] {
+  const stale = isNewer("game.project", projectc) ? ["game.project"] : [];
+  const visit = (rel: string): void => {
+    let entries: Dirent[];
+    try {
+      entries = readdirSync(rel === "" ? buildRoot : path.join(buildRoot, rel), {
+        withFileTypes: true,
+      });
+    } catch {
+      return;
+    }
+    entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    for (const entry of entries) {
+      const child = rel === "" ? entry.name : \`\${rel}/\${entry.name}\`;
+      if (entry.isDirectory()) {
+        visit(child);
+        continue;
+      }
+      if (!BREAKPOINTABLE_SUFFIXES.some((suffix) => entry.name.endsWith(\`\${suffix}c\`))) continue;
+      const source = child.slice(0, -1);
+      if (isNewer(source, path.join(buildRoot, child))) stale.push(source);
+    }
+  };
+  visit("");
+  return stale;
+}
+
+const BUILD_ROUTES = '"defold-typescript bob build", or with Project -> Build in the Defold editor';
+
 const target = PLATFORM_TARGETS[\`\${process.platform}-\${process.arch}\`];
 if (!target) {
   console.error(\`Unsupported platform: \${process.platform}-\${process.arch}\`);
   process.exit(1);
+}
+
+const engineBuildRoot = path.join("build", "default");
+const projectc = path.join(engineBuildRoot, "game.projectc");
+if (!existsSync(projectc)) {
+  console.error(\`There is no engine build at \${projectc} to run. Build it with \${BUILD_ROUTES}.\`);
+  process.exit(1);
+}
+
+// Warn rather than stop: running the last build is still a working session,
+// only one whose breakpoints may sit on lines that no longer exist.
+const stale = staleEngineBuildSources(engineBuildRoot, projectc);
+if (stale.length) {
+  const named = stale.slice(0, 3).join(", ");
+  const rest = stale.length > 3 ? \` and \${stale.length - 3} more\` : "";
+  const files = stale.length === 1 ? "1 file" : \`\${stale.length} files\`;
+  console.warn(
+    \`The engine build in \${engineBuildRoot} is older than \${files} (\${named}\${rest}), so the game runs the old code and its breakpoints may not bind. \` +
+      \`Rebuild with \${BUILD_ROUTES}.\`,
+  );
 }
 
 const here = path.dirname(new URL(import.meta.url).pathname);
@@ -393,7 +459,6 @@ if (process.platform !== "win32") {
   chmodSync(enginePath, 0o755);
 }
 
-const projectc = path.join("build", "default", "game.projectc");
 console.log(\`Launching \${enginePath} \${projectc}\`);
 const proc = Bun.spawn([enginePath, projectc], {
   stdio: ["inherit", "inherit", "inherit"],

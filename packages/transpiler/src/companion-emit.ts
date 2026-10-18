@@ -66,6 +66,8 @@ function isRuntimeScriptSource(sourceFile: ts.SourceFile, checker: ts.TypeChecke
 interface CompanionPlan {
   /** Full start of each top-level statement the companion takes over. */
   readonly closureStarts: ReadonlySet<number>;
+  /** Full start of each unedited `setup-debug` block statement. */
+  readonly bootstrapStarts: ReadonlySet<number>;
   /** Members the script reaches by bare name, which the companion must expose. */
   readonly internals: readonly string[];
   /** Import bindings the companion needs its own `require` of. */
@@ -86,6 +88,7 @@ function planFor(sourceFile: ts.SourceFile, checker: ts.TypeChecker): CompanionP
   }
   return {
     closureStarts: new Set(closure.statements.map((statement) => statement.pos)),
+    bootstrapStarts: new Set(closure.bootstrap.map((statement) => statement.pos)),
     internals: closure.internals,
     importBindings: closure.importBindings,
     requirePath: requirePathForRel(sourceFile.fileName),
@@ -466,6 +469,10 @@ interface SplitHalves {
  * first. The run stops at the first statement that reads the companion, and at
  * the first non-declaration — a lifecycle hook closes over the internals it
  * reads, so its declaration must precede the hook's.
+ *
+ * The `setup-debug` block's gate is taken out of `script` before this runs and
+ * placed immediately ahead of the `require`, so the debugger starts before any
+ * companion code does while `lldebugger` itself is still required above it.
  */
 function requireInsertionPoint(script: readonly Statement[], reads: ReadonlySet<string>): number {
   let index = 0;
@@ -524,6 +531,7 @@ export interface CompanionEmitter {
 export function createCompanionEmitPlugin(): CompanionEmitter {
   const plans = new Map<string, CompanionPlan | undefined>();
   const owned = new Map<string, Set<Statement>>();
+  const bootstraps = new Map<string, Set<Statement>>();
   const companions = new Map<string, string>();
 
   function planOf(sourceFile: ts.SourceFile, checker: ts.TypeChecker): CompanionPlan | undefined {
@@ -552,6 +560,24 @@ export function createCompanionEmitPlugin(): CompanionEmitter {
     return statements;
   }
 
+  function captureBootstrap(node: ts.IfStatement, context: TransformationContext): Statement[] {
+    const statements = context.superTransformStatements(node);
+    const sourceFile = context.sourceFile;
+    const plan = planOf(sourceFile, context.checker);
+    if (plan === undefined || !plan.bootstrapStarts.has(node.pos)) {
+      return statements;
+    }
+    let bucket = bootstraps.get(sourceFile.fileName);
+    if (bucket === undefined) {
+      bucket = new Set();
+      bootstraps.set(sourceFile.fileName, bucket);
+    }
+    for (const statement of statements) {
+      bucket.add(statement);
+    }
+    return statements;
+  }
+
   const visitors: Plugin["visitors"] = {
     [ts.SyntaxKind.VariableStatement]: capture,
     [ts.SyntaxKind.FunctionDeclaration]: capture,
@@ -561,6 +587,7 @@ export function createCompanionEmitPlugin(): CompanionEmitter {
     // because TSTL emits its `require` bindings through its own hoisting. The
     // companion takes a copy of that prelude instead — see `copiedPrelude`.
     [ts.SyntaxKind.ExportDeclaration]: capture,
+    [ts.SyntaxKind.IfStatement]: captureBootstrap,
   };
 
   let configuredNoResolvePaths: readonly string[] = [];
@@ -582,7 +609,8 @@ export function createCompanionEmitPlugin(): CompanionEmitter {
         if (plan === undefined || bucket === undefined || bucket.size === 0) {
           continue;
         }
-        emitCompanion(program, emitHost, file, sourceFile, plan, bucket, companions);
+        const bootstrap = bootstraps.get(sourceFile.fileName) ?? new Set();
+        emitCompanion(program, emitHost, file, sourceFile, plan, bucket, bootstrap, companions);
         emitted.push(plan.requirePath);
       }
       // The companion is written by the CLI, not by TSTL's emit plan, so TSTL's
@@ -606,6 +634,7 @@ function emitCompanion(
   sourceFile: ts.SourceFile,
   plan: CompanionPlan,
   owned: ReadonlySet<Statement>,
+  bootstrap: ReadonlySet<Statement>,
   companions: Map<string, string>,
 ): void {
   const luaAst = file.luaAst;
@@ -644,9 +673,11 @@ function emitCompanion(
   ];
 
   const reads = new Set([EXPORTS_NAME, ...plan.internals]);
-  const insertAt = requireInsertionPoint(halves.script, reads);
+  const rest = halves.script.filter((statement) => !bootstrap.has(statement));
+  const insertAt = requireInsertionPoint(rest, reads);
   const scriptStatements: Statement[] = [
-    ...halves.script.slice(0, insertAt),
+    ...rest.slice(0, insertAt),
+    ...halves.script.filter((statement) => bootstrap.has(statement)),
     createVariableDeclarationStatement(
       exportsIdentifier(),
       createCallExpression(createIdentifier("require"), [createStringLiteral(plan.requirePath)]),
@@ -654,7 +685,7 @@ function emitCompanion(
     ...plan.internals.map((name) =>
       createVariableDeclarationStatement(createIdentifier(name), internalsField(name)),
     ),
-    ...halves.script.slice(insertAt),
+    ...rest.slice(insertAt),
     createReturnStatement([exportsIdentifier()]),
   ];
 

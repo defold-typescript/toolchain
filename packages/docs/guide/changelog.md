@@ -15,8 +15,12 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **[`upgrade` reads versions right](./upgrade.md#what-it-does)**, prereleases too.
 > - **[Model texture keys](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** reach `texture15`.
+> - **[A debug-wired entry script can export values](./debugging.md#picking-the-entry-script)**, and F5 flags a stale engine build.
 
 ### Fixed
+
+- **An entry script wired by `setup-debug` builds when it exports runtime values.** The unedited managed block no longer fails the [companion's](./script-state.md#exporting-a-value-from-a-script-itself) order rule at its `if`, and its gated `lldebugger.start()` runs before the companion loads; an edited block is still rejected, with an error that says to run `defold-typescript setup-debug` to restore it.
+- **F5 no longer runs a missing or stale engine build without a word.** The debug launcher stops when `build/default/game.projectc` is missing, and warns before launching when a generated script or `game.project` is newer than its compiled copy, while `build` and `watch` leave an unchanged output's file time alone; an existing project gets this launcher by [deleting `.vscode/defold-debug.ts` and rerunning `setup-debug`](./debugging.md#which-engine-the-launcher-runs).
 
 - **`upgrade` reports the version the project had before the run** — its installed `@defold-typescript/cli`, else its `package.json` pin — in the summary line and the `--json` `from` field, so `bunx @defold-typescript/cli@latest upgrade` no longer claims "already latest" after moving the project to a newer release. When neither names a version, the line reads `none -> <to>` and `from` is left out.
 - **`upgrade` tells distinct prereleases apart** — digit-led ones such as `1.3.0-1alpha` and `1.3.0-1beta`, and very long numeric ones such as `1.3.0-9007199254740992` and `1.3.0-9007199254740993` — so a CLI on the older one hands off to the newer one instead of re-scaffolding from its own templates and calling the project already latest.

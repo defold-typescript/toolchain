@@ -39,5 +39,8 @@
     "@typescript-to-lua/language-extensions": "1.19.0",
     "typescript": "6.0.2",
     "typescript-to-lua": "^1.36.0"
+  },
+  "devDependencies": {
+    "lua-wasm-bindings": "0.5.3"
   }
 }
