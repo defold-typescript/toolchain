@@ -257,5 +257,19 @@
       "blobSha": "451d9db550c7dc60b92e88d358b96fd218ddb786",
       "sha256": "8708e3b1190d447e53f303cb46cd11ff8f407e6802e28a6b18f2d35d11465927"
     }
+  ],
+  "evidence": [
+    {
+      "path": "engine/gamesys/src/gamesys/components/comp_model.cpp",
+      "blobSha": "f4df928d09ba277b4b71e81e227c8d62d1e97e33"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/gamesys.cpp",
+      "blobSha": "8b9559221ee788e6eff2586abcb737ffa10044da"
+    },
+    {
+      "path": "engine/render/src/dmsdk/render/render.h",
+      "blobSha": "220263ecbfed31e634143f8f3507083dd5c6f408"
+    }
   ]
 }
