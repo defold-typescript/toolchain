@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { type ApiTarget, loadApiTargets } from "./regen";
-import { bindingsDir } from "./sync-engine-bindings";
+import { bindingsDir, evidenceDir } from "./sync-engine-bindings";
 
 export type LuaKind =
   | "number"
@@ -2292,23 +2292,50 @@ export function cTokenKeys(source: string): string[] {
   return preprocess(source).map(tokenKey);
 }
 
-const bindingFileCache = new Map<string, CFunction[]>();
+// The two vendored engine trees a pin reads: the Lua binding sources and the
+// non-binding files a correction pins as evidence.
+const VENDORED_ROOTS = { bindings: bindingsDir, evidence: evidenceDir } as const;
+type VendoredRoot = keyof typeof VENDORED_ROOTS;
 
-function bindingFileFunctions(targetId: string, file: string, where: string): CFunction[] {
-  const cacheKey = `${targetId}\0${file}`;
-  let functions = bindingFileCache.get(cacheKey);
-  if (!functions) {
+const vendoredSourceCache = new Map<string, SourceFile>();
+
+function vendoredSource(
+  targetId: string,
+  root: VendoredRoot,
+  file: string,
+  where: string,
+): SourceFile {
+  const cacheKey = `${targetId}\0${root}\0${file}`;
+  let source = vendoredSourceCache.get(cacheKey);
+  if (!source) {
     const target = loadApiTargets().find((t) => t.id === targetId);
     if (!target) throw new Error(`${where}: unknown API target`);
     if ((target.source ?? null) !== null) {
-      throw new Error(`${where}: target has no vendored engine bindings`);
+      throw new Error(`${where}: target has no vendored engine ${root}`);
     }
-    const dir = join(bindingsDir(target), "engine");
+    const dir = join(VENDORED_ROOTS[root](target), "engine");
     if (!existsSync(join(dir, file))) throw new Error(`${where}: file is not vendored`);
-    functions = loadSource(dir, file).functions;
-    bindingFileCache.set(cacheKey, functions);
+    source = loadSource(dir, file);
+    vendoredSourceCache.set(cacheKey, source);
   }
-  return functions;
+  return source;
+}
+
+function bindingFileFunctions(targetId: string, file: string, where: string): CFunction[] {
+  return vendoredSource(targetId, "bindings", file, where).functions;
+}
+
+function functionBodyTokens(
+  functions: readonly CFunction[],
+  cFunction: string,
+  where: string,
+): string[] {
+  const named = functions.filter((fn) => fn.name === cFunction);
+  if (named.length === 0) throw new Error(`${where}: function is not defined in the file`);
+  if (named.length > 1) {
+    throw new Error(`${where}: function name is ambiguous (${named.length} definitions)`);
+  }
+  return (named[0] as CFunction).body.map(tokenKey);
 }
 
 // Whether the target vendors `file`. Every binding source a release ships is
@@ -2333,13 +2360,25 @@ export function bindingDefinesFunction(targetId: string, file: string, cFunction
 // the file defines twice, throws: none of them is evidence either way.
 export function bindingFunctionTokens(targetId: string, file: string, cFunction: string): string[] {
   const where = `${targetId}: ${file}:${cFunction}`;
-  const functions = bindingFileFunctions(targetId, file, where);
-  const named = functions.filter((fn) => fn.name === cFunction);
-  if (named.length === 0) throw new Error(`${where}: function is not defined in the file`);
-  if (named.length > 1) {
-    throw new Error(`${where}: function name is ambiguous (${named.length} definitions)`);
-  }
-  return (named[0] as CFunction).body.map(tokenKey);
+  return functionBodyTokens(bindingFileFunctions(targetId, file, where), cFunction, where);
+}
+
+// The tokens of the whole vendored evidence `file` (relative to the target's
+// evidence `engine/` tree). A missing file throws, as for `bindingFunctionTokens`.
+export function evidenceFileTokens(targetId: string, file: string): string[] {
+  return vendoredSource(targetId, "evidence", file, `${targetId}: ${file}`).tokens.map(tokenKey);
+}
+
+// The body tokens of `cFunction` in the vendored evidence `file`, under the
+// same throw rules as `bindingFunctionTokens`.
+export function evidenceFunctionTokens(
+  targetId: string,
+  file: string,
+  cFunction: string,
+): string[] {
+  const where = `${targetId}: ${file}:${cFunction}`;
+  const { functions } = vendoredSource(targetId, "evidence", file, where);
+  return functionBodyTokens(functions, cFunction, where);
 }
 
 const registeredConstantCache = new Map<string, ReadonlySet<string>>();

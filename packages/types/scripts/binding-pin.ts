@@ -1,5 +1,8 @@
 import {
   type BindingPin,
+  type EngineSourcePin,
+  PROPERTY_KEY_RANGES,
+  type PropertyKeyRange,
   RETURN_TYPE_CORRECTIONS,
   type ReturnTypeCorrection,
   STRUCT_MEMBER_ADDITIONS,
@@ -11,6 +14,8 @@ import {
   bindingFunctionTokens,
   bindingVendorsFile,
   cTokenKeys,
+  evidenceFileTokens,
+  evidenceFunctionTokens,
   mergeBindings,
   readBindingsForTarget,
   registeredConstantFqns,
@@ -27,11 +32,9 @@ function containsRun(body: readonly string[], run: readonly string[]): boolean {
   return false;
 }
 
-function snippet(pin: BindingPin, text: string): string[] {
+function snippet(label: string, text: string): string[] {
   const tokens = cTokenKeys(text);
-  if (tokens.length === 0) {
-    throw new Error(`binding pin ${pin.file}:${pin.cFunction}: snippet has no tokens`);
-  }
+  if (tokens.length === 0) throw new Error(`${label}: snippet has no tokens`);
   return tokens;
 }
 
@@ -43,10 +46,23 @@ export function bindingPinHolds(targetId: string, pin: BindingPin): boolean {
     throw new Error(`binding pin ${pin.file}:${pin.cFunction}: names neither contains nor lacks`);
   }
   const body = bindingFunctionTokens(targetId, pin.file, pin.cFunction);
+  const label = `binding pin ${pin.file}:${pin.cFunction}`;
   return (
-    (pin.contains === undefined || containsRun(body, snippet(pin, pin.contains))) &&
-    (pin.lacks === undefined || !containsRun(body, snippet(pin, pin.lacks)))
+    (pin.contains === undefined || containsRun(body, snippet(label, pin.contains))) &&
+    (pin.lacks === undefined || !containsRun(body, snippet(label, pin.lacks)))
   );
+}
+
+// Whether `targetId`'s vendored engine evidence contains the pin's snippet: in
+// the named function's body, or anywhere in the file without one. A file or
+// function the target does not vendor throws.
+export function enginePinHolds(targetId: string, pin: EngineSourcePin): boolean {
+  const where = pin.cFunction === undefined ? pin.file : `${pin.file}:${pin.cFunction}`;
+  const tokens =
+    pin.cFunction === undefined
+      ? evidenceFileTokens(targetId, pin.file)
+      : evidenceFunctionTokens(targetId, pin.file, pin.cFunction);
+  return containsRun(tokens, snippet(`engine pin ${where}`, pin.contains));
 }
 
 // The binding-pinned correction keys whose pin holds in the target's vendored
@@ -54,11 +70,13 @@ export function bindingPinHolds(targetId: string, pin: BindingPin): boolean {
 // member addition whose function the target does not define has no evidence
 // there: a release older than the function has neither the struct nor the push.
 // Likewise a return correction whose file the target does not vendor: a release
-// older than the module declares no function for it to correct.
+// older than the module declares no function for it to correct. A key range
+// with an `engine` field is evidence where every one of its pins holds.
 export function bindingEvidenceFor(
   target: ApiTarget,
   entries: Iterable<readonly [string, ReturnTypeCorrection]> = RETURN_TYPE_CORRECTIONS,
   additions: Iterable<readonly [string, StructMemberAddition]> = STRUCT_MEMBER_ADDITIONS,
+  ranges: Iterable<readonly [string, PropertyKeyRange]> = PROPERTY_KEY_RANGES,
 ): ReadonlySet<string> {
   const evidence = new Set<string>();
   if ((target.source ?? null) !== null) return evidence;
@@ -76,6 +94,11 @@ export function bindingEvidenceFor(
       bindingDefinesFunction(target.id, binding.file, binding.cFunction) &&
       bindingPinHolds(target.id, binding)
     ) {
+      evidence.add(key);
+    }
+  }
+  for (const [key, { engine }] of ranges) {
+    if (engine?.pins.every((pin) => enginePinHolds(target.id, pin))) {
       evidence.add(key);
     }
   }
@@ -119,12 +142,13 @@ export function targetBindingOptions(
   target: ApiTarget,
   corrections?: Iterable<readonly [string, ReturnTypeCorrection]>,
   additions?: Iterable<readonly [string, StructMemberAddition]>,
+  ranges?: Iterable<readonly [string, PropertyKeyRange]>,
 ): TargetBindingOptions {
   const registeredConstants = registeredConstantFqns(target);
   const vendored = (target.source ?? null) === null;
   return {
     ...(registeredConstants ? { registeredConstants } : {}),
-    bindingEvidence: bindingEvidenceFor(target, corrections, additions),
+    bindingEvidence: bindingEvidenceFor(target, corrections, additions, ranges),
     ...(vendored ? { nilRaisingSlots: targetNilRaisingSlots(target.id) } : {}),
   };
 }

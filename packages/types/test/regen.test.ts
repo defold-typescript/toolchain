@@ -1684,7 +1684,7 @@ describe("per-target binding evidence", () => {
   ];
 
   test("a vendored target's evidence holds exactly the binding-pinned keys whose pin holds", () => {
-    const options = targetBindingOptions(target("defold-1.14.0"), entries, additions);
+    const options = targetBindingOptions(target("defold-1.14.0"), entries, additions, []);
     expect([...(options.bindingEvidence ?? [])]).toEqual([
       "factory.create",
       "graphics.adapter_limits:member:max_storage_buffers_per_stage",
@@ -1695,7 +1695,7 @@ describe("per-target binding evidence", () => {
   test("a struct member addition has no evidence where the target lacks its function", () => {
     // 1.13.1 binds the function without the push; 1.12.4 predates the function.
     const evidenceOn = (id: string) => [
-      ...(targetBindingOptions(target(id), [], additions).bindingEvidence ?? ["missing"]),
+      ...(targetBindingOptions(target(id), [], additions, []).bindingEvidence ?? ["missing"]),
     ];
     expect(evidenceOn("defold-1.13.1")).toEqual([]);
     expect(evidenceOn("defold-1.12.4")).toEqual([]);

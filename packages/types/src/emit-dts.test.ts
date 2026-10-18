@@ -4602,6 +4602,14 @@ describe("component property type fidelity", () => {
     expect(model).not.toContain("texture8:");
     expect(model).not.toContain("[key:");
     expect(model).not.toContain("textureN:");
+    const engine = emitDeclarations(placeholder("model"), {
+      bindingEvidence: new Set(["model.textureN"]),
+    });
+    for (let unit = 0; unit <= 15; unit++) {
+      expect(engine).toContain(`    texture${unit}: Hash;`);
+    }
+    expect(engine).not.toContain("texture16:");
+    expect(engine).not.toContain("textureN:");
     const other = emitDeclarations(placeholder("label"));
     expect(other).toContain("    textureN: Hash;");
     expect(other).not.toContain("[key:");

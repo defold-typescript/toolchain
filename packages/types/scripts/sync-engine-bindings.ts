@@ -1,10 +1,14 @@
 import { createHash } from "node:crypto";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { PROPERTY_KEY_RANGES, type PropertyKeyRange } from "../src/emit-dts";
 import { type ApiTarget, loadApiTargets } from "./regen";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 export const ENGINE_BINDINGS_DIR = "engine-bindings";
+// The non-binding engine files a correction pins, kept apart from the bindings
+// so the binding extractor never reads them.
+export const ENGINE_EVIDENCE_DIR = "engine-evidence";
 
 const ENGINE_SOURCE = /^engine\/.+\/src\/.+\.cpp$/;
 // `profiler.cpp` is the one binding file whose name carries no `script` token.
@@ -47,8 +51,29 @@ export function sha256(contents: string | Uint8Array): string {
   return createHash("sha256").update(contents).digest("hex");
 }
 
+// The object id `git hash-object` gives the same bytes.
+export function gitBlobSha(contents: string | Uint8Array): string {
+  const bytes = typeof contents === "string" ? Buffer.from(contents) : contents;
+  return createHash("sha1").update(`blob ${bytes.byteLength}\0`).update(bytes).digest("hex");
+}
+
 export function bindingsDir(target: ApiTarget, packageRoot: string = PACKAGE_ROOT): string {
   return resolve(packageRoot, target.fixturesDir, ENGINE_BINDINGS_DIR);
+}
+
+export function evidenceDir(target: ApiTarget, packageRoot: string = PACKAGE_ROOT): string {
+  return resolve(packageRoot, target.fixturesDir, ENGINE_EVIDENCE_DIR);
+}
+
+// The repository paths of every engine file a key range's `engine` pins name.
+export function engineEvidencePaths(
+  ranges: Iterable<readonly [string, PropertyKeyRange]> = PROPERTY_KEY_RANGES,
+): string[] {
+  const paths = new Set<string>();
+  for (const [, range] of ranges) {
+    for (const pin of range.engine?.pins ?? []) paths.add(`engine/${pin.file}`);
+  }
+  return [...paths].sort();
 }
 
 export function vendoredTargets(targets: readonly ApiTarget[] = loadApiTargets()): ApiTarget[] {
@@ -125,9 +150,44 @@ export async function syncTarget(
   return manifest;
 }
 
+// Fetches the pinned engine files at the commit the target's bindings were
+// synced from, so the evidence and the bindings describe one engine.
+export async function syncEvidence(target: ApiTarget): Promise<EngineBindingManifest> {
+  const tag = targetTag(target);
+  const { commit } = JSON.parse(
+    readFileSync(resolve(bindingsDir(target), "manifest.json"), "utf8"),
+  ) as EngineBindingManifest;
+  const fetched: { path: string; bytes: Uint8Array }[] = [];
+  for (const path of engineEvidencePaths()) {
+    const url = `https://raw.githubusercontent.com/defold/defold/${commit}/${path}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${target.id}: ${path}: GET ${url} failed: ${res.status}`);
+    fetched.push({ path, bytes: new Uint8Array(await res.arrayBuffer()) });
+  }
+
+  const dir = evidenceDir(target);
+  rmSync(dir, { recursive: true, force: true });
+  const files: EngineBindingFile[] = [];
+  for (const { path, bytes } of fetched) {
+    const out = resolve(dir, path);
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, bytes);
+    files.push({ path, blobSha: gitBlobSha(bytes), sha256: sha256(bytes) });
+  }
+  mkdirSync(dir, { recursive: true });
+  const manifest: EngineBindingManifest = { tag, commit, files };
+  writeFileSync(resolve(dir, "manifest.json"), biomeFormatJson(JSON.stringify(manifest)));
+  return manifest;
+}
+
 if (import.meta.main) {
+  const evidenceOnly = process.argv.includes("--evidence");
   for (const target of vendoredTargets()) {
-    const manifest = await syncTarget(target);
-    console.log(`${target.id}: ${manifest.files.length} binding files @ ${manifest.commit}`);
+    if (!evidenceOnly) {
+      const manifest = await syncTarget(target);
+      console.log(`${target.id}: ${manifest.files.length} binding files @ ${manifest.commit}`);
+    }
+    const evidence = await syncEvidence(target);
+    console.log(`${target.id}: ${evidence.files.length} evidence files @ ${evidence.commit}`);
   }
 }

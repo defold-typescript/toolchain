@@ -77,6 +77,7 @@
     "fixtures/messages_doc.json",
     "fixtures/defold-*",
     "!fixtures/defold-*/engine-bindings",
+    "!fixtures/defold-*/engine-evidence",
     "!fixtures/defold-*/annotations",
     "examples/translations.json",
     "!src/**/*.test.ts",

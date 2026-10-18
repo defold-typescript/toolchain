@@ -1,0 +1,21 @@
+{
+  "tag": "1.13.2",
+  "commit": "8620195789abcf164992cc82103a16189d22f675",
+  "files": [
+    {
+      "path": "engine/gamesys/src/gamesys/components/comp_model.cpp",
+      "blobSha": "fdb90c258aeb7d5106cd4a25d293335dfeb68cdb",
+      "sha256": "16fc276788a3d1fdc6ad583a07eaf9cc52d1e37f1bbff45d10a7fba7ed3e3144"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/gamesys.cpp",
+      "blobSha": "2cb6c8c8b2bbf08b948c1dca7680d64621d9933b",
+      "sha256": "a2267108b795c547b61c41e24d4133ce99d5cbf53f2cba5a1c78aeb6c0cef928"
+    },
+    {
+      "path": "engine/render/src/dmsdk/render/render.h",
+      "blobSha": "f99e7bfddd74ee38e51204a5f0aaa1a9eb300f33",
+      "sha256": "c66d7534eebc5cc37f5234d4d4bf23aec733f2d075ccbbe57ecbfbe531bf92c1"
+    }
+  ]
+}
