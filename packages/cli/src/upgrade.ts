@@ -14,6 +14,8 @@ function numericSegments(core: string): number[] {
   });
 }
 
+const NUMERIC_IDENTIFIER = /^\d+$/;
+
 function comparePrerelease(a: string, b: string): number {
   if (a === b) {
     return 0;
@@ -36,10 +38,13 @@ function comparePrerelease(a: string, b: string): number {
     if (r === undefined) {
       return 1;
     }
-    const ln = Number.parseInt(l, 10);
-    const rn = Number.parseInt(r, 10);
-    const bothNumeric = !Number.isNaN(ln) && !Number.isNaN(rn);
-    const cmp = bothNumeric ? ln - rn : l.localeCompare(r);
+    const lNumeric = NUMERIC_IDENTIFIER.test(l);
+    const rNumeric = NUMERIC_IDENTIFIER.test(r);
+    if (lNumeric !== rNumeric) {
+      // Explicit, because the lexical fallback would rank `2` above `1alpha`.
+      return lNumeric ? -1 : 1;
+    }
+    const cmp = lNumeric ? Number(l) - Number(r) : l.localeCompare(r);
     if (cmp !== 0) {
       return cmp;
     }
