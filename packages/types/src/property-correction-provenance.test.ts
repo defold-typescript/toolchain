@@ -2,6 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import apiTargets from "../api-targets.json" with { type: "json" };
+import { enginePinHolds } from "../scripts/binding-pin";
+import { cTokenKeys } from "../scripts/engine-binding-extract";
+import { vendoredTargets } from "../scripts/sync-engine-bindings";
 import { pinMatches, propertyCorrectionPins, spanTokens } from "./correction-pins";
 import { PROPERTY_KEY_RANGES, PROPERTY_TYPE_CORRECTIONS } from "./emit-dts";
 
@@ -156,5 +159,35 @@ describe("property key range provenance", () => {
       }
     }
     expect(drifted).toEqual([]);
+  });
+
+  test("every engine pin holds on every vendored target", () => {
+    const failing: string[] = [];
+    for (const [key, entry] of entries) {
+      for (const pin of entry.engine?.pins ?? []) {
+        for (const target of vendoredTargets()) {
+          if (!enginePinHolds(target.id, pin)) {
+            const where = pin.cFunction === undefined ? pin.file : `${pin.file}:${pin.cFunction}`;
+            failing.push(`${key} ${target.id} ${where}`);
+          }
+        }
+      }
+    }
+    expect(failing).toEqual([]);
+  });
+
+  test("an engine range differs from the prose range and its key count is pinned", () => {
+    const unsupported: string[] = [];
+    for (const [key, entry] of entries) {
+      if (entry.engine === undefined) continue;
+      if (entry.engine.last === entry.last) {
+        unsupported.push(`${key}: engine.last equals the prose range's last`);
+      }
+      const count = String(entry.engine.last - entry.first + 1);
+      if (!entry.engine.pins.some((pin) => cTokenKeys(pin.contains).includes(count))) {
+        unsupported.push(`${key}: no engine pin states the key count ${count}`);
+      }
+    }
+    expect(unsupported).toEqual([]);
   });
 });

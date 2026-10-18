@@ -13,12 +13,14 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`upgrade` reads versions correctly](./upgrade.md#what-it-does)**: the project's prior one, and any two distinct prereleases.
+> - **[`upgrade` reads versions right](./upgrade.md#what-it-does)**, prereleases too.
+> - **[Model texture keys](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** reach `texture15`.
 
 ### Fixed
 
 - **`upgrade` reports the version the project had before the run** — its installed `@defold-typescript/cli`, else its `package.json` pin — in the summary line and the `--json` `from` field, so `bunx @defold-typescript/cli@latest upgrade` no longer claims "already latest" after moving the project to a newer release. When neither names a version, the line reads `none -> <to>` and `from` is left out.
 - **`upgrade` tells distinct prereleases apart** — digit-led ones such as `1.3.0-1alpha` and `1.3.0-1beta`, and very long numeric ones such as `1.3.0-9007199254740992` and `1.3.0-9007199254740993` — so a CLI on the older one hands off to the newer one instead of re-scaffolding from its own templates and calling the project already latest.
+- **`model.properties` declares all sixteen texture units the engine handles**, `"texture0"` through `"texture15"`, on every [pre-baked Defold version](./pinning-defold-target.md#opting-into-a-pinned-surface), so `go.get<model.properties>()("#model", "texture8")` compiles; a surface generated from a reference doc alone keeps `"texture0"` through `"texture7"`.
 
 ## v0.52.0
 

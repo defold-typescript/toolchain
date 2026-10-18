@@ -68,6 +68,7 @@ describe("@defold-typescript/types publish surface", () => {
 
   test("keeps the vendored engine binding sources and their tooling out of the tarball", () => {
     expect(paths.filter((path) => path.includes("/engine-bindings/"))).toEqual([]);
+    expect(paths.filter((path) => path.includes("/engine-evidence/"))).toEqual([]);
     expect(paths).not.toContain("scripts/sync-engine-bindings.ts");
     expect(paths).not.toContain("scripts/engine-binding-extract.ts");
   });

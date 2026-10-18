@@ -1,11 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
+import type { PropertyKeyRange } from "../src/emit-dts";
 import {
   bindingsDir,
   type EngineBindingManifest,
+  engineEvidencePaths,
+  evidenceDir,
+  gitBlobSha,
   selectBindingPaths,
   sha256,
+  targetTag,
   vendoredTargets,
 } from "./sync-engine-bindings";
 
@@ -65,4 +70,63 @@ describe("vendored engine bindings", () => {
       }
     });
   }
+});
+
+describe("vendored engine evidence", () => {
+  for (const target of vendoredTargets()) {
+    test(`${target.id} evidence is the pinned files, unedited, from the bindings commit`, () => {
+      const dir = evidenceDir(target);
+      const manifest = JSON.parse(
+        readFileSync(join(dir, "manifest.json"), "utf8"),
+      ) as EngineBindingManifest;
+      const bindings = JSON.parse(
+        readFileSync(join(bindingsDir(target), "manifest.json"), "utf8"),
+      ) as EngineBindingManifest;
+      expect(manifest.tag).toBe(targetTag(target));
+      expect(manifest.commit).toBe(bindings.commit);
+      const paths = manifest.files.map((file) => file.path).sort();
+      expect(paths).toEqual(engineEvidencePaths());
+      const onDisk = listFiles(dir)
+        .filter((path) => path !== "manifest.json")
+        .sort();
+      expect(onDisk).toEqual(paths);
+      for (const file of manifest.files) {
+        const bytes = readFileSync(join(dir, file.path));
+        expect({ path: file.path, sha256: sha256(bytes), blobSha: gitBlobSha(bytes) }).toEqual({
+          path: file.path,
+          sha256: file.sha256,
+          blobSha: file.blobSha,
+        });
+      }
+    });
+  }
+});
+
+describe("engineEvidencePaths", () => {
+  test("lists each pinned file once, engine-prefixed and sorted", () => {
+    const pin = (file: string, contains: string) => ({ file, contains });
+    const ranges: ReadonlyMap<string, PropertyKeyRange> = new Map([
+      [
+        "a.slotN",
+        {
+          prefix: "slot",
+          first: 0,
+          last: 1,
+          evidence: "0-1",
+          engine: {
+            last: 3,
+            pins: [pin("z/src/z.h", "Z = 4;"), pin("z/src/z.h", "Z;"), pin("b/src/b.cpp", "B")],
+          },
+        },
+      ],
+      ["c.itemN", { prefix: "item", first: 1, last: 2, evidence: "1-2" }],
+    ]);
+    expect(engineEvidencePaths(ranges)).toEqual(["engine/b/src/b.cpp", "engine/z/src/z.h"]);
+  });
+});
+
+describe("gitBlobSha", () => {
+  test("is the object id git hash-object gives", () => {
+    expect(gitBlobSha("hello\n")).toBe("ce013625030ba8dba906f756967f9e9ca394464a");
+  });
 });
