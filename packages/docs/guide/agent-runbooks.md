@@ -584,11 +584,12 @@ On failure:
 ```
 
 **Reading `ok`:** if `ok` is `true`, the upgrade landed — `written` lists the
-managed files the re-scaffold touched, `from` and `to` are the running and the
-resolved-latest CLI versions, and `handedOff` says whether a newer CLI performed
-the re-scaffold (`false` means the running CLI was already the latest and
-re-scaffolded in place; `from` and `to` are then equal). If `ok` is `false`, stop
-and surface `error`.
+managed files the re-scaffold touched, `from` is the `@defold-typescript/cli`
+version the project had before the upgrade (the installed copy in `node_modules`,
+else the version in its `package.json` pin, and absent when neither exists), `to`
+is the resolved latest, and `handedOff` says whether a newer CLI performed the
+re-scaffold (`false` means the running CLI was already the latest and
+re-scaffolded in place). If `ok` is `false`, stop and surface `error`.
 
 When `handedOff` is `true`, `written` is the list the **newer CLI reports** for
 the re-scaffold it performed, read back from the delegated run; when it is

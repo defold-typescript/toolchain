@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
+import * as path from "node:path";
 import { runInit } from "./init";
 import { installHint, packageManager } from "./install-reminder";
 import { type FetchImpl, resolveLatestCliVersion } from "./latest-version";
@@ -59,6 +61,42 @@ export function compareSemver(a: string, b: string): number {
     }
   }
   return comparePrerelease(aPre.join("-"), bPre.join("-"));
+}
+
+function readJsonObject(file: string): Record<string, unknown> | undefined {
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(file, "utf8"));
+    return typeof parsed === "object" && parsed !== null
+      ? (parsed as Record<string, unknown>)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const CONCRETE_PIN = /^[\^~=]?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/;
+
+function pinnedVersion(deps: unknown): string | undefined {
+  if (typeof deps !== "object" || deps === null) {
+    return undefined;
+  }
+  const spec = (deps as Record<string, unknown>)[CLI_PACKAGE];
+  return typeof spec === "string" ? CONCRETE_PIN.exec(spec)?.[1] : undefined;
+}
+
+// Under `bunx @defold-typescript/cli@latest upgrade` the running binary is
+// already the latest, so the version the project had before the run comes from
+// the project itself: the installed copy, else its pin. Only `cwd` is read, the
+// same directory `init .` and the install run in.
+export function readProjectCliVersion(cwd: string): string | undefined {
+  const installed = readJsonObject(
+    path.join(cwd, "node_modules", ...CLI_PACKAGE.split("/"), "package.json"),
+  )?.version;
+  if (typeof installed === "string") {
+    return installed;
+  }
+  const pkg = readJsonObject(path.join(cwd, "package.json"));
+  return pinnedVersion(pkg?.devDependencies) ?? pinnedVersion(pkg?.dependencies);
 }
 
 export type UpgradePlan = { action: "in-process" } | { action: "hand-off"; target: string };
@@ -178,7 +216,9 @@ export interface RunUpgradeOptions {
 }
 
 export interface UpgradeOutcome {
-  readonly from: string;
+  // The project's `@defold-typescript/cli` version before this run; absent when
+  // neither an installed copy nor a concrete pin names one.
+  readonly from?: string;
   readonly to: string;
   readonly handedOff: boolean;
   readonly written: readonly string[];
@@ -270,8 +310,15 @@ export async function runUpgrade(opts: RunUpgradeOptions): Promise<UpgradeOutcom
   const io: UpgradeIo = { ...defaultUpgradeIo(), ...opts.io };
   const capture = opts.capture ?? false;
   const latest = await resolveLatestCliVersion(io.fetch);
+  // Read before any spawn or `runInit`: the re-init re-pins the CLI entry to
+  // this binary's own version, which would erase what the project had.
+  const prior = readProjectCliVersion(opts.cwd);
   const plan = planUpgrade({ running: opts.running, latest });
-  const base = { from: opts.running, to: latest, handedOff: plan.action === "hand-off" };
+  const base = {
+    ...(prior !== undefined ? { from: prior } : {}),
+    to: latest,
+    handedOff: plan.action === "hand-off",
+  };
 
   // Captured text is a diagnostic: it earns its place in the envelope only when
   // a child failed, so a success payload stays byte-identical to today's.
