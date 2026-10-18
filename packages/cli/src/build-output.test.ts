@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  utimesSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
@@ -471,6 +480,46 @@ describe("writeScriptFile generated banner", () => {
     // The sourceMappingURL directive must be the file's last line.
     expect(script.trimEnd().split("\n").at(-1)).toBe("--# sourceMappingURL=hero.ts.script.map");
     expect(script.indexOf(GENERATED_BANNER)).toBeLessThan(script.indexOf("sourceMappingURL"));
+  });
+});
+
+describe("writeScriptFile leaves identical outputs untouched", () => {
+  const SCRIPT_REL = "src/player.ts.script";
+  const OLD = new Date("2020-01-01T00:00:00Z");
+  let cwd: string;
+
+  beforeEach(() => {
+    cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-unchanged-"));
+  });
+
+  afterEach(() => {
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
+  function ageOutputs(): void {
+    utimesSync(path.join(cwd, SCRIPT_REL), OLD, OLD);
+    utimesSync(path.join(cwd, `${SCRIPT_REL}.map`), OLD, OLD);
+  }
+
+  function modifiedAt(rel: string): number {
+    return statSync(path.join(cwd, rel)).mtimeMs;
+  }
+
+  test("rewriting the same script and map moves neither file's time", () => {
+    writeScriptFile(cwd, SCRIPT_REL, "local x = 1", "{}");
+    ageOutputs();
+    writeScriptFile(cwd, SCRIPT_REL, "local x = 1", "{}");
+    expect(modifiedAt(SCRIPT_REL)).toBe(OLD.getTime());
+    expect(modifiedAt(`${SCRIPT_REL}.map`)).toBe(OLD.getTime());
+  });
+
+  test("new Lua moves the script's time and not the unchanged map's", () => {
+    writeScriptFile(cwd, SCRIPT_REL, "local x = 1", "{}");
+    ageOutputs();
+    writeScriptFile(cwd, SCRIPT_REL, "local x = 2", "{}");
+    expect(modifiedAt(SCRIPT_REL)).toBeGreaterThan(OLD.getTime());
+    expect(readFileSync(path.join(cwd, SCRIPT_REL), "utf8")).toStartWith("local x = 2\n");
+    expect(modifiedAt(`${SCRIPT_REL}.map`)).toBe(OLD.getTime());
   });
 });
 

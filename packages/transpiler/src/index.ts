@@ -11,6 +11,13 @@ export {
   componentIdOfSameObjectAddress,
 } from "./component-animation-index";
 export { buildConfigKeyIndex, readGameProjectSetting } from "./config-key-index";
+export type { ManagedBootstrap } from "./debug-bootstrap";
+export {
+  DEBUG_BLOCK_BEGIN,
+  DEBUG_BLOCK_END,
+  DEBUG_MANAGED_BLOCK,
+  findManagedBootstrap,
+} from "./debug-bootstrap";
 export { findEmittedRequires, LUALIB_REQUIRE_NAME } from "./emitted-requires";
 export type { GuiFlipbookIndex } from "./gui-flipbook-index";
 export { buildGuiFlipbookIndex } from "./gui-flipbook-index";

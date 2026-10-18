@@ -1,6 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
-import { DEFAULT_INCLUDE } from "@defold-typescript/transpiler";
+import {
+  DEBUG_BLOCK_BEGIN,
+  DEBUG_BLOCK_END,
+  DEBUG_MANAGED_BLOCK,
+  DEFAULT_INCLUDE,
+} from "@defold-typescript/transpiler";
 import { resolveBootPathScripts } from "./boot-path";
 import {
   type BuildConfig,
@@ -49,28 +54,12 @@ declare module "lldebugger.debug" {
 }
 `;
 
-// Managed-block sentinels. A re-run locates the single BEGIN…END pair and
-// refreshes the enclosed text if it drifted, so wording changes self-heal.
-// They are `//` line comments, stripped by TSTL, so they never reach the
-// emitted `.ts.script`.
-export const BLOCK_BEGIN = "// defold-typescript:setup-debug BEGIN — managed block, do not edit";
-export const BLOCK_END = "// defold-typescript:setup-debug END";
-
-// The canonical managed block: import + gated start, marker-free, no
-// `declare module` (that lives in the ambient `.d.ts`). Mirrors the snippet in
-// `packages/docs/guide/debugging.md` exactly; a guide-comparison test locks the two.
-// The blank line before END keeps Biome's organizeImports assist from gluing
-// the END comment onto a following import as its leading comment (which would
-// then demand a blank line before the whole group). With blank lines on both
-// sides of END, an import injected above the user's own imports stays clean.
-const MANAGED_BLOCK = `${BLOCK_BEGIN}
-import * as lldebugger from "lldebugger.debug";
-
-if (sys.get_engine_info().is_debug) {
-  lldebugger.start();
-}
-
-${BLOCK_END}`;
+// The managed block and its sentinels live in the transpiler, which exempts the
+// unedited block from the companion split's order rule; `setup-debug` writes the
+// very text that rule recognizes.
+export const BLOCK_BEGIN = DEBUG_BLOCK_BEGIN;
+export const BLOCK_END = DEBUG_BLOCK_END;
+const MANAGED_BLOCK = DEBUG_MANAGED_BLOCK;
 
 const FACTORY_NAMES = ["defineScript", "defineGuiScript", "defineRenderScript"] as const;
 

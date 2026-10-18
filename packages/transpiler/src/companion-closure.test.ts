@@ -5,13 +5,17 @@ import {
   type CompanionClosure,
   computeCompanionClosure,
 } from "./companion-closure";
+import { DEBUG_BLOCK_BEGIN, DEBUG_BLOCK_END, DEBUG_MANAGED_BLOCK } from "./debug-bootstrap";
 import { createTranspileSession } from "./session";
 
 const FACTORY_IMPORT = 'import { defineScript } from "@defold-typescript/types";';
 
-function closureOf(source: string): CompanionClosure {
+function closureOf(
+  source: string,
+  extraFiles: Readonly<Record<string, string>> = {},
+): CompanionClosure {
   const session = createTranspileSession();
-  session.update({ "main.ts": source });
+  session.update({ ...extraFiles, "main.ts": source });
   const program = session.getProgram();
   if (!program) {
     throw new Error("session produced no program");
@@ -592,6 +596,85 @@ describe("computeCompanionClosure — initialization order", () => {
       ),
     );
     expect(closure.violations).toEqual([]);
+  });
+});
+
+describe("computeCompanionClosure — the setup-debug managed block", () => {
+  const AMBIENT_LLDEBUGGER = {
+    "lldebugger.debug.d.ts": lines(
+      "/** @noResolution */",
+      'declare module "lldebugger.debug" {',
+      "  export function start(): void;",
+      "}",
+    ),
+  };
+  const ENTRY = lines(
+    FACTORY_IMPORT,
+    "",
+    "export const SPEED = 3;",
+    "",
+    "export default defineScript({",
+    "  init() {",
+    "    print(SPEED);",
+    "  },",
+    "});",
+  );
+  const TODAYS_ORDER_ADVICE =
+    "Move that work below the companion's declarations, or into a lifecycle hook.";
+
+  function debugEntry(head: string): CompanionClosure {
+    return closureOf(`${head}\n\n${ENTRY}`, AMBIENT_LLDEBUGGER);
+  }
+
+  function siteLines(closure: CompanionClosure): number[] {
+    return closure.violations.map((violation) => violation.sites[0]?.line ?? 0);
+  }
+
+  test("the canonical block above an export is exempt from the order rule", () => {
+    const closure = debugEntry(DEBUG_MANAGED_BLOCK);
+    expect(closure.violations).toEqual([]);
+    expect(closure.statements.length).toBeGreaterThan(0);
+  });
+
+  test("the canonical block stays exempt under CRLF line endings", () => {
+    const closure = closureOf(
+      `${DEBUG_MANAGED_BLOCK}\n\n${ENTRY}`.replace(/\n/g, "\r\n"),
+      AMBIENT_LLDEBUGGER,
+    );
+    expect(closure.violations).toEqual([]);
+  });
+
+  test("work written right after the END sentinel is still reported", () => {
+    const closure = debugEntry(`${DEBUG_MANAGED_BLOCK}\nprint("boot");`);
+    expect(kinds(closure)).toEqual(["initialization-order"]);
+    expect(siteLines(closure)).toEqual([DEBUG_MANAGED_BLOCK.split("\n").length + 1]);
+    expect(closure.violations[0]?.message).toContain(TODAYS_ORDER_ADVICE);
+  });
+
+  test("the block body without its sentinels is ordinary top-level work", () => {
+    const body = DEBUG_MANAGED_BLOCK.replace(`${DEBUG_BLOCK_BEGIN}\n`, "").replace(
+      DEBUG_BLOCK_END,
+      "",
+    );
+    const closure = debugEntry(body);
+    expect(kinds(closure)).toEqual(["initialization-order"]);
+    const ifLine = body.split("\n").findIndex((line) => line.startsWith("if (")) + 1;
+    expect(siteLines(closure)).toEqual([ifLine]);
+    expect(closure.violations[0]?.message).toContain(TODAYS_ORDER_ADVICE);
+  });
+
+  test("an edited block names setup-debug as the way to restore it", () => {
+    const edited = DEBUG_MANAGED_BLOCK.replace(DEBUG_BLOCK_END, `print("x");\n${DEBUG_BLOCK_END}`);
+    const closure = debugEntry(edited);
+    const rows = edited.split("\n");
+    const ifLine = rows.findIndex((line) => line.startsWith("if (")) + 1;
+    const printLine = rows.indexOf('print("x");') + 1;
+    expect(kinds(closure)).toEqual(["initialization-order", "initialization-order"]);
+    expect(siteLines(closure)).toEqual([ifLine, printLine]);
+    for (const violation of closure.violations) {
+      expect(violation.message).toContain("defold-typescript setup-debug");
+      expect(violation.message).not.toContain("Move that work below");
+    }
   });
 });
 

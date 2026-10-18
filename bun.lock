@@ -131,6 +131,9 @@
         "typescript": "6.0.2",
         "typescript-to-lua": "^1.36.0",
       },
+      "devDependencies": {
+        "lua-wasm-bindings": "0.5.3",
+      },
     },
     "packages/tstl-plugin": {
       "name": "@defold-typescript/tstl-plugin",
