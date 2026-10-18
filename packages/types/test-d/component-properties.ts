@@ -41,17 +41,25 @@ void _framesAsHash;
 const _image: Hash = go.get<sprite.properties>()("#sprite", "image");
 void _image;
 
-// `model.textureN` is upstream's placeholder for the eight texture slots, so the
-// catalog keys the whole numbered family and rejects the placeholder itself.
-const _modelTexture0: Hash = go.get<model.properties>()("#model", "texture0");
-const _modelTexture7: Hash = go.get<model.properties>()("#model", "texture7");
-void _modelTexture0;
-void _modelTexture7;
+// `model.textureN` is upstream's placeholder for the numbered texture units, so
+// the catalog keys the whole family and rejects the placeholder itself. The
+// ref-doc says 0-7; comp_model.cpp matches units below
+// dmRender::RenderObject::MAX_TEXTURE_COUNT (16), and the vendored engine
+// source decides the sixteen keys here.
+type ModelTextureKey =
+  `texture${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15}`;
+const _modelTextures: Equal<
+  Pick<model.properties, ModelTextureKey>,
+  Record<ModelTextureKey, Hash>
+> = true;
+void _modelTextures;
+const _modelTextureKey = null as unknown as ModelTextureKey;
+go.set<model.properties>()("#model", _modelTextureKey, hash("/main/t.texturec"));
 
 // @ts-expect-error textureN is the placeholder, not a key the engine accepts
 go.get<model.properties>()("#model", "textureN");
-// @ts-expect-error the ref-doc bounds the units to 0-7
-go.get<model.properties>()("#model", "texture8");
+// @ts-expect-error the engine holds sixteen texture units, 0-15
+go.get<model.properties>()("#model", "texture16");
 // @ts-expect-error a unit is never negative
 go.get<model.properties>()("#model", "texture-1");
 // @ts-expect-error a unit is never fractional

@@ -1443,8 +1443,9 @@ bump reports each one as a manual review point rather than deciding silently.
 `remainingHumanDecisions`); resolve each by hand:
 
 - **Vendor the engine bindings** — `bump:defold --to` fails at its `regen` stage
-  until `fixtures/defold-<new>/engine-bindings/` exists, and no bump stage
-  creates it. A failed bump prints no `remainingHumanDecisions`, so the rest of
+  until `fixtures/defold-<new>/engine-bindings/` and
+  `fixtures/defold-<new>/engine-evidence/` exist, and no bump stage creates
+  them. A failed bump prints no `remainingHumanDecisions`, so the rest of
   this list still applies. Run the networked sync, then regenerate:
 
   ```sh
@@ -1454,7 +1455,9 @@ bump reports each one as a manual review point rather than deciding silently.
 
   The sync re-reads every vendored target. A changed `commit` under an older
   target means upstream moved that release tag; check that no binding file
-  changed with it.
+  changed with it. It also fetches `engine-evidence/`, the engine files a
+  `PROPERTY_KEY_RANGES` `engine` pin names, at the bindings commit;
+  `--evidence` refreshes only those, with no GitHub API call.
 - **Curate `api-migrations.json`** for the `<from> -> <to>` transition — the
   deprecation list is never auto-edited.
 - **Re-confirm `import-manifest.json`** — verify the imported release tag matches

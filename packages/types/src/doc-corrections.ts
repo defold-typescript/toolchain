@@ -95,6 +95,15 @@ export const DOC_CORRECTIONS: ReadonlyMap<string, DocCorrection> = new Map([
     },
   ],
   [
+    "model#property:textureN",
+    {
+      upstreamHash: "d6b885cb54de309f",
+      reason:
+        "the engine handles texture units 0-15 on 1.12.4 and later (render.h `MAX_TEXTURE_COUNT = 16`), while upstream's 0-7 holds on 1.11.0 and earlier, so the text names no range",
+      html: "The texture hash id of the model, read and written on the texture unit the key's number names (<code>texture3</code> is unit 3).",
+    },
+  ],
+  [
     "buffer.get_bytes#brief",
     {
       upstreamHash: "e30a9df6b7f4f67d",

@@ -1,13 +1,21 @@
 import { describe, expect, test } from "bun:test";
-import type { BindingPin, ReturnTypeCorrection } from "../src/emit-dts";
+import {
+  type BindingPin,
+  type EngineSourcePin,
+  PROPERTY_KEY_RANGES,
+  type PropertyKeyRange,
+  type ReturnTypeCorrection,
+} from "../src/emit-dts";
 import {
   bindingEvidenceFor,
   bindingPinHolds,
+  enginePinHolds,
   nilRaisingSlotsOf,
   targetBindingOptions,
 } from "./binding-pin";
 import type { BindingFunction, BindingSlot } from "./engine-binding-extract";
 import { type ApiTarget, loadApiTargets } from "./regen";
+import { vendoredTargets } from "./sync-engine-bindings";
 
 const TARGET = "defold-1.14.0";
 const FACTORY = "gamesys/src/gamesys/scripts/script_factory.cpp";
@@ -142,13 +150,80 @@ describe("bindingEvidenceFor", () => {
   ];
 
   test("a return correction's pin is evidence where the target's binding shows it", () => {
-    expect([...bindingEvidenceFor(apiTarget("defold-1.14.0"), [meshCase], [])]).toEqual([
+    expect([...bindingEvidenceFor(apiTarget("defold-1.14.0"), [meshCase], [], [])]).toEqual([
       "bullet3d.shape.get_shape",
     ]);
   });
 
   test("a release that does not ship the pinned file shows no evidence", () => {
-    expect([...bindingEvidenceFor(apiTarget("defold-1.13.1"), [meshCase], [])]).toEqual([]);
+    expect([...bindingEvidenceFor(apiTarget("defold-1.13.1"), [meshCase], [], [])]).toEqual([]);
+  });
+
+  test("an engine-pinned key range is evidence on every vendored target", () => {
+    for (const target of vendoredTargets()) {
+      expect({ target: target.id, has: bindingEvidenceFor(target).has("model.textureN") }).toEqual({
+        target: target.id,
+        has: true,
+      });
+    }
+    expect(bindingEvidenceFor(apiTarget("defold-1.9.8")).has("model.textureN")).toBe(false);
+  });
+
+  test("a key range whose pin does not hold is no evidence", () => {
+    const falsified: readonly [string, PropertyKeyRange] = [
+      "model.textureN",
+      {
+        ...MODEL_TEXTURE_RANGE,
+        engine: { last: 15, pins: [{ ...RENDER_H_PIN, contains: RENDER_H_PIN_AT_8 }] },
+      },
+    ];
+    expect([...bindingEvidenceFor(apiTarget("defold-1.14.0"), [], [], [falsified])]).toEqual([]);
+  });
+});
+
+const MODEL_TEXTURE_RANGE = PROPERTY_KEY_RANGES.get("model.textureN") as PropertyKeyRange;
+const MODEL_PINS: readonly EngineSourcePin[] = MODEL_TEXTURE_RANGE.engine?.pins ?? [];
+const RENDER_H_PIN = MODEL_PINS.find(
+  (pin) => pin.file === "render/src/dmsdk/render/render.h",
+) as EngineSourcePin;
+const RENDER_H_PIN_AT_8 = "static const uint32_t MAX_TEXTURE_COUNT = 8;";
+
+describe("enginePinHolds", () => {
+  test("each model texture pin holds on the 1.14.0 engine source", () => {
+    expect(MODEL_PINS.length).toBe(4);
+    for (const pin of MODEL_PINS) {
+      expect({ pin, holds: enginePinHolds(TARGET, pin) }).toEqual({ pin, holds: true });
+    }
+  });
+
+  test("a pin the source contradicts does not hold", () => {
+    expect(enginePinHolds(TARGET, { ...RENDER_H_PIN, contains: RENDER_H_PIN_AT_8 })).toBe(false);
+  });
+
+  test("a pin on a function's body is not matched in the rest of the file", () => {
+    expect(
+      enginePinHolds(TARGET, {
+        file: "gamesys/src/gamesys/components/comp_model.cpp",
+        cFunction: "CompModelGetProperty",
+        contains: "static int32_t FindNextFreeTextureSlot(dmRender::RenderObject* ro)",
+      }),
+    ).toBe(false);
+  });
+
+  test("a file the target does not vendor throws, naming the file", () => {
+    expect(() =>
+      enginePinHolds(TARGET, { ...RENDER_H_PIN, file: "render/src/dmsdk/render/no_such.h" }),
+    ).toThrow(/no_such\.h/);
+  });
+
+  test("a C function the file does not define throws, naming it", () => {
+    expect(() =>
+      enginePinHolds(TARGET, {
+        file: "gamesys/src/gamesys/components/comp_model.cpp",
+        cFunction: "CompModelNoSuchProperty",
+        contains: "params.m_PropertyId",
+      }),
+    ).toThrow(/CompModelNoSuchProperty/);
   });
 });
 

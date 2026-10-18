@@ -192,37 +192,69 @@ declare global {
        */
       playback_rate: number;
       /**
-       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
        */
       texture0: Hash;
       /**
-       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
        */
       texture1: Hash;
       /**
-       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
        */
       texture2: Hash;
       /**
-       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
        */
       texture3: Hash;
       /**
-       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
        */
       texture4: Hash;
       /**
-       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
        */
       texture5: Hash;
       /**
-       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
        */
       texture6: Hash;
       /**
-       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
        */
       texture7: Hash;
+      /**
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
+       */
+      texture8: Hash;
+      /**
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
+       */
+      texture9: Hash;
+      /**
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
+       */
+      texture10: Hash;
+      /**
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
+       */
+      texture11: Hash;
+      /**
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
+       */
+      texture12: Hash;
+      /**
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
+       */
+      texture13: Hash;
+      /**
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
+       */
+      texture14: Hash;
+      /**
+       * The texture hash id of the model, read and written on the texture unit the key's number names (`texture3` is unit 3).
+       */
+      texture15: Hash;
     }
   }
 }
