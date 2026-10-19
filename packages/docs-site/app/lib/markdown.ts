@@ -8,7 +8,7 @@ import {
 import MarkdownIt from "markdown-it";
 import type Token from "markdown-it/lib/token.mjs";
 import footnotePlugin from "markdown-it-footnote";
-import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
+import { type BundledLanguage, createHighlighter, type Highlighter, type ThemedToken } from "shiki";
 import { Badge } from "../components/ui/badge";
 import { SvgFigure } from "../components/ui/svg-figure";
 import { TooltipTrigger } from "../components/ui/tooltip";
@@ -280,6 +280,45 @@ function cellTextLength(inline: Token | undefined): number {
 
 function replaceFirstHeading(markdown: string, heading: string): string {
   return markdown.replace(/^#\s+.+$/m, `# ${heading}`);
+}
+
+// The TypeScript grammar names a `type` alias by one identifier, so a qualified
+// alias head (`type image.TYPE`) colors only its first segment. Each later segment
+// takes that segment's color, the way an `interface` head colors each of its own
+// segments and leaves the dots plain.
+function colorQualifiedAliasHead(tokens: ThemedToken[], text: string): ThemedToken[] {
+  const head = /^type ([\w$]+)((?:\.[\w$]+)+)/.exec(text);
+  const first = head?.[1];
+  const tail = head?.[2];
+  if (first === undefined || tail === undefined) return tokens;
+  const firstStart = "type ".length;
+  const segments = [...tail.matchAll(/[\w$]+/g)].map((m) => {
+    const start = firstStart + first.length + (m.index ?? 0);
+    return { start, end: start + m[0].length };
+  });
+  let offset = 0;
+  const placed = tokens.map((token) => {
+    const start = offset;
+    offset += token.content.length;
+    return { token, start, end: offset };
+  });
+  const nameStyle = placed.find(({ start, end }) => start <= firstStart && firstStart < end)?.token
+    .htmlStyle;
+  if (nameStyle === undefined) return tokens;
+  const bounds = segments.flatMap(({ start, end }) => [start, end]);
+  return placed.flatMap(({ token, start, end }) => {
+    const cuts = [start, ...bounds.filter((cut) => cut > start && cut < end), end];
+    return cuts.slice(1).map((to, k) => {
+      const from = cuts[k] ?? start;
+      const inName = segments.some((segment) => segment.start <= from && to <= segment.end);
+      return {
+        ...token,
+        content: token.content.slice(from - start, to - start),
+        offset: token.offset + (from - start),
+        ...(inName ? { htmlStyle: nameStyle } : {}),
+      };
+    });
+  });
 }
 
 export async function renderMarkdown(
@@ -720,7 +759,7 @@ export async function renderMarkdown(
     });
     // `codeToHtml` folds a whitespace-only token into the token after it; do the
     // same so a fragment's spaces carry the colors its full signature gives them.
-    const flat = tokens.flat();
+    const flat = colorQualifiedAliasHead(tokens.flat(), prefix + content);
     const merged: typeof flat = [];
     let carry = "";
     for (const [index, token] of flat.entries()) {

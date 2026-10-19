@@ -248,9 +248,9 @@ describe("apiSearchRecords", () => {
       ["/api/demo", "demo API"],
       [fixtureIndex["demo.LIMIT"]?.route, "demo.LIMIT"],
       [fixtureIndex["demo.move"]?.route, "demo.move"],
-      [fixtureIndex["demo.Options"]?.route, "demo.Options"],
       [fixtureIndex["demo.Options.no_stack"]?.route, "demo.Options.no_stack"],
       [fixtureIndex["demo.Options.open"]?.route, "demo.Options.open"],
+      [fixtureIndex["demo.Options"]?.route, "demo.Options"],
       [fixtureIndex["demo.speed"]?.route, "demo.speed"],
       [fixtureIndex["demo.Mode"]?.route, "demo.Mode"],
     ]);

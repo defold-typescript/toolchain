@@ -14,7 +14,7 @@ import {
   AXIS,
   CONSTANT_UNION_ALIAS,
   CONSTANT_UNION_ALIAS_CONSUMER,
-  CONSTANT_UNION_ALIAS_SIGNATURE,
+  CONSTANT_UNION_ALIAS_ROW,
   HISTORICAL_ONLY_NAMESPACE,
   MIDDLE,
   makeWindowedTypesDir,
@@ -854,7 +854,7 @@ describe("api routing migration — the rendered namespace page carries its shap
       if (dir) rmSync(dir, { recursive: true, force: true });
     });
 
-    test("links the shape token to the shape heading, not the colliding section heading", async () => {
+    test("links the shape token to the shape heading, not the same-named section heading", async () => {
       const app = new Hono();
       app.get(
         "/api/:version/:namespace",
@@ -864,12 +864,16 @@ describe("api routing migration — the rendered namespace page carries its shap
       expect(res.status).toBe(200);
       const html = await res.text();
 
-      // The fixture shape is named for the module-function section heading, so
-      // the page mints two ids for the same text and only the last is the shape's.
-      const collided = allPageHeadings(html).filter((h) => h.text === TYPEDEF_SHAPE_NAME);
-      expect(collided.length).toBe(2);
-      const id = (collided[collided.length - 1] as (typeof collided)[number]).id;
-      expect(id).not.toBe((collided[0] as (typeof collided)[number]).id);
+      // The fixture shape is named for the module-function section heading, so a
+      // link slugged from the bare label lands on the section rather than on the
+      // shape's qualified heading.
+      const headings = allPageHeadings(html);
+      const section = headings.filter((h) => h.text === TYPEDEF_SHAPE_NAME);
+      const shape = headings.filter((h) => h.text === `demo.${TYPEDEF_SHAPE_NAME}`);
+      expect(section.length).toBe(1);
+      expect(shape.length).toBe(1);
+      const id = (shape[0] as (typeof shape)[number]).id;
+      expect(id).not.toBe((section[0] as (typeof section)[number]).id);
 
       const href = symbolLinks(html).get(TYPEDEF_SHAPE_NAME);
       expect(href).toBe(`/api/${versionId(NEWEST)}/demo#${id}`);
@@ -919,13 +923,13 @@ describe("api routing migration — the rendered namespace page carries its shap
 
     test("a signature heading links its alias to the entry this version minted", () => {
       expect(status).toBe(200);
-      const id = headingId(html, CONSTANT_UNION_ALIAS_SIGNATURE);
+      const id = headingId(html, CONSTANT_UNION_ALIAS_ROW);
       expect(id).toBeDefined();
       expect(symbolLinks(html).get(CONSTANT_UNION_ALIAS)).toBe(`${prefix}/demo#${id}`);
     });
 
     test("the parameter breakdown links the same alias to the same entry", () => {
-      const id = headingId(html, CONSTANT_UNION_ALIAS_SIGNATURE);
+      const id = headingId(html, CONSTANT_UNION_ALIAS_ROW);
       const aliasHrefs = typeLinks(consumerSlots())
         .filter(([name]) => name === CONSTANT_UNION_ALIAS)
         .map(([, href]) => href);
