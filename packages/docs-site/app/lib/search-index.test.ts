@@ -396,8 +396,16 @@ describe("combinedSearchRecords", () => {
     const anchored = records.filter((r) => r.route.includes("#"));
     expect(anchored.length).toBeGreaterThan(1000);
     expect(new Set(anchored.map((r) => r.route)).size).toBe(anchored.length);
+    // A function and a type row can share a qualified name (`vmath.vector`); the
+    // key routes to one of the two records, the symbol index tests say which.
+    const routesByTitle = new Map<string, string[]>();
+    for (const r of anchored)
+      routesByTitle.set(r.title, [...(routesByTitle.get(r.title) ?? []), r.route]);
     const misrouted = anchored
-      .filter((r) => index[r.title]?.route !== r.route)
+      .filter((r) => {
+        const target = index[r.title]?.route;
+        return target !== r.route && !(target && routesByTitle.get(r.title)?.includes(target));
+      })
       .map((r) => `${r.title} -> ${r.route}`);
     expect(misrouted).toEqual([]);
     expect(memberRecord("go.get_position").text).toContain("get_position(");

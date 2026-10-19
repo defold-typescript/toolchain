@@ -2607,6 +2607,24 @@ describe("constant union alias entries", () => {
     expect(links.get("graphics.State")).toBe(`/api/graphics#${slugify(STATE_SIG)}`);
   });
 
+  test("a type sharing its qualified name with a function links to the type's own anchor", () => {
+    const page: ApiPage = {
+      ...guiPage(),
+      module: {
+        ...guiPage().module,
+        functions: [
+          ...guiPage().module.functions,
+          { name: "gui.node", brief: "", description: "", parameters: [], returnValues: [] },
+        ],
+        typedefs: [{ name: "node", types: ["userdata"] }],
+      },
+    };
+    const type = apiModuleSymbols(page).find((s) => s.kind === "type" && s.name === "node");
+    expect(type).toBeDefined();
+    const links = apiSignatureSymbolLinks([page], page);
+    expect(links.get("gui.node")).toBe(`/api/gui#${slugify(type?.signature ?? "")}`);
+  });
+
   test("page-local typedef shapes keep their existing bare-name heading target", () => {
     const page: ApiPage = {
       ...guiPage(),
