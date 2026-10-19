@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import * as ts from "typescript";
 import committed from "../api-signatures.json" with { type: "json" };
-import { OVERLOAD_COVERED_SKIPS } from "../src/emit-dts";
+import { symbolIdentityKey } from "../src/api-availability";
+import { OVERLOAD_COVERED_SKIPS, PROPERTIES_INTERFACE } from "../src/emit-dts";
 import { splitTopLevel } from "../src/luals-type-expr";
 import { signatureArmsFor } from "../src/signature-store";
 import { targetBindingOptions } from "./binding-pin";
@@ -42,6 +44,36 @@ function committedDtsBlob(version: string): string {
     .filter((file) => file.endsWith(".d.ts"))
     .map((file) => readFileSync(resolve(dir, file), "utf8"))
     .join("\n");
+}
+
+// The local path (`render_target_params`, `dns.address_info`) of every type alias
+// and interface a declaration file declares inside `namespace`, a nested
+// namespace adding its segment. `declare global` adds no segment.
+function declaredTypePaths(text: string, namespace: string): string[] {
+  const file = ts.createSourceFile("module.d.ts", text, ts.ScriptTarget.Latest);
+  const paths: string[] = [];
+  const walk = (statements: readonly ts.Statement[], path: string) => {
+    for (const statement of statements) {
+      if (ts.isTypeAliasDeclaration(statement) || ts.isInterfaceDeclaration(statement)) {
+        if (path === namespace) paths.push(statement.name.text);
+        else if (path.startsWith(`${namespace}.`)) {
+          paths.push(`${path.slice(namespace.length + 1)}.${statement.name.text}`);
+        }
+        continue;
+      }
+      if (!ts.isModuleDeclaration(statement)) continue;
+      let nested = path;
+      let body: ts.ModuleBody | ts.ModuleDeclaration | undefined = statement;
+      while (body !== undefined && ts.isModuleDeclaration(body)) {
+        if ((body.flags & ts.NodeFlags.GlobalAugmentation) !== 0) nested = "";
+        else nested = nested === "" ? body.name.text : `${nested}.${body.name.text}`;
+        body = body.body;
+      }
+      if (body !== undefined && ts.isModuleBlock(body)) walk(body.statements, nested);
+    }
+  };
+  walk(file.statements, "");
+  return paths;
 }
 
 describe("authoritative signature artifact", () => {
@@ -97,6 +129,40 @@ describe("authoritative signature artifact", () => {
       // The exclusion must not swallow the whole assertion.
       expect(Object.keys(perSymbol).length).toBeGreaterThan(folded.size * 10);
     }
+  });
+
+  // The reverse of the verbatim test above: a type the declarations carry that
+  // the map lacks has no definition on the reference and no date.
+  test("every type a target's generated module declares has a TYPEDEF entry in that version's map", () => {
+    const missing: string[] = [];
+    let checked = 0;
+    for (const target of COMPLETE_TARGETS) {
+      const version = target.id.replace(/^defold-/, "");
+      const perSymbol = artifact.versions[version] as Record<string, string>;
+      const withProperties = new Set(
+        Object.keys(perSymbol)
+          .map((key) => key.split("\0"))
+          .filter(([, kind]) => kind === "PROPERTY")
+          .map(([namespace]) => namespace),
+      );
+      for (const entry of loadTargetModules(target, PACKAGE_ROOT)) {
+        const text = readFileSync(resolve(committedDtsDir(version), entry.outFile), "utf8");
+        for (const name of declaredTypePaths(text, entry.namespace)) {
+          checked++;
+          const key = symbolIdentityKey({
+            namespace: entry.namespace,
+            kind: "TYPEDEF",
+            name,
+            signature: "",
+          });
+          if (perSymbol[key] !== undefined) continue;
+          if (name === PROPERTIES_INTERFACE && withProperties.has(entry.namespace)) continue;
+          missing.push(`${version} ${entry.namespace} ${name}`);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+    expect(checked).toBeGreaterThan(COMPLETE_TARGETS.length * 30);
   });
 
   test("every b2d.shape function lists each arm its version's committed b2d_shape.d.ts declares", () => {

@@ -292,8 +292,8 @@ export function buildLlmsFull(target: LlmsTarget = SITE_TARGET): string {
   }
   lines.push("## API", "");
   const defaultSurface = loadApiSurface(TYPES_DIR);
-  // Symbols authored in override `.d.ts` (excluded from auto-emit — the vmath
-  // generics, msg/go overloads, socket aliases) are absent from
+  // Symbols authored in override `.d.ts` (excluded from auto-emit — the `hash`,
+  // `hash_to_hex` and `pprint` globals) are absent from
   // `api-signatures.json`, so their Combined entry carries no authoritative
   // signature. They are present in every tracked version, so fall back to the
   // same declaration-backed signature the default `/api` surface renders,
