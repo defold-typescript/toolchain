@@ -310,7 +310,9 @@ export async function renderMarkdown(
   // carrying a shape's exact text is always that shape's own heading (the `type`
   // section renders last, nothing follows it, and a shape's members are headed
   // `Shape.member`), so last-wins picks the shape over an identically-texted
-  // section heading. First-wins would resolve to the section heading instead.
+  // section heading. The `## Types` heading renders before every shape heading
+  // nested in it, so last-wins still picks a shape named `Types`.
+  // First-wins would resolve to the section heading instead.
   const mintedIds = new Map<string, string>();
   // Keep every cell of a short-content column on one line. The browser's auto
   // table layout otherwise hands nearly all the width to a column of long
@@ -774,7 +776,8 @@ export async function renderMarkdown(
     const call = code.search(/[(<]/);
     return call < 0 ? code : code.slice(0, call);
   };
-  // API-page signatures appear both as h3 inline-code (`### `ns.fn(...)``) and,
+  // API-page signatures appear both as h3/h4 inline-code headings (`### `ns.fn(...)``,
+  // `#### `file:read(...)`` under a receiver or shape heading) and,
   // linked, in each namespace's overview list (`[`ns.fn(...)`](#anchor)`).
   // Recolor both so the summary index reads with the same syntax highlighting as
   // the detail headings. Runs after the rules above so the slug is already
@@ -820,7 +823,7 @@ export async function renderMarkdown(
           children[idx] = replacement;
           continue;
         }
-        if (token?.type !== "heading_open" || token.tag !== "h3") continue;
+        if (token?.type !== "heading_open" || (token.tag !== "h3" && token.tag !== "h4")) continue;
         const inline = state.tokens[i + 1];
         if (inline?.type !== "inline" || !inline.children) continue;
         const children = inline.children;

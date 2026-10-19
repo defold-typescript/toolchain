@@ -259,9 +259,11 @@ Should be called on final, where druid instance is destroyed.
 
 </div>
 
-## druid_back_handler
+## Types
 
-### \`druid_back_handler.init(callback?: ((...args: any[]) => unknown) | undefined, params?: unknown | undefined)\`
+### druid_back_handler
+
+#### \`druid_back_handler.init(callback?: ((...args: any[]) => unknown) | undefined, params?: unknown | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -274,7 +276,7 @@ The Back Handler constructor
 
 </div>
 
-### \`druid_back_handler.on_back: event\`
+#### \`druid_back_handler.on_back: event\`
 
 <div class="api-symbol-body">
 
@@ -282,7 +284,7 @@ fun(self: druid.back_handler, params: any?) Trigger on back handler action
 
 </div>
 
-### \`druid_back_handler.params: unknown | undefined\`
+#### \`druid_back_handler.params: unknown | undefined\`
 
 <div class="api-symbol-body">
 
@@ -290,9 +292,9 @@ Custom args to pass in the callback
 
 </div>
 
-## druid_blocker
+### druid_blocker
 
-### \`druid_blocker.init(node: Opaque<"node"> | string)\`
+#### \`druid_blocker.init(node: Opaque<"node"> | string)\`
 
 <div class="api-symbol-body">
 
@@ -304,7 +306,7 @@ The Blocker constructor
 
 </div>
 
-### \`druid_blocker.set_enabled(state: boolean): druid_blocker\`
+#### \`druid_blocker.set_enabled(state: boolean): druid_blocker\`
 
 <div class="api-symbol-body">
 
@@ -320,7 +322,7 @@ Set blocker enabled state
 
 </div>
 
-### \`druid_blocker.is_enabled(): boolean\`
+#### \`druid_blocker.is_enabled(): boolean\`
 
 <div class="api-symbol-body">
 
@@ -332,7 +334,7 @@ Get blocker enabled state
 
 </div>
 
-### \`druid_blocker.node: Opaque<"node">\`
+#### \`druid_blocker.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -340,9 +342,9 @@ The node that will block input
 
 </div>
 
-## druid_button_style
+### druid_button_style
 
-### \`druid_button_style.LONGTAP_TIME: number | undefined\`
+#### \`druid_button_style.LONGTAP_TIME: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -350,7 +352,7 @@ Minimum time to trigger on_hold_callback. Default: 0.4
 
 </div>
 
-### \`druid_button_style.AUTOHOLD_TRIGGER: number | undefined\`
+#### \`druid_button_style.AUTOHOLD_TRIGGER: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -358,7 +360,7 @@ Maximum hold time to trigger button release while holding. Default: 0.8
 
 </div>
 
-### \`druid_button_style.DOUBLETAP_TIME: number | undefined\`
+#### \`druid_button_style.DOUBLETAP_TIME: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -366,7 +368,7 @@ Time between double taps. Default: 0.4
 
 </div>
 
-### \`druid_button_style.HOVER_SCALE: Vector3 | undefined\`
+#### \`druid_button_style.HOVER_SCALE: Vector3 | undefined\`
 
 <div class="api-symbol-body">
 
@@ -374,7 +376,7 @@ Scale added on touch hover (default style). Default: <a href="/api/defold-1.14.0
 
 </div>
 
-### \`druid_button_style.HOVER_MOUSE_SCALE: Vector3 | undefined\`
+#### \`druid_button_style.HOVER_MOUSE_SCALE: Vector3 | undefined\`
 
 <div class="api-symbol-body">
 
@@ -382,7 +384,7 @@ Scale added on mouse hover (default style). Default: <a href="/api/defold-1.14.0
 
 </div>
 
-### \`druid_button_style.HOVER_TIME: number | undefined\`
+#### \`druid_button_style.HOVER_TIME: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -390,7 +392,7 @@ Hover scale animation time. Default: 0.05
 
 </div>
 
-### \`druid_button_style.SCALE_CHANGE: Vector3 | undefined\`
+#### \`druid_button_style.SCALE_CHANGE: Vector3 | undefined\`
 
 <div class="api-symbol-body">
 
@@ -398,7 +400,7 @@ Scale punch on click (default style). Default: <a href="/api/defold-1.14.0/vmath
 
 </div>
 
-### \`druid_button_style.BTN_SOUND: string | undefined\`
+#### \`druid_button_style.BTN_SOUND: string | undefined\`
 
 <div class="api-symbol-body">
 
@@ -406,7 +408,7 @@ Sound id played on click. Default: "click"
 
 </div>
 
-### \`druid_button_style.BTN_SOUND_DISABLED: string | undefined\`
+#### \`druid_button_style.BTN_SOUND_DISABLED: string | undefined\`
 
 <div class="api-symbol-body">
 
@@ -414,7 +416,7 @@ Sound id played on disabled click. Default: "click"
 
 </div>
 
-### \`druid_button_style.DISABLED_COLOR: Vector4 | undefined\`
+#### \`druid_button_style.DISABLED_COLOR: Vector4 | undefined\`
 
 <div class="api-symbol-body">
 
@@ -422,7 +424,7 @@ Color applied when disabled via style. Default: <a href="/api/defold-1.14.0/vmat
 
 </div>
 
-### \`druid_button_style.ENABLED_COLOR: Vector4 | undefined\`
+#### \`druid_button_style.ENABLED_COLOR: Vector4 | undefined\`
 
 <div class="api-symbol-body">
 
@@ -430,7 +432,7 @@ Color applied when enabled via style. Default: <a href="/api/defold-1.14.0/vmath
 
 </div>
 
-### \`druid_button_style.ON_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_button_style.ON_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -438,7 +440,7 @@ Cursor on button touch hover (defos cursor). Default: nil
 
 </div>
 
-### \`druid_button_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_button_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -446,21 +448,21 @@ Cursor on button mouse hover (defos cursor). Default: nil
 
 </div>
 
-### \`druid_button_style.on_init: ((self: druid_button) => void) | undefined\`
+#### \`druid_button_style.on_init: ((self: druid_button) => void) | undefined\`
 
-### \`druid_button_style.on_click: ((self: druid_button, node: Opaque<"node">) => void) | undefined\`
+#### \`druid_button_style.on_click: ((self: druid_button, node: Opaque<"node">) => void) | undefined\`
 
-### \`druid_button_style.on_click_disabled: ((self: druid_button, node: Opaque<"node">) => void) | undefined\`
+#### \`druid_button_style.on_click_disabled: ((self: druid_button, node: Opaque<"node">) => void) | undefined\`
 
-### \`druid_button_style.on_hover: ((self: druid_button, node: Opaque<"node">, hover_state: boolean) => void) | undefined\`
+#### \`druid_button_style.on_hover: ((self: druid_button, node: Opaque<"node">, hover_state: boolean) => void) | undefined\`
 
-### \`druid_button_style.on_mouse_hover: ((self: druid_button, node: Opaque<"node">, hover_state: boolean) => void) | undefined\`
+#### \`druid_button_style.on_mouse_hover: ((self: druid_button, node: Opaque<"node">, hover_state: boolean) => void) | undefined\`
 
-### \`druid_button_style.on_set_enabled: ((self: druid_button, node: Opaque<"node">, enabled_state: boolean | undefined) => void) | undefined\`
+#### \`druid_button_style.on_set_enabled: ((self: druid_button, node: Opaque<"node">, enabled_state: boolean | undefined) => void) | undefined\`
 
-## druid_button
+### druid_button
 
-### \`druid_button.init(node_or_node_id: Opaque<"node"> | string, callback?: ((self: unknown, custom_args: unknown, button_instance: druid_button) => void) | undefined, custom_args?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined)\`
+#### \`druid_button.init(node_or_node_id: Opaque<"node"> | string, callback?: ((self: unknown, custom_args: unknown, button_instance: druid_button) => void) | undefined, custom_args?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -475,7 +477,7 @@ The constructor for the button component
 
 </div>
 
-### \`druid_button.set_animations_disabled(): druid_button\`
+#### \`druid_button.set_animations_disabled(): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -487,7 +489,7 @@ Remove default button style animations
 
 </div>
 
-### \`druid_button.set_enabled(state?: boolean | undefined): druid_button\`
+#### \`druid_button.set_enabled(state?: boolean | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -505,7 +507,7 @@ Disabled button is not clickable.
 
 </div>
 
-### \`druid_button.is_enabled(): boolean\`
+#### \`druid_button.is_enabled(): boolean\`
 
 <div class="api-symbol-body">
 
@@ -518,7 +520,7 @@ By default all Buttons are enabled on creating.
 
 </div>
 
-### \`druid_button.set_click_zone(zone?: Opaque<"node"> | string | undefined): druid_button\`
+#### \`druid_button.set_click_zone(zone?: Opaque<"node"> | string | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -536,7 +538,7 @@ If button node placed inside stencil node, it will be automatically set to this 
 
 </div>
 
-### \`druid_button.set_key_trigger(key: Hash | string): druid_button\`
+#### \`druid_button.set_key_trigger(key: Hash | string): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -552,7 +554,7 @@ Set key name to trigger this button by keyboard.
 
 </div>
 
-### \`druid_button.get_key_trigger(): Hash\`
+#### \`druid_button.get_key_trigger(): Hash\`
 
 <div class="api-symbol-body">
 
@@ -564,7 +566,7 @@ Get current key name to trigger this button.
 
 </div>
 
-### \`druid_button.set_check_function(check_function?: ((...args: any[]) => unknown) | undefined, failure_callback?: ((...args: any[]) => unknown) | undefined): druid_button\`
+#### \`druid_button.set_check_function(check_function?: ((...args: any[]) => unknown) | undefined, failure_callback?: ((...args: any[]) => unknown) | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -581,7 +583,7 @@ Set function for additional check for button click availability.
 
 </div>
 
-### \`druid_button.set_web_user_interaction(is_web_mode?: boolean | undefined): druid_button\`
+#### \`druid_button.set_web_user_interaction(is_web_mode?: boolean | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -602,7 +604,7 @@ If the game is not HTML, html mode will be not enabled
 
 </div>
 
-### \`druid_button._is_input_match(action_id: Hash): boolean\`
+#### \`druid_button._is_input_match(action_id: Hash): boolean\`
 
 <div class="api-symbol-body">
 
@@ -616,7 +618,7 @@ If the game is not HTML, html mode will be not enabled
 
 </div>
 
-### \`druid_button.button_hover(hover_state: boolean)\`
+#### \`druid_button.button_hover(hover_state: boolean)\`
 
 <div class="api-symbol-body">
 
@@ -628,7 +630,7 @@ Call button style on_hover callback
 
 </div>
 
-### \`druid_button.button_mouse_hover(hover_state: boolean)\`
+#### \`druid_button.button_mouse_hover(hover_state: boolean)\`
 
 <div class="api-symbol-body">
 
@@ -640,7 +642,7 @@ Call button style on_hover callback
 
 </div>
 
-### \`druid_button.button_click()\`
+#### \`druid_button.button_click()\`
 
 <div class="api-symbol-body">
 
@@ -648,7 +650,7 @@ Call button click callback
 
 </div>
 
-### \`druid_button.button_repeated_click()\`
+#### \`druid_button.button_repeated_click()\`
 
 <div class="api-symbol-body">
 
@@ -656,7 +658,7 @@ Call button repeated click callback
 
 </div>
 
-### \`druid_button.button_long_click()\`
+#### \`druid_button.button_long_click()\`
 
 <div class="api-symbol-body">
 
@@ -664,7 +666,7 @@ Call button long click callback
 
 </div>
 
-### \`druid_button.button_double_click()\`
+#### \`druid_button.button_double_click()\`
 
 <div class="api-symbol-body">
 
@@ -672,7 +674,7 @@ Call button double click callback
 
 </div>
 
-### \`druid_button.button_hold(press_time: number)\`
+#### \`druid_button.button_hold(press_time: number)\`
 
 <div class="api-symbol-body">
 
@@ -684,17 +686,9 @@ Call button hold callback
 
 </div>
 
-### \`druid_button._on_button_release()\`
+#### \`druid_button._on_button_release()\`
 
-### \`druid_button.on_click: event\`
-
-<div class="api-symbol-body">
-
-fun(self: druid.button, custom_args: any, button_instance: druid.button)
-
-</div>
-
-### \`druid_button.on_pressed: event\`
+#### \`druid_button.on_click: event\`
 
 <div class="api-symbol-body">
 
@@ -702,7 +696,15 @@ fun(self: druid.button, custom_args: any, button_instance: druid.button)
 
 </div>
 
-### \`druid_button.on_repeated_click: event\`
+#### \`druid_button.on_pressed: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.button, custom_args: any, button_instance: druid.button)
+
+</div>
+
+#### \`druid_button.on_repeated_click: event\`
 
 <div class="api-symbol-body">
 
@@ -710,7 +712,7 @@ fun(self: druid.button, custom_args: any, button_instance: druid.button, click_c
 
 </div>
 
-### \`druid_button.on_long_click: event\`
+#### \`druid_button.on_long_click: event\`
 
 <div class="api-symbol-body">
 
@@ -718,7 +720,7 @@ fun(self: druid.button, custom_args: any, button_instance: druid.button, hold_ti
 
 </div>
 
-### \`druid_button.on_double_click: event\`
+#### \`druid_button.on_double_click: event\`
 
 <div class="api-symbol-body">
 
@@ -726,7 +728,7 @@ fun(self: druid.button, custom_args: any, button_instance: druid.button, click_a
 
 </div>
 
-### \`druid_button.on_hold_callback: event\`
+#### \`druid_button.on_hold_callback: event\`
 
 <div class="api-symbol-body">
 
@@ -734,7 +736,7 @@ fun(self: druid.button, custom_args: any, button_instance: druid.button, press_t
 
 </div>
 
-### \`druid_button.on_click_outside: event\`
+#### \`druid_button.on_click_outside: event\`
 
 <div class="api-symbol-body">
 
@@ -742,7 +744,7 @@ fun(self: druid.button, custom_args: any, button_instance: druid.button)
 
 </div>
 
-### \`druid_button.node: Opaque<"node">\`
+#### \`druid_button.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -750,7 +752,7 @@ Clickable node
 
 </div>
 
-### \`druid_button.node_id: Hash\`
+#### \`druid_button.node_id: Hash\`
 
 <div class="api-symbol-body">
 
@@ -758,7 +760,7 @@ Node id
 
 </div>
 
-### \`druid_button.anim_node: Opaque<"node">\`
+#### \`druid_button.anim_node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -766,7 +768,7 @@ Animation node. In default case equals to clickable node
 
 </div>
 
-### \`druid_button.params: unknown\`
+#### \`druid_button.params: unknown\`
 
 <div class="api-symbol-body">
 
@@ -774,7 +776,7 @@ Custom arguments for any Button event
 
 </div>
 
-### \`druid_button.hover: druid_hover\`
+#### \`druid_button.hover: druid_hover\`
 
 <div class="api-symbol-body">
 
@@ -782,7 +784,7 @@ Hover component for this button
 
 </div>
 
-### \`druid_button.click_zone: Opaque<"node"> | undefined\`
+#### \`druid_button.click_zone: Opaque<"node"> | undefined\`
 
 <div class="api-symbol-body">
 
@@ -790,7 +792,7 @@ Click zone node to restrict click area
 
 </div>
 
-### \`druid_button.start_scale: Vector3\`
+#### \`druid_button.start_scale: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -798,7 +800,7 @@ Start scale of the button
 
 </div>
 
-### \`druid_button.start_pos: Vector3\`
+#### \`druid_button.start_pos: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -806,7 +808,7 @@ Start position of the button
 
 </div>
 
-### \`druid_button.disabled: boolean\`
+#### \`druid_button.disabled: boolean\`
 
 <div class="api-symbol-body">
 
@@ -814,7 +816,7 @@ Is button disabled
 
 </div>
 
-### \`druid_button.key_trigger: Hash\`
+#### \`druid_button.key_trigger: Hash\`
 
 <div class="api-symbol-body">
 
@@ -822,7 +824,7 @@ Key trigger for this button
 
 </div>
 
-### \`druid_button.style: druid_button_style\`
+#### \`druid_button.style: druid_button_style\`
 
 <div class="api-symbol-body">
 
@@ -830,9 +832,9 @@ Style for this button
 
 </div>
 
-## druid_drag_style
+### druid_drag_style
 
-### \`druid_drag_style.DRAG_DEADZONE: number\`
+#### \`druid_drag_style.DRAG_DEADZONE: number\`
 
 <div class="api-symbol-body">
 
@@ -840,7 +842,7 @@ Distance in pixels to start dragging. Default: 10
 
 </div>
 
-### \`druid_drag_style.NO_USE_SCREEN_KOEF: boolean\`
+#### \`druid_drag_style.NO_USE_SCREEN_KOEF: boolean\`
 
 <div class="api-symbol-body">
 
@@ -848,7 +850,7 @@ If screen aspect ratio affects on drag values. Default: false
 
 </div>
 
-### \`druid_drag_style.ON_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_drag_style.ON_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -856,7 +858,7 @@ Cursor on node touch hover (defos cursor). Default: nil
 
 </div>
 
-### \`druid_drag_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_drag_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -864,9 +866,9 @@ Cursor on node mouse hover (defos cursor). Default: nil
 
 </div>
 
-## druid_drag
+### druid_drag
 
-### \`druid_drag.init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void)\`
+#### \`druid_drag.init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void)\`
 
 <div class="api-symbol-body">
 
@@ -879,7 +881,7 @@ The constructor for Drag component
 
 </div>
 
-### \`druid_drag.set_drag_cursors(is_enabled: boolean)\`
+#### \`druid_drag.set_drag_cursors(is_enabled: boolean)\`
 
 <div class="api-symbol-body">
 
@@ -892,7 +894,7 @@ The cursors are not shown while the Drag is disabled.
 
 </div>
 
-### \`druid_drag.set_click_zone(node?: Opaque<"node"> | string | undefined): druid_drag\`
+#### \`druid_drag.set_click_zone(node?: Opaque<"node"> | string | undefined): druid_drag\`
 
 <div class="api-symbol-body">
 
@@ -908,7 +910,7 @@ Set Drag click zone
 
 </div>
 
-### \`druid_drag.set_enabled(is_enabled: boolean): druid_drag\`
+#### \`druid_drag.set_enabled(is_enabled: boolean): druid_drag\`
 
 <div class="api-symbol-body">
 
@@ -924,7 +926,7 @@ Set Drag component enabled state.
 
 </div>
 
-### \`druid_drag.is_enabled(): boolean\`
+#### \`druid_drag.is_enabled(): boolean\`
 
 <div class="api-symbol-body">
 
@@ -936,7 +938,7 @@ Check if Drag component is capture input
 
 </div>
 
-### \`druid_drag.add_drag_action(action_id: Hash): druid_drag\`
+#### \`druid_drag.add_drag_action(action_id: Hash): druid_drag\`
 
 <div class="api-symbol-body">
 
@@ -955,7 +957,7 @@ The action should provide the pointer position, key actions are ignored.
 
 </div>
 
-### \`druid_drag.remove_drag_action(action_id: Hash): druid_drag\`
+#### \`druid_drag.remove_drag_action(action_id: Hash): druid_drag\`
 
 <div class="api-symbol-body">
 
@@ -971,9 +973,9 @@ Remove an additional input action from the allowed drag actions
 
 </div>
 
-### \`druid_drag._start_touch()\`
+#### \`druid_drag._start_touch()\`
 
-### \`druid_drag._end_touch(touch?: touch | undefined)\`
+#### \`druid_drag._end_touch(touch?: touch | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -983,7 +985,7 @@ Remove an additional input action from the allowed drag actions
 
 </div>
 
-### \`druid_drag._process_touch(touch: touch)\`
+#### \`druid_drag._process_touch(touch: touch)\`
 
 <div class="api-symbol-body">
 
@@ -993,7 +995,7 @@ Remove an additional input action from the allowed drag actions
 
 </div>
 
-### \`druid_drag._find_touch(action_id: Hash, action: LuaTable, touch_id: number): LuaTable | undefined\`
+#### \`druid_drag._find_touch(action_id: Hash, action: LuaTable, touch_id: number): LuaTable | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1012,7 +1014,7 @@ If touch_id stored - return exact this touch action
 
 </div>
 
-### \`druid_drag._on_touch_release(action: LuaTable, touch: LuaTable)\`
+#### \`druid_drag._on_touch_release(action: LuaTable, touch: LuaTable)\`
 
 <div class="api-symbol-body">
 
@@ -1026,7 +1028,7 @@ touches exists to switch to another touch.
 
 </div>
 
-### \`druid_drag.node: Opaque<"node">\`
+#### \`druid_drag.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -1034,7 +1036,7 @@ The node to subscribe to drag events over
 
 </div>
 
-### \`druid_drag.on_touch_start: event\`
+#### \`druid_drag.on_touch_start: event\`
 
 <div class="api-symbol-body">
 
@@ -1042,7 +1044,7 @@ fun(self, touch) The event triggered when a touch starts
 
 </div>
 
-### \`druid_drag.on_touch_end: event\`
+#### \`druid_drag.on_touch_end: event\`
 
 <div class="api-symbol-body">
 
@@ -1050,7 +1052,7 @@ fun(self, touch) The event triggered when a touch ends
 
 </div>
 
-### \`druid_drag.on_drag_start: event\`
+#### \`druid_drag.on_drag_start: event\`
 
 <div class="api-symbol-body">
 
@@ -1058,7 +1060,7 @@ fun(self, touch) The event triggered when a drag starts
 
 </div>
 
-### \`druid_drag.on_drag: event\`
+#### \`druid_drag.on_drag: event\`
 
 <div class="api-symbol-body">
 
@@ -1066,7 +1068,7 @@ fun(self, touch) The event triggered when a drag occurs
 
 </div>
 
-### \`druid_drag.on_drag_end: event\`
+#### \`druid_drag.on_drag_end: event\`
 
 <div class="api-symbol-body">
 
@@ -1074,7 +1076,7 @@ fun(self, touch) The event triggered when a drag ends
 
 </div>
 
-### \`druid_drag.style: druid_drag_style\`
+#### \`druid_drag.style: druid_drag_style\`
 
 <div class="api-symbol-body">
 
@@ -1082,7 +1084,7 @@ The style of Drag component
 
 </div>
 
-### \`druid_drag.click_zone: Opaque<"node"> | undefined\`
+#### \`druid_drag.click_zone: Opaque<"node"> | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1090,7 +1092,7 @@ The click zone of Drag component
 
 </div>
 
-### \`druid_drag.is_touch: boolean\`
+#### \`druid_drag.is_touch: boolean\`
 
 <div class="api-symbol-body">
 
@@ -1098,7 +1100,7 @@ True if a touch is active
 
 </div>
 
-### \`druid_drag.is_drag: boolean\`
+#### \`druid_drag.is_drag: boolean\`
 
 <div class="api-symbol-body">
 
@@ -1106,7 +1108,7 @@ True if a drag is active
 
 </div>
 
-### \`druid_drag.can_x: boolean\`
+#### \`druid_drag.can_x: boolean\`
 
 <div class="api-symbol-body">
 
@@ -1114,7 +1116,7 @@ True if Drag can move horizontally
 
 </div>
 
-### \`druid_drag.can_y: boolean\`
+#### \`druid_drag.can_y: boolean\`
 
 <div class="api-symbol-body">
 
@@ -1122,7 +1124,7 @@ True if Drag can move vertically
 
 </div>
 
-### \`druid_drag.dx: number\`
+#### \`druid_drag.dx: number\`
 
 <div class="api-symbol-body">
 
@@ -1130,7 +1132,7 @@ The horizontal drag distance
 
 </div>
 
-### \`druid_drag.dy: number\`
+#### \`druid_drag.dy: number\`
 
 <div class="api-symbol-body">
 
@@ -1138,7 +1140,7 @@ The vertical drag distance
 
 </div>
 
-### \`druid_drag.touch_id: number\`
+#### \`druid_drag.touch_id: number\`
 
 <div class="api-symbol-body">
 
@@ -1146,7 +1148,7 @@ The touch id
 
 </div>
 
-### \`druid_drag.x: number\`
+#### \`druid_drag.x: number\`
 
 <div class="api-symbol-body">
 
@@ -1154,7 +1156,7 @@ The current x position
 
 </div>
 
-### \`druid_drag.y: number\`
+#### \`druid_drag.y: number\`
 
 <div class="api-symbol-body">
 
@@ -1162,7 +1164,7 @@ The current y position
 
 </div>
 
-### \`druid_drag.screen_x: number\`
+#### \`druid_drag.screen_x: number\`
 
 <div class="api-symbol-body">
 
@@ -1170,7 +1172,7 @@ The current screen x position
 
 </div>
 
-### \`druid_drag.screen_y: number\`
+#### \`druid_drag.screen_y: number\`
 
 <div class="api-symbol-body">
 
@@ -1178,7 +1180,7 @@ The current screen y position
 
 </div>
 
-### \`druid_drag.touch_start_pos: Vector3\`
+#### \`druid_drag.touch_start_pos: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -1186,7 +1188,7 @@ The touch start position
 
 </div>
 
-### \`druid_drag.hover: druid_hover | undefined\`
+#### \`druid_drag.hover: druid_hover | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1194,9 +1196,9 @@ Hover for drag cursors. nil without defos
 
 </div>
 
-## druid_hover_style
+### druid_hover_style
 
-### \`druid_hover_style.ON_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_hover_style.ON_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1204,7 +1206,7 @@ Mouse hover style on node hover
 
 </div>
 
-### \`druid_hover_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_hover_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1212,9 +1214,9 @@ Mouse hover style on node mouse hover
 
 </div>
 
-## druid_hover
+### druid_hover
 
-### \`druid_hover.init(node: Opaque<"node">, on_hover_callback: (...args: any[]) => unknown, on_mouse_hover: (...args: any[]) => unknown)\`
+#### \`druid_hover.init(node: Opaque<"node">, on_hover_callback: (...args: any[]) => unknown, on_mouse_hover: (...args: any[]) => unknown)\`
 
 <div class="api-symbol-body">
 
@@ -1228,7 +1230,7 @@ The constructor for the hover component
 
 </div>
 
-### \`druid_hover.set_hover(state?: boolean | undefined)\`
+#### \`druid_hover.set_hover(state?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1240,7 +1242,7 @@ Set hover state
 
 </div>
 
-### \`druid_hover.is_hovered(): boolean\`
+#### \`druid_hover.is_hovered(): boolean\`
 
 <div class="api-symbol-body">
 
@@ -1252,7 +1254,7 @@ Return current hover state. True if touch action was on the node at current time
 
 </div>
 
-### \`druid_hover.set_mouse_hover(state?: boolean | undefined)\`
+#### \`druid_hover.set_mouse_hover(state?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1264,7 +1266,7 @@ Set mouse hover state
 
 </div>
 
-### \`druid_hover.is_mouse_hovered(): boolean\`
+#### \`druid_hover.is_mouse_hovered(): boolean\`
 
 <div class="api-symbol-body">
 
@@ -1276,7 +1278,7 @@ Return current hover state. True if nil action_id (usually desktop mouse) was on
 
 </div>
 
-### \`druid_hover.set_click_zone(zone?: Opaque<"node"> | string | undefined)\`
+#### \`druid_hover.set_click_zone(zone?: Opaque<"node"> | string | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1288,7 +1290,7 @@ Strict hover click area. Useful for no click events outside stencil node
 
 </div>
 
-### \`druid_hover.set_enabled(state?: boolean | undefined)\`
+#### \`druid_hover.set_enabled(state?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1302,7 +1304,7 @@ any hover events
 
 </div>
 
-### \`druid_hover.is_enabled(): boolean\`
+#### \`druid_hover.is_enabled(): boolean\`
 
 <div class="api-symbol-body">
 
@@ -1314,7 +1316,7 @@ Return current hover enabled state
 
 </div>
 
-### \`druid_hover.node: Opaque<"node">\`
+#### \`druid_hover.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -1322,7 +1324,7 @@ Gui node
 
 </div>
 
-### \`druid_hover.on_hover: event\`
+#### \`druid_hover.on_hover: event\`
 
 <div class="api-symbol-body">
 
@@ -1330,7 +1332,7 @@ fun(self: druid.hover, is_hover: boolean) Hover event
 
 </div>
 
-### \`druid_hover.on_mouse_hover: event\`
+#### \`druid_hover.on_mouse_hover: event\`
 
 <div class="api-symbol-body">
 
@@ -1338,7 +1340,7 @@ fun(self: druid.hover, is_hover: boolean) Mouse hover event
 
 </div>
 
-### \`druid_hover.style: druid_hover_style\`
+#### \`druid_hover.style: druid_hover_style\`
 
 <div class="api-symbol-body">
 
@@ -1346,7 +1348,7 @@ Style of the hover component
 
 </div>
 
-### \`druid_hover.click_zone: Opaque<"node">\`
+#### \`druid_hover.click_zone: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -1354,9 +1356,9 @@ Click zone of the hover component
 
 </div>
 
-## druid_scroll_style
+### druid_scroll_style
 
-### \`druid_scroll_style.FRICT: number | undefined\`
+#### \`druid_scroll_style.FRICT: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1364,7 +1366,7 @@ Multiplier for free inertion. Default: 0
 
 </div>
 
-### \`druid_scroll_style.FRICT_HOLD: number | undefined\`
+#### \`druid_scroll_style.FRICT_HOLD: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1372,7 +1374,7 @@ Multiplier for inertion, while touching. Default: 0
 
 </div>
 
-### \`druid_scroll_style.INERT_THRESHOLD: number | undefined\`
+#### \`druid_scroll_style.INERT_THRESHOLD: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1380,7 +1382,7 @@ Scroll speed to stop inertion. Default: 3
 
 </div>
 
-### \`druid_scroll_style.INERT_SPEED: number | undefined\`
+#### \`druid_scroll_style.INERT_SPEED: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1388,7 +1390,7 @@ Multiplier for inertion speed. Default: 30
 
 </div>
 
-### \`druid_scroll_style.POINTS_DEADZONE: number | undefined\`
+#### \`druid_scroll_style.POINTS_DEADZONE: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1396,7 +1398,7 @@ Speed to check points of interests in no_inertion mode. Default: 20
 
 </div>
 
-### \`druid_scroll_style.BACK_SPEED: number | undefined\`
+#### \`druid_scroll_style.BACK_SPEED: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1404,7 +1406,7 @@ Scroll back returning lerp speed. Default: 35
 
 </div>
 
-### \`druid_scroll_style.ANIM_SPEED: number | undefined\`
+#### \`druid_scroll_style.ANIM_SPEED: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1412,7 +1414,7 @@ Scroll gui.animation speed for scroll_to function. Default: 2
 
 </div>
 
-### \`druid_scroll_style.EXTRA_STRETCH_SIZE: number | undefined\`
+#### \`druid_scroll_style.EXTRA_STRETCH_SIZE: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1420,7 +1422,7 @@ extra size in pixels outside of scroll (stretch effect). Default: 0
 
 </div>
 
-### \`druid_scroll_style.SMALL_CONTENT_SCROLL: boolean | undefined\`
+#### \`druid_scroll_style.SMALL_CONTENT_SCROLL: boolean | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1428,7 +1430,7 @@ If true, content node with size less than view node size can be scrolled. Defaul
 
 </div>
 
-### \`druid_scroll_style.WHEEL_SCROLL_SPEED: number | undefined\`
+#### \`druid_scroll_style.WHEEL_SCROLL_SPEED: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1436,7 +1438,7 @@ The scroll speed via mouse wheel scroll or touchpad. Set to 0 to disable wheel s
 
 </div>
 
-### \`druid_scroll_style.WHEEL_SCROLL_INVERTED: boolean | undefined\`
+#### \`druid_scroll_style.WHEEL_SCROLL_INVERTED: boolean | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1444,7 +1446,7 @@ If true, invert direction for touchpad and mouse wheel scroll. Default: false
 
 </div>
 
-### \`druid_scroll_style.WHEEL_SCROLL_BY_INERTION: boolean | undefined\`
+#### \`druid_scroll_style.WHEEL_SCROLL_BY_INERTION: boolean | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1452,7 +1454,7 @@ If true, wheel will add inertion to scroll. Direct set position otherwise.. Defa
 
 </div>
 
-### \`druid_scroll_style.ON_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_scroll_style.ON_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1460,7 +1462,7 @@ Cursor on scroll touch hover (defos cursor), only while content is scrollable. D
 
 </div>
 
-### \`druid_scroll_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_scroll_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1468,9 +1470,9 @@ Cursor on scroll mouse hover (defos cursor), only while content is scrollable. D
 
 </div>
 
-## druid_scroll
+### druid_scroll
 
-### \`druid_scroll.init(view_node: string | Opaque<"node">, content_node: string | Opaque<"node">)\`
+#### \`druid_scroll.init(view_node: string | Opaque<"node">, content_node: string | Opaque<"node">)\`
 
 <div class="api-symbol-body">
 
@@ -1483,7 +1485,7 @@ The Scroll constructor
 
 </div>
 
-### \`druid_scroll.scroll_to(point: Vector3, is_instant?: boolean | undefined)\`
+#### \`druid_scroll.scroll_to(point: Vector3, is_instant?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1496,7 +1498,7 @@ Start scroll to target point.
 
 </div>
 
-### \`druid_scroll.scroll_to_make_node_visible(node: Opaque<"node">, is_instant?: boolean | undefined)\`
+#### \`druid_scroll.scroll_to_make_node_visible(node: Opaque<"node">, is_instant?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1509,7 +1511,7 @@ Scroll to the node, if node is not visible in scroll view
 
 </div>
 
-### \`druid_scroll.scroll_to_index(index: number, is_silent?: boolean | undefined, is_instant?: boolean | undefined)\`
+#### \`druid_scroll.scroll_to_index(index: number, is_silent?: boolean | undefined, is_instant?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1523,7 +1525,7 @@ Scroll to item in scroll by point index.
 
 </div>
 
-### \`druid_scroll.scroll_to_percent(percent: Vector3, is_instant?: boolean | undefined)\`
+#### \`druid_scroll.scroll_to_percent(percent: Vector3, is_instant?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1536,7 +1538,7 @@ Start scroll to target scroll percent
 
 </div>
 
-### \`druid_scroll.get_percent(): Vector3\`
+#### \`druid_scroll.get_percent(): Vector3\`
 
 <div class="api-symbol-body">
 
@@ -1548,7 +1550,7 @@ Return current scroll progress status.
 
 </div>
 
-### \`druid_scroll.set_size(size: Vector3, offset?: Vector3 | undefined): druid_scroll\`
+#### \`druid_scroll.set_size(size: Vector3, offset?: Vector3 | undefined): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1565,7 +1567,7 @@ Set scroll content size.
 
 </div>
 
-### \`druid_scroll.set_view_size(size: Vector3): druid_scroll\`
+#### \`druid_scroll.set_view_size(size: Vector3): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1581,7 +1583,7 @@ Set new scroll view size in case the node size was changed.
 
 </div>
 
-### \`druid_scroll.update_view_size(): druid_scroll\`
+#### \`druid_scroll.update_view_size(): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1593,7 +1595,7 @@ Refresh scroll view size, used when view node size is changed
 
 </div>
 
-### \`druid_scroll.set_inert(state: boolean): druid_scroll\`
+#### \`druid_scroll.set_inert(state: boolean): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1609,7 +1611,7 @@ Enable or disable scroll inert
 
 </div>
 
-### \`druid_scroll.is_inert(): boolean\`
+#### \`druid_scroll.is_inert(): boolean\`
 
 <div class="api-symbol-body">
 
@@ -1621,7 +1623,7 @@ Return if scroll have inertion
 
 </div>
 
-### \`druid_scroll.set_extra_stretch_size(stretch_size?: number | undefined): druid_scroll\`
+#### \`druid_scroll.set_extra_stretch_size(stretch_size?: number | undefined): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1637,7 +1639,7 @@ Set extra size for scroll stretching
 
 </div>
 
-### \`druid_scroll.get_scroll_size(): Vector3\`
+#### \`druid_scroll.get_scroll_size(): Vector3\`
 
 <div class="api-symbol-body">
 
@@ -1649,7 +1651,7 @@ Return vector of scroll size with width and height.
 
 </div>
 
-### \`druid_scroll.set_points(points: LuaTable): druid_scroll\`
+#### \`druid_scroll.set_points(points: LuaTable): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1665,7 +1667,7 @@ Set points of interest.
 
 </div>
 
-### \`druid_scroll.set_horizontal_scroll(state: boolean): druid_scroll\`
+#### \`druid_scroll.set_horizontal_scroll(state: boolean): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1681,7 +1683,7 @@ Lock or unlock horizontal scroll
 
 </div>
 
-### \`druid_scroll.set_vertical_scroll(state: boolean): druid_scroll\`
+#### \`druid_scroll.set_vertical_scroll(state: boolean): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1697,7 +1699,7 @@ Lock or unlock vertical scroll
 
 </div>
 
-### \`druid_scroll.is_node_in_view(node: Opaque<"node">): boolean\`
+#### \`druid_scroll.is_node_in_view(node: Opaque<"node">): boolean\`
 
 <div class="api-symbol-body">
 
@@ -1713,7 +1715,7 @@ Check node if it visible now on scroll.
 
 </div>
 
-### \`druid_scroll.bind_grid(grid?: druid_grid | undefined): druid_scroll\`
+#### \`druid_scroll.bind_grid(grid?: druid_grid | undefined): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1729,7 +1731,7 @@ Bind the grid component (Static or Dynamic) to recalculate
 
 </div>
 
-### \`druid_scroll.bind_layout(layout?: druid_layout | undefined): druid_scroll\`
+#### \`druid_scroll.bind_layout(layout?: druid_layout | undefined): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1745,7 +1747,7 @@ Bind the layout component to recalculate
 
 </div>
 
-### \`druid_scroll.set_click_zone(node: Opaque<"node"> | string)\`
+#### \`druid_scroll.set_click_zone(node: Opaque<"node"> | string)\`
 
 <div class="api-symbol-body">
 
@@ -1757,27 +1759,27 @@ Strict drag scroll area. Useful for
 
 </div>
 
-### \`druid_scroll._on_scroll_drag()\`
+#### \`druid_scroll._on_scroll_drag()\`
 
-### \`druid_scroll._check_soft_zone()\`
+#### \`druid_scroll._check_soft_zone()\`
 
-### \`druid_scroll._cancel_animate()\`
+#### \`druid_scroll._cancel_animate()\`
 
-### \`druid_scroll._set_scroll_position()\`
+#### \`druid_scroll._set_scroll_position()\`
 
-### \`druid_scroll._check_threshold()\`
+#### \`druid_scroll._check_threshold()\`
 
-### \`druid_scroll._update_free_scroll()\`
+#### \`druid_scroll._update_free_scroll()\`
 
-### \`druid_scroll._update_hand_scroll()\`
+#### \`druid_scroll._update_hand_scroll()\`
 
-### \`druid_scroll._on_touch_start()\`
+#### \`druid_scroll._on_touch_start()\`
 
-### \`druid_scroll._on_touch_end()\`
+#### \`druid_scroll._on_touch_end()\`
 
-### \`druid_scroll._update_size()\`
+#### \`druid_scroll._update_size()\`
 
-### \`druid_scroll._update_drag_cursors()\`
+#### \`druid_scroll._update_drag_cursors()\`
 
 <div class="api-symbol-body">
 
@@ -1785,11 +1787,11 @@ Apply scroll cursors style to the inner drag. Cursors are shown only while conte
 
 </div>
 
-### \`druid_scroll._process_scroll_wheel()\`
+#### \`druid_scroll._process_scroll_wheel()\`
 
-### \`druid_scroll._inverse_lerp()\`
+#### \`druid_scroll._inverse_lerp()\`
 
-### \`druid_scroll._get_border_vector(vector: Vector4, offset: Vector3): Vector4\`
+#### \`druid_scroll._get_border_vector(vector: Vector4, offset: Vector3): Vector4\`
 
 <div class="api-symbol-body">
 
@@ -1808,7 +1810,7 @@ Field y have to <= field w
 
 </div>
 
-### \`druid_scroll._get_size_vector(vector: Vector4): Vector3\`
+#### \`druid_scroll._get_size_vector(vector: Vector4): Vector3\`
 
 <div class="api-symbol-body">
 
@@ -1824,7 +1826,7 @@ Return size from scroll border vector4
 
 </div>
 
-### \`druid_scroll.node: Opaque<"node">\`
+#### \`druid_scroll.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -1832,7 +1834,7 @@ The root node
 
 </div>
 
-### \`druid_scroll.click_zone: Opaque<"node"> | undefined\`
+#### \`druid_scroll.click_zone: Opaque<"node"> | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1840,7 +1842,7 @@ Optional click zone to restrict scroll area
 
 </div>
 
-### \`druid_scroll.on_scroll: event\`
+#### \`druid_scroll.on_scroll: event\`
 
 <div class="api-symbol-body">
 
@@ -1848,7 +1850,7 @@ fun(self: druid.scroll, position: vector3) Triggered on scroll move
 
 </div>
 
-### \`druid_scroll.on_scroll_to: event\`
+#### \`druid_scroll.on_scroll_to: event\`
 
 <div class="api-symbol-body">
 
@@ -1856,7 +1858,7 @@ fun(self: druid.scroll, target: vector3, is_instant: boolean) Triggered on scrol
 
 </div>
 
-### \`druid_scroll.on_point_scroll: event\`
+#### \`druid_scroll.on_point_scroll: event\`
 
 <div class="api-symbol-body">
 
@@ -1864,7 +1866,7 @@ fun(self: druid.scroll, index: number, point: vector3) Triggered on scroll_to_in
 
 </div>
 
-### \`druid_scroll.view_node: Opaque<"node">\`
+#### \`druid_scroll.view_node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -1872,7 +1874,7 @@ The scroll view node (static part)
 
 </div>
 
-### \`druid_scroll.view_border: Vector4\`
+#### \`druid_scroll.view_border: Vector4\`
 
 <div class="api-symbol-body">
 
@@ -1880,7 +1882,7 @@ The scroll view borders
 
 </div>
 
-### \`druid_scroll.content_node: Opaque<"node">\`
+#### \`druid_scroll.content_node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -1888,7 +1890,7 @@ The scroll content node (moving part)
 
 </div>
 
-### \`druid_scroll.view_size: Vector3\`
+#### \`druid_scroll.view_size: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -1896,7 +1898,7 @@ Size of the view node
 
 </div>
 
-### \`druid_scroll.position: Vector3\`
+#### \`druid_scroll.position: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -1904,7 +1906,7 @@ Current scroll position
 
 </div>
 
-### \`druid_scroll.target_position: Vector3\`
+#### \`druid_scroll.target_position: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -1912,7 +1914,7 @@ Target scroll position for animations
 
 </div>
 
-### \`druid_scroll.available_pos: Vector4\`
+#### \`druid_scroll.available_pos: Vector4\`
 
 <div class="api-symbol-body">
 
@@ -1920,7 +1922,7 @@ Available content position (min_x, max_y, max_x, min_y)
 
 </div>
 
-### \`druid_scroll.available_size: Vector3\`
+#### \`druid_scroll.available_size: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -1928,7 +1930,7 @@ Size of available positions (width, height, 0)
 
 </div>
 
-### \`druid_scroll.drag: druid_drag\`
+#### \`druid_scroll.drag: druid_drag\`
 
 <div class="api-symbol-body">
 
@@ -1936,7 +1938,7 @@ The drag component instance
 
 </div>
 
-### \`druid_scroll.selected: number | undefined\`
+#### \`druid_scroll.selected: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1944,7 +1946,7 @@ Current selected point of interest index
 
 </div>
 
-### \`druid_scroll.is_animate: boolean\`
+#### \`druid_scroll.is_animate: boolean\`
 
 <div class="api-symbol-body">
 
@@ -1952,7 +1954,7 @@ True if scroll is animating
 
 </div>
 
-### \`druid_scroll.style: druid_scroll_style\`
+#### \`druid_scroll.style: druid_scroll_style\`
 
 <div class="api-symbol-body">
 
@@ -1960,9 +1962,9 @@ Component style parameters
 
 </div>
 
-## druid_grid_style
+### druid_grid_style
 
-### \`druid_grid_style.IS_DYNAMIC_NODE_POSES: boolean | undefined\`
+#### \`druid_grid_style.IS_DYNAMIC_NODE_POSES: boolean | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1970,7 +1972,7 @@ If true, always center grid content as grid pivot sets. Default: false
 
 </div>
 
-### \`druid_grid_style.IS_ALIGN_LAST_ROW: boolean | undefined\`
+#### \`druid_grid_style.IS_ALIGN_LAST_ROW: boolean | undefined\`
 
 <div class="api-symbol-body">
 
@@ -1978,9 +1980,9 @@ If true, always align last row of the grid as grid pivot sets. Default: false
 
 </div>
 
-## druid_grid
+### druid_grid
 
-### \`druid_grid.init(parent: string | Opaque<"node">, element: Opaque<"node">, in_row?: number | undefined)\`
+#### \`druid_grid.init(parent: string | Opaque<"node">, element: Opaque<"node">, in_row?: number | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1994,7 +1996,7 @@ The constructor for the grid component
 
 </div>
 
-### \`druid_grid.get_pos(index: number): Vector3\`
+#### \`druid_grid.get_pos(index: number): Vector3\`
 
 <div class="api-symbol-body">
 
@@ -2010,7 +2012,7 @@ Return pos for grid node index
 
 </div>
 
-### \`druid_grid.get_index_xy(x: number, y: number): number\`
+#### \`druid_grid.get_index_xy(x: number, y: number): number\`
 
 <div class="api-symbol-body">
 
@@ -2027,7 +2029,7 @@ Return grid index by content-local x, y. Inverse of get_pos + _get_dynamic_offse
 
 </div>
 
-### \`druid_grid.get_index(pos: Vector3): number\`
+#### \`druid_grid.get_index(pos: Vector3): number\`
 
 <div class="api-symbol-body">
 
@@ -2043,7 +2045,7 @@ Return grid index by position. Inverse of get_pos + _get_dynamic_offset.
 
 </div>
 
-### \`druid_grid.get_index_by_node(node: Opaque<"node">): number | undefined\`
+#### \`druid_grid.get_index_by_node(node: Opaque<"node">): number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -2059,7 +2061,7 @@ Return grid index by node
 
 </div>
 
-### \`druid_grid.set_anchor(anchor: Vector3)\`
+#### \`druid_grid.set_anchor(anchor: Vector3)\`
 
 <div class="api-symbol-body">
 
@@ -2071,7 +2073,7 @@ Set grid anchor. Default anchor is equal to anchor of grid parent node
 
 </div>
 
-### \`druid_grid.refresh(): druid_grid\`
+#### \`druid_grid.refresh(): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2083,7 +2085,7 @@ Instantly update the grid content
 
 </div>
 
-### \`druid_grid.set_pivot(pivot: Opaque<"constant">): druid_grid\`
+#### \`druid_grid.set_pivot(pivot: Opaque<"constant">): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2099,7 +2101,7 @@ Set grid pivot
 
 </div>
 
-### \`druid_grid.add(item: Opaque<"node">, index?: number | undefined, shift_policy?: number | undefined, is_instant?: boolean | undefined): druid_grid\`
+#### \`druid_grid.add(item: Opaque<"node">, index?: number | undefined, shift_policy?: number | undefined, is_instant?: boolean | undefined): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2118,7 +2120,7 @@ Add new item to the grid
 
 </div>
 
-### \`druid_grid.set_items(nodes: Opaque<"node">[], is_instant?: boolean | undefined): druid_grid\`
+#### \`druid_grid.set_items(nodes: Opaque<"node">[], is_instant?: boolean | undefined): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2135,7 +2137,7 @@ Set new items to the grid. All previous items will be removed
 
 </div>
 
-### \`druid_grid.remove(index: number, shift_policy?: number | undefined, is_instant?: boolean | undefined): Opaque<"node">\`
+#### \`druid_grid.remove(index: number, shift_policy?: number | undefined, is_instant?: boolean | undefined): Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -2153,7 +2155,7 @@ Remove the item from the grid. Note that gui node will be not deleted
 
 </div>
 
-### \`druid_grid.get_items_count(): number\`
+#### \`druid_grid.get_items_count(): number\`
 
 <div class="api-symbol-body">
 
@@ -2165,7 +2167,7 @@ Return items count in grid
 
 </div>
 
-### \`druid_grid.get_size(): Vector3\`
+#### \`druid_grid.get_size(): Vector3\`
 
 <div class="api-symbol-body">
 
@@ -2177,7 +2179,7 @@ Return grid content size
 
 </div>
 
-### \`druid_grid.get_size_for(count: number): Vector3\`
+#### \`druid_grid.get_size_for(count: number): Vector3\`
 
 <div class="api-symbol-body">
 
@@ -2193,7 +2195,7 @@ Return grid content size for given count of nodes
 
 </div>
 
-### \`druid_grid.get_borders(): Vector4\`
+#### \`druid_grid.get_borders(): Vector4\`
 
 <div class="api-symbol-body">
 
@@ -2205,7 +2207,7 @@ Return grid content borders
 
 </div>
 
-### \`druid_grid.get_all_pos(): Vector3[]\`
+#### \`druid_grid.get_all_pos(): Vector3[]\`
 
 <div class="api-symbol-body">
 
@@ -2217,7 +2219,7 @@ Return array of all node positions
 
 </div>
 
-### \`druid_grid.set_position_function(callback: (...args: any[]) => unknown): druid_grid\`
+#### \`druid_grid.set_position_function(callback: (...args: any[]) => unknown): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2233,7 +2235,7 @@ Change set position function for grid nodes. It will call on
 
 </div>
 
-### \`druid_grid.clear(): druid_grid\`
+#### \`druid_grid.clear(): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2245,7 +2247,7 @@ Clear grid nodes array. GUI nodes will be not deleted!
 
 </div>
 
-### \`druid_grid.get_offset(): Vector3\`
+#### \`druid_grid.get_offset(): Vector3\`
 
 <div class="api-symbol-body">
 
@@ -2257,7 +2259,7 @@ Return StaticGrid offset, where StaticGrid content starts.
 
 </div>
 
-### \`druid_grid.set_in_row(in_row: number): druid_grid\`
+#### \`druid_grid.set_in_row(in_row: number): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2273,7 +2275,7 @@ Set new in_row elements for grid
 
 </div>
 
-### \`druid_grid.set_item_size(width?: number | undefined, height?: number | undefined): druid_grid\`
+#### \`druid_grid.set_item_size(width?: number | undefined, height?: number | undefined): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2290,7 +2292,7 @@ Set new node size for grid
 
 </div>
 
-### \`druid_grid.sort_nodes(comparator: (...args: any[]) => unknown): druid_grid\`
+#### \`druid_grid.sort_nodes(comparator: (...args: any[]) => unknown): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2306,7 +2308,7 @@ Sort grid nodes by custom comparator function
 
 </div>
 
-### \`druid_grid._extend_border(border: Vector4, pos: Vector3, size: Vector3, pivot: Vector3)\`
+#### \`druid_grid._extend_border(border: Vector4, pos: Vector3, size: Vector3, pivot: Vector3)\`
 
 <div class="api-symbol-body">
 
@@ -2319,7 +2321,7 @@ Sort grid nodes by custom comparator function
 
 </div>
 
-### \`druid_grid.on_add_item: event\`
+#### \`druid_grid.on_add_item: event\`
 
 <div class="api-symbol-body">
 
@@ -2327,7 +2329,7 @@ fun(self: druid.grid, item: node, index: number) Trigger on add item event
 
 </div>
 
-### \`druid_grid.on_remove_item: event\`
+#### \`druid_grid.on_remove_item: event\`
 
 <div class="api-symbol-body">
 
@@ -2335,7 +2337,7 @@ fun(self: druid.grid, index: number) Trigger on remove item event
 
 </div>
 
-### \`druid_grid.on_change_items: event\`
+#### \`druid_grid.on_change_items: event\`
 
 <div class="api-symbol-body">
 
@@ -2343,7 +2345,7 @@ fun(self: druid.grid, index: number) Trigger on change items event
 
 </div>
 
-### \`druid_grid.on_clear: event\`
+#### \`druid_grid.on_clear: event\`
 
 <div class="api-symbol-body">
 
@@ -2351,7 +2353,7 @@ fun(self: druid.grid) Trigger on clear event
 
 </div>
 
-### \`druid_grid.on_update_positions: event\`
+#### \`druid_grid.on_update_positions: event\`
 
 <div class="api-symbol-body">
 
@@ -2359,7 +2361,7 @@ fun(self: druid.grid) Trigger on update positions event
 
 </div>
 
-### \`druid_grid.parent: Opaque<"node">\`
+#### \`druid_grid.parent: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -2367,7 +2369,7 @@ Parent node
 
 </div>
 
-### \`druid_grid.nodes: Opaque<"node">[]\`
+#### \`druid_grid.nodes: Opaque<"node">[]\`
 
 <div class="api-symbol-body">
 
@@ -2375,7 +2377,7 @@ Nodes array
 
 </div>
 
-### \`druid_grid.first_index: number\`
+#### \`druid_grid.first_index: number\`
 
 <div class="api-symbol-body">
 
@@ -2383,7 +2385,7 @@ First index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 </div>
 
-### \`druid_grid.last_index: number\`
+#### \`druid_grid.last_index: number\`
 
 <div class="api-symbol-body">
 
@@ -2391,7 +2393,7 @@ Last index. **⚠️ 1-based; passed to \`druid\` unchanged.**
 
 </div>
 
-### \`druid_grid.anchor: Vector3\`
+#### \`druid_grid.anchor: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -2399,7 +2401,7 @@ Anchor
 
 </div>
 
-### \`druid_grid.pivot: Vector3\`
+#### \`druid_grid.pivot: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -2407,7 +2409,7 @@ Pivot
 
 </div>
 
-### \`druid_grid.node_size: Vector3\`
+#### \`druid_grid.node_size: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -2415,7 +2417,7 @@ Node size
 
 </div>
 
-### \`druid_grid.border: Vector4\`
+#### \`druid_grid.border: Vector4\`
 
 <div class="api-symbol-body">
 
@@ -2423,7 +2425,7 @@ Border
 
 </div>
 
-### \`druid_grid.in_row: number\`
+#### \`druid_grid.in_row: number\`
 
 <div class="api-symbol-body">
 
@@ -2431,7 +2433,7 @@ In row
 
 </div>
 
-### \`druid_grid.style: druid_grid_style\`
+#### \`druid_grid.style: druid_grid_style\`
 
 <div class="api-symbol-body">
 
@@ -2439,9 +2441,9 @@ Style
 
 </div>
 
-## druid_text_style
+### druid_text_style
 
-### \`druid_text_style.TRIM_POSTFIX: string | undefined\`
+#### \`druid_text_style.TRIM_POSTFIX: string | undefined\`
 
 <div class="api-symbol-body">
 
@@ -2449,7 +2451,7 @@ The postfix for TRIM adjust type. Default: ...
 
 </div>
 
-### \`druid_text_style.DEFAULT_ADJUST: string | undefined\`
+#### \`druid_text_style.DEFAULT_ADJUST: string | undefined\`
 
 <div class="api-symbol-body">
 
@@ -2457,7 +2459,7 @@ The default adjust type for any text component. Default: DOWNSCALE
 
 </div>
 
-### \`druid_text_style.ADJUST_STEPS: number | undefined\`
+#### \`druid_text_style.ADJUST_STEPS: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -2465,7 +2467,7 @@ Amount of iterations for text adjust by height. Default: 20
 
 </div>
 
-### \`druid_text_style.ADJUST_SCALE_DELTA: number | undefined\`
+#### \`druid_text_style.ADJUST_SCALE_DELTA: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -2473,9 +2475,9 @@ Scale step on each height adjust step. Default: 0.02
 
 </div>
 
-## druid_text
+### druid_text
 
-### \`druid_text.init(node: string | Opaque<"node">, value?: string | undefined, adjust_type?: druid_text_adjust_type | undefined)\`
+#### \`druid_text.init(node: string | Opaque<"node">, value?: string | undefined, adjust_type?: druid_text_adjust_type | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -2489,7 +2491,7 @@ The Text constructor
 
 </div>
 
-### \`druid_text.get_text_size(text?: string | undefined): LuaMultiReturn<[number, number]>\`
+#### \`druid_text.get_text_size(text?: string | undefined): LuaMultiReturn<[number, number]>\`
 
 <div class="api-symbol-body">
 
@@ -2506,7 +2508,7 @@ Calculate text width with font with respect to trailing space
 
 </div>
 
-### \`druid_text.get_text_index_by_width(width: number): number\`
+#### \`druid_text.get_text_index_by_width(width: number): number\`
 
 <div class="api-symbol-body">
 
@@ -2522,7 +2524,7 @@ Get chars count by width
 
 </div>
 
-### \`druid_text.set_text(new_text: string): druid_text\`
+#### \`druid_text.set_text(new_text: string): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -2538,7 +2540,7 @@ Set text to text field
 
 </div>
 
-### \`druid_text.set_to(set_to: string): druid_text\`
+#### \`druid_text.set_to(set_to: string): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -2560,9 +2562,9 @@ Set text to text field
 
 </div>
 
-### \`druid_text.get_text()\`
+#### \`druid_text.get_text()\`
 
-### \`druid_text.set_size(size: Vector3): druid_text\`
+#### \`druid_text.set_size(size: Vector3): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -2578,7 +2580,7 @@ Set text area size
 
 </div>
 
-### \`druid_text.set_color(color: Vector4): druid_text\`
+#### \`druid_text.set_color(color: Vector4): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -2594,7 +2596,7 @@ Set color
 
 </div>
 
-### \`druid_text.set_alpha(alpha: number): druid_text\`
+#### \`druid_text.set_alpha(alpha: number): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -2610,7 +2612,7 @@ Set alpha
 
 </div>
 
-### \`druid_text.set_scale(scale: Vector3): druid_text\`
+#### \`druid_text.set_scale(scale: Vector3): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -2626,7 +2628,7 @@ Set scale
 
 </div>
 
-### \`druid_text.set_pivot(pivot: number): druid_text\`
+#### \`druid_text.set_pivot(pivot: number): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -2642,7 +2644,7 @@ Set text pivot. Text will re-anchor inside text area
 
 </div>
 
-### \`druid_text.is_multiline(): boolean\`
+#### \`druid_text.is_multiline(): boolean\`
 
 <div class="api-symbol-body">
 
@@ -2654,7 +2656,7 @@ Return true, if text with line break
 
 </div>
 
-### \`druid_text.set_text_adjust(adjust_type?: druid_text_adjust_type | undefined, minimal_scale?: number | undefined): druid_text\`
+#### \`druid_text.set_text_adjust(adjust_type?: druid_text_adjust_type | undefined, minimal_scale?: number | undefined): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -2671,7 +2673,7 @@ Set text adjust, refresh the current text visuals, if needed
 
 </div>
 
-### \`druid_text.set_minimal_scale(minimal_scale: number): druid_text\`
+#### \`druid_text.set_minimal_scale(minimal_scale: number): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -2687,7 +2689,7 @@ Set minimal scale for "downscale_limited" or "scale_then_scroll" adjust types
 
 </div>
 
-### \`druid_text.get_text_adjust(): string\`
+#### \`druid_text.get_text_adjust(): string\`
 
 <div class="api-symbol-body">
 
@@ -2699,7 +2701,7 @@ Return current text adjust type
 
 </div>
 
-### \`druid_text.node: Opaque<"node">\`
+#### \`druid_text.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -2707,7 +2709,7 @@ The text node
 
 </div>
 
-### \`druid_text.on_set_text: event\`
+#### \`druid_text.on_set_text: event\`
 
 <div class="api-symbol-body">
 
@@ -2715,7 +2717,7 @@ fun(self: druid.text, text: string) The event triggered when the text is set
 
 </div>
 
-### \`druid_text.on_update_text_scale: event\`
+#### \`druid_text.on_update_text_scale: event\`
 
 <div class="api-symbol-body">
 
@@ -2723,7 +2725,7 @@ fun(self: druid.text, scale: vector3, metrics: table) The event triggered when t
 
 </div>
 
-### \`druid_text.on_set_pivot: event\`
+#### \`druid_text.on_set_pivot: event\`
 
 <div class="api-symbol-body">
 
@@ -2731,7 +2733,7 @@ fun(self: druid.text, pivot: userdata) The event triggered when the text pivot i
 
 </div>
 
-### \`druid_text.style: druid_text_style\`
+#### \`druid_text.style: druid_text_style\`
 
 <div class="api-symbol-body">
 
@@ -2739,7 +2741,7 @@ The style of the text
 
 </div>
 
-### \`druid_text.start_pivot: number\`
+#### \`druid_text.start_pivot: number\`
 
 <div class="api-symbol-body">
 
@@ -2747,7 +2749,7 @@ The start pivot of the text
 
 </div>
 
-### \`druid_text.start_scale: Vector3\`
+#### \`druid_text.start_scale: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -2755,7 +2757,7 @@ The start scale of the text
 
 </div>
 
-### \`druid_text.scale: Vector3\`
+#### \`druid_text.scale: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -2763,27 +2765,27 @@ The current scale of the text
 
 </div>
 
-## druid_component_meta
+### druid_component_meta
 
-### \`druid_component_meta.template: string\`
+#### \`druid_component_meta.template: string\`
 
-### \`druid_component_meta.context: LuaTable\`
+#### \`druid_component_meta.context: LuaTable\`
 
-### \`druid_component_meta.nodes: LuaTable<Hash, Opaque<"node">> | undefined\`
+#### \`druid_component_meta.nodes: LuaTable<Hash, Opaque<"node">> | undefined\`
 
-### \`druid_component_meta.style: LuaTable | undefined\`
+#### \`druid_component_meta.style: LuaTable | undefined\`
 
-### \`druid_component_meta.druid: druid_instance\`
+#### \`druid_component_meta.druid: druid_instance\`
 
-### \`druid_component_meta.input_enabled: boolean\`
+#### \`druid_component_meta.input_enabled: boolean\`
 
-### \`druid_component_meta.children: LuaTable\`
+#### \`druid_component_meta.children: LuaTable\`
 
-### \`druid_component_meta.parent: druid_component | undefined\`
+#### \`druid_component_meta.parent: druid_component | undefined\`
 
-### \`druid_component_meta.instance_class: LuaTable\`
+#### \`druid_component_meta.instance_class: LuaTable\`
 
-### \`druid_component_meta.input_filter: druid_instance_input_filter | undefined\`
+#### \`druid_component_meta.input_filter: druid_instance_input_filter | undefined\`
 
 <div class="api-symbol-body">
 
@@ -2791,21 +2793,21 @@ Input filter for the component subtree, set by \`druid:set_whitelist\` / \`druid
 
 </div>
 
-## druid_component_component
+### druid_component_component
 
-### \`druid_component_component.name: string\`
+#### \`druid_component_component.name: string\`
 
-### \`druid_component_component.input_priority: number\`
+#### \`druid_component_component.input_priority: number\`
 
-### \`druid_component_component.default_input_priority: number\`
+#### \`druid_component_component.default_input_priority: number\`
 
-### \`druid_component_component._is_input_priority_changed: boolean\`
+#### \`druid_component_component._is_input_priority_changed: boolean\`
 
-### \`druid_component_component._uid: number\`
+#### \`druid_component_component._uid: number\`
 
-## druid_component
+### druid_component
 
-### \`druid_component.set_style<T>(self: T, druid_style?: LuaTable | undefined): T\`
+#### \`druid_component.set_style<T>(self: T, druid_style?: LuaTable | undefined): T\`
 
 <div class="api-symbol-body">
 
@@ -2822,7 +2824,7 @@ Set component style. Pass nil to clear style
 
 </div>
 
-### \`druid_component.set_template<T>(self: T, template?: string | undefined): T\`
+#### \`druid_component.set_template<T>(self: T, template?: string | undefined): T\`
 
 <div class="api-symbol-body">
 
@@ -2841,7 +2843,7 @@ Parent template will be added automatically if exist.
 
 </div>
 
-### \`druid_component.get_template(): string\`
+#### \`druid_component.get_template(): string\`
 
 <div class="api-symbol-body">
 
@@ -2853,7 +2855,7 @@ Get full template name.
 
 </div>
 
-### \`druid_component.set_nodes(nodes?: LuaMap<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_component\`
+#### \`druid_component.set_nodes(nodes?: LuaMap<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_component\`
 
 <div class="api-symbol-body">
 
@@ -2869,7 +2871,7 @@ Set current component nodes, returned from \`gui.clone_tree\` function.
 
 </div>
 
-### \`druid_component.get_node(node_id: string | Opaque<"node">): Opaque<"node">\`
+#### \`druid_component.get_node(node_id: string | Opaque<"node">): Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -2885,7 +2887,7 @@ Get component node by node_id. Respect to current template and nodes.
 
 </div>
 
-### \`druid_component.get_name(): string\`
+#### \`druid_component.get_name(): string\`
 
 <div class="api-symbol-body">
 
@@ -2897,7 +2899,7 @@ Get component name
 
 </div>
 
-### \`druid_component.get_input_priority(): number\`
+#### \`druid_component.get_input_priority(): number\`
 
 <div class="api-symbol-body">
 
@@ -2909,7 +2911,7 @@ Get component input priority, the bigger number processed first. Default value: 
 
 </div>
 
-### \`druid_component.set_input_priority(value: number, is_temporary?: boolean | undefined): druid_component\`
+#### \`druid_component.set_input_priority(value: number, is_temporary?: boolean | undefined): druid_component\`
 
 <div class="api-symbol-body">
 
@@ -2926,7 +2928,7 @@ Set component input priority, the bigger number processed first. Default value: 
 
 </div>
 
-### \`druid_component.reset_input_priority(): druid_component\`
+#### \`druid_component.reset_input_priority(): druid_component\`
 
 <div class="api-symbol-body">
 
@@ -2939,7 +2941,7 @@ Each component in the subtree returns to it's own default value, not to the pare
 
 </div>
 
-### \`druid_component.set_input_enabled(state: boolean): druid_component\`
+#### \`druid_component.set_input_enabled(state: boolean): druid_component\`
 
 <div class="api-symbol-body">
 
@@ -2957,7 +2959,7 @@ Recursive for all children components.
 
 </div>
 
-### \`druid_component.get_input_enabled(): boolean\`
+#### \`druid_component.get_input_enabled(): boolean\`
 
 <div class="api-symbol-body">
 
@@ -2969,7 +2971,7 @@ Get component input state. By default it's enabled. Can be disabled by \`set_inp
 
 </div>
 
-### \`druid_component.get_parent_component(): druid_component | undefined\`
+#### \`druid_component.get_parent_component(): druid_component | undefined\`
 
 <div class="api-symbol-body">
 
@@ -2981,9 +2983,9 @@ Get parent component
 
 </div>
 
-## druid_rich_input
+### druid_rich_input
 
-### \`druid_rich_input.init(template: string, nodes: LuaTable)\`
+#### \`druid_rich_input.init(template: string, nodes: LuaTable)\`
 
 <div class="api-symbol-body">
 
@@ -2994,7 +2996,7 @@ Get parent component
 
 </div>
 
-### \`druid_rich_input.set_placeholder(placeholder_text: string): druid_rich_input\`
+#### \`druid_rich_input.set_placeholder(placeholder_text: string): druid_rich_input\`
 
 <div class="api-symbol-body">
 
@@ -3010,7 +3012,7 @@ Set placeholder text
 
 </div>
 
-### \`druid_rich_input.select(): druid_rich_input\`
+#### \`druid_rich_input.select(): druid_rich_input\`
 
 <div class="api-symbol-body">
 
@@ -3022,7 +3024,7 @@ Select input field
 
 </div>
 
-### \`druid_rich_input.set_text(text: string): druid_rich_input\`
+#### \`druid_rich_input.set_text(text: string): druid_rich_input\`
 
 <div class="api-symbol-body">
 
@@ -3038,7 +3040,7 @@ Set input field text
 
 </div>
 
-### \`druid_rich_input.set_font(font: Hash): druid_rich_input\`
+#### \`druid_rich_input.set_font(font: Hash): druid_rich_input\`
 
 <div class="api-symbol-body">
 
@@ -3054,7 +3056,7 @@ Set input field font
 
 </div>
 
-### \`druid_rich_input.get_text()\`
+#### \`druid_rich_input.get_text()\`
 
 <div class="api-symbol-body">
 
@@ -3062,7 +3064,7 @@ Set input field text
 
 </div>
 
-### \`druid_rich_input.set_allowed_characters(characters: string): druid_rich_input\`
+#### \`druid_rich_input.set_allowed_characters(characters: string): druid_rich_input\`
 
 <div class="api-symbol-body">
 
@@ -3078,7 +3080,7 @@ Set allowed charaters for input field.
 
 </div>
 
-### \`druid_rich_input.root: Opaque<"node">\`
+#### \`druid_rich_input.root: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -3086,7 +3088,7 @@ The root node of the rich input
 
 </div>
 
-### \`druid_rich_input.input: druid_input\`
+#### \`druid_rich_input.input: druid_input\`
 
 <div class="api-symbol-body">
 
@@ -3094,7 +3096,7 @@ The input component
 
 </div>
 
-### \`druid_rich_input.cursor: Opaque<"node">\`
+#### \`druid_rich_input.cursor: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -3102,7 +3104,7 @@ The cursor node
 
 </div>
 
-### \`druid_rich_input.cursor_text: Opaque<"node">\`
+#### \`druid_rich_input.cursor_text: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -3110,7 +3112,7 @@ The cursor text node
 
 </div>
 
-### \`druid_rich_input.cursor_position: Vector3\`
+#### \`druid_rich_input.cursor_position: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3118,117 +3120,117 @@ The position of the cursor
 
 </div>
 
-## druid_rich_text_settings
+### druid_rich_text_settings
 
-### \`druid_rich_text_settings.parent: Opaque<"node">\`
+#### \`druid_rich_text_settings.parent: Opaque<"node">\`
 
-### \`druid_rich_text_settings.size: number\`
+#### \`druid_rich_text_settings.size: number\`
 
-### \`druid_rich_text_settings.fonts: LuaTable<string, string>\`
+#### \`druid_rich_text_settings.fonts: LuaTable<string, string>\`
 
-### \`druid_rich_text_settings.scale: Vector3\`
+#### \`druid_rich_text_settings.scale: Vector3\`
 
-### \`druid_rich_text_settings.color: Vector4\`
+#### \`druid_rich_text_settings.color: Vector4\`
 
-### \`druid_rich_text_settings.shadow: Vector4\`
+#### \`druid_rich_text_settings.shadow: Vector4\`
 
-### \`druid_rich_text_settings.outline: Vector4\`
+#### \`druid_rich_text_settings.outline: Vector4\`
 
-### \`druid_rich_text_settings.position: Vector3\`
+#### \`druid_rich_text_settings.position: Vector3\`
 
-### \`druid_rich_text_settings.image_pixel_grid_snap: boolean\`
+#### \`druid_rich_text_settings.image_pixel_grid_snap: boolean\`
 
-### \`druid_rich_text_settings.combine_words: boolean\`
+#### \`druid_rich_text_settings.combine_words: boolean\`
 
-### \`druid_rich_text_settings.default_animation: string\`
+#### \`druid_rich_text_settings.default_animation: string\`
 
-### \`druid_rich_text_settings.split_by_character: boolean\`
+#### \`druid_rich_text_settings.split_by_character: boolean\`
 
-### \`druid_rich_text_settings.text_prefab: Opaque<"node">\`
+#### \`druid_rich_text_settings.text_prefab: Opaque<"node">\`
 
-### \`druid_rich_text_settings.adjust_scale: number\`
+#### \`druid_rich_text_settings.adjust_scale: number\`
 
-### \`druid_rich_text_settings.default_texture: string\`
+#### \`druid_rich_text_settings.default_texture: string\`
 
-### \`druid_rich_text_settings.is_multiline: boolean\`
+#### \`druid_rich_text_settings.is_multiline: boolean\`
 
-### \`druid_rich_text_settings.text_leading: number\`
+#### \`druid_rich_text_settings.text_leading: number\`
 
-### \`druid_rich_text_settings.font: Hash\`
+#### \`druid_rich_text_settings.font: Hash\`
 
-### \`druid_rich_text_settings.width: number\`
+#### \`druid_rich_text_settings.width: number\`
 
-### \`druid_rich_text_settings.height: number\`
+#### \`druid_rich_text_settings.height: number\`
 
-### \`druid_rich_text_settings.is_justify: boolean\`
+#### \`druid_rich_text_settings.is_justify: boolean\`
 
-## druid_rich_text_word
+### druid_rich_text_word
 
-### \`druid_rich_text_word.node: Opaque<"node">\`
+#### \`druid_rich_text_word.node: Opaque<"node">\`
 
-### \`druid_rich_text_word.relative_scale: number\`
+#### \`druid_rich_text_word.relative_scale: number\`
 
-### \`druid_rich_text_word.source_text: string\`
+#### \`druid_rich_text_word.source_text: string\`
 
-### \`druid_rich_text_word.color: Vector4\`
+#### \`druid_rich_text_word.color: Vector4\`
 
-### \`druid_rich_text_word.text_color: Vector4\`
+#### \`druid_rich_text_word.text_color: Vector4\`
 
-### \`druid_rich_text_word.position: Vector3\`
+#### \`druid_rich_text_word.position: Vector3\`
 
-### \`druid_rich_text_word.offset: Vector3\`
+#### \`druid_rich_text_word.offset: Vector3\`
 
-### \`druid_rich_text_word.scale: Vector3\`
+#### \`druid_rich_text_word.scale: Vector3\`
 
-### \`druid_rich_text_word.size: Vector3\`
+#### \`druid_rich_text_word.size: Vector3\`
 
-### \`druid_rich_text_word.metrics: druid_rich_text_metrics\`
+#### \`druid_rich_text_word.metrics: druid_rich_text_metrics\`
 
-### \`druid_rich_text_word.pivot: Opaque<"constant">\`
+#### \`druid_rich_text_word.pivot: Opaque<"constant">\`
 
-### \`druid_rich_text_word.text: string\`
+#### \`druid_rich_text_word.text: string\`
 
-### \`druid_rich_text_word.shadow: Vector4\`
+#### \`druid_rich_text_word.shadow: Vector4\`
 
-### \`druid_rich_text_word.outline: Vector4\`
+#### \`druid_rich_text_word.outline: Vector4\`
 
-### \`druid_rich_text_word.font: string\`
+#### \`druid_rich_text_word.font: string\`
 
-### \`druid_rich_text_word.image: druid_rich_text_word_image\`
+#### \`druid_rich_text_word.image: druid_rich_text_word_image\`
 
-### \`druid_rich_text_word.br: boolean\`
+#### \`druid_rich_text_word.br: boolean\`
 
-### \`druid_rich_text_word.nobr: boolean\`
+#### \`druid_rich_text_word.nobr: boolean\`
 
-### \`druid_rich_text_word.tags: LuaTable<string, boolean>\`
+#### \`druid_rich_text_word.tags: LuaTable<string, boolean>\`
 
-## druid_rich_text_word_image
+### druid_rich_text_word_image
 
-### \`druid_rich_text_word_image.texture: string\`
+#### \`druid_rich_text_word_image.texture: string\`
 
-### \`druid_rich_text_word_image.anim: string\`
+#### \`druid_rich_text_word_image.anim: string\`
 
-### \`druid_rich_text_word_image.width: number\`
+#### \`druid_rich_text_word_image.width: number\`
 
-### \`druid_rich_text_word_image.height: number\`
+#### \`druid_rich_text_word_image.height: number\`
 
-## druid_rich_text_style
+### druid_rich_text_style
 
-### \`druid_rich_text_style.ADJUST_STEPS: number\`
+#### \`druid_rich_text_style.ADJUST_STEPS: number\`
 
-### \`druid_rich_text_style.ADJUST_SCALE_DELTA: number\`
+#### \`druid_rich_text_style.ADJUST_SCALE_DELTA: number\`
 
-## druid_rich_text_lines_metrics
+### druid_rich_text_lines_metrics
 
-### \`druid_rich_text_lines_metrics.text_width: number\`
+#### \`druid_rich_text_lines_metrics.text_width: number\`
 
-### \`druid_rich_text_lines_metrics.text_height: number\`
+#### \`druid_rich_text_lines_metrics.text_height: number\`
 
-### \`druid_rich_text_lines_metrics.lines: LuaTable<number, druid_rich_text_metrics>\`
+#### \`druid_rich_text_lines_metrics.lines: LuaTable<number, druid_rich_text_metrics>\`
 
-## druid_rich_text_metrics
+### druid_rich_text_metrics
 
-### \`druid_rich_text_metrics.width: number\`
+#### \`druid_rich_text_metrics.width: number\`
 
 <div class="api-symbol-body">
 
@@ -3236,7 +3238,7 @@ Advance of the word, the next word starts after it
 
 </div>
 
-### \`druid_rich_text_metrics.visible_width: number | undefined\`
+#### \`druid_rich_text_metrics.visible_width: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -3244,17 +3246,17 @@ Width to the last visible glyph of a text word
 
 </div>
 
-### \`druid_rich_text_metrics.height: number\`
+#### \`druid_rich_text_metrics.height: number\`
 
-### \`druid_rich_text_metrics.offset_x: number | undefined\`
+#### \`druid_rich_text_metrics.offset_x: number | undefined\`
 
-### \`druid_rich_text_metrics.offset_y: number | undefined\`
+#### \`druid_rich_text_metrics.offset_y: number | undefined\`
 
-### \`druid_rich_text_metrics.node_size: Vector3 | undefined\`
+#### \`druid_rich_text_metrics.node_size: Vector3 | undefined\`
 
-## druid_rich_text
+### druid_rich_text
 
-### \`druid_rich_text.init(text_node: Opaque<"node"> | string, value?: string | undefined)\`
+#### \`druid_rich_text.init(text_node: Opaque<"node"> | string, value?: string | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -3265,7 +3267,7 @@ Width to the last visible glyph of a text word
 
 </div>
 
-### \`druid_rich_text.set_text(text?: string | undefined): LuaMultiReturn<[druid_rich_text_word[], druid_rich_text_lines_metrics]>\`
+#### \`druid_rich_text.set_text(text?: string | undefined): LuaMultiReturn<[druid_rich_text_word[], druid_rich_text_lines_metrics]>\`
 
 <div class="api-symbol-body">
 
@@ -3309,7 +3311,7 @@ rich_text:set_text("＜img=texture:image,width,height＞Display image with width
 
 </div>
 
-### \`druid_rich_text.get_text(): string\`
+#### \`druid_rich_text.get_text(): string\`
 
 <div class="api-symbol-body">
 
@@ -3321,7 +3323,7 @@ Get the current text of the rich text
 
 </div>
 
-### \`druid_rich_text.set_pivot(pivot: number): druid_rich_text\`
+#### \`druid_rich_text.set_pivot(pivot: number): druid_rich_text\`
 
 <div class="api-symbol-body">
 
@@ -3337,7 +3339,7 @@ Set pivot and keep the content in place (anchor). After this, resizing the root 
 
 </div>
 
-### \`druid_rich_text.clear()\`
+#### \`druid_rich_text.clear()\`
 
 <div class="api-symbol-body">
 
@@ -3345,7 +3347,7 @@ Clear all created words.
 
 </div>
 
-### \`druid_rich_text.tagged(tag: string): druid_rich_text_word[]\`
+#### \`druid_rich_text.tagged(tag: string): druid_rich_text_word[]\`
 
 <div class="api-symbol-body">
 
@@ -3361,7 +3363,7 @@ Get all words, which has a passed tag.
 
 </div>
 
-### \`druid_rich_text.set_split_to_characters(value: boolean): druid_rich_text\`
+#### \`druid_rich_text.set_split_to_characters(value: boolean): druid_rich_text\`
 
 <div class="api-symbol-body">
 
@@ -3377,7 +3379,7 @@ Set if the rich text should split to characters, not words
 
 </div>
 
-### \`druid_rich_text.get_words(): druid_rich_text_word[]\`
+#### \`druid_rich_text.get_words(): druid_rich_text_word[]\`
 
 <div class="api-symbol-body">
 
@@ -3389,7 +3391,7 @@ Get all current created words, each word is a table that contains the informatio
 
 </div>
 
-### \`druid_rich_text.get_line_metric(): druid_rich_text_lines_metrics\`
+#### \`druid_rich_text.get_line_metric(): druid_rich_text_lines_metrics\`
 
 <div class="api-symbol-body">
 
@@ -3401,7 +3403,7 @@ Get the current line metrics
 
 </div>
 
-### \`druid_rich_text.set_justify(is_justify: boolean): druid_rich_text\`
+#### \`druid_rich_text.set_justify(is_justify: boolean): druid_rich_text\`
 
 <div class="api-symbol-body">
 
@@ -3418,7 +3420,7 @@ A line with one word is left as-is. Extra gap is inserted between words.
 
 </div>
 
-### \`druid_rich_text.set_width(width: number): druid_rich_text\`
+#### \`druid_rich_text.set_width(width: number): druid_rich_text\`
 
 <div class="api-symbol-body">
 
@@ -3434,7 +3436,7 @@ Set the width of the rich text, not affects the size of current spawned words
 
 </div>
 
-### \`druid_rich_text.set_height(height: number): druid_rich_text\`
+#### \`druid_rich_text.set_height(height: number): druid_rich_text\`
 
 <div class="api-symbol-body">
 
@@ -3450,7 +3452,7 @@ Set the height of the rich text, not affects the size of current spawned words
 
 </div>
 
-### \`druid_rich_text.root: Opaque<"node">\`
+#### \`druid_rich_text.root: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -3458,7 +3460,7 @@ The root text node of the rich text
 
 </div>
 
-### \`druid_rich_text.text_prefab: Opaque<"node">\`
+#### \`druid_rich_text.text_prefab: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -3466,7 +3468,7 @@ The text prefab node
 
 </div>
 
-### \`druid_rich_text.is_justify: boolean\`
+#### \`druid_rich_text.is_justify: boolean\`
 
 <div class="api-symbol-body">
 
@@ -3474,9 +3476,9 @@ True if words on a line should be spread to the root width
 
 </div>
 
-## druid_container_style
+### druid_container_style
 
-### \`druid_container_style.DRAGGABLE_CORNER_SIZE: Vector3\`
+#### \`druid_container_style.DRAGGABLE_CORNER_SIZE: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3484,7 +3486,7 @@ Size of box node for debug draggable corners
 
 </div>
 
-### \`druid_container_style.DRAGGABLE_CORNER_COLOR: Vector4\`
+#### \`druid_container_style.DRAGGABLE_CORNER_COLOR: Vector4\`
 
 <div class="api-symbol-body">
 
@@ -3492,9 +3494,9 @@ Color of debug draggable corners
 
 </div>
 
-## druid_container
+### druid_container
 
-### \`druid_container.init(node: Opaque<"node">, mode: string, callback?: ((self: druid_container, size: Vector3) => void) | undefined)\`
+#### \`druid_container.init(node: Opaque<"node">, mode: string, callback?: ((self: druid_container, size: Vector3) => void) | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -3508,7 +3510,7 @@ The Container constructor
 
 </div>
 
-### \`druid_container.refresh_origins()\`
+#### \`druid_container.refresh_origins()\`
 
 <div class="api-symbol-body">
 
@@ -3516,7 +3518,7 @@ Refresh the origins of the container, origins is the size and position of the co
 
 </div>
 
-### \`druid_container.set_pivot(pivot: Opaque<"constant">)\`
+#### \`druid_container.set_pivot(pivot: Opaque<"constant">)\`
 
 <div class="api-symbol-body">
 
@@ -3528,7 +3530,7 @@ Set the pivot of the container
 
 </div>
 
-### \`druid_container.set_size(width?: number | undefined, height?: number | undefined, anchor_pivot?: Opaque<"constant"> | undefined): druid_container\`
+#### \`druid_container.set_size(width?: number | undefined, height?: number | undefined, anchor_pivot?: Opaque<"constant"> | undefined): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3546,7 +3548,7 @@ Set new size of layout node
 
 </div>
 
-### \`druid_container.get_position(): Vector3\`
+#### \`druid_container.get_position(): Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3558,7 +3560,7 @@ Get the position of the container
 
 </div>
 
-### \`druid_container.set_position(pos_x: number, pos_y: number)\`
+#### \`druid_container.set_position(pos_x: number, pos_y: number)\`
 
 <div class="api-symbol-body">
 
@@ -3571,7 +3573,7 @@ Set the position of the container
 
 </div>
 
-### \`druid_container.get_size(): Vector3\`
+#### \`druid_container.get_size(): Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3583,7 +3585,7 @@ Get the current size of the layout node
 
 </div>
 
-### \`druid_container.get_scale(): Vector3\`
+#### \`druid_container.get_scale(): Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3595,7 +3597,7 @@ Get the current scale of the layout node
 
 </div>
 
-### \`druid_container.fit_into_size(target_size: Vector3): druid_container\`
+#### \`druid_container.fit_into_size(target_size: Vector3): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3611,7 +3613,7 @@ Set size for layout node to fit inside it
 
 </div>
 
-### \`druid_container.fit_into_window(): druid_container\`
+#### \`druid_container.fit_into_window(): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3623,7 +3625,7 @@ Set current size for layout node to fit inside it
 
 </div>
 
-### \`druid_container.add_container(node_or_container: Opaque<"node"> | string | druid_container | LuaTable, mode?: druid_container_mode | undefined, on_resize_callback?: ((self: Opaque<"userdata">, size: Vector3) => void) | undefined): druid_container\`
+#### \`druid_container.add_container(node_or_container: Opaque<"node"> | string | druid_container | LuaTable, mode?: druid_container_mode | undefined, on_resize_callback?: ((self: Opaque<"userdata">, size: Vector3) => void) | undefined): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3639,7 +3641,7 @@ Set current size for layout node to fit inside it
 
 </div>
 
-### \`druid_container.remove_container_by_node(): druid_container | undefined\`
+#### \`druid_container.remove_container_by_node(): druid_container | undefined\`
 
 <div class="api-symbol-body">
 
@@ -3649,7 +3651,7 @@ Set current size for layout node to fit inside it
 
 </div>
 
-### \`druid_container.set_parent_container(parent_container?: druid_container | undefined)\`
+#### \`druid_container.set_parent_container(parent_container?: druid_container | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -3659,23 +3661,13 @@ Set current size for layout node to fit inside it
 
 </div>
 
-### \`druid_container.refresh()\`
+#### \`druid_container.refresh()\`
 
-### \`druid_container.refresh_scale()\`
+#### \`druid_container.refresh_scale()\`
 
-### \`druid_container.update_child_containers()\`
+#### \`druid_container.update_child_containers()\`
 
-### \`druid_container.create_draggable_corners(): druid_container\`
-
-<div class="api-symbol-body">
-
-<p class="api-slot-label">Returns</p>
-
-- <code class="api-type">druid_container</code> — Current container instance
-
-</div>
-
-### \`druid_container.clear_draggable_corners(): druid_container\`
+#### \`druid_container.create_draggable_corners(): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3685,9 +3677,19 @@ Set current size for layout node to fit inside it
 
 </div>
 
-### \`druid_container._on_corner_drag()\`
+#### \`druid_container.clear_draggable_corners(): druid_container\`
 
-### \`druid_container.fit_into_node(node: string | Opaque<"node">): druid_container\`
+<div class="api-symbol-body">
+
+<p class="api-slot-label">Returns</p>
+
+- <code class="api-type">druid_container</code> — Current container instance
+
+</div>
+
+#### \`druid_container._on_corner_drag()\`
+
+#### \`druid_container.fit_into_node(node: string | Opaque<"node">): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3703,7 +3705,7 @@ Set node for layout node to fit inside it. Pass nil to reset
 
 </div>
 
-### \`druid_container.set_min_size(min_size_x?: number | undefined, min_size_y?: number | undefined): druid_container\`
+#### \`druid_container.set_min_size(min_size_x?: number | undefined, min_size_y?: number | undefined): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3720,7 +3722,7 @@ Set the minimum size of the container
 
 </div>
 
-### \`druid_container.set_max_size(max_size_x?: number | undefined, max_size_y?: number | undefined): druid_container\`
+#### \`druid_container.set_max_size(max_size_x?: number | undefined, max_size_y?: number | undefined): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3737,7 +3739,7 @@ Set the maximum size of the container
 
 </div>
 
-### \`druid_container.node: Opaque<"node">\`
+#### \`druid_container.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -3745,7 +3747,7 @@ The gui node
 
 </div>
 
-### \`druid_container.druid: druid_instance\`
+#### \`druid_container.druid: druid_instance\`
 
 <div class="api-symbol-body">
 
@@ -3753,7 +3755,7 @@ The druid instance
 
 </div>
 
-### \`druid_container.node_offset: Vector4\`
+#### \`druid_container.node_offset: Vector4\`
 
 <div class="api-symbol-body">
 
@@ -3761,7 +3763,7 @@ The node offset
 
 </div>
 
-### \`druid_container.origin_size: Vector3\`
+#### \`druid_container.origin_size: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3769,7 +3771,7 @@ The origin size
 
 </div>
 
-### \`druid_container.size: Vector3\`
+#### \`druid_container.size: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3777,7 +3779,7 @@ The current size
 
 </div>
 
-### \`druid_container.origin_position: Vector3\`
+#### \`druid_container.origin_position: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3785,7 +3787,7 @@ The origin position
 
 </div>
 
-### \`druid_container.position: Vector3\`
+#### \`druid_container.position: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3793,7 +3795,7 @@ The current position
 
 </div>
 
-### \`druid_container.pivot_offset: Vector3\`
+#### \`druid_container.pivot_offset: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3801,7 +3803,7 @@ The pivot offset
 
 </div>
 
-### \`druid_container.center_offset: Vector3\`
+#### \`druid_container.center_offset: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3809,7 +3811,7 @@ The center offset
 
 </div>
 
-### \`druid_container.mode: druid_container_mode\`
+#### \`druid_container.mode: druid_container_mode\`
 
 <div class="api-symbol-body">
 
@@ -3817,7 +3819,7 @@ The layout mode
 
 </div>
 
-### \`druid_container.fit_size: Vector3\`
+#### \`druid_container.fit_size: Vector3\`
 
 <div class="api-symbol-body">
 
@@ -3825,7 +3827,7 @@ The fit size
 
 </div>
 
-### \`druid_container.min_size_x: number | undefined\`
+#### \`druid_container.min_size_x: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -3833,7 +3835,7 @@ The minimum size x
 
 </div>
 
-### \`druid_container.min_size_y: number | undefined\`
+#### \`druid_container.min_size_y: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -3841,7 +3843,7 @@ The minimum size y
 
 </div>
 
-### \`druid_container.max_size_x: number | undefined\`
+#### \`druid_container.max_size_x: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -3849,7 +3851,7 @@ The maximum size x
 
 </div>
 
-### \`druid_container.max_size_y: number | undefined\`
+#### \`druid_container.max_size_y: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -3857,7 +3859,7 @@ The maximum size y
 
 </div>
 
-### \`druid_container.on_size_changed: event\`
+#### \`druid_container.on_size_changed: event\`
 
 <div class="api-symbol-body">
 
@@ -3865,7 +3867,7 @@ fun(self: druid.container, size: vector3) The event triggered when the size chan
 
 </div>
 
-### \`druid_container._parent_container: druid_container\`
+#### \`druid_container._parent_container: druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3873,7 +3875,7 @@ The parent container
 
 </div>
 
-### \`druid_container._containers: LuaTable\`
+#### \`druid_container._containers: LuaTable\`
 
 <div class="api-symbol-body">
 
@@ -3881,7 +3883,7 @@ The containers
 
 </div>
 
-### \`druid_container._draggable_corners: LuaTable\`
+#### \`druid_container._draggable_corners: LuaTable\`
 
 <div class="api-symbol-body">
 
@@ -3889,9 +3891,9 @@ The draggable corners
 
 </div>
 
-## druid_data_list
+### druid_data_list
 
-### \`druid_data_list.init(scroll: druid_scroll, grid: druid_grid, create_function: (...args: any[]) => unknown)\`
+#### \`druid_data_list.init(scroll: druid_scroll, grid: druid_grid, create_function: (...args: any[]) => unknown)\`
 
 <div class="api-symbol-body">
 
@@ -3905,7 +3907,7 @@ The DataList constructor
 
 </div>
 
-### \`druid_data_list.set_use_cache(is_use_cache: boolean): druid_data_list\`
+#### \`druid_data_list.set_use_cache(is_use_cache: boolean): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -3921,7 +3923,7 @@ Set use cache version of DataList. Requires make setup of components in on_eleme
 
 </div>
 
-### \`druid_data_list.set_data(data: LuaTable): druid_data_list\`
+#### \`druid_data_list.set_data(data: LuaTable): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -3937,7 +3939,7 @@ Set new data set for DataList component
 
 </div>
 
-### \`druid_data_list.get_data(): LuaTable\`
+#### \`druid_data_list.get_data(): LuaTable\`
 
 <div class="api-symbol-body">
 
@@ -3949,7 +3951,7 @@ Return current data from DataList component
 
 </div>
 
-### \`druid_data_list.add(data: LuaTable, index?: number | undefined, shift_policy?: number | undefined): druid_data_list\`
+#### \`druid_data_list.add(data: LuaTable, index?: number | undefined, shift_policy?: number | undefined): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -3967,7 +3969,7 @@ Add element to DataList
 
 </div>
 
-### \`druid_data_list.remove(index?: number | undefined, shift_policy?: number | undefined): druid_data_list\`
+#### \`druid_data_list.remove(index?: number | undefined, shift_policy?: number | undefined): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -3984,7 +3986,7 @@ Remove element from DataList
 
 </div>
 
-### \`druid_data_list.remove_by_data(data: LuaTable, shift_policy?: number | undefined): druid_data_list\`
+#### \`druid_data_list.remove_by_data(data: LuaTable, shift_policy?: number | undefined): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -4001,7 +4003,7 @@ Remove element from DataList by data value
 
 </div>
 
-### \`druid_data_list.clear(): druid_data_list\`
+#### \`druid_data_list.clear(): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -4013,7 +4015,7 @@ Clear the DataList and refresh visuals
 
 </div>
 
-### \`druid_data_list.get_index(data: LuaTable)\`
+#### \`druid_data_list.get_index(data: LuaTable)\`
 
 <div class="api-symbol-body">
 
@@ -4025,7 +4027,7 @@ Return index for data value
 
 </div>
 
-### \`druid_data_list.get_created_nodes(): Opaque<"node">[]\`
+#### \`druid_data_list.get_created_nodes(): Opaque<"node">[]\`
 
 <div class="api-symbol-body">
 
@@ -4037,7 +4039,7 @@ Return all currently created nodes in DataList
 
 </div>
 
-### \`druid_data_list.get_created_components(): druid_component[]\`
+#### \`druid_data_list.get_created_components(): druid_component[]\`
 
 <div class="api-symbol-body">
 
@@ -4049,7 +4051,7 @@ Return all currently created components in DataList
 
 </div>
 
-### \`druid_data_list.scroll_to_index(index: number)\`
+#### \`druid_data_list.scroll_to_index(index: number)\`
 
 <div class="api-symbol-body">
 
@@ -4061,7 +4063,7 @@ Instant scroll to element with passed index
 
 </div>
 
-### \`druid_data_list.refresh(): druid_data_list\`
+#### \`druid_data_list.refresh(): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -4075,7 +4077,7 @@ something outside of the data changed, like the grid item size at runtime
 
 </div>
 
-### \`druid_data_list.scroll: druid_scroll\`
+#### \`druid_data_list.scroll: druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -4083,7 +4085,7 @@ The scroll instance for Data List component
 
 </div>
 
-### \`druid_data_list.grid: druid_grid\`
+#### \`druid_data_list.grid: druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -4091,7 +4093,7 @@ The Static Grid instance for Data List component
 
 </div>
 
-### \`druid_data_list.on_scroll_progress_change: event\`
+#### \`druid_data_list.on_scroll_progress_change: event\`
 
 <div class="api-symbol-body">
 
@@ -4099,7 +4101,7 @@ fun(self: druid.data_list, progress: number) The event triggered when the scroll
 
 </div>
 
-### \`druid_data_list.on_element_add: event\`
+#### \`druid_data_list.on_element_add: event\`
 
 <div class="api-symbol-body">
 
@@ -4107,7 +4109,7 @@ fun(self: druid.data_list, index: number, node: node, instance: druid.component,
 
 </div>
 
-### \`druid_data_list.on_element_remove: event\`
+#### \`druid_data_list.on_element_remove: event\`
 
 <div class="api-symbol-body">
 
@@ -4115,7 +4117,7 @@ fun(self: druid.data_list, index: number, node: node, instance: druid.component,
 
 </div>
 
-### \`druid_data_list.top_index: number\`
+#### \`druid_data_list.top_index: number\`
 
 <div class="api-symbol-body">
 
@@ -4123,7 +4125,7 @@ The top index of the visible elements. **⚠️ 1-based; passed to \`druid\` unc
 
 </div>
 
-### \`druid_data_list.last_index: number\`
+#### \`druid_data_list.last_index: number\`
 
 <div class="api-symbol-body">
 
@@ -4131,7 +4133,7 @@ The last index of the visible elements. **⚠️ 1-based; passed to \`druid\` un
 
 </div>
 
-### \`druid_data_list.scroll_progress: number\`
+#### \`druid_data_list.scroll_progress: number\`
 
 <div class="api-symbol-body">
 
@@ -4139,9 +4141,9 @@ The scroll progress
 
 </div>
 
-## druid_hotkey_style
+### druid_hotkey_style
 
-### \`druid_hotkey_style.MODIFICATORS: string[] | Hash[]\`
+#### \`druid_hotkey_style.MODIFICATORS: string[] | Hash[]\`
 
 <div class="api-symbol-body">
 
@@ -4149,7 +4151,7 @@ The list of action_id as hotkey modificators
 
 </div>
 
-### \`druid_hotkey_style.MODIFICATOR_RELEASE_TIME: number\`
+#### \`druid_hotkey_style.MODIFICATOR_RELEASE_TIME: number\`
 
 <div class="api-symbol-body">
 
@@ -4157,9 +4159,9 @@ Time in seconds to keep modificator active after release
 
 </div>
 
-## druid_hotkey
+### druid_hotkey
 
-### \`druid_hotkey.init(keys: string[] | string, callback: (...args: any[]) => unknown, callback_argument?: unknown | undefined)\`
+#### \`druid_hotkey.init(keys: string[] | string, callback: (...args: any[]) => unknown, callback_argument?: unknown | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -4173,7 +4175,7 @@ The Hotkey constructor
 
 </div>
 
-### \`druid_hotkey.add_hotkey(keys: string[] | Hash[] | string | Hash, callback_argument?: unknown | undefined): druid_hotkey\`
+#### \`druid_hotkey.add_hotkey(keys: string[] | Hash[] | string | Hash, callback_argument?: unknown | undefined): druid_hotkey\`
 
 <div class="api-symbol-body">
 
@@ -4190,9 +4192,9 @@ Add hotkey for component callback
 
 </div>
 
-### \`druid_hotkey.is_processing()\`
+#### \`druid_hotkey.is_processing()\`
 
-### \`druid_hotkey.set_repeat(is_enabled_repeated: boolean): druid_hotkey\`
+#### \`druid_hotkey.set_repeat(is_enabled_repeated: boolean): druid_hotkey\`
 
 <div class="api-symbol-body">
 
@@ -4208,7 +4210,7 @@ If true, the callback will be triggered on action.repeated
 
 </div>
 
-### \`druid_hotkey.bind_node(node?: Opaque<"node"> | undefined): druid_hotkey\`
+#### \`druid_hotkey.bind_node(node?: Opaque<"node"> | undefined): druid_hotkey\`
 
 <div class="api-symbol-body">
 
@@ -4224,7 +4226,7 @@ If node is provided, the hotkey can be disabled, if the node is disabled
 
 </div>
 
-### \`druid_hotkey.on_hotkey_pressed: event\`
+#### \`druid_hotkey.on_hotkey_pressed: event\`
 
 <div class="api-symbol-body">
 
@@ -4232,7 +4234,7 @@ fun(self, context, callback_argument) The event triggered when a hotkey is press
 
 </div>
 
-### \`druid_hotkey.on_hotkey_released: event\`
+#### \`druid_hotkey.on_hotkey_released: event\`
 
 <div class="api-symbol-body">
 
@@ -4240,7 +4242,7 @@ fun(self, context, callback_argument) The event triggered when a hotkey is relea
 
 </div>
 
-### \`druid_hotkey.style: druid_hotkey_style\`
+#### \`druid_hotkey.style: druid_hotkey_style\`
 
 <div class="api-symbol-body">
 
@@ -4248,9 +4250,9 @@ The style of the hotkey component
 
 </div>
 
-## druid_input_style
+### druid_input_style
 
-### \`druid_input_style.MASK_DEFAULT_CHAR: string\`
+#### \`druid_input_style.MASK_DEFAULT_CHAR: string\`
 
 <div class="api-symbol-body">
 
@@ -4258,7 +4260,7 @@ Default character mask for password input
 
 </div>
 
-### \`druid_input_style.IS_LONGTAP_ERASE: boolean\`
+#### \`druid_input_style.IS_LONGTAP_ERASE: boolean\`
 
 <div class="api-symbol-body">
 
@@ -4266,7 +4268,7 @@ Is long tap will erase current input data
 
 </div>
 
-### \`druid_input_style.IS_UNSELECT_ON_RESELECT: boolean\`
+#### \`druid_input_style.IS_UNSELECT_ON_RESELECT: boolean\`
 
 <div class="api-symbol-body">
 
@@ -4274,7 +4276,7 @@ If true, call unselect on select selected input
 
 </div>
 
-### \`druid_input_style.ON_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_input_style.ON_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -4282,7 +4284,7 @@ Cursor on input touch hover (defos cursor). Default: nil
 
 </div>
 
-### \`druid_input_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_input_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -4290,7 +4292,7 @@ Cursor on input mouse hover (defos cursor). Default: nil
 
 </div>
 
-### \`druid_input_style.on_init: ((self: druid_input) => void) | undefined\`
+#### \`druid_input_style.on_init: ((self: druid_input) => void) | undefined\`
 
 <div class="api-symbol-body">
 
@@ -4298,7 +4300,7 @@ Callback when input is initialized, use to set custom properties on self
 
 </div>
 
-### \`druid_input_style.on_select: (self: druid_input, button_node: Opaque<"node">) => void\`
+#### \`druid_input_style.on_select: (self: druid_input, button_node: Opaque<"node">) => void\`
 
 <div class="api-symbol-body">
 
@@ -4306,7 +4308,7 @@ Callback on input field selecting
 
 </div>
 
-### \`druid_input_style.on_unselect: (self: druid_input, button_node: Opaque<"node">) => void\`
+#### \`druid_input_style.on_unselect: (self: druid_input, button_node: Opaque<"node">) => void\`
 
 <div class="api-symbol-body">
 
@@ -4314,7 +4316,7 @@ Callback on input field unselecting
 
 </div>
 
-### \`druid_input_style.on_input_wrong: (self: druid_input, button_node: Opaque<"node">) => void\`
+#### \`druid_input_style.on_input_wrong: (self: druid_input, button_node: Opaque<"node">) => void\`
 
 <div class="api-symbol-body">
 
@@ -4322,9 +4324,9 @@ Callback on wrong user input
 
 </div>
 
-## druid_input
+### druid_input
 
-### \`druid_input.init(click_node: Opaque<"node">, text_node: Opaque<"node"> | druid_text, keyboard_type?: Opaque<"constant"> | undefined)\`
+#### \`druid_input.init(click_node: Opaque<"node">, text_node: Opaque<"node"> | druid_text, keyboard_type?: Opaque<"constant"> | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -4336,9 +4338,9 @@ Callback on wrong user input
 
 </div>
 
-### \`druid_input.get_text_selected()\`
+#### \`druid_input.get_text_selected()\`
 
-### \`druid_input.get_text_selected_replaced(text: string): string\`
+#### \`druid_input.get_text_selected_replaced(text: string): string\`
 
 <div class="api-symbol-body">
 
@@ -4354,7 +4356,7 @@ Replace selected text with new text
 
 </div>
 
-### \`druid_input.set_text(input_text?: string | undefined)\`
+#### \`druid_input.set_text(input_text?: string | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -4366,7 +4368,7 @@ Set text for input field
 
 </div>
 
-### \`druid_input.select()\`
+#### \`druid_input.select()\`
 
 <div class="api-symbol-body">
 
@@ -4374,7 +4376,7 @@ Select input field. It will show the keyboard and trigger on_select events
 
 </div>
 
-### \`druid_input.unselect()\`
+#### \`druid_input.unselect()\`
 
 <div class="api-symbol-body">
 
@@ -4382,7 +4384,7 @@ Remove selection from input. It will hide the keyboard and trigger on_unselect e
 
 </div>
 
-### \`druid_input.get_text_visual(): string\`
+#### \`druid_input.get_text_visual(): string\`
 
 <div class="api-symbol-body">
 
@@ -4395,7 +4397,7 @@ Can differ from \`get_text\` if the text adjust mode trims the value.
 
 </div>
 
-### \`druid_input.get_text(): string\`
+#### \`druid_input.get_text(): string\`
 
 <div class="api-symbol-body">
 
@@ -4407,7 +4409,7 @@ Return current input field text
 
 </div>
 
-### \`druid_input.set_max_length(max_length: number): druid_input\`
+#### \`druid_input.set_max_length(max_length: number): druid_input\`
 
 <div class="api-symbol-body">
 
@@ -4424,7 +4426,7 @@ Pass nil to make input field unliminted (by default)
 
 </div>
 
-### \`druid_input.set_allowed_characters(characters: string): druid_input\`
+#### \`druid_input.set_allowed_characters(characters: string): druid_input\`
 
 <div class="api-symbol-body">
 
@@ -4444,7 +4446,7 @@ ex: [^%s] to allow only non-space characters
 
 </div>
 
-### \`druid_input.reset_changes(): druid_input\`
+#### \`druid_input.reset_changes(): druid_input\`
 
 <div class="api-symbol-body">
 
@@ -4456,7 +4458,7 @@ Reset current input selection and return previous value
 
 </div>
 
-### \`druid_input.select_cursor(cursor_index?: number | undefined, start_index?: number | undefined, end_index?: number | undefined): druid_input\`
+#### \`druid_input.select_cursor(cursor_index?: number | undefined, start_index?: number | undefined, end_index?: number | undefined): druid_input\`
 
 <div class="api-symbol-body">
 
@@ -4474,7 +4476,7 @@ Set cursor position in input field
 
 </div>
 
-### \`druid_input.move_selection(delta: number, is_add_to_selection: boolean, is_move_to_end: boolean): druid_input\`
+#### \`druid_input.move_selection(delta: number, is_add_to_selection: boolean, is_move_to_end: boolean): druid_input\`
 
 <div class="api-symbol-body">
 
@@ -4492,7 +4494,7 @@ Change cursor position by delta
 
 </div>
 
-### \`druid_input.on_input_select: event\`
+#### \`druid_input.on_input_select: event\`
 
 <div class="api-symbol-body">
 
@@ -4500,7 +4502,7 @@ fun(self: druid.input, input: druid.input) The event triggered when the input fi
 
 </div>
 
-### \`druid_input.on_input_unselect: event\`
+#### \`druid_input.on_input_unselect: event\`
 
 <div class="api-symbol-body">
 
@@ -4508,7 +4510,7 @@ fun(self: druid.input, text: string, input: druid.input) The event triggered whe
 
 </div>
 
-### \`druid_input.on_input_text: event\`
+#### \`druid_input.on_input_text: event\`
 
 <div class="api-symbol-body">
 
@@ -4516,7 +4518,7 @@ fun(self: druid.input, text: string) The event triggered when the input field te
 
 </div>
 
-### \`druid_input.on_input_empty: event\`
+#### \`druid_input.on_input_empty: event\`
 
 <div class="api-symbol-body">
 
@@ -4524,7 +4526,7 @@ fun(self: druid.input, text: string) The event triggered when the input field be
 
 </div>
 
-### \`druid_input.on_input_full: event\`
+#### \`druid_input.on_input_full: event\`
 
 <div class="api-symbol-body">
 
@@ -4532,7 +4534,7 @@ fun(self: druid.input, text: string) The event triggered when the input field re
 
 </div>
 
-### \`druid_input.on_input_wrong: event\`
+#### \`druid_input.on_input_wrong: event\`
 
 <div class="api-symbol-body">
 
@@ -4540,7 +4542,7 @@ fun(self: druid.input, character: string) The event triggered when a not allowed
 
 </div>
 
-### \`druid_input.on_select_cursor_change: event\`
+#### \`druid_input.on_select_cursor_change: event\`
 
 <div class="api-symbol-body">
 
@@ -4548,7 +4550,7 @@ fun(self: druid.input, cursor_index: number, start_index: number, end_index: num
 
 </div>
 
-### \`druid_input.style: druid_input_style\`
+#### \`druid_input.style: druid_input_style\`
 
 <div class="api-symbol-body">
 
@@ -4556,9 +4558,9 @@ The style of the input component
 
 </div>
 
-## druid_lang_text
+### druid_lang_text
 
-### \`druid_lang_text.init(node: string | Opaque<"node">, locale_id?: string | undefined, adjust_type?: string | undefined)\`
+#### \`druid_lang_text.init(node: string | Opaque<"node">, locale_id?: string | undefined, adjust_type?: string | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -4570,7 +4572,7 @@ The style of the input component
 
 </div>
 
-### \`druid_lang_text.set_text(text: string): druid_lang_text\`
+#### \`druid_lang_text.set_text(text: string): druid_lang_text\`
 
 <div class="api-symbol-body">
 
@@ -4586,7 +4588,7 @@ Setup raw text to lang_text component. This will clear any locale settings.
 
 </div>
 
-### \`druid_lang_text.set_to(text: string): druid_lang_text\`
+#### \`druid_lang_text.set_to(text: string): druid_lang_text\`
 
 <div class="api-symbol-body">
 
@@ -4608,7 +4610,7 @@ Setup raw text to lang_text component. This will clear any locale settings.
 
 </div>
 
-### \`druid_lang_text.translate(locale_id: string, ...args: string[]): druid_lang_text\`
+#### \`druid_lang_text.translate(locale_id: string, ...args: string[]): druid_lang_text\`
 
 <div class="api-symbol-body">
 
@@ -4625,7 +4627,7 @@ Translate the text by locale_id. The text will be automatically updated when loc
 
 </div>
 
-### \`druid_lang_text.format(...args: string[]): druid_lang_text\`
+#### \`druid_lang_text.format(...args: string[]): druid_lang_text\`
 
 <div class="api-symbol-body">
 
@@ -4641,7 +4643,7 @@ Format string with new text params on localized text. Keeps the current locale b
 
 </div>
 
-### \`druid_lang_text.text: druid_text\`
+#### \`druid_lang_text.text: druid_text\`
 
 <div class="api-symbol-body">
 
@@ -4649,7 +4651,7 @@ The text component
 
 </div>
 
-### \`druid_lang_text.node: Opaque<"node">\`
+#### \`druid_lang_text.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -4657,7 +4659,7 @@ The node of the text component
 
 </div>
 
-### \`druid_lang_text.on_change: event\`
+#### \`druid_lang_text.on_change: event\`
 
 <div class="api-symbol-body">
 
@@ -4665,29 +4667,29 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 </div>
 
-## druid_layout_row_data
+### druid_layout_row_data
 
-### \`druid_layout_row_data.width: number\`
+#### \`druid_layout_row_data.width: number\`
 
-### \`druid_layout_row_data.height: number\`
+#### \`druid_layout_row_data.height: number\`
 
-### \`druid_layout_row_data.count: number\`
+#### \`druid_layout_row_data.count: number\`
 
-## druid_layout_rows_data
+### druid_layout_rows_data
 
-### \`druid_layout_rows_data.total_width: number\`
+#### \`druid_layout_rows_data.total_width: number\`
 
-### \`druid_layout_rows_data.total_height: number\`
+#### \`druid_layout_rows_data.total_height: number\`
 
-### \`druid_layout_rows_data.nodes_width: LuaTable<Opaque<"node">, number>\`
+#### \`druid_layout_rows_data.nodes_width: LuaTable<Opaque<"node">, number>\`
 
-### \`druid_layout_rows_data.nodes_height: LuaTable<Opaque<"node">, number>\`
+#### \`druid_layout_rows_data.nodes_height: LuaTable<Opaque<"node">, number>\`
 
-### \`druid_layout_rows_data.rows: druid_layout_row_data[]\`
+#### \`druid_layout_rows_data.rows: druid_layout_row_data[]\`
 
-## druid_layout
+### druid_layout
 
-### \`druid_layout.init(node_or_node_id: Opaque<"node"> | string, layout_type: druid_layout_type)\`
+#### \`druid_layout.init(node_or_node_id: Opaque<"node"> | string, layout_type: druid_layout_type)\`
 
 <div class="api-symbol-body">
 
@@ -4698,11 +4700,11 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 </div>
 
-### \`druid_layout.update()\`
+#### \`druid_layout.update()\`
 
-### \`druid_layout.on_layout_change()\`
+#### \`druid_layout.on_layout_change()\`
 
-### \`druid_layout.get_entities(): Opaque<"node">[]\`
+#### \`druid_layout.get_entities(): Opaque<"node">[]\`
 
 <div class="api-symbol-body">
 
@@ -4712,7 +4714,7 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 </div>
 
-### \`druid_layout.get_entities_count(): number\`
+#### \`druid_layout.get_entities_count(): number\`
 
 <div class="api-symbol-body">
 
@@ -4722,7 +4724,7 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 </div>
 
-### \`druid_layout.set_node_index(node: Opaque<"node">, index: number): druid_layout\`
+#### \`druid_layout.set_node_index(node: Opaque<"node">, index: number): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4737,7 +4739,7 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 </div>
 
-### \`druid_layout.set_margin(margin_x?: number | undefined, margin_y?: number | undefined): druid_layout\`
+#### \`druid_layout.set_margin(margin_x?: number | undefined, margin_y?: number | undefined): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4754,7 +4756,7 @@ Set the margin of the layout
 
 </div>
 
-### \`druid_layout.set_padding(padding_x?: number | undefined, padding_y?: number | undefined, padding_z?: number | undefined, padding_w?: number | undefined): druid_layout\`
+#### \`druid_layout.set_padding(padding_x?: number | undefined, padding_y?: number | undefined, padding_z?: number | undefined, padding_w?: number | undefined): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4771,7 +4773,7 @@ Set the margin of the layout
 
 </div>
 
-### \`druid_layout.set_dirty(): druid_layout\`
+#### \`druid_layout.set_dirty(): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4781,7 +4783,7 @@ Set the margin of the layout
 
 </div>
 
-### \`druid_layout.set_justify(is_justify: boolean): druid_layout\`
+#### \`druid_layout.set_justify(is_justify: boolean): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4795,7 +4797,7 @@ Set the margin of the layout
 
 </div>
 
-### \`druid_layout.set_type(layout_type: druid_layout_type): druid_layout\`
+#### \`druid_layout.set_type(layout_type: druid_layout_type): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4809,7 +4811,7 @@ Set the margin of the layout
 
 </div>
 
-### \`druid_layout.set_hug_content(is_hug_width: boolean, is_hug_height: boolean): druid_layout\`
+#### \`druid_layout.set_hug_content(is_hug_width: boolean, is_hug_height: boolean): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4824,7 +4826,7 @@ Set the margin of the layout
 
 </div>
 
-### \`druid_layout.add(node_or_node_id: Opaque<"node"> | string): druid_layout\`
+#### \`druid_layout.add(node_or_node_id: Opaque<"node"> | string): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4840,7 +4842,7 @@ Add node to layout
 
 </div>
 
-### \`druid_layout.remove(node_or_node_id: Opaque<"node"> | string): druid_layout\`
+#### \`druid_layout.remove(node_or_node_id: Opaque<"node"> | string): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4856,7 +4858,7 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.get_size(): Vector3\`
+#### \`druid_layout.get_size(): Vector3\`
 
 <div class="api-symbol-body">
 
@@ -4866,7 +4868,7 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.get_content_size(): LuaMultiReturn<[number, number]>\`
+#### \`druid_layout.get_content_size(): LuaMultiReturn<[number, number]>\`
 
 <div class="api-symbol-body">
 
@@ -4877,7 +4879,7 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.refresh_layout(is_instant?: boolean | undefined): druid_layout\`
+#### \`druid_layout.refresh_layout(is_instant?: boolean | undefined): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4891,7 +4893,7 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.clear_layout(): druid_layout\`
+#### \`druid_layout.clear_layout(): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4901,7 +4903,7 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.get_node_size(node: Opaque<"node">): LuaMultiReturn<[number, number]>\`
+#### \`druid_layout.get_node_size(node: Opaque<"node">): LuaMultiReturn<[number, number]>\`
 
 <div class="api-symbol-body">
 
@@ -4916,7 +4918,7 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.set_node_position(node: Opaque<"node">, x: number, y: number): Opaque<"node">\`
+#### \`druid_layout.set_node_position(node: Opaque<"node">, x: number, y: number): Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -4932,7 +4934,7 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.set_position_function(callback: (...args: any[]) => unknown): druid_layout\`
+#### \`druid_layout.set_position_function(callback: (...args: any[]) => unknown): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4948,7 +4950,7 @@ Set custom position function for layout nodes. It will call on update poses on l
 
 </div>
 
-### \`druid_layout.node: Opaque<"node">\`
+#### \`druid_layout.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -4956,7 +4958,7 @@ The node to manage the layout of
 
 </div>
 
-### \`druid_layout.rows_data: druid_layout_rows_data\`
+#### \`druid_layout.rows_data: druid_layout_rows_data\`
 
 <div class="api-symbol-body">
 
@@ -4964,7 +4966,7 @@ Last calculated rows data
 
 </div>
 
-### \`druid_layout.is_dirty: boolean\`
+#### \`druid_layout.is_dirty: boolean\`
 
 <div class="api-symbol-body">
 
@@ -4972,7 +4974,7 @@ True if layout needs to be updated
 
 </div>
 
-### \`druid_layout.entities: Opaque<"node">[]\`
+#### \`druid_layout.entities: Opaque<"node">[]\`
 
 <div class="api-symbol-body">
 
@@ -4980,7 +4982,7 @@ The entities to manage the layout of
 
 </div>
 
-### \`druid_layout.margin: { x: number; y: number }\`
+#### \`druid_layout.margin: { x: number; y: number }\`
 
 <div class="api-symbol-body">
 
@@ -4988,7 +4990,7 @@ The margin of the layout
 
 </div>
 
-### \`druid_layout.padding: Vector4\`
+#### \`druid_layout.padding: Vector4\`
 
 <div class="api-symbol-body">
 
@@ -4996,7 +4998,7 @@ The padding of the layout
 
 </div>
 
-### \`druid_layout.type: string\`
+#### \`druid_layout.type: string\`
 
 <div class="api-symbol-body">
 
@@ -5004,7 +5006,7 @@ The type of the layout
 
 </div>
 
-### \`druid_layout.is_resize_width: boolean\`
+#### \`druid_layout.is_resize_width: boolean\`
 
 <div class="api-symbol-body">
 
@@ -5012,7 +5014,7 @@ True if the layout should resize the width of the node
 
 </div>
 
-### \`druid_layout.is_resize_height: boolean\`
+#### \`druid_layout.is_resize_height: boolean\`
 
 <div class="api-symbol-body">
 
@@ -5020,7 +5022,7 @@ True if the layout should resize the height of the node
 
 </div>
 
-### \`druid_layout.is_justify: boolean\`
+#### \`druid_layout.is_justify: boolean\`
 
 <div class="api-symbol-body">
 
@@ -5028,7 +5030,7 @@ True if the layout should justify the nodes
 
 </div>
 
-### \`druid_layout.on_size_changed: event_on_size_changed\`
+#### \`druid_layout.on_size_changed: event_on_size_changed\`
 
 <div class="api-symbol-body">
 
@@ -5036,9 +5038,9 @@ fun(self: druid.layout, size: vector3) The event triggered when the size of the 
 
 </div>
 
-## druid_progress_style
+### druid_progress_style
 
-### \`druid_progress_style.SPEED: number | undefined\`
+#### \`druid_progress_style.SPEED: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -5046,7 +5048,7 @@ Progress bar fill rate. Higher value means faster fill. Default: 5
 
 </div>
 
-### \`druid_progress_style.MIN_DELTA: number | undefined\`
+#### \`druid_progress_style.MIN_DELTA: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -5054,9 +5056,9 @@ Minimum step to fill progress bar. Default: 0.005
 
 </div>
 
-## druid_progress
+### druid_progress
 
-### \`druid_progress.init(node: string | Opaque<"node">, key: string, init_value?: number | undefined)\`
+#### \`druid_progress.init(node: string | Opaque<"node">, key: string, init_value?: number | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -5068,7 +5070,7 @@ Minimum step to fill progress bar. Default: 0.005
 
 </div>
 
-### \`druid_progress.update(dt: number)\`
+#### \`druid_progress.update(dt: number)\`
 
 <div class="api-symbol-body">
 
@@ -5078,7 +5080,7 @@ Minimum step to fill progress bar. Default: 0.005
 
 </div>
 
-### \`druid_progress.fill(): druid_progress\`
+#### \`druid_progress.fill(): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -5090,7 +5092,7 @@ Fill the progress bar
 
 </div>
 
-### \`druid_progress.empty(): druid_progress\`
+#### \`druid_progress.empty(): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -5102,7 +5104,7 @@ Empty the progress bar
 
 </div>
 
-### \`druid_progress.set_value(to: number): druid_progress\`
+#### \`druid_progress.set_value(to: number): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -5118,7 +5120,7 @@ Instant fill progress bar to value
 
 </div>
 
-### \`druid_progress.set_to(to: number): druid_progress\`
+#### \`druid_progress.set_to(to: number): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -5140,7 +5142,7 @@ Instant fill progress bar to value
 
 </div>
 
-### \`druid_progress.get(): number\`
+#### \`druid_progress.get(): number\`
 
 <div class="api-symbol-body">
 
@@ -5152,7 +5154,7 @@ Return the current value of the progress bar
 
 </div>
 
-### \`druid_progress.get_value(): number\`
+#### \`druid_progress.get_value(): number\`
 
 <div class="api-symbol-body">
 
@@ -5164,7 +5166,7 @@ Return the current value of the progress bar
 
 </div>
 
-### \`druid_progress.set_steps(steps: number[], callback: (...args: any[]) => unknown): druid_progress\`
+#### \`druid_progress.set_steps(steps: number[], callback: (...args: any[]) => unknown): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -5181,7 +5183,7 @@ Set points on progress bar to fire the callback
 
 </div>
 
-### \`druid_progress.to(to: number, callback?: ((...args: any[]) => unknown) | undefined): druid_progress\`
+#### \`druid_progress.to(to: number, callback?: ((...args: any[]) => unknown) | undefined): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -5198,7 +5200,7 @@ Start animation of a progress bar
 
 </div>
 
-### \`druid_progress.set_max_size(max_size: Vector3): druid_progress\`
+#### \`druid_progress.set_max_size(max_size: Vector3): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -5214,7 +5216,7 @@ Set progress bar max node size
 
 </div>
 
-### \`druid_progress.node: Opaque<"node">\`
+#### \`druid_progress.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -5222,7 +5224,7 @@ The progress bar node
 
 </div>
 
-### \`druid_progress.on_change: event\`
+#### \`druid_progress.on_change: event\`
 
 <div class="api-symbol-body">
 
@@ -5230,7 +5232,7 @@ fun(self: druid.progress, value: number) Event triggered when progress value cha
 
 </div>
 
-### \`druid_progress.style: druid_progress_style\`
+#### \`druid_progress.style: druid_progress_style\`
 
 <div class="api-symbol-body">
 
@@ -5238,7 +5240,7 @@ Component style parameters
 
 </div>
 
-### \`druid_progress.key: string\`
+#### \`druid_progress.key: string\`
 
 <div class="api-symbol-body">
 
@@ -5246,7 +5248,7 @@ Progress bar direction: "x" or "y"
 
 </div>
 
-### \`druid_progress.prop: Hash\`
+#### \`druid_progress.prop: Hash\`
 
 <div class="api-symbol-body">
 
@@ -5254,9 +5256,9 @@ Property for scaling the progress bar
 
 </div>
 
-## druid_slider_style
+### druid_slider_style
 
-### \`druid_slider_style.DEFAULT_STEPS: number[] | undefined\`
+#### \`druid_slider_style.DEFAULT_STEPS: number[] | undefined\`
 
 <div class="api-symbol-body">
 
@@ -5264,7 +5266,7 @@ Default steps for the notched slider. Default: nil
 
 </div>
 
-### \`druid_slider_style.ON_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_slider_style.ON_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -5272,7 +5274,7 @@ Cursor on slider touch hover (defos cursor). Default: nil
 
 </div>
 
-### \`druid_slider_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
+#### \`druid_slider_style.ON_MOUSE_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -5280,9 +5282,9 @@ Cursor on slider mouse hover (defos cursor). Default: nil
 
 </div>
 
-## druid_slider
+### druid_slider
 
-### \`druid_slider.init(node: Opaque<"node">, end_pos: Vector3, callback?: ((...args: any[]) => unknown) | undefined)\`
+#### \`druid_slider.init(node: Opaque<"node">, end_pos: Vector3, callback?: ((...args: any[]) => unknown) | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -5296,7 +5298,7 @@ The Slider constructor
 
 </div>
 
-### \`druid_slider.set(value: number, is_silent?: boolean | undefined): druid_slider\`
+#### \`druid_slider.set(value: number, is_silent?: boolean | undefined): druid_slider\`
 
 <div class="api-symbol-body">
 
@@ -5313,7 +5315,7 @@ Set value for slider
 
 </div>
 
-### \`druid_slider.set_steps(steps: number[]): druid_slider\`
+#### \`druid_slider.set_steps(steps: number[]): druid_slider\`
 
 <div class="api-symbol-body">
 
@@ -5330,7 +5332,7 @@ apply closest step position
 
 </div>
 
-### \`druid_slider.set_end_pos(end_pos: Vector3): druid_slider\`
+#### \`druid_slider.set_end_pos(end_pos: Vector3): druid_slider\`
 
 <div class="api-symbol-body">
 
@@ -5346,7 +5348,7 @@ Adjust the end position of the slider
 
 </div>
 
-### \`druid_slider.set_input_node(input_node?: Opaque<"node"> | string | undefined): druid_slider\`
+#### \`druid_slider.set_input_node(input_node?: Opaque<"node"> | string | undefined): druid_slider\`
 
 <div class="api-symbol-body">
 
@@ -5365,7 +5367,7 @@ This function require the Defold version 1.3.0+
 
 </div>
 
-### \`druid_slider.set_enabled(is_enabled: boolean): druid_slider\`
+#### \`druid_slider.set_enabled(is_enabled: boolean): druid_slider\`
 
 <div class="api-symbol-body">
 
@@ -5381,7 +5383,7 @@ Set Slider input enabled or disabled
 
 </div>
 
-### \`druid_slider.is_enabled(): boolean\`
+#### \`druid_slider.is_enabled(): boolean\`
 
 <div class="api-symbol-body">
 
@@ -5393,7 +5395,7 @@ Check if Slider component is enabled
 
 </div>
 
-### \`druid_slider.node: Opaque<"node">\`
+#### \`druid_slider.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -5401,7 +5403,7 @@ The node to manage the slider
 
 </div>
 
-### \`druid_slider.on_change_value: event\`
+#### \`druid_slider.on_change_value: event\`
 
 <div class="api-symbol-body">
 
@@ -5409,7 +5411,7 @@ fun(self: druid.slider, value: number) The event triggered when the slider value
 
 </div>
 
-### \`druid_slider.style: druid_slider_style\`
+#### \`druid_slider.style: druid_slider_style\`
 
 <div class="api-symbol-body">
 
@@ -5417,7 +5419,7 @@ The style of the slider
 
 </div>
 
-### \`druid_slider.hover: druid_hover | undefined\`
+#### \`druid_slider.hover: druid_hover | undefined\`
 
 <div class="api-symbol-body">
 
@@ -5425,9 +5427,9 @@ Hover for the pin node cursors. nil without defos or without cursors in style
 
 </div>
 
-## druid_swipe_style
+### druid_swipe_style
 
-### \`druid_swipe_style.SWIPE_TIME: number | undefined\`
+#### \`druid_swipe_style.SWIPE_TIME: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -5435,7 +5437,7 @@ Maximum time for swipe trigger. Default: 0.4
 
 </div>
 
-### \`druid_swipe_style.SWIPE_THRESHOLD: number | undefined\`
+#### \`druid_swipe_style.SWIPE_THRESHOLD: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -5443,7 +5445,7 @@ Minimum distance for swipe trigger. Default: 50
 
 </div>
 
-### \`druid_swipe_style.SWIPE_TRIGGER_ON_MOVE: boolean | undefined\`
+#### \`druid_swipe_style.SWIPE_TRIGGER_ON_MOVE: boolean | undefined\`
 
 <div class="api-symbol-body">
 
@@ -5451,9 +5453,9 @@ If true, trigger on swipe moving, not only release action. Default: false
 
 </div>
 
-## druid_swipe
+### druid_swipe
 
-### \`druid_swipe.init(node_or_node_id: Opaque<"node"> | string, on_swipe_callback: (...args: any[]) => unknown)\`
+#### \`druid_swipe.init(node_or_node_id: Opaque<"node"> | string, on_swipe_callback: (...args: any[]) => unknown)\`
 
 <div class="api-symbol-body">
 
@@ -5464,7 +5466,7 @@ If true, trigger on swipe moving, not only release action. Default: false
 
 </div>
 
-### \`druid_swipe.set_click_zone(zone?: Opaque<"node"> | string | undefined)\`
+#### \`druid_swipe.set_click_zone(zone?: Opaque<"node"> | string | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -5476,7 +5478,7 @@ Set the click zone for the swipe, useful for restricting events outside stencil 
 
 </div>
 
-### \`druid_swipe.set_enabled(is_enabled: boolean): druid_swipe\`
+#### \`druid_swipe.set_enabled(is_enabled: boolean): druid_swipe\`
 
 <div class="api-symbol-body">
 
@@ -5492,7 +5494,7 @@ Set swipe enabled state
 
 </div>
 
-### \`druid_swipe.is_enabled(): boolean\`
+#### \`druid_swipe.is_enabled(): boolean\`
 
 <div class="api-symbol-body">
 
@@ -5504,7 +5506,7 @@ Return current swipe enabled state
 
 </div>
 
-### \`druid_swipe._start_swipe(action: action)\`
+#### \`druid_swipe._start_swipe(action: action)\`
 
 <div class="api-symbol-body">
 
@@ -5516,7 +5518,7 @@ Start swipe event
 
 </div>
 
-### \`druid_swipe._reset_swipe()\`
+#### \`druid_swipe._reset_swipe()\`
 
 <div class="api-symbol-body">
 
@@ -5524,7 +5526,7 @@ Reset swipe event
 
 </div>
 
-### \`druid_swipe._check_swipe(self: druid_swipe, action: action)\`
+#### \`druid_swipe._check_swipe(self: druid_swipe, action: action)\`
 
 <div class="api-symbol-body">
 
@@ -5537,7 +5539,7 @@ Check swipe event
 
 </div>
 
-### \`druid_swipe.node: Opaque<"node">\`
+#### \`druid_swipe.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -5545,7 +5547,7 @@ The node to manage the swipe
 
 </div>
 
-### \`druid_swipe.on_swipe: event\`
+#### \`druid_swipe.on_swipe: event\`
 
 <div class="api-symbol-body">
 
@@ -5553,7 +5555,7 @@ fun(context, side, dist, dt) The event triggered when a swipe is detected
 
 </div>
 
-### \`druid_swipe.style: druid_swipe_style\`
+#### \`druid_swipe.style: druid_swipe_style\`
 
 <div class="api-symbol-body">
 
@@ -5561,7 +5563,7 @@ The style of the swipe
 
 </div>
 
-### \`druid_swipe.click_zone: Opaque<"node">\`
+#### \`druid_swipe.click_zone: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -5569,9 +5571,9 @@ The click zone of the swipe
 
 </div>
 
-## druid_timer
+### druid_timer
 
-### \`druid_timer.init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: ((...args: any[]) => unknown) | undefined)\`
+#### \`druid_timer.init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: ((...args: any[]) => unknown) | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -5584,7 +5586,7 @@ The click zone of the swipe
 
 </div>
 
-### \`druid_timer.set_value(value: number): druid_timer\`
+#### \`druid_timer.set_value(value: number): druid_timer\`
 
 <div class="api-symbol-body">
 
@@ -5600,7 +5602,7 @@ Set the timer to a specific value
 
 </div>
 
-### \`druid_timer.set_to(set_to: number): druid_timer\`
+#### \`druid_timer.set_to(set_to: number): druid_timer\`
 
 <div class="api-symbol-body">
 
@@ -5622,7 +5624,7 @@ Set the timer to a specific value
 
 </div>
 
-### \`druid_timer.set_state(is_on?: boolean | undefined): druid_timer\`
+#### \`druid_timer.set_state(is_on?: boolean | undefined): druid_timer\`
 
 <div class="api-symbol-body">
 
@@ -5638,7 +5640,7 @@ Set the timer to a specific value
 
 </div>
 
-### \`druid_timer.set_interval(from: number, to: number): druid_timer\`
+#### \`druid_timer.set_interval(from: number, to: number): druid_timer\`
 
 <div class="api-symbol-body">
 
@@ -5655,7 +5657,7 @@ Set the timer interval
 
 </div>
 
-### \`druid_timer.on_tick: event\`
+#### \`druid_timer.on_tick: event\`
 
 <div class="api-symbol-body">
 
@@ -5663,7 +5665,7 @@ fun(context, value) The event triggered when the timer ticks
 
 </div>
 
-### \`druid_timer.on_set_enabled: event\`
+#### \`druid_timer.on_set_enabled: event\`
 
 <div class="api-symbol-body">
 
@@ -5671,7 +5673,7 @@ fun(context, is_on) The event triggered when the timer is enabled
 
 </div>
 
-### \`druid_timer.on_timer_end: event\`
+#### \`druid_timer.on_timer_end: event\`
 
 <div class="api-symbol-body">
 
@@ -5679,7 +5681,7 @@ fun(context) The event triggered when the timer ends
 
 </div>
 
-### \`druid_timer.node: Opaque<"node">\`
+#### \`druid_timer.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -5687,7 +5689,7 @@ The node to display the timer
 
 </div>
 
-### \`druid_timer.from: number\`
+#### \`druid_timer.from: number\`
 
 <div class="api-symbol-body">
 
@@ -5695,7 +5697,7 @@ The start time of the timer
 
 </div>
 
-### \`druid_timer.target: number\`
+#### \`druid_timer.target: number\`
 
 <div class="api-symbol-body">
 
@@ -5703,7 +5705,7 @@ The target time of the timer
 
 </div>
 
-### \`druid_timer.value: number\`
+#### \`druid_timer.value: number\`
 
 <div class="api-symbol-body">
 
@@ -5711,7 +5713,7 @@ The current value of the timer
 
 </div>
 
-### \`druid_timer.is_on: boolean | undefined\`
+#### \`druid_timer.is_on: boolean | undefined\`
 
 <div class="api-symbol-body">
 
@@ -5719,9 +5721,9 @@ True if the timer is on
 
 </div>
 
-## druid_system_animation_data
+### druid_system_animation_data
 
-### \`druid_system_animation_data.frames: LuaTable<number, LuaTable<string, number>>\`
+#### \`druid_system_animation_data.frames: LuaTable<number, LuaTable<string, number>>\`
 
 <div class="api-symbol-body">
 
@@ -5729,7 +5731,7 @@ List of frames with uv coordinates and size
 
 </div>
 
-### \`druid_system_animation_data.width: number\`
+#### \`druid_system_animation_data.width: number\`
 
 <div class="api-symbol-body">
 
@@ -5737,7 +5739,7 @@ Width of the animation
 
 </div>
 
-### \`druid_system_animation_data.height: number\`
+#### \`druid_system_animation_data.height: number\`
 
 <div class="api-symbol-body">
 
@@ -5745,7 +5747,7 @@ Height of the animation
 
 </div>
 
-### \`druid_system_animation_data.fps: number\`
+#### \`druid_system_animation_data.fps: number\`
 
 <div class="api-symbol-body">
 
@@ -5753,7 +5755,7 @@ Frames per second
 
 </div>
 
-### \`druid_system_animation_data.current_frame: number\`
+#### \`druid_system_animation_data.current_frame: number\`
 
 <div class="api-symbol-body">
 
@@ -5761,7 +5763,7 @@ Current frame
 
 </div>
 
-### \`druid_system_animation_data.node: Opaque<"node">\`
+#### \`druid_system_animation_data.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -5769,7 +5771,7 @@ Node with flipbook animation
 
 </div>
 
-### \`druid_system_animation_data.v: Vector4\`
+#### \`druid_system_animation_data.v: Vector4\`
 
 <div class="api-symbol-body">
 
@@ -5777,69 +5779,69 @@ Vector with UV coordinates and size
 
 </div>
 
-## druid_logger
+### druid_logger
 
-### \`druid_logger.trace: (message: string, context: unknown) => void\`
+#### \`druid_logger.trace: (message: string, context: unknown) => void\`
 
-### \`druid_logger.debug: (message: string, context: unknown) => void\`
+#### \`druid_logger.debug: (message: string, context: unknown) => void\`
 
-### \`druid_logger.info: (message: string, context: unknown) => void\`
+#### \`druid_logger.info: (message: string, context: unknown) => void\`
 
-### \`druid_logger.warn: (message: string, context: unknown) => void\`
+#### \`druid_logger.warn: (message: string, context: unknown) => void\`
 
-### \`druid_logger.error: (message: string, context: unknown) => void\`
+#### \`druid_logger.error: (message: string, context: unknown) => void\`
 
-## GUITextMetrics
+### GUITextMetrics
 
-### \`GUITextMetrics.width: number\`
+#### \`GUITextMetrics.width: number\`
 
-### \`GUITextMetrics.height: number\`
+#### \`GUITextMetrics.height: number\`
 
-### \`GUITextMetrics.max_ascent: number\`
+#### \`GUITextMetrics.max_ascent: number\`
 
-### \`GUITextMetrics.max_descent: number\`
+#### \`GUITextMetrics.max_descent: number\`
 
-### \`GUITextMetrics.offset_x: number\`
+#### \`GUITextMetrics.offset_x: number\`
 
-### \`GUITextMetrics.offset_y: number\`
+#### \`GUITextMetrics.offset_y: number\`
 
-## utf8
+### utf8
 
-### \`utf8.len: (s: string) => number\`
+#### \`utf8.len: (s: string) => number\`
 
-### \`utf8.sub: (s: string, start_index: number, length: number) => void\`
+#### \`utf8.sub: (s: string, start_index: number, length: number) => void\`
 
-### \`utf8.reverse: () => void\`
+#### \`utf8.reverse: () => void\`
 
-### \`utf8.char: () => void\`
+#### \`utf8.char: () => void\`
 
-### \`utf8.unicode: () => void\`
+#### \`utf8.unicode: () => void\`
 
-### \`utf8.gensub: () => void\`
+#### \`utf8.gensub: () => void\`
 
-### \`utf8.byte: () => void\`
+#### \`utf8.byte: () => void\`
 
-### \`utf8.find: () => void\`
+#### \`utf8.find: () => void\`
 
-### \`utf8.match: (s: string, m: string) => void\`
+#### \`utf8.match: (s: string, m: string) => void\`
 
-### \`utf8.gmatch: (s: string, m: string) => void\`
+#### \`utf8.gmatch: (s: string, m: string) => void\`
 
-### \`utf8.gsub: () => void\`
+#### \`utf8.gsub: () => void\`
 
-### \`utf8.dump: () => void\`
+#### \`utf8.dump: () => void\`
 
-### \`utf8.format: () => void\`
+#### \`utf8.format: () => void\`
 
-### \`utf8.lower: () => void\`
+#### \`utf8.lower: () => void\`
 
-### \`utf8.upper: () => void\`
+#### \`utf8.upper: () => void\`
 
-### \`utf8.rep: () => void\`
+#### \`utf8.rep: () => void\`
 
-## action
+### action
 
-### \`action.value: number\`
+#### \`action.value: number\`
 
 <div class="api-symbol-body">
 
@@ -5847,7 +5849,7 @@ The amount of input given by the user. This is usually 1 for buttons and 0-1 for
 
 </div>
 
-### \`action.pressed: boolean\`
+#### \`action.pressed: boolean\`
 
 <div class="api-symbol-body">
 
@@ -5855,7 +5857,7 @@ If the input was pressed this frame. This is not present for mouse movement.
 
 </div>
 
-### \`action.released: boolean\`
+#### \`action.released: boolean\`
 
 <div class="api-symbol-body">
 
@@ -5863,7 +5865,7 @@ If the input was released this frame. This is not present for mouse movement.
 
 </div>
 
-### \`action.repeated: boolean\`
+#### \`action.repeated: boolean\`
 
 <div class="api-symbol-body">
 
@@ -5871,7 +5873,7 @@ If the input was repeated this frame. This is similar to how a key on a keyboard
 
 </div>
 
-### \`action.x: number\`
+#### \`action.x: number\`
 
 <div class="api-symbol-body">
 
@@ -5879,7 +5881,7 @@ The x value of a pointer device, if present.
 
 </div>
 
-### \`action.y: number\`
+#### \`action.y: number\`
 
 <div class="api-symbol-body">
 
@@ -5887,7 +5889,7 @@ The y value of a pointer device, if present.
 
 </div>
 
-### \`action.screen_x: number\`
+#### \`action.screen_x: number\`
 
 <div class="api-symbol-body">
 
@@ -5895,7 +5897,7 @@ The screen space x value of a pointer device, if present.
 
 </div>
 
-### \`action.screen_y: number\`
+#### \`action.screen_y: number\`
 
 <div class="api-symbol-body">
 
@@ -5903,7 +5905,7 @@ The screen space y value of a pointer device, if present.
 
 </div>
 
-### \`action.dx: number\`
+#### \`action.dx: number\`
 
 <div class="api-symbol-body">
 
@@ -5911,7 +5913,7 @@ The change in x value of a pointer device, if present.
 
 </div>
 
-### \`action.dy: number\`
+#### \`action.dy: number\`
 
 <div class="api-symbol-body">
 
@@ -5919,7 +5921,7 @@ The change in y value of a pointer device, if present.
 
 </div>
 
-### \`action.screen_dx: number\`
+#### \`action.screen_dx: number\`
 
 <div class="api-symbol-body">
 
@@ -5927,7 +5929,7 @@ The change in screen space x value of a pointer device, if present.
 
 </div>
 
-### \`action.screen_dy: number\`
+#### \`action.screen_dy: number\`
 
 <div class="api-symbol-body">
 
@@ -5935,7 +5937,7 @@ The change in screen space y value of a pointer device, if present.
 
 </div>
 
-### \`action.gamepad: number\`
+#### \`action.gamepad: number\`
 
 <div class="api-symbol-body">
 
@@ -5943,7 +5945,7 @@ The index of the gamepad device that provided the input.
 
 </div>
 
-### \`action.touch: touch[]\`
+#### \`action.touch: touch[]\`
 
 <div class="api-symbol-body">
 
@@ -5951,7 +5953,7 @@ List of touch input, one element per finger, if present. See table below about t
 
 </div>
 
-### \`action.text: string\`
+#### \`action.text: string\`
 
 <div class="api-symbol-body">
 
@@ -5959,9 +5961,9 @@ The text input.
 
 </div>
 
-## touch
+### touch
 
-### \`touch.id: number\`
+#### \`touch.id: number\`
 
 <div class="api-symbol-body">
 
@@ -5969,7 +5971,7 @@ A number identifying the touch input during its duration.
 
 </div>
 
-### \`touch.pressed: boolean\`
+#### \`touch.pressed: boolean\`
 
 <div class="api-symbol-body">
 
@@ -5977,7 +5979,7 @@ True if the finger was pressed this frame.
 
 </div>
 
-### \`touch.released: boolean\`
+#### \`touch.released: boolean\`
 
 <div class="api-symbol-body">
 
@@ -5985,7 +5987,7 @@ True if the finger was released this frame.
 
 </div>
 
-### \`touch.tap_count: number\`
+#### \`touch.tap_count: number\`
 
 <div class="api-symbol-body">
 
@@ -5993,7 +5995,7 @@ Number of taps, one for single, two for double-tap, etc
 
 </div>
 
-### \`touch.x: number\`
+#### \`touch.x: number\`
 
 <div class="api-symbol-body">
 
@@ -6001,7 +6003,7 @@ The x touch location.
 
 </div>
 
-### \`touch.y: number\`
+#### \`touch.y: number\`
 
 <div class="api-symbol-body">
 
@@ -6009,7 +6011,7 @@ The y touch location.
 
 </div>
 
-### \`touch.dx: number\`
+#### \`touch.dx: number\`
 
 <div class="api-symbol-body">
 
@@ -6017,7 +6019,7 @@ The change in x value.
 
 </div>
 
-### \`touch.dy: number\`
+#### \`touch.dy: number\`
 
 <div class="api-symbol-body">
 
@@ -6025,7 +6027,7 @@ The change in y value.
 
 </div>
 
-### \`touch.acc_x: number | undefined\`
+#### \`touch.acc_x: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -6033,7 +6035,7 @@ Accelerometer x value (if present).
 
 </div>
 
-### \`touch.acc_y: number | undefined\`
+#### \`touch.acc_y: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -6041,7 +6043,7 @@ Accelerometer y value (if present).
 
 </div>
 
-### \`touch.acc_z: number | undefined\`
+#### \`touch.acc_z: number | undefined\`
 
 <div class="api-symbol-body">
 
@@ -6049,9 +6051,9 @@ Accelerometer z value (if present).
 
 </div>
 
-## druid_instance_input_filter
+### druid_instance_input_filter
 
-### \`druid_instance_input_filter.whitelist: LuaTable<druid_component, boolean> | undefined\`
+#### \`druid_instance_input_filter.whitelist: LuaTable<druid_component, boolean> | undefined\`
 
 <div class="api-symbol-body">
 
@@ -6059,7 +6061,7 @@ Allow-list: nil means all, empty table means none
 
 </div>
 
-### \`druid_instance_input_filter.blacklist: LuaTable<druid_component, boolean> | undefined\`
+#### \`druid_instance_input_filter.blacklist: LuaTable<druid_component, boolean> | undefined\`
 
 <div class="api-symbol-body">
 
@@ -6067,9 +6069,9 @@ Deny-list: nil and empty table both deny nobody
 
 </div>
 
-## druid_instance
+### druid_instance
 
-### \`druid_instance._can_use_input_component(component: druid_component): boolean\`
+#### \`druid_instance._can_use_input_component(component: druid_component): boolean\`
 
 <div class="api-symbol-body">
 
@@ -6085,7 +6087,7 @@ Check the input filters for the component: the instance one and the ones from it
 
 </div>
 
-### \`druid_instance.new<T extends druid_component>(component: T, ...args: unknown[]): T\`
+#### \`druid_instance.new<T extends druid_component>(component: T, ...args: unknown[]): T\`
 
 <div class="api-symbol-body">
 
@@ -6102,7 +6104,7 @@ Create new Druid component instance
 
 </div>
 
-### \`druid_instance.final()\`
+#### \`druid_instance.final()\`
 
 <div class="api-symbol-body">
 
@@ -6110,7 +6112,7 @@ Call this in gui_script final function.
 
 </div>
 
-### \`druid_instance.remove<T extends druid_component>(component: T): boolean\`
+#### \`druid_instance.remove<T extends druid_component>(component: T): boolean\`
 
 <div class="api-symbol-body">
 
@@ -6128,7 +6130,7 @@ Component \`on_remove\` function will be invoked, if exist.
 
 </div>
 
-### \`druid_instance.set_style(style?: LuaTable | undefined): druid_instance\`
+#### \`druid_instance.set_style(style?: LuaTable | undefined): druid_instance\`
 
 <div class="api-symbol-body">
 
@@ -6145,7 +6147,7 @@ The style is applied to the components created after this call, already created 
 
 </div>
 
-### \`druid_instance.update(dt: number)\`
+#### \`druid_instance.update(dt: number)\`
 
 <div class="api-symbol-body">
 
@@ -6157,7 +6159,7 @@ Call this in gui_script update function.
 
 </div>
 
-### \`druid_instance.on_input(action_id: Hash, action: LuaTable): boolean\`
+#### \`druid_instance.on_input(action_id: Hash, action: LuaTable): boolean\`
 
 <div class="api-symbol-body">
 
@@ -6174,7 +6176,7 @@ Call this in gui_script on_input function.
 
 </div>
 
-### \`druid_instance.on_message(message_id: Hash, message: LuaTable, sender: Url)\`
+#### \`druid_instance.on_message(message_id: Hash, message: LuaTable, sender: Url)\`
 
 <div class="api-symbol-body">
 
@@ -6188,7 +6190,7 @@ Call this in gui_script on_message function.
 
 </div>
 
-### \`druid_instance.on_window_event(window_event: number)\`
+#### \`druid_instance.on_window_event(window_event: number)\`
 
 <div class="api-symbol-body">
 
@@ -6200,7 +6202,7 @@ Called when the window event occurs
 
 </div>
 
-### \`druid_instance.set_whitelist(whitelist_components?: LuaTable | druid_component[] | undefined): druid_instance\`
+#### \`druid_instance.set_whitelist(whitelist_components?: LuaTable | druid_component[] | undefined): druid_instance\`
 
 <div class="api-symbol-body">
 
@@ -6224,7 +6226,7 @@ and keep its own \`on_input\` working.
 
 </div>
 
-### \`druid_instance.set_blacklist(blacklist_components?: LuaTable | druid_component[] | undefined): druid_instance\`
+#### \`druid_instance.set_blacklist(blacklist_components?: LuaTable | druid_component[] | undefined): druid_instance\`
 
 <div class="api-symbol-body">
 
@@ -6248,7 +6250,7 @@ set the filter from the outside: the gui script or the parent widget.
 
 </div>
 
-### \`druid_instance.new_widget<T extends druid_component>(widget: T, template?: string | undefined, nodes?: LuaMap<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...args: unknown[]): T\`
+#### \`druid_instance.new_widget<T extends druid_component>(widget: T, template?: string | undefined, nodes?: LuaMap<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...args: unknown[]): T\`
 
 <div class="api-symbol-body">
 
@@ -6267,7 +6269,7 @@ Create new Druid widget instance
 
 </div>
 
-### \`druid_instance.new_button(node: string | Opaque<"node">, callback?: ((...args: any[]) => unknown) | event | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button\`
+#### \`druid_instance.new_button(node: string | Opaque<"node">, callback?: ((...args: any[]) => unknown) | event | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -6286,7 +6288,7 @@ Create Button component
 
 </div>
 
-### \`druid_instance.new_blocker(node: string | Opaque<"node">): druid_blocker\`
+#### \`druid_instance.new_blocker(node: string | Opaque<"node">): druid_blocker\`
 
 <div class="api-symbol-body">
 
@@ -6302,7 +6304,7 @@ Create Blocker component
 
 </div>
 
-### \`druid_instance.new_back_handler(callback?: ((...args: any[]) => unknown) | event | undefined, params?: unknown | undefined): druid_back_handler\`
+#### \`druid_instance.new_back_handler(callback?: ((...args: any[]) => unknown) | event | undefined, params?: unknown | undefined): druid_back_handler\`
 
 <div class="api-symbol-body">
 
@@ -6319,7 +6321,7 @@ Create BackHandler component
 
 </div>
 
-### \`druid_instance.new_hover(node: string | Opaque<"node">, on_hover_callback?: ((...args: any[]) => unknown) | undefined, on_mouse_hover_callback?: ((...args: any[]) => unknown) | undefined): druid_hover\`
+#### \`druid_instance.new_hover(node: string | Opaque<"node">, on_hover_callback?: ((...args: any[]) => unknown) | undefined, on_mouse_hover_callback?: ((...args: any[]) => unknown) | undefined): druid_hover\`
 
 <div class="api-symbol-body">
 
@@ -6337,7 +6339,7 @@ Create Hover component
 
 </div>
 
-### \`druid_instance.new_text(node: string | Opaque<"node"> | druid_text, value?: string | undefined, adjust_type?: string | undefined): druid_text\`
+#### \`druid_instance.new_text(node: string | Opaque<"node"> | druid_text, value?: string | undefined, adjust_type?: string | undefined): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -6355,7 +6357,7 @@ Create Text component
 
 </div>
 
-### \`druid_instance.new_grid(parent_node: string | Opaque<"node">, item: string | Opaque<"node">, in_row?: number | undefined): druid_grid\`
+#### \`druid_instance.new_grid(parent_node: string | Opaque<"node">, item: string | Opaque<"node">, in_row?: number | undefined): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -6373,7 +6375,7 @@ Create Grid component
 
 </div>
 
-### \`druid_instance.new_scroll(view_node: string | Opaque<"node">, content_node: string | Opaque<"node">): druid_scroll\`
+#### \`druid_instance.new_scroll(view_node: string | Opaque<"node">, content_node: string | Opaque<"node">): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -6390,7 +6392,7 @@ Create Scroll component
 
 </div>
 
-### \`druid_instance.new_drag(node: string | Opaque<"node">, on_drag_callback?: ((...args: any[]) => unknown) | undefined): druid_drag\`
+#### \`druid_instance.new_drag(node: string | Opaque<"node">, on_drag_callback?: ((...args: any[]) => unknown) | undefined): druid_drag\`
 
 <div class="api-symbol-body">
 
@@ -6407,7 +6409,7 @@ Create Drag component
 
 </div>
 
-### \`druid_instance.new_swipe(node: string | Opaque<"node">, on_swipe_callback?: ((...args: any[]) => unknown) | undefined): druid_swipe\`
+#### \`druid_instance.new_swipe(node: string | Opaque<"node">, on_swipe_callback?: ((...args: any[]) => unknown) | undefined): druid_swipe\`
 
 <div class="api-symbol-body">
 
@@ -6424,7 +6426,7 @@ Create Swipe component
 
 </div>
 
-### \`druid_instance.new_lang_text(node: string | Opaque<"node">, locale_id?: string | undefined, adjust_type?: string | undefined): druid_lang_text\`
+#### \`druid_instance.new_lang_text(node: string | Opaque<"node">, locale_id?: string | undefined, adjust_type?: string | undefined): druid_lang_text\`
 
 <div class="api-symbol-body">
 
@@ -6442,7 +6444,7 @@ Create LangText component
 
 </div>
 
-### \`druid_instance.new_slider(pin_node: string | Opaque<"node">, end_pos: Vector3, callback?: ((...args: any[]) => unknown) | undefined): druid_slider\`
+#### \`druid_instance.new_slider(pin_node: string | Opaque<"node">, end_pos: Vector3, callback?: ((...args: any[]) => unknown) | undefined): druid_slider\`
 
 <div class="api-symbol-body">
 
@@ -6460,7 +6462,7 @@ Create Slider component
 
 </div>
 
-### \`druid_instance.new_input(click_node: string | Opaque<"node">, text_node: string | Opaque<"node"> | druid_text, keyboard_type?: number | undefined): druid_input\`
+#### \`druid_instance.new_input(click_node: string | Opaque<"node">, text_node: string | Opaque<"node"> | druid_text, keyboard_type?: number | undefined): druid_input\`
 
 <div class="api-symbol-body">
 
@@ -6478,7 +6480,7 @@ Create Input component
 
 </div>
 
-### \`druid_instance.new_data_list(druid_scroll: druid_scroll, druid_grid: druid_grid, create_function: (...args: any[]) => unknown): druid_data_list\`
+#### \`druid_instance.new_data_list(druid_scroll: druid_scroll, druid_grid: druid_grid, create_function: (...args: any[]) => unknown): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -6496,7 +6498,7 @@ Create DataList component
 
 </div>
 
-### \`druid_instance.new_timer(node: string | Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: ((...args: any[]) => unknown) | undefined): druid_timer\`
+#### \`druid_instance.new_timer(node: string | Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: ((...args: any[]) => unknown) | undefined): druid_timer\`
 
 <div class="api-symbol-body">
 
@@ -6515,7 +6517,7 @@ Create Timer component
 
 </div>
 
-### \`druid_instance.new_progress(node: string | Opaque<"node">, key: string, init_value?: number | undefined): druid_progress\`
+#### \`druid_instance.new_progress(node: string | Opaque<"node">, key: string, init_value?: number | undefined): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -6533,7 +6535,7 @@ Create Progress component
 
 </div>
 
-### \`druid_instance.new_layout(node: string | Opaque<"node">, mode?: string | undefined): druid_layout\`
+#### \`druid_instance.new_layout(node: string | Opaque<"node">, mode?: string | undefined): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -6550,7 +6552,7 @@ Create Layout component
 
 </div>
 
-### \`druid_instance.new_container(node: string | Opaque<"node">, mode?: druid_container_mode | undefined, callback?: ((self: druid_container, size: Vector3) => void) | undefined): druid_container\`
+#### \`druid_instance.new_container(node: string | Opaque<"node">, mode?: druid_container_mode | undefined, callback?: ((self: druid_container, size: Vector3) => void) | undefined): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -6568,7 +6570,7 @@ Create Container component
 
 </div>
 
-### \`druid_instance.new_hotkey(keys_array: string | string[], callback?: ((...args: any[]) => unknown) | event | undefined, callback_argument?: unknown | undefined): druid_hotkey\`
+#### \`druid_instance.new_hotkey(keys_array: string | string[], callback?: ((...args: any[]) => unknown) | event | undefined, callback_argument?: unknown | undefined): druid_hotkey\`
 
 <div class="api-symbol-body">
 
@@ -6586,7 +6588,7 @@ Create Hotkey component
 
 </div>
 
-### \`druid_instance.new_rich_text(text_node: string | Opaque<"node">, value?: string | undefined): druid_rich_text\`
+#### \`druid_instance.new_rich_text(text_node: string | Opaque<"node">, value?: string | undefined): druid_rich_text\`
 
 <div class="api-symbol-body">
 
@@ -6603,7 +6605,7 @@ Create RichText component.
 
 </div>
 
-### \`druid_instance.new_rich_input(template: string, nodes?: LuaTable | undefined): druid_rich_input\`
+#### \`druid_instance.new_rich_input(template: string, nodes?: LuaTable | undefined): druid_rich_input\`
 
 <div class="api-symbol-body">
 

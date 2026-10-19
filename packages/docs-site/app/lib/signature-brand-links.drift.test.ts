@@ -100,7 +100,7 @@ test("a rendered signature deep-links a shape it declares and leaves other token
 });
 
 // A page whose module-function section heading and typedef shape share the slug
-// `functions`: the section renders `h2#functions` and the shape `h2#functions-1`,
+// `functions`: the section renders `h2#functions` and the shape `h3#functions-1`,
 // so a link built from `slugify(<shape name>)` alone lands on the wrong heading.
 // No shipped page carries this collision yet, which is why it takes a fixture.
 function collidingShapePage(): ApiPage {
@@ -161,7 +161,7 @@ test("a shape link targets its own heading when an earlier heading shares the sl
   // Both sides come from production: the expected id is read off the rendered
   // shape heading, so the assertion compares two render outputs rather than a
   // literal, and the de-duplication suffix cannot drift them apart silently.
-  const collided = allPageHeadings(html).filter((h) => h.level === 2 && h.text === "Functions");
+  const collided = allPageHeadings(html).filter((h) => h.text === "Functions");
   expect(collided.length).toBe(2);
   const shape = collided[collided.length - 1] as (typeof collided)[number];
   expect(shape.id).not.toBe("functions");
@@ -179,4 +179,116 @@ test("a shape link targets its own heading when an earlier heading shares the sl
   // Stated separately so the assertion above cannot pass by both ids agreeing:
   // resolving first-wins, or from `slugify(label)`, lands on the section heading.
   expect(linked.get("Functions")?.endsWith("#functions")).toBe(false);
+});
+
+function signatureLinks(html: string, signatureText: string): Map<string, string> {
+  const signature = html.split(/<h3\b/).find((chunk) => chunk.includes(signatureText)) ?? "";
+  return new Map(
+    [
+      ...signature.matchAll(/<a class="signature-symbol-link" href="([^"]*)">(?:<[^>]*>)*([^<]*)/g),
+    ].map((m) => [m[2] as string, m[1] as string]),
+  );
+}
+
+// One member-less alias and one shape with fields, both named by the same
+// signature, so the two link targets can be told apart on one page.
+function mixedTypesPage(): ApiPage {
+  return {
+    namespace: "demo",
+    route: "/api/demo",
+    brief: "Demo",
+    module: {
+      namespace: "demo",
+      brief: "Demo",
+      description: "Mixed types demo.",
+      functions: [
+        {
+          name: "demo.show",
+          brief: "",
+          description: "Shows a screen.",
+          parameters: [
+            { name: "id", doc: "the screen", types: ["ScreenKey"], isOptional: false },
+            { name: "opts", doc: "the options", types: ["ShowConfig"], isOptional: false },
+          ],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [
+        { name: "ScreenKey", types: ["string", "number"] },
+        {
+          name: "ShowConfig",
+          properties: [{ name: "modal", brief: "", description: "Modal.", types: ["boolean"] }],
+        },
+      ],
+    },
+    translations: {},
+    signatures: {},
+    category: "library",
+  };
+}
+
+test("a member-less type's bare name links to its own row", async () => {
+  const page = mixedTypesPage();
+  const html = await renderMarkdown(
+    apiPageMarkdown(page, (t) => t, { omitHeading: true }),
+    {
+      highlightSignatureHeadings: true,
+      signatureSymbolLinks: apiSignatureSymbolLinks([page], page),
+    },
+  );
+
+  const headings = allPageHeadings(html);
+  const named = (text: string) => headings.filter((h) => h.text === text);
+  expect(named("Types").map((h) => h.level)).toEqual([2]);
+  expect(named("ShowConfig").map((h) => h.level)).toEqual([3]);
+  expect(named("ScreenKey")).toHaveLength(0);
+  const row = headings.find((h) => h.text.startsWith("type ScreenKey"));
+  const shape = named("ShowConfig")[0];
+  expect(row).toBeDefined();
+  if (!row || !shape) return;
+
+  const linked = signatureLinks(html, "demo.show(id");
+  expect(linked.get("ScreenKey")?.endsWith(`#${row.id}`)).toBe(true);
+  expect(linked.get("ShowConfig")?.endsWith(`#${shape.id}`)).toBe(true);
+});
+
+test("canonical gui and socket pages: one Types heading and no dangling in-page type link", async () => {
+  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const render = async (namespace: string) => {
+    const page = pages.find((p) => p.namespace === namespace);
+    if (!page) throw new Error(`no ${namespace} page`);
+    const html = await renderMarkdown(
+      apiPageMarkdown(page, (t) => t, { omitHeading: true }),
+      {
+        highlightSignatureHeadings: true,
+        signatureSymbolLinks: apiSignatureSymbolLinks(pages, page),
+      },
+    );
+    return { page, html, headings: allPageHeadings(html) };
+  };
+
+  for (const namespace of ["gui", "socket"]) {
+    const { page, html, headings } = await render(namespace);
+    const levelsOf = (text: string) => headings.filter((h) => h.text === text).map((h) => h.level);
+    expect(levelsOf("Types")).toEqual([2]);
+    if (namespace === "gui") {
+      expect(levelsOf("ADJUST")).toEqual([]);
+      expect(levelsOf("EASING")).toEqual([]);
+    } else {
+      expect(levelsOf("dns")).toEqual([3]);
+      expect(levelsOf("socket_client")).toEqual([]);
+      expect(levelsOf("client methods")).toEqual([3]);
+    }
+
+    const ids = new Set(headings.map((h) => h.id));
+    const inPage = [...html.matchAll(/<a class="signature-symbol-link" href="([^"]*)"/g)]
+      .map((m) => m[1] as string)
+      .filter((href) => href.startsWith(`${page.route}#`));
+    expect(inPage.length).toBeGreaterThan(0);
+    const dangling = inPage.filter((href) => !ids.has(href.slice(`${page.route}#`.length)));
+    expect(dangling).toEqual([]);
+  }
 });

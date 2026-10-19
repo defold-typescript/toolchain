@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[`upgrade` reads versions right](./upgrade.md#what-it-does)**, prereleases too.
 > - **[Model texture keys](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** reach `texture15`.
 > - **[A debug-wired entry script can export values](./debugging.md#picking-the-entry-script)**, and F5 flags a stale engine build.
-> - **API pages list every interface type in full**, such as the [socket](/api/socket) handles and their methods.
+> - **API pages list every type in full under one `Types` heading**, with a type's fields and a handle's methods nested beneath it, as on [socket](/api/socket).
 
 ### Breaking
 
@@ -33,6 +33,10 @@ What changed in each published `defold-typescript` toolchain release.
   - **[socket](/api/socket)** — `socket.client` -> `socket.socket_client`, `socket.connected` -> `socket.socket_connected`, `socket.master` -> `socket.socket_master`, `socket.server` -> `socket.socket_server`, `socket.unconnected` -> `socket.socket_unconnected`.
   - **[sys](/api/sys)** — `sys.NetworkConnectivity` -> `sys.NETWORK`.
   - **[window](/api/window)** — `window.DimModeState` -> `window.DIMMING`.
+
+### Improved
+
+- **API pages file every type under one `Types` heading and every handle method under `Functions`.** An alias or interface is one row there, while a type with fields, such as `on_input` on [go](/api/go), and a handle's methods, such as the `client` methods on [socket](/api/socket), each get a heading nested inside.
 
 ### Fixed
 

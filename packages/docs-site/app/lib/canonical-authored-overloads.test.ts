@@ -46,15 +46,15 @@ function callForm(signature: string): string {
 }
 
 // Every call form the page renders, in order: a `### \`<signature>\`` heading's
-// own, or, under an overload block's `### \`<fqn>(...)<returns>\`` heading, each
-// listed form's. The trailing count badge and availability dots are not part of
+// own (`####` under a receiver heading), or, under an overload block's
+// `### \`<fqn>(...)<returns>\`` heading, each listed form's. The trailing count badge and availability dots are not part of
 // the signature.
 function renderedCallForms(markdown: string): string[] {
   const out: string[] = [];
   const lines = markdown.split("\n");
   let group: string | null = null;
   for (const [index, line] of lines.entries()) {
-    const heading = line.match(/^### `(.+?)`(?: .*)?$/)?.[1];
+    const heading = line.match(/^#{3,4} `(.+?)`(?: .*)?$/)?.[1];
     if (heading !== undefined) {
       const dots = heading.indexOf("(...)");
       group = dots < 0 ? null : heading.slice(0, dots);
@@ -88,9 +88,9 @@ function armsOf(headings: string[], fqn: string): string[] {
 // line lists and the text under it.
 function overloadForms(markdown: string, fqn: string): { code: string; body: string }[] {
   const lines = markdown.split("\n");
-  const start = lines.findIndex((line) => line.startsWith(`### \`${fqn}(...)`));
+  const start = lines.findIndex((line) => /^#{3,4} `/.test(line) && line.includes(`\`${fqn}(...)`));
   if (start < 0) return [];
-  const next = lines.findIndex((line, index) => index > start && line.startsWith("### "));
+  const next = lines.findIndex((line, index) => index > start && /^#{2,4} /.test(line));
   const block = lines.slice(start + 1, next < 0 ? undefined : next);
   const forms: { code: string; body: string }[] = [];
   for (const [index, line] of block.entries()) {
