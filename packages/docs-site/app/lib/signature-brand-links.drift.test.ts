@@ -255,32 +255,58 @@ test("a member-less type's bare name links to its own row", async () => {
   expect(linked.get("ShowConfig")?.endsWith(`#${shape.id}`)).toBe(true);
 });
 
-test("canonical gui and socket pages: one Types heading and no dangling in-page type link", async () => {
-  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-  const render = async (namespace: string) => {
-    const page = pages.find((p) => p.namespace === namespace);
-    if (!page) throw new Error(`no ${namespace} page`);
-    const html = await renderMarkdown(
-      apiPageMarkdown(page, (t) => t, { omitHeading: true }),
-      {
-        highlightSignatureHeadings: true,
-        signatureSymbolLinks: apiSignatureSymbolLinks(pages, page),
-      },
-    );
-    return { page, html, headings: allPageHeadings(html) };
-  };
+test("an engine page's type links target the qualified headings it renders", async () => {
+  const page: ApiPage = { ...mixedTypesPage(), category: "engine" };
+  const html = await renderMarkdown(
+    apiPageMarkdown(page, (t) => t, { omitHeading: true }),
+    {
+      highlightSignatureHeadings: true,
+      signatureSymbolLinks: apiSignatureSymbolLinks([page], page),
+    },
+  );
 
-  for (const namespace of ["gui", "socket"]) {
-    const { page, html, headings } = await render(namespace);
+  const headings = allPageHeadings(html);
+  const row = headings.find((h) => h.text.startsWith("type demo.ScreenKey"));
+  const shape = headings.find((h) => h.text === "demo.ShowConfig");
+  expect(row).toBeDefined();
+  expect(shape?.level).toBe(3);
+  if (!row || !shape) return;
+
+  const linked = signatureLinks(html, "demo.show(id");
+  expect(linked.get("ScreenKey")?.endsWith(`#${row.id}`)).toBe(true);
+  expect(linked.get("ShowConfig")?.endsWith(`#${shape.id}`)).toBe(true);
+});
+
+async function renderCanonical(pages: ApiPage[], namespace: string) {
+  const page = pages.find((p) => p.namespace === namespace);
+  if (!page) throw new Error(`no ${namespace} page`);
+  const html = await renderMarkdown(
+    apiPageMarkdown(page, (t) => t, { omitHeading: true }),
+    {
+      highlightSignatureHeadings: true,
+      signatureSymbolLinks: apiSignatureSymbolLinks(pages, page),
+    },
+  );
+  return { page, html, headings: allPageHeadings(html) };
+}
+
+test("canonical gui, socket and image pages: one Types heading and no dangling in-page type link", async () => {
+  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+
+  for (const namespace of ["gui", "socket", "image"]) {
+    const { page, html, headings } = await renderCanonical(pages, namespace);
     const levelsOf = (text: string) => headings.filter((h) => h.text === text).map((h) => h.level);
     expect(levelsOf("Types")).toEqual([2]);
     if (namespace === "gui") {
       expect(levelsOf("ADJUST")).toEqual([]);
       expect(levelsOf("EASING")).toEqual([]);
-    } else {
-      expect(levelsOf("dns")).toEqual([3]);
+    } else if (namespace === "socket") {
+      expect(levelsOf("socket.dns")).toEqual([3]);
+      expect(levelsOf("dns")).toEqual([]);
       expect(levelsOf("socket_client")).toEqual([]);
       expect(levelsOf("client methods")).toEqual([3]);
+    } else {
+      expect(headings.some((h) => h.text.startsWith("type image.TYPE"))).toBe(true);
     }
 
     const ids = new Set(headings.map((h) => h.id));
@@ -291,4 +317,13 @@ test("canonical gui and socket pages: one Types heading and no dangling in-page 
     const dangling = inPage.filter((href) => !ids.has(href.slice(`${page.route}#`.length)));
     expect(dangling).toEqual([]);
   }
+});
+
+test("the symbol index routes a type to the heading the page renders", async () => {
+  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const { headings } = await renderCanonical(pages, "image");
+  const heading = headings.find((h) => h.text.startsWith("type image.TYPE"));
+  expect(heading).toBeDefined();
+  if (!heading) return;
+  expect(buildSymbolIndex(pages)["image.TYPE"]?.route.endsWith(`#${heading.id}`)).toBe(true);
 });

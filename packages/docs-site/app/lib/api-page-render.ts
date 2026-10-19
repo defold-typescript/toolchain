@@ -30,7 +30,9 @@ import {
   overloadFormCodes,
   overloadHeading,
   proseDocText,
+  qualify,
   splitCallForm,
+  typeShapeHeading,
   windowedBadgeCategory,
 } from "./api-surface";
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
@@ -46,7 +48,7 @@ import type { LibraryListing } from "./nav";
 import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
 import { functionTypeEmphasis } from "./signature-emphasis";
-import { buildSymbolIndex, memberAnchors, qualify } from "./symbol-index";
+import { buildSymbolIndex, memberAnchors } from "./symbol-index";
 import { symbolLinkifier } from "./symbol-linkify";
 import { symbolNote } from "./symbol-notes";
 import { resolveVersionWindow } from "./version-window";
@@ -1067,7 +1069,7 @@ export function apiPageMarkdown(
       const { types, shapes } = groupTypeSymbols(group);
       for (const symbol of types) emitSymbol(symbol);
       for (const shape of shapes) {
-        lines.push(`### ${shape.label}`, "");
+        lines.push(`### ${typeShapeHeading(page, shape.label)}`, "");
         for (const symbol of shape.symbols) emitSymbol(symbol, 4);
       }
       continue;
@@ -1100,8 +1102,9 @@ export function apiLinkify(pages: ApiPage[]): (text: string) => string {
 // mislink the nine shape names declared on more than one page. A type called
 // `Opaque` never displaces the global entry. A member-less type links to its
 // row's signature heading through `memberAnchors`, the same anchor its qualified
-// spelling takes below. A shape with members links to its own heading, and that
-// anchor is deferred to `renderMarkdown` as
+// spelling takes below. A shape with members links from its bare name to its own
+// heading, which names the qualified path on an engine page, and that anchor is
+// deferred to `renderMarkdown` as
 // `{ route, heading }` rather than fixed here: the heading id is only known once
 // the render has de-duplicated it against every earlier heading on the page.
 export function apiSignatureSymbolLinks(
@@ -1120,7 +1123,7 @@ export function apiSignatureSymbolLinks(
       if (anchor) links.set(row.name, `${page.route}#${anchor}`);
     }
     for (const shape of shapes) {
-      links.set(shape.label, { route: page.route, heading: shape.label });
+      links.set(shape.label, { route: page.route, heading: typeShapeHeading(page, shape.label) });
     }
   }
   const index = buildSymbolIndex(pages);
