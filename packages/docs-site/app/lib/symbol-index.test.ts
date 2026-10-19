@@ -168,6 +168,20 @@ describe("memberAnchors", () => {
     expect(index["demo.speed"]?.route).toBe(`/api/demo#${anchors.get("property:speed")}`);
   });
 
+  test("a value member keeps its qualified key over a same-named type row", () => {
+    const shared = page("demo", {
+      functions: [
+        { name: "demo.thing", brief: "", description: "", parameters: [], returnValues: [] },
+      ],
+      typedefs: [{ name: "thing", types: ["number"] }],
+    });
+    const anchors = memberAnchors(shared);
+    expect(anchors.has("type:thing")).toBe(true);
+    expect(buildSymbolIndex([shared])["demo.thing"]?.route).toBe(
+      `/api/demo#${anchors.get("function:demo.thing")}`,
+    );
+  });
+
   test("a function whose signature changed anchors at its current signature", () => {
     const b2d = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
       (p) => p.namespace === "b2d",

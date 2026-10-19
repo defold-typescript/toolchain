@@ -1256,12 +1256,30 @@ function variableSignature(v: ApiVariable, mapType: MapType = mapDocType): strin
   return `${v.name}${v.isOptional ? "?" : ""}: ${typeList(v.types, mapType)}`;
 }
 
-function renderableTypedefs(typedefs: ApiTypedef[]): ApiTypedef[] {
+function renderableTypedefs(
+  typedefs: ApiTypedef[],
+  namespace: string,
+  authoritative: ReadonlyMap<string, string> | undefined,
+): ApiTypedef[] {
   return typedefs.filter(
     (td) =>
       (td.functions?.length ?? 0) > 0 ||
       (td.properties?.length ?? 0) > 0 ||
-      typedefDefinitionSignature(td) !== undefined,
+      typedefDefinition(td, namespace, authoritative) !== undefined,
+  );
+}
+
+// A typedef's definition line: the ledger's signed declaration when the page
+// carries one, else the shape its ref-doc arms or parents spell.
+function typedefDefinition(
+  td: ApiTypedef,
+  namespace: string,
+  authoritative: ReadonlyMap<string, string> | undefined,
+  mapType: MapType = mapDocType,
+): string | undefined {
+  return (
+    authoritativeSignatureFor(authoritative, namespace, "TYPEDEF", td.name, "") ??
+    typedefDefinitionSignature(td, mapType)
   );
 }
 
@@ -1589,17 +1607,17 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
     }
   }
 
-  const aliases = authoritativeConstantUnionAliases(authoritative, m);
-  const typedefs = renderableTypedefs(m.typedefs);
-  if (aliases.length > 0 || typedefs.length > 0) {
+  const ledgerOnly = ledgerOnlyTypedefs(authoritative, m);
+  const typedefs = renderableTypedefs(m.typedefs, m.namespace, authoritative);
+  if (ledgerOnly.length > 0 || typedefs.length > 0) {
     groups.push({ heading: "## Types", sections: [] });
-    for (const [name, definition] of aliases) {
+    for (const [name, definition] of ledgerOnly) {
       section("type", name).push(`### ${name}`, "", `\`${definition}\``, "");
     }
     for (const td of typedefs) {
       lines = section("type", td.name);
       lines.push(`### ${td.name}`, "");
-      const definition = typedefDefinitionSignature(td, mapType);
+      const definition = typedefDefinition(td, m.namespace, authoritative, mapType);
       if (definition) lines.push(`\`${definition}\``, "");
       for (const fn of td.functions ?? []) {
         lines = section("type", typeMemberName(td.name, fn.name));
@@ -1642,9 +1660,10 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
  * rows. `apiModuleMarkdown` stays the flat search/index projection.
  */
 // The `TYPEDEF` ledger entries a module owns that no ref-doc typedef declares:
-// the constant-union aliases. Returned as `[bare name, definition]` with the
-// trailing `;` dropped, so the signature reads like every other type symbol's.
-function authoritativeConstantUnionAliases(
+// the constant-union aliases, the overload slot alias and the ledger-only
+// interfaces. Returned as `[bare name, definition]` with the trailing `;`
+// dropped, so the signature reads like every other type symbol's.
+function ledgerOnlyTypedefs(
   authoritative: ReadonlyMap<string, string> | undefined,
   module: ApiModule,
 ): [string, string][] {
@@ -2039,11 +2058,12 @@ export function apiModuleSymbols(
     symbols.push(symbol);
   }
 
-  // A constant-union alias has no ref-doc typedef behind it — the emitter mints
-  // it — so its members reach the page only through the authoritative ledger.
-  // Rendering it as an ordinary type symbol is what gives the members a home
-  // once the signatures that used to spell them inline carry the name instead.
-  for (const [name, signature] of authoritativeConstantUnionAliases(authoritative, m)) {
+  // A ledger-only typedef (a constant-union alias, the overload slot alias, a
+  // signed interface) has no ref-doc typedef behind it — the emitter mints it —
+  // so it reaches the page only through the authoritative ledger. Rendering it
+  // as an ordinary type symbol gives a constant union's members a home where
+  // signatures carry the alias name, and gives each interface its own row.
+  for (const [name, signature] of ledgerOnlyTypedefs(authoritative, m)) {
     symbols.push({
       kind: "type",
       name,
@@ -2054,8 +2074,8 @@ export function apiModuleSymbols(
     });
   }
 
-  for (const td of renderableTypedefs(m.typedefs)) {
-    const definition = typedefDefinitionSignature(td, mapType);
+  for (const td of renderableTypedefs(m.typedefs, m.namespace, authoritative)) {
+    const definition = typedefDefinition(td, m.namespace, authoritative, mapType);
     if (definition) {
       symbols.push({
         kind: "type",

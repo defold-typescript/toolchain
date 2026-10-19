@@ -2861,14 +2861,94 @@ describe("apiModuleSymbols / apiModuleMarkdown authoritative member signatures",
       if (!map) continue;
       const rendered = new Set(apiModuleSymbols(page).map((s) => s.signature));
       for (const entry of ns.entries) {
-        // Standalone typedef aliases carry a (dormant) map entry but are never
-        // rendered as page symbols; the guard covers the rendered kinds only.
+        // TYPEDEF rows are covered in both projections by the "authoritative
+        // TYPEDEF rows on Combined pages" describe; this guard covers the rest.
         if (entry.identity.kind === "TYPEDEF") continue;
         const inner = map.get(symbolIdentityKey(entry.identity));
         if (inner === undefined) continue;
         expect(rendered.has(inner)).toBe(true);
       }
     }
+  });
+});
+
+describe("authoritative TYPEDEF rows on Combined pages (committed artifacts)", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const newest =
+    (
+      JSON.parse(readFileSync(join(REAL_TYPES_DIR, "api-signatures.json"), "utf8")) as {
+        versions: Record<string, Record<string, string>>;
+      }
+    ).versions[surface.versions[0] ?? ""] ?? {};
+
+  function pageFor(namespace: string): ApiPage {
+    const ns = surface.namespaces.find((n) => n.namespace === namespace);
+    if (ns === undefined) throw new Error(`no Combined namespace ${namespace}`);
+    return combinedNamespaceToApiPage(ns);
+  }
+
+  function typeRow(page: ApiPage, name: string) {
+    return {
+      symbols: apiModuleSymbols(page).filter((s) => s.kind === "type" && s.name === name),
+      markdown:
+        apiModuleSections(page).sections.find((s) => s.kind === "type" && s.name === name)
+          ?.markdown ?? "",
+    };
+  }
+
+  test("every signed TYPEDEF renders its authoritative definition", () => {
+    const offenders: string[] = [];
+    let checked = 0;
+    for (const ns of surface.namespaces) {
+      const page = combinedNamespaceToApiPage(ns);
+      for (const entry of ns.entries) {
+        if (entry.identity.kind !== "TYPEDEF" || entry.authoritativeSignature.trim() === "") {
+          continue;
+        }
+        const { name } = entry.identity;
+        const expected = page.authoritativeSignatures?.get(symbolIdentityKey(entry.identity));
+        if (expected === undefined) {
+          offenders.push(`${ns.namespace} ${name} no map entry`);
+          continue;
+        }
+        checked++;
+        const { symbols, markdown } = typeRow(page, name);
+        if (symbols.length !== 1) offenders.push(`${ns.namespace} ${name} ${symbols.length} rows`);
+        else if (symbols[0]?.signature !== expected) {
+          offenders.push(`${ns.namespace} ${name} signature ${symbols[0]?.signature}`);
+        }
+        if (!markdown.includes(`\`${expected}\``)) {
+          offenders.push(`${ns.namespace} ${name} markdown`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  test("socket handles render their committed interfaces", () => {
+    const page = pageFor("socket");
+    for (const name of [
+      "socket_client",
+      "socket_connected",
+      "socket_master",
+      "socket_server",
+      "socket_unconnected",
+    ]) {
+      const expected = newest[`socket\0TYPEDEF\0${name}\0`]?.trim() ?? "";
+      expect(expected.startsWith(`interface ${name} {`)).toBe(true);
+      const { symbols, markdown } = typeRow(page, name);
+      expect(symbols.map((s) => s.signature)).toEqual([expected]);
+      expect(markdown).toContain(`\`${expected}\``);
+    }
+  });
+
+  test("authoritative type aliases keep rendering", () => {
+    const expected = (newest["gui\0TYPEDEF\0EASING\0"] ?? "").trim().replace(/;$/, "");
+    expect(expected.startsWith("type EASING =")).toBe(true);
+    const { symbols, markdown } = typeRow(pageFor("gui"), "EASING");
+    expect(symbols.map((s) => s.signature)).toEqual([expected]);
+    expect(markdown).toContain(`\`${expected}\``);
   });
 });
 

@@ -46,7 +46,7 @@ import type { LibraryListing } from "./nav";
 import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
 import { functionTypeEmphasis } from "./signature-emphasis";
-import { buildSymbolIndex } from "./symbol-index";
+import { buildSymbolIndex, memberAnchors, qualify } from "./symbol-index";
 import { symbolLinkifier } from "./symbol-linkify";
 import { symbolNote } from "./symbol-notes";
 import { resolveVersionWindow } from "./version-window";
@@ -1094,8 +1094,11 @@ export function apiSignatureSymbolLinks(
   const index = buildSymbolIndex(pages);
   // A constant-union alias is spelled qualified in every signature that takes it
   // (`gui.EASING`, `graphics.State`), which is also how the symbol index keys it.
-  // Keying the qualified name off the index rather than the current page is what
-  // lets a `render` signature reach the `graphics` entry that lists the members.
+  // Keying the qualified name off every alias page rather than the current page
+  // is what lets a `render` signature reach the `graphics` entry that lists the
+  // members. The route is the type row's own anchor, not the index entry: the
+  // index leaves a key a type shares with a value member (`vmath.vector`) to the
+  // value, and a signature names the type.
   //
   // The aliases come from `aliasPages` — the surface the reader is on — not from
   // `pages`, which the versioned route sets to the canonical collection for the
@@ -1103,12 +1106,12 @@ export function apiSignatureSymbolLinks(
   // its version prefix, so scoping the source keeps an alias link inside the
   // release the reader opened without any per-call prefixing. On the canonical
   // route the two collections are the same object.
-  const aliasIndex = aliasPages === pages ? index : buildSymbolIndex(aliasPages);
   for (const p of aliasPages) {
-    for (const symbol of apiModuleSymbols(p, p.translations).filter((s) => s.kind === "type")) {
-      const qualified = `${p.namespace}.${symbol.name}`;
-      const entry = aliasIndex[qualified];
-      if (entry) links.set(qualified, entry.route);
+    for (const [key, anchor] of memberAnchors(p)) {
+      if (!key.startsWith("type:")) continue;
+      const name = key.slice("type:".length);
+      const qualified = `${p.namespace}.${name}`;
+      if (qualify(p.namespace, name) === qualified) links.set(qualified, `${p.route}#${anchor}`);
     }
   }
   const route = index.Opaque?.route;
