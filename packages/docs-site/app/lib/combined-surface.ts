@@ -744,7 +744,10 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
   const seePresence = (identity: ApiSymbolIdentity, version: string): string => {
     const key = symbolIdentityKey(identity);
     const record = presence.get(key) ?? { identity, availableIn: [] };
-    if (!record.availableIn.includes(version)) record.availableIn.push(version);
+    if (!record.availableIn.includes(version)) {
+      record.availableIn.push(version);
+      record.availableIn.sort((a, b) => versions.indexOf(a) - versions.indexOf(b));
+    }
     presence.set(key, record);
     return key;
   };
@@ -787,6 +790,22 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
         );
         if (!accum.typedefs.has(key)) accum.typedefs.set(key, typedef);
       }
+    }
+  }
+
+  // A type is dated by the declarations that carry it, not by its reference: the
+  // signature map holds a TYPEDEF in every version whose declarations declare it,
+  // including a type the emitter mints and one an older reference leaves
+  // undocumented.
+  const ledgerTypedefs = new Map<string, Set<string>>();
+  for (const version of versions) {
+    for (const key of Object.keys(input.signatures.versions[version] ?? {})) {
+      const [namespace = "", kind, name, signature] = key.split("\u0000");
+      if (kind !== "TYPEDEF" || signature !== "" || name === undefined) continue;
+      seePresence(memberIdentity(namespace, "TYPEDEF", name), version);
+      const names = ledgerTypedefs.get(namespace) ?? new Set<string>();
+      names.add(name);
+      ledgerTypedefs.set(namespace, names);
     }
   }
 
@@ -915,28 +934,18 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
       ...typedefs.map((t) => memberIdentity(ns, "TYPEDEF", t.name)),
     ];
 
-    // A constant-union alias is a TYPEDEF the emitter mints, so no ref-doc
-    // accumulator holds it and it carries no presence record. It joins `entries`
-    // — which is what puts its definition in the page's authoritative map — but
-    // stays out of the availability walk below, where an empty presence would
-    // read as "available in no version" and mint a false badge.
+    // A TYPEDEF no ref-doc accumulator holds — a constant-union alias, an
+    // overload-slot alias, a socket handle interface, or a type only an older
+    // version's map carries — joins `entries` from the signature map of every
+    // version, which is what puts its definition in the page's authoritative map.
+    // Its presence is the ledger presence recorded above, so its authoritative
+    // signature resolves in every version it spans and its entry carries that
+    // span. It holds no availability record: the walk below covers `identities`.
     const declared = new Set(identities.map(symbolIdentityKey));
     const aliasIdentities: ApiSymbolIdentity[] = [];
-    for (const key of Object.keys(input.signatures.versions[versions[0] ?? ""] ?? {})) {
-      const parts = key.split("\u0000");
-      if (parts[0] !== ns || parts[1] !== "TYPEDEF" || parts[3] !== "") continue;
-      const name = parts[2];
-      if (name === undefined) continue;
+    for (const name of [...(ledgerTypedefs.get(ns) ?? [])].sort()) {
       const identity = memberIdentity(ns, "TYPEDEF", name);
       if (declared.has(symbolIdentityKey(identity))) continue;
-      // Presence comes from the ledger itself: the alias exists in exactly the
-      // versions whose signature store declares it, which is what keeps its
-      // authoritative signature resolvable and its badge honest.
-      for (const version of versions) {
-        if (input.signatures.versions[version]?.[key] !== undefined) {
-          seePresence(identity, version);
-        }
-      }
       aliasIdentities.push(identity);
     }
 

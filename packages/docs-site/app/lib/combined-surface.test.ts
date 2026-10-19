@@ -229,6 +229,35 @@ describe("buildCombinedSurface", () => {
     expect(entry?.availableIn).toEqual(["1.14.0"]);
     expect(entry?.label.label).toBe("Since Defold 1.14.0");
   });
+
+  // An older target can declare a type its reference leaves undocumented, so the
+  // declarations date a type, not the reference.
+  test("a type is available in every version whose signature map declares it", () => {
+    const typedefKey = (name: string) =>
+      symbolIdentityKey({ namespace: "ns", kind: "TYPEDEF", name, signature: "" });
+    const built = buildCombinedSurface({
+      surfaces: [
+        { version: "1.14.0", modules: [mod("ns", [], { typedefs: [{ name: "T" }] })] },
+        { version: "1.13.0", modules: [mod("ns", [])] },
+      ],
+      signatures: {
+        versions: {
+          "1.14.0": { [typedefKey("T")]: "type T = number;" },
+          "1.13.0": {
+            [typedefKey("T")]: "type T = number;",
+            [typedefKey("Old")]: "type Old = string;",
+          },
+        },
+      },
+    });
+    const ns = built.namespaces.find((candidate) => candidate.namespace === "ns");
+    const entry = (name: string) =>
+      ns?.entries.find((e) => e.identity.kind === "TYPEDEF" && e.identity.name === name);
+    expect(entry("T")?.availableIn).toEqual(["1.14.0", "1.13.0"]);
+    expect(ns?.availability.records.has(typedefKey("T"))).toBe(false);
+    expect(entry("Old")?.availableIn).toEqual(["1.13.0"]);
+    expect(entry("Old")?.authoritativeSignature).toBe("type Old = string;");
+  });
 });
 
 describe("loadCombinedSurface (committed artifacts)", () => {
@@ -247,6 +276,28 @@ describe("loadCombinedSurface (committed artifacts)", () => {
 
   test("its axis is the tracked versions, newest-first", () => {
     expect(surface.versions).toEqual(trackedVersions);
+  });
+
+  test("every TYPEDEF the signature map carries has a signed entry available wherever it is declared", () => {
+    const signatures = loadSignaturesArtifact(REAL_TYPES_DIR);
+    const entries = new Map(
+      surface.namespaces.flatMap((ns) =>
+        ns.entries.map((entry) => [symbolIdentityKey(entry.identity), entry] as const),
+      ),
+    );
+    const defects: string[] = [];
+    let checked = 0;
+    for (const [version, perSymbol] of Object.entries(signatures.versions)) {
+      for (const key of Object.keys(perSymbol)) {
+        if (key.split("\u0000")[1] !== "TYPEDEF") continue;
+        checked++;
+        const entry = entries.get(key);
+        if (entry?.authoritativeSignature && entry.availableIn.includes(version)) continue;
+        defects.push(`${version} ${key.split("\u0000").join(" ").trim()}`);
+      }
+    }
+    expect(defects).toEqual([]);
+    expect(checked).toBeGreaterThan(trackedVersions.length * 30);
   });
 
   // `compute` arrived mid-history and has survived since, so every entry runs to

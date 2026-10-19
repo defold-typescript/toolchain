@@ -9,7 +9,7 @@ import {
   versionsWithDiskFixtures,
 } from "../app/lib/api-surface-loader";
 import { withBase } from "../app/lib/base";
-import { compactAvailability } from "../app/lib/combined-surface";
+import { compactAvailability, llmsSignaturesForEntry } from "../app/lib/combined-surface";
 import { listGuidePages } from "../app/lib/guide-loader";
 import { SRC_ROOT_FOOTNOTE_ID, SRC_ROOT_FOOTNOTE_LINE } from "../app/lib/src-root-note";
 import {
@@ -309,6 +309,35 @@ describe("llms-full ## API serializes the Combined projection", () => {
     expect(api).toContain(`[through ${OLDEST_VERSION}]`);
     // a universally-present symbol carries a bare signature with no availability tag
     expect(api).toMatch(/^- [^\n[]*;$/m);
+  });
+
+  test("lists every type each tracked version declares as a whole untagged line under its namespace", () => {
+    const signatures = loadSignaturesArtifact(TYPES_DIR);
+    const combined = loadCombinedSurface(TYPES_DIR);
+    const [newest = {}, ...older] = TRACKED_VERSIONS.map(
+      (version) => signatures.versions[version] ?? {},
+    );
+    const universal = Object.keys(newest).filter(
+      (key) =>
+        key.split("\u0000")[1] === "TYPEDEF" &&
+        older.every((perSymbol) => perSymbol[key] !== undefined),
+    );
+    expect(universal.length).toBeGreaterThan(0);
+    const missing: string[] = [];
+    for (const key of universal) {
+      const namespace = key.split("\u0000")[0] as string;
+      const entry = combined.namespaces
+        .find((ns) => ns.namespace === namespace)
+        ?.entries.find((candidate) => symbolIdentityKey(candidate.identity) === key);
+      const start = api.indexOf(`### ${namespace}\n`);
+      const end = api.indexOf("\n### ", start + 1);
+      const lines = api.slice(start, end === -1 ? undefined : end).split("\n");
+      const [signature] = entry ? llmsSignaturesForEntry(entry) : [];
+      if (start === -1 || signature === undefined || !lines.includes(`- ${signature}`)) {
+        missing.push(key.split("\u0000").join(" ").trim());
+      }
+    }
+    expect(missing).toEqual([]);
   });
 
   test("keeps the version-independent namespaces (lua-stdlib, global types) covered", () => {
