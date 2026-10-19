@@ -195,12 +195,12 @@ describe("rendered slot types agree with the signature above them", () => {
 
     const enableState = symbols.find((s) => s.name === "render.enable_state");
     expect(enableState?.parameters[0]?.types[0]).toBe(
-      "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+      "Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
     );
     expect(enableState?.parameters[0]?.types[0]).not.toContain('Opaque<"constant">');
 
     // The union each of them names is a symbol on its home page, so neither row
-    // is a dead end: `ClearBufferKey` is render's own, `STATE` is graphics'.
+    // is a dead end: `ClearBufferKey` is render's own, `State` is graphics'.
     const renderTypes = symbols.filter((s) => s.kind === "type").map((s) => s.name);
     expect(renderTypes).toContain("ClearBufferKey");
     const graphics = combined.namespaces.find((ns) => ns.namespace === "graphics");
@@ -208,7 +208,7 @@ describe("rendered slot types agree with the signature above them", () => {
     const graphicsTypes = apiModuleSymbols(combinedNamespaceToApiPage(graphics))
       .filter((s) => s.kind === "type")
       .map((s) => s.name);
-    expect(graphicsTypes).toContain("STATE");
+    expect(graphicsTypes).toContain("State");
   });
 
   test("a lua-stdlib page the artifact never covers still renders its slot types", () => {

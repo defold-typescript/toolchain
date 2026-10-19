@@ -7,7 +7,7 @@ declare global {
    * used to dynamically spawn collections into the runtime.
    */
   namespace collectionfactory {
-    type STATUS = typeof collectionfactory.STATUS_UNLOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_LOADED;
+    type Status = typeof collectionfactory.STATUS_UNLOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_LOADED;
     /**
      * loaded
      */
@@ -97,7 +97,7 @@ declare global {
      * - `collectionfactory.STATUS_LOADING`
      * - `collectionfactory.STATUS_LOADED`
      */
-    function get_status(url: string | Hash | Url): collectionfactory.STATUS;
+    function get_status(url: string | Hash | Url): collectionfactory.Status;
     /**
      * Resources loaded are referenced by the collection factory component until the existing (parent) collection is destroyed or collectionfactory.unload is called.
      * Calling this function when the factory is not marked as dynamic loading does nothing.

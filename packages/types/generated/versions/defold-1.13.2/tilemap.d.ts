@@ -6,7 +6,7 @@ declare global {
    * Functions and messages used to manipulate tile map components.
    */
   namespace tilemap {
-    type TRANSFORM = typeof tilemap.H_FLIP | typeof tilemap.ROTATE_180 | typeof tilemap.ROTATE_270 | typeof tilemap.ROTATE_90 | typeof tilemap.V_FLIP;
+    type Transform = typeof tilemap.H_FLIP | typeof tilemap.ROTATE_180 | typeof tilemap.ROTATE_270 | typeof tilemap.ROTATE_90 | typeof tilemap.V_FLIP;
     /**
      * flip tile horizontally
      */
@@ -176,7 +176,7 @@ declare global {
      * }
      * ```
      */
-    function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.TRANSFORM | number): boolean;
+    function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.Transform | number): boolean;
     /**
      * Sets the visibility of the tilemap layer
      *

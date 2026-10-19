@@ -27,7 +27,7 @@ declare global {
       /**
        * Frustum planes used for culling. The default is render.FRUSTUM_PLANES_SIDES.
        */
-      frustum_planes?: render.FRUSTUM_PLANES;
+      frustum_planes?: render.FrustumPlanes;
     }
     /**
      * Compute-dispatch options
@@ -49,7 +49,7 @@ declare global {
       /**
        * Frustum planes used for culling. The default is render.FRUSTUM_PLANES_SIDES.
        */
-      frustum_planes?: render.FRUSTUM_PLANES;
+      frustum_planes?: render.FrustumPlanes;
       /**
        * Constants used while rendering. The values are copied when `render.draw()` is called.
        */
@@ -57,7 +57,7 @@ declare global {
       /**
        * World-entry sort order. The default is the renderer's preferred back-to-front order.
        */
-      sort_order?: render.SORT;
+      sort_order?: render.Sort;
     }
     type render_predicate = Opaque<"render_predicate">;
     type render_target = Opaque<"render_target">;
@@ -68,7 +68,7 @@ declare global {
       /**
        * Attachment texture format.
        */
-      format: graphics.TEXTURE_FORMAT;
+      format: graphics.TextureFormat;
       /**
        * Attachment width.
        */
@@ -80,27 +80,27 @@ declare global {
       /**
        * Minification filter.
        */
-      min_filter?: graphics.TEXTURE_FILTER;
+      min_filter?: graphics.TextureFilter;
       /**
        * Magnification filter.
        */
-      mag_filter?: graphics.TEXTURE_FILTER;
+      mag_filter?: graphics.TextureFilter;
       /**
        * Horizontal wrap mode.
        */
-      u_wrap?: graphics.TEXTURE_WRAP;
+      u_wrap?: graphics.TextureWrap;
       /**
        * Vertical wrap mode.
        */
-      v_wrap?: graphics.TEXTURE_WRAP;
+      v_wrap?: graphics.TextureWrap;
       /**
        * Depth wrap mode.
        */
-      w_wrap?: graphics.TEXTURE_WRAP;
+      w_wrap?: graphics.TextureWrap;
       /**
        * Attachment creation flags, applicable only to depth and stencil buffers.
        */
-      flags?: render.RENDER_TARGET_FLAG | number;
+      flags?: render.RenderTargetFlag | number;
     }
     type render_target_params = { sample_count?: number } & { [key: number]: render.render_target_buffer_params };
     /**
@@ -110,15 +110,15 @@ declare global {
       /**
        * Buffers whose contents become undefined after the target is deactivated. Missing buffers are ignored; combined depth-stencil buffers remain non-transient unless both are selected.
        */
-      transient?: graphics.BUFFER_TYPE[];
+      transient?: graphics.BufferType[];
     }
     type texture = Opaque<"texture">;
     type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
     type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;
-    type CONTEXT_EVENT = typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED;
-    type FRUSTUM_PLANES = typeof render.FRUSTUM_PLANES_ALL | typeof render.FRUSTUM_PLANES_SIDES;
-    type RENDER_TARGET_FLAG = typeof render.TEXTURE_BIT;
-    type SORT = typeof render.SORT_BACK_TO_FRONT | typeof render.SORT_FRONT_TO_BACK | typeof render.SORT_NONE;
+    type ContextEvent = typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED;
+    type FrustumPlanes = typeof render.FRUSTUM_PLANES_ALL | typeof render.FRUSTUM_PLANES_SIDES;
+    type RenderTargetFlag = typeof render.TEXTURE_BIT;
+    type Sort = typeof render.SORT_BACK_TO_FRONT | typeof render.SORT_FRONT_TO_BACK | typeof render.SORT_NONE;
     /**
      * rendering context was lost; rendering pauses and graphics resources become invalid
      */
@@ -291,7 +291,7 @@ declare global {
      * });
      * ```
      */
-    function disable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
+    function disable_state(state: Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
     /**
      * Disables a texture that has previourly been enabled.
      *
@@ -539,7 +539,7 @@ declare global {
      * });
      * ```
      */
-    function enable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
+    function enable_state(state: Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
     /**
      * Sets the specified texture handle for a render target attachment or a regular texture
      * that should be used for rendering. The texture can be bound to either a texture unit
@@ -628,7 +628,7 @@ declare global {
      * });
      * ```
      */
-    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BUFFER_TYPE): void;
+    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BufferType): void;
     /**
      * Returns the logical window height that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints
@@ -681,7 +681,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
+    function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
     /**
      * Returns the specified buffer width from a render target.
      *
@@ -722,7 +722,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
+    function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
     /**
      * Returns the logical window width that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints
@@ -789,7 +789,7 @@ declare global {
      * render.set_blend_equation_separate(graphics.BLEND_EQUATION_ADD, graphics.BLEND_EQUATION_REVERSE_SUBTRACT);
      * ```
      */
-    function set_blend_equation_separate(equation_color: graphics.BLEND_EQUATION, equation_alpha: graphics.BLEND_EQUATION): void;
+    function set_blend_equation_separate(equation_color: graphics.BlendEquation, equation_alpha: graphics.BlendEquation): void;
     /**
      * Specifies the arithmetic used when computing pixel values that are written to the frame
      * buffer. In RGBA mode, pixels can be drawn using a function that blends the source RGBA
@@ -823,7 +823,7 @@ declare global {
      * render.set_blend_func(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
      * ```
      */
-    function set_blend_func(source_factor: graphics.BLEND_FACTOR, destination_factor: graphics.BLEND_FACTOR): void;
+    function set_blend_func(source_factor: graphics.BlendFactor, destination_factor: graphics.BlendFactor): void;
     /**
      * Sets the blend function with separate blend factors for the color and alpha channels.
      *
@@ -836,7 +836,7 @@ declare global {
      * render.set_blend_func_separate(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
      * ```
      */
-    function set_blend_func_separate(source_factor_color: graphics.BLEND_FACTOR, destination_factor_color: graphics.BLEND_FACTOR, source_factor_alpha: graphics.BLEND_FACTOR, destination_factor_alpha: graphics.BLEND_FACTOR): void;
+    function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void;
     /**
      * Sets the current render camera to be used for rendering. If a render camera
      * has been set by the render script, the renderer will be using its projection and view matrix
@@ -924,7 +924,7 @@ declare global {
      * render.set_cull_face(graphics.FACE_TYPE_FRONT);
      * ```
      */
-    function set_cull_face(face_type: graphics.FACE_TYPE): void;
+    function set_cull_face(face_type: graphics.FaceType): void;
     /**
      * Specifies the function that should be used to compare each incoming pixel
      * depth value with the value present in the depth buffer.
@@ -940,7 +940,7 @@ declare global {
      * render.set_depth_func(graphics.COMPARE_FUNC_NOTEQUAL);
      * ```
      */
-    function set_depth_func(func: graphics.COMPARE_FUNC): void;
+    function set_depth_func(func: graphics.CompareFunc): void;
     /**
      * Specifies whether the depth buffer is enabled for writing. The supplied mask governs
      * if depth buffer writing is enabled (`true`) or disabled (`false`).
@@ -976,7 +976,7 @@ declare global {
      * });
      * ```
      */
-    function set_listener(callback?: (self: unknown, event_type: render.CONTEXT_EVENT) => void): void;
+    function set_listener(callback?: (self: unknown, event_type: render.ContextEvent) => void): void;
     /**
      * Sets the scale and units used to calculate depth values.
      * If `graphics.STATE_POLYGON_OFFSET_FILL` is enabled, each fragment's depth value
@@ -1196,7 +1196,7 @@ declare global {
      * render.set_stencil_func(graphics.COMPARE_FUNC_EQUAL, 0, 1);
      * ```
      */
-    function set_stencil_func(func: graphics.COMPARE_FUNC, ref: number, mask: number): void;
+    function set_stencil_func(func: graphics.CompareFunc, ref: number, mask: number): void;
     /**
      * The stencil mask controls the writing of individual bits in the stencil buffer.
      * The least significant `n` bits of the parameter `mask`, where `n` is the number of
@@ -1238,7 +1238,7 @@ declare global {
      * render.set_stencil_op(graphics.STENCIL_OP_REPLACE, graphics.STENCIL_OP_KEEP, graphics.STENCIL_OP_KEEP);
      * ```
      */
-    function set_stencil_op(sfail: graphics.STENCIL_OP, dpfail: graphics.STENCIL_OP, dppass: graphics.STENCIL_OP): void;
+    function set_stencil_op(sfail: graphics.StencilOp, dpfail: graphics.StencilOp, dppass: graphics.StencilOp): void;
     /**
      * Sets the view matrix to use when rendering.
      *

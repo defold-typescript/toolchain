@@ -173,7 +173,7 @@ declare global {
       /**
        * shape type
        */
-      type: physics.SHAPE_TYPE;
+      type: physics.ShapeType;
       /**
        * sphere diameter or capsule pole diameter
        */
@@ -187,8 +187,8 @@ declare global {
        */
       height?: number;
     }
-    type JOINT_TYPE = typeof physics.JOINT_TYPE_FIXED | typeof physics.JOINT_TYPE_HINGE | typeof physics.JOINT_TYPE_SLIDER | typeof physics.JOINT_TYPE_SPRING | typeof physics.JOINT_TYPE_WELD | typeof physics.JOINT_TYPE_WHEEL;
-    type SHAPE_TYPE = typeof physics.SHAPE_TYPE_BOX | typeof physics.SHAPE_TYPE_CAPSULE | typeof physics.SHAPE_TYPE_HULL | typeof physics.SHAPE_TYPE_MESH | typeof physics.SHAPE_TYPE_SPHERE;
+    type JointType = typeof physics.JOINT_TYPE_FIXED | typeof physics.JOINT_TYPE_HINGE | typeof physics.JOINT_TYPE_SLIDER | typeof physics.JOINT_TYPE_SPRING | typeof physics.JOINT_TYPE_WELD | typeof physics.JOINT_TYPE_WHEEL;
+    type ShapeType = typeof physics.SHAPE_TYPE_BOX | typeof physics.SHAPE_TYPE_CAPSULE | typeof physics.SHAPE_TYPE_HULL | typeof physics.SHAPE_TYPE_MESH | typeof physics.SHAPE_TYPE_SPHERE;
     /**
      * Fixed joint; uses `max_length` from physics.joint_properties.
      */
@@ -245,7 +245,7 @@ declare global {
      * @param position_b - local position where to attach the joint on the second collision object
      * @param properties - optional joint-specific properties
      */
-    function create_joint(joint_type: physics.JOINT_TYPE, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: physics.joint_properties): void;
+    function create_joint(joint_type: physics.JointType, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: physics.joint_properties): void;
     /**
      * Destroy an already physics joint. The joint has to be created before a
      * destroy can be issued.

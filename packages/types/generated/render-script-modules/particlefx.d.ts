@@ -16,7 +16,7 @@ declare global {
        */
       clear?: boolean;
     }
-    type EMITTER_STATE = typeof particlefx.EMITTER_STATE_POSTSPAWN | typeof particlefx.EMITTER_STATE_PRESPAWN | typeof particlefx.EMITTER_STATE_SLEEPING | typeof particlefx.EMITTER_STATE_SPAWNING;
+    type EmitterState = typeof particlefx.EMITTER_STATE_POSTSPAWN | typeof particlefx.EMITTER_STATE_PRESPAWN | typeof particlefx.EMITTER_STATE_SLEEPING | typeof particlefx.EMITTER_STATE_SPAWNING;
     /**
      * postspawn state The emitter is not spawning any particles, but has particles that are still alive.
      */

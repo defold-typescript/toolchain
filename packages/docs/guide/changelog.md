@@ -13,30 +13,27 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Types take the reference's names](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** on every Defold version: rename `gui.Easing` to `gui.EASING`, `socket.client` to `socket.socket_client` and 26 more, and write `gui.XAnchor` and four other narrower unions as `Exclude` of their enum.
+> - **[Constant unions take PascalCase names](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** on every Defold version: rename `gui.EASING` to `gui.Easing`, `gui.AdjustMode` to `gui.Adjust`, `socket.client` to `socket.socket_client`, and write `gui.XAnchor` and two other narrower unions as `Exclude` of their enum.
 > - **[`upgrade` reads versions right](./upgrade.md#what-it-does)**, prereleases too.
 > - **[Model texture keys](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** reach `texture15`.
 > - **[A debug-wired entry script can export values](./debugging.md#picking-the-entry-script)**, and F5 flags a stale engine build.
-> - **API pages list every type in full under one `Types` heading**, by its full path on engine pages, with a type's fields and a handle's methods nested beneath it, as on [socket](/api/socket).
+> - **API pages list every type in full under one `Types` heading**, by its full path on engine pages and with its Defold name where that differs, with a type's fields and a handle's methods nested beneath it, as on [socket](/api/socket).
 
 ### Breaking
 
-- **Each constant union, socket handle and the `render.render_target` parameter table has one name, the one the Defold reference gives it, on every Defold version.** Rename these in your code. A union the reference leaves unnamed keeps its alias, such as `render.ClearBufferKey`, unless it is part of a named one in its namespace: then it is written as `Exclude` of that one.
-  - **[buffer](/api/buffer)** — `buffer.ValueType` -> `buffer.VALUE_TYPE`.
-  - **[collectionfactory](/api/collectionfactory)** — `collectionfactory.Status` -> `collectionfactory.STATUS`.
-  - **[factory](/api/factory)** — `factory.Status` -> `factory.STATUS`.
-  - **[go](/api/go)** — `go.Easing` -> `go.EASING`, `go.Playback` -> `Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>`.
-  - **[graphics](/api/graphics)** — `graphics.BlendFactor` -> `graphics.BLEND_FACTOR`, `graphics.BufferType` -> `graphics.BUFFER_TYPE`, `graphics.State` -> `Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>`; on Defold 1.13.2 and later, `graphics.BUFFER_TYPE` takes `graphics.BUFFER_TYPE_COLOR1_BIT` through `graphics.BUFFER_TYPE_COLOR3_BIT` only once narrowed past `undefined`.
-  - **[gui](/api/gui)** — `gui.AdjustMode` -> `gui.ADJUST`, `gui.BlendMode` -> `gui.BLEND`, `gui.ClippingMode` -> `gui.CLIPPING_MODE`, `gui.Easing` -> `gui.EASING`, `gui.KeyboardType` -> `gui.KEYBOARD_TYPE`, `gui.NodeType` -> `gui.TYPE`, `gui.PieBounds` -> `gui.PIEBOUNDS`, `gui.Pivot` -> `gui.PIVOT`, `gui.Playback` -> `gui.PLAYBACK`, `gui.Property` -> `gui.PROP`, `gui.SafeAreaMode` -> `gui.SAFE_AREA`, `gui.SizeMode` -> `gui.SIZE_MODE`, `gui.XAnchor` -> `Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>`, `gui.YAnchor` -> `Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>`.
-  - **[profiler](/api/profiler)** — `profiler.Mode` -> `profiler.MODE`, `profiler.ViewMode` -> `profiler.VIEW_MODE`.
+- **Each constant union, socket handle and the `render.render_target` parameter table has one name on every Defold version, and a constant union takes the PascalCase form of the name the Defold reference gives it.** Rename these in your code. A union the reference leaves unnamed keeps its alias, such as `render.ClearBufferKey`, unless it is part of a named one in its namespace: then it is written as `Exclude` of that one.
+  - **Reference spellings** — every union v0.52.0 declared under the reference's own name is PascalCase: `gui.EASING` -> `gui.Easing`, `graphics.BLEND_EQUATION` -> `graphics.BlendEquation`, `image.TYPE` -> `image.Type`, `editor.ui.COLOR` -> `editor.ui.Color`, and a run of capitals splits into words: `gui.PIEBOUNDS` -> `gui.PieBounds`, `crash.SYSFIELD` -> `crash.SysField`, `liveupdate.LIVEUPDATE` -> `liveupdate.LiveUpdate`.
+  - **[go](/api/go)** — `go.Playback` includes `go.PLAYBACK_NONE`; on Defold 1.13.1 and earlier, the `go.animate` and atlas `playback` slots, which leave it out, take `Exclude<go.Playback, typeof go.PLAYBACK_NONE>`.
+  - **[graphics](/api/graphics)** — `graphics.State` includes `graphics.STATE_ALPHA_TEST_SUPPORTED` and `graphics.STATE_SCISSOR_TEST`, which `render.enable_state` and `render.disable_state` reject, so those take `Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>`; on Defold 1.13.2 and later, `graphics.BufferType` takes `graphics.BUFFER_TYPE_COLOR1_BIT` through `graphics.BUFFER_TYPE_COLOR3_BIT` only once narrowed past `undefined`.
+  - **[gui](/api/gui)** — `gui.AdjustMode` -> `gui.Adjust`, `gui.BlendMode` -> `gui.Blend`, `gui.NodeType` -> `gui.Type`, `gui.Property` -> `gui.Prop`, `gui.SafeAreaMode` -> `gui.SafeArea`, `gui.XAnchor` -> `Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>`, `gui.YAnchor` -> `Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>`.
   - **[render](/api/render)** — `render.RenderTargetParams` -> `render.render_target_params`.
   - **[socket](/api/socket)** — `socket.client` -> `socket.socket_client`, `socket.connected` -> `socket.socket_connected`, `socket.master` -> `socket.socket_master`, `socket.server` -> `socket.socket_server`, `socket.unconnected` -> `socket.socket_unconnected`.
-  - **[sys](/api/sys)** — `sys.NetworkConnectivity` -> `sys.NETWORK`.
-  - **[window](/api/window)** — `window.DimModeState` -> `window.DIMMING`, `window.DimModeStateSettable` -> `Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>`.
+  - **[sys](/api/sys)** — `sys.NetworkConnectivity` -> `sys.Network`.
+  - **[window](/api/window)** — `window.DimModeState` -> `window.Dimming`, `window.DimModeStateSettable` -> `Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>`.
 
 ### Improved
 
-- **API pages file every type under one `Types` heading, named by its full path on engine pages, and every handle method under `Functions`.** An alias or interface is one row there, such as `image.TYPE`, while a type with fields, such as `go.on_input` on [go](/api/go), and a handle's methods, such as the `client` methods on [socket](/api/socket), each get a heading nested inside.
+- **API pages file every type under one `Types` heading, named by its full path on engine pages, and every handle method under `Functions`.** An alias or interface is one row there, such as `image.Type` with its `Defold name: image.TYPE` line, while a type with fields, such as `go.on_input` on [go](/api/go), and a handle's methods, such as the `client` methods on [socket](/api/socket), each get a heading nested inside.
 
 ### Fixed
 

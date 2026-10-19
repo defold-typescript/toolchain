@@ -18,7 +18,7 @@ declare global {
    * non-negative.
    */
   namespace bullet3d.rigid_body {
-    type FLAG = typeof bullet3d.rigid_body.BT_DISABLE_WORLD_GRAVITY | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_EXPLICIT | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_WORLD | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_BODY;
+    type Flag = typeof bullet3d.rigid_body.BT_DISABLE_WORLD_GRAVITY | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_EXPLICIT | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_WORLD | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_BODY;
     /**
      * Disable automatic world gravity. Set this bit before assigning custom body gravity that must survive later world-gravity changes or re-adding the body to a world.
      */

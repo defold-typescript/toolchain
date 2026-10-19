@@ -61,7 +61,14 @@ import tilemapDoc from "../fixtures/tilemap_doc.json" with { type: "json" };
 import typesDoc from "../fixtures/types_doc.json" with { type: "json" };
 import vmathDoc from "../fixtures/vmath_doc.json" with { type: "json" };
 import windowDoc from "../fixtures/window_doc.json" with { type: "json" };
-import { loadApiTargets, loadSrcAugmentations } from "../scripts/regen";
+import {
+  EDITOR_MODULE_MANIFEST,
+  EDITOR_VM_MODULE_MANIFEST,
+  loadApiTargets,
+  loadSrcAugmentations,
+  MODULE_MANIFEST,
+  VERSIONED_MODULE_MANIFEST,
+} from "../scripts/regen";
 import structSlots from "../test/fixtures/defold-1.13.2-struct-slots.json" with { type: "json" };
 import urlParameterTable from "../url-parameters.json" with { type: "json" };
 import {
@@ -113,6 +120,7 @@ import {
   UNDOCUMENTED_CONSTANTS,
   VARIABLE_TYPE_OVERRIDES,
 } from "./emit-dts";
+import { engineTypeName } from "./engine-type-name";
 import { hashExampleSource } from "./example-store";
 import { splitTopLevel } from "./luals-type-expr";
 import type { UrlParameterTable } from "./url-parameters";
@@ -1457,7 +1465,7 @@ describe("emitDeclarations", () => {
     const module = parseDefoldApiDoc(resourceDoc);
     const out = emitDeclarations(module);
     expect(out).toContain(
-      "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
+      "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.Playback, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.Playback, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
     );
     const createAtlasLine = out.split("\n").find((line) => line.includes("function create_atlas"));
     // Each non-empty list spells its element twice: the head and the rest.
@@ -2386,7 +2394,7 @@ describe("supplementary cross-reference table-field recovery", () => {
     const out = emitDeclarations(resourceModule);
     const line = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(line).toContain(
-      "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
+      "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Exclude<go.Playback, typeof go.PLAYBACK_NONE>; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
     );
   });
 });
@@ -3039,7 +3047,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       functions: [requireFunction(module, "buffer.create")],
     });
     expect(out).toContain(
-      'function create(element_count: number, declaration: [{ name?: Hash | string; type: buffer.VALUE_TYPE; count?: number }, ...{ name?: Hash | string; type: buffer.VALUE_TYPE; count?: number }[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };',
+      'function create(element_count: number, declaration: [{ name?: Hash | string; type: buffer.ValueType; count?: number }, ...{ name?: Hash | string; type: buffer.ValueType; count?: number }[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };',
     );
   });
 
@@ -3049,7 +3057,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ...module,
       functions: [requireFunction(module, "render.set_render_target")],
     });
-    expect(out).toContain("options?: { transient?: graphics.BUFFER_TYPE[] }");
+    expect(out).toContain("options?: { transient?: graphics.BufferType[] }");
   });
 
   test("a string-keyed mapping parameter also accepts a plain object", () => {
@@ -4557,7 +4565,7 @@ describe("per-slot rendered types", () => {
     const entry = slotsOf(renderDoc, "render.enable_state", { knownConstantFqns: renderConstants });
     const state = entry.slotTypes["param:0:state"]?.type;
     expect(state).toBe(
-      "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+      "Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
     );
     expect(state).not.toContain('Opaque<"constant">');
   });
@@ -4726,10 +4734,11 @@ describe("documented constant slot expansion", () => {
     const alias = constantUnionAlias(fqns);
     if (alias === undefined) return fqns.map(brand).join(" | ");
     if (!("name" in alias)) return constantUnionSpelling(alias);
+    const name = engineTypeName(alias.name);
     expect(out ?? guiOut).toContain(
-      `type ${alias.name} = ${fqns.map((fqn) => `typeof ${fqn}`).join(" | ")};`,
+      `type ${name} = ${fqns.map((fqn) => `typeof ${fqn}`).join(" | ")};`,
     );
-    return `${alias.home}.${alias.name}`;
+    return `${alias.home}.${name}`;
   };
 
   function signatureLine(out: string, marker: string): string {
@@ -4879,7 +4888,7 @@ describe("documented constant slot expansion", () => {
   test("the signature ledger carries the same expansion", () => {
     const ledger = emitSymbolSignatures(gui);
     const entry = ledger.find((candidate) => candidate.identity.name === "gui.set_blend_mode");
-    expect(entry?.tsSignature).toContain("blend_mode: gui.BLEND");
+    expect(entry?.tsSignature).toContain("blend_mode: gui.Blend");
     expect(entry?.tsSignature).toBe(signatureLine(guiOut, "function set_blend_mode("));
   });
 });
@@ -5054,7 +5063,7 @@ describe("return-side optionality corrections", () => {
         emitDeclarations(parseDefoldApiDoc(collectionproxy114Doc), { bindingEvidence: evidence }),
         "function set_collection(",
       ),
-    ).toEndWith("): LuaMultiReturn<[boolean, collectionproxy.RESULT | undefined]>;");
+    ).toEndWith("): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;");
     expect(
       signatureLine(
         emitDeclarations(parseDefoldApiDoc(collectionproxy113Doc), { bindingEvidence: evidence }),
@@ -5149,15 +5158,15 @@ describe("CONSTANT_UNION_ALIASES", () => {
   test("a slot whose member set matches a row emits the alias in place of the arms", () => {
     const out = emitDeclarations(parseDefoldApiDoc(guiDoc));
     const animate = lineWith(out, "function animate(");
-    expect(animate).toContain("easing: gui.EASING | Vector");
+    expect(animate).toContain("easing: gui.Easing | Vector");
     expect(animate).not.toContain('__brand: "gui.EASING_');
   });
 
   test("the alias is declared once in its home namespace, in the row's member order", () => {
     const out = emitDeclarations(parseDefoldApiDoc(guiDoc));
     const row = aliasRow("gui", "EASING");
-    const expected = `  type EASING = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`;
-    expect(out.split("\n").filter((l) => l.trimStart().startsWith("type EASING ="))).toEqual([
+    const expected = `  type Easing = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`;
+    expect(out.split("\n").filter((l) => l.trimStart().startsWith("type Easing ="))).toEqual([
       expected,
     ]);
   });
@@ -5193,15 +5202,16 @@ describe("CONSTANT_UNION_ALIASES", () => {
 
   test("two subset rows of one parent each exclude their own complement, in the parent's order", () => {
     const out = emitDeclarations(parseDefoldApiDoc(guiDoc));
-    const x = "Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>";
-    const y = "Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>";
+    const x = "Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>";
+    const y = "Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>";
     expect(lineWith(out, "function get_xanchor(")).toContain(`): ${x};`);
     expect(lineWith(out, "function get_yanchor(")).toContain(`): ${y};`);
     expect(lineWith(out, "function set_xanchor(")).toContain(`anchor: ${x})`);
     expect(lineWith(out, "function set_yanchor(")).toContain(`anchor: ${y})`);
-    expect(out.split("\n").filter((l) => l.trimStart().startsWith("type ANCHOR ="))).toHaveLength(
+    expect(out.split("\n").filter((l) => l.trimStart().startsWith("type Anchor ="))).toHaveLength(
       1,
     );
+    expect(out).not.toContain("type ANCHOR =");
     expect(out).not.toContain("type XAnchor =");
     expect(out).not.toContain("type YAnchor =");
   });
@@ -5223,11 +5233,11 @@ describe("CONSTANT_UNION_ALIASES", () => {
     const ledger = emitSymbolSignatures(parseDefoldApiDoc(guiDoc));
     const row = aliasRow("gui", "EASING");
     const entry = ledger.find(
-      (candidate) => candidate.identity.kind === "TYPEDEF" && candidate.identity.name === "EASING",
+      (candidate) => candidate.identity.kind === "TYPEDEF" && candidate.identity.name === "Easing",
     );
     expect(entry?.identity.namespace).toBe("gui");
     expect(entry?.tsSignature).toBe(
-      `type EASING = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
+      `type Easing = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
     );
   });
 
@@ -5239,15 +5249,15 @@ describe("CONSTANT_UNION_ALIASES", () => {
       knownConstantFqns: graphicsConstantFqns,
     });
     expect(lineWith(renderOut, "function enable_state(")).toContain(
-      "state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>)",
+      "state: Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>)",
     );
-    expect(renderOut).not.toContain("type STATE =");
+    expect(renderOut).not.toContain("type State =");
     const graphicsOut = emitDeclarations(parseDefoldApiDoc(graphicsDoc));
     const row = aliasRow("graphics", "STATE");
     expect(graphicsOut).toContain(
-      `type STATE = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
+      `type State = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
     );
-    expect(graphicsOut).not.toContain("type State =");
+    expect(graphicsOut).not.toContain("type STATE =");
   });
 });
 
@@ -5302,42 +5312,69 @@ describe("subset constant unions", () => {
 
   test("the default target spells each engine-narrowed setter as Exclude of the reference ENUM", () => {
     expect(parameterType(sourceAt("render.d.ts"), "render", "enable_state", "state")).toBe(
-      "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+      "Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
     );
     expect(parameterType(sourceAt("window.d.ts"), "window", "set_dim_mode", "mode")).toBe(
-      "Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>",
+      "Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>",
     );
   });
 
+  test("the default target names the easing and pie-bounds unions in PascalCase", () => {
+    const guiAliases = typeAliases(sourceAt("gui.d.ts"), "gui");
+    expect([...guiAliases.keys()]).toEqual(expect.arrayContaining(["Easing", "PieBounds"]));
+    expect(guiAliases.has("EASING")).toBe(false);
+    expect(guiAliases.has("PIEBOUNDS")).toBe(false);
+    expect(parameterType(sourceAt("gui.d.ts"), "gui", "set_xanchor", "anchor")).toBe("gui.Anchor");
+  });
+
   test("an older target declares the parent in the reference's order and excludes from it", () => {
-    const defaultPlayback = typeAliases(sourceAt("go.d.ts"), "go").get("PLAYBACK");
+    const defaultPlayback = typeAliases(sourceAt("go.d.ts"), "go").get("Playback");
     const goOld = sourceAt("versions", "defold-1.13.1", "go.d.ts");
     const oldAliases = typeAliases(goOld, "go");
     expect(defaultPlayback?.split(" | ")).toHaveLength(7);
-    expect(oldAliases.get("PLAYBACK")).toBe(defaultPlayback as string);
-    expect(oldAliases.has("Playback")).toBe(false);
+    expect(oldAliases.get("Playback")).toBe(defaultPlayback as string);
+    expect(oldAliases.has("PLAYBACK")).toBe(false);
     expect(parameterType(goOld, "go", "animate", "playback")).toBe(
-      "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>",
+      "Exclude<go.Playback, typeof go.PLAYBACK_NONE>",
     );
 
     const guiOld = sourceAt("versions", "defold-1.13.1", "gui.d.ts");
-    expect(typeAliases(guiOld, "gui").get("ANCHOR")).toBe(
-      typeAliases(sourceAt("gui.d.ts"), "gui").get("ANCHOR") as string,
+    expect(typeAliases(guiOld, "gui").get("Anchor")).toBe(
+      typeAliases(sourceAt("gui.d.ts"), "gui").get("Anchor") as string,
     );
     expect(parameterType(guiOld, "gui", "set_xanchor", "anchor")).toBe(
-      "Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+      "Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
     );
     expect(parameterType(guiOld, "gui", "set_yanchor", "anchor")).toBe(
-      "Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+      "Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
     );
+  });
+
+  test("the editor declares its color union as a type beside the constant namespace", () => {
+    const editor = sourceAt("editor.d.ts");
+    const ui = namespaceBodies(editor, "ui");
+    const color = ui.flatMap((body) =>
+      body.statements.filter(
+        (statement) =>
+          (ts.isTypeAliasDeclaration(statement) || ts.isModuleDeclaration(statement)) &&
+          statement.name.text.toUpperCase() === "COLOR",
+      ),
+    );
+    expect(
+      color.map((statement) => [
+        ts.isTypeAliasDeclaration(statement) ? "type" : "namespace",
+        (statement as ts.TypeAliasDeclaration | ts.ModuleDeclaration).name.text,
+      ]),
+    ).toEqual([
+      ["type", "Color"],
+      ["namespace", "COLOR"],
+    ]);
   });
 
   test("no committed surface declares a subset name in its home", () => {
     const removed = [
-      ["go", "Playback"],
       ["gui", "XAnchor"],
       ["gui", "YAnchor"],
-      ["graphics", "State"],
       ["window", "DimModeStateSettable"],
     ] as const;
     const declarationFiles = (dir: string): string[] =>
@@ -5422,6 +5459,145 @@ describe("subset constant unions", () => {
   });
 });
 
+describe("constant union names on every committed surface", () => {
+  function declarationFiles(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) return declarationFiles(path);
+      return entry.name.endsWith(".d.ts") ? [path] : [];
+    });
+  }
+
+  interface Surface {
+    // Each dotted namespace path the file opens, with the type aliases declared
+    // directly in it.
+    readonly types: Map<string, Set<string>>;
+    // The qualified constants the file declares.
+    readonly constants: Set<string>;
+  }
+
+  function readSurface(path: string): Surface {
+    const source = ts.createSourceFile(
+      path,
+      readFileSync(path, "utf8"),
+      ts.ScriptTarget.Latest,
+      true,
+    );
+    const types = new Map<string, Set<string>>();
+    const constants = new Set<string>();
+    const visit = (node: ts.ModuleDeclaration, outer: string): void => {
+      const transparent =
+        ts.isStringLiteral(node.name) || (node.flags & ts.NodeFlags.GlobalAugmentation) !== 0;
+      const path = transparent
+        ? outer
+        : outer === ""
+          ? node.name.text
+          : `${outer}.${node.name.text}`;
+      const body = node.body;
+      if (body === undefined) return;
+      if (ts.isModuleDeclaration(body)) {
+        visit(body, path);
+        return;
+      }
+      if (!ts.isModuleBlock(body)) return;
+      const declared = types.get(path) ?? new Set<string>();
+      types.set(path, declared);
+      for (const statement of body.statements) {
+        if (ts.isTypeAliasDeclaration(statement)) declared.add(statement.name.text);
+        if (ts.isModuleDeclaration(statement)) visit(statement, path);
+        if (ts.isVariableStatement(statement)) {
+          for (const declaration of statement.declarationList.declarations) {
+            constants.add(`${path}.${declaration.name.getText(source)}`);
+          }
+        }
+      }
+    };
+    for (const statement of source.statements) {
+      if (ts.isModuleDeclaration(statement)) visit(statement, "");
+    }
+    return { types, constants };
+  }
+
+  // Every reference `ENUM` a target reads and every named row, as the namespace
+  // it is declared in, its reference leaf and its members. A row is declared in
+  // its home on every surface that declares the home's constants; an `ENUM`
+  // wherever all its members are declared.
+  interface Union {
+    readonly home: string;
+    readonly reference: string;
+    readonly members: readonly string[];
+    readonly row: boolean;
+  }
+
+  function targetUnions(entries: readonly { namespace: string; doc: unknown }[]): Union[] {
+    const unions = new Map<string, Union>();
+    for (const row of CONSTANT_UNION_ALIASES) {
+      if ("name" in row) {
+        unions.set(`${row.home}.${row.name}`, {
+          home: row.home,
+          reference: row.name,
+          members: row.members,
+          row: true,
+        });
+      }
+    }
+    for (const entry of entries) {
+      for (const { name, members } of parseDefoldApiDoc(entry.doc).enums ?? []) {
+        const local = name.startsWith(`${entry.namespace}.`)
+          ? name.slice(entry.namespace.length + 1)
+          : name;
+        const full = `${entry.namespace}.${local}`;
+        if (unions.has(full)) continue;
+        const home = full.slice(0, full.lastIndexOf("."));
+        unions.set(full, { home, reference: full.slice(home.length + 1), members, row: false });
+      }
+    }
+    return [...unions.values()];
+  }
+
+  const VERSIONS_DIR = join(GENERATED_DIR, "versions");
+  const targets = [
+    {
+      files: declarationFiles(GENERATED_DIR).filter((path) => !path.startsWith(VERSIONS_DIR)),
+      unions: targetUnions([
+        ...MODULE_MANIFEST,
+        ...EDITOR_MODULE_MANIFEST,
+        ...EDITOR_VM_MODULE_MANIFEST,
+      ]),
+    },
+    ...readdirSync(VERSIONS_DIR).map((id) => ({
+      files: declarationFiles(join(VERSIONS_DIR, id)),
+      unions: targetUnions(VERSIONED_MODULE_MANIFEST.filter((entry) => entry.versionId === id)),
+    })),
+  ];
+
+  test("every union is declared under its PascalCase name, and its reference name only when equal", () => {
+    const reference: string[] = [];
+    const missing: string[] = [];
+    let checked = 0;
+    for (const { files, unions } of targets) {
+      for (const path of files) {
+        const { types, constants } = readSurface(path);
+        for (const { home, reference: name, members, row } of unions) {
+          const declared = types.get(home);
+          if (declared === undefined) continue;
+          const pascal = engineTypeName(name);
+          if (pascal !== name && declared.has(name)) reference.push(`${path}: ${home}.${name}`);
+          const owned = row
+            ? [...constants].some((constant) => constant.startsWith(`${home}.`))
+            : members.every((member) => constants.has(member));
+          if (!owned) continue;
+          checked += 1;
+          if (!declared.has(pascal)) missing.push(`${path}: ${home}.${pascal}`);
+        }
+      }
+    }
+    expect(reference).toEqual([]);
+    expect(missing).toEqual([]);
+    expect(checked).toBeGreaterThan(0);
+  });
+});
+
 describe("one name per constant union beside a reference ENUM", () => {
   function row(home: string, name: string) {
     const found = CONSTANT_UNION_ALIASES.find(
@@ -5481,24 +5657,24 @@ describe("one name per constant union beside a reference ENUM", () => {
 
   test("the ENUM's alias is the only declaration of its name, in the ENUM's spelling", () => {
     const out = emitDeclarations(enumModule);
-    const expected = `type EASING = ${enumOrder.map((m) => arm(m, new Set([nilableMember]))).join(" | ")};`;
-    expect(aliasLines(out, "EASING")).toEqual([expected]);
-    expect(ledgerTypedefs(enumModule, "EASING")).toEqual([expected]);
-    expect(out).not.toMatch(/\bEasing\b/);
+    const expected = `type Easing = ${enumOrder.map((m) => arm(m, new Set([nilableMember]))).join(" | ")};`;
+    expect(aliasLines(out, "Easing")).toEqual([expected]);
+    expect(ledgerTypedefs(enumModule, "Easing")).toEqual([expected]);
+    expect(aliasLines(out, "EASING")).toEqual([]);
   });
 
   test("a row no ENUM declares is still emitted from the table beside one that does", () => {
-    const expected = `type PLAYBACK = ${playback.members.map((m) => arm(m)).join(" | ")};`;
-    expect(aliasLines(emitDeclarations(enumModule), "PLAYBACK")).toEqual([expected]);
-    expect(ledgerTypedefs(enumModule, "PLAYBACK")).toEqual([expected]);
+    const expected = `type Playback = ${playback.members.map((m) => arm(m)).join(" | ")};`;
+    expect(aliasLines(emitDeclarations(enumModule), "Playback")).toEqual([expected]);
+    expect(ledgerTypedefs(enumModule, "Playback")).toEqual([expected]);
   });
 
   test("a reference without the ENUM declares the same name once, from the table row", () => {
     const out = emitDeclarations(tableModule);
-    const expected = `type EASING = ${easing.members.map((m) => arm(m)).join(" | ")};`;
-    expect(aliasLines(out, "EASING")).toEqual([expected]);
-    expect(ledgerTypedefs(tableModule, "EASING")).toEqual([expected]);
-    expect(out).not.toMatch(/\bEasing\b/);
+    const expected = `type Easing = ${easing.members.map((m) => arm(m)).join(" | ")};`;
+    expect(aliasLines(out, "Easing")).toEqual([expected]);
+    expect(ledgerTypedefs(tableModule, "Easing")).toEqual([expected]);
+    expect(aliasLines(out, "EASING")).toEqual([]);
   });
 
   test("a slot whose constant set is the row renders the kept name on both shapes", () => {
@@ -5506,7 +5682,7 @@ describe("one name per constant union beside a reference ENUM", () => {
       const line = emitDeclarations(module)
         .split("\n")
         .find((l) => l.includes("function animate("));
-      expect(line?.trim()).toBe("function animate(easing: gui.EASING): void;");
+      expect(line?.trim()).toBe("function animate(easing: gui.Easing): void;");
     }
   });
 
@@ -5526,10 +5702,10 @@ describe("one name per constant union beside a reference ENUM", () => {
       "graphics.BUFFER_TYPE_DEPTH_BIT",
       "graphics.BUFFER_TYPE_STENCIL_BIT",
     ];
-    const expected = `type BUFFER_TYPE = ${members.map((m) => arm(m, nilable)).join(" | ")};`;
-    expect(aliasLines(out, "BUFFER_TYPE")).toEqual([expected]);
-    expect(ledgerTypedefs(module, "BUFFER_TYPE")).toEqual([expected]);
-    expect(out).not.toMatch(/\bBufferType\b/);
+    const expected = `type BufferType = ${members.map((m) => arm(m, nilable)).join(" | ")};`;
+    expect(aliasLines(out, "BufferType")).toEqual([expected]);
+    expect(ledgerTypedefs(module, "BufferType")).toEqual([expected]);
+    expect(aliasLines(out, "BUFFER_TYPE")).toEqual([]);
   });
 });
 
@@ -5805,11 +5981,11 @@ describe("engine slot rules", () => {
   };
 
   test("a non-empty slot turns its array into a tuple of one or more elements", () => {
-    const record = "{ name?: Hash | string; type: buffer.VALUE_TYPE; count?: number }";
+    const record = "{ name?: Hash | string; type: buffer.ValueType; count?: number }";
     expect(
       signatureLine(emitDeclarations(only(bufferDoc, "buffer.create")), "function create("),
     ).toContain(`declaration: [${record}, ...${record}[]]`);
-    const struct = "({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })";
+    const struct = "({ name: Hash | string; type: buffer.ValueType; count: number })";
     expect(
       signatureLine(emitDeclarations(only(buffer114Doc, "buffer.create")), "function create("),
     ).toContain(`declaration: [${struct}, ...${struct}[]]`);
@@ -5828,7 +6004,7 @@ describe("engine slot rules", () => {
         "function set_metadata(",
       ),
     ).toEndWith(
-      "value_type: Exclude<buffer.VALUE_TYPE, typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_UINT64>): void;",
+      "value_type: Exclude<buffer.ValueType, typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_UINT64>): void;",
     );
   });
 
@@ -5924,24 +6100,24 @@ describe("a nested table field's type override", () => {
       {
         name: "playback",
         types: ["constant"],
-        tsType: "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>",
+        tsType: "Exclude<go.Playback, typeof go.PLAYBACK_NONE>",
       },
       { name: "fps", types: ["number"] },
     ]);
     expect(parsed[1]?.fields?.[0]).toEqual({ name: "playback", types: ["constant"] });
   });
 
-  test("the atlas animations playback field emits as go.PLAYBACK without NONE on every atlas element", () => {
+  test("the atlas animations playback field emits as go.Playback without NONE on every atlas element", () => {
     const out = emitDeclarations(parseDefoldApiDoc(resourceDoc));
     const lineWith = (text: string, needle: string): string =>
       text.split("\n").find((line) => line.includes(needle)) ?? "";
     for (const name of ["set_atlas", "create_atlas"]) {
       expect(lineWith(out, `function ${name}(`)).toContain(
-        "playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>;",
+        "playback?: Exclude<go.Playback, typeof go.PLAYBACK_NONE>;",
       );
     }
     expect(lineWith(out, "function get_atlas(")).toContain(
-      "playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>;",
+      "playback: Exclude<go.Playback, typeof go.PLAYBACK_NONE>;",
     );
   });
 });
@@ -6127,7 +6303,7 @@ describe("library index base notes", () => {
 describe("overload slot aliases", () => {
   // Regen resolves the graphics enum the state corrections narrow; a lone
   // render doc needs it declared.
-  const declaredTypes = new Map([["graphics.STATE", "graphics.STATE"]]);
+  const declaredTypes = new Map([["graphics.STATE", "graphics.State"]]);
   const emittedLines = (doc: Parameters<typeof parseDefoldApiDoc>[0]): string[] =>
     emitDeclarations(parseDefoldApiDoc(doc), { declaredTypes })
       .split("\n")
@@ -6474,19 +6650,19 @@ describe("ENUM declarations", () => {
   test("each enum emits one union alias named after it, over its members in order", () => {
     const aliases = emitDeclarations(factoryEnumModule)
       .split("\n")
-      .filter((line) => line.trimStart().startsWith("type STATUS "));
+      .filter((line) => line.trimStart().startsWith("type Status "));
     expect(aliases).toEqual([
-      "  type STATUS = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED;",
+      "  type Status = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED;",
     ]);
   });
 
   test("the enum alias signs as a typedef the declarations carry verbatim", () => {
     const declarations = emitDeclarations(factoryEnumModule);
     const typedef = emitSymbolSignatures(factoryEnumModule).find(
-      (entry) => entry.identity.kind === "TYPEDEF" && entry.identity.name === "STATUS",
+      (entry) => entry.identity.kind === "TYPEDEF" && entry.identity.name === "Status",
     );
     expect(typedef?.tsSignature).toBe(
-      "type STATUS = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED;",
+      "type Status = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED;",
     );
     expect(declarations).toContain(typedef?.tsSignature as string);
   });
@@ -6514,13 +6690,13 @@ describe("ENUM declarations", () => {
   test("a nested enum's alias is declared beside the namespace holding its members", () => {
     const lines = emitDeclarations(editorEnumModule).split("\n");
     const ui = lines.findIndex((line) => line.trim() === "namespace ui {");
-    const alias = lines.findIndex((line) => line.trim().startsWith("type COLOR = "));
+    const alias = lines.findIndex((line) => line.trim().startsWith("type Color = "));
     const color = lines.findIndex((line) => line.trim() === "namespace COLOR {");
     expect(ui).toBeGreaterThan(-1);
     expect(alias).toBeGreaterThan(ui);
     expect(color).toBeGreaterThan(ui);
     expect(lines[alias]?.trim()).toBe(
-      "type COLOR = typeof editor.ui.COLOR.TEXT | typeof editor.ui.COLOR.HINT | typeof editor.ui.COLOR.OVERRIDE | typeof editor.ui.COLOR.WARNING | typeof editor.ui.COLOR.ERROR;",
+      "type Color = typeof editor.ui.COLOR.TEXT | typeof editor.ui.COLOR.HINT | typeof editor.ui.COLOR.OVERRIDE | typeof editor.ui.COLOR.WARNING | typeof editor.ui.COLOR.ERROR;",
     );
   });
 
@@ -6538,7 +6714,7 @@ describe("ENUM declarations", () => {
     ]);
     expect(
       signatures.filter((entry) => entry.identity.kind === "TYPEDEF").map((e) => e.identity.name),
-    ).toEqual(["ui.COLOR"]);
+    ).toEqual(["ui.Color"]);
     const missing = signatures
       .filter((entry) => !declarations.includes(entry.tsSignature))
       .map((entry) => entry.tsSignature);
@@ -6580,7 +6756,7 @@ describe("ENUM declarations", () => {
       'function use(format: number & { readonly __brand: "graphics.TEXTURE_FORMAT_BGRA8U" }): void;',
     );
     expect(out).toContain(
-      "type TEXTURE_FORMAT = typeof graphics.TEXTURE_FORMAT_RGBA | NonNullable<typeof graphics.TEXTURE_FORMAT_BGRA8U>;",
+      "type TextureFormat = typeof graphics.TEXTURE_FORMAT_RGBA | NonNullable<typeof graphics.TEXTURE_FORMAT_BGRA8U>;",
     );
   });
 });
@@ -6765,7 +6941,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
       "    /**",
       "     * shape type",
       "     */",
-      "    type: physics.SHAPE_TYPE;",
+      "    type: physics.ShapeType;",
       "    /**",
       "     * sphere diameter or capsule pole diameter",
       "     */",
@@ -6789,9 +6965,9 @@ describe("STRUCT and TYPEDEF declarations", () => {
       (entry) => entry.identity.kind === "TYPEDEF" && entry.identity.name === "shape_data",
     );
     expect(shapeData?.tsSignature).toBe(
-      "interface shape_data { type: physics.SHAPE_TYPE; diameter?: number; dimensions?: Vector3; height?: number; }",
+      "interface shape_data { type: physics.ShapeType; diameter?: number; dimensions?: Vector3; height?: number; }",
     );
-    for (const member of ["type: physics.SHAPE_TYPE;", "diameter?: number;", "height?: number;"]) {
+    for (const member of ["type: physics.ShapeType;", "diameter?: number;", "height?: number;"]) {
       expect(declarations).toContain(`    ${member}`);
     }
   });
@@ -6993,10 +7169,10 @@ describe("STRUCT and TYPEDEF declarations", () => {
     ];
     expect(shapeDefinitionLine(changed)).toBe(
       `type definition = ${[
-        `{ type: bullet3d.shape.SHAPE_TYPE; diameter: number; ${shapeArmFields} }`,
-        `{ type: bullet3d.shape.SHAPE_TYPE; dimensions: Vector3; ${shapeArmFields} }`,
-        `{ type: bullet3d.shape.SHAPE_TYPE; diameter: number; height: number; ${shapeArmFields} }`,
-        "{ type: bullet3d.shape.SHAPE_TYPE; vertices: Vector3[] }",
+        `{ type: bullet3d.shape.ShapeType; diameter: number; ${shapeArmFields} }`,
+        `{ type: bullet3d.shape.ShapeType; dimensions: Vector3; ${shapeArmFields} }`,
+        `{ type: bullet3d.shape.ShapeType; diameter: number; height: number; ${shapeArmFields} }`,
+        "{ type: bullet3d.shape.ShapeType; vertices: Vector3[] }",
       ].join(" | ")};`,
     );
   });
@@ -7146,7 +7322,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
         ],
       }),
     );
-    expect(out).toContain("    flags?: graphics.TEXTURE_USAGE_FLAG | number;");
+    expect(out).toContain("    flags?: graphics.TextureUsageFlag | number;");
   });
 
   test("a member-keyed correction naming no member of a declared struct throws", () => {
@@ -7514,9 +7690,9 @@ describe("upstream-pinned corrections", () => {
         },
       ],
     };
-    const declared = new Map([["tilemap.TRANSFORM", "tilemap.TRANSFORM"]]);
+    const declared = new Map([["tilemap.TRANSFORM", "tilemap.Transform"]]);
     expect(signature(emitted("tilemap", setTile, declared), "set_tile")).toContain(
-      "transform_bitmask?: tilemap.TRANSFORM | number)",
+      "transform_bitmask?: tilemap.Transform | number)",
     );
   });
 
@@ -7553,9 +7729,9 @@ describe("upstream-pinned corrections", () => {
       name: "window.set_dim_mode",
       parameters: [{ name: "mode", doc: "", types: ["window.DIMMING"], is_optional: "False" }],
     };
-    const declared = new Map([["window.DIMMING", "window.DIMMING"]]);
+    const declared = new Map([["window.DIMMING", "window.Dimming"]]);
     expect(signature(emitted("window", setDimMode, declared), "set_dim_mode")).toContain(
-      "(mode: Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>)",
+      "(mode: Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>)",
     );
   });
 
@@ -7668,7 +7844,7 @@ describe("UNDOCUMENTED_CONSTANTS back-fill", () => {
     const NOT_INITIALIZED_DECL = "const LIVEUPDATE_NOT_INITIALIZED:";
     const MEMBER = `typeof ${NOT_INITIALIZED}`;
     const resultAlias = (out: string): string | undefined =>
-      out.split("\n").find((line) => line.includes("type LIVEUPDATE ="));
+      out.split("\n").find((line) => line.includes("type LiveUpdate ="));
     const registeredWithDocumented = (module: ApiModule): Set<string> =>
       new Set([...module.constants.map((c) => c.name), NOT_INITIALIZED]);
 

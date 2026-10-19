@@ -483,10 +483,10 @@ describe("manifest member skips", () => {
     expect(contents).toContain(
       'const MAYBE: string & { readonly __brand: "demo.KEPT_ENUM.MAYBE" } | undefined;',
     );
-    expect(contents).toContain("type KEPT_ENUM = ");
+    expect(contents).toContain("type KeptEnum = ");
     const names = generateModuleSignatures(enumEntry).map((s) => s.identity.name);
     expect(names.sort()).toEqual([
-      "KEPT_ENUM",
+      "KeptEnum",
       "demo.KEPT_CONST",
       "demo.KEPT_ENUM.MAYBE",
       "demo.KEPT_ENUM.PLAIN",
@@ -673,10 +673,10 @@ describe("editor namespace emit", () => {
     expect(dropped).toEqual(expect.arrayContaining(["zip.METHOD.DEFLATED", "zip.METHOD.STORED"]));
     expect(contents).not.toContain("namespace zip");
     expect(contents).not.toContain("DEFLATED");
-    expect(contents).not.toContain("type METHOD");
+    expect(contents).not.toContain("type Method");
     expect(contents).toContain("namespace ui {");
     expect(contents).toContain("const TEXT:");
-    expect(contents).toContain("type COLOR = ");
+    expect(contents).toContain("type Color = ");
   });
 
   test("leaves the editor-VM libraries that share the fixture to their own manifest", () => {
@@ -1402,8 +1402,8 @@ describe("editor VM module emit", () => {
     });
     expect(contents).not.toContain("namespace METHOD");
     expect(contents).not.toContain("namespace ON_CONFLICT");
-    expect(contents).not.toContain("type METHOD");
-    expect(contents).not.toContain("type ON_CONFLICT");
+    expect(contents).not.toContain("type Method");
+    expect(contents).not.toContain("type OnConflict");
   });
 
   test("each module lands under its own subdirectory path, dots flattened", () => {

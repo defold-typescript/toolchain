@@ -448,6 +448,7 @@ function symbolBlock(
     ? `${marks} \`${symbol.signature}\` ${dots}`
     : `${marks} \`${symbol.signature}\``;
   const body: string[] = [];
+  if (symbol.defoldName) body.push(defoldNameLine(symbol.defoldName));
   if (badges) body.push(badges);
   // Ahead of the prose: the note exists to qualify the upstream description and
   // example that follow it, which a reader would otherwise take at face value.
@@ -460,6 +461,12 @@ function symbolBlock(
   return [heading, "", '<div class="api-symbol-body">', "", body.join("\n\n"), "", "</div>"].join(
     "\n",
   );
+}
+
+// Plain text rather than an inline code span: a span whose content is a symbol
+// key links to that member, and a reference name can also name a function.
+function defoldNameLine(name: string): string {
+  return `Defold name: ${name}`;
 }
 
 // The `  1.` adopt step naming the dependency URL for a repo at its pin — shared by
@@ -1070,7 +1077,13 @@ export function apiPageMarkdown(
       for (const symbol of types) emitSymbol(symbol);
       for (const shape of shapes) {
         lines.push(`### ${typeShapeHeading(page, shape.label)}`, "");
-        for (const symbol of shape.symbols) emitSymbol(symbol, 4);
+        // A shape's Defold name belongs to its heading, not to its definition row.
+        for (const { defoldName, ...symbol } of shape.symbols) {
+          if (defoldName !== undefined && symbol.name === shape.label) {
+            lines.push(defoldNameLine(defoldName), "");
+          }
+          emitSymbol(symbol, 4);
+        }
       }
       continue;
     }
@@ -1128,7 +1141,7 @@ export function apiSignatureSymbolLinks(
   }
   const index = buildSymbolIndex(pages);
   // A constant-union alias is spelled qualified in every signature that takes it
-  // (`gui.EASING`, `graphics.STATE`), which is also how the symbol index keys it.
+  // (`gui.Easing`, `graphics.State`), which is also how the symbol index keys it.
   // Keying the qualified name off every alias page rather than the current page
   // is what lets a `render` signature reach the `graphics` entry that lists the
   // members. The route is the type row's own anchor, not the index entry: the

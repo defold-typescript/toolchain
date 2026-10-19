@@ -5,7 +5,7 @@ declare global {
    * dynamically spawn game objects into the runtime.
    */
   namespace factory {
-    type STATUS = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED;
+    type Status = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED;
     /**
      * The factory resources are loaded.
      */

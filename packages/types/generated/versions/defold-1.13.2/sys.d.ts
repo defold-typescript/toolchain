@@ -69,7 +69,7 @@ declare global {
       /**
        * Request status.
        */
-      status: sys.REQUEST_STATUS;
+      status: sys.RequestStatus;
       /**
        * Loaded payload for a successful request.
        */
@@ -142,8 +142,8 @@ declare global {
        */
       ignore_secure?: boolean;
     }
-    type NETWORK = typeof sys.NETWORK_CONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_DISCONNECTED;
-    type REQUEST_STATUS = typeof sys.REQUEST_STATUS_ERROR_IO_ERROR | typeof sys.REQUEST_STATUS_ERROR_NOT_FOUND | typeof sys.REQUEST_STATUS_FINISHED;
+    type Network = typeof sys.NETWORK_CONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_DISCONNECTED;
+    type RequestStatus = typeof sys.REQUEST_STATUS_ERROR_IO_ERROR | typeof sys.REQUEST_STATUS_ERROR_NOT_FOUND | typeof sys.REQUEST_STATUS_FINISHED;
     /**
      * Connected through Wi-Fi or another non-cellular network.
      */
@@ -377,7 +377,7 @@ declare global {
      * }
      * ```
      */
-    function get_connectivity(): sys.NETWORK;
+    function get_connectivity(): sys.Network;
     /**
      * Returns a table with engine information.
      *

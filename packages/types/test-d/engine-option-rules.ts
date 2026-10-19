@@ -37,7 +37,7 @@ const decl = { name: hash("position"), type: buffer.VALUE_TYPE_FLOAT32, count: 3
 const buf = buffer.create(1, [decl]);
 // @ts-expect-error the binding raises on an empty declaration list
 buffer.create(1, []);
-declare const decls: { name: Hash; type: buffer.VALUE_TYPE; count: number }[];
+declare const decls: { name: Hash; type: buffer.ValueType; count: number }[];
 // @ts-expect-error a list of unknown length may be empty
 buffer.create(1, decls);
 

@@ -6,7 +6,7 @@ declare global {
    * Messages to control camera components and camera focus.
    */
   namespace camera {
-    type ORTHO_MODE = typeof camera.ORTHO_MODE_AUTO_COVER | typeof camera.ORTHO_MODE_AUTO_FIT | typeof camera.ORTHO_MODE_FIXED;
+    type OrthoMode = typeof camera.ORTHO_MODE_AUTO_COVER | typeof camera.ORTHO_MODE_AUTO_FIT | typeof camera.ORTHO_MODE_FIXED;
     /**
      * auto-cover orthographic zoom mode Computes zoom so the original display area covers the entire window while preserving aspect ratio. Equivalent to using max(window_width/width, window_height/height). The result is multiplied by the user-controlled orthographic zoom.
      */
@@ -96,7 +96,7 @@ declare global {
      * @returns one of camera.ORTHO_MODE_FIXED, camera.ORTHO_MODE_AUTO_FIT or
      * camera.ORTHO_MODE_AUTO_COVER
      */
-    function get_orthographic_mode(camera?: Url | number | string | Hash): camera.ORTHO_MODE;
+    function get_orthographic_mode(camera?: Url | number | string | Hash): camera.OrthoMode;
     /**
      * Gets the positive user-controlled orthographic zoom multiplier. In auto-fit and auto-cover
      * modes, this value is multiplied with camera.get_orthographic_auto_zoom(camera).
@@ -221,7 +221,7 @@ declare global {
      * @param camera - camera id
      * @param mode - camera.ORTHO_MODE_FIXED, camera.ORTHO_MODE_AUTO_FIT or camera.ORTHO_MODE_AUTO_COVER
      */
-    function set_orthographic_mode(camera: Url | number | string | Hash | undefined, mode: camera.ORTHO_MODE): void;
+    function set_orthographic_mode(camera: Url | number | string | Hash | undefined, mode: camera.OrthoMode): void;
     /**
      * Sets the positive user-controlled orthographic zoom multiplier. In auto-fit and auto-cover
      * modes, this value is multiplied with camera.get_orthographic_auto_zoom(camera).

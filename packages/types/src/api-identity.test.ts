@@ -83,11 +83,24 @@ describe("canonical identity types", () => {
     ["the script instance is the userdata self", ["userdata"], ["script_instance"]],
     ["an alias is what it aliases", ["number", "vector4", "table"], ["material.constant_value"]],
     ["a literal union is its value type", ["number"], ["0", "1"]],
+    ["an enum's TypeScript name is that enum", ["go.PLAYBACK"], ["go.Playback"]],
+    [
+      "a subset excluded from an enum's TypeScript name is that enum's value",
+      ["go.PLAYBACK"],
+      ["Exclude<go.Playback, typeof go.PLAYBACK_NONE>"],
+    ],
+    ["a struct's TypeScript name is a table", ["table"], ["b2d.Aabb"]],
   ] as const)("%s", (_name, older, newer) => {
     expect(canonicalIdentityTypes(newer, VOCABULARY)).toEqual(
       canonicalIdentityTypes(older, VOCABULARY),
     );
     expect(signature(fn([newer]))).toBe(signature(fn([older])));
+  });
+
+  test("a correction naming a renamed union keys the identity its reference name keys", () => {
+    expect(canonicalIdentityTypes(["gui.Anchor"], COMMITTED_IDENTITY_VOCABULARY)).toEqual(
+      canonicalIdentityTypes(["gui.ANCHOR"], COMMITTED_IDENTITY_VOCABULARY),
+    );
   });
 
   test("nil survives canonicalization, from a union arm or a LuaLS `?`", () => {
