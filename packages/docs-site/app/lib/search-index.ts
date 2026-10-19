@@ -1,5 +1,5 @@
 import { htmlToDocText } from "@defold-typescript/types";
-import { type ApiPage, apiModuleSections } from "./api-surface";
+import { type ApiPage, apiModuleSections, qualify } from "./api-surface";
 import {
   type CombinedEntry,
   type CombinedNamespace,
@@ -7,7 +7,7 @@ import {
   combinedNamespaceToApiPage,
 } from "./combined-surface";
 import type { GuidePage } from "./guide";
-import { memberAnchors, qualify } from "./symbol-index";
+import { memberAnchors } from "./symbol-index";
 
 export interface SearchRecord {
   route: string;

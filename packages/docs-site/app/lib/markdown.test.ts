@@ -391,6 +391,24 @@ describe("renderMarkdown", () => {
     expect(headings[0]?.text).toBe(SIGNATURE);
   });
 
+  test("colors each segment of a qualified type alias head as an interface head colors its own", async () => {
+    const spans = async (code: string) => {
+      const html = await renderMarkdown(`### \`${code}\`\n`, { highlightSignatureHeadings: true });
+      const h3 = html.slice(html.indexOf("<h3"), html.indexOf("</h3>"));
+      return [...h3.matchAll(/<span style="([^"]*)">([^<]*)<\/span>/g)].map(
+        (m) => [m[2]?.trim(), m[1]] as const,
+      );
+    };
+    const styleOf = (list: (readonly [string | undefined, string | undefined])[], text: string) =>
+      list.find(([t]) => t === text)?.[1];
+    const alias = await spans("type image.TYPE = typeof image.TYPE_RGB");
+    const iface = await spans("interface image.load_result { width: number; }");
+    expect(styleOf(alias, "TYPE")).toBeDefined();
+    expect(styleOf(alias, "TYPE")).toBe(styleOf(alias, "image"));
+    expect(styleOf(alias, "TYPE")).toBe(styleOf(iface, "load_result"));
+    expect(styleOf(alias, ".")).toBe(styleOf(iface, "."));
+  });
+
   test("the TOC text for a generic-typed signature heading is fully decoded", async () => {
     const html = await renderMarkdown('### `gui.get_node(id: string | Hash): Opaque<"node">`\n', {
       highlightSignatureHeadings: true,

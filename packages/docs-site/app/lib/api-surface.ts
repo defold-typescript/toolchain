@@ -646,9 +646,10 @@ export interface TypeSymbolLayout {
  * its shape rather than minting one. A dotless name is the shape's own definition
  * symbol and heads that shape's group. A type with no members (a `type` alias or
  * an `interface` row) is a row: the rows share one heading, and each row's own
- * signature heading is its anchor. A shape with members owns a heading labeled
- * with the bare shape name, because that heading is the only anchor a signature
- * token naming it can resolve to. Input order is preserved within every shape.
+ * signature heading is its anchor. A shape with members is labeled with the bare
+ * shape name and owns a heading, {@link typeShapeHeading} of that label, because
+ * that heading is the only anchor a signature token naming it can resolve to.
+ * Input order is preserved within every shape.
  * Presentation-only — does not feed the search index or `apiModuleSymbols`.
  */
 export function groupTypeSymbols(types: ApiSymbol[]): TypeSymbolLayout {
@@ -1311,6 +1312,51 @@ function typedefDefinitionSignature(
 
 function typeMemberName(typeName: string, memberName: string): string {
   return `${typeName}.${memberName}`;
+}
+
+// Functions/constants come namespace-qualified (`go.get_position`), properties
+// come bare (`position`); only prefix when the name is not already qualified.
+// The synthetic `globals` page documents prefixless ambient symbols (`hash`),
+// so its members are keyed bare.
+export function qualify(namespace: string, name: string): string {
+  if (namespace === "globals") return name;
+  return name.startsWith(`${namespace}.`) ? name : `${namespace}.${name}`;
+}
+
+const IDENTIFIER_CHAR = /[\w$]/;
+
+// `text` opens with `head` as a whole token, not as the prefix of a longer name.
+function opensWith(text: string, head: string): boolean {
+  return text.startsWith(head) && !IDENTIFIER_CHAR.test(text.charAt(head.length));
+}
+
+/**
+ * A type row spelled by the path a script names it with: a definition opening
+ * `type <leaf>` or `interface <leaf>` names the whole qualified path
+ * (`type TYPE` on `image` -> `type image.TYPE`, `interface action` filed as
+ * `go`'s `on_input.action` -> `interface go.on_input.action`), and a shape
+ * member row opening with its own `<Shape>.<member>` name gains the namespace
+ * (`Logger.info(...)` -> `demo.Logger.info(...)`). Any other signature is
+ * returned unchanged.
+ */
+function qualifiedTypeSignature(namespace: string, name: string, signature: string): string {
+  const path = qualify(namespace, name);
+  const leaf = name.slice(name.lastIndexOf(".") + 1);
+  for (const keyword of ["type", "interface"]) {
+    const head = `${keyword} ${leaf}`;
+    if (opensWith(signature, head)) return `${keyword} ${path}${signature.slice(head.length)}`;
+  }
+  if (opensWith(signature, name)) return `${path}${signature.slice(name.length)}`;
+  return signature;
+}
+
+/**
+ * The heading over a shape's member rows: the qualified path on an engine page,
+ * where scripts reach every type through its namespace, and the bare shape name
+ * on any other page, where the type is imported or ambient by that name.
+ */
+export function typeShapeHeading(page: Pick<ApiPage, "namespace" | "category">, label: string) {
+  return page.category === "engine" ? qualify(page.namespace, label) : label;
 }
 
 function typeMemberFunctionSignature(
@@ -2149,6 +2195,14 @@ export function apiModuleSymbols(
   for (const symbol of symbols) {
     if (symbol.kind === "function" && !artifactBacked.has(symbol)) {
       symbol.parameters = paramsFromSignature(symbol.parameters, symbol.signature);
+    }
+  }
+  // Qualified here rather than at render time so a type row's heading and the
+  // anchor `memberAnchors` slugs from its signature stay the same text.
+  if (page.category === "engine") {
+    for (const symbol of symbols) {
+      if (symbol.kind !== "type") continue;
+      symbol.signature = qualifiedTypeSignature(page.namespace, symbol.name, symbol.signature);
     }
   }
   return symbols;
