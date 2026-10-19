@@ -595,10 +595,23 @@ export interface ApiSymbol {
   docSource?: "upstream";
   /**
    * The reference's own qualified name for an engine type the declarations
-   * rename (`gui.EASING` for `gui.Easing`), so a reader can match the row to the
-   * Defold documentation. Absent when the declared name is the reference's.
+   * rename (`gui.EASING` for `gui.Easing`) and its defold.com entry, so a reader
+   * can match the row to the Defold documentation. Absent when the declared name
+   * is the reference's.
    */
-  defoldName?: string;
+  defoldRef?: DefoldRef;
+}
+
+/** A Defold reference name and the URL of its entry on defold.com. */
+export interface DefoldRef {
+  name: string;
+  url: string;
+}
+
+// The defold.com entry of a ref-doc element: its module's page, which keeps the
+// namespace's dots (`b2d.body-lua`), anchored by the element's own name.
+export function defoldRefUrl(namespace: string, name: string): string {
+  return `https://defold.com/ref/${namespace}-lua#${name}`;
 }
 
 export interface ApiSymbolGroup {
@@ -2207,30 +2220,50 @@ export function apiModuleSymbols(
   // Qualified here rather than at render time so a type row's heading and the
   // anchor `memberAnchors` slugs from its signature stay the same text.
   if (page.category === "engine") {
-    const defoldNames = defoldTypeNames(m);
+    const defoldRefs = defoldTypeRefs(m);
     for (const symbol of symbols) {
       if (symbol.kind !== "type") continue;
-      const defoldName = defoldNames.get(symbol.name);
-      if (defoldName !== undefined) symbol.defoldName = defoldName;
+      const defoldRef = defoldRefs.get(symbol.name);
+      if (defoldRef !== undefined) symbol.defoldRef = defoldRef;
       symbol.signature = qualifiedTypeSignature(page.namespace, symbol.name, symbol.signature);
     }
   }
   return symbols;
 }
 
-// The reference name each engine type the declarations rename was derived from,
-// keyed by its declared local path (`Easing` -> `gui.EASING`). The namespace
-// segments of a nested path stay as the reference spells them.
-function defoldTypeNames(module: ApiModule): Map<string, string> {
-  const names = new Map<string, string>();
+/**
+ * The reference name and defold.com entry of one ref-doc type listed on
+ * `module`'s page. The name nests under the page's namespace, keeping the
+ * segments as the reference spells them (`go.on_input.action`). The entry sits
+ * on the page of the module that declared the type, which routing can differ
+ * from (`b2d.joint.filter_definition` is on `b2d`), anchored by the element's
+ * own name, which leaves the namespace off where the reference does (`node`).
+ */
+export function defoldTypeRef(
+  module: ApiModule,
+  element: { name: string; declaredIn?: string },
+): DefoldRef {
   const prefix = `${module.namespace}.`;
-  for (const { name } of [...(module.enums ?? []), ...(module.structs ?? []), ...module.typedefs]) {
+  const local = element.name.startsWith(prefix) ? element.name.slice(prefix.length) : element.name;
+  return {
+    name: `${prefix}${local}`,
+    url: defoldRefUrl(element.declaredIn ?? module.namespace, element.name),
+  };
+}
+
+// The reference name and entry each engine type the declarations rename was
+// derived from, keyed by its declared local path (`Easing` -> `gui.EASING`).
+function defoldTypeRefs(module: ApiModule): Map<string, DefoldRef> {
+  const refs = new Map<string, DefoldRef>();
+  const prefix = `${module.namespace}.`;
+  for (const element of [...(module.enums ?? []), ...(module.structs ?? []), ...module.typedefs]) {
+    const { name } = element;
     const local = name.startsWith(prefix) ? name.slice(prefix.length) : name;
     const dot = local.lastIndexOf(".");
     const declared = `${local.slice(0, dot + 1)}${engineTypeName(local.slice(dot + 1))}`;
-    if (declared !== local) names.set(declared, `${prefix}${local}`);
+    if (declared !== local) refs.set(declared, defoldTypeRef(module, element));
   }
-  return names;
+  return refs;
 }
 
 /**

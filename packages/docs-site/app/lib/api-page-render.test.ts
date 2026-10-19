@@ -18,6 +18,7 @@ import {
   apiPageMarkdown,
   apiReplacementResolver,
   apiSignatureSymbolLinks,
+  defoldRefLine,
   dependencyStep,
   isKnownVersionId,
   listingPageMarkdown,
@@ -3738,18 +3739,61 @@ describe("a renamed engine type shows its Defold name", () => {
       .filter((line) => line !== "" && line !== '<div class="api-symbol-body">');
   };
 
-  test("a renamed union's row opens its body with the reference's own name", () => {
+  test("a renamed union's row opens its body with a Lua badge and the reference's own name linked to its entry", () => {
     const gui = markdownFor("gui");
-    expect(rowBody(gui, "type gui.Easing =")[0]).toBe("Defold name: gui.EASING");
-    expect(rowBody(gui, "type gui.PieBounds =")[0]).toBe("Defold name: gui.PIEBOUNDS");
+    expect(rowBody(gui, "type gui.Easing =")[0]).toBe(
+      "[icon:lua] [`gui.EASING`](https://defold.com/ref/gui-lua#gui.EASING)",
+    );
+    expect(rowBody(gui, "type gui.PieBounds =")[0]).toBe(
+      "[icon:lua] [`gui.PIEBOUNDS`](https://defold.com/ref/gui-lua#gui.PIEBOUNDS)",
+    );
+    expect(rowBody(markdownFor("b2d.shape"), "type b2d.shape.ShapeType =")[0]).toBe(
+      "[icon:lua] [`b2d.shape.SHAPE_TYPE`](https://defold.com/ref/b2d.shape-lua#b2d.shape.SHAPE_TYPE)",
+    );
   });
 
   test("a type the reference does not name, or names the same, carries no Defold name", () => {
     expect(rowBody(markdownFor("render"), "type render.ClearBufferKey =").join("\n")).not.toContain(
-      "Defold name:",
+      "[icon:lua]",
     );
     expect(rowBody(markdownFor("sys"), "interface sys.sys_info").join("\n")).not.toContain(
-      "Defold name:",
+      "[icon:lua]",
     );
+  });
+
+  test("every engine page gives each type carrying a Defold name exactly one linked line", () => {
+    const engine = pages.filter((page) => page.category === "engine");
+    let total = 0;
+    for (const page of engine) {
+      const expected = apiModuleSymbols(page)
+        .flatMap((symbol) =>
+          symbol.kind === "type" && symbol.defoldRef ? [defoldRefLine(symbol.defoldRef)] : [],
+        )
+        .sort();
+      const rendered = markdownFor(page.namespace)
+        .filter((line) => line.includes("[icon:lua]"))
+        .sort();
+      expect({ page: page.namespace, lines: rendered }).toEqual({
+        page: page.namespace,
+        lines: expected,
+      });
+      total += expected.length;
+    }
+    expect(total).toBeGreaterThan(0);
+  });
+
+  test("the line renders as the Lua badge followed by an external link around the reference name", async () => {
+    const gui = pages.find((page) => page.namespace === "gui");
+    if (gui === undefined) throw new Error("no canonical gui page");
+    const ref = apiModuleSymbols(gui).find((symbol) => symbol.name === "Easing")?.defoldRef;
+    if (ref === undefined) throw new Error("gui.Easing carries no Defold name");
+    const html = await renderMarkdown(defoldRefLine(ref));
+    const badge = html.indexOf('aria-label="Lua"');
+    const anchor = html.indexOf('<a href="https://defold.com/ref/gui-lua#gui.EASING"');
+    expect(badge).toBeGreaterThanOrEqual(0);
+    expect(anchor).toBeGreaterThan(badge);
+    const link = html.slice(anchor, html.indexOf("</a>", anchor));
+    expect(link).toContain('class="external"');
+    expect(link.slice(link.indexOf(">") + 1)).toStartWith("<code>gui.EASING</code>");
   });
 });

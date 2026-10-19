@@ -15,6 +15,7 @@ import {
   badgeCategoryFromLabel,
   bareId,
   type CategoryWindow,
+  type DefoldRef,
   type FunctionRevision,
   type FunctionRevisionGroup,
   functionBadgeCategory,
@@ -448,7 +449,7 @@ function symbolBlock(
     ? `${marks} \`${symbol.signature}\` ${dots}`
     : `${marks} \`${symbol.signature}\``;
   const body: string[] = [];
-  if (symbol.defoldName) body.push(defoldNameLine(symbol.defoldName));
+  if (symbol.defoldRef) body.push(defoldRefLine(symbol.defoldRef));
   if (badges) body.push(badges);
   // Ahead of the prose: the note exists to qualify the upstream description and
   // example that follow it, which a reader would otherwise take at face value.
@@ -463,10 +464,10 @@ function symbolBlock(
   );
 }
 
-// Plain text rather than an inline code span: a span whose content is a symbol
-// key links to that member, and a reference name can also name a function.
-function defoldNameLine(name: string): string {
-  return `Defold name: ${name}`;
+// The reference name as a code span inside its defold.com link: the link keeps
+// any code-span linker off a reference name that also names a value.
+export function defoldRefLine(ref: DefoldRef): string {
+  return `[icon:lua] [\`${ref.name}\`](${ref.url})`;
 }
 
 // The `  1.` adopt step naming the dependency URL for a repo at its pin — shared by
@@ -1078,9 +1079,9 @@ export function apiPageMarkdown(
       for (const shape of shapes) {
         lines.push(`### ${typeShapeHeading(page, shape.label)}`, "");
         // A shape's Defold name belongs to its heading, not to its definition row.
-        for (const { defoldName, ...symbol } of shape.symbols) {
-          if (defoldName !== undefined && symbol.name === shape.label) {
-            lines.push(defoldNameLine(defoldName), "");
+        for (const { defoldRef, ...symbol } of shape.symbols) {
+          if (defoldRef !== undefined && symbol.name === shape.label) {
+            lines.push(defoldRefLine(defoldRef), "");
           }
           emitSymbol(symbol, 4);
         }

@@ -16,6 +16,8 @@ import {
   symbolIdentityKey,
   type TranslationStore,
 } from "@defold-typescript/types";
+import { loadAnnotations } from "../../../types/scripts/lua-annotations";
+import { loadApiTargets } from "../../../types/scripts/regen";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
 import { canonicalApiPages, windowedApiPages } from "./api-content";
 import { apiSignatureSymbolLinks } from "./api-page-render";
@@ -27,6 +29,7 @@ import {
   apiModuleSections,
   apiModuleSymbols,
   badgeCategory,
+  defoldTypeRef,
   exampleMarkdownFor,
   functionAnchorText,
   functionBadgeCategory,
@@ -5060,5 +5063,49 @@ describe("authored arm availability on the API pages (committed artifacts)", () 
       seen.add(atOrAfterSince(to));
     }
     expect([...seen].sort()).toEqual([false, true]);
+  });
+});
+
+describe("defoldTypeRef", () => {
+  test("agrees with every runtime Open in Browser link the reference annotations carry", () => {
+    const target = loadApiTargets().find((candidate) => candidate.default === true);
+    if (target === undefined) throw new Error("api-targets.json has no default target");
+    const annotations = loadAnnotations(target);
+    const engine = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).filter(
+      (page) => page.category === "engine",
+    );
+    // Every entry the engine pages give the name: `b2Body` is on both `b2d` and
+    // `b2d.body`, while upstream links one.
+    const entries = (name: string): string[] =>
+      engine.flatMap(({ module }) =>
+        [...(module.enums ?? []), ...(module.structs ?? []), ...module.typedefs]
+          .filter((element) => element.name === name)
+          .map((element) => defoldTypeRef(module, element).url),
+      );
+    const undeclared: string[] = [];
+    const mismatched: string[] = [];
+    let agreed = 0;
+    for (const declaration of [
+      ...annotations.aliases.values(),
+      ...annotations.enums.values(),
+      ...annotations.classes.values(),
+    ]) {
+      const { name, url } = declaration;
+      if (declaration.surface !== "runtime" || url === undefined) continue;
+      const given = entries(name);
+      if (given.length === 0) {
+        undeclared.push(`${name} ${url}`);
+      } else if (given.includes(url)) {
+        agreed++;
+      } else {
+        mismatched.push(`${name} ${url} given ${given.join(", ")}`);
+      }
+    }
+    expect(mismatched).toEqual([]);
+    expect(agreed).toBeGreaterThan(0);
+    expect(undeclared.sort()).toEqual([
+      "hash https://defold.com/ref/builtins-lua#hash",
+      "script_instance https://defold.com/ref/builtins-lua#script_instance",
+    ]);
   });
 });

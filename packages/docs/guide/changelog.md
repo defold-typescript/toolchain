@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[`upgrade` reads versions right](./upgrade.md#what-it-does)**, prereleases too.
 > - **[Model texture keys](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** reach `texture15`.
 > - **[A debug-wired entry script can export values](./debugging.md#picking-the-entry-script)**, and F5 flags a stale engine build.
-> - **API pages list every type in full under one `Types` heading**, by its full path on engine pages and with its Defold name where that differs, with a type's fields and a handle's methods nested beneath it, as on [socket](/api/socket).
+> - **API pages list every type in full under one `Types` heading**, by its full path on engine pages and with its Defold name linked to defold.com where that differs, with a type's fields and a handle's methods nested beneath it, as on [socket](/api/socket).
 
 ### Breaking
 
@@ -33,7 +33,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **API pages file every type under one `Types` heading, named by its full path on engine pages, and every handle method under `Functions`.** An alias or interface is one row there, such as `image.Type` with its `Defold name: image.TYPE` line, while a type with fields, such as `go.on_input` on [go](/api/go), and a handle's methods, such as the `client` methods on [socket](/api/socket), each get a heading nested inside.
+- **API pages file every type under one `Types` heading, named by its full path on engine pages, and every handle method under `Functions`.** An alias or interface is one row there, such as `image.Type`, which opens with a Lua badge linking the reference's own `image.TYPE` to its defold.com entry, while a type with fields, such as `go.on_input` on [go](/api/go), and a handle's methods, such as the `client` methods on [socket](/api/socket), each get a heading nested inside.
 
 ### Fixed
 
