@@ -7,10 +7,10 @@ describe("type-application erasure", () => {
       [
         "declare const url: Url;",
         "interface EnemyProps { speed: number }",
-        'const animation = go.get<sprite.properties>()(url, "animation");',
-        'go.set<sprite.properties>()(url, "playback_rate", go.get<sprite.properties>()(url, "cursor"));',
+        'const animation = go.get<sprite.Properties>()(url, "animation");',
+        'go.set<sprite.Properties>()(url, "playback_rate", go.get<sprite.Properties>()(url, "cursor"));',
         'const speed = go.get<EnemyProps>()(url, "speed", { index: 1 });',
-        "const read = go.get<model.properties>();",
+        "const read = go.get<model.Properties>();",
         'read(url, "texture0");',
         'go.get(url, "position");',
         "declare function typed<T>(): (value: T) => T;",

@@ -714,7 +714,7 @@ declare global {
       /**
        * DNS address information
        */
-      interface address_info {
+      interface AddressInfo {
         /**
          * `"inet"` for IPv4 or `"inet6"` for IPv6
          */
@@ -727,7 +727,7 @@ declare global {
       /**
        * DNS host information
        */
-      interface host_info {
+      interface HostInfo {
         /**
          * canonical host name
          */
@@ -748,7 +748,7 @@ declare global {
        *
        * @param address - a hostname or an IPv4 or IPv6 address.
        */
-      function getaddrinfo(address: string): LuaMultiReturn<[socket.dns.address_info[] | undefined, string | undefined]>;
+      function getaddrinfo(address: string): LuaMultiReturn<[socket.dns.AddressInfo[] | undefined, string | undefined]>;
       /**
        * Returns the standard host name for the machine as a string.
        *
@@ -777,14 +777,14 @@ declare global {
        *
        * @param address - an IPv4 address or host name.
        */
-      function tohostname(address: string): LuaMultiReturn<[string | undefined, socket.dns.host_info | string]>;
+      function tohostname(address: string): LuaMultiReturn<[string | undefined, socket.dns.HostInfo | string]>;
       /**
        * This function converts a host name to IPv4 address.
        * The address can be an IP address or a host name.
        *
        * @param address - a hostname or an IP address.
        */
-      function toip(address: string): LuaMultiReturn<[string | undefined, socket.dns.host_info | string]>;
+      function toip(address: string): LuaMultiReturn<[string | undefined, socket.dns.HostInfo | string]>;
     }
   }
 }

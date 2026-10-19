@@ -1,8 +1,8 @@
 {
   "gui.animate": {
     "signatures": [
-      "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Prop | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void",
-      "gui.animate(node: Opaque<\"node\">, property: keyof gui.node_properties | gui.Prop | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void"
+      "gui.animate(node: Opaque<\"node\">, property: keyof gui.NodeProperties | gui.Prop | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void",
+      "gui.animate(node: Opaque<\"node\">, property: keyof gui.NodeProperties | gui.Prop | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void"
     ],
     "docs": [
       "This starts an animation of a node property according to the specified parameters. If the node property is already being animated, that animation will be canceled and replaced by the new one. Note however that several different node properties can be animated simultaneously. Use `gui.cancel_animations` to stop the animation before it has completed. Only the node properties gui.get lists can be animated; a material constant cannot. Composite properties of type vector3, vector4 or quaternion also expose their sub-components (x, y, z and w). You can address the components individually by suffixing the name with a dot '.' and the name of the component. For instance, `\"position.x\"` (the position x coordinate) or `\"color.w\"` (the color alpha value). If a `complete_function` (Lua function) is specified, that function will be called when the animation has completed. By starting a new animation in that function, several animations can be sequenced together. See the examples below for more information.",
@@ -11,7 +11,7 @@
   },
   "gui.get": {
     "signatures": [
-      "gui.get<K extends keyof gui.node_properties | gui.Prop>(node: Opaque<\"node\">, property: K): gui.node_properties[NodePropertyName<K>]",
+      "gui.get<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K): gui.NodeProperties[NodePropertyName<K>]",
       "gui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
       "gui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]"
     ],
@@ -23,7 +23,7 @@
   },
   "gui.set": {
     "signatures": [
-      "gui.set<K extends keyof gui.node_properties | gui.Prop>(node: Opaque<\"node\">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void",
+      "gui.set<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void",
       "gui.set(node: Opaque<\"node\">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash): void",
       "gui.set(node: Opaque<\"node\">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options: gui.PropertyOptions): void",
       "gui.set(url: Url, property: \"material\" | \"materials\" | \"fonts\" | \"textures\" | Hash, value: Hash): void",

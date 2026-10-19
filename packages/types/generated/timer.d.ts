@@ -11,7 +11,7 @@ declare global {
     /**
      * Timer information
      */
-    interface info {
+    interface Info {
       /**
        * Time remaining until the next callback.
        */
@@ -111,7 +111,7 @@ declare global {
      * }
      * ```
      */
-    function get_info(handle: number): timer.info | undefined;
+    function get_info(handle: number): timer.Info | undefined;
     /**
      * Manual triggering a callback for a timer.
      *

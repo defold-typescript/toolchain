@@ -215,7 +215,7 @@ declare global {
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
      * @returns touching contacts
      */
-    function get_contact_data(shape_id: Opaque<"b2Shape">): b2d.contact_data[];
+    function get_contact_data(shape_id: Opaque<"b2Shape">): b2d.ContactData[];
     /**
      * Get touching contact data for a shape.
      *
@@ -223,14 +223,14 @@ declare global {
      * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns touching contacts
      */
-    function get_contact_data(body: Opaque<"b2Body">, shape_index: number): b2d.contact_data[];
+    function get_contact_data(body: Opaque<"b2Body">, shape_index: number): b2d.ContactData[];
     /**
      * Get mass data for a shape.
      *
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
      * @returns shape mass data
      */
-    function get_mass_data(shape_id: Opaque<"b2Shape">): b2d.mass_data;
+    function get_mass_data(shape_id: Opaque<"b2Shape">): b2d.MassData;
     /**
      * Get mass data for a shape.
      *
@@ -238,7 +238,7 @@ declare global {
      * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns shape mass data
      */
-    function get_mass_data(body: Opaque<"b2Body">, shape_index: number): b2d.mass_data;
+    function get_mass_data(body: Opaque<"b2Body">, shape_index: number): b2d.MassData;
     /**
      * Get shape material id.
      *
@@ -275,7 +275,7 @@ declare global {
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
      * @returns overlapping shapes
      */
-    function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): b2d.shape_info[];
+    function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): b2d.ShapeInfo[];
     /**
      * Get sensor overlaps.
      *
@@ -283,7 +283,7 @@ declare global {
      * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns overlapping shapes
      */
-    function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): b2d.shape_info[];
+    function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): b2d.ShapeInfo[];
     /**
      * Get a shape's geometry.
      *
@@ -338,7 +338,7 @@ declare global {
      * @param max_fraction - optional maximum translation fraction, defaults to 1
      * @returns cast result, or `nil`
      */
-    function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.shape_cast_output | undefined;
+    function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.ShapeCastOutput | undefined;
     /**
      * Ray cast a shape directly.
      *
@@ -349,7 +349,7 @@ declare global {
      * @param max_fraction - optional maximum translation fraction, defaults to 1
      * @returns cast result, or `nil`
      */
-    function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.shape_cast_output | undefined;
+    function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.ShapeCastOutput | undefined;
     /**
      * Set shape material id.
      *

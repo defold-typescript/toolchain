@@ -10,7 +10,7 @@ declare global {
     /**
      * The available fields depend on the joint type.
      */
-    interface joint_properties {
+    interface JointProperties {
       /**
        * whether the connected objects should collide
        */
@@ -79,7 +79,7 @@ declare global {
     /**
      * The available optional fields depend on the joint type.
      */
-    interface joint_properties_info {
+    interface JointPropertiesInfo {
       /**
        * whether the connected objects collide
        */
@@ -160,7 +160,7 @@ declare global {
     /**
      * Ray-cast options
      */
-    interface raycast_options {
+    interface RaycastOptions {
       /**
        * Return every hit instead of only the closest hit.
        */
@@ -169,7 +169,7 @@ declare global {
     /**
      * The available geometry fields depend on `type`.
      */
-    interface shape_data {
+    interface ShapeData {
       /**
        * shape type
        */
@@ -245,7 +245,7 @@ declare global {
      * @param position_b - local position where to attach the joint on the second collision object
      * @param properties - optional joint-specific properties
      */
-    function create_joint(joint_type: physics.JointType, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: physics.joint_properties): void;
+    function create_joint(joint_type: physics.JointType, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: physics.JointProperties): void;
     /**
      * Destroy an already physics joint. The joint has to be created before a
      * destroy can be issued.
@@ -297,7 +297,7 @@ declare global {
      * @param joint_id - id of the joint
      * @returns joint properties
      */
-    function get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): physics.joint_properties_info;
+    function get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): physics.JointPropertiesInfo;
     /**
      * Get the reaction force for a joint. The joint has to be created before
      * the reaction force can be calculated.
@@ -350,7 +350,7 @@ declare global {
      * }
      * ```
      */
-    function get_shape(url: string | Hash | Url, shape: string | Hash): physics.shape_data;
+    function get_shape(url: string | Hash | Url, shape: string | Hash): physics.ShapeData;
     /**
      * Ray casts are used to test for intersections against collision objects in the physics world.
      * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects
@@ -391,7 +391,7 @@ declare global {
      * });
      * ```
      */
-    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.raycast_options): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined;
+    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.RaycastOptions): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined;
     /**
      * Ray casts are used to test for intersections against collision objects in the physics world.
      * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects
@@ -637,7 +637,7 @@ declare global {
      * @param properties - joint specific properties table
      * Note: The `collide_connected` field cannot be updated/changed after a connection has been made.
      */
-    function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: physics.joint_properties): void;
+    function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: physics.JointProperties): void;
     /**
      * Sets or clears the masking of a group (maskbit) in a collision object.
      *
@@ -686,7 +686,7 @@ declare global {
      * }
      * ```
      */
-    function set_shape(url: string | Hash | Url, shape: string | Hash, table: physics.shape_data): void;
+    function set_shape(url: string | Hash | Url, shape: string | Hash, table: physics.ShapeData): void;
     /**
      * Flips the collision shapes vertically for a collision object
      *
@@ -738,7 +738,7 @@ declare global {
         /**
          * collision object information
          */
-        interface collision_info {
+        interface CollisionInfo {
           /**
            * object position in world space
            */
@@ -755,7 +755,7 @@ declare global {
         /**
          * contact-point object information
          */
-        interface contact_point_info {
+        interface ContactPointInfo {
           /**
            * contact point position in world space
            */
@@ -788,7 +788,7 @@ declare global {
         /**
          * trigger interaction object information
          */
-        interface trigger_info {
+        interface TriggerInfo {
           /**
            * object identifier
            */
@@ -800,7 +800,7 @@ declare global {
         }
       }
     }
-    interface properties {
+    interface Properties {
       /**
        * The angular damping value for the collision object. Setting this value alters the damping of
        * angular motion of the object (rotation). Valid values are between 0 (no damping) and 1 (full damping).

@@ -9,7 +9,7 @@ declare global {
      * Data delivered to a collectionproxy.load callback. The available
      * field depends on the callback message identifier.
      */
-    interface load_data {
+    interface LoadData {
       /**
        * Loading progress from 0 to 1 for `proxy_loading`.
        */

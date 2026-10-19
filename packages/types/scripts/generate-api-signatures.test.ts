@@ -46,7 +46,7 @@ function committedDtsBlob(version: string): string {
     .join("\n");
 }
 
-// The local path (`render_target_params`, `dns.address_info`) of every type alias
+// The local path (`render_target_params`, `dns.AddressInfo`) of every type alias
 // and interface a declaration file declares inside `namespace`, a nested
 // namespace adding its segment. `declare global` adds no segment.
 function declaredTypePaths(text: string, namespace: string): string[] {
@@ -203,13 +203,13 @@ describe("authoritative signature artifact", () => {
     };
     expect(find("model", "model.set_blend_weights")).toContain("weights?: number[]");
     expect(find("compute", "compute.set_constants")).toContain(
-      "Record<string, material.constant_options>",
+      "Record<string, material.ConstantOptions>",
     );
     expect(find("material", "material.set_vertex_attributes")).toContain(
-      "Record<string, material.vertex_attribute_options>",
+      "Record<string, material.VertexAttributeOptions>",
     );
     // The 6 compute/material getters render as arrays of records, inline or the
-    // named `material.*_info` structs 1.13.2 declares.
+    // named `material.*Info` structs 1.13.2 declares.
     for (const [ns, name] of [
       ["compute", "compute.get_constants"],
       ["compute", "compute.get_samplers"],
@@ -218,11 +218,11 @@ describe("authoritative signature artifact", () => {
       ["material", "material.get_samplers"],
       ["material", "material.get_vertex_attributes"],
     ] as const) {
-      expect(find(ns, name)).toMatch(/(\}|\bmaterial\.\w+_info)\[\];$/);
+      expect(find(ns, name)).toMatch(/(\}|\bmaterial\.\w+Info)\[\];$/);
     }
     // The material's textures are keyed by sampler slot, with holes.
     expect(find("material", "material.get_textures")).toMatch(
-      /: LuaMap<number, material\.texture_info>;$/,
+      /: LuaMap<number, material\.TextureInfo>;$/,
     );
   });
 });
@@ -415,18 +415,18 @@ describe("per-slot rendered types travel with the signature", () => {
       const [v2 = "", v3 = "", ...rest] = (artifact.versions[version]?.[key] ?? "").split("\n");
       expect({ version, rest }).toEqual({ version, rest: [] });
       expect(v2).toStartWith('function cast_ray<Backend extends "v2" = "v2">(');
-      expect(v2).toEndWith("): LuaMultiReturn<[b2d.fixture_cast_hit[], b2d.tree_stats]>;");
+      expect(v2).toEndWith("): LuaMultiReturn<[b2d.FixtureCastHit[], b2d.TreeStats]>;");
       expect(v3).toStartWith('function cast_ray<Backend extends "v3">(');
-      expect(v3).toEndWith("): LuaMultiReturn<[b2d.shape_cast_hit[], b2d.tree_stats]>;");
+      expect(v3).toEndWith("): LuaMultiReturn<[b2d.ShapeCastHit[], b2d.TreeStats]>;");
       const slots = artifact.slotTypes[version]?.[key];
-      expect(slots?.["param:3:filter"]).toEqual({ type: "b2d.query_filter", optional: true });
-      expect(slots?.["return:1:stats"]).toEqual({ type: "b2d.tree_stats", optional: false });
+      expect(slots?.["param:3:filter"]).toEqual({ type: "b2d.QueryFilter", optional: true });
+      expect(slots?.["return:1:stats"]).toEqual({ type: "b2d.TreeStats", optional: false });
       expect(slots?.["return:0:hits"]).toBeUndefined();
 
       const mover = functionKey(version, "b2d.world", "b2d.world.cast_mover");
       expect(artifact.versions[version]?.[mover]?.split("\n")).toHaveLength(1);
       expect(artifact.slotTypes[version]?.[mover]?.["param:1:capsule"]).toEqual({
-        type: "b2d.mover_capsule",
+        type: "b2d.MoverCapsule",
         optional: false,
       });
     }

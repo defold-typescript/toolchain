@@ -9,7 +9,7 @@ declare global {
     /**
      * Rich-text layout object
      */
-    interface layout_object {
+    interface LayoutObject {
       /**
        * object type, currently `link` or `sprite`
        */
@@ -51,7 +51,7 @@ declare global {
     /**
      * GUI flipbook playback properties
      */
-    interface play_properties {
+    interface PlayProperties {
       /**
        * Normalized initial animation cursor.
        */
@@ -64,7 +64,7 @@ declare global {
     /**
      * Generic GUI property options
      */
-    interface set_options {
+    interface SetOptions {
       /**
        * One-based material-constant array index.
        */
@@ -823,7 +823,7 @@ declare global {
      * @param node - text node to inspect
      * @returns layout objects in source order. **0️⃣ `text_offset` is 0-based; passed to Defold unchanged.**
      */
-    function get_layout_objects(node: Opaque<"node">): gui.layout_object[];
+    function get_layout_objects(node: Opaque<"node">): gui.LayoutObject[];
     /**
      * Returns a table mapping each layout id hash to a vector3(width, height, 0). For the default layout,
      * the current scene resolution is returned. If a layout name is not present in the Display Profiles (or when
@@ -1345,7 +1345,7 @@ declare global {
      * gui.play_flipbook(node, "button");
      * ```
      */
-    function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function: ((self: unknown, node: Opaque<"node">) => void) | undefined, play_properties: gui.play_properties): void;
+    function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function: ((self: unknown, node: Opaque<"node">) => void) | undefined, play_properties: gui.PlayProperties): void;
     /**
      * Plays the paricle fx for a gui node
      *
@@ -1948,8 +1948,8 @@ declare global {
      * @param node - node to stop particle fx for
      * @param options - options used when stopping the particle fx
      */
-    function stop_particlefx(node: Opaque<"node">, options: particlefx.stop_options): void;
-    interface properties {
+    function stop_particlefx(node: Opaque<"node">, options: particlefx.StopOptions): void;
+    interface Properties {
       /**
        * The fonts used in the gui. The type of the property is hash.
        * Key must be specified in options table.

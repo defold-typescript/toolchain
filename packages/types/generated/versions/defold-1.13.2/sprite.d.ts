@@ -9,7 +9,7 @@ declare global {
     /**
      * Sprite flipbook playback properties
      */
-    interface play_properties {
+    interface PlayProperties {
       /**
        * Normalized initial animation cursor.
        */
@@ -114,7 +114,7 @@ declare global {
      * });
      * ```
      */
-    function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function: ((self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void) | undefined, play_properties: sprite.play_properties): void;
+    function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function: ((self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void) | undefined, play_properties: sprite.PlayProperties): void;
     /**
      * Resets a shader constant for a sprite component.
      * The constant must be defined in the material assigned to the sprite.
@@ -178,7 +178,7 @@ declare global {
      * ```
      */
     function set_vflip(url: string | Hash | Url, flip: boolean): void;
-    interface properties {
+    interface Properties {
       /**
        * READ ONLY The current animation id. An animation that plays currently for the sprite. The type of the property is hash.
        */

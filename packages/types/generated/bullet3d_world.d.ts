@@ -97,7 +97,7 @@ declare global {
     /**
      * Bullet world axis-aligned bounding box
      */
-    interface aabb {
+    interface Aabb {
       /**
        * lower world-space bound in Defold units
        */
@@ -110,7 +110,7 @@ declare global {
     /**
      * Bullet world cast result
      */
-    interface cast_result {
+    interface CastResult {
       /**
        * hit collision object
        */
@@ -143,7 +143,7 @@ declare global {
     /**
      * Bullet world contact result
      */
-    interface contact_result {
+    interface ContactResult {
       /**
        * first collision object
        */
@@ -172,7 +172,7 @@ declare global {
     /**
      * Bullet world query filter
      */
-    interface query_filter {
+    interface QueryFilter {
       /**
        * unsigned 16-bit category bits; defaults to `65535`
        */
@@ -213,7 +213,7 @@ declare global {
      * @param max_results - maximum sorted hits, or zero for all
      * @returns cast results sorted by ascending fraction. **⚠️ `shape_index` is 1-based; passed to Defold unchanged.**
      */
-    function cast_ray(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.query_filter, max_results?: number): bullet3d.world.cast_result[];
+    function cast_ray(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.QueryFilter, max_results?: number): bullet3d.world.CastResult[];
     /**
      * Queues the same ray query as bullet3d.world.cast_ray and returns without
      * executing it. After the next physics step, `callback(self, hits)` receives the
@@ -250,7 +250,7 @@ declare global {
      * }
      * ```
      */
-    function cast_ray_async(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, callback: (self: unknown, hits: bullet3d.world.cast_result[]) => void, filter?: bullet3d.world.query_filter, max_results?: number): void;
+    function cast_ray_async(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, callback: (self: unknown, hits: bullet3d.world.CastResult[]) => void, filter?: bullet3d.world.QueryFilter, max_results?: number): void;
     /**
      * Equivalent to bullet3d.world.cast_ray with one result, but returns the
      * hit table directly or `nil` on a miss.
@@ -280,7 +280,7 @@ declare global {
      * });
      * ```
      */
-    function cast_ray_closest(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.query_filter): bullet3d.world.cast_result | undefined;
+    function cast_ray_closest(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.QueryFilter): bullet3d.world.CastResult | undefined;
     /**
      * Sweeps the temporary shape from `shape.position` by `translation`, while
      * interpolating from `shape.rotation` to `shape.target_rotation`. Translation
@@ -299,7 +299,7 @@ declare global {
      * @param max_results - maximum sorted hits, or zero for all
      * @returns cast results sorted by ascending fraction. **⚠️ `shape_index` is 1-based; passed to Defold unchanged.**
      */
-    function cast_shape(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, filter?: bullet3d.world.query_filter, max_results?: number): bullet3d.world.cast_result[];
+    function cast_shape(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, filter?: bullet3d.world.QueryFilter, max_results?: number): bullet3d.world.CastResult[];
     /**
      * Queues the same convex sweep as bullet3d.world.cast_shape and returns
      * without executing it. After the next physics step, `callback(self, hits)`
@@ -315,7 +315,7 @@ declare global {
      * @param filter - query filter
      * @param max_results - maximum sorted hits, or zero for all
      */
-    function cast_shape_async(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, callback: (self: unknown, hits: bullet3d.world.cast_result[]) => void, filter?: bullet3d.world.query_filter, max_results?: number): void;
+    function cast_shape_async(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, callback: (self: unknown, hits: bullet3d.world.CastResult[]) => void, filter?: bullet3d.world.QueryFilter, max_results?: number): void;
     /**
      * Equivalent to bullet3d.world.cast_shape with one result, but returns
      * the hit table directly or `nil` on a miss.
@@ -326,7 +326,7 @@ declare global {
      * @param filter - query filter
      * @returns closest cast result, or `nil` on a miss. **⚠️ `shape_index` is 1-based; passed to Defold unchanged.**
      */
-    function cast_shape_closest(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, filter?: bullet3d.world.query_filter): bullet3d.world.cast_result | undefined;
+    function cast_shape_closest(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, filter?: bullet3d.world.QueryFilter): bullet3d.world.CastResult | undefined;
     /**
      * Runs Bullet's discrete pair contact algorithm without changing the simulation.
      * Both borrowed handles must belong to `world` and must identify different
@@ -340,7 +340,7 @@ declare global {
      * @param max_results - maximum number of contact points, or zero for all
      * @returns normalized contact results
      */
-    function contact_pair_test(world: bullet3d.btDiscreteDynamicsWorld, object_a: Opaque<"btCollisionObject" | "btRigidBody">, object_b: Opaque<"btCollisionObject" | "btRigidBody">, max_results?: number): bullet3d.world.contact_result[];
+    function contact_pair_test(world: bullet3d.btDiscreteDynamicsWorld, object_a: Opaque<"btCollisionObject" | "btRigidBody">, object_b: Opaque<"btCollisionObject" | "btRigidBody">, max_results?: number): bullet3d.world.ContactResult[];
     /**
      * Runs Bullet's discrete contact test between `object` and matching objects in
      * the same world. The supplied object is always `object_a` in returned contacts.
@@ -373,7 +373,7 @@ declare global {
      * });
      * ```
      */
-    function contact_test(world: bullet3d.btDiscreteDynamicsWorld, object: Opaque<"btCollisionObject" | "btRigidBody">, filter?: bullet3d.world.query_filter, max_results?: number): bullet3d.world.contact_result[];
+    function contact_test(world: bullet3d.btDiscreteDynamicsWorld, object: Opaque<"btCollisionObject" | "btRigidBody">, filter?: bullet3d.world.QueryFilter, max_results?: number): bullet3d.world.ContactResult[];
     /**
      * Get the number of collision objects in the world
      *
@@ -418,7 +418,7 @@ declare global {
      * @param max_results - maximum number of results, or zero for all
      * @returns array of overlapping collision-object handles
      */
-    function overlap_aabb(world: bullet3d.btDiscreteDynamicsWorld, aabb: bullet3d.world.aabb, filter?: bullet3d.world.query_filter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[];
+    function overlap_aabb(world: bullet3d.btDiscreteDynamicsWorld, aabb: bullet3d.world.Aabb, filter?: bullet3d.world.QueryFilter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[];
     /**
      * Performs an exact narrow-phase test using a temporary zero-radius Bullet
      * sphere at the world-space point. A result is returned only for a contact with
@@ -431,7 +431,7 @@ declare global {
      * @param max_results - maximum number of results, or zero for all
      * @returns array of overlapping collision-object handles
      */
-    function overlap_point(world: bullet3d.btDiscreteDynamicsWorld, point: Vector3, filter?: bullet3d.world.query_filter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[];
+    function overlap_point(world: bullet3d.btDiscreteDynamicsWorld, point: Vector3, filter?: bullet3d.world.QueryFilter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[];
     /**
      * Performs an exact Bullet contact test for a temporary sphere, box, Y-axis
      * capsule, or convex hull. Multiple native contact points for the same target
@@ -464,7 +464,7 @@ declare global {
      * });
      * ```
      */
-    function overlap_shape(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, filter?: bullet3d.world.query_filter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[];
+    function overlap_shape(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, filter?: bullet3d.world.QueryFilter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[];
     /**
      * Bullet propagates the new value to active dynamic bodies unless they have
      * `bullet3d.rigid_body.BT_DISABLE_WORLD_GRAVITY` set. Such bodies retain their

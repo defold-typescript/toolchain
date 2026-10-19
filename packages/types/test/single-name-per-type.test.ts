@@ -4,6 +4,7 @@ import { join, relative, resolve } from "node:path";
 import * as ts from "typescript";
 import { loadApiTargets } from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
+import { engineTypeName } from "../src/engine-type-name";
 
 // Every emitted engine surface gives each type one name per namespace. Two names
 // for one type render as two full entries on `/api/<namespace>`, and nothing
@@ -215,8 +216,9 @@ function bareAliasTarget(declaration: Declaration, namespace: string): string | 
   return name.startsWith(`${namespace}.`) ? name.slice(namespace.length + 1) : undefined;
 }
 
-// The `<namespace>.<name>` of every TYPEDEF, STRUCT and ENUM a target's own
-// reference documents, read with the production ref-doc parser.
+// The declared `<namespace>.<name>` of every TYPEDEF, STRUCT and ENUM a target's
+// own reference documents, read with the production ref-doc parser: a STRUCT or
+// ENUM leaf goes through `engineTypeName`, as the declarations spell it.
 const referenceNamesCache = new Map<string, Set<string>>();
 function referenceNames(target: string): Set<string> {
   const cached = referenceNamesCache.get(target);
@@ -229,12 +231,13 @@ function referenceNames(target: string): Set<string> {
     const module = parseDefoldApiDoc(JSON.parse(readFileSync(join(dir, entry), "utf8")));
     const qualify = (name: string) =>
       name.startsWith(`${module.namespace}.`) ? name : `${module.namespace}.${name}`;
-    for (const element of [
-      ...module.typedefs,
-      ...(module.structs ?? []),
-      ...(module.enums ?? []),
-    ]) {
-      names.add(qualify(element.name));
+    const renamed = (name: string) => {
+      const dot = name.lastIndexOf(".");
+      return `${name.slice(0, dot + 1)}${engineTypeName(name.slice(dot + 1))}`;
+    };
+    for (const element of module.typedefs) names.add(qualify(element.name));
+    for (const element of [...(module.structs ?? []), ...(module.enums ?? [])]) {
+      names.add(renamed(qualify(element.name)));
     }
   }
   referenceNamesCache.set(target, names);

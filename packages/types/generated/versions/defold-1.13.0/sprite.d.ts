@@ -183,7 +183,7 @@ declare global {
      * ```
      */
     function set_vflip(url: string | Hash | Url, flip: boolean): void;
-    interface properties {
+    interface Properties {
       /**
        * READ ONLY The current animation id. An animation that plays currently for the sprite. The type of the property is hash.
        */

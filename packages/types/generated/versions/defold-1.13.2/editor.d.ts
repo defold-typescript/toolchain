@@ -172,14 +172,14 @@ declare global {
      * });
      * ```
      */
-    function execute(command: string, ...args: (string | editor.execute.options)[]): undefined | string;
+    function execute(command: string, ...args: (string | editor.execute.Options)[]): undefined | string;
     /**
      * Query information about file system path
      *
      * @param path - External file path, resolved against project root if relative
      * @returns external file attributes
      */
-    function external_file_attributes(path: string): editor.external_file_attributes.result;
+    function external_file_attributes(path: string): editor.external_file_attributes.Result;
     /**
      * Download the latest version of the project library dependencies and reload library-provided editor scripts.
      * This function may replace library-provided editor commands, hooks, routes, and UI contributed by editor scripts, so it should typically be the last operation performed by a command.
@@ -214,7 +214,7 @@ declare global {
      * @param resource_path - Resource path (starting with `/`)
      * @returns resource attributes
      */
-    function resource_attributes(resource_path: string): editor.resource_attributes.result;
+    function resource_attributes(resource_path: string): editor.resource_attributes.Result;
     /**
      * Persist any unsaved changes to disk
      */
@@ -229,7 +229,7 @@ declare global {
       /**
        * Context provided to editor command handler functions
        */
-      interface context {
+      interface Context {
         /**
          * current selection, populated when requested by the command query
          */
@@ -247,7 +247,7 @@ declare global {
       /**
        * Options used to create an editor command
        */
-      interface options {
+      interface Options {
         /**
          * user-visible command name, either a string or a localization message
          */
@@ -259,7 +259,7 @@ declare global {
         /**
          * query that controls command availability and provides context to its handler functions
          */
-        query?: editor.command.query;
+        query?: editor.command.Query;
         /**
          * keyword identifier that may be used for assigning a shortcut to a command; should be a dot-separated identifier string, e.g. `"my-extension.do-stuff"`
          */
@@ -267,24 +267,24 @@ declare global {
         /**
          * function that additionally checks if a command is active in the current context; should be fast to execute since the editor might invoke it in response to UI interactions
          */
-        active?: (opts: editor.command.context) => boolean;
+        active?: (opts: editor.command.Context) => boolean;
         /**
          * function that is invoked when the user decides to execute the command
          */
-        run?: (opts: editor.command.context) => unknown;
+        run?: (opts: editor.command.Context) => unknown;
       }
       /**
        * A query that controls command availability and provides context to its handler functions
        */
-      interface query {
+      interface Query {
         /**
          * current selection request
          */
-        selection?: editor.command.query.selection;
+        selection?: editor.command.query.Selection;
         /**
          * current active editor view request
          */
-        active_view?: editor.command.query.active_view;
+        active_view?: editor.command.query.ActiveView;
         /**
          * set to true to provide the command argument to the handler functions
          */
@@ -294,7 +294,7 @@ declare global {
         /**
          * Active editor view requested by an editor command
          */
-        interface active_view {
+        interface ActiveView {
           /**
            * active editor view type
            */
@@ -303,7 +303,7 @@ declare global {
         /**
          * Selection requested by an editor command
          */
-        interface selection {
+        interface Selection {
           /**
            * selection type
            */
@@ -322,7 +322,7 @@ declare global {
       /**
        * Options for editor.execute
        */
-      interface options {
+      interface Options {
         /**
          * whether the editor reloads resources from disk after the command is executed; defaults to true
          */
@@ -341,7 +341,7 @@ declare global {
       /**
        * External file attributes
        */
-      interface result {
+      interface Result {
         /**
          * resolved file path
          */
@@ -393,28 +393,28 @@ declare global {
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function array(opts: editor.prefs.schema.array.options): editor.schema;
+        export function array(opts: editor.prefs.schema.array.Options): editor.schema;
         /**
          * boolean schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function boolean(opts?: editor.prefs.schema.boolean.options): editor.schema;
+        export function boolean(opts?: editor.prefs.schema.boolean.Options): editor.schema;
         /**
          * enum value schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        function _enum(opts: editor.prefs.schema.enum.options): editor.schema;
+        function _enum(opts: editor.prefs.schema.enum.Options): editor.schema;
         /**
          * integer schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function integer(opts?: editor.prefs.schema.integer.options): editor.schema;
+        export function integer(opts?: editor.prefs.schema.integer.Options): editor.schema;
         /**
          * keyword schema
          * A keyword is a short string that is interned within the editor runtime, useful e.g. for identifiers
@@ -422,35 +422,35 @@ declare global {
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function keyword(opts?: editor.prefs.schema.keyword.options): editor.schema;
+        export function keyword(opts?: editor.prefs.schema.keyword.Options): editor.schema;
         /**
          * floating-point number schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function number(opts?: editor.prefs.schema.number.options): editor.schema;
+        export function number(opts?: editor.prefs.schema.number.Options): editor.schema;
         /**
          * heterogeneous object schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function object(opts: editor.prefs.schema.object.options): editor.schema;
+        export function object(opts: editor.prefs.schema.object.Options): editor.schema;
         /**
          * homogeneous object schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function object_of(opts: editor.prefs.schema.object_of.options): editor.schema;
+        export function object_of(opts: editor.prefs.schema.object_of.Options): editor.schema;
         /**
          * one of schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function one_of(opts: editor.prefs.schema.one_of.options): editor.schema;
+        export function one_of(opts: editor.prefs.schema.one_of.Options): editor.schema;
         /**
          * password schema
          * A password is a string that is encrypted when stored in a preference file
@@ -458,7 +458,7 @@ declare global {
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function password(opts?: editor.prefs.schema.password.options): editor.schema;
+        export function password(opts?: editor.prefs.schema.password.Options): editor.schema;
         /**
          * set schema
          * Set is represented as a lua table with `true` values
@@ -466,14 +466,14 @@ declare global {
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function set(opts: editor.prefs.schema.set.options): editor.schema;
+        export function set(opts: editor.prefs.schema.set.Options): editor.schema;
         /**
          * string schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function string(opts?: editor.prefs.schema.string.options): editor.schema;
+        export function string(opts?: editor.prefs.schema.string.Options): editor.schema;
         /**
          * tuple schema
          * A tuple is a fixed-length array where each item has its own defined type
@@ -481,13 +481,13 @@ declare global {
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function tuple(opts: editor.prefs.schema.tuple.options): editor.schema;
+        export function tuple(opts: editor.prefs.schema.tuple.Options): editor.schema;
         export { _enum as enum };
         export namespace array {
           /**
            * Options for editor.prefs.schema.array
            */
-          interface options {
+          interface Options {
             /**
              * array item schema
              */
@@ -506,7 +506,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.boolean
            */
-          interface options {
+          interface Options {
             /**
              * default value
              */
@@ -521,7 +521,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.enum
            */
-          interface options {
+          interface Options {
             /**
              * allowed values, must be scalar (nil, boolean, number or string)
              */
@@ -540,7 +540,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.integer
            */
-          interface options {
+          interface Options {
             /**
              * default value
              */
@@ -555,7 +555,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.keyword
            */
-          interface options {
+          interface Options {
             /**
              * default value
              */
@@ -570,7 +570,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.number
            */
-          interface options {
+          interface Options {
             /**
              * default value
              */
@@ -585,7 +585,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.object
            */
-          interface options {
+          interface Options {
             /**
              * a table from property key (string) to value schema
              */
@@ -604,7 +604,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.object_of
            */
-          interface options {
+          interface Options {
             /**
              * table key schema
              */
@@ -627,7 +627,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.one_of
            */
-          interface options {
+          interface Options {
             /**
              * alternative schemas
              */
@@ -646,7 +646,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.password
            */
-          interface options {
+          interface Options {
             /**
              * default value
              */
@@ -661,7 +661,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.set
            */
-          interface options {
+          interface Options {
             /**
              * set item schema
              */
@@ -680,7 +680,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.string
            */
-          interface options {
+          interface Options {
             /**
              * default value
              */
@@ -695,7 +695,7 @@ declare global {
           /**
            * Options for editor.prefs.schema.tuple
            */
-          interface options {
+          interface Options {
             /**
              * schemas for the items
              */
@@ -726,7 +726,7 @@ declare global {
       /**
        * Project resource attributes
        */
-      interface result {
+      interface Result {
         /**
          * whether a resource identified by the path exists in the project
          */
@@ -799,7 +799,7 @@ declare global {
       /**
        * External file dialog filter
        */
-      interface external_file_filter {
+      interface ExternalFileFilter {
         /**
          * text explaining the filter, either a literal string like `"Text files (*.txt)"` or a localization message
          */
@@ -812,7 +812,7 @@ declare global {
       /**
        * Issue associated with an input component
        */
-      interface issue {
+      interface Issue {
         /**
          * issue severity
          */
@@ -837,14 +837,14 @@ declare global {
        * @param props - component properties
        * @returns UI component
        */
-      function button(props: editor.ui.button.props): Opaque<"component">;
+      function button(props: editor.ui.button.Props): Opaque<"component">;
       /**
        * Check box with a label
        *
        * @param props - component properties
        * @returns UI component
        */
-      function check_box(props: editor.ui.check_box.props): Opaque<"component">;
+      function check_box(props: editor.ui.check_box.Props): Opaque<"component">;
       /**
        * Convert a function to a UI component.
        * The wrapped function may call any hooks functions (`editor.ui.use_*`), but on any function invocation, the hooks calls must be the same, and in the same order. This means that hooks should not be used inside loops and conditions or after a conditional return statement.
@@ -860,77 +860,77 @@ declare global {
        * @param props - component properties
        * @returns UI component
        */
-      function dialog(props: editor.ui.dialog.props): Opaque<"component">;
+      function dialog(props: editor.ui.dialog.Props): Opaque<"component">;
       /**
        * Dialog button shown in the footer of a dialog
        *
        * @param props - component properties
        * @returns UI component
        */
-      function dialog_button(props: editor.ui.dialog_button.props): Opaque<"component">;
+      function dialog_button(props: editor.ui.dialog_button.Props): Opaque<"component">;
       /**
        * Input component for selecting files from the file system
        *
        * @param props - component properties
        * @returns UI component
        */
-      function external_file_field(props: editor.ui.external_file_field.props): Opaque<"component">;
+      function external_file_field(props: editor.ui.external_file_field.Props): Opaque<"component">;
       /**
        * Layout container that places its children in a 2D grid
        *
        * @param props - component properties
        * @returns UI component
        */
-      function grid(props: editor.ui.grid.props): Opaque<"component">;
+      function grid(props: editor.ui.grid.Props): Opaque<"component">;
       /**
        * A text heading
        *
        * @param props - component properties
        * @returns UI component
        */
-      function heading(props: editor.ui.heading.props): Opaque<"component">;
+      function heading(props: editor.ui.heading.Props): Opaque<"component">;
       /**
        * Layout container that places its children in a horizontal row one after another
        *
        * @param props - component properties
        * @returns UI component
        */
-      function horizontal(props: editor.ui.horizontal.props): Opaque<"component">;
+      function horizontal(props: editor.ui.horizontal.Props): Opaque<"component">;
       /**
        * An icon from a predefined set
        *
        * @param props - component properties
        * @returns UI component
        */
-      function icon(props: editor.ui.icon.props): Opaque<"component">;
+      function icon(props: editor.ui.icon.Props): Opaque<"component">;
       /**
        * An image
        *
        * @param props - component properties
        * @returns UI component
        */
-      function image(props: editor.ui.image.props): Opaque<"component">;
+      function image(props: editor.ui.image.Props): Opaque<"component">;
       /**
        * Integer input component based on a text field, reports changes on commit (`Enter` or focus loss)
        *
        * @param props - component properties
        * @returns UI component
        */
-      function integer_field(props: editor.ui.integer_field.props): Opaque<"component">;
+      function integer_field(props: editor.ui.integer_field.Props): Opaque<"component">;
       /**
        * Label intended for use with input components
        *
        * @param props - component properties
        * @returns UI component
        */
-      function label(props: editor.ui.label.props): Opaque<"component">;
+      function label(props: editor.ui.label.Props): Opaque<"component">;
       /**
        * Number input component based on a text field, reports changes on commit (`Enter` or focus loss)
        *
        * @param props - component properties
        * @returns UI component
        */
-      function number_field(props: editor.ui.number_field.props): Opaque<"component">;
+      function number_field(props: editor.ui.number_field.Props): Opaque<"component">;
       /**
        * Open a resource using its primary or selected view, either in the editor or in a third-party app. Code and Text views accept a one-based cursor or range in `args`: `{line = 42}`, `{line = 42, column = 12}`, or `{from = {line = 42, column = 12}, to = {line = 43, column = 4}}`
        *
@@ -945,35 +945,35 @@ declare global {
        * @param props - component properties
        * @returns UI component
        */
-      function paragraph(props: editor.ui.paragraph.props): Opaque<"component">;
+      function paragraph(props: editor.ui.paragraph.Props): Opaque<"component">;
       /**
        * Input component for selecting project resources
        *
        * @param props - component properties
        * @returns UI component
        */
-      function resource_field(props: editor.ui.resource_field.props): Opaque<"component">;
+      function resource_field(props: editor.ui.resource_field.Props): Opaque<"component">;
       /**
        * Layout container that optionally shows scroll bars if child contents overflow the assigned bounds
        *
        * @param props - component properties
        * @returns UI component
        */
-      function scroll(props: editor.ui.scroll.props): Opaque<"component">;
+      function scroll(props: editor.ui.scroll.Props): Opaque<"component">;
       /**
        * Dropdown select box with an array of options
        *
        * @param props - component properties
        * @returns UI component
        */
-      function select_box(props: editor.ui.select_box.props): Opaque<"component">;
+      function select_box(props: editor.ui.select_box.Props): Opaque<"component">;
       /**
        * Thin line for visual content separation, by default horizontal and aligned to center
        *
        * @param props - component properties
        * @returns UI component
        */
-      function separator(props: editor.ui.separator.props): Opaque<"component">;
+      function separator(props: editor.ui.separator.Props): Opaque<"component">;
       /**
        * Show a dialog and await a result
        *
@@ -987,42 +987,42 @@ declare global {
        * @param opts - dialog options
        * @returns either absolute directory path or nil if user canceled directory selection
        */
-      function show_external_directory_dialog(opts?: editor.ui.show_external_directory_dialog.options): string | undefined;
+      function show_external_directory_dialog(opts?: editor.ui.show_external_directory_dialog.Options): string | undefined;
       /**
        * Show a modal OS file selection dialog and await a result
        *
        * @param opts - dialog options
        * @returns either absolute file path or nil if user canceled file selection
        */
-      function show_external_file_dialog(opts?: editor.ui.show_external_file_dialog.options): string | undefined;
+      function show_external_file_dialog(opts?: editor.ui.show_external_file_dialog.Options): string | undefined;
       /**
        * Show a modal resource selection dialog and await a result
        *
        * @param opts - dialog options
        * @returns if user made no selection, returns `nil`. Otherwise, if selection mode is `"single"`, returns selected resource path; otherwise returns a non-empty array of selected resource paths.
        */
-      function show_resource_dialog(opts?: editor.ui.show_resource_dialog.options): string | string[] | undefined;
+      function show_resource_dialog(opts?: editor.ui.show_resource_dialog.Options): string | string[] | undefined;
       /**
        * String input component based on a text field, reports changes on commit (`Enter` or focus loss)
        *
        * @param props - component properties
        * @returns UI component
        */
-      function string_field(props: editor.ui.string_field.props): Opaque<"component">;
+      function string_field(props: editor.ui.string_field.Props): Opaque<"component">;
       /**
        * Tab used in the `tabs` prop of `editor.ui.tabs(...)`
        *
        * @param props - component properties
        * @returns UI component
        */
-      function tab(props: editor.ui.tab.props): Opaque<"component">;
+      function tab(props: editor.ui.tab.Props): Opaque<"component">;
       /**
        * Layout container that shows one selected tab content at a time
        *
        * @param props - component properties
        * @returns UI component
        */
-      function tabs(props: editor.ui.tabs.props): Opaque<"component">;
+      function tabs(props: editor.ui.tabs.Props): Opaque<"component">;
       /**
        * A hook that caches the result of a computation between re-renders.
        * See `editor.ui.component` for hooks caveats and rules. If any of the arguments to `use_memo` change during a component refresh (checked with `==`), the value will be recomputed.
@@ -1083,7 +1083,7 @@ declare global {
        * @param props - component properties
        * @returns UI component
        */
-      function vertical(props: editor.ui.vertical.props): Opaque<"component">;
+      function vertical(props: editor.ui.vertical.Props): Opaque<"component">;
       namespace ALIGNMENT {
         /**
          * `"bottom"`
@@ -1126,7 +1126,7 @@ declare global {
         /**
          * Properties for editor.ui.button
          */
-        interface props {
+        interface Props {
           /**
            * button press callback, will be invoked without arguments when the user presses the button
            */
@@ -1169,7 +1169,7 @@ declare global {
         /**
          * Properties for editor.ui.check_box
          */
-        interface props {
+        interface Props {
           /**
            * determines if the checkbox should appear checked
            */
@@ -1193,7 +1193,7 @@ declare global {
           /**
            * issue related to the input, or false if there is no issue
            */
-          issue?: editor.ui.issue | false;
+          issue?: editor.ui.Issue | false;
           /**
            * tooltip message shown on hover; either a string or a localization message
            */
@@ -1246,7 +1246,7 @@ declare global {
         /**
          * Properties for editor.ui.dialog
          */
-        interface props {
+        interface Props {
           /**
            * OS dialog window title, either a string or a localization message
            */
@@ -1285,7 +1285,7 @@ declare global {
         /**
          * Properties for editor.ui.dialog_button
          */
-        interface props {
+        interface Props {
           /**
            * button text, either a string or a localization message
            */
@@ -1312,7 +1312,7 @@ declare global {
         /**
          * Properties for editor.ui.external_file_field
          */
-        interface props {
+        interface Props {
           /**
            * file or directory path; resolved against project root if relative
            */
@@ -1328,11 +1328,11 @@ declare global {
           /**
            * File filters
            */
-          filters?: editor.ui.external_file_filter[];
+          filters?: editor.ui.ExternalFileFilter[];
           /**
            * issue related to the input, or false if there is no issue
            */
-          issue?: editor.ui.issue | false;
+          issue?: editor.ui.Issue | false;
           /**
            * tooltip message shown on hover; either a string or a localization message
            */
@@ -1363,7 +1363,7 @@ declare global {
         /**
          * Grid row or column constraint
          */
-        interface constraint {
+        interface Constraint {
           /**
            * whether the row or column should grow to fill available space
            */
@@ -1372,7 +1372,7 @@ declare global {
         /**
          * Properties for editor.ui.grid
          */
-        interface props {
+        interface Props {
           /**
            * array of arrays of child components
            */
@@ -1380,11 +1380,11 @@ declare global {
           /**
            * separate configuration for each row
            */
-          rows?: (editor.ui.grid.constraint | false)[];
+          rows?: (editor.ui.grid.Constraint | false)[];
           /**
            * separate configuration for each column
            */
-          columns?: (editor.ui.grid.constraint | false)[];
+          columns?: (editor.ui.grid.Constraint | false)[];
           /**
            * empty space from the edges of the container to its children, either a predefined padding value or a non-negative number of pixels
            */
@@ -1415,7 +1415,7 @@ declare global {
         /**
          * Properties for editor.ui.heading
          */
-        interface props {
+        interface Props {
           /**
            * the text, either a string or a localization message
            */
@@ -1492,7 +1492,7 @@ declare global {
         /**
          * Properties for editor.ui.horizontal
          */
-        interface props {
+        interface Props {
           /**
            * array of child components
            */
@@ -1527,7 +1527,7 @@ declare global {
         /**
          * Properties for editor.ui.icon
          */
-        interface props {
+        interface Props {
           /**
            * predefined icon name
            */
@@ -1572,7 +1572,7 @@ declare global {
         /**
          * Properties for editor.ui.image
          */
-        interface props {
+        interface Props {
           /**
            * either a resource path (starts with `/`), or an URL
            */
@@ -1607,7 +1607,7 @@ declare global {
         /**
          * Properties for editor.ui.integer_field
          */
-        interface props {
+        interface Props {
           /**
            * value
            */
@@ -1619,7 +1619,7 @@ declare global {
           /**
            * issue related to the input, or false if there is no issue
            */
-          issue?: editor.ui.issue | false;
+          issue?: editor.ui.Issue | false;
           /**
            * tooltip message shown on hover; either a string or a localization message
            */
@@ -1660,7 +1660,7 @@ declare global {
         /**
          * Properties for editor.ui.label
          */
-        interface props {
+        interface Props {
           /**
            * the text, either a string or a localization message
            */
@@ -1699,7 +1699,7 @@ declare global {
         /**
          * Properties for editor.ui.number_field
          */
-        interface props {
+        interface Props {
           /**
            * value
            */
@@ -1711,7 +1711,7 @@ declare global {
           /**
            * issue related to the input, or false if there is no issue
            */
-          issue?: editor.ui.issue | false;
+          issue?: editor.ui.Issue | false;
           /**
            * tooltip message shown on hover; either a string or a localization message
            */
@@ -1770,7 +1770,7 @@ declare global {
         /**
          * Properties for editor.ui.paragraph
          */
-        interface props {
+        interface Props {
           /**
            * the text, either a string or a localization message
            */
@@ -1809,7 +1809,7 @@ declare global {
         /**
          * Properties for editor.ui.resource_field
          */
-        interface props {
+        interface Props {
           /**
            * resource path (must start with `/`)
            */
@@ -1829,7 +1829,7 @@ declare global {
           /**
            * issue related to the input, or false if there is no issue
            */
-          issue?: editor.ui.issue | false;
+          issue?: editor.ui.Issue | false;
           /**
            * tooltip message shown on hover; either a string or a localization message
            */
@@ -1860,7 +1860,7 @@ declare global {
         /**
          * Properties for editor.ui.scroll
          */
-        interface props {
+        interface Props {
           /**
            * content component
            */
@@ -1883,7 +1883,7 @@ declare global {
         /**
          * Properties for editor.ui.select_box
          */
-        interface props {
+        interface Props {
           /**
            * selected value
            */
@@ -1903,7 +1903,7 @@ declare global {
           /**
            * issue related to the input, or false if there is no issue
            */
-          issue?: editor.ui.issue | false;
+          issue?: editor.ui.Issue | false;
           /**
            * tooltip message shown on hover; either a string or a localization message
            */
@@ -1934,7 +1934,7 @@ declare global {
         /**
          * Properties for editor.ui.separator
          */
-        interface props {
+        interface Props {
           /**
            * separator line orientation, `editor.ui.ORIENTATION.VERTICAL` or `editor.ui.ORIENTATION.HORIZONTAL`
            */
@@ -1961,7 +1961,7 @@ declare global {
         /**
          * Options for editor.ui.show_external_directory_dialog
          */
-        interface options {
+        interface Options {
           /**
            * initial file or directory path; resolved against project root if relative
            */
@@ -1976,7 +1976,7 @@ declare global {
         /**
          * Options for editor.ui.show_external_file_dialog
          */
-        interface options {
+        interface Options {
           /**
            * initial file or directory path; resolved against project root if relative
            */
@@ -1988,14 +1988,14 @@ declare global {
           /**
            * File filters
            */
-          filters?: editor.ui.external_file_filter[];
+          filters?: editor.ui.ExternalFileFilter[];
         }
       }
       namespace show_resource_dialog {
         /**
          * Options for editor.ui.show_resource_dialog
          */
-        interface options {
+        interface Options {
           /**
            * if specified, restricts selectable resources in the dialog to specified file extensions; e.g. `{"collection", "go"}`
            */
@@ -2032,7 +2032,7 @@ declare global {
         /**
          * Properties for editor.ui.string_field
          */
-        interface props {
+        interface Props {
           /**
            * value
            */
@@ -2044,7 +2044,7 @@ declare global {
           /**
            * issue related to the input, or false if there is no issue
            */
-          issue?: editor.ui.issue | false;
+          issue?: editor.ui.Issue | false;
           /**
            * tooltip message shown on hover; either a string or a localization message
            */
@@ -2075,7 +2075,7 @@ declare global {
         /**
          * Properties for editor.ui.tab
          */
-        interface props {
+        interface Props {
           /**
            * tab header text, either a string or a localization message
            */
@@ -2098,7 +2098,7 @@ declare global {
         /**
          * Properties for editor.ui.tabs
          */
-        interface props {
+        interface Props {
           /**
            * array of `editor.ui.tab(...)` components
            */
@@ -2139,7 +2139,7 @@ declare global {
         /**
          * Properties for editor.ui.vertical
          */
-        interface props {
+        interface Props {
           /**
            * array of child components
            */

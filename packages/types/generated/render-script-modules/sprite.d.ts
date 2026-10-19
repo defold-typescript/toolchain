@@ -9,7 +9,7 @@ declare global {
     /**
      * Sprite flipbook playback properties
      */
-    interface play_properties {
+    interface PlayProperties {
       /**
        * Normalized initial animation cursor.
        */
@@ -19,7 +19,7 @@ declare global {
        */
       playback_rate?: number;
     }
-    interface properties {
+    interface Properties {
       /**
        * READ ONLY The current animation id. An animation that plays currently for the sprite. The type of the property is hash.
        */

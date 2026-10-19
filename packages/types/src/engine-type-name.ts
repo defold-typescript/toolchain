@@ -1,9 +1,12 @@
 // Reference names the rule cannot split into words: the reference writes these
-// as one run of capitals.
+// as one run of capitals, or runs a number into a word (Bullet spells the joint
+// `btGeneric6DofConstraint`).
 export const ENGINE_TYPE_NAME_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["LIVEUPDATE", "LiveUpdate"],
   ["PIEBOUNDS", "PieBounds"],
   ["SYSFIELD", "SysField"],
+  ["generic_6dof_params", "Generic6DofParams"],
+  ["generic_6dof_spring_params", "Generic6DofSpringParams"],
 ]);
 
 /**

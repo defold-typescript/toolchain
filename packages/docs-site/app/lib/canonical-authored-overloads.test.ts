@@ -187,18 +187,18 @@ describe("canonical pages render every authored overload arm", () => {
   it("renders each Box2D backend form of a world query with its own return and prose", () => {
     const markdown = markdownFor(namespaceByName("b2d.world"));
     const multi = (hit: string, info: string) => [
-      `LuaMultiReturn<[b2d.${hit}[], b2d.tree_stats]>`,
-      `LuaMultiReturn<[b2d.${info}[], b2d.tree_stats]>`,
+      `LuaMultiReturn<[b2d.${hit}[], b2d.TreeStats]>`,
+      `LuaMultiReturn<[b2d.${info}[], b2d.TreeStats]>`,
     ];
     const queries: [string, string[]][] = [
-      ["b2d.world.cast_ray", multi("fixture_cast_hit", "shape_cast_hit")],
+      ["b2d.world.cast_ray", multi("FixtureCastHit", "ShapeCastHit")],
       [
         "b2d.world.cast_ray_closest",
-        ["b2d.fixture_cast_hit | undefined", "b2d.shape_cast_hit | undefined"],
+        ["b2d.FixtureCastHit | undefined", "b2d.ShapeCastHit | undefined"],
       ],
-      ["b2d.world.cast_shape", multi("fixture_cast_hit", "shape_cast_hit")],
-      ["b2d.world.overlap_aabb", multi("fixture_info", "shape_info")],
-      ["b2d.world.overlap_shape", multi("fixture_info", "shape_info")],
+      ["b2d.world.cast_shape", multi("FixtureCastHit", "ShapeCastHit")],
+      ["b2d.world.overlap_aabb", multi("FixtureInfo", "ShapeInfo")],
+      ["b2d.world.overlap_shape", multi("FixtureInfo", "ShapeInfo")],
     ];
     for (const [fqn, [v2Return, v3Return]] of queries) {
       const forms = overloadForms(markdown, fqn);

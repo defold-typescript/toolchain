@@ -6,10 +6,12 @@ declare global {
    * Functions for interacting with materials.
    */
   namespace material {
+    type constant_info_value = Vector4 | Matrix4 | Vector4[] | Matrix4[];
+    type constant_value = number | Vector3 | Vector4 | Matrix4 | (number | Vector3 | Vector4 | Matrix4)[];
     /**
      * Shader constant information
      */
-    interface constant_info {
+    interface ConstantInfo {
       /**
        * Constant name.
        */
@@ -23,11 +25,10 @@ declare global {
        */
       value?: material.constant_info_value;
     }
-    type constant_info_value = Vector4 | Matrix4 | Vector4[] | Matrix4[];
     /**
      * Shader constant update
      */
-    interface constant_options {
+    interface ConstantOptions {
       /**
        * Constant type.
        */
@@ -37,11 +38,10 @@ declare global {
        */
       value?: material.constant_value;
     }
-    type constant_value = number | Vector3 | Vector4 | Matrix4 | (number | Vector3 | Vector4 | Matrix4)[];
     /**
      * Named material vertex attribute update
      */
-    interface named_vertex_attribute_options {
+    interface NamedVertexAttributeOptions {
       /**
        * Attribute name.
        */
@@ -70,7 +70,7 @@ declare global {
     /**
      * Texture sampler information
      */
-    interface sampler_info {
+    interface SamplerInfo {
       /**
        * Sampler name.
        */
@@ -107,7 +107,7 @@ declare global {
     /**
      * Texture sampler update
      */
-    interface sampler_options {
+    interface SamplerOptions {
       /**
        * Horizontal wrap mode.
        */
@@ -136,7 +136,7 @@ declare global {
     /**
      * Texture information
      */
-    interface texture_info {
+    interface TextureInfo {
       /**
        * Texture resource path, if backed by a resource.
        */
@@ -174,10 +174,11 @@ declare global {
        */
       flags: graphics.TextureUsageFlag | number;
     }
+    type vertex_attribute_value = number | Vector3 | Vector4 | Matrix4 | number[];
     /**
      * Material vertex attribute information
      */
-    interface vertex_attribute_info {
+    interface VertexAttributeInfo {
       /**
        * Attribute name.
        */
@@ -206,7 +207,7 @@ declare global {
     /**
      * Material vertex attribute update
      */
-    interface vertex_attribute_options {
+    interface VertexAttributeOptions {
       /**
        * Attribute value.
        */
@@ -228,7 +229,6 @@ declare global {
        */
       semantic_type?: graphics.SemanticType;
     }
-    type vertex_attribute_value = number | Vector3 | Vector4 | Matrix4 | number[];
     type ConstantType = typeof material.CONSTANT_TYPE_USER | typeof material.CONSTANT_TYPE_USER_COLOR | typeof material.CONSTANT_TYPE_USER_MATRIX4 | typeof material.CONSTANT_TYPE_VIEWPROJ | typeof material.CONSTANT_TYPE_WORLD | typeof material.CONSTANT_TYPE_TEXTURE | typeof material.CONSTANT_TYPE_VIEW | typeof material.CONSTANT_TYPE_PROJECTION | typeof material.CONSTANT_TYPE_NORMAL | typeof material.CONSTANT_TYPE_WORLDVIEW | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ | typeof material.CONSTANT_TYPE_TIME | typeof material.CONSTANT_TYPE_WORLD_INVERSE | typeof material.CONSTANT_TYPE_VIEW_INVERSE | typeof material.CONSTANT_TYPE_PROJECTION_INVERSE | typeof material.CONSTANT_TYPE_VIEWPROJ_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEW_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE;
     /**
      * Normal matrix constant.
@@ -322,7 +322,7 @@ declare global {
      * });
      * ```
      */
-    function get_constants(path: Hash | string): material.constant_info[];
+    function get_constants(path: Hash | string): material.ConstantInfo[];
     /**
      * Returns a table of all the texture samplers in the material. This function will return all the texture samplers
      * that are used in both the vertex and the fragment shaders.
@@ -343,7 +343,7 @@ declare global {
      * });
      * ```
      */
-    function get_samplers(path: Hash | string): material.sampler_info[];
+    function get_samplers(path: Hash | string): material.SamplerInfo[];
     /**
      * Returns a table of all the textures from the material.
      *
@@ -363,7 +363,7 @@ declare global {
      * });
      * ```
      */
-    function get_textures(path: Hash | string): LuaMap<number, material.texture_info>;
+    function get_textures(path: Hash | string): LuaMap<number, material.TextureInfo>;
     /**
      * Returns a table of all the vertex attributes in the material. This function will return all the vertex attributes
      * that are used in the vertex shader of the material.
@@ -384,7 +384,7 @@ declare global {
      * });
      * ```
      */
-    function get_vertex_attributes(path: Hash | string): material.vertex_attribute_info[];
+    function get_vertex_attributes(path: Hash | string): material.VertexAttributeInfo[];
     /**
      * Sets shader constants in a material, if the constants exist.
      *
@@ -415,7 +415,7 @@ declare global {
      * });
      * ```
      */
-    function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.constant_options> | Record<string, material.constant_options>): void;
+    function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.ConstantOptions> | Record<string, material.ConstantOptions>): void;
     /**
      * Sets texture samplers in a material, if the samplers exist. Use this function to change the settings of texture samplers.
      * To set actual textures that should be bound to the samplers, use the `material.set_textures` function instead.
@@ -438,7 +438,7 @@ declare global {
      * });
      * ```
      */
-    function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.sampler_options> | Record<string, material.sampler_options>): void;
+    function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.SamplerOptions> | Record<string, material.SamplerOptions>): void;
     /**
      * Sets textures in a material, if the samplers exist.
      *
@@ -483,7 +483,7 @@ declare global {
      * });
      * ```
      */
-    function set_vertex_attributes(path: Hash | string, attributes: LuaMap<string | Hash, material.vertex_attribute_options> | Record<string, material.vertex_attribute_options> | material.named_vertex_attribute_options[]): void;
+    function set_vertex_attributes(path: Hash | string, attributes: LuaMap<string | Hash, material.VertexAttributeOptions> | Record<string, material.VertexAttributeOptions> | material.NamedVertexAttributeOptions[]): void;
   }
 }
 

@@ -19,7 +19,7 @@ declare global {
      * @param y - y coordinate of a tile
      * @returns full tile information, or nil if no tile is set at the coordinate. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      */
-    export function get_info(tiles: editor.tiles, x: number, y: number): tilemap.tiles.get_info.result | undefined;
+    export function get_info(tiles: editor.tiles, x: number, y: number): tilemap.tiles.get_info.Result | undefined;
     /**
      * Get a tile index at a particular coordinate
      *
@@ -72,13 +72,13 @@ declare global {
      * @param tile_or_info - Either 1-indexed tile index of a tilemap's tilesource or full tile information. **⚠️ 1-based; passed to Defold unchanged.** **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * @returns unbounded 2d grid of tiles
      */
-    export function set(tiles: editor.tiles, x: number, y: number, tile_or_info: number | tilemap.tiles.set.info): editor.tiles;
+    export function set(tiles: editor.tiles, x: number, y: number, tile_or_info: number | tilemap.tiles.set.Info): editor.tiles;
     export { _new as new };
     export namespace get_info {
       /**
        * Full tile information returned by tilemap.tiles.get_info
        */
-      interface result {
+      interface Result {
         /**
          * 1-indexed tile index of a tilemap's tilesource
          */
@@ -101,7 +101,7 @@ declare global {
       /**
        * Tile information accepted by tilemap.tiles.set
        */
-      interface info {
+      interface Info {
         /**
          * 1-indexed tile index of a tilemap's tilesource
          */

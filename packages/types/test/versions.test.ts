@@ -596,7 +596,7 @@ describe("committed API surfaces — a restored lifecycle hook still fails the w
   });
 
   // The default surface keeps `go.on_input` as a type-only namespace for its
-  // `action` table, so a restored hook merges with it rather than replacing it.
+  // `Action` table, so a restored hook merges with it rather than replacing it.
   test("index.d.ts proof reacts to a go.on_input merged with its action namespace", () => {
     const root = mkdtempSync(resolve(PACKAGE_ROOT, "hooks-merged-"));
     try {
@@ -605,7 +605,7 @@ describe("committed API surfaces — a restored lifecycle hook still fails the w
         stub,
         'import type { Hash, Opaque } from "../src/core-types";\n\n' +
           "declare global {\n  namespace go {\n" +
-          '    function on_input(self: Opaque<"userdata">, action_id: Hash, action: go.on_input.action): boolean | undefined;\n' +
+          '    function on_input(self: Opaque<"userdata">, action_id: Hash, action: go.on_input.Action): boolean | undefined;\n' +
           "  }\n}\n",
       );
       const { exitCode, output } = typecheck(writeHooksProofTsconfig(root, "index.d.ts", stub));

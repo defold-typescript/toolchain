@@ -7,7 +7,7 @@ declare global {
     /**
      * JSON decoding options
      */
-    export interface decode_options {
+    export interface DecodeOptions {
       /**
        * Decode JSON `null` as json.null instead of `nil`.
        */
@@ -16,7 +16,7 @@ declare global {
     /**
      * JSON encoding options
      */
-    export interface encode_options {
+    export interface EncodeOptions {
       /**
        * Encode an empty table as an object instead of an array. The default is true.
        */
@@ -59,7 +59,7 @@ declare global {
      * // }
      * ```
      */
-    export function decode(json: string, options?: json.decode_options): unknown;
+    export function decode(json: string, options?: json.DecodeOptions): unknown;
     /**
      * Encode a lua table to a JSON string.
      * A Lua error is raised for syntax errors.
@@ -86,7 +86,7 @@ declare global {
      * // {"persons":[{"name":"John Doe"},{"name":"Darth Vader"}]}
      * ```
      */
-    export function encode(tbl: unknown, options?: json.encode_options): string;
+    export function encode(tbl: unknown, options?: json.EncodeOptions): string;
     export { _null as null };
   }
 }
