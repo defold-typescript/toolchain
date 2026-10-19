@@ -7,7 +7,7 @@ declare global {
    * error handling and debugging.
    */
   namespace sys {
-    type NetworkConnectivity = typeof sys.NETWORK_DISCONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_CONNECTED;
+    type NETWORK = typeof sys.NETWORK_DISCONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_CONNECTED;
     /**
      * network connected through other, non cellular, connection
      */
@@ -248,7 +248,7 @@ declare global {
      * }
      * ```
      */
-    function get_connectivity(): sys.NetworkConnectivity;
+    function get_connectivity(): sys.NETWORK;
     /**
      * Returns a table with engine information.
      *
