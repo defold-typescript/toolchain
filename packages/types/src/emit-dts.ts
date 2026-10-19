@@ -922,7 +922,7 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       [
         `render.${name}:param:state`,
         {
-          adds: "graphics.State",
+          adds: "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
           removes: ["graphics.STATE"],
           upstream: ["graphics.STATE"],
           reason: `render_script.cpp:RenderScript_${name === "enable_state" ? "Enable" : "Disable"}State raises "Invalid state" on any state but the six it lists, so graphics.STATE_SCISSOR_TEST and graphics.STATE_ALPHA_TEST_SUPPORTED are rejected`,
@@ -999,7 +999,7 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     "window.set_dim_mode:param:mode",
     {
       removes: ["window.DIMMING"],
-      adds: "window.DimModeStateSettable",
+      adds: "Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>",
       upstream: ["window.DIMMING"],
       reason:
         'script_window.cpp:SetDimMode raises "The dim mode specified is not supported." for anything but DIMMING_ON and DIMMING_OFF',
@@ -1824,7 +1824,7 @@ export const CONSTANT_SLOT_RESOLUTIONS: ReadonlyMap<string, ConstantSlotResoluti
   ],
 ]);
 
-export interface ConstantUnionAlias {
+export interface ConstantUnionNamedRow {
   // The namespace the alias is declared in. It is the namespace the union
   // *means*, which is not always the one its constants live in: the three
   // buffer keys `render.clear` accepts are `graphics.BUFFER_TYPE_*` constants,
@@ -1835,11 +1835,22 @@ export interface ConstantUnionAlias {
   readonly members: readonly string[];
 }
 
-// A documented constant union gets a public name so a caller can spell the type
-// their own wrapper takes. Identity is the *member set*, never a name prefix:
-// `gui.ANCHOR_*` splits into two rows because the x and y slots accept
-// different thirds of it, and `graphics.BUFFER_TYPE_*` splits because
-// `render.clear` accepts three of the six.
+// A union that is a strict subset of a named row in the same home. It declares
+// nothing: each slot spells it `Exclude<<home>.<parent>, ...>`, so one namespace
+// never carries two names for overlapping sets.
+export interface ConstantUnionSubsetRow {
+  readonly home: string;
+  readonly parent: string;
+  readonly members: readonly string[];
+}
+
+export type ConstantUnionAlias = ConstantUnionNamedRow | ConstantUnionSubsetRow;
+
+// A documented constant union gets a public spelling so a caller can write the
+// type their own wrapper takes. Identity is the *member set*, never a name
+// prefix: the x and y anchor slots accept different thirds of `gui.ANCHOR_*`,
+// so each is its own subset row of `gui.ANCHOR`, and `graphics.BUFFER_TYPE_*`
+// splits because `render.clear` accepts three of the six.
 //
 // The table is the only thing the emitter reads, and every name in it has been
 // reviewed: a longest-common-prefix rule proposes, a human disposes. A union
@@ -1925,7 +1936,20 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "go",
-    name: "Playback",
+    name: "PLAYBACK",
+    members: [
+      "go.PLAYBACK_LOOP_BACKWARD",
+      "go.PLAYBACK_LOOP_FORWARD",
+      "go.PLAYBACK_LOOP_PINGPONG",
+      "go.PLAYBACK_NONE",
+      "go.PLAYBACK_ONCE_BACKWARD",
+      "go.PLAYBACK_ONCE_FORWARD",
+      "go.PLAYBACK_ONCE_PINGPONG",
+    ],
+  },
+  {
+    home: "go",
+    parent: "PLAYBACK",
     members: [
       "go.PLAYBACK_ONCE_FORWARD",
       "go.PLAYBACK_ONCE_BACKWARD",
@@ -1972,7 +1996,22 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "graphics",
-    name: "State",
+    name: "STATE",
+    members: [
+      "graphics.STATE_ALPHA_TEST",
+      "graphics.STATE_ALPHA_TEST_SUPPORTED",
+      "graphics.STATE_BLEND",
+      "graphics.STATE_CULL_FACE",
+      "graphics.STATE_DEPTH_TEST",
+      "graphics.STATE_POLYGON_OFFSET_FILL",
+      "graphics.STATE_SCISSOR_TEST",
+      "graphics.STATE_STENCIL_TEST",
+    ],
+  },
+  // The six render_script.cpp:RenderScript_EnableState accepts.
+  {
+    home: "graphics",
+    parent: "STATE",
     members: [
       "graphics.STATE_DEPTH_TEST",
       "graphics.STATE_STENCIL_TEST",
@@ -1986,6 +2025,27 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
     home: "gui",
     name: "ADJUST",
     members: ["gui.ADJUST_FIT", "gui.ADJUST_ZOOM", "gui.ADJUST_STRETCH"],
+  },
+  {
+    home: "gui",
+    name: "ANCHOR",
+    members: [
+      "gui.ANCHOR_BOTTOM",
+      "gui.ANCHOR_LEFT",
+      "gui.ANCHOR_NONE",
+      "gui.ANCHOR_RIGHT",
+      "gui.ANCHOR_TOP",
+    ],
+  },
+  {
+    home: "gui",
+    parent: "ANCHOR",
+    members: ["gui.ANCHOR_NONE", "gui.ANCHOR_LEFT", "gui.ANCHOR_RIGHT"],
+  },
+  {
+    home: "gui",
+    parent: "ANCHOR",
+    members: ["gui.ANCHOR_NONE", "gui.ANCHOR_TOP", "gui.ANCHOR_BOTTOM"],
   },
   {
     home: "gui",
@@ -2138,16 +2198,6 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
     members: ["gui.SIZE_MODE_MANUAL", "gui.SIZE_MODE_AUTO"],
   },
   {
-    home: "gui",
-    name: "XAnchor",
-    members: ["gui.ANCHOR_NONE", "gui.ANCHOR_LEFT", "gui.ANCHOR_RIGHT"],
-  },
-  {
-    home: "gui",
-    name: "YAnchor",
-    members: ["gui.ANCHOR_NONE", "gui.ANCHOR_TOP", "gui.ANCHOR_BOTTOM"],
-  },
-  {
     home: "profiler",
     name: "MODE",
     members: [
@@ -2193,7 +2243,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "window",
-    name: "DimModeStateSettable",
+    parent: "DIMMING",
     members: ["window.DIMMING_ON", "window.DIMMING_OFF"],
   },
 ];
@@ -2213,17 +2263,35 @@ export function constantUnionAlias(fqns: readonly string[]): ConstantUnionAlias 
   return CONSTANT_UNION_ALIAS_BY_MEMBERS.get(constantUnionAliasKey(fqns));
 }
 
-// The rows a module owns. A row is declared in its home whether or not that
-// module references it, so a cross-namespace row is reachable from the module
-// whose signatures spell it. A row whose name the module's own `ENUM` already
-// declares is left to that `ENUM`, which carries the reference's member order
-// and nilable arms.
+// What a slot taking exactly the row's members is written as: a named row's
+// qualified name, or a subset row's parent minus the parent's other members,
+// listed in the parent's order.
+export function constantUnionSpelling(row: ConstantUnionAlias): string {
+  if ("name" in row) return `${row.home}.${row.name}`;
+  const parent = CONSTANT_UNION_ALIASES.find(
+    (candidate): candidate is ConstantUnionNamedRow =>
+      "name" in candidate && candidate.home === row.home && candidate.name === row.parent,
+  );
+  if (parent === undefined) {
+    throw new Error(`constant union subset of ${row.home}.${row.parent}: no such named row`);
+  }
+  const kept = new Set(row.members);
+  const excluded = parent.members.filter((member) => !kept.has(member));
+  return `Exclude<${row.home}.${row.parent}, ${excluded.map((m) => `typeof ${m}`).join(" | ")}>`;
+}
+
+// The named rows a module owns; a subset row declares nothing. A row is
+// declared in its home whether or not that module references it, so a
+// cross-namespace row is reachable from the module whose signatures spell it.
+// A row whose name the module's own `ENUM` already declares is left to that
+// `ENUM`, which carries the reference's member order and nilable arms.
 function ownedConstantUnionAliases(
   namespace: string,
   enumDeclared: ReadonlySet<string>,
-): ConstantUnionAlias[] {
+): ConstantUnionNamedRow[] {
   return CONSTANT_UNION_ALIASES.filter(
-    (row) => row.home === namespace && !enumDeclared.has(row.name),
+    (row): row is ConstantUnionNamedRow =>
+      "name" in row && row.home === namespace && !enumDeclared.has(row.name),
   );
 }
 
@@ -3569,14 +3637,15 @@ export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> 
 // script_resource.cpp:CreateSoundData reads it with CheckBufferOrString.
 const CONSTANT_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[]";
 const ATTRIBUTE_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | number[]";
+const ATLAS_PLAYBACK_TS = "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>";
 export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["compute.set_constants:param:constants:value", CONSTANT_VALUE_TS],
   ["material.set_constants:param:constants:value", CONSTANT_VALUE_TS],
   ["material.set_vertex_attributes:param:attributes:value", ATTRIBUTE_VALUE_TS],
   ["material.get_vertex_attributes:return:table:value", ATTRIBUTE_VALUE_TS],
-  ["resource.set_atlas:param:table:animations[].playback", "go.Playback"],
-  ["resource.create_atlas:param:table:animations[].playback", "go.Playback"],
-  ["resource.get_atlas:return:data:animations[].playback", "go.Playback"],
+  ["resource.set_atlas:param:table:animations[].playback", ATLAS_PLAYBACK_TS],
+  ["resource.create_atlas:param:table:animations[].playback", ATLAS_PLAYBACK_TS],
+  ["resource.get_atlas:return:data:animations[].playback", ATLAS_PLAYBACK_TS],
   ["render.set_render_target:param:options:transient", "graphics.BUFFER_TYPE[]"],
   ["resource.create_sound_data:param:options:data", 'string | Opaque<"buffer">'],
   // The option bags 1.13.2 types as a STRUCT, whose members still carry the
@@ -6870,8 +6939,8 @@ function withoutSubsumedOpaqueArms(mapped: readonly string[]): string[] {
   });
 }
 
-// Joins already-mapped arms, collapsing the branded ones to their alias when
-// they are exactly a `CONSTANT_UNION_ALIASES` member set. The alias takes the
+// Joins already-mapped arms, collapsing the branded ones to their row's spelling
+// when they are exactly a `CONSTANT_UNION_ALIASES` member set. The spelling takes the
 // position of the first branded arm, so a mixed union keeps its reading order
 // (`gui.EASING | Vector`). Arms that are not constants are untouched, and a set
 // with no row keeps every arm inline.
@@ -6889,7 +6958,7 @@ function joinUnionArms(mapped: readonly string[]): string {
   for (const arm of arms) {
     if (BRAND_ARM.test(arm)) {
       if (placed) continue;
-      out.push(`${alias.home}.${alias.name}`);
+      out.push(constantUnionSpelling(alias));
       placed = true;
       continue;
     }

@@ -7,6 +7,7 @@ declare global {
    */
   namespace gui {
     type ADJUST = typeof gui.ADJUST_FIT | typeof gui.ADJUST_ZOOM | typeof gui.ADJUST_STRETCH;
+    type ANCHOR = typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_RIGHT | typeof gui.ANCHOR_TOP;
     type BLEND = typeof gui.BLEND_ALPHA | typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN;
     type CLIPPING_MODE = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL;
     type EASING = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE;
@@ -18,8 +19,6 @@ declare global {
     type SAFE_AREA = typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_SHORT | typeof gui.SAFE_AREA_BOTH;
     type SIZE_MODE = typeof gui.SIZE_MODE_MANUAL | typeof gui.SIZE_MODE_AUTO;
     type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_TEXT | typeof gui.TYPE_PIE | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_CUSTOM;
-    type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT;
-    type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;
     /**
      * Adjust mode is used when the screen resolution differs from the project settings.
      * The fit mode ensures that the entire node is visible in the adjusted gui scene.
@@ -1001,7 +1000,7 @@ declare global {
      * - `gui.ANCHOR_LEFT`
      * - `gui.ANCHOR_RIGHT`
      */
-    function get_xanchor(node: Opaque<"node">): gui.XAnchor;
+    function get_xanchor(node: Opaque<"node">): Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>;
     /**
      * The y-anchor specifies how the node is moved when the game is run in a different resolution.
      *
@@ -1012,7 +1011,7 @@ declare global {
      * - `gui.ANCHOR_TOP`
      * - `gui.ANCHOR_BOTTOM`
      */
-    function get_yanchor(node: Opaque<"node">): gui.YAnchor;
+    function get_yanchor(node: Opaque<"node">): Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>;
     /**
      * Hides the on-display touch keyboard on the device.
      */
@@ -1901,7 +1900,7 @@ declare global {
      * - `gui.ANCHOR_LEFT`
      * - `gui.ANCHOR_RIGHT`
      */
-    function set_xanchor(node: Opaque<"node">, anchor: gui.XAnchor): void;
+    function set_xanchor(node: Opaque<"node">, anchor: Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>): void;
     /**
      * The y-anchor specifies how the node is moved when the game is run in a different resolution.
      *
@@ -1912,7 +1911,7 @@ declare global {
      * - `gui.ANCHOR_TOP`
      * - `gui.ANCHOR_BOTTOM`
      */
-    function set_yanchor(node: Opaque<"node">, anchor: gui.YAnchor): void;
+    function set_yanchor(node: Opaque<"node">, anchor: Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>): void;
     /**
      * Shows the on-display touch keyboard.
      * The specified type of keyboard is displayed if it is available on

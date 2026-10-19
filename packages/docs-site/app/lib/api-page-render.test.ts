@@ -2553,12 +2553,12 @@ describe("listingPageMarkdown", () => {
 describe("constant union alias entries", () => {
   const EASING_SIG =
     "type EASING = typeof gui.EASING_LINEAR | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_OUTSINE";
-  const STATE_SIG = "type State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
+  const STATE_SIG = "type STATE = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
   // The ledger declares each alias inside its namespace; an engine page names its path.
   const EASING_ROW =
     "type gui.EASING = typeof gui.EASING_LINEAR | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_OUTSINE";
   const STATE_ROW =
-    "type graphics.State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
+    "type graphics.STATE = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
 
   function aliasKey(namespace: string, name: string): string {
     return symbolIdentityKey({ namespace, kind: "TYPEDEF", name, signature: "" });
@@ -2629,7 +2629,7 @@ describe("constant union alias entries", () => {
       translations: {},
       signatures: {},
       category: "engine",
-      authoritativeSignatures: new Map([[aliasKey("graphics", "State"), `${STATE_SIG};`]]),
+      authoritativeSignatures: new Map([[aliasKey("graphics", "STATE"), `${STATE_SIG};`]]),
     };
   }
 
@@ -2659,7 +2659,7 @@ describe("constant union alias entries", () => {
   test("a cross-namespace alias links to its home page, not the referencing one", () => {
     const page = guiPage();
     const links = apiSignatureSymbolLinks([page, graphicsPage()], page);
-    expect(links.get("graphics.State")).toBe(`/api/graphics#${slugify(STATE_ROW)}`);
+    expect(links.get("graphics.STATE")).toBe(`/api/graphics#${slugify(STATE_ROW)}`);
   });
 
   test("a type sharing its qualified name with a function links to the type's own anchor", () => {
@@ -2699,10 +2699,10 @@ describe("constant union alias entries", () => {
 // built once and re-routed rather than restated.
 const ALIAS_EASING_SIG = "type EASING = typeof gui.EASING_LINEAR | typeof gui.EASING_OUTSINE";
 const ALIAS_STATE_SIG =
-  "type State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
+  "type STATE = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
 const ALIAS_EASING_ROW = "type gui.EASING = typeof gui.EASING_LINEAR | typeof gui.EASING_OUTSINE";
 const ALIAS_STATE_ROW =
-  "type graphics.State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
+  "type graphics.STATE = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
 const NAME_TYPE_GAP = " ";
 
 function aliasTypedefKey(namespace: string, name: string): string {
@@ -2725,7 +2725,7 @@ const ALIAS_ANIMATE: ApiFunction = {
       fields: [{ name: "inner", doc: "", types: ["gui.EASING"], isOptional: true }],
     },
   ],
-  returnValues: [{ name: "state", doc: "", types: ["graphics.State"], isOptional: false }],
+  returnValues: [{ name: "state", doc: "", types: ["graphics.STATE"], isOptional: false }],
 };
 
 function guiAliasPage(route: string): ApiPage {
@@ -2755,7 +2755,7 @@ function guiAliasPage(route: string): ApiPage {
           name: "gui.animate",
           signature: normalizedFunctionSignature(ALIAS_ANIMATE),
         }),
-        'gui.animate(node: Opaque<"node">, easing: gui.EASING): graphics.State',
+        'gui.animate(node: Opaque<"node">, easing: gui.EASING): graphics.STATE',
       ],
     ]),
   };
@@ -2780,7 +2780,7 @@ function graphicsAliasPage(route: string): ApiPage {
     signatures: {},
     category: "engine",
     authoritativeSignatures: new Map([
-      [aliasTypedefKey("graphics", "State"), `${ALIAS_STATE_SIG};`],
+      [aliasTypedefKey("graphics", "STATE"), `${ALIAS_STATE_SIG};`],
     ]),
   };
 }
@@ -2882,7 +2882,7 @@ describe("constant union alias links in parameter, return and field types", () =
     const pages = surface();
     const html = await renderAliasSurface(pages, pages[0] as ApiPage);
     expect(slotBullet(html, "state")).toContain(
-      `<a class="api-type-link" href="/api/graphics#${slugify(ALIAS_STATE_ROW)}">graphics.State</a>`,
+      `<a class="api-type-link" href="/api/graphics#${slugify(ALIAS_STATE_ROW)}">graphics.STATE</a>`,
     );
     expect(slotBullet(html, "inner")).toContain(
       `<a class="api-type-link" href="/api/gui#${slugify(ALIAS_EASING_ROW)}">gui.EASING</a>`,

@@ -1128,7 +1128,7 @@ export function apiSignatureSymbolLinks(
   }
   const index = buildSymbolIndex(pages);
   // A constant-union alias is spelled qualified in every signature that takes it
-  // (`gui.EASING`, `graphics.State`), which is also how the symbol index keys it.
+  // (`gui.EASING`, `graphics.STATE`), which is also how the symbol index keys it.
   // Keying the qualified name off every alias page rather than the current page
   // is what lets a `render` signature reach the `graphics` entry that lists the
   // members. The route is the type row's own anchor, not the index entry: the
