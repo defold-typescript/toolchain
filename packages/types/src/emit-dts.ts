@@ -4764,8 +4764,9 @@ function moduleTypeMappers(
  * dropped, so the home's own copy wins; a type sharing a value's name
  * (`resource.atlas`) is untouched. A function moves the same way (1.13.2 files
  * `bullet3d.collision_object.get_shapes` in the shape doc), since the emitter
- * declares only the functions under a module's own namespace. Modules with
- * nothing moved in or out are returned as-is.
+ * declares only the functions under a module's own namespace. A moved type
+ * records the module that declared it as `declaredIn`. Modules with nothing
+ * moved in or out are returned as-is.
  */
 export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[] {
   const homeOf = (name: string, declaring: string): string => {
@@ -4795,14 +4796,14 @@ export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[
     const structs = (module.structs ?? []).filter((struct) => {
       const home = homeOf(struct.name, module.namespace);
       if (home === module.namespace) return true;
-      into(home).structs.push(struct);
+      into(home).structs.push({ ...struct, declaredIn: module.namespace });
       return false;
     });
     const typedefs = module.typedefs.filter((typedef) => {
       if (typedef.aliasOf === undefined) return true;
       const home = homeOf(typedef.name, module.namespace);
       if (home === module.namespace) return true;
-      into(home).typedefs.push(typedef);
+      into(home).typedefs.push({ ...typedef, declaredIn: module.namespace });
       return false;
     });
     const functions = module.functions.filter((fn) => {

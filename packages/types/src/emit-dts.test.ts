@@ -7194,6 +7194,32 @@ describe("STRUCT and TYPEDEF declarations", () => {
     ).toEqual([["b2d.joint", "revolute_definition"]]);
   });
 
+  test("a moved declaration records the module that declared it, and one that stays records none", () => {
+    const alias = (name: string) => ({
+      type: "TYPEDEF",
+      name,
+      parameters: [{ name: "value", doc: "", types: ["{}"] }],
+    });
+    const [b2d, joint] = routeTypeDeclarations([
+      parseDefoldApiDoc({
+        info: { namespace: "b2d" },
+        elements: [revoluteDefinition, alias("b2d.joint.filter_definition"), alias("b2d.aabb")],
+      }),
+      parseDefoldApiDoc({
+        info: { namespace: "b2d.joint" },
+        elements: [alias("b2d.joint.weld_definition")],
+      }),
+    ]) as [ApiModule, ApiModule];
+    expect(joint.structs?.map((s) => [s.name, s.declaredIn])).toEqual([
+      ["b2d.joint.revolute_definition", "b2d"],
+    ]);
+    expect(joint.typedefs.map((t) => [t.name, t.declaredIn])).toEqual([
+      ["b2d.joint.weld_definition", undefined],
+      ["b2d.joint.filter_definition", "b2d"],
+    ]);
+    expect(b2d.typedefs.map((t) => [t.name, t.declaredIn])).toEqual([["b2d.aabb", undefined]]);
+  });
+
   test("a routed declaration the home already declares keeps the home's copy alone", () => {
     const handle = (name: string, aliased: string) => ({
       type: "TYPEDEF",

@@ -31,6 +31,8 @@ export interface ApiStruct {
   brief: string;
   description: string;
   members: ApiStructMember[];
+  /** See {@link ApiTypedef.declaredIn}. */
+  declaredIn?: string;
 }
 
 /** One `STRUCT` member; upstream marks an optional one with a `name?` suffix. */
@@ -73,6 +75,12 @@ export interface ApiTypedef {
   aliasOf?: string[];
   /** See {@link ApiFunction.global}. */
   global?: true;
+  /**
+   * The namespace of the ref-doc module that declared this type, set when
+   * `routeTypeDeclarations` moves it to another module; the reference lists it
+   * on the declaring module's page. Absent on a type its own module declares.
+   */
+  declaredIn?: string;
 }
 
 export interface ApiConstant {
