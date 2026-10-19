@@ -264,13 +264,18 @@ describe("core-types", () => {
       ["resource", 'Opaque<"resource">'],
       ["b2World", 'Opaque<"b2World">'],
       ["b2Body", 'Opaque<"b2Body">'],
-      // socket handle types resolve to their method-bearing `interface <receiver>`,
-      // not opaque brands.
-      ["client", "client"],
-      ["connected", "connected"],
-      ["master", "master"],
-      ["server", "server"],
-      ["unconnected", "unconnected"],
+      // socket handle types resolve to their method-bearing
+      // `interface socket_<receiver>`, not opaque brands, under either spelling.
+      ["client", "socket_client"],
+      ["connected", "socket_connected"],
+      ["master", "socket_master"],
+      ["server", "socket_server"],
+      ["unconnected", "socket_unconnected"],
+      ["socket_client", "socket_client"],
+      ["socket_connected", "socket_connected"],
+      ["socket_master", "socket_master"],
+      ["socket_server", "socket_server"],
+      ["socket_unconnected", "socket_unconnected"],
       ["any", "unknown"],
     ];
     for (const [defoldToken, tsType] of rows) {

@@ -24,6 +24,7 @@ import model113Doc from "../fixtures/defold-1.13.1/model_doc.json" with { type: 
 import render113Doc from "../fixtures/defold-1.13.1/render_doc.json" with { type: "json" };
 import sprite113Doc from "../fixtures/defold-1.13.1/sprite_doc.json" with { type: "json" };
 import graphics1132Doc from "../fixtures/defold-1.13.2/graphics_doc.json" with { type: "json" };
+import socket1132Doc from "../fixtures/defold-1.13.2/socket_doc.json" with { type: "json" };
 import buffer114Doc from "../fixtures/defold-1.14.0/buffer_doc.json" with { type: "json" };
 import bullet3d114Doc from "../fixtures/defold-1.14.0/bullet3d_doc.json" with { type: "json" };
 import collectionproxy114Doc from "../fixtures/defold-1.14.0/collectionproxy_doc.json" with {
@@ -3097,7 +3098,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ...module,
       functions: [requireFunction(module, "socket.select")],
     });
-    const socketHandles = "(client | master | unconnected)[]";
+    const socketHandles = "(socket_client | socket_master | socket_unconnected)[]";
     expect(out).toContain(
       `function select(recvt: ${socketHandles}, sendt: ${socketHandles}, timeout?: number): LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | undefined]>;`,
     );
@@ -3387,25 +3388,69 @@ describe("nil-return typing", () => {
 });
 
 describe("socket handle method interfaces", () => {
+  const SOCKET_HANDLE_INTERFACES = [
+    "socket_client",
+    "socket_connected",
+    "socket_master",
+    "socket_server",
+    "socket_unconnected",
+  ];
+  const RECEIVERS = ["client", "connected", "master", "server", "unconnected"];
+  const typeDeclarationNames = (out: string): string[] =>
+    [...out.matchAll(/^ {2}(?:export )?(?:type|interface) ([A-Za-z_$][\w$]*)\b/gm)].map(
+      (match) => match[1] as string,
+    );
+
+  // 1.13.1 declares TYPEDEFs named after the receivers (`client`); 1.13.2 names
+  // them `socket_client` while its colon methods keep the receiver (`client:send`).
+  for (const [shape, doc] of [
+    ["1.13.1", socketDoc],
+    ["1.13.2", socket1132Doc],
+  ] as const) {
+    test(`the ${shape} reference shape declares one socket_<receiver> interface per handle`, () => {
+      const out = emitDeclarations(parseDefoldApiDoc(doc));
+      const names = typeDeclarationNames(out);
+      for (const name of SOCKET_HANDLE_INTERFACES) {
+        expect(names.filter((declared) => declared === name)).toEqual([name]);
+        expect(out).toContain(`interface ${name} {`);
+        expect(out).not.toContain(`type ${name} =`);
+      }
+      for (const receiver of RECEIVERS) expect(names).not.toContain(receiver);
+      expect(out).toMatch(/interface socket_client \{[\s\S]*?\n {4}send\(/);
+      expect(out).toMatch(/interface socket_master \{[\s\S]*?\n {4}listen\(/);
+    });
+  }
+
+  test("the 1.13.2 selectable union names the socket_<receiver> interfaces", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(socket1132Doc));
+    const selectable = out
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.startsWith("type socket_selectable ="));
+    expect(selectable).toStartWith(
+      "type socket_selectable = socket_master | socket_client | socket_server | socket_connected | socket_unconnected |",
+    );
+  });
+
   test("emits a method-bearing interface per receiver, replacing the Opaque handle brands", () => {
     const module = parseDefoldApiDoc(socketDoc);
     const out = emitDeclarations(module);
 
-    // client/master/unconnected are now interfaces, not Opaque typedef aliases.
-    expect(out).toContain("interface client {");
+    // The handles are interfaces, not Opaque typedef aliases.
+    expect(out).toContain("interface socket_client {");
     expect(out).not.toContain('type client = Opaque<"client">');
     expect(out).not.toContain('type master = Opaque<"master">');
     expect(out).not.toContain('type unconnected = Opaque<"unconnected">');
 
     // The interface carries its documented methods; the final colon segment is
     // the emitted member name (no `function` keyword inside an interface).
-    expect(out).toMatch(/interface client \{[\s\S]*?\n {4}send\(/);
-    expect(out).toMatch(/interface client \{[\s\S]*?\n {4}close\(\): void;/);
+    expect(out).toMatch(/interface socket_client \{[\s\S]*?\n {4}send\(/);
+    expect(out).toMatch(/interface socket_client \{[\s\S]*?\n {4}close\(\): void;/);
 
     // server and connected exist only via colon methods (no TYPEDEF element), yet
     // are still emitted as interfaces.
-    expect(out).toContain("interface server {");
-    expect(out).toContain("interface connected {");
+    expect(out).toContain("interface socket_server {");
+    expect(out).toContain("interface socket_connected {");
 
     // No leftover socket handle brands anywhere in the module.
     expect(out).not.toContain('Opaque<"client">');
@@ -3419,14 +3464,31 @@ describe("socket handle method interfaces", () => {
     const module = parseDefoldApiDoc(socketDoc);
     const out = emitDeclarations(module);
     expect(out).toContain(
-      "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | undefined, string | undefined]>;",
+      "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
     );
     expect(out).toContain(
-      "function tcp(): LuaMultiReturn<[master | undefined, string | undefined]>;",
+      "function tcp(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
     );
-    const socketHandles = "(client | master | unconnected)[]";
+    const socketHandles = "(socket_client | socket_master | socket_unconnected)[]";
     expect(out).toContain(
       `function select(recvt: ${socketHandles}, sendt: ${socketHandles}, timeout?: number): LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | undefined]>;`,
+    );
+  });
+
+  test("the 1.13.2 shape's factory returns and select results name the socket_<receiver> interfaces", () => {
+    const lines = emitDeclarations(parseDefoldApiDoc(socket1132Doc))
+      .split("\n")
+      .map((line) => line.trim());
+    const line = (prefix: string) => lines.find((candidate) => candidate.startsWith(prefix));
+    expect(line("function connect(")).toContain(
+      "LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
+    );
+    expect(line("function tcp(")).toContain(
+      "LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+    );
+    const socketHandles = "(socket_client | socket_master | socket_unconnected)[]";
+    expect(line("function select(")).toContain(
+      `LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | undefined]>;`,
     );
   });
 
@@ -5843,20 +5905,27 @@ describe("overload slot aliases", () => {
       .split("\n")
       .map((line) => line.trim());
 
-  test("render.RenderTargetParams is the reference's struct where the reference types the slot", () => {
-    expect(emittedLines(render114Doc)).toContain(
-      "type RenderTargetParams = render.render_target_params;",
-    );
+  const slotDeclarations = (lines: readonly string[]): string[] =>
+    lines.filter((line) => /^(?:export )?(?:type|interface) render_target_params\b/.test(line));
+
+  test("render.render_target_params is the reference's own declaration where the reference declares it", () => {
+    const lines = emittedLines(render114Doc);
+    const [only, ...rest] = slotDeclarations(lines);
+    expect(rest).toEqual([]);
+    expect(only).toStartWith("type render_target_params = {");
+    expect(lines.join("\n")).not.toContain("RenderTargetParams");
   });
 
-  test("render.RenderTargetParams is the bare record where the reference leaves the slot a table", () => {
-    expect(emittedLines(render113Doc)).toContain(
-      "type RenderTargetParams = Record<string | number, unknown>;",
-    );
+  test("render.render_target_params aliases the slot type where the reference leaves the slot a table", () => {
+    const lines = emittedLines(render113Doc);
+    expect(slotDeclarations(lines)).toEqual([
+      "type render_target_params = Record<string | number, unknown>;",
+    ]);
+    expect(lines.join("\n")).not.toContain("RenderTargetParams");
   });
 
   test("a namespace without the aliased slot declares no alias", () => {
-    expect(emitDeclarations(parseDefoldApiDoc(sprite114Doc))).not.toContain("RenderTargetParams");
+    expect(emitDeclarations(parseDefoldApiDoc(sprite114Doc))).not.toContain("render_target_params");
   });
 });
 
@@ -6018,7 +6087,8 @@ describe("defaultMapType LuaLS fallback", () => {
     expect(defaultMapType("buffer_data")).toBe(
       'Opaque<"buffer"> & { length: LuaLengthMethod<number> }',
     );
-    expect(defaultMapType("socket_client")).toBe("client");
+    expect(defaultMapType("socket_client")).toBe("socket_client");
+    expect(defaultMapType("client")).toBe("socket_client");
     expect(defaultMapType("message.physics.collision_event")).toBe(
       'BuiltinMessages["collision_event"]',
     );
@@ -6513,11 +6583,23 @@ describe("STRUCT and TYPEDEF declarations", () => {
     expect(aliasLine(out, "TIME_STEP_MODE")).toBe("type TIME_STEP_MODE = 0 | 1;");
   });
 
-  test("a handle typedef the type map resolves aliases that mapping", () => {
+  test("a socket handle typedef beside its receiver's methods declares only the interface", () => {
+    const send = {
+      type: "FUNCTION",
+      name: "client:send",
+      brief: "",
+      parameters: [{ name: "data", doc: "", types: ["string"], is_optional: "False" }],
+      returnvalues: [],
+    };
     const socket = emitDeclarations(
-      parseDefoldApiDoc({ info: { namespace: "socket" }, elements: [socketClient] }),
+      parseDefoldApiDoc({ info: { namespace: "socket" }, elements: [socketClient, send] }),
     );
-    expect(aliasLine(socket, "socket_client")).toBe("type socket_client = client;");
+    expect(aliasLine(socket, "socket_client")).toBeUndefined();
+    expect(socket).toContain("interface socket_client {");
+    expect(socket).not.toContain("interface client {");
+  });
+
+  test("a handle typedef the type map resolves aliases that mapping", () => {
     const vmath = emitDeclarations(
       parseDefoldApiDoc({ info: { namespace: "vmath" }, elements: [vmathVector] }),
     );

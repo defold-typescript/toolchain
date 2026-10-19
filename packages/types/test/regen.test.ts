@@ -275,7 +275,9 @@ describe("overload slot alias of a withheld function", () => {
     const render = MODULE_MANIFEST.find((e) => e.namespace === "render");
     if (!render) throw new Error("render manifest entry missing");
     const { contents } = generateModuleDeclaration(render);
-    expect(contents).toContain("type RenderTargetParams = render.render_target_params;");
+    expect(contents).toContain("type render_target_params = {");
+    expect(contents).not.toContain("type render_target_params = render.render_target_params;");
+    expect(contents).not.toContain("RenderTargetParams");
     expect(contents).not.toContain("function render_target(");
   });
 
@@ -285,7 +287,8 @@ describe("overload slot alias of a withheld function", () => {
     );
     if (!render) throw new Error("defold-1.13.1 render manifest entry missing");
     const { contents } = generateModuleDeclaration(render);
-    expect(contents).toContain("type RenderTargetParams = Record<string | number, unknown>;");
+    expect(contents).toContain("type render_target_params = Record<string | number, unknown>;");
+    expect(contents).not.toContain("RenderTargetParams");
     expect(contents).not.toContain("function render_target(");
   });
 });

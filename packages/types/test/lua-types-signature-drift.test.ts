@@ -19,6 +19,7 @@ import {
   STRING_SIGNATURES_PATH,
   TABLE_SIGNATURES_PATH,
 } from "../scripts/signature-store-fs";
+import { SOCKET_HANDLE_NAMES } from "../src/core-types";
 
 // Defold runs LuaJIT, so the authoritative type surface is `lua-types`' jit
 // composition: `core/index.d.ts` (every `core/*.d.ts`) plus the files
@@ -71,13 +72,9 @@ const LUA_TYPES_STORES = [
 const HAND_AUTHORED_NO_SOURCE = new Set(["module", "package.seeall"]);
 
 const SOCKET_GENERATED = resolve(import.meta.dir, "..", "generated", "socket.d.ts");
-const SOCKET_HANDLES = {
-  client: "client",
-  server: "server",
-  master: "master",
-  connected: "connected",
-  unconnected: "unconnected",
-};
+// The socket store keys its handle methods by receiver (`client:send`); each
+// receiver's methods live on its `socket_<receiver>` interface.
+const SOCKET_HANDLES = SOCKET_HANDLE_NAMES;
 
 const index = buildSignatureIndex(LUAJIT_SOURCES, LUA_TYPES_HANDLES);
 

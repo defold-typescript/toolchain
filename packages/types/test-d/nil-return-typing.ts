@@ -26,16 +26,16 @@ if (parent !== undefined) {
   void parentId;
 }
 
-// socket.connect(...): LuaMultiReturn<[client | undefined, string | undefined]>
+// socket.connect(...): LuaMultiReturn<[socket_client | undefined, string | undefined]>
 // The value and error slots are independent `| undefined` unions, so each narrows
 // on its own guard and neither is usable before it.
 const [conn, err] = socket.connect("localhost", 80);
 // @ts-expect-error the connection is undefined on failure, not usable before the guard
-const _connEarly: socket.client = conn;
+const _connEarly: socket.socket_client = conn;
 // @ts-expect-error the error string is undefined on success, not usable before the guard
 const _errEarly: string = err;
 if (conn !== undefined) {
-  const client: socket.client = conn;
+  const client: socket.socket_client = conn;
   void client;
 }
 if (err !== undefined) {

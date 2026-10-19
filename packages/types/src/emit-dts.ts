@@ -15,7 +15,7 @@ import type {
   ApiTypedef,
   ApiVariable,
 } from "./api-doc";
-import { DEFOLD_TYPE_MAP } from "./core-types";
+import { DEFOLD_TYPE_MAP, SOCKET_HANDLE_NAMES, type SocketHandleReceiver } from "./core-types";
 import { correctionPins, pinMatches, propertyCorrectionPins } from "./correction-pins";
 import {
   type DocCommentParts,
@@ -2248,10 +2248,12 @@ function unionAliasDeclaration(
 }
 
 // A slot of a function the authored-overload lane declares, published under
-// one alias on every target so the version-independent overload file can
-// name the type each target's own reference gives that slot.
+// one name on every target so the version-independent overload file can name
+// the type each target's own reference gives that slot. The name is the
+// newest reference's own declaration for the slot; a target that declares it
+// emits no alias.
 export const OVERLOAD_SLOT_ALIASES: ReadonlyMap<string, string> = new Map([
-  ["render.render_target:param:parameters", "RenderTargetParams"],
+  ["render.render_target:param:parameters", "render_target_params"],
 ]);
 
 const DOC_CONSTANT_TOKEN =
@@ -2465,7 +2467,27 @@ export type TableSlotCuration = (
   | { kind: "verbatim"; ts: string }
 ) & { readonly retypedUpstream?: readonly string[] };
 
-export const SOCKET_HANDLE_TOKENS = ["client", "master", "unconnected"] as const;
+export const SOCKET_HANDLE_TOKENS = (["client", "master", "unconnected"] as const).map(
+  (receiver) => SOCKET_HANDLE_NAMES[receiver],
+);
+
+// The interface a module's `<receiver>:<method>` colon methods are emitted on:
+// the socket handles take their `socket_<receiver>` name, any other receiver
+// keeps its own.
+export function handleInterfaceName(namespace: string, receiver: string): string {
+  return namespace === "socket" && Object.hasOwn(SOCKET_HANDLE_NAMES, receiver)
+    ? SOCKET_HANDLE_NAMES[receiver as SocketHandleReceiver]
+    : receiver;
+}
+
+// The typedef names a module's handle interfaces stand for, which emit as the
+// interface rather than an alias: each receiver (1.13.1 `client`) and each
+// interface name (1.13.2 `socket_client`).
+function handleTypedefNames(namespace: string, receivers: Iterable<string>): Set<string> {
+  return new Set(
+    [...receivers].flatMap((receiver) => [receiver, handleInterfaceName(namespace, receiver)]),
+  );
+}
 
 // Shared Box2D (b2d.*) table shapes, curated from the ref-doc prose (the docs
 // name fields in running text, not a machine-readable `<dl>`). Reused across the
@@ -4821,7 +4843,12 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   // interface, the same non-flat recovery the dns nested-namespace pass does one
   // container shape shallower.
   const handleGroups = collectHandleMethodGroups(module);
-  const handleReceivers = [...handleGroups.keys()].sort((a, b) => a.localeCompare(b));
+  const handleInterfaces = [...handleGroups]
+    .map(([receiver, group]) => ({
+      name: handleInterfaceName(module.namespace, receiver),
+      group,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const resolver = buildTableDocResolver(
     module.functions.map((fn) => ({
@@ -4835,7 +4862,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   const typeDeclarations = placeTypeDeclarations(
     collectTypeDeclarations(
       module,
-      new Set(handleGroups.keys()),
+      handleTypedefNames(module.namespace, handleGroups.keys()),
       rawMapType,
       mapType,
       bindingEvidence,
@@ -4866,6 +4893,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   }
   for (const aliasDecl of overloadSlotAliasDeclarations(
     [...module.functions, ...(options?.withheldFunctions ?? [])],
+    new Set(typeDeclarations.map((declaration) => declaration.name)),
     prefix,
     mapType,
     constantTokens,
@@ -4880,9 +4908,8 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
     );
   }
   const handleIndent = `${INDENT}${INDENT}`;
-  for (const receiver of handleReceivers) {
-    const group = handleGroups.get(receiver) ?? [];
-    lines.push(`${INDENT}${decl}interface ${receiver} {`);
+  for (const { name, group } of handleInterfaces) {
+    lines.push(`${INDENT}${decl}interface ${name} {`);
     for (const fn of group) {
       for (const docLine of functionDocLines(fn.original, translations, baseNotes, handleIndent)) {
         lines.push(docLine);
@@ -5052,11 +5079,13 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
 }
 
 // One `type <alias> = <slot type>;` per `OVERLOAD_SLOT_ALIASES` slot these
-// functions carry, in alias order. The type is the one `emitFunction` reports
-// for the slot, so it reads as the function's own signature would. The
-// resolver spans these functions alone, leaving the module's own untouched.
+// functions carry, in alias order, skipping an alias the module already
+// `declared`. The type is the one `emitFunction` reports for the slot, so it
+// reads as the function's own signature would. The resolver spans these
+// functions alone, leaving the module's own untouched.
 function overloadSlotAliasDeclarations(
   functions: readonly ApiFunction[],
+  declared: ReadonlySet<string>,
   prefix: string,
   mapType: DefoldTypeMapper,
   constantTokens: ConstantSlotTokens,
@@ -5070,7 +5099,7 @@ function overloadSlotAliasDeclarations(
   for (const fn of functions) {
     for (const [position, p] of fn.parameters.entries()) {
       const alias = OVERLOAD_SLOT_ALIASES.get(tableSlotKey(fn.name, "param", p.name));
-      if (alias === undefined) continue;
+      if (alias === undefined || declared.has(alias)) continue;
       const prepared = prepareFunction(fn, prefix);
       if (prepared === null) continue;
       const slots: Record<string, SlotType> = {};
@@ -5315,7 +5344,7 @@ export function emitSymbolSignatures(
   // the declarations.
   for (const declaration of collectTypeDeclarations(
     module,
-    new Set(handleGroups.keys()),
+    handleTypedefNames(module.namespace, handleGroups.keys()),
     rawMapType,
     mapType,
     bindingEvidence,
