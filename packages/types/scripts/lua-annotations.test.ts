@@ -195,6 +195,46 @@ describe("loadAnnotations over the default target", () => {
   });
 });
 
+describe("Open in Browser links", () => {
+  test("a link lands on the declaration it precedes, never past a @field or a code line", () => {
+    const parsed = parseAnnotations([
+      {
+        name: "probe.lua",
+        text: [
+          "---[Open in Browser](https://defold.com/ref/gui-lua#node)",
+          "---@alias node userdata",
+          "",
+          "---@class probe.fields",
+          "---[Open in Browser](https://defold.com/ref/probe-lua#probe.fields)",
+          "---@field FIT integer",
+          "---@class probe.shape",
+          "",
+          "---[Open in Browser](https://defold.com/ref/probe-lua#probe.value)",
+          "probe.value = nil",
+          "---@alias probe.alias userdata",
+          "",
+        ].join("\n"),
+      },
+    ]);
+    expect(parsed.aliases.get("runtime:node")?.url).toBe("https://defold.com/ref/gui-lua#node");
+    expect(parsed.classes.get("runtime:probe.shape")).toBeDefined();
+    expect(parsed.classes.get("runtime:probe.shape")?.url).toBeUndefined();
+    expect(parsed.aliases.get("runtime:probe.alias")).toBeDefined();
+    expect(parsed.aliases.get("runtime:probe.alias")?.url).toBeUndefined();
+  });
+
+  test("over the default target every linked declaration's fragment is its own name", () => {
+    expect(model.aliases.get("runtime:gui.EASING")?.url).toBe(
+      "https://defold.com/ref/gui-lua#gui.EASING",
+    );
+    const linked = [...model.aliases.values(), ...model.enums.values(), ...model.classes.values()]
+      .filter((declaration) => declaration.url !== undefined)
+      .map(({ name, url = "" }) => [name, url.slice(url.indexOf("#") + 1)]);
+    expect(linked.length).toBeGreaterThan(0);
+    expect(linked.filter(([name, fragment]) => name !== fragment)).toEqual([]);
+  });
+});
+
 describe("type splitting", () => {
   test("splits unions only at top level and keeps a bracketed type whole up to its first top-level space", () => {
     const parsed = parseAnnotations([

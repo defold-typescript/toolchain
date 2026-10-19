@@ -45,6 +45,7 @@ export interface AnnotatedAlias {
   readonly surface: AnnotationSurface;
   readonly file: string;
   readonly members: readonly string[];
+  readonly url?: string;
 }
 
 export interface AnnotatedEnum {
@@ -53,6 +54,7 @@ export interface AnnotatedEnum {
   readonly file: string;
   readonly types: readonly string[];
   readonly members: readonly string[];
+  readonly url?: string;
 }
 
 export interface AnnotatedField {
@@ -67,6 +69,7 @@ export interface AnnotatedClass {
   readonly file: string;
   readonly parents: readonly string[];
   readonly fields: readonly AnnotatedField[];
+  readonly url?: string;
 }
 
 // Every map is keyed `<surface>:<name>`: the runtime and the editor VM declare
@@ -206,6 +209,9 @@ function addUnique<T>(map: Map<string, T>, key: string, value: T, where: string)
 const FUNCTION_LINE = /^function\s+([A-Za-z_][A-Za-z0-9_.]*)\s*\(/;
 const ENUM_TABLE_OPEN = /=\s*\{\s*$/;
 const ENUM_MEMBER = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=/;
+// Upstream's link to a declaration's reference entry, written on the comment
+// line ahead of the `@alias`, `@enum` or `@class` it names.
+const OPEN_IN_BROWSER = /^---\[Open in Browser\]\((\S+)\)$/;
 
 export function parseAnnotations(files: readonly AnnotationFile[]): AnnotationModel {
   const model: AnnotationModel = {
@@ -225,6 +231,7 @@ function parseFile(file: AnnotationFile, model: AnnotationModel): void {
   let currentAlias: { members: string[] } | null = null;
   let pendingEnum: { members: string[] } | null = null;
   let enumBody: { members: string[] } | null = null;
+  let pendingUrl: string | undefined;
 
   const lines = file.text.split(/\r?\n/);
   for (const [index, raw] of lines.entries()) {
@@ -248,6 +255,8 @@ function parseFile(file: AnnotationFile, model: AnnotationModel): void {
 
     if (line.startsWith("---@")) {
       const { word: tag, rest } = headWord(line.slice(4));
+      const link = pendingUrl === undefined ? {} : { url: pendingUrl };
+      pendingUrl = undefined;
       switch (tag) {
         case "param":
           pending.params.push(parseParamTag(rest));
@@ -270,6 +279,7 @@ function parseFile(file: AnnotationFile, model: AnnotationModel): void {
             file: file.name,
             parents,
             fields: [] as AnnotatedField[],
+            ...link,
           };
           addUnique(model.classes, `${surface}:${name}`, record, where);
           currentClass = record;
@@ -285,7 +295,7 @@ function parseFile(file: AnnotationFile, model: AnnotationModel): void {
         }
         case "alias": {
           const { word: name, rest: body } = headWord(rest);
-          const record = { name, surface, file: file.name, members: splitUnion(body) };
+          const record = { name, surface, file: file.name, members: splitUnion(body), ...link };
           addUnique(model.aliases, `${surface}:${name}`, record, where);
           currentAlias = record;
           currentClass = null;
@@ -299,6 +309,7 @@ function parseFile(file: AnnotationFile, model: AnnotationModel): void {
             file: file.name,
             types: splitUnion(suffix),
             members: [] as string[],
+            ...link,
           };
           addUnique(model.enums, `${surface}:${name}`, record, where);
           pendingEnum = record;
@@ -311,7 +322,11 @@ function parseFile(file: AnnotationFile, model: AnnotationModel): void {
       continue;
     }
 
-    if (line.startsWith("---")) continue;
+    if (line.startsWith("---")) {
+      const url = OPEN_IN_BROWSER.exec(line)?.[1];
+      if (url !== undefined) pendingUrl = url;
+      continue;
+    }
 
     const fqn = FUNCTION_LINE.exec(line)?.[1];
     if (fqn) {
@@ -327,6 +342,7 @@ function parseFile(file: AnnotationFile, model: AnnotationModel): void {
     pending = emptyPending();
     currentClass = null;
     pendingEnum = null;
+    pendingUrl = undefined;
   }
 }
 
