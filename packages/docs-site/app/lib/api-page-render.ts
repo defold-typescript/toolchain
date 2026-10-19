@@ -59,6 +59,8 @@ const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [
   { kind: "type", label: "Types" },
 ];
 
+type SymbolDepth = 3 | 4;
+
 // A wider-than-normal gap after the `:` between a name and its type. An en space
 // (U+2002) survives HTML whitespace collapsing (repeated ASCII spaces do not), so
 // the type reads as its own column across every parameter/return/field list.
@@ -422,16 +424,27 @@ export function navLeafBadgeHtml(
   return navNamespaceBadges(counts, reachableBadgeCounts(row));
 }
 
-// One symbol, single column: the `### signature` heading is the title, and the
+// One symbol, single column: the signature heading is the title, and the
 // description + example are wrapped in an indented `.api-symbol-body` so the body
-// reads as subordinate to the title. The signature is not repeated as a code
+// reads as subordinate to the title. The heading is `###` under a kind section
+// and `####` under a group heading nested in one (a shape's members, a
+// receiver's methods). The signature is not repeated as a code
 // block — the heading already shows it. The blank lines around the inner markdown
 // let markdown-it parse it inside the raw HTML wrapper. Body order is `badges`
 // (the availability block), description, example, Parameters, Returns: a symbol
 // that was removed or re-signatured says so before the prose describing it, so a
 // reader never acts on a description that no longer holds for their version.
-function symbolBlock(symbol: ApiSymbol, badges = "", dots = "", note = ""): string {
-  const heading = dots ? `### \`${symbol.signature}\` ${dots}` : `### \`${symbol.signature}\``;
+function symbolBlock(
+  symbol: ApiSymbol,
+  badges = "",
+  dots = "",
+  note = "",
+  depth: SymbolDepth = 3,
+): string {
+  const marks = "#".repeat(depth);
+  const heading = dots
+    ? `${marks} \`${symbol.signature}\` ${dots}`
+    : `${marks} \`${symbol.signature}\``;
   const body: string[] = [];
   if (badges) body.push(badges);
   // Ahead of the prose: the note exists to qualify the upstream description and
@@ -751,14 +764,14 @@ export function apiPageMarkdown(
       indexRoute,
       symbol.deprecated,
     );
-  const emitSymbol = (symbol: ApiSymbol) => {
+  const emitSymbol = (symbol: ApiSymbol, depth: SymbolDepth = 3) => {
     const dots =
       (combinedMarkers ? symbolDots(symbol) : "") +
       globalDot(symbol) +
       upstreamDot(symbol) +
       (spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : "");
     lines.push(
-      symbolBlock(linkifySymbol(symbol), badgesFor(symbol), dots, noteFor(symbol.name)),
+      symbolBlock(linkifySymbol(symbol), badgesFor(symbol), dots, noteFor(symbol.name), depth),
       "",
     );
   };
@@ -869,7 +882,11 @@ export function apiPageMarkdown(
   // single-form function; its heading scores the function, so a form over
   // several identities reads like any other function. Replaced and removed forms
   // follow its availability as history lines.
-  const emitFunction = (group: FunctionRevisionGroup, revision: FunctionRevision) => {
+  const emitFunction = (
+    group: FunctionRevisionGroup,
+    revision: FunctionRevision,
+    depth: SymbolDepth,
+  ) => {
     const symbol = chainSymbol(revision);
     const dots =
       (combinedMarkers ? groupDots([symbol]) : "") +
@@ -882,7 +899,7 @@ export function apiPageMarkdown(
       revisionList([...predecessorLines(revision), ...removedLines(group)]),
     ].filter((part) => part !== "");
     lines.push(
-      symbolBlock(linkifySymbol(symbol), lead.join("\n\n"), dots, noteFor(symbol.name)),
+      symbolBlock(linkifySymbol(symbol), lead.join("\n\n"), dots, noteFor(symbol.name), depth),
       "",
     );
   };
@@ -890,7 +907,7 @@ export function apiPageMarkdown(
   // the group heading, each fact the forms share stated once for the block, and
   // each fact that differs kept under the form it belongs to. A form's replaced
   // signatures follow it; removed forms follow the list.
-  const emitOverloads = (group: FunctionRevisionGroup) => {
+  const emitOverloads = (group: FunctionRevisionGroup, depth: SymbolDepth) => {
     const forms = group.forms.map(chainSymbol);
     const [head] = forms;
     if (head === undefined) return;
@@ -960,7 +977,7 @@ export function apiPageMarkdown(
       groupSpan(chainSymbols(group));
     // The count badge stands where the heading reads `...`; the markdown renderer
     // splices it into the colored signature and keeps it out of the anchor.
-    const heading = `### \`${overloadHeading(forms)}\` <span class="api-overload-count">${forms.length} overloads</span>`;
+    const heading = `${"#".repeat(depth)} \`${overloadHeading(forms)}\` <span class="api-overload-count">${forms.length} overloads</span>`;
     const items = linked.map((symbol, index) => {
       const code = codes[index] ?? symbol.signature;
       const markers = sameAvailability
@@ -1023,31 +1040,38 @@ export function apiPageMarkdown(
   for (const { kind, label } of KIND_SECTIONS) {
     const group = symbols.filter((s) => s.kind === kind);
     if (group.length === 0) continue;
+    lines.push(`## ${label}`, "");
     // Colon-named handle methods (`file:read`, `client:send`) get their own
-    // `<receiver> methods` heading so they read apart from the module table.
+    // `<receiver> methods` heading nested in `Functions`, so they read apart
+    // from the module table.
     if (kind === "function") {
       const overviewMarker = combinedMarkers ? groupDots : undefined;
       for (const fnGroup of groupFunctionSymbols(group)) {
-        lines.push(`## ${fnGroup.label}`, "");
+        const methods = fnGroup.symbols.some((s) => s.name.includes(":"));
+        const depth: SymbolDepth = methods ? 4 : 3;
+        if (methods) lines.push(`### ${fnGroup.label}`, "");
         lines.push(functionOverviewCards(fnGroup.symbols, pageAxis, overviewMarker), "");
         for (const group of groupFunctionRevisions(fnGroup.symbols, pageAxis)) {
           const [only] = group.forms;
-          if (group.forms.length === 1 && only) emitFunction(group, only);
-          else emitOverloads(group);
+          if (group.forms.length === 1 && only) emitFunction(group, only, depth);
+          else emitOverloads(group, depth);
         }
       }
       continue;
     }
-    // Each typedef shape gets its own heading so a signature token naming it has
-    // an anchor to deep-link to.
+    // Member-less types are rows directly under `Types`, each anchored by its
+    // own signature heading. A shape with members follows under its own heading
+    // nested in `Types`, so a signature token naming it has an anchor to
+    // deep-link to.
     if (kind === "type") {
-      for (const typeGroup of groupTypeSymbols(group)) {
-        lines.push(`## ${typeGroup.label}`, "");
-        for (const symbol of typeGroup.symbols) emitSymbol(symbol);
+      const { types, shapes } = groupTypeSymbols(group);
+      for (const symbol of types) emitSymbol(symbol);
+      for (const shape of shapes) {
+        lines.push(`### ${shape.label}`, "");
+        for (const symbol of shape.symbols) emitSymbol(symbol, 4);
       }
       continue;
     }
-    lines.push(`## ${label}`, "");
     for (const symbol of group) emitSymbol(symbol);
   }
   return lines.join("\n");
@@ -1070,12 +1094,14 @@ export function apiLinkify(pages: ApiPage[]): (text: string) => string {
 // scopes. `Opaque` — the generic engine-handle brand — resolves through
 // `buildSymbolIndex` over `pages`, and is empty when that surface carries no such
 // page: global types are version-independent, so the versioned route resolves
-// this against the canonical surface, not its own pages. A typedef shape, by
-// contrast, belongs to the page that renders it, so `page`'s own shapes are keyed
+// this against the canonical surface, not its own pages. A page's own type, by
+// contrast, belongs to the page that renders it, so `page`'s own types are keyed
 // by bare name to that page's own route — a surface-global bare-name table would
-// mislink the nine shape names declared on more than one page. A shape called
-// `Opaque` never displaces the global entry. A shape's anchor is deferred to
-// `renderMarkdown` as
+// mislink the nine shape names declared on more than one page. A type called
+// `Opaque` never displaces the global entry. A member-less type links to its
+// row's signature heading through `memberAnchors`, the same anchor its qualified
+// spelling takes below. A shape with members links to its own heading, and that
+// anchor is deferred to `renderMarkdown` as
 // `{ route, heading }` rather than fixed here: the heading id is only known once
 // the render has de-duplicated it against every earlier heading on the page.
 export function apiSignatureSymbolLinks(
@@ -1085,10 +1111,16 @@ export function apiSignatureSymbolLinks(
 ): Map<string, SignatureSymbolTarget> {
   const links = new Map<string, SignatureSymbolTarget>();
   if (page) {
-    for (const group of groupTypeSymbols(
+    const { types, shapes } = groupTypeSymbols(
       apiModuleSymbols(page, page.translations).filter((s) => s.kind === "type"),
-    )) {
-      links.set(group.label, { route: page.route, heading: group.label });
+    );
+    const anchors = memberAnchors(page);
+    for (const row of types) {
+      const anchor = anchors.get(`type:${row.name}`);
+      if (anchor) links.set(row.name, `${page.route}#${anchor}`);
+    }
+    for (const shape of shapes) {
+      links.set(shape.label, { route: page.route, heading: shape.label });
     }
   }
   const index = buildSymbolIndex(pages);
