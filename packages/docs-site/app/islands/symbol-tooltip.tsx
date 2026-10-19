@@ -18,9 +18,9 @@ type ActiveTip = {
 } | null;
 
 // The symbol an element's prose belongs to: an `.api-symbol-body` is rendered
-// right after its `### signature` heading, so the owning symbol is that
-// heading's `code.api-signature`. Mentions outside any symbol body (the module
-// intro) have no owner and so are never self-references.
+// right after its signature heading (`###`, or `####` under a group), so the
+// owning symbol is that heading's `code.api-signature`. Mentions outside any
+// symbol body (the module intro) have no owner and so are never self-references.
 function ownerSignature(el: Element): string {
   const heading = el.closest(".api-symbol-body")?.previousElementSibling;
   return heading?.querySelector(".api-signature")?.textContent ?? "";
