@@ -77,7 +77,7 @@ void weld;
 // once it is destructured into separate arguments.
 const try_ = socket.newtry();
 const [conn, connectError] = socket.connect("myserver.com", 80);
-const client: socket.client = try_(conn, connectError);
+const client: socket.socket_client = try_(conn, connectError);
 void client;
 const plain: string = try_("ok");
 void plain;

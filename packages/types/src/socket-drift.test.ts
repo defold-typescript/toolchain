@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
 import { parseDefoldApiDoc } from "./api-doc";
 import { DEFOLD_TYPE_MAP } from "./core-types";
-import { collectHandleMethodGroups, SOCKET_HANDLE_TOKENS } from "./emit-dts";
+import { collectHandleMethodGroups, handleInterfaceName, SOCKET_HANDLE_TOKENS } from "./emit-dts";
 
 // The socket receiver interfaces (client/master/server/connected/unconnected)
 // are generated end-to-end from the `<receiver>:<method>` colon methods in
@@ -96,19 +96,26 @@ describe("socket receiver-interface drift guard", () => {
     expect(asObject).toEqual(EXPECTED_RECEIVER_METHODS);
   });
 
-  test("every fixture-derived receiver self-maps in DEFOLD_TYPE_MAP", () => {
-    // A new receiver appearing upstream would emit `interface <name>` but leave
-    // any function param typed `<name>` unresolved until the map gains a key.
+  test("every fixture-derived receiver maps to its handle interface in DEFOLD_TYPE_MAP", () => {
+    // A new receiver appearing upstream would emit `interface socket_<name>` but
+    // leave any function param typed `<name>` unresolved until the map gains a key.
     for (const receiver of deriveReceiverMethods().keys()) {
-      expect(DEFOLD_TYPE_MAP[receiver]).toBe(receiver);
+      const name = handleInterfaceName("socket", receiver);
+      expect(name).toBe(`socket_${receiver}`);
+      expect(DEFOLD_TYPE_MAP[receiver]).toBe(name);
+      expect(DEFOLD_TYPE_MAP[name]).toBe(name);
     }
   });
 
-  test("every socket.select handle token is a real fixture-derived receiver", () => {
+  test("every socket.select handle token names a real fixture-derived receiver's interface", () => {
     // SOCKET_HANDLE_TOKENS is the select-coercion subset, not the full receiver
     // set, so the invariant is subset — a renamed/removed receiver must not
     // leave a dangling token.
-    const receivers = new Set(deriveReceiverMethods().keys());
+    const receivers = new Set(
+      [...deriveReceiverMethods().keys()].map((receiver) =>
+        handleInterfaceName("socket", receiver),
+      ),
+    );
     for (const token of SOCKET_HANDLE_TOKENS) {
       expect(receivers.has(token)).toBe(true);
     }

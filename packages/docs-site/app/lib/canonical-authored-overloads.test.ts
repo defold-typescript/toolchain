@@ -131,12 +131,12 @@ describe("canonical pages render every authored overload arm", () => {
     const headings = renderedCallForms(markdownFor(namespaceByName("render")));
     expect(headings).toContain(
       callForm(
-        'render.render_target(parameters: render.RenderTargetParams): Opaque<"render_target">',
+        'render.render_target(parameters: render.render_target_params): Opaque<"render_target">',
       ),
     );
     expect(headings).toContain(
       callForm(
-        'render.render_target(name: string, parameters: render.RenderTargetParams): Opaque<"render_target">',
+        'render.render_target(name: string, parameters: render.render_target_params): Opaque<"render_target">',
       ),
     );
   });

@@ -13,14 +13,14 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Enum aliases take the reference's names](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** on every Defold version: rename `gui.Easing` to `gui.EASING` and 21 more.
+> - **[Types take the reference's names](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** on every Defold version: rename `gui.Easing` to `gui.EASING`, `socket.client` to `socket.socket_client` and 26 more.
 > - **[`upgrade` reads versions right](./upgrade.md#what-it-does)**, prereleases too.
 > - **[Model texture keys](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** reach `texture15`.
 > - **[A debug-wired entry script can export values](./debugging.md#picking-the-entry-script)**, and F5 flags a stale engine build.
 
 ### Breaking
 
-- **Each constant-union alias has one name, the one the Defold reference gives its enum, on every Defold version.** Rename these in your code; a union the reference leaves unnamed keeps its alias, such as `gui.XAnchor` and `render.ClearBufferKey`.
+- **Each constant union, socket handle and the `render.render_target` parameter table has one name, the one the Defold reference gives it, on every Defold version.** Rename these in your code; a union the reference leaves unnamed keeps its alias, such as `gui.XAnchor` and `render.ClearBufferKey`.
   - **[buffer](/api/buffer)** — `buffer.ValueType` -> `buffer.VALUE_TYPE`.
   - **[collectionfactory](/api/collectionfactory)** — `collectionfactory.Status` -> `collectionfactory.STATUS`.
   - **[factory](/api/factory)** — `factory.Status` -> `factory.STATUS`.
@@ -28,6 +28,8 @@ What changed in each published `defold-typescript` toolchain release.
   - **[graphics](/api/graphics)** — `graphics.BlendFactor` -> `graphics.BLEND_FACTOR`, `graphics.BufferType` -> `graphics.BUFFER_TYPE`; on Defold 1.13.2 and later, `graphics.BUFFER_TYPE` takes `graphics.BUFFER_TYPE_COLOR1_BIT` through `graphics.BUFFER_TYPE_COLOR3_BIT` only once narrowed past `undefined`.
   - **[gui](/api/gui)** — `gui.AdjustMode` -> `gui.ADJUST`, `gui.BlendMode` -> `gui.BLEND`, `gui.ClippingMode` -> `gui.CLIPPING_MODE`, `gui.Easing` -> `gui.EASING`, `gui.KeyboardType` -> `gui.KEYBOARD_TYPE`, `gui.NodeType` -> `gui.TYPE`, `gui.PieBounds` -> `gui.PIEBOUNDS`, `gui.Pivot` -> `gui.PIVOT`, `gui.Playback` -> `gui.PLAYBACK`, `gui.Property` -> `gui.PROP`, `gui.SafeAreaMode` -> `gui.SAFE_AREA`, `gui.SizeMode` -> `gui.SIZE_MODE`.
   - **[profiler](/api/profiler)** — `profiler.Mode` -> `profiler.MODE`, `profiler.ViewMode` -> `profiler.VIEW_MODE`.
+  - **[render](/api/render)** — `render.RenderTargetParams` -> `render.render_target_params`.
+  - **[socket](/api/socket)** — `socket.client` -> `socket.socket_client`, `socket.connected` -> `socket.socket_connected`, `socket.master` -> `socket.socket_master`, `socket.server` -> `socket.socket_server`, `socket.unconnected` -> `socket.socket_unconnected`.
   - **[sys](/api/sys)** — `sys.NetworkConnectivity` -> `sys.NETWORK`.
   - **[window](/api/window)** — `window.DimModeState` -> `window.DIMMING`.
 

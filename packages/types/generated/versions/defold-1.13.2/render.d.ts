@@ -115,7 +115,6 @@ declare global {
     type texture = Opaque<"texture">;
     type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
     type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;
-    type RenderTargetParams = render.render_target_params;
     type CONTEXT_EVENT = typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED;
     type FRUSTUM_PLANES = typeof render.FRUSTUM_PLANES_ALL | typeof render.FRUSTUM_PLANES_SIDES;
     type RENDER_TARGET_FLAG = typeof render.TEXTURE_BIT;

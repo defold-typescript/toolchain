@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import {
   type ApiModule,
+  DEFOLD_TYPE_MAP,
   hashExampleSource,
   htmlToCodeText,
   INDEX_SLOT_CLASSIFICATIONS,
@@ -85,9 +86,11 @@ function declarationSources(): ts.SourceFile[] {
   return parsedDeclarations;
 }
 
-// Each declared signature of `base` (`b2d.shape.get_body`, `client:send`).
+// Each declared signature of `base` (`b2d.shape.get_body`, `client:send`). A
+// receiver's methods live on the interface its token maps to (`socket_client`).
 function declaredSignatures(base: string): DeclaredSignature[] {
-  const [owner, method] = base.includes(":") ? base.split(":") : [undefined, undefined];
+  const [receiver, method] = base.includes(":") ? base.split(":") : [undefined, undefined];
+  const owner = receiver === undefined ? undefined : (DEFOLD_TYPE_MAP[receiver] ?? receiver);
   const namespace = base.slice(0, base.lastIndexOf("."));
   const name = base.slice(base.lastIndexOf(".") + 1);
   const found: DeclaredSignature[] = [];
@@ -327,7 +330,7 @@ describe("engine index passthrough", () => {
   test("each engine argument and return is emitted as the source expression", () => {
     expect(
       lua([
-        "declare const client: socket.client;",
+        "declare const client: socket.socket_client;",
         "declare const i: number;",
         "declare const maybe: number | undefined;",
         'type Idx = number & { readonly __brand: "Idx" };',
@@ -423,7 +426,7 @@ describe("engine index passthrough", () => {
       transpile(
         [
           'declare const body: Opaque<"b2Body">;',
-          "declare const client: socket.client;",
+          "declare const client: socket.socket_client;",
           "/** @noSelf */",
           'declare namespace unclassified { function get_density(body: Opaque<"b2Body">, fixture_index: number): number; }',
           "interface Peer { send(data: string, i?: number, j?: number): LuaMultiReturn<[number | undefined, string | undefined, number | undefined]>; }",

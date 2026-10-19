@@ -198,8 +198,9 @@ declare const OpaqueBrand: unique symbol;
  * - GUI & rendering: `Opaque<"node">`, `Opaque<"texture">`,
  *   `Opaque<"render_target">`, `Opaque<"constant">`, `Opaque<"constant_buffer">`
  * - Buffers: `Opaque<"buffer">`, `Opaque<"bufferstream">`
- * - Sockets: `Opaque<"client">`, `Opaque<"server">`, `Opaque<"master">`,
- *   `Opaque<"connected">`, `Opaque<"unconnected">`
+ * - Sockets are not brands: `socket.socket_client`, `socket.socket_server`,
+ *   `socket.socket_master`, `socket.socket_connected` and
+ *   `socket.socket_unconnected` are interfaces carrying each handle's methods
  * - Box2D physics: `Opaque<"b2Body">`, `Opaque<"b2World">`
  * - Generic: `Opaque<"userdata">`
  *
@@ -247,6 +248,20 @@ export interface Url {
   get fragment(): Hash | undefined;
   set fragment(value: Hash | string | undefined);
 }
+
+// The receiver of each socket handle's colon methods (`client:send`) and the one
+// name its method-bearing interface takes inside `namespace socket` on every
+// target: the 1.13.2 TYPEDEF name. Older references name the TYPEDEF after the
+// receiver, so both spellings resolve to the same interface.
+export const SOCKET_HANDLE_NAMES = {
+  client: "socket_client",
+  connected: "socket_connected",
+  master: "socket_master",
+  server: "socket_server",
+  unconnected: "socket_unconnected",
+} as const;
+
+export type SocketHandleReceiver = keyof typeof SOCKET_HANDLE_NAMES;
 
 const BUFFER_TYPE = 'Opaque<"buffer"> & { length: LuaLengthMethod<number> }';
 const BUFFERSTREAM_TYPE =
@@ -301,14 +316,14 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   btRigidBody: 'Opaque<"btRigidBody">',
   b2BodyType:
     '(number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" })',
-  // socket handle types resolve to the method-bearing `interface <receiver>`
+  // socket handle types resolve to the method-bearing `interface socket_<receiver>`
   // emitted inside `namespace socket`, not opaque brands — the documented
   // colon methods (`client:send`, …) make each handle structurally distinct.
-  client: "client",
-  connected: "connected",
-  master: "master",
-  server: "server",
-  unconnected: "unconnected",
+  client: SOCKET_HANDLE_NAMES.client,
+  connected: SOCKET_HANDLE_NAMES.connected,
+  master: SOCKET_HANDLE_NAMES.master,
+  server: SOCKET_HANDLE_NAMES.server,
+  unconnected: SOCKET_HANDLE_NAMES.unconnected,
   any: "unknown",
   // 1.13.2 renames of the leaves above, same slots. Upstream declares each only as
   // a `userdata`/`number` handle TYPEDEF, so each keeps its 1.13.1 mapping, with
@@ -323,9 +338,9 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   resource_data: "Hash",
   timer_handle: "number",
   render_predicate: 'Opaque<"render_predicate">',
-  socket_client: "client",
-  socket_connected: "connected",
-  socket_master: "master",
-  socket_server: "server",
-  socket_unconnected: "unconnected",
+  socket_client: SOCKET_HANDLE_NAMES.client,
+  socket_connected: SOCKET_HANDLE_NAMES.connected,
+  socket_master: SOCKET_HANDLE_NAMES.master,
+  socket_server: SOCKET_HANDLE_NAMES.server,
+  socket_unconnected: SOCKET_HANDLE_NAMES.unconnected,
 } as const;
