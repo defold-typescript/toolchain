@@ -3409,15 +3409,15 @@ describe("engine type rows name their qualified path", () => {
 
   test("an engine definition row names its namespace", () => {
     expect(typeRow("image", "Type")?.signature).toStartWith("type image.Type =");
-    expect(typeRow("image", "load_result")?.signature).toStartWith("interface image.load_result {");
+    expect(typeRow("image", "LoadResult")?.signature).toStartWith("interface image.LoadResult {");
   });
 
   test("a nested engine row names its whole path, not just its leaf", () => {
-    expect(typeRow("go", "on_input.action")?.signature).toStartWith(
-      "interface go.on_input.action {",
+    expect(typeRow("go", "on_input.Action")?.signature).toStartWith(
+      "interface go.on_input.Action {",
     );
-    expect(typeRow("socket", "dns.address_info")?.signature).toStartWith(
-      "interface socket.dns.address_info {",
+    expect(typeRow("socket", "dns.AddressInfo")?.signature).toStartWith(
+      "interface socket.dns.AddressInfo {",
     );
   });
 

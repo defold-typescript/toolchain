@@ -2,7 +2,7 @@
 
 // On the default target `render.render_target_params` is the reference's own
 // struct, not the bare record older pins get: each buffer key takes a
-// `render.render_target_buffer_params`, so leaving out a required field is
+// `render.RenderTargetBufferParams`, so leaving out a required field is
 // rejected.
 
 const _depthOnly: render.render_target_params = {

@@ -19,15 +19,15 @@ type ScalarName = "inner_radius" | "fill_angle" | "leading" | "tracking";
 
 type VectorName = Exclude<PropName<gui.Prop>, ScalarName>;
 
-type NodePropertyName<K> = K extends keyof gui.node_properties
+type NodePropertyName<K> = K extends keyof gui.NodeProperties
   ? K
-  : Extract<PropName<K>, keyof gui.node_properties>;
+  : Extract<PropName<K>, keyof gui.NodeProperties>;
 
 // gui_script.cpp:LuaSet: `rotation` takes only a quat, every other vector a
 // vector4 or a vector3, and a sub-key or scalar a number.
-type NodePropertyWrite<N extends keyof gui.node_properties> = N extends "rotation"
+type NodePropertyWrite<N extends keyof gui.NodeProperties> = N extends "rotation"
   ? Quaternion
-  : gui.node_properties[N] extends number
+  : gui.NodeProperties[N] extends number
     ? number
     : Vector4 | Vector3;
 
@@ -38,7 +38,7 @@ declare global {
      * property reads as a vmath.vector4 and `rotation` as a vmath.quat; their
      * `.x`..`.w` sub-keys and the four scalar properties read as a number.
      */
-    type node_properties = {
+    type NodeProperties = {
       [K in
         | VectorName
         | `${VectorName}.${"x" | "y" | "z" | "w"}`
@@ -87,10 +87,10 @@ declare global {
      * const node_position = gui.get(node, "position");
      * ```
      */
-    function get<K extends keyof gui.node_properties | gui.Prop>(
+    function get<K extends keyof gui.NodeProperties | gui.Prop>(
       node: Opaque<"node">,
       property: K,
-    ): gui.node_properties[NodePropertyName<K>];
+    ): gui.NodeProperties[NodePropertyName<K>];
     /**
      * Gets a material constant of a node, or any property named by a hash. Pass
      * the constant's name as a hash, such as `hash("tint")`. Reading an array
@@ -173,7 +173,7 @@ declare global {
      * gui.set_rotation(node, vmath.vector3(0, 0, 45));
      * ```
      */
-    function set<K extends keyof gui.node_properties | gui.Prop>(
+    function set<K extends keyof gui.NodeProperties | gui.Prop>(
       node: Opaque<"node">,
       property: K,
       value: NodePropertyWrite<NodePropertyName<K>>,
@@ -393,7 +393,7 @@ declare global {
      */
     function animate(
       node: Opaque<"node">,
-      property: keyof gui.node_properties | gui.Prop | Hash,
+      property: keyof gui.NodeProperties | gui.Prop | Hash,
       to: number | Vector3 | Vector4 | Quaternion,
       easing: gui.Easing | Vector,
       duration: number,
@@ -477,7 +477,7 @@ declare global {
      */
     function animate(
       node: Opaque<"node">,
-      property: keyof gui.node_properties | gui.Prop | Hash,
+      property: keyof gui.NodeProperties | gui.Prop | Hash,
       to: number | Vector3 | Vector4 | Quaternion,
       easing: gui.Easing | Vector,
       duration: number,

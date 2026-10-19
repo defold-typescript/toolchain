@@ -420,8 +420,8 @@ written against 1.13.1 keeps compiling.
 #### b2d.world.cast_ray
 
 The `filter` and `max_results` arguments are optional on every form, and the
-filter and hit tables are the named `b2d.query_filter` and `b2d.fixture_cast_hit`
-or `b2d.shape_cast_hit` types. Compare the [1.13.1 `b2d.world`
+filter and hit tables are the named `b2d.QueryFilter` and `b2d.FixtureCastHit`
+or `b2d.ShapeCastHit` types. Compare the [1.13.1 `b2d.world`
 page](/api/defold-1.13.1/b2d.world).
 
 #### b2d.world.cast_ray_closest
@@ -434,7 +434,7 @@ Same change as `b2d.world.cast_ray`.
 
 #### b2d.world.overlap_aabb
 
-Same change as `b2d.world.cast_ray`, with `b2d.aabb` as the box type.
+Same change as `b2d.world.cast_ray`, with `b2d.Aabb` as the box type.
 
 #### b2d.world.overlap_shape
 
@@ -453,18 +453,18 @@ The `type` parameter takes `string | image.Type`, as for `gui.new_texture`.
 #### image.load
 
 `options` also accepts a boolean, the older premultiply-alpha flag, and the
-options and result tables are the named `image.load_options` and
-`image.load_result` types. Compare the [1.13.1 `image`
+options and result tables are the named `image.LoadOptions` and
+`image.LoadResult` types. Compare the [1.13.1 `image`
 page](/api/defold-1.13.1/image).
 
 #### image.load_buffer
 
-Same change as `image.load`, with `image.load_buffer_result` as the result type.
+Same change as `image.load`, with `image.LoadBufferResult` as the result type.
 
 #### json.encode
 
 `json.encode` accepts any value, not only a table, and its options table is the
-named `json.encode_options` type.
+named `json.EncodeOptions` type.
 
 #### socket.skip
 

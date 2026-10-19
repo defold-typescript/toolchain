@@ -570,7 +570,7 @@ declare global {
      * ```
      */
     function wakeup(url: string | Hash | Url): void;
-    interface properties {
+    interface Properties {
       /**
        * The angular damping value for the collision object. Setting this value alters the damping of
        * angular motion of the object (rotation). Valid values are between 0 (no damping) and 1 (full damping).

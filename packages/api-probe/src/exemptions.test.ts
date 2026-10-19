@@ -502,17 +502,17 @@ describe("evaluateProbe on property writes and received messages", () => {
       [
         {
           backend: "v2",
-          calls: [set("sprite.properties.a"), set("sprite.properties.b")],
+          calls: [set("sprite.Properties.a"), set("sprite.Properties.b")],
           outcomes: [
-            { ...outcome("sprite.properties.a", "ok"), variant: "set" },
-            { ...outcome("sprite.properties.b", "engine-error", "read only"), variant: "set" },
+            { ...outcome("sprite.Properties.a", "ok"), variant: "set" },
+            { ...outcome("sprite.Properties.b", "engine-error", "read only"), variant: "set" },
           ],
         },
       ],
       {},
     );
     expect(failures.writableReadonly).toEqual([
-      "sprite.properties.a:set: the engine accepts a write to a property declared readonly",
+      "sprite.Properties.a:set: the engine accepts a write to a property declared readonly",
     ]);
     expect(failures.unexempted).toEqual([]);
   });

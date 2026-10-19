@@ -27,7 +27,7 @@ declare global {
     /**
      * Universal and hinge2 constraint parameters
      */
-    interface anchor_axes_params {
+    interface AnchorAxesParams {
       /**
        * world-space anchor
        */
@@ -49,7 +49,7 @@ declare global {
     /**
      * The frame-B fields are required for a two-body constraint.
      */
-    interface cone_twist_params {
+    interface ConeTwistParams {
       /**
        * local body-A frame position
        */
@@ -78,7 +78,7 @@ declare global {
     /**
      * The frame-B fields are required for a two-body constraint.
      */
-    interface generic_6dof_params {
+    interface Generic6DofParams {
       /**
        * local body-A frame position
        */
@@ -103,7 +103,7 @@ declare global {
     /**
      * Generic spring 6-DOF constraint parameters
      */
-    interface generic_6dof_spring_params {
+    interface Generic6DofSpringParams {
       /**
        * local body-A frame position
        */
@@ -128,7 +128,7 @@ declare global {
     /**
      * The frame-B fields are required for a two-body constraint.
      */
-    interface hinge_params {
+    interface HingeParams {
       /**
        * local body-A frame position
        */
@@ -162,7 +162,7 @@ declare global {
      * `pivot_b` is required for a two-body constraint. For a one-body constraint,
      * it is an optional world-space anchor.
      */
-    interface point_to_point_params {
+    interface PointToPointParams {
       /**
        * local body-A pivot
        */
@@ -179,7 +179,7 @@ declare global {
     /**
      * The frame-B fields are required for a two-body constraint.
      */
-    interface slider_params {
+    interface SliderParams {
       /**
        * local body-A frame position
        */
@@ -246,7 +246,7 @@ declare global {
      * @param params - local frames and options
      * @returns cone-twist constraint
      */
-    function create_cone_twist(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.cone_twist_params & Required<Pick<bullet3d.constraint.cone_twist_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint;
+    function create_cone_twist(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.ConeTwistParams & Required<Pick<bullet3d.constraint.ConeTwistParams, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint;
     /**
      * The world is derived from `body_a`.
      *
@@ -255,7 +255,7 @@ declare global {
      * @param params - local frames and options
      * @returns cone-twist constraint
      */
-    function create_cone_twist(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.cone_twist_params): bullet3d.constraint.btTypedConstraint;
+    function create_cone_twist(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.ConeTwistParams): bullet3d.constraint.btTypedConstraint;
     /**
      * The params table requires local frame A and, for a two-body constraint,
      * local frame B. It optionally accepts `collide_connected`. The world is
@@ -268,7 +268,7 @@ declare global {
      * @param params - local frames and options
      * @returns generic 6-DOF constraint
      */
-    function create_generic_6dof(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.generic_6dof_params & Required<Pick<bullet3d.constraint.generic_6dof_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint;
+    function create_generic_6dof(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.Generic6DofParams & Required<Pick<bullet3d.constraint.Generic6DofParams, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint;
     /**
      * The params table requires local frame A and, for a two-body constraint,
      * local frame B. It optionally accepts `collide_connected`. The world is
@@ -281,7 +281,7 @@ declare global {
      * @param params - local frames and options
      * @returns generic 6-DOF constraint
      */
-    function create_generic_6dof(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.generic_6dof_params): bullet3d.constraint.btTypedConstraint;
+    function create_generic_6dof(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.Generic6DofParams): bullet3d.constraint.btTypedConstraint;
     /**
      * Both bodies and both local frames are required. The params table optionally
      * accepts `collide_connected`. The world is derived from `body_a`. The active
@@ -324,7 +324,7 @@ declare global {
      * });
      * ```
      */
-    function create_generic_6dof_spring(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.generic_6dof_spring_params): bullet3d.constraint.btTypedConstraint;
+    function create_generic_6dof_spring(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.Generic6DofSpringParams): bullet3d.constraint.btTypedConstraint;
     /**
      * The world is derived from `body_a`.
      *
@@ -361,7 +361,7 @@ declare global {
      * });
      * ```
      */
-    function create_hinge(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.hinge_params & Required<Pick<bullet3d.constraint.hinge_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint;
+    function create_hinge(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.HingeParams & Required<Pick<bullet3d.constraint.HingeParams, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint;
     /**
      * The world is derived from `body_a`.
      *
@@ -398,7 +398,7 @@ declare global {
      * });
      * ```
      */
-    function create_hinge(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.hinge_params): bullet3d.constraint.btTypedConstraint;
+    function create_hinge(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.HingeParams): bullet3d.constraint.btTypedConstraint;
     /**
      * Both bodies are required. Its initial linear suspension travel is one Defold
      * unit in either direction. The world is derived from `body_a`.
@@ -408,7 +408,7 @@ declare global {
      * @param params - anchor, axes, and options
      * @returns hinge2 constraint
      */
-    function create_hinge2(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.anchor_axes_params): bullet3d.constraint.btTypedConstraint;
+    function create_hinge2(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.AnchorAxesParams): bullet3d.constraint.btTypedConstraint;
     /**
      * The world is derived from `body_a`; both bodies must belong to that same world.
      *
@@ -442,7 +442,7 @@ declare global {
      * });
      * ```
      */
-    function create_point_to_point(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.point_to_point_params & Required<Pick<bullet3d.constraint.point_to_point_params, "pivot_b">>): bullet3d.constraint.btTypedConstraint;
+    function create_point_to_point(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.PointToPointParams & Required<Pick<bullet3d.constraint.PointToPointParams, "pivot_b">>): bullet3d.constraint.btTypedConstraint;
     /**
      * The world is derived from `body_a`; both bodies must belong to that same world.
      *
@@ -476,7 +476,7 @@ declare global {
      * });
      * ```
      */
-    function create_point_to_point(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.point_to_point_params): bullet3d.constraint.btTypedConstraint;
+    function create_point_to_point(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.PointToPointParams): bullet3d.constraint.btTypedConstraint;
     /**
      * The world is derived from `body_a`.
      *
@@ -485,7 +485,7 @@ declare global {
      * @param params - local frames and options
      * @returns slider constraint
      */
-    function create_slider(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.slider_params & Required<Pick<bullet3d.constraint.slider_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint;
+    function create_slider(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.SliderParams & Required<Pick<bullet3d.constraint.SliderParams, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint;
     /**
      * The world is derived from `body_a`.
      *
@@ -494,7 +494,7 @@ declare global {
      * @param params - local frames and options
      * @returns slider constraint
      */
-    function create_slider(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.slider_params): bullet3d.constraint.btTypedConstraint;
+    function create_slider(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.SliderParams): bullet3d.constraint.btTypedConstraint;
     /**
      * Both bodies are required. The world is derived from `body_a`.
      *
@@ -503,7 +503,7 @@ declare global {
      * @param params - anchor, axes, and options
      * @returns universal constraint
      */
-    function create_universal(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.anchor_axes_params): bullet3d.constraint.btTypedConstraint;
+    function create_universal(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.AnchorAxesParams): bullet3d.constraint.btTypedConstraint;
     /**
      * Destroy a constraint
      *

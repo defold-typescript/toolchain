@@ -11,7 +11,7 @@ declare global {
      * Data delivered to a collectionproxy.load callback. The available
      * field depends on the callback message identifier.
      */
-    interface load_data {
+    interface LoadData {
       /**
        * Loading progress from 0 to 1 for `proxy_loading`.
        */
@@ -78,7 +78,7 @@ declare global {
      * });
      * ```
      */
-    function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.load_data, sender: Url) => void): void;
+    function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.LoadData, sender: Url) => void): void;
     /**
      * The collection should be loaded by the collection proxy.
      * Setting the collection to "nil" will revert it back to the original collection.

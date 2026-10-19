@@ -1922,7 +1922,7 @@ declare global {
      * - boolean `clear`: instantly clear spawned particles
      */
     function stop_particlefx(node: Opaque<"node">, options: { clear?: boolean }): void;
-    interface properties {
+    interface Properties {
       /**
        * The fonts used in the gui. The type of the property is hash.
        * Key must be specified in options table.

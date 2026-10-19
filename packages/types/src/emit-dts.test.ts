@@ -109,6 +109,7 @@ import {
   OPTIONAL_SLOT_CORRECTIONS,
   OVERLOAD_COVERED_SKIPS,
   PARAM_TYPE_CORRECTIONS,
+  PROPERTIES_INTERFACE,
   parseTableFields,
   recoverCallbackSignature,
   routeTypeDeclarations,
@@ -144,7 +145,7 @@ function propertyMembersFromSource(text: string, file: string): PropertyMember[]
   const out: PropertyMember[] = [];
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
   const visit = (node: ts.Node): void => {
-    if (ts.isInterfaceDeclaration(node) && node.name.text === "properties") {
+    if (ts.isInterfaceDeclaration(node) && node.name.text === "Properties") {
       for (const member of node.members) {
         if (!ts.isPropertySignature(member) || member.type === undefined) continue;
         out.push({
@@ -1150,7 +1151,7 @@ describe("emitDeclarations", () => {
       typedefs: [],
     };
     const out = emitDeclarations(module);
-    expect(out).toContain("  interface properties {");
+    expect(out).toContain("  interface Properties {");
     expect(out).toContain("    color: Vector4;");
     expect(out).toContain("    size: Vector3;");
     expect(out.indexOf("color: Vector4")).toBeLessThan(out.indexOf("size: Vector3"));
@@ -1564,7 +1565,7 @@ describe("emitDeclarations", () => {
       [
         "/use.ts",
         [
-          'const opts: editor.prefs.schema.enum.options = { values: ["a"] };',
+          'const opts: editor.prefs.schema.enum.Options = { values: ["a"] };',
           "const value: string = editor.prefs.schema.enum(opts);",
           "void value;",
         ].join("\n"),
@@ -1974,7 +1975,7 @@ describe("constant, variable, and property JSDoc emission", () => {
         "declare namespace ns {\n" +
         '  const FOO: number & { readonly __brand: "ns.FOO" };\n' +
         "  const PI: number;\n" +
-        "  interface properties {\n" +
+        "  interface Properties {\n" +
         "    color: Vector4;\n" +
         "  }\n" +
         "}\n",
@@ -4614,7 +4615,7 @@ describe("component property type fidelity", () => {
   test("a property slot typed float emits number rather than unknown", () => {
     const module = parseDefoldApiDoc(camera113Doc);
     const out = emitDeclarations(module);
-    expect(out).toContain("  interface properties {");
+    expect(out).toContain("  interface Properties {");
     expect(out).toContain("    fov: number;");
     expect(out).toContain("    near_z: number;");
     expect(out).toContain("    aspect_ratio: number;");
@@ -4929,7 +4930,7 @@ describe("return-side optionality corrections", () => {
   test("the sys.sys_info struct keeps the members upstream marks optional required", () => {
     const out = emitDeclarations(parseDefoldApiDoc(sys114Doc));
     const lines = out.split("\n");
-    const start = lines.indexOf("  interface sys_info {");
+    const start = lines.indexOf("  interface SysInfo {");
     expect(start).toBeGreaterThan(-1);
     const members = lines.slice(start, lines.indexOf("  }", start));
     for (const field of SYS_INFO_STRINGS) {
@@ -5017,10 +5018,10 @@ describe("return-side optionality corrections", () => {
       expect(
         interfaceLines(
           emitDeclarations(graphics, { bindingEvidence: new Set([LIMIT]) }),
-          "adapter_limits",
+          "AdapterLimits",
         ),
       ).toContain("    max_storage_buffers_per_stage: number;");
-      expect(interfaceLines(emitDeclarations(graphics), "adapter_limits").join("\n")).not.toContain(
+      expect(interfaceLines(emitDeclarations(graphics), "AdapterLimits").join("\n")).not.toContain(
         "max_storage_buffers_per_stage",
       );
     });
@@ -5029,7 +5030,7 @@ describe("return-side optionality corrections", () => {
       expect(
         interfaceLines(
           emitDeclarations(parseDefoldApiDoc(sys114Doc), { bindingEvidence: new Set([FAMILY]) }),
-          "interface_info",
+          "InterfaceInfo",
         ),
       ).toContain('    family?: "ipv4" | "ipv6";');
     });
@@ -5079,9 +5080,9 @@ describe("return-side optionality corrections", () => {
         emitDeclarations(image, { bindingEvidence: new Set(["image.get_astc_header"]) }),
         "function get_astc_header(",
       ),
-    ).toEndWith("): image.astc_header;");
+    ).toEndWith("): image.AstcHeader;");
     expect(signatureLine(emitDeclarations(image), "function get_astc_header(")).toEndWith(
-      "): image.astc_header | undefined;",
+      "): image.AstcHeader | undefined;",
     );
   });
 
@@ -5459,15 +5460,15 @@ describe("subset constant unions", () => {
   });
 });
 
-describe("constant union names on every committed surface", () => {
-  function declarationFiles(dir: string): string[] {
-    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-      const path = join(dir, entry.name);
-      if (entry.isDirectory()) return declarationFiles(path);
-      return entry.name.endsWith(".d.ts") ? [path] : [];
-    });
-  }
+function declarationFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return declarationFiles(path);
+    return entry.name.endsWith(".d.ts") ? [path] : [];
+  });
+}
 
+describe("constant union names on every committed surface", () => {
   interface Surface {
     // Each dotted namespace path the file opens, with the type aliases declared
     // directly in it.
@@ -5595,6 +5596,244 @@ describe("constant union names on every committed surface", () => {
     expect(reference).toEqual([]);
     expect(missing).toEqual([]);
     expect(checked).toBeGreaterThan(0);
+  });
+});
+
+describe("shape names on every committed surface", () => {
+  interface ShapeSurface {
+    // Each dotted namespace path the file opens, with the interfaces and type
+    // aliases declared directly in it.
+    readonly types: Map<string, Set<string>>;
+    // Every qualified name a type reference in the file spells.
+    readonly references: Set<string>;
+    // The return type node of each overload of each function, by qualified name.
+    readonly returns: Map<string, ts.TypeNode[]>;
+    readonly source: ts.SourceFile;
+  }
+
+  // A namespace segment named for a reserved word is declared under an internal
+  // name and re-exported (`export { _enum as enum }`); the path keeps the public
+  // segment.
+  function readShapeSurface(path: string): ShapeSurface {
+    const source = ts.createSourceFile(
+      path,
+      readFileSync(path, "utf8"),
+      ts.ScriptTarget.Latest,
+      true,
+    );
+    const types = new Map<string, Set<string>>();
+    const references = new Set<string>();
+    const returns = new Map<string, ts.TypeNode[]>();
+    const collectReferences = (node: ts.Node): void => {
+      if (ts.isTypeReferenceNode(node)) references.add(node.typeName.getText(source));
+      ts.forEachChild(node, collectReferences);
+    };
+    collectReferences(source);
+    const visit = (node: ts.ModuleDeclaration, outer: string, segment?: string): void => {
+      const transparent =
+        ts.isStringLiteral(node.name) || (node.flags & ts.NodeFlags.GlobalAugmentation) !== 0;
+      const name = segment ?? node.name.text;
+      const path = transparent ? outer : outer === "" ? name : `${outer}.${name}`;
+      const body = node.body;
+      if (body === undefined) return;
+      if (ts.isModuleDeclaration(body)) {
+        visit(body, path);
+        return;
+      }
+      if (!ts.isModuleBlock(body)) return;
+      const declared = types.get(path) ?? new Set<string>();
+      types.set(path, declared);
+      const publicNames = new Map<string, string>();
+      for (const statement of body.statements) {
+        if (!ts.isExportDeclaration(statement) || statement.exportClause === undefined) continue;
+        if (!ts.isNamedExports(statement.exportClause)) continue;
+        for (const element of statement.exportClause.elements) {
+          if (element.propertyName) {
+            publicNames.set(element.propertyName.getText(source), element.name.text);
+          }
+        }
+      }
+      for (const statement of body.statements) {
+        if (ts.isTypeAliasDeclaration(statement) || ts.isInterfaceDeclaration(statement)) {
+          declared.add(statement.name.text);
+        }
+        if (ts.isModuleDeclaration(statement)) {
+          visit(statement, path, publicNames.get(statement.name.text));
+        }
+        if (ts.isFunctionDeclaration(statement) && statement.name && statement.type) {
+          const name = `${path}.${statement.name.text}`;
+          returns.set(name, [...(returns.get(name) ?? []), statement.type]);
+        }
+      }
+    };
+    for (const statement of source.statements) {
+      if (ts.isModuleDeclaration(statement)) visit(statement, "");
+    }
+    return { types, references, returns, source };
+  }
+
+  // Every reference `STRUCT` a target reads, as the namespace path it is
+  // declared in and its reference leaf. The editor VM is a surface of its own,
+  // with its own `http` namespace, so its shapes are checked against its files
+  // alone and the rest against the others.
+  interface Shape {
+    readonly home: string;
+    readonly leaf: string;
+    readonly editorVm: boolean;
+  }
+
+  const isEditorVm = (path: string): boolean => path.split(/[\\/]/).includes("editor-vm");
+
+  function targetShapes(
+    entries: readonly { namespace: string; doc: unknown; outFile: string }[],
+  ): Shape[] {
+    const shapes = new Map<string, Shape>();
+    for (const entry of entries) {
+      const editorVm = isEditorVm(entry.outFile);
+      for (const { name } of parseDefoldApiDoc(entry.doc).structs ?? []) {
+        const local = name.startsWith(`${entry.namespace}.`)
+          ? name.slice(entry.namespace.length + 1)
+          : name;
+        const full = `${entry.namespace}.${local}`;
+        const home = full.slice(0, full.lastIndexOf("."));
+        shapes.set(`${editorVm}:${full}`, { home, leaf: full.slice(home.length + 1), editorVm });
+      }
+    }
+    return [...shapes.values()];
+  }
+
+  // The name the reference gives a component's properties table.
+  const REFERENCE_PROPERTIES = "properties";
+  const VERSIONS_DIR = join(GENERATED_DIR, "versions");
+  const DEFAULT_ID = "default";
+  const targets = [
+    {
+      id: DEFAULT_ID,
+      files: declarationFiles(GENERATED_DIR).filter((path) => !path.startsWith(VERSIONS_DIR)),
+      shapes: targetShapes([
+        ...MODULE_MANIFEST,
+        ...EDITOR_MODULE_MANIFEST,
+        ...EDITOR_VM_MODULE_MANIFEST,
+      ]),
+    },
+    ...readdirSync(VERSIONS_DIR).map((id) => ({
+      id,
+      files: declarationFiles(join(VERSIONS_DIR, id)),
+      shapes: targetShapes(VERSIONED_MODULE_MANIFEST.filter((entry) => entry.versionId === id)),
+    })),
+  ].map((target) => ({
+    ...target,
+    surfaces: target.files.map((path) => ({ path, surface: readShapeSurface(path) })),
+  }));
+  const target = (id: string) => {
+    const found = targets.find((candidate) => candidate.id === id);
+    if (found === undefined) throw new Error(`no committed target ${id}`);
+    return found;
+  };
+  const declaredAt = (path: string, home: string): Set<string> =>
+    readShapeSurface(join(GENERATED_DIR, path)).types.get(home) ?? new Set();
+
+  test("the default target declares the PascalCase shape names and none of the reference spellings", () => {
+    const sys = declaredAt("sys.d.ts", "sys");
+    const onInput = declaredAt("go.d.ts", "go.on_input");
+    const constraint = declaredAt("bullet3d_constraint.d.ts", "bullet3d.constraint");
+    const model = declaredAt("model.d.ts", "model");
+    expect([
+      sys.has("SysInfo"),
+      onInput.has("Action"),
+      constraint.has("Generic6DofParams"),
+      model.has("Properties"),
+    ]).toEqual([true, true, true, true]);
+    expect([sys.has("sys_info"), onInput.has("action"), model.has("properties")]).toEqual([
+      false,
+      false,
+      false,
+    ]);
+  });
+
+  test("every shape a surface declares takes its PascalCase name, and its reference name only when equal", () => {
+    const reference: string[] = [];
+    const unchecked: string[] = [];
+    for (const { id, shapes, surfaces } of targets) {
+      let declared = 0;
+      for (const { home, leaf, editorVm } of shapes) {
+        const pascal = engineTypeName(leaf);
+        for (const { path, surface } of surfaces) {
+          if (isEditorVm(path) !== editorVm) continue;
+          const types = surface.types.get(home);
+          if (types === undefined) continue;
+          if (pascal !== leaf && types.has(leaf)) reference.push(`${path}: ${home}.${leaf}`);
+          if (types.has(pascal)) declared += 1;
+        }
+      }
+      if (shapes.length > 0 && declared === 0) unchecked.push(id);
+    }
+    expect(reference).toEqual([]);
+    expect(unchecked).toEqual([]);
+  });
+
+  test("every component properties interface takes its PascalCase name", () => {
+    const reference: string[] = [];
+    let declared = 0;
+    for (const { surfaces } of targets) {
+      for (const { path, surface } of surfaces) {
+        for (const [home, types] of surface.types) {
+          if (types.has(REFERENCE_PROPERTIES)) reference.push(`${path}: ${home}`);
+          if (types.has(PROPERTIES_INTERFACE)) declared += 1;
+        }
+      }
+    }
+    expect(PROPERTIES_INTERFACE).toBe(engineTypeName(REFERENCE_PROPERTIES));
+    expect(reference).toEqual([]);
+    expect(declared).toBeGreaterThan(0);
+  });
+
+  test("no slot on any committed surface names a shape by its reference spelling", () => {
+    const stale: string[] = [];
+    for (const { shapes, surfaces } of targets) {
+      const renamed = (editorVm: boolean) =>
+        new Set(
+          shapes
+            .filter(
+              (shape) => shape.editorVm === editorVm && engineTypeName(shape.leaf) !== shape.leaf,
+            )
+            .map(({ home, leaf }) => `${home}.${leaf}`),
+        );
+      const renamedBySurface = new Map(
+        [true, false].map((editorVm) => [editorVm, renamed(editorVm)]),
+      );
+      for (const { path, surface } of surfaces) {
+        const old = renamedBySurface.get(isEditorVm(path)) ?? new Set();
+        for (const name of surface.references) {
+          if (old.has(name) || name.endsWith(`.${REFERENCE_PROPERTIES}`)) {
+            stale.push(`${path}: ${name}`);
+          }
+        }
+      }
+    }
+    expect(stale).toEqual([]);
+  });
+
+  test("sys.get_sys_info returns sys.SysInfo where the target declares the shape, and its inline body where it does not", () => {
+    const returnsOf = (id: string): ts.TypeNode[] => {
+      const nodes = target(id).surfaces.flatMap(
+        ({ surface }) => surface.returns.get("sys.get_sys_info") ?? [],
+      );
+      if (nodes.length === 0) throw new Error(`${id}: no sys.get_sys_info`);
+      return nodes;
+    };
+    for (const id of [DEFAULT_ID, "defold-1.13.2"]) {
+      expect({ id, returns: returnsOf(id).map((node) => node.getText()) }).toEqual({
+        id,
+        returns: returnsOf(id).map(() => "sys.SysInfo"),
+      });
+    }
+    for (const id of ["defold-1.12.4", "defold-1.13.0", "defold-1.13.1"]) {
+      expect({ id, inline: returnsOf(id).every(ts.isTypeLiteralNode) }).toEqual({
+        id,
+        inline: true,
+      });
+    }
   });
 });
 
@@ -5929,8 +6168,8 @@ describe("table fields a present argument requires", () => {
 
   test("a curated creator requires the fields with the argument, then takes the call without it", () => {
     expect(signaturesOf(emitDeclarations(moduleWith(frameMembers)))).toEqual([
-      'function create_hinge(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.hinge_params & Required<Pick<bullet3d.constraint.hinge_params, "frame_b_position" | "frame_b_rotation">>): void;',
-      'function create_hinge(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.hinge_params): void;',
+      'function create_hinge(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.HingeParams & Required<Pick<bullet3d.constraint.HingeParams, "frame_b_position" | "frame_b_rotation">>): void;',
+      'function create_hinge(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.HingeParams): void;',
     ]);
   });
 
@@ -6009,7 +6248,7 @@ describe("engine slot rules", () => {
   });
 
   test("a flag-requires slot demands its fields once the flag is true", () => {
-    const struct = "resource.sound_data_options";
+    const struct = "resource.SoundDataOptions";
     expect(
       signatureLine(
         emitDeclarations(only(resource114Doc, "resource.create_sound_data")),
@@ -6404,7 +6643,7 @@ describe("signatures upstream documents in prose", () => {
 
   test("collectionproxy.load's callback takes the reference's message struct where the reference types it", () => {
     expect(emittedLine(collectionproxy114Doc, "function load(")).toContain(
-      "(self: unknown, message_id: Hash, message: collectionproxy.load_data, sender: Url) => void",
+      "(self: unknown, message_id: Hash, message: collectionproxy.LoadData, sender: Url) => void",
     );
   });
 
@@ -6414,7 +6653,7 @@ describe("signatures upstream documents in prose", () => {
       // biome-ignore lint/suspicious/noTemplateCurlyInString: a TS template literal type in emitted text
       "event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>]",
     );
-    expect(line).toContain("data: window.event_data) => void) | undefined");
+    expect(line).toContain("data: window.EventData) => void) | undefined");
   });
 
   test("http.request's callback keeps the documented response table where the reference names a withheld struct", () => {
@@ -6934,10 +7173,10 @@ describe("STRUCT and TYPEDEF declarations", () => {
 
   test("a struct emits an interface with its members' optionality, types and docs", () => {
     const lines = emitDeclarations(physicsModule).split("\n");
-    const start = lines.indexOf("  interface shape_data {");
+    const start = lines.indexOf("  interface ShapeData {");
     expect(start).toBeGreaterThan(-1);
     expect(lines.slice(start, start + 18)).toEqual([
-      "  interface shape_data {",
+      "  interface ShapeData {",
       "    /**",
       "     * shape type",
       "     */",
@@ -6962,10 +7201,10 @@ describe("STRUCT and TYPEDEF declarations", () => {
   test("a struct signs as a typedef whose member lines the declarations carry", () => {
     const declarations = emitDeclarations(physicsModule);
     const shapeData = emitSymbolSignatures(physicsModule).find(
-      (entry) => entry.identity.kind === "TYPEDEF" && entry.identity.name === "shape_data",
+      (entry) => entry.identity.kind === "TYPEDEF" && entry.identity.name === "ShapeData",
     );
     expect(shapeData?.tsSignature).toBe(
-      "interface shape_data { type: physics.ShapeType; diameter?: number; dimensions?: Vector3; height?: number; }",
+      "interface ShapeData { type: physics.ShapeType; diameter?: number; dimensions?: Vector3; height?: number; }",
     );
     for (const member of ["type: physics.ShapeType;", "diameter?: number;", "height?: number;"]) {
       expect(declarations).toContain(`    ${member}`);
@@ -7090,7 +7329,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
         "{ type?:graphics.TEXTURE_TYPE, sample_count?:integer, [graphics.BUFFER_TYPE]:render.render_target_buffer_params }",
       ),
     ).toBe(
-      "type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.render_target_buffer_params };",
+      "type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.RenderTargetBufferParams };",
     );
   });
 
@@ -7100,7 +7339,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
         "{ sample_count?:integer, [graphics.BUFFER_TYPE]:render.render_target_buffer_params }",
       ),
     ).toBe(
-      "type render_target_params = { sample_count?: number } & { [key: number]: render.render_target_buffer_params };",
+      "type render_target_params = { sample_count?: number } & { [key: number]: render.RenderTargetBufferParams };",
     );
   });
 
@@ -7184,14 +7423,14 @@ describe("STRUCT and TYPEDEF declarations", () => {
     ]) as [ApiModule, ApiModule];
     const jointOut = emitDeclarations(joint);
     expect(jointOut).toContain("declare namespace b2d.joint {");
-    expect(jointOut).toContain("  interface revolute_definition {");
+    expect(jointOut).toContain("  interface RevoluteDefinition {");
     expect(jointOut).toContain("    local_anchor_a?: Vector3;");
-    expect(emitDeclarations(b2d)).not.toContain("revolute_definition");
+    expect(emitDeclarations(b2d)).not.toContain("RevoluteDefinition");
     expect(
       emitSymbolSignatures(joint)
         .filter((entry) => entry.identity.kind === "TYPEDEF")
         .map((entry) => [entry.identity.namespace, entry.identity.name]),
-    ).toEqual([["b2d.joint", "revolute_definition"]]);
+    ).toEqual([["b2d.joint", "RevoluteDefinition"]]);
   });
 
   test("a moved declaration records the module that declared it, and one that stays records none", () => {
@@ -7298,7 +7537,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
       }),
     ]);
     const paths = declaredTypePaths(modules);
-    expect(paths.get("on_input.action")).toBe("go.on_input.action");
+    expect(paths.get("on_input.action")).toBe("go.on_input.Action");
     const lines = emitDeclarations(modules[0] as ApiModule, { declaredTypes: paths }).split("\n");
     const namespace = lines.indexOf("  namespace on_input {");
     expect(namespace).toBeGreaterThan(-1);
@@ -7306,9 +7545,9 @@ describe("STRUCT and TYPEDEF declarations", () => {
       "    /**",
       "     * Input action",
       "     */",
-      "    interface action {",
+      "    interface Action {",
     ]);
-    expect(lines).toContain("  function take(action: go.on_input.action): void;");
+    expect(lines).toContain("  function take(action: go.on_input.Action): void;");
   });
 
   const resource113_2 = parseDefoldApiDoc(structSlots.resource);
@@ -7316,14 +7555,14 @@ describe("STRUCT and TYPEDEF declarations", () => {
   test("resource.atlas emits its member-keyed non-empty lists", () => {
     const out = emitDeclarations(resource113_2);
     const animation =
-      'Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number })';
-    expect(out).toContain("    geometries: [resource.geometry, ...resource.geometry[]];");
+      'Omit<resource.Animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number })';
+    expect(out).toContain("    geometries: [resource.Geometry, ...resource.Geometry[]];");
     expect(out).toContain(`    animations: [${animation}, ...(${animation})[]];`);
   });
 
   test("resource.sound_data_options emits its member-keyed required, retyped data", () => {
     const lines = emitDeclarations(resource113_2).split("\n");
-    const start = lines.indexOf("  interface sound_data_options {");
+    const start = lines.indexOf("  interface SoundDataOptions {");
     expect(start).toBeGreaterThan(-1);
     const end = lines.indexOf("  }", start);
     expect(lines.slice(start, end).filter((line) => /^ {4}\w/.test(line))).toEqual([

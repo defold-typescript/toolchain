@@ -7,7 +7,7 @@ declare global {
     /**
      * Graphics adapter information
      */
-    interface adapter_info {
+    interface AdapterInfo {
       /**
        * Adapter family name.
        */
@@ -23,7 +23,7 @@ declare global {
       /**
        * Hardware and driver limits.
        */
-      limits: graphics.adapter_limits;
+      limits: graphics.AdapterLimits;
       /**
        * Driver-reported extension names.
        */
@@ -36,7 +36,7 @@ declare global {
     /**
      * Graphics context limits
      */
-    interface adapter_limits {
+    interface AdapterLimits {
       /**
        * Maximum 2D texture dimension in texels.
        */
@@ -598,7 +598,7 @@ declare global {
      *
      * @returns information about the active graphics adapter and context
      */
-    function get_adapter_info(): graphics.adapter_info;
+    function get_adapter_info(): graphics.AdapterInfo;
     /**
      * get the list of graphics adapters that have been registered with the engine
      *

@@ -820,7 +820,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [`null`/`undefined`/`== null` all become `nil`](#null-undefined-and--null-all-collapse-to-nil) — the three TS forms collapse to one Lua check; you cannot tell them apart at runtime.
 - [`===` and `==` are the same Lua](#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard) — both lower to a non-coercing Lua `==`; `==` is not JS loose equality here, and the real equality footgun is `if (cell)`.
 - [`as` is not a runtime check](#as-is-a-compile-time-assertion-not-a-runtime-check) — a cast erases to nothing; the value is unverified at runtime.
-- [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.properties["color"]`, not off the namespace object.
+- [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.Properties["color"]`, not off the namespace object.
 - [Texture format constants can be `undefined`](#texture-format-constants-can-be-undefined) — the engine registers most formats only when the driver supports them; check the constant before a `render.render_target` or `resource.create_texture` table uses it.
 - [Box2D v3 query hits need the `"v3"` type argument](#box2d-v3-query-hits-need-the-v3-type-argument) — with no type argument, `b2d.world.cast_ray` and the other world queries return v2 fixture hits; on the v3 backend write `b2d.world.cast_ray<"v3">(…)`.
 - [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
@@ -944,7 +944,7 @@ timer.delay(0.5, false, (self, handle) => timer.cancel(handle));  // OK — hand
 
 **Why.** Defold's ref-doc names a callback parameter by its whole Lua signature string, e.g. `function(self, handle, time_elapsed)`. The generated typings recover each into a function type with the documented parameter names, and give every parameter the ref-doc describes its documented type: `(self: unknown, handle: number, time_elapsed: number) => void`. `self` stays `unknown`, because the engine passes whatever script instance registered the callback. The return is `void`: the engine ignores any value a callback returns, and a `void` return position still accepts a callback that happens to return something.
 
-**Typed alternative.** Pass the callback inline and leave its parameters unannotated, so each one takes the declared type. A callback declared on its own needs annotations: name the declared type (`handle: number`, `message: sound.play_completion`) rather than `unknown`. Keep `self: unknown` there and narrow it once at the top (`const state = self as { counter: number }`). A callback slot the ref-doc describes without parameter types still hands `unknown` values; narrow those at the point of use, as you would any other `unknown`. Typings for an older [pinned Defold target](./pinning-defold-target.md) leave more of these parameters `unknown`.
+**Typed alternative.** Pass the callback inline and leave its parameters unannotated, so each one takes the declared type. A callback declared on its own needs annotations: name the declared type (`handle: number`, `message: sound.PlayCompletion`) rather than `unknown`. Keep `self: unknown` there and narrow it once at the top (`const state = self as { counter: number }`). A callback slot the ref-doc describes without parameter types still hands `unknown` values; narrow those at the point of use, as you would any other `unknown`. Typings for an older [pinned Defold target](./pinning-defold-target.md) leave more of these parameters `unknown`.
 
 #### Some slots are `unknown` on purpose — the `any` wildcard
 
@@ -1057,7 +1057,7 @@ window.set_listener((self, event, data) => {
 });
 ```
 
-**Why.** The engine delivers `event` and `data` to the callback as two **separate** parameters, and the `WINDOW_EVENT_*` constants are branded numbers. TypeScript never correlates two independent parameters, and a branded number is not a unit-type discriminant — so an `event == …` check cannot auto-narrow `data` the way a discriminated-union field would. The generated callback types `event` as the union of the five `WINDOW_EVENT_*` constants (so you get autocomplete and simple positive `event ==` narrowing) and `data` as `window.event_data`, whose `width` and `height` are optional because only a resize carries them. On Defold 1.13.1 and older the reference names no payload type, so `data` is a bare `Record<string | number, unknown>` there.
+**Why.** The engine delivers `event` and `data` to the callback as two **separate** parameters, and the `WINDOW_EVENT_*` constants are branded numbers. TypeScript never correlates two independent parameters, and a branded number is not a unit-type discriminant — so an `event == …` check cannot auto-narrow `data` the way a discriminated-union field would. The generated callback types `event` as the union of the five `WINDOW_EVENT_*` constants (so you get autocomplete and simple positive `event ==` narrowing) and `data` as `window.EventData`, whose `width` and `height` are optional because only a resize carries them. On Defold 1.13.1 and older the reference names no payload type, so `data` is a bare `Record<string | number, unknown>` there.
 
 **Typed alternative.** Use the provided `isWindowEvent` guard — the window mirror of [`isMessage`](messages.md#receiving-messages-with-type-narrowing). It re-introduces the discriminant at the use site and narrows `data` to that event's payload, so inside a resize check `width` and `height` are `number`:
 
@@ -1252,20 +1252,20 @@ function first(values: unknown): number {
 
 **Symptom.** Defold component properties — the values you address at runtime through `go.get`/`go.set`/`go.animate` with a string id (`"color"`, `"position"`, `"size"`, …) — do not appear as members on the namespace object. There is no `label.color` you can read directly.
 
-**Why.** These properties are not module-level globals; they are per-component fields keyed by a string id passed to `go.get(url, "color")`. The ref-doc lists them as `PROPERTY` elements with a name and a type but no addressable symbol. The generated typings recover each namespace's properties into an in-namespace `interface properties { … }` so the name and type survive as a committed, drift-gated catalog. For example, `label.properties` carries `color: Vector4`, `size: Vector3`, `scale: Vector3`, and so on.
+**Why.** These properties are not module-level globals; they are per-component fields keyed by a string id passed to `go.get(url, "color")`. The ref-doc lists them as `PROPERTY` elements with a name and a type but no addressable symbol. The generated typings recover each namespace's properties into an in-namespace `interface Properties { … }` so the name and type survive as a committed, drift-gated catalog. For example, `label.Properties` carries `color: Vector4`, `size: Vector3`, `scale: Vector3`, and so on.
 
-**Typed alternative.** Read a property's type off the catalog with an indexed access — `label.properties["color"]` is `Vector4`. The catalog also makes `go.get`/`go.set` type-aware: a literal key drawn from `go`'s own transform properties narrows the result and the written value to the property's real type. `go.get(url, "position")` is `Vector3`, `go.get(url, "scale")` is `number | Vector3`, and `go.set(url, "euler", v3)` type-checks while `go.set(url, "position", "oops")` is rejected. The single-component keys narrow too: `go.get(url, "position.x")` is `number`, as is every `.x`, `.y`, `.z` and `.w` key of `position`, `rotation`, `euler` and `scale`, while `go.get(url, "scale.xy")` is a `Vector3` whose z is always 1. Any other key — a `Hash`, a dynamic string, or a fragment-addressed cross-component property like `go.get("#sprite", "tint")` — falls through to an open `string | Hash` overload returning the documented wide union, so hashed and runtime access keep working unchanged.
+**Typed alternative.** Read a property's type off the catalog with an indexed access — `label.Properties["color"]` is `Vector4`. The catalog also makes `go.get`/`go.set` type-aware: a literal key drawn from `go`'s own transform properties narrows the result and the written value to the property's real type. `go.get(url, "position")` is `Vector3`, `go.get(url, "scale")` is `number | Vector3`, and `go.set(url, "euler", v3)` type-checks while `go.set(url, "position", "oops")` is rejected. The single-component keys narrow too: `go.get(url, "position.x")` is `number`, as is every `.x`, `.y`, `.z` and `.w` key of `position`, `rotation`, `euler` and `scale`, while `go.get(url, "scale.xy")` is a `Vector3` whose z is always 1. Any other key — a `Hash`, a dynamic string, or a fragment-addressed cross-component property like `go.get("#sprite", "tint")` — falls through to an open `string | Hash` overload returning the documented wide union, so hashed and runtime access keep working unchanged.
 
 **Name the component to narrow a cross-component property.** A string url like `"#sprite"` cannot tell the type system which component it targets, so the bare call can only narrow `go`'s own transform properties. When you know the component, name it with a type argument and the result narrows to *that* component's catalog:
 
 ```ts
-const animation = go.get<sprite.properties>()("#sprite", "animation"); // Hash, not the wide union
-go.set<sprite.properties>()("#sprite", "playback_rate", 2);            // value gated to number
-go.get<sprite.properties>()("#sprite", "nope");                       // type error — not a sprite property
-go.set<sprite.properties>()("#sprite", "animation", hash("run"));     // type error — animation is read-only
+const animation = go.get<sprite.Properties>()("#sprite", "animation"); // Hash, not the wide union
+go.set<sprite.Properties>()("#sprite", "playback_rate", 2);            // value gated to number
+go.get<sprite.Properties>()("#sprite", "nope");                       // type error — not a sprite property
+go.set<sprite.Properties>()("#sprite", "animation", hash("run"));     // type error — animation is read-only
 ```
 
-The form is curried — `go.get<P>()(url, property)` — on purpose. TypeScript has no partial type-argument inference: if `P` and the property key were both type parameters on one call, supplying `<sprite.properties>` would force the key to its default and collapse the return to the component's whole value union. The empty `()` fixes `P`, then the inner call infers the key from the `"animation"` argument, recovering the exact field type. The transpiler drops the empty call, so Lua receives `go.get("#sprite", "animation")`. A property the engine refuses to write is `readonly` in its catalog, and `go.set<P>()` does not accept its key. That covers every property the reference marks READ ONLY, plus the ones the engine source reads but never writes: model `"animation"`, sprite `"texture0"` and a factory's `"prototype"`. You are naming the component yourself — nothing checks that `"#sprite"` actually resolves to a sprite — so this is a typed convenience over an unverified url, not a correctness guarantee. The bare direct call (`go.get("#go", "position")`) is unchanged for the transform default, and a fully dynamic key still falls through to the wide union. The catalogs also declare the keys the engine handles that the reference leaves out. `model.properties` accepts `"texture0"` through `"texture15"` in place of upstream's `textureN` placeholder on every [pre-baked Defold version](./pinning-defold-target.md#opting-into-a-pinned-surface), plus `"material"` and `"skin"`; a surface generated from a reference doc alone keeps the reference's `"texture0"` through `"texture7"`. `sprite.properties` adds `"texture0"`. Label and sprite vector properties take one `number` key per component, `.x` through `.z` on a `Vector3` and `.x` through `.w` on a `Vector4`, plus a `Vector3` `.xy` key on a `Vector3`, so `go.get<label.properties>()("#label", "color.w")` is `number`. `physics.properties` adds `"bullet"`, a `boolean` that only Box2D supports. `factory.properties` and `collectionfactory.properties` declare `"prototype"`. A `mesh.properties` catalog declares `"vertices"`, `"material"` and `"texture0"` through `"texture15"`. Every resource key is a `Hash`.
+The form is curried — `go.get<P>()(url, property)` — on purpose. TypeScript has no partial type-argument inference: if `P` and the property key were both type parameters on one call, supplying `<sprite.Properties>` would force the key to its default and collapse the return to the component's whole value union. The empty `()` fixes `P`, then the inner call infers the key from the `"animation"` argument, recovering the exact field type. The transpiler drops the empty call, so Lua receives `go.get("#sprite", "animation")`. A property the engine refuses to write is `readonly` in its catalog, and `go.set<P>()` does not accept its key. That covers every property the reference marks READ ONLY, plus the ones the engine source reads but never writes: model `"animation"`, sprite `"texture0"` and a factory's `"prototype"`. You are naming the component yourself — nothing checks that `"#sprite"` actually resolves to a sprite — so this is a typed convenience over an unverified url, not a correctness guarantee. The bare direct call (`go.get("#go", "position")`) is unchanged for the transform default, and a fully dynamic key still falls through to the wide union. The catalogs also declare the keys the engine handles that the reference leaves out. `model.Properties` accepts `"texture0"` through `"texture15"` in place of upstream's `textureN` placeholder on every [pre-baked Defold version](./pinning-defold-target.md#opting-into-a-pinned-surface), plus `"material"` and `"skin"`; a surface generated from a reference doc alone keeps the reference's `"texture0"` through `"texture7"`. `sprite.Properties` adds `"texture0"`. Label and sprite vector properties take one `number` key per component, `.x` through `.z` on a `Vector3` and `.x` through `.w` on a `Vector4`, plus a `Vector3` `.xy` key on a `Vector3`, so `go.get<label.Properties>()("#label", "color.w")` is `number`. `physics.Properties` adds `"bullet"`, a `boolean` that only Box2D supports. `factory.Properties` and `collectionfactory.Properties` declare `"prototype"`. A `mesh.Properties` catalog declares `"vertices"`, `"material"` and `"texture0"` through `"texture15"`. Every resource key is a `Hash`.
 
 **Name the script to read or tune another object's declared properties.** The same generic also types the *cross-script* channel — reading or writing a property a *different* script declared, addressed by its script-component url (`go.get("/enemy#controller", "speed")`). This is distinct from a component property and from the `self`-side access inside the owning script: it is how one object tunes another object's declared state. A script declares its editor properties with the value-keyed `properties` field of `defineScript`, and exports that shape as a nameable type with `ScriptPropertiesOf<typeof script>`; another script names it as the `P` generic to get a typed read and a value-gated write:
 
@@ -1284,7 +1284,7 @@ go.get<EnemyProps>()("/enemy#controller", "missing");              // type error
 
 `ScriptPropertiesOf` extracts the same `TProps` the owning script's `self` carries, so the cross-script type and the owning script's `self` stay one source of truth — there is no second hand-maintained interface to drift. As with the component generic, you name the script yourself; nothing verifies the url resolves to that script.
 
-**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts `label.properties["color"]` is assignable to `Vector4` and that a `string` annotation on the same member carries `@ts-expect-error`. `packages/types/test-d/go-property-accessors.ts` pins the typed `go.get`/`go.set`: narrow keys resolve to `Vector3`/`Quaternion`/`number | Vector3`, a wrong-typed `go.set` value and a wrong-typed `go.get` assignment carry `@ts-expect-error`, and the `Hash`/dynamic-string fallback still type-checks. `packages/types/test-d/go-property-access.ts` pins the caller-named-component generic: `go.get<sprite.properties>()("#sprite", "animation")` is `Hash`, a wrong key, a wrong value type and a write to the read-only `"animation"` carry `@ts-expect-error`, and the bare transform call still resolves; it also pins the cross-script channel — a `ScriptPropertiesOf<typeof enemyScript>`-named read is typed, a write is value-gated, and a wrong key or wrong value type carries `@ts-expect-error`. `packages/types/test-d/component-properties.ts` pins the member types the catalogs resolve to: the `camera` members read as `number`, `camera.projection` / `camera.view` as `Matrix4` and `sprite.frame_count` as `number`, with a `Hash` annotation on the last carrying `@ts-expect-error`; every model texture key `"texture0"` through `"texture15"` reads and writes as `Hash`, sprite `"texture0"` and mesh `"vertices"` read as `Hash`, and the `"textureN"` placeholder, the out-of-range `"texture16"` and an undeclared mesh key carry `@ts-expect-error`. The same file pins the keys taken from the engine source at their kinds, including the `"position.x"`-style transform keys, and puts `@ts-expect-error` on a typed write to model `"animation"`, sprite `"texture0"` and each factory's `"prototype"`. `packages/types/test-d/lifecycle.ts` proves `ScriptPropertiesOf` extracts exactly the declared property shape (excess and wrong-typed fields carry `@ts-expect-error`), tying it to the `self` channel. If the property catalog is dropped, its member types change, or the overloads regress, one of these lines flips and the typecheck gate fails.
+**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts `label.Properties["color"]` is assignable to `Vector4` and that a `string` annotation on the same member carries `@ts-expect-error`. `packages/types/test-d/go-property-accessors.ts` pins the typed `go.get`/`go.set`: narrow keys resolve to `Vector3`/`Quaternion`/`number | Vector3`, a wrong-typed `go.set` value and a wrong-typed `go.get` assignment carry `@ts-expect-error`, and the `Hash`/dynamic-string fallback still type-checks. `packages/types/test-d/go-property-access.ts` pins the caller-named-component generic: `go.get<sprite.Properties>()("#sprite", "animation")` is `Hash`, a wrong key, a wrong value type and a write to the read-only `"animation"` carry `@ts-expect-error`, and the bare transform call still resolves; it also pins the cross-script channel — a `ScriptPropertiesOf<typeof enemyScript>`-named read is typed, a write is value-gated, and a wrong key or wrong value type carries `@ts-expect-error`. `packages/types/test-d/component-properties.ts` pins the member types the catalogs resolve to: the `camera` members read as `number`, `camera.projection` / `camera.view` as `Matrix4` and `sprite.frame_count` as `number`, with a `Hash` annotation on the last carrying `@ts-expect-error`; every model texture key `"texture0"` through `"texture15"` reads and writes as `Hash`, sprite `"texture0"` and mesh `"vertices"` read as `Hash`, and the `"textureN"` placeholder, the out-of-range `"texture16"` and an undeclared mesh key carry `@ts-expect-error`. The same file pins the keys taken from the engine source at their kinds, including the `"position.x"`-style transform keys, and puts `@ts-expect-error` on a typed write to model `"animation"`, sprite `"texture0"` and each factory's `"prototype"`. `packages/types/test-d/lifecycle.ts` proves `ScriptPropertiesOf` extracts exactly the declared property shape (excess and wrong-typed fields carry `@ts-expect-error`), tying it to the `self` channel. If the property catalog is dropped, its member types change, or the overloads regress, one of these lines flips and the typecheck gate fails.
 
 #### GUI node properties are a closed set
 
@@ -1322,7 +1322,7 @@ info.not_a_field;
 
 **Why.** Many Defold `table` slots carry their field structure only in the doc HTML, in one of four regular shapes: a `<dt><code>field</code></dt><dd><span class="type">T</span></dd>` definition list, a `<ul>` whose items read `<span class="type">T</span> <code>field</code>` (type before name), a dash-list option bag whose items read `field <span class="type">T</span>` / `<code>field</code> <span class="type">T</span>` (name before type), or a code-dash field that reads `<code>field</code> - <span class="type">T</span>` (name in `<code>`, then dash, then type — `sys.open_url`'s `target` attribute). The generator parses these shapes and emits an inline object type instead of the `Record` fallback, so the field names and types survive. Two nested shapes are also recovered: a `<dl>` declaring a single `table`-typed field whose keys sit in an immediately-following `<ul>` typed-field list (`window.get_safe_area()` now returns `{ safe_area: { x: number; y: number; … } }`), and a flattened `<ul><li><dl>` option bag whose `table` entries are followed by their member fields (`resource.create_atlas` groups `animations` and `geometries` into nested objects). A recovered `table` field whose `<dd>` prose reads "a list of …" emits an **array** of that recovered element shape rather than a single object (`resource.get_atlas`'s `animations` and `geometries` become `{ … }[]`); the `[]` is appended only when member fields were recovered. The atlas tables `resource.create_atlas` and `resource.set_atlas` take are stricter: their `animations` and `geometries` are non-empty lists (`[{ … }, ...{ … }[]]`) rather than `{ … }[]`, because the engine rejects an atlas with no geometry or no animation, and each animation takes either a non-empty `frames` list or both `frame_start` and `frame_end`. A "list" field with no recovered member shape but a machine-readable **numeric** element type — its `<dd>` reads "a list of … in the form {px0, py0, …}" / "{i0, i1, …}", a flat comma-separated list of numeric placeholders — emits `number[]` (`resource.create_atlas`/`set_atlas`'s `vertices`/`uvs`/`indices`); a brace form with quotes, nested braces, or non-numeric identifiers is never guessed and stays `Record`. A "list" field with neither members nor a numeric brace form (opaque maps, the wholesale `geometries` `Record`) stays `Record`. A cross-reference form is also recovered: a `table` slot with no inline field list of its own whose doc carries a `See <a href="…#<element>">` pointer to a sibling element in the same module adopts that element's already-recovered fields, unless a curation supplies that slot's shape directly. Resolution is one hop only. A supplementary `See` pointer sitting beside an **untyped name-only** `<ul>` field list (`<li>field</li>` items with no `<span class="type">`) is also recovered: the slot adopts the referenced element's fields **filtered to the names the own `<ul>` enumerates** (`resource.get_atlas` lists `texture`/`geometries`/`animations` then points at `resource.set_atlas`, so it adopts those three only — the sibling's unlisted `vertices`/`uvs`/`indices` are excluded). A `See` pointer beside an element's own **typed** field list still loses to the direct parse, which already recovers those fields. Tables with no recoverable shape (the wholesale `geometries` `Record`, opaque key→value maps) keep the `Record` type — there is no single machine-readable structure to recover. Two deliberate distinctions: a recovered **input** parameter's fields are optional (an option bag accepts a partial or empty `{}`, exactly as the old `Record` did), while a **return** table's fields are required (the engine always populates them); and recovery nests at most one level — a deeper `table` field with no recovered keys stays `Record`. A **variant** return — one whose members depend on a discriminant, as `physics.get_shape`'s do on its `type` field — is the exception to the required rule: it is hand-curated as a single record whose kind-specific fields are optional, because only one kind's fields are present in any given value. `physics.set_shape` takes a separate union discriminated on `type` — a sphere with `diameter`, a box with `dimensions`, a capsule with `diameter` and `height` — so a table `get_shape` returns is rebuilt into its kind's arm before it is passed back.
 
-**Typed alternative.** Read the members directly — `sys.get_sys_info().system_name`, `liveupdate.get_mounts()[0].uri`, `tilemap.get_tile_info(url, layer, x, y)?.index` — instead of indexing an opaque record and casting. For an options argument, pass only the fields you need (`image.load(data, { flip_vertically: true })`); omitted fields and `{}` still type-check, except the fields the engine reads unconditionally, such as the `type`, `format`, `width` and `height` of a [`resource.create_texture`](/api/resource) table, which stay required. To build the table `render.render_target` takes ahead of the call, type it as `render.render_target_params`, which every pin declares: on 1.13.2 and newer it is the reference's own struct (one `render.render_target_buffer_params` with a required `format`, `width` and `height` per buffer key, plus an optional `sample_count`, and from 1.14.0 an optional `type`), and on older pins it is the bare `Record<string | number, unknown>`.
+**Typed alternative.** Read the members directly — `sys.get_sys_info().system_name`, `liveupdate.get_mounts()[0].uri`, `tilemap.get_tile_info(url, layer, x, y)?.index` — instead of indexing an opaque record and casting. For an options argument, pass only the fields you need (`image.load(data, { flip_vertically: true })`); omitted fields and `{}` still type-check, except the fields the engine reads unconditionally, such as the `type`, `format`, `width` and `height` of a [`resource.create_texture`](/api/resource) table, which stay required. To build the table `render.render_target` takes ahead of the call, type it as `render.render_target_params`, which every pin declares: on 1.13.2 and newer it is the reference's own struct (one `render.RenderTargetBufferParams` with a required `format`, `width` and `height` per buffer key, plus an optional `sample_count`, and from 1.14.0 an optional `type`), and on older pins it is the bare `Record<string | number, unknown>`.
 
 **How we pin this in the type tests.** `packages/types/test-d/sys-info-table-fields.ts` asserts `sys.get_sys_info().system_name` is assignable to `string` and that a bogus field carries `@ts-expect-error`; `packages/types/test-d/example-shaped-table-curations.ts` pins the example-proven `liveupdate.get_mounts()` and `tilemap.get_tile_info()` shapes; `packages/types/test-d/physics-set-shape-fields.ts` pins the variant `physics.get_shape()` record — `type` reads as `number`, while `diameter` and `height` need narrowing before they are; `packages/types/test-d/resource-atlas-frame-forms.ts` pins the atlas tables — empty lists, an animation with neither frame form, and an ordinary `T[]` carry `@ts-expect-error`; `packages/types/test-d/b2d-backend-shape-kinds.ts` pins each Box2D backend's shape kinds — a v2 fixture rejects a capsule and a v3 shape rejects a chain. The fidelity audit and the emitter share the table recovery and curation data (`packages/types/src/emit-dts.ts`), so the `recordTables` loss gate and the emitted surface cannot drift; if a recovered field's type regressed to `unknown` the audit's `unknownTokens` would surface it.
 
@@ -1909,7 +1909,7 @@ src/greeter.ts:5:15: script property "greeting" has a string default, which need
 
 A direct `go.property("greeting", "Hello")` also compiles, typed `ScriptProperty<string>`; it is deprecated like every direct `go.property` call and meets the same version check.
 
-The same release lets a script read and write a label's text as a component property: `go.get<label.properties>()("#label", "text")`.
+The same release lets a script read and write a label's text as a component property: `go.get<label.Properties>()("#label", "text")`.
 
 ##### Reading properties in `init`
 
@@ -10138,8 +10138,8 @@ written against 1.13.1 keeps compiling.
 ###### b2d.world.cast_ray
 
 The `filter` and `max_results` arguments are optional on every form, and the
-filter and hit tables are the named `b2d.query_filter` and `b2d.fixture_cast_hit`
-or `b2d.shape_cast_hit` types. Compare the [1.13.1 `b2d.world`
+filter and hit tables are the named `b2d.QueryFilter` and `b2d.FixtureCastHit`
+or `b2d.ShapeCastHit` types. Compare the [1.13.1 `b2d.world`
 page](/api/defold-1.13.1/b2d.world).
 
 ###### b2d.world.cast_ray_closest
@@ -10152,7 +10152,7 @@ Same change as `b2d.world.cast_ray`.
 
 ###### b2d.world.overlap_aabb
 
-Same change as `b2d.world.cast_ray`, with `b2d.aabb` as the box type.
+Same change as `b2d.world.cast_ray`, with `b2d.Aabb` as the box type.
 
 ###### b2d.world.overlap_shape
 
@@ -10171,18 +10171,18 @@ The `type` parameter takes `string | image.Type`, as for `gui.new_texture`.
 ###### image.load
 
 `options` also accepts a boolean, the older premultiply-alpha flag, and the
-options and result tables are the named `image.load_options` and
-`image.load_result` types. Compare the [1.13.1 `image`
+options and result tables are the named `image.LoadOptions` and
+`image.LoadResult` types. Compare the [1.13.1 `image`
 page](/api/defold-1.13.1/image).
 
 ###### image.load_buffer
 
-Same change as `image.load`, with `image.load_buffer_result` as the result type.
+Same change as `image.load`, with `image.LoadBufferResult` as the result type.
 
 ###### json.encode
 
 `json.encode` accepts any value, not only a table, and its options table is the
-named `json.encode_options` type.
+named `json.EncodeOptions` type.
 
 ###### socket.skip
 
@@ -12008,35 +12008,35 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function get_body(url: string | Hash | Url): Opaque<"b2Body"> | undefined;
 - function get_gameobject_id(body: Opaque<"b2Body">): Hash | undefined; [since 1.14.0]
-- function get_version(): b2d.version_info; [since 1.13.0]
+- function get_version(): b2d.VersionInfo; [since 1.13.0]
 - function get_world(): Opaque<"b2World">; [through 1.13.1] [signature transition]
 - function get_world(): Opaque<"b2World"> | undefined; [since 1.13.2] [signature transition]
 - type b2Body = Opaque<"b2Body">
 - type b2World = Opaque<"b2World">
-- interface aabb { lower: Vector3; upper: Vector3; } [since 1.13.2]
-- interface chain_definition { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: b2d.filter_options; enable_sensor_events?: boolean; } [since 1.13.2]
-- interface chain_geometry { loop: boolean; segment_count: number; vertices: Vector3[]; prev_vertex?: Vector3; next_vertex?: Vector3; } [since 1.13.2]
-- interface contact_data { shape_a: b2d.shape_info; shape_b: b2d.shape_info; normal: Vector3; rolling_impulse: number; point_count: number; points: b2d.contact_point[]; } [since 1.13.2]
-- interface contact_point { point: Vector3; anchor_a: Vector3; anchor_b: Vector3; separation: number; normal_impulse: number; tangent_impulse: number; total_normal_impulse: number; normal_velocity: number; id: number; persisted: boolean; } [since 1.13.2]
-- interface explosion_definition { position: Vector3; radius: number; falloff: number; impulse_per_length: number; mask_bits?: number; } [since 1.13.2]
-- interface filter { category_bits: number; mask_bits: number; group_index: number; } [since 1.13.2]
-- interface filter_options { category_bits?: number; mask_bits?: number; group_index?: number; } [since 1.13.2]
-- interface fixture_cast_hit { fixture: b2d.fixture_info; shape: b2d.fixture_info; point: Vector3; normal: Vector3; fraction: number; node_visits?: number; leaf_visits?: number; } [since 1.13.2]
-- interface fixture_definition { shape: b2d.shape.definition; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.filter; } [since 1.13.2]
-- interface fixture_info { body?: Opaque<"b2Body">; index: number; child_index?: number; type: b2d.shape.ShapeType; sensor: boolean; density: number; friction: number; restitution: number; child_count: number; } [since 1.13.2]
-- interface mass_data { mass: number; center: Vector3; inertia: number; } [since 1.13.2]
-- interface mover_capsule { center1: Vector3; center2: Vector3; radius: number; } [since 1.13.2]
-- interface mover_plane { shape: b2d.shape_info; normal: Vector3; offset: number; hit: boolean; } [since 1.13.2]
-- interface query_filter { category_bits?: number; mask_bits?: number; group_index?: number; } [since 1.13.2]
-- interface shape_cast_hit { shape: b2d.shape_info; point: Vector3; normal: Vector3; fraction: number; node_visits?: number; leaf_visits?: number; } [since 1.13.2]
-- interface shape_cast_output { point: Vector3; normal: Vector3; fraction: number; iterations: number; } [since 1.13.2]
-- type shape_create_definition = { shape: b2d.shape.definition; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.filter } | { type: b2d.shape.ShapeType; radius?: number; center?: Vector3; center1?: Vector3; center2?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; hx?: number; hy?: number; angle?: number; vertices?: Vector3[]; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.filter } [since 1.13.2]
-- interface shape_info { index: number; shape_id: Opaque<"b2Shape">; type: b2d.shape.ShapeType; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean; } [since 1.13.2]
-- interface transform { position: Vector3; angle: number; } [since 1.13.2]
-- interface tree_stats { node_visits: number; leaf_visits: number; } [since 1.13.2]
-- interface version_info { version: string; major: number; middle: number; minor: number; } [since 1.13.2]
-- interface world_counters { body_count: number; shape_count: number; contact_count: number; joint_count: number; island_count: number; stack_used: number; static_tree_height: number; tree_height: number; byte_count: number; task_count: number; color_counts: number[]; } [since 1.13.2]
-- interface world_profile { step: number; pairs: number; collide: number; solve: number; merge_islands: number; prepare_stages: number; solve_constraints: number; prepare_constraints: number; integrate_velocities: number; warm_start: number; solve_impulses: number; integrate_positions: number; relax_impulses: number; apply_restitution: number; store_impulses: number; split_islands: number; transforms: number; hit_events: number; refit: number; bullets: number; sleep_islands: number; sensors: number; } [since 1.13.2]
+- interface Aabb { lower: Vector3; upper: Vector3; } [since 1.13.2]
+- interface ChainDefinition { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: b2d.FilterOptions; enable_sensor_events?: boolean; } [since 1.13.2]
+- interface ChainGeometry { loop: boolean; segment_count: number; vertices: Vector3[]; prev_vertex?: Vector3; next_vertex?: Vector3; } [since 1.13.2]
+- interface ContactData { shape_a: b2d.ShapeInfo; shape_b: b2d.ShapeInfo; normal: Vector3; rolling_impulse: number; point_count: number; points: b2d.ContactPoint[]; } [since 1.13.2]
+- interface ContactPoint { point: Vector3; anchor_a: Vector3; anchor_b: Vector3; separation: number; normal_impulse: number; tangent_impulse: number; total_normal_impulse: number; normal_velocity: number; id: number; persisted: boolean; } [since 1.13.2]
+- interface ExplosionDefinition { position: Vector3; radius: number; falloff: number; impulse_per_length: number; mask_bits?: number; } [since 1.13.2]
+- interface Filter { category_bits: number; mask_bits: number; group_index: number; } [since 1.13.2]
+- interface FilterOptions { category_bits?: number; mask_bits?: number; group_index?: number; } [since 1.13.2]
+- interface FixtureCastHit { fixture: b2d.FixtureInfo; shape: b2d.FixtureInfo; point: Vector3; normal: Vector3; fraction: number; node_visits?: number; leaf_visits?: number; } [since 1.13.2]
+- interface FixtureDefinition { shape: b2d.shape.definition; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.Filter; } [since 1.13.2]
+- interface FixtureInfo { body?: Opaque<"b2Body">; index: number; child_index?: number; type: b2d.shape.ShapeType; sensor: boolean; density: number; friction: number; restitution: number; child_count: number; } [since 1.13.2]
+- interface MassData { mass: number; center: Vector3; inertia: number; } [since 1.13.2]
+- interface MoverCapsule { center1: Vector3; center2: Vector3; radius: number; } [since 1.13.2]
+- interface MoverPlane { shape: b2d.ShapeInfo; normal: Vector3; offset: number; hit: boolean; } [since 1.13.2]
+- interface QueryFilter { category_bits?: number; mask_bits?: number; group_index?: number; } [since 1.13.2]
+- interface ShapeCastHit { shape: b2d.ShapeInfo; point: Vector3; normal: Vector3; fraction: number; node_visits?: number; leaf_visits?: number; } [since 1.13.2]
+- interface ShapeCastOutput { point: Vector3; normal: Vector3; fraction: number; iterations: number; } [since 1.13.2]
+- interface ShapeInfo { index: number; shape_id: Opaque<"b2Shape">; type: b2d.shape.ShapeType; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean; } [since 1.13.2]
+- interface Transform { position: Vector3; angle: number; } [since 1.13.2]
+- interface TreeStats { node_visits: number; leaf_visits: number; } [since 1.13.2]
+- interface VersionInfo { version: string; major: number; middle: number; minor: number; } [since 1.13.2]
+- interface WorldCounters { body_count: number; shape_count: number; contact_count: number; joint_count: number; island_count: number; stack_used: number; static_tree_height: number; tree_height: number; byte_count: number; task_count: number; color_counts: number[]; } [since 1.13.2]
+- interface WorldProfile { step: number; pairs: number; collide: number; solve: number; merge_islands: number; prepare_stages: number; solve_constraints: number; prepare_constraints: number; integrate_velocities: number; warm_start: number; solve_impulses: number; integrate_positions: number; relax_impulses: number; apply_restitution: number; store_impulses: number; split_islands: number; transforms: number; hit_events: number; refit: number; bullets: number; sleep_islands: number; sensors: number; } [since 1.13.2]
+- type shape_create_definition = { shape: b2d.shape.definition; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.Filter } | { type: b2d.shape.ShapeType; radius?: number; center?: Vector3; center1?: Vector3; center2?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; hx?: number; hy?: number; angle?: number; vertices?: Vector3[]; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.Filter } [since 1.13.2]
 
 ### b2d.body
 
@@ -12046,9 +12046,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function apply_linear_impulse(body: Opaque<"b2Body">, impulse: Vector3, point: Vector3): void;
 - function apply_linear_impulse_to_center(body: Opaque<"b2Body">, impulse: Vector3): void; [since 1.13.0]
 - function apply_torque(body: Opaque<"b2Body">, torque: number): void;
-- function compute_aabb(body: Opaque<"b2Body">): b2d.aabb; [since 1.13.0]
-- function create_chain(body: Opaque<"b2Body">, definition: b2d.chain_definition): LuaMultiReturn<[Opaque<"b2Chain">, b2d.shape_info[]]>; [since 1.13.0]
-- function create_fixture(body: Opaque<"b2Body">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): b2d.fixture_info; [since 1.13.0]
+- function compute_aabb(body: Opaque<"b2Body">): b2d.Aabb; [since 1.13.0]
+- function create_chain(body: Opaque<"b2Body">, definition: b2d.ChainDefinition): LuaMultiReturn<[Opaque<"b2Chain">, b2d.ShapeInfo[]]>; [since 1.13.0]
+- function create_fixture(body: Opaque<"b2Body">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): b2d.FixtureInfo; [since 1.13.0]
 - function create_shape(body: Opaque<"b2Body">, definition: ({ shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 } } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 }) & { density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; shape_id: Opaque<"b2Shape">; type: number; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean }; [since 1.13.0]
 - function destroy_fixture(body: Opaque<"b2Body">, fixture_index: number): void; [since 1.13.0]
 - function destroy_shape(body: Opaque<"b2Body">, shape_index: number): void; [since 1.13.0]
@@ -12059,8 +12059,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_angle(body: Opaque<"b2Body">): number;
 - function get_angular_damping(body: Opaque<"b2Body">): number;
 - function get_angular_velocity(body: Opaque<"b2Body">): number;
-- function get_contact_data(body: Opaque<"b2Body">): b2d.contact_data[]; [since 1.13.0]
-- function get_fixtures(body: Opaque<"b2Body">): b2d.fixture_info[]; [since 1.13.0]
+- function get_contact_data(body: Opaque<"b2Body">): b2d.ContactData[]; [since 1.13.0]
+- function get_fixtures(body: Opaque<"b2Body">): b2d.FixtureInfo[]; [since 1.13.0]
 - function get_force(body: Opaque<"b2Body">): Vector3; [since 1.13.0]
 - function get_gravity_scale(body: Opaque<"b2Body">): number;
 - function get_inertia(body: Opaque<"b2Body">): number; [since 1.13.0]
@@ -12074,16 +12074,16 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_local_point(body: Opaque<"b2Body">, world_point: Vector3): Vector3;
 - function get_local_vector(body: Opaque<"b2Body">, world_vector: Vector3): Vector3;
 - function get_mass(body: Opaque<"b2Body">): number;
-- function get_mass_data(body: Opaque<"b2Body">): b2d.mass_data; [since 1.13.0]
+- function get_mass_data(body: Opaque<"b2Body">): b2d.MassData; [since 1.13.0]
 - function get_name(body: Opaque<"b2Body">): string; [1.13.0–1.13.1] [signature transition]
 - function get_name(body: Opaque<"b2Body">): string | undefined; [since 1.13.2] [signature transition]
 - function get_next(body: Opaque<"b2Body">): Opaque<"b2Body">; [1.13.0–1.13.1] [signature transition]
 - function get_next(body: Opaque<"b2Body">): Opaque<"b2Body"> | undefined; [since 1.13.2] [signature transition]
 - function get_position(body: Opaque<"b2Body">): Vector3;
 - function get_rotational_inertia(body: Opaque<"b2Body">): number;
-- function get_shapes(body: Opaque<"b2Body">): b2d.shape_info[]; [since 1.13.0]
+- function get_shapes(body: Opaque<"b2Body">): b2d.ShapeInfo[]; [since 1.13.0]
 - function get_sleep_threshold(body: Opaque<"b2Body">): number; [since 1.13.0]
-- function get_transform(body: Opaque<"b2Body">): b2d.transform; [since 1.13.0]
+- function get_transform(body: Opaque<"b2Body">): b2d.Transform; [since 1.13.0]
 - function get_type(body: Opaque<"b2Body">): (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" });
 - b2d.body.get_user_data(body: Opaque<"b2Body">): Hash
 - function get_world(body: Opaque<"b2Body">): Opaque<"b2World">;
@@ -12109,7 +12109,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_gravity_scale(body: Opaque<"b2Body">, scale: number): void;
 - function set_linear_damping(body: Opaque<"b2Body">, damping: number): void;
 - function set_linear_velocity(body: Opaque<"b2Body">, velocity: Vector3): void;
-- function set_mass_data(body: Opaque<"b2Body">, data: b2d.mass_data): void; [since 1.13.0]
+- function set_mass_data(body: Opaque<"b2Body">, data: b2d.MassData): void; [since 1.13.0]
 - function set_name(body: Opaque<"b2Body">, name: string): void; [since 1.13.0]
 - function set_sleep_threshold(body: Opaque<"b2Body">, threshold: number): void; [since 1.13.0]
 - function set_sleeping_allowed(body: Opaque<"b2Body">, enable: boolean): void; [since 1.13.0]
@@ -12129,11 +12129,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function destroy(chain: Opaque<"b2Chain">): void; [since 1.13.0]
 - function from_shape(shape_id: Opaque<"b2Shape">): Opaque<"b2Chain"> | undefined; [since 1.13.0]
 - function get_friction(chain: Opaque<"b2Chain">): number; [since 1.13.0]
-- function get_geometry(chain: Opaque<"b2Chain">): b2d.chain_geometry; [since 1.13.0]
+- function get_geometry(chain: Opaque<"b2Chain">): b2d.ChainGeometry; [since 1.13.0]
 - function get_material(chain: Opaque<"b2Chain">): number; [since 1.13.0]
 - function get_restitution(chain: Opaque<"b2Chain">): number; [since 1.13.0]
 - function get_segment_count(chain: Opaque<"b2Chain">): number; [since 1.13.0]
-- function get_segments(chain: Opaque<"b2Chain">): b2d.shape_info[]; [since 1.13.0]
+- function get_segments(chain: Opaque<"b2Chain">): b2d.ShapeInfo[]; [since 1.13.0]
 - function get_world(chain: Opaque<"b2Chain">): Opaque<"b2World">; [since 1.13.0]
 - function is_valid(chain: Opaque<"b2Chain">): boolean; [since 1.13.0]
 - function set_friction(chain: Opaque<"b2Chain">, friction: number): void; [since 1.13.0]
@@ -12143,9 +12143,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### b2d.fixture
 
-- function get_aabb(body: Opaque<"b2Body">, fixture_index: number, child_index: number): b2d.aabb; [since 1.13.0]
+- function get_aabb(body: Opaque<"b2Body">, fixture_index: number, child_index: number): b2d.Aabb; [since 1.13.0]
 - function get_density(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
-- function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): b2d.filter; [since 1.13.0]
+- function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): b2d.Filter; [since 1.13.0]
 - function get_friction(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
 - function get_restitution(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
 - function get_shape(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.definition; [since 1.13.0]
@@ -12153,7 +12153,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function is_sensor(body: Opaque<"b2Body">, fixture_index: number): boolean; [since 1.13.0]
 - function refilter(body: Opaque<"b2Body">, fixture_index: number, touch_proxies: boolean): void; [since 1.13.0]
 - function set_density(body: Opaque<"b2Body">, fixture_index: number, density: number, update_mass?: boolean): void; [since 1.13.0]
-- function set_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number, filter: b2d.filter): void; [since 1.13.0]
+- function set_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number, filter: b2d.Filter): void; [since 1.13.0]
 - function set_friction(body: Opaque<"b2Body">, fixture_index: number, friction: number): void; [since 1.13.0]
 - function set_restitution(body: Opaque<"b2Body">, fixture_index: number, restitution: number): void; [since 1.13.0]
 - function set_sensor(body: Opaque<"b2Body">, fixture_index: number, enabled: boolean): void; [since 1.13.0]
@@ -12162,18 +12162,18 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### b2d.joint
 
-- function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.distance_definition): Opaque<"b2Joint">; [since 1.13.0]
+- function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.DistanceDefinition): Opaque<"b2Joint">; [since 1.13.0]
 - function create_filter(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.filter_definition): Opaque<"b2Joint">; [since 1.13.0]
-- function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.friction_definition): Opaque<"b2Joint">; [since 1.13.0]
-- function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition?: b2d.joint.gear_definition): Opaque<"b2Joint">; [since 1.13.0]
-- function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.motor_definition): Opaque<"b2Joint">; [since 1.13.0]
-- function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.mouse_definition): Opaque<"b2Joint">; [since 1.13.0]
-- function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.prismatic_definition): Opaque<"b2Joint">; [since 1.13.0]
-- function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.pulley_definition): Opaque<"b2Joint">; [since 1.13.0]
-- function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.revolute_definition): Opaque<"b2Joint">; [since 1.13.0]
-- function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.rope_definition): Opaque<"b2Joint">; [since 1.13.0]
-- function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.weld_definition): Opaque<"b2Joint">; [since 1.13.0]
-- function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.wheel_definition): Opaque<"b2Joint">; [since 1.13.0]
+- function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.FrictionDefinition): Opaque<"b2Joint">; [since 1.13.0]
+- function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition?: b2d.joint.GearDefinition): Opaque<"b2Joint">; [since 1.13.0]
+- function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.MotorDefinition): Opaque<"b2Joint">; [since 1.13.0]
+- function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.MouseDefinition): Opaque<"b2Joint">; [since 1.13.0]
+- function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.PrismaticDefinition): Opaque<"b2Joint">; [since 1.13.0]
+- function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.PulleyDefinition): Opaque<"b2Joint">; [since 1.13.0]
+- function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.RevoluteDefinition): Opaque<"b2Joint">; [since 1.13.0]
+- function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.RopeDefinition): Opaque<"b2Joint">; [since 1.13.0]
+- function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.WeldDefinition): Opaque<"b2Joint">; [since 1.13.0]
+- function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.WheelDefinition): Opaque<"b2Joint">; [since 1.13.0]
 - function destroy(joint: Opaque<"b2Joint">): void; [since 1.13.0]
 - function enable_limit(joint: Opaque<"b2Joint">, enable: boolean): void; [since 1.13.0]
 - function enable_motor(joint: Opaque<"b2Joint">, enable: boolean): void; [since 1.13.0]
@@ -12282,20 +12282,20 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - b2d.joint.LIMIT_STATE_EQUAL: number & { readonly __brand: "b2d.joint.LIMIT_STATE_EQUAL" } [since 1.13.0]
 - b2d.joint.LIMIT_STATE_INACTIVE: number & { readonly __brand: "b2d.joint.LIMIT_STATE_INACTIVE" } [since 1.13.0]
 - type b2Joint = Opaque<"b2Joint"> [since 1.13.0]
+- interface DistanceDefinition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; length?: number; min_length?: number; max_length?: number; enable_spring?: boolean; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; enable_limit?: boolean; enable_motor?: boolean; max_motor_force?: number; motor_speed?: number; collide_connected?: boolean; } [since 1.13.2]
+- interface FrictionDefinition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_force?: number; max_torque?: number; collide_connected?: boolean; } [since 1.13.2]
+- interface GearDefinition { ratio?: number; collide_connected?: boolean; } [since 1.13.2]
 - type JointType = typeof b2d.joint.JOINT_TYPE_DISTANCE | typeof b2d.joint.JOINT_TYPE_FILTER | typeof b2d.joint.JOINT_TYPE_FRICTION | typeof b2d.joint.JOINT_TYPE_GEAR | typeof b2d.joint.JOINT_TYPE_MOTOR | typeof b2d.joint.JOINT_TYPE_MOUSE | typeof b2d.joint.JOINT_TYPE_PRISMATIC | typeof b2d.joint.JOINT_TYPE_PULLEY | typeof b2d.joint.JOINT_TYPE_REVOLUTE | typeof b2d.joint.JOINT_TYPE_ROPE | typeof b2d.joint.JOINT_TYPE_UNKNOWN | typeof b2d.joint.JOINT_TYPE_WELD | typeof b2d.joint.JOINT_TYPE_WHEEL [since 1.13.2]
 - type LimitState = typeof b2d.joint.LIMIT_STATE_AT_LOWER | typeof b2d.joint.LIMIT_STATE_AT_UPPER | typeof b2d.joint.LIMIT_STATE_EQUAL | typeof b2d.joint.LIMIT_STATE_INACTIVE [since 1.13.2]
-- interface distance_definition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; length?: number; min_length?: number; max_length?: number; enable_spring?: boolean; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; enable_limit?: boolean; enable_motor?: boolean; max_motor_force?: number; motor_speed?: number; collide_connected?: boolean; } [since 1.13.2]
+- interface MotorDefinition { linear_offset?: Vector3; angular_offset?: number; max_force?: number; max_torque?: number; correction_factor?: number; collide_connected?: boolean; } [since 1.13.2]
+- interface MouseDefinition { target?: Vector3; max_force?: number; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; collide_connected?: boolean; } [since 1.13.2]
+- interface PrismaticDefinition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; reference_angle?: number; enable_spring?: boolean; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; enable_limit?: boolean; lower_translation?: number; upper_translation?: number; enable_motor?: boolean; max_motor_force?: number; motor_speed?: number; collide_connected?: boolean; } [since 1.13.2]
+- interface PulleyDefinition { ground_anchor_a?: Vector3; ground_anchor_b?: Vector3; local_anchor_a?: Vector3; local_anchor_b?: Vector3; length_a?: number; length_b?: number; ratio?: number; collide_connected?: boolean; } [since 1.13.2]
+- interface RevoluteDefinition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; enable_spring?: boolean; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; enable_limit?: boolean; lower_angle?: number; upper_angle?: number; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; collide_connected?: boolean; } [since 1.13.2]
+- interface RopeDefinition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_length?: number; collide_connected?: boolean; } [since 1.13.2]
+- interface WeldDefinition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; linear_hertz?: number; angular_hertz?: number; linear_damping_ratio?: number; angular_damping_ratio?: number; collide_connected?: boolean; } [since 1.13.2]
+- interface WheelDefinition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; enable_spring?: boolean; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; enable_limit?: boolean; lower_translation?: number; upper_translation?: number; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; collide_connected?: boolean; } [since 1.13.2]
 - type filter_definition = {} [since 1.13.2]
-- interface friction_definition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_force?: number; max_torque?: number; collide_connected?: boolean; } [since 1.13.2]
-- interface gear_definition { ratio?: number; collide_connected?: boolean; } [since 1.13.2]
-- interface motor_definition { linear_offset?: Vector3; angular_offset?: number; max_force?: number; max_torque?: number; correction_factor?: number; collide_connected?: boolean; } [since 1.13.2]
-- interface mouse_definition { target?: Vector3; max_force?: number; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; collide_connected?: boolean; } [since 1.13.2]
-- interface prismatic_definition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; reference_angle?: number; enable_spring?: boolean; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; enable_limit?: boolean; lower_translation?: number; upper_translation?: number; enable_motor?: boolean; max_motor_force?: number; motor_speed?: number; collide_connected?: boolean; } [since 1.13.2]
-- interface pulley_definition { ground_anchor_a?: Vector3; ground_anchor_b?: Vector3; local_anchor_a?: Vector3; local_anchor_b?: Vector3; length_a?: number; length_b?: number; ratio?: number; collide_connected?: boolean; } [since 1.13.2]
-- interface revolute_definition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; enable_spring?: boolean; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; enable_limit?: boolean; lower_angle?: number; upper_angle?: number; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; collide_connected?: boolean; } [since 1.13.2]
-- interface rope_definition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_length?: number; collide_connected?: boolean; } [since 1.13.2]
-- interface weld_definition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; linear_hertz?: number; angular_hertz?: number; linear_damping_ratio?: number; angular_damping_ratio?: number; collide_connected?: boolean; } [since 1.13.2]
-- interface wheel_definition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; enable_spring?: boolean; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; enable_limit?: boolean; lower_translation?: number; upper_translation?: number; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; collide_connected?: boolean; } [since 1.13.2]
 
 ### b2d.shape
 
@@ -12321,24 +12321,24 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_closest_point(body: Opaque<"b2Body">, shape_index: number, target: Vector3): Vector3;
 - function get_contact_capacity(shape_id: Opaque<"b2Shape">): number; [since 1.13.0]
 - function get_contact_capacity(body: Opaque<"b2Body">, shape_index: number): number;
-- function get_contact_data(shape_id: Opaque<"b2Shape">): b2d.contact_data[]; [since 1.13.0]
-- function get_contact_data(body: Opaque<"b2Body">, shape_index: number): b2d.contact_data[];
-- function get_mass_data(shape_id: Opaque<"b2Shape">): b2d.mass_data; [since 1.13.0]
-- function get_mass_data(body: Opaque<"b2Body">, shape_index: number): b2d.mass_data;
+- function get_contact_data(shape_id: Opaque<"b2Shape">): b2d.ContactData[]; [since 1.13.0]
+- function get_contact_data(body: Opaque<"b2Body">, shape_index: number): b2d.ContactData[];
+- function get_mass_data(shape_id: Opaque<"b2Shape">): b2d.MassData; [since 1.13.0]
+- function get_mass_data(body: Opaque<"b2Body">, shape_index: number): b2d.MassData;
 - function get_material(shape_id: Opaque<"b2Shape">): number; [since 1.13.0]
 - function get_material(body: Opaque<"b2Body">, shape_index: number): number;
 - function get_sensor_capacity(shape_id: Opaque<"b2Shape">): number; [since 1.13.0]
 - function get_sensor_capacity(body: Opaque<"b2Body">, shape_index: number): number;
-- function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): b2d.shape_info[]; [since 1.13.0]
-- function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): b2d.shape_info[];
+- function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): b2d.ShapeInfo[]; [since 1.13.0]
+- function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): b2d.ShapeInfo[];
 - function get_shape(shape_id: Opaque<"b2Shape">): b2d.shape.definition; [since 1.13.0]
 - function get_shape(body: Opaque<"b2Body">, shape_index: number): b2d.shape.definition;
 - function get_world(shape_id: Opaque<"b2Shape">): Opaque<"b2World">; [since 1.13.0]
 - function get_world(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2World">;
 - function is_valid(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
 - function is_valid(body: Opaque<"b2Body">, shape_index: number): boolean;
-- function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.shape_cast_output | undefined; [since 1.13.0]
-- function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.shape_cast_output | undefined;
+- function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.ShapeCastOutput | undefined; [since 1.13.0]
+- function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): b2d.ShapeCastOutput | undefined;
 - function set_material(shape_id: Opaque<"b2Shape">, material: number): void; [since 1.13.0]
 - function set_material(body: Opaque<"b2Body">, shape_index: number, material: number): void;
 - function set_shape(shape_id: Opaque<"b2Shape">, definition: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 }, update_mass?: boolean): void; [since 1.13.0]
@@ -12357,28 +12357,28 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### b2d.world
 
-- function cast_mover(world: Opaque<"b2World">, capsule: b2d.mover_capsule, translation: Vector3, filter?: b2d.query_filter): number; [since 1.13.0]
+- function cast_mover(world: Opaque<"b2World">, capsule: b2d.MoverCapsule, translation: Vector3, filter?: b2d.QueryFilter): number; [since 1.13.0]
 - function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [1.13.0–1.13.1]
-- function cast_ray<Backend extends "v2" = "v2">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.fixture_cast_hit[], b2d.tree_stats]>; [since 1.13.2]
-- function cast_ray<Backend extends "v3">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.shape_cast_hit[], b2d.tree_stats]>; [since 1.13.2]
+- function cast_ray<Backend extends "v2" = "v2">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.FixtureCastHit[], b2d.TreeStats]>; [since 1.13.2]
+- function cast_ray<Backend extends "v3">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.ShapeCastHit[], b2d.TreeStats]>; [since 1.13.2]
 - function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | undefined; [1.13.0–1.13.1]
-- function cast_ray_closest<Backend extends "v2" = "v2">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.query_filter): b2d.fixture_cast_hit | undefined; [since 1.13.2]
-- function cast_ray_closest<Backend extends "v3">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.query_filter): b2d.shape_cast_hit | undefined; [since 1.13.2]
+- function cast_ray_closest<Backend extends "v2" = "v2">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.QueryFilter): b2d.FixtureCastHit | undefined; [since 1.13.2]
+- function cast_ray_closest<Backend extends "v3">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.QueryFilter): b2d.ShapeCastHit | undefined; [since 1.13.2]
 - function cast_shape(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [1.13.0–1.13.1]
-- function cast_shape<Backend extends "v2" = "v2">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.fixture_cast_hit[], b2d.tree_stats]>; [since 1.13.2]
-- function cast_shape<Backend extends "v3">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.shape_cast_hit[], b2d.tree_stats]>; [since 1.13.2]
-- function collide_mover(world: Opaque<"b2World">, capsule: b2d.mover_capsule, filter?: b2d.query_filter, max_results?: number): b2d.mover_plane[]; [since 1.13.0]
+- function cast_shape<Backend extends "v2" = "v2">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.FixtureCastHit[], b2d.TreeStats]>; [since 1.13.2]
+- function cast_shape<Backend extends "v3">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.ShapeCastHit[], b2d.TreeStats]>; [since 1.13.2]
+- function collide_mover(world: Opaque<"b2World">, capsule: b2d.MoverCapsule, filter?: b2d.QueryFilter, max_results?: number): b2d.MoverPlane[]; [since 1.13.0]
 - function enable_continuous(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.0]
 - function enable_sleeping(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.0]
 - function enable_speculative(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.0]
 - function enable_warm_starting(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.0]
-- function explode(world: Opaque<"b2World">, definition: b2d.explosion_definition): void; [since 1.13.0]
+- function explode(world: Opaque<"b2World">, definition: b2d.ExplosionDefinition): void; [since 1.13.0]
 - function get_awake_body_count(world: Opaque<"b2World">): number; [since 1.13.0]
-- function get_counters(world: Opaque<"b2World">): b2d.world_counters; [since 1.13.0]
+- function get_counters(world: Opaque<"b2World">): b2d.WorldCounters; [since 1.13.0]
 - function get_gravity(world: Opaque<"b2World">): Vector3; [since 1.13.0]
 - function get_hit_event_threshold(world: Opaque<"b2World">): number; [since 1.13.0]
 - function get_maximum_linear_speed(world: Opaque<"b2World">): number; [since 1.13.0]
-- function get_profile(world: Opaque<"b2World">): b2d.world_profile; [since 1.13.0]
+- function get_profile(world: Opaque<"b2World">): b2d.WorldProfile; [since 1.13.0]
 - function get_restitution_threshold(world: Opaque<"b2World">): number; [since 1.13.0]
 - function is_continuous_enabled(world: Opaque<"b2World">): boolean; [since 1.13.0]
 - function is_locked(world: Opaque<"b2World">): boolean; [since 1.13.0]
@@ -12386,11 +12386,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function is_valid(world: Opaque<"b2World">): boolean; [since 1.13.0]
 - function is_warm_starting_enabled(world: Opaque<"b2World">): boolean; [since 1.13.0]
 - function overlap_aabb(world: Opaque<"b2World">, aabb: { lower: Vector3; upper: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>; [1.13.0–1.13.1]
-- function overlap_aabb<Backend extends "v2" = "v2">(world: Opaque<"b2World">, aabb: b2d.aabb, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.fixture_info[], b2d.tree_stats]>; [since 1.13.2]
-- function overlap_aabb<Backend extends "v3">(world: Opaque<"b2World">, aabb: b2d.aabb, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.shape_info[], b2d.tree_stats]>; [since 1.13.2]
+- function overlap_aabb<Backend extends "v2" = "v2">(world: Opaque<"b2World">, aabb: b2d.Aabb, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.FixtureInfo[], b2d.TreeStats]>; [since 1.13.2]
+- function overlap_aabb<Backend extends "v3">(world: Opaque<"b2World">, aabb: b2d.Aabb, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.ShapeInfo[], b2d.TreeStats]>; [since 1.13.2]
 - function overlap_shape(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>; [1.13.0–1.13.1]
-- function overlap_shape<Backend extends "v2" = "v2">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.fixture_info[], b2d.tree_stats]>; [since 1.13.2]
-- function overlap_shape<Backend extends "v3">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.shape_info[], b2d.tree_stats]>; [since 1.13.2]
+- function overlap_shape<Backend extends "v2" = "v2">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.FixtureInfo[], b2d.TreeStats]>; [since 1.13.2]
+- function overlap_shape<Backend extends "v3">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.ShapeInfo[], b2d.TreeStats]>; [since 1.13.2]
 - function rebuild_static_tree(world: Opaque<"b2World">): void; [since 1.13.0]
 - function set_contact_tuning(world: Opaque<"b2World">, hertz: number, damping_ratio: number, pushout: number): void; [since 1.13.0]
 - function set_gravity(world: Opaque<"b2World">, gravity: Vector3): void; [since 1.13.0]
@@ -12426,12 +12426,12 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_collision_object(url: string | Hash | Url): Opaque<"btCollisionObject" | "btRigidBody"> | undefined; [since 1.13.2]
 - function get_gameobject_id(object: Opaque<"btCollisionObject" | "btRigidBody">): Hash | undefined; [since 1.14.0]
 - function get_rigid_body(url: string | Hash | Url): Opaque<"btRigidBody"> | undefined; [since 1.13.2]
-- function get_version(): bullet3d.version_info; [since 1.13.2]
+- function get_version(): bullet3d.VersionInfo; [since 1.13.2]
 - function get_world(): bullet3d.btDiscreteDynamicsWorld | undefined; [since 1.13.2]
 - type btCollisionObject = Opaque<"btCollisionObject" | "btRigidBody"> [since 1.13.2]
 - type btDiscreteDynamicsWorld = Opaque<"btDiscreteDynamicsWorld"> [since 1.13.2]
 - type btRigidBody = Opaque<"btRigidBody"> [since 1.13.2]
-- interface version_info { version: string; number: number; major: number; minor: number; } [since 1.13.2]
+- interface VersionInfo { version: string; number: number; major: number; minor: number; } [since 1.13.2]
 
 ### bullet3d.collision_object
 
@@ -12499,19 +12499,19 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### bullet3d.constraint
 
-- function create_cone_twist(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.cone_twist_params & Required<Pick<bullet3d.constraint.cone_twist_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
-- function create_cone_twist(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.cone_twist_params): bullet3d.constraint.btTypedConstraint;
-- function create_generic_6dof(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.generic_6dof_params & Required<Pick<bullet3d.constraint.generic_6dof_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
-- function create_generic_6dof(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.generic_6dof_params): bullet3d.constraint.btTypedConstraint;
-- function create_generic_6dof_spring(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.generic_6dof_spring_params): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
-- function create_hinge(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.hinge_params & Required<Pick<bullet3d.constraint.hinge_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
-- function create_hinge(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.hinge_params): bullet3d.constraint.btTypedConstraint;
-- function create_hinge2(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.anchor_axes_params): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
-- function create_point_to_point(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.point_to_point_params & Required<Pick<bullet3d.constraint.point_to_point_params, "pivot_b">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
-- function create_point_to_point(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.point_to_point_params): bullet3d.constraint.btTypedConstraint;
-- function create_slider(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.slider_params & Required<Pick<bullet3d.constraint.slider_params, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
-- function create_slider(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.slider_params): bullet3d.constraint.btTypedConstraint;
-- function create_universal(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.anchor_axes_params): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_cone_twist(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.ConeTwistParams & Required<Pick<bullet3d.constraint.ConeTwistParams, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_cone_twist(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.ConeTwistParams): bullet3d.constraint.btTypedConstraint;
+- function create_generic_6dof(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.Generic6DofParams & Required<Pick<bullet3d.constraint.Generic6DofParams, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_generic_6dof(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.Generic6DofParams): bullet3d.constraint.btTypedConstraint;
+- function create_generic_6dof_spring(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.Generic6DofSpringParams): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_hinge(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.HingeParams & Required<Pick<bullet3d.constraint.HingeParams, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_hinge(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.HingeParams): bullet3d.constraint.btTypedConstraint;
+- function create_hinge2(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.AnchorAxesParams): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_point_to_point(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.PointToPointParams & Required<Pick<bullet3d.constraint.PointToPointParams, "pivot_b">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_point_to_point(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.PointToPointParams): bullet3d.constraint.btTypedConstraint;
+- function create_slider(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody"> | undefined, params: bullet3d.constraint.SliderParams & Required<Pick<bullet3d.constraint.SliderParams, "frame_b_position" | "frame_b_rotation">>): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
+- function create_slider(body_a: Opaque<"btRigidBody">, body_b: undefined, params: bullet3d.constraint.SliderParams): bullet3d.constraint.btTypedConstraint;
+- function create_universal(body_a: Opaque<"btRigidBody">, body_b: Opaque<"btRigidBody">, params: bullet3d.constraint.AnchorAxesParams): bullet3d.constraint.btTypedConstraint; [since 1.13.2]
 - function destroy(constraint: bullet3d.constraint.btTypedConstraint): void; [since 1.13.2]
 - function enable_cone_twist_motor(constraint: bullet3d.constraint.btTypedConstraint, enabled: boolean): void; [since 1.13.2]
 - function enable_spring(constraint: bullet3d.constraint.btTypedConstraint, axis: number, enabled: boolean): void; [since 1.13.2]
@@ -12572,14 +12572,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - bullet3d.constraint.CONSTRAINT_TYPE_SLIDER: number & { readonly __brand: "bullet3d.constraint.CONSTRAINT_TYPE_SLIDER" } [since 1.13.2]
 - bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL: number & { readonly __brand: "bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL" } [since 1.13.2]
 - type btTypedConstraint = Opaque<"btTypedConstraint"> [since 1.13.2]
+- interface AnchorAxesParams { anchor: Vector3; axis1: Vector3; axis2: Vector3; collide_connected?: boolean; } [since 1.13.2]
+- interface ConeTwistParams { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position?: Vector3; frame_b_rotation?: Quaternion; angular_only?: boolean; collide_connected?: boolean; } [since 1.13.2]
 - type ConstraintType = typeof bullet3d.constraint.CONSTRAINT_TYPE_CONE_TWIST | typeof bullet3d.constraint.CONSTRAINT_TYPE_GENERIC_6DOF | typeof bullet3d.constraint.CONSTRAINT_TYPE_GENERIC_6DOF_SPRING | typeof bullet3d.constraint.CONSTRAINT_TYPE_HINGE | typeof bullet3d.constraint.CONSTRAINT_TYPE_HINGE2 | typeof bullet3d.constraint.CONSTRAINT_TYPE_POINT_TO_POINT | typeof bullet3d.constraint.CONSTRAINT_TYPE_SLIDER | typeof bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL [since 1.13.2]
-- interface anchor_axes_params { anchor: Vector3; axis1: Vector3; axis2: Vector3; collide_connected?: boolean; } [since 1.13.2]
-- interface cone_twist_params { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position?: Vector3; frame_b_rotation?: Quaternion; angular_only?: boolean; collide_connected?: boolean; } [since 1.13.2]
-- interface generic_6dof_params { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position?: Vector3; frame_b_rotation?: Quaternion; collide_connected?: boolean; } [since 1.13.2]
-- interface generic_6dof_spring_params { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position: Vector3; frame_b_rotation: Quaternion; collide_connected?: boolean; } [since 1.13.2]
-- interface hinge_params { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position?: Vector3; frame_b_rotation?: Quaternion; use_reference_frame_a?: boolean; angular_only?: boolean; collide_connected?: boolean; } [since 1.13.2]
-- interface point_to_point_params { pivot_a: Vector3; pivot_b?: Vector3; collide_connected?: boolean; } [since 1.13.2]
-- interface slider_params { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position?: Vector3; frame_b_rotation?: Quaternion; use_linear_reference_frame_a?: boolean; collide_connected?: boolean; } [since 1.13.2]
+- interface Generic6DofParams { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position?: Vector3; frame_b_rotation?: Quaternion; collide_connected?: boolean; } [since 1.13.2]
+- interface Generic6DofSpringParams { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position: Vector3; frame_b_rotation: Quaternion; collide_connected?: boolean; } [since 1.13.2]
+- interface HingeParams { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position?: Vector3; frame_b_rotation?: Quaternion; use_reference_frame_a?: boolean; angular_only?: boolean; collide_connected?: boolean; } [since 1.13.2]
+- interface PointToPointParams { pivot_a: Vector3; pivot_b?: Vector3; collide_connected?: boolean; } [since 1.13.2]
+- interface SliderParams { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position?: Vector3; frame_b_rotation?: Quaternion; use_linear_reference_frame_a?: boolean; collide_connected?: boolean; } [since 1.13.2]
 
 ### bullet3d.rigid_body
 
@@ -12592,7 +12592,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function apply_torque(body: Opaque<"btRigidBody">, torque: Vector3): void; [since 1.13.2]
 - function apply_torque_impulse(body: Opaque<"btRigidBody">, impulse: Vector3): void; [since 1.13.2]
 - function clear_forces(body: Opaque<"btRigidBody">): void; [since 1.13.2]
-- function compute_aabb(body: Opaque<"btRigidBody">): bullet3d.world.aabb; [since 1.13.2]
+- function compute_aabb(body: Opaque<"btRigidBody">): bullet3d.world.Aabb; [since 1.13.2]
 - function get_angular_damping(body: Opaque<"btRigidBody">): number; [since 1.13.2]
 - function get_angular_factor(body: Opaque<"btRigidBody">): Vector3; [since 1.13.2]
 - function get_angular_sleeping_threshold(body: Opaque<"btRigidBody">): number; [since 1.13.2]
@@ -12655,26 +12655,26 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### bullet3d.world
 
-- function cast_ray(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.query_filter, max_results?: number): bullet3d.world.cast_result[]; [since 1.13.2]
-- function cast_ray_async(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, callback: (self: unknown, hits: bullet3d.world.cast_result[]) => void, filter?: bullet3d.world.query_filter, max_results?: number): void; [since 1.13.2]
-- function cast_ray_closest(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.query_filter): bullet3d.world.cast_result | undefined; [since 1.13.2]
-- function cast_shape(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, filter?: bullet3d.world.query_filter, max_results?: number): bullet3d.world.cast_result[]; [since 1.13.2]
-- function cast_shape_async(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, callback: (self: unknown, hits: bullet3d.world.cast_result[]) => void, filter?: bullet3d.world.query_filter, max_results?: number): void; [since 1.13.2]
-- function cast_shape_closest(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, filter?: bullet3d.world.query_filter): bullet3d.world.cast_result | undefined; [since 1.13.2]
-- function contact_pair_test(world: bullet3d.btDiscreteDynamicsWorld, object_a: Opaque<"btCollisionObject" | "btRigidBody">, object_b: Opaque<"btCollisionObject" | "btRigidBody">, max_results?: number): bullet3d.world.contact_result[]; [since 1.13.2]
-- function contact_test(world: bullet3d.btDiscreteDynamicsWorld, object: Opaque<"btCollisionObject" | "btRigidBody">, filter?: bullet3d.world.query_filter, max_results?: number): bullet3d.world.contact_result[]; [since 1.13.2]
+- function cast_ray(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.QueryFilter, max_results?: number): bullet3d.world.CastResult[]; [since 1.13.2]
+- function cast_ray_async(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, callback: (self: unknown, hits: bullet3d.world.CastResult[]) => void, filter?: bullet3d.world.QueryFilter, max_results?: number): void; [since 1.13.2]
+- function cast_ray_closest(world: bullet3d.btDiscreteDynamicsWorld, origin: Vector3, translation: Vector3, filter?: bullet3d.world.QueryFilter): bullet3d.world.CastResult | undefined; [since 1.13.2]
+- function cast_shape(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, filter?: bullet3d.world.QueryFilter, max_results?: number): bullet3d.world.CastResult[]; [since 1.13.2]
+- function cast_shape_async(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, callback: (self: unknown, hits: bullet3d.world.CastResult[]) => void, filter?: bullet3d.world.QueryFilter, max_results?: number): void; [since 1.13.2]
+- function cast_shape_closest(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, translation: Vector3, filter?: bullet3d.world.QueryFilter): bullet3d.world.CastResult | undefined; [since 1.13.2]
+- function contact_pair_test(world: bullet3d.btDiscreteDynamicsWorld, object_a: Opaque<"btCollisionObject" | "btRigidBody">, object_b: Opaque<"btCollisionObject" | "btRigidBody">, max_results?: number): bullet3d.world.ContactResult[]; [since 1.13.2]
+- function contact_test(world: bullet3d.btDiscreteDynamicsWorld, object: Opaque<"btCollisionObject" | "btRigidBody">, filter?: bullet3d.world.QueryFilter, max_results?: number): bullet3d.world.ContactResult[]; [since 1.13.2]
 - function get_collision_object_count(world: bullet3d.btDiscreteDynamicsWorld): number; [since 1.13.2]
 - function get_collision_objects(world: bullet3d.btDiscreteDynamicsWorld, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[]; [since 1.13.2]
 - function get_gravity(world: bullet3d.btDiscreteDynamicsWorld): Vector3; [since 1.13.2]
 - function is_valid(world: bullet3d.btDiscreteDynamicsWorld): boolean; [since 1.13.2]
-- function overlap_aabb(world: bullet3d.btDiscreteDynamicsWorld, aabb: bullet3d.world.aabb, filter?: bullet3d.world.query_filter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[]; [since 1.13.2]
-- function overlap_point(world: bullet3d.btDiscreteDynamicsWorld, point: Vector3, filter?: bullet3d.world.query_filter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[]; [since 1.13.2]
-- function overlap_shape(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, filter?: bullet3d.world.query_filter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[]; [since 1.13.2]
+- function overlap_aabb(world: bullet3d.btDiscreteDynamicsWorld, aabb: bullet3d.world.Aabb, filter?: bullet3d.world.QueryFilter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[]; [since 1.13.2]
+- function overlap_point(world: bullet3d.btDiscreteDynamicsWorld, point: Vector3, filter?: bullet3d.world.QueryFilter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[]; [since 1.13.2]
+- function overlap_shape(world: bullet3d.btDiscreteDynamicsWorld, shape: bullet3d.shape.definition, filter?: bullet3d.world.QueryFilter, max_results?: number): Opaque<"btCollisionObject" | "btRigidBody">[]; [since 1.13.2]
 - function set_gravity(world: bullet3d.btDiscreteDynamicsWorld, gravity: Vector3): void; [since 1.13.2]
-- interface aabb { lower: Vector3; upper: Vector3; } [since 1.13.2]
-- interface cast_result { object: Opaque<"btCollisionObject" | "btRigidBody">; point: Vector3; normal: Vector3; fraction: number; shape_index?: number; initial_overlap: boolean; inside: boolean; } [since 1.13.2]
-- interface contact_result { object_a: Opaque<"btCollisionObject" | "btRigidBody">; object_b: Opaque<"btCollisionObject" | "btRigidBody">; position_a: Vector3; position_b: Vector3; normal_on_b: Vector3; distance: number; } [since 1.13.2]
-- interface query_filter { category_bits?: number; mask_bits?: number; include_triggers?: boolean; ignore?: Opaque<"btCollisionObject" | "btRigidBody"> | Opaque<"btCollisionObject" | "btRigidBody">[]; report_initial_overlaps?: boolean; } [since 1.13.2]
+- interface Aabb { lower: Vector3; upper: Vector3; } [since 1.13.2]
+- interface CastResult { object: Opaque<"btCollisionObject" | "btRigidBody">; point: Vector3; normal: Vector3; fraction: number; shape_index?: number; initial_overlap: boolean; inside: boolean; } [since 1.13.2]
+- interface ContactResult { object_a: Opaque<"btCollisionObject" | "btRigidBody">; object_b: Opaque<"btCollisionObject" | "btRigidBody">; position_a: Vector3; position_b: Vector3; normal_on_b: Vector3; distance: number; } [since 1.13.2]
+- interface QueryFilter { category_bits?: number; mask_bits?: number; include_triggers?: boolean; ignore?: Opaque<"btCollisionObject" | "btRigidBody"> | Opaque<"btCollisionObject" | "btRigidBody">[]; report_initial_overlaps?: boolean; } [since 1.13.2]
 
 ### camera
 
@@ -12728,29 +12728,29 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### collectionproxy
 
 - function get_resources(collectionproxy: Url | string | Hash): string[];
-- function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.load_data, sender: Url) => void): void; [since 1.13.1]
+- function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.LoadData, sender: Url) => void): void; [since 1.13.1]
 - function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;
 - collectionproxy.RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" }
 - collectionproxy.RESULT_LOADING: number & { readonly __brand: "collectionproxy.RESULT_LOADING" }
 - collectionproxy.RESULT_NOT_EXCLUDED: number & { readonly __brand: "collectionproxy.RESULT_NOT_EXCLUDED" }
+- interface LoadData { progress?: number; code?: number; } [since 1.13.2]
 - type Result = typeof collectionproxy.RESULT_ALREADY_LOADED | typeof collectionproxy.RESULT_LOADING | typeof collectionproxy.RESULT_NOT_EXCLUDED [since 1.13.2]
 - type TIME_STEP_MODE = 0 | 1 [since 1.13.2]
-- interface load_data { progress?: number; code?: number; } [since 1.13.2]
 
 ### compute
 
-- function get_constants(path: Hash | string): material.constant_info[]; [since 1.13.0]
-- function get_samplers(path: Hash | string): material.sampler_info[]; [since 1.13.0]
-- function get_textures(path: Hash | string): material.texture_info[]; [since 1.13.0]
-- function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.constant_options> | Record<string, material.constant_options>): void; [since 1.13.0]
-- function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.sampler_options> | Record<string, material.sampler_options>): void; [since 1.13.0]
+- function get_constants(path: Hash | string): material.ConstantInfo[]; [since 1.13.0]
+- function get_samplers(path: Hash | string): material.SamplerInfo[]; [since 1.13.0]
+- function get_textures(path: Hash | string): material.TextureInfo[]; [since 1.13.0]
+- function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.ConstantOptions> | Record<string, material.ConstantOptions>): void; [since 1.13.0]
+- function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.SamplerOptions> | Record<string, material.SamplerOptions>): void; [since 1.13.0]
 - function set_textures(path: Hash | string, textures: LuaMap<string | Hash, string | Hash> | Record<string, string | Hash>): void; [since 1.13.0]
 
 ### crash
 
 - function get_backtrace(handle: number): string[];
 - function get_extra_data(handle: number): string;
-- function get_modules(handle: number): crash.module_info[];
+- function get_modules(handle: number): crash.ModuleInfo[];
 - function get_signum(handle: number): number;
 - function get_sys_field(handle: number, index: crash.SysField): string | undefined;
 - function get_user_field(handle: number, index: crash.USERFIELD): string;
@@ -12772,9 +12772,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - crash.SYSFIELD_TERRITORY: number & { readonly __brand: "crash.SYSFIELD_TERRITORY" }
 - crash.USERFIELD_MAX: number & { readonly __brand: "crash.USERFIELD_MAX" }
 - crash.USERFIELD_SIZE: number & { readonly __brand: "crash.USERFIELD_SIZE" }
+- interface ModuleInfo { name: string; address: string; } [since 1.13.2]
 - type SysField = typeof crash.SYSFIELD_ENGINE_VERSION | typeof crash.SYSFIELD_ENGINE_HASH | typeof crash.SYSFIELD_DEVICE_MODEL | typeof crash.SYSFIELD_MANUFACTURER | typeof crash.SYSFIELD_SYSTEM_NAME | typeof crash.SYSFIELD_SYSTEM_VERSION | typeof crash.SYSFIELD_LANGUAGE | typeof crash.SYSFIELD_DEVICE_LANGUAGE | typeof crash.SYSFIELD_TERRITORY | typeof crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT [since 1.13.2]
 - type USERFIELD = number [since 1.13.2]
-- interface module_info { name: string; address: string; } [since 1.13.2]
 
 ### factory
 
@@ -12791,12 +12791,12 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### font
 
 - function add_font(fontc: string | Hash, font: string | Hash): void;
-- function get_info(fontc: string | Hash): font.info;
+- function get_info(fontc: string | Hash): font.Info;
 - function prewarm_text(fontc: string | Hash, text: string, callback?: (self: unknown, request_id: number, result: boolean, errstring?: string) => void): number;
 - function remove_font(fontc: string | Hash, font: string | Hash): void;
 - function set_style(fontc: string | Hash, name: string, style: string): void; [since 1.13.2]
-- interface file_info { path: string; path_hash: Hash; } [since 1.13.2]
-- interface info { path: Hash; fonts: font.file_info[]; } [since 1.13.2]
+- interface FileInfo { path: string; path_hash: Hash; } [since 1.13.2]
+- interface Info { path: Hash; fonts: font.FileInfo[]; } [since 1.13.2]
 
 ### globals
 
@@ -12813,8 +12813,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url>, recursive: boolean): void;
 - function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
 - go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, ...options: [] | [GoPropertyOptions]) => P[K]
-- go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K): go.properties[K]
-- go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options: GoPropertyOptions): go.properties[K]
+- go.get<K extends keyof go.Properties>(url: SceneAddress | Hash | Url, property: K): go.Properties[K]
+- go.get<K extends keyof go.Properties>(url: SceneAddress | Hash | Url, property: K, options: GoPropertyOptions): go.Properties[K]
 - go.get(url: SceneAddress | Hash | Url, property: string | Hash): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[]
 - go.get(url: SceneAddress | Hash | Url, property: string | Hash, options: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[]
 - function get_id(): Hash;
@@ -12838,8 +12838,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
 - go.property(name: string, value: string): ScriptProperty<string>
 - go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], ...options: [] | [GoPropertyOptions]) => void
-- go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K]): void
-- go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options: GoPropertyOptions): void
+- go.set<K extends keyof go.Properties>(url: SceneAddress | Hash | Url, property: K, value: go.Properties[K]): void
+- go.set<K extends keyof go.Properties>(url: SceneAddress | Hash | Url, property: K, value: go.Properties[K], options: GoPropertyOptions): void
 - go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[]): void
 - go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[], options: GoPropertyOptions): void
 - function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
@@ -12904,14 +12904,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - scale: number | Vector3
 - type Easing = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE
 - type Playback = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG
-- interface action { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; acc_x?: number; acc_y?: number; acc_z?: number; gamepad?: number; userid?: number; gamepad_guid?: string; gamepad_guid_info?: go.on_input.gamepad_guid_info; gamepad_unknown?: boolean; gamepad_name?: string; gamepad_axis?: number[]; gamepad_hats?: number[]; gamepad_buttons?: number[]; touch?: go.on_input.touch[]; text?: string; } [since 1.13.2]
-- interface gamepad_guid_info { vendor: number; product: number; bus: number; crc: number; version: number; } [since 1.13.2]
-- interface touch { id: number; pressed: boolean; released: boolean; tap_count: number; x: number; y: number; screen_x: number; screen_y: number; dx: number; dy: number; screen_dx: number; screen_dy: number; } [since 1.13.2]
-- interface property_options { index?: number; key?: Hash; keys?: Hash[]; } [since 1.13.2]
+- interface PropertyOptions { index?: number; key?: Hash; keys?: Hash[]; } [since 1.13.2]
+- interface Action { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; acc_x?: number; acc_y?: number; acc_z?: number; gamepad?: number; userid?: number; gamepad_guid?: string; gamepad_guid_info?: go.on_input.GamepadGuidInfo; gamepad_unknown?: boolean; gamepad_name?: string; gamepad_axis?: number[]; gamepad_hats?: number[]; gamepad_buttons?: number[]; touch?: go.on_input.Touch[]; text?: string; } [since 1.13.2]
+- interface GamepadGuidInfo { vendor: number; product: number; bus: number; crc: number; version: number; } [since 1.13.2]
+- interface Touch { id: number; pressed: boolean; released: boolean; tap_count: number; x: number; y: number; screen_x: number; screen_y: number; dx: number; dy: number; screen_dx: number; screen_dy: number; } [since 1.13.2]
 
 ### graphics
 
-- function get_adapter_info(): graphics.adapter_info; [since 1.13.0]
+- function get_adapter_info(): graphics.AdapterInfo; [since 1.13.0]
 - function get_engine_adapters(): string[]; [since 1.13.0]
 - graphics.BLEND_EQUATION_ADD: number & { readonly __brand: "graphics.BLEND_EQUATION_ADD" } [since 1.13.0]
 - graphics.BLEND_EQUATION_MAX: number & { readonly __brand: "graphics.BLEND_EQUATION_MAX" } [since 1.13.0]
@@ -13065,6 +13065,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - graphics.TEXTURE_WRAP_CLAMP_TO_EDGE: number & { readonly __brand: "graphics.TEXTURE_WRAP_CLAMP_TO_EDGE" }
 - graphics.TEXTURE_WRAP_MIRRORED_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_MIRRORED_REPEAT" }
 - graphics.TEXTURE_WRAP_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_REPEAT" }
+- interface AdapterInfo { family: string; version_major: number; version_minor: number; limits: graphics.AdapterLimits; extensions: string[]; features: graphics.ContextFeature[]; } [since 1.13.2]
+- interface AdapterLimits { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number; max_storage_buffers_per_stage: number; } [since 1.13.2]
 - type BlendEquation = typeof graphics.BLEND_EQUATION_ADD | typeof graphics.BLEND_EQUATION_MAX | typeof graphics.BLEND_EQUATION_MIN | typeof graphics.BLEND_EQUATION_REVERSE_SUBTRACT | typeof graphics.BLEND_EQUATION_SUBTRACT [since 1.13.2]
 - type BlendFactor = typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ZERO
 - type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | NonNullable<typeof graphics.BUFFER_TYPE_COLOR1_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR2_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR3_BIT> | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT
@@ -13083,20 +13085,18 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type TextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_2D_ARRAY | NonNullable<typeof graphics.TEXTURE_TYPE_3D> | typeof graphics.TEXTURE_TYPE_CUBE_MAP | typeof graphics.TEXTURE_TYPE_IMAGE_2D | NonNullable<typeof graphics.TEXTURE_TYPE_IMAGE_3D> [since 1.13.2]
 - type TextureUsageFlag = typeof graphics.TEXTURE_USAGE_FLAG_COLOR | typeof graphics.TEXTURE_USAGE_FLAG_INPUT | typeof graphics.TEXTURE_USAGE_FLAG_MEMORYLESS | typeof graphics.TEXTURE_USAGE_FLAG_SAMPLE | typeof graphics.TEXTURE_USAGE_FLAG_STORAGE [since 1.13.2]
 - type TextureWrap = typeof graphics.TEXTURE_WRAP_CLAMP_TO_BORDER | typeof graphics.TEXTURE_WRAP_CLAMP_TO_EDGE | typeof graphics.TEXTURE_WRAP_MIRRORED_REPEAT | typeof graphics.TEXTURE_WRAP_REPEAT [since 1.13.2]
-- interface adapter_info { family: string; version_major: number; version_minor: number; limits: graphics.adapter_limits; extensions: string[]; features: graphics.ContextFeature[]; } [since 1.13.2]
-- interface adapter_limits { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number; max_storage_buffers_per_stage: number; } [since 1.13.2]
 
 ### gui
 
-- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.Prop | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void
-- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.Prop | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.Playback): void
+- gui.animate(node: Opaque<"node">, property: keyof gui.NodeProperties | gui.Prop | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void
+- gui.animate(node: Opaque<"node">, property: keyof gui.NodeProperties | gui.Prop | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.Playback): void
 - function cancel_animations(node: Opaque<"node">, property?: string | Hash | gui.Prop): void;
 - function cancel_flipbook(node: Opaque<"node">): void;
 - function clone(node: Opaque<"node">): Opaque<"node">;
 - function clone_tree(node: Opaque<"node"> | undefined): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
 - function delete_node(node: Opaque<"node">): void;
 - function delete_texture(texture: string | Hash): void;
-- gui.get<K extends keyof gui.node_properties | gui.Prop>(node: Opaque<"node">, property: K): gui.node_properties[NodePropertyName<K>]
+- gui.get<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<"node">, property: K): gui.NodeProperties[NodePropertyName<K>]
 - gui.get(node: Opaque<"node">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
 - gui.get(node: Opaque<"node">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
 - function get_adjust_mode(node: Opaque<"node">): gui.Adjust;
@@ -13120,7 +13120,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_inner_radius(node: Opaque<"node">): number;
 - function get_layer(node: Opaque<"node">): Hash;
 - function get_layout(): Hash;
-- function get_layout_objects(node: Opaque<"node">): gui.layout_object[]; [since 1.13.2]
+- function get_layout_objects(node: Opaque<"node">): gui.LayoutObject[]; [since 1.13.2]
 - function get_layouts(): LuaTable<Hash, Vector3>;
 - function get_leading(node: Opaque<"node">): number;
 - function get_line_break(node: Opaque<"node">): boolean;
@@ -13163,13 +13163,13 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function new_texture(texture_id: string | Hash, width: number, height: number, type: string | image.Type, buffer: string, flip: boolean): LuaMultiReturn<[boolean, gui.Result | undefined]>;
 - function pick_node(node: Opaque<"node">, x: number, y: number): boolean;
 - function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: Opaque<"node">) => void): void;
-- function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function: ((self: unknown, node: Opaque<"node">) => void) | undefined, play_properties: gui.play_properties): void;
+- function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function: ((self: unknown, node: Opaque<"node">) => void) | undefined, play_properties: gui.PlayProperties): void;
 - function play_particlefx(node: Opaque<"node">, emitter_state_function?: (self: unknown, node: Opaque<"node"> | undefined, emitter: Hash, state: particlefx.EmitterState) => void): void;
 - function reset_keyboard(): void;
 - function reset_material(node: Opaque<"node">): void;
 - function reset_nodes(): void;
 - function screen_to_local(node: Opaque<"node">, screen_position: Vector3 | Vector4): Vector3;
-- gui.set<K extends keyof gui.node_properties | gui.Prop>(node: Opaque<"node">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void
+- gui.set<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<"node">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void
 - gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash): void
 - gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options: gui.PropertyOptions): void
 - gui.set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash): void
@@ -13224,7 +13224,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_yanchor(node: Opaque<"node">, anchor: gui.Anchor): void;
 - function show_keyboard(type: gui.KeyboardType, autoclose: boolean): void;
 - function stop_particlefx(node: Opaque<"node">): void;
-- function stop_particlefx(node: Opaque<"node">, options: particlefx.stop_options): void;
+- function stop_particlefx(node: Opaque<"node">, options: particlefx.StopOptions): void;
 - gui.ADJUST_FIT: number & { readonly __brand: "gui.ADJUST_FIT" }
 - gui.ADJUST_STRETCH: number & { readonly __brand: "gui.ADJUST_STRETCH" }
 - gui.ADJUST_ZOOM: number & { readonly __brand: "gui.ADJUST_ZOOM" }
@@ -13340,17 +13340,17 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type ClippingMode = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL
 - type Easing = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE
 - type KeyboardType = typeof gui.KEYBOARD_TYPE_DEFAULT | typeof gui.KEYBOARD_TYPE_EMAIL | typeof gui.KEYBOARD_TYPE_NUMBER_PAD | typeof gui.KEYBOARD_TYPE_PASSWORD
+- interface LayoutObject { type: string; id: Hash; text_offset: number; text_length: number; x: number; y: number; width: number; height: number; attributes: LuaTable<string, string>; } [since 1.13.2]
 - type PieBounds = typeof gui.PIEBOUNDS_ELLIPSE | typeof gui.PIEBOUNDS_RECTANGLE
 - type Pivot = typeof gui.PIVOT_CENTER | typeof gui.PIVOT_E | typeof gui.PIVOT_N | typeof gui.PIVOT_NE | typeof gui.PIVOT_NW | typeof gui.PIVOT_S | typeof gui.PIVOT_SE | typeof gui.PIVOT_SW | typeof gui.PIVOT_W
+- interface PlayProperties { offset?: number; playback_rate?: number; } [since 1.13.2]
 - type Playback = typeof gui.PLAYBACK_LOOP_BACKWARD | typeof gui.PLAYBACK_LOOP_FORWARD | typeof gui.PLAYBACK_LOOP_PINGPONG | typeof gui.PLAYBACK_ONCE_BACKWARD | typeof gui.PLAYBACK_ONCE_FORWARD | typeof gui.PLAYBACK_ONCE_PINGPONG
 - type Prop = typeof gui.PROP_COLOR | typeof gui.PROP_EULER | typeof gui.PROP_FILL_ANGLE | typeof gui.PROP_INNER_RADIUS | typeof gui.PROP_LEADING | typeof gui.PROP_OUTLINE | typeof gui.PROP_POSITION | typeof gui.PROP_ROTATION | typeof gui.PROP_SCALE | typeof gui.PROP_SHADOW | typeof gui.PROP_SIZE | typeof gui.PROP_SLICE9 | typeof gui.PROP_TRACKING
 - type Result = typeof gui.RESULT_DATA_ERROR | typeof gui.RESULT_OUT_OF_RESOURCES | typeof gui.RESULT_TEXTURE_ALREADY_EXISTS [since 1.13.2]
 - type SafeArea = typeof gui.SAFE_AREA_BOTH | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_SHORT
+- interface SetOptions { index?: number; key?: string | Hash; } [since 1.13.2]
 - type SizeMode = typeof gui.SIZE_MODE_AUTO | typeof gui.SIZE_MODE_MANUAL
 - type Type = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT
-- interface layout_object { type: string; id: Hash; text_offset: number; text_length: number; x: number; y: number; width: number; height: number; attributes: LuaTable<string, string>; } [since 1.13.2]
-- interface play_properties { offset?: number; playback_rate?: number; } [since 1.13.2]
-- interface set_options { index?: number; key?: string | Hash; } [since 1.13.2]
 
 ### html5
 
@@ -13359,43 +13359,43 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### http
 
-- function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: http.request_options): void;
-- interface request_options { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; } [since 1.13.2]
+- function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: http.RequestOptions): void;
+- interface RequestOptions { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; } [since 1.13.2]
 
 ### image
 
-- function get_astc_header(buffer: string): image.astc_header;
+- function get_astc_header(buffer: string): image.AstcHeader;
 - function load(buffer: string): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined; [through 1.13.1] [signature transition]
 - function load(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined;
-- function load(buffer: string): image.load_result | undefined; [since 1.13.2] [signature transition]
-- function load(buffer: string, options: boolean | image.load_options): image.load_result | undefined;
+- function load(buffer: string): image.LoadResult | undefined; [since 1.13.2] [signature transition]
+- function load(buffer: string, options: boolean | image.LoadOptions): image.LoadResult | undefined;
 - function load_buffer(buffer: string): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } } | undefined; [through 1.13.1] [signature transition]
 - function load_buffer(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } } | undefined;
-- function load_buffer(buffer: string): image.load_buffer_result | undefined; [since 1.13.2] [signature transition]
-- function load_buffer(buffer: string, options: boolean | image.load_options): image.load_buffer_result | undefined;
+- function load_buffer(buffer: string): image.LoadBufferResult | undefined; [since 1.13.2] [signature transition]
+- function load_buffer(buffer: string, options: boolean | image.LoadOptions): image.LoadBufferResult | undefined;
 - image.TYPE_LUMINANCE: string & { readonly __brand: "image.TYPE_LUMINANCE" }
 - image.TYPE_LUMINANCE_ALPHA: string & { readonly __brand: "image.TYPE_LUMINANCE_ALPHA" }
 - image.TYPE_RGB: string & { readonly __brand: "image.TYPE_RGB" }
 - image.TYPE_RGBA: string & { readonly __brand: "image.TYPE_RGBA" }
+- interface AstcHeader { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number; } [since 1.13.2]
+- interface LoadBufferResult { width: number; height: number; type: image.Type; buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; } [since 1.13.2]
+- interface LoadOptions { premultiply_alpha?: boolean; flip_vertically?: boolean; } [since 1.13.2]
+- interface LoadResult { width: number; height: number; type: image.Type; buffer: string; } [since 1.13.2]
 - type Type = typeof image.TYPE_RGB | typeof image.TYPE_RGBA | typeof image.TYPE_LUMINANCE | typeof image.TYPE_LUMINANCE_ALPHA [since 1.13.2]
-- interface astc_header { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number; } [since 1.13.2]
-- interface load_buffer_result { width: number; height: number; type: image.Type; buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; } [since 1.13.2]
-- interface load_options { premultiply_alpha?: boolean; flip_vertically?: boolean; } [since 1.13.2]
-- interface load_result { width: number; height: number; type: image.Type; buffer: string; } [since 1.13.2]
 
 ### json
 
 - function decode(json: string, options?: { decode_null_as_userdata?: boolean }): Record<string | number, unknown>; [through 1.13.1] [signature transition]
-- function decode(json: string, options?: json.decode_options): unknown; [since 1.13.2] [signature transition]
+- function decode(json: string, options?: json.DecodeOptions): unknown; [since 1.13.2] [signature transition]
 - function encode(tbl: Record<string | number, unknown>, options?: { encode_empty_table_as_object?: string }): string; [through 1.13.1] [signature transition]
-- function encode(tbl: unknown, options?: json.encode_options): string; [since 1.13.2] [signature transition]
+- function encode(tbl: unknown, options?: json.EncodeOptions): string; [since 1.13.2] [signature transition]
 - json.null: unknown
-- interface decode_options { decode_null_as_userdata?: boolean; } [since 1.13.2]
-- interface encode_options { encode_empty_table_as_object?: boolean; } [since 1.13.2]
+- interface DecodeOptions { decode_null_as_userdata?: boolean; } [since 1.13.2]
+- interface EncodeOptions { encode_empty_table_as_object?: boolean; } [since 1.13.2]
 
 ### label
 
-- function get_layout_objects(url: string | Hash | Url): label.layout_object[]; [since 1.13.2]
+- function get_layout_objects(url: string | Hash | Url): label.LayoutObject[]; [since 1.13.2]
 - function get_text(url: string | Hash | Url): string; [deprecated since 1.13.2]
 - function set_text(url: string | Hash | Url, text: string | number): void; [deprecated since 1.13.2]
 - color: Vector4
@@ -13409,7 +13409,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - size: Vector3
 - text: string [since 1.13.2]
 - tracking: number
-- interface layout_object { type: string; id: Hash; text_offset: number; text_length: number; x: number; y: number; width: number; height: number; attributes: LuaTable<string, string>; } [since 1.13.2]
+- interface LayoutObject { type: string; id: Hash; text_offset: number; text_length: number; x: number; y: number; width: number; height: number; attributes: LuaTable<string, string>; } [since 1.13.2]
 
 ### liveupdate
 
@@ -13436,14 +13436,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### material
 
-- function get_constants(path: Hash | string): material.constant_info[]; [since 1.13.0]
-- function get_samplers(path: Hash | string): material.sampler_info[]; [since 1.13.0]
-- function get_textures(path: Hash | string): LuaMap<number, material.texture_info>; [since 1.13.0]
-- function get_vertex_attributes(path: Hash | string): material.vertex_attribute_info[]; [since 1.13.0]
-- function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.constant_options> | Record<string, material.constant_options>): void; [since 1.13.0]
-- function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.sampler_options> | Record<string, material.sampler_options>): void; [since 1.13.0]
+- function get_constants(path: Hash | string): material.ConstantInfo[]; [since 1.13.0]
+- function get_samplers(path: Hash | string): material.SamplerInfo[]; [since 1.13.0]
+- function get_textures(path: Hash | string): LuaMap<number, material.TextureInfo>; [since 1.13.0]
+- function get_vertex_attributes(path: Hash | string): material.VertexAttributeInfo[]; [since 1.13.0]
+- function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.ConstantOptions> | Record<string, material.ConstantOptions>): void; [since 1.13.0]
+- function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.SamplerOptions> | Record<string, material.SamplerOptions>): void; [since 1.13.0]
 - function set_textures(path: Hash | string, textures: LuaMap<string | Hash, string | Hash> | Record<string, string | Hash>): void; [since 1.13.0]
-- function set_vertex_attributes(path: Hash | string, attributes: LuaMap<string | Hash, material.vertex_attribute_options> | Record<string, material.vertex_attribute_options> | material.named_vertex_attribute_options[]): void; [since 1.13.0]
+- function set_vertex_attributes(path: Hash | string, attributes: LuaMap<string | Hash, material.VertexAttributeOptions> | Record<string, material.VertexAttributeOptions> | material.NamedVertexAttributeOptions[]): void; [since 1.13.0]
 - material.CONSTANT_TYPE_NORMAL: number & { readonly __brand: "material.CONSTANT_TYPE_NORMAL" } [since 1.13.2]
 - material.CONSTANT_TYPE_PROJECTION: number & { readonly __brand: "material.CONSTANT_TYPE_PROJECTION" } [since 1.13.2]
 - material.CONSTANT_TYPE_PROJECTION_INVERSE: number & { readonly __brand: "material.CONSTANT_TYPE_PROJECTION_INVERSE" } [since 1.13.2]
@@ -13462,28 +13462,28 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - material.CONSTANT_TYPE_WORLDVIEW_INVERSE: number & { readonly __brand: "material.CONSTANT_TYPE_WORLDVIEW_INVERSE" } [since 1.13.2]
 - material.CONSTANT_TYPE_WORLDVIEWPROJ: number & { readonly __brand: "material.CONSTANT_TYPE_WORLDVIEWPROJ" } [since 1.13.2]
 - material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE: number & { readonly __brand: "material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE" } [since 1.13.2]
+- interface ConstantInfo { name: Hash; type: material.ConstantType; value?: material.constant_info_value; } [since 1.13.2]
+- interface ConstantOptions { type?: material.ConstantType; value?: material.constant_value; } [since 1.13.2]
 - type ConstantType = typeof material.CONSTANT_TYPE_USER | typeof material.CONSTANT_TYPE_USER_COLOR | typeof material.CONSTANT_TYPE_USER_MATRIX4 | typeof material.CONSTANT_TYPE_VIEWPROJ | typeof material.CONSTANT_TYPE_WORLD | typeof material.CONSTANT_TYPE_TEXTURE | typeof material.CONSTANT_TYPE_VIEW | typeof material.CONSTANT_TYPE_PROJECTION | typeof material.CONSTANT_TYPE_NORMAL | typeof material.CONSTANT_TYPE_WORLDVIEW | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ | typeof material.CONSTANT_TYPE_TIME | typeof material.CONSTANT_TYPE_WORLD_INVERSE | typeof material.CONSTANT_TYPE_VIEW_INVERSE | typeof material.CONSTANT_TYPE_PROJECTION_INVERSE | typeof material.CONSTANT_TYPE_VIEWPROJ_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEW_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE [since 1.13.2]
-- interface constant_info { name: Hash; type: material.ConstantType; value?: material.constant_info_value; } [since 1.13.2]
+- interface NamedVertexAttributeOptions { name: string | Hash; value?: material.vertex_attribute_value; normalize?: boolean; data_type?: graphics.DataType; coordinate_space?: graphics.CoordinateSpace; semantic_type?: graphics.SemanticType; } [since 1.13.2]
+- interface SamplerInfo { name: Hash; type: graphics.TextureType | 6 | 7 | 8 | 9 | 10; u_wrap: graphics.TextureWrap; v_wrap: graphics.TextureWrap; w_wrap: graphics.TextureWrap; min_filter: graphics.TextureFilter; mag_filter: graphics.TextureFilter; max_anisotropy: number; } [since 1.13.2]
+- interface SamplerOptions { u_wrap?: graphics.TextureWrap; v_wrap?: graphics.TextureWrap; w_wrap?: graphics.TextureWrap; min_filter?: graphics.TextureFilter; mag_filter?: graphics.TextureFilter; max_anisotropy?: number; } [since 1.13.2]
+- interface TextureInfo { path?: Hash; handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; type: graphics.TextureType; flags: graphics.TextureUsageFlag | number; } [since 1.13.2]
+- interface VertexAttributeInfo { name: Hash; value: material.vertex_attribute_value; normalize: boolean; data_type: graphics.DataType; coordinate_space: graphics.CoordinateSpace; semantic_type: graphics.SemanticType; } [since 1.13.2]
+- interface VertexAttributeOptions { value?: material.vertex_attribute_value; normalize?: boolean; data_type?: graphics.DataType; coordinate_space?: graphics.CoordinateSpace; semantic_type?: graphics.SemanticType; } [since 1.13.2]
 - type constant_info_value = Vector4 | Matrix4 | Vector4[] | Matrix4[] [since 1.13.2]
-- interface constant_options { type?: material.ConstantType; value?: material.constant_value; } [since 1.13.2]
 - type constant_value = number | Vector3 | Vector4 | Matrix4 | (number | Vector3 | Vector4 | Matrix4)[] [since 1.13.2]
-- interface named_vertex_attribute_options { name: string | Hash; value?: material.vertex_attribute_value; normalize?: boolean; data_type?: graphics.DataType; coordinate_space?: graphics.CoordinateSpace; semantic_type?: graphics.SemanticType; } [since 1.13.2]
-- interface sampler_info { name: Hash; type: graphics.TextureType | 6 | 7 | 8 | 9 | 10; u_wrap: graphics.TextureWrap; v_wrap: graphics.TextureWrap; w_wrap: graphics.TextureWrap; min_filter: graphics.TextureFilter; mag_filter: graphics.TextureFilter; max_anisotropy: number; } [since 1.13.2]
-- interface sampler_options { u_wrap?: graphics.TextureWrap; v_wrap?: graphics.TextureWrap; w_wrap?: graphics.TextureWrap; min_filter?: graphics.TextureFilter; mag_filter?: graphics.TextureFilter; max_anisotropy?: number; } [since 1.13.2]
-- interface texture_info { path?: Hash; handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; type: graphics.TextureType; flags: graphics.TextureUsageFlag | number; } [since 1.13.2]
-- interface vertex_attribute_info { name: Hash; value: material.vertex_attribute_value; normalize: boolean; data_type: graphics.DataType; coordinate_space: graphics.CoordinateSpace; semantic_type: graphics.SemanticType; } [since 1.13.2]
-- interface vertex_attribute_options { value?: material.vertex_attribute_value; normalize?: boolean; data_type?: graphics.DataType; coordinate_space?: graphics.CoordinateSpace; semantic_type?: graphics.SemanticType; } [since 1.13.2]
 - type vertex_attribute_value = number | Vector3 | Vector4 | Matrix4 | number[] [since 1.13.2]
 
 ### model
 
 - function cancel(url: string | Hash | Url): void;
-- function get_aabb(url: string | Hash | Url): model.aabb;
+- function get_aabb(url: string | Hash | Url): model.Aabb;
 - function get_blend_weights(url: string | Hash | Url): number[]; [since 1.13.0]
 - function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;
-- function get_mesh_aabb(url: string | Hash | Url): LuaTable<Hash, model.aabb>;
+- function get_mesh_aabb(url: string | Hash | Url): LuaTable<Hash, model.Aabb>;
 - function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;
-- function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.play_properties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
+- function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
 - function set_blend_weights(url: string | Hash | Url, weights?: number[]): void; [since 1.13.0]
 - function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash, enabled: boolean): void;
@@ -13492,8 +13492,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - material: Hash [through 1.12.4]
 - playback_rate: number
 - textureN: Hash
-- interface aabb { min: Vector3; max: Vector3; } [since 1.13.2]
-- interface play_properties { blend_duration?: number; offset?: number; playback_rate?: number; } [since 1.13.2]
+- interface Aabb { min: Vector3; max: Vector3; } [since 1.13.2]
+- interface PlayProperties { blend_duration?: number; offset?: number; playback_rate?: number; } [since 1.13.2]
 
 ### msg
 
@@ -13512,7 +13512,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash): void;
 - function set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4 | Matrix4): void;
 - function stop(url: string | Hash | Url): void;
-- function stop(url: string | Hash | Url, options: particlefx.stop_options): void;
+- function stop(url: string | Hash | Url, options: particlefx.StopOptions): void;
 - particlefx.EMITTER_STATE_POSTSPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_POSTSPAWN" }
 - particlefx.EMITTER_STATE_PRESPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_PRESPAWN" }
 - particlefx.EMITTER_STATE_SLEEPING: number & { readonly __brand: "particlefx.EMITTER_STATE_SLEEPING" }
@@ -13521,29 +13521,29 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - image: Hash
 - material: Hash
 - type EmitterState = typeof particlefx.EMITTER_STATE_POSTSPAWN | typeof particlefx.EMITTER_STATE_PRESPAWN | typeof particlefx.EMITTER_STATE_SLEEPING | typeof particlefx.EMITTER_STATE_SPAWNING [since 1.13.2]
-- interface stop_options { clear?: boolean; } [since 1.13.2]
+- interface StopOptions { clear?: boolean; } [since 1.13.2]
 
 ### physics
 
-- function create_joint(joint_type: physics.JointType, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: physics.joint_properties): void;
+- function create_joint(joint_type: physics.JointType, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: physics.JointProperties): void;
 - function destroy_joint(collisionobject: string | Hash | Url, joint_id: string | Hash): void;
 - function get_gravity(): Vector3;
 - function get_group(url: string | Hash | Url): Hash;
-- function get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): physics.joint_properties_info;
+- function get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): physics.JointPropertiesInfo;
 - function get_joint_reaction_force(collisionobject: string | Hash | Url, joint_id: string | Hash): Vector3;
 - function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;
 - function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;
-- function get_shape(url: string | Hash | Url, shape: string | Hash): physics.shape_data;
-- function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.raycast_options): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined;
+- function get_shape(url: string | Hash | Url, shape: string | Hash): physics.ShapeData;
+- function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.RaycastOptions): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined;
 - function raycast_async(from: Vector3, to: Vector3, groups: Hash[]): void;
 - function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;
 - function set_event_listener(callback?: (self: unknown, events: physics.event[]) => void): void;
 - function set_gravity(gravity: Vector3): void;
 - function set_group(url: string | Hash | Url, group: string | Hash): void;
 - function set_hflip(url: string | Hash | Url, flip: boolean): void;
-- function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: physics.joint_properties): void;
+- function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: physics.JointProperties): void;
 - function set_maskbit(url: string | Hash | Url, group: string | Hash, maskbit: boolean): void;
-- function set_shape(url: string | Hash | Url, shape: string | Hash, table: physics.shape_data): void;
+- function set_shape(url: string | Hash | Url, shape: string | Hash, table: physics.ShapeData): void;
 - function set_vflip(url: string | Hash | Url, flip: boolean): void;
 - function update_mass(collisionobject: string | Hash | Url, mass: number): void;
 - function wakeup(url: string | Hash | Url): void;
@@ -13563,16 +13563,16 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - linear_damping: number
 - linear_velocity: Vector3
 - readonly mass: number;
+- interface JointProperties { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean; } [since 1.13.2]
+- interface JointPropertiesInfo { collide_connected: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean; joint_angle?: number; joint_speed?: number; joint_translation?: number; } [since 1.13.2]
 - type JointType = typeof physics.JOINT_TYPE_FIXED | typeof physics.JOINT_TYPE_HINGE | typeof physics.JOINT_TYPE_SLIDER | typeof physics.JOINT_TYPE_SPRING | typeof physics.JOINT_TYPE_WELD | typeof physics.JOINT_TYPE_WHEEL [since 1.13.2]
+- interface RaycastOptions { all?: boolean; } [since 1.13.2]
+- interface ShapeData { type: physics.ShapeType; diameter?: number; dimensions?: Vector3; height?: number; } [since 1.13.2]
 - type ShapeType = typeof physics.SHAPE_TYPE_BOX | typeof physics.SHAPE_TYPE_CAPSULE | typeof physics.SHAPE_TYPE_HULL | typeof physics.SHAPE_TYPE_MESH | typeof physics.SHAPE_TYPE_SPHERE [since 1.13.2]
 - type event = BuiltinMessages["contact_point_event"] & { type: Hash<"contact_point_event"> } | BuiltinMessages["collision_event"] & { type: Hash<"collision_event"> } | BuiltinMessages["trigger_event"] & { type: Hash<"trigger_event"> } | BuiltinMessages["ray_cast_response"] & { type: Hash<"ray_cast_response"> } | BuiltinMessages["ray_cast_missed"] & { type: Hash<"ray_cast_missed"> } [since 1.13.2]
-- interface joint_properties { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean; } [since 1.13.2]
-- interface joint_properties_info { collide_connected: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean; joint_angle?: number; joint_speed?: number; joint_translation?: number; } [since 1.13.2]
-- interface collision_info { position: Vector3; id: Hash; group: Hash; } [since 1.13.2]
-- interface contact_point_info { position: Vector3; instance_position: Vector3; normal: Vector3; relative_velocity: Vector3; mass: number; id: Hash; group: Hash; } [since 1.13.2]
-- interface trigger_info { id: Hash; group: Hash; } [since 1.13.2]
-- interface raycast_options { all?: boolean; } [since 1.13.2]
-- interface shape_data { type: physics.ShapeType; diameter?: number; dimensions?: Vector3; height?: number; } [since 1.13.2]
+- interface CollisionInfo { position: Vector3; id: Hash; group: Hash; } [since 1.13.2]
+- interface ContactPointInfo { position: Vector3; instance_position: Vector3; normal: Vector3; relative_velocity: Vector3; mass: number; id: Hash; group: Hash; } [since 1.13.2]
+- interface TriggerInfo { id: Hash; group: Hash; } [since 1.13.2]
 
 ### profiler
 
@@ -13606,10 +13606,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function disable_material(): void;
 - function disable_state(state: Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
 - function disable_texture(binding: string | Hash | number): void;
-- function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;
+- function dispatch_compute(x: number, y: number, z: number, options?: render.DispatchOptions): void;
 - function draw(predicate: Opaque<"render_predicate">): void;
-- function draw(predicate: Opaque<"render_predicate">, options: render.draw_options): void;
-- function draw_debug3d(options?: render.debug_draw_options): void;
+- function draw(predicate: Opaque<"render_predicate">, options: render.DrawOptions): void;
+- function draw_debug3d(options?: render.DebugDrawOptions): void;
 - function enable_material(material_id: string | Hash): void;
 - function enable_state(state: Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
 - function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BufferType): void;
@@ -13625,7 +13625,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_blend_equation_separate(equation_color: graphics.BlendEquation, equation_alpha: graphics.BlendEquation): void; [since 1.13.0]
 - function set_blend_func(source_factor: graphics.BlendFactor, destination_factor: graphics.BlendFactor): void;
 - function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void; [since 1.13.0]
-- function set_camera(camera?: Url | number | string | Hash, options?: render.camera_options): void;
+- function set_camera(camera?: Url | number | string | Hash, options?: render.CameraOptions): void;
 - function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;
 - function set_compute(compute?: string | Hash): void;
 - function set_cull_face(face_type: graphics.FaceType): void;
@@ -13635,7 +13635,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_polygon_offset(factor: number, units: number): void;
 - function set_projection(matrix: Matrix4): void;
 - function set_render_target(render_target?: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT): void;
-- function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: render.set_render_target_options): void;
+- function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: render.SetRenderTargetOptions): void;
 - function set_render_target_size(render_target: Opaque<"render_target"> | string | Hash, width: number, height: number): void;
 - function set_stencil_func(func: graphics.CompareFunc, ref: number, mask: number): void;
 - function set_stencil_mask(mask: number): void;
@@ -13655,65 +13655,65 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type render_predicate = Opaque<"render_predicate"> [since 1.13.2]
 - type render_target = Opaque<"render_target">
 - type texture = Opaque<"texture">
+- interface CameraOptions { use_frustum?: boolean; } [since 1.13.2]
 - type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT
 - type ContextEvent = typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED [since 1.13.2]
+- interface DebugDrawOptions { frustum?: Matrix4; frustum_planes?: render.FrustumPlanes; } [since 1.13.2]
+- interface DispatchOptions { constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; } [since 1.13.2]
+- interface DrawOptions { frustum?: Matrix4; frustum_planes?: render.FrustumPlanes; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: render.Sort; } [since 1.13.2]
 - type FrustumPlanes = typeof render.FRUSTUM_PLANES_ALL | typeof render.FRUSTUM_PLANES_SIDES [since 1.13.2]
+- interface RenderTargetBufferParams { format: graphics.TextureFormat; width: number; height: number; min_filter?: graphics.TextureFilter; mag_filter?: graphics.TextureFilter; u_wrap?: graphics.TextureWrap; v_wrap?: graphics.TextureWrap; w_wrap?: graphics.TextureWrap; flags?: render.RenderTargetFlag | number; } [since 1.13.2]
 - type RenderTargetFlag = typeof render.TEXTURE_BIT [since 1.13.2]
 - type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP
+- interface SetRenderTargetOptions { transient?: graphics.BufferType[]; face?: graphics.CubemapFace; } [since 1.13.2]
 - type Sort = typeof render.SORT_BACK_TO_FRONT | typeof render.SORT_FRONT_TO_BACK | typeof render.SORT_NONE [since 1.13.2]
-- interface camera_options { use_frustum?: boolean; } [since 1.13.2]
-- interface debug_draw_options { frustum?: Matrix4; frustum_planes?: render.FrustumPlanes; } [since 1.13.2]
-- interface dispatch_options { constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; } [since 1.13.2]
-- interface draw_options { frustum?: Matrix4; frustum_planes?: render.FrustumPlanes; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: render.Sort; } [since 1.13.2]
-- interface render_target_buffer_params { format: graphics.TextureFormat; width: number; height: number; min_filter?: graphics.TextureFilter; mag_filter?: graphics.TextureFilter; u_wrap?: graphics.TextureWrap; v_wrap?: graphics.TextureWrap; w_wrap?: graphics.TextureWrap; flags?: render.RenderTargetFlag | number; } [since 1.13.2]
-- type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.render_target_buffer_params }
-- interface set_render_target_options { transient?: graphics.BufferType[]; face?: graphics.CubemapFace; } [since 1.13.2]
+- type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.RenderTargetBufferParams }
 
 ### resource
 
 - function atlas(path?: string): Hash;
 - function buffer(path?: string): Hash;
-- function create_atlas(path: string, table: resource.atlas): Hash;
-- function create_buffer(path: string, table: resource.buffer_creation_params): Hash;
-- function create_sound_data(path: string, options: resource.sound_data_options & ({ partial?: false } | ({ partial: true } & Required<Pick<resource.sound_data_options, "filesize">>))): Hash;
-- function create_texture(path: string, table: resource.texture_creation_params, buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): Hash;
-- function create_texture_async(path: string, table: resource.texture_creation_params, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } | undefined, callback: (self: unknown, request_id: number, result: resource.texture_creation_result) => void): LuaMultiReturn<[Hash, number]>;
+- function create_atlas(path: string, table: resource.Atlas): Hash;
+- function create_buffer(path: string, table: resource.BufferCreationParams): Hash;
+- function create_sound_data(path: string, options: resource.SoundDataOptions & ({ partial?: false } | ({ partial: true } & Required<Pick<resource.SoundDataOptions, "filesize">>))): Hash;
+- function create_texture(path: string, table: resource.TextureCreationParams, buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): Hash;
+- function create_texture_async(path: string, table: resource.TextureCreationParams, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> } | undefined, callback: (self: unknown, request_id: number, result: resource.TextureCreationResult) => void): LuaMultiReturn<[Hash, number]>;
 - function font(path?: string): Hash;
-- function get_atlas(path: Hash | string): resource.atlas_data;
+- function get_atlas(path: Hash | string): resource.AtlasData;
 - function get_buffer(path: Hash | string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
-- function get_render_target_info(path: Hash | string | Opaque<"render_target"> | number): resource.render_target_info;
-- function get_text_metrics(url: Hash | string, text: string): resource.text_metrics;
-- function get_text_metrics(url: Hash | string, text: string, options: resource.text_metrics_options): resource.text_metrics;
-- function get_texture_info(path: Hash | string | Opaque<"texture"> | number): resource.texture_info;
+- function get_render_target_info(path: Hash | string | Opaque<"render_target"> | number): resource.RenderTargetInfo;
+- function get_text_metrics(url: Hash | string, text: string): resource.TextMetrics;
+- function get_text_metrics(url: Hash | string, text: string, options: resource.TextMetricsOptions): resource.TextMetrics;
+- function get_texture_info(path: Hash | string | Opaque<"texture"> | number): resource.TextureInfo;
 - function load(path: string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
 - function material(path?: string): Hash;
 - function release(path: Hash | string): void;
 - function render_target(path?: string): Hash;
 - function set(path: string | Hash, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
-- function set_atlas(path: Hash | string, table: resource.atlas): void;
-- function set_buffer(path: Hash | string, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, table?: resource.buffer_update_options): void;
+- function set_atlas(path: Hash | string, table: resource.Atlas): void;
+- function set_buffer(path: Hash | string, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, table?: resource.BufferUpdateOptions): void;
 - function set_sound(path: Hash | string, buffer: string): void;
-- function set_texture(path: Hash | string, table: resource.texture_update_params, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
+- function set_texture(path: Hash | string, table: resource.TextureUpdateParams, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
 - function texture(path?: string): Hash;
 - function tile_source(path?: string): Hash;
 - type resource_data = Hash [since 1.13.2]
-- interface animation { id: string; width: number; height: number; frames?: number[]; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean; } [since 1.13.2]
-- interface animation_data { id: string; width: number; height: number; frames: number[]; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean; } [since 1.13.2]
-- interface atlas { texture: string | Hash; animations: [Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...(Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [resource.geometry, ...resource.geometry[]]; } [since 1.13.2]
-- interface atlas_data { texture: string | Hash; animations: resource.animation_data[]; geometries: resource.geometry_data[]; } [since 1.13.2]
-- interface buffer_creation_params { buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; transfer_ownership?: boolean; } [since 1.13.2]
-- interface buffer_update_options { transfer_ownership?: boolean; } [since 1.13.2]
-- interface geometry { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[]; } [since 1.13.2]
-- interface geometry_data { width: number; height: number; pivot_x: number; pivot_y: number; rotated: boolean; vertices: number[]; uvs: number[]; indices: number[]; } [since 1.13.2]
-- interface render_target_attachment_info { handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: graphics.TextureUsageFlag | number; type: graphics.TextureType; buffer_type: graphics.BufferType; texture?: Hash; } [since 1.13.2]
-- interface render_target_info { handle: Opaque<"render_target">; sample_count: number; attachments: resource.render_target_attachment_info[]; } [since 1.13.2]
-- interface sound_data_options { data: string | Opaque<"buffer">; filesize?: number; partial?: boolean; } [since 1.13.2]
-- interface text_metrics { width: number; height: number; max_ascent: number; max_descent: number; } [since 1.13.2]
-- interface text_metrics_options { width?: number; leading?: number; tracking?: number; line_break?: boolean; } [since 1.13.2]
-- interface texture_creation_params { type: graphics.TextureType; width: number; height: number; depth?: number; page_count?: number; format: graphics.TextureFormat; flags?: graphics.TextureUsageFlag | number; max_mipmaps?: number; compression_type?: graphics.CompressionType; } [since 1.13.2]
-- interface texture_creation_result { path: Hash; } [since 1.13.2]
-- interface texture_info { handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: graphics.TextureUsageFlag | number; type: graphics.TextureType; } [since 1.13.2]
-- interface texture_update_params { type: graphics.TextureType; width: number; height: number; depth?: number; format: graphics.TextureFormat; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: graphics.CompressionType; } [since 1.13.2]
+- interface Animation { id: string; width: number; height: number; frames?: number[]; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean; } [since 1.13.2]
+- interface AnimationData { id: string; width: number; height: number; frames: number[]; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean; } [since 1.13.2]
+- interface Atlas { texture: string | Hash; animations: [Omit<resource.Animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...(Omit<resource.Animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [resource.Geometry, ...resource.Geometry[]]; } [since 1.13.2]
+- interface AtlasData { texture: string | Hash; animations: resource.AnimationData[]; geometries: resource.GeometryData[]; } [since 1.13.2]
+- interface BufferCreationParams { buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; transfer_ownership?: boolean; } [since 1.13.2]
+- interface BufferUpdateOptions { transfer_ownership?: boolean; } [since 1.13.2]
+- interface Geometry { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[]; } [since 1.13.2]
+- interface GeometryData { width: number; height: number; pivot_x: number; pivot_y: number; rotated: boolean; vertices: number[]; uvs: number[]; indices: number[]; } [since 1.13.2]
+- interface RenderTargetAttachmentInfo { handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: graphics.TextureUsageFlag | number; type: graphics.TextureType; buffer_type: graphics.BufferType; texture?: Hash; } [since 1.13.2]
+- interface RenderTargetInfo { handle: Opaque<"render_target">; sample_count: number; attachments: resource.RenderTargetAttachmentInfo[]; } [since 1.13.2]
+- interface SoundDataOptions { data: string | Opaque<"buffer">; filesize?: number; partial?: boolean; } [since 1.13.2]
+- interface TextMetrics { width: number; height: number; max_ascent: number; max_descent: number; } [since 1.13.2]
+- interface TextMetricsOptions { width?: number; leading?: number; tracking?: number; line_break?: boolean; } [since 1.13.2]
+- interface TextureCreationParams { type: graphics.TextureType; width: number; height: number; depth?: number; page_count?: number; format: graphics.TextureFormat; flags?: graphics.TextureUsageFlag | number; max_mipmaps?: number; compression_type?: graphics.CompressionType; } [since 1.13.2]
+- interface TextureCreationResult { path: Hash; } [since 1.13.2]
+- interface TextureInfo { handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: graphics.TextureUsageFlag | number; type: graphics.TextureType; } [since 1.13.2]
+- interface TextureUpdateParams { type: graphics.TextureType; width: number; height: number; depth?: number; format: graphics.TextureFormat; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: graphics.CompressionType; } [since 1.13.2]
 
 ### socket
 
@@ -13779,11 +13779,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - settimeout(value: number, mode?: string): void; [through 1.13.1] [signature transition]
 - settimeout(value?: number, mode?: string): number; [since 1.13.2] [signature transition]
 - function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[socket_client | undefined, string | undefined]>;
-- function getaddrinfo(address: string): LuaMultiReturn<[socket.dns.address_info[] | undefined, string | undefined]>;
+- function getaddrinfo(address: string): LuaMultiReturn<[socket.dns.AddressInfo[] | undefined, string | undefined]>;
 - function gethostname(): string;
 - function getnameinfo(address: string): LuaMultiReturn<[string[] | undefined, string | undefined]>;
-- function tohostname(address: string): LuaMultiReturn<[string | undefined, socket.dns.host_info | string]>;
-- function toip(address: string): LuaMultiReturn<[string | undefined, socket.dns.host_info | string]>;
+- function tohostname(address: string): LuaMultiReturn<[string | undefined, socket.dns.HostInfo | string]>;
+- function toip(address: string): LuaMultiReturn<[string | undefined, socket.dns.HostInfo | string]>;
 - function gettime(): number;
 - function newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T;
 - function protect(func: (...args: unknown[]) => unknown): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>;
@@ -13816,8 +13816,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type socket_selectable = socket_master | socket_client | socket_server | socket_connected | socket_unconnected | { getfd: (self: unknown) => number; dirty: (self: unknown) => boolean } [since 1.13.2]
 - interface socket_server { accept(): LuaMultiReturn<[socket_client | undefined, string | undefined]>; close(): number; dirty(): boolean; getfd(): number; getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>; getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>; getstats(): LuaMultiReturn<[number, number, number]>; setfd(handle: number): void; setoption(option: string, value?: unknown): LuaMultiReturn<[number | undefined, string | undefined]>; setstats(received?: number, sent?: number, age?: number): number; settimeout(value?: number, mode?: string): number; }
 - interface socket_unconnected { close(): number; getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>; getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>; receive(size?: number): LuaMultiReturn<[string | undefined, string | undefined]>; receivefrom(size?: number): LuaMultiReturn<[string | undefined, string, number | undefined]>; sendto(datagram: string, ip: string, port: number): LuaMultiReturn<[number | undefined, string | undefined]>; setoption(option: string, value?: unknown): LuaMultiReturn<[number | undefined, string | undefined]>; setpeername(address: string, port: number): LuaMultiReturn<[number | undefined, string | undefined]>; setsockname(address: string, port: number): LuaMultiReturn<[number | undefined, string | undefined]>; settimeout(value?: number): number; }
-- interface address_info { family: string; addr: string; } [since 1.13.2]
-- interface host_info { name: string; alias: string[]; ip: string[]; } [since 1.13.2]
+- interface AddressInfo { family: string; addr: string; } [since 1.13.2]
+- interface HostInfo { name: string; alias: string[]; ip: string[]; } [since 1.13.2]
 
 ### sound
 
@@ -13829,23 +13829,23 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function is_music_playing(): boolean;
 - function is_phone_call_active(): boolean;
 - function pause(url: string | Hash | Url, pause: boolean): void;
-- function play(url: string | Hash | Url, play_properties?: sound.play_properties, complete_function?: (self: unknown, message_id: Hash, message: sound.play_completion, sender: Url) => void): number;
+- function play(url: string | Hash | Url, play_properties?: sound.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: sound.PlayCompletion, sender: Url) => void): number;
 - function set_gain(url: string | Hash | Url, gain: number): void;
 - function set_group_gain(group: string | Hash, gain: number): void;
 - function set_pan(url: string | Hash | Url, pan: number): void;
-- function stop(url: string | Hash | Url, stop_properties?: sound.stop_properties): void;
+- function stop(url: string | Hash | Url, stop_properties?: sound.StopProperties): void;
 - gain: number
 - pan: number
 - sound: Hash
 - speed: number
-- interface play_completion { play_id: number; } [since 1.13.2]
-- interface play_properties { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number; } [since 1.13.2]
-- interface stop_properties { play_id?: number; } [since 1.13.2]
+- interface PlayCompletion { play_id: number; } [since 1.13.2]
+- interface PlayProperties { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number; } [since 1.13.2]
+- interface StopProperties { play_id?: number; } [since 1.13.2]
 
 ### sprite
 
 - function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void): void;
-- function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function: ((self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void) | undefined, play_properties: sprite.play_properties): void;
+- function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function: ((self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void) | undefined, play_properties: sprite.PlayProperties): void;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
 - function set_hflip(url: string | Hash | Url, flip: boolean): void;
 - function set_vflip(url: string | Hash | Url, flip: boolean): void;
@@ -13858,14 +13858,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - scale: Vector3
 - size: Vector3
 - slice: Vector4
-- interface play_properties { offset?: number; playback_rate?: number; } [since 1.13.2]
+- interface PlayProperties { offset?: number; playback_rate?: number; } [since 1.13.2]
 
 ### sys
 
 - function deserialize(buffer: string): LuaTable<AnyNotNil, unknown>;
 - function exists(path: string): boolean;
 - function exit(code: number): void;
-- function get_application_info(app_string: string): sys.application_info;
+- function get_application_info(app_string: string): sys.ApplicationInfo;
 - function get_application_path(): string;
 - function get_config_boolean(key: string, default_value?: boolean): boolean;
 - function get_config_int(key: string): number;
@@ -13875,18 +13875,18 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - sys.get_config_string(key: string): string | undefined
 - sys.get_config_string(key: string, default_value: string): string
 - function get_connectivity(): sys.Network;
-- function get_engine_info(): sys.engine_info;
+- function get_engine_info(): sys.EngineInfo;
 - function get_host_path(filename: string): string;
-- function get_ifaddrs(): sys.interface_info[];
+- function get_ifaddrs(): sys.InterfaceInfo[];
 - function get_save_file(application_id: string, file_name: string): string;
-- function get_sys_info(): sys.sys_info;
-- function get_sys_info(options: sys.sys_info_options): sys.sys_info;
+- function get_sys_info(): sys.SysInfo;
+- function get_sys_info(options: sys.SysInfoOptions): sys.SysInfo;
 - function load(filename: string): LuaTable<AnyNotNil, unknown>;
 - function load_buffer(path: string): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
-- function load_buffer_async(path: string, status_callback: (self: unknown, request_id: number, result: sys.load_buffer_result) => void): number;
+- function load_buffer_async(path: string, status_callback: (self: unknown, request_id: number, result: sys.LoadBufferResult) => void): number;
 - function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;
 - function open_url(url: string): boolean;
-- function open_url(url: string, attributes: sys.open_url_attributes): boolean;
+- function open_url(url: string, attributes: sys.OpenUrlAttributes): boolean;
 - function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;
 - function save(filename: string, table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): boolean;
 - function serialize(table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): string;
@@ -13903,15 +13903,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - sys.REQUEST_STATUS_ERROR_IO_ERROR: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_IO_ERROR" }
 - sys.REQUEST_STATUS_ERROR_NOT_FOUND: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_NOT_FOUND" }
 - sys.REQUEST_STATUS_FINISHED: number & { readonly __brand: "sys.REQUEST_STATUS_FINISHED" }
+- interface ApplicationInfo { installed: boolean; } [since 1.13.2]
+- interface EngineInfo { version: string; version_sha1: string; is_debug: boolean; } [since 1.13.2]
+- interface InterfaceInfo { name: string; address?: string; mac?: string; up: boolean; running: boolean; family?: "ipv4" | "ipv6"; } [since 1.13.2]
+- interface LoadBufferResult { status: sys.RequestStatus; buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; } [since 1.13.2]
 - type Network = typeof sys.NETWORK_CONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_DISCONNECTED
+- interface OpenUrlAttributes { target?: string; } [since 1.13.2]
 - type RequestStatus = typeof sys.REQUEST_STATUS_ERROR_IO_ERROR | typeof sys.REQUEST_STATUS_ERROR_NOT_FOUND | typeof sys.REQUEST_STATUS_FINISHED [since 1.13.2]
-- interface application_info { installed: boolean; } [since 1.13.2]
-- interface engine_info { version: string; version_sha1: string; is_debug: boolean; } [since 1.13.2]
-- interface interface_info { name: string; address?: string; mac?: string; up: boolean; running: boolean; family?: "ipv4" | "ipv6"; } [since 1.13.2]
-- interface load_buffer_result { status: sys.RequestStatus; buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; } [since 1.13.2]
-- interface open_url_attributes { target?: string; } [since 1.13.2]
-- interface sys_info { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string; } [since 1.13.2]
-- interface sys_info_options { ignore_secure?: boolean; } [since 1.13.2]
+- interface SysInfo { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string; } [since 1.13.2]
+- interface SysInfoOptions { ignore_secure?: boolean; } [since 1.13.2]
 
 ### tilemap
 
@@ -13935,11 +13935,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function cancel(handle: number): boolean;
 - function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: number, time_elapsed: number) => void): number;
-- function get_info(handle: number): timer.info | undefined;
+- function get_info(handle: number): timer.Info | undefined;
 - function trigger(handle: number): boolean;
 - timer.INVALID_TIMER_HANDLE: number & { readonly __brand: "timer.INVALID_TIMER_HANDLE" }
 - type timer_handle = number [since 1.13.2]
-- interface info { time_remaining: number; delay: number; repeating: boolean; } [since 1.13.2]
+- interface Info { time_remaining: number; delay: number; repeating: boolean; } [since 1.13.2]
 
 ### types
 
@@ -14016,10 +14016,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_dim_mode(): window.Dimming;
 - function get_display_scale(): number;
 - function get_mouse_lock(): boolean;
-- function get_safe_area(): window.safe_area;
+- function get_safe_area(): window.SafeArea;
 - function get_size(): LuaMultiReturn<[number, number]>;
 - function set_dim_mode(mode: Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>): void;
-- function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void) | undefined): void;
+- function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.EventData) => void) | undefined): void;
 - function set_mouse_lock(flag: boolean): void;
 - function set_position(x: number, y: number): void;
 - function set_size(width: number, height: number): void;
@@ -14034,9 +14034,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - window.WINDOW_EVENT_ICONIFIED: number & { readonly __brand: "window.WINDOW_EVENT_ICONIFIED" } [since 1.13.2]
 - window.WINDOW_EVENT_RESIZED: number & { readonly __brand: "window.WINDOW_EVENT_RESIZED" }
 - type Dimming = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN
+- interface EventData { width?: number; height?: number; } [since 1.13.2]
+- interface SafeArea { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number; } [since 1.13.2]
 - type WindowEvent = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED [since 1.13.2]
-- interface event_data { width?: number; height?: number; } [since 1.13.2]
-- interface safe_area { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number; } [since 1.13.2]
 
 ### zlib
 

@@ -5,7 +5,7 @@ type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 declare const world: Opaque<"b2World">;
-declare const bounds: b2d.aabb;
+declare const bounds: b2d.Aabb;
 
 const origin = vmath.vector3(0, 0, 0);
 const east = vmath.vector3(1, 0, 0);

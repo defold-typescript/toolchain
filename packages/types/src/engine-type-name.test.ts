@@ -23,6 +23,8 @@ describe("engineTypeName", () => {
     ["PIEBOUNDS", "PieBounds"],
     ["SYSFIELD", "SysField"],
     ["LIVEUPDATE", "LiveUpdate"],
+    ["generic_6dof_params", "Generic6DofParams"],
+    ["generic_6dof_spring_params", "Generic6DofSpringParams"],
   ])("the override %s -> %s wins over the rule", (reference, expected) => {
     expect(engineTypeName(reference)).toBe(expected);
   });

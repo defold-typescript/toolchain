@@ -124,7 +124,7 @@ export function contextFor(namespace: string): ProbeContext {
   return CONTEXTS[namespace] ?? GO_CONTEXT;
 }
 
-// The `PROBE_URLS` component whose type owns each `<ns>.properties` catalog.
+// The `PROBE_URLS` component whose type owns each `<ns>.Properties` catalog.
 // Every property is read from the go script, the gui component's included.
 export const PROPERTY_TARGETS: Readonly<Record<string, string>> = {
   go: "GO",

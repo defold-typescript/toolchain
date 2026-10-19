@@ -9,7 +9,7 @@ declare global {
     /**
      * Render-camera options
      */
-    interface camera_options {
+    interface CameraOptions {
       /**
        * Use the camera view-projection matrix for frustum culling. The default is false.
        */
@@ -19,7 +19,7 @@ declare global {
     /**
      * Debug-draw options
      */
-    interface debug_draw_options {
+    interface DebugDrawOptions {
       /**
        * Frustum matrix used for culling renderable items.
        */
@@ -32,7 +32,7 @@ declare global {
     /**
      * Compute-dispatch options
      */
-    interface dispatch_options {
+    interface DispatchOptions {
       /**
        * Constants used by the compute program. The values are copied when `render.dispatch_compute()` is called.
        */
@@ -41,7 +41,7 @@ declare global {
     /**
      * Render draw options
      */
-    interface draw_options {
+    interface DrawOptions {
       /**
        * Frustum matrix used for culling renderable items.
        */
@@ -61,10 +61,11 @@ declare global {
     }
     type render_predicate = Opaque<"render_predicate">;
     type render_target = Opaque<"render_target">;
+    type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.RenderTargetBufferParams };
     /**
      * Render-target attachment parameters
      */
-    interface render_target_buffer_params {
+    interface RenderTargetBufferParams {
       /**
        * Attachment texture format.
        */
@@ -102,11 +103,10 @@ declare global {
        */
       flags?: render.RenderTargetFlag | number;
     }
-    type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.render_target_buffer_params };
     /**
      * Render-target activation options
      */
-    interface set_render_target_options {
+    interface SetRenderTargetOptions {
       /**
        * Buffers whose contents become undefined after the target is deactivated. Missing buffers are ignored; combined depth-stencil buffers remain non-transient unless both are selected.
        */
@@ -378,7 +378,7 @@ declare global {
      * render.dispatch_compute(32, 32, 32, { constants });
      * ```
      */
-    function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;
+    function dispatch_compute(x: number, y: number, z: number, options?: render.DispatchOptions): void;
     /**
      * Draws all objects that match a specified predicate. An optional constant buffer can be
      * provided to override the default constants. If no constants buffer is provided, a default
@@ -476,7 +476,7 @@ declare global {
      * }
      * ```
      */
-    function draw(predicate: Opaque<"render_predicate">, options: render.draw_options): void;
+    function draw(predicate: Opaque<"render_predicate">, options: render.DrawOptions): void;
     /**
      * Draws all 3d debug graphics such as lines drawn with "draw_line" messages and physics visualization.
      *
@@ -491,7 +491,7 @@ declare global {
      * });
      * ```
      */
-    function draw_debug3d(options?: render.debug_draw_options): void;
+    function draw_debug3d(options?: render.DebugDrawOptions): void;
     /**
      * If another material was already enabled, it will be automatically disabled
      * and the specified material is used instead.
@@ -873,7 +873,7 @@ declare global {
      * }
      * ```
      */
-    function set_camera(camera?: Url | number | string | Hash, options?: render.camera_options): void;
+    function set_camera(camera?: Url | number | string | Hash, options?: render.CameraOptions): void;
     /**
      * Specifies whether the individual color components in the frame buffer is enabled for writing (`true`) or disabled (`false`). For example, if `blue` is `false`, nothing is written to the blue component of any pixel in any of the color buffers, regardless of the drawing operation attempted. Note that writing are either enabled or disabled for entire color components, not the individual bits of a component.
      * The component masks are all initially `true`.
@@ -1172,7 +1172,7 @@ declare global {
      * });
      * ```
      */
-    function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: render.set_render_target_options): void;
+    function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: render.SetRenderTargetOptions): void;
     /**
      * Sets the render target size for a render target created from
      * either a render script, or from a render target resource.

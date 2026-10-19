@@ -27,7 +27,7 @@ declare global {
      * flip tile vertically
      */
     const V_FLIP: number & { readonly __brand: "tilemap.V_FLIP" };
-    interface properties {
+    interface Properties {
       /**
        * The material used when rendering the tile map. The type of the property is hash.
        */

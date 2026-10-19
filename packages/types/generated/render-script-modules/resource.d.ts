@@ -10,7 +10,7 @@ declare global {
      * Animation data accepted when creating or updating an atlas. Specify either
      * `frames`, or both `frame_start` and `frame_end`.
      */
-    interface animation {
+    interface Animation {
       /**
        * Animation id.
        */
@@ -55,7 +55,7 @@ declare global {
     /**
      * Animation data returned by resource.get_atlas.
      */
-    interface animation_data {
+    interface AnimationData {
       /**
        * Animation id.
        */
@@ -92,7 +92,7 @@ declare global {
     /**
      * Data accepted by resource.create_atlas and resource.set_atlas.
      */
-    interface atlas {
+    interface Atlas {
       /**
        * Path to the texture resource, for example `"/main/my_texture.texturec"`.
        */
@@ -100,16 +100,16 @@ declare global {
       /**
        * Animations in the atlas.
        */
-      animations: [Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...(Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]];
+      animations: [Omit<resource.Animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...(Omit<resource.Animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]];
       /**
        * Geometries that map to the texture data.
        */
-      geometries: [resource.geometry, ...resource.geometry[]];
+      geometries: [resource.Geometry, ...resource.Geometry[]];
     }
     /**
      * Data returned by resource.get_atlas.
      */
-    interface atlas_data {
+    interface AtlasData {
       /**
        * Path to the texture resource.
        */
@@ -117,16 +117,16 @@ declare global {
       /**
        * Animations in the atlas.
        */
-      animations: resource.animation_data[];
+      animations: resource.AnimationData[];
       /**
        * Geometries that map to the texture data.
        */
-      geometries: resource.geometry_data[];
+      geometries: resource.GeometryData[];
     }
     /**
      * Buffer-resource creation parameters
      */
-    interface buffer_creation_params {
+    interface BufferCreationParams {
       /**
        * Buffer to bind to the resource.
        */
@@ -139,7 +139,7 @@ declare global {
     /**
      * Buffer-resource update options
      */
-    interface buffer_update_options {
+    interface BufferUpdateOptions {
       /**
        * Whether the resource takes ownership of the buffer. The default is false.
        */
@@ -149,7 +149,7 @@ declare global {
      * Geometry data accepted when creating or updating an atlas. Vertex, UV, and
      * index values are zero-based.
      */
-    interface geometry {
+    interface Geometry {
       /**
        * Geometry name, used when matching animations between atlases.
        */
@@ -190,7 +190,7 @@ declare global {
     /**
      * Geometry data returned by resource.get_atlas.
      */
-    interface geometry_data {
+    interface GeometryData {
       /**
        * Width of the image represented by the geometry.
        */
@@ -227,7 +227,7 @@ declare global {
     /**
      * Render target attachment information
      */
-    interface render_target_attachment_info {
+    interface RenderTargetAttachmentInfo {
       /**
        * Opaque texture handle.
        */
@@ -272,7 +272,7 @@ declare global {
     /**
      * Render target information
      */
-    interface render_target_info {
+    interface RenderTargetInfo {
       /**
        * Opaque render-target handle.
        */
@@ -284,13 +284,13 @@ declare global {
       /**
        * Render-target attachments.
        */
-      attachments: resource.render_target_attachment_info[];
+      attachments: resource.RenderTargetAttachmentInfo[];
     }
     type resource_data = Hash;
     /**
      * Sound-data creation options
      */
-    interface sound_data_options {
+    interface SoundDataOptions {
       /**
        * Raw sound file data, including the file header.
        */
@@ -307,7 +307,7 @@ declare global {
     /**
      * Text metrics
      */
-    interface text_metrics {
+    interface TextMetrics {
       /**
        * Text width.
        */
@@ -328,7 +328,7 @@ declare global {
     /**
      * Text metric options
      */
-    interface text_metrics_options {
+    interface TextMetricsOptions {
       /**
        * Text-field width; unused when `line_break` is false.
        */
@@ -349,7 +349,7 @@ declare global {
     /**
      * Texture creation parameters
      */
-    interface texture_creation_params {
+    interface TextureCreationParams {
       /**
        * Texture type.
        */
@@ -390,7 +390,7 @@ declare global {
     /**
      * Asynchronous texture creation result
      */
-    interface texture_creation_result {
+    interface TextureCreationResult {
       /**
        * Created texture resource path.
        */
@@ -399,7 +399,7 @@ declare global {
     /**
      * Texture information
      */
-    interface texture_info {
+    interface TextureInfo {
       /**
        * Opaque texture handle.
        */
@@ -436,7 +436,7 @@ declare global {
     /**
      * Texture update parameters
      */
-    interface texture_update_params {
+    interface TextureUpdateParams {
       /**
        * Texture type.
        */
@@ -593,7 +593,7 @@ declare global {
      * @param path - The path to the atlas resource
      * @returns atlas data. **⚠️ `frames` is 1-based; passed to Defold unchanged.** **0️⃣ `indices` is 0-based; passed to Defold unchanged.**
      */
-    function get_atlas(path: Hash | string): resource.atlas_data;
+    function get_atlas(path: Hash | string): resource.AtlasData;
     /**
      * gets the buffer from a resource
      *
@@ -604,7 +604,7 @@ declare global {
      * // How to get the data from a buffer
      * export default defineScript({
      *   init() {
-     *     const res_path = go.get<mesh.properties>()("#mesh", "vertices");
+     *     const res_path = go.get<mesh.Properties>()("#mesh", "vertices");
      *     const buf = resource.get_buffer(res_path);
      *     const stream_positions = buffer.get_stream(buf, "position");
      *
@@ -650,7 +650,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_info(path: Hash | string | Opaque<"render_target"> | number): resource.render_target_info;
+    function get_render_target_info(path: Hash | string | Opaque<"render_target"> | number): resource.RenderTargetInfo;
     /**
      * Gets the text metrics from a font. Rich text markup is measured using its
      * visible text and font sizes. If markup cannot be parsed, the text is measured literally.
@@ -664,14 +664,14 @@ declare global {
      * ```ts
      * export default defineScript({
      *   init() {
-     *     const font = go.get<label.properties>()("#label", "font");
+     *     const font = go.get<label.Properties>()("#label", "font");
      *     const metrics = resource.get_text_metrics(font, "The quick brown fox\n jumps over the lazy dog");
      *     pprint(metrics);
      *   },
      * });
      * ```
      */
-    function get_text_metrics(url: Hash | string, text: string): resource.text_metrics;
+    function get_text_metrics(url: Hash | string, text: string): resource.TextMetrics;
     /**
      * Gets the text metrics from a font. Rich text markup is measured using its
      * visible text and font sizes. If markup cannot be parsed, the text is measured literally.
@@ -685,14 +685,14 @@ declare global {
      * ```ts
      * export default defineScript({
      *   init() {
-     *     const font = go.get<label.properties>()("#label", "font");
+     *     const font = go.get<label.Properties>()("#label", "font");
      *     const metrics = resource.get_text_metrics(font, "The quick brown fox\n jumps over the lazy dog");
      *     pprint(metrics);
      *   },
      * });
      * ```
      */
-    function get_text_metrics(url: Hash | string, text: string, options: resource.text_metrics_options): resource.text_metrics;
+    function get_text_metrics(url: Hash | string, text: string, options: resource.TextMetricsOptions): resource.TextMetrics;
     /**
      * Gets texture info from a texture resource path or a texture handle
      *
@@ -746,7 +746,7 @@ declare global {
      * });
      * ```
      */
-    function get_texture_info(path: Hash | string | Opaque<"texture"> | number): resource.texture_info;
+    function get_texture_info(path: Hash | string | Opaque<"texture"> | number): resource.TextureInfo;
     /**
      * Loads the resource data for a specific resource.
      *
@@ -844,7 +844,7 @@ declare global {
      * // Assuming the folder "/res" is added to the project custom resources:
      * // load a texture resource and set it on a sprite
      * const buffer = resource.load("/res/new.texturec");
-     * resource.set(go.get<sprite.properties>()("#sprite", "texture0"), buffer);
+     * resource.set(go.get<sprite.Properties>()("#sprite", "texture0"), buffer);
      * ```
      */
     function set(path: string | Hash, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
@@ -929,7 +929,7 @@ declare global {
      * });
      * ```
      */
-    function set_atlas(path: Hash | string, table: resource.atlas): void;
+    function set_atlas(path: Hash | string, table: resource.Atlas): void;
     /**
      * Sets the buffer of a resource. By default, setting the resource buffer will either copy the data from the incoming buffer object
      * to the buffer stored in the destination resource, or make a new buffer object if the sizes between the source buffer and the destination buffer
@@ -953,7 +953,7 @@ declare global {
      *
      * export default defineScript({
      *   init() {
-     *     const res_path = go.get<mesh.properties>()("#mesh", "vertices");
+     *     const res_path = go.get<mesh.Properties>()("#mesh", "vertices");
      *
      *     const positions = [
      *       1, -1, 0,
@@ -976,7 +976,7 @@ declare global {
      * });
      * ```
      */
-    function set_buffer(path: Hash | string, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, table?: resource.buffer_update_options): void;
+    function set_buffer(path: Hash | string, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, table?: resource.BufferUpdateOptions): void;
     /**
      * Update internal sound resource (wavc/oggc/opusc) with new data
      *
@@ -1029,7 +1029,7 @@ declare global {
      *     // the engine registers a texture format only when the driver supports it
      *     const format = graphics.TEXTURE_FORMAT_RGB;
      *     if (format !== undefined) {
-     *       const resource_path = go.get<model.properties>()("#model", "texture0");
+     *       const resource_path = go.get<model.Properties>()("#model", "texture0");
      *       const args = { width, height, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };
      *       resource.set_texture(resource_path, args, buf);
      *     }
@@ -1062,7 +1062,7 @@ declare global {
      *     // the engine registers a texture format only when the driver supports it
      *     const format = graphics.TEXTURE_FORMAT_RGB;
      *     if (format !== undefined) {
-     *       const resource_path = go.get<model.properties>()("#model", "texture0");
+     *       const resource_path = go.get<model.Properties>()("#model", "texture0");
      *       const args = { width, height, x, y, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };
      *       resource.set_texture(resource_path, args, buf);
      *     }
@@ -1083,7 +1083,7 @@ declare global {
      *     // the engine registers a texture format only when the driver supports it
      *     const format = graphics.TEXTURE_FORMAT_RGB;
      *     if (format === undefined) return;
-     *     const resource_path = go.get<model.properties>()("#model", "texture0");
+     *     const resource_path = go.get<model.Properties>()("#model", "texture0");
      *     // the "my_buffer" resource is expected to hold 128 * 128 * 3 bytes!
      *     const args = {
      *       width: 128,
@@ -1176,7 +1176,7 @@ declare global {
      * }
      * ```
      */
-    function set_texture(path: Hash | string, table: resource.texture_update_params, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
+    function set_texture(path: Hash | string, table: resource.TextureUpdateParams, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
     /**
      * Constructor-like function with two purposes:
      *

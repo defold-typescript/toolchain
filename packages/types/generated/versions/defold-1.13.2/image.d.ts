@@ -9,7 +9,7 @@ declare global {
     /**
      * ASTC image header
      */
-    interface astc_header {
+    interface AstcHeader {
       /**
        * Image width.
        */
@@ -38,7 +38,7 @@ declare global {
     /**
      * Loaded buffer image data
      */
-    interface load_buffer_result {
+    interface LoadBufferResult {
       /**
        * Image width.
        */
@@ -59,7 +59,7 @@ declare global {
     /**
      * Image loading options
      */
-    interface load_options {
+    interface LoadOptions {
       /**
        * Whether to premultiply alpha into the color components. Defaults to `false`.
        */
@@ -72,7 +72,7 @@ declare global {
     /**
      * Loaded string image data
      */
-    interface load_result {
+    interface LoadResult {
       /**
        * Image width.
        */
@@ -122,7 +122,7 @@ declare global {
      * }
      * ```
      */
-    function get_astc_header(buffer: string): image.astc_header;
+    function get_astc_header(buffer: string): image.AstcHeader;
     /**
      * Load image (PNG or JPEG) from buffer.
      *
@@ -141,7 +141,7 @@ declare global {
      * });
      * ```
      */
-    function load(buffer: string): image.load_result | undefined;
+    function load(buffer: string): image.LoadResult | undefined;
     /**
      * Load image (PNG or JPEG) from buffer.
      *
@@ -160,7 +160,7 @@ declare global {
      * });
      * ```
      */
-    function load(buffer: string, options: boolean | image.load_options): image.load_result | undefined;
+    function load(buffer: string, options: boolean | image.LoadOptions): image.LoadResult | undefined;
     /**
      * Load image (PNG or JPEG) from a string buffer.
      *
@@ -193,7 +193,7 @@ declare global {
      * });
      * ```
      */
-    function load_buffer(buffer: string): image.load_buffer_result | undefined;
+    function load_buffer(buffer: string): image.LoadBufferResult | undefined;
     /**
      * Load image (PNG or JPEG) from a string buffer.
      *
@@ -226,7 +226,7 @@ declare global {
      * });
      * ```
      */
-    function load_buffer(buffer: string, options: boolean | image.load_options): image.load_buffer_result | undefined;
+    function load_buffer(buffer: string, options: boolean | image.LoadOptions): image.LoadBufferResult | undefined;
   }
 }
 

@@ -10,7 +10,7 @@ declare global {
       /**
        * Options for zip.pack
        */
-      interface options {
+      interface Options {
         /**
          * compression method, defaults to `zip.METHOD.DEFLATED`
          */
@@ -25,7 +25,7 @@ declare global {
       /**
        * Options for zip.unpack
        */
-      interface options {
+      interface Options {
         /**
          * conflict resolution strategy
          */

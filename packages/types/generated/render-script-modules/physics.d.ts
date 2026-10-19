@@ -10,7 +10,7 @@ declare global {
     /**
      * The available fields depend on the joint type.
      */
-    interface joint_properties {
+    interface JointProperties {
       /**
        * whether the connected objects should collide
        */
@@ -79,7 +79,7 @@ declare global {
     /**
      * The available optional fields depend on the joint type.
      */
-    interface joint_properties_info {
+    interface JointPropertiesInfo {
       /**
        * whether the connected objects collide
        */
@@ -160,7 +160,7 @@ declare global {
     /**
      * Ray-cast options
      */
-    interface raycast_options {
+    interface RaycastOptions {
       /**
        * Return every hit instead of only the closest hit.
        */
@@ -169,7 +169,7 @@ declare global {
     /**
      * The available geometry fields depend on `type`.
      */
-    interface shape_data {
+    interface ShapeData {
       /**
        * shape type
        */
@@ -238,7 +238,7 @@ declare global {
         /**
          * collision object information
          */
-        interface collision_info {
+        interface CollisionInfo {
           /**
            * object position in world space
            */
@@ -255,7 +255,7 @@ declare global {
         /**
          * contact-point object information
          */
-        interface contact_point_info {
+        interface ContactPointInfo {
           /**
            * contact point position in world space
            */
@@ -288,7 +288,7 @@ declare global {
         /**
          * trigger interaction object information
          */
-        interface trigger_info {
+        interface TriggerInfo {
           /**
            * object identifier
            */
@@ -300,7 +300,7 @@ declare global {
         }
       }
     }
-    interface properties {
+    interface Properties {
       /**
        * The angular damping value for the collision object. Setting this value alters the damping of
        * angular motion of the object (rotation). Valid values are between 0 (no damping) and 1 (full damping).

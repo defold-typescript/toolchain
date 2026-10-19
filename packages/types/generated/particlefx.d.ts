@@ -10,7 +10,7 @@ declare global {
     /**
      * Options used when stopping particle effects.
      */
-    interface stop_options {
+    interface StopOptions {
       /**
        * Instantly clear spawned particles.
        */
@@ -147,8 +147,8 @@ declare global {
      * });
      * ```
      */
-    function stop(url: string | Hash | Url, options: particlefx.stop_options): void;
-    interface properties {
+    function stop(url: string | Hash | Url, options: particlefx.StopOptions): void;
+    interface Properties {
       /**
        * The animation used during rendering by an emitter in a particle FX component.
        * The property type is a hash and refers to a valid animation in an atlas or a tile source resource.

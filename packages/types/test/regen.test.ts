@@ -263,7 +263,7 @@ describe("go facade skip", () => {
     expect(contents).not.toContain("function set(");
     expect(contents).not.toContain("function property(");
     expect(contents).toContain("function animate(");
-    expect(contents).toContain("interface properties {");
+    expect(contents).toContain("interface Properties {");
     expect(dropped).toContain("go.get");
     expect(dropped).toContain("go.set");
     expect(dropped).toContain("go.property");
@@ -302,10 +302,10 @@ describe("surface-wide type routing", () => {
 
   test("a struct another module's doc declares resolves by name", () => {
     expect(emitted("compute")).toContain(
-      "function get_constants(path: Hash | string): material.constant_info[];",
+      "function get_constants(path: Hash | string): material.ConstantInfo[];",
     );
     expect(emitted("b2d.world")).toMatch(
-      /function cast_ray<Backend extends "v2" = "v2">\([^)]*\): LuaMultiReturn<\[b2d\.fixture_cast_hit\[\], b2d\.tree_stats\]>;/,
+      /function cast_ray<Backend extends "v2" = "v2">\([^)]*\): LuaMultiReturn<\[b2d\.FixtureCastHit\[\], b2d\.TreeStats\]>;/,
     );
   });
 
@@ -317,9 +317,9 @@ describe("surface-wide type routing", () => {
   });
 
   test("a struct named under another module is declared there, not where its doc lists it", () => {
-    expect(emitted("b2d.joint")).toContain("interface revolute_definition {");
-    expect(emitted("b2d.joint")).toContain("definition?: b2d.joint.revolute_definition");
-    expect(emitted("b2d")).not.toContain("interface revolute_definition {");
+    expect(emitted("b2d.joint")).toContain("interface RevoluteDefinition {");
+    expect(emitted("b2d.joint")).toContain("definition?: b2d.joint.RevoluteDefinition");
+    expect(emitted("b2d")).not.toContain("interface RevoluteDefinition {");
   });
 });
 
@@ -471,7 +471,7 @@ describe("manifest member skips", () => {
     expect(contents).not.toContain("interface gone");
     expect(contents).not.toContain("type gone_alias");
     expect(contents).not.toContain("namespace nested");
-    expect(contents).toContain("interface kept {");
+    expect(contents).toContain("interface Kept {");
     expect(contents).toContain('type kept_alias = "a" | "b";');
   });
 
@@ -616,7 +616,7 @@ describe("editor namespace emit", () => {
   test("brands the component handle so a builder and show_dialog share one type", () => {
     const { contents } = generateModuleDeclaration(editorEntry());
     expect(contents).toContain(
-      'function button(props: editor.ui.button.props): Opaque<"component">;',
+      'function button(props: editor.ui.button.Props): Opaque<"component">;',
     );
     expect(contents).toContain('function show_dialog(dialog: Opaque<"component">)');
   });
@@ -698,7 +698,7 @@ describe("editor namespace emit", () => {
     expect(dropped).toEqual(
       expect.arrayContaining(["http.response", "http.server.request", "http.server.handler"]),
     );
-    expect(contents).toContain("interface selection {");
+    expect(contents).toContain("interface Selection {");
   });
 
   test("maps the editor handle tokens to opaque types and repairs the mangled array token", () => {
@@ -869,16 +869,16 @@ describe("editor namespace emit", () => {
       ],
     };
     const { contents } = generateModuleDeclaration({ ...editorEntry(), doc });
-    expect(contents).toContain("selection?: editor.command.query.selection;");
+    expect(contents).toContain("selection?: editor.command.query.Selection;");
     expect(contents).toContain("locations: editor.command.location[];");
-    expect(contents).toMatch(/active\?: \(opts: editor\.command\.context\) => boolean;/);
+    expect(contents).toMatch(/active\?: \(opts: editor\.command\.Context\) => boolean;/);
     expect(contents).toContain('label: string | Opaque<"message">;');
     expect(contents).toMatch(/type location = "Assets" \| "Bundle" \|/);
     const block = (name: string): string => {
       const opened = contents.slice(contents.indexOf(`interface ${name} {`));
       return opened.slice(0, opened.indexOf("\n", opened.indexOf("}")));
     };
-    for (const name of ["query", "options"]) {
+    for (const name of ["Query", "Options"]) {
       expect(block(name)).toContain(`interface ${name} {`);
       expect(block(name)).not.toMatch(/: unknown;/);
     }
@@ -898,7 +898,7 @@ describe("editor namespace emit", () => {
     const { contents } = generateModuleDeclaration(editorEntry());
     expect(contents).toContain(
       "function execute(command: string, " +
-        "...args: (string | editor.execute.options)[]" +
+        "...args: (string | editor.execute.Options)[]" +
         "): undefined | string;",
     );
   });
@@ -1331,9 +1331,9 @@ describe("editor VM module emit", () => {
     if (!entry) throw new Error("http editor VM manifest entry missing");
     const { contents } = generateModuleDeclaration({ ...entry, doc: splitEditorHttpDoc() });
     expect(contents.match(/type response = /g)).toHaveLength(1);
-    expect(contents).toContain("interface request {");
+    expect(contents).toContain("interface Request {");
     expect(contents).toMatch(
-      /type handler = \(request: http\.server\.request\) => .*http\.response/,
+      /type handler = \(request: http\.server\.Request\) => .*http\.response/,
     );
   });
 
