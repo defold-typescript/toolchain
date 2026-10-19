@@ -76,8 +76,19 @@ export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> 
       route,
     };
     const anchors = memberAnchors(page);
+    const valueKeys = new Set<string>();
     for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
-      index[qualify(namespace, symbol.name)] = {
+      const key = qualify(namespace, symbol.name);
+      // A type row sharing its key with a value member (`vmath.vector`, the
+      // function and the type it returns) leaves the key to the value. One key
+      // cannot name both; signatures link the type through its own anchor in
+      // `apiSignatureSymbolLinks`.
+      if (symbol.kind === "type") {
+        if (valueKeys.has(key)) continue;
+      } else {
+        valueKeys.add(key);
+      }
+      index[key] = {
         brief: stripPlatformMarkers(symbol.docMarkdown),
         route: `${route}#${anchors.get(`${symbol.kind}:${symbol.name}`)}`,
       };

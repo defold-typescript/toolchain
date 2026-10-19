@@ -264,8 +264,9 @@ const memberInnerFormShape = /^[A-Za-z_$][\w$]*\s*:/;
  *   `PROPERTY` (`name: T;`) drop an optional binding keyword and `;`, then
  *   splice the namespace-qualified public `identity.name` before the type
  *   portion, so an emitter-safe binding alias (`_null`, `_delete`) never leaks.
- * - `TYPEDEF` (`type Name = T;`) drops the trailing `;` (dormant: pure aliases
- *   are not rendered as page symbols today, so nothing displays this yet).
+ * - `TYPEDEF` (`type Name = T;`) drops the trailing `;`; an interface
+ *   (`interface Name { … }`) passes through trimmed. The inner form is the
+ *   definition the page's type row renders.
  *
  * Returns `""` when the declaration does not match its kind's expected shape, so
  * an unrenderable entry falls the render layer back to the token-derived form.
@@ -294,6 +295,7 @@ function innerRenderSignature(identity: ApiSymbolIdentity, declaration: string):
       return `${identity.name}: ${body.slice(body.indexOf(":") + 1).trim()}`;
     }
     case "TYPEDEF": {
+      if (decl.startsWith("interface ")) return decl;
       if (!decl.startsWith("type ")) return "";
       return decl.replace(/;\s*$/, "");
     }

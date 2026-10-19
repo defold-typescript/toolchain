@@ -17,6 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[`upgrade` reads versions right](./upgrade.md#what-it-does)**, prereleases too.
 > - **[Model texture keys](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** reach `texture15`.
 > - **[A debug-wired entry script can export values](./debugging.md#picking-the-entry-script)**, and F5 flags a stale engine build.
+> - **API pages list every interface type in full**, such as the [socket](/api/socket) handles and their methods.
 
 ### Breaking
 
@@ -40,6 +41,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **`upgrade` reports the version the project had before the run** — its installed `@defold-typescript/cli`, else its `package.json` pin — in the summary line and the `--json` `from` field, so `bunx @defold-typescript/cli@latest upgrade` no longer claims "already latest" after moving the project to a newer release. When neither names a version, the line reads `none -> <to>` and `from` is left out.
 - **`upgrade` tells distinct prereleases apart** — digit-led ones such as `1.3.0-1alpha` and `1.3.0-1beta`, and very long numeric ones such as `1.3.0-9007199254740992` and `1.3.0-9007199254740993` — so a CLI on the older one hands off to the newer one instead of re-scaffolding from its own templates and calling the project already latest.
 - **`model.properties` declares all sixteen texture units the engine handles**, `"texture0"` through `"texture15"`, on every [pre-baked Defold version](./pinning-defold-target.md#opting-into-a-pinned-surface), so `go.get<model.properties>()("#model", "texture8")` compiles; a surface generated from a reference doc alone keeps `"texture0"` through `"texture7"`.
+- **API reference pages list every interface and type alias the declarations define, with its full definition.** This covers the five socket handles and their methods (`socket.socket_client`, `socket.socket_connected`, `socket.socket_master`, `socket.socket_server`, `socket.socket_unconnected`), option and result tables such as `b2d.aabb`, `bullet3d.version_info` and `sys.sys_info`, and aliases such as `gui.node`.
 
 ## v0.52.0
 
