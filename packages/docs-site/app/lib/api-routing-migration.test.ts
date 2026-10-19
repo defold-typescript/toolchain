@@ -866,9 +866,7 @@ describe("api routing migration — the rendered namespace page carries its shap
 
       // The fixture shape is named for the module-function section heading, so
       // the page mints two ids for the same text and only the last is the shape's.
-      const collided = allPageHeadings(html).filter(
-        (h) => h.level === 2 && h.text === TYPEDEF_SHAPE_NAME,
-      );
+      const collided = allPageHeadings(html).filter((h) => h.text === TYPEDEF_SHAPE_NAME);
       expect(collided.length).toBe(2);
       const id = (collided[collided.length - 1] as (typeof collided)[number]).id;
       expect(id).not.toBe((collided[0] as (typeof collided)[number]).id);

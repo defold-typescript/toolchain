@@ -3264,40 +3264,66 @@ describe("groupTypeSymbols", () => {
     };
   }
 
-  test("returns one group per owning shape, labeled bare, preserving both orders", () => {
-    const groups = groupTypeSymbols([
+  test("lists every member-less type as a row, in input order", () => {
+    const layout = groupTypeSymbols([
+      typeSymbol("EASING"),
+      typeSymbol("Shape.member"),
+      typeSymbol("ADJUST"),
+    ]);
+    expect(layout.types).toEqual([typeSymbol("EASING"), typeSymbol("ADJUST")]);
+    expect(layout.shapes.map((s) => s.label)).toEqual(["Shape"]);
+  });
+
+  test("returns one shape per owning shape, labeled bare, preserving both orders", () => {
+    const layout = groupTypeSymbols([
       typeSymbol("ShowOptions.visible"),
       typeSymbol("Transition.easing"),
       typeSymbol("ShowOptions.sequential"),
     ]);
-    expect(groups).toEqual([
-      {
-        label: "ShowOptions",
-        symbols: [typeSymbol("ShowOptions.visible"), typeSymbol("ShowOptions.sequential")],
-      },
-      { label: "Transition", symbols: [typeSymbol("Transition.easing")] },
-    ]);
+    expect(layout).toEqual({
+      types: [],
+      shapes: [
+        {
+          label: "ShowOptions",
+          symbols: [typeSymbol("ShowOptions.visible"), typeSymbol("ShowOptions.sequential")],
+        },
+        { label: "Transition", symbols: [typeSymbol("Transition.easing")] },
+      ],
+    });
   });
 
   test("splits at the first dot, so a dotted member stays with its shape", () => {
-    const groups = groupTypeSymbols([typeSymbol("Config.window.width")]);
-    expect(groups).toEqual([{ label: "Config", symbols: [typeSymbol("Config.window.width")] }]);
+    const layout = groupTypeSymbols([typeSymbol("Config.window.width")]);
+    expect(layout).toEqual({
+      types: [],
+      shapes: [{ label: "Config", symbols: [typeSymbol("Config.window.width")] }],
+    });
   });
 
-  test("heads a shape's group with its dotless definition symbol", () => {
-    const groups = groupTypeSymbols([
-      typeSymbol("Shape"),
-      typeSymbol("Shape.member"),
+  test("heads a shape with its dotless definition symbol and keeps it out of the rows", () => {
+    const layout = groupTypeSymbols([
+      typeSymbol("ManifoldHit"),
+      typeSymbol("ManifoldHit.normal"),
       typeSymbol("other"),
+      typeSymbol("ManifoldHit.depth"),
     ]);
-    expect(groups).toEqual([
-      { label: "Shape", symbols: [typeSymbol("Shape"), typeSymbol("Shape.member")] },
-      { label: "other", symbols: [typeSymbol("other")] },
-    ]);
+    expect(layout).toEqual({
+      types: [typeSymbol("other")],
+      shapes: [
+        {
+          label: "ManifoldHit",
+          symbols: [
+            typeSymbol("ManifoldHit"),
+            typeSymbol("ManifoldHit.normal"),
+            typeSymbol("ManifoldHit.depth"),
+          ],
+        },
+      ],
+    });
   });
 
-  test("yields an empty array for empty input", () => {
-    expect(groupTypeSymbols([])).toEqual([]);
+  test("yields empty rows and shapes for empty input", () => {
+    expect(groupTypeSymbols([])).toEqual({ types: [], shapes: [] });
   });
 });
 
@@ -3308,17 +3334,19 @@ describe("native helper shape definitions", () => {
     if (!found) throw new Error(`no /api/${namespace} page`);
     return found;
   };
-  const typeGroups = (namespace: string) =>
+  const typeLayout = (namespace: string) =>
     groupTypeSymbols(
       apiModuleSymbols(page(namespace), page(namespace).translations).filter(
         (s) => s.kind === "type",
       ),
     );
   const group = (namespace: string, label: string) =>
-    typeGroups(namespace).find((g) => g.label === label);
+    typeLayout(namespace).shapes.find((g) => g.label === label);
+  const row = (namespace: string, name: string) =>
+    typeLayout(namespace).types.find((s) => s.name === name);
 
-  test("heads a union alias's group with a definition naming its arms", () => {
-    const definition = group("daabbcc", "QueryResult")?.symbols[0];
+  test("lists a union alias as a row whose definition names its arms", () => {
+    const definition = row("daabbcc", "QueryResult");
     expect(definition?.name).toBe("QueryResult");
     expect(definition?.signature).toContain("BitsHit[]");
     expect(definition?.signature).toContain("ManifoldHit[]");
@@ -3337,9 +3365,10 @@ describe("native helper shape definitions", () => {
 
   test("links a signature token to the page that defines the shape", () => {
     const daabbcc = apiSignatureSymbolLinks(pages, page("daabbcc"));
-    for (const shape of ["QueryResult", "SortedQueryResult", "BitsHit"]) {
-      expect(daabbcc.get(shape)).toMatchObject({ route: "/api/daabbcc" });
+    for (const alias of ["QueryResult", "SortedQueryResult"]) {
+      expect(daabbcc.get(alias)).toStartWith("/api/daabbcc#");
     }
+    expect(daabbcc.get("BitsHit")).toMatchObject({ route: "/api/daabbcc" });
     expect(apiSignatureSymbolLinks(pages, page("share")).get("FileOptions")).toMatchObject({
       route: "/api/share",
     });

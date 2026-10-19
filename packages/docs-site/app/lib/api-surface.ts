@@ -633,18 +633,25 @@ export function groupFunctionSymbols(functions: ApiSymbol[]): ApiSymbolGroup[] {
   return groups;
 }
 
+export interface TypeSymbolLayout {
+  types: ApiSymbol[];
+  shapes: ApiSymbolGroup[];
+}
+
 /**
- * Partition a namespace's `type` symbols for `/api` rendering: one group per
- * owning shape, in first-appearance order, labeled with the bare shape name.
+ * Partition a namespace's `type` symbols for `/api` rendering into member-less
+ * rows and shapes with members, each in first-appearance order.
  * `apiModuleSymbols` projects every typedef member as `<Shape>.<member>`, so the
  * split is at the *first* `.` — a member whose own name carries a dot stays with
  * its shape rather than minting one. A dotless name is the shape's own definition
- * symbol and heads that shape's group. Giving each shape a heading is what makes
- * a shape linkable at all: a signature token naming it resolves to that heading's
- * anchor. Input order is preserved within every group. Presentation-only — does
- * not feed the search index or `apiModuleSymbols`.
+ * symbol and heads that shape's group. A type with no members (a `type` alias or
+ * an `interface` row) is a row: the rows share one heading, and each row's own
+ * signature heading is its anchor. A shape with members owns a heading labeled
+ * with the bare shape name, because that heading is the only anchor a signature
+ * token naming it can resolve to. Input order is preserved within every shape.
+ * Presentation-only — does not feed the search index or `apiModuleSymbols`.
  */
-export function groupTypeSymbols(types: ApiSymbol[]): ApiSymbolGroup[] {
+export function groupTypeSymbols(types: ApiSymbol[]): TypeSymbolLayout {
   const byShape = new Map<string, ApiSymbol[]>();
 
   for (const type of types) {
@@ -655,9 +662,12 @@ export function groupTypeSymbols(types: ApiSymbol[]): ApiSymbolGroup[] {
     else byShape.set(shape, [type]);
   }
 
-  const groups: ApiSymbolGroup[] = [];
-  for (const [shape, symbols] of byShape) groups.push({ label: shape, symbols });
-  return groups;
+  const layout: TypeSymbolLayout = { types: [], shapes: [] };
+  for (const [shape, symbols] of byShape) {
+    if (symbols.every((s) => !s.name.includes("."))) layout.types.push(...symbols);
+    else layout.shapes.push({ label: shape, symbols });
+  }
+  return layout;
 }
 
 /**

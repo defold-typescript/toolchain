@@ -422,11 +422,16 @@ describe("apiPageMarkdown", () => {
     expect(md).not.toContain(`\`${thin}\``);
   });
 
-  test("renders member-bearing typedefs under a per-shape heading", () => {
+  test("nests a member-bearing typedef's heading in Types, over its member rows", () => {
     const md = apiPageMarkdown(typedefPage(), (t) => t);
-    expect(md).toContain("## LoggerInstance");
-    expect(md).not.toContain("## Types");
-    expect(md).toContain("### `LoggerInstance.info(message: string)`");
+    const lines = md.split("\n");
+    const typesAt = lines.indexOf("## Types");
+    const shapeAt = lines.indexOf("### LoggerInstance");
+    expect(typesAt).toBeGreaterThan(-1);
+    expect(shapeAt).toBeGreaterThan(typesAt);
+    expect(lines).not.toContain("## LoggerInstance");
+    expect(lines.indexOf("#### `LoggerInstance.info(message: string)`")).toBeGreaterThan(shapeAt);
+    expect(lines.indexOf("#### `LoggerInstance.level: number`")).toBeGreaterThan(shapeAt);
     expect(md).toContain("Writes an info message.");
     expect(md).toContain(`- ${nameCode("message")}: ${typeCode("string")} — message text`);
     expect(md).toContain("### `LoggerInstance.level: number`");
@@ -442,10 +447,44 @@ describe("apiPageMarkdown", () => {
         properties: [{ name: "level", brief: "", description: "Threshold.", types: ["number"] }],
       },
     ];
-    const md = apiPageMarkdown(page, (t) => t);
-    expect(md).toContain("## LoggerInstance");
-    expect(md.indexOf("## LoggerConfig")).toBeGreaterThan(md.indexOf("## LoggerInstance"));
-    expect(md).toContain("### `LoggerConfig.level: number`");
+    const lines = apiPageMarkdown(page, (t) => t).split("\n");
+    expect(lines).toContain("### LoggerInstance");
+    expect(lines.indexOf("### LoggerConfig")).toBeGreaterThan(lines.indexOf("### LoggerInstance"));
+    expect(lines).toContain("#### `LoggerConfig.level: number`");
+  });
+
+  test("lists member-less types under one Types heading", () => {
+    const page = typedefPage();
+    page.module.typedefs = [
+      { name: "LogLevel", types: ["string", "number"] },
+      { name: "LogSink", types: ["function", "string"] },
+    ];
+    const lines = apiPageMarkdown(page, (t) => t).split("\n");
+    expect(lines.filter((line) => line === "## Types")).toHaveLength(1);
+    const typesAt = lines.indexOf("## Types");
+    const rowsAt = ["LogLevel", "LogSink"].map((name) =>
+      lines.findIndex((line) => line.startsWith(`### \`type ${name} =`)),
+    );
+    for (const at of rowsAt) expect(at).toBeGreaterThan(typesAt);
+    expect(lines).not.toContain("## LogLevel");
+    expect(lines).not.toContain("## LogSink");
+  });
+
+  test("keeps a member-bearing shape's heading after the Types list", () => {
+    const page = typedefPage();
+    page.module.typedefs = [
+      ...(page.module.typedefs ?? []),
+      { name: "LogLevel", types: ["string", "number"] },
+    ];
+    const lines = apiPageMarkdown(page, (t) => t).split("\n");
+    const typesAt = lines.indexOf("## Types");
+    const rowAt = lines.findIndex((line) => line.startsWith("### `type LogLevel ="));
+    const shapeAt = lines.indexOf("### LoggerInstance");
+    const memberAt = lines.findIndex((line) => line.startsWith("#### `LoggerInstance.info("));
+    expect(typesAt).toBeGreaterThan(-1);
+    expect(rowAt).toBeGreaterThan(typesAt);
+    expect(shapeAt).toBeGreaterThan(rowAt);
+    expect(memberAt).toBeGreaterThan(shapeAt);
   });
 });
 
@@ -1703,7 +1742,7 @@ describe("windowed page dots follow the selected range", () => {
   const headingDots = (md: string, kind: string): number =>
     md
       .split("\n")
-      .filter((line) => line.startsWith("### `"))
+      .filter((line) => /^#{3,4} `/.test(line))
       .reduce(
         (total, line) =>
           total +
@@ -2625,7 +2664,7 @@ describe("constant union alias entries", () => {
     expect(links.get("gui.node")).toBe(`/api/gui#${slugify(type?.signature ?? "")}`);
   });
 
-  test("page-local typedef shapes keep their existing bare-name heading target", () => {
+  test("a member-less type's bare and qualified names link to the same row", () => {
     const page: ApiPage = {
       ...guiPage(),
       module: {
@@ -2634,7 +2673,8 @@ describe("constant union alias entries", () => {
       },
     };
     const links = apiSignatureSymbolLinks([page], page);
-    expect(links.get("node")).toEqual({ route: "/api/gui", heading: "node" });
+    expect(typeof links.get("node")).toBe("string");
+    expect(links.get("node")).toBe(links.get("gui.node"));
   });
 });
 
