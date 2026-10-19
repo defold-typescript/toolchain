@@ -67,9 +67,23 @@ interface Declaration {
   readonly nodes: Located<ts.TypeAliasDeclaration | ts.InterfaceDeclaration>[];
 }
 
+// A declaration file's display path and text, read from disk for a surface or
+// written inline.
+interface Source {
+  readonly path: string;
+  readonly text: string;
+}
+
+function readSources(files: readonly string[]): Source[] {
+  return files.map((file) => ({
+    path: relative(PACKAGE_ROOT, file),
+    text: readFileSync(file, "utf8"),
+  }));
+}
+
 // Declarations keyed by namespace path, then name. `declare global` adds no
 // segment; a module file's own top-level declarations are scoped to that file.
-function collectDeclarations(files: readonly string[]): Map<string, Map<string, Declaration>> {
+function collectDeclarations(sources: readonly Source[]): Map<string, Map<string, Declaration>> {
   const byNamespace = new Map<string, Map<string, Declaration>>();
   const add = (
     namespace: string,
@@ -101,15 +115,19 @@ function collectDeclarations(files: readonly string[]): Map<string, Map<string, 
       if (body !== undefined && ts.isModuleBlock(body)) walk(body.statements, path, file);
     }
   };
-  for (const path of files) {
-    const file = ts.createSourceFile(path, readFileSync(path, "utf8"), ts.ScriptTarget.Latest);
+  for (const source of sources) {
+    const file = ts.createSourceFile(source.path, source.text, ts.ScriptTarget.Latest);
     const isModule = file.statements.some(
       (statement) =>
         ts.isImportDeclaration(statement) ||
         ts.isExportDeclaration(statement) ||
-        ts.isExportAssignment(statement),
+        ts.isExportAssignment(statement) ||
+        (ts.canHaveModifiers(statement) &&
+          (ts.getModifiers(statement) ?? []).some(
+            (modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword,
+          )),
     );
-    walk(file.statements, isModule ? `file:${relative(PACKAGE_ROOT, path)}` : "", file);
+    walk(file.statements, isModule ? `file:${source.path}` : "", file);
   }
   return byNamespace;
 }
@@ -223,15 +241,41 @@ function referenceNames(target: string): Set<string> {
   return names;
 }
 
-function duplicateDefects(surface: Surface): string[] {
-  const reference = referenceNames(surface.target);
+// Several declarations of one name merge only when every one is an interface and
+// all carry the same type parameters; any other repeat is a second definition.
+function mergesAsInterfaces(declaration: Declaration): boolean {
+  const parameterLists = declaration.nodes.map(({ node, file }) =>
+    ts.isInterfaceDeclaration(node)
+      ? (node.typeParameters ?? []).map((param) => printed(param, file)).join(", ")
+      : undefined,
+  );
+  const [first] = parameterLists;
+  return parameterLists.every((list) => list !== undefined && list === first);
+}
+
+function declarationSite({ node, file }: Located<ts.Node>): string {
+  const kind = ts.isInterfaceDeclaration(node) ? "interface" : "type";
+  const line = file.getLineAndCharacterOfPosition(node.getStart(file)).line + 1;
+  return `${kind}@${file.fileName}:${line}`;
+}
+
+function duplicateDefects(surface: string, target: string, sources: readonly Source[]): string[] {
+  const reference = referenceNames(target);
   const defects: string[] = [];
-  for (const [namespace, names] of collectDeclarations(surface.files)) {
+  for (const [namespace, names] of collectDeclarations(sources)) {
     const entries = [...names].sort(([a], [b]) => a.localeCompare(b));
+    // A name the reference documents is still declared once; the exemption below
+    // covers two distinct names only.
+    for (const [name, declaration] of entries) {
+      if (declaration.nodes.length < 2 || mergesAsInterfaces(declaration)) continue;
+      defects.push(
+        `${surface}: ${namespace}: ${name} is declared ${declaration.nodes.length} times (${declaration.nodes.map(declarationSite).join(", ")}); only interfaces with identical type parameters merge`,
+      );
+    }
     const documented = (name: string) => reference.has(`${namespace}.${name}`);
     const report = (a: string, b: string, reason: string) => {
       if (documented(a) && documented(b)) return;
-      defects.push(`${surface.name}: ${namespace}: ${a} and ${b} ${reason}`);
+      defects.push(`${surface}: ${namespace}: ${a} and ${b} ${reason}`);
     };
     const reported = new Set<string>();
     const pairKey = (a: string, b: string) => [a, b].sort().join("\0");
@@ -276,7 +320,73 @@ describe("single name per type", () => {
 
   for (const surface of all) {
     test(`${surface.name} declares each type under one name per namespace`, () => {
-      expect(duplicateDefects(surface)).toEqual([]);
+      expect(duplicateDefects(surface.name, surface.target, readSources(surface.files))).toEqual(
+        [],
+      );
     });
   }
+});
+
+describe("same-name analyzer", () => {
+  const defectsOf = (...texts: string[]) =>
+    duplicateDefects(
+      "memory",
+      DEFAULT_TARGET_ID,
+      texts.map((text, index) => ({ path: `source-${index}.d.ts`, text })),
+    );
+
+  test("a type alias declared twice in one namespace is a defect naming both declarations", () => {
+    expect(
+      defectsOf(
+        [
+          "declare namespace render {",
+          "  type render_target_params = { sample_count?: number };",
+          "}",
+          "declare namespace render {",
+          "  type render_target_params = Record<string | number, unknown>;",
+          "}",
+        ].join("\n"),
+      ),
+    ).toEqual([
+      "memory: render: render_target_params is declared 2 times (type@source-0.d.ts:2, type@source-0.d.ts:5); only interfaces with identical type parameters merge",
+    ]);
+  });
+
+  test("an interface beside a type alias of the same name is a defect", () => {
+    expect(
+      defectsOf(
+        [
+          "declare namespace socket {",
+          "  interface socket_client { close(): number; }",
+          "  type socket_client = unknown;",
+          "}",
+        ].join("\n"),
+      ),
+    ).toEqual([
+      "memory: socket: socket_client is declared 2 times (interface@source-0.d.ts:2, type@source-0.d.ts:3); only interfaces with identical type parameters merge",
+    ]);
+  });
+
+  test("interfaces that merge report nothing", () => {
+    expect(
+      defectsOf(
+        "declare namespace go {\n  interface properties { euler: Vector3; }\n}",
+        "declare namespace go {\n  interface properties { position: Vector3; }\n}",
+        "interface CustomMessages {}",
+        "interface CustomMessages { ping: { at: number } }",
+      ),
+    ).toEqual([]);
+  });
+
+  test("interfaces with different type parameters are a defect", () => {
+    expect(defectsOf("interface Box<T> { value: T; }", "interface Box { size: number; }")).toEqual([
+      "memory: : Box is declared 2 times (interface@source-0.d.ts:1, interface@source-1.d.ts:1); only interfaces with identical type parameters merge",
+    ]);
+  });
+
+  test("a module file's top-level name and a global one are different namespaces", () => {
+    expect(
+      defectsOf("export type Shared = number;\ndeclare global {\n  type Shared = string;\n}"),
+    ).toEqual([]);
+  });
 });
