@@ -9,19 +9,32 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.52.1
+## v0.53.0
 
 > Summary:
 >
+> - **[Enum aliases take the reference's names](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** on every Defold version: rename `gui.Easing` to `gui.EASING` and 21 more.
 > - **[`upgrade` reads versions right](./upgrade.md#what-it-does)**, prereleases too.
 > - **[Model texture keys](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** reach `texture15`.
 > - **[A debug-wired entry script can export values](./debugging.md#picking-the-entry-script)**, and F5 flags a stale engine build.
+
+### Breaking
+
+- **Each constant-union alias has one name, the one the Defold reference gives its enum, on every Defold version.** Rename these in your code; a union the reference leaves unnamed keeps its alias, such as `gui.XAnchor` and `render.ClearBufferKey`.
+  - **[buffer](/api/buffer)** — `buffer.ValueType` -> `buffer.VALUE_TYPE`.
+  - **[collectionfactory](/api/collectionfactory)** — `collectionfactory.Status` -> `collectionfactory.STATUS`.
+  - **[factory](/api/factory)** — `factory.Status` -> `factory.STATUS`.
+  - **[go](/api/go)** — `go.Easing` -> `go.EASING`.
+  - **[graphics](/api/graphics)** — `graphics.BlendFactor` -> `graphics.BLEND_FACTOR`, `graphics.BufferType` -> `graphics.BUFFER_TYPE`; on Defold 1.13.2 and later, `graphics.BUFFER_TYPE` takes `graphics.BUFFER_TYPE_COLOR1_BIT` through `graphics.BUFFER_TYPE_COLOR3_BIT` only once narrowed past `undefined`.
+  - **[gui](/api/gui)** — `gui.AdjustMode` -> `gui.ADJUST`, `gui.BlendMode` -> `gui.BLEND`, `gui.ClippingMode` -> `gui.CLIPPING_MODE`, `gui.Easing` -> `gui.EASING`, `gui.KeyboardType` -> `gui.KEYBOARD_TYPE`, `gui.NodeType` -> `gui.TYPE`, `gui.PieBounds` -> `gui.PIEBOUNDS`, `gui.Pivot` -> `gui.PIVOT`, `gui.Playback` -> `gui.PLAYBACK`, `gui.Property` -> `gui.PROP`, `gui.SafeAreaMode` -> `gui.SAFE_AREA`, `gui.SizeMode` -> `gui.SIZE_MODE`.
+  - **[profiler](/api/profiler)** — `profiler.Mode` -> `profiler.MODE`, `profiler.ViewMode` -> `profiler.VIEW_MODE`.
+  - **[sys](/api/sys)** — `sys.NetworkConnectivity` -> `sys.NETWORK`.
+  - **[window](/api/window)** — `window.DimModeState` -> `window.DIMMING`.
 
 ### Fixed
 
 - **An entry script wired by `setup-debug` builds when it exports runtime values.** The unedited managed block no longer fails the [companion's](./script-state.md#exporting-a-value-from-a-script-itself) order rule at its `if`, and its gated `lldebugger.start()` runs before the companion loads; an edited block is still rejected, with an error that says to run `defold-typescript setup-debug` to restore it.
 - **F5 no longer runs a missing or stale engine build without a word.** The debug launcher stops when `build/default/game.projectc` is missing, and warns before launching when a generated script or `game.project` is newer than its compiled copy, while `build` and `watch` leave an unchanged output's file time alone; an existing project gets this launcher by [deleting `.vscode/defold-debug.ts` and rerunning `setup-debug`](./debugging.md#which-engine-the-launcher-runs).
-
 - **`upgrade` reports the version the project had before the run** — its installed `@defold-typescript/cli`, else its `package.json` pin — in the summary line and the `--json` `from` field, so `bunx @defold-typescript/cli@latest upgrade` no longer claims "already latest" after moving the project to a newer release. When neither names a version, the line reads `none -> <to>` and `from` is left out.
 - **`upgrade` tells distinct prereleases apart** — digit-led ones such as `1.3.0-1alpha` and `1.3.0-1beta`, and very long numeric ones such as `1.3.0-9007199254740992` and `1.3.0-9007199254740993` — so a CLI on the older one hands off to the newer one instead of re-scaffolding from its own templates and calling the project already latest.
 - **`model.properties` declares all sixteen texture units the engine handles**, `"texture0"` through `"texture15"`, on every [pre-baked Defold version](./pinning-defold-target.md#opting-into-a-pinned-surface), so `go.get<model.properties>()("#model", "texture8")` compiles; a surface generated from a reference doc alone keeps `"texture0"` through `"texture7"`.

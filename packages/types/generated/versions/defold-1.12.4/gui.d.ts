@@ -8,18 +8,18 @@ declare global {
    * accessible only from gui scripts.
    */
   namespace gui {
-    type AdjustMode = typeof gui.ADJUST_FIT | typeof gui.ADJUST_ZOOM | typeof gui.ADJUST_STRETCH;
-    type BlendMode = typeof gui.BLEND_ALPHA | typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN;
-    type ClippingMode = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL;
-    type Easing = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE;
-    type KeyboardType = typeof gui.KEYBOARD_TYPE_DEFAULT | typeof gui.KEYBOARD_TYPE_EMAIL | typeof gui.KEYBOARD_TYPE_NUMBER_PAD | typeof gui.KEYBOARD_TYPE_PASSWORD;
-    type NodeType = typeof gui.TYPE_BOX | typeof gui.TYPE_TEXT | typeof gui.TYPE_PIE | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_CUSTOM;
-    type PieBounds = typeof gui.PIEBOUNDS_RECTANGLE | typeof gui.PIEBOUNDS_ELLIPSE;
-    type Pivot = typeof gui.PIVOT_CENTER | typeof gui.PIVOT_N | typeof gui.PIVOT_NE | typeof gui.PIVOT_E | typeof gui.PIVOT_SE | typeof gui.PIVOT_S | typeof gui.PIVOT_SW | typeof gui.PIVOT_W | typeof gui.PIVOT_NW;
-    type Playback = typeof gui.PLAYBACK_ONCE_FORWARD | typeof gui.PLAYBACK_ONCE_BACKWARD | typeof gui.PLAYBACK_ONCE_PINGPONG | typeof gui.PLAYBACK_LOOP_FORWARD | typeof gui.PLAYBACK_LOOP_BACKWARD | typeof gui.PLAYBACK_LOOP_PINGPONG;
-    type Property = typeof gui.PROP_POSITION | typeof gui.PROP_ROTATION | typeof gui.PROP_EULER | typeof gui.PROP_SCALE | typeof gui.PROP_COLOR | typeof gui.PROP_OUTLINE | typeof gui.PROP_SHADOW | typeof gui.PROP_SIZE | typeof gui.PROP_FILL_ANGLE | typeof gui.PROP_INNER_RADIUS | typeof gui.PROP_LEADING | typeof gui.PROP_TRACKING | typeof gui.PROP_SLICE9;
-    type SafeAreaMode = typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_SHORT | typeof gui.SAFE_AREA_BOTH;
-    type SizeMode = typeof gui.SIZE_MODE_MANUAL | typeof gui.SIZE_MODE_AUTO;
+    type ADJUST = typeof gui.ADJUST_FIT | typeof gui.ADJUST_ZOOM | typeof gui.ADJUST_STRETCH;
+    type BLEND = typeof gui.BLEND_ALPHA | typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN;
+    type CLIPPING_MODE = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL;
+    type EASING = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE;
+    type KEYBOARD_TYPE = typeof gui.KEYBOARD_TYPE_DEFAULT | typeof gui.KEYBOARD_TYPE_EMAIL | typeof gui.KEYBOARD_TYPE_NUMBER_PAD | typeof gui.KEYBOARD_TYPE_PASSWORD;
+    type PIEBOUNDS = typeof gui.PIEBOUNDS_RECTANGLE | typeof gui.PIEBOUNDS_ELLIPSE;
+    type PIVOT = typeof gui.PIVOT_CENTER | typeof gui.PIVOT_N | typeof gui.PIVOT_NE | typeof gui.PIVOT_E | typeof gui.PIVOT_SE | typeof gui.PIVOT_S | typeof gui.PIVOT_SW | typeof gui.PIVOT_W | typeof gui.PIVOT_NW;
+    type PLAYBACK = typeof gui.PLAYBACK_ONCE_FORWARD | typeof gui.PLAYBACK_ONCE_BACKWARD | typeof gui.PLAYBACK_ONCE_PINGPONG | typeof gui.PLAYBACK_LOOP_FORWARD | typeof gui.PLAYBACK_LOOP_BACKWARD | typeof gui.PLAYBACK_LOOP_PINGPONG;
+    type PROP = typeof gui.PROP_POSITION | typeof gui.PROP_ROTATION | typeof gui.PROP_EULER | typeof gui.PROP_SCALE | typeof gui.PROP_COLOR | typeof gui.PROP_OUTLINE | typeof gui.PROP_SHADOW | typeof gui.PROP_SIZE | typeof gui.PROP_FILL_ANGLE | typeof gui.PROP_INNER_RADIUS | typeof gui.PROP_LEADING | typeof gui.PROP_TRACKING | typeof gui.PROP_SLICE9;
+    type SAFE_AREA = typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_SHORT | typeof gui.SAFE_AREA_BOTH;
+    type SIZE_MODE = typeof gui.SIZE_MODE_MANUAL | typeof gui.SIZE_MODE_AUTO;
+    type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_TEXT | typeof gui.TYPE_PIE | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_CUSTOM;
     type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT;
     type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;
     /**
@@ -486,7 +486,7 @@ declare global {
      * gui.cancel_animations(node);
      * ```
      */
-    function cancel_animations(node: Opaque<"node">, property?: string | gui.Property | Hash): void;
+    function cancel_animations(node: Opaque<"node">, property?: string | gui.PROP | Hash): void;
     /**
      * Cancels any running flipbook animation on the specified node.
      *
@@ -563,7 +563,7 @@ declare global {
      * - `gui.ADJUST_ZOOM`
      * - `gui.ADJUST_STRETCH`
      */
-    function get_adjust_mode(node: Opaque<"node">): gui.AdjustMode;
+    function get_adjust_mode(node: Opaque<"node">): gui.ADJUST;
     /**
      * gets the node alpha
      *
@@ -584,7 +584,7 @@ declare global {
      * - `gui.BLEND_MULT`
      * - `gui.BLEND_SCREEN`
      */
-    function get_blend_mode(node: Opaque<"node">): gui.BlendMode;
+    function get_blend_mode(node: Opaque<"node">): gui.BLEND;
     /**
      * If node is set as an inverted clipping node, it will clip anything inside as opposed to outside.
      *
@@ -601,7 +601,7 @@ declare global {
      * - `gui.CLIPPING_MODE_NONE`
      * - `gui.CLIPPING_MODE_STENCIL`
      */
-    function get_clipping_mode(node: Opaque<"node">): gui.ClippingMode;
+    function get_clipping_mode(node: Opaque<"node">): gui.CLIPPING_MODE;
     /**
      * If node is set as visible clipping node, it will be shown as well as clipping. Otherwise, it will only clip but not show visually.
      *
@@ -826,7 +826,7 @@ declare global {
      * - `gui.PIEBOUNDS_RECTANGLE`
      * - `gui.PIEBOUNDS_ELLIPSE`
      */
-    function get_outer_bounds(node: Opaque<"node">): gui.PieBounds;
+    function get_outer_bounds(node: Opaque<"node">): gui.PIEBOUNDS;
     /**
      * Returns the outline color of the supplied node.
      * See gui.get_color for info how vectors encode color values.
@@ -874,7 +874,7 @@ declare global {
      * - `gui.PIVOT_W`
      * - `gui.PIVOT_NW`
      */
-    function get_pivot(node: Opaque<"node">): gui.Pivot;
+    function get_pivot(node: Opaque<"node">): gui.PIVOT;
     /**
      * Returns the position of the supplied node.
      *
@@ -935,7 +935,7 @@ declare global {
      * - `gui.SIZE_MODE_MANUAL`
      * - `gui.SIZE_MODE_AUTO`
      */
-    function get_size_mode(node: Opaque<"node">): gui.SizeMode;
+    function get_size_mode(node: Opaque<"node">): gui.SIZE_MODE;
     /**
      * Returns the slice9 configuration values for the node.
      *
@@ -978,7 +978,7 @@ declare global {
      *
      * @param node - node from which to get the type
      */
-    function get_type(node: Opaque<"node">): LuaMultiReturn<[gui.NodeType, number | undefined]>;
+    function get_type(node: Opaque<"node">): LuaMultiReturn<[gui.TYPE, number | undefined]>;
     /**
      * Returns `true` if a node is visible and `false` if it's not.
      * Invisible nodes are not rendered.
@@ -1380,7 +1380,7 @@ declare global {
      * - `gui.ADJUST_ZOOM`
      * - `gui.ADJUST_STRETCH`
      */
-    function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.AdjustMode): void;
+    function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.ADJUST): void;
     /**
      * sets the node alpha
      *
@@ -1401,7 +1401,7 @@ declare global {
      * - `gui.BLEND_MULT`
      * - `gui.BLEND_SCREEN`
      */
-    function set_blend_mode(node: Opaque<"node">, blend_mode: gui.BlendMode): void;
+    function set_blend_mode(node: Opaque<"node">, blend_mode: gui.BLEND): void;
     /**
      * If node is set as an inverted clipping node, it will clip anything inside as opposed to outside.
      *
@@ -1418,7 +1418,7 @@ declare global {
      * - `gui.CLIPPING_MODE_NONE`
      * - `gui.CLIPPING_MODE_STENCIL`
      */
-    function set_clipping_mode(node: Opaque<"node">, clipping_mode: gui.ClippingMode): void;
+    function set_clipping_mode(node: Opaque<"node">, clipping_mode: gui.CLIPPING_MODE): void;
     /**
      * If node is set as an visible clipping node, it will be shown as well as clipping. Otherwise, it will only clip but not show visually.
      *
@@ -1585,7 +1585,7 @@ declare global {
      * - `gui.PIEBOUNDS_RECTANGLE`
      * - `gui.PIEBOUNDS_ELLIPSE`
      */
-    function set_outer_bounds(node: Opaque<"node">, bounds_mode: gui.PieBounds): void;
+    function set_outer_bounds(node: Opaque<"node">, bounds_mode: gui.PIEBOUNDS): void;
     /**
      * Sets the outline color of the supplied node.
      * See gui.set_color for info how vectors encode color values.
@@ -1632,7 +1632,7 @@ declare global {
      * - `gui.PIVOT_W`
      * - `gui.PIVOT_NW`
      */
-    function set_pivot(node: Opaque<"node">, pivot: gui.Pivot): void;
+    function set_pivot(node: Opaque<"node">, pivot: gui.PIVOT): void;
     /**
      * Sets the position of the supplied node.
      *
@@ -1668,7 +1668,7 @@ declare global {
      * - `gui.SAFE_AREA_SHORT`
      * - `gui.SAFE_AREA_BOTH`
      */
-    function set_safe_area_mode(mode: gui.SafeAreaMode): void;
+    function set_safe_area_mode(mode: gui.SAFE_AREA): void;
     /**
      * Sets the scaling of the supplied node.
      *
@@ -1713,7 +1713,7 @@ declare global {
      * - `gui.SIZE_MODE_MANUAL`
      * - `gui.SIZE_MODE_AUTO`
      */
-    function set_size_mode(node: Opaque<"node">, size_mode: gui.SizeMode): void;
+    function set_size_mode(node: Opaque<"node">, size_mode: gui.SIZE_MODE): void;
     /**
      * Set the slice9 configuration values for the node.
      *
@@ -1904,7 +1904,7 @@ declare global {
      * - `gui.KEYBOARD_TYPE_PASSWORD`
      * @param autoclose - if the keyboard should automatically close when clicking outside
      */
-    function show_keyboard(type: gui.KeyboardType, autoclose: boolean): void;
+    function show_keyboard(type: gui.KEYBOARD_TYPE, autoclose: boolean): void;
     /**
      * Stops the particle fx for a gui node
      *

@@ -8,7 +8,6 @@ declare global {
   namespace buffer {
     type buffer_data = Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     type buffer_stream = Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
-    type ValueType = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8;
     type VALUE_TYPE = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8;
     /**
      * float32 Float, single precision, 4 bytes

@@ -23,6 +23,7 @@ import materialDoc from "../fixtures/defold-1.13.1/material_doc.json" with { typ
 import model113Doc from "../fixtures/defold-1.13.1/model_doc.json" with { type: "json" };
 import render113Doc from "../fixtures/defold-1.13.1/render_doc.json" with { type: "json" };
 import sprite113Doc from "../fixtures/defold-1.13.1/sprite_doc.json" with { type: "json" };
+import graphics1132Doc from "../fixtures/defold-1.13.2/graphics_doc.json" with { type: "json" };
 import buffer114Doc from "../fixtures/defold-1.14.0/buffer_doc.json" with { type: "json" };
 import bullet3d114Doc from "../fixtures/defold-1.14.0/bullet3d_doc.json" with { type: "json" };
 import collectionproxy114Doc from "../fixtures/defold-1.14.0/collectionproxy_doc.json" with {
@@ -3031,7 +3032,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       functions: [requireFunction(module, "buffer.create")],
     });
     expect(out).toContain(
-      'function create(element_count: number, declaration: [{ name?: Hash | string; type: buffer.ValueType; count?: number }, ...{ name?: Hash | string; type: buffer.ValueType; count?: number }[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };',
+      'function create(element_count: number, declaration: [{ name?: Hash | string; type: buffer.VALUE_TYPE; count?: number }, ...{ name?: Hash | string; type: buffer.VALUE_TYPE; count?: number }[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };',
     );
   });
 
@@ -3041,7 +3042,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ...module,
       functions: [requireFunction(module, "render.set_render_target")],
     });
-    expect(out).toContain("options?: { transient?: graphics.BufferType[] }");
+    expect(out).toContain("options?: { transient?: graphics.BUFFER_TYPE[] }");
   });
 
   test("a string-keyed mapping parameter also accepts a plain object", () => {
@@ -4780,7 +4781,7 @@ describe("documented constant slot expansion", () => {
   test("the signature ledger carries the same expansion", () => {
     const ledger = emitSymbolSignatures(gui);
     const entry = ledger.find((candidate) => candidate.identity.name === "gui.set_blend_mode");
-    expect(entry?.tsSignature).toContain("blend_mode: gui.BlendMode");
+    expect(entry?.tsSignature).toContain("blend_mode: gui.BLEND");
     expect(entry?.tsSignature).toBe(signatureLine(guiOut, "function set_blend_mode("));
   });
 });
@@ -5046,15 +5047,15 @@ describe("CONSTANT_UNION_ALIASES", () => {
   test("a slot whose member set matches a row emits the alias in place of the arms", () => {
     const out = emitDeclarations(parseDefoldApiDoc(guiDoc));
     const animate = lineWith(out, "function animate(");
-    expect(animate).toContain("easing: gui.Easing | Vector");
+    expect(animate).toContain("easing: gui.EASING | Vector");
     expect(animate).not.toContain('__brand: "gui.EASING_');
   });
 
   test("the alias is declared once in its home namespace, in the row's member order", () => {
     const out = emitDeclarations(parseDefoldApiDoc(guiDoc));
-    const row = aliasRow("gui", "Easing");
-    const expected = `  type Easing = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`;
-    expect(out.split("\n").filter((l) => l.trimStart().startsWith("type Easing ="))).toEqual([
+    const row = aliasRow("gui", "EASING");
+    const expected = `  type EASING = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`;
+    expect(out.split("\n").filter((l) => l.trimStart().startsWith("type EASING ="))).toEqual([
       expected,
     ]);
   });
@@ -5114,13 +5115,13 @@ describe("CONSTANT_UNION_ALIASES", () => {
 
   test("each row also reaches the signature ledger as a TYPEDEF entry", () => {
     const ledger = emitSymbolSignatures(parseDefoldApiDoc(guiDoc));
-    const row = aliasRow("gui", "Easing");
+    const row = aliasRow("gui", "EASING");
     const entry = ledger.find(
-      (candidate) => candidate.identity.kind === "TYPEDEF" && candidate.identity.name === "Easing",
+      (candidate) => candidate.identity.kind === "TYPEDEF" && candidate.identity.name === "EASING",
     );
     expect(entry?.identity.namespace).toBe("gui");
     expect(entry?.tsSignature).toBe(
-      `type Easing = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
+      `type EASING = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
     );
   });
 
@@ -5138,6 +5139,115 @@ describe("CONSTANT_UNION_ALIASES", () => {
     expect(graphicsOut).toContain(
       `type State = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
     );
+  });
+});
+
+describe("one name per constant union beside a reference ENUM", () => {
+  function row(home: string, name: string) {
+    const found = CONSTANT_UNION_ALIASES.find((r) => r.home === home && r.name === name);
+    if (found === undefined) throw new Error(`no alias row ${home}.${name}`);
+    return found;
+  }
+
+  const easing = row("gui", "EASING");
+  const playback = row("gui", "PLAYBACK");
+  // Reversed, with one nilable member, so the alias the ENUM writes is
+  // distinguishable from the one the table row would write.
+  const enumOrder = [...easing.members].reverse();
+  const nilableMember = enumOrder[1] as string;
+  const arm = (member: string, nilable: ReadonlySet<string> = new Set()) =>
+    nilable.has(member) ? `NonNullable<typeof ${member}>` : `typeof ${member}`;
+
+  const constantElements = (members: readonly string[]) =>
+    members.map((name) => ({ type: "CONSTANT", name, brief: "", description: "" }));
+  const animate = {
+    type: "FUNCTION",
+    name: "gui.animate",
+    parameters: [{ name: "easing", types: [...easing.members] }],
+  };
+  const enumModule = parseDefoldApiDoc({
+    info: { namespace: "gui" },
+    elements: [
+      {
+        type: "ENUM",
+        name: "gui.EASING",
+        parameters: [],
+        members: enumOrder.map((name) => ({
+          name,
+          doc: "",
+          type: name === nilableMember ? "gui.EASING|nil" : "",
+        })),
+      },
+      ...constantElements(playback.members),
+      animate,
+    ],
+  });
+  const tableModule = parseDefoldApiDoc({
+    info: { namespace: "gui" },
+    elements: [...constantElements(easing.members), ...constantElements(playback.members), animate],
+  });
+
+  const aliasLines = (out: string, name: string): string[] =>
+    out
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith(`type ${name} =`));
+  const ledgerTypedefs = (module: ApiModule, name: string): string[] =>
+    emitSymbolSignatures(module)
+      .filter((entry) => entry.identity.kind === "TYPEDEF" && entry.identity.name === name)
+      .map((entry) => entry.tsSignature);
+
+  test("the ENUM's alias is the only declaration of its name, in the ENUM's spelling", () => {
+    const out = emitDeclarations(enumModule);
+    const expected = `type EASING = ${enumOrder.map((m) => arm(m, new Set([nilableMember]))).join(" | ")};`;
+    expect(aliasLines(out, "EASING")).toEqual([expected]);
+    expect(ledgerTypedefs(enumModule, "EASING")).toEqual([expected]);
+    expect(out).not.toMatch(/\bEasing\b/);
+  });
+
+  test("a row no ENUM declares is still emitted from the table beside one that does", () => {
+    const expected = `type PLAYBACK = ${playback.members.map((m) => arm(m)).join(" | ")};`;
+    expect(aliasLines(emitDeclarations(enumModule), "PLAYBACK")).toEqual([expected]);
+    expect(ledgerTypedefs(enumModule, "PLAYBACK")).toEqual([expected]);
+  });
+
+  test("a reference without the ENUM declares the same name once, from the table row", () => {
+    const out = emitDeclarations(tableModule);
+    const expected = `type EASING = ${easing.members.map((m) => arm(m)).join(" | ")};`;
+    expect(aliasLines(out, "EASING")).toEqual([expected]);
+    expect(ledgerTypedefs(tableModule, "EASING")).toEqual([expected]);
+    expect(out).not.toMatch(/\bEasing\b/);
+  });
+
+  test("a slot whose constant set is the row renders the kept name on both shapes", () => {
+    for (const module of [enumModule, tableModule]) {
+      const line = emitDeclarations(module)
+        .split("\n")
+        .find((l) => l.includes("function animate("));
+      expect(line?.trim()).toBe("function animate(easing: gui.EASING): void;");
+    }
+  });
+
+  test("the 1.13.2 graphics BUFFER_TYPE keeps the ENUM's nilable arms under one name", () => {
+    const module = parseDefoldApiDoc(graphics1132Doc);
+    const out = emitDeclarations(module);
+    const nilable = new Set([
+      "graphics.BUFFER_TYPE_COLOR1_BIT",
+      "graphics.BUFFER_TYPE_COLOR2_BIT",
+      "graphics.BUFFER_TYPE_COLOR3_BIT",
+    ]);
+    const members = [
+      "graphics.BUFFER_TYPE_COLOR0_BIT",
+      "graphics.BUFFER_TYPE_COLOR1_BIT",
+      "graphics.BUFFER_TYPE_COLOR2_BIT",
+      "graphics.BUFFER_TYPE_COLOR3_BIT",
+      "graphics.BUFFER_TYPE_DEPTH_BIT",
+      "graphics.BUFFER_TYPE_STENCIL_BIT",
+    ];
+    const expected = `type BUFFER_TYPE = ${members.map((m) => arm(m, nilable)).join(" | ")};`;
+    expect(aliasLines(out, "BUFFER_TYPE")).toEqual([expected]);
+    expect(ledgerTypedefs(module, "BUFFER_TYPE")).toEqual([expected]);
+    expect(out).not.toMatch(/\bBufferType\b/);
   });
 });
 
@@ -5413,7 +5523,7 @@ describe("engine slot rules", () => {
   };
 
   test("a non-empty slot turns its array into a tuple of one or more elements", () => {
-    const record = "{ name?: Hash | string; type: buffer.ValueType; count?: number }";
+    const record = "{ name?: Hash | string; type: buffer.VALUE_TYPE; count?: number }";
     expect(
       signatureLine(emitDeclarations(only(bufferDoc, "buffer.create")), "function create("),
     ).toContain(`declaration: [${record}, ...${record}[]]`);

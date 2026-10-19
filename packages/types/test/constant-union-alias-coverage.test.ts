@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { loadApiTargets, loadTargetModules } from "../scripts/regen";
+import { parseDefoldApiDoc } from "../src/api-doc";
 import { CONSTANT_UNION_ALIASES, constantUnionAlias } from "../src/emit-dts";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
@@ -123,5 +125,67 @@ describe("constant union alias coverage", () => {
       return !emitted.has(key) && !declared.has(key);
     }).map((row) => `${row.home}.${row.name} matches no emitted union`);
     expect(unreachable).toEqual([]);
+  });
+});
+
+// Each retained target's `ENUM` elements by home namespace, keyed by their local
+// path, parsed from the vendored reference with the production parser.
+const targetEnums = loadApiTargets()
+  .filter((target) => target.source == null)
+  .map((target) => {
+    const byHome = new Map<string, Map<string, readonly string[]>>();
+    for (const entry of loadTargetModules(target)) {
+      const module = parseDefoldApiDoc(entry.doc);
+      const home = byHome.get(module.namespace) ?? new Map<string, readonly string[]>();
+      for (const e of module.enums ?? []) {
+        home.set(e.name.slice(module.namespace.length + 1), e.members);
+      }
+      byHome.set(module.namespace, home);
+    }
+    return { id: target.id, byHome };
+  });
+
+const memberKey = (members: readonly string[]): string => [...new Set(members)].sort().join(",");
+
+describe("constant union names agree with the reference ENUM names", () => {
+  test("some retained target documents an ENUM a row matches", () => {
+    // Two-way: with no ENUM parsed the gates below would hold over nothing.
+    const matched = targetEnums.flatMap(({ byHome }) =>
+      CONSTANT_UNION_ALIASES.filter((row) =>
+        [...(byHome.get(row.home)?.values() ?? [])].some(
+          (members) => memberKey(members) === memberKey(row.members),
+        ),
+      ),
+    );
+    expect(matched.length).toBeGreaterThan(0);
+  });
+
+  test("a row whose member set equals an ENUM in its home carries that ENUM's name", () => {
+    const misnamed: string[] = [];
+    for (const { id, byHome } of targetEnums) {
+      for (const row of CONSTANT_UNION_ALIASES) {
+        for (const [local, members] of byHome.get(row.home) ?? []) {
+          if (memberKey(members) !== memberKey(row.members) || local === row.name) continue;
+          misnamed.push(
+            `${id}: ${row.home}.${row.name} has the members of ENUM ${row.home}.${local} — name the row ${local}`,
+          );
+        }
+      }
+    }
+    expect(misnamed).toEqual([]);
+  });
+
+  test("a row named after an ENUM in its home has that ENUM's member set", () => {
+    const diverged: string[] = [];
+    for (const { id, byHome } of targetEnums) {
+      for (const row of CONSTANT_UNION_ALIASES) {
+        const members = byHome.get(row.home)?.get(row.name);
+        if (members === undefined || memberKey(members) === memberKey(row.members)) continue;
+        diverged.push(
+          `${id}: ${row.home}.${row.name} row [${memberKey(row.members)}] vs ENUM [${memberKey(members)}]`,
+        );
+      }
+    }
+    expect(diverged).toEqual([]);
   });
 });
