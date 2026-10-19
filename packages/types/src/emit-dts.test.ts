@@ -3421,6 +3421,33 @@ describe("socket handle method interfaces", () => {
     });
   }
 
+  for (const [shape, doc] of [
+    ["1.13.1", socketDoc],
+    ["1.13.2", socket1132Doc],
+  ] as const) {
+    test(`the ${shape} reference shape signs one TYPEDEF per socket_<receiver> interface`, () => {
+      const signatures = emitSymbolSignatures(parseDefoldApiDoc(doc));
+      const typedefs = signatures.filter((entry) => entry.identity.kind === "TYPEDEF");
+      for (const name of SOCKET_HANDLE_INTERFACES) {
+        const receiver = name.slice("socket_".length);
+        const methods = signatures
+          .filter(
+            (entry) =>
+              entry.identity.kind === "FUNCTION" && entry.identity.name.startsWith(`${receiver}:`),
+          )
+          .map((entry) => entry.tsSignature);
+        expect(methods.length).toBeGreaterThan(0);
+        expect(
+          typedefs
+            .filter((entry) => entry.identity.name === name)
+            .map((entry) => entry.tsSignature),
+        ).toEqual([`interface ${name} { ${methods.map((method) => `${method} `).join("")}}`]);
+      }
+      const names = typedefs.map((entry) => entry.identity.name);
+      for (const receiver of RECEIVERS) expect(names).not.toContain(receiver);
+    });
+  }
+
   test("the 1.13.2 selectable union names the socket_<receiver> interfaces", () => {
     const out = emitDeclarations(parseDefoldApiDoc(socket1132Doc));
     const selectable = out
@@ -5926,6 +5953,27 @@ describe("overload slot aliases", () => {
 
   test("a namespace without the aliased slot declares no alias", () => {
     expect(emitDeclarations(parseDefoldApiDoc(sprite114Doc))).not.toContain("render_target_params");
+  });
+
+  const slotSignatures = (doc: Parameters<typeof parseDefoldApiDoc>[0]): string[] =>
+    emitSymbolSignatures(parseDefoldApiDoc(doc), { declaredTypes })
+      .filter(
+        (entry) =>
+          entry.identity.kind === "TYPEDEF" && entry.identity.name === "render_target_params",
+      )
+      .map((entry) => entry.tsSignature);
+
+  test("the slot alias signs the line the declarations print", () => {
+    expect(slotSignatures(render113Doc)).toEqual(slotDeclarations(emittedLines(render113Doc)));
+    expect(slotSignatures(render113Doc)).toEqual([
+      "type render_target_params = Record<string | number, unknown>;",
+    ]);
+  });
+
+  test("the reference's own declaration is the slot's only signature where the reference declares it", () => {
+    const [only, ...rest] = slotSignatures(render114Doc);
+    expect(rest).toEqual([]);
+    expect(only).toStartWith("type render_target_params = {");
   });
 });
 

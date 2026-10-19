@@ -2467,6 +2467,10 @@ export type TableSlotCuration = (
   | { kind: "verbatim"; ts: string }
 ) & { readonly retypedUpstream?: readonly string[] };
 
+// The interface a module's component properties are declared on; its PROPERTY
+// entries carry its members, so it signs no TYPEDEF of its own.
+export const PROPERTIES_INTERFACE = "properties";
+
 export const SOCKET_HANDLE_TOKENS = (["client", "master", "unconnected"] as const).map(
   (receiver) => SOCKET_HANDLE_NAMES[receiver],
 );
@@ -4627,7 +4631,10 @@ function structDeclaration(
         `${indent}}`,
       ];
     },
-    signature: `interface ${name} { ${members.map((member) => `${member.line} `).join("")}}`,
+    signature: interfaceSignature(
+      name,
+      members.map((member) => member.line),
+    ),
   };
 }
 
@@ -4836,20 +4843,6 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   const nestedRoot = collectNestedGroups(module, prefix);
   const enumAliases = collectEnumAliases(module, constants, nestedRoot);
 
-  // Colon methods (`client:send`) are FUNCTION elements named `<receiver>:<method>`
-  // and are NOT namespace-prefixed, so they fail the flat-identifier test in
-  // prepareFunction (the colon) and are absent from `functions`. A returned handle
-  // is defined entirely by these methods; emit each receiver as a method-bearing
-  // interface, the same non-flat recovery the dns nested-namespace pass does one
-  // container shape shallower.
-  const handleGroups = collectHandleMethodGroups(module);
-  const handleInterfaces = [...handleGroups]
-    .map(([receiver, group]) => ({
-      name: handleInterfaceName(module.namespace, receiver),
-      group,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
   const resolver = buildTableDocResolver(
     module.functions.map((fn) => ({
       name: fn.name,
@@ -4857,18 +4850,33 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
     })),
   );
 
+  // Colon methods (`client:send`) are FUNCTION elements named `<receiver>:<method>`
+  // and are NOT namespace-prefixed, so they fail the flat-identifier test in
+  // prepareFunction (the colon) and are absent from `functions`. A returned handle
+  // is defined entirely by these methods; emit each receiver as a method-bearing
+  // interface, the same non-flat recovery the dns nested-namespace pass does one
+  // container shape shallower.
+  const handleGroups = collectHandleMethodGroups(module);
+  const handleInterfaces = collectHandleInterfaces(
+    module.namespace,
+    handleGroups,
+    mapType,
+    resolver,
+    constantTokens,
+    urlParameters,
+    bindingEvidence,
+  );
+
   // A typedef that also has colon methods is emitted as a method-bearing
   // interface below, not an opaque brand alias.
-  const typeDeclarations = placeTypeDeclarations(
-    collectTypeDeclarations(
-      module,
-      handleTypedefNames(module.namespace, handleGroups.keys()),
-      rawMapType,
-      mapType,
-      bindingEvidence,
-    ),
-    nestedRoot,
+  const collectedTypes = collectTypeDeclarations(
+    module,
+    handleTypedefNames(module.namespace, handleGroups.keys()),
+    rawMapType,
+    mapType,
+    bindingEvidence,
   );
+  const typeDeclarations = placeTypeDeclarations(collectedTypes, nestedRoot);
 
   // A re-export alias (`export { _x as x }`) switches the ambient namespace out
   // of its implicit-export mode, so once any alias is present every sibling
@@ -4891,16 +4899,16 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   )) {
     lines.push(`${INDENT}${decl}${aliasDecl}`);
   }
-  for (const aliasDecl of overloadSlotAliasDeclarations(
+  for (const { declaration } of overloadSlotAliasDeclarations(
     [...module.functions, ...(options?.withheldFunctions ?? [])],
-    new Set(typeDeclarations.map((declaration) => declaration.name)),
+    collectedTypes,
     prefix,
     mapType,
     constantTokens,
     urlParameters,
     bindingEvidence,
   )) {
-    lines.push(`${INDENT}${decl}${aliasDecl}`);
+    lines.push(`${INDENT}${decl}${declaration}`);
   }
   for (const alias of enumAliases.topLevel) {
     lines.push(
@@ -4908,15 +4916,13 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
     );
   }
   const handleIndent = `${INDENT}${INDENT}`;
-  for (const { name, group } of handleInterfaces) {
+  for (const { name, members } of handleInterfaces) {
     lines.push(`${INDENT}${decl}interface ${name} {`);
-    for (const fn of group) {
+    for (const { fn, text } of members) {
       for (const docLine of functionDocLines(fn.original, translations, baseNotes, handleIndent)) {
         lines.push(docLine);
       }
-      lines.push(
-        `${handleIndent}${emitMethod(fn, mapType, resolver, constantTokens, urlParameters, bindingEvidence)}`,
-      );
+      lines.push(`${handleIndent}${text}`);
     }
     lines.push(`${INDENT}}`);
   }
@@ -5062,7 +5068,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
 
   if (module.properties.length > 0) {
     const members = [...module.properties].sort((a, b) => a.name.localeCompare(b.name));
-    lines.push(`${INDENT}${decl}interface properties {`);
+    lines.push(`${INDENT}${decl}interface ${PROPERTIES_INTERFACE} {`);
     for (const p of members) {
       for (const member of emitPropertyMembers(p, mapType, module.namespace, bindingEvidence)) {
         for (const docLine of summaryDocLines(p.brief, p.description, `${INDENT}${INDENT}`)) {
@@ -5079,19 +5085,25 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
 }
 
 // One `type <alias> = <slot type>;` per `OVERLOAD_SLOT_ALIASES` slot these
-// functions carry, in alias order, skipping an alias the module already
-// `declared`. The type is the one `emitFunction` reports for the slot, so it
-// reads as the function's own signature would. The resolver spans these
-// functions alone, leaving the module's own untouched.
+// functions carry, in alias order, skipping an alias one of the module's
+// top-level type `declarations` already names. The type is the one
+// `emitFunction` reports for the slot, so it reads as the function's own
+// signature would. The resolver spans these functions alone, leaving the
+// module's own untouched.
 function overloadSlotAliasDeclarations(
   functions: readonly ApiFunction[],
-  declared: ReadonlySet<string>,
+  declarations: readonly TypeDeclaration[],
   prefix: string,
   mapType: DefoldTypeMapper,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
   bindingEvidence: ReadonlySet<string>,
-): string[] {
+): { name: string; declaration: string }[] {
+  const declared = new Set(
+    declarations
+      .filter((declaration) => declaration.path === declaration.name)
+      .map((declaration) => declaration.name),
+  );
   const resolver = buildTableDocResolver(
     functions.map((fn) => ({ name: fn.name, slots: [...fn.parameters, ...fn.returnValues] })),
   );
@@ -5126,7 +5138,51 @@ function overloadSlotAliasDeclarations(
   }
   return [...types]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([alias, type]) => `type ${alias} = ${type};`);
+    .map(([name, type]) => ({ name, declaration: `type ${name} = ${type};` }));
+}
+
+// A method of a handle interface: the member text the declarations print inside
+// the interface, which its FUNCTION entry signs too.
+interface HandleMember {
+  fn: PreparedFunction;
+  text: string;
+  slotTypes: SlotTypes;
+}
+
+// Each handle interface a module's colon methods declare, sorted by name, with
+// its methods in group order.
+function collectHandleInterfaces(
+  namespace: string,
+  handleGroups: ReadonlyMap<string, readonly PreparedFunction[]>,
+  mapType: DefoldTypeMapper,
+  resolver: TableDocResolver,
+  constantTokens: ConstantSlotTokens,
+  urlParameters: UrlParameterTable,
+  bindingEvidence: ReadonlySet<string>,
+): { name: string; members: HandleMember[] }[] {
+  return [...handleGroups]
+    .map(([receiver, group]) => ({
+      name: handleInterfaceName(namespace, receiver),
+      members: group.map((fn): HandleMember => {
+        const slotTypes: Record<string, SlotType> = {};
+        const text = emitMethod(
+          fn,
+          mapType,
+          resolver,
+          constantTokens,
+          urlParameters,
+          bindingEvidence,
+          slotTypes,
+        );
+        return { fn, text, slotTypes };
+      }),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// An interface signed on one line, each member line followed by a space.
+function interfaceSignature(name: string, members: readonly string[]): string {
+  return `interface ${name} { ${members.map((member) => `${member} `).join("")}}`;
 }
 
 /**
@@ -5286,24 +5342,29 @@ export function emitSymbolSignatures(
     });
   }
 
+  // A handle interface signs as one line, as a struct does; each member is the
+  // text its method's FUNCTION entry signs.
   const handleGroups = collectHandleMethodGroups(module);
-  for (const group of handleGroups.values()) {
-    for (const prepared of group) {
-      const slotTypes: Record<string, SlotType> = {};
-      out.push({
-        identity: fnIdentity(prepared.original),
-        tsSignature: emitMethod(
-          prepared,
-          mapType,
-          resolver,
-          constantTokens,
-          urlParameters,
-          bindingEvidence,
-          slotTypes,
-        ),
-        slotTypes,
-      });
+  for (const { name, members } of collectHandleInterfaces(
+    module.namespace,
+    handleGroups,
+    mapType,
+    resolver,
+    constantTokens,
+    urlParameters,
+    bindingEvidence,
+  )) {
+    for (const { fn, text, slotTypes } of members) {
+      out.push({ identity: fnIdentity(fn.original), tsSignature: text, slotTypes });
     }
+    out.push({
+      identity: { namespace: module.namespace, kind: "TYPEDEF", name, signature: "" },
+      tsSignature: interfaceSignature(
+        name,
+        members.map((member) => member.text),
+      ),
+      slotTypes: NO_SLOTS,
+    });
   }
 
   const constants: PreparedConstant[] = [];
@@ -5342,13 +5403,14 @@ export function emitSymbolSignatures(
 
   // A struct signs as its interface on one line; each member line is verbatim in
   // the declarations.
-  for (const declaration of collectTypeDeclarations(
+  const typeDeclarations = collectTypeDeclarations(
     module,
     handleTypedefNames(module.namespace, handleGroups.keys()),
     rawMapType,
     mapType,
     bindingEvidence,
-  )) {
+  );
+  for (const declaration of typeDeclarations) {
     out.push({
       identity: {
         namespace: module.namespace,
@@ -5357,6 +5419,24 @@ export function emitSymbolSignatures(
         signature: "",
       },
       tsSignature: declaration.signature,
+      slotTypes: NO_SLOTS,
+    });
+  }
+
+  // An overload-slot alias is declared exactly where the declarations carry it,
+  // so it signs from the same functions and the same declared set.
+  for (const { name, declaration } of overloadSlotAliasDeclarations(
+    [...module.functions, ...(options?.withheldFunctions ?? [])],
+    typeDeclarations,
+    prefix,
+    mapType,
+    constantTokens,
+    urlParameters,
+    bindingEvidence,
+  )) {
+    out.push({
+      identity: { namespace: module.namespace, kind: "TYPEDEF", name, signature: "" },
+      tsSignature: declaration,
       slotTypes: NO_SLOTS,
     });
   }
