@@ -567,7 +567,7 @@ declare global {
      * });
      * ```
      */
-    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BufferType): void;
+    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BUFFER_TYPE): void;
     /**
      * Returns the logical window height that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints
@@ -620,7 +620,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
+    function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
     /**
      * Returns the specified buffer width from a render target.
      *
@@ -661,7 +661,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
+    function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
     /**
      * Returns the logical window width that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints
@@ -825,7 +825,7 @@ declare global {
      * render.set_blend_func_separate(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
      * ```
      */
-    function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void;
+    function set_blend_func_separate(source_factor_color: graphics.BLEND_FACTOR, destination_factor_color: graphics.BLEND_FACTOR, source_factor_alpha: graphics.BLEND_FACTOR, destination_factor_alpha: graphics.BLEND_FACTOR): void;
     /**
      * Sets the current render camera to be used for rendering. If a render camera
      * has been set by the render script, the renderer will be using its projection and view matrix
@@ -1181,7 +1181,7 @@ declare global {
      * });
      * ```
      */
-    function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: { transient?: graphics.BufferType[] }): void;
+    function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: { transient?: graphics.BUFFER_TYPE[] }): void;
     /**
      * Sets the render target size for a render target created from
      * either a render script, or from a render target resource.

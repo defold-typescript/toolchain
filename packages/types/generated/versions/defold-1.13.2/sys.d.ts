@@ -142,7 +142,6 @@ declare global {
        */
       ignore_secure?: boolean;
     }
-    type NetworkConnectivity = typeof sys.NETWORK_DISCONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_CONNECTED;
     type NETWORK = typeof sys.NETWORK_CONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_DISCONNECTED;
     type REQUEST_STATUS = typeof sys.REQUEST_STATUS_ERROR_IO_ERROR | typeof sys.REQUEST_STATUS_ERROR_NOT_FOUND | typeof sys.REQUEST_STATUS_FINISHED;
     /**

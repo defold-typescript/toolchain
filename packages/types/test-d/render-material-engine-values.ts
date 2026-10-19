@@ -22,7 +22,7 @@ render.set_blend_func_separate(
 // @ts-expect-error a bare number is not a blend-factor constant
 render.set_blend_func_separate(1, 1, 1, 1);
 
-const _factor: graphics.BlendFactor = graphics.BLEND_FACTOR_ZERO;
+const _factor: graphics.BLEND_FACTOR = graphics.BLEND_FACTOR_ZERO;
 const _sameFactor: graphics.BLEND_FACTOR = _factor;
 void _sameFactor;
 

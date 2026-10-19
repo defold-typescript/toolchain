@@ -841,7 +841,7 @@ declare global {
      * render.set_blend_func_separate(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
      * ```
      */
-    function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void;
+    function set_blend_func_separate(source_factor_color: graphics.BLEND_FACTOR, destination_factor_color: graphics.BLEND_FACTOR, source_factor_alpha: graphics.BLEND_FACTOR, destination_factor_alpha: graphics.BLEND_FACTOR): void;
     /**
      * Sets the current render camera to be used for rendering. If a render camera
      * has been set by the render script, the renderer will be using its projection and view matrix

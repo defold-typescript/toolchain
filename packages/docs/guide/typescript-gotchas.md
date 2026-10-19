@@ -69,15 +69,15 @@ go.animate(id, "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1);
 
 **Typed alternative.** Always pass the named constant (`go.PLAYBACK_ONCE_FORWARD`, `go.EASING_LINEAR`, …). The brand is type-only and erases at transpile time to a plain Lua global access, so there is no runtime cost. A branded constant is still assignable to any plain `number` parameter, so existing numeric signatures keep working.
 
-**Naming the enum.** Every documented constant union has an exported alias in the namespace it belongs to, so you can spell the type yourself instead of retyping the arms or falling back to `number`:
+**Naming the enum.** Every documented constant union has an exported alias in the namespace it belongs to, so you can spell the type yourself instead of retyping the arms or falling back to `number`. Where the reference names the enum, the alias carries that name (`gui.EASING`, `buffer.VALUE_TYPE`, `factory.STATUS`), and it is the same name on every Defold version:
 
 ```ts
-function fadeIn(node: Opaque<"node">, easing: gui.Easing, playback: gui.Playback) {
+function fadeIn(node: Opaque<"node">, easing: gui.EASING, playback: gui.PLAYBACK) {
   gui.animate(node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), easing, 0.5, 0, undefined, playback);
 }
 ```
 
-The alias is the exact set of constants the reference documents for that slot, which is why one enum can split into two names where the slots differ: `gui.set_xanchor` takes `gui.XAnchor` (`ANCHOR_NONE` / `LEFT` / `RIGHT`) while `gui.set_yanchor` takes `gui.YAnchor` (`ANCHOR_NONE` / `TOP` / `BOTTOM`), and `window.get_dim_mode` returns `window.DimModeState` — which includes `DIMMING_UNKNOWN` — where the setter takes the narrower `window.DimModeStateSettable`. Signatures and hovers carry the alias, and the API reference gives each one an entry listing its members.
+The alias is the exact set of constants the reference documents for that slot, which is why one enum can split into two names where the slots differ: `gui.set_xanchor` takes `gui.XAnchor` (`ANCHOR_NONE` / `LEFT` / `RIGHT`) while `gui.set_yanchor` takes `gui.YAnchor` (`ANCHOR_NONE` / `TOP` / `BOTTOM`), and `window.get_dim_mode` returns `window.DIMMING` — which includes `DIMMING_UNKNOWN` — where the setter takes the narrower `window.DimModeStateSettable`. Signatures and hovers carry the alias, and the API reference gives each one an entry listing its members.
 
 **How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts the constant is assignable to `number` (backward compatibility) and to its own brand, while a bare `0` assigned to the brand carries `@ts-expect-error`. If the brand is dropped or widened, the expected error disappears and the typecheck gate fails. `packages/types/test-d/constant-union-aliases.ts` does the same for the aliases: representative members are assignable to their alias, and a constant from a sibling group is not. Exhaustive member-set fidelity is held elsewhere: `packages/types/test/constant-union-alias-coverage.test.ts` catches a brand union left without a name, and `packages/types/test/constant-slot-expansion-drift.test.ts` checks each documented slot against the reference documentation.
 
