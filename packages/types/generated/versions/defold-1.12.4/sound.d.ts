@@ -265,7 +265,7 @@ declare global {
      * ```
      */
     function stop(url: string | Hash | Url, stop_properties?: { play_id?: number }): void;
-    interface properties {
+    interface Properties {
       /**
        * The gain on the sound-component. Note that gain is in linear scale,
        * between 0 and 1.

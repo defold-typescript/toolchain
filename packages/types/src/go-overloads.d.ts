@@ -51,7 +51,7 @@ declare global {
      * const position = go.get("#sprite", "position");
      * // Name the target component to read its catalogued property type. The
      * // empty call applies the type argument, then the inner call infers the key:
-     * const animation = go.get<sprite.properties>()("#sprite", "animation"); // Hash
+     * const animation = go.get<sprite.Properties>()("#sprite", "animation"); // Hash
      * ```
      */
     function get<P>(): <K extends keyof P>(
@@ -59,15 +59,15 @@ declare global {
       property: K,
       ...options: [] | [GoPropertyOptions]
     ) => P[K];
-    function get<K extends keyof go.properties>(
+    function get<K extends keyof go.Properties>(
       url: SceneAddress | Hash | Url,
       property: K,
-    ): go.properties[K];
-    function get<K extends keyof go.properties>(
+    ): go.Properties[K];
+    function get<K extends keyof go.Properties>(
       url: SceneAddress | Hash | Url,
       property: K,
       options: GoPropertyOptions,
-    ): go.properties[K];
+    ): go.Properties[K];
     function get(
       url: SceneAddress | Hash | Url,
       property: string | Hash,
@@ -114,7 +114,7 @@ declare global {
      * // Name the target component to gate the value to its property type. The
      * // empty call applies the type argument, then the inner call infers the key.
      * // A read-only property such as "animation" is not a key it accepts:
-     * go.set<sprite.properties>()("#sprite", "playback_rate", 2);
+     * go.set<sprite.Properties>()("#sprite", "playback_rate", 2);
      * ```
      */
     function set<P>(): <K extends WritableKey<P>>(
@@ -123,15 +123,15 @@ declare global {
       value: P[K],
       ...options: [] | [GoPropertyOptions]
     ) => void;
-    function set<K extends keyof go.properties>(
+    function set<K extends keyof go.Properties>(
       url: SceneAddress | Hash | Url,
       property: K,
-      value: go.properties[K],
+      value: go.Properties[K],
     ): void;
-    function set<K extends keyof go.properties>(
+    function set<K extends keyof go.Properties>(
       url: SceneAddress | Hash | Url,
       property: K,
-      value: go.properties[K],
+      value: go.Properties[K],
       options: GoPropertyOptions,
     ): void;
     function set(

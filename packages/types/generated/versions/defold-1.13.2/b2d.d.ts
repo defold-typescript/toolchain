@@ -9,7 +9,7 @@ declare global {
     /**
      * Box2D axis-aligned bounding box
      */
-    interface aabb {
+    interface Aabb {
       /**
        * Lower bound.
        */
@@ -24,7 +24,7 @@ declare global {
     /**
      * Box2D 3.x chain definition
      */
-    interface chain_definition {
+    interface ChainDefinition {
       /**
        * Chain vertices.
        */
@@ -56,7 +56,7 @@ declare global {
       /**
        * Collision filter fields to override.
        */
-      filter?: b2d.filter_options;
+      filter?: b2d.FilterOptions;
       /**
        * Whether to enable sensor events.
        */
@@ -65,7 +65,7 @@ declare global {
     /**
      * Box2D chain geometry
      */
-    interface chain_geometry {
+    interface ChainGeometry {
       /**
        * Whether the chain is closed.
        */
@@ -90,15 +90,15 @@ declare global {
     /**
      * Box2D contact data
      */
-    interface contact_data {
+    interface ContactData {
       /**
        * First contact shape.
        */
-      shape_a: b2d.shape_info;
+      shape_a: b2d.ShapeInfo;
       /**
        * Second contact shape.
        */
-      shape_b: b2d.shape_info;
+      shape_b: b2d.ShapeInfo;
       /**
        * Contact normal.
        */
@@ -114,12 +114,12 @@ declare global {
       /**
        * Contact manifold points.
        */
-      points: b2d.contact_point[];
+      points: b2d.ContactPoint[];
     }
     /**
      * Box2D contact manifold point
      */
-    interface contact_point {
+    interface ContactPoint {
       /**
        * World contact point.
        */
@@ -164,7 +164,7 @@ declare global {
     /**
      * Box2D explosion definition
      */
-    interface explosion_definition {
+    interface ExplosionDefinition {
       /**
        * Explosion center.
        */
@@ -189,7 +189,7 @@ declare global {
     /**
      * Box2D collision filter
      */
-    interface filter {
+    interface Filter {
       /**
        * Collision category bits.
        */
@@ -206,7 +206,7 @@ declare global {
     /**
      * Partial Box2D collision filter
      */
-    interface filter_options {
+    interface FilterOptions {
       /**
        * Collision category bits.
        */
@@ -223,15 +223,15 @@ declare global {
     /**
      * Box2D 2.x cast hit
      */
-    interface fixture_cast_hit {
+    interface FixtureCastHit {
       /**
        * Hit fixture.
        */
-      fixture: b2d.fixture_info;
+      fixture: b2d.FixtureInfo;
       /**
        * Hit fixture child shape.
        */
-      shape: b2d.fixture_info;
+      shape: b2d.FixtureInfo;
       /**
        * Hit point.
        */
@@ -256,7 +256,7 @@ declare global {
     /**
      * Box2D 2.x fixture definition
      */
-    interface fixture_definition {
+    interface FixtureDefinition {
       /**
        * Shape definition.
        */
@@ -284,12 +284,12 @@ declare global {
       /**
        * Collision filter.
        */
-      filter?: b2d.filter;
+      filter?: b2d.Filter;
     }
     /**
      * Box2D 2.x fixture information
      */
-    interface fixture_info {
+    interface FixtureInfo {
       /**
        * Owning body, when returned from a world query.
        */
@@ -330,7 +330,7 @@ declare global {
     /**
      * Mass properties for a Box2D body or shape.
      */
-    interface mass_data {
+    interface MassData {
       /**
        * Body mass, usually in kilograms.
        */
@@ -347,7 +347,7 @@ declare global {
     /**
      * Box2D mover capsule
      */
-    interface mover_capsule {
+    interface MoverCapsule {
       /**
        * First capsule center.
        */
@@ -364,11 +364,11 @@ declare global {
     /**
      * Box2D mover collision plane
      */
-    interface mover_plane {
+    interface MoverPlane {
       /**
        * Colliding shape.
        */
-      shape: b2d.shape_info;
+      shape: b2d.ShapeInfo;
       /**
        * Plane normal.
        */
@@ -385,7 +385,7 @@ declare global {
     /**
      * Box2D world-query filter
      */
-    interface query_filter {
+    interface QueryFilter {
       /**
        * Optional collision category bits.
        */
@@ -399,14 +399,15 @@ declare global {
        */
       group_index?: number;
     }
+    type shape_create_definition = { shape: b2d.shape.definition; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.Filter } | { type: b2d.shape.ShapeType; radius?: number; center?: Vector3; center1?: Vector3; center2?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; hx?: number; hy?: number; angle?: number; vertices?: Vector3[]; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.Filter };
     /**
      * Box2D 3.x cast hit
      */
-    interface shape_cast_hit {
+    interface ShapeCastHit {
       /**
        * Hit shape.
        */
-      shape: b2d.shape_info;
+      shape: b2d.ShapeInfo;
       /**
        * Hit point.
        */
@@ -431,7 +432,7 @@ declare global {
     /**
      * Direct Box2D shape cast result
      */
-    interface shape_cast_output {
+    interface ShapeCastOutput {
       /**
        * Hit point.
        */
@@ -449,11 +450,10 @@ declare global {
        */
       iterations: number;
     }
-    type shape_create_definition = { shape: b2d.shape.definition; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.filter } | { type: b2d.shape.ShapeType; radius?: number; center?: Vector3; center1?: Vector3; center2?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; hx?: number; hy?: number; angle?: number; vertices?: Vector3[]; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.filter };
     /**
      * Box2D 3.x shape information
      */
-    interface shape_info {
+    interface ShapeInfo {
       /**
        * Shape index on the body.
        */
@@ -498,7 +498,7 @@ declare global {
     /**
      * World transform for a Box2D body.
      */
-    interface transform {
+    interface Transform {
       /**
        * World position of the body origin.
        */
@@ -511,7 +511,7 @@ declare global {
     /**
      * Box2D broad-phase query statistics
      */
-    interface tree_stats {
+    interface TreeStats {
       /**
        * Number of tree nodes visited.
        */
@@ -524,7 +524,7 @@ declare global {
     /**
      * Box2D version information
      */
-    interface version_info {
+    interface VersionInfo {
       /**
        * Full Box2D version string.
        */
@@ -545,7 +545,7 @@ declare global {
     /**
      * Box2D world counters
      */
-    interface world_counters {
+    interface WorldCounters {
       /**
        * Number of bodies.
        */
@@ -594,7 +594,7 @@ declare global {
     /**
      * Box2D world profiling data
      */
-    interface world_profile {
+    interface WorldProfile {
       /**
        * Total step time.
        */
@@ -696,7 +696,7 @@ declare global {
      *
      * @returns version information
      */
-    function get_version(): b2d.version_info;
+    function get_version(): b2d.VersionInfo;
     /**
      * Get the Box2D world from the current collection
      *

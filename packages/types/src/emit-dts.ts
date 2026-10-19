@@ -2539,7 +2539,7 @@ export type TableSlotCuration = (
 
 // The interface a module's component properties are declared on; its PROPERTY
 // entries carry its members, so it signs no TYPEDEF of its own.
-export const PROPERTIES_INTERFACE = "properties";
+export const PROPERTIES_INTERFACE = engineTypeName("properties");
 
 export const SOCKET_HANDLE_TOKENS = (["client", "master", "unconnected"] as const).map(
   (receiver) => SOCKET_HANDLE_NAMES[receiver],
@@ -3556,7 +3556,7 @@ export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, CallbackSignature
         "(self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void",
       typed:
         // biome-ignore lint/suspicious/noTemplateCurlyInString: emitted verbatim as a TS template literal type
-        "(self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void",
+        "(self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.EventData) => void",
     },
   ],
   [
@@ -4482,7 +4482,7 @@ export const TYPEDEF_ALIAS_CORRECTIONS: ReadonlyMap<string, TypedefAliasCorrecti
       upstream: [
         "{ type?:graphics.TEXTURE_TYPE, sample_count?:integer, [graphics.BUFFER_TYPE]:render.render_target_buffer_params }",
       ],
-      ts: "{ type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.render_target_buffer_params }",
+      ts: "{ type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.RenderTargetBufferParams }",
       reason:
         'render_script.cpp:RenderScript_RenderTarget raises "Invalid render target texture type" on any `type` but graphics.TEXTURE_TYPE_2D and graphics.TEXTURE_TYPE_CUBE_MAP',
     },
@@ -4558,8 +4558,8 @@ interface TypeDeclaration {
 
 // A typedef with no aliased type keeps the flat-name rule it always had; one that
 // names its aliased type, and every struct, sits at its name less the module
-// prefix, nested when that local is dotted. Typedefs come before structs, each in
-// document order.
+// prefix, nested when that local is dotted. A struct's leaf goes through
+// `engineTypeName`. Typedefs come before structs, each in document order.
 function collectTypeDeclarations(
   module: ApiModule,
   skip: ReadonlySet<string>,
@@ -4639,11 +4639,12 @@ function correctedListMemberType(
 
 function structDeclaration(
   struct: ApiStruct,
-  path: string,
+  local: string,
   mapType: DefoldTypeMapper,
   structs: readonly ApiStruct[],
   bindingEvidence: ReadonlySet<string>,
 ): TypeDeclaration {
+  const path = renamedLeaf(local);
   const name = path.slice(path.lastIndexOf(".") + 1);
   const memberPrefix = memberCorrectionKey(struct.name, "");
   const declared = new Set(struct.members.map((member) => member.name));
@@ -4846,20 +4847,21 @@ export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[
 /**
  * The TS path of every `ENUM`, `STRUCT` and aliasing `TYPEDEF` the (routed)
  * modules declare, keyed by its Lua name: the name itself when it sits under its
- * module's namespace, else that name nested under the module
- * (`on_input.action` in `go` is `go.on_input.action`).
+ * module's namespace, else that name nested under the module, with an `ENUM` or
+ * `STRUCT` leaf through `engineTypeName` (`on_input.action` in `go` is
+ * `go.on_input.Action`).
  */
 export function declaredTypePaths(modules: readonly ApiModule[]): Map<string, string> {
   const paths = new Map<string, string>();
   for (const module of modules) {
     const qualified = (name: string): string =>
       name.startsWith(`${module.namespace}.`) ? name : `${module.namespace}.${name}`;
-    for (const { name } of module.enums ?? []) paths.set(name, renamedLeaf(qualified(name)));
-    const names = [
-      ...(module.structs ?? []).map((struct) => struct.name),
-      ...module.typedefs.filter((t) => t.aliasOf !== undefined).map((t) => t.name),
-    ];
-    for (const name of names) paths.set(name, qualified(name));
+    for (const { name } of [...(module.enums ?? []), ...(module.structs ?? [])]) {
+      paths.set(name, renamedLeaf(qualified(name)));
+    }
+    for (const { name } of module.typedefs.filter((t) => t.aliasOf !== undefined)) {
+      paths.set(name, qualified(name));
+    }
   }
   return paths;
 }

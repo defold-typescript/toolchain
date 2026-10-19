@@ -930,7 +930,7 @@
     },
     {
       "sourceHash": "877de2c1daa19e58",
-      "ts": "export default defineScript({\n  init() {\n    const text = go.get<label.properties>()(\"#label\", \"text\");\n    print(text);\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    const text = go.get<label.Properties>()(\"#label\", \"text\");\n    print(text);\n  },\n});"
     }
   ],
   "label.set_text": [
@@ -940,7 +940,7 @@
     },
     {
       "sourceHash": "2ac0aeb70ccdc6bf",
-      "ts": "export default defineScript({\n  init() {\n    go.set<label.properties>()(\"#label\", \"text\", \"Hello World!\");\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    go.set<label.Properties>()(\"#label\", \"text\", \"Hello World!\");\n  },\n});"
     }
   ],
   "liveupdate.add_mount": [
@@ -1687,7 +1687,7 @@
     },
     {
       "sourceHash": "66e3c1c627270938",
-      "ts": "// Create a texture resource asyncronously with a buffer and a callback\nfunction callback(self: unknown, request_id: number, result: resource.texture_creation_result) {\n  // The resource has been updated with a new texture,\n  // so we can update other systems with the new handle,\n  // or update components to use the resource if we want\n  const tinfo = resource.get_texture_info(result.path);\n  msg.post(\"@render:\", \"set_backing_texture\", { handle: tinfo.handle });\n}\n\nexport default defineScript({\n  init() {\n    // the engine registers a texture format only when the driver supports it\n    const format = graphics.TEXTURE_FORMAT_RGBA;\n    if (format === undefined) return;\n    // Create a texture resource async\n    const tparams = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format,\n    };\n\n    // Create a new buffer with 4 components\n    const tbuffer = buffer.create(tparams.width * tparams.height, [{ name: hash(\"rgba\"), type: buffer.VALUE_TYPE_UINT8, count: 4 }]);\n    const tstream = buffer.get_stream(tbuffer, hash(\"rgba\"));\n\n    // Fill the buffer stream with some float values\n    for (let y = 0; y < tparams.width; y++) {\n      for (let x = 0; x < tparams.height; x++) {\n        const index = y * 128 * 4 + x * 4;\n        tstream[index + 0] = 255;\n        tstream[index + 1] = 0;\n        tstream[index + 2] = 255;\n        tstream[index + 3] = 255;\n      }\n    }\n    // create the texture\n    const [tpath, request_id] = resource.create_texture_async(\"/my_texture.texturec\", tparams, tbuffer, callback);\n    // at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture\n    // that will be removed once the new texture has been updated\n    go.set(\"#model\", \"texture0\", tpath);\n  },\n});"
+      "ts": "// Create a texture resource asyncronously with a buffer and a callback\nfunction callback(self: unknown, request_id: number, result: resource.TextureCreationResult) {\n  // The resource has been updated with a new texture,\n  // so we can update other systems with the new handle,\n  // or update components to use the resource if we want\n  const tinfo = resource.get_texture_info(result.path);\n  msg.post(\"@render:\", \"set_backing_texture\", { handle: tinfo.handle });\n}\n\nexport default defineScript({\n  init() {\n    // the engine registers a texture format only when the driver supports it\n    const format = graphics.TEXTURE_FORMAT_RGBA;\n    if (format === undefined) return;\n    // Create a texture resource async\n    const tparams = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format,\n    };\n\n    // Create a new buffer with 4 components\n    const tbuffer = buffer.create(tparams.width * tparams.height, [{ name: hash(\"rgba\"), type: buffer.VALUE_TYPE_UINT8, count: 4 }]);\n    const tstream = buffer.get_stream(tbuffer, hash(\"rgba\"));\n\n    // Fill the buffer stream with some float values\n    for (let y = 0; y < tparams.width; y++) {\n      for (let x = 0; x < tparams.height; x++) {\n        const index = y * 128 * 4 + x * 4;\n        tstream[index + 0] = 255;\n        tstream[index + 1] = 0;\n        tstream[index + 2] = 255;\n        tstream[index + 3] = 255;\n      }\n    }\n    // create the texture\n    const [tpath, request_id] = resource.create_texture_async(\"/my_texture.texturec\", tparams, tbuffer, callback);\n    // at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture\n    // that will be removed once the new texture has been updated\n    go.set(\"#model\", \"texture0\", tpath);\n  },\n});"
     }
   ],
   "resource.font": [
@@ -1703,7 +1703,7 @@
   "resource.get_buffer": [
     {
       "sourceHash": "ed7d361c7f5d2e35",
-      "ts": "// How to get the data from a buffer\nexport default defineScript({\n  init() {\n    const res_path = go.get<mesh.properties>()(\"#mesh\", \"vertices\");\n    const buf = resource.get_buffer(res_path);\n    const stream_positions = buffer.get_stream(buf, \"position\");\n\n    for (let i = 0; i < stream_positions.length(); i++) {\n      print(i, stream_positions[i]);\n    }\n  },\n});"
+      "ts": "// How to get the data from a buffer\nexport default defineScript({\n  init() {\n    const res_path = go.get<mesh.Properties>()(\"#mesh\", \"vertices\");\n    const buf = resource.get_buffer(res_path);\n    const stream_positions = buffer.get_stream(buf, \"position\");\n\n    for (let i = 0; i < stream_positions.length(); i++) {\n      print(i, stream_positions[i]);\n    }\n  },\n});"
     }
   ],
   "resource.get_render_target_info": [
@@ -1719,7 +1719,7 @@
   "resource.get_text_metrics": [
     {
       "sourceHash": "d63156dd59513358",
-      "ts": "export default defineScript({\n  init() {\n    const font = go.get<label.properties>()(\"#label\", \"font\");\n    const metrics = resource.get_text_metrics(font, \"The quick brown fox\\n jumps over the lazy dog\");\n    pprint(metrics);\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    const font = go.get<label.Properties>()(\"#label\", \"font\");\n    const metrics = resource.get_text_metrics(font, \"The quick brown fox\\n jumps over the lazy dog\");\n    pprint(metrics);\n  },\n});"
     }
   ],
   "resource.get_texture_info": [
@@ -1761,7 +1761,7 @@
   "resource.set": [
     {
       "sourceHash": "fd3445f93ecdd85e",
-      "ts": "// Assuming the folder \"/res\" is added to the project custom resources:\n// load a texture resource and set it on a sprite\nconst buffer = resource.load(\"/res/new.texturec\");\nresource.set(go.get<sprite.properties>()(\"#sprite\", \"texture0\"), buffer);"
+      "ts": "// Assuming the folder \"/res\" is added to the project custom resources:\n// load a texture resource and set it on a sprite\nconst buffer = resource.load(\"/res/new.texturec\");\nresource.set(go.get<sprite.Properties>()(\"#sprite\", \"texture0\"), buffer);"
     }
   ],
   "resource.set_atlas": [
@@ -1777,21 +1777,21 @@
   "resource.set_buffer": [
     {
       "sourceHash": "a52fd8ac7453f601",
-      "ts": "// How to set the data from a buffer\nfunction fill_stream(stream: { [index: number]: number }, verts: number[]) {\n  verts.forEach((value, key) => {\n    stream[key] = value;\n  });\n}\n\nexport default defineScript({\n  init() {\n    const res_path = go.get<mesh.properties>()(\"#mesh\", \"vertices\");\n\n    const positions = [\n      1, -1, 0,\n      1, 1, 0,\n      -1, -1, 0,\n    ];\n\n    const num_verts = positions.length / 3;\n\n    // create a new buffer\n    let buf = buffer.create(num_verts, [{ name: hash(\"position\"), type: buffer.VALUE_TYPE_FLOAT32, count: 3 }]);\n\n    buf = resource.get_buffer(res_path);\n    const stream_positions = buffer.get_stream(buf, \"position\");\n\n    fill_stream(stream_positions, positions);\n\n    resource.set_buffer(res_path, buf);\n  },\n});"
+      "ts": "// How to set the data from a buffer\nfunction fill_stream(stream: { [index: number]: number }, verts: number[]) {\n  verts.forEach((value, key) => {\n    stream[key] = value;\n  });\n}\n\nexport default defineScript({\n  init() {\n    const res_path = go.get<mesh.Properties>()(\"#mesh\", \"vertices\");\n\n    const positions = [\n      1, -1, 0,\n      1, 1, 0,\n      -1, -1, 0,\n    ];\n\n    const num_verts = positions.length / 3;\n\n    // create a new buffer\n    let buf = buffer.create(num_verts, [{ name: hash(\"position\"), type: buffer.VALUE_TYPE_FLOAT32, count: 3 }]);\n\n    buf = resource.get_buffer(res_path);\n    const stream_positions = buffer.get_stream(buf, \"position\");\n\n    fill_stream(stream_positions, positions);\n\n    resource.set_buffer(res_path, buf);\n  },\n});"
     }
   ],
   "resource.set_texture": [
     {
       "sourceHash": "fe312c35ef2ab0f4",
-      "ts": "// How to set all pixels of an atlas\nexport default defineScript({\n  init() {\n    const height = 128;\n    const width = 128;\n    const buf = buffer.create(width * height, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    const stream = buffer.get_stream(buf, hash(\"rgb\"));\n\n    for (let y = 0; y < height; y++) {\n      for (let x = 0; x < width; x++) {\n        const index = y * width * 3 + x * 3;\n        stream[index + 0] = 0xff;\n        stream[index + 1] = 0x80;\n        stream[index + 2] = 0x10;\n      }\n    }\n\n    // the engine registers a texture format only when the driver supports it\n    const format = graphics.TEXTURE_FORMAT_RGB;\n    if (format !== undefined) {\n      const resource_path = go.get<model.properties>()(\"#model\", \"texture0\");\n      const args = { width, height, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };\n      resource.set_texture(resource_path, args, buf);\n    }\n    return { buffer: buf, stream };\n  },\n});"
+      "ts": "// How to set all pixels of an atlas\nexport default defineScript({\n  init() {\n    const height = 128;\n    const width = 128;\n    const buf = buffer.create(width * height, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    const stream = buffer.get_stream(buf, hash(\"rgb\"));\n\n    for (let y = 0; y < height; y++) {\n      for (let x = 0; x < width; x++) {\n        const index = y * width * 3 + x * 3;\n        stream[index + 0] = 0xff;\n        stream[index + 1] = 0x80;\n        stream[index + 2] = 0x10;\n      }\n    }\n\n    // the engine registers a texture format only when the driver supports it\n    const format = graphics.TEXTURE_FORMAT_RGB;\n    if (format !== undefined) {\n      const resource_path = go.get<model.Properties>()(\"#model\", \"texture0\");\n      const args = { width, height, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };\n      resource.set_texture(resource_path, args, buf);\n    }\n    return { buffer: buf, stream };\n  },\n});"
     },
     {
       "sourceHash": "b4098f0f37b9c1d0",
-      "ts": "// How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.\nexport default defineScript({\n  init() {\n    const x = 16;\n    const y = 16;\n    const height = 128 - x * 2;\n    const width = 128 - y * 2;\n    const buf = buffer.create(width * height, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    const stream = buffer.get_stream(buf, hash(\"rgb\"));\n\n    for (let row = 0; row < height; row++) {\n      for (let col = 0; col < width; col++) {\n        const index = row * width * 3 + col * 3;\n        stream[index + 0] = 0xff;\n        stream[index + 1] = 0x80;\n        stream[index + 2] = 0x10;\n      }\n    }\n\n    // the engine registers a texture format only when the driver supports it\n    const format = graphics.TEXTURE_FORMAT_RGB;\n    if (format !== undefined) {\n      const resource_path = go.get<model.properties>()(\"#model\", \"texture0\");\n      const args = { width, height, x, y, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };\n      resource.set_texture(resource_path, args, buf);\n    }\n    return { buffer: buf, stream };\n  },\n});"
+      "ts": "// How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.\nexport default defineScript({\n  init() {\n    const x = 16;\n    const y = 16;\n    const height = 128 - x * 2;\n    const width = 128 - y * 2;\n    const buf = buffer.create(width * height, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    const stream = buffer.get_stream(buf, hash(\"rgb\"));\n\n    for (let row = 0; row < height; row++) {\n      for (let col = 0; col < width; col++) {\n        const index = row * width * 3 + col * 3;\n        stream[index + 0] = 0xff;\n        stream[index + 1] = 0x80;\n        stream[index + 2] = 0x10;\n      }\n    }\n\n    // the engine registers a texture format only when the driver supports it\n    const format = graphics.TEXTURE_FORMAT_RGB;\n    if (format !== undefined) {\n      const resource_path = go.get<model.Properties>()(\"#model\", \"texture0\");\n      const args = { width, height, x, y, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };\n      resource.set_texture(resource_path, args, buf);\n    }\n    return { buffer: buf, stream };\n  },\n});"
     },
     {
       "sourceHash": "02d7f2ec29971bf1",
-      "ts": "// Update a texture from a buffer resource\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_buffer: resource.buffer(\"/my_default_buffer.buffer\") },\n\n  init(self) {\n    // the engine registers a texture format only when the driver supports it\n    const format = graphics.TEXTURE_FORMAT_RGB;\n    if (format === undefined) return;\n    const resource_path = go.get<model.properties>()(\"#model\", \"texture0\");\n    // the \"my_buffer\" resource is expected to hold 128 * 128 * 3 bytes!\n    const args = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format,\n    };\n    // Note that the extra resource.get_buffer call is a requirement here\n    // since the \"self.my_buffer\" is just pointing to a buffer resource path\n    // and not an actual buffer object or buffer resource.\n    resource.set_texture(resource_path, args, resource.get_buffer(self.my_buffer));\n  },\n});"
+      "ts": "// Update a texture from a buffer resource\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_buffer: resource.buffer(\"/my_default_buffer.buffer\") },\n\n  init(self) {\n    // the engine registers a texture format only when the driver supports it\n    const format = graphics.TEXTURE_FORMAT_RGB;\n    if (format === undefined) return;\n    const resource_path = go.get<model.Properties>()(\"#model\", \"texture0\");\n    // the \"my_buffer\" resource is expected to hold 128 * 128 * 3 bytes!\n    const args = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format,\n    };\n    // Note that the extra resource.get_buffer call is a requirement here\n    // since the \"self.my_buffer\" is just pointing to a buffer resource path\n    // and not an actual buffer object or buffer resource.\n    resource.set_texture(resource_path, args, resource.get_buffer(self.my_buffer));\n  },\n});"
     },
     {
       "sourceHash": "15829bfe1b186bc3",
@@ -2117,11 +2117,11 @@
     },
     {
       "sourceHash": "7f66d3285b20ff78",
-      "ts": "// Load binary data from a custom project resource and update a texture resource:\nfunction my_callback(self: unknown, request_id: number, result: sys.load_buffer_result) {\n  const format = graphics.TEXTURE_FORMAT_RGBA;\n  if (result.status === sys.REQUEST_STATUS_FINISHED && result.buffer !== undefined && format !== undefined) {\n    resource.set_texture(\"/my_texture\", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format }, result.buffer);\n  }\n}\n\nconst my_request = sys.load_buffer_async(\"/assets/my_level_data.bin\", my_callback);"
+      "ts": "// Load binary data from a custom project resource and update a texture resource:\nfunction my_callback(self: unknown, request_id: number, result: sys.LoadBufferResult) {\n  const format = graphics.TEXTURE_FORMAT_RGBA;\n  if (result.status === sys.REQUEST_STATUS_FINISHED && result.buffer !== undefined && format !== undefined) {\n    resource.set_texture(\"/my_texture\", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format }, result.buffer);\n  }\n}\n\nconst my_request = sys.load_buffer_async(\"/assets/my_level_data.bin\", my_callback);"
     },
     {
       "sourceHash": "9be4f92f718990af",
-      "ts": "// Load binary data from non-custom resource files on disk:\nfunction my_callback(self: unknown, request_id: number, result: sys.load_buffer_result) {\n  const { first_request, second_request } = self as { first_request: number; second_request: number };\n  if (result.status !== sys.REQUEST_STATUS_FINISHED) {\n    // uh oh! File could not be found, do something graceful\n  } else if (request_id === first_request) {\n    // result.buffer contains data from my_level_asset.bin\n  } else if (request_id === second_request) {\n    // result.buffer contains data from 'my_level.bin'\n  }\n}\n\nexport default defineScript({\n  init() {\n    return {\n      first_request: sys.load_buffer_async(\"folder_next_to_binary/my_level_asset.bin\", my_callback),\n      second_request: sys.load_buffer_async(\"/some_absolute_path/my_level.bin\", my_callback),\n    };\n  },\n});"
+      "ts": "// Load binary data from non-custom resource files on disk:\nfunction my_callback(self: unknown, request_id: number, result: sys.LoadBufferResult) {\n  const { first_request, second_request } = self as { first_request: number; second_request: number };\n  if (result.status !== sys.REQUEST_STATUS_FINISHED) {\n    // uh oh! File could not be found, do something graceful\n  } else if (request_id === first_request) {\n    // result.buffer contains data from my_level_asset.bin\n  } else if (request_id === second_request) {\n    // result.buffer contains data from 'my_level.bin'\n  }\n}\n\nexport default defineScript({\n  init() {\n    return {\n      first_request: sys.load_buffer_async(\"folder_next_to_binary/my_level_asset.bin\", my_callback),\n      second_request: sys.load_buffer_async(\"/some_absolute_path/my_level.bin\", my_callback),\n    };\n  },\n});"
     }
   ],
   "sys.load_resource": [

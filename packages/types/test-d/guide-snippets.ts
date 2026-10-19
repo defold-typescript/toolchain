@@ -45,7 +45,7 @@ const _pbBad: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" } = 0;
 
 // packages/docs/guide/typescript-gotchas.md — component property catalog
 // The per-namespace `interface properties` records each property's type.
-declare const _labelProps: label.properties;
+declare const _labelProps: label.Properties;
 const _labelColor: Vector4 = _labelProps.color;
 // @ts-expect-error a property member carries its catalogued type, not an arbitrary one
 const _labelColorBad: string = _labelProps.color;

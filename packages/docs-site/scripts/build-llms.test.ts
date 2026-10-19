@@ -546,7 +546,7 @@ describe("llms-full.txt withholds the overloads the declarations withhold", () =
     expect(fixture).toHaveLength(1);
     expect(fixture[0]).toContain("definition: { shape:");
     expect(massData).toHaveLength(1);
-    expect(massData[0]).toContain("data: b2d.mass_data");
+    expect(massData[0]).toContain("data: b2d.MassData");
     for (const line of lines) {
       expect(line).not.toContain('Opaque<"b2Shape">, density');
       expect(line).not.toContain('data: Opaque<"b2MassData">');

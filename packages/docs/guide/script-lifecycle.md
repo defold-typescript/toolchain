@@ -130,7 +130,7 @@ src/greeter.ts:5:15: script property "greeting" has a string default, which need
 
 A direct `go.property("greeting", "Hello")` also compiles, typed `ScriptProperty<string>`; it is deprecated like every direct `go.property` call and meets the same version check.
 
-The same release lets a script read and write a label's text as a component property: `go.get<label.properties>()("#label", "text")`.
+The same release lets a script read and write a label's text as a component property: `go.get<label.Properties>()("#label", "text")`.
 
 ### Reading properties in `init`
 

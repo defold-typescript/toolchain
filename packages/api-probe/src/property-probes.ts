@@ -7,6 +7,7 @@ import {
   UnmappedLuaKindError,
 } from "../../types/scripts/lua-kind";
 import type { ApiTarget } from "../../types/scripts/regen";
+import { PROPERTIES_INTERFACE } from "../../types/src/emit-dts";
 import { PROPERTY_OPTIONS, PROPERTY_TARGETS } from "./contexts";
 import { PROPERTY_DENYLIST } from "./probe-denylist";
 import { kindWitness, type ProbeCall, probeTarget } from "./witness";
@@ -81,14 +82,14 @@ function isReadonly(property: ts.Symbol): boolean {
 
 function getter(probe: PropertyProbe): string {
   const options = probe.options === undefined ? "" : `, ${probe.options}`;
-  return `go.get<${probe.catalog}.properties>()(${probe.target}, ${JSON.stringify(probe.member)}${options})`;
+  return `go.get<${probe.catalog}.${PROPERTIES_INTERFACE}>()(${probe.target}, ${JSON.stringify(probe.member)}${options})`;
 }
 
 export function callsFor(probe: PropertyProbe): ProbeCall[] {
-  const name = `${probe.catalog}.properties.${probe.member}`;
+  const name = `${probe.catalog}.${PROPERTIES_INTERFACE}.${probe.member}`;
   const options = probe.options === undefined ? "" : `, ${probe.options}`;
   const setter = (value: string) =>
-    `go.set<${probe.catalog}.properties>()(${probe.target}, ${JSON.stringify(probe.member)}, ${value}${options})`;
+    `go.set<${probe.catalog}.${PROPERTIES_INTERFACE}>()(${probe.target}, ${JSON.stringify(probe.member)}, ${value}${options})`;
   const set = setter(getter(probe));
   const kindWrites: ProbeCall[] = probe.readonly
     ? []
@@ -140,7 +141,7 @@ function kindWritesFor(
   });
 }
 
-// Every member of every `<ns>.properties` catalog the surface declares, the
+// Every member of every `<ns>.Properties` catalog the surface declares, the
 // hand-authored overlays merged in, read with `go.get` from its probe
 // component and written back with `go.set`; a writable union member is also
 // written once with a value of each kind it declares.
@@ -151,7 +152,8 @@ export function propertyProbes(
   const checker = program.getTypeChecker();
   const catalogs = new Map<string, ts.Symbol>();
   forEachNamespaceStatement(program, (namespace, statement) => {
-    if (!ts.isInterfaceDeclaration(statement) || statement.name.text !== "properties") return;
+    if (!ts.isInterfaceDeclaration(statement) || statement.name.text !== PROPERTIES_INTERFACE)
+      return;
     const symbol = checker.getSymbolAtLocation(statement.name);
     if (symbol !== undefined && !catalogs.has(namespace)) catalogs.set(namespace, symbol);
   });

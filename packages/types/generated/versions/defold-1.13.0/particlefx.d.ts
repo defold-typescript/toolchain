@@ -156,7 +156,7 @@ declare global {
      * ```
      */
     function stop(url: string | Hash | Url, options: { clear?: boolean }): void;
-    interface properties {
+    interface Properties {
       /**
        * The animation used during rendering by an emitter in a particle FX component.
        * The property type is a hash and refers to a valid animation in an atlas or a tile source resource.

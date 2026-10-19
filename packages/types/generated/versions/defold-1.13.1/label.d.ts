@@ -39,7 +39,7 @@ declare global {
      * ```
      */
     function set_text(url: string | Hash | Url, text: string | number): void;
-    interface properties {
+    interface Properties {
       /**
        * The color of the label. The type of the property is vector4.
        */

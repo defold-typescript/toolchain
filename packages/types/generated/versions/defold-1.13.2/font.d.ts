@@ -9,7 +9,7 @@ declare global {
     /**
      * Associated font file information
      */
-    interface file_info {
+    interface FileInfo {
       /**
        * path to the `.ttf` or `.otf` font file
        */
@@ -22,7 +22,7 @@ declare global {
     /**
      * Font resource information
      */
-    interface info {
+    interface Info {
       /**
        * path hash of the `.fontc` resource
        */
@@ -30,7 +30,7 @@ declare global {
       /**
        * associated font files
        */
-      fonts: font.file_info[];
+      fonts: font.FileInfo[];
     }
     /**
      * associates a TTF or OTF resource to a .fontc file.
@@ -51,7 +51,7 @@ declare global {
      * @param fontc - The path to the .fontc resource
      * @returns font resource information
      */
-    function get_info(fontc: string | Hash): font.info;
+    function get_info(fontc: string | Hash): font.Info;
     /**
      * prepopulates the font glyph cache with rasterised glyphs
      *

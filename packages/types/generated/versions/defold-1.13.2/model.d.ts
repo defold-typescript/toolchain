@@ -9,7 +9,7 @@ declare global {
     /**
      * Axis-aligned bounding box
      */
-    interface aabb {
+    interface Aabb {
       /**
        * minimum local-space bounds
        */
@@ -22,7 +22,7 @@ declare global {
     /**
      * Model animation playback properties
      */
-    interface play_properties {
+    interface PlayProperties {
       /**
        * duration of a linear blend from the current animation
        */
@@ -53,7 +53,7 @@ declare global {
      * model.get_aabb("#empty"); // => { min = vmath.vector3(0, 0, 0), max = vmath.vector3(0, 0, 0) }
      * ```
      */
-    function get_aabb(url: string | Hash | Url): model.aabb;
+    function get_aabb(url: string | Hash | Url): model.Aabb;
     /**
      * Returns a table of numbers with one entry per morph target on the first mesh of the model that has morph targets.
      * Values reflect the rig state at call time (after animation, and any active script override from model.set_blend_weights).
@@ -106,7 +106,7 @@ declare global {
      * model.get_mesh_aabb("#model"); // => { hash("Sword") = { min = vmath.vector3(-0.5, -0.5, 0), max = vmath.vector3(0.5, 0.5, 0) }, hash("Shield") = { min = vmath.vector3(-0.5, -0.5, -0.5), max = vmath.vector3(0.5, 0.5, 0.5) } }
      * ```
      */
-    function get_mesh_aabb(url: string | Hash | Url): LuaTable<Hash, model.aabb>;
+    function get_mesh_aabb(url: string | Hash | Url): LuaTable<Hash, model.Aabb>;
     /**
      * Get the enabled state of a mesh
      *
@@ -183,7 +183,7 @@ declare global {
      * });
      * ```
      */
-    function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.play_properties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
+    function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
     /**
      * Resets a shader constant for a model component.
      * The constant must be defined in the material assigned to the model.
@@ -233,7 +233,7 @@ declare global {
      * ```
      */
     function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash, enabled: boolean): void;
-    interface properties {
+    interface Properties {
       /**
        * The current animation set on the component. The type of the property is hash.
        */

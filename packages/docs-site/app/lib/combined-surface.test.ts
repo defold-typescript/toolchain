@@ -692,7 +692,7 @@ describe("combinedAuthoritativeSignatures (committed artifacts)", () => {
     const entry = compute.entries.find((e) => e.identity.name === "compute.get_constants");
     expect(entry).toBeDefined();
     const inner = map?.get(symbolIdentityKey((entry as NonNullable<typeof entry>).identity));
-    expect(inner).toBe("compute.get_constants(path: Hash | string): material.constant_info[]");
+    expect(inner).toBe("compute.get_constants(path: Hash | string): material.ConstantInfo[]");
     expect(inner).not.toContain("Record<string | number, unknown>");
   });
 });

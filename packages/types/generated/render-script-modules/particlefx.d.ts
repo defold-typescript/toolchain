@@ -10,7 +10,7 @@ declare global {
     /**
      * Options used when stopping particle effects.
      */
-    interface stop_options {
+    interface StopOptions {
       /**
        * Instantly clear spawned particles.
        */
@@ -33,7 +33,7 @@ declare global {
      * spawning state The emitter is spawning particles.
      */
     const EMITTER_STATE_SPAWNING: number & { readonly __brand: "particlefx.EMITTER_STATE_SPAWNING" };
-    interface properties {
+    interface Properties {
       /**
        * The animation used during rendering by an emitter in a particle FX component.
        * The property type is a hash and refers to a valid animation in an atlas or a tile source resource.

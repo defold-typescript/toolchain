@@ -21,7 +21,7 @@ void _rtNameOnly;
 
 // Both arities check the table against the reference's
 // `render.render_target_params`: each buffer key takes a
-// `render.render_target_buffer_params`.
+// `render.RenderTargetBufferParams`.
 const COLOR0 = graphics.BUFFER_TYPE_COLOR0_BIT;
 const DEPTH = graphics.BUFFER_TYPE_DEPTH_BIT;
 const depth = { format: graphics.TEXTURE_FORMAT_DEPTH, width: 1, height: 1 };

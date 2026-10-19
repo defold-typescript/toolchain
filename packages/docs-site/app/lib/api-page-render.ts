@@ -1078,12 +1078,16 @@ export function apiPageMarkdown(
       for (const symbol of types) emitSymbol(symbol);
       for (const shape of shapes) {
         lines.push(`### ${typeShapeHeading(page, shape.label)}`, "");
-        // A shape's Defold name belongs to its heading, not to its definition row.
-        for (const { defoldRef, ...symbol } of shape.symbols) {
-          if (defoldRef !== undefined && symbol.name === shape.label) {
-            lines.push(defoldRefLine(defoldRef), "");
+        // A shape's Defold name belongs to its heading, not to its definition row;
+        // a row nested under a path heading (`go.on_input.Action`) keeps its own.
+        for (const symbol of shape.symbols) {
+          if (symbol.defoldRef === undefined || symbol.name !== shape.label) {
+            emitSymbol(symbol, 4);
+            continue;
           }
-          emitSymbol(symbol, 4);
+          const { defoldRef, ...row } = symbol;
+          lines.push(defoldRefLine(defoldRef), "");
+          emitSymbol(row, 4);
         }
       }
       continue;

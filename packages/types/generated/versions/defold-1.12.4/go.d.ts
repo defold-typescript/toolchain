@@ -826,7 +826,7 @@ declare global {
      */
     export function world_to_local_transform(transformation: Matrix4, url?: SceneGameObjectAddress | Hash | Url): Matrix4;
     export { _delete as delete };
-    export interface properties {
+    export interface Properties {
       /**
        * The rotation of the game object expressed in Euler angles.
        * Euler angles are specified in degrees in the interval (-360, 360).

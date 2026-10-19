@@ -7,7 +7,7 @@ declare global {
     /**
      * Loaded crash module
      */
-    interface module_info {
+    interface ModuleInfo {
       /**
        * module name
        */
@@ -93,7 +93,7 @@ declare global {
      * @param handle - crash dump handle
      * @returns loaded modules
      */
-    function get_modules(handle: number): crash.module_info[];
+    function get_modules(handle: number): crash.ModuleInfo[];
     /**
      * read signal number from a crash report
      *

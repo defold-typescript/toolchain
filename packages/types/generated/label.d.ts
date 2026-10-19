@@ -9,7 +9,7 @@ declare global {
     /**
      * Rich-text layout object
      */
-    interface layout_object {
+    interface LayoutObject {
       /**
        * object type, currently `link` or `sprite`
        */
@@ -70,7 +70,7 @@ declare global {
      * }
      * ```
      */
-    function get_layout_objects(url: string | Hash | Url): label.layout_object[];
+    function get_layout_objects(url: string | Hash | Url): label.LayoutObject[];
     /**
      * Gets the text from a label component
      * This function is deprecated. Use `go.get("#label", "text")` instead.
@@ -81,7 +81,7 @@ declare global {
      * ```ts
      * export default defineScript({
      *   init() {
-     *     const text = go.get<label.properties>()("#label", "text");
+     *     const text = go.get<label.Properties>()("#label", "text");
      *     print(text);
      *   },
      * });
@@ -100,13 +100,13 @@ declare global {
      * ```ts
      * export default defineScript({
      *   init() {
-     *     go.set<label.properties>()("#label", "text", "Hello World!");
+     *     go.set<label.Properties>()("#label", "text", "Hello World!");
      *   },
      * });
      * ```
      */
     function set_text(url: string | Hash | Url, text: string | number): void;
-    interface properties {
+    interface Properties {
       /**
        * The color of the label. The type of the property is vector4.
        */

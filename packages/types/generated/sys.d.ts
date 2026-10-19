@@ -10,7 +10,7 @@ declare global {
     /**
      * Application information
      */
-    interface application_info {
+    interface ApplicationInfo {
       /**
        * Whether the queried application is installed.
        */
@@ -19,7 +19,7 @@ declare global {
     /**
      * Engine information
      */
-    interface engine_info {
+    interface EngineInfo {
       /**
        * Defold engine version.
        */
@@ -36,7 +36,7 @@ declare global {
     /**
      * Network-interface information
      */
-    interface interface_info {
+    interface InterfaceInfo {
       /**
        * Interface name.
        */
@@ -65,7 +65,7 @@ declare global {
     /**
      * Asynchronous buffer-load result
      */
-    interface load_buffer_result {
+    interface LoadBufferResult {
       /**
        * Request status.
        */
@@ -78,7 +78,7 @@ declare global {
     /**
      * URL opening attributes
      */
-    interface open_url_attributes {
+    interface OpenUrlAttributes {
       /**
        * HTML5 browsing context: `_self`, `_blank`, `_parent`, `_top`, or a named window.
        */
@@ -87,7 +87,7 @@ declare global {
     /**
      * System information
      */
-    interface sys_info {
+    interface SysInfo {
       /**
        * Device model on iOS and Android.
        */
@@ -136,7 +136,7 @@ declare global {
     /**
      * System-information options
      */
-    interface sys_info_options {
+    interface SysInfoOptions {
       /**
        * Omit operating-system-protected values such as `device_ident`.
        */
@@ -254,7 +254,7 @@ declare global {
      * // ...
      * ```
      */
-    function get_application_info(app_string: string): sys.application_info;
+    function get_application_info(app_string: string): sys.ApplicationInfo;
     /**
      * The path from which the application is run.
      * This function will raise a Lua error if unable to get the application support path.
@@ -391,7 +391,7 @@ declare global {
      * gui.set_text(gui.get_node("version"), version_str);
      * ```
      */
-    function get_engine_info(): sys.engine_info;
+    function get_engine_info(): sys.EngineInfo;
     /**
      * Create a path to the host device for unit testing
      * Useful for saving logs etc during development
@@ -428,7 +428,7 @@ declare global {
      * }
      * ```
      */
-    function get_ifaddrs(): sys.interface_info[];
+    function get_ifaddrs(): sys.InterfaceInfo[];
     /**
      * The save-file path is operating system specific and is typically located under the user's home directory.
      * This function will raise a Lua error if unable to get the save file path.
@@ -475,7 +475,7 @@ declare global {
      * }
      * ```
      */
-    function get_sys_info(): sys.sys_info;
+    function get_sys_info(): sys.SysInfo;
     /**
      * Returns a table with system information.
      *
@@ -490,7 +490,7 @@ declare global {
      * }
      * ```
      */
-    function get_sys_info(options: sys.sys_info_options): sys.sys_info;
+    function get_sys_info(options: sys.SysInfoOptions): sys.SysInfo;
     /**
      * If the file exists, it must have been created by `sys.save` to be loaded.
      * This function will raise a Lua error if an error occurs while loading the file.
@@ -559,7 +559,7 @@ declare global {
      * Load binary data from a custom project resource and update a texture resource:
      * ```ts
      * // Load binary data from a custom project resource and update a texture resource:
-     * function my_callback(self: unknown, request_id: number, result: sys.load_buffer_result) {
+     * function my_callback(self: unknown, request_id: number, result: sys.LoadBufferResult) {
      *   const format = graphics.TEXTURE_FORMAT_RGBA;
      *   if (result.status === sys.REQUEST_STATUS_FINISHED && result.buffer !== undefined && format !== undefined) {
      *     resource.set_texture("/my_texture", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format }, result.buffer);
@@ -572,7 +572,7 @@ declare global {
      * Load binary data from non-custom resource files on disk:
      * ```ts
      * // Load binary data from non-custom resource files on disk:
-     * function my_callback(self: unknown, request_id: number, result: sys.load_buffer_result) {
+     * function my_callback(self: unknown, request_id: number, result: sys.LoadBufferResult) {
      *   const { first_request, second_request } = self as { first_request: number; second_request: number };
      *   if (result.status !== sys.REQUEST_STATUS_FINISHED) {
      *     // uh oh! File could not be found, do something graceful
@@ -593,7 +593,7 @@ declare global {
      * });
      * ```
      */
-    function load_buffer_async(path: string, status_callback: (self: unknown, request_id: number, result: sys.load_buffer_result) => void): number;
+    function load_buffer_async(path: string, status_callback: (self: unknown, request_id: number, result: sys.LoadBufferResult) => void): number;
     /**
      * Loads a custom resource. Specify the full filename of the resource that you want
      * to load. When loaded, the file data is returned as a string.
@@ -651,7 +651,7 @@ declare global {
      * }
      * ```
      */
-    function open_url(url: string, attributes: sys.open_url_attributes): boolean;
+    function open_url(url: string, attributes: sys.OpenUrlAttributes): boolean;
     /**
      * Reboots the game engine with a specified set of arguments.
      * Arguments will be translated into command line arguments. Calling reboot

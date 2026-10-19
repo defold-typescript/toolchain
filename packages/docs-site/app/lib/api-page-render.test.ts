@@ -1835,7 +1835,7 @@ describe("Combined page authoritative render + markers", () => {
 
   test("compute page heading and its function-overview anchor slugify the authoritative signature", () => {
     const md = apiPageMarkdown(combinedPage("compute"), noLink, { combinedMarkers: true });
-    const authoritative = "compute.get_constants(path: Hash | string): material.constant_info[]";
+    const authoritative = "compute.get_constants(path: Hash | string): material.ConstantInfo[]";
     const headingLine = md
       .split("\n")
       .find((l) => l.startsWith("### `") && l.includes("compute.get_constants("));
@@ -1865,7 +1865,7 @@ describe("Combined page authoritative render + markers", () => {
       apiPageMarkdown(combinedPage("compute"), noLink, { combinedMarkers: true }),
       { highlightSignatureHeadings: true },
     );
-    const authoritative = "compute.get_constants(path: Hash | string): material.constant_info[]";
+    const authoritative = "compute.get_constants(path: Hash | string): material.ConstantInfo[]";
     const slug = slugify(authoritative);
     expect(html).toContain(`id="${slug}"`);
     expect(html).toContain(`href="#${slug}"`);
@@ -3178,7 +3178,7 @@ describe("grouped overload blocks (committed artifacts)", () => {
     const get = blockOf(render(go), overloadHeading(groupFor(go, "go.get")));
     const typed = get.split('<li class="api-overload">')[3] ?? "";
     expect(typed).toContain(`- ${nameCode("options")}:${G}${typeCode("GoPropertyOptions")}`);
-    expect(typed).toContain(`${G}${typeCode("go.properties[K]")}`);
+    expect(typed).toContain(`${G}${typeCode("go.Properties[K]")}`);
   });
 
   test("overloads that coexist keep each form's own example under that form", () => {
@@ -3728,10 +3728,12 @@ describe("a renamed engine type shows its Defold name", () => {
     if (page === undefined) throw new Error(`no canonical ${namespace} page`);
     return apiPageMarkdown(page, linkify).split("\n");
   };
-  // The body of the type row whose heading opens with `opening`, up to the
-  // next heading.
+  // The body of the type row whose heading opens with `opening`, at either row
+  // depth, up to the next heading.
   const rowBody = (lines: readonly string[], opening: string): string[] => {
-    const start = lines.findIndex((line) => line.startsWith(`### \`${opening}`));
+    const start = lines.findIndex(
+      (line) => /^#{3,4} `/.test(line) && line.includes(`\`${opening}`),
+    );
     if (start < 0) throw new Error(`no type row opening ${opening}`);
     const end = lines.findIndex((line, index) => index > start && line.startsWith("#"));
     return lines
@@ -3752,11 +3754,20 @@ describe("a renamed engine type shows its Defold name", () => {
     );
   });
 
+  test("a renamed shape's row opens its body with the reference's own name, a nested one anchored by its element name", () => {
+    expect(rowBody(markdownFor("sys"), "interface sys.SysInfo {")[0]).toBe(
+      "[icon:lua] [`sys.sys_info`](https://defold.com/ref/sys-lua#sys.sys_info)",
+    );
+    expect(rowBody(markdownFor("go"), "interface go.on_input.Action {")[0]).toBe(
+      "[icon:lua] [`go.on_input.action`](https://defold.com/ref/go-lua#on_input.action)",
+    );
+  });
+
   test("a type the reference does not name, or names the same, carries no Defold name", () => {
     expect(rowBody(markdownFor("render"), "type render.ClearBufferKey =").join("\n")).not.toContain(
       "[icon:lua]",
     );
-    expect(rowBody(markdownFor("sys"), "interface sys.sys_info").join("\n")).not.toContain(
+    expect(rowBody(markdownFor("b2d.body"), "type b2d.body.B2 =").join("\n")).not.toContain(
       "[icon:lua]",
     );
   });
