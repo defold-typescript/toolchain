@@ -74,8 +74,6 @@ declare global {
        */
       key?: string | Hash;
     }
-    type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT;
-    type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;
     type ADJUST = typeof gui.ADJUST_FIT | typeof gui.ADJUST_STRETCH | typeof gui.ADJUST_ZOOM;
     type ANCHOR = typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_RIGHT | typeof gui.ANCHOR_TOP;
     type BLEND = typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN;

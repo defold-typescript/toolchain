@@ -872,7 +872,7 @@ function fadeIn(node: Opaque<"node">, easing: gui.EASING, playback: gui.PLAYBACK
 }
 ```
 
-The alias is the exact set of constants the reference documents for that slot, which is why one enum can split into two names where the slots differ: `gui.set_xanchor` takes `gui.XAnchor` (`ANCHOR_NONE` / `LEFT` / `RIGHT`) while `gui.set_yanchor` takes `gui.YAnchor` (`ANCHOR_NONE` / `TOP` / `BOTTOM`), and `window.get_dim_mode` returns `window.DIMMING` — which includes `DIMMING_UNKNOWN` — where the setter takes the narrower `window.DimModeStateSettable`. Signatures and hovers carry the alias, and the API reference gives each one an entry listing its members.
+A slot that takes only part of a named enum spells that part as `Exclude` of the enum instead of a second name, so one namespace never carries two names for overlapping sets. `window.get_dim_mode` returns `window.DIMMING`, which includes `DIMMING_UNKNOWN`, while `window.set_dim_mode` takes `Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>`; `render.enable_state` takes `graphics.STATE` minus `STATE_ALPHA_TEST_SUPPORTED` and `STATE_SCISSOR_TEST`, which the engine rejects. Write the same `Exclude` in a wrapper that forwards to such a slot. Signatures and hovers carry the spelling, and the API reference gives each named enum an entry listing its members.
 
 **How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts the constant is assignable to `number` (backward compatibility) and to its own brand, while a bare `0` assigned to the brand carries `@ts-expect-error`. If the brand is dropped or widened, the expected error disappears and the typecheck gate fails. `packages/types/test-d/constant-union-aliases.ts` does the same for the aliases: representative members are assignable to their alias, and a constant from a sibling group is not. Exhaustive member-set fidelity is held elsewhere: `packages/types/test/constant-union-alias-coverage.test.ts` catches a brand union left without a name, and `packages/types/test/constant-slot-expansion-drift.test.ts` checks each documented slot against the reference documentation.
 
@@ -12903,8 +12903,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - rotation: Quaternion
 - scale: number | Vector3
 - type EASING = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE
-- type PLAYBACK = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG [since 1.13.2]
-- type Playback = typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_PINGPONG | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_PINGPONG
+- type PLAYBACK = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG
 - interface action { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; acc_x?: number; acc_y?: number; acc_z?: number; gamepad?: number; userid?: number; gamepad_guid?: string; gamepad_guid_info?: go.on_input.gamepad_guid_info; gamepad_unknown?: boolean; gamepad_name?: string; gamepad_axis?: number[]; gamepad_hats?: number[]; gamepad_buttons?: number[]; touch?: go.on_input.touch[]; text?: string; } [since 1.13.2]
 - interface gamepad_guid_info { vendor: number; product: number; bus: number; crc: number; version: number; } [since 1.13.2]
 - interface touch { id: number; pressed: boolean; released: boolean; tap_count: number; x: number; y: number; screen_x: number; screen_y: number; dx: number; dy: number; screen_dx: number; screen_dy: number; } [since 1.13.2]
@@ -13077,9 +13076,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type DATA_TYPE = typeof graphics.DATA_TYPE_BYTE | typeof graphics.DATA_TYPE_FLOAT | typeof graphics.DATA_TYPE_INT | typeof graphics.DATA_TYPE_SHORT | typeof graphics.DATA_TYPE_UNSIGNED_BYTE | typeof graphics.DATA_TYPE_UNSIGNED_INT | typeof graphics.DATA_TYPE_UNSIGNED_SHORT [since 1.13.2]
 - type FACE_TYPE = typeof graphics.FACE_TYPE_BACK | typeof graphics.FACE_TYPE_FRONT | typeof graphics.FACE_TYPE_FRONT_AND_BACK [since 1.13.2]
 - type SEMANTIC_TYPE = typeof graphics.SEMANTIC_TYPE_BONE_INDICES | typeof graphics.SEMANTIC_TYPE_BONE_WEIGHTS | typeof graphics.SEMANTIC_TYPE_COLOR | typeof graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS | typeof graphics.SEMANTIC_TYPE_NONE | typeof graphics.SEMANTIC_TYPE_NORMAL | typeof graphics.SEMANTIC_TYPE_NORMAL_MATRIX | typeof graphics.SEMANTIC_TYPE_PAGE_INDEX | typeof graphics.SEMANTIC_TYPE_POSITION | typeof graphics.SEMANTIC_TYPE_TANGENT | typeof graphics.SEMANTIC_TYPE_TEXCOORD | typeof graphics.SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D | typeof graphics.SEMANTIC_TYPE_WORLD_MATRIX [since 1.13.2]
-- type STATE = typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_BLEND | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_POLYGON_OFFSET_FILL | typeof graphics.STATE_SCISSOR_TEST | typeof graphics.STATE_STENCIL_TEST [since 1.13.2]
+- type STATE = typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_BLEND | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_POLYGON_OFFSET_FILL | typeof graphics.STATE_SCISSOR_TEST | typeof graphics.STATE_STENCIL_TEST
 - type STENCIL_OP = typeof graphics.STENCIL_OP_DECR | typeof graphics.STENCIL_OP_DECR_WRAP | typeof graphics.STENCIL_OP_INCR | typeof graphics.STENCIL_OP_INCR_WRAP | typeof graphics.STENCIL_OP_INVERT | typeof graphics.STENCIL_OP_KEEP | typeof graphics.STENCIL_OP_REPLACE | typeof graphics.STENCIL_OP_ZERO [since 1.13.2]
-- type State = typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_STENCIL_TEST | typeof graphics.STATE_BLEND | typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_POLYGON_OFFSET_FILL
 - type TEXTURE_FILTER = typeof graphics.TEXTURE_FILTER_DEFAULT | typeof graphics.TEXTURE_FILTER_LINEAR | typeof graphics.TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR | typeof graphics.TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST | typeof graphics.TEXTURE_FILTER_NEAREST | typeof graphics.TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR | typeof graphics.TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST [since 1.13.2]
 - type TEXTURE_FORMAT = NonNullable<typeof graphics.TEXTURE_FORMAT_BGRA8U> | typeof graphics.TEXTURE_FORMAT_DEPTH | NonNullable<typeof graphics.TEXTURE_FORMAT_LUMINANCE> | NonNullable<typeof graphics.TEXTURE_FORMAT_LUMINANCE_ALPHA> | NonNullable<typeof graphics.TEXTURE_FORMAT_R16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_R32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_R32UI> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA32UI> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_16BPP> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_BC3> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_BC7> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_ETC2> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_16BPP> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_BC1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_ETC1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG_BC5> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG_ETC2> | NonNullable<typeof graphics.TEXTURE_FORMAT_R_BC4> | NonNullable<typeof graphics.TEXTURE_FORMAT_R_ETC2> | typeof graphics.TEXTURE_FORMAT_STENCIL [since 1.13.2]
 - type TEXTURE_TYPE = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_2D_ARRAY | NonNullable<typeof graphics.TEXTURE_TYPE_3D> | typeof graphics.TEXTURE_TYPE_CUBE_MAP | typeof graphics.TEXTURE_TYPE_IMAGE_2D | NonNullable<typeof graphics.TEXTURE_TYPE_IMAGE_3D> [since 1.13.2]
@@ -13337,7 +13335,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - textures: Hash
 - type node = Opaque<"node"> [since 1.13.2]
 - type ADJUST = typeof gui.ADJUST_FIT | typeof gui.ADJUST_STRETCH | typeof gui.ADJUST_ZOOM
-- type ANCHOR = typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_RIGHT | typeof gui.ANCHOR_TOP [since 1.13.2]
+- type ANCHOR = typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_RIGHT | typeof gui.ANCHOR_TOP
 - type BLEND = typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN
 - type CLIPPING_MODE = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL
 - type EASING = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE
@@ -13350,8 +13348,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type SAFE_AREA = typeof gui.SAFE_AREA_BOTH | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_SHORT
 - type SIZE_MODE = typeof gui.SIZE_MODE_AUTO | typeof gui.SIZE_MODE_MANUAL
 - type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT
-- type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT
-- type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM
 - interface layout_object { type: string; id: Hash; text_offset: number; text_length: number; x: number; y: number; width: number; height: number; attributes: LuaTable<string, string>; } [since 1.13.2]
 - interface play_properties { offset?: number; playback_rate?: number; } [since 1.13.2]
 - interface set_options { index?: number; key?: string | Hash; } [since 1.13.2]
@@ -13608,14 +13604,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function constant_buffer(): Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };
 - function delete_render_target(render_target: Opaque<"render_target">): void;
 - function disable_material(): void;
-- function disable_state(state: graphics.State): void;
+- function disable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
 - function disable_texture(binding: string | Hash | number): void;
 - function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;
 - function draw(predicate: Opaque<"render_predicate">): void;
 - function draw(predicate: Opaque<"render_predicate">, options: render.draw_options): void;
 - function draw_debug3d(options?: render.debug_draw_options): void;
 - function enable_material(material_id: string | Hash): void;
-- function enable_state(state: graphics.State): void;
+- function enable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
 - function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BUFFER_TYPE): void;
 - function get_height(): number;
 - function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
@@ -14022,7 +14018,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_mouse_lock(): boolean;
 - function get_safe_area(): window.safe_area;
 - function get_size(): LuaMultiReturn<[number, number]>;
-- function set_dim_mode(mode: window.DimModeStateSettable): void;
+- function set_dim_mode(mode: Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>): void;
 - function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void) | undefined): void;
 - function set_mouse_lock(flag: boolean): void;
 - function set_position(x: number, y: number): void;
@@ -14038,7 +14034,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - window.WINDOW_EVENT_ICONIFIED: number & { readonly __brand: "window.WINDOW_EVENT_ICONIFIED" } [since 1.13.2]
 - window.WINDOW_EVENT_RESIZED: number & { readonly __brand: "window.WINDOW_EVENT_RESIZED" }
 - type DIMMING = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN
-- type DimModeStateSettable = typeof window.DIMMING_ON | typeof window.DIMMING_OFF
 - type WINDOW_EVENT = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED [since 1.13.2]
 - interface event_data { width?: number; height?: number; } [since 1.13.2]
 - interface safe_area { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number; } [since 1.13.2]

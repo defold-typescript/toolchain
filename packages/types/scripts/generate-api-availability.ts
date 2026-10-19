@@ -98,7 +98,9 @@ export function identityCorrections(): IdentityCorrections {
       ]),
     ),
     constantFamilies: Object.fromEntries(
-      CONSTANT_UNION_ALIASES.map((alias) => [`${alias.home}.${alias.name}`, alias.members]),
+      CONSTANT_UNION_ALIASES.flatMap((alias) =>
+        "name" in alias ? [[`${alias.home}.${alias.name}`, alias.members] as const] : [],
+      ),
     ),
   };
 }

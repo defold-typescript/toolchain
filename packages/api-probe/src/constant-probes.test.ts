@@ -69,7 +69,7 @@ describe("constant probes", () => {
     expect(easing?.call).toStartWith('distinct([["gui.EASING_INBACK", gui.EASING_INBACK], [');
     expect(easing?.call).toContain('["gui.EASING_LINEAR", gui.EASING_LINEAR]');
     const aliases = generation.calls.filter((call) => call.variant === "distinct");
-    expect(aliases.map((call) => call.name)).toContain("go.Playback");
+    expect(aliases.map((call) => call.name)).toContain("go.PLAYBACK");
     expect(aliases.map((call) => call.name)).toContain("buffer.VALUE_TYPE");
   });
 });

@@ -84,8 +84,12 @@ import {
   buildTableDocResolver,
   CALLBACK_SIGNATURE_CURATIONS,
   CONSTANT_UNION_ALIASES,
+  type ConstantUnionAlias,
+  type ConstantUnionNamedRow,
+  type ConstantUnionSubsetRow,
   collectHandleMethodGroups,
   constantUnionAlias,
+  constantUnionSpelling,
   declaredTypePaths,
   defaultMapType,
   emitDeclarations,
@@ -102,6 +106,7 @@ import {
   recoverCallbackSignature,
   routeTypeDeclarations,
   SLOT_LEVEL_LIST_PROSE,
+  TABLE_FIELD_TYPE_OVERRIDES,
   TABLE_SLOT_CURATIONS,
   TABLE_SLOT_FIELD_ADDITIONS,
   type TableField,
@@ -109,6 +114,7 @@ import {
   VARIABLE_TYPE_OVERRIDES,
 } from "./emit-dts";
 import { hashExampleSource } from "./example-store";
+import { splitTopLevel } from "./luals-type-expr";
 import type { UrlParameterTable } from "./url-parameters";
 
 function requireFunction(module: ApiModule, name: string): ApiFunction {
@@ -1451,7 +1457,7 @@ describe("emitDeclarations", () => {
     const module = parseDefoldApiDoc(resourceDoc);
     const out = emitDeclarations(module);
     expect(out).toContain(
-      "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
+      "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
     );
     const createAtlasLine = out.split("\n").find((line) => line.includes("function create_atlas"));
     // Each non-empty list spells its element twice: the head and the rest.
@@ -2380,7 +2386,7 @@ describe("supplementary cross-reference table-field recovery", () => {
     const out = emitDeclarations(resourceModule);
     const line = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(line).toContain(
-      "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
+      "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
     );
   });
 });
@@ -4550,7 +4556,9 @@ describe("per-slot rendered types", () => {
   test("a documented-constant slot reports the brand union, not Opaque", () => {
     const entry = slotsOf(renderDoc, "render.enable_state", { knownConstantFqns: renderConstants });
     const state = entry.slotTypes["param:0:state"]?.type;
-    expect(state).toBe("graphics.State");
+    expect(state).toBe(
+      "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+    );
     expect(state).not.toContain('Opaque<"constant">');
   });
 
@@ -4717,6 +4725,7 @@ describe("documented constant slot expansion", () => {
   const union = (fqns: readonly string[], out?: string): string => {
     const alias = constantUnionAlias(fqns);
     if (alias === undefined) return fqns.map(brand).join(" | ");
+    if (!("name" in alias)) return constantUnionSpelling(alias);
     expect(out ?? guiOut).toContain(
       `type ${alias.name} = ${fqns.map((fqn) => `typeof ${fqn}`).join(" | ")};`,
     );
@@ -5117,13 +5126,17 @@ describe("CONSTANT_UNION_ALIASES", () => {
   }
 
   function aliasRow(home: string, name: string) {
-    const row = CONSTANT_UNION_ALIASES.find((r) => r.home === home && r.name === name);
+    const row = CONSTANT_UNION_ALIASES.find(
+      (r) => r.home === home && "name" in r && r.name === name,
+    );
     if (row === undefined) throw new Error(`no alias row ${home}.${name}`);
     return row;
   }
 
   test("every row carries a unique qualified name and a member set no other row repeats", () => {
-    const names = CONSTANT_UNION_ALIASES.map((r) => `${r.home}.${r.name}`);
+    const names = CONSTANT_UNION_ALIASES.flatMap((r) =>
+      "name" in r ? [`${r.home}.${r.name}`] : [],
+    );
     expect(new Set(names).size).toBe(names.length);
     const sets = CONSTANT_UNION_ALIASES.map((r) => [...r.members].sort().join(","));
     expect(new Set(sets).size).toBe(sets.length);
@@ -5178,15 +5191,19 @@ describe("CONSTANT_UNION_ALIASES", () => {
     expect(out).not.toContain("type Mode =");
   });
 
-  test("two rows sharing a prefix but differing in members each resolve to their own", () => {
+  test("two subset rows of one parent each exclude their own complement, in the parent's order", () => {
     const out = emitDeclarations(parseDefoldApiDoc(guiDoc));
-    expect(lineWith(out, "function get_xanchor(")).toContain("): gui.XAnchor;");
-    expect(lineWith(out, "function get_yanchor(")).toContain("): gui.YAnchor;");
-    expect(lineWith(out, "function set_xanchor(")).toContain("anchor: gui.XAnchor)");
-    expect(lineWith(out, "function set_yanchor(")).toContain("anchor: gui.YAnchor)");
-    const xRow = aliasRow("gui", "XAnchor");
-    const yRow = aliasRow("gui", "YAnchor");
-    expect([...xRow.members].sort()).not.toEqual([...yRow.members].sort());
+    const x = "Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>";
+    const y = "Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>";
+    expect(lineWith(out, "function get_xanchor(")).toContain(`): ${x};`);
+    expect(lineWith(out, "function get_yanchor(")).toContain(`): ${y};`);
+    expect(lineWith(out, "function set_xanchor(")).toContain(`anchor: ${x})`);
+    expect(lineWith(out, "function set_yanchor(")).toContain(`anchor: ${y})`);
+    expect(out.split("\n").filter((l) => l.trimStart().startsWith("type ANCHOR ="))).toHaveLength(
+      1,
+    );
+    expect(out).not.toContain("type XAnchor =");
+    expect(out).not.toContain("type YAnchor =");
   });
 
   test("a row whose home differs from its constants' namespace emits into the home", () => {
@@ -5221,19 +5238,195 @@ describe("CONSTANT_UNION_ALIASES", () => {
     const renderOut = emitDeclarations(parseDefoldApiDoc(renderDoc), {
       knownConstantFqns: graphicsConstantFqns,
     });
-    expect(lineWith(renderOut, "function enable_state(")).toContain("state: graphics.State)");
-    expect(renderOut).not.toContain("type State =");
-    const graphicsOut = emitDeclarations(parseDefoldApiDoc(graphicsDoc));
-    const row = aliasRow("graphics", "State");
-    expect(graphicsOut).toContain(
-      `type State = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
+    expect(lineWith(renderOut, "function enable_state(")).toContain(
+      "state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>)",
     );
+    expect(renderOut).not.toContain("type STATE =");
+    const graphicsOut = emitDeclarations(parseDefoldApiDoc(graphicsDoc));
+    const row = aliasRow("graphics", "STATE");
+    expect(graphicsOut).toContain(
+      `type STATE = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
+    );
+    expect(graphicsOut).not.toContain("type State =");
+  });
+});
+
+describe("subset constant unions", () => {
+  const sourceAt = (...segments: string[]): ts.SourceFile => {
+    const path = join(GENERATED_DIR, ...segments);
+    return ts.createSourceFile(path, readFileSync(path, "utf8"), ts.ScriptTarget.Latest, true);
+  };
+
+  function namespaceBodies(source: ts.SourceFile, home: string): ts.ModuleBlock[] {
+    const out: ts.ModuleBlock[] = [];
+    const visit = (node: ts.Node): void => {
+      if (
+        ts.isModuleDeclaration(node) &&
+        node.name.text === home &&
+        node.body !== undefined &&
+        ts.isModuleBlock(node.body)
+      ) {
+        out.push(node.body);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    return out;
+  }
+
+  function typeAliases(source: ts.SourceFile, home: string): Map<string, string> {
+    const out = new Map<string, string>();
+    for (const body of namespaceBodies(source, home)) {
+      for (const statement of body.statements) {
+        if (ts.isTypeAliasDeclaration(statement)) {
+          out.set(statement.name.text, statement.type.getText(source));
+        }
+      }
+    }
+    return out;
+  }
+
+  function parameterType(source: ts.SourceFile, home: string, fn: string, param: string): string {
+    for (const body of namespaceBodies(source, home)) {
+      for (const statement of body.statements) {
+        if (!ts.isFunctionDeclaration(statement) || statement.name?.text !== fn) continue;
+        const slot = statement.parameters.find((p) => p.name.getText(source) === param);
+        if (slot?.type !== undefined) return slot.type.getText(source);
+      }
+    }
+    throw new Error(`${source.fileName}: no ${home}.${fn} parameter ${param}`);
+  }
+
+  const isSubset = (row: ConstantUnionAlias): row is ConstantUnionSubsetRow => "parent" in row;
+  const isNamed = (row: ConstantUnionAlias): row is ConstantUnionNamedRow => !isSubset(row);
+
+  test("the default target spells each engine-narrowed setter as Exclude of the reference ENUM", () => {
+    expect(parameterType(sourceAt("render.d.ts"), "render", "enable_state", "state")).toBe(
+      "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+    );
+    expect(parameterType(sourceAt("window.d.ts"), "window", "set_dim_mode", "mode")).toBe(
+      "Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>",
+    );
+  });
+
+  test("an older target declares the parent in the reference's order and excludes from it", () => {
+    const defaultPlayback = typeAliases(sourceAt("go.d.ts"), "go").get("PLAYBACK");
+    const goOld = sourceAt("versions", "defold-1.13.1", "go.d.ts");
+    const oldAliases = typeAliases(goOld, "go");
+    expect(defaultPlayback?.split(" | ")).toHaveLength(7);
+    expect(oldAliases.get("PLAYBACK")).toBe(defaultPlayback as string);
+    expect(oldAliases.has("Playback")).toBe(false);
+    expect(parameterType(goOld, "go", "animate", "playback")).toBe(
+      "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>",
+    );
+
+    const guiOld = sourceAt("versions", "defold-1.13.1", "gui.d.ts");
+    expect(typeAliases(guiOld, "gui").get("ANCHOR")).toBe(
+      typeAliases(sourceAt("gui.d.ts"), "gui").get("ANCHOR") as string,
+    );
+    expect(parameterType(guiOld, "gui", "set_xanchor", "anchor")).toBe(
+      "Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+    );
+    expect(parameterType(guiOld, "gui", "set_yanchor", "anchor")).toBe(
+      "Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+    );
+  });
+
+  test("no committed surface declares a subset name in its home", () => {
+    const removed = [
+      ["go", "Playback"],
+      ["gui", "XAnchor"],
+      ["gui", "YAnchor"],
+      ["graphics", "State"],
+      ["window", "DimModeStateSettable"],
+    ] as const;
+    const declarationFiles = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) return declarationFiles(path);
+        return entry.name.endsWith(".d.ts") ? [path] : [];
+      });
+    const homesSeen = new Map<string, number>();
+    const declared: string[] = [];
+    for (const path of declarationFiles(GENERATED_DIR)) {
+      const source = ts.createSourceFile(
+        path,
+        readFileSync(path, "utf8"),
+        ts.ScriptTarget.Latest,
+        true,
+      );
+      for (const [home, name] of removed) {
+        if (namespaceBodies(source, home).length === 0) continue;
+        homesSeen.set(home, (homesSeen.get(home) ?? 0) + 1);
+        if (typeAliases(source, home).has(name)) declared.push(`${path}: ${home}.${name}`);
+      }
+    }
+    // The default surface and the four pinned ones each open every home.
+    for (const [home] of removed) expect(homesSeen.get(home) ?? 0).toBeGreaterThanOrEqual(5);
+    expect(declared).toEqual([]);
+  });
+
+  test("every subset row names a parent in its home that strictly contains it", () => {
+    const subsets = CONSTANT_UNION_ALIASES.filter(isSubset);
+    expect(subsets.length).toBeGreaterThan(0);
+    const problems: string[] = [];
+    for (const row of subsets) {
+      const parent = CONSTANT_UNION_ALIASES.filter(isNamed).find(
+        (candidate) => candidate.home === row.home && candidate.name === row.parent,
+      );
+      if (parent === undefined) {
+        problems.push(`${row.home}: parent ${row.parent} is not a named row`);
+        continue;
+      }
+      const parentMembers = new Set(parent.members);
+      if (
+        !row.members.every((m) => parentMembers.has(m)) ||
+        row.members.length >= parentMembers.size
+      ) {
+        problems.push(`${row.home}: [${row.members.join(", ")}] is not inside ${row.parent}`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  test("no named row is a strict subset of another named row in its home", () => {
+    const named = CONSTANT_UNION_ALIASES.filter(isNamed);
+    const nested: string[] = [];
+    for (const row of named) {
+      for (const other of named) {
+        if (other === row || other.home !== row.home) continue;
+        const members = new Set(other.members);
+        if (row.members.length < members.size && row.members.every((m) => members.has(m))) {
+          nested.push(`${row.home}: ${row.name} is inside ${other.name}`);
+        }
+      }
+    }
+    expect(nested).toEqual([]);
+  });
+
+  test("an Exclude a correction or field override writes is a subset row's spelling", () => {
+    const spellings = new Set(CONSTANT_UNION_ALIASES.filter(isSubset).map(constantUnionSpelling));
+    const written = [
+      ...[...PARAM_TYPE_CORRECTIONS].map(([key, correction]) => [key, correction.adds] as const),
+      ...TABLE_FIELD_TYPE_OVERRIDES,
+    ].flatMap(([key, text]) =>
+      text === undefined
+        ? []
+        : splitTopLevel(text, "|")
+            .map((arm) => arm.trim())
+            .filter((arm) => arm.startsWith("Exclude<"))
+            .map((arm) => ({ key, arm })),
+    );
+    expect(written.length).toBeGreaterThan(0);
+    expect(written.filter(({ arm }) => !spellings.has(arm))).toEqual([]);
   });
 });
 
 describe("one name per constant union beside a reference ENUM", () => {
   function row(home: string, name: string) {
-    const found = CONSTANT_UNION_ALIASES.find((r) => r.home === home && r.name === name);
+    const found = CONSTANT_UNION_ALIASES.find(
+      (r) => r.home === home && "name" in r && r.name === name,
+    );
     if (found === undefined) throw new Error(`no alias row ${home}.${name}`);
     return found;
   }
@@ -5728,20 +5921,28 @@ describe("a nested table field's type override", () => {
     const out = applyFieldTypeOverrides("resource.set_atlas", "param", "table", parsed);
     expect(out[0]).toEqual({ name: "playback", types: ["constant"] });
     expect(out[1]?.fields).toEqual([
-      { name: "playback", types: ["constant"], tsType: "go.Playback" },
+      {
+        name: "playback",
+        types: ["constant"],
+        tsType: "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>",
+      },
       { name: "fps", types: ["number"] },
     ]);
     expect(parsed[1]?.fields?.[0]).toEqual({ name: "playback", types: ["constant"] });
   });
 
-  test("the atlas animations playback field emits as go.Playback on every atlas element", () => {
+  test("the atlas animations playback field emits as go.PLAYBACK without NONE on every atlas element", () => {
     const out = emitDeclarations(parseDefoldApiDoc(resourceDoc));
     const lineWith = (text: string, needle: string): string =>
       text.split("\n").find((line) => line.includes(needle)) ?? "";
     for (const name of ["set_atlas", "create_atlas"]) {
-      expect(lineWith(out, `function ${name}(`)).toContain("playback?: go.Playback;");
+      expect(lineWith(out, `function ${name}(`)).toContain(
+        "playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>;",
+      );
     }
-    expect(lineWith(out, "function get_atlas(")).toContain("playback: go.Playback;");
+    expect(lineWith(out, "function get_atlas(")).toContain(
+      "playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>;",
+    );
   });
 });
 
@@ -7354,7 +7555,7 @@ describe("upstream-pinned corrections", () => {
     };
     const declared = new Map([["window.DIMMING", "window.DIMMING"]]);
     expect(signature(emitted("window", setDimMode, declared), "set_dim_mode")).toContain(
-      "(mode: window.DimModeStateSettable)",
+      "(mode: Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>)",
     );
   });
 

@@ -73,6 +73,11 @@ describe("canonical identity types", () => {
     ],
     ["an untyped constant is a numeric enum", ["constant"], ["go.PLAYBACK"]],
     ["a numeric enum is the number an older release wrote", ["number"], ["go.PLAYBACK"]],
+    [
+      "a subset a correction excludes from an enum is that enum's value",
+      ["constant"],
+      ["Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>"],
+    ],
     ["a string enum is a string", ["string"], ["image.TYPE"]],
     ["a string constant is a string", ["string"], ["image.TYPE_RGBA"]],
     ["the script instance is the userdata self", ["userdata"], ["script_instance"]],

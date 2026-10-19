@@ -337,7 +337,9 @@ describe("per-slot rendered types travel with the signature", () => {
 
     const stateKey = functionKey(CURRENT_VERSION, "render", "render.enable_state");
     const state = artifact.slotTypes[CURRENT_VERSION]?.[stateKey]?.["param:0:state"]?.type;
-    expect(state).toBe("graphics.State");
+    expect(state).toBe(
+      "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+    );
     expect(state).not.toContain('Opaque<"constant">');
   });
 

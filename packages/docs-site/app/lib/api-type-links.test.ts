@@ -13,7 +13,7 @@ function typeCode(inner: string): string {
 
 const LINKS = new Map([
   ["gui.EASING", "/api/gui#type-easing"],
-  ["graphics.State", "/api/graphics#type-state"],
+  ["graphics.BUFFER_TYPE", "/api/graphics#type-buffer-type"],
 ]);
 
 describe("linkApiTypeTokens", () => {
@@ -27,12 +27,14 @@ describe("linkApiTypeTokens", () => {
   test("a run holding bold parameter names still links its tokens and keeps the names", () => {
     const name = (text: string) => `${API_NAME_OPEN}${text}${API_NAME_CLOSE}`;
     const html = linkApiTypeTokens(
-      typeCode(`(${name("easing")}: gui.EASING, ${name("...rest")}: graphics.State[]) =&gt; void`),
+      typeCode(
+        `(${name("easing")}: gui.EASING, ${name("...rest")}: graphics.BUFFER_TYPE[]) =&gt; void`,
+      ),
       LINKS,
     );
     expect(html).toBe(
       typeCode(
-        `(${name("easing")}: <a class="api-type-link" href="/api/gui#type-easing">gui.EASING</a>, ${name("...rest")}: <a class="api-type-link" href="/api/graphics#type-state">graphics.State</a>[]) =&gt; void`,
+        `(${name("easing")}: <a class="api-type-link" href="/api/gui#type-easing">gui.EASING</a>, ${name("...rest")}: <a class="api-type-link" href="/api/graphics#type-buffer-type">graphics.BUFFER_TYPE</a>[]) =&gt; void`,
       ),
     );
   });
@@ -48,9 +50,12 @@ describe("linkApiTypeTokens", () => {
   });
 
   test("every occurrence in one run is linked", () => {
-    const html = linkApiTypeTokens(typeCode("gui.EASING | graphics.State | gui.EASING"), LINKS);
+    const html = linkApiTypeTokens(
+      typeCode("gui.EASING | graphics.BUFFER_TYPE | gui.EASING"),
+      LINKS,
+    );
     expect(html.match(/<a class="api-type-link"/g)).toHaveLength(3);
-    expect(html).toContain('href="/api/graphics#type-state">graphics.State</a>');
+    expect(html).toContain('href="/api/graphics#type-buffer-type">graphics.BUFFER_TYPE</a>');
   });
 
   test("word boundaries follow the signature rule, so a longer identifier is left alone", () => {

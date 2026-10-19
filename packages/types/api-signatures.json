@@ -769,7 +769,6 @@
       "go\u0000PROPERTY\u0000scale\u0000": "scale: number | Vector3;",
       "go\u0000TYPEDEF\u0000EASING\u0000": "type EASING = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE;",
       "go\u0000TYPEDEF\u0000PLAYBACK\u0000": "type PLAYBACK = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG;",
-      "go\u0000TYPEDEF\u0000Playback\u0000": "type Playback = typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_PINGPONG | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_PINGPONG;",
       "go\u0000TYPEDEF\u0000on_input.action\u0000": "interface action { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; acc_x?: number; acc_y?: number; acc_z?: number; gamepad?: number; userid?: number; gamepad_guid?: string; gamepad_guid_info?: go.on_input.gamepad_guid_info; gamepad_unknown?: boolean; gamepad_name?: string; gamepad_axis?: number[]; gamepad_hats?: number[]; gamepad_buttons?: number[]; touch?: go.on_input.touch[]; text?: string; }",
       "go\u0000TYPEDEF\u0000on_input.gamepad_guid_info\u0000": "interface gamepad_guid_info { vendor: number; product: number; bus: number; crc: number; version: number; }",
       "go\u0000TYPEDEF\u0000on_input.touch\u0000": "interface touch { id: number; pressed: boolean; released: boolean; tap_count: number; x: number; y: number; screen_x: number; screen_y: number; dx: number; dy: number; screen_dx: number; screen_dy: number; }",
@@ -941,7 +940,6 @@
       "graphics\u0000TYPEDEF\u0000SEMANTIC_TYPE\u0000": "type SEMANTIC_TYPE = typeof graphics.SEMANTIC_TYPE_BONE_INDICES | typeof graphics.SEMANTIC_TYPE_BONE_WEIGHTS | typeof graphics.SEMANTIC_TYPE_COLOR | typeof graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS | typeof graphics.SEMANTIC_TYPE_NONE | typeof graphics.SEMANTIC_TYPE_NORMAL | typeof graphics.SEMANTIC_TYPE_NORMAL_MATRIX | typeof graphics.SEMANTIC_TYPE_PAGE_INDEX | typeof graphics.SEMANTIC_TYPE_POSITION | typeof graphics.SEMANTIC_TYPE_TANGENT | typeof graphics.SEMANTIC_TYPE_TEXCOORD | typeof graphics.SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D | typeof graphics.SEMANTIC_TYPE_WORLD_MATRIX;",
       "graphics\u0000TYPEDEF\u0000STATE\u0000": "type STATE = typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_BLEND | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_POLYGON_OFFSET_FILL | typeof graphics.STATE_SCISSOR_TEST | typeof graphics.STATE_STENCIL_TEST;",
       "graphics\u0000TYPEDEF\u0000STENCIL_OP\u0000": "type STENCIL_OP = typeof graphics.STENCIL_OP_DECR | typeof graphics.STENCIL_OP_DECR_WRAP | typeof graphics.STENCIL_OP_INCR | typeof graphics.STENCIL_OP_INCR_WRAP | typeof graphics.STENCIL_OP_INVERT | typeof graphics.STENCIL_OP_KEEP | typeof graphics.STENCIL_OP_REPLACE | typeof graphics.STENCIL_OP_ZERO;",
-      "graphics\u0000TYPEDEF\u0000State\u0000": "type State = typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_STENCIL_TEST | typeof graphics.STATE_BLEND | typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_POLYGON_OFFSET_FILL;",
       "graphics\u0000TYPEDEF\u0000TEXTURE_FILTER\u0000": "type TEXTURE_FILTER = typeof graphics.TEXTURE_FILTER_DEFAULT | typeof graphics.TEXTURE_FILTER_LINEAR | typeof graphics.TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR | typeof graphics.TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST | typeof graphics.TEXTURE_FILTER_NEAREST | typeof graphics.TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR | typeof graphics.TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST;",
       "graphics\u0000TYPEDEF\u0000TEXTURE_FORMAT\u0000": "type TEXTURE_FORMAT = NonNullable<typeof graphics.TEXTURE_FORMAT_BGRA8U> | typeof graphics.TEXTURE_FORMAT_DEPTH | NonNullable<typeof graphics.TEXTURE_FORMAT_LUMINANCE> | NonNullable<typeof graphics.TEXTURE_FORMAT_LUMINANCE_ALPHA> | NonNullable<typeof graphics.TEXTURE_FORMAT_R16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_R32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_R32UI> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA32UI> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_16BPP> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_BC3> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_BC7> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_ETC2> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_16BPP> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_BC1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_ETC1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG_BC5> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG_ETC2> | NonNullable<typeof graphics.TEXTURE_FORMAT_R_BC4> | NonNullable<typeof graphics.TEXTURE_FORMAT_R_ETC2> | typeof graphics.TEXTURE_FORMAT_STENCIL;",
       "graphics\u0000TYPEDEF\u0000TEXTURE_TYPE\u0000": "type TEXTURE_TYPE = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_2D_ARRAY | NonNullable<typeof graphics.TEXTURE_TYPE_3D> | typeof graphics.TEXTURE_TYPE_CUBE_MAP | typeof graphics.TEXTURE_TYPE_IMAGE_2D | NonNullable<typeof graphics.TEXTURE_TYPE_IMAGE_3D>;",
@@ -1192,8 +1190,6 @@
       "gui\u0000TYPEDEF\u0000SAFE_AREA\u0000": "type SAFE_AREA = typeof gui.SAFE_AREA_BOTH | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_SHORT;",
       "gui\u0000TYPEDEF\u0000SIZE_MODE\u0000": "type SIZE_MODE = typeof gui.SIZE_MODE_AUTO | typeof gui.SIZE_MODE_MANUAL;",
       "gui\u0000TYPEDEF\u0000TYPE\u0000": "type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT;",
-      "gui\u0000TYPEDEF\u0000XAnchor\u0000": "type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT;",
-      "gui\u0000TYPEDEF\u0000YAnchor\u0000": "type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;",
       "gui\u0000TYPEDEF\u0000layout_object\u0000": "interface layout_object { type: string; id: Hash; text_offset: number; text_length: number; x: number; y: number; width: number; height: number; attributes: LuaTable<string, string>; }",
       "gui\u0000TYPEDEF\u0000node\u0000": "type node = Opaque<\"node\">;",
       "gui\u0000TYPEDEF\u0000play_properties\u0000": "interface play_properties { offset?: number; playback_rate?: number; }",
@@ -1405,13 +1401,13 @@
       "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
-      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
+      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">): void;\nfunction draw(predicate: Opaque<\"render_predicate\">, options: render.draw_options): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: render.debug_draw_options): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
-      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
+      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;",
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number, buffer_type?: graphics.BUFFER_TYPE): void;",
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_height(): number;",
       "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;",
@@ -1756,14 +1752,13 @@
       "window\u0000FUNCTION\u0000window.get_mouse_lock\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mouse_lock(): boolean;",
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): window.safe_area;",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
-      "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: window.DimModeStateSettable): void;",
+      "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>): void;",
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void) | undefined): void;",
       "window\u0000FUNCTION\u0000window.set_mouse_lock\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mouse_lock(flag: boolean): void;",
       "window\u0000FUNCTION\u0000window.set_position\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_position(x: number, y: number): void;",
       "window\u0000FUNCTION\u0000window.set_size\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_size(width: number, height: number): void;",
       "window\u0000FUNCTION\u0000window.set_title\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_title(title: string): void;",
       "window\u0000TYPEDEF\u0000DIMMING\u0000": "type DIMMING = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN;",
-      "window\u0000TYPEDEF\u0000DimModeStateSettable\u0000": "type DimModeStateSettable = typeof window.DIMMING_ON | typeof window.DIMMING_OFF;",
       "window\u0000TYPEDEF\u0000WINDOW_EVENT\u0000": "type WINDOW_EVENT = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED;",
       "window\u0000TYPEDEF\u0000event_data\u0000": "interface event_data { width?: number; height?: number; }",
       "window\u0000TYPEDEF\u0000safe_area\u0000": "interface safe_area { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number; }",
@@ -2537,7 +2532,6 @@
       "go\u0000PROPERTY\u0000scale\u0000": "scale: number | Vector3;",
       "go\u0000TYPEDEF\u0000EASING\u0000": "type EASING = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE;",
       "go\u0000TYPEDEF\u0000PLAYBACK\u0000": "type PLAYBACK = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG;",
-      "go\u0000TYPEDEF\u0000Playback\u0000": "type Playback = typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_PINGPONG | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_PINGPONG;",
       "go\u0000TYPEDEF\u0000on_input.action\u0000": "interface action { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; acc_x?: number; acc_y?: number; acc_z?: number; gamepad?: number; userid?: number; gamepad_guid?: string; gamepad_guid_info?: go.on_input.gamepad_guid_info; gamepad_unknown?: boolean; gamepad_name?: string; gamepad_axis?: number[]; gamepad_hats?: number[]; gamepad_buttons?: number[]; touch?: go.on_input.touch[]; text?: string; }",
       "go\u0000TYPEDEF\u0000on_input.gamepad_guid_info\u0000": "interface gamepad_guid_info { vendor: number; product: number; bus: number; crc: number; version: number; }",
       "go\u0000TYPEDEF\u0000on_input.touch\u0000": "interface touch { id: number; pressed: boolean; released: boolean; tap_count: number; x: number; y: number; screen_x: number; screen_y: number; dx: number; dy: number; screen_dx: number; screen_dy: number; }",
@@ -2702,7 +2696,6 @@
       "graphics\u0000TYPEDEF\u0000SEMANTIC_TYPE\u0000": "type SEMANTIC_TYPE = typeof graphics.SEMANTIC_TYPE_BONE_INDICES | typeof graphics.SEMANTIC_TYPE_BONE_WEIGHTS | typeof graphics.SEMANTIC_TYPE_COLOR | typeof graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS | typeof graphics.SEMANTIC_TYPE_NONE | typeof graphics.SEMANTIC_TYPE_NORMAL | typeof graphics.SEMANTIC_TYPE_NORMAL_MATRIX | typeof graphics.SEMANTIC_TYPE_PAGE_INDEX | typeof graphics.SEMANTIC_TYPE_POSITION | typeof graphics.SEMANTIC_TYPE_TANGENT | typeof graphics.SEMANTIC_TYPE_TEXCOORD | typeof graphics.SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D | typeof graphics.SEMANTIC_TYPE_WORLD_MATRIX;",
       "graphics\u0000TYPEDEF\u0000STATE\u0000": "type STATE = typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_BLEND | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_POLYGON_OFFSET_FILL | typeof graphics.STATE_SCISSOR_TEST | typeof graphics.STATE_STENCIL_TEST;",
       "graphics\u0000TYPEDEF\u0000STENCIL_OP\u0000": "type STENCIL_OP = typeof graphics.STENCIL_OP_DECR | typeof graphics.STENCIL_OP_DECR_WRAP | typeof graphics.STENCIL_OP_INCR | typeof graphics.STENCIL_OP_INCR_WRAP | typeof graphics.STENCIL_OP_INVERT | typeof graphics.STENCIL_OP_KEEP | typeof graphics.STENCIL_OP_REPLACE | typeof graphics.STENCIL_OP_ZERO;",
-      "graphics\u0000TYPEDEF\u0000State\u0000": "type State = typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_STENCIL_TEST | typeof graphics.STATE_BLEND | typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_POLYGON_OFFSET_FILL;",
       "graphics\u0000TYPEDEF\u0000TEXTURE_FILTER\u0000": "type TEXTURE_FILTER = typeof graphics.TEXTURE_FILTER_DEFAULT | typeof graphics.TEXTURE_FILTER_LINEAR | typeof graphics.TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR | typeof graphics.TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST | typeof graphics.TEXTURE_FILTER_NEAREST | typeof graphics.TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR | typeof graphics.TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST;",
       "graphics\u0000TYPEDEF\u0000TEXTURE_FORMAT\u0000": "type TEXTURE_FORMAT = NonNullable<typeof graphics.TEXTURE_FORMAT_BGRA8U> | typeof graphics.TEXTURE_FORMAT_DEPTH | NonNullable<typeof graphics.TEXTURE_FORMAT_LUMINANCE> | NonNullable<typeof graphics.TEXTURE_FORMAT_LUMINANCE_ALPHA> | NonNullable<typeof graphics.TEXTURE_FORMAT_R16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_R32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_R32UI> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA32UI> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_16BPP> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_BC3> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_BC7> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_ETC2> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_16BPP> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_BC1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_ETC1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG_BC5> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG_ETC2> | NonNullable<typeof graphics.TEXTURE_FORMAT_R_BC4> | NonNullable<typeof graphics.TEXTURE_FORMAT_R_ETC2> | typeof graphics.TEXTURE_FORMAT_STENCIL;",
       "graphics\u0000TYPEDEF\u0000TEXTURE_TYPE\u0000": "type TEXTURE_TYPE = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_2D_ARRAY | NonNullable<typeof graphics.TEXTURE_TYPE_3D> | typeof graphics.TEXTURE_TYPE_CUBE_MAP | typeof graphics.TEXTURE_TYPE_IMAGE_2D | NonNullable<typeof graphics.TEXTURE_TYPE_IMAGE_3D>;",
@@ -2953,8 +2946,6 @@
       "gui\u0000TYPEDEF\u0000SAFE_AREA\u0000": "type SAFE_AREA = typeof gui.SAFE_AREA_BOTH | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_SHORT;",
       "gui\u0000TYPEDEF\u0000SIZE_MODE\u0000": "type SIZE_MODE = typeof gui.SIZE_MODE_AUTO | typeof gui.SIZE_MODE_MANUAL;",
       "gui\u0000TYPEDEF\u0000TYPE\u0000": "type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT;",
-      "gui\u0000TYPEDEF\u0000XAnchor\u0000": "type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT;",
-      "gui\u0000TYPEDEF\u0000YAnchor\u0000": "type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;",
       "gui\u0000TYPEDEF\u0000layout_object\u0000": "interface layout_object { type: string; id: Hash; text_offset: number; text_length: number; x: number; y: number; width: number; height: number; attributes: LuaTable<string, string>; }",
       "gui\u0000TYPEDEF\u0000node\u0000": "type node = Opaque<\"node\">;",
       "gui\u0000TYPEDEF\u0000play_properties\u0000": "interface play_properties { offset?: number; playback_rate?: number; }",
@@ -3166,13 +3157,13 @@
       "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
-      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
+      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">): void;\nfunction draw(predicate: Opaque<\"render_predicate\">, options: render.draw_options): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: render.debug_draw_options): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
-      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
+      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;",
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number, buffer_type?: graphics.BUFFER_TYPE): void;",
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_height(): number;",
       "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;",
@@ -3517,14 +3508,13 @@
       "window\u0000FUNCTION\u0000window.get_mouse_lock\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mouse_lock(): boolean;",
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): window.safe_area;",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
-      "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: window.DimModeStateSettable): void;",
+      "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>): void;",
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void) | undefined): void;",
       "window\u0000FUNCTION\u0000window.set_mouse_lock\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mouse_lock(flag: boolean): void;",
       "window\u0000FUNCTION\u0000window.set_position\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_position(x: number, y: number): void;",
       "window\u0000FUNCTION\u0000window.set_size\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_size(width: number, height: number): void;",
       "window\u0000FUNCTION\u0000window.set_title\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_title(title: string): void;",
       "window\u0000TYPEDEF\u0000DIMMING\u0000": "type DIMMING = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN;",
-      "window\u0000TYPEDEF\u0000DimModeStateSettable\u0000": "type DimModeStateSettable = typeof window.DIMMING_ON | typeof window.DIMMING_OFF;",
       "window\u0000TYPEDEF\u0000WINDOW_EVENT\u0000": "type WINDOW_EVENT = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED;",
       "window\u0000TYPEDEF\u0000event_data\u0000": "interface event_data { width?: number; height?: number; }",
       "window\u0000TYPEDEF\u0000safe_area\u0000": "interface safe_area { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number; }",
@@ -3987,7 +3977,7 @@
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_BACKWARD\u0000": "const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_BACKWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_FORWARD\u0000": "const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_FORWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_PINGPONG\u0000": "const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: \"go.PLAYBACK_ONCE_PINGPONG\" };",
-      "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number): void;\nfunction animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
+      "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number): void;\nfunction animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean): void;\nfunction _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url>, recursive: boolean): void;",
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function exists(url: SceneGameObjectAddress | Hash | Url): boolean;",
@@ -4018,7 +4008,7 @@
       "go\u0000PROPERTY\u0000rotation\u0000": "rotation: Quaternion;",
       "go\u0000PROPERTY\u0000scale\u0000": "scale: number | Vector3;",
       "go\u0000TYPEDEF\u0000EASING\u0000": "type EASING = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE;",
-      "go\u0000TYPEDEF\u0000Playback\u0000": "type Playback = typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_PINGPONG | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_PINGPONG;",
+      "go\u0000TYPEDEF\u0000PLAYBACK\u0000": "type PLAYBACK = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG;",
       "graphics\u0000CONSTANT\u0000graphics.BLEND_EQUATION_ADD\u0000": "const BLEND_EQUATION_ADD: number & { readonly __brand: \"graphics.BLEND_EQUATION_ADD\" };",
       "graphics\u0000CONSTANT\u0000graphics.BLEND_EQUATION_MAX\u0000": "const BLEND_EQUATION_MAX: number & { readonly __brand: \"graphics.BLEND_EQUATION_MAX\" };",
       "graphics\u0000CONSTANT\u0000graphics.BLEND_EQUATION_MIN\u0000": "const BLEND_EQUATION_MIN: number & { readonly __brand: \"graphics.BLEND_EQUATION_MIN\" };",
@@ -4168,7 +4158,7 @@
       "graphics\u0000FUNCTION\u0000graphics.get_engine_adapters\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_engine_adapters(): string[];",
       "graphics\u0000TYPEDEF\u0000BLEND_FACTOR\u0000": "type BLEND_FACTOR = typeof graphics.BLEND_FACTOR_ZERO | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;",
       "graphics\u0000TYPEDEF\u0000BUFFER_TYPE\u0000": "type BUFFER_TYPE = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_COLOR1_BIT | typeof graphics.BUFFER_TYPE_COLOR2_BIT | typeof graphics.BUFFER_TYPE_COLOR3_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
-      "graphics\u0000TYPEDEF\u0000State\u0000": "type State = typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_STENCIL_TEST | typeof graphics.STATE_BLEND | typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_POLYGON_OFFSET_FILL;",
+      "graphics\u0000TYPEDEF\u0000STATE\u0000": "type STATE = typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_BLEND | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_POLYGON_OFFSET_FILL | typeof graphics.STATE_SCISSOR_TEST | typeof graphics.STATE_STENCIL_TEST;",
       "gui\u0000CONSTANT\u0000gui.ADJUST_FIT\u0000": "const ADJUST_FIT: number & { readonly __brand: \"gui.ADJUST_FIT\" };",
       "gui\u0000CONSTANT\u0000gui.ADJUST_STRETCH\u0000": "const ADJUST_STRETCH: number & { readonly __brand: \"gui.ADJUST_STRETCH\" };",
       "gui\u0000CONSTANT\u0000gui.ADJUST_ZOOM\u0000": "const ADJUST_ZOOM: number & { readonly __brand: \"gui.ADJUST_ZOOM\" };",
@@ -4328,8 +4318,8 @@
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.TYPE, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
-      "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_xanchor(node: Opaque<\"node\">): gui.XAnchor;",
-      "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_yanchor(node: Opaque<\"node\">): gui.YAnchor;",
+      "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_xanchor(node: Opaque<\"node\">): Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>;",
+      "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_yanchor(node: Opaque<\"node\">): Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>;",
       "gui\u0000FUNCTION\u0000gui.hide_keyboard\u0000[]->[]": "function hide_keyboard(): void;",
       "gui\u0000FUNCTION\u0000gui.is_enabled\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_enabled(node: Opaque<\"node\">, recursive?: boolean): boolean;",
       "gui\u0000FUNCTION\u0000gui.move_above\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"node\\\">\",\"nil\"],\"isOptional\":false}]->[]": "function move_above(node: Opaque<\"node\">, reference: Opaque<\"node\"> | undefined): void;",
@@ -4389,8 +4379,8 @@
       "gui\u0000FUNCTION\u0000gui.set_texture_data\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string): boolean;\nfunction set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string, flip: boolean): boolean;",
       "gui\u0000FUNCTION\u0000gui.set_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_tracking(node: Opaque<\"node\">, tracking: number): void;",
       "gui\u0000FUNCTION\u0000gui.set_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_visible(node: Opaque<\"node\">, visible: boolean): void;",
-      "gui\u0000FUNCTION\u0000gui.set_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_xanchor(node: Opaque<\"node\">, anchor: gui.XAnchor): void;",
-      "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_yanchor(node: Opaque<\"node\">, anchor: gui.YAnchor): void;",
+      "gui\u0000FUNCTION\u0000gui.set_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_xanchor(node: Opaque<\"node\">, anchor: Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>): void;",
+      "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_yanchor(node: Opaque<\"node\">, anchor: Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>): void;",
       "gui\u0000FUNCTION\u0000gui.show_keyboard\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function show_keyboard(type: gui.KEYBOARD_TYPE, autoclose: boolean): void;",
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function stop_particlefx(node: Opaque<\"node\">): void;\nfunction stop_particlefx(node: Opaque<\"node\">, options: { clear?: boolean }): void;",
       "gui\u0000PROPERTY\u0000fonts\u0000": "fonts: Hash;",
@@ -4398,6 +4388,7 @@
       "gui\u0000PROPERTY\u0000materials\u0000": "materials: Hash;",
       "gui\u0000PROPERTY\u0000textures\u0000": "textures: Hash;",
       "gui\u0000TYPEDEF\u0000ADJUST\u0000": "type ADJUST = typeof gui.ADJUST_FIT | typeof gui.ADJUST_ZOOM | typeof gui.ADJUST_STRETCH;",
+      "gui\u0000TYPEDEF\u0000ANCHOR\u0000": "type ANCHOR = typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_RIGHT | typeof gui.ANCHOR_TOP;",
       "gui\u0000TYPEDEF\u0000BLEND\u0000": "type BLEND = typeof gui.BLEND_ALPHA | typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN;",
       "gui\u0000TYPEDEF\u0000CLIPPING_MODE\u0000": "type CLIPPING_MODE = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL;",
       "gui\u0000TYPEDEF\u0000EASING\u0000": "type EASING = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE;",
@@ -4409,8 +4400,6 @@
       "gui\u0000TYPEDEF\u0000SAFE_AREA\u0000": "type SAFE_AREA = typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_SHORT | typeof gui.SAFE_AREA_BOTH;",
       "gui\u0000TYPEDEF\u0000SIZE_MODE\u0000": "type SIZE_MODE = typeof gui.SIZE_MODE_MANUAL | typeof gui.SIZE_MODE_AUTO;",
       "gui\u0000TYPEDEF\u0000TYPE\u0000": "type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_TEXT | typeof gui.TYPE_PIE | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_CUSTOM;",
-      "gui\u0000TYPEDEF\u0000XAnchor\u0000": "type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT;",
-      "gui\u0000TYPEDEF\u0000YAnchor\u0000": "type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback: ((self: unknown) => void) | undefined): void;",
       "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;",
@@ -4485,7 +4474,7 @@
       "model\u0000FUNCTION\u0000model.get_go\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;",
       "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;",
       "model\u0000FUNCTION\u0000model.get_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;",
-      "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages[\"model_animation_done\"]) => void): void;",
+      "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages[\"model_animation_done\"]) => void): void;",
       "model\u0000FUNCTION\u0000model.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
       "model\u0000FUNCTION\u0000model.set_blend_weights\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_blend_weights(url: string | Hash | Url, weights?: number[]): void;",
       "model\u0000FUNCTION\u0000model.set_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash, enabled: boolean): void;",
@@ -4578,13 +4567,13 @@
       "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
-      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
+      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">): void;\nfunction draw(predicate: Opaque<\"render_predicate\">, options: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
-      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
+      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;",
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number, buffer_type?: graphics.BUFFER_TYPE): void;",
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_height(): number;",
       "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;",
@@ -4621,13 +4610,13 @@
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
       "resource\u0000FUNCTION\u0000resource.buffer\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function buffer(path?: string): Hash;",
-      "resource\u0000FUNCTION\u0000resource.create_atlas\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
+      "resource\u0000FUNCTION\u0000resource.create_atlas\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_buffer(path: string, table: { buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }; transfer_ownership?: boolean }): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_sound_data\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_sound_data(path: string, options: { data: string | Opaque<\"buffer\">; filesize?: number; partial?: boolean } & ({ partial?: false } | ({ partial: true } & Required<Pick<{ data: string | Opaque<\"buffer\">; filesize?: number; partial?: boolean }, \"filesize\">>))): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_texture\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_texture_async\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function create_texture_async(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> } | undefined, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;",
       "resource\u0000FUNCTION\u0000resource.font\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function font(path?: string): Hash;",
-      "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
+      "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
       "resource\u0000FUNCTION\u0000resource.get_buffer\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false}]": "function get_buffer(path: Hash | string): Opaque<\"buffer\"> & { length: LuaLengthMethod<number> };",
       "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_render_target_info(path: Hash | string | number): { handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] };",
       "resource\u0000FUNCTION\u0000resource.get_text_metrics\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_text_metrics(url: Hash | string, text: string): { width: number; height: number; max_ascent: number; max_descent: number };\nfunction get_text_metrics(url: Hash | string, text: string, options: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };",
@@ -4637,7 +4626,7 @@
       "resource\u0000FUNCTION\u0000resource.release\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function release(path: Hash | string): void;",
       "resource\u0000FUNCTION\u0000resource.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function render_target(path?: string): Hash;",
       "resource\u0000FUNCTION\u0000resource.set\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false}]->[]": "function set(path: string | Hash, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }): void;",
-      "resource\u0000FUNCTION\u0000resource.set_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_atlas(path: Hash | string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;",
+      "resource\u0000FUNCTION\u0000resource.set_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_atlas(path: Hash | string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;",
       "resource\u0000FUNCTION\u0000resource.set_buffer\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_buffer(path: Hash | string, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }, table?: { transfer_ownership?: boolean }): void;",
       "resource\u0000FUNCTION\u0000resource.set_sound\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_sound(path: Hash | string, buffer: string): void;",
       "resource\u0000FUNCTION\u0000resource.set_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false}]->[]": "function set_texture(path: Hash | string, table: { type: number; width: number; height: number; format: number; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: number }, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }): void;",
@@ -4880,14 +4869,13 @@
       "window\u0000FUNCTION\u0000window.get_mouse_lock\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mouse_lock(): boolean;",
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
-      "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: window.DimModeStateSettable): void;",
+      "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>): void;",
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined): void;",
       "window\u0000FUNCTION\u0000window.set_mouse_lock\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mouse_lock(flag: boolean): void;",
       "window\u0000FUNCTION\u0000window.set_position\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_position(x: number, y: number): void;",
       "window\u0000FUNCTION\u0000window.set_size\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_size(width: number, height: number): void;",
       "window\u0000FUNCTION\u0000window.set_title\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_title(title: string): void;",
       "window\u0000TYPEDEF\u0000DIMMING\u0000": "type DIMMING = typeof window.DIMMING_UNKNOWN | typeof window.DIMMING_ON | typeof window.DIMMING_OFF;",
-      "window\u0000TYPEDEF\u0000DimModeStateSettable\u0000": "type DimModeStateSettable = typeof window.DIMMING_ON | typeof window.DIMMING_OFF;",
       "zlib\u0000FUNCTION\u0000zlib.deflate\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function deflate(buf: string): string;",
       "zlib\u0000FUNCTION\u0000zlib.inflate\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function inflate(buf: string): string;"
     },
@@ -5346,7 +5334,7 @@
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_BACKWARD\u0000": "const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_BACKWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_FORWARD\u0000": "const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_FORWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_PINGPONG\u0000": "const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: \"go.PLAYBACK_ONCE_PINGPONG\" };",
-      "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number): void;\nfunction animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
+      "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number): void;\nfunction animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean): void;\nfunction _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url>, recursive: boolean): void;",
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function exists(url: SceneGameObjectAddress | Hash | Url): boolean;",
@@ -5377,7 +5365,7 @@
       "go\u0000PROPERTY\u0000rotation\u0000": "rotation: Quaternion;",
       "go\u0000PROPERTY\u0000scale\u0000": "scale: number | Vector3;",
       "go\u0000TYPEDEF\u0000EASING\u0000": "type EASING = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE;",
-      "go\u0000TYPEDEF\u0000Playback\u0000": "type Playback = typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_PINGPONG | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_PINGPONG;",
+      "go\u0000TYPEDEF\u0000PLAYBACK\u0000": "type PLAYBACK = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG;",
       "graphics\u0000CONSTANT\u0000graphics.BLEND_EQUATION_ADD\u0000": "const BLEND_EQUATION_ADD: number & { readonly __brand: \"graphics.BLEND_EQUATION_ADD\" };",
       "graphics\u0000CONSTANT\u0000graphics.BLEND_EQUATION_MAX\u0000": "const BLEND_EQUATION_MAX: number & { readonly __brand: \"graphics.BLEND_EQUATION_MAX\" };",
       "graphics\u0000CONSTANT\u0000graphics.BLEND_EQUATION_MIN\u0000": "const BLEND_EQUATION_MIN: number & { readonly __brand: \"graphics.BLEND_EQUATION_MIN\" };",
@@ -5526,7 +5514,7 @@
       "graphics\u0000FUNCTION\u0000graphics.get_engine_adapters\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_engine_adapters(): string[];",
       "graphics\u0000TYPEDEF\u0000BLEND_FACTOR\u0000": "type BLEND_FACTOR = typeof graphics.BLEND_FACTOR_ZERO | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;",
       "graphics\u0000TYPEDEF\u0000BUFFER_TYPE\u0000": "type BUFFER_TYPE = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_COLOR1_BIT | typeof graphics.BUFFER_TYPE_COLOR2_BIT | typeof graphics.BUFFER_TYPE_COLOR3_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
-      "graphics\u0000TYPEDEF\u0000State\u0000": "type State = typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_STENCIL_TEST | typeof graphics.STATE_BLEND | typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_POLYGON_OFFSET_FILL;",
+      "graphics\u0000TYPEDEF\u0000STATE\u0000": "type STATE = typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_BLEND | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_POLYGON_OFFSET_FILL | typeof graphics.STATE_SCISSOR_TEST | typeof graphics.STATE_STENCIL_TEST;",
       "gui\u0000CONSTANT\u0000gui.ADJUST_FIT\u0000": "const ADJUST_FIT: number & { readonly __brand: \"gui.ADJUST_FIT\" };",
       "gui\u0000CONSTANT\u0000gui.ADJUST_STRETCH\u0000": "const ADJUST_STRETCH: number & { readonly __brand: \"gui.ADJUST_STRETCH\" };",
       "gui\u0000CONSTANT\u0000gui.ADJUST_ZOOM\u0000": "const ADJUST_ZOOM: number & { readonly __brand: \"gui.ADJUST_ZOOM\" };",
@@ -5686,8 +5674,8 @@
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.TYPE, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
-      "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_xanchor(node: Opaque<\"node\">): gui.XAnchor;",
-      "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_yanchor(node: Opaque<\"node\">): gui.YAnchor;",
+      "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_xanchor(node: Opaque<\"node\">): Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>;",
+      "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_yanchor(node: Opaque<\"node\">): Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>;",
       "gui\u0000FUNCTION\u0000gui.hide_keyboard\u0000[]->[]": "function hide_keyboard(): void;",
       "gui\u0000FUNCTION\u0000gui.is_enabled\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_enabled(node: Opaque<\"node\">, recursive?: boolean): boolean;",
       "gui\u0000FUNCTION\u0000gui.move_above\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"node\\\">\",\"nil\"],\"isOptional\":false}]->[]": "function move_above(node: Opaque<\"node\">, reference: Opaque<\"node\"> | undefined): void;",
@@ -5747,8 +5735,8 @@
       "gui\u0000FUNCTION\u0000gui.set_texture_data\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string): boolean;\nfunction set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string, flip: boolean): boolean;",
       "gui\u0000FUNCTION\u0000gui.set_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_tracking(node: Opaque<\"node\">, tracking: number): void;",
       "gui\u0000FUNCTION\u0000gui.set_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_visible(node: Opaque<\"node\">, visible: boolean): void;",
-      "gui\u0000FUNCTION\u0000gui.set_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_xanchor(node: Opaque<\"node\">, anchor: gui.XAnchor): void;",
-      "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_yanchor(node: Opaque<\"node\">, anchor: gui.YAnchor): void;",
+      "gui\u0000FUNCTION\u0000gui.set_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_xanchor(node: Opaque<\"node\">, anchor: Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>): void;",
+      "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_yanchor(node: Opaque<\"node\">, anchor: Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>): void;",
       "gui\u0000FUNCTION\u0000gui.show_keyboard\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function show_keyboard(type: gui.KEYBOARD_TYPE, autoclose: boolean): void;",
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function stop_particlefx(node: Opaque<\"node\">): void;\nfunction stop_particlefx(node: Opaque<\"node\">, options: { clear?: boolean }): void;",
       "gui\u0000PROPERTY\u0000fonts\u0000": "fonts: Hash;",
@@ -5756,6 +5744,7 @@
       "gui\u0000PROPERTY\u0000materials\u0000": "materials: Hash;",
       "gui\u0000PROPERTY\u0000textures\u0000": "textures: Hash;",
       "gui\u0000TYPEDEF\u0000ADJUST\u0000": "type ADJUST = typeof gui.ADJUST_FIT | typeof gui.ADJUST_ZOOM | typeof gui.ADJUST_STRETCH;",
+      "gui\u0000TYPEDEF\u0000ANCHOR\u0000": "type ANCHOR = typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_RIGHT | typeof gui.ANCHOR_TOP;",
       "gui\u0000TYPEDEF\u0000BLEND\u0000": "type BLEND = typeof gui.BLEND_ALPHA | typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN;",
       "gui\u0000TYPEDEF\u0000CLIPPING_MODE\u0000": "type CLIPPING_MODE = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL;",
       "gui\u0000TYPEDEF\u0000EASING\u0000": "type EASING = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE;",
@@ -5767,8 +5756,6 @@
       "gui\u0000TYPEDEF\u0000SAFE_AREA\u0000": "type SAFE_AREA = typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_SHORT | typeof gui.SAFE_AREA_BOTH;",
       "gui\u0000TYPEDEF\u0000SIZE_MODE\u0000": "type SIZE_MODE = typeof gui.SIZE_MODE_MANUAL | typeof gui.SIZE_MODE_AUTO;",
       "gui\u0000TYPEDEF\u0000TYPE\u0000": "type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_TEXT | typeof gui.TYPE_PIE | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_CUSTOM;",
-      "gui\u0000TYPEDEF\u0000XAnchor\u0000": "type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT;",
-      "gui\u0000TYPEDEF\u0000YAnchor\u0000": "type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback: ((self: unknown) => void) | undefined): void;",
       "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;",
@@ -5843,7 +5830,7 @@
       "model\u0000FUNCTION\u0000model.get_go\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;",
       "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;",
       "model\u0000FUNCTION\u0000model.get_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;",
-      "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages[\"model_animation_done\"]) => void): void;",
+      "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages[\"model_animation_done\"]) => void): void;",
       "model\u0000FUNCTION\u0000model.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
       "model\u0000FUNCTION\u0000model.set_blend_weights\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_blend_weights(url: string | Hash | Url, weights?: number[]): void;",
       "model\u0000FUNCTION\u0000model.set_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash, enabled: boolean): void;",
@@ -5936,13 +5923,13 @@
       "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
-      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
+      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">): void;\nfunction draw(predicate: Opaque<\"render_predicate\">, options: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
-      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
+      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;",
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number, buffer_type?: graphics.BUFFER_TYPE): void;",
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_height(): number;",
       "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;",
@@ -5979,13 +5966,13 @@
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
       "resource\u0000FUNCTION\u0000resource.buffer\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function buffer(path?: string): Hash;",
-      "resource\u0000FUNCTION\u0000resource.create_atlas\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
+      "resource\u0000FUNCTION\u0000resource.create_atlas\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_buffer(path: string, table: { buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }; transfer_ownership?: boolean }): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_sound_data\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_sound_data(path: string, options: { data: string | Opaque<\"buffer\">; filesize?: number; partial?: boolean } & ({ partial?: false } | ({ partial: true } & Required<Pick<{ data: string | Opaque<\"buffer\">; filesize?: number; partial?: boolean }, \"filesize\">>))): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_texture\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_texture_async\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function create_texture_async(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> } | undefined, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;",
       "resource\u0000FUNCTION\u0000resource.font\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function font(path?: string): Hash;",
-      "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
+      "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
       "resource\u0000FUNCTION\u0000resource.get_buffer\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false}]": "function get_buffer(path: Hash | string): Opaque<\"buffer\"> & { length: LuaLengthMethod<number> };",
       "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_render_target_info(path: Hash | string | number): { handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] };",
       "resource\u0000FUNCTION\u0000resource.get_text_metrics\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_text_metrics(url: Hash | string, text: string): { width: number; height: number; max_ascent: number; max_descent: number };\nfunction get_text_metrics(url: Hash | string, text: string, options: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };",
@@ -5995,7 +5982,7 @@
       "resource\u0000FUNCTION\u0000resource.release\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function release(path: Hash | string): void;",
       "resource\u0000FUNCTION\u0000resource.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function render_target(path?: string): Hash;",
       "resource\u0000FUNCTION\u0000resource.set\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false}]->[]": "function set(path: string | Hash, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }): void;",
-      "resource\u0000FUNCTION\u0000resource.set_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_atlas(path: Hash | string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;",
+      "resource\u0000FUNCTION\u0000resource.set_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_atlas(path: Hash | string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;",
       "resource\u0000FUNCTION\u0000resource.set_buffer\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_buffer(path: Hash | string, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }, table?: { transfer_ownership?: boolean }): void;",
       "resource\u0000FUNCTION\u0000resource.set_sound\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_sound(path: Hash | string, buffer: string): void;",
       "resource\u0000FUNCTION\u0000resource.set_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false}]->[]": "function set_texture(path: Hash | string, table: { type: number; width: number; height: number; format: number; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: number }, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }): void;",
@@ -6238,14 +6225,13 @@
       "window\u0000FUNCTION\u0000window.get_mouse_lock\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mouse_lock(): boolean;",
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
-      "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: window.DimModeStateSettable): void;",
+      "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>): void;",
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined): void;",
       "window\u0000FUNCTION\u0000window.set_mouse_lock\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mouse_lock(flag: boolean): void;",
       "window\u0000FUNCTION\u0000window.set_position\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_position(x: number, y: number): void;",
       "window\u0000FUNCTION\u0000window.set_size\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_size(width: number, height: number): void;",
       "window\u0000FUNCTION\u0000window.set_title\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_title(title: string): void;",
       "window\u0000TYPEDEF\u0000DIMMING\u0000": "type DIMMING = typeof window.DIMMING_UNKNOWN | typeof window.DIMMING_ON | typeof window.DIMMING_OFF;",
-      "window\u0000TYPEDEF\u0000DimModeStateSettable\u0000": "type DimModeStateSettable = typeof window.DIMMING_ON | typeof window.DIMMING_OFF;",
       "zlib\u0000FUNCTION\u0000zlib.deflate\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function deflate(buf: string): string;",
       "zlib\u0000FUNCTION\u0000zlib.inflate\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function inflate(buf: string): string;"
     },
@@ -6440,7 +6426,7 @@
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_BACKWARD\u0000": "const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_BACKWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_FORWARD\u0000": "const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: \"go.PLAYBACK_ONCE_FORWARD\" };",
       "go\u0000CONSTANT\u0000go.PLAYBACK_ONCE_PINGPONG\u0000": "const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: \"go.PLAYBACK_ONCE_PINGPONG\" };",
-      "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number): void;\nfunction animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
+      "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number): void;\nfunction animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;",
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"Hash\",\"Url\",\"boolean\",\"string\",\"table\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean): void;\nfunction _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url>, recursive: boolean): void;",
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function exists(url: SceneGameObjectAddress | Hash | Url): boolean;",
@@ -6471,7 +6457,7 @@
       "go\u0000PROPERTY\u0000rotation\u0000": "rotation: Quaternion;",
       "go\u0000PROPERTY\u0000scale\u0000": "scale: number | Vector3;",
       "go\u0000TYPEDEF\u0000EASING\u0000": "type EASING = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE;",
-      "go\u0000TYPEDEF\u0000Playback\u0000": "type Playback = typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_PINGPONG | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_PINGPONG;",
+      "go\u0000TYPEDEF\u0000PLAYBACK\u0000": "type PLAYBACK = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG;",
       "graphics\u0000CONSTANT\u0000graphics.BLEND_FACTOR_CONSTANT_ALPHA\u0000": "const BLEND_FACTOR_CONSTANT_ALPHA: number & { readonly __brand: \"graphics.BLEND_FACTOR_CONSTANT_ALPHA\" };",
       "graphics\u0000CONSTANT\u0000graphics.BLEND_FACTOR_CONSTANT_COLOR\u0000": "const BLEND_FACTOR_CONSTANT_COLOR: number & { readonly __brand: \"graphics.BLEND_FACTOR_CONSTANT_COLOR\" };",
       "graphics\u0000CONSTANT\u0000graphics.BLEND_FACTOR_DST_ALPHA\u0000": "const BLEND_FACTOR_DST_ALPHA: number & { readonly __brand: \"graphics.BLEND_FACTOR_DST_ALPHA\" };",
@@ -6582,7 +6568,7 @@
       "graphics\u0000CONSTANT\u0000graphics.TEXTURE_WRAP_REPEAT\u0000": "const TEXTURE_WRAP_REPEAT: number & { readonly __brand: \"graphics.TEXTURE_WRAP_REPEAT\" };",
       "graphics\u0000TYPEDEF\u0000BLEND_FACTOR\u0000": "type BLEND_FACTOR = typeof graphics.BLEND_FACTOR_ZERO | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;",
       "graphics\u0000TYPEDEF\u0000BUFFER_TYPE\u0000": "type BUFFER_TYPE = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_COLOR1_BIT | typeof graphics.BUFFER_TYPE_COLOR2_BIT | typeof graphics.BUFFER_TYPE_COLOR3_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
-      "graphics\u0000TYPEDEF\u0000State\u0000": "type State = typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_STENCIL_TEST | typeof graphics.STATE_BLEND | typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_POLYGON_OFFSET_FILL;",
+      "graphics\u0000TYPEDEF\u0000STATE\u0000": "type STATE = typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_BLEND | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_POLYGON_OFFSET_FILL | typeof graphics.STATE_SCISSOR_TEST | typeof graphics.STATE_STENCIL_TEST;",
       "gui\u0000CONSTANT\u0000gui.ADJUST_FIT\u0000": "const ADJUST_FIT: number & { readonly __brand: \"gui.ADJUST_FIT\" };",
       "gui\u0000CONSTANT\u0000gui.ADJUST_STRETCH\u0000": "const ADJUST_STRETCH: number & { readonly __brand: \"gui.ADJUST_STRETCH\" };",
       "gui\u0000CONSTANT\u0000gui.ADJUST_ZOOM\u0000": "const ADJUST_ZOOM: number & { readonly __brand: \"gui.ADJUST_ZOOM\" };",
@@ -6742,8 +6728,8 @@
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.TYPE, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
-      "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_xanchor(node: Opaque<\"node\">): gui.XAnchor;",
-      "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_yanchor(node: Opaque<\"node\">): gui.YAnchor;",
+      "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_xanchor(node: Opaque<\"node\">): Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>;",
+      "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_yanchor(node: Opaque<\"node\">): Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>;",
       "gui\u0000FUNCTION\u0000gui.hide_keyboard\u0000[]->[]": "function hide_keyboard(): void;",
       "gui\u0000FUNCTION\u0000gui.is_enabled\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_enabled(node: Opaque<\"node\">, recursive?: boolean): boolean;",
       "gui\u0000FUNCTION\u0000gui.move_above\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"node\\\">\",\"nil\"],\"isOptional\":false}]->[]": "function move_above(node: Opaque<\"node\">, reference: Opaque<\"node\"> | undefined): void;",
@@ -6803,8 +6789,8 @@
       "gui\u0000FUNCTION\u0000gui.set_texture_data\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string): boolean;\nfunction set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string, flip: boolean): boolean;",
       "gui\u0000FUNCTION\u0000gui.set_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_tracking(node: Opaque<\"node\">, tracking: number): void;",
       "gui\u0000FUNCTION\u0000gui.set_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_visible(node: Opaque<\"node\">, visible: boolean): void;",
-      "gui\u0000FUNCTION\u0000gui.set_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_xanchor(node: Opaque<\"node\">, anchor: gui.XAnchor): void;",
-      "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_yanchor(node: Opaque<\"node\">, anchor: gui.YAnchor): void;",
+      "gui\u0000FUNCTION\u0000gui.set_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_xanchor(node: Opaque<\"node\">, anchor: Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>): void;",
+      "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_yanchor(node: Opaque<\"node\">, anchor: Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>): void;",
       "gui\u0000FUNCTION\u0000gui.show_keyboard\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function show_keyboard(type: gui.KEYBOARD_TYPE, autoclose: boolean): void;",
       "gui\u0000FUNCTION\u0000gui.stop_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function stop_particlefx(node: Opaque<\"node\">): void;\nfunction stop_particlefx(node: Opaque<\"node\">, options: { clear?: boolean }): void;",
       "gui\u0000PROPERTY\u0000fonts\u0000": "fonts: Hash;",
@@ -6812,6 +6798,7 @@
       "gui\u0000PROPERTY\u0000materials\u0000": "materials: Hash;",
       "gui\u0000PROPERTY\u0000textures\u0000": "textures: Hash;",
       "gui\u0000TYPEDEF\u0000ADJUST\u0000": "type ADJUST = typeof gui.ADJUST_FIT | typeof gui.ADJUST_ZOOM | typeof gui.ADJUST_STRETCH;",
+      "gui\u0000TYPEDEF\u0000ANCHOR\u0000": "type ANCHOR = typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_RIGHT | typeof gui.ANCHOR_TOP;",
       "gui\u0000TYPEDEF\u0000BLEND\u0000": "type BLEND = typeof gui.BLEND_ALPHA | typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN;",
       "gui\u0000TYPEDEF\u0000CLIPPING_MODE\u0000": "type CLIPPING_MODE = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL;",
       "gui\u0000TYPEDEF\u0000EASING\u0000": "type EASING = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE;",
@@ -6823,8 +6810,6 @@
       "gui\u0000TYPEDEF\u0000SAFE_AREA\u0000": "type SAFE_AREA = typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_SHORT | typeof gui.SAFE_AREA_BOTH;",
       "gui\u0000TYPEDEF\u0000SIZE_MODE\u0000": "type SIZE_MODE = typeof gui.SIZE_MODE_MANUAL | typeof gui.SIZE_MODE_AUTO;",
       "gui\u0000TYPEDEF\u0000TYPE\u0000": "type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_TEXT | typeof gui.TYPE_PIE | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_CUSTOM;",
-      "gui\u0000TYPEDEF\u0000XAnchor\u0000": "type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT;",
-      "gui\u0000TYPEDEF\u0000YAnchor\u0000": "type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback: ((self: unknown) => void) | undefined): void;",
       "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;",
@@ -6872,7 +6857,7 @@
       "model\u0000FUNCTION\u0000model.get_go\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;",
       "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;",
       "model\u0000FUNCTION\u0000model.get_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;",
-      "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages[\"model_animation_done\"]) => void): void;",
+      "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages[\"model_animation_done\"]) => void): void;",
       "model\u0000FUNCTION\u0000model.set_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash, enabled: boolean): void;",
       "model\u0000PROPERTY\u0000animation\u0000": "readonly animation: Hash;",
       "model\u0000PROPERTY\u0000cursor\u0000": "cursor: number;",
@@ -6964,13 +6949,13 @@
       "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"Opaque<\\\"constant_buffer\\\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
-      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
+      "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function disable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": "function disable_texture(binding: string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> } }): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: Opaque<\"render_predicate\">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
-      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
+      "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function enable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;",
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number, buffer_type?: graphics.BUFFER_TYPE): void;",
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_height(): number;",
       "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;",
@@ -7005,13 +6990,13 @@
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
       "resource\u0000FUNCTION\u0000resource.buffer\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function buffer(path?: string): Hash;",
-      "resource\u0000FUNCTION\u0000resource.create_atlas\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
+      "resource\u0000FUNCTION\u0000resource.create_atlas\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_buffer(path: string, table: { buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }; transfer_ownership?: boolean }): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_sound_data\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_sound_data(path: string, options: { data: string | Opaque<\"buffer\">; filesize?: number; partial?: boolean } & ({ partial?: false } | ({ partial: true } & Required<Pick<{ data: string | Opaque<\"buffer\">; filesize?: number; partial?: boolean }, \"filesize\">>))): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_texture\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }): Hash;",
       "resource\u0000FUNCTION\u0000resource.create_texture_async\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function create_texture_async(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> } | undefined, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;",
       "resource\u0000FUNCTION\u0000resource.font\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function font(path?: string): Hash;",
-      "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
+      "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
       "resource\u0000FUNCTION\u0000resource.get_buffer\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false}]": "function get_buffer(path: Hash | string): Opaque<\"buffer\"> & { length: LuaLengthMethod<number> };",
       "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_render_target_info(path: Hash | string | number): { handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] };",
       "resource\u0000FUNCTION\u0000resource.get_text_metrics\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_text_metrics(url: Hash | string, text: string): { width: number; height: number; max_ascent: number; max_descent: number };\nfunction get_text_metrics(url: Hash | string, text: string, options: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };",
@@ -7021,7 +7006,7 @@
       "resource\u0000FUNCTION\u0000resource.release\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function release(path: Hash | string): void;",
       "resource\u0000FUNCTION\u0000resource.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function render_target(path?: string): Hash;",
       "resource\u0000FUNCTION\u0000resource.set\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false}]->[]": "function set(path: string | Hash, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }): void;",
-      "resource\u0000FUNCTION\u0000resource.set_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_atlas(path: Hash | string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;",
+      "resource\u0000FUNCTION\u0000resource.set_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_atlas(path: Hash | string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;",
       "resource\u0000FUNCTION\u0000resource.set_buffer\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_buffer(path: Hash | string, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }, table?: { transfer_ownership?: boolean }): void;",
       "resource\u0000FUNCTION\u0000resource.set_sound\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_sound(path: Hash | string, buffer: string): void;",
       "resource\u0000FUNCTION\u0000resource.set_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"buffer\\\"> & { length: LuaLengthMethod<number> }\"],\"isOptional\":false}]->[]": "function set_texture(path: Hash | string, table: { type: number; width: number; height: number; format: number; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: number }, buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> }): void;",
@@ -7262,14 +7247,13 @@
       "window\u0000FUNCTION\u0000window.get_mouse_lock\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mouse_lock(): boolean;",
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
-      "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: window.DimModeStateSettable): void;",
+      "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>): void;",
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: Record<string | number, unknown>) => void) | undefined): void;",
       "window\u0000FUNCTION\u0000window.set_mouse_lock\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_mouse_lock(flag: boolean): void;",
       "window\u0000FUNCTION\u0000window.set_position\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_position(x: number, y: number): void;",
       "window\u0000FUNCTION\u0000window.set_size\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_size(width: number, height: number): void;",
       "window\u0000FUNCTION\u0000window.set_title\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_title(title: string): void;",
       "window\u0000TYPEDEF\u0000DIMMING\u0000": "type DIMMING = typeof window.DIMMING_UNKNOWN | typeof window.DIMMING_ON | typeof window.DIMMING_OFF;",
-      "window\u0000TYPEDEF\u0000DimModeStateSettable\u0000": "type DimModeStateSettable = typeof window.DIMMING_ON | typeof window.DIMMING_OFF;",
       "zlib\u0000FUNCTION\u0000zlib.deflate\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function deflate(buf: string): string;",
       "zlib\u0000FUNCTION\u0000zlib.inflate\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function inflate(buf: string): string;"
     }
@@ -10879,7 +10863,10 @@
         "param:0:render_target": { "type": "Opaque<\"render_target\">", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.State", "optional": false }
+        "param:0:state": {
+          "type": "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+          "optional": false
+        }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:binding": { "type": "string | Hash | number", "optional": false }
@@ -10900,7 +10887,10 @@
         "param:0:material_id": { "type": "string | Hash", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.State", "optional": false }
+        "param:0:state": {
+          "type": "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+          "optional": false
+        }
       },
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
         "param:0:binding": { "type": "number | string | Hash", "optional": false },
@@ -12027,7 +12017,10 @@
         "return:1:height": { "type": "number", "optional": false }
       },
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:mode": { "type": "window.DimModeStateSettable", "optional": false }
+        "param:0:mode": {
+          "type": "Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>",
+          "optional": false
+        }
       },
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": {
@@ -15651,7 +15644,10 @@
         "param:0:render_target": { "type": "Opaque<\"render_target\">", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.State", "optional": false }
+        "param:0:state": {
+          "type": "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+          "optional": false
+        }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:binding": { "type": "string | Hash | number", "optional": false }
@@ -15672,7 +15668,10 @@
         "param:0:material_id": { "type": "string | Hash", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.State", "optional": false }
+        "param:0:state": {
+          "type": "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+          "optional": false
+        }
       },
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
         "param:0:binding": { "type": "number | string | Hash", "optional": false },
@@ -16799,7 +16798,10 @@
         "return:1:height": { "type": "number", "optional": false }
       },
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:mode": { "type": "window.DimModeStateSettable", "optional": false }
+        "param:0:mode": {
+          "type": "Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>",
+          "optional": false
+        }
       },
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": {
@@ -18545,7 +18547,10 @@
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "SceneAddress | Hash | Url", "optional": false },
         "param:1:property": { "type": "string | Hash", "optional": false },
-        "param:2:playback": { "type": "go.Playback", "optional": false },
+        "param:2:playback": {
+          "type": "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>",
+          "optional": false
+        },
         "param:3:to": { "type": "number | Vector3 | Vector4 | Quaternion", "optional": false },
         "param:4:easing": { "type": "Vector | go.EASING", "optional": false },
         "param:5:duration": { "type": "number", "optional": false }
@@ -18864,11 +18869,17 @@
       },
       "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:anchor": { "type": "gui.XAnchor", "optional": false }
+        "return:0:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:anchor": { "type": "gui.YAnchor", "optional": false }
+        "return:0:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.is_enabled\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -19114,11 +19125,17 @@
       },
       "gui\u0000FUNCTION\u0000gui.set_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:anchor": { "type": "gui.XAnchor", "optional": false }
+        "param:1:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:anchor": { "type": "gui.YAnchor", "optional": false }
+        "param:1:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.show_keyboard\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": {
         "param:0:type": { "type": "gui.KEYBOARD_TYPE", "optional": false },
@@ -19303,7 +19320,10 @@
       "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:anim_id": { "type": "string | Hash", "optional": false },
-        "param:2:playback": { "type": "go.Playback", "optional": false },
+        "param:2:playback": {
+          "type": "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>",
+          "optional": false
+        },
         "param:3:play_properties": {
           "type": "{ blend_duration?: number; offset?: number; playback_rate?: number }",
           "optional": true
@@ -19505,7 +19525,10 @@
         "param:0:render_target": { "type": "Opaque<\"render_target\">", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.State", "optional": false }
+        "param:0:state": {
+          "type": "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+          "optional": false
+        }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:binding": { "type": "string | Hash | number", "optional": false }
@@ -19532,7 +19555,10 @@
         "param:0:material_id": { "type": "string | Hash", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.State", "optional": false }
+        "param:0:state": {
+          "type": "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+          "optional": false
+        }
       },
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
         "param:0:binding": { "type": "number | string | Hash", "optional": false },
@@ -19670,7 +19696,7 @@
       "resource\u0000FUNCTION\u0000resource.create_atlas\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "string", "optional": false },
         "param:1:table": {
-          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
+          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
           "optional": false
         },
         "return:0:path": { "type": "Hash", "optional": false }
@@ -19724,7 +19750,7 @@
       "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
         "return:0:data": {
-          "type": "{ texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] }",
+          "type": "{ texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] }",
           "optional": false
         }
       },
@@ -19785,7 +19811,7 @@
       "resource\u0000FUNCTION\u0000resource.set_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
         "param:1:table": {
-          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
+          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
           "optional": false
         }
       },
@@ -20680,7 +20706,10 @@
         "return:1:height": { "type": "number", "optional": false }
       },
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:mode": { "type": "window.DimModeStateSettable", "optional": false }
+        "param:0:mode": {
+          "type": "Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>",
+          "optional": false
+        }
       },
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": {
@@ -22415,7 +22444,10 @@
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "SceneAddress | Hash | Url", "optional": false },
         "param:1:property": { "type": "string | Hash", "optional": false },
-        "param:2:playback": { "type": "go.Playback", "optional": false },
+        "param:2:playback": {
+          "type": "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>",
+          "optional": false
+        },
         "param:3:to": { "type": "number | Vector3 | Vector4 | Quaternion", "optional": false },
         "param:4:easing": { "type": "Vector | go.EASING", "optional": false },
         "param:5:duration": { "type": "number", "optional": false }
@@ -22734,11 +22766,17 @@
       },
       "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:anchor": { "type": "gui.XAnchor", "optional": false }
+        "return:0:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:anchor": { "type": "gui.YAnchor", "optional": false }
+        "return:0:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.is_enabled\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -22984,11 +23022,17 @@
       },
       "gui\u0000FUNCTION\u0000gui.set_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:anchor": { "type": "gui.XAnchor", "optional": false }
+        "param:1:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:anchor": { "type": "gui.YAnchor", "optional": false }
+        "param:1:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.show_keyboard\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": {
         "param:0:type": { "type": "gui.KEYBOARD_TYPE", "optional": false },
@@ -23173,7 +23217,10 @@
       "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:anim_id": { "type": "string | Hash", "optional": false },
-        "param:2:playback": { "type": "go.Playback", "optional": false },
+        "param:2:playback": {
+          "type": "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>",
+          "optional": false
+        },
         "param:3:play_properties": {
           "type": "{ blend_duration?: number; offset?: number; playback_rate?: number }",
           "optional": true
@@ -23375,7 +23422,10 @@
         "param:0:render_target": { "type": "Opaque<\"render_target\">", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.State", "optional": false }
+        "param:0:state": {
+          "type": "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+          "optional": false
+        }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:binding": { "type": "string | Hash | number", "optional": false }
@@ -23402,7 +23452,10 @@
         "param:0:material_id": { "type": "string | Hash", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.State", "optional": false }
+        "param:0:state": {
+          "type": "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+          "optional": false
+        }
       },
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
         "param:0:binding": { "type": "number | string | Hash", "optional": false },
@@ -23540,7 +23593,7 @@
       "resource\u0000FUNCTION\u0000resource.create_atlas\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "string", "optional": false },
         "param:1:table": {
-          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
+          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
           "optional": false
         },
         "return:0:path": { "type": "Hash", "optional": false }
@@ -23594,7 +23647,7 @@
       "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
         "return:0:data": {
-          "type": "{ texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] }",
+          "type": "{ texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] }",
           "optional": false
         }
       },
@@ -23655,7 +23708,7 @@
       "resource\u0000FUNCTION\u0000resource.set_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
         "param:1:table": {
-          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
+          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
           "optional": false
         }
       },
@@ -24550,7 +24603,10 @@
         "return:1:height": { "type": "number", "optional": false }
       },
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:mode": { "type": "window.DimModeStateSettable", "optional": false }
+        "param:0:mode": {
+          "type": "Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>",
+          "optional": false
+        }
       },
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": {
@@ -25066,7 +25122,10 @@
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Quaternion\",\"Vector3\",\"Vector4\",\"number\"],\"isOptional\":false},{\"types\":[\"Vector\",\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "SceneAddress | Hash | Url", "optional": false },
         "param:1:property": { "type": "string | Hash", "optional": false },
-        "param:2:playback": { "type": "go.Playback", "optional": false },
+        "param:2:playback": {
+          "type": "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>",
+          "optional": false
+        },
         "param:3:to": { "type": "number | Vector3 | Vector4 | Quaternion", "optional": false },
         "param:4:easing": { "type": "Vector | go.EASING", "optional": false },
         "param:5:duration": { "type": "number", "optional": false }
@@ -25376,11 +25435,17 @@
       },
       "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:anchor": { "type": "gui.XAnchor", "optional": false }
+        "return:0:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:anchor": { "type": "gui.YAnchor", "optional": false }
+        "return:0:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.is_enabled\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -25626,11 +25691,17 @@
       },
       "gui\u0000FUNCTION\u0000gui.set_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:anchor": { "type": "gui.XAnchor", "optional": false }
+        "param:1:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.set_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "param:1:anchor": { "type": "gui.YAnchor", "optional": false }
+        "param:1:anchor": {
+          "type": "Exclude<gui.ANCHOR, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.show_keyboard\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": {
         "param:0:type": { "type": "gui.KEYBOARD_TYPE", "optional": false },
@@ -25749,7 +25820,10 @@
       "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:anim_id": { "type": "string | Hash", "optional": false },
-        "param:2:playback": { "type": "go.Playback", "optional": false },
+        "param:2:playback": {
+          "type": "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>",
+          "optional": false
+        },
         "param:3:play_properties": {
           "type": "{ blend_duration?: number; offset?: number; playback_rate?: number }",
           "optional": true
@@ -25943,7 +26017,10 @@
         "param:0:render_target": { "type": "Opaque<\"render_target\">", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.State", "optional": false }
+        "param:0:state": {
+          "type": "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+          "optional": false
+        }
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:binding": { "type": "string | Hash | number", "optional": false }
@@ -25974,7 +26051,10 @@
         "param:0:material_id": { "type": "string | Hash", "optional": false }
       },
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:state": { "type": "graphics.State", "optional": false }
+        "param:0:state": {
+          "type": "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+          "optional": false
+        }
       },
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Opaque<\\\"render_target\\\">\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
         "param:0:binding": { "type": "number | string | Hash", "optional": false },
@@ -26102,7 +26182,7 @@
       "resource\u0000FUNCTION\u0000resource.create_atlas\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "string", "optional": false },
         "param:1:table": {
-          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
+          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
           "optional": false
         },
         "return:0:path": { "type": "Hash", "optional": false }
@@ -26156,7 +26236,7 @@
       "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
         "return:0:data": {
-          "type": "{ texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] }",
+          "type": "{ texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] }",
           "optional": false
         }
       },
@@ -26217,7 +26297,7 @@
       "resource\u0000FUNCTION\u0000resource.set_atlas\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:path": { "type": "Hash | string", "optional": false },
         "param:1:table": {
-          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
+          "type": "{ texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ vertices: number[]; uvs: number[]; indices: number[] }, ...{ vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
           "optional": false
         }
       },
@@ -27104,7 +27184,10 @@
         "return:1:height": { "type": "number", "optional": false }
       },
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:mode": { "type": "window.DimModeStateSettable", "optional": false }
+        "param:0:mode": {
+          "type": "Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>",
+          "optional": false
+        }
       },
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": {

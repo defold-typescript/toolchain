@@ -764,6 +764,42 @@ describe("api-targets — every overload-covered skip is wired into every target
   }
 });
 
+const CONSTANT_UNION_SUBSET_PROOF = resolve(VERSIONS_DIR, "constant-union-subset-proof.ts");
+
+describe("committed API surfaces — subset constant unions spell Exclude of a parent every target declares", () => {
+  for (const index of committedSurfaceIndexes()) {
+    test(`${index} declares each parent union and keeps every subset slot's accepted set`, () => {
+      const root = mkdtempSync(resolve(PACKAGE_ROOT, "subset-union-wall-"));
+      try {
+        const tsconfigPath = resolve(root, "tsconfig.json");
+        writeFileSync(
+          tsconfigPath,
+          `${JSON.stringify(
+            {
+              extends: "../../../tsconfig.json",
+              compilerOptions: { noEmit: true, types: [] },
+              include: [CONSTANT_UNION_SUBSET_PROOF, resolve(PACKAGE_ROOT, index)],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        const { exitCode, output } = typecheck(tsconfigPath);
+        if (exitCode !== 0) {
+          throw new Error(
+            `${index} proof failed — go.PLAYBACK, gui.ANCHOR, graphics.STATE or window.DIMMING ` +
+              `is absent, a subset slot widened or narrowed, or a removed subset name is ` +
+              `still declared on this surface:\n${output}`,
+          );
+        }
+        expect(exitCode).toBe(0);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
 describe("versioned API surface — src augmentations reach the consumer", () => {
   test("augmentation-dependent call sites compile against a materialized surface", async () => {
     const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.12.4");
