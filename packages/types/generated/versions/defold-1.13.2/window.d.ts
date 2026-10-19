@@ -56,7 +56,6 @@ declare global {
        */
       inset_bottom: number;
     }
-    type DimModeStateSettable = typeof window.DIMMING_ON | typeof window.DIMMING_OFF;
     type DIMMING = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN;
     type WINDOW_EVENT = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED;
     /**
@@ -134,7 +133,7 @@ declare global {
      *
      * @param mode - The mode for screen dimming
      */
-    function set_dim_mode(mode: window.DimModeStateSettable): void;
+    function set_dim_mode(mode: Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>): void;
     /**
      * Sets a window event listener. Only one window event listener can be set at a time.
      *

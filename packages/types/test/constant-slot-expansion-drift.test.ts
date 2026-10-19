@@ -15,6 +15,7 @@ import {
   CONSTANT_SLOT_RESOLUTIONS,
   documentedConstantKeyTokens,
   documentedConstantTokens,
+  ENGINE_SLOT_RULES,
   resolveConstantSlotTokens,
 } from "../src/emit-dts";
 import { EXTENSION_GOLDENS_TARGET } from "../src/optional-correction-provenance";
@@ -92,18 +93,32 @@ for (const surface of surfaces) {
   aliasMembersByTarget.set(surface.target, declared);
 }
 
+const EXCLUDE_SPELLING =
+  /Exclude<([A-Za-z0-9_.]+), (typeof [A-Za-z0-9_.]+(?: \| typeof [A-Za-z0-9_.]+)*)>/g;
+
 // Every constant FQN a signature carries: the arms it brands inline, plus the
-// members of every alias it names. The indirection is the only thing this
+// members of every alias it names, and of every `Exclude<P, ...>` the members
+// of `P`'s declaration it does not list. The indirection is the only thing this
 // resolves — an alias whose declaration drops a constant is still missing it.
 function effectiveBrands(surface: Surface, signature: string): ReadonlySet<string> {
   const out = new Set<string>();
   for (const match of signature.matchAll(/__brand: "([^"]+)"/g)) out.add(match[1] as string);
   const declared = aliasMembersByTarget.get(surface.target);
+  for (const match of signature.matchAll(EXCLUDE_SPELLING)) {
+    const excluded = new Set(
+      (match[2] as string).split(" | ").map((arm) => arm.slice("typeof ".length)),
+    );
+    for (const member of declared?.get(match[1] as string) ?? []) {
+      if (!excluded.has(member)) out.add(member);
+    }
+  }
+  // The parent an Exclude names is not taken whole, so it never reaches the alias pass.
+  const named = signature.replace(EXCLUDE_SPELLING, "");
   if (declared !== undefined) {
     for (const [qualified, members] of declared) {
       if (
         !new RegExp(`(?<![A-Za-z0-9_.])${qualified.replace(".", "\\.")}(?![A-Za-z0-9_])`).test(
-          signature,
+          named,
         )
       ) {
         continue;
@@ -148,6 +163,13 @@ const isResidual = (key: string): boolean => {
   return entry !== undefined && "residual" in entry;
 };
 
+// Constants an engine rule removes from a slot: documented, but rejected by the
+// binding, so the declaration must not brand them.
+const engineExcluded = (key: string): ReadonlySet<string> => {
+  const rule = ENGINE_SLOT_RULES.get(key);
+  return new Set(rule?.kind === "excludes" ? rule.constants : []);
+};
+
 const signatureOf = (surface: Surface, fn: ApiFunction): string | undefined =>
   surface.signatures.get(`${fn.name}(${normalizedFunctionSignature(fn)})`);
 
@@ -180,13 +202,18 @@ describe("documented constant slots reach both shipped surfaces", () => {
         missing.push(`${surface.target}: ${key} ledger signature is not in the declaration`);
       }
       const branded = effectiveBrands(surface, signature);
+      const excluded = engineExcluded(key);
       for (const fqn of resolveConstantSlotTokens(
         surface.module,
         key,
         surface.universe,
         surface.withheld,
       )) {
-        if (!branded.has(fqn)) {
+        if (excluded.has(fqn)) {
+          if (branded.has(fqn)) {
+            missing.push(`${surface.target}: ${key} brands ${fqn}, which the engine rejects`);
+          }
+        } else if (!branded.has(fqn)) {
           missing.push(`${surface.target}: ${key} does not brand ${fqn}`);
         }
       }

@@ -186,7 +186,7 @@ declare global {
      * });
      * ```
      */
-    function disable_state(state: graphics.State): void;
+    function disable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
     /**
      * Disables a texture that has previourly been enabled.
      *
@@ -409,7 +409,7 @@ declare global {
      * });
      * ```
      */
-    function enable_state(state: graphics.State): void;
+    function enable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
     /**
      * Sets the specified texture handle for a render target attachment or a regular texture
      * that should be used for rendering. The texture can be bound to either a texture unit

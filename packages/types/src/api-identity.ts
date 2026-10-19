@@ -32,7 +32,7 @@ export interface IdentityCorrections {
   readonly parameterCorrections: Readonly<Record<string, IdentityCorrection>>;
   /** Keyed by element. */
   readonly returnCorrections: Readonly<Record<string, IdentityCorrection>>;
-  /** Constant-family aliases a correction may name (`window.DimModeStateSettable`), with members. */
+  /** Constant-family aliases a correction may name (`graphics.BLEND_FACTOR`), with members. */
   readonly constantFamilies: Readonly<Record<string, readonly string[]>>;
 }
 
@@ -117,6 +117,8 @@ const NUMERIC_LITERAL = /^-?\d+(\.\d+)?$/;
 const STRING_LITERAL = /^(".*"|'.*')$/;
 // The TypeScript table types a correction writes.
 const TS_TABLE = /^(Record|LuaMap|ReadonlyLuaMap|LuaTable)\b/;
+// A subset of a constant union a correction writes, which is still that union's value.
+const EXCLUDE = /^Exclude<([\w.]+),.*>$/;
 
 function canonicalLeaves(
   token: string,
@@ -136,6 +138,8 @@ function canonicalLeaves(
   if (trimmed.startsWith("typeof ")) {
     return canonicalLeaves(trimmed.slice("typeof ".length), vocabulary, expanding);
   }
+  const excluded = EXCLUDE.exec(trimmed);
+  if (excluded !== null) return canonicalLeaves(excluded[1] as string, vocabulary, expanding);
   if (trimmed === "nil" || trimmed === "undefined") return ["nil"];
   // Every table shape — a bare or typed `table`, a list, an inline record, a
   // struct, a built-in message payload — is one Lua table at runtime; its

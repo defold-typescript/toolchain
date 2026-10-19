@@ -31,7 +31,7 @@ void _crossedStatus;
 
 // go
 const _goEasing: go.EASING = go.EASING_OUTINQUINT;
-const _goPlayback: go.Playback = go.PLAYBACK_LOOP_PINGPONG;
+const _goPlayback: go.PLAYBACK = go.PLAYBACK_NONE;
 void _goEasing;
 void _goPlayback;
 
@@ -43,7 +43,7 @@ void _goEasingWrong;
 // for the keys render.clear accepts.
 const _bufferType: graphics.BUFFER_TYPE = graphics.BUFFER_TYPE_COLOR0_BIT;
 const _clearKey: render.ClearBufferKey = graphics.BUFFER_TYPE_DEPTH_BIT;
-const _graphicsState: graphics.State = graphics.STATE_POLYGON_OFFSET_FILL;
+const _graphicsState: graphics.STATE = graphics.STATE_SCISSOR_TEST;
 void _bufferType;
 void _clearKey;
 void _graphicsState;
@@ -101,23 +101,17 @@ void _guiEasingWrong;
 const _guiEasingSibling: gui.EASING = gui.PLAYBACK_ONCE_FORWARD;
 void _guiEasingSibling;
 
-// The anchor split: NONE is in both, the directional arms are in exactly one.
-const _xAnchorNone: gui.XAnchor = gui.ANCHOR_NONE;
-const _yAnchorNone: gui.YAnchor = gui.ANCHOR_NONE;
-const _xAnchor: gui.XAnchor = gui.ANCHOR_RIGHT;
-const _yAnchor: gui.YAnchor = gui.ANCHOR_BOTTOM;
-void _xAnchorNone;
-void _yAnchorNone;
-void _xAnchor;
-void _yAnchor;
+// One anchor name holds both axes; a slot that takes one axis excludes the other.
+const _anchorNone: gui.ANCHOR = gui.ANCHOR_NONE;
+const _anchorRight: gui.ANCHOR = gui.ANCHOR_RIGHT;
+const _anchorTop: gui.ANCHOR = gui.ANCHOR_TOP;
+void _anchorNone;
+void _anchorRight;
+void _anchorTop;
 
-// @ts-expect-error TOP is a y anchor, not an x anchor
-const _xAnchorWrong: gui.XAnchor = gui.ANCHOR_TOP;
-void _xAnchorWrong;
-
-// @ts-expect-error LEFT is an x anchor, not a y anchor
-const _yAnchorWrong: gui.YAnchor = gui.ANCHOR_LEFT;
-void _yAnchorWrong;
+// @ts-expect-error a pivot is not an anchor
+const _anchorWrong: gui.ANCHOR = gui.PIVOT_N;
+void _anchorWrong;
 
 // profiler
 const _profilerMode: profiler.MODE = profiler.MODE_SHOW_PEAK_FRAME;
@@ -135,13 +129,11 @@ void _connectivity;
 
 // window — the dim-mode split: only the getter can report DIMMING_UNKNOWN.
 const _dimState: window.DIMMING = window.DIMMING_UNKNOWN;
-const _dimSettable: window.DimModeStateSettable = window.DIMMING_ON;
 void _dimState;
-void _dimSettable;
+window.set_dim_mode(window.DIMMING_ON);
 
 // @ts-expect-error DIMMING_UNKNOWN is reportable but not settable
-const _dimSettableWrong: window.DimModeStateSettable = window.DIMMING_UNKNOWN;
-void _dimSettableWrong;
+window.set_dim_mode(window.DIMMING_UNKNOWN);
 
 // The aliases are the types the signatures actually take, so a getter's result
 // feeds its setter and a wrapper can name its own parameter.
@@ -160,7 +152,7 @@ function fadeIn(target: Opaque<"node">, easing: gui.EASING, playback: gui.PLAYBA
 }
 fadeIn(node, gui.EASING_OUTQUAD, gui.PLAYBACK_ONCE_FORWARD);
 gui.set_pivot(node, gui.get_pivot(node));
-render.enable_state(graphics.STATE_BLEND satisfies graphics.State);
+render.enable_state(graphics.STATE_BLEND satisfies graphics.STATE);
 
 // Where the reference names the enum, that name is the only one: the curated
 // spelling it replaced is declared on no target.

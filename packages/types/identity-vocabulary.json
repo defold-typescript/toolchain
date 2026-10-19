@@ -144,7 +144,6 @@
     "crash.SYSFIELD": "number",
     "factory.STATUS": "number",
     "go.EASING": "number",
-    "go.Playback": "number",
     "go.PLAYBACK": "number",
     "graphics.BLEND_EQUATION": "number",
     "graphics.BLEND_FACTOR": "number",
@@ -157,7 +156,6 @@
     "graphics.DATA_TYPE": "number",
     "graphics.FACE_TYPE": "number",
     "graphics.SEMANTIC_TYPE": "number",
-    "graphics.State": "number",
     "graphics.STATE": "number",
     "graphics.STENCIL_OP": "number",
     "graphics.TEXTURE_FILTER": "number",
@@ -179,8 +177,6 @@
     "gui.SAFE_AREA": "number",
     "gui.SIZE_MODE": "number",
     "gui.TYPE": "number",
-    "gui.XAnchor": "number",
-    "gui.YAnchor": "number",
     "image.TYPE": "string",
     "liveupdate.LIVEUPDATE": "number",
     "material.CONSTANT_TYPE": "number",
@@ -199,7 +195,6 @@
     "sys.REQUEST_STATUS": "number",
     "tilemap.TRANSFORM": "number",
     "window.DIMMING": "number",
-    "window.DimModeStateSettable": "number",
     "window.WINDOW_EVENT": "number"
   },
   "stringConstants": [
@@ -448,7 +443,9 @@
     "physics.set_maskbit:param:group": { "pins": [["string"]], "adds": ["Hash"] },
     "render.disable_state:param:state": {
       "pins": [["graphics.STATE"]],
-      "adds": ["graphics.State"],
+      "adds": [
+        "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>"
+      ],
       "removes": ["graphics.STATE"]
     },
     "render.disable_texture:param:binding": {
@@ -463,7 +460,9 @@
     },
     "render.enable_state:param:state": {
       "pins": [["graphics.STATE"]],
-      "adds": ["graphics.State"],
+      "adds": [
+        "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>"
+      ],
       "removes": ["graphics.STATE"]
     },
     "render.enable_texture:param:handle_or_name": {
@@ -538,7 +537,7 @@
     },
     "window.set_dim_mode:param:mode": {
       "pins": [["window.DIMMING"]],
-      "adds": ["window.DimModeStateSettable"],
+      "adds": ["Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>"],
       "removes": ["window.DIMMING"]
     }
   },
